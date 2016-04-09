@@ -27,9 +27,9 @@ import ctypes
 import time
 from math import pi, copysign, sqrt
 from enum import IntEnum
-from steamcontroller.cheader import defines
+from scc.cheader import defines
 
-from steamcontroller.tools import get_so_extensions
+from scc.tools import get_so_extensions
 
 from collections import deque
 

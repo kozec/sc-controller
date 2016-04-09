@@ -31,12 +31,12 @@ from math import sqrt
 
 from enum import IntEnum
 
-from steamcontroller import \
+from scc import \
 	SCStatus, \
 	SCButtons, \
 	SCI_NULL
 
-import steamcontroller.uinput as sui
+import scc.uinput as sui
 
 from collections import deque
 
