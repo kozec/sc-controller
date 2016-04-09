@@ -27,17 +27,17 @@
 import imp
 
 def static_vars(**kwargs):
-    """Static variable func decorator"""
+	"""Static variable func decorator"""
 
-    def decorate(func):
-        """inner function used to add kwargs attribute to a func"""
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
-        return func
-    return decorate
+	def decorate(func):
+		"""inner function used to add kwargs attribute to a func"""
+		for k in kwargs:
+			setattr(func, k, kwargs[k])
+		return func
+	return decorate
 
 def get_so_extensions():
-    """Return so file extenstion compatible with python and pypy"""
-    for ext, _, typ in imp.get_suffixes():
-        if typ == imp.C_EXTENSION:
-            yield ext
+	"""Return so file extenstion compatible with python and pypy"""
+	for ext, _, typ in imp.get_suffixes():
+		if typ == imp.C_EXTENSION:
+			yield ext
