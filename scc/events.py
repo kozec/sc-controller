@@ -28,17 +28,11 @@ events
 """
 
 from math import sqrt
-
 from enum import IntEnum
-
-from scc import \
-	SCStatus, \
-	SCButtons, \
-	SCI_NULL
-
-import scc.uinput as sui
-
 from collections import deque
+
+from scc.constants import SCStatus, SCButtons, SCI_NULL
+import scc.uinput as sui
 
 class Pos(IntEnum):
 	"""Specify witch pad or trig is used"""
