@@ -376,7 +376,7 @@ class Mouse(UInput):
 	def __init__(self):
 		super(Mouse, self).__init__(vendor=0x28de,
 									product=0x1142,
-									name=b"Steam Controller Mouse",
+									name=b"SCController Mouse",
 									keys=[Keys.BTN_LEFT,
 										  Keys.BTN_RIGHT,
 										  Keys.BTN_MIDDLE,
@@ -655,7 +655,7 @@ class Keyboard(UInput):
 	def __init__(self):
 		super(Keyboard, self).__init__(vendor=0x28de,
 									   product=0x1142,
-									   name=b"Steam Controller Keyboard",
+									   name=b"SCController Keyboard",
 									   keys=Scans.keys(),
 									   axes=[],
 									   rels=[],

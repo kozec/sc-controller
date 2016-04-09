@@ -24,7 +24,7 @@ from threading import Timer
 import struct, time
 
 from scc.constants import VENDOR_ID, PRODUCT_ID, HPERIOD, LPERIOD, DURATION
-from scc.constants import ENDPOINT, CONTROLIDX, FORMATS, SteamControllerInput
+from scc.constants import ENDPOINT, CONTROLIDX, FORMATS, ControllerInput
 from scc.constants import SCStatus, SCButtons, HapticPos
 
 class SCController(object):
@@ -34,10 +34,10 @@ class SCController(object):
 		Constructor
 
 		callback: function called on usb message must take at lead a
-		SteamControllerInput as first argument
+		ControllerInput as first argument
 
 		callback_args: Optional arguments passed to the callback afer the
-		SteamControllerInput argument
+		ControllerInput argument
 		"""
 		self._handle = None
 		self._cb = callback
@@ -59,7 +59,7 @@ class SCController(object):
 				break
 
 		if self._handle is None:
-			raise ValueError('SteamControler Device not found')
+			raise ValueError('Controler Device not found')
 
 		self._ccidx = ccidx
 		dev = self._handle.getDevice()
@@ -146,7 +146,7 @@ class SCController(object):
 			return
 
 		data = transfer.getBuffer()
-		self._tup = SteamControllerInput._make(struct.unpack('<' + ''.join(FORMATS), data))
+		self._tup = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), data))
 		self._callback()
 
 		transfer.submit()

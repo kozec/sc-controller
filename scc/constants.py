@@ -11,7 +11,7 @@ HPERIOD  = 0.02
 LPERIOD  = 0.5
 DURATION = 1.0
 
-STEAM_CONTROLER_FORMAT = [
+CONTROLER_FORMAT = [
 	('x',   'ukn_00'),
 	('x',   'ukn_01'),
 	('H',   'status'),
@@ -38,11 +38,11 @@ STEAM_CONTROLER_FORMAT = [
 	('16x', 'ukn_07'),
 ]
 
-FORMATS, NAMES = zip(*STEAM_CONTROLER_FORMAT)
+FORMATS, NAMES = zip(*CONTROLER_FORMAT)
 
-SteamControllerInput = namedtuple('SteamControllerInput', ' '.join([x for x in NAMES if not x.startswith('ukn_')]))
+ControllerInput = namedtuple('ControllerInput', ' '.join([x for x in NAMES if not x.startswith('ukn_')]))
 
-SCI_NULL = SteamControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
+SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
 
 class SCStatus(IntEnum):
 	IDLE  = 2820
@@ -57,7 +57,7 @@ class SCButtons(IntEnum):
 	RGRIP	 = 0b00000001000000000000000000000000
 	LGRIP	 = 0b00000000100000000000000000000000
 	START	 = 0b00000000010000000000000000000000
-	STEAM	 = 0b00000000001000000000000000000000
+	C		 = 0b00000000001000000000000000000000
 	BACK	  = 0b00000000000100000000000000000000
 	A		 = 0b00000000000000001000000000000000
 	X		 = 0b00000000000000000100000000000000

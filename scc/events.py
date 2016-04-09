@@ -22,9 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-"""Event mapper class and enums used to map steamcontroller inputs to uinput
+"""
+Event mapper class and enums used to map controller inputs to uinput
 events
-
 """
 
 from math import sqrt
@@ -70,7 +70,7 @@ class StickModes(IntEnum):
 class EventMapper(object):
 	"""
 	Event mapper class permit to configure events and provide the process event
-	callback to be registered to a SteamController instance
+	callback to be registered to a SCController instance
 	"""
 
 	def __init__(self):
@@ -116,10 +116,10 @@ class EventMapper(object):
 
 	def process(self, sc, sci):
 		"""
-		Process SteamController inputs to generate events
+		Process SCController inputs to generate events
 
-		@param SteamController sc	   steamcontroller class used to get input
-		@param SteamControllerInput sci inputs from the steam controller
+		@param SCController sc		SCController class used to get input
+		@param ControllerInput		sci inputs from the controller
 		"""
 
 		if sci.status != SCStatus.INPUT:
