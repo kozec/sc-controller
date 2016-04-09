@@ -1,0 +1,36 @@
+{
+	"buttons" : {
+		"A"      : { "action" : "pad(Keys.BTN_A)" },
+		"B"      : { "action" : "pad(Keys.BTN_B)" },
+		"X"      : { "action" : "pad(Keys.BTN_X)" },
+		"Y"      : { "action" : "pad(Keys.BTN_Y)" },
+		"LB"     : { "action" : "pad(Keys.BTN_TL)" },
+		"RB"     : { "action" : "pad(Keys.BTN_TR)" },
+		"BACK"   : { "action" : "pad(Keys.BTN_SELECT)" },
+		"START"  : { "action" : "pad(Keys.BTN_START)" },
+		"C"      : { "action" : "pad(Keys.BTN_MODE)" },
+		"LPAD"   : { "action" : "pad(Keys.BTN_THUMBL)" },
+		"RPAD"   : { "action" : "pad(Keys.BTN_THUMBR)" },
+		"LGRIP"  : { "action" : "pad(Keys.BTN_A)" },
+		"RGRIP"  : { "action" : "pad(Keys.BTN_X)" }
+	},
+	
+	"triggers" : {
+		"LEFT"  : { "action" : "axis(Axes.ABS_Z)" },
+		"RIGHT" : { "action" : "axis(Axes.ABS_RZ)" }
+	},
+	
+	"stick" : {
+		"X"	: { "action" : "axis(Axes.ABS_X)" },
+		"Y"	: { "action" : "raxis(Axes.ABS_Y)" }
+	},
+	
+	"left_pad" : {
+		"action" : "dpad('hatup(Axes.ABS_HAT0Y)', 'hatdown(Axes.ABS_HAT0Y)', 'hatleft(Axes.ABS_HAT0X)', 'hatright(Axes.ABS_HAT0X)' )"
+	},
+	
+	"right_pad" : {
+		"X"	: { "action" : "axis(Axes.ABS_RX)" },
+		"Y"	: { "action" : "raxis(Axes.ABS_RY)" }
+	}
+}

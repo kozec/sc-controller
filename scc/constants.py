@@ -39,8 +39,9 @@ CONTROLER_FORMAT = [
 ]
 
 FORMATS, NAMES = zip(*CONTROLER_FORMAT)
+CI_NAMES = [ x for x in NAMES if not x.startswith('ukn_') ]
 
-ControllerInput = namedtuple('ControllerInput', ' '.join([x for x in NAMES if not x.startswith('ukn_')]))
+ControllerInput = namedtuple('ControllerInput', ' '.join(CI_NAMES))
 
 SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
 
