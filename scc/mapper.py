@@ -1,9 +1,11 @@
 #!/usr/bin/python2
-import json, traceback
+from __future__ import unicode_literals
+
+import traceback
 from collections import deque
 from scc.uinput import Gamepad, Keyboard, Mouse
-
 from scc.uinput import Keys, Axes, Rels
+from scc.profile import Profile
 from scc.constants import SCStatus, SCButtons, SCI_NULL
 from scc.constants import CI_NAMES, ControllerInput
 
@@ -11,10 +13,7 @@ STICK_PAD_MIN = -32767
 STICK_PAD_MAX = 32767
 STICK_PAD_MIN_HALF = STICK_PAD_MIN / 2
 STICK_PAD_MAX_HALF = STICK_PAD_MAX / 2
-STICK_AXES = { "X" : "lpad_x", "Y" : "lpad_y" }
-LPAD_AXES = STICK_AXES
-RPAD_AXES = { "X" : "rpad_x", "Y" : "rpad_y" }
-TRIGGERS = [ "LEFT", "RIGHT" ]
+
 TRIGGERS_MIN = 0
 TRIGGERS_HALF = 50
 TRIGGERS_CLICK = 254 # Values under this are generated until trigger clicks
@@ -502,8 +501,7 @@ class Mapper(object):
 	DEBUG = False
 	
 	def __init__(self, profile):
-		# Read configuration from profile
-		self.load_profile(profile)
+		self.profile = profile
 		
 		# Create virtual devices
 		self.gamepad = Gamepad()
@@ -526,57 +524,16 @@ class Mapper(object):
 		self.old_state = SCI_NULL
 		self.state = SCI_NULL
 		self.force_event = set()
-		self.bpe =			ButtonPressEvent(self)
-		self.bre =			ButtonReleaseEvent(self)
-		self.se  = { x :	StickEvent(self, STICK_AXES[x], None, SCButtons.LPAD) for x in STICK_AXES }
-		self.se['whole']  =	StickEvent(self, "lpad_x", "lpad_y", SCButtons.LPAD)
-		self.lpe = { x :	PadEvent(self, LPAD_AXES[x], None, SCButtons.LPAD, SCButtons.LPADTOUCH) for x in LPAD_AXES }
-		self.lpe['whole'] =	PadEvent(self, "lpad_x", "lpad_y", SCButtons.LPAD, SCButtons.LPADTOUCH)
-		self.rpe = { x :	PadEvent(self, RPAD_AXES[x], None, SCButtons.RPAD, SCButtons.RPADTOUCH) for x in RPAD_AXES }
-		self.rpe['whole'] =	PadEvent(self, "rpad_x", "rpad_y", SCButtons.RPAD, SCButtons.RPADTOUCH)
-		self.lte = 			TriggerEvent(self, "ltrig")
-		self.rte = 			TriggerEvent(self, "rtrig")
-	
-	
-	def load_profile(self, profile):
-		data = json.loads(open(profile, "r").read())
-		# Buttons
-		self.buttons = {
-			x : data["buttons"][x.name]["action"]
-			for x in SCButtons
-			if x.name in data["buttons"] and "action" in data["buttons"][x.name]
-		}
-		
-		# Stick
-		self.stick = {
-			x : data["stick"][x]["action"]
-			for x in STICK_AXES
-			if x in data["stick"] and "action" in data["stick"][x]
-		}
-		if "action" in data["stick"]: self.stick["whole"] = data["stick"]["action"]
-		
-		# Triggers
-		self.triggers = {
-			x : data["triggers"][x]["action"]
-			for x in TRIGGERS
-			if x in data["triggers"] and "action" in data["triggers"][x]
-		}
-		
-		# LPAD
-		self.left_pad = {
-			x : data["left_pad"][x]["action"]
-			for x in LPAD_AXES
-			if x in data["left_pad"] and "action" in data["left_pad"][x]
-		}
-		if "action" in data["left_pad"]: self.left_pad["whole"] = data["left_pad"]["action"]
-		
-		# RPAD
-		self.right_pad = {
-			x : data["right_pad"][x]["action"]
-			for x in RPAD_AXES
-			if x in data["right_pad"] and "action" in data["right_pad"][x]
-		}
-		if "action" in data["right_pad"]: self.right_pad["whole"] = data["right_pad"]["action"]
+		self.bpe =					ButtonPressEvent(self)
+		self.bre =					ButtonReleaseEvent(self)
+		self.se  = { x :			StickEvent(self, Profile.STICK_AXES[x], None, SCButtons.LPAD) for x in Profile.STICK_AXES }
+		self.lpe = { x :			PadEvent(self, Profile.LPAD_AXES[x], None, SCButtons.LPAD, SCButtons.LPADTOUCH) for x in Profile.LPAD_AXES }
+		self.rpe = { x :			PadEvent(self, Profile.RPAD_AXES[x], None, SCButtons.RPAD, SCButtons.RPADTOUCH) for x in Profile.RPAD_AXES }
+		self.se[Profile.WHOLE]  =	StickEvent(self, "lpad_x", "lpad_y", SCButtons.LPAD)
+		self.lpe[Profile.WHOLE] =	PadEvent(self, "lpad_x", "lpad_y", SCButtons.LPAD, SCButtons.LPADTOUCH)
+		self.rpe[Profile.WHOLE] =	PadEvent(self, "rpad_x", "rpad_y", SCButtons.RPAD, SCButtons.RPADTOUCH)
+		self.lte = 					TriggerEvent(self, "ltrig")
+		self.rte = 					TriggerEvent(self, "rtrig")
 	
 	
 	def eeval(self, code, globs, locs):
@@ -606,49 +563,49 @@ class Mapper(object):
 		
 		if btn_add or btn_rem:
 			# At least one button was pressed
-			for x in self.buttons:
+			for x in self.profile.buttons:
 				if x & btn_add:
-					self.eeval(self.buttons[x], self.bpe.GLOBS, self.bpe.locs)
+					self.eeval(self.profile.buttons[x], self.bpe.GLOBS, self.bpe.locs)
 				elif x & btn_rem:
-					self.eeval(self.buttons[x], self.bre.GLOBS, self.bre.locs)
+					self.eeval(self.profile.buttons[x], self.bre.GLOBS, self.bre.locs)
 		
 		# Check stick
 		if not sci.buttons & SCButtons.LPADTOUCH:
 			if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
 				# STICK
-				if "whole" in self.stick:
-					self.eeval(self.stick["whole"], self.se["whole"].GLOBS, self.se["whole"].locs)
+				if Profile.WHOLE in self.profile.stick:
+					self.eeval(self.profile.stick[Profile.WHOLE], self.se[Profile.WHOLE].GLOBS, self.se[Profile.WHOLE].locs)
 				else:
-					for x in STICK_AXES:
-						if x in self.stick:
-							self.eeval(self.stick[x], self.se[x].GLOBS, self.se[x].locs)
+					for x in Profile.STICK_AXES:
+						if x in self.profile.stick:
+							self.eeval(self.profile.stick[x], self.se[x].GLOBS, self.se[x].locs)
 		
 		# Check triggers
 		if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:
-			if "LEFT" in self.triggers:
-				self.eeval(self.triggers["LEFT"], self.lte.GLOBS, self.lte.locs)
+			if Profile.LEFT in self.profile.triggers:
+				self.eeval(self.profile.triggers[Profile.LEFT], self.lte.GLOBS, self.lte.locs)
 		if FE_TRIGGER in fe or sci.rtrig != self.old_state.rtrig:
-			if "RIGHT" in self.triggers:
-				self.eeval(self.triggers["RIGHT"], self.rte.GLOBS, self.rte.locs)
+			if Profile.RIGHT in self.profile.triggers:
+				self.eeval(self.profile.triggers[Profile.RIGHT], self.rte.GLOBS, self.rte.locs)
 		
 		# Check pads
 		if FE_PAD in fe or sci.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 			# RPAD
-			if "whole" in self.right_pad:
-				self.eeval(self.right_pad["whole"], self.rpe["whole"].GLOBS, self.rpe["whole"].locs)
+			if Profile.WHOLE in self.profile.pads[Profile.RIGHT]:
+				self.eeval(self.profile.pads[Profile.RIGHT][Profile.WHOLE], self.rpe[Profile.WHOLE].GLOBS, self.rpe[Profile.WHOLE].locs)
 			else:
-				for x in RPAD_AXES:
-					if x in self.right_pad:
-						self.eeval(self.right_pad[x], self.rpe[x].GLOBS, self.rpe[x].locs)
+				for x in Profile.RPAD_AXES:
+					if x in self.profile.pads[Profile.RIGHT]:
+						self.eeval(self.profile.pads[Profile.RIGHT][x], self.rpe[x].GLOBS, self.rpe[x].locs)
 		
 		if FE_PAD in fe or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
 			# LPAD
-			if "whole" in self.left_pad:
-				self.eeval(self.left_pad["whole"], self.lpe["whole"].GLOBS, self.lpe["whole"].locs)
+			if Profile.WHOLE in self.profile.pads[Profile.LEFT]:
+				self.eeval(self.profile.pads[Profile.LEFT][Profile.WHOLE], self.lpe[Profile.WHOLE].GLOBS, self.lpe[Profile.WHOLE].locs)
 			else:
-				for x in LPAD_AXES:
-					if x in self.left_pad:
-						self.eeval(self.left_pad[x], self.lpe[x].GLOBS, self.lpe[x].locs)
+				for x in Profile.LPAD_AXES:
+					if x in self.profile.pads[Profile.LEFT]:
+						self.eeval(self.profile.pads[Profile.LEFT][x], self.lpe[x].GLOBS, self.lpe[x].locs)
 		
 		
 		# Generate events
