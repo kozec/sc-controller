@@ -26,7 +26,7 @@
 	},
 	
 	"left_pad" : {
-		"action" : "dpad('hatup(Axes.ABS_HAT0Y)', 'hatdown(Axes.ABS_HAT0Y)', 'hatleft(Axes.ABS_HAT0X)', 'hatright(Axes.ABS_HAT0X)' )"
+		"action" : "dpad(hatup(Axes.ABS_HAT0Y), hatdown(Axes.ABS_HAT0Y), hatleft(Axes.ABS_HAT0X), hatright(Axes.ABS_HAT0X) )"
 	},
 	
 	"right_pad" : {

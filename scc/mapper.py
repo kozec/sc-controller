@@ -49,16 +49,6 @@ class Mapper(object):
 		self.rte = 					TriggerEvent(self, "rtrig")
 	
 	
-	def eeval(self, code, globs, locs):
-		""" eval in try... except with optional logging """
-		try:
-			if Mapper.DEBUG:
-				print "Executing", code
-			eval(code, globs, locs)
-		except:
-			traceback.print_exc()
-	
-	
 	def callback(self, controller, sci):
 		# Store state
 		#print sci
@@ -78,47 +68,47 @@ class Mapper(object):
 			# At least one button was pressed
 			for x in self.profile.buttons:
 				if x & btn_add:
-					self.eeval(self.profile.buttons[x], self.bpe.GLOBS, self.bpe.locs)
+					self.profile.buttons[x].execute(self.bpe)
 				elif x & btn_rem:
-					self.eeval(self.profile.buttons[x], self.bre.GLOBS, self.bre.locs)
+					self.profile.buttons[x].execute(self.bre)
 		
 		# Check stick
 		if not sci.buttons & SCButtons.LPADTOUCH:
 			if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
 				# STICK
 				if Profile.WHOLE in self.profile.stick:
-					self.eeval(self.profile.stick[Profile.WHOLE], self.se[Profile.WHOLE].GLOBS, self.se[Profile.WHOLE].locs)
+					self.profile.stick[Profile.WHOLE].execute(self.se[Profile.WHOLE])
 				else:
 					for x in Profile.STICK_AXES:
 						if x in self.profile.stick:
-							self.eeval(self.profile.stick[x], self.se[x].GLOBS, self.se[x].locs)
+							self.profile.stick[x].execute(self.se[x])
 		
 		# Check triggers
 		if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:
 			if Profile.LEFT in self.profile.triggers:
-				self.eeval(self.profile.triggers[Profile.LEFT], self.lte.GLOBS, self.lte.locs)
+				self.profile.triggers[Profile.LEFT].execute(self.lte)
 		if FE_TRIGGER in fe or sci.rtrig != self.old_state.rtrig:
 			if Profile.RIGHT in self.profile.triggers:
-				self.eeval(self.profile.triggers[Profile.RIGHT], self.rte.GLOBS, self.rte.locs)
+				self.profile.triggers[Profile.RIGHT].execute(self.rte)
 		
 		# Check pads
 		if FE_PAD in fe or sci.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 			# RPAD
 			if Profile.WHOLE in self.profile.pads[Profile.RIGHT]:
-				self.eeval(self.profile.pads[Profile.RIGHT][Profile.WHOLE], self.rpe[Profile.WHOLE].GLOBS, self.rpe[Profile.WHOLE].locs)
+				self.profile.pads[Profile.RIGHT][Profile.WHOLE].execute(self.rpe[Profile.WHOLE])
 			else:
 				for x in Profile.RPAD_AXES:
 					if x in self.profile.pads[Profile.RIGHT]:
-						self.eeval(self.profile.pads[Profile.RIGHT][x], self.rpe[x].GLOBS, self.rpe[x].locs)
+						self.profile.pads[Profile.RIGHT][x].execute(self.rpe[x].GLOBS)
 		
 		if FE_PAD in fe or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
 			# LPAD
 			if Profile.WHOLE in self.profile.pads[Profile.LEFT]:
-				self.eeval(self.profile.pads[Profile.LEFT][Profile.WHOLE], self.lpe[Profile.WHOLE].GLOBS, self.lpe[Profile.WHOLE].locs)
+				self.profile.pads[Profile.LEFT][Profile.WHOLE].execute(self.lpe[Profile.WHOLE])
 			else:
 				for x in Profile.LPAD_AXES:
 					if x in self.profile.pads[Profile.LEFT]:
-						self.eeval(self.profile.pads[Profile.LEFT][x], self.lpe[x].GLOBS, self.lpe[x].locs)
+						self.profile.pads[Profile.LEFT][x].execute(self.lpe[x])
 		
 		
 		# Generate events

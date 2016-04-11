@@ -36,29 +36,33 @@ class ControllerEvent(object):
 		'Rels' : Rels
 	}
 	
+	ACTIONS = (
+		# Actions
+		'mapper',
+		'key',
+		'pad' ,
+		'axis' ,
+		'dpad',
+		'mouse',
+		'trackpad',
+		'trackball',
+		'wheel',
+		'button' ,
+		'click',
+		# Shortcuts
+		'raxis',
+		'hatup' ,
+		'hatdown',
+		'hatleft',
+		'hatright',
+	)
+	
 	def __init__(self, mapper):
 		self.mapper = mapper
 		# Used as locals when executing code from 'python' action
-		self.locs = {
-			# Actions
-			'mapper' : mapper,
-			'key' : self.key,
-			'pad' : self.pad,
-			'axis' : self.axis,
-			'dpad' : self.dpad,
-			'mouse' : self.mouse,
-			'trackpad' : self.trackpad,
-			'trackball' : self.trackball,
-			'wheel' : self.wheel,
-			'button' : self.button,
-			'click' : self.click,
-			# Shortcuts
-			'raxis' : self.raxis,
-			'hatup' : self.hatup,
-			'hatdown' : self.hatdown,
-			'hatleft' : self.hatup,
-			'hatright' : self.hatdown,
-		}
+		self.locs = { x : getattr(self, x) for x in ControllerEvent.ACTIONS }
+		self.locs['mapper'] = mapper
+	
 	
 	def trackpad(self, *a):
 		pass
@@ -83,9 +87,11 @@ class ControllerEvent(object):
 	def hatup(self, id):
 		return self.axis(id, 0, 32767)
 	
-	
 	def hatdown(self, id):
 		return self.axis(id, 0, -32767)
+	
+	hatleft = hatup
+	hatright = hatdown
 
 
 class ButtonPressEvent(ControllerEvent):
@@ -275,11 +281,11 @@ class StickEvent(ControllerEvent):
 		for i in (0, 1):
 			if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
 				if locals()[self.dpad_state[i]] is not None:
-					rv = self.mapper.eeval(locals()[self.dpad_state[i]], self.mapper.bre.GLOBS, self.mapper.bre.locs) or rv
+					rv = locals()[self.dpad_state[i]].execute(self.mapper.bre)
 				self.dpad_state[i] = None
 			if side[i] is not None and side[i] != self.dpad_state[i]:
 				if locals()[side[i]] is not None:
-					rv = self.mapper.eeval(locals()[side[i]], self.mapper.bpe.GLOBS, self.mapper.bpe.locs) or rv
+					rv = locals()[side[i]].execute(self.mapper.bpe)
 				self.dpad_state[i] = side[i]
 		return rv
 	

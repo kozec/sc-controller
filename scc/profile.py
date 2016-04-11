@@ -7,6 +7,7 @@ Handles mapping profile stored in json file
 from __future__ import unicode_literals
 
 from scc.constants import SCButtons
+from scc.actions import ActionParser
 import json
 
 class Profile(object):
@@ -28,44 +29,47 @@ class Profile(object):
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
 		data = json.loads(open(filename, "r").read())
+		ap = ActionParser()
 		# Buttons
-		self.buttons = {
-			x : data["buttons"][x.name]["action"]
-			for x in SCButtons
-			if x.name in data["buttons"] and "action" in data["buttons"][x.name]
-		}
+		self.buttons = {}
+		for x in SCButtons:
+			if x.name in data["buttons"] and "action" in data["buttons"][x.name]:
+				a = ap.restart(data["buttons"][x.name]["action"]).parse()
+				if a is not None:
+					self.buttons[x] = a
 		
 		# Stick
-		self.stick = {
-			x : data["stick"][x]["action"]
-			for x in Profile.STICK_AXES
-			if x in data["stick"] and "action" in data["stick"][x]
-		}
-		if "action" in data["stick"]: self.stick[Profile.WHOLE] = data["stick"]["action"]
+		self.stick = {}
+		for x in Profile.STICK_AXES:
+			if x in data["stick"] and "action" in data["stick"][x]:
+				a = ap.restart(data["stick"][x]["action"]).parse()
+				if a is not None:
+					self.stick[x] = a
+		if "action" in data["stick"]:
+			a = ap.restart(data["stick"]["action"]).parse()
+			if a is not None:
+				self.stick[Profile.WHOLE] = a
 		
 		# Triggers
-		self.triggers = {
-			x : data["triggers"][x]["action"]
-			for x in Profile.TRIGGERS
-			if x in data["triggers"] and "action" in data["triggers"][x]
-		}
+		self.triggers = {}
+		for x in Profile.TRIGGERS:
+			if x in data["triggers"] and "action" in data["triggers"][x]:
+				a = ap.restart(data["triggers"][x]["action"]).parse()
+				if a is not None:
+					self.triggers[x] = a
 		
 		# Pads
-		self.pads = {
-			Profile.LEFT : {
-				x : data["left_pad"][x]["action"]
-				for x in Profile.LPAD_AXES
-				if x in data["left_pad"] and "action" in data["left_pad"][x]
-			},
-			Profile.RIGHT : {
-				x : data["right_pad"][x]["action"]
-				for x in Profile.RPAD_AXES
-				if x in data["right_pad"] and "action" in data["right_pad"][x]
-			}
-		}
-		
-		
-		if "action" in data["left_pad"]: self.pads[Profile.LEFT][Profile.WHOLE] = data["left_pad"]["action"]
-		if "action" in data["right_pad"]: self.pads[Profile.RIGHT][Profile.WHOLE] = data["right_pad"]["action"]
+		self.pads = {}
+		for (y, key) in ( (Profile.LEFT, "left_pad"), (Profile.RIGHT, "right_pad") ):
+			self.pads[y] = {}
+			if x in data[key] and "action" in data[key][x]:
+				a = ap.restart(data[key][x]["action"]).parse()
+				if a is not None:
+					self.pads[y][x] = a
+			
+			if "action" in data[key]:
+				a = ap.restart(data[key]["action"]).parse()
+				if a is not None:
+					self.pads[y][Profile.WHOLE] = a
 		
 		return self
