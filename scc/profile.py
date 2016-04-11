@@ -1,3 +1,9 @@
+#!/usr/bin/env python2
+"""
+SC-Controller - Profile
+
+Handles mapping profile stored in json file
+"""
 from __future__ import unicode_literals
 
 from scc.constants import SCButtons
@@ -20,6 +26,7 @@ class Profile(object):
 		self.right_pad = {}
 	
 	def load(self, filename):
+		""" Loads profile from file. Returns self """
 		data = json.loads(open(filename, "r").read())
 		# Buttons
 		self.buttons = {
@@ -60,3 +67,5 @@ class Profile(object):
 		
 		if "action" in data["left_pad"]: self.pads[Profile.LEFT][Profile.WHOLE] = data["left_pad"]["action"]
 		if "action" in data["right_pad"]: self.pads[Profile.RIGHT][Profile.WHOLE] = data["right_pad"]["action"]
+		
+		return self
