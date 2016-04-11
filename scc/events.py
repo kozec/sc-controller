@@ -1,638 +1,501 @@
 #!/usr/bin/env python2
-
-# The MIT License (MIT)
-#
-# Copyright (c) 2015 Stany MARCEL <stanypub@gmail.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-
 """
-Event mapper class and enums used to map controller inputs to uinput
-events
-"""
+SC Controller - Events.
 
-from math import sqrt
-from enum import IntEnum
+Event represents event from physical controller button, stick, pad or trigger
+and it is used as context in which Action is done.
+That means that same action can have different meaning depending on event which
+caused it to run.
+For example, 'button' action caused by ButtonPressEvent translates directly
+to button press while with StickEvent it be configured to press different
+buttons for each direction in which stick can be moved.
+"""
+from scc.uinput import Keys, Axes, Rels
 from collections import deque
 
-from scc.constants import SCStatus, SCButtons, SCI_NULL
-import scc.uinput as sui
+STICK_PAD_MIN = -32767
+STICK_PAD_MAX = 32767
+STICK_PAD_MIN_HALF = STICK_PAD_MIN / 2
+STICK_PAD_MAX_HALF = STICK_PAD_MAX / 2
 
-class Pos(IntEnum):
-	"""Specify witch pad or trig is used"""
-	RIGHT = 0
-	LEFT = 1
+TRIGGERS_MIN = 0
+TRIGGERS_HALF = 50
+TRIGGERS_CLICK = 254 # Values under this are generated until trigger clicks
+TRIGGERS_MAX = 255
 
-class Modes(IntEnum):
-	"""Different kinds of uinput event type"""
-	GAMEPAD = 0
-	KEYBOARD = 1
-	MOUSE = 2
-	CALLBACK = 3
-
-class PadModes(IntEnum):
-	"""Different possible pads modes"""
-	NOACTION = 0
-	AXIS = 1
-	MOUSE = 2
-	MOUSESCROLL = 3
-	BUTTONTOUCH = 4
-	BUTTONCLICK = 5
-
-class TrigModes(IntEnum):
-	"""Different possible trig modes"""
-	NOACTION = 0
-	AXIS = 1
-	BUTTON = 2
-
-class StickModes(IntEnum):
-	"""Different possible stick modes"""
-	NOACTION = 0
-	AXIS = 1
-	BUTTON = 2
-
-class EventMapper(object):
-	"""
-	Event mapper class permit to configure events and provide the process event
-	callback to be registered to a SCController instance
-	"""
-
-	def __init__(self):
-
-		self._uip = (sui.Gamepad(),
-					 sui.Keyboard(),
-					 sui.Mouse())
-
-		self._btn_map = {x : (None, 0) for x in list(SCButtons)}
-
-		self._pad_modes = [PadModes.NOACTION, PadModes.NOACTION]
-		self._pad_dzones = [0, 0]
-		self._pad_evts = [[(None, 0)]*4]*2
-		self._pad_revs = [False, False]
-
-		self._trig_modes = [TrigModes.NOACTION, TrigModes.NOACTION]
-		self._trig_evts = [(None, 0)]*2
-
-		self._stick_mode = StickModes.NOACTION
-		self._stick_evts = [(None, 0)]*2
-		self._stick_rev = False
-
-		self._sci_prev = SCI_NULL
-
-		self._xdq = [deque(maxlen=8), deque(maxlen=8)]
-		self._ydq = [deque(maxlen=8), deque(maxlen=8)]
-
-		self._onkeys = set()
-		self._onabs = {}
-
-		self._stick_tys = None
-		self._stick_lxs = None
-		self._stick_bys = None
-		self._stick_rxs = None
-		self._stick_axes_callback = None
-		self._stick_pressed_callback = None
-
-		self._trig_s = [None, None]
-		self._trig_axes_callbacks = [None, None]
-
-		self._moved = [0, 0]
+FE_STICK = 1
+FE_TRIGGER = 2
+FE_PAD = 3
 
 
-	def process(self, sc, sci):
+class ControllerEvent(object):
+	# Used as globals when executing code from 'python' action
+	GLOBS = {
+		'Keys' : Keys,
+		'Axes' : Axes,
+		'Rels' : Rels
+	}
+	
+	def __init__(self, mapper):
+		self.mapper = mapper
+		# Used as locals when executing code from 'python' action
+		self.locs = {
+			# Actions
+			'mapper' : mapper,
+			'key' : self.key,
+			'pad' : self.pad,
+			'axis' : self.axis,
+			'dpad' : self.dpad,
+			'mouse' : self.mouse,
+			'trackpad' : self.trackpad,
+			'trackball' : self.trackball,
+			'wheel' : self.wheel,
+			'button' : self.button,
+			'click' : self.click,
+			# Shortcuts
+			'raxis' : self.raxis,
+			'hatup' : self.hatup,
+			'hatdown' : self.hatdown,
+			'hatleft' : self.hatup,
+			'hatright' : self.hatdown,
+		}
+	
+	def trackpad(self, *a):
+		pass
+	
+	
+	def trackball(self, *a):
+		pass
+	
+	
+	def wheel(self, *a):
+		pass
+	
+	
+	def dpad(self, *a):
+		pass
+	
+	
+	def raxis(self, id):
+		return self.axis(id, 32767, -32767)
+	
+	
+	def hatup(self, id):
+		return self.axis(id, 0, 32767)
+	
+	
+	def hatdown(self, id):
+		return self.axis(id, 0, -32767)
+
+
+class ButtonPressEvent(ControllerEvent):
+	def key(self, key1, *a):
+		self.mapper.keypress_list.append(key1)
+		return True
+	
+	
+	def button(self, button1, *a):
+		self.mapper.mouse.keyEvent(button1, 1)
+		self.mapper.syn_list.add(self.mapper.mouse)
+		return True
+
+	
+	def pad(self, button1, *a):
+		self.mapper.gamepad.keyEvent(button1, 1)
+		self.mapper.syn_list.add(self.mapper.gamepad)
+		return True
+	
+	
+	def mouse(self, axis, speed=1):
+		# This is generaly bad idea...
+		if axis == Rels.REL_X:
+			self.mapper.mouse.moveEvent(1000 * speed, 0, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif axis == Rels.REL_Y:
+			self.mapper.mouse.moveEvent(0, 1000 * speed, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif axis == Rels.REL_WHEEL:
+			self.mapper.mouse.scrollEvent(0, 2000 * speed, False)
+			self.mapper.syn_list.add(self.mapper.mouse)	
+		return True
+	
+	
+	def axis(self, id, min = STICK_PAD_MIN, max = STICK_PAD_MAX):
+		self.mapper.gamepad.axisEvent(id, max)
+		self.mapper.syn_list.add(self.mapper.gamepad)
+		return True
+	
+	
+	def click(self, *a):
+		return True
+
+
+class ButtonReleaseEvent(ControllerEvent):
+	def key(self, key1, *a):
+		self.mapper.keyrelease_list.append(key1)
+		return False
+	
+	def button(self, button1, *a):
+		self.mapper.mouse.keyEvent(button1, 0)
+		self.mapper.syn_list.add(self.mapper.mouse)
+		return False
+	
+	
+	def pad(self, button1, *a):
+		self.mapper.gamepad.keyEvent(button1, 0)
+		self.mapper.syn_list.add(self.mapper.gamepad)
+		return False
+	
+	
+	def mouse(self, axis, speed=10):
+		# Does nothing
+		return False
+	
+	
+	def axis(self, id, min = STICK_PAD_MIN, max = STICK_PAD_MAX):
+		self.mapper.gamepad.axisEvent(id, min)
+		self.mapper.syn_list.add(self.mapper.gamepad)
+		return False
+	
+	
+	def click(self, *a):
+		return True
+
+
+class StickEvent(ControllerEvent):
+	def __init__(self, mapper, axis_attr, axis2_attr, click_button):
+		ControllerEvent.__init__(self, mapper)
+		self.axis_attr = axis_attr
+		self.axis2_attr = axis2_attr
+		self.click_button = click_button
+		self.dpad_state = [ None, None ]
+	
+	
+	def _by_trigger(self, option1, option2, minustrigger, plustrigger):
 		"""
-		Process SCController inputs to generate events
-
-		@param SCController sc		SCController class used to get input
-		@param ControllerInput		sci inputs from the controller
+		Choses which key or button should be pressed or released based on
+		current stick position.
+		
+		Returns list of actions represented by tuples of (pressed, option)
+		where 'pressed' is True if chosen button should be pressed.
 		"""
-
-		if sci.status != SCStatus.INPUT:
-			return
-
-		sci_p = self._sci_prev
-		self._sci_prev = sci
-
-		_xor = sci_p.buttons ^ sci.buttons
-		btn_rem = _xor & sci_p.buttons
-		btn_add = _xor & sci.buttons
-
-		_pressed = []
-		_released = []
-
-		syn = set()
-
-		def _abspressed(ev, val):
-			if ev not in self._onabs or self._onabs[ev] != val:
-				self._uip[Modes.GAMEPAD].axisEvent(ev, val)
-				syn.add(Modes.GAMEPAD)
-				self._onabs[ev] = val
-				return True
+		old_p = getattr(self.mapper.old_state, self.axis_attr)
+		p = getattr(self.mapper.state, self.axis_attr)
+		rv = []
+		
+		if p <= minustrigger and old_p > minustrigger:
+			rv.append( (True, option1) )
+		elif p > minustrigger and old_p <= minustrigger:
+			rv.append( (False, option1) )
+		if option2 is not None:
+			if p >= plustrigger and old_p < plustrigger:
+				rv.append( (True, option2) )
+			elif p < plustrigger and old_p >= plustrigger:
+				rv.append( (False, option2) )
+		return rv
+	
+	
+	def key(self, key1, key2 = None, minustrigger = STICK_PAD_MIN_HALF, plustrigger = STICK_PAD_MAX_HALF):
+		rv = False
+		for (pressed, key) in self._by_trigger(key1, key2, minustrigger, plustrigger):
+			if pressed:
+				self.mapper.keypress_list.append(key)
+				rv = True
 			else:
-				return False
-
-		def _absreleased(ev):
-			if ev not in self._onabs or self._onabs[ev] == 0:
-				return False
+				self.mapper.keyrelease_list.append(key)
+		return rv
+	
+	
+	def button(self, button1, button2 = None, minustrigger = STICK_PAD_MIN_HALF, plustrigger = STICK_PAD_MAX_HALF):
+		rv = False
+		for (pressed, button) in self._by_trigger(button1, button2, minustrigger, plustrigger):
+			if pressed:
+				self.mapper.mouse.keyEvent(button, 1)
+				rv = True
 			else:
-				self._uip[Modes.GAMEPAD].axisEvent(ev, 0)
-				syn.add(Modes.GAMEPAD)
-				self._onabs[ev] = 0
-				return True
-
-		def _keypressed(mode, ev):
-			"""Private function used to generate different kind of key press"""
-			if mode == Modes.GAMEPAD or mode == Modes.MOUSE:
-				if ev not in self._onkeys:
-					self._uip[mode].keyEvent(ev, 1)
-					syn.add(mode)
-			elif mode == Modes.KEYBOARD:
-				_pressed.append(ev)
-			if ev in self._onkeys:
-				return False
+				self.mapper.mouse.keyEvent(button, 0)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		return rv
+	
+	
+	def pad(self, button1, button2 = None, minustrigger = STICK_PAD_MIN_HALF, plustrigger = STICK_PAD_MAX_HALF):
+		rv = False
+		for (pressed, button) in self._by_trigger(button1, button2, minustrigger, plustrigger):
+			if pressed:
+				self.mapper.gamepad.keyEvent(button, 1)
+				rv = True
 			else:
-				self._onkeys.add(ev)
-				return True
+				self.mapper.gamepad.keyEvent(button, 0)
+			self.mapper.syn_list.add(self.mapper.gamepad)
+		return rv
+	
+	
+	def mouse(self, axis, speed=1):
+		p = getattr(self.mapper.state, self.axis_attr) * speed / 100
 
-		def _keyreleased(mode, ev):
-			"""Private function used to generate different kind of key release"""
-			if ev in self._onkeys:
-				self._onkeys.remove(ev)
-				if mode == Modes.GAMEPAD or mode == Modes.MOUSE:
-					self._uip[mode].keyEvent(ev, 0)
-					syn.add(mode)
-				elif mode == Modes.KEYBOARD:
-					_released.append(ev)
-				return True
-			else:
-				return False
-
-		# Manage buttons
-		for btn, (mode, ev) in self._btn_map.items():
-
-			if mode is None:
-				continue
-			if btn & btn_add:
-				if mode is Modes.CALLBACK:
-					ev(self, btn, True)
-				else:
-					_keypressed(mode, ev)
-			elif btn & btn_rem:
-				if mode is Modes.CALLBACK:
-					ev(self, btn, False)
-				else:
-					_keyreleased(mode, ev)
-		# Manage pads
-		for pos in [Pos.LEFT, Pos.RIGHT]:
-
-			if pos == Pos.LEFT:
-				x, y = sci.lpad_x, sci.lpad_y
-				x_p, y_p = sci_p.lpad_x, sci_p.lpad_y
-				touch = SCButtons.LPADTOUCH
-				click = SCButtons.LPAD
-			else:
-				x, y = sci.rpad_x, sci.rpad_y
-				x_p, y_p = sci_p.rpad_x, sci_p.rpad_y
-				touch = SCButtons.RPADTOUCH
-				click = SCButtons.RPAD
-
-			if sci.buttons & touch == touch:
-				# Compute mean pos
-				try:
-					xm_p = int(sum(self._xdq[pos]) / len(self._xdq[pos]))
-					ym_p = int(sum(self._ydq[pos]) / len(self._ydq[pos]))
-				except ZeroDivisionError:
-					xm_p, ym_p = 0, 0
-				self._xdq[pos].append(x)
-				self._ydq[pos].append(y)
-				try:
-					xm = int(sum(self._xdq[pos]) / len(self._xdq[pos]))
-					ym = int(sum(self._ydq[pos]) / len(self._ydq[pos]))
-				except ZeroDivisionError:
-					xm, ym = 0, 0
-				if not sci_p.buttons & touch == touch:
-					xm_p, ym_p = xm, ym
-
-
-			# Mouse and mouse scroll modes
-			if self._pad_modes[pos] in (PadModes.MOUSE, PadModes.MOUSESCROLL):
-				_free = True
-				_dx = 0
-				_dy = 0
-
-				if sci.buttons & touch == touch:
-					_free = False
-					if sci_p.buttons & touch == touch:
-						_dx = xm - xm_p
-						_dy = ym - ym_p
-
-				if self._pad_modes[pos] == PadModes.MOUSE:
-					self._moved[pos] += int(self._uip[Modes.MOUSE].moveEvent(_dx, -_dy, _free))
-					# FIXME: make haptic configurable
-					if self._moved[pos] >= 4000:
-						if not _free:
-							sc.addFeedback(pos, amplitude=100)
-						self._moved[pos] %= 4000
-				else:
-					if self._uip[Modes.MOUSE].scrollEvent(_dx, _dy, _free):
-						# FIXME: make haptic configurable
-						if not _free:
-							sc.addFeedback(pos, amplitude=256)
+		# This is generaly bad idea...
+		if axis == Rels.REL_X:
+			self.mapper.mouse.moveEvent(p, 0, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif axis == Rels.REL_Y:
+			self.mapper.mouse.moveEvent(0, -p, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif axis == Rels.REL_WHEEL:
+			self.mapper.mouse.scrollEvent(0, p, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		self.mapper.force_event.add(FE_STICK)
+		return False	# TODO: Some magic for feedback here
+	
+	
+	def axis(self, id, min = STICK_PAD_MIN, max = STICK_PAD_MAX):
+		p = float(getattr(self.mapper.state, self.axis_attr) - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
+		p = int((p * (max - min)) + min)
+		self.mapper.gamepad.axisEvent(id, p)
+		self.mapper.syn_list.add(self.mapper.gamepad)
+		return True
+	
+	
+	def dpad(self, up, down = None, left = None, right = None):
+		rv = False
+		old_x = getattr(self.mapper.old_state, self.axis_attr)
+		old_y = getattr(self.mapper.old_state, self.axis2_attr)
+		x = getattr(self.mapper.state, self.axis_attr)
+		y = getattr(self.mapper.state, self.axis2_attr)
+		
+		side = [ None, None ]
+		if x <= STICK_PAD_MIN_HALF:
+			side[0] = "left"
+		elif x >= STICK_PAD_MAX_HALF:
+			side[0] = "right"
+		if y <= STICK_PAD_MIN_HALF:
+			side[1] = "down"
+		elif y >= STICK_PAD_MAX_HALF:
+			side[1] = "up"
+		
+		for i in (0, 1):
+			if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
+				if locals()[self.dpad_state[i]] is not None:
+					rv = self.mapper.eeval(locals()[self.dpad_state[i]], self.mapper.bre.GLOBS, self.mapper.bre.locs) or rv
+				self.dpad_state[i] = None
+			if side[i] is not None and side[i] != self.dpad_state[i]:
+				if locals()[side[i]] is not None:
+					rv = self.mapper.eeval(locals()[side[i]], self.mapper.bpe.GLOBS, self.mapper.bpe.locs) or rv
+				self.dpad_state[i] = side[i]
+		return rv
+	
+	
+	def click(self, *a):
+		# Pad is still pressed
+		if self.mapper.state.buttons & self.click_button : return True
+		# Check if pad was just released
+		if self.mapper.old_state.buttons & self.click_button :
+			# Set axis position to 0,0
+			data = { x : getattr(self.mapper.state, x) for x in CI_NAMES }
+			data[self.axis_attr] = 0
+			if self.axis2_attr is not None:
+				data[self.axis2_attr] = 0
+			self.mapper.state = ControllerInput(**data)
+			return True
+		
+		# Not pressed
+		return False
 
 
-			# Axis mode
-			elif self._pad_modes[pos] == PadModes.AXIS:
-				revert = self._pad_revs[pos]
-				(xmode, xev), (ymode, yev) = self._pad_evts[pos]
-				if xmode is not None:
+class PadEvent(StickEvent):
+	def __init__(self, mapper, axis_attr, axis2_attr, click_button, touch_button):
+		StickEvent.__init__(self, mapper, axis_attr, axis2_attr, click_button)
+		self.touch_button = touch_button
+		self.dq = [ deque(maxlen=8), deque(maxlen=8), deque(maxlen=8), deque(maxlen=8) ]
+		self.trackpadmode = False
+	
+	
+	def _dq_add(self, axis, current_position):
+		try:
+			prev = int(sum(self.dq[axis]) / len(self.dq[axis]))
+		except ZeroDivisionError:
+			prev = 0
+		self.dq[axis].append(current_position)
 
-					# FIXME: make haptic configurable
-					if sci.buttons & touch == touch:
-						self._moved[pos] += sqrt((xm - xm_p)**2 + (ym - ym_p)**2)
-						if self._moved[pos] >= 4000:
-							sc.addFeedback(pos, amplitude=100)
-							self._moved[pos] %= 4000
-
-					if x != x_p:
-						self._uip[xmode].axisEvent(xev, x)
-						syn.add(xmode)
-					if y != y_p:
-						self._uip[ymode].axisEvent(yev, y if not revert else -y)
-						syn.add(ymode)
-
-			# Button touch mode
-			elif (self._pad_modes[pos] == PadModes.BUTTONTOUCH or
-				  self._pad_modes[pos] == PadModes.BUTTONCLICK):
-
-				if self._pad_modes[pos] == PadModes.BUTTONTOUCH:
-					on_test = touch
-					off_test = touch
-				else:
-					on_test = click | touch
-					off_test = click
-
-				haptic = False
-
-				if sci.buttons & on_test == on_test:
-					# get callback events
-					callbacks = []
-					for evt in self._pad_evts[pos]:
-						if evt[0] == Modes.CALLBACK:
-							callbacks.append(evt)
-					for callback_evt in callbacks:
-						callback_evt[1](self, pos, xm, ym)
-
-					dzone = self._pad_dzones[pos]
-					if len(self._pad_evts[pos]) == 4:
-						# key or buttons
-						tmode, tev = self._pad_evts[pos][0]
-						lmode, lev = self._pad_evts[pos][1]
-						bmode, bev = self._pad_evts[pos][2]
-						rmode, rev = self._pad_evts[pos][3]
-
-						if ym > dzone: # TOP
-							haptic |= _keypressed(tmode, tev)
-						else:
-							haptic |= _keyreleased(tmode, tev)
-
-						if xm < -dzone: # LEFT
-							haptic |= _keypressed(lmode, lev)
-						else:
-							haptic |= _keyreleased(lmode, lev)
-
-						if ym < -dzone: # BOTTOM
-							haptic |= _keypressed(bmode, bev)
-						else:
-							haptic |= _keyreleased(bmode, bev)
-
-						if xm > dzone: # RIGHT
-							haptic |= _keypressed(rmode, rev)
-						else:
-							haptic |= _keyreleased(rmode, rev)
-
-					elif len(self._pad_evts[pos]) == 2:
-						_, xev = self._pad_evts[pos][0]
-						_, yev = self._pad_evts[pos][1]
-						rev = self._pad_revs[pos]
-
-						if ym > dzone:	# TOP
-							haptic |= _abspressed(yev, -1 if rev else 1)
-						elif ym < -dzone: # BOTTOM
-							haptic |= _abspressed(yev, 1 if rev else -1)
-						else:
-							haptic |= _absreleased(yev)
-
-						if xm < -dzone:  # LEFT
-							haptic |= _abspressed(xev, -1)
-						elif xm > dzone: # RIGHT
-							haptic |= _abspressed(xev, 1)
-						else:
-							haptic |= _absreleased(xev)
-
-				if (sci.buttons & off_test != off_test and
-					sci_p.buttons & on_test == on_test):
-					if len(self._pad_evts[pos]) == 4:
-						for mode, ev in self._pad_evts[pos]:
-							haptic |= _keyreleased(mode, ev)
-					elif len(self._pad_evts[pos]) == 2:
-						for _, ev in self._pad_evts[pos]:
-							haptic |= _absreleased(ev)
-
-				if haptic and self._pad_modes[pos] == PadModes.BUTTONTOUCH:
-					sc.addFeedback(pos, amplitude=300)
-
-			if sci.buttons & touch != touch:
-				xm_p, ym_p, xm, ym = 0, 0, 0, 0
-				self._xdq[pos].clear()
-				self._ydq[pos].clear()
+		try:
+			m = int(sum(self.dq[axis]) / len(self.dq[axis]))
+		except ZeroDivisionError:
+			m = 0
+		if not self.mapper.old_state.buttons & self.touch_button:
+			# Pad was just pressed
+			prev = m
+		return prev, m
+	
+	def trackball(self, speed=1, trackpadmode=False):
+		px, mx = self._dq_add(0, getattr(self.mapper.state, self.axis_attr))
+		py, my = self._dq_add(1, getattr(self.mapper.state, self.axis2_attr))
+		
+		if not self.mapper.state.buttons & self.touch_button:
+			# Pad was just released
+			if not trackpadmode:
+				dist = self.mapper.mouse.moveEvent(0, 0, True)
+				if dist:
+					self.mapper.force_event.add(FE_PAD)
+			self.dq[0].clear()
+			self.dq[1].clear()
+			return False
+			
+		dx = mx - px
+		dy = my - py
+		self.mapper.mouse.moveEvent(dx * speed, dy * speed * -1, False)
+		self.mapper.force_event.add(FE_PAD)
+		
+		return False	# TODO: Some magic for feedback here
+	
+	def wheel(self, trackball=False, speed=1):
+		py, y = self._dq_add(2, getattr(self.mapper.state, self.axis_attr))
+		px, x = 0, 0
+		if self.axis2_attr is not None:
+			px, x = py, y
+			py, y = self._dq_add(3, getattr(self.mapper.state, self.axis2_attr))
+		
+		if not self.mapper.state.buttons & self.touch_button:
+			# Pad was just released
+			if trackball:
+				dist = self.mapper.mouse.scrollEvent(0, 0, True)
+				if dist:
+					self.mapper.force_event.add(FE_PAD)
+			self.dq[2].clear()
+			self.dq[3].clear()
+			return False
+			
+		dx = x - px
+		dy = y - py
+		self.mapper.mouse.scrollEvent(dx * speed, dy * speed, False)
+		self.mapper.force_event.add(FE_PAD)
+	
+	
+	def trackpad(self, speed=1):
+		return self.trackball(speed, trackpadmode=True)
 
 
-		# Manage Trig
-		for pos in [Pos.LEFT, Pos.RIGHT]:
-			trigval = sci.ltrig if pos == Pos.LEFT else sci.rtrig
-			trigval_prev = sci_p.ltrig if pos == Pos.LEFT else sci_p.rtrig
-			mode, ev = self._trig_evts[pos]
-			if trigval != trigval_prev:
-				if self._trig_axes_callbacks[pos]:
-					self._trig_axes_callbacks[pos](self, pos, trigval)
-				elif self._trig_modes[pos] == TrigModes.AXIS:
-					syn.add(mode)
-					self._uip[mode].axisEvent(ev, trigval)
-			elif self._trig_modes[pos] == TrigModes.BUTTON:
-				if self._trig_s[pos] is None and trigval > min(trigval_prev + 10, 200):
-					self._trig_s[pos] = max(0, min(trigval - 10, 180))
-					_keypressed(mode, ev)
-				elif self._trig_s[pos] is not None and trigval <= self._trig_s[pos]:
-					self._trig_s[pos] = None
-					_keyreleased(mode, ev)
-
-
-		# Manage Stick
-		if sci.buttons & SCButtons.LPADTOUCH != SCButtons.LPADTOUCH:
-			x, y = sci.lpad_x, sci.lpad_y
-			x_p, y_p = sci_p.lpad_x, sci_p.lpad_y
-
-			if self._stick_axes_callback is not None and (x != x_p or y != y_p):
-				self._stick_axes_callback(self, x, y)
-
-			if self._stick_mode == StickModes.AXIS:
-				revert = self._stick_rev
-				(xmode, xev), (ymode, yev) = self._stick_evts # pylint: disable=E0632
-				if x != x_p:
-					syn.add(xmode)
-					self._uip[xmode].axisEvent(xev, x)
-				if y != y_p:
-					syn.add(ymode)
-					self._uip[ymode].axisEvent(yev, y if not revert else -y)
-
-			elif self._stick_mode == StickModes.BUTTON:
-
-				tmode, tev = self._stick_evts[0]
-				lmode, lev = self._stick_evts[1]
-				bmode, bev = self._stick_evts[2]
-				rmode, rev = self._stick_evts[3]
-
-				# top
-				if self._stick_tys is None and y > 0 and y > min(y_p + 2000, 32000):
-					self._stick_tys = max(0, min(y - 2000, 31000))
-					_keypressed(tmode, tev)
-				elif self._stick_tys is not None and y <= self._stick_tys:
-					self._stick_tys = None
-					_keyreleased(tmode, tev)
-
-				# left
-				if self._stick_lxs is None and x < 0 and x < max(x_p - 2000, -32000):
-					self._stick_lxs = min(0, max(x + 2000, -31000))
-					_keypressed(lmode, lev)
-				elif self._stick_lxs is not None and x >= self._stick_lxs:
-					self._stick_lxs = None
-					_keyreleased(lmode, lev)
-
-				# bottom
-				if self._stick_bys is None and y < 0 and y < max(y_p - 2000, -32000):
-					self._stick_bys = min(0, max(y + 2000, -31000))
-					_keypressed(bmode, bev)
-				elif self._stick_bys is not None and y >= self._stick_bys:
-					self._stick_bys = None
-					_keyreleased(bmode, bev)
-
-				# right
-				if self._stick_rxs is None and x > 0 and x > min(x_p + 2000, 32000):
-					self._stick_rxs = max(0, min(x - 2000, 31000))
-					_keypressed(rmode, rev)
-				elif self._stick_rxs is not None and x <= self._stick_rxs:
-					self._stick_rxs = None
-					_keyreleased(rmode, rev)
-			if sci.buttons & SCButtons.LPAD == SCButtons.LPAD:
-				if self._stick_pressed_callback is not None:
-					self._stick_pressed_callback(self)
-
-
-		if len(_pressed):
-			self._uip[Modes.KEYBOARD].pressEvent(_pressed)
-
-		if len(_released):
-			self._uip[Modes.KEYBOARD].releaseEvent(_released)
-
-		for i in list(syn):
-			self._uip[i].synEvent()
-
-
-	def setButtonAction(self, btn, key_event):
-		for mode in Modes:
-			if self._uip[mode].keyManaged(key_event):
-				self._btn_map[btn] = (mode, key_event)
-				return
-
-	def setButtonCallback(self, btn, callback):
+class TriggerEvent(ControllerEvent):
+	def __init__(self, mapper, axis_attr):
+		ControllerEvent.__init__(self, mapper)
+		self.axis_attr = axis_attr
+		self.pressed_key = None
+		self.released = True
+	
+	
+	def _by_trigger(self, option1, option2, first_trigger, full_trigger):
 		"""
-		set callback function to be executed when button is clicked
-		callback is called with parameters self(EventMapper), btn
-		and pushed (boollean True -> Button pressed, False -> Button released)
-
-		@param btn					  Button
-		@param function callback		Callback function
+		Choses which key or button should be pressed or released based on
+		current trigger position.
+		
+		Returns list of actions represented by tuples of (pressed, option)
+		where 'pressed' is True if chosen button should be pressed.
 		"""
-
-		self._btn_map[btn] = (Modes.CALLBACK, callback)
-
-
-	def setPadButtons(self, pos, key_events, deadzone=0.6, clicked=False):
-		"""
-		Set pad as buttons
-
-		@param Pos pos		  designate left or right pad
-		@param list key_events  list of key events for the pad buttons (top,left,bottom,right)
-		@param fload deadzone   portion of the pad in the center dead zone from 0.0 to 1.0
-		@param bool clicked	 action on touch or on click event
-		"""
-
-		assert len(key_events) == 4
-		assert deadzone >= 0.0 and deadzone < 1.0
-
-		self._pad_modes[pos] = PadModes.BUTTONCLICK if clicked else PadModes.BUTTONTOUCH
-
-		self._pad_evts[pos] = []
-		for ev in key_events:
-			for mode in Modes:
-				if self._uip[mode].keyManaged(ev):
-					self._pad_evts[pos].append((mode, ev))
-					break
-
-		self._pad_dzones[pos] = 32768 * deadzone
-
-		if clicked:
-			if pos == Pos.LEFT:
-				self._btn_map[SCButtons.LPAD] = (None, 0)
-			else:
-				self._btn_map[SCButtons.RPAD] = (None, 0)
-
-	def setPadButtonCallback(self, pos, callback, clicked=False):
-		"""
-		set callback function to be executed when Pad clicked or touched
-		if clicked is False callback will be called with pad, xpos and ypos
-		else with pad and boolean is_pressed
-
-		@param Pos pos		  designate left or right pad
-		@param callback		 Callback function
-		@param bool clicked	 callback on touch or on click event
-		"""
-		if not clicked:
-			self._pad_modes[pos] = PadModes.BUTTONTOUCH
-			self._pad_evts[pos].append((Modes.CALLBACK, callback))
+		old_p = getattr(self.mapper.old_state, self.axis_attr)
+		p = getattr(self.mapper.state, self.axis_attr)
+		rv = []
+		
+		if option2 is None:
+			if p >= first_trigger and old_p < first_trigger:
+				rv.append([ True, option1 ])
+			elif p < first_trigger and old_p >= first_trigger:
+				rv.append([ False, option1 ])
 		else:
-			self._pad_modes[pos] = PadModes.BUTTONCLICK
-			if pos == Pos.LEFT:
-				self._btn_map[SCButtons.LPAD] = (Modes.CALLBACK, callback)
+			if p >= first_trigger and p < full_trigger:
+				if self.pressed_key != option1 and self.released:
+					rv.append([ True, option1 ])
+					self.pressed_key = option1
+					self.released = False
 			else:
-				self._btn_map[SCButtons.RPAD] = (Modes.CALLBACK, callback)
-
-	def setPadAxesAsButtons(self, pos, abs_events, deadzone=0.6, clicked=False, revert=True):
-		"""
-		Set pad as buttons
-
-		@param Pos pos		  designate left or right pad
-		@param list key_events  list of axes events for the pad buttons (X, Y)
-		@param fload deadzone   portion of the pad in the center dead zone from 0.0 to 1.0
-		@param bool clicked	 action on touch or on click event
-		@param bool revert	  revert axes
-		"""
-
-		assert len(abs_events) == 2
-		assert deadzone >= 0.0 and deadzone < 1.0
-
-		self._pad_modes[pos] = PadModes.BUTTONCLICK if clicked else PadModes.BUTTONTOUCH
-
-		self._pad_evts[pos] = []
-		for ev in abs_events:
-			self._pad_evts[pos].append((Modes.GAMEPAD, ev))
-
-		self._pad_revs[pos] = revert
-		self._pad_dzones[pos] = 32768 * deadzone
-
-		if clicked:
-			if pos == Pos.LEFT:
-				self._btn_map[SCButtons.LPAD] = (None, 0)
+				if self.pressed_key == option1:
+					rv.append([ False, option1 ])
+					self.pressed_key = None
+			if p > full_trigger and old_p < full_trigger:
+				if self.pressed_key != option2:
+					if self.pressed_key is not None:
+						rv.append([ False, self.pressed_key ])
+					rv.append([ True, option2 ])
+					self.pressed_key = option2
+					self.released = False
 			else:
-				self._btn_map[SCButtons.RPAD] = (None, 0)
+				if self.pressed_key == option2:
+					rv.append([ False, option2 ])
+					self.pressed_key = None
+		
+		if p <= TRIGGERS_MIN:
+			self.released = True
+		return rv
+	
+	
+	def key(self, key1, key2 = None, first_trigger = TRIGGERS_HALF, full_trigger = TRIGGERS_CLICK):
+		rv = False
+		for (pressed, key) in self._by_trigger(key1, key2, first_trigger, full_trigger):
+			if pressed:
+				self.mapper.keypress_list.append(key)
+				rv = True
+			else:
+				self.mapper.keyrelease_list.append(key)
+		return rv
 
 
-	def setPadMouse(self, pos,
-					trackball=True,
-					friction=sui.Mouse.DEFAULT_FRICTION,
-					xscale=sui.Mouse.DEFAULT_XSCALE,
-					yscale=sui.Mouse.DEFAULT_XSCALE):
-		if not trackball:
-			friction = 100.0
-		self._uip[Modes.MOUSE].updateParams(friction=friction, xscale=xscale, yscale=yscale)
-		self._pad_modes[pos] = PadModes.MOUSE
+	def button(self, button1, button2 = None, first_trigger = TRIGGERS_HALF, full_trigger = TRIGGERS_CLICK):
+		rv = False
+		for (pressed, button) in self._by_trigger(button1, button2, first_trigger, full_trigger):
+			if pressed:
+				self.mapper.mouse.keyEvent(button, 1)
+				rv = True
+			else:
+				self.mapper.mouse.keyEvent(button, 0)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		return rv
+	
+	
+	def pad(self, button1, button2 = None, first_trigger = TRIGGERS_HALF, full_trigger = TRIGGERS_CLICK):
+		rv = False
+		for (pressed, button) in self._by_trigger(button1, button2, first_trigger, full_trigger):
+			if pressed:
+				self.mapper.gamepad.keyEvent(button, 1)
+				rv = True
+			else:
+				self.mapper.gamepad.keyEvent(button, 0)
+			self.mapper.syn_list.add(self.mapper.gamepad)
+		return rv
+	
+	
+	def mouse(self, axis, speed=1):
+		p = getattr(self.mapper.state, self.axis_attr) * speed * 1
 
-
-	def setPadScroll(self, pos,
-					 trackball=True,
-					 friction=sui.Mouse.DEFAULT_SCR_FRICTION,
-					 xscale=sui.Mouse.DEFAULT_SCR_XSCALE,
-					 yscale=sui.Mouse.DEFAULT_SCR_XSCALE):
-		if not trackball:
-			friction = 100.0
-		self._uip[Modes.MOUSE].updateScrollParams(friction=friction, xscale=xscale, yscale=yscale)
-		self._pad_modes[pos] = PadModes.MOUSESCROLL
-
-	def setPadAxes(self, pos, abs_x_event, abs_y_event, revert=True):
-		self._pad_modes[pos] = PadModes.AXIS
-		self._pad_evts[pos] = [(Modes.GAMEPAD, abs_x_event),
-							   (Modes.GAMEPAD, abs_y_event)]
-		self._pad_revs[pos] = revert
-
-	def setTrigButton(self, pos, key_event):
-		self._trig_modes[pos] = TrigModes.BUTTON
-		for mode in Modes:
-			if self._uip[mode].keyManaged(key_event):
-				self._trig_evts[pos] = (mode, key_event)
-				return
-
-	def setTrigAxis(self, pos, abs_event):
-		self._trig_modes[pos] = TrigModes.AXIS
-		self._trig_evts[pos] = (Modes.GAMEPAD, abs_event)
-
-	def setTrigAxesCallback(self, pos, callback):
-			self._trig_modes[pos] = StickModes.AXIS
-			self._trig_axes_callbacks[pos] = callback
-
-	def setStickAxes(self, abs_x_event, abs_y_event, revert=True):
-		self._stick_mode = StickModes.AXIS
-		self._stick_evts = [(Modes.GAMEPAD, abs_x_event),
-							(Modes.GAMEPAD, abs_y_event)]
-		self._stick_rev = revert
-
-	def setStickAxesCallback(self, callback):
-		"""
-		Set Callback on StickAxes Movement
-		the function will be called with EventMapper, pos_x, pos_y
-
-		@param function callback	   the callback function
-		"""
-		self._stick_axes_callback = callback
-
-
-	def setStickButtons(self, key_events):
-		"""
-		Set stick as buttons
-
-		@param list key_events  list of key events for the pad buttons (top,left,bottom,right)
-		"""
-
-		assert len(key_events) == 4
-
-		self._stick_mode = StickModes.BUTTON
-
-		self._stick_evts = []
-		for ev in key_events:
-			for mode in Modes:
-				if self._uip[mode].keyManaged(ev):
-					self._stick_evts.append((mode, ev))
-					break
-
-	def setStickPressedCallback(self, callback):
-		"""
-		Set callback on StickPressed event.
-		the function will be called with EventMapper as first (and only) argument
-
-		@param function Callback function	  function that is called on buton press.
-		"""
-		self._stick_pressed_callback = callback
+		# This is generaly bad idea...
+		if axis == Rels.REL_X:
+			self.mapper.mouse.moveEvent(p, 0, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif axis == Rels.REL_Y:
+			self.mapper.mouse.moveEvent(0, -p, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif axis == Rels.REL_WHEEL:
+			self.mapper.mouse.scrollEvent(0, p, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		self.mapper.force_event.add(FE_TRIGGER)
+		return False
+		
+	
+	def axis(self, id, min = TRIGGERS_MIN, max = TRIGGERS_MAX):
+		p = float(getattr(self.mapper.state, self.axis_attr) - TRIGGERS_MIN) / (TRIGGERS_MAX - TRIGGERS_MIN)
+		p = int((p * (max - min)) + min)
+		self.mapper.gamepad.axisEvent(id, p)
+		self.mapper.syn_list.add(self.mapper.gamepad)
+		return True
+		
+	
+	def click(self, *a):
+		p = getattr(self.mapper.state, self.axis_attr)
+		if p > TRIGGERS_CLICK : return True
+		p = getattr(self.mapper.old_state, self.axis_attr)
+		# Check if trigger was just released
+		if p > TRIGGERS_CLICK:
+			# Set trigger position to 0
+			data = { x : getattr(self.mapper.state, x) for x in CI_NAMES }
+			data[self.axis_attr] = 0
+			self.mapper.state = ControllerInput(**data)
+			return True
+		
+		# Not pressed
+		return False
