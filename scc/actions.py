@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 from tokenize import generate_tokens
 from collections import namedtuple
 from scc.uinput import Keys, Axes, Rels
+from scc.events import ControllerEvent
 import token as TokenType
 
 
@@ -244,6 +245,8 @@ class ActionParser(object):
 		t = self._next_token()
 		if t.type != TokenType.NAME:
 			raise ParserError("Excepted action name, got '%s'" % (t.value,))
+		if t.value not in ControllerEvent.ACTIONS:
+			raise ParserError("Unknown action '%s'" % (t.value,))
 		action_name = t.value
 		
 		# Check if there are any tokens left - return action without parameters

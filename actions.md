@@ -37,13 +37,8 @@ Available only for pads. Emulates mouse scroll wheel.
 
 
 ### button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
-Controls mouse buttons.
-Works in same way as key(), but for mouse buttons.
-
-
-#### pad(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
-Controls gamepad buttons.
-Works in same way as key(), but for gamepad buttons.
+Controls gamepad and mouse buttons.
+Works in same way as key(), but for buttons.
 
 
 #### axis(id [, min = -32767, max = 32767 ])

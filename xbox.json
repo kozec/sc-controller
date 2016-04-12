@@ -1,18 +1,18 @@
 {
 	"buttons" : {
-		"A"      : { "action" : "pad(Keys.BTN_A)" },
-		"B"      : { "action" : "pad(Keys.BTN_B)" },
-		"X"      : { "action" : "pad(Keys.BTN_X)" },
-		"Y"      : { "action" : "pad(Keys.BTN_Y)" },
-		"LB"     : { "action" : "pad(Keys.BTN_TL)" },
-		"RB"     : { "action" : "pad(Keys.BTN_TR)" },
-		"BACK"   : { "action" : "pad(Keys.BTN_SELECT)" },
-		"START"  : { "action" : "pad(Keys.BTN_START)" },
-		"C"      : { "action" : "pad(Keys.BTN_MODE)" },
-		"LPAD"   : { "action" : "pad(Keys.BTN_THUMBL)" },
-		"RPAD"   : { "action" : "pad(Keys.BTN_THUMBR)" },
-		"LGRIP"  : { "action" : "pad(Keys.BTN_A)" },
-		"RGRIP"  : { "action" : "pad(Keys.BTN_X)" }
+		"A"      : { "action" : "button(Keys.BTN_A)" },
+		"B"      : { "action" : "button(Keys.BTN_B)" },
+		"X"      : { "action" : "button(Keys.BTN_X)" },
+		"Y"      : { "action" : "button(Keys.BTN_Y)" },
+		"LB"     : { "action" : "button(Keys.BTN_TL)" },
+		"RB"     : { "action" : "button(Keys.BTN_TR)" },
+		"BACK"   : { "action" : "button(Keys.BTN_SELECT)" },
+		"START"  : { "action" : "button(Keys.BTN_START)" },
+		"C"      : { "action" : "button(Keys.BTN_MODE)" },
+		"LPAD"   : { "action" : "button(Keys.BTN_THUMBL)" },
+		"RPAD"   : { "action" : "button(Keys.BTN_THUMBR)" },
+		"LGRIP"  : { "action" : "button(Keys.BTN_A)" },
+		"RGRIP"  : { "action" : "button(Keys.BTN_X)" }
 	},
 	
 	"triggers" : {

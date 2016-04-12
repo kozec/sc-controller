@@ -27,6 +27,8 @@ FE_STICK = 1
 FE_TRIGGER = 2
 FE_PAD = 3
 
+MOUSE_BUTTONS = [ Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA ]
+
 
 class ControllerEvent(object):
 	# Used as globals when executing code from 'python' action
@@ -40,7 +42,6 @@ class ControllerEvent(object):
 		# Actions
 		'mapper',
 		'key',
-		'pad' ,
 		'axis' ,
 		'dpad',
 		'mouse',
@@ -101,14 +102,12 @@ class ButtonPressEvent(ControllerEvent):
 	
 	
 	def button(self, button1, *a):
-		self.mapper.mouse.keyEvent(button1, 1)
-		self.mapper.syn_list.add(self.mapper.mouse)
-		return True
-
-	
-	def pad(self, button1, *a):
-		self.mapper.gamepad.keyEvent(button1, 1)
-		self.mapper.syn_list.add(self.mapper.gamepad)
+		if button1 in MOUSE_BUTTONS:
+			self.mapper.mouse.keyEvent(button1, 1)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		else:
+			self.mapper.gamepad.keyEvent(button1, 1)
+			self.mapper.syn_list.add(self.mapper.gamepad)
 		return True
 	
 	
@@ -142,14 +141,12 @@ class ButtonReleaseEvent(ControllerEvent):
 		return False
 	
 	def button(self, button1, *a):
-		self.mapper.mouse.keyEvent(button1, 0)
-		self.mapper.syn_list.add(self.mapper.mouse)
-		return False
-	
-	
-	def pad(self, button1, *a):
-		self.mapper.gamepad.keyEvent(button1, 0)
-		self.mapper.syn_list.add(self.mapper.gamepad)
+		if button1 in MOUSE_BUTTONS:
+			self.mapper.mouse.keyEvent(button1, 0)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		else:
+			self.mapper.gamepad.keyEvent(button1, 0)
+			self.mapper.syn_list.add(self.mapper.gamepad)
 		return False
 	
 	
@@ -215,24 +212,13 @@ class StickEvent(ControllerEvent):
 	def button(self, button1, button2 = None, minustrigger = STICK_PAD_MIN_HALF, plustrigger = STICK_PAD_MAX_HALF):
 		rv = False
 		for (pressed, button) in self._by_trigger(button1, button2, minustrigger, plustrigger):
+			dev = self.mapper.mouse if button1 in MOUSE_BUTTONS else self.mapper.gamepad
 			if pressed:
-				self.mapper.mouse.keyEvent(button, 1)
+				dev.keyEvent(button, 1)
 				rv = True
 			else:
-				self.mapper.mouse.keyEvent(button, 0)
-			self.mapper.syn_list.add(self.mapper.mouse)
-		return rv
-	
-	
-	def pad(self, button1, button2 = None, minustrigger = STICK_PAD_MIN_HALF, plustrigger = STICK_PAD_MAX_HALF):
-		rv = False
-		for (pressed, button) in self._by_trigger(button1, button2, minustrigger, plustrigger):
-			if pressed:
-				self.mapper.gamepad.keyEvent(button, 1)
-				rv = True
-			else:
-				self.mapper.gamepad.keyEvent(button, 0)
-			self.mapper.syn_list.add(self.mapper.gamepad)
+				dev.keyEvent(button, 0)
+			self.mapper.syn_list.add(dev)
 		return rv
 	
 	
@@ -440,29 +426,18 @@ class TriggerEvent(ControllerEvent):
 			else:
 				self.mapper.keyrelease_list.append(key)
 		return rv
-
-
+	
+	
 	def button(self, button1, button2 = None, first_trigger = TRIGGERS_HALF, full_trigger = TRIGGERS_CLICK):
 		rv = False
 		for (pressed, button) in self._by_trigger(button1, button2, first_trigger, full_trigger):
+			dev = self.mapper.mouse if button1 in MOUSE_BUTTONS else self.mapper.gamepad
 			if pressed:
-				self.mapper.mouse.keyEvent(button, 1)
+				dev.keyEvent(button, 1)
 				rv = True
 			else:
-				self.mapper.mouse.keyEvent(button, 0)
-			self.mapper.syn_list.add(self.mapper.mouse)
-		return rv
-	
-	
-	def pad(self, button1, button2 = None, first_trigger = TRIGGERS_HALF, full_trigger = TRIGGERS_CLICK):
-		rv = False
-		for (pressed, button) in self._by_trigger(button1, button2, first_trigger, full_trigger):
-			if pressed:
-				self.mapper.gamepad.keyEvent(button, 1)
-				rv = True
-			else:
-				self.mapper.gamepad.keyEvent(button, 0)
-			self.mapper.syn_list.add(self.mapper.gamepad)
+				dev.keyEvent(button, 0)
+			self.mapper.syn_list.add(dev)
 		return rv
 	
 	
