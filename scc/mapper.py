@@ -99,7 +99,7 @@ class Mapper(object):
 			else:
 				for x in Profile.RPAD_AXES:
 					if x in self.profile.pads[Profile.RIGHT]:
-						self.profile.pads[Profile.RIGHT][x].execute(self.rpe[x].GLOBS)
+						self.profile.pads[Profile.RIGHT][x].execute(self.rpe[x])
 		
 		if FE_PAD in fe or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
 			# LPAD

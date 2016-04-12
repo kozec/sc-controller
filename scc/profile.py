@@ -62,10 +62,11 @@ class Profile(object):
 		self.pads = {}
 		for (y, key) in ( (Profile.LEFT, "left_pad"), (Profile.RIGHT, "right_pad") ):
 			self.pads[y] = {}
-			if x in data[key] and "action" in data[key][x]:
-				a = self.parser.restart(data[key][x]["action"]).parse()
-				if a is not None:
-					self.pads[y][x] = a
+			for x in Profile.RPAD_AXES:
+				if x in data[key] and "action" in data[key][x]:
+					a = self.parser.restart(data[key][x]["action"]).parse()
+					if a is not None:
+						self.pads[y][x] = a
 			
 			if "action" in data[key]:
 				a = self.parser.restart(data[key]["action"]).parse()
