@@ -11,6 +11,7 @@ to button press while with StickEvent it be configured to press different
 buttons for each direction in which stick can be moved.
 """
 from scc.uinput import Keys, Axes, Rels
+from scc.actions import MOUSE_BUTTONS, ACTIONS
 from collections import deque
 
 STICK_PAD_MIN = -32767
@@ -27,8 +28,6 @@ FE_STICK = 1
 FE_TRIGGER = 2
 FE_PAD = 3
 
-MOUSE_BUTTONS = [ Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA ]
-
 
 class ControllerEvent(object):
 	# Used as globals when executing code from 'python' action
@@ -38,30 +37,11 @@ class ControllerEvent(object):
 		'Rels' : Rels
 	}
 	
-	ACTIONS = (
-		# Actions
-		'mapper',
-		'key',
-		'axis' ,
-		'dpad',
-		'mouse',
-		'trackpad',
-		'trackball',
-		'wheel',
-		'button' ,
-		'click',
-		# Shortcuts
-		'raxis',
-		'hatup' ,
-		'hatdown',
-		'hatleft',
-		'hatright',
-	)
 	
 	def __init__(self, mapper):
 		self.mapper = mapper
 		# Used as locals when executing code from 'python' action
-		self.locs = { x : getattr(self, x) for x in ControllerEvent.ACTIONS }
+		self.locs = { x : getattr(self, x) for x in ACTIONS }
 		self.locs['mapper'] = mapper
 	
 	

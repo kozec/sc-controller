@@ -14,20 +14,30 @@ from __future__ import unicode_literals
 from tokenize import generate_tokens
 from collections import namedtuple
 from scc.uinput import Keys, Axes, Rels
-from scc.events import ControllerEvent
 import token as TokenType
 import sys
+_ = lambda x : x
 
+MOUSE_BUTTONS = [ Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA ]
 
 class Action(object):
 	"""
-	Simple action that executes one of predefined methods. 
-	See events.ControllerEvent.ACTIONS for list of them.
+	Simple action that executes one of predefined methods.
+	See ACTIONS for list of them.
 	"""
 	
 	def __init__(self, action, parameters):
 		self.action = action
 		self.parameters = parameters
+	
+	
+	def describe(self):
+		"""
+		Returns string that describes what action does in human-readable form.
+		Used in GUI.
+		"""
+		
+	
 	
 	def execute(self, event):
 		return getattr(event, self.action)(*self.parameters)
@@ -37,6 +47,95 @@ class Action(object):
 		return "<Action '%s', %s>" % (self.action, self.parameters)
 	
 	__repr__ = __str__
+
+
+class KeyAction(Action):
+	def describe(self):
+		return _("Key %s") % (self.parameters[0],)
+
+
+class AxisAction(Action):
+	def describe(self):
+		return _("%s Axis") % (self.parameters[0].name.split("_", 1)[-1],)
+
+
+class RAxisAction(Action):
+	def describe(self):
+		return _("Reverse %s Axis") % (self.parameters[0].name.split("_", 1)[-1],)
+
+
+class DPadAction(Action):
+	def describe(self):
+		return "DPad"
+
+
+class MouseAction(Action):
+	def describe(self):
+		return _("Mouse Move %s") % (self.parameters[0],)
+
+
+class TrackpadAction(Action):
+	def describe(self):
+		return "Trackpad"
+
+
+class TrackballAction(Action):
+	def describe(self):
+		return "Trackball"
+
+
+class WheelAction(Action):
+	def describe(self):
+		return _("Mouse Wheel")
+
+
+class ButtonAction(Action):
+	SPECIAL_NAMES = {
+		Keys.BTN_TR		: "Right Trigger",
+		Keys.BTN_TL		: "Left Trigger",
+		Keys.BTN_THUMBL	: "Left Stick Click",
+		Keys.BTN_THUMBR	: "Right Stick Click",
+	}
+	
+	def describe(self):
+		if self.parameters[0] in MOUSE_BUTTONS:
+			return _("Mouse Button %s") % (self.parameters[0],)
+		else:
+			p = self.parameters[0]
+			if p in ButtonAction.SPECIAL_NAMES:
+				return _(ButtonAction.SPECIAL_NAMES[p])
+			else:
+				return p.name.split("_", 1)[-1]
+
+
+class ClickAction(Action):
+	def describe(self):
+		return _("(if pressed)")
+
+
+class HatAction(Action):
+	def describe(self):
+		return "Hat"
+
+
+ACTIONS = {
+	# Actions
+	'key'		: KeyAction,
+	'axis'		: AxisAction,
+	'dpad'		: DPadAction,
+	'mouse'		: MouseAction,
+	'trackpad'	: TrackpadAction,
+	'trackball'	: TrackballAction,
+	'wheel'		: WheelAction,
+	'button'	: ButtonAction,
+	'click'		: ClickAction,
+	# Shortcuts
+	'raxis'		: RAxisAction,
+	'hatup'		: HatAction,
+	'hatdown'	: HatAction,
+	'hatleft'	: HatAction,
+	'hatright'	: HatAction,
+}
 
 
 class MultiAction(object):
@@ -236,14 +335,15 @@ class ActionParser(object):
 		t = self._next_token()
 		if t.type != TokenType.NAME:
 			raise ParseError("Excepted action name, got '%s'" % (t.value,))
-		if t.value not in ControllerEvent.ACTIONS:
+		if t.value not in ACTIONS:
 			raise ParseError("Unknown action '%s'" % (t.value,))
 		action_name = t.value
+		action_class = ACTIONS[action_name]
 		
 		# Check if there are any tokens left - return action without parameters
 		# if not
 		if not self._tokens_left():
-			return Action(action_name, [])
+			return action_class(action_name, [])
 		
 		# Check if token after action name is parenthesis and if yes, parse
 		# parameters from it
@@ -251,7 +351,7 @@ class ActionParser(object):
 		if t.type == TokenType.OP and t.value == '(':
 			parameters  = self._parse_parameters()
 			if not self._tokens_left():
-				return Action(action_name, parameters)
+				return action_class(action_name, parameters)
 			t = self._peek_token()
 		
 		# ... or, if it is one of ';', 'and' or 'or' and if yes, parse next action
@@ -260,7 +360,7 @@ class ActionParser(object):
 			self._next_token()
 			if not self._tokens_left():
 				raise ParseError("Excepted action after 'and'")
-			action1 = Action(action_name, parameters)
+			action1 = action_class(action_name, parameters)
 			action2 = self._parse_action()
 			return LinkedActions(action1, action2)
 		
@@ -269,12 +369,12 @@ class ActionParser(object):
 			self._next_token()
 			if not self._tokens_left():
 				# Having ';' at end of string is not actually error
-				return Action(action_name, parameters)
-			action1 = Action(action_name, parameters)
+				return action_class(action_name, parameters)
+			action1 = action_class(action_name, parameters)
 			action2 = self._parse_action()
 			return MultiAction(action1, action2)
 		
-		return Action(action_name, parameters)
+		return action_class(action_name, parameters)
 	
 	
 	def parse(self):
