@@ -16,6 +16,7 @@ from collections import namedtuple
 from scc.uinput import Keys, Axes, Rels
 from scc.events import ControllerEvent
 import token as TokenType
+import sys
 
 
 class Action(object):
@@ -93,7 +94,7 @@ class LinkedActions(MultiAction):
 	__repr__ = __str__
 
 
-class ParserError(Exception): pass
+class ParseError(Exception): pass
 
 
 class ActionParser(object):
@@ -132,17 +133,7 @@ class ActionParser(object):
 			if type != TokenType.ENDMARKER
 		]
 		self.index = 0
-		self.action = None
-		self.error = None
 		return self
-	
-	
-	def get_error(self):
-		"""
-		Returns error that prevented action from being parsed or None if there was
-		no error.
-		"""
-		return self.error
 	
 	
 	def _next_token(self):
@@ -173,18 +164,18 @@ class ActionParser(object):
 			else:
 				# Constant
 				if not t.value in ActionParser.CONSTS:
-					raise ParserError("Excepted parameter, got '%s' which is not defined" % (t.value,))
+					raise ParseError("Excepted parameter, got '%s' which is not defined" % (t.value,))
 				parameter = ActionParser.CONSTS[t.value]
 			
 			# Check for dots
 			while self._tokens_left() and self._peek_token().type == TokenType.OP and self._peek_token().value == '.':
 				self._next_token()
 				if not self._tokens_left():
-					raise ParserError("Excepted NAME after '.'")
+					raise ParseError("Excepted NAME after '.'")
 				
 				t = self._next_token()
 				if not hasattr(parameter, t.value):
-					raise ParserError("%s has no attribute '%s'" % (t.value,))
+					raise ParseError("%s has no attribute '%s'" % (t.value,))
 				parameter = getattr(parameter, t.value)
 			return parameter
 		
@@ -200,7 +191,7 @@ class ActionParser(object):
 			else:
 				return int(t.value)
 		
-		raise ParserError("Excepted parameter, got '%s'" % (t.value,))
+		raise ParseError("Excepted parameter, got '%s'" % (t.value,))
 	
 	
 	def _parse_parameters(self):
@@ -208,7 +199,7 @@ class ActionParser(object):
 		# Check and skip over '('
 		t = self._next_token()
 		if t.type != TokenType.OP or t.value != '(':
-			raise ParserError("Excepted '(' of parameter list, got '%s'" % (t.value,))
+			raise ParseError("Excepted '(' of parameter list, got '%s'" % (t.value,))
 		
 		parameters = []
 		while self._tokens_left():
@@ -227,11 +218,11 @@ class ActionParser(object):
 			elif t.type == TokenType.OP and t.value == ',':
 				 self._next_token()
 			else:
-				raise ParserError("Excepted ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
+				raise ParseError("Excepted ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
 			
 		
 		# Code shouldn't reach here, unless there is not closing ')' in parameter list
-		raise ParserError("Unmatched parenthesis")
+		raise ParseError("Unmatched parenthesis")
 	
 	
 	def _parse_action(self):
@@ -244,9 +235,9 @@ class ActionParser(object):
 		# Check if next token is TokenType.NAME and grab action name from it
 		t = self._next_token()
 		if t.type != TokenType.NAME:
-			raise ParserError("Excepted action name, got '%s'" % (t.value,))
+			raise ParseError("Excepted action name, got '%s'" % (t.value,))
 		if t.value not in ControllerEvent.ACTIONS:
-			raise ParserError("Unknown action '%s'" % (t.value,))
+			raise ParseError("Unknown action '%s'" % (t.value,))
 		action_name = t.value
 		
 		# Check if there are any tokens left - return action without parameters
@@ -268,7 +259,7 @@ class ActionParser(object):
 			# Two (or more) actions joined by 'and'
 			self._next_token()
 			if not self._tokens_left():
-				raise ParserError("Excepted action after 'and'")
+				raise ParseError("Excepted action after 'and'")
 			action1 = Action(action_name, parameters)
 			action2 = self._parse_action()
 			return LinkedActions(action1, action2)
@@ -288,9 +279,28 @@ class ActionParser(object):
 	
 	def parse(self):
 		"""
-		Returns parsed action or None if action cannot be parsed.
-		Use get_error() to get reason when second is the case.
+		Returns parsed action.
+		Throws ParseError if action cannot be parsed.
 		"""
-		if self.action is None and self.error is None:
-			self.action = self._parse_action()
-		return self.action
+		return self._parse_action()
+	
+	
+class TalkingActionParser(ActionParser):
+	"""
+	Works like ActionParser but when parsing fails, returns None instead of
+	trowing exception and outputs message to stderr
+	"""
+	
+	def restart(self, string):
+		self.string = string
+		return ActionParser.restart(self, string)
+	
+	
+	def parse(self):
+		"""
+		Returns parsed action or None if action cannot be parsed.
+		"""
+		try:
+			return ActionParser.parse(self)
+		except ParseError, e:
+			print >>sys.stderr, "Warning: Failed to parse '%s':" % (self.string,), e

@@ -3,6 +3,7 @@ import argparse
 
 from scc.controller import SCController
 from scc.constants import SCButtons
+from scc.actions import TalkingActionParser
 from scc.profile import Profile
 from scc.mapper import Mapper
 from scc.uinput import Keys, Axes
@@ -26,7 +27,7 @@ if __name__ == '__main__':
 		parser.add_argument('profile', type=str)
 		parser.add_argument('command', type=str, choices=['start', 'stop', 'restart', 'debug'])
 		args = parser.parse_args()
-		profile = Profile()
+		profile = Profile(TalkingActionParser())
 		profile.load(args.profile)
 		mapper = Mapper(profile)
 		daemon = SCDaemon(mapper, '/tmp/scccontroller.pid')
