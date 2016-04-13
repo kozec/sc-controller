@@ -54,7 +54,7 @@ class Action(object):
 
 class KeyAction(Action):
 	def describe(self, context):
-		return _("Key %s") % (self.parameters[0],)
+		return _("Key %s") % (self.parameters[0].name.split("_")[-1],)
 
 
 class AxisAction(Action):
