@@ -12,8 +12,8 @@ from scc.gui.controller_button import ControllerButton
 from scc.gui.controller_pad import ControllerPad
 from scc.gui.action_editor import ActionEditor
 from scc.gui.svg_widget import SVGWidget
+from scc.gui.parser import GuiActionParser
 from scc.constants import SCButtons
-from scc.actions import InvalidActionParser
 from scc.profile import Profile
 
 import os, sys, time, logging
@@ -42,9 +42,9 @@ class App(Gtk.Application):
 		self.iconpath = iconpath
 		self.builder = None
 		self.background = None
-		self.current = Profile(InvalidActionParser())
-		self.buttons = {}
-		self.pads = {}
+		self.current = Profile(GuiActionParser())
+		self.button_widgets = {}
+		self.pad_widgets = {}
 	
 	
 	def setup_widgets(self):
@@ -57,11 +57,11 @@ class App(Gtk.Application):
 		self.window.set_wmclass("SC Controller", "SC Controller")
 		
 		for b in App.BUTTONS:
-			self.buttons[b.name] = ControllerButton(self, b, self.builder.get_object("bt" + b.name))
+			self.button_widgets[b] = ControllerButton(self, b, self.builder.get_object("bt" + b.name))
 		for b in App.TRIGGERS:
-			self.buttons[b] = ControllerButton(self, b, self.builder.get_object("bt" + b))
+			self.button_widgets[b] = ControllerButton(self, b, self.builder.get_object("bt" + b))
 		for p in App.PADS:
-			self.buttons[p] = ControllerPad(self, p, self.builder.get_object("bt" + p))
+			self.button_widgets[p] = ControllerPad(self, p, self.builder.get_object("bt" + p))
 		
 		
 		vbc = self.builder.get_object("vbC")
@@ -83,10 +83,14 @@ class App(Gtk.Application):
 	
 	def hint(self, button):
 		""" As hilight, but marks GTK Button as well """
-		for b in self.buttons.values():
+		active = None
+		for b in self.button_widgets.values():
 			b.widget.set_state(Gtk.StateType.NORMAL)
-		if button in self.buttons:
-			self.buttons[button].widget.set_state(Gtk.StateType.ACTIVE)
+			if b.name == button:
+				active = b.widget
+		
+		if active is not None:
+			active.set_state(Gtk.StateType.ACTIVE)
 		
 		self.hilight(button)
 	
@@ -96,12 +100,14 @@ class App(Gtk.Application):
 			ae = ActionEditor(self)
 			ae.set_title(_("Edit action for %s Button") % (id.name,))
 			ae.set_button(id)
+			ae.set_action(self.current.buttons[id])
 			ae.show(self.window)
 	
 	
 	def set_action(self, id, action):
-		if what in SCButtons:
-			self.button[what].update()
+		if id in SCButtons:
+			self.current.buttons[id] = action
+			self.button_widgets[id].update()
 	
 	
 	def on_background_area_hover(self, trash, area):

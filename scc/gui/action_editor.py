@@ -9,6 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gio, GLib
 from scc.gui.svg_widget import SVGWidget
+from scc.gui.parser import GuiActionParser
 import os, sys, time, logging
 log = logging.getLogger("ActionEditor")
 
@@ -65,7 +66,7 @@ class ActionEditor:
 	def on_background_area_click(self, trash, area):
 		entAction = self.builder.get_object("entAction")
 		if area in ActionEditor.BUTTONS:
-			entAction.set_text("pad(Keys.BTN_%s)" % (area,))
+			entAction.set_text("button(Keys.BTN_%s)" % (area,))
 			return
 		if area in ActionEditor.AXES:
 			entAction.set_text("axis(Axes.%s)" % (area,))
@@ -87,8 +88,15 @@ class ActionEditor:
 	
 	
 	def on_btOK_clicked(self, *a):
-		self.app.set_action(self.id, self.builder.get_object("entAction").get_text())
+		entAction = self.builder.get_object("entAction")
+		action = GuiActionParser(entAction.get_text()).parse()
+		self.app.set_action(self.id, action)
 		self.builder.get_object("actionEditor").destroy()
+	
+	
+	def set_action(self, action):
+		entAction = self.builder.get_object("entAction")
+		entAction.set_text(action.string)
 	
 	
 	def set_button(self, button):

@@ -429,31 +429,3 @@ class TalkingActionParser(ActionParser):
 		except ParseError, e:
 			print >>sys.stderr, "Warning: Failed to parse '%s':" % (self.string,), e
 
-
-class InvalidAction(object):
-	def __init__(self, string):
-		self.string = string
-	
-	
-	def describe(self):
-		return _("Invalid Action")
-
-
-class InvalidActionParser(ActionParser):
-	"""
-	ActionParser that returns InvalidAction instance when parsing fails
-	"""
-	
-	def restart(self, string):
-		self.string = string
-		return ActionParser.restart(self, string)
-	
-	
-	def parse(self):
-		"""
-		Returns parsed action or None if action cannot be parsed.
-		"""
-		try:
-			return ActionParser.parse(self)
-		except ParseError, e:
-			return InvalidAction(self.string)
