@@ -278,19 +278,33 @@ class ActionParser(object):
 				parameter = getattr(parameter, t.value)
 			return parameter
 		
+		if t.type == TokenType.OP and t.value == "-":
+			if not self._tokens_left() or self._peek_token().type != TokenType.NUMBER:
+				raise ParseError("Excepted number after '-'")
+			return - self._parse_number()
+		
+		
 		if t.type == TokenType.NUMBER:
-			if "." in t.value:
-				return float(t.value)
-			elif "e" in t.value.lower():
-				return float(t.value)
-			elif t.value.lower().startswith("0x"):
-				return int(t.value, 16)
-			elif t.value.lower().startswith("0b"):
-				return int(t.value, 2)
-			else:
-				return int(t.value)
+			self.index -= 1
+			return self._parse_number()
 		
 		raise ParseError("Excepted parameter, got '%s'" % (t.value,))
+	
+	
+	def _parse_number(self):
+		t = self._next_token()
+		if t.type != TokenType.NUMBER:
+			raise ParseError("Excepted number, got '%s'" % (t.value,))
+		if "." in t.value:
+			return float(t.value)
+		elif "e" in t.value.lower():
+			return float(t.value)
+		elif t.value.lower().startswith("0x"):
+			return int(t.value, 16)
+		elif t.value.lower().startswith("0b"):
+			return int(t.value, 2)
+		else:
+			return int(t.value)
 	
 	
 	def _parse_parameters(self):
