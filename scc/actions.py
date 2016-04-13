@@ -91,10 +91,20 @@ class WheelAction(Action):
 
 class ButtonAction(Action):
 	SPECIAL_NAMES = {
-		Keys.BTN_TR		: "Right Trigger",
-		Keys.BTN_TL		: "Left Trigger",
+		Keys.BTN_LEFT	: "Left Mouse Button",
+		Keys.BTN_RIGHT	: "Right Mouse Button",
+		Keys.BTN_MIDDLE	: "Middle Mouse Button",
+		Keys.BTN_SIDE	: "Mouse Button 8",
+		Keys.BTN_EXTRA	: "Mouse Button 9",
+		
+		Keys.BTN_TR		: "Right Bumper",
+		Keys.BTN_TL		: "Left Bumper",
 		Keys.BTN_THUMBL	: "Left Stick Click",
 		Keys.BTN_THUMBR	: "Right Stick Click",
+		Keys.BTN_A		: "A Button",
+		Keys.BTN_B		: "B Button",
+		Keys.BTN_X		: "X Button",
+		Keys.BTN_Y		: "Y Button",
 	}
 	
 	def describe(self):
@@ -401,7 +411,7 @@ class ActionParser(object):
 	
 class TalkingActionParser(ActionParser):
 	"""
-	Works like ActionParser but when parsing fails, returns None instead of
+	ActionParser that returns None when parsing fails instead of
 	trowing exception and outputs message to stderr
 	"""
 	
@@ -418,3 +428,32 @@ class TalkingActionParser(ActionParser):
 			return ActionParser.parse(self)
 		except ParseError, e:
 			print >>sys.stderr, "Warning: Failed to parse '%s':" % (self.string,), e
+
+
+class InvalidAction(object):
+	def __init__(self, string):
+		self.string = string
+	
+	
+	def describe(self):
+		return _("Invalid Action")
+
+
+class InvalidActionParser(ActionParser):
+	"""
+	ActionParser that returns InvalidAction instance when parsing fails
+	"""
+	
+	def restart(self, string):
+		self.string = string
+		return ActionParser.restart(self, string)
+	
+	
+	def parse(self):
+		"""
+		Returns parsed action or None if action cannot be parsed.
+		"""
+		try:
+			return ActionParser.parse(self)
+		except ParseError, e:
+			return InvalidAction(self.string)
