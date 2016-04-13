@@ -18,5 +18,5 @@ if __name__ == "__main__":
 	from gi.repository import Gtk
 	Gtk.IconTheme.get_default().append_search_path(os.path.join(os.getcwd(), "icons"))
 	
-	from scc.app import App
+	from scc.gui.app import App
 	App(".", "./icons").run(sys.argv)

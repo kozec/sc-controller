@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gio, GLib
-from scc.svg_widget import SVGWidget
+from scc.gui.svg_widget import SVGWidget
 import os, sys, time, logging
 log = logging.getLogger("ActionEditor")
 

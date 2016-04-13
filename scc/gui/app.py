@@ -8,10 +8,10 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
-from scc.controller_button import ControllerButton
-from scc.controller_pad import ControllerPad
-from scc.action_editor import ActionEditor
-from scc.svg_widget import SVGWidget
+from scc.gui.controller_button import ControllerButton
+from scc.gui.controller_pad import ControllerPad
+from scc.gui.action_editor import ActionEditor
+from scc.gui.svg_widget import SVGWidget
 from scc.constants import SCButtons
 from scc.actions import InvalidActionParser
 from scc.profile import Profile
