@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 from collections import namedtuple
-from enum import IntEnum
+from scc.lib import IntEnum
 import struct
 
 VENDOR_ID = 0x28de

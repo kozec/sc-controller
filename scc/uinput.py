@@ -26,7 +26,7 @@ import os
 import ctypes
 import time
 from math import pi, copysign, sqrt
-from enum import IntEnum
+from scc.lib import IntEnum
 from scc.cheader import defines
 
 from scc.tools import get_so_extensions
