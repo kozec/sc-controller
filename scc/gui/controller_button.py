@@ -8,12 +8,15 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk
+from scc.actions import Action
 from scc.gui.controller_widget import ControllerWidget
 import logging
 
 log = logging.getLogger("ControllerButton")
 
 class ControllerButton(ControllerWidget):
+	ACTION_CONTEXT = Action.AC_BUTTON
+	
 	def __init__(self, app, name, widget):
 		ControllerWidget.__init__(self, app, name, widget)
 		
@@ -21,6 +24,9 @@ class ControllerButton(ControllerWidget):
 		separator = Gtk.Separator(orientation = Gtk.Orientation.VERTICAL)
 		vbox.pack_start(self.icon, False, False, 1)
 		vbox.pack_start(separator, False, False, 1)
-		vbox.pack_start(self.label, False, False, 1)
+		vbox.pack_start(self.label, False, True, 1)
 		self.widget.add(vbox)
 		self.widget.show_all()
+		self.label.set_max_width_chars(11)
+		if name == "C":
+			self.label.set_max_width_chars(10)

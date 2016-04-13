@@ -76,10 +76,10 @@ class ActionEditor:
 			return
 		if area.startswith("MOUSE"):
 			action = ActionEditor.MOUSE[int(area[5:]) - 1]
-			if "Keys" in action:
-				entAction.set_text("button(%s)" % (action,))
-			else:
+			if "Rels" in action:
 				entAction.set_text("mouse(%s)" % (action,))
+			else:
+				entAction.set_text("button(%s)" % (action,))
 			return
 	
 	

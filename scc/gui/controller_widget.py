@@ -7,13 +7,15 @@ Wraps around actual button and provides code for setting actions
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 import os, sys, logging
 from scc.constants import SCButtons
 
 log = logging.getLogger("ControllerWidget")
 
 class ControllerWidget:
+	ACTION_CONTEXT = None
+	
 	def __init__(self, app, id, widget):
 		self.app = app
 		self.id = id
@@ -22,6 +24,7 @@ class ControllerWidget:
 		
 		filename = os.path.join(self.app.iconpath, self.name + ".svg")
 		self.label = Gtk.Label()
+		self.label.set_ellipsize(Pango.EllipsizeMode.END)
 		self.icon = Gtk.Image.new_from_file(filename)
 		self.update()
 		
@@ -29,10 +32,11 @@ class ControllerWidget:
 		self.widget.connect('leave', self.on_cursor_leave)
 		self.widget.connect('clicked', self.on_click)
 	
+	
 	def update(self):
 		if self.id in SCButtons:
 			if self.id in self.app.current.buttons:
-				self.label.set_label(self.app.current.buttons[self.id].describe())
+				self.label.set_label(self.app.current.buttons[self.id].describe(self.ACTION_CONTEXT))
 			else:
 				self.label.set_label(_("(no action)"))
 	

@@ -32,6 +32,7 @@ Available only for pads. Acts as trackpad - sliding finger over the pad moves th
 ### trackball([ speed = 1 ])
 Available only for pads. Acts as trackball.
 
+
 ### wheel([ trackball = False, speed = 1 ])
 Available only for pads. Emulates mouse scroll wheel.
 

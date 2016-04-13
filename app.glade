@@ -34,6 +34,7 @@
             <property name="spacing">1</property>
             <child>
               <object class="GtkButton" id="btLT">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -49,6 +50,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btLB">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -64,6 +66,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btLGRIP">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -79,6 +82,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btBACK">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -107,6 +111,7 @@
             <property name="spacing">1</property>
             <child>
               <object class="GtkButton" id="btRT">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -122,6 +127,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btRB">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -137,6 +143,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btRGRIP">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -152,6 +159,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btSTART">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -190,6 +198,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btLPAD">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -205,6 +214,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btSTICK">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -222,6 +232,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btRPAD">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -277,6 +288,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="btC">
+                    <property name="width_request">160</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -323,6 +335,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btY">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -338,6 +351,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btX">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -372,6 +386,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btB">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -387,6 +402,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btA">
+                <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>

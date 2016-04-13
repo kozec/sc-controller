@@ -26,17 +26,20 @@ class Action(object):
 	See ACTIONS for list of them.
 	"""
 	
+	# "Action Context" constants used by describe method
+	AC_BUTTON = 1
+	
 	def __init__(self, action, parameters):
 		self.action = action
 		self.parameters = parameters
 	
 	
-	def describe(self):
+	def describe(self, context):
 		"""
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
-		
+		return str(self)
 	
 	
 	def execute(self, event):
@@ -50,81 +53,105 @@ class Action(object):
 
 
 class KeyAction(Action):
-	def describe(self):
+	def describe(self, context):
 		return _("Key %s") % (self.parameters[0],)
 
 
 class AxisAction(Action):
-	def describe(self):
-		return _("%s Axis") % (self.parameters[0].name.split("_", 1)[-1],)
+	AXIS_NAMES = {
+		Axes.ABS_X : ("LStick", "Left", "Right"),
+		Axes.ABS_Y : ("LStick", "Up", "Down"),
+		Axes.ABS_RX : ("RStick", "Left", "Right"),
+		Axes.ABS_RY : ("RStick", "Up", "Down"),
+		Axes.ABS_HAT0X : ("D-PAD", "Left", "Right"),
+		Axes.ABS_HAT0Y : ("D-PAD", "Up", "Down"),
+		Axes.ABS_Z  : ("Left Trigger", "Press", "Press"),
+		Axes.ABS_RZ : ("Right Trigger", "Press", "Press"),
+	}
+	def describe(self, context):
+		axis, neg, pos = "%s %s" % (self.parameters[0].name, _("Axis")), _("Negative"), _("Positive")
+		if self.parameters[0] in AxisAction.AXIS_NAMES:
+			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.parameters[0]] ]
+		
+		if context == Action.AC_BUTTON:
+			for x in self.parameters:
+				if type(x) in (int, float):
+					if x > 0:
+						return "%s %s" % (axis, pos)
+					if x < 0:
+						return "%s %s" % (axis, neg)
+		return axis
 
 
 class RAxisAction(Action):
-	def describe(self):
+	def describe(self, context):
 		return _("Reverse %s Axis") % (self.parameters[0].name.split("_", 1)[-1],)
 
 
 class DPadAction(Action):
-	def describe(self):
+	def describe(self, context):
 		return "DPad"
 
 
 class MouseAction(Action):
-	def describe(self):
-		return _("Mouse Move %s") % (self.parameters[0],)
+	def describe(self, context):
+		if self.parameters[0] == Rels.REL_WHEEL:
+			return _("Wheel")
+		return _("Mouse %s") % (self.parameters[0].name.split("_", 1)[-1],)
 
 
 class TrackpadAction(Action):
-	def describe(self):
+	def describe(self, context):
 		return "Trackpad"
 
 
 class TrackballAction(Action):
-	def describe(self):
+	def describe(self, context):
 		return "Trackball"
 
 
 class WheelAction(Action):
-	def describe(self):
+	def describe(self, context):
 		return _("Mouse Wheel")
 
 
 class ButtonAction(Action):
 	SPECIAL_NAMES = {
-		Keys.BTN_LEFT	: "Left Mouse Button",
-		Keys.BTN_RIGHT	: "Right Mouse Button",
-		Keys.BTN_MIDDLE	: "Middle Mouse Button",
-		Keys.BTN_SIDE	: "Mouse Button 8",
-		Keys.BTN_EXTRA	: "Mouse Button 9",
+		Keys.BTN_LEFT	: "Mouse Left",
+		Keys.BTN_MIDDLE	: "Mouse Middle",
+		Keys.BTN_RIGHT	: "Mouse Right",
+		Keys.BTN_SIDE	: "Mouse 8",
+		Keys.BTN_EXTRA	: "Mouse 9",
 		
 		Keys.BTN_TR		: "Right Bumper",
 		Keys.BTN_TL		: "Left Bumper",
-		Keys.BTN_THUMBL	: "Left Stick Click",
-		Keys.BTN_THUMBR	: "Right Stick Click",
+		Keys.BTN_THUMBL	: "LStick Click",
+		Keys.BTN_THUMBR	: "RStick Click",
+		Keys.BTN_START	: "Start >",
+		Keys.BTN_SELECT	: "< Select",
 		Keys.BTN_A		: "A Button",
 		Keys.BTN_B		: "B Button",
 		Keys.BTN_X		: "X Button",
 		Keys.BTN_Y		: "Y Button",
 	}
 	
-	def describe(self):
-		if self.parameters[0] in MOUSE_BUTTONS:
-			return _("Mouse Button %s") % (self.parameters[0],)
+	def describe(self, context):
+		p = self.parameters[0]
+		if p in ButtonAction.SPECIAL_NAMES:
+			return _(ButtonAction.SPECIAL_NAMES[p])
+		elif p in MOUSE_BUTTONS:
+			return _("Mouse %s") % (p,)
 		else:
-			p = self.parameters[0]
-			if p in ButtonAction.SPECIAL_NAMES:
-				return _(ButtonAction.SPECIAL_NAMES[p])
-			else:
-				return p.name.split("_", 1)[-1]
+			return p.name.split("_", 1)[-1]
 
 
 class ClickAction(Action):
-	def describe(self):
+	def describe(self, context):
 		return _("(if pressed)")
 
 
 class HatAction(Action):
-	def describe(self):
+	def describe(self, context):
 		return "Hat"
 
 
