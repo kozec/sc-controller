@@ -33,7 +33,7 @@
             <property name="orientation">vertical</property>
             <property name="spacing">1</property>
             <child>
-              <object class="GtkButton" id="btLT">
+              <object class="GtkButton" id="btTriggerLEFT">
                 <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -110,7 +110,7 @@
             <property name="orientation">vertical</property>
             <property name="spacing">1</property>
             <child>
-              <object class="GtkButton" id="btRT">
+              <object class="GtkButton" id="btTriggerRIGHT">
                 <property name="width_request">170</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

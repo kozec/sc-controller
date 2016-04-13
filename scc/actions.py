@@ -25,30 +25,31 @@ class Action(object):
 	Simple action that executes one of predefined methods.
 	See ACTIONS for list of them.
 	"""
-	
+
 	# "Action Context" constants used by describe method
 	AC_BUTTON = 1
-	
+	AC_TRIGGER = 3
+
 	def __init__(self, action, parameters):
 		self.action = action
 		self.parameters = parameters
-	
-	
+
+
 	def describe(self, context):
 		"""
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
 		return str(self)
-	
-	
+
+
 	def execute(self, event):
 		return getattr(event, self.action)(*self.parameters)
-	
-	
+
+
 	def __str__(self):
 		return "<Action '%s', %s>" % (self.action, self.parameters)
-	
+
 	__repr__ = __str__
 
 
@@ -68,11 +69,13 @@ class AxisAction(Action):
 		Axes.ABS_Z  : ("Left Trigger", "Press", "Press"),
 		Axes.ABS_RZ : ("Right Trigger", "Press", "Press"),
 	}
+	X = [ Axes.ABS_X, Axes.ABS_RX, Axes.ABS_HAT0X ]
+	Z = [ Axes.ABS_Z, Axes.ABS_RZ ]
 	def describe(self, context):
 		axis, neg, pos = "%s %s" % (self.parameters[0].name, _("Axis")), _("Negative"), _("Positive")
 		if self.parameters[0] in AxisAction.AXIS_NAMES:
 			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.parameters[0]] ]
-		
+
 		if context == Action.AC_BUTTON:
 			for x in self.parameters:
 				if type(x) in (int, float):
@@ -80,6 +83,12 @@ class AxisAction(Action):
 						return "%s %s" % (axis, pos)
 					if x < 0:
 						return "%s %s" % (axis, neg)
+		if context == Action.AC_TRIGGER:
+			if self.parameters[0] in AxisAction.Z: # Trigger
+				return axis
+			else:
+				xy = "X" if self.parameters[0] in AxisAction.X else "Y"
+				return "%s %s" % (axis, xy)
 		return axis
 
 
@@ -122,7 +131,7 @@ class ButtonAction(Action):
 		Keys.BTN_RIGHT	: "Mouse Right",
 		Keys.BTN_SIDE	: "Mouse 8",
 		Keys.BTN_EXTRA	: "Mouse 9",
-		
+
 		Keys.BTN_TR		: "Right Bumper",
 		Keys.BTN_TL		: "Left Bumper",
 		Keys.BTN_THUMBL	: "LStick Click",
@@ -134,7 +143,7 @@ class ButtonAction(Action):
 		Keys.BTN_X		: "X Button",
 		Keys.BTN_Y		: "Y Button",
 	}
-	
+
 	def describe(self, context):
 		p = self.parameters[0]
 		if p in ButtonAction.SPECIAL_NAMES:
@@ -180,43 +189,43 @@ class MultiAction(object):
 	Two or more actions executed in sequence.
 	Generated when parsing ';'
 	"""
-	
+
 	def __init__(self, *actions):
 		self.actions = []
 		self._add_all(actions)
-	
-	
+
+
 	def _add_all(self, actions):
 		for x in actions:
 			self._add(x)
-	
-	
+
+
 	def _add(self, action):
 		if action.__class__ == self.__class__:	# I don't wan't subclasses here
 			self._add_all(action.actions)
 		else:
 			self.actions.append(action)
-	
-	
+
+
 	def describe(self, context):
 		"""
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
 		return self.actions[0].describe(context)
-	
-	
+
+
 	def execute(self, event):
 		rv = False
 		for a in actions:
 			rv = a.execute(event)
 		return rv
-	
-	
+
+
 	def __str__(self):
 		return "<[ %s ]>" % ("; ".join([ str(x) for x in self.actions ]), )
-	
-	__repr__ = __str__	
+
+	__repr__ = __str__
 
 
 class LinkedActions(MultiAction):
@@ -225,24 +234,24 @@ class LinkedActions(MultiAction):
 	Action 2 is executed only if action 1 returns True - currently used only
 	with 'click' action that returns True only if pad or stick is pressed.
 	"""
-	
+
 	def execute(self, event):
 		for x in self.actions:
 			if not x.execute(event): return False
 		return True
-	
-	
+
+
 	def describe(self, context):
 		"""
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
 		return self.actions[0].describe(context)
-	
-	
+
+
 	def __str__(self):
 		return "< %s >" % (" and ".join([ str(x) for x in self.actions ]), )
-	
+
 	__repr__ = __str__
 
 
@@ -252,7 +261,7 @@ class ParseError(Exception): pass
 class ActionParser(object):
 	"""
 	Parses action expressed as string into Action instances.
-	
+
 	Usage:
 		ap = ActionParser(string)
 		action = ap.parse()
@@ -261,23 +270,23 @@ class ActionParser(object):
 			# do something with error
 	"""
 	Token = namedtuple('Token', 'type value')
-	
+
 	CONSTS = {
 		'Keys' : Keys,
 		'Axes' : Axes,
 		'Rels' : Rels
 	}
-	
+
 	def __init__(self, string=""):
 		self.restart(string)
-	
-	
+
+
 	def restart(self, string):
 		"""
 		Restarts parsing with new string
 		Returns self for chaining.
 		"""
-		
+
 		try:
 			self.tokens = [
 				ActionParser.Token(type, string)
@@ -289,24 +298,24 @@ class ActionParser(object):
 			self.tokens = None
 		self.index = 0
 		return self
-	
-	
+
+
 	def _next_token(self):
 		rv = self.tokens[self.index]
 		self.index += 1
 		return rv
-	
-	
+
+
 	def _peek_token(self):
 		""" As _next_token, but without increasing counter """
 		return self.tokens[self.index]
-	
-	
+
+
 	def _tokens_left(self):
 		""" Returns True if there are any tokens left """
 		return self.index < len(self.tokens)
-	
-	
+
+
 	def _parse_parameter(self):
 		""" Parses single parameter """
 		t = self._next_token()
@@ -321,32 +330,32 @@ class ActionParser(object):
 				if not t.value in ActionParser.CONSTS:
 					raise ParseError("Excepted parameter, got '%s' which is not defined" % (t.value,))
 				parameter = ActionParser.CONSTS[t.value]
-			
+
 			# Check for dots
 			while self._tokens_left() and self._peek_token().type == TokenType.OP and self._peek_token().value == '.':
 				self._next_token()
 				if not self._tokens_left():
 					raise ParseError("Excepted NAME after '.'")
-				
+
 				t = self._next_token()
 				if not hasattr(parameter, t.value):
 					raise ParseError("%s has no attribute '%s'" % (parameter, t.value,))
 				parameter = getattr(parameter, t.value)
 			return parameter
-		
+
 		if t.type == TokenType.OP and t.value == "-":
 			if not self._tokens_left() or self._peek_token().type != TokenType.NUMBER:
 				raise ParseError("Excepted number after '-'")
 			return - self._parse_number()
-		
-		
+
+
 		if t.type == TokenType.NUMBER:
 			self.index -= 1
 			return self._parse_number()
-		
+
 		raise ParseError("Excepted parameter, got '%s'" % (t.value,))
-	
-	
+
+
 	def _parse_number(self):
 		t = self._next_token()
 		if t.type != TokenType.NUMBER:
@@ -361,15 +370,15 @@ class ActionParser(object):
 			return int(t.value, 2)
 		else:
 			return int(t.value)
-	
-	
+
+
 	def _parse_parameters(self):
 		""" Parses parameter list """
 		# Check and skip over '('
 		t = self._next_token()
 		if t.type != TokenType.OP or t.value != '(':
 			raise ParseError("Excepted '(' of parameter list, got '%s'" % (t.value,))
-		
+
 		parameters = []
 		while self._tokens_left():
 			# Check for ')' that would end parameter list
@@ -377,7 +386,7 @@ class ActionParser(object):
 			if t.type == TokenType.OP and t.value == ')':
 				self._next_token()
 				return parameters
-			
+
 			# Parse one parameter
 			parameters.append(self._parse_parameter())
 			# Check if next token is either ')' or ','
@@ -388,12 +397,12 @@ class ActionParser(object):
 				 self._next_token()
 			else:
 				raise ParseError("Excepted ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
-			
-		
+
+
 		# Code shouldn't reach here, unless there is not closing ')' in parameter list
 		raise ParseError("Unmatched parenthesis")
-	
-	
+
+
 	def _parse_action(self):
 		"""
 		Parses one action, that is one of:
@@ -409,12 +418,12 @@ class ActionParser(object):
 			raise ParseError("Unknown action '%s'" % (t.value,))
 		action_name = t.value
 		action_class = ACTIONS[action_name]
-		
+
 		# Check if there are any tokens left - return action without parameters
 		# if not
 		if not self._tokens_left():
 			return action_class(action_name, [])
-		
+
 		# Check if token after action name is parenthesis and if yes, parse
 		# parameters from it
 		t = self._peek_token()
@@ -424,7 +433,7 @@ class ActionParser(object):
 			if not self._tokens_left():
 				return action_class(action_name, parameters)
 			t = self._peek_token()
-		
+
 		# ... or, if it is one of ';', 'and' or 'or' and if yes, parse next action
 		if t.type == TokenType.NAME and t.value == 'and':
 			# Two (or more) actions joined by 'and'
@@ -434,7 +443,7 @@ class ActionParser(object):
 			action1 = action_class(action_name, parameters)
 			action2 = self._parse_action()
 			return LinkedActions(action1, action2)
-		
+
 		if t.type == TokenType.OP and t.value == ';':
 			# Two (or more) actions joined by ';'
 			self._next_token()
@@ -444,10 +453,10 @@ class ActionParser(object):
 			action1 = action_class(action_name, parameters)
 			action2 = self._parse_action()
 			return MultiAction(action1, action2)
-		
+
 		return action_class(action_name, parameters)
-	
-	
+
+
 	def parse(self):
 		"""
 		Returns parsed action.
@@ -459,19 +468,19 @@ class ActionParser(object):
 		if self._tokens_left():
 			raise ParseError("Unexpected '%s'" % (self._next_token().value, ))
 		return a
-	
-	
+
+
 class TalkingActionParser(ActionParser):
 	"""
 	ActionParser that returns None when parsing fails instead of
 	trowing exception and outputs message to stderr
 	"""
-	
+
 	def restart(self, string):
 		self.string = string
 		return ActionParser.restart(self, string)
-	
-	
+
+
 	def parse(self):
 		"""
 		Returns parsed action or None if action cannot be parsed.
@@ -480,4 +489,3 @@ class TalkingActionParser(ActionParser):
 			return ActionParser.parse(self)
 		except ParseError, e:
 			print >>sys.stderr, "Warning: Failed to parse '%s':" % (self.string,), e
-

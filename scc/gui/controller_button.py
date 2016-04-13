@@ -16,10 +16,10 @@ log = logging.getLogger("ControllerButton")
 
 class ControllerButton(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_BUTTON
-	
+
 	def __init__(self, app, name, widget):
 		ControllerWidget.__init__(self, app, name, widget)
-		
+
 		vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
 		separator = Gtk.Separator(orientation = Gtk.Orientation.VERTICAL)
 		vbox.pack_start(self.icon, False, False, 1)
@@ -27,6 +27,10 @@ class ControllerButton(ControllerWidget):
 		vbox.pack_start(self.label, False, True, 1)
 		self.widget.add(vbox)
 		self.widget.show_all()
-		self.label.set_max_width_chars(11)
+		self.label.set_max_width_chars(12)
 		if name == "C":
 			self.label.set_max_width_chars(10)
+
+
+class ControllerTrigger(ControllerButton):
+	ACTION_CONTEXT = Action.AC_TRIGGER

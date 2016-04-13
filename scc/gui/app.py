@@ -8,7 +8,8 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
-from scc.gui.controller_button import ControllerButton
+from scc.gui.controller_widget import TRIGGERS, PADS, BUTTONS
+from scc.gui.controller_button import ControllerButton, ControllerTrigger
 from scc.gui.controller_pad import ControllerPad
 from scc.gui.action_editor import ActionEditor
 from scc.gui.svg_widget import SVGWidget
@@ -24,12 +25,9 @@ class App(Gtk.Application):
 	"""
 	Main application / window.
 	"""
-	
+
 	IMAGE = "background.svg"
-	TRIGGERS = [ "LT", "RT" ]
-	PADS	= [ "LPAD", "STICK", "RPAD" ]
-	BUTTONS = [ b for b in SCButtons if b.name not in TRIGGERS + PADS + [ x + "TOUCH" for x in PADS ] ]
-	
+
 	def __init__(self, gladepath="/usr/share/scc",
 						iconpath="/usr/share/scc/icons"):
 		Gtk.Application.__init__(self,
@@ -45,8 +43,8 @@ class App(Gtk.Application):
 		self.current = Profile(GuiActionParser())
 		self.button_widgets = {}
 		self.pad_widgets = {}
-	
-	
+
+
 	def setup_widgets(self):
 		self.builder = Gtk.Builder()
 		self.builder.add_from_file(os.path.join(self.gladepath, "app.glade"))
@@ -55,15 +53,15 @@ class App(Gtk.Application):
 		self.add_window(self.window)
 		self.window.set_title(_("SC Controller"))
 		self.window.set_wmclass("SC Controller", "SC Controller")
-		
-		for b in App.BUTTONS:
+
+		for b in BUTTONS:
 			self.button_widgets[b] = ControllerButton(self, b, self.builder.get_object("bt" + b.name))
-		for b in App.TRIGGERS:
-			self.button_widgets[b] = ControllerButton(self, b, self.builder.get_object("bt" + b))
-		for p in App.PADS:
+		for b in TRIGGERS:
+			self.button_widgets[b] = ControllerTrigger(self, b, self.builder.get_object("btTrigger" + b))
+		for p in PADS:
 			self.button_widgets[p] = ControllerPad(self, p, self.builder.get_object("bt" + p))
-		
-		
+
+
 		vbc = self.builder.get_object("vbC")
 		main_area = self.builder.get_object("mainArea")
 		vbc.get_parent().remove(vbc)
@@ -74,13 +72,13 @@ class App(Gtk.Application):
 		self.background.connect('click', self.on_background_area_click)
 		main_area.put(self.background, 0, 0)
 		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
-	
-	
+
+
 	def hilight(self, button):
 		""" Hilights specified button on background image """
 		self.background.hilight(button)
-	
-	
+
+
 	def hint(self, button):
 		""" As hilight, but marks GTK Button as well """
 		active = None
@@ -88,38 +86,47 @@ class App(Gtk.Application):
 			b.widget.set_state(Gtk.StateType.NORMAL)
 			if b.name == button:
 				active = b.widget
-		
+
 		if active is not None:
 			active.set_state(Gtk.StateType.ACTIVE)
-		
+
 		self.hilight(button)
-	
-	
+
+
 	def show_editor(self, id):
 		if id in SCButtons:
 			ae = ActionEditor(self)
-			ae.set_title(_("Edit action for %s Button") % (id.name,))
+			ae.set_title(_("Edit Action for %s Button") % (id.name,))
 			ae.set_button(id)
 			ae.set_action(self.current.buttons[id])
 			ae.show(self.window)
-	
-	
+		elif id in TRIGGERS:
+			ae = ActionEditor(self)
+			ae.set_title(_("Edit Action for %s Trigger") % (id,))
+			ae.set_trigger(id)
+			ae.set_action(self.current.triggers[id])
+			ae.show(self.window)
+
+
 	def set_action(self, id, action):
-		if id in SCButtons:
+		if id in BUTTONS:
 			self.current.buttons[id] = action
 			self.button_widgets[id].update()
-	
-	
+		elif id in TRIGGERS:
+			self.current.triggers[id] = action
+			self.button_widgets[id].update()
+
+
 	def on_background_area_hover(self, trash, area):
 		self.hint(area)
-	
-	
+
+
 	def on_background_area_click(self, trash, area):
-		if area in [ x.name for x in App.BUTTONS ]:
+		if area in [ x.name for x in BUTTONS ]:
 			self.hint(None)
 			self.show_editor(getattr(SCButtons, area))
-	
-	
+
+
 	def on_vbc_allocated(self, vbc, allocation):
 		"""
 		Called when size of 'Button C' is changed. Centers button
@@ -129,33 +136,33 @@ class App(Gtk.Application):
 		x = (main_area.get_allocation().width - allocation.width) / 2
 		y = main_area.get_allocation().height - allocation.height - 50
 		main_area.move(vbc, x, y)
-	
-	
+
+
 	def on_ebImage_motion_notify_event(self, box, event):
 		self.background.on_mouse_moved(event.x, event.y)
-		
-	
+
+
 	def do_startup(self, *a):
 		Gtk.Application.do_startup(self, *a)
 		self.current.load("xbox.json")
 		self.setup_widgets()
-	
-	
+
+
 	def do_local_options(self, trash, lo):
 		set_logging_level(lo.contains("verbose"), lo.contains("debug") )
 		return -1
-	
-	
+
+
 	def do_command_line(self, cl):
 		Gtk.Application.do_command_line(self, cl)
 		self.activate()
 		return 0
-	
-	
+
+
 	def do_activate(self, *a):
 		self.builder.get_object("window").show()
-	
-	
+
+
 	def setup_commandline(self):
 		def aso(long_name, short_name, description,
 				arg=GLib.OptionArg.NONE,
@@ -168,8 +175,8 @@ class App(Gtk.Application):
 			o.flags = flags
 			o.arg = arg
 			self.add_main_option_entries([o])
-		
+
 		self.connect('handle-local-options', self.do_local_options)
-		
+
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
