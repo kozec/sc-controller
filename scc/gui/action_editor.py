@@ -7,7 +7,7 @@ Allows to edit button action.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gio, GLib
+from gi.repository import Gtk, Gdk, Gio, GLib
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.parser import GuiActionParser
 import os, sys, time, logging
@@ -85,6 +85,12 @@ class ActionEditor:
 	
 	def on_background_area_hover(self, trash, area):
 		self.background.hilight(area, "#FFFF0000")
+	
+	
+	def on_actionEditor_key_press_event(self, trash, event):
+		# Check if pressed key was escape and if yes, close window
+		if event.keyval == Gdk.KEY_Escape:
+			self.builder.get_object("actionEditor").destroy()
 	
 	
 	def on_btOK_clicked(self, *a):

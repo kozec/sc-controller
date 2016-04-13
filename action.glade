@@ -7,7 +7,9 @@
     <property name="role">action-editor</property>
     <property name="resizable">False</property>
     <property name="window_position">center</property>
+    <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <signal name="key-press-event" handler="on_actionEditor_key_press_event" swapped="no"/>
     <child>
       <object class="GtkGrid" id="grid1">
         <property name="visible">True</property>
@@ -40,6 +42,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="margin_bottom">2</property>
+            <property name="activates_default">True</property>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -164,6 +167,7 @@
             <property name="can_focus">True</property>
             <property name="margin_top">20</property>
             <property name="editable">False</property>
+            <property name="activates_default">True</property>
           </object>
           <packing>
             <property name="left_attach">0</property>
