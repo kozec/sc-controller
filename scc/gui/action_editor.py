@@ -9,7 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.gui.svg_widget import SVGWidget
-from scc.gui.parser import GuiActionParser
+from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.gdk_to_key import keyevent_to_key
 from scc.uinput import Keys
 import os, sys, time, logging
@@ -48,10 +48,27 @@ class ActionEditor:
 		Keys.KEY_LEFTSHIFT, Keys.KEY_RIGHTSHIFT
 	]
 	
+	ERROR_CSS = " #error {background-color:green; color:red;} "
+	PAGES = [
+		('vbKeyButMouse', 'tgKeyButMouse'),
+		('vbCustom', 'tgCustom')
+	]
+	
+	css = None
+	
 	def __init__(self, app):
 		self.app = app
 		self.mode = None
 		self.id = None
+		self.parser = GuiActionParser()
+		if ActionEditor.css is None:
+			ActionEditor.css = Gtk.CssProvider()
+			ActionEditor.css.load_from_data(str(ActionEditor.ERROR_CSS))
+			Gtk.StyleContext.add_provider_for_screen(
+				Gdk.Screen.get_default(),
+				ActionEditor.css,
+				Gtk.STYLE_PROVIDER_PRIORITY_USER)
+		self._recursing = False
 		self.active_mods = []
 		self.setup_widgets()
 	
@@ -63,13 +80,70 @@ class ActionEditor:
 		self.keygrab = self.builder.get_object("keyGrab")
 		self.builder.connect_signals(self)
 		
-		vbKBorM = self.builder.get_object("vbKBorM")
+		vbKeyButMouse = self.builder.get_object("vbKeyButMouse")
 		self.background = SVGWidget(self.app, os.path.join(self.app.iconpath, self.IMAGE))
 		self.background.connect('hover', self.on_background_area_hover)
 		self.background.connect('leave', self.on_background_area_hover, None)
 		self.background.connect('click', self.on_background_area_click)
-		vbKBorM.pack_start(self.background, True, True, 0)
-		vbKBorM.show_all()
+		vbKeyButMouse.pack_start(self.background, True, True, 0)
+		vbKeyButMouse.show_all()
+		
+		entAction = self.builder.get_object("entAction")
+	
+	
+	def on_action_mode_changed(self, obj):
+		if self._recursing : return
+		self._recursing = True
+		if not obj.get_active():
+			obj.set_active(True)
+			self._recursing = False
+			return
+		
+		active = None
+		for (page, button) in ActionEditor.PAGES:
+			if obj == self.builder.get_object(button):
+				active = (page, button)
+			else:
+				self.builder.get_object(button).set_active(False)
+		self._recursing = False
+
+		if active[1] == "tgCustom":
+			tbCustomAction = self.builder.get_object("tbCustomAction")
+			entAction = self.builder.get_object("entAction")
+			txt = entAction.get_text().split(";")
+			txt = [ t.strip(" \t") for t in txt ]
+			tbCustomAction.set_text("\n".join(txt))
+
+		stActionModes = self.builder.get_object("stActionModes")
+		stActionModes.set_visible_child(self.builder.get_object(active[0]))
+	
+	
+	def on_tbCustomAction_changed(self, tbCustomAction, *a):
+		""" Converts text from custom action into bottom action field """
+		txCustomAction = self.builder.get_object("txCustomAction")
+		entAction = self.builder.get_object("entAction")
+		btOK = self.builder.get_object("btOK")
+		
+		# Get text from buffer
+		txt = tbCustomAction.get_text(tbCustomAction.get_start_iter(), tbCustomAction.get_end_iter(), True)
+		
+		# Convert it to simpler text separated only with ';'
+		txt = txt.replace(";", "\n").split("\n")
+		txt = [ t.strip("\t ") for t in txt ]
+		while "" in txt : txt.remove("")
+		txt = "; ".join(txt)
+		
+		# Try to parse it as action
+		if len(txt) > 0:
+			action = self.parser.restart(txt).parse()
+			if isinstance(action, InvalidAction):
+				btOK.set_sensitive(False)
+				entAction.set_name("error")
+				entAction.set_text(str(action.error))
+			else:
+				btOK.set_sensitive(True)
+				entAction.set_name("entAction")
+				entAction.set_text(txt)
 	
 	
 	def on_btnGrabKey_clicked(self, *a):
@@ -164,7 +238,7 @@ class ActionEditor:
 	
 	def on_btOK_clicked(self, *a):
 		entAction = self.builder.get_object("entAction")
-		action = GuiActionParser(entAction.get_text()).parse()
+		action = self.parser.restart(entAction.get_text()).parse()
 		self.app.set_action(self.id, action)
 		self.window.destroy()
 	

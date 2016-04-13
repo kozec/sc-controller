@@ -3,12 +3,13 @@ from scc.actions import ActionParser, ParseError
 from scc.tools import _
 
 class InvalidAction(object):
-	def __init__(self, string):
+	def __init__(self, string, error):
 		self.string = string
+		self.error = error
 	
 	
-	def describe(self):
-		return _("Invalid Action")
+	def describe(self, *a):
+		return _("(invalid)")
 
 
 class GuiActionParser(ActionParser):
@@ -31,4 +32,4 @@ class GuiActionParser(ActionParser):
 			a.string = self.string
 			return a
 		except ParseError, e:
-			return InvalidAction(self.string)
+			return InvalidAction(self.string, e)

@@ -11,7 +11,7 @@ one or more Action instances.
 """
 from __future__ import unicode_literals
 
-from tokenize import generate_tokens
+from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 from scc.uinput import Keys, Axes, Rels
 import token as TokenType
@@ -198,6 +198,14 @@ class MultiAction(object):
 			self.actions.append(action)
 	
 	
+	def describe(self, context):
+		"""
+		Returns string that describes what action does in human-readable form.
+		Used in GUI.
+		"""
+		return self.actions[0].describe(context)
+	
+	
 	def execute(self, event):
 		rv = False
 		for a in actions:
@@ -222,6 +230,14 @@ class LinkedActions(MultiAction):
 		for x in self.actions:
 			if not x.execute(event): return False
 		return True
+	
+	
+	def describe(self, context):
+		"""
+		Returns string that describes what action does in human-readable form.
+		Used in GUI.
+		"""
+		return self.actions[0].describe(context)
 	
 	
 	def __str__(self):
@@ -262,12 +278,15 @@ class ActionParser(object):
 		Returns self for chaining.
 		"""
 		
-		self.tokens = [
-			ActionParser.Token(type, string)
-			for (type, string, trash, trash, trash)
-			in generate_tokens( iter([string]).next )
-			if type != TokenType.ENDMARKER
-		]
+		try:
+			self.tokens = [
+				ActionParser.Token(type, string)
+				for (type, string, trash, trash, trash)
+				in generate_tokens( iter([string]).next )
+				if type != TokenType.ENDMARKER
+			]
+		except TokenError:
+			self.tokens = None
 		self.index = 0
 		return self
 	
@@ -311,7 +330,7 @@ class ActionParser(object):
 				
 				t = self._next_token()
 				if not hasattr(parameter, t.value):
-					raise ParseError("%s has no attribute '%s'" % (t.value,))
+					raise ParseError("%s has no attribute '%s'" % (parameter, t.value,))
 				parameter = getattr(parameter, t.value)
 			return parameter
 		
@@ -399,6 +418,7 @@ class ActionParser(object):
 		# Check if token after action name is parenthesis and if yes, parse
 		# parameters from it
 		t = self._peek_token()
+		parameters = []
 		if t.type == TokenType.OP and t.value == '(':
 			parameters  = self._parse_parameters()
 			if not self._tokens_left():
@@ -433,7 +453,12 @@ class ActionParser(object):
 		Returns parsed action.
 		Throws ParseError if action cannot be parsed.
 		"""
-		return self._parse_action()
+		if self.tokens == None:
+			raise ParseError("Syntax error")
+		a = self._parse_action()
+		if self._tokens_left():
+			raise ParseError("Unexpected '%s'" % (self._next_token().value, ))
+		return a
 	
 	
 class TalkingActionParser(ActionParser):
