@@ -103,10 +103,10 @@ class RAxisAction(Action):
 		return _("Reverse %s Axis") % (self.parameters[0].name.split("_", 1)[-1],)
 
 
-class HatUpAction(Action): COMMAND = "hatup"
-class HatDownAction(Action): COMMAND = "hatdown"
-class HatLeftAction(Action): COMMAND = "hatleft"
-class HatRightAction(Action): COMMAND = "hatright"
+class HatUpAction(AxisAction): COMMAND = "hatup"
+class HatDownAction(AxisAction): COMMAND = "hatdown"
+class HatLeftAction(AxisAction): COMMAND = "hatleft"
+class HatRightAction(AxisAction): COMMAND = "hatright"
 
 class DPadAction(Action):
 	COMMAND = "dpad"

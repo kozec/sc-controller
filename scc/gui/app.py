@@ -59,8 +59,8 @@ class App(Gtk.Application):
 			self.button_widgets[b] = ControllerButton(self, b, self.builder.get_object("bt" + b.name))
 		for b in TRIGGERS:
 			self.button_widgets[b] = ControllerTrigger(self, b, self.builder.get_object("btTrigger" + b))
-		for p in PADS:
-			self.button_widgets[p] = ControllerPad(self, p, self.builder.get_object("bt" + p))
+		for b in PADS:
+			self.button_widgets[b] = ControllerPad(self, b, self.builder.get_object("bt" + b))
 
 
 		vbc = self.builder.get_object("vbC")
@@ -124,6 +124,9 @@ class App(Gtk.Application):
 		if area in [ x.name for x in BUTTONS ]:
 			self.hint(None)
 			self.show_editor(getattr(SCButtons, area))
+		elif area in TRIGGERS:
+			self.hint(None)
+			self.show_editor(area)
 
 
 	def on_vbc_allocated(self, vbc, allocation):
