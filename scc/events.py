@@ -11,7 +11,7 @@ to button press while with StickEvent it be configured to press different
 buttons for each direction in which stick can be moved.
 """
 from scc.uinput import Keys, Axes, Rels
-from scc.actions import MOUSE_BUTTONS, ACTIONS
+from scc.actions import MOUSE_BUTTONS, GAMEPAD_BUTTONS, ACTIONS
 from collections import deque
 
 STICK_PAD_MIN = -32767
@@ -73,21 +73,39 @@ class ControllerEvent(object):
 	
 	hatleft = hatup
 	hatright = hatdown
+	
+	
+	def _button_press(self, button):
+		"""
+		Emulates button press.
+		button can be mouse button, gamepad button or key; this method decides
+		which device and which emulation method should be used.
+		"""
+		if button in MOUSE_BUTTONS:
+			self.mapper.mouse.keyEvent(button, 1)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif button in GAMEPAD_BUTTONS:
+			self.mapper.gamepad.keyEvent(button, 1)
+			self.mapper.syn_list.add(self.mapper.gamepad)
+		else:
+			self.mapper.keypress_list.append(button)
+	
+	
+	def _button_release(self, button):
+		""" See _button_press """
+		if button in MOUSE_BUTTONS:
+			self.mapper.mouse.keyEvent(button, 0)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif button in GAMEPAD_BUTTONS:
+			self.mapper.gamepad.keyEvent(button, 0)
+			self.mapper.syn_list.add(self.mapper.gamepad)
+		else:
+			self.mapper.keyrelease_list.append(button)
 
 
 class ButtonPressEvent(ControllerEvent):
-	def key(self, key1, *a):
-		self.mapper.keypress_list.append(key1)
-		return True
-	
-	
 	def button(self, button1, *a):
-		if button1 in MOUSE_BUTTONS:
-			self.mapper.mouse.keyEvent(button1, 1)
-			self.mapper.syn_list.add(self.mapper.mouse)
-		else:
-			self.mapper.gamepad.keyEvent(button1, 1)
-			self.mapper.syn_list.add(self.mapper.gamepad)
+		self._button_press(button1)
 		return True
 	
 	
@@ -116,17 +134,8 @@ class ButtonPressEvent(ControllerEvent):
 
 
 class ButtonReleaseEvent(ControllerEvent):
-	def key(self, key1, *a):
-		self.mapper.keyrelease_list.append(key1)
-		return False
-	
 	def button(self, button1, *a):
-		if button1 in MOUSE_BUTTONS:
-			self.mapper.mouse.keyEvent(button1, 0)
-			self.mapper.syn_list.add(self.mapper.mouse)
-		else:
-			self.mapper.gamepad.keyEvent(button1, 0)
-			self.mapper.syn_list.add(self.mapper.gamepad)
+		self._button_release(button1)
 		return False
 	
 	
@@ -178,27 +187,14 @@ class StickEvent(ControllerEvent):
 		return rv
 	
 	
-	def key(self, key1, key2 = None, minustrigger = STICK_PAD_MIN_HALF, plustrigger = STICK_PAD_MAX_HALF):
-		rv = False
-		for (pressed, key) in self._by_trigger(key1, key2, minustrigger, plustrigger):
-			if pressed:
-				self.mapper.keypress_list.append(key)
-				rv = True
-			else:
-				self.mapper.keyrelease_list.append(key)
-		return rv
-	
-	
 	def button(self, button1, button2 = None, minustrigger = STICK_PAD_MIN_HALF, plustrigger = STICK_PAD_MAX_HALF):
 		rv = False
 		for (pressed, button) in self._by_trigger(button1, button2, minustrigger, plustrigger):
-			dev = self.mapper.mouse if button1 in MOUSE_BUTTONS else self.mapper.gamepad
 			if pressed:
-				dev.keyEvent(button, 1)
+				self._button_press(button)
 				rv = True
 			else:
-				dev.keyEvent(button, 0)
-			self.mapper.syn_list.add(dev)
+				self._button_release(button)
 		return rv
 	
 	
@@ -397,26 +393,14 @@ class TriggerEvent(ControllerEvent):
 		return rv
 	
 	
-	def key(self, key1, key2 = None, first_trigger = TRIGGERS_HALF, full_trigger = TRIGGERS_CLICK):
-		rv = False
-		for (pressed, key) in self._by_trigger(key1, key2, first_trigger, full_trigger):
-			if pressed:
-				self.mapper.keypress_list.append(key)
-				rv = True
-			else:
-				self.mapper.keyrelease_list.append(key)
-		return rv
-	
-	
 	def button(self, button1, button2 = None, first_trigger = TRIGGERS_HALF, full_trigger = TRIGGERS_CLICK):
 		rv = False
 		for (pressed, button) in self._by_trigger(button1, button2, first_trigger, full_trigger):
-			dev = self.mapper.mouse if button1 in MOUSE_BUTTONS else self.mapper.gamepad
 			if pressed:
-				dev.keyEvent(button, 1)
+				self._button_press(button)
 				rv = True
 			else:
-				dev.keyEvent(button, 0)
+				self._button_release(button)
 			self.mapper.syn_list.add(dev)
 		return rv
 	
