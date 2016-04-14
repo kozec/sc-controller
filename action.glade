@@ -476,7 +476,7 @@
             <property name="spacing">4</property>
             <child>
               <object class="GtkToggleButton" id="tgAxisTrigger">
-                <property name="label" translatable="yes">Axis or Trigger</property>
+                <property name="label" translatable="yes">Axis, Trigger or Mouse</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -492,7 +492,7 @@
             </child>
             <child>
               <object class="GtkToggleButton" id="tgKeyButMouse">
-                <property name="label" translatable="yes">Key, Button or Mouse</property>
+                <property name="label" translatable="yes">Key or Button</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>

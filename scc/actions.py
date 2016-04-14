@@ -27,35 +27,43 @@ class Action(object):
 	Simple action that executes one of predefined methods.
 	See ACTIONS for list of them.
 	"""
-
+	# Used everywhere to convert strings to Action classes and back
+	COMMAND = None
+	
 	# "Action Context" constants used by describe method
 	AC_BUTTON = 1
 	AC_TRIGGER = 3
-
-	def __init__(self, action, parameters):
-		self.action = action
+	
+	def __init__(self, parameters):
 		self.parameters = parameters
-
-
+	
+	
 	def describe(self, context):
 		"""
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
 		return str(self)
-
-
+	
+	
+	def to_string(self):
+		""" Converts action back to string """
+		return "%s(%s)" % (self.COMMAND, ", ".join([ str(x) for x in self.parameters ]))
+	
+	
 	def execute(self, event):
-		return getattr(event, self.action)(*self.parameters)
-
-
+		return getattr(event, self.COMMAND)(*self.parameters)
+	
+	
 	def __str__(self):
-		return "<Action '%s', %s>" % (self.action, self.parameters)
-
+		return "<Action '%s', %s>" % (self.COMMAND, self.parameters)
+	
 	__repr__ = __str__
 
 
 class AxisAction(Action):
+	COMMAND = "axis"
+	
 	AXIS_NAMES = {
 		Axes.ABS_X : ("LStick", "Left", "Right"),
 		Axes.ABS_Y : ("LStick", "Up", "Down"),
@@ -90,16 +98,24 @@ class AxisAction(Action):
 
 
 class RAxisAction(Action):
+	COMMAND = "raxis"
 	def describe(self, context):
 		return _("Reverse %s Axis") % (self.parameters[0].name.split("_", 1)[-1],)
 
 
+class HatUpAction(Action): COMMAND = "hatup"
+class HatDownAction(Action): COMMAND = "hatdown"
+class HatLeftAction(Action): COMMAND = "hatleft"
+class HatRightAction(Action): COMMAND = "hatright"
+
 class DPadAction(Action):
+	COMMAND = "dpad"
 	def describe(self, context):
 		return "DPad"
 
 
 class MouseAction(Action):
+	COMMAND = "mouse"
 	def describe(self, context):
 		if self.parameters[0] == Rels.REL_WHEEL:
 			return _("Wheel")
@@ -107,21 +123,25 @@ class MouseAction(Action):
 
 
 class TrackpadAction(Action):
+	COMMAND = "trackpad"
 	def describe(self, context):
 		return "Trackpad"
 
 
 class TrackballAction(Action):
+	COMMAND = "trackball"
 	def describe(self, context):
 		return "Trackball"
 
 
 class WheelAction(Action):
+	COMMAND = "wheel"
 	def describe(self, context):
 		return _("Mouse Wheel")
 
 
 class ButtonAction(Action):
+	COMMAND = "button"
 	SPECIAL_NAMES = {
 		Keys.BTN_LEFT	: "Mouse Left",
 		Keys.BTN_MIDDLE	: "Mouse Middle",
@@ -152,32 +172,9 @@ class ButtonAction(Action):
 
 
 class ClickAction(Action):
+	COMMAND = "click"
 	def describe(self, context):
 		return _("(if pressed)")
-
-
-class HatAction(Action):
-	def describe(self, context):
-		return "Hat"
-
-
-ACTIONS = {
-	# Actions
-	'axis'		: AxisAction,
-	'dpad'		: DPadAction,
-	'mouse'		: MouseAction,
-	'trackpad'	: TrackpadAction,
-	'trackball'	: TrackballAction,
-	'wheel'		: WheelAction,
-	'button'	: ButtonAction,
-	'click'		: ClickAction,
-	# Shortcuts
-	'raxis'		: RAxisAction,
-	'hatup'		: HatAction,
-	'hatdown'	: HatAction,
-	'hatleft'	: HatAction,
-	'hatright'	: HatAction,
-}
 
 
 class MultiAction(object):
@@ -185,6 +182,7 @@ class MultiAction(object):
 	Two or more actions executed in sequence.
 	Generated when parsing ';'
 	"""
+	COMMAND = None
 
 	def __init__(self, *actions):
 		self.actions = []
@@ -216,8 +214,12 @@ class MultiAction(object):
 		for a in actions:
 			rv = a.execute(event)
 		return rv
-
-
+	
+	
+	def to_string(self):
+		return "; ".join([ x.to_string for x in self.actions ])
+	
+	
 	def __str__(self):
 		return "<[ %s ]>" % ("; ".join([ str(x) for x in self.actions ]), )
 
@@ -230,6 +232,7 @@ class LinkedActions(MultiAction):
 	Action 2 is executed only if action 1 returns True - currently used only
 	with 'click' action that returns True only if pad or stick is pressed.
 	"""
+	COMMAND = None
 
 	def execute(self, event):
 		for x in self.actions:
@@ -243,8 +246,12 @@ class LinkedActions(MultiAction):
 		Used in GUI.
 		"""
 		return self.actions[0].describe(context)
-
-
+	
+	
+	def to_string(self):
+		return " and ".join([ x.to_string for x in self.actions ])
+	
+	
 	def __str__(self):
 		return "< %s >" % (" and ".join([ str(x) for x in self.actions ]), )
 
@@ -427,7 +434,7 @@ class ActionParser(object):
 		if t.type == TokenType.OP and t.value == '(':
 			parameters  = self._parse_parameters()
 			if not self._tokens_left():
-				return action_class(action_name, parameters)
+				return action_class(parameters)
 			t = self._peek_token()
 
 		# ... or, if it is one of ';', 'and' or 'or' and if yes, parse next action
@@ -436,7 +443,7 @@ class ActionParser(object):
 			self._next_token()
 			if not self._tokens_left():
 				raise ParseError("Excepted action after 'and'")
-			action1 = action_class(action_name, parameters)
+			action1 = action_class(parameters)
 			action2 = self._parse_action()
 			return LinkedActions(action1, action2)
 
@@ -445,12 +452,12 @@ class ActionParser(object):
 			self._next_token()
 			if not self._tokens_left():
 				# Having ';' at end of string is not actually error
-				return action_class(action_name, parameters)
-			action1 = action_class(action_name, parameters)
+				return action_class(parameters)
+			action1 = action_class(parameters)
 			action2 = self._parse_action()
 			return MultiAction(action1, action2)
 
-		return action_class(action_name, parameters)
+		return action_class(parameters)
 
 
 	def parse(self):
@@ -485,3 +492,12 @@ class TalkingActionParser(ActionParser):
 			return ActionParser.parse(self)
 		except ParseError, e:
 			print >>sys.stderr, "Warning: Failed to parse '%s':" % (self.string,), e
+
+
+# Generate dict of { 'actionname' : ActionClass } for later use
+ACTIONS = {
+	globals()[x].COMMAND : globals()[x]
+	for x in dir()
+	if hasattr(globals()[x], 'COMMAND')
+	and globals()[x].COMMAND is not None
+}

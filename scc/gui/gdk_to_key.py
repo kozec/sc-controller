@@ -1,15 +1,16 @@
 #!/usr/bin/env python2
 """
-SC-Controller - gdk_to_key
+SC-Controller - GDK_TO_KEY
 
 Maps Gdk.KEY_* constants into Keys.KEY_* constants.
+Used by ActionEditor (when grabbing the key)
 """
 from __future__ import unicode_literals
 
 from gi.repository import Gdk
 from scc.uinput import Keys
 
-gdk_to_key = {
+GDK_TO_KEY = {
 	# Row 1
 	Gdk.KEY_Escape		: Keys.KEY_ESC,
 	Gdk.KEY_Print		: Keys.KEY_PRINT,
@@ -91,20 +92,20 @@ names = { x.name : x for x in Keys }
 for x in dir(Gdk):
 	if x.startswith("KEY_"):
 		if x in names:
-			gdk_to_key[getattr(Gdk, x)] = names[x]
+			GDK_TO_KEY[getattr(Gdk, x)] = names[x]
 
 # A-Z keys, because GDK has different codes for 'A' and 'a'
 for x in xrange(ord('a'), ord('z')+1):
-	gdk_to_key[getattr(Gdk, "KEY_" + chr(x))] = names["KEY_" + chr(x).upper()]
+	GDK_TO_KEY[getattr(Gdk, "KEY_" + chr(x))] = names["KEY_" + chr(x).upper()]
 
 
 def keyevent_to_key(event):
 	keymap = Gdk.Keymap.get_default()
 	found, whatever, keyvals = keymap.get_entries_for_keycode(event.hardware_keycode)
 	if found and len(keyvals) > 0:
-		if keyvals[0] in gdk_to_key:
-			return gdk_to_key[keyvals[0]]
+		if keyvals[0] in GDK_TO_KEY:
+			return GDK_TO_KEY[keyvals[0]]
 	
-	if event.keyval in gdk_to_key:
-		return gdk_to_key[event.keyval]
+	if event.keyval in GDK_TO_KEY:
+		return GDK_TO_KEY[event.keyval]
 	return None
