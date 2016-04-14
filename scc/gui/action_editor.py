@@ -31,14 +31,15 @@ class ActionEditor:
 
 	ERROR_CSS = " #error {background-color:green; color:red;} "
 	PAGES = [
-		('vbKeyButMouse',	'tgKeyButMouse',		[ MODE_BUTTON, MODE_TRIGGER ]),
-		('vbAxisTrigger',	'tgAxisTrigger',		[ MODE_TRIGGER ]),
-		('vbCustom',		'tgCustom',				[ MODE_BUTTON, MODE_TRIGGER ]),
+		('vbKeyBut',			'tgKeyBut',				[ MODE_BUTTON ]),
+		('grKeyButByTrigger',	'tgKeyButByTrigger',	[ MODE_TRIGGER ]),
+		('vbAxisTrigger',		'tgAxisTrigger',		[ MODE_TRIGGER ]),
+		('vbCustom',			'tgCustom',				[ MODE_BUTTON, MODE_TRIGGER ]),
 	]
 	CUSTOM_PAGE = 'tgCustom'
 	DEFAULT_PAGE = {
-		MODE_BUTTON		: 'tgKeyButMouse',
-		MODE_TRIGGER	: 'tgAxisTrigger'
+		MODE_BUTTON		: 'tgKeyBut',
+		MODE_TRIGGER	: 'tgKeyButByTrigger'
 	}
 
 	css = None
@@ -67,7 +68,7 @@ class ActionEditor:
 		self.keygrab = self.builder.get_object("keyGrab")
 		self.builder.connect_signals(self)
 
-		for (p_id, img) in ( ("vbKeyButMouse", self.IMAGE1), ("vbAxisTrigger", self.IMAGE2) ):
+		for (p_id, img) in ( ("vbKeyBut", self.IMAGE1), ("vbAxisTrigger", self.IMAGE2) ):
 			parent = self.builder.get_object(p_id)
 			self.background = SVGWidget(self.app, os.path.join(self.app.iconpath, img))
 			self.background.connect('hover', self.on_background_area_hover)
