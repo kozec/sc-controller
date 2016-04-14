@@ -165,6 +165,11 @@ class ButtonAction(Action):
 		p = self.parameters[0]
 		if p in ButtonAction.SPECIAL_NAMES:
 			return _(ButtonAction.SPECIAL_NAMES[p])
+		elif p == Rels.REL_WHEEL:
+			if len(self.parameters) < 2 or self.parameters[1] > 0:
+				return _("Wheel UP")
+			else:
+				return _("Wheel DOWN")
 		elif p in MOUSE_BUTTONS:
 			return _("Mouse %s") % (p,)
 		else:
@@ -217,7 +222,7 @@ class MultiAction(object):
 	
 	
 	def to_string(self):
-		return "; ".join([ x.to_string for x in self.actions ])
+		return "; ".join([ x.to_string() for x in self.actions ])
 	
 	
 	def __str__(self):
@@ -249,7 +254,7 @@ class LinkedActions(MultiAction):
 	
 	
 	def to_string(self):
-		return " and ".join([ x.to_string for x in self.actions ])
+		return " and ".join([ x.to_string() for x in self.actions ])
 	
 	
 	def __str__(self):
