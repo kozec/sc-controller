@@ -32,6 +32,7 @@ class Action(object):
 	
 	# "Action Context" constants used by describe method
 	AC_BUTTON = 1
+	AC_STICK = 2
 	AC_TRIGGER = 3
 	
 	def __init__(self, parameters):
@@ -259,6 +260,31 @@ class LinkedActions(MultiAction):
 	
 	def __str__(self):
 		return "< %s >" % (" and ".join([ str(x) for x in self.actions ]), )
+
+	__repr__ = __str__
+
+
+class XYAction(MultiAction):
+	"""
+	Used internaly to store actions for X and Y axis at once.
+	Shouldn't be saved into profile or weird stuff may happen.
+	"""
+	COMMAND = "XY"
+
+	def execute(self, event):
+		raise Exception("XYAction cannot be executed")
+
+
+	def describe(self, context):
+		return self.actions[0].describe(context)
+	
+	
+	def to_string(self):
+		return "XY(" + (", ".join([ x.to_string() for x in self.actions ])) + ")"
+	
+	
+	def __str__(self):
+		return "<XY %s >" % (", ".join([ str(x) for x in self.actions ]), )
 
 	__repr__ = __str__
 

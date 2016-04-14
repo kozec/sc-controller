@@ -54,15 +54,15 @@ class App(Gtk.Application):
 		self.add_window(self.window)
 		self.window.set_title(_("SC Controller"))
 		self.window.set_wmclass("SC Controller", "SC Controller")
-
+		
 		for b in BUTTONS:
 			self.button_widgets[b] = ControllerButton(self, b, self.builder.get_object("bt" + b.name))
 		for b in TRIGGERS:
 			self.button_widgets[b] = ControllerTrigger(self, b, self.builder.get_object("btTrigger" + b))
 		for b in PADS:
 			self.button_widgets[b] = ControllerPad(self, b, self.builder.get_object("bt" + b))
-
-
+		
+		
 		vbc = self.builder.get_object("vbC")
 		main_area = self.builder.get_object("mainArea")
 		vbc.get_parent().remove(vbc)
@@ -73,8 +73,8 @@ class App(Gtk.Application):
 		self.background.connect('click', self.on_background_area_click)
 		main_area.put(self.background, 0, 0)
 		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
-
-
+	
+	
 	def hilight(self, button):
 		""" Hilights specified button on background image """
 		self.background.hilight({ button : App.HILIGHT_COLOR })
@@ -104,6 +104,11 @@ class App(Gtk.Application):
 			ae = ActionEditor(self)
 			ae.set_title(_("Edit Action for %s Trigger") % (id,))
 			ae.set_trigger(id, self.current.triggers[id])
+			ae.show(self.window)
+		elif id == "STICK":
+			ae = ActionEditor(self)
+			ae.set_title(_("Edit Action for Stick"))
+			ae.set_stick(self.current.stick)
 			ae.show(self.window)
 
 
