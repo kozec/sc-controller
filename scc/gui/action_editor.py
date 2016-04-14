@@ -9,7 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.uinput import Keys
-from scc.actions import Action, ButtonAction
+from scc.actions import Action, AxisAction, MouseAction, ButtonAction
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.button_chooser import ButtonChooser
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
@@ -106,16 +106,16 @@ class ActionEditor(ButtonChooser):
 		txCustomAction = self.builder.get_object("txCustomAction")
 		entAction = self.builder.get_object("entAction")
 		btOK = self.builder.get_object("btOK")
-
+		
 		# Get text from buffer
 		txt = tbCustomAction.get_text(tbCustomAction.get_start_iter(), tbCustomAction.get_end_iter(), True)
-
+		
 		# Convert it to simpler text separated only with ';'
 		txt = txt.replace(";", "\n").split("\n")
 		txt = [ t.strip("\t ") for t in txt ]
 		while "" in txt : txt.remove("")
 		txt = "; ".join(txt)
-
+		
 		# Try to parse it as action
 		if len(txt) > 0:
 			action = self.parser.restart(txt).parse()
@@ -175,8 +175,8 @@ class ActionEditor(ButtonChooser):
 		action = self.parser.restart(entAction.get_text()).parse()
 		self.app.set_action(self.id, action)
 		self.close()
-
-
+	
+	
 	def on_slave_finished(self, slave, action):
 		self._param2action = self.parser.restart(action).parse()
 		slave.close()
@@ -195,7 +195,8 @@ class ActionEditor(ButtonChooser):
 		area = action_to_area(action)
 		if area is not None:
 			self.set_active_area(area)
-
+	
+	
 	def set_multiparams(self, cls, count):
 		""" Handles creating actions with multiple parameters """
 		if count >= 0:
@@ -206,28 +207,38 @@ class ActionEditor(ButtonChooser):
 		while len(pars) > 1 and pars[-1] is None:
 			pars = pars[0:-1]
 		self.set_action(cls(pars))
-
-
+	
+	
 	def _set_mode(self, mode):
 		""" Hides 'action type' buttons that are not usable with current mode """
 		self._mode = mode
 		for (page, button, modes) in ActionEditor.PAGES:
 			self.builder.get_object(button).set_visible(mode in modes)
 		self.builder.get_object(ActionEditor.DEFAULT_PAGE[mode]).set_active(True)
-
-
-	def set_button(self, button):
+	
+	
+	def set_button(self, button, action):
 		""" Setups action editor as editor for button action """
 		self._set_mode(Action.AC_BUTTON)
+		self.set_action(action)
 		self.id = button
-
-
-	def set_trigger(self, trigger):
+	
+	
+	def set_trigger(self, trigger, action):
 		""" Setups action editor as editor for button action """
 		self._set_mode(Action.AC_TRIGGER)
+		self.set_action(action)
 		self.id = trigger
-
-
+		if isinstance(action, AxisAction):
+			self.builder.get_object("tgAxisTrigger").set_active(True)
+		elif isinstance(action, MouseAction):
+			self.builder.get_object("tgAxisTrigger").set_active(True)
+		elif isinstance(action, ButtonAction):
+			for x in xrange(0, len(action.parameters)):
+				self._multiparams[x] = action.parameters[x]
+			self.set_multiparams(ButtonAction, 2)
+	
+	
 	def describe_action(self, cls, v):
 		"""
 		Returns action description with 'v' as parameter, unless unless v is None.

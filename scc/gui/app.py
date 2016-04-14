@@ -98,14 +98,12 @@ class App(Gtk.Application):
 		if id in SCButtons:
 			ae = ActionEditor(self)
 			ae.set_title(_("Edit Action for %s Button") % (id.name,))
-			ae.set_button(id)
-			ae.set_action(self.current.buttons[id])
+			ae.set_button(id, self.current.buttons[id])
 			ae.show(self.window)
 		elif id in TRIGGERS:
 			ae = ActionEditor(self)
 			ae.set_title(_("Edit Action for %s Trigger") % (id,))
-			ae.set_trigger(id)
-			ae.set_action(self.current.triggers[id])
+			ae.set_trigger(id, self.current.triggers[id])
 			ae.show(self.window)
 
 
