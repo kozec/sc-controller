@@ -80,13 +80,20 @@ class ActionEditor:
 
 
 	def on_action_mode_changed(self, obj):
+		"""
+		Called when user clicks on one of Actio Type buttons.
+		"""
+		# Prevent recurson
 		if self._recursing : return
 		self._recursing = True
+		# Don't allow user to deactivate buttons - I'm using them as
+		# radio button and you can't 'uncheck' radiobutton by clicking on it
 		if not obj.get_active():
 			obj.set_active(True)
 			self._recursing = False
 			return
-
+		
+		#  Uncheck all other Action Buttons
 		active = None
 		for (page, button, modes) in ActionEditor.PAGES:
 			if obj == self.builder.get_object(button):
@@ -94,20 +101,27 @@ class ActionEditor:
 			else:
 				self.builder.get_object(button).set_active(False)
 		self._recursing = False
-
+		
+		# Special handling for 'Custom Action' page.
+		# Text area on it needs to be filled with action code before
+		# page is shown
 		if active[1] == ActionEditor.CUSTOM_PAGE:
 			tbCustomAction = self.builder.get_object("tbCustomAction")
 			entAction = self.builder.get_object("entAction")
 			txt = entAction.get_text().split(";")
 			txt = [ t.strip(" \t") for t in txt ]
 			tbCustomAction.set_text("\n".join(txt))
-
+		
+		# Switch to apropriate page
 		stActionModes = self.builder.get_object("stActionModes")
 		stActionModes.set_visible_child(self.builder.get_object(active[0]))
 
 
 	def on_tbCustomAction_changed(self, tbCustomAction, *a):
-		""" Converts text from custom action into bottom action field """
+		"""
+		Converts text from Custom Action text area into text
+		that can be displayed in Action field on bottom
+		"""
 		txCustomAction = self.builder.get_object("txCustomAction")
 		entAction = self.builder.get_object("entAction")
 		btOK = self.builder.get_object("btOK")
@@ -135,6 +149,10 @@ class ActionEditor:
 
 
 	def on_btnGrabKey_clicked(self, *a):
+		"""
+		Called when user clicks on 'Grab a Key' button.
+		Displays additional dialog.
+		"""
 		self.active_mods = []
 		self.keygrab.set_transient_for(self.window)
 		self.keygrab.set_modal(True)
@@ -146,6 +164,10 @@ class ActionEditor:
 
 
 	def on_background_area_click(self, trash, area):
+		"""
+		Called when user clicks on defined area on gamepad image.
+		Fills Action field on bottom with apropriate action code.
+		"""
 		entAction = self.builder.get_object("entAction")
 		if area in AREA_TO_ACTION:
 			cls, params = AREA_TO_ACTION[area][0], AREA_TO_ACTION[area][1:]
@@ -155,16 +177,19 @@ class ActionEditor:
 	
 	
 	def on_background_area_hover(self, background, area):
-		background.hilight(area, "#FFFF0000")
+		background.hilight(area, "#FFFF0000")	# ARGB
 
 
 	def on_actionEditor_key_press_event(self, trash, event):
-		# Check if pressed key was escape and if yes, close window
+		""" Checks if pressed key was escape and if yes, closes window """
 		if event.keyval == Gdk.KEY_Escape:
 			self.window.destroy()
 
 
 	def on_tgkey_toggled(self, obj, *a):
+		"""
+		Handles when user clicks on modifier buttons in "Grab Key" dialog
+		"""
 		for key in ActionEditor.MODIFIERS:
 			if self.builder.get_object("tg" + key.name) == obj:
 				if obj.get_active() and not key in self.active_mods:
@@ -177,6 +202,12 @@ class ActionEditor:
 
 
 	def on_keyGrab_key_press_event(self, trash, event):
+		"""
+		Handles keypress on "Grab Key" dialog.
+		
+		Remembers modifiers and displays text in middle of dialog.
+		Dialog is dismissed (and key is accepted) by key_release handler bellow.
+		"""
 		key = keyevent_to_key(event)
 		if key is None:
 			log.warning("Unknown keycode %s/%s" % (event.keyval, event.hardware_keycode))
@@ -197,30 +228,41 @@ class ActionEditor:
 
 
 	def on_keyGrab_key_release_event(self, trash, event):
+		"""
+		Handles keyrelease on "Grab Key" dialog.
+		
+		Key is accepted if either:
+		- released key is not modifier
+		- released key is modifier, but there is no other modifier key pressed
+		
+		Calls on_key_grabbed if key is accepted
+		"""
 		key = keyevent_to_key(event)
 		if key is not None:
 			if key in ActionEditor.MODIFIERS:
 				if key in self.active_mods:
 					if len(self.active_mods) == 1:
 						# Releasing last modifier
-						self.key_grabbed([key])
+						self.on_key_grabbed([key])
 						return
 					self.active_mods.remove(key)
 					self.builder.get_object("tg" + key.name).set_active(False)
 				self.builder.get_object("lblKey").set_label("+".join([key.name.split("_")[-1] for key in self.active_mods]))
 				return
 
-			self.key_grabbed(self.active_mods + [key])
+			self.on_key_grabbed(self.active_mods + [key])
 
 
 	def on_btOK_clicked(self, *a):
+		""" Handler for OK button ... """
 		entAction = self.builder.get_object("entAction")
 		action = self.parser.restart(entAction.get_text()).parse()
 		self.app.set_action(self.id, action)
 		self.window.destroy()
 
 
-	def key_grabbed(self, keys):
+	def on_key_grabbed(self, keys):
+		""" Handles selecting key using "Grab the Key" dialog """
 		entAction = self.builder.get_object("entAction")
 		actions = [ 'button(Keys.%s)' % (key.name,) for key in keys ]
 		entAction.set_text("; ".join(actions))
@@ -228,6 +270,8 @@ class ActionEditor:
 
 
 	def set_action(self, action):
+		""" Updates Action field on bottom """
+		# TODO: Display action on image as well
 		entAction = self.builder.get_object("entAction")
 		if hasattr(action, 'string'):
 			# Stuff generated by my special parser
@@ -266,6 +310,7 @@ class ActionEditor:
 		self.window.set_transient_for(modal_for)
 		self.window.set_modal(True)
 		self.window.show()
+
 
 def merge_modifiers(mods):
 	return "+".join([ key.name.split("_")[-1] for key in mods ])
