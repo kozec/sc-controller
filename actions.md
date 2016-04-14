@@ -1,16 +1,16 @@
 # Actions
 
-#### key(key1 [, key2 = None, minustrigger = -16383, plustrigger = 16383 ])
-- For button, simply maps to 'key1' press.
-- For stick or pad, when it is moved over 'minustrigger', 'key1' is pressed;
-  When it is moved back, 'key1' is released. Similary, 'key2' is pressed and
-  released when stick (or finger on pad) moves over 'plustrigger' value
-- For trigger, when trigger value goes over 'plustrigger', 'key2' is pressed;
-  then, when trigger value goes over 'minustrigger', 'key2' is released and
-  replaced with 'key1'. Whatever keypress was emulated by trigger, it is
+### button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
+- For button, simply maps to 'button1' press.
+- For stick or pad, when it is moved over 'minustrigger', 'button1' is pressed;
+  When it is moved back, 'button1' is released. Similary, 'button2' is pressed
+  and released when stick (or finger on pad) moves over 'plustrigger' value
+- For trigger, when trigger value goes over 'plustrigger', 'button2' is pressed;
+  then, when trigger value goes over 'minustrigger', 'button2' is released and
+  replaced with 'button1'. Whatever button was emulated by trigger, it is
   released when trigger is released.
   
-  Note that 'key2' is optional.
+  Note that 'button2' is always optional.
 
 
 ### mouse(axis [, speed = 1, acceleration = 0 ])
@@ -36,10 +36,6 @@ Available only for pads. Acts as trackball.
 ### wheel([ trackball = False, speed = 1 ])
 Available only for pads. Emulates mouse scroll wheel.
 
-
-### button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
-Controls gamepad and mouse buttons.
-Works in same way as key(), but for buttons.
 
 
 #### axis(id [, min = -32767, max = 32767 ])
@@ -75,11 +71,11 @@ reversed. Effectively inverted axis mapping.
 
 #### hatup(id)
 Shortcut for `axis(id, 0, 32767)`, emulates moving hat up or pressing 'up'
-key on dpad.
+button on dpad.
 
 #### hatdown(id)
 Shortcut for `axis(id, 0, -32767)`, emulates moving hat down or pressing 'down'
-key on dpad.
+button on dpad.
 
 #### hatleft(id), hadright(id)
 Same thing as hatup/hatdown, as vertical hat movement and left/right dpad

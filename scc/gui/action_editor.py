@@ -268,7 +268,7 @@ class ActionEditor:
 
 	def key_grabbed(self, keys):
 		entAction = self.builder.get_object("entAction")
-		actions = [ 'key(Keys.%s)' % (key.name,) for key in keys ]
+		actions = [ 'button(Keys.%s)' % (key.name,) for key in keys ]
 		entAction.set_text("; ".join(actions))
 		self.keygrab.hide()
 

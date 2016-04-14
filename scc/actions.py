@@ -18,7 +18,9 @@ import token as TokenType
 import sys
 _ = lambda x : x
 
-MOUSE_BUTTONS = [ Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA ]
+MOUSE_BUTTONS = ( Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA )
+GAMEPAD_BUTTONS = ( Keys.BTN_A, Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
+		Keys.BTN_SELECT, Keys.BTN_START, Keys.BTN_MODE, Keys.BTN_THUMBL, Keys.BTN_THUMBR )
 
 class Action(object):
 	"""
@@ -51,11 +53,6 @@ class Action(object):
 		return "<Action '%s', %s>" % (self.action, self.parameters)
 
 	__repr__ = __str__
-
-
-class KeyAction(Action):
-	def describe(self, context):
-		return _("Key %s") % (self.parameters[0].name.split("_")[-1],)
 
 
 class AxisAction(Action):
@@ -166,7 +163,6 @@ class HatAction(Action):
 
 ACTIONS = {
 	# Actions
-	'key'		: KeyAction,
 	'axis'		: AxisAction,
 	'dpad'		: DPadAction,
 	'mouse'		: MouseAction,
