@@ -25,7 +25,6 @@ MODIFIERS = [ Keys.KEY_LEFTCTRL, Keys.KEY_LEFTMETA, Keys.KEY_LEFTALT,
 ]
 
 
-
 def merge_modifiers(mods):
 	return "+".join([ key.name.split("_")[-1] for key in mods ])
 
@@ -34,10 +33,15 @@ class ButtonChooser(object):
 	GLADE_KG = "key_grabber.glade"
 	IMAGES = { "vbButChooser" : "buttons.svg" }
 	
+	ACTIVE_COLOR = "#FF00FF00"	# ARGB
+	HILIGHT_COLOR = "#FFFF0000"	# ARGB
+	
 	def __init__(self, app, callback=None):
 		self.app = app
 		self.axes_allowed = False
 		self.active_mods = []
+		self.active_area = None		# Area that is permanently hilighted on the image
+		self.images = []
 		self.setup_widgets()
 		self.callback = callback
 	
@@ -53,25 +57,37 @@ class ButtonChooser(object):
 		for id in self.IMAGES:
 			parent = self.builder.get_object(id)
 			if parent is not None:
-				img = self.IMAGES[id]
-				self.background = SVGWidget(self.app, os.path.join(self.app.iconpath, img))
-				self.background.connect('hover', self.on_background_area_hover)
-				self.background.connect('leave', self.on_background_area_hover, None)
-				self.background.connect('click', self.on_background_area_click)
-				parent.pack_start(self.background, True, True, 0)
+				image = SVGWidget(self.app, os.path.join(self.app.iconpath, self.IMAGES[id]))
+				image.connect('hover', self.on_background_area_hover)
+				image.connect('leave', self.on_background_area_hover, None)
+				image.connect('click', self.on_background_area_click)
+				self.images.append(image)
+				parent.pack_start(image, True, True, 0)
 				parent.show_all()
+	
 	
 	def allow_axes(self):
 		""" Allows axes to be selectable """
 		self.axes_allowed = True
 	
 	
+	def set_active_area(self, a):
+		"""
+		Sets area that is permanently hilighted on image.
+		"""
+		self.active_area = a
+		for i in self.images:
+			i.hilight({ self.active_area : ButtonChooser.ACTIVE_COLOR })
+	
 	def on_background_area_hover(self, background, area):
 		if area in AREA_TO_ACTION:
 			if AREA_TO_ACTION[area][0] in AXIS_ACTION_CLASSES:
 				if not self.axes_allowed:
 					return
-		background.hilight(area, "#FFFF0000")	# ARGB
+		background.hilight({
+			self.active_area : ButtonChooser.ACTIVE_COLOR,
+			area : ButtonChooser.HILIGHT_COLOR
+		})
 	
 	
 	def on_keyGrab_key_press_event(self, trash, event):

@@ -16,7 +16,6 @@ log = logging.getLogger("Background")
 
 class SVGWidget(Gtk.EventBox):
 	FILENAME = "background.svg"
-	HILIGHT_COLOR = "#FF00FF00"
 	
 	__gsignals__ = {
 			# Raised when mouse is over defined area
@@ -42,7 +41,7 @@ class SVGWidget(Gtk.EventBox):
 		self.image_width = 1
 		self.image = Gtk.Image()
 		self.parse_image()
-		self.hilight(None)
+		self.hilight({})
 		self.add(self.image)
 		self.show_all()
 	
@@ -80,25 +79,22 @@ class SVGWidget(Gtk.EventBox):
 		return None
 		
 	
-	def hilight(self, button, color = None):
+	def hilight(self, buttons):
 		""" Hilights specified button, if same ID is found in svg """
-		color = SVGWidget.HILIGHT_COLOR if color is None else color
-		cache_id = None if button is None else "%s|%s" % (color, button)
+		cache_id = "|".join([ "%s:%s" % (x, buttons[x]) for x in buttons ])
 		if not cache_id in self.cache:
 			# Ok, this is close to madness, but probably better than drawing
 			# 200 images by hand;
-			if button is not None:
-				# 1st, parse source as XML
-				tree = ET.fromstring(self.svg_source)
-				# 2nd, change element color
+			# 1st, parse source as XML
+			tree = ET.fromstring(self.svg_source)
+			# 2nd, change colors of some elements
+			for button in buttons:
 				el = find_by_id(tree, button)
 				if el is not None:
-					recolor(el, color)
+					recolor(el, buttons[button])
 				
-				# 3rd, turn it back into XML string......
-				xml = ET.tostring(tree)
-			else:
-				xml = self.svg_source
+			# 3rd, turn it back into XML string......
+			xml = ET.tostring(tree)
 			
 			# ... and now, parse that as XML again......
 			svg = Rsvg.Handle.new_from_data(xml.encode("utf-8"))

@@ -27,6 +27,7 @@ class App(Gtk.Application):
 	"""
 
 	IMAGE = "background.svg"
+	HILIGHT_COLOR = "#FF00FF00"		# ARGB
 
 	def __init__(self, gladepath="/usr/share/scc",
 						iconpath="/usr/share/scc/icons"):
@@ -76,7 +77,7 @@ class App(Gtk.Application):
 
 	def hilight(self, button):
 		""" Hilights specified button on background image """
-		self.background.hilight(button)
+		self.background.hilight({ button : App.HILIGHT_COLOR })
 
 
 	def hint(self, button):

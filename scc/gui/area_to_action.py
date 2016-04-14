@@ -72,3 +72,31 @@ AREA_TO_ACTION = {
 	'MOUSE8'			: (ButtonAction, Keys.BTN_SIDE),
 	'MOUSE9'			: (ButtonAction, Keys.BTN_EXTRA),
 }
+
+_CLS_TO_AREA = {}
+for x in AREA_TO_ACTION:
+	cls, params = AREA_TO_ACTION[x][0], AREA_TO_ACTION[x][1:]
+	if not cls in _CLS_TO_AREA:
+		_CLS_TO_AREA[cls] = []
+	_CLS_TO_AREA[cls].append((x, params))
+
+
+def action_to_area(action):
+	"""
+	Returns area that matches provided action (both class and parameters)
+	or None if there is no such area.
+	"""
+	cls = action.__class__
+	if not cls in _CLS_TO_AREA:
+		return None
+	for area, pars in _CLS_TO_AREA[cls]:
+		if not len(pars) == len(action.parameters):
+			continue
+		differs = False
+		for i in xrange(0, len(pars)):
+			if pars[i] != action.parameters[i]:
+				differs = True
+				break
+		if differs : continue
+		return area
+	return None

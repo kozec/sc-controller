@@ -12,7 +12,7 @@ from scc.uinput import Keys
 from scc.actions import Action, ButtonAction
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.button_chooser import ButtonChooser
-from scc.gui.area_to_action import AREA_TO_ACTION
+from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
 from scc.gui.parser import GuiActionParser, InvalidAction
 import os, sys, time, logging
 log = logging.getLogger("ActionEditor")
@@ -125,8 +125,7 @@ class ActionEditor(ButtonChooser):
 				entAction.set_text(str(action.error))
 			else:
 				btOK.set_sensitive(True)
-				entAction.set_name("entAction")
-				entAction.set_text(txt)
+				self.set_action(action)
 	
 	
 	def on_button_chooser_callback(self, action):
@@ -193,7 +192,9 @@ class ActionEditor(ButtonChooser):
 		else:
 			# Actions generated elsewhere
 			entAction.set_text(action.to_string())
-
+		area = action_to_area(action)
+		if area is not None:
+			self.set_active_area(area)
 
 	def set_multiparams(self, cls, count):
 		""" Handles creating actions with multiple parameters """
