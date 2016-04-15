@@ -14,9 +14,10 @@ from scc.actions import Action, XYAction
 from scc.profile import Profile
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.button_chooser import ButtonChooser
+from scc.gui.axis_chooser import AxisChooser
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
 from scc.gui.parser import GuiActionParser, InvalidAction
-import os, sys, time, logging
+import os, logging
 log = logging.getLogger("ActionEditor")
 
 class ActionEditor(ButtonChooser):
@@ -187,15 +188,20 @@ class ActionEditor(ButtonChooser):
 			b.close()
 			self.set_multiparams(cls, count)
 		
-		area = None
-		if store_as_action:
+		b, area = None, None
+		if cls == XYAction:
+			b = AxisChooser(self.app, cb)
+			b.set_title(_("Select Axis"))
+			area = action_to_area(self._multiparams[param])
+		elif store_as_action:
+			b = ButtonChooser(self.app, cb)
+			b.set_title(_("Select Action"))
 			area = action_to_area(self._multiparams[param])
 		elif cls == ButtonAction:
+			b.set_title(_("Select Button"))
 			action = cls([self._multiparams[param]])
 			area = action_to_area(action)
 		
-		b = ButtonChooser(self.app, cb)
-		b.set_title(_("Select Button"))
 		if allow_axes:
 			b.allow_axes()
 		if area is not None:
@@ -204,32 +210,42 @@ class ActionEditor(ButtonChooser):
 	
 	
 	def on_btFullPress_clicked(self, *a):
-		""" "Select Fully Pressed Action" handler """
+		""" 'Select Fully Pressed Action' handler """
 		self._grab_multiparam_action(ButtonAction, 0, 2)
 	
 	
 	def on_btPartPressed_clicked(self, *a):
-		""" "Select Partialy Pressed Action" handler """
+		""" 'Select Partialy Pressed Action' handler """
 		self._grab_multiparam_action(ButtonAction, 1, 2)
 	
 	
+	def on_btAxisX_clicked(self, *a):
+		""" 'Select X Axis Action' handler """
+		self._grab_multiparam_action(XYAction, 0, 2, True, True)
+	
+	
+	def on_btAxisY_clicked(self, *a):
+		""" 'Select Y Axis Action' handler """
+		self._grab_multiparam_action(XYAction, 1, 2, True, True)
+	
+	
 	def on_btDPADUp_clicked(self, *a):
-		""" "Select DPAD Left Action" handler """
+		""" 'Select DPAD Left Action' handler """
 		self._grab_multiparam_action(DPadAction, 0, 4, True, True)
 	
 	
 	def on_btDPADDown_clicked(self, *a):
-		""" "Select DPAD Left Action" handler """
+		""" 'Select DPAD Left Action' handler """
 		self._grab_multiparam_action(DPadAction, 1, 4, True, True)
 	
 	
 	def on_btDPADLeft_clicked(self, *a):
-		""" "Select DPAD Left Action" handler """
+		""" 'Select DPAD Left Action' handler """
 		self._grab_multiparam_action(DPadAction, 2, 4, True, True)
 	
 	
 	def on_btDPADRight_clicked(self, *a):
-		""" "Select DPAD Left Action" handler """
+		""" 'Select DPAD Left Action' handler """
 		self._grab_multiparam_action(DPadAction, 3, 4, True, True)
 	
 	
@@ -297,9 +313,11 @@ class ActionEditor(ButtonChooser):
 		if count >= 0:
 			self.builder.get_object("lblFullPress").set_label(self.describe_action(cls, self._multiparams[0]))
 			self.builder.get_object("lblDPADUp").set_label(self.describe_action(cls, self._multiparams[0]))
+			self.builder.get_object("lblAxisX").set_label(self.describe_action(cls, self._multiparams[0]))
 		if count >= 1:
 			self.builder.get_object("lblPartPressed").set_label(self.describe_action(cls, self._multiparams[1]))
 			self.builder.get_object("lblDPADDown").set_label(self.describe_action(cls, self._multiparams[1]))
+			self.builder.get_object("lblAxisY").set_label(self.describe_action(cls, self._multiparams[1]))
 		if count >= 2:
 			self.builder.get_object("lblDPADLeft").set_label(self.describe_action(cls, self._multiparams[2]))
 		if count >= 3:

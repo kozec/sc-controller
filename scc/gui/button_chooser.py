@@ -15,7 +15,7 @@ from scc.actions import HatUpAction, HatDownAction
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import keyevent_to_key
 from scc.gui.area_to_action import AREA_TO_ACTION
-import os, sys, time, logging
+import os, logging
 log = logging.getLogger("ButtonChooser")
 
 AXIS_ACTION_CLASSES = (AxisAction, MouseAction, HatLeftAction, HatRightAction, HatUpAction, HatDownAction)

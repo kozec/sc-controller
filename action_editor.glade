@@ -447,6 +447,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btAxisX_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box8">
                         <property name="visible">True</property>
@@ -503,6 +504,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btAxisY_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box9">
                         <property name="visible">True</property>
