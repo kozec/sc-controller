@@ -74,6 +74,10 @@ class ControllerEvent(object):
 	hatleft = hatup
 	hatright = hatdown
 	
+	def XY(self, *a):
+		""" XYAction is only internal and never executed """
+		pass
+	
 	
 	def _button_press(self, button):
 		"""

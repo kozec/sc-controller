@@ -47,7 +47,7 @@ class Action(object):
 		return str(self)
 	
 	
-	def to_string(self):
+	def to_string(self, multiline=False):
 		""" Converts action back to string """
 		return "%s(%s)" % (self.COMMAND, ", ".join([ str(x) for x in self.parameters ]))
 	
@@ -70,18 +70,22 @@ class AxisAction(Action):
 		Axes.ABS_Y : ("LStick", "Up", "Down"),
 		Axes.ABS_RX : ("RStick", "Left", "Right"),
 		Axes.ABS_RY : ("RStick", "Up", "Down"),
-		Axes.ABS_HAT0X : ("D-PAD", "Left", "Right"),
-		Axes.ABS_HAT0Y : ("D-PAD", "Up", "Down"),
+		Axes.ABS_HAT0X : ("DPAD", "Left", "Right"),
+		Axes.ABS_HAT0Y : ("DPAD", "Up", "Down"),
 		Axes.ABS_Z  : ("Left Trigger", "Press", "Press"),
 		Axes.ABS_RZ : ("Right Trigger", "Press", "Press"),
 	}
 	X = [ Axes.ABS_X, Axes.ABS_RX, Axes.ABS_HAT0X ]
 	Z = [ Axes.ABS_Z, Axes.ABS_RZ ]
-	def describe(self, context):
+	
+	def _get_axis_description(self):
 		axis, neg, pos = "%s %s" % (self.parameters[0].name, _("Axis")), _("Negative"), _("Positive")
 		if self.parameters[0] in AxisAction.AXIS_NAMES:
 			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.parameters[0]] ]
-
+		return axis, neg, pos
+	
+	def describe(self, context):
+		axis, neg, pos = self._get_axis_description()
 		if context == Action.AC_BUTTON:
 			for x in self.parameters:
 				if type(x) in (int, float):
@@ -103,17 +107,20 @@ class RAxisAction(Action):
 	def describe(self, context):
 		return _("Reverse %s Axis") % (self.parameters[0].name.split("_", 1)[-1],)
 
-
-class HatUpAction(AxisAction): COMMAND = "hatup"
-class HatDownAction(AxisAction): COMMAND = "hatdown"
-class HatLeftAction(AxisAction): COMMAND = "hatleft"
-class HatRightAction(AxisAction): COMMAND = "hatright"
-
-class DPadAction(Action):
-	COMMAND = "dpad"
+class HatAction(AxisAction):
+	COMMAND = None
 	def describe(self, context):
-		return "DPad"
+		axis, neg, pos = self._get_axis_description()
+		if "up" in self.COMMAND or "left" in self.COMMAND:
+			return "%s %s" % (axis, neg)
+		else:
+			return "%s %s" % (axis, pos)
+	
 
+class HatUpAction(HatAction): COMMAND = "hatup"
+class HatDownAction(HatAction): COMMAND = "hatdown"
+class HatLeftAction(HatAction): COMMAND = "hatleft"
+class HatRightAction(HatAction): COMMAND = "hatright"
 
 class MouseAction(Action):
 	COMMAND = "mouse"
@@ -225,7 +232,7 @@ class MultiAction(object):
 		return rv
 	
 	
-	def to_string(self):
+	def to_string(self, multiline=False):
 		return "; ".join([ x.to_string() for x in self.actions ])
 	
 	
@@ -233,6 +240,30 @@ class MultiAction(object):
 		return "<[ %s ]>" % ("; ".join([ str(x) for x in self.actions ]), )
 
 	__repr__ = __str__
+
+
+class DPadAction(MultiAction):
+	COMMAND = "dpad"
+	
+	def describe(self, context):
+		return "DPad"
+	
+	def execute(self, event):
+		return getattr(event, self.COMMAND)(*self.parameters)
+	
+	def to_string(self, multiline=False):
+		if multiline:
+			rv = [ "dpad(" ]
+			for a in self.actions:
+				rv += [ "  " + a.to_string(False) + ","]
+			if rv[-1].endswith(","):
+				rv[-1] = rv[-1][0:-1]
+			rv += [ ")" ]
+			return "\n".join(rv)
+		return "dpad(" + (", ".join([
+			x.to_string() if x is not None else "None"
+			for x in self.actions
+		])) + ")"
 
 
 class LinkedActions(MultiAction):
@@ -257,7 +288,7 @@ class LinkedActions(MultiAction):
 		return self.actions[0].describe(context)
 	
 	
-	def to_string(self):
+	def to_string(self, multiline=False):
 		return " and ".join([ x.to_string() for x in self.actions ])
 	
 	
@@ -282,12 +313,48 @@ class XYAction(MultiAction):
 		return self.actions[0].describe(context)
 	
 	
-	def to_string(self):
+	def to_string(self, multiline=False):
+		if multiline:
+			rv = []
+			i = 0
+			for a in self.actions[0:2]:
+				if i == 0:
+					rv += [ "X:" ]
+				elif i == 1:
+					rv += [ "Y:" ]
+				i += 1
+				rv += [ "  " + x for x in a.to_string(True).split("\n") ]
+			return "\n".join(rv)
+			
 		return "XY(" + (", ".join([ x.to_string() for x in self.actions ])) + ")"
 	
 	
 	def __str__(self):
 		return "<XY %s >" % (", ".join([ str(x) for x in self.actions ]), )
+
+	__repr__ = __str__
+
+
+class NoAction(Action):
+	"""
+	Parsed from None
+	"""
+	COMMAND = None
+
+	def execute(self, event):
+		pass
+	
+	
+	def describe(self, context):
+		return _("(not set)")
+	
+	
+	def to_string(self, multiline=False):
+		return "None"
+	
+	
+	def __str__(self):
+		return "NoAction"
 
 	__repr__ = __str__
 
@@ -311,7 +378,8 @@ class ActionParser(object):
 	CONSTS = {
 		'Keys' : Keys,
 		'Axes' : Axes,
-		'Rels' : Rels
+		'Rels' : Rels,
+		'None' : NoAction([]),
 	}
 
 	def __init__(self, string=""):
@@ -356,6 +424,11 @@ class ActionParser(object):
 	def _parse_parameter(self):
 		""" Parses single parameter """
 		t = self._next_token()
+		while t.type == TokenType.NEWLINE or t.value == "\n":
+			if not self._tokens_left():
+				raise ParseError("Excepted parameter at end of string")
+			t = self._next_token()
+		
 		if t.type == TokenType.NAME:
 			# Constant or action used as parameter
 			if self._tokens_left() and self._peek_token().type == TokenType.OP and self._peek_token().value == '(':
@@ -389,7 +462,7 @@ class ActionParser(object):
 		if t.type == TokenType.NUMBER:
 			self.index -= 1
 			return self._parse_number()
-
+		
 		raise ParseError("Excepted parameter, got '%s'" % (t.value,))
 
 
@@ -428,10 +501,15 @@ class ActionParser(object):
 			parameters.append(self._parse_parameter())
 			# Check if next token is either ')' or ','
 			t = self._peek_token()
+			while t.type == TokenType.NEWLINE or t.value == "\n":
+				self._next_token()
+				if not self._tokens_left():
+					raise ParseError("Excepted ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
+				t = self._peek_token()
 			if t.type == TokenType.OP and t.value == ')':
 				pass
 			elif t.type == TokenType.OP and t.value == ',':
-				 self._next_token()
+				self._next_token()
 			else:
 				raise ParseError("Excepted ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
 
@@ -459,7 +537,7 @@ class ActionParser(object):
 		# Check if there are any tokens left - return action without parameters
 		# if not
 		if not self._tokens_left():
-			return action_class(action_name, [])
+			return action_class([])
 
 		# Check if token after action name is parenthesis and if yes, parse
 		# parameters from it
@@ -480,10 +558,12 @@ class ActionParser(object):
 			action1 = action_class(parameters)
 			action2 = self._parse_action()
 			return LinkedActions(action1, action2)
-
-		if t.type == TokenType.OP and t.value == ';':
+		
+		if t.type == TokenType.NEWLINE or (t.type == TokenType.OP and t.value == ';'):
 			# Two (or more) actions joined by ';'
 			self._next_token()
+			while self._tokens_left() and self._peek_token().type == TokenType.NEWLINE:
+				self._next_token()
 			if not self._tokens_left():
 				# Having ';' at end of string is not actually error
 				return action_class(parameters)

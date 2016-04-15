@@ -572,6 +572,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btDPADLeft_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box1">
                         <property name="visible">True</property>
@@ -625,6 +626,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btDPADDown_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box2">
                         <property name="visible">True</property>
@@ -679,6 +681,7 @@
                     <property name="receives_default">True</property>
                     <property name="margin_top">20</property>
                     <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btDPADUp_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box6">
                         <property name="visible">True</property>
@@ -732,6 +735,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btDPADRight_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box7">
                         <property name="visible">True</property>
