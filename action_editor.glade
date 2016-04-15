@@ -2,6 +2,14 @@
 <!-- Generated with glade 3.19.0 -->
 <interface>
   <requires lib="gtk+" version="3.16"/>
+  <object class="GtkAdjustment" id="adjSensitivity">
+    <property name="lower">0.01</property>
+    <property name="upper">10.01</property>
+    <property name="value">1</property>
+    <property name="step_increment">0.01</property>
+    <property name="page_increment">0.10000000000000001</property>
+    <property name="page_size">0.01</property>
+  </object>
   <object class="GtkListStore" id="lstOutputMode">
     <columns>
       <!-- column-name action -->
@@ -11,27 +19,23 @@
     </columns>
     <data>
       <row>
-        <col id="0">axis(Axes.ABS_X)
-raxis(Axes.ABS_Y)</col>
+        <col id="0">XY( axis(Axes.ABS_X, sensitivity), raxis(Axes.ABS_Y, sensitivity) )</col>
         <col id="1" translatable="yes">Left Stick</col>
       </row>
       <row>
-        <col id="0">axis(Axes.ABS_RX)
-raxis(Axes.ABS_RY)
-</col>
+        <col id="0">XY( axis(Axes.ABS_RX, sensitivity), raxis(Axes.ABS_RY, sensitivity) )</col>
         <col id="1" translatable="yes">Right Stick</col>
       </row>
       <row>
-        <col id="0">axis(Axes.ABS_HAT0X)
-raxis(Axes.ABS_HAT0Y)</col>
+        <col id="0">XY( axis(Axes.ABS_HAT0X), raxis(Axes.ABS_HAT0Y) )</col>
         <col id="1" translatable="yes">DPad</col>
       </row>
       <row>
-        <col id="0">trackpad()</col>
+        <col id="0">trackpad(sensitivity)</col>
         <col id="1" translatable="yes">Trackpad (Mouse)</col>
       </row>
       <row>
-        <col id="0">trackball()</col>
+        <col id="0">trackball(sensitivity)</col>
         <col id="1" translatable="yes">Trackball (Mouse)</col>
       </row>
     </data>
@@ -434,6 +438,7 @@ raxis(Axes.ABS_HAT0Y)</col>
                 <property name="can_focus">False</property>
                 <property name="margin_left">50</property>
                 <property name="margin_right">50</property>
+                <property name="margin_top">20</property>
                 <property name="orientation">vertical</property>
                 <property name="spacing">10</property>
                 <child>
@@ -559,6 +564,8 @@ raxis(Axes.ABS_HAT0Y)</col>
               <object class="GtkGrid" id="grDPAD">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="row_spacing">5</property>
+                <property name="column_spacing">5</property>
                 <child>
                   <object class="GtkButton" id="btDPADLeft">
                     <property name="visible">True</property>
@@ -670,6 +677,7 @@ raxis(Axes.ABS_HAT0Y)</col>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="margin_top">20</property>
                     <property name="hexpand">True</property>
                     <child>
                       <object class="GtkBox" id="box6">
@@ -794,9 +802,6 @@ raxis(Axes.ABS_HAT0Y)</col>
               </packing>
             </child>
             <child>
-              <placeholder/>
-            </child>
-            <child>
               <object class="GtkBox" id="vbAxisMouseByStick">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -826,6 +831,7 @@ raxis(Axes.ABS_HAT0Y)</col>
                     <property name="margin_left">40</property>
                     <property name="margin_right">40</property>
                     <property name="model">lstOutputMode</property>
+                    <property name="active">1</property>
                     <signal name="changed" handler="on_cbAxisOutput_changed" swapped="no"/>
                     <child>
                       <object class="GtkCellRendererText" id="text"/>
@@ -841,13 +847,80 @@ raxis(Axes.ABS_HAT0Y)</col>
                   </packing>
                 </child>
                 <child>
-                  <placeholder/>
+                  <object class="GtkBox" id="box10">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkLabel" id="lblSensitivity">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">40</property>
+                        <property name="margin_top">10</property>
+                        <property name="label" translatable="yes">Sensitivity</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScale" id="sclSensitivity">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="margin_left">10</property>
+                        <property name="margin_right">10</property>
+                        <property name="margin_top">10</property>
+                        <property name="adjustment">adjSensitivity</property>
+                        <property name="fill_level">10</property>
+                        <property name="round_digits">10</property>
+                        <property name="digits">2</property>
+                        <property name="value_pos">right</property>
+                        <signal name="change-value" handler="on_cbAxisOutput_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="on_btScaleClear">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="margin_right">40</property>
+                        <property name="margin_top">10</property>
+                        <signal name="clicked" handler="on_btScaleClear_clicked" swapped="no"/>
+                        <child>
+                          <object class="GtkImage" id="image6">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="stock">gtk-clear</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
                 </child>
               </object>
               <packing>
                 <property name="name">page4</property>
                 <property name="title" translatable="yes">page4</property>
-                <property name="position">7</property>
+                <property name="position">6</property>
               </packing>
             </child>
           </object>

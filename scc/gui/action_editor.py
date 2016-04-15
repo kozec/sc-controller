@@ -181,14 +181,19 @@ class ActionEditor(ButtonChooser):
 		self.close()
 	
 	
-	def on_cbAxisOutput_changed(self, cb, *a):
-		actions = cb.get_model().get_value(cb.get_active_iter(), 0).split("\n")
-		actions = [ a for a in actions if len(a.strip(" \t\n")) > 0 ]
-		actions = [ self.parser.restart(a).parse() for a in actions]
-		if len(actions) > 1:
-			self.set_action(XYAction(*actions))
-		else:
-			self.set_action(actions[0])
+	def on_cbAxisOutput_changed(self, *a):
+		cbAxisOutput = self.builder.get_object("cbAxisOutput")
+		sens = self.builder.get_object("sclSensitivity")
+		action = cbAxisOutput.get_model().get_value(cbAxisOutput.get_active_iter(), 0)
+		action = action.replace("sensitivity", str(sens.get_value()))
+		action = self.parser.restart(action).parse()
+		self.set_action(action)
+	
+	
+	def on_btScaleClear_clicked(self, *a):
+		sens = self.builder.get_object("sclSensitivity")
+		sens.set_value(1.0)
+		self.on_cbAxisOutput_changed()
 	
 	
 	def set_action(self, action):
