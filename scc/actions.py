@@ -197,7 +197,10 @@ class MultiAction(object):
 
 	def _add_all(self, actions):
 		for x in actions:
-			self._add(x)
+			if type(x) == list:
+				self._add_all(x)
+			else:
+				self._add(x)
 
 
 	def _add(self, action):

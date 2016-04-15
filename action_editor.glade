@@ -931,20 +931,6 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="entAction">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="margin_top">20</property>
-            <property name="editable">False</property>
-            <property name="activates_default">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">3</property>
-            <property name="width">3</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkBox" id="box3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -1062,6 +1048,95 @@
             <property name="left_attach">1</property>
             <property name="top_attach">1</property>
             <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="box12">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">20</property>
+            <child>
+              <object class="GtkLabel" id="lblX">
+                <property name="width_request">30</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="entAction">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="editable">False</property>
+                <property name="activates_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">3</property>
+            <property name="width">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRevealer" id="rvlY">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkBox" id="boxY">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">5</property>
+                <child>
+                  <object class="GtkLabel" id="lblX1">
+                    <property name="width_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Y</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="entActionY">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="editable">False</property>
+                    <property name="activates_default">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">4</property>
+            <property name="width">3</property>
           </packing>
         </child>
       </object>
