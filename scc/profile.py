@@ -25,8 +25,8 @@ class Profile(object):
 		self.buttons = {}
 		self.stick = {}
 		self.triggers = {}
-		self.left_pad = {}
-		self.right_pad = {}
+		self.pads = { Profile.LEFT : {}, Profile.RIGHT : {} }
+	
 	
 	def load(self, filename):
 		""" Loads profile from file. Returns self """

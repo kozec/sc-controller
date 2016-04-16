@@ -13,16 +13,18 @@ from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.controller_widget import ControllerPad, ControllerStick
 from scc.gui.action_editor import ActionEditor
 from scc.gui.svg_widget import SVGWidget
+from scc.gui.profile_manager import ProfileManager
 from scc.gui.parser import GuiActionParser
+from scc.gui.paths import get_daemon_path
 from scc.constants import SCButtons
 from scc.actions import XYAction
 from scc.profile import Profile
 
-import os, sys, time, logging
+import os, sys, logging
 log = logging.getLogger("App")
 
 
-class App(Gtk.Application):
+class App(Gtk.Application, ProfileManager):
 	"""
 	Main application / window.
 	"""
@@ -35,6 +37,7 @@ class App(Gtk.Application):
 		Gtk.Application.__init__(self,
 				application_id="me.kozec.scc",
 				flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+		ProfileManager.__init__(self)
 		# Setup Gtk.Application
 		self.setup_commandline()
 		# Set variables
@@ -44,7 +47,6 @@ class App(Gtk.Application):
 		self.background = None
 		self.current = Profile(GuiActionParser())
 		self.button_widgets = {}
-		self.pad_widgets = {}
 
 
 	def setup_widgets(self):
@@ -123,8 +125,28 @@ class App(Gtk.Application):
 				data = self.current.pads[Profile.RIGHT]
 			ae.set_pad(id, data)
 			ae.show(self.window)
-
-
+	
+	
+	def on_profiles_loaded(self, profiles):
+		cb = self.builder.get_object("cbProfile")
+		model = cb.get_model()
+		model.clear()
+		for f in profiles:
+			name = f.get_basename()
+			if name.endswith(".sccprofile"):
+				name = name[0:-11]
+			model.append((name, f))
+		if cb.get_active_iter() is None:
+			cb.set_active(0)
+	
+	
+	def on_cbProfile_changed(self, cb, *a):
+		f = cb.get_model().get_value(cb.get_active_iter(), 1)
+		self.current.load(f.get_path())
+		for w in self.button_widgets.values():
+			w.update()
+	
+	
 	def on_action_chosen(self, id, action):
 		if id in BUTTONS:
 			self.current.buttons[id] = action
@@ -181,7 +203,7 @@ class App(Gtk.Application):
 
 	def do_startup(self, *a):
 		Gtk.Application.do_startup(self, *a)
-		self.current.load("xbox.json")
+		self.load_profile_list()
 		self.setup_widgets()
 
 
