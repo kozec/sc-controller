@@ -113,6 +113,16 @@ class App(Gtk.Application):
 			ae.set_title(_("Edit Action for Stick"))
 			ae.set_stick(self.current.stick)
 			ae.show(self.window)
+		elif id in PADS:
+			ae = ActionEditor(self, self.on_action_chosen)
+			ae.set_title(_("Edit Action for %s") % (id))
+			data = None
+			if id == "LPAD":
+				data = self.current.pads[Profile.LEFT]
+			else:
+				data = self.current.pads[Profile.RIGHT]
+			ae.set_pad(id, data)
+			ae.show(self.window)
 
 
 	def on_action_chosen(self, id, action):
@@ -122,14 +132,22 @@ class App(Gtk.Application):
 		elif id in TRIGGERS:
 			self.current.triggers[id] = action
 			self.button_widgets[id].update()
-		elif id in STICKS:
+		elif id in STICKS + PADS:
+			data = None
+			if id in STICKS:
+				data = self.current.stick
+			elif id == "LPAD":
+				data = self.current.pads[Profile.LEFT]
+			else:
+				data = self.current.pads[Profile.RIGHT]
+			
 			for i in (Profile.X, Profile.Y, Profile.WHOLE):
-				if i in self.current.stick: del self.current.stick[i]
+				if i in data: del data[i]
 			if isinstance(action, XYAction):
 				for i in xrange(0, min(2, len(action.actions))):
-					self.current.stick["XY"[i]] = action.actions[i]
+					data["XY"[i]] = action.actions[i]
 			else:
-				self.current.stick[Profile.WHOLE] = action
+				data[Profile.WHOLE] = action
 			self.button_widgets[id].update()
 
 
@@ -141,7 +159,7 @@ class App(Gtk.Application):
 		if area in [ x.name for x in BUTTONS ]:
 			self.hint(None)
 			self.show_editor(getattr(SCButtons, area))
-		elif area in TRIGGERS + STICKS:
+		elif area in TRIGGERS + STICKS + PADS:
 			self.hint(None)
 			self.show_editor(area)
 

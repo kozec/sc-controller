@@ -31,17 +31,18 @@ class ActionEditor(ButtonChooser):
 	PAGES = [
 		('vbKeyBut',			'tgKeyBut',				[ Action.AC_BUTTON ]),
 		('grKeyButByTrigger',	'tgKeyButByTrigger',	[ Action.AC_TRIGGER ]),
-		('vbAxisMouseByStick',	'tgAxisMouseByStick',	[ Action.AC_STICK ]),
-		('grDPAD',				'tgDPAD',				[ Action.AC_STICK ]),
+		('vbAxisMouseByStick',	'tgAxisMouseByStick',	[ Action.AC_STICK, Action.AC_PAD ]),
+		('grDPAD',				'tgDPAD',				[ Action.AC_STICK, Action.AC_PAD ]),
 		('vbAxisTrigger',		'tgAxisTrigger',		[ Action.AC_TRIGGER ]),
-		('vbPerAxis',			'tgPerAxis',			[ Action.AC_STICK ]),
-		('vbCustom',			'tgCustom',				[ Action.AC_BUTTON, Action.AC_STICK, Action.AC_TRIGGER ]),
+		('vbPerAxis',			'tgPerAxis',			[ Action.AC_STICK, Action.AC_PAD ]),
+		('vbCustom',			'tgCustom',				[ Action.AC_BUTTON, Action.AC_STICK, Action.AC_PAD, Action.AC_TRIGGER ]),
 	]
 	CUSTOM_PAGE = 'tgCustom'
 	DEFAULT_PAGE = {
 		Action.AC_BUTTON		: 'tgKeyBut',
 		Action.AC_TRIGGER		: 'tgKeyButByTrigger',
-		Action.AC_STICK			: 'tgAxisMouseByStick'
+		Action.AC_STICK			: 'tgAxisMouseByStick',
+		Action.AC_PAD			: 'tgAxisMouseByStick'
 	}
 
 	css = None
@@ -385,7 +386,12 @@ class ActionEditor(ButtonChooser):
 			self.set_multiparams(DPadAction, 4)
 		self.id = "STICK"
 	
-	
+	def set_pad(self, id, paddata):
+		""" Setups action editor as editor for pad action """
+		self.set_stick(paddata)
+		self._set_mode(Action.AC_PAD)
+		self.id = id
+		
 	def describe_action(self, cls, v):
 		"""
 		Returns action description with 'v' as parameter, unless unless v is None.
