@@ -34,6 +34,7 @@ class Action(object):
 	AC_BUTTON = 1
 	AC_STICK = 2
 	AC_TRIGGER = 3
+	AC_PAD = 4
 	
 	def __init__(self, parameters):
 		self.parameters = parameters

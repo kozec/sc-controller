@@ -8,9 +8,9 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, BUTTONS
-from scc.gui.controller_button import ControllerButton, ControllerTrigger
-from scc.gui.controller_pad import ControllerPad
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS
+from scc.gui.controller_widget import ControllerButton, ControllerTrigger
+from scc.gui.controller_widget import ControllerPad, ControllerStick
 from scc.gui.action_editor import ActionEditor
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.parser import GuiActionParser
@@ -61,6 +61,8 @@ class App(Gtk.Application):
 			self.button_widgets[b] = ControllerTrigger(self, b, self.builder.get_object("btTrigger" + b))
 		for b in PADS:
 			self.button_widgets[b] = ControllerPad(self, b, self.builder.get_object("bt" + b))
+		for b in STICKS:
+			self.button_widgets[b] = ControllerStick(self, b, self.builder.get_object("bt" + b))
 		
 		
 		vbc = self.builder.get_object("vbC")

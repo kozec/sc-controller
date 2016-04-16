@@ -1,21 +1,26 @@
 #!/usr/bin/env python2
 """
-SC-Controller - Controller Button
+SC-Controller - Controller Widget
 
-Wraps around actual button and provides code for setting actions
+Button that user can click to choose emulated action for physical button, axis
+or pad.
+
+Wraps around actual button defined in glade file.
 """
 from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Pango
 from scc.constants import SCButtons
+from scc.actions import Action
 from scc.profile import Profile
 import os, sys, logging
 
 log = logging.getLogger("ControllerWidget")
 
 TRIGGERS = [ Profile.LEFT, Profile.RIGHT ]
-PADS	= [ "LPAD", "STICK", "RPAD" ]
+PADS	= [ "LPAD", "RPAD" ]
+STICKS	= [ "STICK" ]
 _NOT_BUTTONS = PADS + [ "LT", "RT" ] + [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
 
@@ -58,3 +63,41 @@ class ControllerWidget:
 
 	def on_cursor_leave(self, *a):
 		self.app.hilight(None)
+
+
+class ControllerButton(ControllerWidget):
+	ACTION_CONTEXT = Action.AC_BUTTON
+
+	def __init__(self, app, name, widget):
+		ControllerWidget.__init__(self, app, name, widget)
+
+		vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+		separator = Gtk.Separator(orientation = Gtk.Orientation.VERTICAL)
+		vbox.pack_start(self.icon, False, False, 1)
+		vbox.pack_start(separator, False, False, 1)
+		vbox.pack_start(self.label, False, True, 1)
+		self.widget.add(vbox)
+		self.widget.show_all()
+		self.label.set_max_width_chars(12)
+		if name == "C":
+			self.label.set_max_width_chars(10)
+
+
+class ControllerStick(ControllerWidget):
+	ACTION_CONTEXT = Action.AC_STICK
+	def __init__(self, app, name, widget):
+		ControllerWidget.__init__(self, app, name, widget)
+		
+		vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+		vbox.pack_start(self.icon, False, False, 1)
+		vbox.pack_start(self.label, False, False, 1)
+		self.widget.add(vbox)
+		self.widget.show_all()
+
+
+class ControllerTrigger(ControllerButton):
+	ACTION_CONTEXT = Action.AC_TRIGGER
+
+
+class ControllerPad(ControllerStick):
+	ACTION_CONTEXT = Action.AC_PAD
