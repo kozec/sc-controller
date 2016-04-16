@@ -94,7 +94,7 @@ class AxisAction(Action):
 						return "%s %s" % (axis, pos)
 					if x < 0:
 						return "%s %s" % (axis, neg)
-		if context == Action.AC_TRIGGER:
+		if context in (Action.AC_TRIGGER, Action.AC_STICK, Action.AC_PAD):
 			if self.parameters[0] in AxisAction.Z: # Trigger
 				return axis
 			else:
@@ -103,10 +103,14 @@ class AxisAction(Action):
 		return axis
 
 
-class RAxisAction(Action):
+class RAxisAction(AxisAction):
 	COMMAND = "raxis"
 	def describe(self, context):
-		return _("Reverse %s Axis") % (self.parameters[0].name.split("_", 1)[-1],)
+		axis, neg, pos = self._get_axis_description()
+		if context in (Action.AC_STICK, Action.AC_PAD):
+			xy = "X" if self.parameters[0] in AxisAction.X else "Y"
+			return _("%s %s (reversed)") % (axis, xy)
+		return _("Reverse %s Axis") % (axis,)
 
 class HatAction(AxisAction):
 	COMMAND = None

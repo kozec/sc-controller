@@ -46,9 +46,10 @@ class ActionEditor(ButtonChooser):
 
 	css = None
 
-	def __init__(self, app):
+	def __init__(self, app, callback):
 		ButtonChooser.__init__(self, app, self.on_button_chooser_callback)
 		self.id = None
+		self.ac_callback = callback	# This is different callback than ButtonChooser uses
 		self.parser = GuiActionParser()
 		if ActionEditor.css is None:
 			ActionEditor.css = Gtk.CssProvider()
@@ -257,8 +258,13 @@ class ActionEditor(ButtonChooser):
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button ... """
 		entAction = self.builder.get_object("entAction")
+		entActionY = self.builder.get_object("entActionY")
 		action = self.parser.restart(entAction.get_text()).parse()
-		self.app.set_action(self.id, action)
+		if len(entActionY.get_text()) > 0:
+			actionY = self.parser.restart(entActionY.get_text()).parse()
+			action = XYAction(action, actionY)
+		if self.ac_callback is not None:
+			self.ac_callback(self.id, action)
 		self.close()
 	
 	
@@ -368,8 +374,8 @@ class ActionEditor(ButtonChooser):
 		if Profile.WHOLE in stickdata:
 			action = stickdata[Profile.WHOLE]
 		else:
-			x = stickdata[stickdata["X"]] if "X" in stickdata else None
-			y = stickdata[stickdata["Y"]] if "Y" in stickdata else None
+			x = stickdata[Profile.X] if Profile.X in stickdata else None
+			y = stickdata[Profile.Y] if Profile.Y in stickdata else None
 			action = XYAction(x, y)
 		self.set_action(action)
 		if isinstance(action, DPadAction):

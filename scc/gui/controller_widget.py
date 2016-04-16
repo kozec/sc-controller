@@ -45,12 +45,7 @@ class ControllerWidget:
 
 
 	def update(self):
-		if self.id in SCButtons and self.id in self.app.current.buttons:
-			self.label.set_label(self.app.current.buttons[self.id].describe(self.ACTION_CONTEXT))
-		elif self.id in TRIGGERS and self.id in self.app.current.triggers:
-			self.label.set_label(self.app.current.triggers[self.id].describe(self.ACTION_CONTEXT))
-		else:
-			self.label.set_label(_("(no action)"))
+		self.label.set_label(_("(no action)"))
 
 
 	def on_click(self, *a):
@@ -81,6 +76,13 @@ class ControllerButton(ControllerWidget):
 		self.label.set_max_width_chars(12)
 		if name == "C":
 			self.label.set_max_width_chars(10)
+	
+	
+	def update(self):
+		if self.id in SCButtons and self.id in self.app.current.buttons:
+			self.label.set_label(self.app.current.buttons[self.id].describe(self.ACTION_CONTEXT))
+		else:
+			self.label.set_label(_("(no action)"))
 
 
 class ControllerStick(ControllerWidget):
@@ -93,11 +95,38 @@ class ControllerStick(ControllerWidget):
 		vbox.pack_start(self.label, False, False, 1)
 		self.widget.add(vbox)
 		self.widget.show_all()
+	
+	
+	def _set_label(self, stickdata):
+		if Profile.WHOLE in stickdata:
+			self.label.set_label(stickdata[Profile.WHOLE].describe(self.ACTION_CONTEXT))
+		elif Profile.X in stickdata or Profile.Y in stickdata:
+			txt = []
+			for i in [Profile.X, Profile.Y]:
+				if i in stickdata:
+					txt.append(stickdata[i].describe(self.ACTION_CONTEXT))
+			self.label.set_label("\n".join(txt))
+		else:
+			self.label.set_label(_("(no action)"))
+	
+	
+	def update(self):
+		self._set_label(self.app.current.stick)
 
 
 class ControllerTrigger(ControllerButton):
 	ACTION_CONTEXT = Action.AC_TRIGGER
+	def update(self):
+		if self.id in TRIGGERS and self.id in self.app.current.triggers:
+			self.label.set_label(self.app.current.triggers[self.id].describe(self.ACTION_CONTEXT))
+		else:
+			self.label.set_label(_("(no action)"))
 
 
 class ControllerPad(ControllerStick):
 	ACTION_CONTEXT = Action.AC_PAD
+	def update(self):
+		if self.id == "LPAD":
+			self._set_label(self.app.current.pads[Profile.LEFT])
+		else:
+			self._set_label(self.app.current.pads[Profile.RIGHT])

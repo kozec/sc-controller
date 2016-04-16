@@ -15,6 +15,7 @@ from scc.gui.action_editor import ActionEditor
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.parser import GuiActionParser
 from scc.constants import SCButtons
+from scc.actions import XYAction
 from scc.profile import Profile
 
 import os, sys, time, logging
@@ -98,28 +99,37 @@ class App(Gtk.Application):
 
 	def show_editor(self, id):
 		if id in SCButtons:
-			ae = ActionEditor(self)
+			ae = ActionEditor(self, self.on_action_chosen)
 			ae.set_title(_("Edit Action for %s Button") % (id.name,))
 			ae.set_button(id, self.current.buttons[id])
 			ae.show(self.window)
 		elif id in TRIGGERS:
-			ae = ActionEditor(self)
+			ae = ActionEditor(self, self.on_action_chosen)
 			ae.set_title(_("Edit Action for %s Trigger") % (id,))
 			ae.set_trigger(id, self.current.triggers[id])
 			ae.show(self.window)
-		elif id == "STICK":
-			ae = ActionEditor(self)
+		elif id in STICKS:
+			ae = ActionEditor(self, self.on_action_chosen)
 			ae.set_title(_("Edit Action for Stick"))
 			ae.set_stick(self.current.stick)
 			ae.show(self.window)
 
 
-	def set_action(self, id, action):
+	def on_action_chosen(self, id, action):
 		if id in BUTTONS:
 			self.current.buttons[id] = action
 			self.button_widgets[id].update()
 		elif id in TRIGGERS:
 			self.current.triggers[id] = action
+			self.button_widgets[id].update()
+		elif id in STICKS:
+			for i in (Profile.X, Profile.Y, Profile.WHOLE):
+				if i in self.current.stick: del self.current.stick[i]
+			if isinstance(action, XYAction):
+				for i in xrange(0, min(2, len(action.actions))):
+					self.current.stick["XY"[i]] = action.actions[i]
+			else:
+				self.current.stick[Profile.WHOLE] = action
 			self.button_widgets[id].update()
 
 
@@ -131,7 +141,7 @@ class App(Gtk.Application):
 		if area in [ x.name for x in BUTTONS ]:
 			self.hint(None)
 			self.show_editor(getattr(SCButtons, area))
-		elif area in TRIGGERS:
+		elif area in TRIGGERS + STICKS:
 			self.hint(None)
 			self.show_editor(area)
 

@@ -14,9 +14,10 @@ class Profile(object):
 	LEFT  = "LEFT"
 	RIGHT = "RIGHT"
 	WHOLE = "WHOLE"
-	STICK_AXES = { "X" : "lpad_x", "Y" : "lpad_y" }
+	X, Y = "X", "Y"
+	STICK_AXES = { X : "lpad_x", Y : "lpad_y" }
 	LPAD_AXES  = STICK_AXES
-	RPAD_AXES  = { "X" : "rpad_x", "Y" : "rpad_y" }
+	RPAD_AXES  = { X : "rpad_x", Y : "rpad_y" }
 	TRIGGERS   = [ LEFT, RIGHT ]
 	
 	def __init__(self, parser):
