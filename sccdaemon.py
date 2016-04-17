@@ -1,36 +1,21 @@
 #!/usr/bin/python2
-import argparse
+from scc.sccdaemon import SCCDaemon
+from scc.tools import init_logging
 
-from scc.controller import SCController
-from scc.constants import SCButtons
-from scc.actions import TalkingActionParser
-from scc.profile import Profile
-from scc.mapper import Mapper
-from scc.uinput import Keys, Axes
-from scc.daemon import Daemon
-
-
-class SCDaemon(Daemon):
-	def __init__(self, mapper, piddile):
-		Daemon.__init__(self, piddile)
-		self.mapper = mapper
-
-	def run(self):
-		sc = SCController(callback=self.mapper.callback)
-		sc.run()
-
+import os, argparse
 
 if __name__ == '__main__':
 
 	def _main():
+		init_logging()
 		parser = argparse.ArgumentParser(description=__doc__)
 		parser.add_argument('profile', type=str)
 		parser.add_argument('command', type=str, choices=['start', 'stop', 'restart', 'debug'])
+		pid_file = os.path.expanduser('~/.scccontroller.pid')
+		socket_file = os.path.expanduser('~/.scccontroller.socket')
+		daemon = SCCDaemon(pid_file, socket_file)
 		args = parser.parse_args()
-		profile = Profile(TalkingActionParser())
-		profile.load(args.profile)
-		mapper = Mapper(profile)
-		daemon = SCDaemon(mapper, '/tmp/scccontroller.pid')
+		daemon.load_profile(args.profile)
 
 		if 'start' == args.command:
 			daemon.start()
@@ -39,10 +24,6 @@ if __name__ == '__main__':
 		elif 'restart' == args.command:
 			daemon.restart()
 		elif 'debug' == args.command:
-			try:
-				sc = SCController(callback=mapper.callback)
-				sc.run()
-			except KeyboardInterrupt:
-				return
+			daemon.debug()
 
 	_main()
