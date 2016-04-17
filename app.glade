@@ -8,6 +8,8 @@
       <column type="gchararray"/>
       <!-- column-name giofile -->
       <column type="GObject"/>
+      <!-- column-name changed -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window">
@@ -457,6 +459,16 @@
                     <attribute name="text">0</attribute>
                   </attributes>
                 </child>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext2">
+                    <property name="xalign">1</property>
+                    <property name="alignment">right</property>
+                    <property name="style">italic</property>
+                  </object>
+                  <attributes>
+                    <attribute name="text">2</attribute>
+                  </attributes>
+                </child>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -480,9 +492,10 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="tooltip_text" translatable="yes">Save Profile</property>
+                        <property name="tooltip_text" translatable="yes">Save Changes</property>
                         <property name="margin_right">5</property>
                         <property name="always_show_image">True</property>
+                        <signal name="clicked" handler="on_btSaveProfile_clicked" swapped="no"/>
                         <child>
                           <object class="GtkImage" id="image2">
                             <property name="visible">True</property>
@@ -495,28 +508,6 @@
                         <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="btUseProfile">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="tooltip_text" translatable="yes">Use Profile</property>
-                        <property name="xalign">0.54000002145767212</property>
-                        <property name="always_show_image">True</property>
-                        <child>
-                          <object class="GtkImage" id="image1">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="stock">gtk-apply</property>
-                          </object>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">1</property>
                       </packing>
                     </child>
                   </object>

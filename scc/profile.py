@@ -28,6 +28,60 @@ class Profile(object):
 		self.pads = { Profile.LEFT : {}, Profile.RIGHT : {} }
 	
 	
+	def save(self, filename):
+		""" Saves profile into file. Returns self """
+		data = {
+			'buttons' : {},
+			'stick' : {},
+			'triggers' : {},
+			"left_pad" : {},
+			"right_pad" : {}
+		}
+		# Buttons
+		for x in SCButtons:
+			if x in self.buttons:
+				data['buttons'][x.name] = { 'action' : self.buttons[x].to_string() }
+		
+		# Stick
+		if Profile.WHOLE in self.stick:
+			data["stick"]['action'] = self.stick[Profile.WHOLE].to_string()
+		else:
+			for x in Profile.STICK_AXES:
+				data["stick"][x] = {}
+				if x in self.stick:
+					data["stick"][x]['action'] = self.stick[x].to_string()
+		
+		# Triggers
+		for x in Profile.TRIGGERS:
+			data["triggers"][x] = {}
+			if x in self.triggers:
+				data["triggers"][x]['action'] = self.triggers[x].to_string()
+		
+		# Pads
+		for (y, key) in ( (Profile.LEFT, "left_pad"), (Profile.RIGHT, "right_pad") ):
+			data[key] = {}
+			if Profile.WHOLE in self.pads[y]:
+				data[key]['action'] = self.pads[y][Profile.WHOLE].to_string()
+			else:
+				for x in Profile.RPAD_AXES:
+					data[key][x] = {}
+					if x in self.pads[y]:
+						data[key][x]['action'] = self.pads[y][x].to_string()
+		
+		# Generate json
+		jstr = json.dumps(data, sort_keys=True, indent=4)
+		# Convert spaces to tabs
+		# jstr = jstr.replace("    ", "\t")
+		# Compact it a little
+		# for x in (2, 3):
+		#	jstr = jstr.replace('{\n' + (b"\t" * x) + '"action', '\t{ "action')
+		#	jstr = jstr.replace('"\n' + (b"\t" * x) + '}', ' }')
+		
+		# Save it
+		open(filename, "w").write(jstr)
+		return self
+
+
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
 		data = json.loads(open(filename, "r").read())

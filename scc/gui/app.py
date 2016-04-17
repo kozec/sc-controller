@@ -46,6 +46,7 @@ class App(Gtk.Application, ProfileManager):
 		self.builder = None
 		self.background = None
 		self.current = Profile(GuiActionParser())
+		self.current_file = None
 		self.button_widgets = {}
 
 
@@ -67,6 +68,8 @@ class App(Gtk.Application, ProfileManager):
 		for b in STICKS:
 			self.button_widgets[b] = ControllerStick(self, b, self.builder.get_object("bt" + b))
 		
+		self.builder.get_object("cbProfile").set_row_separator_func(
+			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
 		
 		vbc = self.builder.get_object("vbC")
 		main_area = self.builder.get_object("mainArea")
@@ -135,16 +138,64 @@ class App(Gtk.Application, ProfileManager):
 			name = f.get_basename()
 			if name.endswith(".sccprofile"):
 				name = name[0:-11]
-			model.append((name, f))
+			model.append((name, f, None))
+		model.append(("-", None, None))
+		model.append((_("New profile..."), None, None))
+		
 		if cb.get_active_iter() is None:
 			cb.set_active(0)
 	
 	
 	def on_cbProfile_changed(self, cb, *a):
-		f = cb.get_model().get_value(cb.get_active_iter(), 1)
-		self.current.load(f.get_path())
+		""" Called when user chooses profile in selection combo """
+		model = cb.get_model()
+		iter = cb.get_active_iter()
+		f = model.get_value(iter, 1)
+		if f is None:
+			# TODO: New profile dialog
+			cb.set_active(0)
+			return
+		self.load_profile(f)
+	
+	
+	def on_profile_loaded(self, profile, giofile):
+		self.current = profile
+		self.current_file = giofile
 		for w in self.button_widgets.values():
 			w.update()
+		self.on_profile_saved(giofile)	# Just to indicate that there are no changes to save
+	
+	
+	def on_profile_changed(self, *a):
+		"""
+		Called when selected profile is modified in memory
+		Displays "changed" next to profile name and shows Save button
+		"""
+		cb = self.builder.get_object("cbProfile")
+		self.builder.get_object("rvProfileChanged").set_reveal_child(True)
+		model = cb.get_model()
+		for row in model:
+			if self.current_file == model.get_value(row.iter, 1):
+				model.set_value(row.iter, 2, _("(changed)"))
+				break
+	
+	
+	def on_profile_saved(self, giofile):
+		"""
+		Called when selected profile is saved to disk
+		"""
+		cb = self.builder.get_object("cbProfile")
+		self.builder.get_object("rvProfileChanged").set_reveal_child(False)
+		model = cb.get_model()
+		for row in model:
+			if model.get_value(row.iter, 1) == self.current_file:
+				model.set_value(row.iter, 1, giofile)
+			model.set_value(row.iter, 2, None)
+		self.current_file = giofile
+	
+	
+	def on_btSaveProfile_clicked(self, *a):
+		self.save_profile(self.current_file, self.current)
 	
 	
 	def on_action_chosen(self, id, action):
@@ -171,6 +222,7 @@ class App(Gtk.Application, ProfileManager):
 			else:
 				data[Profile.WHOLE] = action
 			self.button_widgets[id].update()
+		self.on_profile_changed()
 
 
 	def on_background_area_hover(self, trash, area):

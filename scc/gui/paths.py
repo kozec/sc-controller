@@ -42,6 +42,7 @@ def get_default_profiles_path():
 	if __main__.__file__.endswith(".py"):
 		# Started as script with something like './scc.py'
 		local = os.path.join(os.path.split(__file__)[0], "../../default_profiles")
+		local = os.path.normpath(local)
 		if os.path.exists(local):
 			return local
 	return "/usr/share/scc/default_profiles"
@@ -57,6 +58,7 @@ def get_daemon_path():
 	if __main__.__file__.endswith(".py"):
 		# Started as script with something like './scc.py'
 		local = os.path.join(os.path.split(__file__)[0], "../../sccdaemon.py")
+		local = os.path.normpath(local)
 		if os.path.exists(local):
 			return local
 	for x in ("/usr/bin/sccdaemon", "/usr/local/bin/sccdaemon"):
