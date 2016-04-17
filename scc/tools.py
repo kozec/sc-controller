@@ -1,30 +1,57 @@
 #!/usr/bin/env python2
+"""
+SC-Controller - tools
 
-# The MIT License (MIT)
-#
-# Copyright (c) 2015 Stany MARCEL <stanypub@gmail.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+Various stuff that I don't care to fit anywhere else.
+"""
+from __future__ import unicode_literals
 
-"""Misc Tools"""
+import imp, os, sys, gettext, logging
+log = logging.getLogger("tools.py")
+_ = lambda x : x
 
-import imp
+LOG_FORMAT				= "%(levelname)s %(name)-13s %(message)s"
+
+def init_logging():
+	"""
+	Initializes logging, sets custom logging format and adds one
+	logging level with name and method to call.
+	"""
+	logging.basicConfig(format=LOG_FORMAT)
+	logger = logging.getLogger()
+	# Rename levels
+	logging.addLevelName(10, "D")	# Debug
+	logging.addLevelName(20, "I")	# Info
+	logging.addLevelName(30, "W")	# Warning
+	logging.addLevelName(40, "E")	# Error
+	# Create additional, "verbose" level
+	logging.addLevelName(15, "V")	# Verbose
+	# Add 'logging.verbose' method
+	def verbose(self, msg, *args, **kwargs):
+		return self.log(15, msg, *args, **kwargs)
+	logging.Logger.verbose = verbose
+	# Wrap Logger._log in something that can handle utf-8 exceptions
+	old_log = logging.Logger._log
+	def _log(self, level, msg, args, exc_info=None, extra=None):
+		args = tuple([
+			(c if type(c) is unicode else str(c).decode("utf-8"))
+			for c in args
+		])
+		msg = msg if type(msg) is unicode else str(msg).decode("utf-8")
+		old_log(self, level, msg, args, exc_info, extra)
+	logging.Logger._log = _log
+
+
+def set_logging_level(verbose, debug):
+	""" Sets logging level """
+	logger = logging.getLogger()
+	if debug:		# everything
+		logger.setLevel(0)
+	elif verbose:	# everything but debug
+		logger.setLevel(11)
+	else:			# INFO and worse
+		logger.setLevel(20)
+
 
 def static_vars(**kwargs):
 	"""Static variable func decorator"""
@@ -35,6 +62,7 @@ def static_vars(**kwargs):
 			setattr(func, k, kwargs[k])
 		return func
 	return decorate
+
 
 def get_so_extensions():
 	"""Return so file extenstion compatible with python and pypy"""
