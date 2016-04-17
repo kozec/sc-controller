@@ -90,13 +90,17 @@ class Daemon(object):
 		# Start the daemon
 		self.daemonize()
 		syslog.syslog(syslog.LOG_INFO, '{}: started'.format(os.path.basename(sys.argv[0])))
+		self.on_start()
 		while True:
 			try:
 				self.run()
 			except Exception as e: # pylint: disable=W0703
 				syslog.syslog(syslog.LOG_ERR, '{}: {!s}'.format(os.path.basename(sys.argv[0]), e))
 			time.sleep(2)
-
+	
+	def on_start(self):
+		pass
+	
 	def stop(self):
 		"""Stop the daemon."""
 

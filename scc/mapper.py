@@ -10,6 +10,9 @@ from scc.events import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import SCStatus, SCButtons, SCI_NULL
 from scc.constants import CI_NAMES, ControllerInput
 
+import logging
+log = logging.getLogger("Mapper")
+
 class Mapper(object):
 	DEBUG = False
 	
@@ -17,9 +20,13 @@ class Mapper(object):
 		self.profile = profile
 		
 		# Create virtual devices
+		log.debug("Creating virtual devices")
 		self.gamepad = Gamepad()
+		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		self.keyboard = Keyboard()
+		log.debug("Keyboard: %s" % (self.keyboard, ))
 		self.mouse = Mouse()
+		log.debug("Mouse:    %s" % (self.mouse, ))
 		self.mouse.updateParams(
 			friction=Mouse.DEFAULT_FRICTION,
 			xscale=Mouse.DEFAULT_XSCALE,
