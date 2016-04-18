@@ -254,7 +254,7 @@ class DPadAction(MultiAction):
 		return "DPad"
 	
 	def execute(self, event):
-		return getattr(event, self.COMMAND)(*self.parameters)
+		return getattr(event, self.COMMAND)(*self.actions)
 	
 	def to_string(self, multiline=False):
 		if multiline:
