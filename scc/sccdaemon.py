@@ -28,7 +28,7 @@ from scc.mapper import Mapper
 from scc.uinput import Keys, Axes
 from scc.daemon import Daemon
 
-import os, sys, signal, socket, select, logging, threading
+import os, sys, signal, socket, select, logging, threading, traceback
 log = logging.getLogger("App")
 tlog = logging.getLogger("Socket Thread")
 
@@ -124,7 +124,14 @@ class SCCDaemon(Daemon):
 					if data and "\n" in data:
 						filename = data[0:data.index("\n")]
 						tlog.debug("Loading profile '%s'" % (filename,))
-						self._set_profile(filename)
+						try:
+							self._set_profile(filename)
+							connection.send("OK\n")
+						except Exception, e:
+							tb = traceback.format_exc()
+							tlog.debug("Failed")
+							tlog.error(e)
+							connection.send(str(tb))
 					else:
 						while s in reads:
 							reads.remove(s)
