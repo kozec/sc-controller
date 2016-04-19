@@ -2,14 +2,12 @@
 """
 SC-Controller - Daemon class
 
-This class can either act as, or control already running daemon.
-
 To control running daemon instance, unix socket in user directory is used.
 Controlling "protocol" is dead-simple:
  - When new connection is accepted, daemon sends two lines:
       SCCDaemon version 0.1
       Current profile: filename.json
- - Connection is held until other side closes it sends line of text
+ - Connection is held until other side closes it or sends line of text
  - Recieved line is treated as filename of profie, that should be loaded istead
    currently active profile.
  - If profile is loaded, daemon responds with 'OK' and closes connection.
@@ -38,6 +36,7 @@ class SCCDaemon(Daemon):
 	def __init__(self, piddile, socket_file):
 		set_logging_level(True, True)
 		Daemon.__init__(self, piddile)
+		self.started = False
 		self.socket_file = socket_file
 		self.mapper = None
 		self.profile_file = None
