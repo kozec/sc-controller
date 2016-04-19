@@ -135,6 +135,10 @@ class MouseAction(Action):
 		return _("Mouse %s") % (self.parameters[0].name.split("_", 1)[-1],)
 
 
+class MacroAction(Action):
+	COMMAND = "macro"
+
+
 class TrackpadAction(Action):
 	COMMAND = "trackpad"
 	def describe(self, context):

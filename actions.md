@@ -52,6 +52,10 @@ touchped, action is executed depending on finger position.
 Available only for pads and sticks; for stick, works by translating
 stick position, what probably doesn't yields expected results.
 
+### macro(key1, key2... [, pause])
+Available only for buttons. Emulates multiple keyboard (or button) presses.
+Pause, if used, has to be int or floating number and specifies delay between
+keyy being pressed and released.
 
 #### click()
 Used to create action, that occurs only if pad or stick is pressed.
@@ -80,7 +84,6 @@ button on dpad.
 #### hatleft(id), hadright(id)
 Same thing as hatup/hatdown, as vertical hat movement and left/right dpad
 buttons are same events on another axis
-
 
 
 # Examples:

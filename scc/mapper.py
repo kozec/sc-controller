@@ -56,6 +56,14 @@ class Mapper(object):
 		self.rte = 					TriggerEvent(self, "rtrig")
 	
 	
+	def sync(self):
+		# Syncs generated events
+		if len(self.syn_list):
+			for dev in self.syn_list:
+				dev.synEvent()
+			self.syn_list = set()
+	
+	
 	def callback(self, controller, sci):
 		# Store state
 		#print sci
@@ -125,7 +133,4 @@ class Mapper(object):
 		if len(self.keyrelease_list):
 			self.keyboard.releaseEvent(self.keyrelease_list)
 			self.keyrelease_list = []
-		if len(self.syn_list):
-			for dev in self.syn_list:
-				dev.synEvent()
-			self.syn_list = set()
+		self.sync()

@@ -13,6 +13,7 @@ buttons for each direction in which stick can be moved.
 from scc.uinput import Keys, Axes, Rels
 from scc.actions import MOUSE_BUTTONS, GAMEPAD_BUTTONS, ACTIONS
 from collections import deque
+import time
 
 STICK_PAD_MIN = -32767
 STICK_PAD_MAX = 32767
@@ -73,17 +74,22 @@ class ControllerEvent(object):
 	
 	hatleft = hatup
 	hatright = hatdown
+
+	def macro(self, *a):
+		pass
 	
 	def XY(self, *a):
 		""" XYAction is only internal and never executed """
 		pass
 	
 	
-	def _button_press(self, button):
+	def _button_press(self, button, immediate=False):
 		"""
 		Emulates button press.
 		button can be mouse button, gamepad button or key; this method decides
 		which device and which emulation method should be used.
+		
+		Setting immediate to True prevents queuing keyboard events.
 		"""
 		if button in MOUSE_BUTTONS:
 			self.mapper.mouse.keyEvent(button, 1)
@@ -91,11 +97,14 @@ class ControllerEvent(object):
 		elif button in GAMEPAD_BUTTONS:
 			self.mapper.gamepad.keyEvent(button, 1)
 			self.mapper.syn_list.add(self.mapper.gamepad)
+		elif immediate:
+			self.mapper.keyboard.keyEvent(button, 1)
+			self.mapper.syn_list.add(self.mapper.keyboard)
 		else:
 			self.mapper.keypress_list.append(button)
 	
 	
-	def _button_release(self, button):
+	def _button_release(self, button, immediate=False):
 		""" See _button_press """
 		if button in MOUSE_BUTTONS:
 			self.mapper.mouse.keyEvent(button, 0)
@@ -103,6 +112,9 @@ class ControllerEvent(object):
 		elif button in GAMEPAD_BUTTONS:
 			self.mapper.gamepad.keyEvent(button, 0)
 			self.mapper.syn_list.add(self.mapper.gamepad)
+		elif immediate:
+			self.mapper.keyboard.keyEvent(button, 0)
+			self.mapper.syn_list.add(self.mapper.keyboard)
 		else:
 			self.mapper.keyrelease_list.append(button)
 
@@ -111,6 +123,19 @@ class ButtonPressEvent(ControllerEvent):
 	def button(self, button1, *a):
 		self._button_press(button1)
 		return True
+	
+	def macro(self, *buttons):
+		delay = 0.05
+		for s in buttons:
+			if type(s) in (int, float):
+				delay = float(s)
+		for b in [ x for x in buttons if type(x) not in (int, float) ]:
+			self._button_press(b, immediate=True)
+			self.mapper.sync()
+			time.sleep(delay)
+			self._button_release(b, immediate=True)
+			self.mapper.sync()
+			time.sleep(delay)
 	
 	
 	def mouse(self, axis, speed=1):
