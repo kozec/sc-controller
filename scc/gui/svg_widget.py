@@ -134,7 +134,7 @@ def find_areas(xml, translation, areas):
 	for child in xml:
 		if 'id' in child.attrib:
 			if child.attrib['id'].startswith("AREA_"):
-				log.debug("Found SVG area %s", child.attrib['id'][5:])
+				# log.debug("Found SVG area %s", child.attrib['id'][5:])
 				areas.append(Area(translation, child))
 				continue
 		if 'transform' in child.attrib:

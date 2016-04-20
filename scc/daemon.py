@@ -60,6 +60,10 @@ class Daemon(object):
 		os.dup2(stde.fileno(), sys.stderr.fileno())
 
 		# write pidfile
+		self.write_pid()
+	
+	def write_pid(self):
+		"""Write pid file"""
 		atexit.register(self.delpid)
 
 		pid = str(os.getpid())

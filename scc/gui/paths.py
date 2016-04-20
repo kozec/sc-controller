@@ -10,6 +10,7 @@ python can't handle.
 All this is needed since I want to have entire thing installable, runnable
 from source tarball *and* debugable in working folder.
 """
+from scc.sccdaemon import DEFAULT_SOCKET
 from gi.repository import GLib
 import os, __main__
 
@@ -67,3 +68,12 @@ def get_daemon_path():
 			return x
 	# Nothing found, just hope for miracles...
 	return "sccdaemon"
+
+
+def get_daemon_socket():
+	"""
+	Returns path to socket that can be used to controll sccdaemon.
+	
+	Currently it's just default value of ~/.scccontroller.socket
+	"""
+	return DEFAULT_SOCKET

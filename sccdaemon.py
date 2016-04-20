@@ -1,5 +1,5 @@
 #!/usr/bin/python2
-from scc.sccdaemon import SCCDaemon
+from scc.sccdaemon import SCCDaemon, DEFAULT_PID_FILE, DEFAULT_SOCKET
 from scc.tools import init_logging
 
 import os, argparse
@@ -11,9 +11,7 @@ if __name__ == '__main__':
 		parser = argparse.ArgumentParser(description=__doc__)
 		parser.add_argument('profile', type=str)
 		parser.add_argument('command', type=str, choices=['start', 'stop', 'restart', 'debug'])
-		pid_file = os.path.expanduser('~/.scccontroller.pid')
-		socket_file = os.path.expanduser('~/.scccontroller.socket')
-		daemon = SCCDaemon(pid_file, socket_file)
+		daemon = SCCDaemon(DEFAULT_PID_FILE, DEFAULT_SOCKET)
 		args = parser.parse_args()
 		daemon.load_profile(args.profile)
 

@@ -11,11 +11,12 @@ from gi.repository import Gtk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.controller_widget import ControllerPad, ControllerStick
-from scc.gui.action_editor import ActionEditor
-from scc.gui.svg_widget import SVGWidget
+from scc.gui.daemon_manager import DaemonManager
 from scc.gui.profile_manager import ProfileManager
+from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.paths import get_daemon_path
+from scc.gui.svg_widget import SVGWidget
 from scc.constants import SCButtons
 from scc.actions import XYAction
 from scc.profile import Profile
@@ -28,10 +29,10 @@ class App(Gtk.Application, ProfileManager):
 	"""
 	Main application / window.
 	"""
-
+	
 	IMAGE = "background.svg"
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
-
+	
 	def __init__(self, gladepath="/usr/share/scc",
 						iconpath="/usr/share/scc/icons"):
 		Gtk.Application.__init__(self,
@@ -40,16 +41,23 @@ class App(Gtk.Application, ProfileManager):
 		ProfileManager.__init__(self)
 		# Setup Gtk.Application
 		self.setup_commandline()
+		# Setup DaemonManager
+		self.dm = DaemonManager()
+		self.dm.connect("alive", self.on_daemon_alive)
+		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
+		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
 		self.gladepath = gladepath
 		self.iconpath = iconpath
 		self.builder = None
+		self.recursing = False
 		self.background = None
 		self.current = Profile(GuiActionParser())
 		self.current_file = None
+		self.just_started = True
 		self.button_widgets = {}
-
-
+	
+	
 	def setup_widgets(self):
 		self.builder = Gtk.Builder()
 		self.builder.add_from_file(os.path.join(self.gladepath, "app.glade"))
@@ -71,6 +79,8 @@ class App(Gtk.Application, ProfileManager):
 		self.builder.get_object("cbProfile").set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
 		
+		self.set_daemon_status("unknown")
+		
 		vbc = self.builder.get_object("vbC")
 		main_area = self.builder.get_object("mainArea")
 		vbc.get_parent().remove(vbc)
@@ -86,8 +96,8 @@ class App(Gtk.Application, ProfileManager):
 	def hilight(self, button):
 		""" Hilights specified button on background image """
 		self.background.hilight({ button : App.HILIGHT_COLOR })
-
-
+	
+	
 	def hint(self, button):
 		""" As hilight, but marks GTK Button as well """
 		active = None
@@ -95,13 +105,13 @@ class App(Gtk.Application, ProfileManager):
 			b.widget.set_state(Gtk.StateType.NORMAL)
 			if b.name == button:
 				active = b.widget
-
+	
 		if active is not None:
 			active.set_state(Gtk.StateType.ACTIVE)
-
+	
 		self.hilight(button)
-
-
+	
+	
 	def show_editor(self, id):
 		if id in SCButtons:
 			ae = ActionEditor(self, self.on_action_chosen)
@@ -156,6 +166,7 @@ class App(Gtk.Application, ProfileManager):
 			cb.set_active(0)
 			return
 		self.load_profile(f)
+		self.dm.set_profile(f.get_path())
 	
 	
 	def on_profile_loaded(self, profile, giofile):
@@ -223,12 +234,12 @@ class App(Gtk.Application, ProfileManager):
 				data[Profile.WHOLE] = action
 			self.button_widgets[id].update()
 		self.on_profile_changed()
-
-
+	
+	
 	def on_background_area_hover(self, trash, area):
 		self.hint(area)
-
-
+	
+	
 	def on_background_area_click(self, trash, area):
 		if area in [ x.name for x in BUTTONS ]:
 			self.hint(None)
@@ -236,8 +247,8 @@ class App(Gtk.Application, ProfileManager):
 		elif area in TRIGGERS + STICKS + PADS:
 			self.hint(None)
 			self.show_editor(area)
-
-
+	
+	
 	def on_vbc_allocated(self, vbc, allocation):
 		"""
 		Called when size of 'Button C' is changed. Centers button
@@ -247,33 +258,105 @@ class App(Gtk.Application, ProfileManager):
 		x = (main_area.get_allocation().width - allocation.width) / 2
 		y = main_area.get_allocation().height - allocation.height - 50
 		main_area.move(vbc, x, y)
-
-
+	
+	
 	def on_ebImage_motion_notify_event(self, box, event):
 		self.background.on_mouse_moved(event.x, event.y)
-
-
+	
+	
+	def on_mnuExit_activate(self, *a):
+		self.quit()
+	
+	
+	def on_daemon_alive(self, *a):
+		self.set_daemon_status("alive")
+		if self.current_file is not None and not self.just_started:
+			self.dm.set_profile(self.current_file.get_path())
+	
+	
+	def on_daemon_profile_changed(self, trash, profile):
+		if self.just_started:
+			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
+			self.select_profile(profile)
+		self.just_started = False
+	
+	
+	def on_daemon_dead(self, *a):
+		if self.just_started:
+			self.dm.restart()
+			self.just_started = False
+			self.set_daemon_status("unknown")
+			return
+		self.set_daemon_status("dead")
+	
+	
+	def on_mnuEmulationEnabled_toggled(self, cb):
+		if self.recursing : return
+		if cb.get_active():
+			# Turning daemon on
+			self.set_daemon_status("unknown")
+			cb.set_sensitive(False)
+			self.dm.start()
+		else:
+			# Turning daemon off
+			self.set_daemon_status("unknown")
+			cb.set_sensitive(False)
+			self.dm.stop()
+			
+	
 	def do_startup(self, *a):
 		Gtk.Application.do_startup(self, *a)
 		self.load_profile_list()
 		self.setup_widgets()
-
-
+	
+	
 	def do_local_options(self, trash, lo):
 		set_logging_level(lo.contains("verbose"), lo.contains("debug") )
 		return -1
-
-
+	
+	
 	def do_command_line(self, cl):
 		Gtk.Application.do_command_line(self, cl)
 		self.activate()
 		return 0
-
-
+	
+	
 	def do_activate(self, *a):
 		self.builder.get_object("window").show()
-
-
+	
+	
+	def select_profile(self, filename):
+		""" Selects specified file in profile selection combobox """
+		cb = self.builder.get_object("cbProfile")
+		model = cb.get_model()
+		for row in model:
+			if filename == model.get_value(row.iter, 1).get_path():
+				cb.set_active_iter(row.iter)
+				break
+	
+	
+	def set_daemon_status(self, status):
+		""" Updates image that shows daemon status and menu shown when image is clicked """
+		log.debug("daemon status: %s", status)
+		icon = os.path.join(self.iconpath, "status_%s.svg" % (status,))
+		imgDaemonStatus = self.builder.get_object("imgDaemonStatus")
+		btDaemon = self.builder.get_object("btDaemon")
+		mnuEmulationEnabled = self.builder.get_object("mnuEmulationEnabled")
+		imgDaemonStatus.set_from_file(icon)
+		mnuEmulationEnabled.set_sensitive(True)
+		self.window.set_icon_from_file(icon)
+		self.recursing = True
+		if status == "alive":
+			btDaemon.set_tooltip_text(_("Emulation is active"))
+			mnuEmulationEnabled.set_active(True)
+		elif status == "dead":
+			btDaemon.set_tooltip_text(_("Emulation is inactive"))
+			mnuEmulationEnabled.set_active(False)
+		else:
+			btDaemon.set_tooltip_text(_("Checking emulation status..."))
+		self.recursing = False
+	
+	
 	def setup_commandline(self):
 		def aso(long_name, short_name, description,
 				arg=GLib.OptionArg.NONE,
@@ -286,8 +369,8 @@ class App(Gtk.Application, ProfileManager):
 			o.flags = flags
 			o.arg = arg
 			self.add_main_option_entries([o])
-
+		
 		self.connect('handle-local-options', self.do_local_options)
-
+		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
