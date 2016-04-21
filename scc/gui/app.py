@@ -146,6 +146,8 @@ class App(Gtk.Application, ProfileManager):
 		model.clear()
 		for f in profiles:
 			name = f.get_basename()
+			if name.endswith(".mod"):
+				continue
 			if name.endswith(".sccprofile"):
 				name = name[0:-11]
 			model.append((name, f, None))
@@ -179,8 +181,11 @@ class App(Gtk.Application, ProfileManager):
 	
 	def on_profile_changed(self, *a):
 		"""
-		Called when selected profile is modified in memory
-		Displays "changed" next to profile name and shows Save button
+		Called when selected profile is modified in memory.
+		Displays "changed" next to profile name and shows Save button.
+		
+		If sccdaemon is alive, creates 'original.filename.mod' and loads it
+		into daemon to activate changes right away.
 		"""
 		cb = self.builder.get_object("cbProfile")
 		self.builder.get_object("rvProfileChanged").set_reveal_child(True)
@@ -189,12 +194,23 @@ class App(Gtk.Application, ProfileManager):
 			if self.current_file == model.get_value(row.iter, 1):
 				model.set_value(row.iter, 2, _("(changed)"))
 				break
+		
+		if self.dm.is_alive():
+			modfile = Gio.File.new_for_path(self.current_file.get_path() + ".mod")
+			self.save_profile(modfile, self.current)
 	
 	
 	def on_profile_saved(self, giofile):
 		"""
 		Called when selected profile is saved to disk
 		"""
+		if giofile.get_path().endswith(".mod"):
+			# Special case, this one is saved only to be sent to daemon
+			# and user doesn't need to know about it
+			if self.dm.is_alive():
+				self.dm.set_profile(giofile.get_path())
+			return
+		
 		cb = self.builder.get_object("cbProfile")
 		self.builder.get_object("rvProfileChanged").set_reveal_child(False)
 		model = cb.get_model()
@@ -202,6 +218,10 @@ class App(Gtk.Application, ProfileManager):
 			if model.get_value(row.iter, 1) == self.current_file:
 				model.set_value(row.iter, 1, giofile)
 			model.set_value(row.iter, 2, None)
+		
+		if self.dm.is_alive():
+			self.dm.set_profile(giofile.get_path())
+		
 		self.current_file = giofile
 	
 	
@@ -276,8 +296,14 @@ class App(Gtk.Application, ProfileManager):
 	
 	def on_daemon_profile_changed(self, trash, profile):
 		if self.just_started:
+			if profile.endswith(".mod"):
+				profile = profile[0:-4]
 			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
-			self.select_profile(profile)
+			if not self.select_profile(profile):
+				# Daemon uses unknown profile, override it with something I know about
+				if self.current_file is not None:
+					self.dm.set_profile(self.current_file.get_path())
+				
 		self.just_started = False
 	
 	
@@ -326,13 +352,18 @@ class App(Gtk.Application, ProfileManager):
 	
 	
 	def select_profile(self, filename):
-		""" Selects specified file in profile selection combobox """
+		"""
+		Selects specified file in profile selection combobox.
+		Returns True on success or False if profile is not in combobox.
+		"""
 		cb = self.builder.get_object("cbProfile")
 		model = cb.get_model()
 		for row in model:
-			if filename == model.get_value(row.iter, 1).get_path():
-				cb.set_active_iter(row.iter)
-				break
+			if model.get_value(row.iter, 1) is not None:
+				if filename == model.get_value(row.iter, 1).get_path():
+					cb.set_active_iter(row.iter)
+					return True
+		return False
 	
 	
 	def set_daemon_status(self, status):
