@@ -15,7 +15,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.gui.profile_manager import ProfileManager
 from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
-from scc.gui.paths import get_daemon_path
+from scc.gui.paths import get_daemon_path, get_profiles_path
 from scc.gui.svg_widget import SVGWidget
 from scc.constants import SCButtons
 from scc.actions import XYAction
@@ -160,15 +160,52 @@ class App(Gtk.Application, ProfileManager):
 	
 	def on_cbProfile_changed(self, cb, *a):
 		""" Called when user chooses profile in selection combo """
+		if self.recursing : return
 		model = cb.get_model()
 		iter = cb.get_active_iter()
 		f = model.get_value(iter, 1)
 		if f is None:
 			# TODO: New profile dialog
-			cb.set_active(0)
+			if self.current_file is None:
+				cb.set_active(0)
+			else:
+				self.select_profile(self.current_file.get_path())
+			
+			new_name = os.path.split(self.current_file.get_path())[-1]
+			if new_name.endswith(".mod"): new_name = new_name[0:-4]
+			if new_name.endswith(".sccprofile"): new_name = new_name[0:-11]
+			new_name = _("Copy of") + " " + new_name
+			dlg = self.builder.get_object("dlgNewProfile")
+			txNewProfile = self.builder.get_object("txNewProfile")
+			txNewProfile.set_text(new_name)
+			dlg.set_transient_for(self.window)
+			dlg.show()
 			return
 		self.load_profile(f)
 		self.dm.set_profile(f.get_path())
+	
+	
+	def on_dlgNewProfile_delete_event(self, dlg, *a):
+		dlg.hide()
+		return True
+	
+	
+	def on_btNewProfile_clicked(self, *a):
+		""" Called when new profile name is set and OK is clicked """
+		txNewProfile = self.builder.get_object("txNewProfile")
+		dlg = self.builder.get_object("dlgNewProfile")
+		cb = self.builder.get_object("cbProfile")
+		name = txNewProfile.get_text()
+		filename = txNewProfile.get_text() + ".sccprofile"
+		path = os.path.join(get_profiles_path(), filename)
+		self.current_file = Gio.File.new_for_path(path)
+		self.recursing = True
+		model = cb.get_model()
+		model.insert(0, ( name, self.current_file, None ))
+		cb.set_active(0)
+		self.recursing = False
+		self.save_profile(self.current_file, self.current)
+		dlg.hide()
 	
 	
 	def on_profile_loaded(self, profile, giofile):
