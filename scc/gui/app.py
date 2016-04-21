@@ -256,7 +256,7 @@ class App(Gtk.Application, ProfileManager):
 		"""
 		main_area = self.builder.get_object("mainArea")
 		x = (main_area.get_allocation().width - allocation.width) / 2
-		y = main_area.get_allocation().height - allocation.height - 50
+		y = main_area.get_allocation().height - allocation.height - 10
 		main_area.move(vbc, x, y)
 	
 	
