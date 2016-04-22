@@ -20,11 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import usb1
-
 from threading import Timer
 import struct, time
 
+from scc.lib import usb1
 from scc.constants import VENDOR_ID, PRODUCT_ID, HPERIOD, LPERIOD, DURATION
 from scc.constants import ENDPOINT, CONTROLIDX, FORMATS, ControllerInput
 from scc.constants import SCStatus, SCButtons, HapticPos
