@@ -3,7 +3,7 @@
 		"A"     : { "action": "button(Keys.KEY_ENTER)" }, 
 		"B"     : { "action": "button(Keys.KEY_ESC)" }, 
 		"BACK"  : { "action": "button(Keys.KEY_BACKSPACE)" }, 
-		"C"     : { "action": "button(Keys.BTN_MODE)" }, 
+		"C"     : { "action": "profile('XBox Controller with High Precision Camera')" },
 		"LB"    : { "action": "button(Keys.KEY_LEFTCTRL)" }, 
 		"LGRIP" : { "action": "button(Keys.BTN_GAMEPAD)" }, 
 		"LPAD"  : { "action": "button(Keys.BTN_THUMBL)" }, 

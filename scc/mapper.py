@@ -1,7 +1,6 @@
 #!/usr/bin/python2
 from __future__ import unicode_literals
 
-import traceback
 from collections import deque
 from scc.uinput import Gamepad, Keyboard, Mouse
 from scc.profile import Profile
@@ -11,7 +10,7 @@ from scc.events import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import SCStatus, SCButtons, SCI_NULL
 from scc.constants import CI_NAMES, ControllerInput
 
-import logging
+import traceback, logging
 log = logging.getLogger("Mapper")
 
 class Mapper(object):
@@ -37,6 +36,10 @@ class Mapper(object):
 			xscale=Mouse.DEFAULT_SCR_XSCALE,
 			yscale=Mouse.DEFAULT_SCR_XSCALE
 		)
+		
+		# Set some stuff to None just to have it overriden
+		# by SCCDaemon class
+		self.change_profile_callback = None
 		
 		# Setup emulation
 		self.keypress_list = []

@@ -12,7 +12,9 @@ buttons for each direction in which stick can be moved.
 """
 from scc.uinput import Keys, Axes, Rels
 from scc.actions import MOUSE_BUTTONS, GAMEPAD_BUTTONS, ACTIONS
-import time
+
+import time, logging
+log = logging.getLogger("Events")
 
 STICK_PAD_MIN = -32767
 STICK_PAD_MAX = 32767
@@ -43,6 +45,12 @@ class ControllerEvent(object):
 		# Used as locals when executing code from 'python' action
 		self.locs = { x : getattr(self, x) for x in ACTIONS }
 		self.locs['mapper'] = mapper
+	
+	
+	def profile(self, name, *a):
+		# Only ButtonReleaseEvent handles this, because every other action
+		# is typicaly executed multiple times in a row
+		pass
 	
 	
 	def trackpad(self, *a):
@@ -172,6 +180,13 @@ class ButtonReleaseEvent(ControllerEvent):
 		self.mapper.gamepad.axisEvent(id, min)
 		self.mapper.syn_list.add(self.mapper.gamepad)
 		return False
+	
+	
+	def profile(self, name, *a):
+		if self.mapper.change_profile_callback is None:
+			log.warning("Mapper can't change profile by controller action")
+		else:
+			self.mapper.change_profile_callback(name)
 	
 	
 	def click(self, *a):

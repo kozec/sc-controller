@@ -142,6 +142,18 @@ class MacroAction(Action):
 	COMMAND = "macro"
 
 
+class ChangeProfileAction(Action):
+	COMMAND = "profile"
+	
+	def describe(self, context):
+		return _("Profile Change")
+	
+	
+	def to_string(self, multiline=False):
+		""" Converts action back to string """
+		return "%s('%s')" % (self.COMMAND, self.parameters[0].encode('string_escape'))
+
+
 class TrackpadAction(Action):
 	COMMAND = "trackpad"
 	def describe(self, context):
@@ -468,6 +480,9 @@ class ActionParser(object):
 		if t.type == TokenType.NUMBER:
 			self.index -= 1
 			return self._parse_number()
+		
+		if t.type == TokenType.STRING:
+			return t.value[1:-1].decode('string_escape')
 		
 		raise ParseError("Excepted parameter, got '%s'" % (t.value,))
 

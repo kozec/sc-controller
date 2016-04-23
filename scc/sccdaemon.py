@@ -16,14 +16,16 @@ Controlling "protocol" is dead-simple:
 from __future__ import unicode_literals
 from scc.tools import _
 
+from scc.lib.daemon import Daemon
+from scc.paths import get_profiles_path, get_default_profiles_path
+from scc.paths import DEFAULT_PID_FILE, DEFAULT_SOCKET
 from scc.actions import TalkingActionParser
 from scc.controller import SCController
 from scc.tools import set_logging_level
 from scc.constants import SCButtons
+from scc.uinput import Keys, Axes
 from scc.profile import Profile
 from scc.mapper import Mapper
-from scc.uinput import Keys, Axes
-from scc.daemon import Daemon
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
 import os, sys, signal, socket, select, logging, threading, traceback
@@ -32,8 +34,6 @@ tlog = logging.getLogger("Socket Thread")
 
 class ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer): daemon_threads = True
 
-DEFAULT_PID_FILE =	os.path.expanduser('~/.scccontroller.pid')
-DEFAULT_SOCKET =	os.path.expanduser('~/.scccontroller.socket')
 
 class SCCDaemon(Daemon):
 	VERSION = "0.1"
@@ -47,6 +47,7 @@ class SCCDaemon(Daemon):
 		self.mapper = None
 		self.lock = threading.Lock()
 		self.profile_file = None
+		self.clients = set()
 		self.cwd = os.getcwd()
 	
 	
@@ -63,11 +64,39 @@ class SCCDaemon(Daemon):
 		self.profile_file = filename
 		# This last line kinda depends on GIL...
 		self.mapper.profile = p
+		# Notify all connected clients about change
+		for wfile in self.clients:
+			try:
+				wfile.write(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
+			except: pass
+	
+	
+	def _set_profile_action(self, name):
+		# Called when 'profile' action is bound to button and used
+		if name.startswith(".") or "/" in name:
+			# Small sanity check
+			log.error("Cannot load profile: Profile '%s' not found", name)
+			return
+		filename = name + ".sccprofile"
+		for p in (get_profiles_path(), get_default_profiles_path()):
+			path = os.path.join(p, filename)
+			if os.path.exists(path):
+				self.lock.acquire()
+				try:
+					self._set_profile(path)
+					self.lock.release()
+					log.info("Loaded profile '%s'", name)
+				except Exception, e:
+					self.lock.release()
+					log.error(e)
+				return
+		log.error("Cannot load profile: Profile '%s' not found", name)
 	
 	
 	def on_start(self):
 		os.chdir(self.cwd)
 		self.mapper = Mapper(Profile(TalkingActionParser()))
+		self.mapper.change_profile_callback = self._set_profile_action
 		if self.profile_file is not None:
 			try:
 				self.mapper.profile.load(self.profile_file)
@@ -110,6 +139,7 @@ class SCCDaemon(Daemon):
 	
 	def _sshandler(self, rfile, wfile):
 		self.lock.acquire()
+		self.clients.add(wfile)
 		wfile.write(b"SCCDaemon\n")
 		wfile.write(("Version: %s\n" % (SCCDaemon.VERSION,)).encode("utf-8"))
 		wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
@@ -130,6 +160,10 @@ class SCCDaemon(Daemon):
 				self.lock.release()
 				tb = traceback.format_exc()
 				wfile.write(unicode(tb).encode("utf-8"))
+		
+		self.lock.acquire()
+		self.clients.remove(wfile)
+		self.lock.release()
 	
 	
 	def _listen_on_socket(self):

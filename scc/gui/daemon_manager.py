@@ -10,7 +10,7 @@ probably too crazy even for me.
 """
 from __future__ import unicode_literals
 
-from scc.gui.paths import get_daemon_path, get_daemon_socket
+from scc.paths import get_daemon_path, get_daemon_socket
 from gi.repository import GObject, Gio, GLib
 
 import os, sys, logging

@@ -15,8 +15,8 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.gui.profile_manager import ProfileManager
 from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
-from scc.gui.paths import get_daemon_path, get_profiles_path
 from scc.gui.svg_widget import SVGWidget
+from scc.paths import get_daemon_path, get_profiles_path
 from scc.constants import SCButtons
 from scc.actions import XYAction
 from scc.profile import Profile
@@ -332,9 +332,15 @@ class App(Gtk.Application, ProfileManager):
 	
 	
 	def on_daemon_profile_changed(self, trash, profile):
-		if self.just_started:
-			if profile.endswith(".mod"):
-				profile = profile[0:-4]
+		current_changed = self.builder.get_object("rvProfileChanged").get_reveal_child()
+		if profile.endswith(".mod"):
+			try:
+				os.unlink(profile)
+			except Exception, e:
+				log.warning("Failed to remove .mod file")
+				log.warning(e)
+			profile = profile[0:-4]
+		if self.just_started or not current_changed:
 			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
 			if not self.select_profile(profile):
 				# Daemon uses unknown profile, override it with something I know about

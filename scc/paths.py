@@ -10,18 +10,19 @@ python can't handle.
 All this is needed since I want to have entire thing installable, runnable
 from source tarball *and* debugable in working folder.
 """
-from scc.sccdaemon import DEFAULT_SOCKET
-from gi.repository import GLib
 import os, __main__
+
+DEFAULT_PID_FILE =	os.path.expanduser('~/.scccontroller.pid')
+DEFAULT_SOCKET =	os.path.expanduser('~/.scccontroller.socket')
 
 def get_config_path():
 	"""
 	Returns configuration directory.
 	~/.config/scc under normal conditions.
 	"""
-	confdir = GLib.get_user_config_dir()
-	if confdir is None:
-		confdir = os.path.expanduser("~/.config")
+	confdir = os.path.expanduser("~/.config")
+	if "XDG_CONFIG_HOME" in os.environ:
+		confdir = os.environ['XDG_CONFIG_HOME']
 	return os.path.join(confdir, "scc")
 
 
@@ -42,7 +43,7 @@ def get_default_profiles_path():
 	"""
 	if __main__.__file__.endswith(".py"):
 		# Started as script with something like './scc.py'
-		local = os.path.join(os.path.split(__file__)[0], "../../default_profiles")
+		local = os.path.join(os.path.split(__file__)[0], "../default_profiles")
 		local = os.path.normpath(local)
 		if os.path.exists(local):
 			return local

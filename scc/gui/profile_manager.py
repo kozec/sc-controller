@@ -9,9 +9,9 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
-from scc.gui.paths import get_profiles_path, get_default_profiles_path
-from scc.gui.parser import GuiActionParser
+from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.profile import Profile
+from scc.gui.parser import GuiActionParser
 
 import os, logging
 log = logging.getLogger("ProfileManager")
