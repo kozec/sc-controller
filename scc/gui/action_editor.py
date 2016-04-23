@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.uinput import Keys, Axes
+from scc.uinput import Keys, Axes, Rels
 from scc.actions import AxisAction, MouseAction, ButtonAction, DPadAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
 from scc.actions import Action, XYAction
@@ -428,7 +428,8 @@ class ActionEditor(ButtonChooser):
 			self._select_axis_output("trackpad")
 			self._set_sensitivity(action)
 		elif isinstance(action, XYAction):
-			mfp = isinstance(action.actions[1], RAxisAction)	# mfp for 'may be forst page'
+			mfp = isinstance(action.actions[1], RAxisAction)	# mfp for 'may be first page'
+			mfp = mfp or isinstance(action.actions[1], MouseAction)
 			p = [ None, None ]
 			for x in (0, 1):
 				if len(action.actions[0].parameters) >= x:
@@ -447,6 +448,9 @@ class ActionEditor(ButtonChooser):
 				self._set_sensitivity(action.actions[0])
 			elif mfp and p[0] == Axes.ABS_HAT0X and p[1] == Axes.ABS_HAT0Y:
 				self._select_axis_output("dpad")
+			elif mfp and p[0] == Rels.REL_HWHEEL and p[1] == Rels.REL_WHEEL:
+				self._select_axis_output("wheel")
+				self._set_sensitivity(action.actions[0])
 			else:
 				self.builder.get_object("tgPerAxis").set_active(True)
 		self.id = "STICK"

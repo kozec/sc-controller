@@ -16,11 +16,10 @@
 ### mouse(axis [, speed = 1, acceleration = 0 ])
 Controls mouse movement or scroll wheel.
 
-- For stick, lets cursor to be controlled by stick tilt.
-- For pad, emulates stick and then controls cursor by emulated stick.
-  Use trackpad() instead.
-- For trigger, moves mouse in one direction with speed depending on how much
-  is trigger pressed.
+- For stick, lets cursor or mouse wheel to be controlled by stick tilt.
+- For pad, does same thing as 'trackball'. You can set pad to move mouse only
+  in one axis using this.
+- For wheel controlled by pad, emulates finger scroll.
 - For button, pressing button maps to single movement over mouse axis or
   single step on scroll wheel.
 
@@ -31,11 +30,6 @@ Available only for pads. Acts as trackpad - sliding finger over the pad moves th
 
 ### trackball([ speed = 1 ])
 Available only for pads. Acts as trackball.
-
-
-### wheel([ trackball = False, speed = 1 ])
-Available only for pads. Emulates mouse scroll wheel.
-
 
 
 #### axis(id [, min = -32767, max = 32767 ])

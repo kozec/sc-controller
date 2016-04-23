@@ -465,8 +465,8 @@ class Mouse(UInput):
 		self._scr_mass = mass
 		self._scr_friction = friction
 		self._scr_r = r
-		self._scr_I = (2 * self._mass * self._r**2) / 5.0
-		self._scr_a = self._r * self._friction / self._I
+		self._scr_I = (2 * self._scr_mass * self._scr_r**2) / 5.0
+		self._scr_a = self._scr_r * self._scr_friction / self._scr_I
 
 		self._scr_xvel_dq = deque(maxlen=mean_len)
 		self._scr_yvel_dq = deque(maxlen=mean_len)
@@ -537,7 +537,7 @@ class Mouse(UInput):
 			# Cap friction desceleration
 			_dvx = min(abs(self._xvel), _ax * dt)
 			_dvy = min(abs(self._yvel), _ay * dt)
-
+			
 			# compute new velocity
 			_xvel = self._xvel - copysign(_dvx, self._xvel)
 			_yvel = self._yvel - copysign(_dvy, self._yvel)
@@ -571,6 +571,8 @@ class Mouse(UInput):
 		_tmp = time.time()
 		dt = _tmp - self._scr_lastTime
 		self._scr_lastTime = _tmp
+		
+		a_dx, a_dy = dx, dy
 
 		def _genevt():
 			_syn = False
@@ -637,7 +639,7 @@ class Mouse(UInput):
 			self._scr_dy += dy * self._scr_yscale
 
 			_nev = _genevt()
-
+		
 		return _nev
 
 

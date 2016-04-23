@@ -21,12 +21,12 @@
     </columns>
     <data>
       <row>
-        <col id="0">XY( axis(Axes.ABS_X, sensitivity), raxis(Axes.ABS_Y, sensitivity) )</col>
+        <col id="0">XY( axis(Axes.ABS_X), raxis(Axes.ABS_Y) )</col>
         <col id="1" translatable="yes">Left Stick</col>
         <col id="2" translatable="yes">lstick</col>
       </row>
       <row>
-        <col id="0">XY( axis(Axes.ABS_RX, sensitivity), raxis(Axes.ABS_RY, sensitivity) )</col>
+        <col id="0">XY( axis(Axes.ABS_RX), raxis(Axes.ABS_RY) )</col>
         <col id="1" translatable="yes">Right Stick</col>
         <col id="2" translatable="yes">rstick</col>
       </row>
@@ -34,6 +34,11 @@
         <col id="0">XY( axis(Axes.ABS_HAT0X), raxis(Axes.ABS_HAT0Y) )</col>
         <col id="1" translatable="yes">DPad</col>
         <col id="2" translatable="yes">dpad</col>
+      </row>
+      <row>
+        <col id="0">XY( mouse(Rels.REL_HWHEEL, sensitivity), mouse(Rels.REL_WHEEL, sensitivity) )</col>
+        <col id="1" translatable="yes">Mouse Wheel</col>
+        <col id="2" translatable="yes">wheel</col>
       </row>
       <row>
         <col id="0">trackpad(sensitivity)</col>

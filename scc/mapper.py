@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import traceback
+from collections import deque
 from scc.uinput import Gamepad, Keyboard, Mouse
 from scc.profile import Profile
 from scc.events import ButtonPressEvent, ButtonReleaseEvent, StickEvent
@@ -32,17 +33,20 @@ class Mapper(object):
 			xscale=Mouse.DEFAULT_XSCALE,
 			yscale=Mouse.DEFAULT_YSCALE)
 		self.mouse.updateScrollParams(
-			friction=Mouse.DEFAULT_SCR_FRICTION,
+			friction=0.1, # Mouse.DEFAULT_SCR_FRICTION
 			xscale=Mouse.DEFAULT_SCR_XSCALE,
 			yscale=Mouse.DEFAULT_SCR_XSCALE
 		)
 		
-		# Set emulation
+		# Setup emulation
 		self.keypress_list = []
 		self.keyrelease_list = []
+		self.mouse_dq = [ deque(maxlen=8), deque(maxlen=8), deque(maxlen=8), deque(maxlen=8) ] # x, y, wheel, hwheel
+		self.mouse_tb = [ False, False ]	# trackball mode for mouse / wheel
 		self.syn_list = set()
 		self.old_state = SCI_NULL
 		self.state = SCI_NULL
+		self.mouse_movements = [ None, None, None, None ]
 		self.force_event = set()
 		self.bpe =					ButtonPressEvent(self)
 		self.bre =					ButtonReleaseEvent(self)
@@ -57,11 +61,45 @@ class Mapper(object):
 	
 	
 	def sync(self):
-		# Syncs generated events
+		""" Syncs generated events """
 		if len(self.syn_list):
 			for dev in self.syn_list:
 				dev.synEvent()
 			self.syn_list = set()
+	
+	
+	def mouse_dq_clear(self, *axes):
+		""" Used by trackpad, trackball and mouse wheel emulation """
+		for axis in axes:
+			self.mouse_dq[axis].clear()
+	
+	
+	def mouse_dq_add(self, axis, position, speed):
+		""" Used by trackpad, trackball and mouse wheel emulation """
+		t = self.mouse_movements[axis]
+		if t is None:
+			try:
+				prev = int(sum(self.mouse_dq[axis]) / len(self.mouse_dq[axis]))
+			except ZeroDivisionError:
+				prev = position
+			t = self.mouse_movements[axis] = [ prev, 0, False ]
+		self.mouse_dq[axis].append(position)
+		
+		try:
+			t[1] = int(sum(self.mouse_dq[axis]) / len(self.mouse_dq[axis]))
+		except ZeroDivisionError:
+			t[1] = 0
+	
+	
+	def do_trackball(self, move_or_wheel, stop=False):
+		""" Used to continue mouse movement when user presses or releases pad """
+		self.mouse_tb[move_or_wheel] = not stop
+	
+	
+	def _get_mouse_movement(self, axis):
+		if self.mouse_movements[axis] is None:
+			return 0
+		return self.mouse_movements[axis][1] - self.mouse_movements[axis][0]
 	
 	
 	def callback(self, controller, sci):
@@ -73,6 +111,7 @@ class Mapper(object):
 		self.state = sci
 		fe = self.force_event
 		self.force_event = set()
+		
 		
 		# Check buttons
 		xor = self.old_state.buttons ^ sci.buttons
@@ -126,11 +165,33 @@ class Mapper(object):
 						self.profile.pads[Profile.LEFT][x].execute(self.lpe[x])
 		
 		
-		# Generate events
+		# Generate events - keys
 		if len(self.keypress_list):
 			self.keyboard.pressEvent(self.keypress_list)
 			self.keypress_list = []
 		if len(self.keyrelease_list):
 			self.keyboard.releaseEvent(self.keyrelease_list)
 			self.keyrelease_list = []
+		# Generate events - mouse
+		mx, my = self._get_mouse_movement(0), self._get_mouse_movement(1)
+		wx, wy = self._get_mouse_movement(2), self._get_mouse_movement(3)
+		if mx != 0 or my != 0:
+			self.mouse.moveEvent(mx, my * -1, False)
+			self.syn_list.add(self.mouse)
+			self.mouse_movements[0] = self.mouse_movements[1] = None
+		if wx != 0 or wy != 0:
+			self.mouse.scrollEvent(wx, wy, False)
+			self.syn_list.add(self.mouse)
+			self.mouse_movements[2] = self.mouse_movements[3] = None
+		# Generate events - trackball
+		if self.mouse_tb[0]:
+			dist = self.mouse.moveEvent(0, 0, True)
+			self.syn_list.add(self.mouse)
+			if not dist:
+				self.mouse_tb[0] = False
+		if self.mouse_tb[1]:
+			dist = self.mouse.scrollEvent(0, 0, True)
+			self.syn_list.add(self.mouse)
+			if not dist:
+				self.mouse_tb[1] = False
 		self.sync()

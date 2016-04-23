@@ -1,0 +1,35 @@
+{
+	"buttons": {
+		"A"     : { "action": "button(Keys.KEY_ENTER)" }, 
+		"B"     : { "action": "button(Keys.KEY_ESC)" }, 
+		"BACK"  : { "action": "button(Keys.KEY_BACKSPACE)" }, 
+		"C"     : { "action": "button(Keys.BTN_MODE)" }, 
+		"LB"    : { "action": "button(Keys.KEY_LEFTCTRL)" }, 
+		"LGRIP" : { "action": "button(Keys.BTN_GAMEPAD)" }, 
+		"LPAD"  : { "action": "button(Keys.BTN_THUMBL)" }, 
+		"RB"    : { "action": "button(Keys.KEY_LEFTALT)" }, 
+		"RGRIP" : { "action": "button(Keys.BTN_NORTH)" }, 
+		"RPAD"  : { "action": "button(Keys.BTN_THUMBR)" }, 
+		"START" : { "action": "button(Keys.KEY_LEFTSHIFT)" }, 
+		"X"     : { "action": "button(Keys.KEY_SPACE)" }, 
+		"Y"     : { "action": "button(Keys.KEY_TAB)" }
+	},
+	
+	"triggers": {
+		"LEFT"  : { "action": "button(Keys.BTN_RIGHT)" }, 
+		"RIGHT" : { "action": "button(Keys.BTN_LEFT)" }
+	},
+	
+	"stick": {
+		"action": "dpad(button(Keys.KEY_W), button(Keys.KEY_S), button(Keys.KEY_A), button(Keys.KEY_S))"
+	}, 
+	
+	"left_pad": {
+		"X": { "action": "mouse(Rels.REL_HWHEEL, 1.0)" }, 
+		"Y": { "action": "mouse(Rels.REL_WHEEL, 1.0)" }
+	},
+	
+	"right_pad": {
+		"action": "trackball(1.0)"
+	}
+}

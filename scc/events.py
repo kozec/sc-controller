@@ -12,7 +12,6 @@ buttons for each direction in which stick can be moved.
 """
 from scc.uinput import Keys, Axes, Rels
 from scc.actions import MOUSE_BUTTONS, GAMEPAD_BUTTONS, ACTIONS
-from collections import deque
 import time
 
 STICK_PAD_MIN = -32767
@@ -51,10 +50,6 @@ class ControllerEvent(object):
 	
 	
 	def trackball(self, *a):
-		pass
-	
-	
-	def wheel(self, *a):
 		pass
 	
 	
@@ -230,15 +225,21 @@ class StickEvent(ControllerEvent):
 	def mouse(self, axis, speed=1):
 		p = getattr(self.mapper.state, self.axis_attr) * speed / 100
 
-		# This is generaly bad idea...
 		if axis == Rels.REL_X:
+			# This is generaly bad idea for stick...
 			self.mapper.mouse.moveEvent(p, 0, False)
 			self.mapper.syn_list.add(self.mapper.mouse)
 		elif axis == Rels.REL_Y:
+			# ... this as well...
 			self.mapper.mouse.moveEvent(0, -p, False)
 			self.mapper.syn_list.add(self.mapper.mouse)
 		elif axis == Rels.REL_WHEEL:
-			self.mapper.mouse.scrollEvent(0, p, False)
+			# ... but this should kinda work
+			self.mapper.mouse.scrollEvent(0, p * speed * 2.0, False)
+			self.mapper.syn_list.add(self.mapper.mouse)
+		elif axis == Rels.REL_HWHEEL:
+			# and this as well
+			self.mapper.mouse.scrollEvent(p * speed * 2.0, 0, False)
 			self.mapper.syn_list.add(self.mapper.mouse)
 		self.mapper.force_event.add(FE_STICK)
 		return False	# TODO: Some magic for feedback here
@@ -302,68 +303,60 @@ class PadEvent(StickEvent):
 	def __init__(self, mapper, axis_attr, axis2_attr, click_button, touch_button):
 		StickEvent.__init__(self, mapper, axis_attr, axis2_attr, click_button)
 		self.touch_button = touch_button
-		self.dq = [ deque(maxlen=8), deque(maxlen=8), deque(maxlen=8), deque(maxlen=8) ]
 		self.trackpadmode = False
 	
 	
-	def _dq_add(self, axis, current_position):
-		try:
-			prev = int(sum(self.dq[axis]) / len(self.dq[axis]))
-		except ZeroDivisionError:
-			prev = 0
-		self.dq[axis].append(current_position)
-
-		try:
-			m = int(sum(self.dq[axis]) / len(self.dq[axis]))
-		except ZeroDivisionError:
-			m = 0
-		if not self.mapper.old_state.buttons & self.touch_button:
-			# Pad was just pressed
-			prev = m
-		return prev, m
-	
 	def trackball(self, speed=1, trackpadmode=False):
-		px, mx = self._dq_add(0, getattr(self.mapper.state, self.axis_attr))
-		py, my = self._dq_add(1, getattr(self.mapper.state, self.axis2_attr))
-		
-		if not self.mapper.state.buttons & self.touch_button:
+		if self.mapper.state.buttons & self.touch_button:
+			if not self.mapper.old_state.buttons & self.touch_button:
+				# Pad was just pressed
+				self.mapper.do_trackball(0, True)
+			x = getattr(self.mapper.state, self.axis_attr)
+			y = getattr(self.mapper.state, self.axis2_attr)
+			if x != 0.0 or y != 0.0:
+				self.mapper.mouse_dq_add(0, x, speed)
+				self.mapper.mouse_dq_add(1, y, speed)
+			self.mapper.force_event.add(FE_PAD)
+		elif self.mapper.old_state.buttons & self.touch_button:
 			# Pad was just released
-			if not trackpadmode:
-				dist = self.mapper.mouse.moveEvent(0, 0, True)
-				if dist:
-					self.mapper.force_event.add(FE_PAD)
-			self.dq[0].clear()
-			self.dq[1].clear()
-			return False
-			
-		dx = mx - px
-		dy = my - py
-		self.mapper.mouse.moveEvent(dx * speed, dy * speed * -1, False)
-		self.mapper.force_event.add(FE_PAD)
+			self.mapper.mouse_dq_clear(0, 1)
+			self.mapper.do_trackball(0, trackpadmode)
 		
 		return False	# TODO: Some magic for feedback here
 	
-	def wheel(self, trackball=False, speed=1):
-		py, y = self._dq_add(2, getattr(self.mapper.state, self.axis_attr))
-		px, x = 0, 0
-		if self.axis2_attr is not None:
-			px, x = py, y
-			py, y = self._dq_add(3, getattr(self.mapper.state, self.axis2_attr))
-		
-		if not self.mapper.state.buttons & self.touch_button:
+	
+	def mouse(self, axis, speed=1):
+		if self.mapper.state.buttons & self.touch_button:
+			if not self.mapper.old_state.buttons & self.touch_button:
+				# Pad was just pressed
+				if axis in (Rels.REL_X, Rels.REL_Y):
+					self.mapper.do_trackball(0, True)
+				elif axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
+					self.mapper.do_trackball(1, True)
+			if axis == Rels.REL_X:
+				self.mapper.mouse_dq_add(0, getattr(self.mapper.state, self.axis_attr), -speed)
+			elif axis == Rels.REL_Y:
+				self.mapper.mouse_dq_add(1, getattr(self.mapper.state, self.axis_attr), -speed)
+			elif axis == Rels.REL_HWHEEL:
+				self.mapper.mouse_dq_add(2, getattr(self.mapper.state, self.axis_attr), -speed)
+			elif axis == Rels.REL_WHEEL:
+				self.mapper.mouse_dq_add(3, getattr(self.mapper.state, self.axis_attr), -speed)
+			self.mapper.force_event.add(FE_PAD)
+				
+		elif self.mapper.old_state.buttons & self.touch_button:
 			# Pad was just released
-			if trackball:
-				dist = self.mapper.mouse.scrollEvent(0, 0, True)
-				if dist:
-					self.mapper.force_event.add(FE_PAD)
-			self.dq[2].clear()
-			self.dq[3].clear()
-			return False
-			
-		dx = x - px
-		dy = y - py
-		self.mapper.mouse.scrollEvent(dx * speed, dy * speed, False)
-		self.mapper.force_event.add(FE_PAD)
+			if axis in (Rels.REL_X, Rels.REL_Y):
+				self.mapper.do_trackball(0, False)
+			elif axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
+				self.mapper.do_trackball(1, False)
+			if axis == Rels.REL_X:
+				self.mapper.mouse_dq_clear(0)
+			elif axis == Rels.REL_Y:
+				self.mapper.mouse_dq_clear(1)
+			elif axis == Rels.REL_WHEEL:
+				self.mapper.mouse_dq_clear(3)
+			elif axis == Rels.REL_HWHEEL:
+				self.mapper.mouse_dq_clear(2)
 	
 	
 	def trackpad(self, speed=1):
@@ -430,7 +423,6 @@ class TriggerEvent(ControllerEvent):
 				rv = True
 			else:
 				self._button_release(button)
-			self.mapper.syn_list.add(dev)
 		return rv
 	
 	

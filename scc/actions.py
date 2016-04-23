@@ -132,7 +132,10 @@ class MouseAction(Action):
 	def describe(self, context):
 		if self.parameters[0] == Rels.REL_WHEEL:
 			return _("Wheel")
-		return _("Mouse %s") % (self.parameters[0].name.split("_", 1)[-1],)
+		elif self.parameters[0] == Rels.REL_HWHEEL:
+			return _("Horizontal Wheel")
+		else:
+			return _("Mouse %s") % (self.parameters[0].name.split("_", 1)[-1],)
 
 
 class MacroAction(Action):
@@ -149,12 +152,6 @@ class TrackballAction(Action):
 	COMMAND = "trackball"
 	def describe(self, context):
 		return "Trackball"
-
-
-class WheelAction(Action):
-	COMMAND = "wheel"
-	def describe(self, context):
-		return _("Mouse Wheel")
 
 
 class ButtonAction(Action):
@@ -236,7 +233,7 @@ class MultiAction(object):
 
 	def execute(self, event):
 		rv = False
-		for a in actions:
+		for a in self.actions:
 			rv = a.execute(event)
 		return rv
 	

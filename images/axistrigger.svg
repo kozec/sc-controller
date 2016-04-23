@@ -25,17 +25,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="16.756496"
-     inkscape:cy="52.403797"
+     inkscape:zoom="5.6"
+     inkscape:cx="376.14589"
+     inkscape:cy="171.13352"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="false"
      units="px"
-     inkscape:window-width="1447"
-     inkscape:window-height="925"
-     inkscape:window-x="398"
-     inkscape:window-y="48"
+     inkscape:window-width="1466"
+     inkscape:window-height="839"
+     inkscape:window-x="333"
+     inkscape:window-y="52"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -323,6 +323,12 @@
        id="ABS_RZ"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccccc" />
+    <path
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#5a5a5a;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.30000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       d="m 359.02734,36.113281 -9.02539,13.351563 9.02539,15.416015 0,-28.767578 z m 29.47657,0.002 0,28.765625 9.02734,-15.414062 -9.02734,-13.351563 z"
+       transform="translate(-1.5258789e-5,0)"
+       id="MOUSE_HWHEEL"
+       inkscape:connector-curvature="0" />
   </g>
   <g
      inkscape:groupmode="layer"
@@ -416,6 +422,22 @@
        height="13.210485"
        width="61.262989"
        id="AREA_ABS_RX"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
+    <rect
+       ry="0"
+       y="34.933487"
+       x="348.93118"
+       height="31.561596"
+       width="12.137582"
+       id="AREA_MOUSE_HWHEEL_1"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
+    <rect
+       ry="0"
+       y="34.933491"
+       x="386.57407"
+       height="31.561596"
+       width="12.137582"
+       id="AREA_MOUSE_HWHEEL_2"
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
   </g>
 </svg>

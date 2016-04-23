@@ -62,6 +62,7 @@ AREA_TO_ACTION = {
 	'MOUSE_X'			: (MouseAction, Rels.REL_X, 1),
 	'MOUSE_Y'			: (MouseAction, Rels.REL_Y, 1),
 	'MOUSE_WHEEL'		: (MouseAction, Rels.REL_WHEEL, 1),
+	'MOUSE_HWHEEL'		: (MouseAction, Rels.REL_HWHEEL, 1),
 	
 	# Mouse buttons
 	'MOUSE1'			: (ButtonAction, Keys.BTN_LEFT),
