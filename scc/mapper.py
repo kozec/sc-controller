@@ -107,7 +107,6 @@ class Mapper(object):
 	
 	def callback(self, controller, sci):
 		# Store state
-		#print sci
 		if sci.status != SCStatus.INPUT:
 			return
 		self.old_state = self.state
@@ -158,7 +157,7 @@ class Mapper(object):
 					if x in self.profile.pads[Profile.RIGHT]:
 						self.profile.pads[Profile.RIGHT][x].execute(self.rpe[x])
 		
-		if FE_PAD in fe or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
+		if (FE_PAD in fe and sci.buttons & SCButtons.LPADTOUCH) or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
 			# LPAD
 			if Profile.WHOLE in self.profile.pads[Profile.LEFT]:
 				self.profile.pads[Profile.LEFT][Profile.WHOLE].execute(self.lpe[Profile.WHOLE])
