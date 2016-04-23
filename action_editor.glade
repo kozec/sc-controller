@@ -16,27 +16,34 @@
       <column type="gchararray"/>
       <!-- column-name text -->
       <column type="gchararray"/>
+      <!-- column-name key -->
+      <column type="gchararray"/>
     </columns>
     <data>
       <row>
         <col id="0">XY( axis(Axes.ABS_X, sensitivity), raxis(Axes.ABS_Y, sensitivity) )</col>
         <col id="1" translatable="yes">Left Stick</col>
+        <col id="2" translatable="yes">lstick</col>
       </row>
       <row>
         <col id="0">XY( axis(Axes.ABS_RX, sensitivity), raxis(Axes.ABS_RY, sensitivity) )</col>
         <col id="1" translatable="yes">Right Stick</col>
+        <col id="2" translatable="yes">rstick</col>
       </row>
       <row>
         <col id="0">XY( axis(Axes.ABS_HAT0X), raxis(Axes.ABS_HAT0Y) )</col>
         <col id="1" translatable="yes">DPad</col>
+        <col id="2" translatable="yes">dpad</col>
       </row>
       <row>
         <col id="0">trackpad(sensitivity)</col>
         <col id="1" translatable="yes">Trackpad (Mouse)</col>
+        <col id="2" translatable="yes">trackpad</col>
       </row>
       <row>
         <col id="0">trackball(sensitivity)</col>
         <col id="1" translatable="yes">Trackball (Mouse)</col>
+        <col id="2" translatable="yes">trackball</col>
       </row>
     </data>
   </object>
@@ -573,6 +580,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="margin_left">30</property>
                     <property name="hexpand">True</property>
                     <signal name="clicked" handler="on_btDPADLeft_clicked" swapped="no"/>
                     <child>
@@ -736,6 +744,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="margin_right">30</property>
                     <property name="hexpand">True</property>
                     <signal name="clicked" handler="on_btDPADRight_clicked" swapped="no"/>
                     <child>
@@ -743,13 +752,13 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkImage" id="image5">
+                          <object class="GtkLabel" id="lblDPADRight">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="stock">gtk-go-forward</property>
+                            <property name="label" translatable="yes">(...)</property>
                           </object>
                           <packing>
-                            <property name="expand">False</property>
+                            <property name="expand">True</property>
                             <property name="fill">True</property>
                             <property name="position">0</property>
                           </packing>
@@ -766,13 +775,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="lblDPADRight">
+                          <object class="GtkImage" id="image5">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">(...)</property>
+                            <property name="stock">gtk-go-forward</property>
                           </object>
                           <packing>
-                            <property name="expand">True</property>
+                            <property name="expand">False</property>
                             <property name="fill">True</property>
                             <property name="position">2</property>
                           </packing>
@@ -1062,14 +1071,23 @@
             <property name="can_focus">False</property>
             <property name="margin_top">20</property>
             <child>
-              <object class="GtkLabel" id="lblX">
-                <property name="width_request">30</property>
+              <object class="GtkRevealer" id="rvlXLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="xalign">0</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                </attributes>
+                <property name="transition_type">slide-left</property>
+                <property name="reveal_child">True</property>
+                <child>
+                  <object class="GtkLabel" id="lblX">
+                    <property name="width_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">X</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1098,16 +1116,17 @@
           </packing>
         </child>
         <child>
-          <object class="GtkRevealer" id="rvlY">
+          <object class="GtkRevealer" id="rvlYaction">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="reveal_child">True</property>
             <child>
               <object class="GtkBox" id="boxY">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_top">5</property>
                 <child>
-                  <object class="GtkLabel" id="lblX1">
+                  <object class="GtkLabel" id="lblY">
                     <property name="width_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>

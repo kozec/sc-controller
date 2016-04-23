@@ -8,6 +8,9 @@ class InvalidAction(object):
 		self.error = error
 	
 	
+	def to_string(self, *a):
+		return self.string
+	
 	def describe(self, *a):
 		return _("(invalid)")
 
