@@ -16,7 +16,7 @@ if __name__ == "__main__":
 	init_logging()
 
 	from gi.repository import Gtk
-	Gtk.IconTheme.get_default().append_search_path(os.path.join(os.getcwd(), "icons"))
+	Gtk.IconTheme.get_default().append_search_path(os.path.join(os.getcwd(), "images"))
 	
 	from scc.gui.app import App
-	App(".", "./icons").run(sys.argv)
+	App(".", "./images").run(sys.argv)

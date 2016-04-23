@@ -34,7 +34,7 @@ class App(Gtk.Application, ProfileManager):
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
 	
 	def __init__(self, gladepath="/usr/share/scc",
-						iconpath="/usr/share/scc/icons"):
+						imagepath="/usr/share/scc/images"):
 		Gtk.Application.__init__(self,
 				application_id="me.kozec.scc",
 				flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
@@ -48,7 +48,7 @@ class App(Gtk.Application, ProfileManager):
 		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
 		self.gladepath = gladepath
-		self.iconpath = iconpath
+		self.imagepath = imagepath
 		self.builder = None
 		self.recursing = False
 		self.background = None
@@ -85,7 +85,7 @@ class App(Gtk.Application, ProfileManager):
 		main_area = self.builder.get_object("mainArea")
 		vbc.get_parent().remove(vbc)
 		vbc.connect('size-allocate', self.on_vbc_allocated)
-		self.background = SVGWidget(self, os.path.join(self.iconpath, self.IMAGE))
+		self.background = SVGWidget(self, os.path.join(self.imagepath, self.IMAGE))
 		self.background.connect('hover', self.on_background_area_hover)
 		self.background.connect('leave', self.on_background_area_hover, None)
 		self.background.connect('click', self.on_background_area_click)
@@ -406,7 +406,7 @@ class App(Gtk.Application, ProfileManager):
 	def set_daemon_status(self, status):
 		""" Updates image that shows daemon status and menu shown when image is clicked """
 		log.debug("daemon status: %s", status)
-		icon = os.path.join(self.iconpath, "status_%s.svg" % (status,))
+		icon = os.path.join(self.imagepath, "status_%s.svg" % (status,))
 		imgDaemonStatus = self.builder.get_object("imgDaemonStatus")
 		btDaemon = self.builder.get_object("btDaemon")
 		mnuEmulationEnabled = self.builder.get_object("mnuEmulationEnabled")

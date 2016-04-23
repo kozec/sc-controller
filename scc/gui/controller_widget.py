@@ -33,7 +33,7 @@ class ControllerWidget:
 		self.name = id if type(id) in (str, unicode) else id.name
 		self.widget = widget
 
-		filename = os.path.join(self.app.iconpath, self.name + ".svg")
+		filename = os.path.join(self.app.imagepath, self.name + ".svg")
 		self.label = Gtk.Label()
 		self.label.set_ellipsize(Pango.EllipsizeMode.END)
 		self.icon = Gtk.Image.new_from_file(filename)
