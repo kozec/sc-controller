@@ -14,3 +14,9 @@ log = logging.getLogger("AxisChooser")
 class AxisChooser(ButtonChooser):
 	GLADE = "button_chooser.glade"
 	IMAGES = { "vbButChooser" : "axistrigger.svg" }
+	
+	
+	def setup_widgets(self):
+		ButtonChooser.setup_widgets(self)
+		self.builder.get_object("lblClickOn").set_text("click any axis")
+		self.builder.get_object("btnGrabKey").set_visible(False)

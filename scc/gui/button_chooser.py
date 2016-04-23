@@ -79,6 +79,7 @@ class ButtonChooser(object):
 		for i in self.images:
 			i.hilight({ self.active_area : ButtonChooser.ACTIVE_COLOR })
 	
+	
 	def on_background_area_hover(self, background, area):
 		if area in AREA_TO_ACTION:
 			if AREA_TO_ACTION[area][0] in AXIS_ACTION_CLASSES:
@@ -88,6 +89,12 @@ class ButtonChooser(object):
 			self.active_area : ButtonChooser.ACTIVE_COLOR,
 			area : ButtonChooser.HILIGHT_COLOR
 		})
+	
+	
+	def on_window_key_press_event(self, trash, event):
+		""" Checks if pressed key was escape and if yes, closes window """
+		if event.keyval == Gdk.KEY_Escape:
+			self.close()
 	
 	
 	def on_keyGrab_key_press_event(self, trash, event):
@@ -172,21 +179,6 @@ class ButtonChooser(object):
 		self.keygrab.set_focus()
 	
 	
-	def set_title(self, title):
-		self.window.set_title(title)
-		self.builder.get_object("header").set_title(title)
-	
-	
-	def close(self, *a):
-		self.window.destroy()
-	
-	
-	def show(self, modal_for):
-		self.window.set_transient_for(modal_for)
-		self.window.set_modal(True)
-		self.window.show()
-	
-	
 	def on_background_area_click(self, trash, area):
 		"""
 		Called when user clicks on defined area on gamepad image.
@@ -210,3 +202,18 @@ class ButtonChooser(object):
 				actions = [ ButtonAction([k]) for k in keys ]
 				self.callback(MultiAction(*actions))
 		self.keygrab.hide()
+	
+	
+	def set_title(self, title):
+		self.window.set_title(title)
+		self.builder.get_object("header").set_title(title)
+	
+	
+	def close(self, *a):
+		self.window.destroy()
+	
+	
+	def show(self, modal_for):
+		self.window.set_transient_for(modal_for)
+		self.window.set_modal(True)
+		self.window.show()

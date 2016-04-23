@@ -9,15 +9,15 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.uinput import Keys, Axes
-from scc.actions import Action, XYAction
 from scc.actions import AxisAction, MouseAction, ButtonAction, DPadAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
+from scc.actions import Action, XYAction
 from scc.profile import Profile
-from scc.gui.svg_widget import SVGWidget
-from scc.gui.button_chooser import ButtonChooser
-from scc.gui.axis_chooser import AxisChooser
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
 from scc.gui.parser import GuiActionParser, InvalidAction
+from scc.gui.button_chooser import ButtonChooser
+from scc.gui.axis_chooser import AxisChooser
+from scc.gui.svg_widget import SVGWidget
 import os, logging
 log = logging.getLogger("ActionEditor")
 
@@ -175,12 +175,6 @@ class ActionEditor(ButtonChooser):
 		self.set_action(action)
 	
 	
-	def on_actionEditor_key_press_event(self, trash, event):
-		""" Checks if pressed key was escape and if yes, closes window """
-		if event.keyval == Gdk.KEY_Escape:
-			self.close()
-	
-	
 	def _grab_multiparam_action(self, cls, param, count, allow_axes=False, store_as_action=False):
 		def cb(action):
 			if store_as_action:
@@ -200,6 +194,7 @@ class ActionEditor(ButtonChooser):
 			b.set_title(_("Select Action"))
 			area = action_to_area(self._multiparams[param])
 		elif cls == ButtonAction:
+			b = ButtonChooser(self.app, cb)
 			b.set_title(_("Select Button"))
 			action = cls([self._multiparams[param]])
 			area = action_to_area(action)
@@ -276,7 +271,12 @@ class ActionEditor(ButtonChooser):
 		action = cbAxisOutput.get_model().get_value(cbAxisOutput.get_active_iter(), 0)
 		action = action.replace("sensitivity", str(sens.get_value()))
 		action = self.parser.restart(action).parse()
-		self.set_action(action)
+		if isinstance(action, XYAction):
+			self._multiparams[0] = action.actions[0]
+			self._multiparams[1] = action.actions[1]
+			self.set_multiparams(XYAction, 2)
+		else:
+			self.set_action(action)
 	
 	
 	def on_btScaleClear_clicked(self, *a):
@@ -321,8 +321,10 @@ class ActionEditor(ButtonChooser):
 	
 	
 	def set_action(self, action):
-		""" Updates Action field on bottom """
-		# TODO: Display action on image as well
+		"""
+		Updates Action field(s) on bottom and recolors apropriate image area,
+		if such area exists.
+		"""
 		entAction = self.builder.get_object("entAction")
 		entActionY = self.builder.get_object("entActionY")
 		btOK = self.builder.get_object("btOK")
@@ -343,6 +345,7 @@ class ActionEditor(ButtonChooser):
 				# Actions generated elsewhere
 				entAction.set_text(action.to_string())
 			self._set_y_field_visible(False)
+		
 		area = action_to_area(action)
 		if area is not None:
 			self.set_active_area(area)
@@ -352,16 +355,16 @@ class ActionEditor(ButtonChooser):
 		""" Handles creating actions with multiple parameters """
 		if count >= 0:
 			self.builder.get_object("lblFullPress").set_label(self.describe_action(cls, self._multiparams[0]))
-			self.builder.get_object("lblDPADUp").set_label(self.describe_action(cls, self._multiparams[0]))
+			self.builder.get_object("lblDPADUp").set_label(self.describe_action(ButtonAction, self._multiparams[0]))
 			self.builder.get_object("lblAxisX").set_label(self.describe_action(cls, self._multiparams[0]))
 		if count >= 1:
 			self.builder.get_object("lblPartPressed").set_label(self.describe_action(cls, self._multiparams[1]))
-			self.builder.get_object("lblDPADDown").set_label(self.describe_action(cls, self._multiparams[1]))
+			self.builder.get_object("lblDPADDown").set_label(self.describe_action(ButtonAction, self._multiparams[1]))
 			self.builder.get_object("lblAxisY").set_label(self.describe_action(cls, self._multiparams[1]))
 		if count >= 2:
-			self.builder.get_object("lblDPADLeft").set_label(self.describe_action(cls, self._multiparams[2]))
+			self.builder.get_object("lblDPADLeft").set_label(self.describe_action(ButtonAction, self._multiparams[2]))
 		if count >= 3:
-			self.builder.get_object("lblDPADRight").set_label(self.describe_action(cls, self._multiparams[3]))
+			self.builder.get_object("lblDPADRight").set_label(self.describe_action(ButtonAction, self._multiparams[3]))
 		pars = self._multiparams[0:count]
 		while len(pars) > 1 and pars[-1] is None:
 			pars = pars[0:-1]
@@ -426,21 +429,26 @@ class ActionEditor(ButtonChooser):
 			self._set_sensitivity(action)
 		elif isinstance(action, XYAction):
 			mfp = isinstance(action.actions[1], RAxisAction)	# mfp for 'may be forst page'
-			p0 = action.actions[0].parameters[0] if len(action.actions[0].parameters) >= 1 else None
-			p1 = action.actions[1].parameters[0] if len(action.actions[1].parameters) >= 1 else None
+			p = [ None, None ]
+			for x in (0, 1):
+				if len(action.actions[0].parameters) >= x:
+					self._multiparams[x] = action.actions[x]
+					p[x] = self._multiparams[x].parameters[0]
+				else:
+					self._multiparams[x] = None
+			self.set_multiparams(XYAction, 2)
 			if len(action.actions) < 2:
 				self.builder.get_object("tgCustom").set_active(True)
-			elif mfp and p0 == Axes.ABS_X and p1 == Axes.ABS_Y:
+			elif mfp and p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
 				self._select_axis_output("lstick")
 				self._set_sensitivity(action.actions[0])
-			elif mfp and p0 == Axes.ABS_RX and p1 == Axes.ABS_RY:
+			elif mfp and p[0] == Axes.ABS_RX and p[1] == Axes.ABS_RY:
 				self._select_axis_output("rstick")
 				self._set_sensitivity(action.actions[0])
-			elif mfp and p0 == Axes.ABS_HAT0X and p1 == Axes.ABS_HAT0Y:
+			elif mfp and p[0] == Axes.ABS_HAT0X and p[1] == Axes.ABS_HAT0Y:
 				self._select_axis_output("dpad")
 			else:
-				print action.actions[0]
-				print action.actions[1]
+				self.builder.get_object("tgPerAxis").set_active(True)
 		self.id = "STICK"
 	
 	
@@ -459,6 +467,9 @@ class ActionEditor(ButtonChooser):
 		if v is None:
 			return _('(not set)')
 		elif isinstance(v, Action):
-			return v.describe(Action.AC_BUTTON)
+			if cls == XYAction:
+				return v.describe(Action.AC_STICK)
+			else:
+				return v.describe(Action.AC_BUTTON)
 		else:
 			return (cls([v])).describe(self._mode)
