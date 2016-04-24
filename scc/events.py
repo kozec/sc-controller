@@ -53,6 +53,12 @@ class ControllerEvent(object):
 		pass
 	
 	
+	def shell(self, name, *a):
+		# Only ButtonReleaseEvent handles this, because every other action
+		# is typicaly executed multiple times in a row
+		pass
+	
+	
 	def trackpad(self, *a):
 		pass
 	
@@ -187,6 +193,13 @@ class ButtonReleaseEvent(ControllerEvent):
 			log.warning("Mapper can't change profile by controller action")
 		else:
 			self.mapper.change_profile_callback(name)
+	
+	
+	def shell(self, name, *a):
+		if self.mapper.shell_command_callback is None:
+			log.warning("Mapper can't execute commands")
+		else:
+			self.mapper.shell_command_callback(name)
 	
 	
 	def click(self, *a):

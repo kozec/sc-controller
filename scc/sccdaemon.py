@@ -70,6 +70,10 @@ class SCCDaemon(Daemon):
 			except: pass
 	
 	
+	def _shell_command(self, command):
+		os.system(command + " &")
+	
+	
 	def _set_profile_action(self, name):
 		# Called when 'profile' action is bound to button and used
 		if name.startswith(".") or "/" in name:
@@ -96,6 +100,7 @@ class SCCDaemon(Daemon):
 		os.chdir(self.cwd)
 		self.mapper = Mapper(Profile(TalkingActionParser()))
 		self.mapper.change_profile_callback = self._set_profile_action
+		self.mapper.shell_command_callback = self._shell_command
 		if self.profile_file is not None:
 			try:
 				self.mapper.profile.load(self.profile_file)

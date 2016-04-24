@@ -40,6 +40,7 @@ class Mapper(object):
 		# Set some stuff to None just to have it overriden
 		# by SCCDaemon class
 		self.change_profile_callback = None
+		self.shell_command_callback = None
 		
 		# Setup emulation
 		self.keypress_list = []

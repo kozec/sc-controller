@@ -51,6 +51,13 @@ Available only for buttons. Emulates multiple keyboard (or button) presses.
 Pause, if used, has to be int or floating number and specifies delay between
 keyy being pressed and released.
 
+
+### profile(name)
+Loads another profile
+
+### shell(command)
+Executes command on background
+
 #### click()
 Used to create action, that occurs only if pad or stick is pressed.
 For example, `click() and axis(Axes.ABS_X)` set to pad axis will move

@@ -154,6 +154,18 @@ class ChangeProfileAction(Action):
 		return "%s('%s')" % (self.COMMAND, self.parameters[0].encode('string_escape'))
 
 
+class ShellCommandAction(Action):
+	COMMAND = "shell"
+	
+	def describe(self, context):
+		return _("Execute Command")
+	
+	
+	def to_string(self, multiline=False):
+		""" Converts action back to string """
+		return "%s('%s')" % (self.COMMAND, self.parameters[0].encode('string_escape'))
+
+
 class TrackpadAction(Action):
 	COMMAND = "trackpad"
 	def describe(self, context):
