@@ -52,6 +52,7 @@ class App(Gtk.Application, ProfileManager):
 		self.imagepath = imagepath
 		self.builder = None
 		self.recursing = False
+		self.daemon_changed_profile = False
 		self.background = None
 		self.current = Profile(GuiActionParser())
 		self.current_file = None
@@ -188,7 +189,8 @@ class App(Gtk.Application, ProfileManager):
 			dlg.show()
 		else:
 			self.load_profile(f)
-			self.dm.set_profile(f.get_path())
+			if not self.daemon_changed_profile:
+				self.dm.set_profile(f.get_path())
 			self.save_profile_selection(f.get_path())
 	
 	
@@ -220,7 +222,7 @@ class App(Gtk.Application, ProfileManager):
 		self.current_file = giofile
 		for w in self.button_widgets.values():
 			w.update()
-		self.on_profile_saved(giofile)	# Just to indicate that there are no changes to save
+		self.on_profile_saved(giofile, False)	# Just to indicate that there are no changes to save
 	
 	
 	def on_profile_changed(self, *a):
@@ -244,7 +246,7 @@ class App(Gtk.Application, ProfileManager):
 			self.save_profile(modfile, self.current)
 	
 	
-	def on_profile_saved(self, giofile):
+	def on_profile_saved(self, giofile, send=True):
 		"""
 		Called when selected profile is saved to disk
 		"""
@@ -263,7 +265,7 @@ class App(Gtk.Application, ProfileManager):
 				model.set_value(row.iter, 1, giofile)
 			model.set_value(row.iter, 2, None)
 		
-		if self.dm.is_alive():
+		if send and self.dm.is_alive() and not self.daemon_changed_profile:
 			self.dm.set_profile(giofile.get_path())
 		
 		self.current_file = giofile
@@ -348,13 +350,13 @@ class App(Gtk.Application, ProfileManager):
 				log.warning(e)
 		if self.just_started or not current_changed:
 			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
-			self.recursing = True
-			if not self.select_profile(profile):
-				self.recursing = False
+			self.daemon_changed_profile = True
+			found = self.select_profile(profile)
+			self.daemon_changed_profile = False
+			if not found:
 				# Daemon uses unknown profile, override it with something I know about
 				if self.current_file is not None:
 					self.dm.set_profile(self.current_file.get_path())
-			self.recursing = False
 				
 		self.just_started = False
 	
