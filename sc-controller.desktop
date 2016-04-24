@@ -5,4 +5,4 @@ Comment=Edits controller mappings
 Exec=/usr/bin/sc-controller
 Type=Application
 Icon=sc-controller
-Categories=GTK;Games
+Categories=GTK;Game
