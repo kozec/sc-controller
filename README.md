@@ -14,11 +14,11 @@ Features:
 Based on [Standalone Steam Controller Driver](https://github.com/ynsta/steamcontroller) by [Ynsta](https://github.com/ynsta).
 
 To run:
-- download source
+- download [latest release](https://github.com/kozec/sc-controller/releases/latest)
 - `./run.sh`
 
 To install:
-- download source
+- download [latest release](https://github.com/kozec/sc-controller/releases/latest)
 - `python2 setup.py build`
 - `python2 setup.py install`
 
