@@ -410,7 +410,7 @@ class App(Gtk.Application, ProfileManager):
 		Selects profile in profile selection combobox.
 		Returns True on success or False if profile is not in combobox.
 		"""
-		if name.endswith(".mod"): profile = profile[0:-4]
+		if name.endswith(".mod"): name = name[0:-4]
 		if name.endswith(".sccprofile"): name = name[0:-11]
 		if "/" in name : name = os.path.split(name)[-1]
 		
