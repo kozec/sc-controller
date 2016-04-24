@@ -13,6 +13,7 @@ from scc.actions import AxisAction, MouseAction, ButtonAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
 from scc.actions import DPadAction, DPad8Action
 from scc.actions import Action, XYAction
+from scc.events import TRIGGERS_HALF, TRIGGERS_CLICK
 from scc.profile import Profile
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
 from scc.gui.parser import GuiActionParser, InvalidAction
@@ -217,12 +218,26 @@ class ActionEditor(ButtonChooser):
 	
 	def on_btFullPress_clicked(self, *a):
 		""" 'Select Fully Pressed Action' handler """
-		self._grab_multiparam_action(ButtonAction, 0, 2)
+		self._grab_multiparam_action(ButtonAction, 0, 4)
 	
 	
 	def on_btPartPressed_clicked(self, *a):
 		""" 'Select Partialy Pressed Action' handler """
-		self._grab_multiparam_action(ButtonAction, 1, 2)
+		self._grab_multiparam_action(ButtonAction, 1, 4)
+	
+	
+	def on_triggerSclchange_value(self, *a):
+		self._multiparams[2] = int(self.builder.get_object("sclPartialLevel").get_value() + 0.1)
+		self._multiparams[3] = int(self.builder.get_object("sclFullLevel").get_value() + 0.1)
+		self.set_multiparams(ButtonAction, 4)
+	
+	
+	def on_btPartPresedClear_clicked(self, *a):
+		self.builder.get_object("sclPartialLevel").set_value(TRIGGERS_HALF)
+	
+	
+	def on_btFullyPresedClear_clicked(self, *a):
+		self.builder.get_object("sclFullLevel").set_value(TRIGGERS_CLICK)
 	
 	
 	def on_btAxisX_clicked(self, *a):
@@ -243,7 +258,7 @@ class ActionEditor(ButtonChooser):
 		self._grab_multiparam_action(cls, param, num, True, True)
 	
 	
-	def on_on_btPartPressedClear_clicked(self, *a):
+	def on_btPartPressedClear_clicked(self, *a):
 		self._multiparams[1] = None
 		self.set_multiparams(ButtonAction, 2)
 	
@@ -350,6 +365,7 @@ class ActionEditor(ButtonChooser):
 	
 	def set_multiparams(self, cls, count):
 		""" Handles creating actions with multiple parameters """
+		# TODO: This is getting messy, maybe find way how to put it into a loop
 		if count >= 0:
 			self.builder.get_object("lblFullPress").set_label(self.describe_action(cls, self._multiparams[0]))
 			self.builder.get_object("lblDPADUp").set_label(self.describe_action(ButtonAction, self._multiparams[0]))
@@ -360,8 +376,12 @@ class ActionEditor(ButtonChooser):
 			self.builder.get_object("lblAxisY").set_label(self.describe_action(cls, self._multiparams[1]))
 		if count >= 2:
 			self.builder.get_object("lblDPADLeft").set_label(self.describe_action(ButtonAction, self._multiparams[2]))
+			if type(self._multiparams[2]) in (float, int):
+				self.builder.get_object("sclPartialLevel").set_value(self._multiparams[2])
 		if count >= 3:
 			self.builder.get_object("lblDPADRight").set_label(self.describe_action(ButtonAction, self._multiparams[3]))
+			if type(self._multiparams[3]) in (float, int):
+				self.builder.get_object("sclFullLevel").set_value(self._multiparams[3])
 		if count >= 4:
 			self.builder.get_object("btDPAD7").set_label(self.describe_action(ButtonAction, self._multiparams[4]))
 		if count >= 5:
@@ -407,7 +427,7 @@ class ActionEditor(ButtonChooser):
 		elif isinstance(action, ButtonAction):
 			for x in xrange(0, len(action.parameters)):
 				self._multiparams[x] = action.parameters[x]
-			self.set_multiparams(ButtonAction, 2)
+			self.set_multiparams(ButtonAction, 4)
 	
 	
 	def set_stick(self, stickdata):
@@ -475,7 +495,7 @@ class ActionEditor(ButtonChooser):
 		Returns action description with 'v' as parameter, unless unless v is None.
 		Returns "not set" if v is None
 		"""
-		if v is None:
+		if v is None or type(v) in (int, float, str, unicode):
 			return _('(not set)')
 		elif isinstance(v, Action):
 			if cls == XYAction:

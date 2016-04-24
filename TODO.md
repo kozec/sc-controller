@@ -1,7 +1,6 @@
 List of (possibly) planned features in no particular order
 
 "Easy" stuff:
-- Better trigger settings (UI is missing)
 - Multibutton actions
 - Gamepad button as modifier (modeshift)
 - Haptic feedback support

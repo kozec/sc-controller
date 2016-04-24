@@ -464,6 +464,7 @@ class TriggerEvent(ControllerEvent):
 	
 	def button(self, button1, button2 = None, first_trigger = TRIGGERS_HALF, full_trigger = TRIGGERS_CLICK):
 		rv = False
+		print first_trigger, full_trigger, getattr(self.mapper.state, self.axis_attr)
 		for (pressed, button) in self._by_trigger(button1, button2, first_trigger, full_trigger):
 			if pressed:
 				self._button_press(button)
