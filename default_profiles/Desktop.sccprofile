@@ -21,7 +21,7 @@
 	},
 	
 	"stick": {
-		"action": "dpad(button(Keys.KEY_W), button(Keys.KEY_S), button(Keys.KEY_A), button(Keys.KEY_S))"
+		"action": "dpad(button(Keys.KEY_W), button(Keys.KEY_S), button(Keys.KEY_A), button(Keys.KEY_D))"
 	}, 
 	
 	"left_pad": {
