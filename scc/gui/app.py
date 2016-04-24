@@ -16,12 +16,12 @@ from scc.gui.profile_manager import ProfileManager
 from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
-from scc.paths import get_daemon_path, get_profiles_path
+from scc.paths import get_daemon_path, get_config_path, get_profiles_path
 from scc.constants import SCButtons
 from scc.actions import XYAction
 from scc.profile import Profile
 
-import os, sys, logging
+import os, sys, json, logging
 log = logging.getLogger("App")
 
 
@@ -32,6 +32,7 @@ class App(Gtk.Application, ProfileManager):
 	
 	IMAGE = "background.svg"
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
+	CONFIG = "scc.config.json"
 	
 	def __init__(self, gladepath="/usr/share/scc",
 						imagepath="/usr/share/scc/images"):
@@ -144,18 +145,23 @@ class App(Gtk.Application, ProfileManager):
 		cb = self.builder.get_object("cbProfile")
 		model = cb.get_model()
 		model.clear()
+		i = 0
+		current_profile, current_index = self.load_profile_selection(), 0
 		for f in profiles:
 			name = f.get_basename()
 			if name.endswith(".mod"):
 				continue
 			if name.endswith(".sccprofile"):
 				name = name[0:-11]
+			if name == current_profile:
+				current_index = i
 			model.append((name, f, None))
+			i += 1
 		model.append(("-", None, None))
 		model.append((_("New profile..."), None, None))
 		
 		if cb.get_active_iter() is None:
-			cb.set_active(0)
+			cb.set_active(current_index)
 	
 	
 	def on_cbProfile_changed(self, cb, *a):
@@ -180,9 +186,10 @@ class App(Gtk.Application, ProfileManager):
 			txNewProfile.set_text(new_name)
 			dlg.set_transient_for(self.window)
 			dlg.show()
-			return
-		self.load_profile(f)
-		self.dm.set_profile(f.get_path())
+		else:
+			self.load_profile(f)
+			self.dm.set_profile(f.get_path())
+			self.save_profile_selection(f.get_path())
 	
 	
 	def on_dlgNewProfile_delete_event(self, dlg, *a):
@@ -339,13 +346,15 @@ class App(Gtk.Application, ProfileManager):
 			except Exception, e:
 				log.warning("Failed to remove .mod file")
 				log.warning(e)
-			profile = profile[0:-4]
 		if self.just_started or not current_changed:
 			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
+			self.recursing = True
 			if not self.select_profile(profile):
+				self.recursing = False
 				# Daemon uses unknown profile, override it with something I know about
 				if self.current_file is not None:
 					self.dm.set_profile(self.current_file.get_path())
+			self.recursing = False
 				
 		self.just_started = False
 	
@@ -394,16 +403,24 @@ class App(Gtk.Application, ProfileManager):
 		self.builder.get_object("window").show()
 	
 	
-	def select_profile(self, filename):
+	def select_profile(self, name):
 		"""
-		Selects specified file in profile selection combobox.
+		Selects profile in profile selection combobox.
 		Returns True on success or False if profile is not in combobox.
 		"""
+		if name.endswith(".mod"): profile = profile[0:-4]
+		if name.endswith(".sccprofile"): name = name[0:-11]
+		if "/" in name : name = os.path.split(name)[-1]
+		
 		cb = self.builder.get_object("cbProfile")
 		model = cb.get_model()
+		active = cb.get_active_iter()
 		for row in model:
 			if model.get_value(row.iter, 1) is not None:
-				if filename == model.get_value(row.iter, 1).get_path():
+				if name == model.get_value(row.iter, 0):
+					if active == row.iter:
+						# Already selected
+						return True
 					cb.set_active_iter(row.iter)
 					return True
 		return False
@@ -448,3 +465,24 @@ class App(Gtk.Application, ProfileManager):
 		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
+	
+	
+	def save_profile_selection(self, path):
+		""" Saves name of profile into config file """
+		name = os.path.split(path)[-1]
+		if name.endswith(".sccprofile"):
+			name = name[0:-11]
+		
+		data = dict(current_profile=name)
+		jstr = json.dumps(data, sort_keys=True, indent=4)
+		
+		open(os.path.join(get_config_path(), self.CONFIG), "w").write(jstr)
+	
+	
+	def load_profile_selection(self):
+		""" Returns name profile from config file or None if there is none saved """
+		try:
+			data = json.loads(open(os.path.join(get_config_path(), self.CONFIG), "r").read())
+			return data['current_profile']
+		except:
+			return None
