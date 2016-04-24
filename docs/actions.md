@@ -46,6 +46,11 @@ touchped, action is executed depending on finger position.
 Available only for pads and sticks; for stick, works by translating
 stick position, what probably doesn't yields expected results.
 
+
+#### dpad8(up, down, left, right, upleft, upright, downleft, downright)
+Same as dpad, with more directions.
+
+
 ### macro(key1, key2... [, pause])
 Available only for buttons. Emulates multiple keyboard (or button) presses.
 Pause, if used, has to be int or floating number and specifies delay between

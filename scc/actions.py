@@ -283,17 +283,24 @@ class DPadAction(MultiAction):
 	
 	def to_string(self, multiline=False):
 		if multiline:
-			rv = [ "dpad(" ]
+			rv = [ self.COMMAND + "(" ]
 			for a in self.actions:
 				rv += [ "  " + a.to_string(False) + ","]
 			if rv[-1].endswith(","):
 				rv[-1] = rv[-1][0:-1]
 			rv += [ ")" ]
 			return "\n".join(rv)
-		return "dpad(" + (", ".join([
+		return self.COMMAND + "(" + (", ".join([
 			x.to_string() if x is not None else "None"
 			for x in self.actions
 		])) + ")"
+
+
+class DPad8Action(DPadAction):
+	COMMAND = "dpad8"
+	
+	def describe(self, context):
+		return "8-Way DPad"
 
 
 class LinkedActions(MultiAction):

@@ -18,8 +18,8 @@ log = logging.getLogger("Events")
 
 STICK_PAD_MIN = -32767
 STICK_PAD_MAX = 32767
-STICK_PAD_MIN_HALF = STICK_PAD_MIN / 2
-STICK_PAD_MAX_HALF = STICK_PAD_MAX / 2
+STICK_PAD_MIN_HALF = STICK_PAD_MIN / 3
+STICK_PAD_MAX_HALF = STICK_PAD_MAX / 3
 
 TRIGGERS_MIN = 0
 TRIGGERS_HALF = 50
@@ -68,6 +68,10 @@ class ControllerEvent(object):
 	
 	
 	def dpad(self, *a):
+		pass
+	
+	
+	def dpad8(self, *a):
 		pass
 	
 	
@@ -212,7 +216,7 @@ class StickEvent(ControllerEvent):
 		self.axis_attr = axis_attr
 		self.axis2_attr = axis2_attr
 		self.click_button = click_button
-		self.dpad_state = [ None, None ]
+		self.dpad_state = [ None, None, None ]	# X, Y, 9-Way pad
 	
 	
 	def _by_trigger(self, option1, option2, minustrigger, plustrigger):
@@ -282,6 +286,10 @@ class StickEvent(ControllerEvent):
 	
 	
 	def dpad(self, up, down = None, left = None, right = None):
+		return self.dpad8(up, down, left, right, eight=False)
+	
+	
+	def dpad8(self, up, down = None, left = None, right = None, leftup = None, rightup = None, leftdown = None, rightdown = None, eight=True):
 		rv = False
 		old_x = getattr(self.mapper.old_state, self.axis_attr)
 		old_y = getattr(self.mapper.old_state, self.axis2_attr)
@@ -298,15 +306,26 @@ class StickEvent(ControllerEvent):
 		elif y >= STICK_PAD_MAX_HALF:
 			side[1] = "up"
 		
-		for i in (0, 1):
-			if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
-				if locals()[self.dpad_state[i]] is not None:
-					rv = locals()[self.dpad_state[i]].execute(self.mapper.bre)
-				self.dpad_state[i] = None
-			if side[i] is not None and side[i] != self.dpad_state[i]:
-				if locals()[side[i]] is not None:
-					rv = locals()[side[i]].execute(self.mapper.bpe)
-				self.dpad_state[i] = side[i]
+		if eight:
+			side = "".join("" if x is None else x for x in side)
+			if side != self.dpad_state[2] and self.dpad_state[2] is not None:
+				if locals()[self.dpad_state[2]] is not None:
+					rv = locals()[self.dpad_state[2]].execute(self.mapper.bre)
+				self.dpad_state[2] = None
+			if len(side) and side != self.dpad_state[2]:
+				if locals()[side] is not None:
+					rv = locals()[side].execute(self.mapper.bpe)
+				self.dpad_state[2] = side
+		else:
+			for i in (0, 1):
+				if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
+					if locals()[self.dpad_state[i]] is not None:
+						rv = locals()[self.dpad_state[i]].execute(self.mapper.bre)
+					self.dpad_state[i] = None
+				if side[i] is not None and side[i] != self.dpad_state[i]:
+					if locals()[side[i]] is not None:
+						rv = locals()[side[i]].execute(self.mapper.bpe)
+					self.dpad_state[i] = side[i]
 		return rv
 	
 	

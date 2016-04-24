@@ -9,8 +9,9 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.uinput import Keys, Axes, Rels
-from scc.actions import AxisAction, MouseAction, ButtonAction, DPadAction
+from scc.actions import AxisAction, MouseAction, ButtonAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
+from scc.actions import DPadAction, DPad8Action
 from scc.actions import Action, XYAction
 from scc.profile import Profile
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
@@ -45,6 +46,7 @@ class ActionEditor(ButtonChooser):
 		Action.AC_STICK			: 'tgAxisMouseByStick',
 		Action.AC_PAD			: 'tgAxisMouseByStick'
 	}
+	DPAD8_WIDGETS = [ 'btDPAD7', 'btDPAD9', 'btDPAD1', 'btDPAD3' ]
 
 	css = None
 
@@ -60,7 +62,7 @@ class ActionEditor(ButtonChooser):
 					Gdk.Screen.get_default(),
 					ActionEditor.css,
 					Gtk.STYLE_PROVIDER_PRIORITY_USER)
-		self._multiparams = [ None ] * 4
+		self._multiparams = [ None ] * 8
 		self._mode = None
 		self._recursing = False
 		self.allow_axes()
@@ -165,6 +167,13 @@ class ActionEditor(ButtonChooser):
 				self.set_action(action)
 	
 	
+	def on_cbDPADType_changed(self, cb):
+		for i in self.DPAD8_WIDGETS:
+			self.builder.get_object(i).set_visible(cb.get_active() == 1)
+		cls, num = (DPadAction, 4) if cb.get_active() == 0 else (DPad8Action, 8)
+		self.set_multiparams(cls, num)
+	
+	
 	def on_button_chooser_callback(self, action):
 		"""
 		Called when user clicks on defined area on gamepad image
@@ -226,24 +235,12 @@ class ActionEditor(ButtonChooser):
 		self._grab_multiparam_action(XYAction, 1, 2, True, True)
 	
 	
-	def on_btDPADUp_clicked(self, *a):
+	def on_btDPAD_clicked(self, b):
 		""" 'Select DPAD Left Action' handler """
-		self._grab_multiparam_action(DPadAction, 0, 4, True, True)
-	
-	
-	def on_btDPADDown_clicked(self, *a):
-		""" 'Select DPAD Left Action' handler """
-		self._grab_multiparam_action(DPadAction, 1, 4, True, True)
-	
-	
-	def on_btDPADLeft_clicked(self, *a):
-		""" 'Select DPAD Left Action' handler """
-		self._grab_multiparam_action(DPadAction, 2, 4, True, True)
-	
-	
-	def on_btDPADRight_clicked(self, *a):
-		""" 'Select DPAD Left Action' handler """
-		self._grab_multiparam_action(DPadAction, 3, 4, True, True)
+		cb = self.builder.get_object("cbDPADType")
+		cls, num = (DPadAction, 4) if cb.get_active() == 0 else (DPad8Action, 8)
+		param = int(b.get_name())
+		self._grab_multiparam_action(cls, param, num, True, True)
 	
 	
 	def on_on_btPartPressedClear_clicked(self, *a):
@@ -365,6 +362,14 @@ class ActionEditor(ButtonChooser):
 			self.builder.get_object("lblDPADLeft").set_label(self.describe_action(ButtonAction, self._multiparams[2]))
 		if count >= 3:
 			self.builder.get_object("lblDPADRight").set_label(self.describe_action(ButtonAction, self._multiparams[3]))
+		if count >= 4:
+			self.builder.get_object("btDPAD7").set_label(self.describe_action(ButtonAction, self._multiparams[4]))
+		if count >= 5:
+			self.builder.get_object("btDPAD9").set_label(self.describe_action(ButtonAction, self._multiparams[5]))
+		if count >= 6:
+			self.builder.get_object("btDPAD1").set_label(self.describe_action(ButtonAction, self._multiparams[6]))
+		if count >= 7:
+			self.builder.get_object("btDPAD3").set_label(self.describe_action(ButtonAction, self._multiparams[7]))
 		pars = self._multiparams[0:count]
 		while len(pars) > 1 and pars[-1] is None:
 			pars = pars[0:-1]
@@ -420,6 +425,8 @@ class ActionEditor(ButtonChooser):
 			for x in xrange(0, len(action.actions)):
 				self._multiparams[x] = action.actions[x]
 			self.set_multiparams(DPadAction, 4)
+			if isinstance(action, DPad8Action):
+				self.builder.get_object("cbDPADType").set_active(1)
 			self.builder.get_object("tgDPAD").set_active(True)
 		elif isinstance(action, TrackballAction):
 			self._select_axis_output("trackball")

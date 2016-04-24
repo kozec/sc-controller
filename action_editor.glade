@@ -10,6 +10,24 @@
     <property name="page_increment">0.10000000000000001</property>
     <property name="page_size">0.01</property>
   </object>
+  <object class="GtkListStore" id="lstDPADType">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name action -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Simple</col>
+        <col id="1">dpad</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">8-Way</col>
+        <col id="1">dpad8</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="lstOutputMode">
     <columns>
       <!-- column-name action -->
@@ -581,12 +599,13 @@
                 <property name="column_spacing">5</property>
                 <child>
                   <object class="GtkButton" id="btDPADLeft">
+                    <property name="name">2</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="margin_left">30</property>
                     <property name="hexpand">True</property>
-                    <signal name="clicked" handler="on_btDPADLeft_clicked" swapped="no"/>
+                    <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box1">
                         <property name="visible">True</property>
@@ -631,16 +650,17 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">1</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkButton" id="btDPADDown">
+                    <property name="name">1</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="hexpand">True</property>
-                    <signal name="clicked" handler="on_btDPADDown_clicked" swapped="no"/>
+                    <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box2">
                         <property name="visible">True</property>
@@ -685,17 +705,18 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">3</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkButton" id="btDPADUp">
+                    <property name="name">0</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="margin_top">20</property>
                     <property name="hexpand">True</property>
-                    <signal name="clicked" handler="on_btDPADUp_clicked" swapped="no"/>
+                    <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box6">
                         <property name="visible">True</property>
@@ -740,17 +761,18 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkButton" id="btDPADRight">
+                    <property name="name">3</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="margin_right">30</property>
                     <property name="hexpand">True</property>
-                    <signal name="clicked" handler="on_btDPADRight_clicked" swapped="no"/>
+                    <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="box7">
                         <property name="visible">True</property>
@@ -795,20 +817,110 @@
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btDPAD7">
+                    <property name="label" translatable="yes">(...)</property>
+                    <property name="name">4</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
+                    <property name="margin_left">30</property>
+                    <property name="margin_top">20</property>
+                    <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
                     <property name="top_attach">1</property>
                   </packing>
                 </child>
                 <child>
-                  <placeholder/>
+                  <object class="GtkButton" id="btDPAD9">
+                    <property name="label" translatable="yes">(...)</property>
+                    <property name="name">5</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
+                    <property name="margin_right">30</property>
+                    <property name="margin_top">20</property>
+                    <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">1</property>
+                  </packing>
                 </child>
                 <child>
-                  <placeholder/>
+                  <object class="GtkButton" id="btDPAD1">
+                    <property name="label" translatable="yes">(...)</property>
+                    <property name="name">6</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
+                    <property name="margin_left">30</property>
+                    <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">3</property>
+                  </packing>
                 </child>
                 <child>
-                  <placeholder/>
+                  <object class="GtkButton" id="btDPAD3">
+                    <property name="label" translatable="yes">(...)</property>
+                    <property name="name">7</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
+                    <property name="margin_right">30</property>
+                    <property name="hexpand">True</property>
+                    <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">3</property>
+                  </packing>
                 </child>
                 <child>
-                  <placeholder/>
+                  <object class="GtkLabel" id="label12">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">DPAD Type</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkComboBox" id="cbDPADType">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_right">30</property>
+                    <property name="model">lstDPADType</property>
+                    <property name="active">0</property>
+                    <signal name="changed" handler="on_cbDPADType_changed" swapped="no"/>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">2</property>
+                  </packing>
                 </child>
                 <child>
                   <placeholder/>

@@ -11,7 +11,6 @@ List of (possibly) planned features in no particular order
 - Selector for media keys
 - UI for configuring profile switch action
 - Macros (partially done)
-- 8-way DPAD
 - DPAD that acts only when clicked
 - double click
 - Turbo
