@@ -12,8 +12,6 @@ from source tarball *and* debugable in working folder.
 """
 import os, __main__
 
-DEFAULT_PID_FILE =	os.path.expanduser('~/.scccontroller.pid')
-DEFAULT_SOCKET =	os.path.expanduser('~/.scccontroller.socket')
 
 def get_config_path():
 	"""
@@ -71,10 +69,18 @@ def get_daemon_path():
 	return "sc-daemon"
 
 
+def get_pid_file():
+	"""
+	Returns path to PID file.
+	~/.config/scc/daemon.pid under normal conditions.
+	"""
+	return os.path.join(get_config_path(), "daemon.pid")
+
+
 def get_daemon_socket():
 	"""
 	Returns path to socket that can be used to controll sccdaemon.
 	
-	Currently it's just default value of ~/.scccontroller.socket
+	~/.config/scc/daemon.socket under normal conditions.
 	"""
-	return DEFAULT_SOCKET
+	return os.path.join(get_config_path(), "daemon.socket")

@@ -18,7 +18,6 @@ from scc.tools import _
 
 from scc.lib.daemon import Daemon
 from scc.paths import get_profiles_path, get_default_profiles_path
-from scc.paths import DEFAULT_PID_FILE, DEFAULT_SOCKET
 from scc.actions import TalkingActionParser
 from scc.controller import SCController
 from scc.tools import set_logging_level
