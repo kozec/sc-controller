@@ -1,0 +1,5 @@
+All images under images/ directory are licensed under CC0, https://creativecommons.org/publicdomain/zero/1.0/
+
+lib/enum.py is licensed under BSD license, as described in that file.
+
+Everything else is licensed under GPL2, as described in 'LICENCE' file.
