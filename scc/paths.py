@@ -54,21 +54,21 @@ def get_daemon_path():
 	"""
 	Returns path to sccdaemon "binary".
 	
-	Should be /usr/bin/sccdaemon if program is installed or
-	./sccdaemon.py if program is being started from extracted source tarball
+	Should be /usr/bin/sc-daemon if program is installed or
+	./sc-daemon.py if program is being started from extracted source tarball
 	"""
 	if __main__.__file__.endswith(".py"):
 		# Started as script with something like './scc.py'
-		local = os.path.join(os.path.split(__file__)[0], "../../sccdaemon.py")
+		local = os.path.join(os.path.split(__file__)[0], "../sc-daemon.py")
 		local = os.path.normpath(local)
 		if os.path.exists(local):
 			return local
-	for x in ("/usr/bin/sccdaemon", "/usr/local/bin/sccdaemon"):
+	for x in ("/usr/bin/sc-daemon", "/usr/local/bin/sc-daemon"):
 		# TODO: This is maybe possible in less insane way
 		if os.path.exists(x):
 			return x
 	# Nothing found, just hope for miracles...
-	return "sccdaemon"
+	return "sc-daemon"
 
 
 def get_daemon_socket():

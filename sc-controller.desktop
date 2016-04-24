@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=SC Controller
+GenericName=SC Controller
+Comment=Edits controller mappings
+Exec=/usr/bin/sc-controller
+Type=Application
+Icon=sc-controller
+Categories=GTK;Games
