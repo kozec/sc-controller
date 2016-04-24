@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#pragma GCC diagnostic ignored "-Wunused-result"
+
 int uinput_init(
 	int	 key_len,
 	__u16 * key,
