@@ -18,7 +18,7 @@ from scc.tools import _
 
 from scc.lib.daemon import Daemon
 from scc.paths import get_profiles_path, get_default_profiles_path
-from scc.actions import TalkingActionParser
+from scc.parser import TalkingActionParser
 from scc.controller import SCController
 from scc.tools import set_logging_level
 from scc.constants import SCButtons

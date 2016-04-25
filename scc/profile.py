@@ -7,7 +7,7 @@ Handles mapping profile stored in json file
 from __future__ import unicode_literals
 
 from scc.constants import SCButtons
-from scc.actions import TalkingActionParser
+from scc.parser import TalkingActionParser
 import json
 
 class Profile(object):

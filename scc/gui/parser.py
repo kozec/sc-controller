@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from scc.actions import ActionParser, ParseError
+from scc.parser import ActionParser, ParseError
 from scc.tools import _
 
 class InvalidAction(object):
