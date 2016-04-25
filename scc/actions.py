@@ -198,7 +198,17 @@ class ButtonAction(Action):
 		Keys.BTN_X		: "X Button",
 		Keys.BTN_Y		: "Y Button",
 	}
-
+	MODIFIERS_NAMES = {
+		Keys.KEY_LEFTSHIFT	: "Shift",
+		Keys.KEY_LEFTCTRL	: "Ctrl",
+		Keys.KEY_LEFTMETA	: "Meta",
+		Keys.KEY_LEFTALT	: "Alt",
+		Keys.KEY_RIGHTSHIFT	: "Shift",
+		Keys.KEY_RIGHTCTRL	: "Ctrl",
+		Keys.KEY_RIGHTMETA	: "Meta",
+		Keys.KEY_RIGHTALT	: "Alt"
+	}
+	
 	def describe(self, context):
 		p = self.parameters[0]
 		if p in ButtonAction.SPECIAL_NAMES:
@@ -212,6 +222,17 @@ class ButtonAction(Action):
 			return _("Mouse %s") % (p,)
 		else:
 			return p.name.split("_", 1)[-1]
+	
+	
+	def describe_short(self):
+		"""
+		Used when multiple ButtonActions are chained together, for
+		combinations like Alt+TAB
+		"""
+		if self.parameters[0] in self.MODIFIERS_NAMES:
+			# Modifiers are special case here
+			return self.MODIFIERS_NAMES[self.parameters[0]]
+		return self.describe(Action.AC_BUTTON)
 
 
 class ClickAction(Action):
@@ -252,6 +273,13 @@ class MultiAction(object):
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
+		if isinstance(self.actions[0], ButtonAction):
+			# Special case, key combination
+			rv = []
+			for a in self.actions:
+				if isinstance(a, ButtonAction,):
+					rv.append(a.describe_short())
+			return "+".join(rv)
 		return self.actions[0].describe(context)
 
 
