@@ -683,3 +683,4 @@ ACTIONS = {
 	if hasattr(globals()[x], 'COMMAND')
 	and globals()[x].COMMAND is not None
 }
+ACTIONS["None"] = NoAction

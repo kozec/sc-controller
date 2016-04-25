@@ -12,7 +12,7 @@ from scc.uinput import Keys, Axes, Rels
 from scc.actions import AxisAction, MouseAction, ButtonAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
 from scc.actions import DPadAction, DPad8Action
-from scc.actions import Action, XYAction
+from scc.actions import Action, XYAction, NoAction
 from scc.events import TRIGGERS_HALF, TRIGGERS_CLICK
 from scc.profile import Profile
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
@@ -263,8 +263,16 @@ class ActionEditor(ButtonChooser):
 		self.set_multiparams(ButtonAction, 2)
 	
 	
+	def on_btClear_clicked	(self, *a):
+		""" Handler for clear button """
+		action = NoAction([])
+		if self.ac_callback is not None:
+			self.ac_callback(self.id, action)
+		self.close()
+	
+	
 	def on_btOK_clicked(self, *a):
-		""" Handler for OK button ... """
+		""" Handler for OK button """
 		entAction = self.builder.get_object("entAction")
 		entActionY = self.builder.get_object("entActionY")
 		action = self.parser.restart(entAction.get_text()).parse()
