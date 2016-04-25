@@ -300,10 +300,13 @@ class ActionEditor(ButtonChooser):
 	def on_cbAxisOutput_changed(self, *a):
 		if self._recursing : return
 		cbAxisOutput = self.builder.get_object("cbAxisOutput")
+		rvSensitivity = self.builder.get_object("rvSensitivity")
 		sens = self.builder.get_object("sclSensitivity")
 		action = cbAxisOutput.get_model().get_value(cbAxisOutput.get_active_iter(), 0)
+		has_sensitivity = "sensitivity" in action
 		action = action.replace("sensitivity", str(sens.get_value()))
 		action = self.parser.restart(action).parse()
+		rvSensitivity.set_reveal_child(has_sensitivity)
 		if isinstance(action, XYAction):
 			self._multiparams[0] = action.actions[0]
 			self._multiparams[1] = action.actions[1]
