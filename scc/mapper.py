@@ -125,6 +125,20 @@ class Mapper(object):
 			return self.old_state.buttons & SCButtons.RPADTOUCH
 	
 	
+	def is_pressed(self, button):
+		"""
+		Returns True if button is pressed
+		"""
+		return self.state.buttons & button
+	
+	
+	def was_pressed(self, button):
+		"""
+		Returns True if button was pressed in previous known state
+		"""
+		return self.old_state.buttons & button
+	
+	
 	def callback(self, controller, sci):
 		# Store state
 		if sci.status != SCStatus.INPUT:
@@ -157,10 +171,10 @@ class Mapper(object):
 				else:
 					if Profile.X in self.profile.stick:
 						if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x:
-							self.profile.stick[Profile.X].axis(self, sci.lpad_x)
+							self.profile.stick[Profile.X].axis(self, sci.lpad_x, STICK)
 					if Profile.Y in self.profile.stick:
 						if FE_STICK in fe or self.old_state.lpad_y != sci.lpad_y:
-							self.profile.stick[Profile.Y].axis(self, sci.lpad_y)
+							self.profile.stick[Profile.Y].axis(self, sci.lpad_y, STICK)
 		
 		# Check triggers
 		if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:

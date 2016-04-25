@@ -58,9 +58,9 @@ class Action(object):
 		return str(self)
 	
 	
-	def to_string(self, multiline=False):
+	def to_string(self, multiline=False, pad=0):
 		""" Converts action back to string """
-		return "%s(%s)" % (self.COMMAND, ", ".join([ str(x) for x in self.parameters ]))
+		return (" " * pad) + "%s(%s)" % (self.COMMAND, ", ".join([ str(x) for x in self.parameters ]))
 	
 	
 	def button_press(self, mapper):
@@ -79,12 +79,14 @@ class Action(object):
 		log.warn("Action %s can't handle button release event", self.__class__.__name__)
 	
 	
-	def axis(self, mapper, position):
+	def axis(self, mapper, position, what):
 		"""
 		Called when action is executed by moving physical stickm when
 		stick has different actions for different axes defined.
 		
 		'position' contains current stick position on updated axis.
+		'what' is one of LEFT, RIGHT or STICK (from scc.constants),
+		describing what is being updated
 		"""
 		log.warn("Action %s can't handle axis event", self.__class__.__name__)
 	
@@ -99,7 +101,8 @@ class Action(object):
 		
 		'pad' calls 'axis' by default
 		"""
-		return self.axis(mapper, position)
+		pass
+	pad = axis
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -192,7 +195,7 @@ class AxisAction(Action):
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
-	def axis(self, mapper, position):
+	def axis(self, mapper, position, what):
 		p = float(position - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
 		mapper.gamepad.axisEvent(self.id, p)
@@ -288,7 +291,7 @@ class MouseAction(Action):
 		pass
 	
 	
-	def axis(self, mapper, position):
+	def axis(self, mapper, position, what):
 		p = position * self.speed / 100
 
 		if self.mouse_axis == Rels.REL_X:
@@ -485,7 +488,7 @@ class ButtonAction(Action):
 		ButtonAction._button_release(mapper, self.button)
 	
 	
-	def axis(self, mapper, position):
+	def axis(self, mapper, position, what):
 		# Choses which key or button should be pressed or released based on
 		# current stick position.
 		minustrigger = self.minustrigger or STICK_PAD_MIN_HALF
@@ -577,8 +580,8 @@ class ChangeProfileAction(Action):
 		return _("Profile Change")
 	
 	
-	def to_string(self, multiline=False):
-		return "%s('%s')" % (self.COMMAND, self.profile.encode('string_escape'))
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s('%s')" % (self.COMMAND, self.profile.encode('string_escape'))
 
 
 	def button_press(self, mapper):
@@ -603,8 +606,8 @@ class ShellCommandAction(Action):
 		return _("Execute Command")
 	
 	
-	def to_string(self, multiline=False):
-		return "%s('%s')" % (self.COMMAND, self.parameters[0].encode('string_escape'))
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s('%s')" % (self.COMMAND, self.parameters[0].encode('string_escape'))
 	
 	
 	def button_press(self, mapper):
@@ -616,12 +619,6 @@ class ShellCommandAction(Action):
 	
 	def button_release(self, mapper):
 		pass
-
-
-class ClickAction(Action):
-	COMMAND = "click"
-	def describe(self, context):
-		return _("(if pressed)")
 
 
 class MultiAction(Action):
@@ -689,8 +686,8 @@ class MultiAction(Action):
 		for a in self.actions: a.trigger(*p)
 	
 	
-	def to_string(self, multiline=False):
-		return "; ".join([ x.to_string() for x in self.actions ])
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "; ".join([ x.to_string() for x in self.actions ])
 	
 	
 	def __str__(self):
@@ -711,14 +708,16 @@ class DPadAction(MultiAction):
 	def describe(self, context):
 		return "DPad"
 	
-	def to_string(self, multiline=False):
+	def to_string(self, multiline=False, pad=0):
 		if multiline:
-			rv = [ self.COMMAND + "(" ]
+			rv = [ (" " * pad) + self.COMMAND + "(" ]
+			pad += 2
 			for a in self.actions:
-				rv += [ "  " + a.to_string(False) + ","]
+				rv += [ a.to_string(True, pad) + ","]
 			if rv[-1].endswith(","):
 				rv[-1] = rv[-1][0:-1]
-			rv += [ ")" ]
+			pad -= 2
+			rv += [ (" " * pad) + ")" ]
 			return "\n".join(rv)
 		return self.COMMAND + "(" + (", ".join([
 			x.to_string() if x is not None else "None"
@@ -807,7 +806,7 @@ class XYAction(MultiAction):
 		return self.actions[0].describe(context)
 	
 	
-	def to_string(self, multiline=False):
+	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			rv = []
 			i = 0
@@ -855,8 +854,8 @@ class NoAction(Action):
 		return _("(not set)")
 	
 	
-	def to_string(self, multiline=False):
-		return "None"
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "None"
 	
 	
 	def __str__(self):
@@ -873,3 +872,5 @@ ACTIONS = {
 	and globals()[x].COMMAND is not None
 }
 ACTIONS["None"] = NoAction
+
+import scc.modifiers

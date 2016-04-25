@@ -63,15 +63,12 @@ Loads another profile
 ### shell(command)
 Executes command on background
 
-#### click()
-Used to create action, that occurs only if pad or stick is pressed.
-For example, `click() and axis(Axes.ABS_X)` set to pad axis will move
-emulated stick only if pad is pressed.
+# Modifiers:
 
-- For button or trigger, always returns True
-- For stick or pad returns True if stick or pad is pressed down
-- For trigger returns True if trigger is pressed all the way down
-  (it actually clicks)
+#### click()
+Used to create action that occurs only if pad or stick is pressed.
+For example, `click(dpad(...))` set to pad will create dpad that activates
+buttons only when pressed.
 
 
 # Shortcuts:
@@ -111,7 +108,7 @@ Emulate left/right stick movement with X and B buttons
 Emulate dpad on left touchpad, but act only when dpad is pressed
 ```
 "left_pad" : {
-	"action" : "click() and dpad('hatup(Axes.ABS_HAT0Y)', 'hatdown(Axes.ABS_HAT0Y)', 'hatleft(Axes.ABS_HAT0X)', 'hatright(Axes.ABS_HAT0X)' )"
+	"action" : "click( dpad('hatup(Axes.ABS_HAT0Y)', 'hatdown(Axes.ABS_HAT0Y)', 'hatleft(Axes.ABS_HAT0X)', 'hatright(Axes.ABS_HAT0X)' ) )"
 }
 ```
 
