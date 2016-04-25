@@ -13,11 +13,15 @@ Features:
 
 Based on [Standalone Steam Controller Driver](https://github.com/ynsta/steamcontroller) by [Ynsta](https://github.com/ynsta).
 
-To run:
+Packages:
+- Ubuntu (deb-based distros): in [OpenSUSE Build Service](http://software.opensuse.org/download.html?project=home%3Akozec&package=sc-controller).
+- Fedora, SUSE (rpm-based distros): in [OpenSUSE Build Service](http://software.opensuse.org/download.html?project=home%3Akozec&package=sc-controller).
+
+To run without package:
 - download [latest release](https://github.com/kozec/sc-controller/releases/latest)
 - `./run.sh`
 
-To install:
+To install without package:
 - download [latest release](https://github.com/kozec/sc-controller/releases/latest)
 - `python2 setup.py build`
 - `python2 setup.py install`
