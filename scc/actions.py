@@ -236,22 +236,22 @@ class HatAction(AxisAction):
 
 class HatUpAction(HatAction):
 	COMMAND = "hatup"
-	def __init__(self, id):
+	def __init__(self, id, *a):
 		HatAction.__init__(self, id, 0, STICK_PAD_MAX)
 	
 class HatDownAction(HatAction):
 	COMMAND = "hatdown"
-	def __init__(self, id):
+	def __init__(self, id, *a):
 		HatAction.__init__(self, id, 0, STICK_PAD_MIN)
 
 class HatLeftAction(HatAction):
 	COMMAND = "hatleft"
-	def __init__(self, id):
+	def __init__(self, id, *a):
 		HatAction.__init__(self, id, 0, STICK_PAD_MAX)
 	
 class HatRightAction(HatAction):
 	COMMAND = "hatright"
-	def __init__(self, id):
+	def __init__(self, id, *a):
 		HatAction.__init__(self, id, 0, STICK_PAD_MIN)
 
 

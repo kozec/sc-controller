@@ -2,6 +2,9 @@ from __future__ import unicode_literals
 from scc.parser import ActionParser, ParseError
 from scc.tools import _
 
+import logging
+log = logging.getLogger("gui.parse")
+
 class InvalidAction(object):
 	def __init__(self, string, error):
 		self.string = string
@@ -35,4 +38,6 @@ class GuiActionParser(ActionParser):
 			a.string = self.string
 			return a
 		except ParseError, e:
+			log.error("Failed to parse '%s'", self.string)
+			log.error(e)
 			return InvalidAction(self.string, e)

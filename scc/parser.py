@@ -176,7 +176,13 @@ class ActionParser(object):
 
 		# Code shouldn't reach here, unless there is not closing ')' in parameter list
 		raise ParseError("Unmatched parenthesis")
-
+	
+	
+	def _create_action(self, cls, *pars):
+		try:
+			return cls(*pars)
+		except TypeError:
+			raise ParseError("Invalid number of parameters for '%s'" % (cls.COMMAND))
 
 	def _parse_action(self):
 		"""
@@ -197,7 +203,7 @@ class ActionParser(object):
 		# Check if there are any tokens left - return action without parameters
 		# if not
 		if not self._tokens_left():
-			return action_class([])
+			return self._create_action(action_class)
 
 		# Check if token after action name is parenthesis and if yes, parse
 		# parameters from it
@@ -206,7 +212,7 @@ class ActionParser(object):
 		if t.type == TokenType.OP and t.value == '(':
 			parameters  = self._parse_parameters()
 			if not self._tokens_left():
-				return action_class(*parameters)
+				return self._create_action(action_class, *parameters)
 			t = self._peek_token()
 
 		# ... or, if it is one of ';', 'and' or 'or' and if yes, parse next action
@@ -215,7 +221,7 @@ class ActionParser(object):
 			self._next_token()
 			if not self._tokens_left():
 				raise ParseError("Excepted action after 'and'")
-			action1 = action_class(*parameters)
+			action1 = self._create_action(action_class, *parameters)
 			action2 = self._parse_action()
 			return LinkedActions(action1, action2)
 		
@@ -226,12 +232,12 @@ class ActionParser(object):
 				self._next_token()
 			if not self._tokens_left():
 				# Having ';' at end of string is not actually error
-				return action_class(*parameters)
-			action1 = action_class(*parameters)
+				return self._create_action(action_class, *parameters)
+			action1 = self._create_action(action_class, *parameters)
 			action2 = self._parse_action()
 			return MultiAction(action1, action2)
 
-		return action_class(*parameters)
+		return self._create_action(action_class, *parameters)
 
 
 	def parse(self):
