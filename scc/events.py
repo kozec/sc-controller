@@ -43,7 +43,7 @@ class ControllerEvent(object):
 	def __init__(self, mapper):
 		self.mapper = mapper
 		# Used as locals when executing code from 'python' action
-		self.locs = { x : getattr(self, x) for x in ACTIONS }
+		self.locs = { x : getattr(self, x) for x in ACTIONS if hasattr(self, x) }
 		self.locs['mapper'] = mapper
 	
 	
