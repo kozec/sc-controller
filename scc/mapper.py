@@ -6,9 +6,10 @@ from scc.uinput import Gamepad, Keyboard, Mouse
 from scc.profile import Profile
 from scc.events import ButtonPressEvent, ButtonReleaseEvent, StickEvent
 from scc.events import PadEvent, TriggerEvent
-from scc.events import FE_STICK, FE_TRIGGER, FE_PAD
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import SCStatus, SCButtons, SCI_NULL
 from scc.constants import CI_NAMES, ControllerInput
+from scc.constants import LEFT, RIGHT, STICK
 
 import traceback, logging
 log = logging.getLogger("Mapper")
@@ -52,16 +53,6 @@ class Mapper(object):
 		self.state = SCI_NULL
 		self.mouse_movements = [ None, None, None, None ]
 		self.force_event = set()
-		self.bpe =					ButtonPressEvent(self)
-		self.bre =					ButtonReleaseEvent(self)
-		self.se  = { x :			StickEvent(self, Profile.STICK_AXES[x], None, SCButtons.LPAD) for x in Profile.STICK_AXES }
-		self.lpe = { x :			PadEvent(self, Profile.LPAD_AXES[x], None, SCButtons.LPAD, SCButtons.LPADTOUCH) for x in Profile.LPAD_AXES }
-		self.rpe = { x :			PadEvent(self, Profile.RPAD_AXES[x], None, SCButtons.RPAD, SCButtons.RPADTOUCH) for x in Profile.RPAD_AXES }
-		self.se[Profile.WHOLE]  =	StickEvent(self, "lpad_x", "lpad_y", SCButtons.LPAD)
-		self.lpe[Profile.WHOLE] =	PadEvent(self, "lpad_x", "lpad_y", SCButtons.LPAD, SCButtons.LPADTOUCH)
-		self.rpe[Profile.WHOLE] =	PadEvent(self, "rpad_x", "rpad_y", SCButtons.RPAD, SCButtons.RPADTOUCH)
-		self.lte = 					TriggerEvent(self, "ltrig")
-		self.rte = 					TriggerEvent(self, "rtrig")
 	
 	
 	def sync(self):
@@ -106,6 +97,34 @@ class Mapper(object):
 		return self.mouse_movements[axis][1] - self.mouse_movements[axis][0]
 	
 	
+	def is_touched(self, what):
+		"""
+		Returns True if specified pad is being touched.
+		May randomly return False for aphephobic pads.
+		
+		'what' should be LEFT or RIGHT (from scc.constants)
+		"""
+		if what == LEFT:
+			return self.state.buttons & SCButtons.LPADTOUCH
+		else: # what == RIGHT
+			return self.state.buttons & SCButtons.RPADTOUCH
+	
+	
+	def was_touched(self, what):
+		"""
+		As is_touched, but returns True if pad *was* touched
+		in previous known state.
+		
+		This is used as:
+		is_touched() and not was_touched() -> pad was just pressed
+		not is_touched() and was_touched() -> pad was just released
+		"""
+		if what == LEFT:
+			return self.old_state.buttons & SCButtons.LPADTOUCH
+		else: # what == RIGHT
+			return self.old_state.buttons & SCButtons.RPADTOUCH
+	
+	
 	def callback(self, controller, sci):
 		# Store state
 		if sci.status != SCStatus.INPUT:
@@ -125,48 +144,56 @@ class Mapper(object):
 			# At least one button was pressed
 			for x in self.profile.buttons:
 				if x & btn_add:
-					self.profile.buttons[x].execute(self.bpe)
+					self.profile.buttons[x].button_press(self)
 				elif x & btn_rem:
-					self.profile.buttons[x].execute(self.bre)
+					self.profile.buttons[x].button_release(self)
 		
 		# Check stick
 		if not sci.buttons & SCButtons.LPADTOUCH:
 			if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
 				# STICK
 				if Profile.WHOLE in self.profile.stick:
-					self.profile.stick[Profile.WHOLE].execute(self.se[Profile.WHOLE])
+					self.profile.stick[Profile.WHOLE].whole(self, sci.lpad_x, sci.lpad_y, STICK)
 				else:
-					for x in Profile.STICK_AXES:
-						if x in self.profile.stick:
-							self.profile.stick[x].execute(self.se[x])
+					if Profile.X in self.profile.stick:
+						if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x:
+							self.profile.stick[Profile.X].axis(self, sci.lpad_x)
+					if Profile.Y in self.profile.stick:
+						if FE_STICK in fe or self.old_state.lpad_y != sci.lpad_y:
+							self.profile.stick[Profile.Y].axis(self, sci.lpad_y)
 		
 		# Check triggers
 		if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:
-			if Profile.LEFT in self.profile.triggers:
-				self.profile.triggers[Profile.LEFT].execute(self.lte)
+			if LEFT in self.profile.triggers:
+				self.profile.triggers[LEFT].trigger(self, sci.ltrig, self.old_state.ltrig)
 		if FE_TRIGGER in fe or sci.rtrig != self.old_state.rtrig:
-			if Profile.RIGHT in self.profile.triggers:
-				self.profile.triggers[Profile.RIGHT].execute(self.rte)
+			if RIGHT in self.profile.triggers:
+				self.profile.triggers[RIGHT].trigger(self, sci.rtrig, self.old_state.rtrig)
 		
 		# Check pads
 		if FE_PAD in fe or sci.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 			# RPAD
-			if Profile.WHOLE in self.profile.pads[Profile.RIGHT]:
-				self.profile.pads[Profile.RIGHT][Profile.WHOLE].execute(self.rpe[Profile.WHOLE])
+			if Profile.WHOLE in self.profile.pads[RIGHT]:
+				self.profile.pads[RIGHT][Profile.WHOLE].whole(self, sci.rpad_x, sci.rpad_y, RIGHT)
 			else:
-				for x in Profile.RPAD_AXES:
-					if x in self.profile.pads[Profile.RIGHT]:
-						self.profile.pads[Profile.RIGHT][x].execute(self.rpe[x])
+				if Profile.X in self.profile.pads[RIGHT]:
+					if FE_PAD in fe or self.old_state.rpad_x != sci.rpad_x:
+						self.profile.pads[RIGHT][Profile.X].pad(self, sci.rpad_x, RIGHT)
+				if Profile.Y in self.profile.pads[RIGHT]:
+					if FE_PAD in fe or self.old_state.rpad_y != sci.rpad_y:
+						self.profile.pads[RIGHT][Profile.Y].pad(self, sci.rpad_y, RIGHT)
 		
 		if (FE_PAD in fe and sci.buttons & SCButtons.LPADTOUCH) or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
 			# LPAD
-			if Profile.WHOLE in self.profile.pads[Profile.LEFT]:
-				self.profile.pads[Profile.LEFT][Profile.WHOLE].execute(self.lpe[Profile.WHOLE])
+			if Profile.WHOLE in self.profile.pads[LEFT]:
+				self.profile.pads[LEFT][Profile.WHOLE].whole(self, sci.lpad_x, sci.lpad_y, LEFT)
 			else:
-				for x in Profile.LPAD_AXES:
-					if x in self.profile.pads[Profile.LEFT]:
-						self.profile.pads[Profile.LEFT][x].execute(self.lpe[x])
-		
+				if Profile.X in self.profile.pads[LEFT]:
+					if FE_PAD in fe or self.old_state.lpad_x != sci.lpad_x:
+						self.profile.pads[LEFT][Profile.X].pad(self, sci.lpad_x, LEFT)
+				if Profile.Y in self.profile.pads[LEFT]:
+					if FE_PAD in fe or self.old_state.lpad_y != sci.lpad_y:
+						self.profile.pads[LEFT][Profile.Y].pad(self, sci.lpad_y, LEFT)
 		
 		# Generate events - keys
 		if len(self.keypress_list):

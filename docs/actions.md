@@ -54,7 +54,7 @@ Same as dpad, with more directions.
 ### macro(key1, key2... [, pause])
 Available only for buttons. Emulates multiple keyboard (or button) presses.
 Pause, if used, has to be int or floating number and specifies delay between
-keyy being pressed and released.
+key being pressed and released.
 
 
 ### profile(name)

@@ -10,7 +10,7 @@ from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
 from scc.uinput import Keys, Axes, Rels
-from scc.actions import ACTIONS, NoAction
+from scc.actions import ACTIONS, NoAction, MultiAction
 
 import token as TokenType
 import sys
@@ -206,7 +206,7 @@ class ActionParser(object):
 		if t.type == TokenType.OP and t.value == '(':
 			parameters  = self._parse_parameters()
 			if not self._tokens_left():
-				return action_class(parameters)
+				return action_class(*parameters)
 			t = self._peek_token()
 
 		# ... or, if it is one of ';', 'and' or 'or' and if yes, parse next action
@@ -215,7 +215,7 @@ class ActionParser(object):
 			self._next_token()
 			if not self._tokens_left():
 				raise ParseError("Excepted action after 'and'")
-			action1 = action_class(parameters)
+			action1 = action_class(*parameters)
 			action2 = self._parse_action()
 			return LinkedActions(action1, action2)
 		
@@ -226,12 +226,12 @@ class ActionParser(object):
 				self._next_token()
 			if not self._tokens_left():
 				# Having ';' at end of string is not actually error
-				return action_class(parameters)
-			action1 = action_class(parameters)
+				return action_class(*parameters)
+			action1 = action_class(*parameters)
 			action2 = self._parse_action()
 			return MultiAction(action1, action2)
 
-		return action_class(parameters)
+		return action_class(*parameters)
 
 
 	def parse(self):

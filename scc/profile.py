@@ -8,12 +8,14 @@ from __future__ import unicode_literals
 
 from scc.constants import SCButtons
 from scc.parser import TalkingActionParser
+from scc.constants import LEFT, RIGHT, WHOLE
+
 import json
 
 class Profile(object):
-	LEFT  = "LEFT"
-	RIGHT = "RIGHT"
-	WHOLE = "WHOLE"
+	LEFT  = LEFT
+	RIGHT = RIGHT
+	WHOLE = WHOLE
 	X, Y = "X", "Y"
 	STICK_AXES = { X : "lpad_x", Y : "lpad_y" }
 	LPAD_AXES  = STICK_AXES

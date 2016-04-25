@@ -53,6 +53,24 @@ def set_logging_level(verbose, debug):
 		logger.setLevel(20)
 
 
+def strip_none(*lst):
+	""" Returns lst without trailing None's """
+	while len(lst) and lst[-1] is None:
+		lst = lst[0:-1]
+	return lst
+
+
+def ensure_size(n, lst):
+	"""
+	Returns copy of lst with size 'n'.
+	If lst is shorter, None's are appended.
+	If lst is longer, it is cat.
+	"""
+	l = [] + lst
+	while len(l) < n : l.append(None)
+	return l[0:n]
+
+
 def static_vars(**kwargs):
 	"""Static variable func decorator"""
 
