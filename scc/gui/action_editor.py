@@ -13,6 +13,7 @@ from scc.actions import AxisAction, MouseAction, ButtonAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
 from scc.actions import DPadAction, DPad8Action
 from scc.actions import Action, XYAction, NoAction
+from scc.modifiers import Modifier, ClickModifier
 from scc.events import TRIGGERS_HALF, TRIGGERS_CLICK
 from scc.profile import Profile
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
@@ -168,11 +169,31 @@ class ActionEditor(ButtonChooser):
 				self.set_action(action)
 	
 	
-	def on_cbDPADType_changed(self, cb):
+	def on_cbDPADType_changed(self, *a):
+		cb = self.builder.get_object("cbDPADType")
 		for i in self.DPAD8_WIDGETS:
 			self.builder.get_object(i).set_visible(cb.get_active() == 1)
 		cls, num = (DPadAction, 4) if cb.get_active() == 0 else (DPad8Action, 8)
-		self.set_multiparams(cls, num)
+		mods = []
+		if self.builder.get_object("cbDPADNeedsClick").get_active():
+			mods.append(ClickModifier)
+		self.set_multiparams(cls, num, mods)
+	
+	
+	def on_btDPAD_clicked(self, b):
+		""" 'Select DPAD Left Action' handler """
+		cb = self.builder.get_object("cbDPADType")
+		cls, num = (DPadAction, 4) if cb.get_active() == 0 else (DPad8Action, 8)
+		mods = []
+		if self.builder.get_object("cbDPADNeedsClick").get_active():
+			mods.append(ClickModifier)
+		param = int(b.get_name())
+		self._grab_multiparam_action(cls, param, num,
+			allow_axes=True, store_as_action=True, modifiers=mods)
+	
+	
+	def on_cbDPADNeedsClick_toggled(self, *a):
+		self.on_cbDPADType_changed()
 	
 	
 	def on_button_chooser_callback(self, action):
@@ -185,14 +206,14 @@ class ActionEditor(ButtonChooser):
 		self.set_action(action)
 	
 	
-	def _grab_multiparam_action(self, cls, param, count, allow_axes=False, store_as_action=False):
+	def _grab_multiparam_action(self, cls, param, count, allow_axes=False, store_as_action=False, modifiers=[]):
 		def cb(action):
 			if store_as_action:
 				self._multiparams[param] = action
 			else:
 				self._multiparams[param] = action.parameters[0]
 			b.close()
-			self.set_multiparams(cls, count)
+			self.set_multiparams(cls, count, modifiers)
 		
 		b, area = None, None
 		if cls == XYAction:
@@ -250,14 +271,6 @@ class ActionEditor(ButtonChooser):
 		self._grab_multiparam_action(XYAction, 1, 2, True, True)
 	
 	
-	def on_btDPAD_clicked(self, b):
-		""" 'Select DPAD Left Action' handler """
-		cb = self.builder.get_object("cbDPADType")
-		cls, num = (DPadAction, 4) if cb.get_active() == 0 else (DPad8Action, 8)
-		param = int(b.get_name())
-		self._grab_multiparam_action(cls, param, num, True, True)
-	
-	
 	def on_btPartPressedClear_clicked(self, *a):
 		self._multiparams[1] = None
 		self.set_multiparams(ButtonAction, 2)
@@ -265,7 +278,7 @@ class ActionEditor(ButtonChooser):
 	
 	def on_btClear_clicked	(self, *a):
 		""" Handler for clear button """
-		action = NoAction([])
+		action = NoAction()
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, action)
 		self.close()
@@ -371,7 +384,7 @@ class ActionEditor(ButtonChooser):
 			self.set_active_area(area)
 	
 	
-	def set_multiparams(self, cls, count):
+	def set_multiparams(self, cls, count, modifiers=[]):
 		""" Handles creating actions with multiple parameters """
 		# TODO: This is getting messy, maybe find way how to put it into a loop
 		if count >= 0:
@@ -401,7 +414,10 @@ class ActionEditor(ButtonChooser):
 		pars = self._multiparams[0:count]
 		while len(pars) > 1 and pars[-1] is None:
 			pars = pars[0:-1]
-		self.set_action(cls(pars))
+		
+		a = cls(pars)
+		for mod in modifiers: a = mod(a)
+		self.set_action(a)
 	
 	
 	def _set_mode(self, mode, activate_default=True):
@@ -449,6 +465,10 @@ class ActionEditor(ButtonChooser):
 			y = stickdata[Profile.Y] if Profile.Y in stickdata else None
 			action = XYAction(x, y)
 		self.set_action(action)
+		if isinstance(action, ClickModifier):
+			self.builder.get_object("cbDPADNeedsClick").set_active(True)
+		while isinstance(action, Modifier):
+			action = action.action
 		if isinstance(action, DPadAction):
 			for x in xrange(0, len(action.actions)):
 				self._multiparams[x] = action.actions[x]

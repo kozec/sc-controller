@@ -10,7 +10,6 @@ List of (possibly) planned features in no particular order
 - Selector for media keys
 - UI for configuring profile switch action
 - Macros (partially done)
-- DPAD that acts only when clicked
 - double click
 - Turbo
 - Cycling Buttons
@@ -26,9 +25,14 @@ UI-only stuff:
 - Copy & paste
 
 
-
-OSD related stuff
+OSD related stuff:
 - OSD
 - on-screen keyboard
 - Touch-Menu
 - Radial Menu for the Joystick/Trackpad
+
+
+**Done** stuff:
+- 8-way DPAD
+- Trigger settings
+- DPAD that acts only when clicked

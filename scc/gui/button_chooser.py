@@ -197,9 +197,9 @@ class ButtonChooser(object):
 		""" Handles selecting key using "Grab the Key" dialog """
 		if self.callback is not None:
 			if len(keys) == 1:
-				self.callback(ButtonAction([keys[0]]))
+				self.callback(ButtonAction(keys[0]))
 			else:
-				actions = [ ButtonAction([k]) for k in keys ]
+				actions = [ ButtonAction(k) for k in keys ]
 				self.callback(MultiAction(*actions))
 		self.keygrab.hide()
 	

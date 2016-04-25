@@ -16,12 +16,14 @@ import time, logging
 log = logging.getLogger("Modifiers")
 _ = lambda x : x
 
-class ClickModifier(Action):
-	COMMAND = "click"
-	
+class Modifier(Action):
 	def __init__(self, action=None):
 		Action.__init__(self, action)
 		self.action = action or NoAction()
+
+
+class ClickModifier(Modifier):
+	COMMAND = "click"
 	
 	def describe(self, context):
 		if context in (Action.AC_STICK, Action.AC_PAD):
