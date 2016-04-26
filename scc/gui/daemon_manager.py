@@ -29,11 +29,16 @@ class DaemonManager(GObject.GObject):
 		profile-changed (profile)
 			Emited after profile is changed. Profile is filename of currently
 			active profile
+		
+		error (description)
+			Emited when daemon reports error, most likely not being able to
+			access to USB dongle.
 	"""
 	
 	__gsignals__ = {
 			b"alive"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"dead"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"error"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
@@ -109,8 +114,15 @@ class DaemonManager(GObject.GObject):
 			if line.startswith("Version:"):
 				version = line.split(":", 1)[-1].strip()
 				log.debug("Connected to daemon, version %s", version)
+			elif line.startswith("Ready."):
+				log.debug("Daemon is ready.")
 				self.alive = True
 				self.emit('alive')
+			elif line.startswith("Error:"):
+				error = line.split(":", 1)[-1].strip()
+				self.alive = True
+				log.debug("Daemon reported error '%s'", error)
+				self.emit('error', error)
 			elif line.startswith("Current profile:"):
 				profile = line.split(":", 1)[-1].strip()
 				log.debug("Daemon reported profile change: %s", profile)

@@ -16,6 +16,7 @@ from scc.gui.profile_manager import ProfileManager
 from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
+from scc.gui.ribar import RIBar
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
 from scc.constants import SCButtons
 from scc.actions import XYAction
@@ -46,6 +47,7 @@ class App(Gtk.Application, ProfileManager):
 		self.dm = DaemonManager()
 		self.dm.connect("alive", self.on_daemon_alive)
 		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
+		self.dm.connect("error", self.on_daemon_error)
 		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
 		self.gladepath = gladepath
@@ -338,6 +340,37 @@ class App(Gtk.Application, ProfileManager):
 		self.set_daemon_status("alive")
 		if self.current_file is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
+	
+	
+	def on_daemon_error(self, trash, error):
+		log.debug("Daemon reported error '%s'", error)
+		msg = _('There was error with enabling emulation: <i>%s</i>') % (error,)
+		# Known errors are handled with aditional message
+		if "Device not found" in error:
+			msg += "\n" + _("Please, check if you have reciever dongle connected to USB port.")
+		elif "LIBUSB_ERROR_ACCESS" in error:
+			msg += "\n" + _("You don't have access to controller device.")
+			msg += "\n\n" + ( _("Consult your distribution manual, try installing Steam package or <a href='%s'>install required udev rules manually</a>.") %
+					'https://wiki.archlinux.org/index.php/Gamepad#Steam_Controller_Not_Pairing' )
+			# TODO: Write howto somewhere instead of linking to ArchWiki
+		bar = RIBar(msg, Gtk.MessageType.ERROR)
+		self.show_error(bar)
+		self.set_daemon_status("dead")
+	
+	
+	def show_error(self, ribar):
+		content = self.builder.get_object("content")
+		content.pack_start(ribar, False, False, 1)
+		content.reorder_child(ribar, 0)
+		ribar.connect("close", self.hide_error)
+		ribar.connect("response", self.hide_error)
+		ribar.show()
+		ribar.set_reveal_child(True)
+	
+	
+	def hide_error(self, ribar, *a):
+		if ribar.get_parent() is not None:
+			ribar.get_parent().remove(ribar)
 	
 	
 	def on_daemon_profile_changed(self, trash, profile):

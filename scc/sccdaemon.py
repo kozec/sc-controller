@@ -4,9 +4,16 @@ SC-Controller - Daemon class
 
 To control running daemon instance, unix socket in user directory is used.
 Controlling "protocol" is dead-simple:
- - When new connection is accepted, daemon sends two lines:
-      SCCDaemon version 0.1
+ - When new connection is accepted, daemon sends some info:
+      SCCDaemon
+      Version: 0.1
+      PID: 123456
       Current profile: filename.json
+      Ready.
+ - Everything important is sent in "Key: data<LF>" format.
+ - "Ready." is sent only if daemon is working as expected. In case of error,
+   "Error: description" is sent (may be sent repeadedly). When error is
+   cleared, "Ready." is sent again to indicate that emulation works again.
  - Connection is held until client side closes it.
  - Recieved line is treated as filename of profie, that should be loaded istead
    currently active profile.
@@ -17,6 +24,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.lib.daemon import Daemon
+from scc.lib.usb1 import USBErrorAccess
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
@@ -27,7 +35,7 @@ from scc.profile import Profile
 from scc.mapper import Mapper
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
-import os, sys, signal, socket, select, logging, threading, traceback
+import os, sys, signal, socket, select, time, logging, threading, traceback
 log = logging.getLogger("App")
 tlog = logging.getLogger("Socket Thread")
 
@@ -44,6 +52,7 @@ class SCCDaemon(Daemon):
 		self.socket_file = socket_file
 		self.sserver = None
 		self.mapper = None
+		self.error = None
 		self.lock = threading.Lock()
 		self.profile_file = None
 		self.clients = set()
@@ -120,8 +129,31 @@ class SCCDaemon(Daemon):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)
 		self.start_listening()
-		sc = SCController(callback=self.mapper.callback)
-		sc.run()
+		try:
+			sc = SCController(callback=self.mapper.callback)
+			sc.run()
+		except (ValueError, USBErrorAccess), e:
+			# When SCController fails to initialize, daemon should
+			# still stay alive, so it is able to report this failure.
+			#
+			# 
+			# As this is most likely caused by hw device being not
+			# connected or busy, daemon will also repeadedly try to
+			# reinitialize SCController instance expecting error to be
+			# fixed by higher power (aka. user)
+			self.error = unicode(e)
+			log.error(e)
+			while True:
+				time.sleep(5)
+				try:
+					sc = SCController(callback=self.mapper.callback)
+					self.error = None
+					sc.run()
+				except (ValueError, USBErrorAccess), e:
+					self.error = unicode(e)
+					log.error(e)
+					continue	# 10: goto 10
+				break
 	
 	
 	def start_listening(self):
@@ -148,6 +180,10 @@ class SCCDaemon(Daemon):
 		wfile.write(("Version: %s\n" % (SCCDaemon.VERSION,)).encode("utf-8"))
 		wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
 		wfile.write(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
+		if self.error is None:
+			wfile.write(b"Ready.\n")
+		else:
+			wfile.write(("Error: %s\n" % (self.error,)).encode("utf-8"))
 		self.lock.release()
 		while True:
 			line = rfile.readline()

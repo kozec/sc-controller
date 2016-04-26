@@ -144,6 +144,13 @@
     <property name="resizable">False</property>
     <property name="window_position">center</property>
     <child>
+    <object class="GtkBox" id="content">
+      <property name="visible">True</property>
+      <property name="can_focus">False</property>
+      <property name="orientation">vertical</property>
+      <property name="spacing">1</property>
+    
+    <child>
       <object class="GtkGrid" id="grid1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
@@ -669,6 +676,8 @@
           </packing>
         </child>
       </object>
+    </child>
+    </object>
     </child>
     <child type="titlebar">
       <object class="GtkHeaderBar" id="headerbar1">

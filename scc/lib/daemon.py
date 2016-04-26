@@ -51,6 +51,7 @@ class Daemon(object):
 		# redirect standard file descriptors
 		sys.stdout.flush()
 		sys.stderr.flush()
+		"""
 		stdi = open(os.devnull, 'r')
 		stdo = open(os.devnull, 'a+')
 		stde = open(os.devnull, 'a+')
@@ -58,6 +59,7 @@ class Daemon(object):
 		os.dup2(stdi.fileno(), sys.stdin.fileno())
 		os.dup2(stdo.fileno(), sys.stdout.fileno())
 		os.dup2(stde.fileno(), sys.stderr.fileno())
+		"""
 
 		# write pidfile
 		self.write_pid()
