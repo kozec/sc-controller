@@ -534,4 +534,4 @@ class ActionEditor(ButtonChooser):
 			else:
 				return v.describe(Action.AC_BUTTON)
 		else:
-			return (cls([v])).describe(self._mode)
+			return (cls(v)).describe(self._mode)
