@@ -346,7 +346,7 @@ class App(Gtk.Application, ProfileManager):
 	
 	def on_daemon_error(self, trash, error):
 		log.debug("Daemon reported error '%s'", error)
-		msg = _('There was error with enabling emulation: <i>%s</i>') % (error,)
+		msg = _('There was error with enabling emulation: <b>%s</b>') % (error,)
 		# Known errors are handled with aditional message
 		if "Device not found" in error:
 			msg += "\n" + _("Please, check if you have reciever dongle connected to USB port.")
@@ -357,7 +357,9 @@ class App(Gtk.Application, ProfileManager):
 			# TODO: Write howto somewhere instead of linking to ArchWiki
 		elif "LIBUSB_ERROR_BUSY" in error:
 			msg += "\n" + _("Another application (most likely Steam) is using the controller.")
-			# TODO: Write howto somewhere instead of linking to ArchWiki
+		elif "LIBUSB_ERROR_PIPE" in error:
+			msg += "\n" + _("USB dongle was removed.")
+		
 		self.show_error(msg)
 		self.set_daemon_status("dead")
 	

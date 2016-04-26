@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.lib.daemon import Daemon
-from scc.lib.usb1 import USBErrorAccess, USBErrorBusy
+from scc.lib.usb1 import USBErrorAccess, USBErrorBusy, USBErrorPipe
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
@@ -147,8 +147,7 @@ class SCCDaemon(Daemon):
 				self.lock.release()
 				sc.disable_auto_haptic()
 				sc.run()
-				break
-			except (ValueError, USBErrorAccess, USBErrorBusy), e:
+			except (ValueError, USBErrorAccess, USBErrorBusy, USBErrorPipe), e:
 				# When SCController fails to initialize, daemon should
 				# still stay alive, so it is able to report this failure.
 				#
@@ -156,9 +155,14 @@ class SCCDaemon(Daemon):
 				# connected or busy, daemon will also repeadedly try to
 				# reinitialize SCController instance expecting error to be
 				# fixed by higher power (aka. user)
+				was_error = self.error is not None
 				self.error = unicode(e)
-				self.lock.release()
+				try:
+					self.lock.release()
+				except: pass
 				log.error(e)
+				if not was_error:
+					self._send_to_all(("Error: %s\n" % (self.error,)).encode("utf-8"))
 				time.sleep(5)
 				self.lock.acquire()
 	
