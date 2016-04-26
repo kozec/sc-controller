@@ -74,7 +74,7 @@ class SCController(object):
 					setting.getSubClass() == 0 and
 					setting.getProtocol() == 0):
 					self._handle.claimInterface(number)
-
+		
 		self._transfer_list = []
 		transfer = self._handle.getTransfer()
 		transfer.setInterrupt(
@@ -95,21 +95,6 @@ class SCController(object):
 
 		self._tup = None
 		self._lastusb = time.time()
-
-		# Disable Haptic auto feedback
-
-		self._ctx.handleEvents()
-		self._sendControl(struct.pack('>' + 'I' * 1,
-									  0x81000000))
-		self._ctx.handleEvents()
-		self._sendControl(struct.pack('>' + 'I' * 6,
-									  0x87153284,
-									  0x03180000,
-									  0x31020008,
-									  0x07000707,
-									  0x00300000,
-									  0x2f010000))
-		self._ctx.handleEvents()
 
 
 	def __del__(self):
@@ -190,6 +175,20 @@ class SCController(object):
 			self._cb(self, self._tup)
 
 
+	def disable_auto_haptic(self):
+		self._ctx.handleEvents()
+		self._sendControl(struct.pack('>' + 'I' * 1,
+									  0x81000000))
+		self._ctx.handleEvents()
+		self._sendControl(struct.pack('>' + 'I' * 6,
+									  0x87153284,
+									  0x03180000,
+									  0x31020008,
+									  0x07000707,
+									  0x00300000,
+									  0x2f010000))
+		self._ctx.handleEvents()
+	
 	def run(self):
 		"""Fucntion to run in order to process usb events"""
 		if self._handle:

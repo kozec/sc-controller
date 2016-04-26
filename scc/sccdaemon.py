@@ -130,7 +130,7 @@ class SCCDaemon(Daemon):
 		self.start_listening()
 		try:
 			sc = SCController(callback=self.mapper.callback)
-			print "-- RUN"
+			sc.disable_auto_haptic()
 			sc.run()
 		except (ValueError, USBErrorAccess, USBErrorBusy), e:
 			# When SCController fails to initialize, daemon should
@@ -147,8 +147,8 @@ class SCCDaemon(Daemon):
 				time.sleep(5)
 				try:
 					sc = SCController(callback=self.mapper.callback)
-					print "-- RUN"
 					self.error = None
+					sc.disable_auto_haptic()
 					sc.run()
 				except (ValueError, USBErrorAccess, USBErrorBusy), e:
 					self.error = unicode(e)
