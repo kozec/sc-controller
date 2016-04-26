@@ -14,7 +14,7 @@ from scc.actions import RAxisAction, TrackballAction, TrackpadAction
 from scc.actions import DPadAction, DPad8Action
 from scc.actions import Action, XYAction, NoAction
 from scc.modifiers import Modifier, ClickModifier
-from scc.events import TRIGGERS_HALF, TRIGGERS_CLICK
+from scc.actions import TRIGGER_HALF, TRIGGER_CLICK
 from scc.profile import Profile
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
 from scc.gui.parser import GuiActionParser, InvalidAction
@@ -254,11 +254,11 @@ class ActionEditor(ButtonChooser):
 	
 	
 	def on_btPartPresedClear_clicked(self, *a):
-		self.builder.get_object("sclPartialLevel").set_value(TRIGGERS_HALF)
+		self.builder.get_object("sclPartialLevel").set_value(TRIGGER_HALF)
 	
 	
 	def on_btFullyPresedClear_clicked(self, *a):
-		self.builder.get_object("sclFullLevel").set_value(TRIGGERS_CLICK)
+		self.builder.get_object("sclFullLevel").set_value(TRIGGER_CLICK)
 	
 	
 	def on_btAxisX_clicked(self, *a):
