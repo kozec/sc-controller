@@ -13,7 +13,7 @@ from scc.actions import AxisAction, MouseAction, ButtonAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
 from scc.actions import DPadAction, DPad8Action
 from scc.actions import Action, XYAction, NoAction
-from scc.modifiers import Modifier, ClickModifier
+from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.actions import TRIGGER_HALF, TRIGGER_CLICK
 from scc.profile import Profile
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
@@ -284,22 +284,33 @@ class ActionEditor(ButtonChooser):
 		self.close()
 	
 	
-	def on_btOK_clicked(self, *a):
-		""" Handler for OK button """
+	def _make_action(self):
+		""" Generates and returns Action instance """
 		entAction = self.builder.get_object("entAction")
 		entActionY = self.builder.get_object("entActionY")
 		action = self.parser.restart(entAction.get_text()).parse()
 		if len(entActionY.get_text()) > 0:
 			actionY = self.parser.restart(entActionY.get_text()).parse()
 			action = XYAction(action, actionY)
+		return action
+	
+	def on_btOK_clicked(self, *a):
+		""" Handler for OK button """
 		if self.ac_callback is not None:
-			self.ac_callback(self.id, action)
+			self.ac_callback(self.id, self._make_action())
 		self.close()
 	
 	
 	def on_btModeSwitch_clicked(self, *a):
 		""" Asks main window to close this one and display mode switch editor """
-		pass
+		if self.ac_callback is not None:
+			# Convert current action into modeswitch and send it to main window
+			action = ModeModifier(self._make_action())
+			self.ac_callback(self.id, action)
+			self.close()
+			# Ask main window to display editor again
+			self.app.show_editor(self.id)
+	
 	
 	def on_cbAxisOutput_changed(self, *a):
 		if self._recursing : return

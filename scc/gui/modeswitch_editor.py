@@ -210,6 +210,12 @@ class ModeswitchEditor(Editor):
 		if not isinstance(self.default, NoAction):
 			pars += [ self.default ]
 		action = ModeModifier(*pars)
+		if len(pars) == 0:
+			# No action is actually set
+			action = NoAction()
+		elif len(pars) == 1:
+			# Only default action left
+			action = self.default
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, action)
 		self.close()
