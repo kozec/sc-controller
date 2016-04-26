@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.lib.daemon import Daemon
-from scc.lib.usb1 import USBErrorAccess
+from scc.lib.usb1 import USBErrorAccess, USBErrorBusy
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
@@ -36,7 +36,7 @@ from scc.mapper import Mapper
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
 import os, sys, signal, socket, select, time, logging, threading, traceback
-log = logging.getLogger("App")
+log = logging.getLogger("SCCDaemon")
 tlog = logging.getLogger("Socket Thread")
 
 class ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer): daemon_threads = True
@@ -115,8 +115,7 @@ class SCCDaemon(Daemon):
 				self.mapper.profile.load(self.profile_file)
 			except Exception, e:
 				log.warning("Failed to load profile. Starting with no mappings.")
-				log.warning("Reason:")
-				log.warning(e)
+				log.warning("Reason: %s", e)
 	
 	
 	def sigterm(self, *a):
@@ -131,8 +130,9 @@ class SCCDaemon(Daemon):
 		self.start_listening()
 		try:
 			sc = SCController(callback=self.mapper.callback)
+			print "-- RUN"
 			sc.run()
-		except (ValueError, USBErrorAccess), e:
+		except (ValueError, USBErrorAccess, USBErrorBusy), e:
 			# When SCController fails to initialize, daemon should
 			# still stay alive, so it is able to report this failure.
 			#
@@ -147,9 +147,10 @@ class SCCDaemon(Daemon):
 				time.sleep(5)
 				try:
 					sc = SCController(callback=self.mapper.callback)
+					print "-- RUN"
 					self.error = None
 					sc.run()
-				except (ValueError, USBErrorAccess), e:
+				except (ValueError, USBErrorAccess, USBErrorBusy), e:
 					self.error = unicode(e)
 					log.error(e)
 					continue	# 10: goto 10

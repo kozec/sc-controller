@@ -353,6 +353,9 @@ class App(Gtk.Application, ProfileManager):
 			msg += "\n\n" + ( _("Consult your distribution manual, try installing Steam package or <a href='%s'>install required udev rules manually</a>.") %
 					'https://wiki.archlinux.org/index.php/Gamepad#Steam_Controller_Not_Pairing' )
 			# TODO: Write howto somewhere instead of linking to ArchWiki
+		elif "LIBUSB_ERROR_BUSY" in error:
+			msg += "\n" + _("Another application (most likely Steam) is using the controller.")
+			# TODO: Write howto somewhere instead of linking to ArchWiki
 		bar = RIBar(msg, Gtk.MessageType.ERROR)
 		self.show_error(bar)
 		self.set_daemon_status("dead")
