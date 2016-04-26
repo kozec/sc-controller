@@ -70,6 +70,7 @@ class App(Gtk.Application, ProfileManager):
 		self.add_window(self.window)
 		self.window.set_title(_("SC Controller"))
 		self.window.set_wmclass("SC Controller", "SC Controller")
+		self.ribar = None
 		
 		for b in BUTTONS:
 			self.button_widgets[b] = ControllerButton(self, b, self.builder.get_object("bt" + b.name))
@@ -338,6 +339,7 @@ class App(Gtk.Application, ProfileManager):
 	
 	def on_daemon_alive(self, *a):
 		self.set_daemon_status("alive")
+		self.hide_error()
 		if self.current_file is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
 	
@@ -356,24 +358,29 @@ class App(Gtk.Application, ProfileManager):
 		elif "LIBUSB_ERROR_BUSY" in error:
 			msg += "\n" + _("Another application (most likely Steam) is using the controller.")
 			# TODO: Write howto somewhere instead of linking to ArchWiki
-		bar = RIBar(msg, Gtk.MessageType.ERROR)
-		self.show_error(bar)
+		self.show_error(msg)
 		self.set_daemon_status("dead")
 	
 	
-	def show_error(self, ribar):
-		content = self.builder.get_object("content")
-		content.pack_start(ribar, False, False, 1)
-		content.reorder_child(ribar, 0)
-		ribar.connect("close", self.hide_error)
-		ribar.connect("response", self.hide_error)
-		ribar.show()
-		ribar.set_reveal_child(True)
+	def show_error(self, message):
+		if self.ribar is None:
+			self.ribar = RIBar(message, Gtk.MessageType.ERROR)
+			content = self.builder.get_object("content")
+			content.pack_start(self.ribar, False, False, 1)
+			content.reorder_child(self.ribar, 0)
+			self.ribar.connect("close", self.hide_error)
+			self.ribar.connect("response", self.hide_error)
+		else:
+			self.ribar.get_label().set_markup(message)
+		self.ribar.show()
+		self.ribar.set_reveal_child(True)
 	
 	
-	def hide_error(self, ribar, *a):
-		if ribar.get_parent() is not None:
-			ribar.get_parent().remove(ribar)
+	def hide_error(self, *a):
+		if self.ribar is not None:
+			if self.ribar.get_parent() is not None:
+				self.ribar.get_parent().remove(self.ribar)
+		self.ribar = None
 	
 	
 	def on_daemon_profile_changed(self, trash, profile):

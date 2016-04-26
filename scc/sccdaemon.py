@@ -73,9 +73,17 @@ class SCCDaemon(Daemon):
 		# This last line kinda depends on GIL...
 		self.mapper.profile = p
 		# Notify all connected clients about change
+		self._send_to_all(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
+	
+	
+	def _send_to_all(self, message_str):
+		"""
+		Sends message to all connect clients.
+		Message should be utf-8 encoded str.
+		"""
 		for wfile in self.clients:
 			try:
-				wfile.write(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
+				wfile.write(message_str)
 			except: pass
 	
 	
@@ -127,34 +135,32 @@ class SCCDaemon(Daemon):
 	def run(self):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)
+		self.lock.acquire()
 		self.start_listening()
-		try:
-			sc = SCController(callback=self.mapper.callback)
-			sc.disable_auto_haptic()
-			sc.run()
-		except (ValueError, USBErrorAccess, USBErrorBusy), e:
-			# When SCController fails to initialize, daemon should
-			# still stay alive, so it is able to report this failure.
-			#
-			# 
-			# As this is most likely caused by hw device being not
-			# connected or busy, daemon will also repeadedly try to
-			# reinitialize SCController instance expecting error to be
-			# fixed by higher power (aka. user)
-			self.error = unicode(e)
-			log.error(e)
-			while True:
-				time.sleep(5)
-				try:
-					sc = SCController(callback=self.mapper.callback)
+		while True:
+			try:
+				sc = SCController(callback=self.mapper.callback)
+				if self.error is not None:
 					self.error = None
-					sc.disable_auto_haptic()
-					sc.run()
-				except (ValueError, USBErrorAccess, USBErrorBusy), e:
-					self.error = unicode(e)
-					log.error(e)
-					continue	# 10: goto 10
+					log.debug("Recovered after error")
+					self._send_to_all(b"Ready.\n")
+				self.lock.release()
+				sc.disable_auto_haptic()
+				sc.run()
 				break
+			except (ValueError, USBErrorAccess, USBErrorBusy), e:
+				# When SCController fails to initialize, daemon should
+				# still stay alive, so it is able to report this failure.
+				#
+				# As this is most likely caused by hw device being not
+				# connected or busy, daemon will also repeadedly try to
+				# reinitialize SCController instance expecting error to be
+				# fixed by higher power (aka. user)
+				self.error = unicode(e)
+				self.lock.release()
+				log.error(e)
+				time.sleep(5)
+				self.lock.acquire()
 	
 	
 	def start_listening(self):
