@@ -11,6 +11,7 @@ from collections import namedtuple
 
 from scc.uinput import Keys, Axes, Rels
 from scc.actions import ACTIONS, NoAction, MultiAction
+from scc.constants import SCButtons
 
 import token as TokenType
 import sys
@@ -19,10 +20,24 @@ import sys
 class ParseError(Exception): pass
 
 
+def build_action_constants():
+	""" Generates dicts for ActionParser.CONSTS """
+	rv = {
+		'Keys'		: Keys,
+		'Axes'		: Axes,
+		'Rels'		: Rels,
+		'None'		: NoAction(),
+	}
+	for tpl in (Keys, Axes, Rels, SCButtons):
+		for x in tpl:
+			rv[x.name] = x
+	return rv
+
+
 class ActionParser(object):
 	"""
 	Parses action expressed as string into Action instances.
-
+	
 	Usage:
 		ap = ActionParser(string)
 		action = ap.parse()
@@ -31,24 +46,20 @@ class ActionParser(object):
 			# do something with error
 	"""
 	Token = namedtuple('Token', 'type value')
-
-	CONSTS = {
-		'Keys' : Keys,
-		'Axes' : Axes,
-		'Rels' : Rels,
-		'None' : NoAction([]),
-	}
-
+	
+	CONSTS = build_action_constants()
+	
+	
 	def __init__(self, string=""):
 		self.restart(string)
-
-
+	
+	
 	def restart(self, string):
 		"""
 		Restarts parsing with new string
 		Returns self for chaining.
 		"""
-
+		
 		try:
 			self.tokens = [
 				ActionParser.Token(type, string)
@@ -60,24 +71,24 @@ class ActionParser(object):
 			self.tokens = None
 		self.index = 0
 		return self
-
-
+	
+	
 	def _next_token(self):
 		rv = self.tokens[self.index]
 		self.index += 1
 		return rv
-
-
+	
+	
 	def _peek_token(self):
 		""" As _next_token, but without increasing counter """
 		return self.tokens[self.index]
-
-
+	
+	
 	def _tokens_left(self):
 		""" Returns True if there are any tokens left """
 		return self.index < len(self.tokens)
-
-
+	
+	
 	def _parse_parameter(self):
 		""" Parses single parameter """
 		t = self._next_token()
@@ -97,25 +108,24 @@ class ActionParser(object):
 				if not t.value in ActionParser.CONSTS:
 					raise ParseError("Excepted parameter, got '%s' which is not defined" % (t.value,))
 				parameter = ActionParser.CONSTS[t.value]
-
+			
 			# Check for dots
 			while self._tokens_left() and self._peek_token().type == TokenType.OP and self._peek_token().value == '.':
 				self._next_token()
 				if not self._tokens_left():
 					raise ParseError("Excepted NAME after '.'")
-
+				
 				t = self._next_token()
 				if not hasattr(parameter, t.value):
 					raise ParseError("%s has no attribute '%s'" % (parameter, t.value,))
 				parameter = getattr(parameter, t.value)
 			return parameter
-
+		
 		if t.type == TokenType.OP and t.value == "-":
 			if not self._tokens_left() or self._peek_token().type != TokenType.NUMBER:
 				raise ParseError("Excepted number after '-'")
 			return - self._parse_number()
-
-
+		
 		if t.type == TokenType.NUMBER:
 			self.index -= 1
 			return self._parse_number()
@@ -181,9 +191,12 @@ class ActionParser(object):
 	def _create_action(self, cls, *pars):
 		try:
 			return cls(*pars)
+		except ValueError, e:
+			raise ParseError(unicode(e))
 		except TypeError:
 			raise ParseError("Invalid number of parameters for '%s'" % (cls.COMMAND))
-
+	
+	
 	def _parse_action(self):
 		"""
 		Parses one action, that is one of:
@@ -199,12 +212,12 @@ class ActionParser(object):
 			raise ParseError("Unknown action '%s'" % (t.value,))
 		action_name = t.value
 		action_class = ACTIONS[action_name]
-
+		
 		# Check if there are any tokens left - return action without parameters
 		# if not
 		if not self._tokens_left():
 			return self._create_action(action_class)
-
+		
 		# Check if token after action name is parenthesis and if yes, parse
 		# parameters from it
 		t = self._peek_token()
@@ -214,7 +227,7 @@ class ActionParser(object):
 			if not self._tokens_left():
 				return self._create_action(action_class, *parameters)
 			t = self._peek_token()
-
+		
 		# ... or, if it is one of ';', 'and' or 'or' and if yes, parse next action
 		if t.type == TokenType.NAME and t.value == 'and':
 			# Two (or more) actions joined by 'and'
@@ -236,10 +249,10 @@ class ActionParser(object):
 			action1 = self._create_action(action_class, *parameters)
 			action2 = self._parse_action()
 			return MultiAction(action1, action2)
-
+		
 		return self._create_action(action_class, *parameters)
-
-
+	
+	
 	def parse(self):
 		"""
 		Returns parsed action.

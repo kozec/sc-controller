@@ -97,6 +97,96 @@ class ClickModifier(Modifier):
 			return self.action.whole(mapper, 0, 0, what)
 
 
+class ModeModifier(Modifier):
+	COMMAND = "mode"
+	
+	def __init__(self, *stuff):
+		Modifier.__init__(self)
+		self.default = None
+		self.mods = {}
+		self.order = []
+		button = None
+		for i in stuff:
+			if self.default is not None:
+				# Default has to be last parameter
+				raise ValueError("Invalid parameters for 'mode'")
+			if isinstance(i, Action):
+				if button is None:
+					self.default = i
+					continue
+				self.mods[button] = i
+				self.order.append(button)
+				button = None
+			elif i in SCButtons:
+				button = i
+			else:
+				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
+		if self.default is None:
+			self.default = NoAction()
+	
+	
+	def describe(self, context):
+		return _("(multiple modes)")
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if multiline:
+			rv = [ (" " * pad) + "mode(" ]
+			for key in self.mods:
+				a_str = self.mods[key].to_string(True).split("\n")
+				a_str[0] = (" " * pad) + "  " + (key.name + ",").ljust(11) + a_str[0]	# Key has to be one of SCButtons
+				for i in xrange(1, len(a_str)):
+					a_str[i] = (" " * pad) + "  " + a_str[i]
+				a_str[-1] = a_str[-1] + ","
+				rv += a_str
+			if self.default is not None:
+				a_str = [
+					(" " * pad) + "  " + x
+					for x in  self.default.to_string(True).split("\n")
+				]
+				rv += a_str
+			if rv[-1][-1] == ",":
+				rv[-1] = rv[-1][0:-1]
+			rv += [ (" " * pad) + ")" ]
+			return "\n".join(rv)
+		else:
+			rv = [ ]
+			for key in self.mods:
+				rv += [ key.name, self.mods[key].to_string(False) ]
+			if self.default is not None:
+				rv += [ self.default.to_string(False) ]
+			return "mode(" + ", ".join(rv) + ")"
+	
+	
+	def select(self, mapper):
+		"""
+		Selects action by pressed button.
+		"""
+		for b in self.order:
+			if mapper.is_pressed(b):
+				return self.mods[b]
+		return self.default
+	
+	
+	def button_press(self, mapper):
+		return self.select(mapper).button_press(mapper)
+	
+	def button_release(self, mapper):
+		return self.select(mapper).button_release(mapper)
+	
+	def trigger(self, mapper, position, old_position):
+		return self.select(mapper).trigger(mapper, position, old_position)
+	
+	def axis(self, mapper, position, what):
+		return self.select(mapper).axis(mapper, position, what)
+	
+	def pad(self, mapper, position, what):
+		return self.pad(mapper).axis(mapper, position, what)
+	
+	def whole(self, mapper, x, y, what):
+		return self.whole(mapper).axis(mapper, x, y, what)
+
+
 # Add modifiers to ACTIONS dict
 for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
 	if i.COMMAND is not None:

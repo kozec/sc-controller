@@ -65,10 +65,14 @@ Executes command on background
 
 # Modifiers:
 
-#### click()
+#### click(action)
 Used to create action that occurs only if pad or stick is pressed.
 For example, `click(dpad(...))` set to pad will create dpad that activates
 buttons only when pressed.
+
+#### mode(button1, action1, [button2, action2... buttonN, actionN] [, default] )
+Defines mode shifting. If physical buttonX is pressed, actionX is executed.
+Optional default action is executed if none from specified buttons is pressed.
 
 
 # Shortcuts:
