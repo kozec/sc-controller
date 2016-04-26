@@ -12,6 +12,7 @@ from scc.uinput import Keys
 from scc.actions import ButtonAction, AxisAction, MouseAction, MultiAction
 from scc.actions import HatLeftAction, HatRightAction
 from scc.actions import HatUpAction, HatDownAction
+from scc.gui.editor import Editor
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import keyevent_to_key
 from scc.gui.area_to_action import AREA_TO_ACTION
@@ -28,7 +29,7 @@ MODIFIERS = [ Keys.KEY_LEFTCTRL, Keys.KEY_LEFTMETA, Keys.KEY_LEFTALT,
 def merge_modifiers(mods):
 	return "+".join([ key.name.split("_")[-1] for key in mods ])
 
-class ButtonChooser(object):
+class ButtonChooser(Editor):
 	GLADE = "button_chooser.glade"
 	GLADE_KG = "key_grabber.glade"
 	IMAGES = { "vbButChooser" : "buttons.svg" }
@@ -89,12 +90,6 @@ class ButtonChooser(object):
 			self.active_area : ButtonChooser.ACTIVE_COLOR,
 			area : ButtonChooser.HILIGHT_COLOR
 		})
-	
-	
-	def on_window_key_press_event(self, trash, event):
-		""" Checks if pressed key was escape and if yes, closes window """
-		if event.keyval == Gdk.KEY_Escape:
-			self.close()
 	
 	
 	def on_keyGrab_key_press_event(self, trash, event):
@@ -202,18 +197,4 @@ class ButtonChooser(object):
 				actions = [ ButtonAction(k) for k in keys ]
 				self.callback(MultiAction(*actions))
 		self.keygrab.hide()
-	
-	
-	def set_title(self, title):
-		self.window.set_title(title)
-		self.builder.get_object("header").set_title(title)
-	
-	
-	def close(self, *a):
-		self.window.destroy()
-	
-	
-	def show(self, modal_for):
-		self.window.set_transient_for(modal_for)
-		self.window.set_modal(True)
-		self.window.show()
+

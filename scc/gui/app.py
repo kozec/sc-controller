@@ -11,15 +11,17 @@ from gi.repository import Gtk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.controller_widget import ControllerPad, ControllerStick
-from scc.gui.daemon_manager import DaemonManager
+from scc.gui.modeswitch_editor import ModeswitchEditor
 from scc.gui.profile_manager import ProfileManager
+from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
 from scc.constants import SCButtons
-from scc.actions import XYAction
+from scc.actions import XYAction, NoAction
+from scc.modifiers import ModeModifier
 from scc.profile import Profile
 
 import os, sys, json, logging
@@ -110,37 +112,47 @@ class App(Gtk.Application, ProfileManager):
 			b.widget.set_state(Gtk.StateType.NORMAL)
 			if b.name == button:
 				active = b.widget
-	
+		
 		if active is not None:
 			active.set_state(Gtk.StateType.ACTIVE)
-	
+		
 		self.hilight(button)
 	
 	
+	def _choose_editor(self, action, title):
+		if isinstance(action, ModeModifier):
+			e = ModeswitchEditor(self, self.on_action_chosen)
+			e.set_title(_("Edit Mode Switch for %s") % (title,))
+		else:
+			e = ActionEditor(self, self.on_action_chosen)
+			e.set_title(_("Edit Action for %s") % (title,))
+		return e
+		
+	
 	def show_editor(self, id):
 		if id in SCButtons:
-			ae = ActionEditor(self, self.on_action_chosen)
-			ae.set_title(_("Edit Action for %s Button") % (id.name,))
+			ae = self._choose_editor(self.current.buttons[id],
+				_("%s Button") % (id.name,))
 			ae.set_button(id, self.current.buttons[id])
 			ae.show(self.window)
 		elif id in TRIGGERS:
-			ae = ActionEditor(self, self.on_action_chosen)
-			ae.set_title(_("Edit Action for %s Trigger") % (id,))
+			ae = self._choose_editor(self.current.triggers[id],
+				_("%s Trigger") % (id,))
 			ae.set_trigger(id, self.current.triggers[id])
 			ae.show(self.window)
 		elif id in STICKS:
-			ae = ActionEditor(self, self.on_action_chosen)
-			ae.set_title(_("Edit Action for Stick"))
+			ae = self._choose_editor(self.current.stick,
+				_("Stick"))
 			ae.set_stick(self.current.stick)
 			ae.show(self.window)
 		elif id in PADS:
-			ae = ActionEditor(self, self.on_action_chosen)
-			ae.set_title(_("Edit Action for %s") % (id))
-			data = None
+			data = NoAction()
 			if id == "LPAD":
 				data = self.current.pads[Profile.LEFT]
+				ae = self._choose_editor(data, _("for Left Pad"))
 			else:
 				data = self.current.pads[Profile.RIGHT]
+				ae = self._choose_editor(data, _("for Right Pad"))
 			ae.set_pad(id, data)
 			ae.show(self.window)
 	

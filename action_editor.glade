@@ -90,6 +90,7 @@
     <signal name="changed" handler="on_tbCustomAction_changed" swapped="no"/>
   </object>
   <object class="GtkWindow" id="Dialog">
+    <property name="width_request">650</property>
     <property name="can_focus">False</property>
     <property name="role">action-editor</property>
     <property name="resizable">False</property>
@@ -1486,6 +1487,18 @@
           </object>
           <packing>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btModeSwitch">
+            <property name="label" translatable="yes">Mode Switch</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_btModeSwitch_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>

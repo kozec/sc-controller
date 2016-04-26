@@ -297,6 +297,10 @@ class ActionEditor(ButtonChooser):
 		self.close()
 	
 	
+	def on_btModeSwitch_clicked(self, *a):
+		""" Asks main window to close this one and display mode switch editor """
+		pass
+	
 	def on_cbAxisOutput_changed(self, *a):
 		if self._recursing : return
 		cbAxisOutput = self.builder.get_object("cbAxisOutput")
@@ -511,7 +515,7 @@ class ActionEditor(ButtonChooser):
 				self._set_sensitivity(action.actions[0])
 			else:
 				self.builder.get_object("tgPerAxis").set_active(True)
-		self.id = "STICK"
+		self.id = Profile.STICK
 	
 	
 	def set_pad(self, id, paddata):

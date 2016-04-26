@@ -20,6 +20,11 @@ class Modifier(Action):
 	def __init__(self, action=None):
 		Action.__init__(self, action)
 		self.action = action or NoAction()
+	
+	def __str__(self):
+		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
+	
+	__repr__ = __str__
 
 
 class ClickModifier(Modifier):
@@ -123,6 +128,17 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		if self.default is None:
 			self.default = NoAction()
+	
+	
+	def __str__(self):
+		rv = [ ]
+		for key in self.mods:
+			rv += [ key.name, self.mods[key] ]
+		if self.default is not None:
+			rv += [ self.default ]
+		return "<Modifier '%s', %s>" % (self.COMMAND, rv)
+	
+	__repr__ = __str__
 	
 	
 	def describe(self, context):

@@ -1,8 +1,6 @@
 List of (possibly) planned features in no particular order
 
 "Easy" stuff:
-- Multibutton actions
-- Gamepad button as modifier (modeshift)
 - Haptic feedback support
 - Gyroscope input
 - Configurable gamepad type (e.g. 4 axes and 16 buttons)
@@ -36,3 +34,4 @@ OSD related stuff:
 - 8-way DPAD
 - Trigger settings
 - DPAD that acts only when clicked
+- Gamepad button as modifier (modeshift)
