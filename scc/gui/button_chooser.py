@@ -188,7 +188,7 @@ class ButtonChooser(object):
 				cls, params = AREA_TO_ACTION[area][0], AREA_TO_ACTION[area][1:]
 				if not self.axes_allowed and cls in AXIS_ACTION_CLASSES:
 					return
-				self.callback(cls(params))
+				self.callback(cls(*params))
 			else:
 				log.warning("Click on unknown area: %s" % (area,))
 	
