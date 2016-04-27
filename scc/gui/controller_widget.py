@@ -20,6 +20,7 @@ log = logging.getLogger("ControllerWidget")
 
 TRIGGERS = [ Profile.LEFT, Profile.RIGHT ]
 PADS	= [ "LPAD", "RPAD" ]
+BPADS	= [ SCButtons.LPAD, SCButtons.RPAD ]
 STICKS	= [ "STICK" ]
 _NOT_BUTTONS = PADS + [ "LT", "RT" ] + [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
@@ -32,30 +33,33 @@ class ControllerWidget:
 		self.id = id
 		self.name = id if type(id) in (str, unicode) else id.name
 		self.widget = widget
-
-		filename = os.path.join(self.app.imagepath, self.name + ".svg")
+		
 		self.label = Gtk.Label()
 		self.label.set_ellipsize(Pango.EllipsizeMode.END)
-		self.icon = Gtk.Image.new_from_file(filename)
+		self.icon = Gtk.Image.new_from_file(self.get_image())
 		self.update()
-
+		
 		self.widget.connect('enter', self.on_cursor_enter)
 		self.widget.connect('leave', self.on_cursor_leave)
 		self.widget.connect('clicked', self.on_click)
-
-
+	
+	
+	def get_image(self):
+		return os.path.join(self.app.imagepath, self.name + ".svg")
+	
+	
 	def update(self):
 		self.label.set_label(_("(no action)"))
-
-
+	
+	
 	def on_click(self, *a):
 		self.app.show_editor(self.id)
-
-
+	
+	
 	def on_cursor_enter(self, *a):
 		self.app.hilight(self.name)
-
-
+	
+	
 	def on_cursor_leave(self, *a):
 		self.app.hilight(None)
 
@@ -84,6 +88,19 @@ class ControllerButton(ControllerWidget):
 		else:
 			self.label.set_label(_("(no action)"))
 
+
+class ControllerPadPress(ControllerButton):
+	def get_image(self):
+		return os.path.join(self.app.imagepath, self.name + "_press.svg")
+	
+	def on_click(self, *a):
+		self.app.show_editor(self.id, True)
+	
+	
+	def on_cursor_enter(self, *a):
+		self.app.hilight(self.name + "_press")
+
+	
 
 class ControllerStick(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_STICK

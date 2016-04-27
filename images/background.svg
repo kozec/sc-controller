@@ -25,16 +25,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6"
-     inkscape:cx="196.11972"
-     inkscape:cy="163.53889"
+     inkscape:zoom="1.979899"
+     inkscape:cx="261.79134"
+     inkscape:cy="213.49974"
      inkscape:document-units="px"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer1"
      showgrid="false"
      units="px"
      inkscape:window-width="1404"
      inkscape:window-height="892"
-     inkscape:window-x="366"
+     inkscape:window-x="300"
      inkscape:window-y="1"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -308,6 +308,18 @@
          id="RGRIP"
          d="m 504.50639,648.81596 c 11.78993,-4.4875 85.69242,-15.79789 102.13822,-17.14412 17.90712,8.56832 28.0742,22.58347 29.82718,42.51958 l -0.63474,47.59657 c 0.55869,14.59846 -4.67422,40.28362 -23.79833,44.74073 L 495.90318,753.20168 c -12.12598,-5.50232 -10.14488,-8.91459 -6.34624,-12.05771 10.81472,-8.85246 23.79037,-28.69912 23.16368,-39.34656 -0.50253,-14.43269 -1.57474,-25.11649 -19.69579,-38.58706 -4.01937,-2.30096 1.13067,-9.93728 11.48156,-14.39439 z"
          style="opacity:0;fill:#000000;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#000000;stroke-width:7.10775232px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.28638497" />
+      <circle
+         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:0;fill:#000000;fill-opacity:0.33333333;fill-rule:evenodd;stroke:#000000;stroke-width:0.90192062;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+         id="RPAD_press"
+         cx="573.40961"
+         cy="652.53406"
+         r="25.802912" />
+      <circle
+         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:0;fill:#000000;fill-opacity:0.33333334;fill-rule:evenodd;stroke:#000000;stroke-width:0.90192062;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+         id="LPAD_press"
+         cx="325.41718"
+         cy="652.53406"
+         r="25.802912" />
     </g>
   </g>
   <g

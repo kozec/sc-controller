@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="32"
+   height="32"
+   viewBox="0 0 32 32"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="LPAD_click.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="11.2"
+     inkscape:cx="23.427668"
+     inkscape:cy="15.049355"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     inkscape:window-width="1270"
+     inkscape:window-height="813"
+     inkscape:window-x="417"
+     inkscape:window-y="23"
+     inkscape:window-maximized="0"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-225.71241,-856.40319)"
+     style="opacity:0.95">
+    <circle
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#000000;stroke-width:1.05127692;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+       id="path4168"
+       cx="241.6131"
+       cy="872.5025"
+       r="15.150148" />
+    <path
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:0.839;fill:#b8b8b8;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.52239859;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+       d="m 241.6131,860.09419 c -1.43527,0 -2.59077,1.15551 -2.59077,2.59079 l 0,7.22699 -7.22676,0 c -1.43527,0 -2.59078,1.15526 -2.59078,2.59053 0,1.43527 1.15551,2.59079 2.59078,2.59079 l 7.22676,0 0,7.22699 c 0,1.43527 1.1555,2.59053 2.59077,2.59053 1.43527,0 2.59078,-1.15526 2.59078,-2.59053 l 0,-7.22699 7.22675,0 c 1.43527,0 2.59077,-1.15552 2.59077,-2.59079 0,-1.43527 -1.1555,-2.59053 -2.59077,-2.59053 l -7.22675,0 0,-7.22699 c 0,-1.43528 -1.15551,-2.59079 -2.59078,-2.59079 z"
+       id="rect4249"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:bold;font-size:23.27219963px;line-height:125%;font-family:Cantarell, sans;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;text-rendering:optimizeLegibility"
+       x="-342.16779"
+       y="846.26099"
+       id="text4135"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.80045732,-0.59938976,0.59938976,0.80045732,0,0)"><tspan
+         sodipodi:role="line"
+         id="tspan4137"
+         x="-342.16779"
+         y="846.26099"
+         style="font-size:8.72707462px">PRESS</tspan></text>
+  </g>
+</svg>
