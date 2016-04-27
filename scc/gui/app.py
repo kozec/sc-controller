@@ -62,6 +62,8 @@ class App(Gtk.Application, ProfileManager):
 		self.current_file = None
 		self.just_started = True
 		self.button_widgets = {}
+		self.undo = []
+		self.redo = []
 	
 	
 	def setup_widgets(self):
@@ -158,6 +160,28 @@ class App(Gtk.Application, ProfileManager):
 			ae.set_pad(id, data)
 			ae.hide_modeswitch()
 			ae.show(self.window)
+	
+	
+	def on_btUndo_clicked(self, *a):
+		if len(self.undo) < 1: return
+		undo, self.undo = self.undo[-1], self.undo[0:-1]
+		self._set_action(undo.id, undo.before)
+		self.redo.append(undo)
+		self.builder.get_object("btRedo").set_sensitive(True)
+		if len(self.undo) < 1:
+			self.builder.get_object("btUndo").set_sensitive(False)
+		self.on_profile_changed()
+	
+	
+	def on_btRedo_clicked(self, *a):
+		if len(self.redo) < 1: return
+		redo, self.redo = self.redo[-1], self.redo[0:-1]
+		self._set_action(redo.id, redo.after)
+		self.undo.append(redo)
+		self.builder.get_object("btUndo").set_sensitive(True)
+		if len(self.redo) < 1:
+			self.builder.get_object("btRedo").set_sensitive(False)
+		self.on_profile_changed()
 	
 	
 	def on_profiles_loaded(self, profiles):
@@ -294,20 +318,34 @@ class App(Gtk.Application, ProfileManager):
 	
 	
 	def on_action_chosen(self, id, action):
+		before = self._set_action(id, action)
+		if type(before) != type(action) or before.to_string() != action.to_string():
+			# TODO: Maybe better comparison
+			self.undo.append(UndoRedo(id, before, action))
+			self.builder.get_object("btUndo").set_sensitive(True)
+		self.on_profile_changed()
+	
+	
+	def _set_action(self, id, action):
+		"""
+		Stores action in profile.
+		Returns formely stored action.
+		"""
+		before = NoAction()
 		if id in BUTTONS:
-			self.current.buttons[id] = action
+			before, self.current.buttons[id] = self.current.buttons[id], action
 			self.button_widgets[id].update()
 		elif id in TRIGGERS:
-			self.current.triggers[id] = action
+			before, self.current.triggers[id] = self.current.triggers[id], action
 			self.button_widgets[id].update()
 		elif id in STICKS + PADS:
 			data = None
 			if id in STICKS:
-				data = self.current.stick
+				before = data = self.current.stick
 			elif id == "LPAD":
-				data = self.current.pads[Profile.LEFT]
+				before = data = self.current.pads[Profile.LEFT]
 			else:
-				data = self.current.pads[Profile.RIGHT]
+				before = data = self.current.pads[Profile.RIGHT]
 			
 			for i in (Profile.X, Profile.Y, Profile.WHOLE):
 				if i in data: del data[i]
@@ -317,7 +355,7 @@ class App(Gtk.Application, ProfileManager):
 			else:
 				data[Profile.WHOLE] = action
 			self.button_widgets[id].update()
-		self.on_profile_changed()
+		return before
 	
 	
 	def on_background_area_hover(self, trash, area):
@@ -548,3 +586,11 @@ class App(Gtk.Application, ProfileManager):
 			return data['current_profile']
 		except:
 			return None
+
+
+class UndoRedo(object):
+	""" Just dummy container """
+	def __init__(self, id, before, after):
+		self.id = id
+		self.before = before
+		self.after = after
