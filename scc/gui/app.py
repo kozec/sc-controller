@@ -101,6 +101,24 @@ class App(Gtk.Application, ProfileManager):
 		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 	
 	
+	def check(self):
+		""" Performs various (two) checks and reports possible problems """
+		# TODO: Maybe not best place to do this
+		if os.path.exists("/dev/uinput"):
+			if not os.access("/dev/uinput", os.R_OK | os.W_OK):
+				# Cannot acces uinput
+				msg = _('You don\'t have required access to /dev/uinput.')
+				msg += "\n" + _('This will most likely prevent emulation from working.')
+				msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
+				self.show_error(msg)
+		else:
+			# There is no uinput
+			msg = _('/dev/uinput not found')
+			msg += "\n" + _('Your kernel is either outdated or compiled without uinput support.')
+			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
+			self.show_error(msg)
+	
+	
 	def hilight(self, button):
 		""" Hilights specified button on background image """
 		self.background.hilight({ button : App.HILIGHT_COLOR })
@@ -386,7 +404,7 @@ class App(Gtk.Application, ProfileManager):
 	
 	def on_daemon_error(self, trash, error):
 		log.debug("Daemon reported error '%s'", error)
-		msg = _('There was error with enabling emulation: <b>%s</b>') % (error,)
+		msg = _('There was an error with enabling emulation: <b>%s</b>') % (error,)
 		# Known errors are handled with aditional message
 		if "Device not found" in error:
 			msg += "\n" + _("Please, check if you have reciever dongle connected to USB port.")
@@ -473,6 +491,7 @@ class App(Gtk.Application, ProfileManager):
 		Gtk.Application.do_startup(self, *a)
 		self.load_profile_list()
 		self.setup_widgets()
+		GLib.timeout_add_seconds(2, self.check)
 	
 	
 	def do_local_options(self, trash, lo):
