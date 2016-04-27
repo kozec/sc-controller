@@ -64,7 +64,7 @@ def get_share_path():
 			return local
 	if os.path.exists("/usr/local/share/scc/"):
 		return "/usr/local/share/scc/"
-	return "/usr/share/scc/default_profiles"
+	return "/usr/share/scc/"
 
 
 
