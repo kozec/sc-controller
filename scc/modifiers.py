@@ -111,11 +111,16 @@ class ClickModifier(Modifier):
 
 class ModeModifier(Modifier):
 	COMMAND = "mode"
+	MIN_TRIGGER = 2		# When trigger is bellow this position, list of held_triggers is cleared
+	MIN_STICK = 2		# When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared
 	
 	def __init__(self, *stuff):
 		Modifier.__init__(self)
 		self.default = None
 		self.mods = {}
+		self.held_buttons = set()
+		self.held_sticks = set()
+		self.held_triggers = {}
 		self.order = []
 		button = None
 		for i in stuff:
@@ -199,23 +204,60 @@ class ModeModifier(Modifier):
 		return self.default
 	
 	
+	def select_b(self, mapper):
+		"""
+		Same as select but returns button as well.
+		"""
+		for b in self.order:
+			if mapper.is_pressed(b):
+				return b, self.mods[b]
+		return None, self.default
+	
+	
 	def button_press(self, mapper):
-		return self.select(mapper).button_press(mapper)
+		sel = self.select(mapper)
+		self.held_buttons.add(sel)
+		return sel.button_press(mapper)
+	
 	
 	def button_release(self, mapper):
-		return self.select(mapper).button_release(mapper)
+		# Releases all held buttons, not just button that matches
+		# currently pressed modifier
+		for b in self.held_buttons:
+			b.button_release(mapper)
+	
 	
 	def trigger(self, mapper, position, old_position):
-		return self.select(mapper).trigger(mapper, position, old_position)
+		if position < ModeModifier.MIN_TRIGGER:
+			for b in self.held_triggers:
+				b.trigger(mapper, 0, self.held_triggers[b])
+			self.held_triggers = {}
+			return False
+		else:
+			sel = self.select(mapper)
+			self.held_triggers[sel] = position
+			return sel.trigger(mapper, position, old_position)
+		
 	
 	def axis(self, mapper, position, what):
 		return self.select(mapper).axis(mapper, position, what)
 	
+	
 	def pad(self, mapper, position, what):
-		return self.pad(mapper).axis(mapper, position, what)
+		return self.select(mapper).pad(mapper, position, what)
 	
 	def whole(self, mapper, x, y, what):
-		return self.whole(mapper).axis(mapper, x, y, what)
+		if what == STICK:
+			if abs(x) < ModeModifier.MIN_STICK and abs(y) < ModeModifier.MIN_STICK:
+				for b in self.held_sticks:
+					b.whole(mapper, 0, 0, what)
+				self.held_sticks.clear()
+			else:
+				self.held_sticks.add(self.select(mapper))
+				for b in self.held_sticks:
+					b.whole(mapper, x, y, what)
+		else:
+			return self.select(mapper).whole(mapper, x, y, what)
 
 
 # Add modifiers to ACTIONS dict
