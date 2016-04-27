@@ -13,6 +13,7 @@ from scc.gui.editor import Editor
 from scc.constants import SCButtons
 from scc.actions import Action, NoAction
 from scc.modifiers import ModeModifier
+from scc.profile import Profile
 
 from gi.repository import Gtk, Gdk, GLib
 import os, logging
