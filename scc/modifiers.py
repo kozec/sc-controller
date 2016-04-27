@@ -47,7 +47,7 @@ class ClickModifier(Modifier):
 	
 	
 	def encode(self):
-		rv = {} if isinstance(self.action, NoAction) else self.action.encode()
+		rv = self.action.encode()
 		rv['click'] = True
 		return rv
 	
@@ -182,7 +182,7 @@ class ModeModifier(Modifier):
 	
 	
 	def encode(self):
-		rv = {} if isinstance(self.default, NoAction) else self.default.encode()
+		rv = self.default.encode()
 		rv['modes'] = {}
 		for key in self.mods:
 			rv['modes'][key.name] = self.mods[key].encode()

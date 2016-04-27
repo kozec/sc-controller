@@ -821,8 +821,8 @@ class XYAction(MultiAction):
 	
 	def describe(self, context):
 		rv = []
-		if not isinstance(self.x, NoAction): rv.append(self.x.describe(context))
-		if not isinstance(self.y, NoAction): rv.append(self.y.describe(context))
+		if self.x: rv.append(self.x.describe(context))
+		if self.y: rv.append(self.y.describe(context))
 		if context in (Action.AC_STICK, Action.AC_PAD):
 			return "\n".join(rv)
 		return " ".join(rv)
@@ -847,8 +847,8 @@ class XYAction(MultiAction):
 	def encode(self):
 		""" Called from json encoder """
 		rv = { }
-		if not isinstance(self.x, NoAction): rv["X"] = self.x.encode()
-		if not isinstance(self.y, NoAction): rv["Y"] = self.y.encode()
+		if self.x: rv["X"] = self.x.encode()
+		if self.y: rv["Y"] = self.y.encode()
 		return rv
 	
 	
@@ -860,9 +860,25 @@ class XYAction(MultiAction):
 
 class NoAction(Action):
 	"""
-	Parsed from None
+	Parsed from None.
+	Singleton, treated as False in boolean ops.
 	"""
 	COMMAND = None
+	_singleton = None
+	
+	def __new__(cls):
+		if cls._singleton is None:
+			cls._singleton = object.__new__(cls)
+		return cls._singleton
+	
+	
+	def __nonzero__(self):
+		return False
+	
+	
+	def encode(self):
+		return { }
+	
 	
 	def button_press(self, *a):
 		pass

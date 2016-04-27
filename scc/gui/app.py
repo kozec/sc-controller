@@ -27,7 +27,6 @@ from scc.profile import Profile
 import os, sys, json, logging
 log = logging.getLogger("App")
 
-
 class App(Gtk.Application, ProfileManager):
 	"""
 	Main application / window.

@@ -44,7 +44,8 @@ class Profile(object):
 		}
 		
 		for i in self.buttons:
-			data['buttons'][i.name] = self.buttons[i]
+			if self.buttons[i]:
+				data['buttons'][i.name] = self.buttons[i]
 		
 		# Generate & save json
 		jstr = Encoder(sort_keys=True, indent=4).encode(data)
@@ -67,9 +68,7 @@ class Profile(object):
 		
 		a = NoAction()
 		if "action" in data:
-			a = self.parser.restart(data["action"]).parse()
-			if a is None:
-				a = NoAction()
+			a = self.parser.restart(data["action"]).parse() or NoAction()
 		if "X" in data or "Y" in data:
 			# "action" is ignored if either "X" or "Y" is there
 			x = self._load_action(data["X"]) if "X" in data else NoAction()
@@ -82,7 +81,7 @@ class Profile(object):
 			for button in data['modes']:
 				if hasattr(SCButtons, button):
 					args += [ getattr(SCButtons, button), self._load_action(data['modes'][button]) ]
-			if not isinstance(a, NoAction):
+			if a:
 				args += [ a ]
 			a = ModeModifier(*args)
 		return a

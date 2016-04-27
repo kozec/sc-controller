@@ -209,7 +209,7 @@ class ModeswitchEditor(Editor):
 		pars = []
 		for button, action, l, b, clearb in self.actions:
 			pars += [ button, action ]
-		if not isinstance(self.default, NoAction):
+		if self.default:
 			pars += [ self.default ]
 		action = ModeModifier(*pars)
 		if len(pars) == 0:
