@@ -340,21 +340,12 @@ class App(Gtk.Application, ProfileManager):
 			before, self.current.triggers[id] = self.current.triggers[id], action
 			self.button_widgets[id].update()
 		elif id in STICKS + PADS:
-			data = None
 			if id in STICKS:
-				before = data = self.current.stick
+				before, self.current.stick = self.current.stick, action
 			elif id == "LPAD":
-				before = data = self.current.pads[Profile.LEFT]
+				before, self.current.pads[Profile.LEFT] = self.current.pads[Profile.LEFT], action
 			else:
-				before = data = self.current.pads[Profile.RIGHT]
-			
-			for i in (Profile.X, Profile.Y, Profile.WHOLE):
-				if i in data: del data[i]
-			if isinstance(action, XYAction):
-				for i in xrange(0, min(2, len(action.actions))):
-					data["XY"[i]] = action.actions[i]
-			else:
-				data[Profile.WHOLE] = action
+				before, self.current.pads[Profile.RIGHT] = self.current.pads[Profile.RIGHT], action
 			self.button_widgets[id].update()
 		return before
 	

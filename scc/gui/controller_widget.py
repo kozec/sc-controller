@@ -12,7 +12,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Pango
 from scc.constants import SCButtons
-from scc.actions import Action
+from scc.actions import Action, XYAction
 from scc.profile import Profile
 import os, sys, logging
 
@@ -97,17 +97,8 @@ class ControllerStick(ControllerWidget):
 		self.widget.show_all()
 	
 	
-	def _set_label(self, stickdata):
-		if Profile.WHOLE in stickdata:
-			self.label.set_label(stickdata[Profile.WHOLE].describe(self.ACTION_CONTEXT))
-		elif Profile.X in stickdata or Profile.Y in stickdata:
-			txt = []
-			for i in [Profile.X, Profile.Y]:
-				if i in stickdata:
-					txt.append(stickdata[i].describe(self.ACTION_CONTEXT))
-			self.label.set_label("\n".join(txt))
-		else:
-			self.label.set_label(_("(no action)"))
+	def _set_label(self, action):
+		self.label.set_label(action.describe(self.ACTION_CONTEXT))
 	
 	
 	def update(self):

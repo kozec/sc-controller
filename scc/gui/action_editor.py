@@ -433,7 +433,7 @@ class ActionEditor(ButtonChooser):
 		while len(pars) > 1 and pars[-1] is None:
 			pars = pars[0:-1]
 		
-		a = cls(pars)
+		a = cls(*pars)
 		for mod in modifiers: a = mod(a)
 		self.set_action(a)
 	
@@ -472,16 +472,9 @@ class ActionEditor(ButtonChooser):
 			self.set_multiparams(ButtonAction, 4)
 	
 	
-	def set_stick(self, stickdata):
+	def set_stick(self, action):
 		""" Setups action editor as editor for stick action """
 		self._set_mode(Action.AC_STICK)
-		action = None
-		if Profile.WHOLE in stickdata:
-			action = stickdata[Profile.WHOLE]
-		else:
-			x = stickdata[Profile.X] if Profile.X in stickdata else None
-			y = stickdata[Profile.Y] if Profile.Y in stickdata else None
-			action = XYAction(x, y)
 		self.set_action(action)
 		if isinstance(action, ClickModifier):
 			self.builder.get_object("cbDPADNeedsClick").set_active(True)
@@ -529,9 +522,9 @@ class ActionEditor(ButtonChooser):
 		self.id = Profile.STICK
 	
 	
-	def set_pad(self, id, paddata):
+	def set_pad(self, id, action):
 		""" Setups action editor as editor for pad action """
-		self.set_stick(paddata)
+		self.set_stick(action)
 		self._set_mode(Action.AC_PAD, False)
 		self.id = id
 	

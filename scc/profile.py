@@ -28,20 +28,23 @@ class Profile(object):
 	def __init__(self, parser):
 		self.parser = parser
 		self.buttons = {}
-		self.stick = {}
-		self.triggers = {}
-		self.pads = { Profile.LEFT : {}, Profile.RIGHT : {} }
+		self.stick = NoAction()
+		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
+		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
 	
 	
 	def save(self, filename):
 		""" Saves profile into file. Returns self """
 		data = {
-			'buttons'	: self.buttons,
+			'buttons'	: {},
 			'stick'		: self.stick,
 			'triggers'	: self.triggers,
 			"left_pad"	: self.pads[Profile.LEFT],
 			"right_pad"	: self.pads[Profile.RIGHT],
 		}
+		
+		for i in self.buttons:
+			data['buttons'][i.name] = self.buttons[i]
 		
 		# Generate & save json
 		jstr = Encoder(sort_keys=True, indent=4).encode(data)

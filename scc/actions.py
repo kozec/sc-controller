@@ -820,7 +820,12 @@ class XYAction(MultiAction):
 	
 	
 	def describe(self, context):
-		return self.actions[0].describe(context)
+		rv = []
+		if not isinstance(self.x, NoAction): rv.append(self.x.describe(context))
+		if not isinstance(self.y, NoAction): rv.append(self.y.describe(context))
+		if context in (Action.AC_STICK, Action.AC_PAD):
+			return "\n".join(rv)
+		return " ".join(rv)
 	
 	
 	def to_string(self, multiline=False, pad=0):
