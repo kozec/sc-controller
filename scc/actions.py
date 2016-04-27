@@ -786,8 +786,7 @@ class DPad8Action(DPadAction):
 
 class XYAction(MultiAction):
 	"""
-	Used internaly to store actions for X and Y axis at once.
-	Shouldn't be saved into profile or weird stuff may happen.
+	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "XY"
 	
@@ -795,23 +794,31 @@ class XYAction(MultiAction):
 		MultiAction.__init__(self, *strip_none(x, y))
 		self.x = x or NoAction()
 		self.y = y or NoAction()
-
+	
+	# XYAction no sense with button and trigger-related events
 	def button_press(self, *a):
-		raise Exception("XYAction cannot be executed")
+		pass
 	
 	def button_release(self, *a):
-		raise Exception("XYAction cannot be executed")
-	
-	def axis(self, *a):
-		raise Exception("XYAction cannot be executed")
-	
-	def whole(self, *a):
-		raise Exception("XYAction cannot be executed")
+		pass
 	
 	def trigger(self, *a):
-		raise Exception("XYAction cannot be executed")
-
-
+		pass
+	
+	# XYAction is what calls axis
+	def axis(self, *a):
+		pass
+	
+	def whole(self, mapper, x, y, what):
+		self.x.axis(self, sci.lpad_x, STICK)
+		self.y.axis(self, sci.lpad_y, STICK)
+	
+	
+	def pad(self, mapper, x, y, what):
+		self.x.pad(self, sci.lpad_x, what)
+		self.y.pad(self, sci.lpad_y, what)
+	
+	
 	def describe(self, context):
 		return self.actions[0].describe(context)
 	

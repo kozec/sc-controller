@@ -163,16 +163,7 @@ class Mapper(object):
 		# Check stick
 		if not sci.buttons & SCButtons.LPADTOUCH:
 			if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
-				# STICK
-				if Profile.WHOLE in self.profile.stick:
-					self.profile.stick[Profile.WHOLE].whole(self, sci.lpad_x, sci.lpad_y, STICK)
-				else:
-					if Profile.X in self.profile.stick:
-						if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x:
-							self.profile.stick[Profile.X].axis(self, sci.lpad_x, STICK)
-					if Profile.Y in self.profile.stick:
-						if FE_STICK in fe or self.old_state.lpad_y != sci.lpad_y:
-							self.profile.stick[Profile.Y].axis(self, sci.lpad_y, STICK)
+				self.profile.stick[Profile.WHOLE].whole(self, sci.lpad_x, sci.lpad_y, STICK)
 		
 		# Check triggers
 		if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:
@@ -185,27 +176,11 @@ class Mapper(object):
 		# Check pads
 		if FE_PAD in fe or sci.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 			# RPAD
-			if Profile.WHOLE in self.profile.pads[RIGHT]:
-				self.profile.pads[RIGHT][Profile.WHOLE].whole(self, sci.rpad_x, sci.rpad_y, RIGHT)
-			else:
-				if Profile.X in self.profile.pads[RIGHT]:
-					if FE_PAD in fe or self.old_state.rpad_x != sci.rpad_x:
-						self.profile.pads[RIGHT][Profile.X].pad(self, sci.rpad_x, RIGHT)
-				if Profile.Y in self.profile.pads[RIGHT]:
-					if FE_PAD in fe or self.old_state.rpad_y != sci.rpad_y:
-						self.profile.pads[RIGHT][Profile.Y].pad(self, sci.rpad_y, RIGHT)
+			self.profile.pads[RIGHT][Profile.WHOLE].whole(self, sci.rpad_x, sci.rpad_y, RIGHT)
 		
 		if (FE_PAD in fe and sci.buttons & SCButtons.LPADTOUCH) or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
 			# LPAD
-			if Profile.WHOLE in self.profile.pads[LEFT]:
-				self.profile.pads[LEFT][Profile.WHOLE].whole(self, sci.lpad_x, sci.lpad_y, LEFT)
-			else:
-				if Profile.X in self.profile.pads[LEFT]:
-					if FE_PAD in fe or self.old_state.lpad_x != sci.lpad_x:
-						self.profile.pads[LEFT][Profile.X].pad(self, sci.lpad_x, LEFT)
-				if Profile.Y in self.profile.pads[LEFT]:
-					if FE_PAD in fe or self.old_state.lpad_y != sci.lpad_y:
-						self.profile.pads[LEFT][Profile.Y].pad(self, sci.lpad_y, LEFT)
+			self.profile.pads[LEFT][Profile.WHOLE].whole(self, sci.lpad_x, sci.lpad_y, LEFT)
 		
 		# Generate events - keys
 		if len(self.keypress_list):
