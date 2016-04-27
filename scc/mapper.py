@@ -46,7 +46,6 @@ class Mapper(object):
 		self.keyrelease_list = []
 		self.mouse_dq = [ deque(maxlen=8), deque(maxlen=8), deque(maxlen=8), deque(maxlen=8) ] # x, y, wheel, hwheel
 		self.mouse_tb = [ False, False ]	# trackball mode for mouse / wheel
-		self.button_release_cbs = {}
 		self.syn_list = set()
 		self.old_state = SCI_NULL
 		self.state = SCI_NULL
@@ -138,27 +137,6 @@ class Mapper(object):
 		return self.old_state.buttons & button
 	
 	
-	def button_release_cb_add(self, button, cb):
-		"""
-		Registers callback thats called when button is relesed.
-		Used by ModeModifier
-		"""
-		if button not in self.button_release_cbs:
-			self.button_release_cbs[button] = set()
-		self.button_release_cbs[button].add(cb)
-	
-	
-	def button_release_cb_rem(self, button, cb):
-		"""
-		Unregisters callback added by button_release_cb_add.
-		Callback is also unregistred unless it returns True
-		"""
-		if button in self.button_release_cbs:
-			self.button_release_cbs[button].remove(cb)
-			if len(self.button_release_cbs[button]) < 1:
-				del self.button_release_cbs[button]
-	
-	
 	def callback(self, controller, sci):
 		# Store state
 		if sci.status != SCStatus.INPUT:
@@ -182,14 +160,6 @@ class Mapper(object):
 						self.profile.buttons[x].button_press(self)
 					elif x & btn_rem:
 						self.profile.buttons[x].button_release(self)
-						if x in self.button_release_cbs:
-							# print self.button_release_cbs[x]
-							rest = set()
-							for cb in self.button_release_cbs[x]:
-								if cb(self): rest.add(cb)
-							self.button_release_cbs[x] = rest
-							if len(rest) < 1:
-								del self.button_release_cbs[x]
 			
 			
 			# Check stick
