@@ -223,7 +223,7 @@ class ModeswitchEditor(Editor):
 		self.close()
 	
 	
-	def _set_mode(self, mode, action , id):
+	def _set_mode(self, mode, id, action):
 		btDefault = self.builder.get_object("btDefault")
 		self.id = id
 		self.mode = mode
@@ -233,21 +233,21 @@ class ModeswitchEditor(Editor):
 		btDefault.set_label(self.default.describe(self.mode))
 	
 	
-	def set_button(self, button, action):
+	def set_button(self, id, action):
 		""" Setups editor as editor for button action """
-		self._set_mode(Action.AC_BUTTON, action, button)
+		self._set_mode(Action.AC_BUTTON, id, action)
 	
 	
-	def set_trigger(self, trigger, action):
+	def set_trigger(self, id, action):
 		""" Setups editor as editor for trigger action """
-		self._set_mode(Action.AC_TRIGGER, trigger, button)
+		self._set_mode(Action.AC_TRIGGER, id, action)
 	
 	
-	def set_stick(self, stickdata):
+	def set_stick(self, action):
 		""" Setups action editor as editor for stick action """
-		self._set_mode(Action.AC_STICK, Profile.STICK, stickdata)
+		self._set_mode(Action.AC_STICK, Profile.STICK, action)
 
 
-	def set_pad(self, id, paddata):
+	def set_pad(self, id, action):
 		""" Setups action editor as editor for pad action """
-		self._set_mode(Action.AC_PAD, id, paddata)
+		self._set_mode(Action.AC_PAD, id, action)
