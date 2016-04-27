@@ -319,11 +319,10 @@ class App(Gtk.Application, ProfileManager):
 	
 	def on_action_chosen(self, id, action):
 		before = self._set_action(id, action)
-		if id not in STICKS + PADS:
-			if type(before) != type(action) or before.to_string() != action.to_string():
-				# TODO: Maybe better comparison
-				self.undo.append(UndoRedo(id, before, action))
-				self.builder.get_object("btUndo").set_sensitive(True)
+		if type(before) != type(action) or before.to_string() != action.to_string():
+			# TODO: Maybe better comparison
+			self.undo.append(UndoRedo(id, before, action))
+			self.builder.get_object("btUndo").set_sensitive(True)
 		self.on_profile_changed()
 	
 	
