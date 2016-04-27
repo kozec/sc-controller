@@ -139,11 +139,13 @@ class App(Gtk.Application, ProfileManager):
 			ae = self._choose_editor(self.current.triggers[id],
 				_("%s Trigger") % (id,))
 			ae.set_trigger(id, self.current.triggers[id])
+			ae.hide_modeswitch()
 			ae.show(self.window)
 		elif id in STICKS:
 			ae = self._choose_editor(self.current.stick,
 				_("Stick"))
 			ae.set_stick(self.current.stick)
+			ae.hide_modeswitch()
 			ae.show(self.window)
 		elif id in PADS:
 			data = NoAction()
@@ -154,6 +156,7 @@ class App(Gtk.Application, ProfileManager):
 				data = self.current.pads[Profile.RIGHT]
 				ae = self._choose_editor(data, _("for Right Pad"))
 			ae.set_pad(id, data)
+			ae.hide_modeswitch()
 			ae.show(self.window)
 	
 	
