@@ -228,23 +228,6 @@
                     <property name="position">3</property>
                   </packing>
                 </child>
-                <child>
-                  <object class="GtkButton" id="btLPAD_press">
-                    <property name="width_request">170</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_right">10</property>
-                    <child>
-                      <placeholder/>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">4</property>
-                  </packing>
-                </child>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -320,20 +303,6 @@
                     <property name="expand">False</property>
                     <property name="fill">True</property>
                     <property name="position">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="btRPAD_press">
-                    <property name="width_request">170</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_left">10</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">4</property>
                   </packing>
                 </child>
               </object>
@@ -434,8 +403,6 @@
                 <property name="can_focus">False</property>
                 <child>
                   <object class="GtkBox" id="vbC">
-                    <property name="width_request">170</property>
-                    <property name="height_request">40</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
@@ -451,7 +418,7 @@
                     </child>
                     <child>
                       <object class="GtkButton" id="btC">
-                        <property name="width_request">160</property>
+                        <property name="width_request">170</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -475,8 +442,8 @@
                     </child>
                   </object>
                   <packing>
-                    <property name="x">139</property>
-                    <property name="y">262</property>
+                    <property name="x">10</property>
+                    <property name="y">150</property>
                   </packing>
                 </child>
               </object>

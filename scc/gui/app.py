@@ -8,10 +8,9 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, BPADS, STICKS, BUTTONS
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, PRESSABLE
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.controller_widget import ControllerPad, ControllerStick
-from scc.gui.controller_widget import ControllerPadPress
 from scc.gui.modeswitch_editor import ModeswitchEditor
 from scc.gui.profile_manager import ProfileManager
 from scc.gui.daemon_manager import DaemonManager
@@ -62,7 +61,6 @@ class App(Gtk.Application, ProfileManager):
 		self.current_file = None
 		self.just_started = True
 		self.button_widgets = {}
-		self.stickpad_widgets = {}
 		self.undo = []
 		self.redo = []
 	
@@ -82,9 +80,7 @@ class App(Gtk.Application, ProfileManager):
 		for b in TRIGGERS:
 			self.button_widgets[b] = ControllerTrigger(self, b, self.builder.get_object("btTrigger" + b))
 		for b in PADS:
-			self.stickpad_widgets[b] = ControllerPad(self, b, self.builder.get_object("bt" + b))
-		for b in BPADS:
-			self.button_widgets[b] = ControllerPadPress(self, b, self.builder.get_object("bt" + b.name + "_press"))
+			self.button_widgets[b] = ControllerPad(self, b, self.builder.get_object("bt" + b))
 		for b in STICKS:
 			self.button_widgets[b] = ControllerStick(self, b, self.builder.get_object("bt" + b))
 		
@@ -131,7 +127,7 @@ class App(Gtk.Application, ProfileManager):
 	def hint(self, button):
 		""" As hilight, but marks GTK Button as well """
 		active = None
-		for b in self.button_widgets.values() + self.stickpad_widgets.values():
+		for b in self.button_widgets.values():
 			b.widget.set_state(Gtk.StateType.NORMAL)
 			if b.name == button:
 				active = b.widget
@@ -152,10 +148,12 @@ class App(Gtk.Application, ProfileManager):
 		return e
 		
 	
-	def show_editor(self, id, pad_press=False):
+	def show_editor(self, id, press=False):
 		if id in SCButtons:
-			ae = self._choose_editor(self.current.buttons[id],
-				_("%s Button") % (id.name,))
+			title = _("%s Button") % (id.name,)
+			if press:
+				title = _("%s Press") % (id.name,)
+			ae = self._choose_editor(self.current.buttons[id], title)
 			ae.set_button(id, self.current.buttons[id])
 			ae.show(self.window)
 		elif id in TRIGGERS:
@@ -280,7 +278,7 @@ class App(Gtk.Application, ProfileManager):
 	def on_profile_loaded(self, profile, giofile):
 		self.current = profile
 		self.current_file = giofile
-		for b in self.button_widgets.values() + self.stickpad_widgets.values():
+		for b in self.button_widgets.values():
 			b.update()
 		self.on_profile_saved(giofile, False)	# Just to indicate that there are no changes to save
 	
@@ -350,9 +348,12 @@ class App(Gtk.Application, ProfileManager):
 		Returns formely stored action.
 		"""
 		before = NoAction()
-		if id in BUTTONS or id in BPADS:
+		if id in BUTTONS:
 			before, self.current.buttons[id] = self.current.buttons[id], action
 			self.button_widgets[id].update()
+		if id in PRESSABLE:
+			before, self.current.buttons[id] = self.current.buttons[id], action
+			self.button_widgets[id.name].update()
 		elif id in TRIGGERS:
 			before, self.current.triggers[id] = self.current.triggers[id], action
 			self.button_widgets[id].update()
@@ -363,7 +364,7 @@ class App(Gtk.Application, ProfileManager):
 				before, self.current.pads[Profile.LEFT] = self.current.pads[Profile.LEFT], action
 			else:
 				before, self.current.pads[Profile.RIGHT] = self.current.pads[Profile.RIGHT], action
-			self.stickpad_widgets[id].update()
+			self.button_widgets[id].update()
 		return before
 	
 	
@@ -387,7 +388,7 @@ class App(Gtk.Application, ProfileManager):
 		"""
 		main_area = self.builder.get_object("mainArea")
 		x = (main_area.get_allocation().width - allocation.width) / 2
-		y = main_area.get_allocation().height - allocation.height - 10
+		y = main_area.get_allocation().height - allocation.height
 		main_area.move(vbc, x, y)
 	
 	

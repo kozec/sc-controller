@@ -10,7 +10,7 @@ Wraps around actual button defined in glade file.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Pango
+from gi.repository import Gtk, Gdk, Pango
 from scc.constants import SCButtons
 from scc.actions import Action, XYAction
 from scc.profile import Profile
@@ -20,9 +20,9 @@ log = logging.getLogger("ControllerWidget")
 
 TRIGGERS = [ Profile.LEFT, Profile.RIGHT ]
 PADS	= [ "LPAD", "RPAD" ]
-BPADS	= [ SCButtons.LPAD, SCButtons.RPAD ]
 STICKS	= [ "STICK" ]
-_NOT_BUTTONS = PADS + [ "LT", "RT" ] + [ x + "TOUCH" for x in PADS ]
+PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD, SCButtons.STICK ]
+_NOT_BUTTONS = PADS + STICKS + [ "LT", "RT" ] + [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
 
 class ControllerWidget:
@@ -89,29 +89,42 @@ class ControllerButton(ControllerWidget):
 			self.label.set_label(_("(no action)"))
 
 
-class ControllerPadPress(ControllerButton):
-	def get_image(self):
-		return os.path.join(self.app.imagepath, self.name + "_press.svg")
-	
-	def on_click(self, *a):
-		self.app.show_editor(self.id, True)
-	
-	
-	def on_cursor_enter(self, *a):
-		self.app.hilight(self.name + "_press")
-
-	
-
 class ControllerStick(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_STICK
 	def __init__(self, app, name, widget):
 		ControllerWidget.__init__(self, app, name, widget)
 		
 		vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+		self.widget.set_events(Gdk.EventMask.POINTER_MOTION_MASK)
+		self.widget.connect('motion-notify-event', self.on_cursor_motion)
 		vbox.pack_start(self.icon, False, False, 1)
 		vbox.pack_start(self.label, False, False, 1)
+		self.over_icon = False
 		self.widget.add(vbox)
 		self.widget.show_all()
+	
+	
+	def on_cursor_enter(self, *a):
+		return
+	
+	
+	def on_click(self, *a):
+		if self.over_icon:
+			self.app.show_editor(getattr(SCButtons, self.id), True)
+		else:
+			self.app.show_editor(self.id)
+	
+	
+	def on_cursor_motion(self, trash, event):
+		# self.icon.get_allocation().x + self.icon.get_allocation().width	# yields nonsense
+		ix2 = 74
+		# Check if cursor is placed on icon
+		if event.x < ix2:
+			self.app.hilight(self.name + "_press")
+			self.over_icon = True
+		else:
+			self.app.hilight(self.name)
+			self.over_icon = False
 	
 	
 	def _set_label(self, action):

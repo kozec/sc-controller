@@ -26,8 +26,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="261.79134"
-     inkscape:cy="213.49974"
+     inkscape:cx="151.65557"
+     inkscape:cy="189.21972"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -131,6 +131,12 @@
          d="m 325.74435,600.83276 c -5.63893,0 -10.17871,4.53978 -10.17871,10.17871 l 0,28.39356 -28.39258,0 c -5.63893,0 -10.17871,4.53881 -10.17871,10.17773 0,5.63893 4.53978,10.17871 10.17871,10.17871 l 28.39258,0 0,28.39356 c 0,5.63893 4.53978,10.17773 10.17871,10.17773 5.63892,0 10.17871,-4.5388 10.17871,-10.17773 l 0,-28.39356 28.39258,0 c 5.63893,0 10.17871,-4.53978 10.17871,-10.17871 0,-5.63892 -4.53978,-10.17773 -10.17871,-10.17773 l -28.39258,0 0,-28.39356 c 0,-5.63893 -4.53979,-10.17871 -10.17871,-10.17871 z"
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:0.39899998;fill:#b8b8b8;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
     </g>
+    <circle
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:0.60392157;fill-rule:evenodd;stroke:#000000;stroke-width:0.91900003;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       id="STICK_press"
+       cx="395.44458"
+       cy="719.95667"
+       r="26.734146" />
     <g
        id="STICK">
       <path
@@ -138,13 +144,6 @@
          d="m 432.93006,718.94788 a 35.701633,35.255367 0 0 1 -35.70164,35.25536 35.701633,35.255367 0 0 1 -35.70163,-35.25536 35.701633,35.255367 0 0 1 35.70163,-35.25537 35.701633,35.255367 0 0 1 35.70164,35.25537 z"
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:0.60335197;fill-rule:evenodd;stroke:#000000;stroke-width:1.24009871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
          inkscape:connector-curvature="0" />
-      <ellipse
-         ry="26.130142"
-         rx="26.460899"
-         cy="717.87646"
-         cx="396.04147"
-         id="path4168-1-2"
-         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:0.60335197;fill-rule:evenodd;stroke:#000000;stroke-width:0.91912121;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
     </g>
     <path
        style="fill:#000000;fill-opacity:0.31372549;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
