@@ -165,6 +165,7 @@ class ModeswitchEditor(Editor):
 				
 				ae = ActionEditor(self.app, on_chosen)
 				ae.set_title(_("Edit Action"))
+				ae.hide_modeswitch()
 				self._setup_editor(ae, action)
 				ae.show(self.window)
 				return
@@ -178,6 +179,7 @@ class ModeswitchEditor(Editor):
 		
 		ae = ActionEditor(self.app, on_chosen)
 		ae.set_title(_("Edit Action"))
+		ae.hide_modeswitch()
 		self._setup_editor(ae, self.default)
 		ae.show(self.window)
 	

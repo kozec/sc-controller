@@ -536,6 +536,13 @@ class ActionEditor(ButtonChooser):
 		self.id = id
 	
 	
+	def hide_modeswitch(self):
+		"""
+		Hides Mode Switch button.
+		Used when displaying ActionEditor from ModeswitchEditor
+		"""
+		self.builder.get_object("btModeSwitch").set_visible(False)
+	
 	def describe_action(self, cls, v):
 		"""
 		Returns action description with 'v' as parameter, unless unless v is None.
