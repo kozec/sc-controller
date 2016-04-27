@@ -47,8 +47,8 @@ class Mapper(object):
 		self.mouse_dq = [ deque(maxlen=8), deque(maxlen=8), deque(maxlen=8), deque(maxlen=8) ] # x, y, wheel, hwheel
 		self.mouse_tb = [ False, False ]	# trackball mode for mouse / wheel
 		self.syn_list = set()
-		self.old_state = SCI_NULL
-		self.state = SCI_NULL
+		self.buttons, self.old_buttons = 0, 0
+		self.state, self.old_state = SCI_NULL, SCI_NULL
 		self.mouse_movements = [ None, None, None, None ]
 		self.force_event = set()
 	
@@ -103,9 +103,9 @@ class Mapper(object):
 		'what' should be LEFT or RIGHT (from scc.constants)
 		"""
 		if what == LEFT:
-			return self.state.buttons & SCButtons.LPADTOUCH
+			return self.buttons & SCButtons.LPADTOUCH
 		else: # what == RIGHT
-			return self.state.buttons & SCButtons.RPADTOUCH
+			return self.buttons & SCButtons.RPADTOUCH
 	
 	
 	def was_touched(self, what):
@@ -118,23 +118,23 @@ class Mapper(object):
 		not is_touched() and was_touched() -> pad was just released
 		"""
 		if what == LEFT:
-			return self.old_state.buttons & SCButtons.LPADTOUCH
+			return self.old_buttons & SCButtons.LPADTOUCH
 		else: # what == RIGHT
-			return self.old_state.buttons & SCButtons.RPADTOUCH
+			return self.old_buttons & SCButtons.RPADTOUCH
 	
 	
 	def is_pressed(self, button):
 		"""
 		Returns True if button is pressed
 		"""
-		return self.state.buttons & button
+		return self.buttons & button
 	
 	
 	def was_pressed(self, button):
 		"""
 		Returns True if button was pressed in previous known state
 		"""
-		return self.old_state.buttons & button
+		return self.old_buttons & button
 	
 	
 	def callback(self, controller, sci):
@@ -142,15 +142,21 @@ class Mapper(object):
 		if sci.status != SCStatus.INPUT:
 			return
 		self.old_state = self.state
+		self.old_buttons = self.buttons
+
 		self.state = sci
+		self.buttons = sci.buttons
+		
+		if self.buttons & SCButtons.LPAD and not self.buttons & SCButtons.LPADTOUCH:
+			self.buttons = (self.buttons & ~SCButtons.LPAD) | SCButtons.STICK
+		
 		fe = self.force_event
 		self.force_event = set()
 		
-		
 		# Check buttons
-		xor = self.old_state.buttons ^ sci.buttons
-		btn_rem = xor & self.old_state.buttons
-		btn_add = xor & sci.buttons
+		xor = self.old_buttons ^ self.buttons
+		btn_rem = xor & self.old_buttons
+		btn_add = xor & self.buttons
 		
 		try:
 			if btn_add or btn_rem:
@@ -163,7 +169,7 @@ class Mapper(object):
 			
 			
 			# Check stick
-			if not sci.buttons & SCButtons.LPADTOUCH:
+			if not self.buttons & SCButtons.LPADTOUCH:
 				if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
 					self.profile.stick.whole(self, sci.lpad_x, sci.lpad_y, STICK)
 			
@@ -176,11 +182,11 @@ class Mapper(object):
 					self.profile.triggers[RIGHT].trigger(self, sci.rtrig, self.old_state.rtrig)
 			
 			# Check pads
-			if FE_PAD in fe or sci.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
+			if FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 				# RPAD
 				self.profile.pads[RIGHT].whole(self, sci.rpad_x, sci.rpad_y, RIGHT)
 			
-			if (FE_PAD in fe and sci.buttons & SCButtons.LPADTOUCH) or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
+			if (FE_PAD in fe and self.buttons & SCButtons.LPADTOUCH) or self.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
 				# LPAD
 				self.profile.pads[LEFT].whole(self, sci.lpad_x, sci.lpad_y, LEFT)
 		except Exception, e:
