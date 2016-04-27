@@ -45,7 +45,27 @@ def get_default_profiles_path():
 		local = os.path.normpath(local)
 		if os.path.exists(local):
 			return local
+	if os.path.exists("/usr/local/share/scc/default_profiles"):
+		return "/usr/local/share/scc/default_profiles"
 	return "/usr/share/scc/default_profiles"
+
+
+def get_share_path():
+	"""
+	Returns directory where shared files are kept.
+	Usually "/usr/share/scc" or "./" if program is being started from
+	extracted source tarball
+	"""
+	if __main__.__file__.endswith(".py"):
+		# Started as script with something like './scc.py'
+		local = os.path.join(os.path.split(__file__)[0], "../")
+		local = os.path.normpath(local)
+		if os.path.exists(local):
+			return local
+	if os.path.exists("/usr/local/share/scc/"):
+		return "/usr/local/share/scc/"
+	return "/usr/share/scc/default_profiles"
+
 
 
 def get_daemon_path():
