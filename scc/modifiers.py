@@ -45,6 +45,13 @@ class ClickModifier(Modifier):
 		else:
 			return "click( " + self.action.to_string() + " )"
 	
+	
+	def encode(self):
+		rv = {} if isinstance(self.action, NoAction) else self.action.encode()
+		rv['click'] = True
+		return rv
+	
+	
 	# For button press & co it's safe to assume that they are being pressed...
 	def button_press(self, mapper):
 		return self.action.button_press(mapper)
@@ -172,6 +179,14 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
+	
+	
+	def encode(self):
+		rv = {} if isinstance(self.default, NoAction) else self.default.encode()
+		rv['modes'] = {}
+		for key in self.mods:
+			rv['modes'][key.name] = self.mods[key].encode()
+		return rv
 	
 	
 	def select(self, mapper):

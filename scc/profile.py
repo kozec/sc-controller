@@ -8,6 +8,8 @@ from __future__ import unicode_literals
 
 from scc.constants import SCButtons
 from scc.parser import TalkingActionParser
+from scc.actions import NoAction, XYAction
+from scc.modifiers import ClickModifier, ModeModifier
 from scc.constants import LEFT, RIGHT, WHOLE, STICK
 
 import json
@@ -34,101 +36,80 @@ class Profile(object):
 	def save(self, filename):
 		""" Saves profile into file. Returns self """
 		data = {
-			'buttons' : {},
-			'stick' : {},
-			'triggers' : {},
-			"left_pad" : {},
-			"right_pad" : {}
+			'buttons'	: self.buttons,
+			'stick'		: self.stick,
+			'triggers'	: self.triggers,
+			"left_pad"	: self.pads[Profile.LEFT],
+			"right_pad"	: self.pads[Profile.RIGHT],
 		}
-		# Buttons
-		for x in SCButtons:
-			if x in self.buttons:
-				data['buttons'][x.name] = { 'action' : self.buttons[x].to_string() }
 		
-		# Stick
-		if Profile.WHOLE in self.stick:
-			data["stick"]['action'] = self.stick[Profile.WHOLE].to_string()
-		else:
-			for x in Profile.STICK_AXES:
-				data["stick"][x] = {}
-				if x in self.stick:
-					data["stick"][x]['action'] = self.stick[x].to_string()
-		
-		# Triggers
-		for x in Profile.TRIGGERS:
-			data["triggers"][x] = {}
-			if x in self.triggers:
-				data["triggers"][x]['action'] = self.triggers[x].to_string()
-		
-		# Pads
-		for (y, key) in ( (Profile.LEFT, "left_pad"), (Profile.RIGHT, "right_pad") ):
-			data[key] = {}
-			if Profile.WHOLE in self.pads[y]:
-				data[key]['action'] = self.pads[y][Profile.WHOLE].to_string()
-			else:
-				for x in Profile.RPAD_AXES:
-					data[key][x] = {}
-					if x in self.pads[y]:
-						data[key][x]['action'] = self.pads[y][x].to_string()
-		
-		# Generate json
-		jstr = json.dumps(data, sort_keys=True, indent=4)
-		# Convert spaces to tabs
-		# jstr = jstr.replace("    ", "\t")
-		# Compact it a little
-		# for x in (2, 3):
-		#	jstr = jstr.replace('{\n' + (b"\t" * x) + '"action', '\t{ "action')
-		#	jstr = jstr.replace('"\n' + (b"\t" * x) + '}', ' }')
-		
-		# Save it
+		# Generate & save json
+		jstr = Encoder(sort_keys=True, indent=4).encode(data)
 		open(filename, "w").write(jstr)
 		return self
-
-
+	
+	
+	def _load_action(self, data, key=None):
+		"""
+		Converts dict returned by json.loads into action.
+		Returns NoAction when parser returns None.
+		"""
+		if key is not None:
+			# Allow calling _load_action(data["buttons"], button), it's shorter
+			# than 'if button in data["buttons"]: ...'
+			if key in data:
+				return self._load_action(data[key], None)
+			else:
+				return NoAction()
+		
+		a = NoAction()
+		if "action" in data:
+			a = self.parser.restart(data["action"]).parse()
+			if a is None:
+				a = NoAction()
+		if "X" in data or "Y" in data:
+			# "action" is ignored if either "X" or "Y" is there
+			x = self._load_action(data["X"]) if "X" in data else NoAction()
+			y = self._load_action(data["Y"]) if "Y" in data else NoAction()
+			a = XYAction(x, y)
+		if "click" in data:
+			a = ClickModifier(a)
+		if "modes" in data:
+			args = []
+			for button in data['modes']:
+				if hasattr(SCButtons, button):
+					args += [ getattr(SCButtons, button), self._load_action(data['modes'][button]) ]
+			if not isinstance(a, NoAction):
+				args += [ a ]
+			a = ModeModifier(*args)
+		return a
+		
+	
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
 		data = json.loads(open(filename, "r").read())
 		# Buttons
 		self.buttons = {}
 		for x in SCButtons:
-			if x.name in data["buttons"] and "action" in data["buttons"][x.name]:
-				a = self.parser.restart(data["buttons"][x.name]["action"]).parse()
-				if a is not None:
-					self.buttons[x] = a
+			self.buttons[x] = self._load_action(data["buttons"], x.name)
 		
 		# Stick
-		self.stick = {}
-		for x in Profile.STICK_AXES:
-			if x in data["stick"] and "action" in data["stick"][x]:
-				a = self.parser.restart(data["stick"][x]["action"]).parse()
-				if a is not None:
-					self.stick[x] = a
-		if "action" in data["stick"]:
-			a = self.parser.restart(data["stick"]["action"]).parse()
-			if a is not None:
-				self.stick[Profile.WHOLE] = a
+		self.stick = self._load_action(data, "stick")
 		
 		# Triggers
 		self.triggers = {}
 		for x in Profile.TRIGGERS:
-			if x in data["triggers"] and "action" in data["triggers"][x]:
-				a = self.parser.restart(data["triggers"][x]["action"]).parse()
-				if a is not None:
-					self.triggers[x] = a
+			self.triggers[x] = self._load_action(data["triggers"], x)
 		
 		# Pads
 		self.pads = {}
 		for (y, key) in ( (Profile.LEFT, "left_pad"), (Profile.RIGHT, "right_pad") ):
-			self.pads[y] = {}
-			for x in Profile.RPAD_AXES:
-				if x in data[key] and "action" in data[key][x]:
-					a = self.parser.restart(data[key][x]["action"]).parse()
-					if a is not None:
-						self.pads[y][x] = a
-			
-			if "action" in data[key]:
-				a = self.parser.restart(data[key]["action"]).parse()
-				if a is not None:
-					self.pads[y][Profile.WHOLE] = a
+			self.pads[y] = self._load_action(data, key)
 		
 		return self
+
+class Encoder(json.JSONEncoder):
+	def default(self, obj):
+		if hasattr(obj, "encode"):
+			return obj.encode()
+		return json.JSONEncoder.default(self, obj)

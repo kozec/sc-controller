@@ -128,6 +128,11 @@ class Action(object):
 		log.warn("Action %s can't handle trigger event", self.__class__.__name__)
 	
 	
+	def encode(self):
+		""" Called from json encoder """
+		return { 'action' : self.to_string() }
+	
+	
 	def __str__(self):
 		return "<Action '%s', %s>" % (self.COMMAND, self.parameters)
 	
@@ -785,6 +790,11 @@ class XYAction(MultiAction):
 	Shouldn't be saved into profile or weird stuff may happen.
 	"""
 	COMMAND = "XY"
+	
+	def __init__(self, x=None, y=None):
+		MultiAction.__init__(self, *strip_none(x, y))
+		self.x = x or NoAction()
+		self.y = y or NoAction()
 
 	def button_press(self, *a):
 		raise Exception("XYAction cannot be executed")
@@ -820,6 +830,14 @@ class XYAction(MultiAction):
 			return "\n".join(rv)
 			
 		return "XY(" + (", ".join([ x.to_string() for x in self.actions ])) + ")"
+	
+	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { }
+		if not isinstance(self.x, NoAction): rv["X"] = self.x.encode()
+		if not isinstance(self.y, NoAction): rv["Y"] = self.y.encode()
+		return rv
 	
 	
 	def __str__(self):
