@@ -152,35 +152,40 @@ class Mapper(object):
 		btn_rem = xor & self.old_state.buttons
 		btn_add = xor & sci.buttons
 		
-		if btn_add or btn_rem:
-			# At least one button was pressed
-			for x in self.profile.buttons:
-				if x & btn_add:
-					self.profile.buttons[x].button_press(self)
-				elif x & btn_rem:
-					self.profile.buttons[x].button_release(self)
-		
-		# Check stick
-		if not sci.buttons & SCButtons.LPADTOUCH:
-			if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
-				self.profile.stick[Profile.WHOLE].whole(self, sci.lpad_x, sci.lpad_y, STICK)
-		
-		# Check triggers
-		if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:
-			if LEFT in self.profile.triggers:
-				self.profile.triggers[LEFT].trigger(self, sci.ltrig, self.old_state.ltrig)
-		if FE_TRIGGER in fe or sci.rtrig != self.old_state.rtrig:
-			if RIGHT in self.profile.triggers:
-				self.profile.triggers[RIGHT].trigger(self, sci.rtrig, self.old_state.rtrig)
-		
-		# Check pads
-		if FE_PAD in fe or sci.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
-			# RPAD
-			self.profile.pads[RIGHT][Profile.WHOLE].whole(self, sci.rpad_x, sci.rpad_y, RIGHT)
-		
-		if (FE_PAD in fe and sci.buttons & SCButtons.LPADTOUCH) or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
-			# LPAD
-			self.profile.pads[LEFT][Profile.WHOLE].whole(self, sci.lpad_x, sci.lpad_y, LEFT)
+		try:
+			if btn_add or btn_rem:
+				# At least one button was pressed
+				for x in self.profile.buttons:
+					if x & btn_add:
+						self.profile.buttons[x].button_press(self)
+					elif x & btn_rem:
+						self.profile.buttons[x].button_release(self)
+			
+			# Check stick
+			if not sci.buttons & SCButtons.LPADTOUCH:
+				if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
+					self.profile.stick.whole(self, sci.lpad_x, sci.lpad_y, STICK)
+			
+			# Check triggers
+			if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:
+				if LEFT in self.profile.triggers:
+					self.profile.triggers[LEFT].trigger(self, sci.ltrig, self.old_state.ltrig)
+			if FE_TRIGGER in fe or sci.rtrig != self.old_state.rtrig:
+				if RIGHT in self.profile.triggers:
+					self.profile.triggers[RIGHT].trigger(self, sci.rtrig, self.old_state.rtrig)
+			
+			# Check pads
+			if FE_PAD in fe or sci.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
+				# RPAD
+				self.profile.pads[RIGHT].whole(self, sci.rpad_x, sci.rpad_y, RIGHT)
+			
+			if (FE_PAD in fe and sci.buttons & SCButtons.LPADTOUCH) or sci.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
+				# LPAD
+				self.profile.pads[LEFT].whole(self, sci.lpad_x, sci.lpad_y, LEFT)
+		except Exception, e:
+			# Log error but don't crash here, it breaks too many things at once
+			log.error("Error while processing controller event")
+			log.error(traceback.format_exc())
 		
 		# Generate events - keys
 		if len(self.keypress_list):

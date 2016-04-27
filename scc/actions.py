@@ -809,14 +809,15 @@ class XYAction(MultiAction):
 	def axis(self, *a):
 		pass
 	
+	
 	def whole(self, mapper, x, y, what):
-		self.x.axis(self, sci.lpad_x, STICK)
-		self.y.axis(self, sci.lpad_y, STICK)
+		self.x.axis(mapper, x, what)
+		self.y.axis(mapper, y, what)
 	
 	
 	def pad(self, mapper, x, y, what):
-		self.x.pad(self, sci.lpad_x, what)
-		self.y.pad(self, sci.lpad_y, what)
+		self.x.pad(mapper, sci.lpad_x, what)
+		self.y.pad(mapper, sci.lpad_y, what)
 	
 	
 	def describe(self, context):
