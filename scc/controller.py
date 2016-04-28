@@ -139,7 +139,7 @@ class SCController(object):
 
 		self._lastusb = time.time()
 
-		self._cb(self, self._tup)
+		self._cb(self, self._lastusb, self._tup)
 
 
 
@@ -147,7 +147,8 @@ class SCController(object):
 
 	def _callbackTimer(self):
 
-		d = time.time() - self._lastusb
+		t = time.time()
+		d = t - self._lastusb
 		self._timer.cancel()
 
 		if d > DURATION:
@@ -162,7 +163,7 @@ class SCController(object):
 		if d < HPERIOD:
 			return
 
-		self._cb(self, self._tup)
+		self._cb(self, t, self._tup)
 
 
 	def disable_auto_haptic(self):
