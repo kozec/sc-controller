@@ -27,7 +27,7 @@ class Profile(object):
 	
 	def __init__(self, parser):
 		self.parser = parser
-		self.buttons = {}
+		self.buttons = { x : NoAction() for x in SCButtons }
 		self.stick = NoAction()
 		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
 		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }

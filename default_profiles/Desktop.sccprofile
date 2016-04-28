@@ -5,11 +5,8 @@
 		"BACK"  : { "action": "button(Keys.KEY_BACKSPACE)" }, 
 		"C"     : { "action": "profile('XBox Controller with High Precision Camera')" },
 		"LB"    : { "action": "button(Keys.KEY_LEFTCTRL)" }, 
-		"LGRIP" : { "action": "button(Keys.BTN_GAMEPAD)" }, 
-		"LPAD"  : { "action": "button(Keys.BTN_THUMBL)" }, 
 		"RB"    : { "action": "button(Keys.KEY_LEFTALT)" }, 
-		"RGRIP" : { "action": "button(Keys.BTN_NORTH)" }, 
-		"RPAD"  : { "action": "button(Keys.BTN_THUMBR)" }, 
+		"RPAD"	: { "action": "button(Keys.BTN_LEFT)" }, 
 		"START" : { "action": "button(Keys.KEY_LEFTSHIFT)" }, 
 		"X"     : { "action": "button(Keys.KEY_SPACE)" }, 
 		"Y"     : { "action": "button(Keys.KEY_TAB)" }
@@ -21,14 +18,13 @@
 	},
 	
 	"stick": {
-		"action": "dpad(button(Keys.KEY_W), button(Keys.KEY_S), button(Keys.KEY_A), button(Keys.KEY_D))"
+		"action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))"
 	}, 
 	
 	"left_pad": {
 		"X": { "action": "mouse(Rels.REL_HWHEEL, 1.0)" }, 
 		"Y": { "action": "mouse(Rels.REL_WHEEL, 1.0)" }
 	},
-	
 	"right_pad": {
 		"action": "trackball(1.0)"
 	}

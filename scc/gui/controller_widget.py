@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, Pango
-from scc.constants import SCButtons
+from scc.constants import SCButtons, STICK, LEFT, RIGHT
 from scc.actions import Action, XYAction
 from scc.profile import Profile
 import os, sys, logging
@@ -20,7 +20,7 @@ log = logging.getLogger("ControllerWidget")
 
 TRIGGERS = [ Profile.LEFT, Profile.RIGHT ]
 PADS	= [ "LPAD", "RPAD" ]
-STICKS	= [ "STICK" ]
+STICKS	= [ STICK ]
 PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD, SCButtons.STICK ]
 _NOT_BUTTONS = PADS + STICKS + [ "LT", "RT" ] + [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
@@ -92,15 +92,23 @@ class ControllerButton(ControllerWidget):
 class ControllerStick(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_STICK
 	def __init__(self, app, name, widget):
+		self.pressed = Gtk.Label()
 		ControllerWidget.__init__(self, app, name, widget)
 		
-		vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+		grid = Gtk.Grid()
 		self.widget.set_events(Gdk.EventMask.POINTER_MOTION_MASK)
 		self.widget.connect('motion-notify-event', self.on_cursor_motion)
-		vbox.pack_start(self.icon, False, False, 1)
-		vbox.pack_start(self.label, False, False, 1)
+		self.label.set_property("vexpand", True)
+		self.label.set_property("hexpand", True)
+		self.label.set_xalign(0.0); self.label.set_yalign(0.5)
+		self.pressed.set_property("hexpand", True)
+		self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
+		self.icon.set_margin_right(5)
+		grid.attach(self.icon, 1, 1, 1, 2)
+		grid.attach(self.label, 2, 1, 1, 1)
+		grid.attach(self.pressed, 2, 2, 1, 1)
 		self.over_icon = False
-		self.widget.add(vbox)
+		self.widget.add(grid)
 		self.widget.show_all()
 	
 	
@@ -132,7 +140,9 @@ class ControllerStick(ControllerWidget):
 	
 	
 	def update(self):
+		action = self.app.current.buttons[SCButtons.STICK]
 		self._set_label(self.app.current.stick)
+		self.pressed.set_markup("<small>Pressed: %s</small>" % (action.describe(self.ACTION_CONTEXT),))
 
 
 class ControllerTrigger(ControllerButton):
@@ -148,6 +158,12 @@ class ControllerPad(ControllerStick):
 	ACTION_CONTEXT = Action.AC_PAD
 	def update(self):
 		if self.id == "LPAD":
-			self._set_label(self.app.current.pads[Profile.LEFT])
+			action = self.app.current.pads[Profile.LEFT]
+			pressed = self.app.current.buttons[SCButtons.LPAD]
 		else:
-			self._set_label(self.app.current.pads[Profile.RIGHT])
+			action = self.app.current.pads[Profile.RIGHT]
+			pressed = self.app.current.buttons[SCButtons.RPAD]
+		
+		self._set_label(action)
+		self.pressed.set_markup("<small>Pressed: %s</small>" % (pressed.describe(self.ACTION_CONTEXT),))
+		
