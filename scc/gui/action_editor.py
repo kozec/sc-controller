@@ -288,10 +288,14 @@ class ActionEditor(ButtonChooser):
 		""" Generates and returns Action instance """
 		entAction = self.builder.get_object("entAction")
 		entActionY = self.builder.get_object("entActionY")
+		entName = self.builder.get_object("entName")
+		
 		action = self.parser.restart(entAction.get_text()).parse()
 		if len(entActionY.get_text()) > 0:
 			actionY = self.parser.restart(entActionY.get_text()).parse()
 			action = XYAction(action, actionY)
+		if entName.get_text().strip() != "":
+			action.name = entName.get_text().strip()
 		return action
 	
 	def on_btOK_clicked(self, *a):
@@ -378,6 +382,7 @@ class ActionEditor(ButtonChooser):
 		"""
 		entAction = self.builder.get_object("entAction")
 		entActionY = self.builder.get_object("entActionY")
+		entName = self.builder.get_object("entName")
 		btOK = self.builder.get_object("btOK")
 		entAction.set_name("entAction")
 		btOK.set_sensitive(True)
@@ -396,6 +401,8 @@ class ActionEditor(ButtonChooser):
 				# Actions generated elsewhere
 				entAction.set_text(action.to_string())
 			self._set_y_field_visible(False)
+		if action.name is not None:
+			entName.set_text(action.name)
 		
 		area = action_to_area(action)
 		if area is not None:

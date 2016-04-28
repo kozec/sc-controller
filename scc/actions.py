@@ -48,6 +48,7 @@ class Action(object):
 	
 	def __init__(self, *parameters):
 		self.parameters = parameters
+		self.name = None
 	
 	
 	def describe(self, context):
@@ -55,6 +56,7 @@ class Action(object):
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
+		if self.name: return self.name
 		return str(self)
 	
 	
@@ -130,7 +132,9 @@ class Action(object):
 	
 	def encode(self):
 		""" Called from json encoder """
-		return { 'action' : self.to_string() }
+		rv = { 'action' : self.to_string() }
+		if self.name: rv['name'] = self.name
+		return rv
 	
 	
 	def __str__(self):
@@ -173,6 +177,7 @@ class AxisAction(Action):
 		return axis, neg, pos
 	
 	def describe(self, context):
+		if self.name: return self.name
 		axis, neg, pos = self._get_axis_description()
 		if context == Action.AC_BUTTON:
 			for x in self.parameters:
@@ -223,6 +228,7 @@ class RAxisAction(AxisAction):
 	
 	
 	def describe(self, context):
+		if self.name: return self.name
 		axis, neg, pos = self._get_axis_description()
 		if context in (Action.AC_STICK, Action.AC_PAD):
 			xy = "X" if self.parameters[0] in AxisAction.X else "Y"
@@ -233,6 +239,7 @@ class RAxisAction(AxisAction):
 class HatAction(AxisAction):
 	COMMAND = None
 	def describe(self, context):
+		if self.name: return self.name
 		axis, neg, pos = self._get_axis_description()
 		if "up" in self.COMMAND or "left" in self.COMMAND:
 			return "%s %s" % (axis, neg)
@@ -270,6 +277,7 @@ class MouseAction(Action):
 	
 	
 	def describe(self, context):
+		if self.name: return self.name
 		if self.parameters[0] == Rels.REL_WHEEL:
 			return _("Wheel")
 		elif self.parameters[0] == Rels.REL_HWHEEL:
@@ -360,6 +368,7 @@ class TrackballAction(Action):
 		self.trackpadmode = False
 
 	def describe(self, context):
+		if self.name: return self.name
 		return "Trackball"
 	
 	def whole(self, mapper, x, y, what):
@@ -385,6 +394,7 @@ class TrackpadAction(TrackballAction):
 		self.trackpadmode = True
 	
 	def describe(self, context):
+		if self.name: return self.name
 		return "Trackpad"
 
 
@@ -431,6 +441,7 @@ class ButtonAction(Action):
 	
 	
 	def describe(self, context):
+		if self.name: return self.name
 		if self.button in ButtonAction.SPECIAL_NAMES:
 			return _(ButtonAction.SPECIAL_NAMES[self.button])
 		elif self.button == Rels.REL_WHEEL:
@@ -582,6 +593,7 @@ class ChangeProfileAction(Action):
 		self.profile = profile
 	
 	def describe(self, context):
+		if self.name: return self.name
 		return _("Profile Change")
 	
 	
@@ -608,6 +620,7 @@ class ShellCommandAction(Action):
 		self.command = command
 	
 	def describe(self, context):
+		if self.name: return self.name
 		return _("Execute Command")
 	
 	
@@ -635,6 +648,7 @@ class MultiAction(Action):
 
 	def __init__(self, *actions):
 		self.actions = []
+		self.name = None
 		self._add_all(actions)
 
 
@@ -658,6 +672,7 @@ class MultiAction(Action):
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
+		if self.name: return self.name
 		if isinstance(self.actions[0], ButtonAction):
 			# Special case, key combination
 			rv = []
@@ -711,6 +726,7 @@ class DPadAction(MultiAction):
 		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
 	
 	def describe(self, context):
+		if self.name: return self.name
 		return "DPad"
 	
 	def to_string(self, multiline=False, pad=0):
@@ -781,6 +797,7 @@ class DPad8Action(DPadAction):
 		self.eight = True
 	
 	def describe(self, context):
+		if self.name: return self.name
 		return "8-Way DPad"
 
 
@@ -821,6 +838,7 @@ class XYAction(MultiAction):
 	
 	
 	def describe(self, context):
+		if self.name: return self.name
 		rv = []
 		if self.x: rv.append(self.x.describe(context))
 		if self.y: rv.append(self.y.describe(context))
@@ -850,6 +868,7 @@ class XYAction(MultiAction):
 		rv = { }
 		if self.x: rv["X"] = self.x.encode()
 		if self.y: rv["Y"] = self.y.encode()
+		if self.name: rv['name'] = self.name
 		return rv
 	
 	

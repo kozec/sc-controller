@@ -1,60 +1,74 @@
 {
     "buttons": {
         "A": {
-            "action": "button(Keys.KEY_SPACE); button(Keys.KEY_ENTER)"
+            "action": "button(Keys.KEY_SPACE); button(Keys.KEY_ENTER)", 
+            "name": "Jump / Confirm"
         }, 
         "B": {
-            "action": "button(Keys.KEY_LEFTSHIFT)"
+            "action": "button(Keys.KEY_LEFTSHIFT)", 
+            "name": "Dodge"
         }, 
         "BACK": {
-            "action": "button(Keys.KEY_TAB)"
+            "action": "button(Keys.KEY_TAB)", 
+            "name": "Map"
         }, 
         "LB": {
-            "action": "button(Keys.KEY_Q)"
-        }, 
-        "LGRIP": {
-            "action": "button(Keys.KEY_C)"
+            "action": "button(Keys.KEY_Q)", 
+            "name": "Survival Instincts"
         }, 
         "LPAD": {
-            "action": "button(Keys.KEY_R)"
+            "action": "button(Keys.KEY_R)", 
+            "name": "Reload"
         }, 
         "RB": {
-            "action": "button(Keys.BTN_MIDDLE)"
+            "action": "button(Keys.BTN_MIDDLE)", 
+            "name": "Alt Fire"
         }, 
         "RGRIP": {
-            "action": "button(Keys.KEY_Z)"
+            "action": "button(Keys.KEY_LEFTSHIFT)", 
+            "name": "Dodge"
         }, 
         "RPAD": {
-            "action": "button(Keys.KEY_Z)"
+            "action": "button(Keys.KEY_Z)", 
+            "name": "Zoom"
         }, 
         "START": {
-            "action": "button(Keys.KEY_ESC)"
+            "action": "button(Keys.KEY_ESC)", 
+            "name": "Menu / Cancel"
         }, 
         "STICK": {
-            "action": "button(Keys.KEY_LEFTCTRL)"
+            "action": "button(Keys.KEY_LEFTCTRL)", 
+            "name": "Walk"
         }, 
         "X": {
-            "action": "button(Keys.KEY_E)"
+            "action": "button(Keys.KEY_E)", 
+            "name": "Interact"
         }, 
         "Y": {
-            "action": "button(Keys.KEY_F)"
+            "action": "button(Keys.KEY_F)", 
+            "name": "Melee"
         }
     }, 
     "left_pad": {
-        "action": "dpad(button(Keys.KEY_1), button(Keys.KEY_4), button(Keys.KEY_2), button(Keys.KEY_3))"
+        "action": "dpad(button(Keys.KEY_1), button(Keys.KEY_4), button(Keys.KEY_2), button(Keys.KEY_3))", 
+        "name": "Weapon Switch"
     }, 
     "right_pad": {
-        "action": "trackball(1.0)"
+        "action": "trackball(1.0)", 
+        "name": "Camera"
     }, 
     "stick": {
-        "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))"
+        "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))", 
+        "name": "Movement"
     }, 
     "triggers": {
         "LEFT": {
-            "action": "button(Keys.BTN_RIGHT)"
+            "action": "button(Keys.BTN_RIGHT)", 
+            "name": "Aim"
         }, 
         "RIGHT": {
-            "action": "button(Keys.BTN_LEFT)"
+            "action": "button(Keys.BTN_LEFT)", 
+            "name": "Fire"
         }
     }
 }

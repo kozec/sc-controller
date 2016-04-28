@@ -84,6 +84,8 @@ class Profile(object):
 			if a:
 				args += [ a ]
 			a = ModeModifier(*args)
+		if "name" in data:
+			a.name = data["name"]
 		return a
 		
 	

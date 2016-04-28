@@ -49,6 +49,7 @@ class ClickModifier(Modifier):
 	def encode(self):
 		rv = self.action.encode()
 		rv['click'] = True
+		if self.name: rv['name'] = self.name
 		return rv
 	
 	
@@ -191,6 +192,7 @@ class ModeModifier(Modifier):
 		rv['modes'] = {}
 		for key in self.mods:
 			rv['modes'][key.name] = self.mods[key].encode()
+		if self.name: rv['name'] = self.name
 		return rv
 	
 	
