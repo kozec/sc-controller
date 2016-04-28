@@ -13,6 +13,7 @@ from scc.actions import ButtonAction, AxisAction, MouseAction, MultiAction
 from scc.actions import HatLeftAction, HatRightAction
 from scc.actions import HatUpAction, HatDownAction
 from scc.gui.editor import Editor
+from scc.gui.dwsnc import headerbar
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import keyevent_to_key
 from scc.gui.area_to_action import AREA_TO_ACTION
@@ -65,6 +66,7 @@ class ButtonChooser(Editor):
 				self.images.append(image)
 				parent.pack_start(image, True, True, 0)
 				parent.show_all()
+		headerbar(self.builder.get_object("header"))
 	
 	
 	def allow_axes(self):

@@ -17,6 +17,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
+from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
 from scc.constants import SCButtons
@@ -99,6 +100,7 @@ class App(Gtk.Application, ProfileManager):
 		self.background.connect('click', self.on_background_area_click)
 		main_area.put(self.background, 0, 0)
 		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
+		headerbar(self.builder.get_object("hbWindow"))
 	
 	
 	def check(self):

@@ -11,6 +11,7 @@ from scc.gui.controller_widget import ControllerButton
 from scc.gui.action_editor import ActionEditor
 from scc.gui.editor import Editor
 from scc.constants import SCButtons
+from scc.gui.dwsnc import headerbar
 from scc.actions import Action, NoAction
 from scc.modifiers import ModeModifier
 from scc.profile import Profile
@@ -67,6 +68,7 @@ class ModeswitchEditor(Editor):
 		for button, text in self.BUTTONS:
 			model.append(( None if button is None else button.name, text ))
 		cbButtonChooser.set_active(0)
+		headerbar(self.builder.get_object("header"))
 	
 	
 	def _add_action(self, button, action):
