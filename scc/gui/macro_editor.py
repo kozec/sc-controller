@@ -213,6 +213,7 @@ class MacroEditor(Editor):
 	
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
+		entName = self.builder.get_object("entName")
 		pars = [ x[0] for x in self.actions ]
 		action = Macro(*pars)
 		if len(pars) == 0:
@@ -221,6 +222,8 @@ class MacroEditor(Editor):
 		elif len(pars) == 1:
 			# Only default action left
 			action = self.default
+		if entName.get_text().strip() != "":
+			action.name = entName.get_text().strip()
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, action)
 		self.close()
@@ -228,10 +231,13 @@ class MacroEditor(Editor):
 	
 	def _set_mode(self, mode, id, action):
 		btDefault = self.builder.get_object("btDefault")
+		entName = self.builder.get_object("entName")
 		self.id = id
 		self.mode = mode
 		for a in action.actions:
 			self._add_action(a)
+		if action.name is not None:
+			entName.set_text(action.name)
 	
 	
 	def set_button(self, id, action):
