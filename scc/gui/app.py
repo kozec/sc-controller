@@ -141,7 +141,7 @@ class App(Gtk.Application, ProfileManager):
 	def _choose_editor(self, action, title):
 		if isinstance(action, ModeModifier):
 			e = ModeshiftEditor(self, self.on_action_chosen)
-			e.set_title(_("Mode Switch for %s") % (title,))
+			e.set_title(_("Mode Shift for %s") % (title,))
 		else:
 			e = ActionEditor(self, self.on_action_chosen)
 			e.set_title(title)

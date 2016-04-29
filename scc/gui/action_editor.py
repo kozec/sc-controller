@@ -306,7 +306,7 @@ class ActionEditor(ButtonChooser):
 	
 	
 	def on_btModeshift_clicked(self, *a):
-		""" Asks main window to close this one and display mode switch editor """
+		""" Asks main window to close this one and display modeshift editor """
 		if self.ac_callback is not None:
 			# Convert current action into modeshift and send it to main window
 			action = ModeModifier(self._make_action())
@@ -538,7 +538,7 @@ class ActionEditor(ButtonChooser):
 	
 	def hide_modeshift(self):
 		"""
-		Hides Mode Switch button.
+		Hides Mode Shift button.
 		Used when displaying ActionEditor from ModeshiftEditor
 		"""
 		self.builder.get_object("btModeshift").set_visible(False)
