@@ -76,6 +76,8 @@ class Profile(object):
 			a = XYAction(x, y)
 		if "click" in data:
 			a = ClickModifier(a)
+		if "name" in data:
+			a.name = data["name"]
 		if "modes" in data:
 			args = []
 			for button in data['modes']:
@@ -84,8 +86,6 @@ class Profile(object):
 			if a:
 				args += [ a ]
 			a = ModeModifier(*args)
-		if "name" in data:
-			a.name = data["name"]
 		return a
 		
 	

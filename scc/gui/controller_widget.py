@@ -24,6 +24,7 @@ STICKS	= [ STICK ]
 PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD, SCButtons.STICK ]
 _NOT_BUTTONS = PADS + STICKS + [ "LT", "RT" ] + [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
+LONG_TEXT = 12
 
 class ControllerWidget:
 	ACTION_CONTEXT = None
@@ -84,7 +85,11 @@ class ControllerButton(ControllerWidget):
 	
 	def update(self):
 		if self.id in SCButtons and self.id in self.app.current.buttons:
-			self.label.set_label(self.app.current.buttons[self.id].describe(self.ACTION_CONTEXT))
+			txt = self.app.current.buttons[self.id].describe(self.ACTION_CONTEXT)
+			if len(txt) > LONG_TEXT or "\n" in txt:
+				self.label.set_markup("<small>%s</small>" % (txt,))
+			else:
+				self.label.set_label(txt)
 		else:
 			self.label.set_label(_("(no action)"))
 

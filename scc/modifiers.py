@@ -155,7 +155,11 @@ class ModeModifier(Modifier):
 	
 	
 	def describe(self, context):
-		return _("(multiple modes)")
+		l = []
+		if self.default : l.append(self.default)
+		for x in self.order:
+			l.append(self.mods[x])
+		return "\n".join([ x.describe(context) for x in l ])
 	
 	
 	def to_string(self, multiline=False, pad=0):
