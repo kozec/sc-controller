@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.19.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjFullLevel">
@@ -1515,7 +1515,6 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
-            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -1529,7 +1528,7 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
-            <property name="position">1</property>
+            <property name="position">6</property>
           </packing>
         </child>
       </object>

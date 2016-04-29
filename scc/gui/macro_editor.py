@@ -10,7 +10,7 @@ from scc.tools import _
 from scc.gui.controller_widget import ControllerButton
 from scc.gui.action_editor import ActionEditor
 from scc.gui.editor import Editor
-from scc.actions import Action, ButtonAction, NoAction, SleepAction
+from scc.actions import Action, Macro, ButtonAction, NoAction, SleepAction
 from scc.modifiers import ModeModifier
 from scc.constants import SCButtons
 from scc.profile import Profile
@@ -89,7 +89,10 @@ class MacroEditor(Editor):
 			grActions.attach(l,			0, i, 1, 1)
 			grActions.attach(b,			1, i, 1, 1)
 		
-		b.connect('clicked', self.on_actionb_clicked, action_data)
+		b.connect('clicked',		self.on_actionb_clicked, action_data)
+		upb.connect('clicked',		self.on_moveb_clicked, -1, action_data)
+		downb.connect('clicked',	self.on_moveb_clicked, 1, action_data)
+		clearb.connect('clicked',	self.on_clearb_clicked, action_data)
 		
 		# Move Up button
 		upb.set_image(Gtk.Image.new_from_stock("gtk-go-up", Gtk.IconSize.SMALL_TOOLBAR))
@@ -102,26 +105,58 @@ class MacroEditor(Editor):
 		# Clear button
 		clearb.set_image(Gtk.Image.new_from_stock("gtk-delete", Gtk.IconSize.SMALL_TOOLBAR))
 		clearb.set_relief(Gtk.ReliefStyle.NONE)
-		clearb.connect('clicked', self.on_clearb_clicked, action_data)
 		
 		# Pack
-		grActions.attach(downb,		2, i, 1, 1)
-		grActions.attach(upb,		3, i, 1, 1)
+		grActions.attach(upb,		2, i, 1, 1)
+		grActions.attach(downb,		3, i, 1, 1)
 		grActions.attach(clearb,	4, i, 1, 1)
+		
+		# Disable 'up' button on 1st aciton
+		if len(self.actions) == 0:
+			upb.set_sensitive(False)
+		# Reenable 'down' button on last action
+		if len(self.actions) > 0:
+			self.actions[-1][1][1].set_sensitive(True)
+		# Disable 'down' on added (now last) action
+		downb.set_sensitive(False)
 		
 		self.actions.append(action_data)
 		grActions.show_all()
 	
 	
+	def on_moveb_clicked(self, trash, direction, data):
+		action = data[0]
+		readd = [ x[0] for x in self.actions ]
+		index = readd.index(action) + direction
+		if index < 0:
+			# Not possible to move 1st item up
+			return
+		if index > len(readd):
+			# Not possible to move last item down
+			return
+		readd.remove(action)
+		readd.insert(index, action)
+		self._refill_grid(readd)
+	
+	
 	def on_clearb_clicked(self, trash, data):
-		grActions = self.builder.get_object("grActions")
+		self._clear_grid()
 		self.actions.remove(data)
+		readd = [ x[0] for x in self.actions ]
+		self._refill_grid(readd)
+	
+	
+	def _refill_grid(self, new_actions):
+		self._clear_grid()
+		self.actions = []
+		for a in new_actions:
+			self._add_action(a)
+	
+	
+	def _clear_grid(self):
+		grActions = self.builder.get_object("grActions")
 		for child in [] + grActions.get_children():
 			grActions.remove(child)
-		readd = [ x[0] for x in self.actions ]
-		self.actions = []
-		for a in readd:
-			self._add_action(a)
 	
 	
 	def _setup_editor(self, ae, action):
@@ -137,7 +172,9 @@ class MacroEditor(Editor):
 	
 	def on_change_delay(self, scale, trash, value, data):
 		ms = int(value)
+		action = data[0]
 		label = data[-1][-2]
+		action.delay = value / 1000.0
 		if ms < 1000:
 			label.set_markup(_("<b>Delay: %sms</b>") % (ms,))
 		else:
@@ -145,22 +182,19 @@ class MacroEditor(Editor):
 			label.set_markup(_("<b>Delay: %0.2fs</b>") % (s,))
 	
 	
-	def on_actionb_clicked(self, trash, clicked_button):
-		for i in self.actions:
-			button, action, l, b, clearb = i
-			if button == clicked_button:
-				def on_chosen(id, action):
-					b.set_label(action.describe(self.mode))
-					i[1] = action
-				
-				ae = ActionEditor(self.app, on_chosen)
-				ae.set_title(_("Edit Action"))
-				ae.hide_modeshift()
-				self._setup_editor(ae, action)
-				ae.show(self.window)
-				return
+	def on_actionb_clicked(self, trash, data):
+		action, widgets = data
+		def on_chosen(id, action):
+			data[0] = action
+			self._refill_grid([ x[0] for x in self.actions ])
+		
+		ae = ActionEditor(self.app, on_chosen)
+		ae.set_title(_("Edit Action"))
+		ae.hide_modeshift()
+		self._setup_editor(ae, action)
+		ae.show(self.window)
 	
-
+	
 	def on_btAddAction_clicked(self, *a):
 		self._add_action(NoAction())
 	
@@ -179,12 +213,8 @@ class MacroEditor(Editor):
 	
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
-		pars = []
-		for button, action, l, b, clearb in self.actions:
-			pars += [ button, action ]
-		if self.default:
-			pars += [ self.default ]
-		action = ModeModifier(*pars)
+		pars = [ x[0] for x in self.actions ]
+		action = Macro(*pars)
 		if len(pars) == 0:
 			# No action is actually set
 			action = NoAction()
