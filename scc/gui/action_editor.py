@@ -11,8 +11,8 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.uinput import Keys, Axes, Rels
 from scc.actions import AxisAction, MouseAction, ButtonAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
+from scc.actions import Action, XYAction, NoAction, Macro
 from scc.actions import DPadAction, DPad8Action
-from scc.actions import Action, XYAction, NoAction
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.actions import TRIGGER_HALF, TRIGGER_CLICK
 from scc.profile import Profile
@@ -310,6 +310,17 @@ class ActionEditor(ButtonChooser):
 		if self.ac_callback is not None:
 			# Convert current action into modeshift and send it to main window
 			action = ModeModifier(self._make_action())
+			self.ac_callback(self.id, action)
+			self.close()
+			# Ask main window to display editor again
+			self.app.show_editor(self.id)
+	
+	
+	def on_btMacro_clicked(self, *a):
+		""" Asks main window to close this one and display macro editor """
+		if self.ac_callback is not None:
+			# Convert current action into modeshift and send it to main window
+			action = Macro(self._make_action())
 			self.ac_callback(self.id, action)
 			self.close()
 			# Ask main window to display editor again

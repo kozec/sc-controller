@@ -15,12 +15,13 @@ from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.profile_manager import ProfileManager
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
+from scc.gui.macro_editor import MacroEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
 from scc.constants import SCButtons
-from scc.actions import XYAction, NoAction
+from scc.actions import XYAction, NoAction, Macro
 from scc.modifiers import ModeModifier
 from scc.profile import Profile
 
@@ -142,6 +143,9 @@ class App(Gtk.Application, ProfileManager):
 		if isinstance(action, ModeModifier):
 			e = ModeshiftEditor(self, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))
+		elif isinstance(action, Macro):
+			e = MacroEditor(self, self.on_action_chosen)
+			e.set_title(_("Macro for %s") % (title,))
 		else:
 			e = ActionEditor(self, self.on_action_chosen)
 			e.set_title(title)

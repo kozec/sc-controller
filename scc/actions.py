@@ -573,7 +573,17 @@ class SleepAction(Action):
 	COMMAND = "sleep"
 	def __init__(self, delay):
 		Action.__init__(self, delay)
-		self.delay_after = float(delay) - MacroAction.HOLD_TIME
+		self.delay = float(delay)
+		self.delay_after = self.delay - Macro.HOLD_TIME
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Wait %sms") % (int(self.delay * 1000),)
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s(%s)" % (self.COMMAND, self.delay)
+
 	
 	def button_press(self, mapper): pass
 	def button_release(self, mapper): pass
@@ -650,6 +660,8 @@ class Macro(Action):
 		for p in parameters:
 			if type(p) == float and len(self.actions):
 				self.actions[-1].delay_after = p
+			elif isinstance(p, Macro):
+				self.actions += p.actions
 			elif isinstance(p, Action):
 				self.actions.append(p)
 			else:
