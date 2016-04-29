@@ -11,7 +11,7 @@ from gi.repository import Gtk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, PRESSABLE
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.controller_widget import ControllerPad, ControllerStick
-from scc.gui.modeswitch_editor import ModeswitchEditor
+from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.profile_manager import ProfileManager
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
@@ -140,7 +140,7 @@ class App(Gtk.Application, ProfileManager):
 	
 	def _choose_editor(self, action, title):
 		if isinstance(action, ModeModifier):
-			e = ModeswitchEditor(self, self.on_action_chosen)
+			e = ModeshiftEditor(self, self.on_action_chosen)
 			e.set_title(_("Mode Switch for %s") % (title,))
 		else:
 			e = ActionEditor(self, self.on_action_chosen)

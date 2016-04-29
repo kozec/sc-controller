@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.19.0 -->
+<!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjFullLevel">
@@ -1479,6 +1479,29 @@
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
         <child>
+          <object class="GtkButton" id="btModeshift">
+            <property name="label" translatable="yes">Mode Shift</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_btModeshift_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btMacro">
+            <property name="label" translatable="yes">Macro</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+          </object>
+          <packing>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkButton" id="btClear">
             <property name="label">gtk-clear</property>
             <property name="visible">True</property>
@@ -1488,19 +1511,8 @@
             <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
           </object>
           <packing>
+            <property name="pack_type">end</property>
             <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="btModeSwitch">
-            <property name="label" translatable="yes">Mode Switch</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="on_btModeSwitch_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="position">2</property>
           </packing>
         </child>
         <child>

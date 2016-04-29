@@ -17,10 +17,10 @@ from scc.profile import Profile
 
 from gi.repository import Gtk, Gdk, GLib
 import os, logging
-log = logging.getLogger("ModeswitchEditor")
+log = logging.getLogger("ModeshiftEditor")
 
-class ModeswitchEditor(Editor):
-	GLADE = "modeswitch_editor.glade"
+class ModeshiftEditor(Editor):
+	GLADE = "modeshift_editor.glade"
 	BUTTONS = (	# in order as displayed in combobox
 		(SCButtons.A,			_('A') ),
 		(SCButtons.B,			_('B') ),
@@ -166,7 +166,7 @@ class ModeswitchEditor(Editor):
 				
 				ae = ActionEditor(self.app, on_chosen)
 				ae.set_title(_("Edit Action"))
-				ae.hide_modeswitch()
+				ae.hide_modeshift()
 				self._setup_editor(ae, action)
 				ae.show(self.window)
 				return
@@ -180,7 +180,7 @@ class ModeswitchEditor(Editor):
 		
 		ae = ActionEditor(self.app, on_chosen)
 		ae.set_title(_("Edit Action"))
-		ae.hide_modeswitch()
+		ae.hide_modeshift()
 		self._setup_editor(ae, self.default)
 		ae.show(self.window)
 	
