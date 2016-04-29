@@ -579,59 +579,6 @@ class SleepAction(Action):
 	def button_release(self, mapper): pass
 
 
-class MacroAction(Action):
-	COMMAND = "macro"
-	HOLD_TIME = 0.01
-	
-	def __init__(self, *parameters):
-		Action.__init__(self, *parameters)
-		self.actions = []
-		self.current = None
-		self.release = None
-		for p in parameters:
-			if type(p) == float and len(self.actions):
-				self.actions[-1].delay_after = p
-			elif isinstance(p, Action):
-				self.actions.append(p)
-			else:
-				self.actions.append(ButtonAction(p))
-	
-	
-	def button_press(self, mapper):
-		# Macro can be executed only by pressing button
-		if self.current is not None:
-			# Already executing macro
-			return False
-		if len(self.actions) < 1:
-			# Empty macro
-			return False
-		self.current = [] + self.actions
-		self.timer(mapper)
-	
-	
-	def timer(self, mapper):
-		if self.release is None:
-			# Execute next action
-			self.release, self.current = self.current[0], self.current[1:]
-			self.release.button_press(mapper)
-			mapper.schedule(self.HOLD_TIME, self.timer)
-		else:
-			# Finish last action
-			self.release.button_release(mapper)
-			if len(self.current) == 0:
-				# Finished
-				self.current = None
-				self.release = None
-			else:
-				# Schedule for next action
-				mapper.schedule(self.release.delay_after, self.timer)
-				self.release = None
-	
-	
-	def button_release(self, mapper):
-		pass
-
-
 class ChangeProfileAction(Action):
 	COMMAND = "profile"
 	
@@ -686,39 +633,108 @@ class ShellCommandAction(Action):
 		pass
 
 
-class MultiAction(Action):
+class Macro(Action):
 	"""
 	Two or more actions executed in sequence.
 	Generated when parsing ';'
 	"""
-	COMMAND = None
 
+	COMMAND = None
+	HOLD_TIME = 0.01
+	
+	def __init__(self, *parameters):
+		Action.__init__(self, *parameters)
+		self.actions = []
+		self.current = None
+		self.release = None
+		for p in parameters:
+			if type(p) == float and len(self.actions):
+				self.actions[-1].delay_after = p
+			elif isinstance(p, Action):
+				self.actions.append(p)
+			else:
+				self.actions.append(ButtonAction(p))
+	
+	
+	def button_press(self, mapper):
+		# Macro can be executed only by pressing button
+		if self.current is not None:
+			# Already executing macro
+			return False
+		if len(self.actions) < 1:
+			# Empty macro
+			return False
+		self.current = [] + self.actions
+		self.timer(mapper)
+	
+	
+	def timer(self, mapper):
+		if self.release is None:
+			# Execute next action
+			self.release, self.current = self.current[0], self.current[1:]
+			self.release.button_press(mapper)
+			mapper.schedule(self.HOLD_TIME, self.timer)
+		else:
+			# Finish last action
+			self.release.button_release(mapper)
+			if len(self.current) == 0:
+				# Finished
+				self.current = None
+				self.release = None
+			else:
+				# Schedule for next action
+				mapper.schedule(self.release.delay_after, self.timer)
+				self.release = None
+	
+	
+	def button_release(self, mapper):
+		pass
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return "; ".join([ x.describe(context) for x in self.actions ])
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "; ".join([ x.to_string() for x in self.actions ])
+	
+	
+	def __str__(self):
+		return "<[ %s ]>" % ("; ".join([ str(x) for x in self.actions ]), )
+	
+	__repr__ = __str__
+
+
+class MultiAction(Action):
+	"""
+	Two or more actions executed at once.
+	Generated when parsing 'and'
+	"""
+	COMMAND = None
+	
 	def __init__(self, *actions):
 		self.actions = []
 		self.name = None
 		self._add_all(actions)
-
-
+	
+	
 	def _add_all(self, actions):
 		for x in actions:
 			if type(x) == list:
 				self._add_all(x)
 			else:
 				self._add(x)
-
-
+	
+	
 	def _add(self, action):
-		if action.__class__ == self.__class__:	# I don't wan't subclasses here
+		if action.__class__ == self.__class__:	# I don't want subclasses here
 			self._add_all(action.actions)
 		else:
 			self.actions.append(action)
-
-
+	
+	
 	def describe(self, context):
-		"""
-		Returns string that describes what action does in human-readable form.
-		Used in GUI.
-		"""
 		if self.name: return self.name
 		if isinstance(self.actions[0], ButtonAction):
 			# Special case, key combination
@@ -727,9 +743,9 @@ class MultiAction(Action):
 				if isinstance(a, ButtonAction,):
 					rv.append(a.describe_short())
 			return "+".join(rv)
-		return self.actions[0].describe(context)
-
-
+		return " and ".join([ x.describe(context) for x in self.actions ])
+	
+	
 	def execute(self, event):
 		rv = False
 		for a in self.actions:
@@ -754,21 +770,21 @@ class MultiAction(Action):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		return (" " * pad) + "; ".join([ x.to_string() for x in self.actions ])
+		return (" " * pad) + " and ".join([ x.to_string() for x in self.actions ])
 	
 	
 	def __str__(self):
-		return "<[ %s ]>" % ("; ".join([ str(x) for x in self.actions ]), )
-
+		return "<[ %s ]>" % (" and ".join([ str(x) for x in self.actions ]), )
+	
 	__repr__ = __str__
 
 
-class DPadAction(MultiAction):
+class DPadAction(Action):
 	COMMAND = "dpad"
 	
 	def __init__(self, *actions):
-		MultiAction.__init__(self, *actions)
-		self.sides = ensure_size(4, self.actions)
+		Action.__init__(self, *actions)
+		self.actions = ensure_size(4, actions)
 		self.eight = False
 		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
 	
@@ -816,22 +832,22 @@ class DPadAction(MultiAction):
 				side = 2 + side[1] * 2 + side[0]
 			
 			if side != self.dpad_state[2] and self.dpad_state[2] is not None:
-				if self.sides[self.dpad_state[2]] is not None:
-					self.sides[self.dpad_state[2]].button_release(mapper)
+				if self.actions[self.dpad_state[2]] is not None:
+					self.actions[self.dpad_state[2]].button_release(mapper)
 				self.dpad_state[2] = None
 			if side is not None and side != self.dpad_state[2]:
-				if self.sides[side] is not None:
-					rv = self.sides[side].button_press(mapper)
+				if self.actions[side] is not None:
+					rv = self.actions[side].button_press(mapper)
 				self.dpad_state[2] = side
 		else:
 			for i in (0, 1):
 				if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
-					if self.sides[self.dpad_state[i]] is not None:
-						self.sides[self.dpad_state[i]].button_release(mapper)
+					if self.actions[self.dpad_state[i]] is not None:
+						self.actions[self.dpad_state[i]].button_release(mapper)
 					self.dpad_state[i] = None
 				if side[i] is not None and side[i] != self.dpad_state[i]:
-					if self.sides[side[i]] is not None:
-						self.sides[side[i]].button_press(mapper)
+					if self.actions[side[i]] is not None:
+						self.actions[side[i]].button_press(mapper)
 					self.dpad_state[i] = side[i]
 
 
@@ -840,7 +856,7 @@ class DPad8Action(DPadAction):
 
 	def __init__(self, *actions):
 		DPadAction.__init__(self, *actions)
-		self.sides = ensure_size(8, self.actions)
+		self.actions = ensure_size(8, actions)
 		self.eight = True
 	
 	def describe(self, context):
@@ -848,14 +864,15 @@ class DPad8Action(DPadAction):
 		return "8-Way DPad"
 
 
-class XYAction(MultiAction):
+class XYAction(Action):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "XY"
 	
 	def __init__(self, x=None, y=None):
-		MultiAction.__init__(self, *strip_none(x, y))
+		Action.__init__(self, *strip_none(x, y))
+		self.actions = strip_none(x, y)
 		self.x = x or NoAction()
 		self.y = y or NoAction()
 	
@@ -898,16 +915,20 @@ class XYAction(MultiAction):
 		if multiline:
 			rv = []
 			i = 0
-			for a in self.actions[0:2]:
-				if i == 0:
-					rv += [ "X:" ]
-				elif i == 1:
-					rv += [ "Y:" ]
-				i += 1
-				rv += [ "  " + x for x in a.to_string(True).split("\n") ]
+			for a in (self.x, self.y):
+				if a:
+					if i == 0:
+						rv += [ "X:" ]
+					elif i == 1:
+						rv += [ "Y:" ]
+					i += 1
+					rv += [ "  " + x for x in a.to_string(True).split("\n") ]
 			return "\n".join(rv)
-			
-		return "XY(" + (", ".join([ x.to_string() for x in self.actions ])) + ")"
+		
+		if self.y:
+			return "XY(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
+		else:
+			return "XY(" + self.x.to_string() + ")"
 	
 	
 	def encode(self):

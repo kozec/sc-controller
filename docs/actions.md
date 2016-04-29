@@ -50,13 +50,6 @@ stick position, what probably doesn't yields expected results.
 #### dpad8(up, down, left, right, upleft, upright, downleft, downright)
 Same as dpad, with more directions.
 
-
-### macro(key1, key2... [, pause])
-Available only for buttons. Emulates multiple keyboard (or button) presses.
-Pause, if used, has to be int or floating number and specifies delay between
-key being pressed and released.
-
-
 ### profile(name)
 Loads another profile
 
@@ -93,7 +86,15 @@ Same thing as hatup/hatdown, as vertical hat movement and left/right dpad
 buttons are same events on another axis
 
 
-# Examples:
+# Macros and operators
+There are two operators for concentating actions - `and` and `;` (semicolon).
+
+- `and` executes actions at once: `button(KEY_LEFTALT) and button(KEY_F4)` presses Alt+F4
+- `;` (or newline) executes actions as macro: `hatup(ABS_Y); hatup(ABS_Y); button(BTN_B); button(BTN_A)` presses 'UP UP B A' on gamepad
+- to insert pause into macro, use `sleep()` action: `button(KEY_A); button(KEY_B); sleep(1.0); button(KEY_C)` types 'ab', waits 1s and types 'c'
+
+
+# Examples
 Emulate key and button presses based on stick position
 ```
 "stick" : {

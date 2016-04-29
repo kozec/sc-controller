@@ -66,7 +66,7 @@ def ensure_size(n, lst):
 	If lst is shorter, None's are appended.
 	If lst is longer, it is cat.
 	"""
-	l = [] + lst
+	l = list(lst)
 	while len(l) < n : l.append(None)
 	return l[0:n]
 

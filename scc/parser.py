@@ -10,7 +10,7 @@ from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
 from scc.uinput import Keys, Axes, Rels
-from scc.actions import ACTIONS, NoAction, MultiAction
+from scc.actions import ACTIONS, NoAction, Macro, MultiAction
 from scc.constants import SCButtons
 
 import token as TokenType
@@ -193,7 +193,8 @@ class ActionParser(object):
 			return cls(*pars)
 		except ValueError, e:
 			raise ParseError(unicode(e))
-		except TypeError:
+		except TypeError, e:
+			print >>sys.stderr, e
 			raise ParseError("Invalid number of parameters for '%s'" % (cls.COMMAND))
 	
 	
@@ -236,7 +237,7 @@ class ActionParser(object):
 				raise ParseError("Excepted action after 'and'")
 			action1 = self._create_action(action_class, *parameters)
 			action2 = self._parse_action()
-			return LinkedActions(action1, action2)
+			return MultiAction(action1, action2)
 		
 		if t.type == TokenType.NEWLINE or (t.type == TokenType.OP and t.value == ';'):
 			# Two (or more) actions joined by ';'
@@ -248,7 +249,7 @@ class ActionParser(object):
 				return self._create_action(action_class, *parameters)
 			action1 = self._create_action(action_class, *parameters)
 			action2 = self._parse_action()
-			return MultiAction(action1, action2)
+			return Macro(action1, action2)
 		
 		return self._create_action(action_class, *parameters)
 	
