@@ -141,10 +141,10 @@ class App(Gtk.Application, ProfileManager):
 	def _choose_editor(self, action, title):
 		if isinstance(action, ModeModifier):
 			e = ModeswitchEditor(self, self.on_action_chosen)
-			e.set_title(_("Edit Mode Switch for %s") % (title,))
+			e.set_title(_("Mode Switch for %s") % (title,))
 		else:
 			e = ActionEditor(self, self.on_action_chosen)
-			e.set_title(_("Edit Action for %s") % (title,))
+			e.set_title(title)
 		return e
 		
 	
@@ -170,10 +170,10 @@ class App(Gtk.Application, ProfileManager):
 			data = NoAction()
 			if id == "LPAD":
 				data = self.current.pads[Profile.LEFT]
-				ae = self._choose_editor(data, _("for Left Pad"))
+				ae = self._choose_editor(data, _("Left Pad"))
 			else:
 				data = self.current.pads[Profile.RIGHT]
-				ae = self._choose_editor(data, _("for Right Pad"))
+				ae = self._choose_editor(data, _("Right Pad"))
 			ae.set_pad(id, data)
 			ae.show(self.window)
 	
