@@ -86,7 +86,9 @@ class Macro(Action):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		return "repeat" + "; ".join([ x.describe(context) for x in self.actions ])
+		if self.repeat:
+			return "repeat " + "; ".join([ x.describe(context) for x in self.actions ])
+		return "; ".join([ x.describe(context) for x in self.actions ])
 	
 	
 	def to_string(self, multiline=False, pad=0):
