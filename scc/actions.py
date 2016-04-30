@@ -681,6 +681,8 @@ class MultiAction(Action):
 	
 	
 	def to_string(self, multiline=False, pad=0):
+		if multiline:
+			return "\n".join([ a.to_string(True, pad) for a in self.actions ])
 		return (" " * pad) + " and ".join([ x.to_string() for x in self.actions ])
 	
 	

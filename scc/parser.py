@@ -240,7 +240,17 @@ class ActionParser(object):
 			action2 = self._parse_action()
 			return MultiAction(action1, action2)
 		
-		if t.type == TokenType.NEWLINE or (t.type == TokenType.OP and t.value == ';'):
+		if t.type == TokenType.NEWLINE or t.value == "\n":
+			# Newline can be used to join actions instead of 'and'
+			self._next_token()
+			if not self._tokens_left():
+				# Newline at end of string is not error
+				return self._create_action(action_class, *parameters)
+			action1 = self._create_action(action_class, *parameters)
+			action2 = self._parse_action()
+			return MultiAction(action1, action2)
+		
+		if t.type == TokenType.OP and t.value == ';':
 			# Two (or more) actions joined by ';'
 			self._next_token()
 			while self._tokens_left() and self._peek_token().type == TokenType.NEWLINE:

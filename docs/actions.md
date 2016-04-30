@@ -88,11 +88,11 @@ buttons are same events on another axis
 # Macros and operators
 
 #### and - executing actions at once
-It is possible to join two (or more) actions with `and` keyword to have them executed together.
+It is possible to join two (or more) actions with `and` keyword (or newline) to have them executed together.
 - `button(KEY_LEFTALT) and button(KEY_F4)` presses Alt+F4
 
 #### semicolon - sequence (macro)
-When `;` or newline is placed between actions, they are executed as sequence.
+When `;` is placed between actions, they are executed as sequence.
 - `hatup(ABS_Y); hatup(ABS_Y); button(BTN_B); button(BTN_A)` presses 'UP UP B A' on gamepad, as fast as possible
 - `button(KEY_A); button(KEY_B); button(KEY_C)` types 'abc'.
 

@@ -1,7 +1,7 @@
 {
     "buttons": {
         "A": {
-            "action": "button(Keys.KEY_SPACE); button(Keys.KEY_ENTER)", 
+            "action": "button(Keys.KEY_SPACE) and button(Keys.KEY_ENTER)", 
             "modes": {
                 "LGRIP": {
                     "action": "repeat(button(Keys.KEY_LEFT); button(Keys.KEY_RIGHT))", 
@@ -17,6 +17,9 @@
         "BACK": {
             "action": "button(Keys.KEY_TAB)", 
             "name": "Map"
+        }, 
+        "C": {
+            "action": "button(Keys.KEY_LEFTALT)"
         }, 
         "LB": {
             "action": "button(Keys.KEY_Q)", 

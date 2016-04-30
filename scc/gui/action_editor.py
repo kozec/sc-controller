@@ -9,8 +9,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, XYAction, NoAction, DPadAction, DPad8Action
+from scc.actions import AxisAction, MouseAction, MultiAction, ButtonAction
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
-from scc.actions import AxisAction, MouseAction, ButtonAction
 from scc.actions import TRIGGER_HALF, TRIGGER_CLICK
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.uinput import Keys, Axes, Rels
@@ -472,7 +472,11 @@ class ActionEditor(ButtonChooser):
 		self._set_mode(Action.AC_BUTTON)
 		self.set_action(action)
 		self.id = button
-	
+		if isinstance(action, ButtonAction):
+			pass
+		else:
+			self.builder.get_object("tgCustom").set_active(True)
+
 	
 	def set_trigger(self, trigger, action):
 		""" Setups action editor as editor for trigger action """
@@ -483,6 +487,8 @@ class ActionEditor(ButtonChooser):
 			self.builder.get_object("tgAxisTrigger").set_active(True)
 		elif isinstance(action, MouseAction):
 			self.builder.get_object("tgAxisTrigger").set_active(True)
+		elif isinstance(action, MultiAction):
+			self.builder.get_object("tgCustom").set_active(True)
 		elif isinstance(action, ButtonAction):
 			for x in xrange(0, len(action.parameters)):
 				self._multiparams[x] = action.parameters[x]
@@ -510,6 +516,8 @@ class ActionEditor(ButtonChooser):
 		elif isinstance(action, TrackpadAction):
 			self._select_axis_output("trackpad")
 			self._set_sensitivity(action)
+		elif isinstance(action, MultiAction):
+			self.builder.get_object("tgCustom").set_active(True)
 		elif isinstance(action, XYAction):
 			mfp = isinstance(action.actions[1], RAxisAction)	# mfp for 'may be first page'
 			mfp = mfp or isinstance(action.actions[1], MouseAction)
