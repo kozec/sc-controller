@@ -9,9 +9,10 @@ from __future__ import unicode_literals
 from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
+from scc.actions import ACTIONS, NoAction, MultiAction
 from scc.uinput import Keys, Axes, Rels
-from scc.actions import ACTIONS, NoAction, Macro, MultiAction
 from scc.constants import SCButtons
+from scc.macros import Macro
 
 import token as TokenType
 import sys

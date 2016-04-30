@@ -21,7 +21,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
 from scc.constants import SCButtons
-from scc.actions import XYAction, NoAction, Macro
+from scc.actions import XYAction, NoAction
+from scc.macros import Macro, Repeat
 from scc.modifiers import ModeModifier
 from scc.profile import Profile
 
@@ -337,13 +338,15 @@ class App(Gtk.Application, ProfileManager):
 		self.save_profile(self.current_file, self.current)
 	
 	
-	def on_action_chosen(self, id, action):
+	def on_action_chosen(self, id, action, reopen=False):
 		before = self._set_action(id, action)
 		if type(before) != type(action) or before.to_string() != action.to_string():
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
 			self.builder.get_object("btUndo").set_sensitive(True)
 		self.on_profile_changed()
+		if reopen:
+			self.show_editor(id)
 	
 	
 	def _set_action(self, id, action):

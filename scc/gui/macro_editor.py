@@ -10,7 +10,8 @@ from scc.tools import _
 from scc.gui.controller_widget import ControllerButton
 from scc.gui.action_editor import ActionEditor
 from scc.gui.editor import Editor
-from scc.actions import Action, Macro, ButtonAction, NoAction, SleepAction
+from scc.actions import Action, ButtonAction, NoAction
+from scc.macros import Macro, Repeat, SleepAction
 from scc.modifiers import ModeModifier
 from scc.constants import SCButtons
 from scc.profile import Profile
@@ -38,10 +39,37 @@ class MacroEditor(Editor):
 		self.builder.connect_signals(self)
 	
 	
+	def update_action_field(self):
+		""" Updates field on bottom """
+		entAction = self.builder.get_object("entAction")
+		entAction.set_text(self._make_action().to_string())
+	
+	
+	def _make_action(self):
+		""" Generates and returns Action instance """
+		entName = self.builder.get_object("entName")
+		cbMacroType = self.builder.get_object("cbMacroType")
+		pars = [ x[0] for x in self.actions ]
+		action = Macro(*pars)
+		if len(pars) == 0:
+			# No action is actually set
+			action = NoAction()
+		elif cbMacroType.get_active() == 1:
+			action.repeat = True
+		elif len(pars) == 1:
+			# Only one action
+			action = pars[0]
+		if entName.get_text().strip() != "":
+			action.name = entName.get_text().strip()
+		return action
+	
+	
 	def _add_action(self, action):
+		""" Adds widgets for new action """
 		grActions = self.builder.get_object("grActions")
 		model = self.builder.get_object("lstPressClickOrHold")
 		i = len(self.actions) + 1
+		action.name = None
 		
 		# Buttons
 		upb, downb, clearb = Gtk.Button(), Gtk.Button(), Gtk.Button()
@@ -121,10 +149,12 @@ class MacroEditor(Editor):
 		downb.set_sensitive(False)
 		
 		self.actions.append(action_data)
+		self.update_action_field()
 		grActions.show_all()
 	
 	
 	def on_moveb_clicked(self, trash, direction, data):
+		""" Handler for 'move action' buttons """
 		action = data[0]
 		readd = [ x[0] for x in self.actions ]
 		index = readd.index(action) + direction
@@ -137,40 +167,39 @@ class MacroEditor(Editor):
 		readd.remove(action)
 		readd.insert(index, action)
 		self._refill_grid(readd)
+		self.update_action_field()
 	
 	
 	def on_clearb_clicked(self, trash, data):
+		""" Handler for 'delete action' button """
 		self._clear_grid()
 		self.actions.remove(data)
 		readd = [ x[0] for x in self.actions ]
 		self._refill_grid(readd)
+		self.update_action_field()
+	
+	
+	def on_cbMacroType_changed(self, *a):
+		self.update_action_field()
+	
+	
+	def _clear_grid(self):
+		""" Removes everything from UI """
+		grActions = self.builder.get_object("grActions")
+		for child in [] + grActions.get_children():
+			grActions.remove(child)
 	
 	
 	def _refill_grid(self, new_actions):
+		""" Removes everything from UI and then adds updated stuff back """
 		self._clear_grid()
 		self.actions = []
 		for a in new_actions:
 			self._add_action(a)
 	
 	
-	def _clear_grid(self):
-		grActions = self.builder.get_object("grActions")
-		for child in [] + grActions.get_children():
-			grActions.remove(child)
-	
-	
-	def _setup_editor(self, ae, action):
-		if self.mode == Action.AC_BUTTON:
-			ae.set_button(self.id, action)
-		elif self.mode == Action.AC_TRIGGER:
-			ae.set_trigger(self.id, action)
-		elif self.mode == Action.AC_STICK:
-			ae.set_stick(action)
-		elif self.mode == Action.AC_PAD:
-			ae.set_pad(self.id, action)		
-	
-	
 	def on_change_delay(self, scale, trash, value, data):
+		""" Called when delay slider is moved """
 		ms = int(value)
 		action = data[0]
 		label = data[-1][-2]
@@ -180,26 +209,46 @@ class MacroEditor(Editor):
 		else:
 			s = ms / 1000.0
 			label.set_markup(_("<b>Delay: %0.2fs</b>") % (s,))
+		self.update_action_field()
+	
+	
+	def _setup_editor(self, ae, action):
+		""" Setups editor used to edit subaction """
+		if self.mode == Action.AC_BUTTON:
+			ae.set_button(self.id, action)
+		elif self.mode == Action.AC_TRIGGER:
+			ae.set_trigger(self.id, action)
+		elif self.mode == Action.AC_STICK:
+			ae.set_stick(action)
+		elif self.mode == Action.AC_PAD:
+			ae.set_pad(self.id, action)
 	
 	
 	def on_actionb_clicked(self, trash, data):
+		""" Handler clicking on action name """
 		action, widgets = data
-		def on_chosen(id, action):
+		def on_chosen(id, action, reopen=False):
 			data[0] = action
 			self._refill_grid([ x[0] for x in self.actions ])
+			self.update_action_field()
+			if reopen: self.on_actionb_clicked(trash, data)
 		
 		ae = ActionEditor(self.app, on_chosen)
 		ae.set_title(_("Edit Action"))
-		ae.hide_modeshift()
 		self._setup_editor(ae, action)
+		ae.hide_modeshift()
+		ae.hide_macro()
+		ae.hide_name()
 		ae.show(self.window)
 	
 	
 	def on_btAddAction_clicked(self, *a):
+		""" Handler for Add Action button """
 		self._add_action(NoAction())
 	
 	
 	def on_btAddDelay_clicked(self, *a):
+		""" Handler for Add Delay button """
 		self._add_action(SleepAction(0.5))
 	
 	
@@ -213,27 +262,21 @@ class MacroEditor(Editor):
 	
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
-		entName = self.builder.get_object("entName")
-		pars = [ x[0] for x in self.actions ]
-		action = Macro(*pars)
-		if len(pars) == 0:
-			# No action is actually set
-			action = NoAction()
-		elif len(pars) == 1:
-			# Only default action left
-			action = self.default
-		if entName.get_text().strip() != "":
-			action.name = entName.get_text().strip()
+		a = self._make_action()
 		if self.ac_callback is not None:
-			self.ac_callback(self.id, action)
+			self.ac_callback(self.id, a)
 		self.close()
 	
 	
 	def _set_mode(self, mode, id, action):
+		""" Common part of editor setup """
 		btDefault = self.builder.get_object("btDefault")
 		entName = self.builder.get_object("entName")
+		cbMacroType = self.builder.get_object("cbMacroType")
 		self.id = id
 		self.mode = mode
+		if action.repeat:
+			cbMacroType.set_active(1)
 		for a in action.actions:
 			self._add_action(a)
 		if action.name is not None:

@@ -87,6 +87,7 @@ class ControllerButton(ControllerWidget):
 		if self.id in SCButtons and self.id in self.app.current.buttons:
 			txt = self.app.current.buttons[self.id].describe(self.ACTION_CONTEXT)
 			if len(txt) > LONG_TEXT or "\n" in txt:
+				txt = "\n".join(txt.split("\n")[0:2])
 				self.label.set_markup("<small>%s</small>" % (txt,))
 			else:
 				self.label.set_label(txt)

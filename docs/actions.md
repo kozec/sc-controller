@@ -50,11 +50,12 @@ stick position, what probably doesn't yields expected results.
 #### dpad8(up, down, left, right, upleft, upright, downleft, downright)
 Same as dpad, with more directions.
 
-### profile(name)
+#### profile(name)
 Loads another profile
 
-### shell(command)
+#### shell(command)
 Executes command on background
+
 
 # Modifiers:
 
@@ -87,33 +88,46 @@ buttons are same events on another axis
 
 
 # Macros and operators
-There are two operators for concentating actions - `and` and `;` (semicolon).
 
-- `and` executes actions at once: `button(KEY_LEFTALT) and button(KEY_F4)` presses Alt+F4
-- `;` (or newline) executes actions as macro: `hatup(ABS_Y); hatup(ABS_Y); button(BTN_B); button(BTN_A)` presses 'UP UP B A' on gamepad
-- to insert pause into macro, use `sleep()` action: `button(KEY_A); button(KEY_B); sleep(1.0); button(KEY_C)` types 'ab', waits 1s and types 'c'
+#### and - executing actions at once
+It is possible to join two (or more) actions with `and` keyword to have them executed together.
+- `button(KEY_LEFTALT) and button(KEY_F4)` presses Alt+F4
+
+#### semicolon - sequence (macro)
+When `;` or newline is placed between actions, they are executed as sequence.
+- `hatup(ABS_Y); hatup(ABS_Y); button(BTN_B); button(BTN_A)` presses 'UP UP B A' on gamepad, as fast as possible
+- `button(KEY_A); button(KEY_B); button(KEY_C)` types 'abc'.
+
+#### sleep(x)
+To insert pause between macro actions, use sleep() action.
+- `button(KEY_A); button(KEY_B); sleep(1.0); button(KEY_C)` types 'ab', waits 1s and types 'c'
+
+#### repeat(action)
+Turbo / rapid fire mode. Repeats macro (or even single action) until physical button is released. Macro is always played to end, even if button is released before macro is finished.
+
+- `repeat(button(BTN_X))` deals with "mash X to not die" events in some games.
 
 
 # Examples
-Emulate key and button presses based on stick position
+Emulate key presses based on stick position
 ```
 "stick" : {
-	"X"		: { "action" : "pad(Keys.BTN_X, Keys.BTN_B)" },
-	"Y"		: { "action" : "key(Keys.KEY_A, Keys.KEY_B)" },
+	"X"		: { "action" : "pad(KEY_A, KEY_D)" },
+	"Y"		: { "action" : "key(KEY_W, KEY_S)" },
 ```
 
 
 Emulate left/right stick movement with X and B buttons
 ```
 "buttons" : {
-	"B"      : { "action" : "axis(Axes.ABS_X, 0, 32767)" },
-	"X"      : { "action" : "axis(Axes.ABS_X, 0, -32767)" },
+	"B"      : { "action" : "axis(ABS_X, 0, 32767)" },
+	"X"      : { "action" : "axis(ABS_X, 0, -32767)" },
 ```
 
 Emulate dpad on left touchpad, but act only when dpad is pressed
 ```
 "left_pad" : {
-	"action" : "click( dpad('hatup(Axes.ABS_HAT0Y)', 'hatdown(Axes.ABS_HAT0Y)', 'hatleft(Axes.ABS_HAT0X)', 'hatright(Axes.ABS_HAT0X)' ) )"
+	"action" : "click( dpad('hatup(ABS_HAT0Y)', 'hatdown(ABS_HAT0Y)', 'hatleft(ABS_HAT0X)', 'hatright(ABS_HAT0X)' ) )"
 }
 ```
 
@@ -121,5 +135,5 @@ Emulate button A when left trigger is half-pressed and button B when
 it is pressed fully
 ```
 "triggers" : {
-	"LEFT"  : { "action" : "pad(Keys.BTN_A, Keys.BTN_B)" },
+	"LEFT"  : { "action" : "pad(BTN_A, BTN_B)" },
 ```

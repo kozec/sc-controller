@@ -9,11 +9,13 @@ from scc.tools import _
 
 from scc.gui.controller_widget import ControllerButton
 from scc.gui.action_editor import ActionEditor
+from scc.gui.macro_editor import MacroEditor
 from scc.gui.editor import Editor
 from scc.constants import SCButtons
 from scc.actions import Action, NoAction
 from scc.modifiers import ModeModifier
 from scc.profile import Profile
+from scc.macros import Macro
 
 from gi.repository import Gtk, Gdk, GLib
 import os, logging
@@ -156,17 +158,27 @@ class ModeshiftEditor(Editor):
 			ae.set_pad(self.id, action)		
 	
 	
+	def _choose_editor(self, action, cb):
+		if isinstance(action, Macro):
+			e = MacroEditor(self.app, cb)
+			e.set_title(_("Edit Macro"))
+		else:
+			e = ActionEditor(self.app, cb)
+			e.set_title(_("Edit Action"))
+			e.hide_modeshift()
+		return e
+
+	
 	def on_actionb_clicked(self, trash, clicked_button):
 		for i in self.actions:
 			button, action, l, b, clearb = i
 			if button == clicked_button:
-				def on_chosen(id, action):
+				def on_chosen(id, action, reopen=False):
 					b.set_label(action.describe(self.mode))
 					i[1] = action
+					if reopen: self.on_actionb_clicked(trash, clicked_button)
 				
-				ae = ActionEditor(self.app, on_chosen)
-				ae.set_title(_("Edit Action"))
-				ae.hide_modeshift()
+				ae = self._choose_editor(action, on_chosen)
 				self._setup_editor(ae, action)
 				ae.show(self.window)
 				return
@@ -174,13 +186,12 @@ class ModeshiftEditor(Editor):
 	
 	def on_btDefault_clicked(self, *a):
 		btDefault = self.builder.get_object("btDefault")
-		def on_chosen(id, action):
+		def on_chosen(id, action, reopen=False):
 			btDefault.set_label(action.describe(self.mode))
 			self.default = action
+			if reopen: self.on_btDefault_clicked()
 		
-		ae = ActionEditor(self.app, on_chosen)
-		ae.set_title(_("Edit Action"))
-		ae.hide_modeshift()
+		ae = self._choose_editor(self.default, on_chosen)
 		self._setup_editor(ae, self.default)
 		ae.show(self.window)
 	

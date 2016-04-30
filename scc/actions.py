@@ -565,34 +565,6 @@ class ButtonAction(Action):
 			self._released = True
 
 
-class SleepAction(Action):
-	"""
-	Does nothing.
-	If used in macro, overrides delay after itself.
-	"""
-	COMMAND = "sleep"
-	def __init__(self, delay):
-		Action.__init__(self, delay)
-		self.delay = float(delay)
-		self.delay_after = self.delay - Macro.HOLD_TIME
-	
-	def describe(self, context):
-		if self.name: return self.name
-		if self.delay < 1.0:
-			return _("Wait %sms") % (int(self.delay*1000),)
-		else:
-			s = ("%0.2f" % (self.delay,)).strip(".0")
-			return _("Wait %ss") % (s,)
-	
-	
-	def to_string(self, multiline=False, pad=0):
-		return (" " * pad) + "%s(%s)" % (self.COMMAND, self.delay)
-
-	
-	def button_press(self, mapper): pass
-	def button_release(self, mapper): pass
-
-
 class ChangeProfileAction(Action):
 	COMMAND = "profile"
 	
@@ -645,81 +617,6 @@ class ShellCommandAction(Action):
 	
 	def button_release(self, mapper):
 		pass
-
-
-class Macro(Action):
-	"""
-	Two or more actions executed in sequence.
-	Generated when parsing ';'
-	"""
-
-	COMMAND = None
-	HOLD_TIME = 0.01
-	
-	def __init__(self, *parameters):
-		Action.__init__(self, *parameters)
-		self.actions = []
-		self.current = None
-		self.release = None
-		for p in parameters:
-			if type(p) == float and len(self.actions):
-				self.actions[-1].delay_after = p
-			elif isinstance(p, Macro):
-				self.actions += p.actions
-			elif isinstance(p, Action):
-				self.actions.append(p)
-			else:
-				self.actions.append(ButtonAction(p))
-	
-	
-	def button_press(self, mapper):
-		# Macro can be executed only by pressing button
-		if self.current is not None:
-			# Already executing macro
-			return False
-		if len(self.actions) < 1:
-			# Empty macro
-			return False
-		self.current = [] + self.actions
-		self.timer(mapper)
-	
-	
-	def timer(self, mapper):
-		if self.release is None:
-			# Execute next action
-			self.release, self.current = self.current[0], self.current[1:]
-			self.release.button_press(mapper)
-			mapper.schedule(self.HOLD_TIME, self.timer)
-		else:
-			# Finish last action
-			self.release.button_release(mapper)
-			if len(self.current) == 0:
-				# Finished
-				self.current = None
-				self.release = None
-			else:
-				# Schedule for next action
-				mapper.schedule(self.release.delay_after, self.timer)
-				self.release = None
-	
-	
-	def button_release(self, mapper):
-		pass
-	
-	
-	def describe(self, context):
-		if self.name: return self.name
-		return "; ".join([ x.describe(context) for x in self.actions ])
-	
-	
-	def to_string(self, multiline=False, pad=0):
-		return (" " * pad) + "; ".join([ x.to_string() for x in self.actions ])
-	
-	
-	def __str__(self):
-		return "<[ %s ]>" % ("; ".join([ str(x) for x in self.actions ]), )
-	
-	__repr__ = __str__
 
 
 class MultiAction(Action):
@@ -1023,4 +920,5 @@ ACTIONS = {
 }
 ACTIONS["None"] = NoAction
 
+import scc.macros
 import scc.modifiers
