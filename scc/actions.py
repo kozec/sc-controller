@@ -403,7 +403,6 @@ class TrackpadAction(TrackballAction):
 
 class ButtonAction(Action):
 	COMMAND = "button"
-	MIN_PAR_COUNT = 1
 	SPECIAL_NAMES = {
 		Keys.BTN_LEFT	: "Mouse Left",
 		Keys.BTN_MIDDLE	: "Mouse Middle",
@@ -454,8 +453,7 @@ class ButtonAction(Action):
 				return _("Wheel DOWN")
 		elif self.button in MOUSE_BUTTONS:
 			return _("Mouse %s") % (self.button,)
-		else:
-			return self.button.name.split("_", 1)[-1]
+		return self.button.name.split("_", 1)[-1]
 	
 	
 	def describe_short(self):

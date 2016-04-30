@@ -11,7 +11,7 @@ from scc.gui.controller_widget import ControllerButton
 from scc.gui.action_editor import ActionEditor
 from scc.gui.editor import Editor
 from scc.actions import Action, ButtonAction, NoAction
-from scc.macros import Macro, Repeat, SleepAction
+from scc.macros import Macro, Repeat, SleepAction, PressAction, ReleaseAction
 from scc.modifiers import ModeModifier
 from scc.constants import SCButtons
 from scc.profile import Profile
@@ -82,7 +82,7 @@ class MacroEditor(Editor):
 		b.set_property("margin-right", 10)
 		action_data = [ action, widgets ]
 		
-		if isinstance(action, ButtonAction):
+		if isinstance(action, ButtonAction) or isinstance(action, PressAction):
 			# Combobox
 			c = Gtk.ComboBox()
 			c.set_model(model)
@@ -90,7 +90,15 @@ class MacroEditor(Editor):
 			renderer = Gtk.CellRendererText()
 			c.pack_start(renderer, True)
 			c.add_attribute(renderer, 'text', 1)
-			c.set_active(0)
+			if isinstance(action, ReleaseAction):
+				c.set_active(2)
+				b.set_label(action.describe_short())
+			elif isinstance(action, PressAction):
+				c.set_active(1)
+				b.set_label(action.describe_short())
+			else:
+				c.set_active(0)
+			c.connect('changed', self.on_buttonaction_type_change, action_data)
 			
 			widgets += [c, b]
 			grActions.attach(c,			0, i, 1, 1)
@@ -182,6 +190,16 @@ class MacroEditor(Editor):
 	def on_cbMacroType_changed(self, *a):
 		self.update_action_field()
 	
+	
+	def on_buttonaction_type_change(self, cb, data):
+		if cb.get_active() == 0:
+			data[0] = ButtonAction(data[0].button)
+		elif cb.get_active() == 1:
+			data[0] = PressAction(data[0].button)
+		else:
+			data[0] = ReleaseAction(data[0].button)
+		self.update_action_field()
+		
 	
 	def _clear_grid(self):
 		""" Removes everything from UI """

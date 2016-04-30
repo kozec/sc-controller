@@ -1,7 +1,5 @@
 # Actions
 
-### button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
-- For button, simply maps to 'button1' press.
 - For stick or pad, when it is moved over 'minustrigger', 'button1' is pressed;
   When it is moved back, 'button1' is released. Similary, 'button2' is pressed
   and released when stick (or finger on pad) moves over 'plustrigger' value
@@ -106,6 +104,12 @@ To insert pause between macro actions, use sleep() action.
 Turbo / rapid fire mode. Repeats macro (or even single action) until physical button is released. Macro is always played to end, even if button is released before macro is finished.
 
 - `repeat(button(BTN_X))` deals with "mash X to not die" events in some games.
+
+### press(button)
+Presses button and leaves it pressed.
+
+### release(button)
+Releases pressed button button.
 
 
 # Examples

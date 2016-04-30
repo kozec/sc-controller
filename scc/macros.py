@@ -6,7 +6,7 @@ Frontier is my favorite.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, NoAction, ACTIONS
+from scc.actions import Action, NoAction, ButtonAction, ACTIONS, MOUSE_BUTTONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
 
@@ -143,6 +143,54 @@ class SleepAction(Action):
 	
 	def button_press(self, mapper): pass
 	def button_release(self, mapper): pass
+
+
+class PressAction(Action):
+	"""
+	Presses button and leaves it pressed.
+	Can be used anywhere, but makes sense only with macro.
+	"""
+	COMMAND = "press"
+	PR = _("Press")
+
+	def __init__(self, button):
+		Action.__init__(self, button)
+		self.button = button
+
+
+	def describe_short(self):
+		""" Used in macro editor """
+		if self.button in ButtonAction.SPECIAL_NAMES:
+			return _(ButtonAction.SPECIAL_NAMES[self.button])
+		elif self.button in MOUSE_BUTTONS:
+			return _("Mouse %s") % (self.button,)
+		return self.button.name.split("_", 1)[-1]
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return self.PR + " " + self.describe_short()
+	
+	
+	def button_press(self, mapper):
+		ButtonAction._button_press(mapper, self.button)
+	
+	
+	def button_release(self, mapper):
+		# This is activated only when button is pressed
+		pass
+
+
+class ReleaseAction(PressAction):
+	"""
+	Releases button.
+	Can be used anywhere, but makes sense only with macro.
+	"""
+	COMMAND = "release"
+	PR = _("Release")
+	
+	def button_press(self, mapper):
+		ButtonAction._button_release(mapper, self.button)
 
 
 # Add macros to ACTIONS dict
