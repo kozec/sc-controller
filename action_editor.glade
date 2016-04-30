@@ -108,7 +108,7 @@
         <property name="margin_bottom">10</property>
         <property name="column_homogeneous">True</property>
         <child>
-          <object class="GtkLabel" id="label1">
+          <object class="GtkLabel" id="lblName">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="no_show_all">True</property>
@@ -1479,28 +1479,27 @@
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
         <child>
-          <object class="GtkButton" id="btClear">
-            <property name="label">gtk-clear</property>
+          <object class="GtkButton" id="btModeshift">
+            <property name="label" translatable="yes">Mode Shift</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="btModeSwitch">
-            <property name="label" translatable="yes">Mode Switch</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="on_btModeSwitch_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btModeshift_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btMacro">
+            <property name="label" translatable="yes">Macro</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_btMacro_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="position">3</property>
           </packing>
         </child>
         <child>
@@ -1516,7 +1515,21 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
-            <property name="position">1</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btClear">
+            <property name="label">gtk-clear</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">6</property>
           </packing>
         </child>
       </object>

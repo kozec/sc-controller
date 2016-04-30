@@ -2,13 +2,23 @@
 <!-- Generated with glade 3.19.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
-  <object class="GtkListStore" id="lstControllerButtons">
+  <object class="GtkListStore" id="lstMacroType">
     <columns>
-      <!-- column-name value -->
+      <!-- column-name key -->
       <column type="gchararray"/>
       <!-- column-name text -->
       <column type="gchararray"/>
     </columns>
+    <data>
+      <row>
+        <col id="0">macro</col>
+        <col id="1" translatable="yes">Run once</col>
+      </row>
+      <row>
+        <col id="0">repeat</col>
+        <col id="1" translatable="yes">Repeat</col>
+      </row>
+    </data>
   </object>
   <object class="GtkWindow" id="Dialog">
     <property name="width_request">500</property>
@@ -30,6 +40,7 @@
         <property name="column_homogeneous">True</property>
         <child>
           <object class="GtkLabel" id="label1">
+            <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="no_show_all">True</property>
             <property name="margin_right">20</property>
@@ -47,7 +58,8 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="entry1">
+          <object class="GtkEntry" id="entName">
+            <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="no_show_all">True</property>
             <property name="margin_bottom">2</property>
@@ -59,109 +71,74 @@
           </packing>
         </child>
         <child>
-          <object class="GtkGrid" id="grActions">
+          <object class="GtkLabel" id="label2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="row_spacing">5</property>
-            <property name="column_spacing">15</property>
-            <property name="row_homogeneous">True</property>
-            <child>
-              <object class="GtkButton" id="btClearDefault">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="on_btClearDefault_clicked" swapped="no"/>
-                <child>
-                  <object class="GtkImage" id="image1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-clear</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btDefault">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="hexpand">True</property>
-                <signal name="clicked" handler="on_btDefault_clicked" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label2">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">(nothing pressed)</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
+            <property name="no_show_all">True</property>
+            <property name="margin_bottom">4</property>
+            <property name="label" translatable="yes">Macro Type</property>
+            <property name="ellipsize">end</property>
+            <property name="xalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
           </object>
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">1</property>
-            <property name="width">2</property>
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="box1">
+          <object class="GtkComboBox" id="cbMacroType">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="model">lstMacroType</property>
+            <property name="active">0</property>
+            <signal name="changed" handler="on_cbMacroType_changed" swapped="no"/>
             <child>
-              <object class="GtkComboBox" id="cbButtonChooser">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_right">5</property>
-                <property name="margin_top">20</property>
-                <property name="hexpand">True</property>
-                <property name="model">lstControllerButtons</property>
-                <property name="active">0</property>
-                <child>
-                  <object class="GtkCellRendererText" id="cellrenderertext1"/>
-                  <attributes>
-                    <attribute name="text">1</attribute>
-                  </attributes>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
+              <object class="GtkCellRendererText" id="cellrenderertext1"/>
+              <attributes>
+                <attribute name="text">1</attribute>
+              </attributes>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="grActions">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="row_spacing">5</property>
+            <property name="row_homogeneous">True</property>
+            <child>
+              <placeholder/>
             </child>
             <child>
-              <object class="GtkButton" id="btAddAction">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="margin_left">5</property>
-                <property name="margin_top">20</property>
-                <signal name="clicked" handler="on_btAddAction_clicked" swapped="no"/>
-                <child>
-                  <object class="GtkImage" id="image2">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-add</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
             </child>
           </object>
           <packing>
@@ -171,10 +148,80 @@
           </packing>
         </child>
         <child>
+          <object class="GtkBox" id="box1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">10</property>
+            <child>
+              <object class="GtkEntry" id="entAction">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_right">10</property>
+                <property name="activates_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btAddAction">
+                <property name="label" translatable="yes">Add _Action</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="margin_left">5</property>
+                <property name="use_underline">True</property>
+                <signal name="clicked" handler="on_btAddAction_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack_type">end</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btAddDelay">
+                <property name="label" translatable="yes">Add Delay</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_btAddDelay_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack_type">end</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">5</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkLabel" id="label3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="vexpand">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">4</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSeparator" id="separator1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">2</property>
+            <property name="margin_bottom">10</property>
           </object>
           <packing>
             <property name="left_attach">0</property>
@@ -190,19 +237,6 @@
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
         <child>
-          <object class="GtkButton" id="btClear">
-            <property name="label">gtk-clear</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkButton" id="btOK">
             <property name="label">gtk-ok</property>
             <property name="visible">True</property>
@@ -215,10 +249,45 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btClear">
+            <property name="label">gtk-clear</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
             <property name="position">1</property>
           </packing>
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkListStore" id="lstPressClickOrHold">
+    <columns>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">button</col>
+        <col id="1" translatable="yes">Click</col>
+      </row>
+      <row>
+        <col id="0">press</col>
+        <col id="1" translatable="yes">Press</col>
+      </row>
+      <row>
+        <col id="0">release</col>
+        <col id="1" translatable="yes">Release</col>
+      </row>
+    </data>
   </object>
 </interface>

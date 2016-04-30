@@ -11,10 +11,11 @@ from gi.repository import Gtk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, PRESSABLE
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.controller_widget import ControllerPad, ControllerStick
-from scc.gui.modeswitch_editor import ModeswitchEditor
+from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.profile_manager import ProfileManager
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
+from scc.gui.macro_editor import MacroEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
@@ -22,6 +23,7 @@ from scc.gui.ribar import RIBar
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
 from scc.constants import SCButtons
 from scc.actions import XYAction, NoAction
+from scc.macros import Macro, Repeat
 from scc.modifiers import ModeModifier
 from scc.profile import Profile
 
@@ -142,11 +144,14 @@ class App(Gtk.Application, ProfileManager):
 	
 	def _choose_editor(self, action, title):
 		if isinstance(action, ModeModifier):
-			e = ModeswitchEditor(self, self.on_action_chosen)
-			e.set_title(_("Edit Mode Switch for %s") % (title,))
+			e = ModeshiftEditor(self, self.on_action_chosen)
+			e.set_title(_("Mode Shift for %s") % (title,))
+		elif isinstance(action, Macro):
+			e = MacroEditor(self, self.on_action_chosen)
+			e.set_title(_("Macro for %s") % (title,))
 		else:
 			e = ActionEditor(self, self.on_action_chosen)
-			e.set_title(_("Edit Action for %s") % (title,))
+			e.set_title(title)
 		return e
 		
 	
@@ -172,10 +177,10 @@ class App(Gtk.Application, ProfileManager):
 			data = NoAction()
 			if id == "LPAD":
 				data = self.current.pads[Profile.LEFT]
-				ae = self._choose_editor(data, _("for Left Pad"))
+				ae = self._choose_editor(data, _("Left Pad"))
 			else:
 				data = self.current.pads[Profile.RIGHT]
-				ae = self._choose_editor(data, _("for Right Pad"))
+				ae = self._choose_editor(data, _("Right Pad"))
 			ae.set_pad(id, data)
 			ae.show(self.window)
 	
@@ -335,13 +340,15 @@ class App(Gtk.Application, ProfileManager):
 		self.save_profile(self.current_file, self.current)
 	
 	
-	def on_action_chosen(self, id, action):
+	def on_action_chosen(self, id, action, reopen=False):
 		before = self._set_action(id, action)
 		if type(before) != type(action) or before.to_string() != action.to_string():
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
 			self.builder.get_object("btUndo").set_sensitive(True)
 		self.on_profile_changed()
+		if reopen:
+			self.show_editor(id)
 	
 	
 	def _set_action(self, id, action):

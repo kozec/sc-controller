@@ -2,6 +2,12 @@
     "buttons": {
         "A": {
             "action": "button(Keys.KEY_SPACE); button(Keys.KEY_ENTER)", 
+            "modes": {
+                "LGRIP": {
+                    "action": "repeat(button(Keys.KEY_LEFT); button(Keys.KEY_RIGHT))", 
+                    "name": "Mash left/right"
+                }
+            }, 
             "name": "Jump / Confirm"
         }, 
         "B": {
@@ -42,15 +48,27 @@
         }, 
         "X": {
             "action": "button(Keys.KEY_E)", 
+            "modes": {
+                "LGRIP": {
+                    "action": "repeat(button(Keys.KEY_E))", 
+                    "name": "Interact (rapid)"
+                }
+            }, 
             "name": "Interact"
         }, 
         "Y": {
             "action": "button(Keys.KEY_F)", 
+            "modes": {
+                "LGRIP": {
+                    "action": "repeat(button(Keys.KEY_F))", 
+                    "name": "Melee (rapid)"
+                }
+            }, 
             "name": "Melee"
         }
     }, 
     "left_pad": {
-        "action": "dpad(button(Keys.KEY_1), button(Keys.KEY_4), button(Keys.KEY_2), button(Keys.KEY_3))", 
+        "action": "dpad(button(Keys.KEY_1), button(Keys.KEY_2), button(Keys.KEY_3), button(Keys.KEY_4))", 
         "name": "Weapon Switch"
     }, 
     "right_pad": {

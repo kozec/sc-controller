@@ -8,14 +8,14 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.uinput import Keys, Axes, Rels
-from scc.actions import AxisAction, MouseAction, ButtonAction
+from scc.actions import Action, XYAction, NoAction, DPadAction, DPad8Action
 from scc.actions import RAxisAction, TrackballAction, TrackpadAction
-from scc.actions import DPadAction, DPad8Action
-from scc.actions import Action, XYAction, NoAction
-from scc.modifiers import Modifier, ClickModifier, ModeModifier
+from scc.actions import AxisAction, MouseAction, ButtonAction
 from scc.actions import TRIGGER_HALF, TRIGGER_CLICK
+from scc.modifiers import Modifier, ClickModifier, ModeModifier
+from scc.uinput import Keys, Axes, Rels
 from scc.profile import Profile
+from scc.macros import Macro
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.button_chooser import ButtonChooser
@@ -305,15 +305,25 @@ class ActionEditor(ButtonChooser):
 		self.close()
 	
 	
-	def on_btModeSwitch_clicked(self, *a):
-		""" Asks main window to close this one and display mode switch editor """
+	def on_btModeshift_clicked(self, *a):
+		""" Asks main window to close this one and display modeshift editor """
 		if self.ac_callback is not None:
-			# Convert current action into modeswitch and send it to main window
+			# Convert current action into modeshift and send it to main window
 			action = ModeModifier(self._make_action())
+			self.close()
+			self.ac_callback(self.id, action, reopen=True)
+	
+	
+	def on_btMacro_clicked(self, *a):
+		""" Asks main window to close this one and display macro editor """
+		if self.ac_callback is not None:
+			# Convert current action into modeshift and send it to main window
+			action = Macro(self._make_action())
+			action.name = action.actions[0].name
+			action.actions[0].name = None
 			self.ac_callback(self.id, action)
 			self.close()
-			# Ask main window to display editor again
-			self.app.show_editor(self.id)
+			self.ac_callback(self.id, action, reopen=True)
 	
 	
 	def on_cbAxisOutput_changed(self, *a):
@@ -446,7 +456,7 @@ class ActionEditor(ButtonChooser):
 	
 	
 	def _set_mode(self, mode, activate_default=True):
-		""" Hides 'action type' buttons that are not usable with current mode """
+		""" Common part of editor setup """
 		self._mode = mode
 		for (page, button, modes) in ActionEditor.PAGES:
 			self.builder.get_object(button).set_visible(mode in modes)
@@ -536,12 +546,31 @@ class ActionEditor(ButtonChooser):
 		self.id = id
 	
 	
-	def hide_modeswitch(self):
+	def hide_modeshift(self):
 		"""
-		Hides Mode Switch button.
-		Used when displaying ActionEditor from ModeswitchEditor
+		Hides Mode Shift button.
+		Used when displaying ActionEditor from ModeshiftEditor
 		"""
-		self.builder.get_object("btModeSwitch").set_visible(False)
+		self.builder.get_object("btModeshift").set_visible(False)
+	
+	
+	def hide_macro(self):
+		"""
+		Hides Macro button.
+		Used when displaying ActionEditor from MacroEditor
+		"""
+		self.builder.get_object("btMacro").set_visible(False)
+	
+	
+	def hide_name(self):
+		"""
+		Hides (and clears) name field.
+		Used when displaying ActionEditor from MacroEditor
+		"""
+		self.builder.get_object("lblName").set_visible(False)
+		self.builder.get_object("entName").set_visible(False)
+		self.builder.get_object("entName").set_text("")
+	
 	
 	def describe_action(self, cls, v):
 		"""

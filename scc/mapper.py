@@ -9,7 +9,7 @@ from scc.constants import SCStatus, SCButtons, SCI_NULL
 from scc.constants import CI_NAMES, ControllerInput
 from scc.constants import LEFT, RIGHT, STICK
 
-import traceback, logging
+import traceback, logging, time
 log = logging.getLogger("Mapper")
 
 class Mapper(object):
@@ -47,6 +47,7 @@ class Mapper(object):
 		self.mouse_dq = [ deque(maxlen=8), deque(maxlen=8), deque(maxlen=8), deque(maxlen=8) ] # x, y, wheel, hwheel
 		self.mouse_tb = [ False, False ]	# trackball mode for mouse / wheel
 		self.syn_list = set()
+		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
 		self.state, self.old_state = SCI_NULL, SCI_NULL
 		self.mouse_movements = [ None, None, None, None ]
@@ -59,6 +60,15 @@ class Mapper(object):
 			for dev in self.syn_list:
 				dev.synEvent()
 			self.syn_list = set()
+	
+	def schedule(self, delay, cb):
+		"""
+		Schedules callback to be ran no sooner than after 'delay's.
+		Callback is called with mapper as only argument.
+		"""
+		when = time.time() + delay
+		self.scheduled_tasks.append( (when, cb) )
+		self.scheduled_tasks.sort(key=lambda a: a[0])
 	
 	
 	def mouse_dq_clear(self, *axes):
@@ -137,7 +147,7 @@ class Mapper(object):
 		return self.old_buttons & button
 	
 	
-	def callback(self, controller, sci):
+	def callback(self, controller, now, sci):
 		# Store state
 		if sci.status != SCStatus.INPUT:
 			return
@@ -193,6 +203,12 @@ class Mapper(object):
 			# Log error but don't crash here, it breaks too many things at once
 			log.error("Error while processing controller event")
 			log.error(traceback.format_exc())
+		
+		if len(self.scheduled_tasks) > 0 and self.scheduled_tasks[0][0] <= now:
+			cb = self.scheduled_tasks[0][1]
+			self.scheduled_tasks = self.scheduled_tasks[1:]
+			cb(self)
+		
 		
 		# Generate events - keys
 		if len(self.keypress_list):

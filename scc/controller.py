@@ -29,19 +29,15 @@ from scc.constants import SCStatus, SCButtons, HapticPos
 
 class SCController(object):
 
-	def __init__(self, callback, callback_args=None):
+	def __init__(self, callback):
 		"""
 		Constructor
 
 		callback: function called on usb message must take at lead a
 		ControllerInput as first argument
-
-		callback_args: Optional arguments passed to the callback afer the
-		ControllerInput argument
 		"""
 		self._handle = None
 		self._cb = callback
-		self._cb_args = callback_args
 		self._cmsg = []
 		self._ctx = usb1.USBContext()
 
@@ -143,10 +139,7 @@ class SCController(object):
 
 		self._lastusb = time.time()
 
-		if isinstance(self._cb_args, (list, tuple)):
-			self._cb(self, self._tup, *self._cb_args)
-		else:
-			self._cb(self, self._tup)
+		self._cb(self, self._lastusb, self._tup)
 
 
 
@@ -154,7 +147,8 @@ class SCController(object):
 
 	def _callbackTimer(self):
 
-		d = time.time() - self._lastusb
+		t = time.time()
+		d = t - self._lastusb
 		self._timer.cancel()
 
 		if d > DURATION:
@@ -169,10 +163,7 @@ class SCController(object):
 		if d < HPERIOD:
 			return
 
-		if isinstance(self._cb_args, (list, tuple)):
-			self._cb(self, self._tup, *self._cb_args)
-		else:
-			self._cb(self, self._tup)
+		self._cb(self, t, self._tup)
 
 
 	def disable_auto_haptic(self):

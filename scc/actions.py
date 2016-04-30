@@ -31,6 +31,8 @@ TRIGGER_HALF = 50
 TRIGGER_CLICK = 254 # Values under this are generated until trigger clicks
 TRIGGER_MAX = 255
 
+# Default delay after action, if used in macro. May be overriden using sleep() action.
+DEFAULT_DELAY = 0.01
 
 class Action(object):
 	"""
@@ -49,6 +51,7 @@ class Action(object):
 	def __init__(self, *parameters):
 		self.parameters = parameters
 		self.name = None
+		self.delay_after = DEFAULT_DELAY
 	
 	
 	def describe(self, context):
@@ -400,7 +403,6 @@ class TrackpadAction(TrackballAction):
 
 class ButtonAction(Action):
 	COMMAND = "button"
-	MIN_PAR_COUNT = 1
 	SPECIAL_NAMES = {
 		Keys.BTN_LEFT	: "Mouse Left",
 		Keys.BTN_MIDDLE	: "Mouse Middle",
@@ -451,8 +453,7 @@ class ButtonAction(Action):
 				return _("Wheel DOWN")
 		elif self.button in MOUSE_BUTTONS:
 			return _("Mouse %s") % (self.button,)
-		else:
-			return self.button.name.split("_", 1)[-1]
+		return self.button.name.split("_", 1)[-1]
 	
 	
 	def describe_short(self):
@@ -562,29 +563,6 @@ class ButtonAction(Action):
 			self._released = True
 
 
-class MacroAction(Action):
-	COMMAND = "macro"
-	
-	def button_press(self, mapper):
-		# Macro can be executed only by pressing button
-		
-		delay = 0.05
-		for s in self.parameters:
-			if type(s) in (int, float):
-				delay = float(s)
-		# TODO: This probably blocks all other events, scheduler may be needed
-		for b in [ x for x in self.parameters if type(x) not in (int, float) ]:
-			ButtonAction._button_press(mapper, b, immediate=True)
-			mapper.sync()
-			time.sleep(delay)
-			ButtonAction._button_release(mapper, b, immediate=True)
-			mapper.sync()
-			time.sleep(delay)
-	
-	def button_release(self, mapper):
-		pass
-
-
 class ChangeProfileAction(Action):
 	COMMAND = "profile"
 	
@@ -641,37 +619,33 @@ class ShellCommandAction(Action):
 
 class MultiAction(Action):
 	"""
-	Two or more actions executed in sequence.
-	Generated when parsing ';'
+	Two or more actions executed at once.
+	Generated when parsing 'and'
 	"""
 	COMMAND = None
-
+	
 	def __init__(self, *actions):
 		self.actions = []
 		self.name = None
 		self._add_all(actions)
-
-
+	
+	
 	def _add_all(self, actions):
 		for x in actions:
 			if type(x) == list:
 				self._add_all(x)
 			else:
 				self._add(x)
-
-
+	
+	
 	def _add(self, action):
-		if action.__class__ == self.__class__:	# I don't wan't subclasses here
+		if action.__class__ == self.__class__:	# I don't want subclasses here
 			self._add_all(action.actions)
 		else:
 			self.actions.append(action)
-
-
+	
+	
 	def describe(self, context):
-		"""
-		Returns string that describes what action does in human-readable form.
-		Used in GUI.
-		"""
 		if self.name: return self.name
 		if isinstance(self.actions[0], ButtonAction):
 			# Special case, key combination
@@ -680,9 +654,9 @@ class MultiAction(Action):
 				if isinstance(a, ButtonAction,):
 					rv.append(a.describe_short())
 			return "+".join(rv)
-		return self.actions[0].describe(context)
-
-
+		return " and ".join([ x.describe(context) for x in self.actions ])
+	
+	
 	def execute(self, event):
 		rv = False
 		for a in self.actions:
@@ -707,21 +681,21 @@ class MultiAction(Action):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		return (" " * pad) + "; ".join([ x.to_string() for x in self.actions ])
+		return (" " * pad) + " and ".join([ x.to_string() for x in self.actions ])
 	
 	
 	def __str__(self):
-		return "<[ %s ]>" % ("; ".join([ str(x) for x in self.actions ]), )
-
+		return "<[ %s ]>" % (" and ".join([ str(x) for x in self.actions ]), )
+	
 	__repr__ = __str__
 
 
-class DPadAction(MultiAction):
+class DPadAction(Action):
 	COMMAND = "dpad"
 	
 	def __init__(self, *actions):
-		MultiAction.__init__(self, *actions)
-		self.sides = ensure_size(4, self.actions)
+		Action.__init__(self, *actions)
+		self.actions = ensure_size(4, actions)
 		self.eight = False
 		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
 	
@@ -769,22 +743,22 @@ class DPadAction(MultiAction):
 				side = 2 + side[1] * 2 + side[0]
 			
 			if side != self.dpad_state[2] and self.dpad_state[2] is not None:
-				if self.sides[self.dpad_state[2]] is not None:
-					self.sides[self.dpad_state[2]].button_release(mapper)
+				if self.actions[self.dpad_state[2]] is not None:
+					self.actions[self.dpad_state[2]].button_release(mapper)
 				self.dpad_state[2] = None
 			if side is not None and side != self.dpad_state[2]:
-				if self.sides[side] is not None:
-					rv = self.sides[side].button_press(mapper)
+				if self.actions[side] is not None:
+					rv = self.actions[side].button_press(mapper)
 				self.dpad_state[2] = side
 		else:
 			for i in (0, 1):
 				if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
-					if self.sides[self.dpad_state[i]] is not None:
-						self.sides[self.dpad_state[i]].button_release(mapper)
+					if self.actions[self.dpad_state[i]] is not None:
+						self.actions[self.dpad_state[i]].button_release(mapper)
 					self.dpad_state[i] = None
 				if side[i] is not None and side[i] != self.dpad_state[i]:
-					if self.sides[side[i]] is not None:
-						self.sides[side[i]].button_press(mapper)
+					if self.actions[side[i]] is not None:
+						self.actions[side[i]].button_press(mapper)
 					self.dpad_state[i] = side[i]
 
 
@@ -793,7 +767,7 @@ class DPad8Action(DPadAction):
 
 	def __init__(self, *actions):
 		DPadAction.__init__(self, *actions)
-		self.sides = ensure_size(8, self.actions)
+		self.actions = ensure_size(8, actions)
 		self.eight = True
 	
 	def describe(self, context):
@@ -801,14 +775,15 @@ class DPad8Action(DPadAction):
 		return "8-Way DPad"
 
 
-class XYAction(MultiAction):
+class XYAction(Action):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "XY"
 	
 	def __init__(self, x=None, y=None):
-		MultiAction.__init__(self, *strip_none(x, y))
+		Action.__init__(self, *strip_none(x, y))
+		self.actions = strip_none(x, y)
 		self.x = x or NoAction()
 		self.y = y or NoAction()
 	
@@ -851,16 +826,20 @@ class XYAction(MultiAction):
 		if multiline:
 			rv = []
 			i = 0
-			for a in self.actions[0:2]:
-				if i == 0:
-					rv += [ "X:" ]
-				elif i == 1:
-					rv += [ "Y:" ]
-				i += 1
-				rv += [ "  " + x for x in a.to_string(True).split("\n") ]
+			for a in (self.x, self.y):
+				if a:
+					if i == 0:
+						rv += [ "X:" ]
+					elif i == 1:
+						rv += [ "Y:" ]
+					i += 1
+					rv += [ "  " + x for x in a.to_string(True).split("\n") ]
 			return "\n".join(rv)
-			
-		return "XY(" + (", ".join([ x.to_string() for x in self.actions ])) + ")"
+		
+		if self.y:
+			return "XY(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
+		else:
+			return "XY(" + self.x.to_string() + ")"
 	
 	
 	def encode(self):
@@ -939,4 +918,5 @@ ACTIONS = {
 }
 ACTIONS["None"] = NoAction
 
+import scc.macros
 import scc.modifiers
