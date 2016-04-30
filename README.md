@@ -9,7 +9,8 @@ User-mode driver and GTK3 based GUI for Steam Controller.
 Features:
 - Allows to setup, configure and use Steam Controller without ever launching Steam
 - Supports profiles switchable in GUI or with controller button
-- Emulates XBox360 controller, mouse and keyboard, separately or at once
+- Macros, rapid fire, modeshift...
+- Emulates XBox360 controller, mouse, trackball and keyboard.
 
 Based on [Standalone Steam Controller Driver](https://github.com/ynsta/steamcontroller) by [Ynsta](https://github.com/ynsta).
 
