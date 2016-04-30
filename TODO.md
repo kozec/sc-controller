@@ -7,9 +7,7 @@ List of (possibly) planned features in no particular order
 - Mouse regions
 - Selector for media keys
 - UI for configuring profile switch action
-- Macros (partially done)
 - double click
-- Turbo
 - Cycling Buttons
 
 
@@ -35,3 +33,5 @@ OSD related stuff:
 - Trigger settings
 - DPAD that acts only when clicked
 - Gamepad button as modifier (modeshift)
+- Macros
+- Turbo
