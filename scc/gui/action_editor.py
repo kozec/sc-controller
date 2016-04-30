@@ -472,7 +472,8 @@ class ActionEditor(ButtonChooser):
 		self._set_mode(Action.AC_BUTTON)
 		self.set_action(action)
 		self.id = button
-		if isinstance(action, ButtonAction):
+		if isinstance(action, ButtonAction) or not action:
+			# Stay on default page
 			pass
 		else:
 			self.builder.get_object("tgCustom").set_active(True)
