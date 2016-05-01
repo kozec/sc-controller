@@ -95,7 +95,7 @@ class ActionParser(object):
 		t = self._next_token()
 		while t.type == TokenType.NEWLINE or t.value == "\n":
 			if not self._tokens_left():
-				raise ParseError("Excepted parameter at end of string")
+				raise ParseError("Expected parameter at end of string")
 			t = self._next_token()
 		
 		if t.type == TokenType.NAME:
@@ -107,14 +107,14 @@ class ActionParser(object):
 			else:
 				# Constant
 				if not t.value in ActionParser.CONSTS:
-					raise ParseError("Excepted parameter, got '%s' which is not defined" % (t.value,))
+					raise ParseError("Expected parameter, got '%s' which is not defined" % (t.value,))
 				parameter = ActionParser.CONSTS[t.value]
 			
 			# Check for dots
 			while self._tokens_left() and self._peek_token().type == TokenType.OP and self._peek_token().value == '.':
 				self._next_token()
 				if not self._tokens_left():
-					raise ParseError("Excepted NAME after '.'")
+					raise ParseError("Expected NAME after '.'")
 				
 				t = self._next_token()
 				if not hasattr(parameter, t.value):
@@ -124,7 +124,7 @@ class ActionParser(object):
 		
 		if t.type == TokenType.OP and t.value == "-":
 			if not self._tokens_left() or self._peek_token().type != TokenType.NUMBER:
-				raise ParseError("Excepted number after '-'")
+				raise ParseError("Expected number after '-'")
 			return - self._parse_number()
 		
 		if t.type == TokenType.NUMBER:
@@ -134,13 +134,13 @@ class ActionParser(object):
 		if t.type == TokenType.STRING:
 			return t.value[1:-1].decode('string_escape')
 		
-		raise ParseError("Excepted parameter, got '%s'" % (t.value,))
+		raise ParseError("Expected parameter, got '%s'" % (t.value,))
 
 
 	def _parse_number(self):
 		t = self._next_token()
 		if t.type != TokenType.NUMBER:
-			raise ParseError("Excepted number, got '%s'" % (t.value,))
+			raise ParseError("Expected number, got '%s'" % (t.value,))
 		if "." in t.value:
 			return float(t.value)
 		elif "e" in t.value.lower():
@@ -158,7 +158,7 @@ class ActionParser(object):
 		# Check and skip over '('
 		t = self._next_token()
 		if t.type != TokenType.OP or t.value != '(':
-			raise ParseError("Excepted '(' of parameter list, got '%s'" % (t.value,))
+			raise ParseError("Expected '(' of parameter list, got '%s'" % (t.value,))
 
 		parameters = []
 		while self._tokens_left():
@@ -175,14 +175,14 @@ class ActionParser(object):
 			while t.type == TokenType.NEWLINE or t.value == "\n":
 				self._next_token()
 				if not self._tokens_left():
-					raise ParseError("Excepted ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
+					raise ParseError("Expected ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
 				t = self._peek_token()
 			if t.type == TokenType.OP and t.value == ')':
 				pass
 			elif t.type == TokenType.OP and t.value == ',':
 				self._next_token()
 			else:
-				raise ParseError("Excepted ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
+				raise ParseError("Expected ',' or end of parameter list after parameter '%s'" % (parameters[-1],))
 
 
 		# Code shouldn't reach here, unless there is not closing ')' in parameter list
@@ -209,7 +209,7 @@ class ActionParser(object):
 		# Check if next token is TokenType.NAME and grab action name from it
 		t = self._next_token()
 		if t.type != TokenType.NAME:
-			raise ParseError("Excepted action name, got '%s'" % (t.value,))
+			raise ParseError("Expected action name, got '%s'" % (t.value,))
 		if t.value not in ACTIONS:
 			raise ParseError("Unknown action '%s'" % (t.value,))
 		action_name = t.value
@@ -235,7 +235,7 @@ class ActionParser(object):
 			# Two (or more) actions joined by 'and'
 			self._next_token()
 			if not self._tokens_left():
-				raise ParseError("Excepted action after 'and'")
+				raise ParseError("Expected action after 'and'")
 			action1 = self._create_action(action_class, *parameters)
 			action2 = self._parse_action()
 			return MultiAction(action1, action2)
