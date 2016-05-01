@@ -17,6 +17,7 @@ class Mapper(object):
 	
 	def __init__(self, profile):
 		self.profile = profile
+		self.controller = None
 		
 		# Create virtual devices
 		log.debug("Creating virtual devices")
@@ -60,6 +61,17 @@ class Mapper(object):
 			for dev in self.syn_list:
 				dev.synEvent()
 			self.syn_list = set()
+	
+	
+	def set_controller(self, c):
+		""" Sets controller device, used by some (one so far) actions """
+		self.controller = c
+	
+	
+	def get_controller(self):
+		""" Returns assigned controller device or None if no controller is set """
+		return self.controller
+	
 	
 	def schedule(self, delay, cb):
 		"""

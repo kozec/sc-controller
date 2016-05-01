@@ -140,6 +140,7 @@ class SCCDaemon(Daemon):
 		while True:
 			try:
 				sc = SCController(callback=self.mapper.callback)
+				self.mapper.set_controller(sc)
 				if self.error is not None:
 					self.error = None
 					log.debug("Recovered after error")

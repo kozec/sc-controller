@@ -20,12 +20,14 @@
 # THE SOFTWARE.
 
 from threading import Timer
-import struct, time
+import struct, time, logging
 
 from scc.lib import usb1
 from scc.constants import VENDOR_ID, PRODUCT_ID, HPERIOD, LPERIOD, DURATION
 from scc.constants import ENDPOINT, CONTROLIDX, FORMATS, ControllerInput
-from scc.constants import SCStatus, SCButtons, HapticPos
+from scc.constants import SCStatus, SCButtons, HapticPos, SCPacketType
+
+log = logging.getLogger("SCController")
 
 class SCController(object):
 
@@ -117,19 +119,21 @@ class SCController(object):
 		@param int period	   signal period from 0 to 65535
 		@param int count		number of period to play
 		"""
-		self._cmsg.insert(0, struct.pack('<BBBHHH', 0x8f, 0x07, position, amplitude, period, count))
-
+		self._cmsg.insert(0, struct.pack('<BBBHHH',
+				SCPacketType.FEEDBACK, 0x07, position,
+				amplitude, period, count))
+	
 	def _processReceivedData(self, transfer):
 		"""Private USB async Rx function"""
-
+		
 		if (transfer.getStatus() != usb1.TRANSFER_COMPLETED or
 			transfer.getActualLength() != 64):
 			return
-
+		
 		data = transfer.getBuffer()
 		self._tup = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), data))
 		self._callback()
-
+		
 		transfer.submit()
 
 	def _callback(self):
@@ -164,8 +168,8 @@ class SCController(object):
 			return
 
 		self._cb(self, t, self._tup)
-
-
+	
+	
 	def disable_auto_haptic(self):
 		self._ctx.handleEvents()
 		self._sendControl(struct.pack('>' + 'I' * 1,
@@ -179,6 +183,15 @@ class SCController(object):
 									  0x00300000,
 									  0x2f010000))
 		self._ctx.handleEvents()
+	
+	
+	def turnoff(self):
+		log.debug("Turning off the controller...")
+		
+		# Mercilessly stolen from scraw library
+		self._cmsg.insert(0, struct.pack('<BBBBBB',
+				SCPacketType.OFF, 0x04, 0x6f, 0x66, 0x66, 0x21))
+	
 	
 	def run(self):
 		"""Fucntion to run in order to process usb events"""

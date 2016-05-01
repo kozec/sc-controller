@@ -54,6 +54,9 @@ Loads another profile
 #### shell(command)
 Executes command on background
 
+### turnoff()
+Turns controller off
+
 
 # Modifiers:
 

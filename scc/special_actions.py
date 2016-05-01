@@ -10,7 +10,6 @@ from scc.actions import Action, NoAction, ButtonAction, ACTIONS, MOUSE_BUTTONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
 
-
 import time, logging
 log = logging.getLogger("SActions")
 _ = lambda x : x
@@ -68,6 +67,33 @@ class ShellCommandAction(Action):
 	
 	def button_release(self, mapper):
 		pass
+
+
+class TurnOffAction(Action):
+	COMMAND = "turnoff"
+	
+	def __init__(self):
+		Action.__init__(self)
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Turn Off the Controller")
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s()" % (self.COMMAND,)
+	
+	
+	def button_press(self, mapper):
+		pass
+	
+	
+	def button_release(self, mapper):
+		# Can be executed only by releasing button
+		# (not by pressing it)
+		if mapper.get_controller():
+			mapper.get_controller().turnoff()
+
 
 
 # Add macros to ACTIONS dict
