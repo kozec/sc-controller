@@ -126,6 +126,14 @@ class SCCDaemon(Daemon):
 				log.warning("Reason: %s", e)
 	
 	
+	def on_controller_status(self, sc, onoff):
+		if onoff:
+			log.debug("Controller turned ON")
+			sc.disable_auto_haptic()			
+		else:
+			log.debug("Controller turned OFF")
+	
+	
 	def sigterm(self, *a):
 		log.debug("SIGTERM")
 		self.remove_socket()
@@ -141,12 +149,12 @@ class SCCDaemon(Daemon):
 			try:
 				sc = SCController(callback=self.mapper.callback)
 				self.mapper.set_controller(sc)
+				sc.setStatusCallback(self.on_controller_status)
 				if self.error is not None:
 					self.error = None
 					log.debug("Recovered after error")
 					self._send_to_all(b"Ready.\n")
 				self.lock.release()
-				sc.disable_auto_haptic()
 				sc.run()
 			except (ValueError, USBErrorAccess, USBErrorBusy, USBErrorPipe), e:
 				# When SCController fails to initialize, daemon should

@@ -34,16 +34,18 @@ class SCController(object):
 	def __init__(self, callback):
 		"""
 		Constructor
-
-		callback: function called on usb message must take at lead a
-		ControllerInput as first argument
+		
+		callback:
+			function called on usb message 
+			takes (SCController, current_time, ControllerInput) as arguments
 		"""
 		self._handle = None
 		self._cb = callback
+		self._cscallback = None		# Controller State Callback
 		self._cmsg = []
 		self._ctx = usb1.USBContext()
-
-
+		self._controller_connected = False
+		
 		for i in range(len(PRODUCT_ID)):
 			pid = PRODUCT_ID[i]
 			endpoint = ENDPOINT[i]
@@ -93,8 +95,17 @@ class SCController(object):
 
 		self._tup = None
 		self._lastusb = time.time()
-
-
+	
+	
+	def setStatusCallback(self, callback):
+		"""
+		Sets callback that is called when controller status is changed.
+		callback:
+			takes (SCController, turned_on) as arguments.
+		"""
+		self._cscallback = callback
+	
+	
 	def __del__(self):
 		if self._handle:
 			self._handle.close()
@@ -132,57 +143,86 @@ class SCController(object):
 		
 		data = transfer.getBuffer()
 		self._tup = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), data))
-		self._callback()
-		
-		transfer.submit()
-
+		if self._tup.status == SCStatus.HOTPLUG:
+			transfer.submit()
+			state, = struct.unpack('<xxxxB59x', data)
+			self._controller_connected = (state == 2)
+			if self._cscallback:
+				self._cscallback(self, self._controller_connected)
+		elif self._tup.status == SCStatus.INPUT:
+			self._callback()
+			transfer.submit()
+			if not self._controller_connected:
+				self._controller_connected = True
+				if self._cscallback:
+					self._cscallback(self, self._controller_connected)
+		else:
+			transfer.submit()
+	
+	
 	def _callback(self):
-
-		if self._tup is None or self._tup.status != SCStatus.INPUT:
-			return
-
 		self._lastusb = time.time()
-
+		
 		self._cb(self, self._lastusb, self._tup)
-
-
-
 		self._period = HPERIOD
-
+	
+	
 	def _callbackTimer(self):
-
+		
+		print "_callbackTimer"
 		t = time.time()
 		d = t - self._lastusb
 		self._timer.cancel()
-
+		
 		if d > DURATION:
 			self._period = LPERIOD
-
+		
 		self._timer = Timer(self._period, self._callbackTimer)
 		self._timer.start()
-
+		
 		if self._tup is None:
 			return
-
+		
 		if d < HPERIOD:
 			return
-
+		
 		self._cb(self, t, self._tup)
 	
 	
+	def configure_controller(self, size, data):
+		"""
+		Sends configuration to controller
+		
+		packet format:
+		 - uint8_t type
+		 - uint8_t size
+		 - uint8_t unknown - 0x32
+		 - 61b data
+		
+		Format for data when configuring controller:
+		 - uint16 timeout
+		 - 13b unknown - (0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30)
+		 - uint8 enable auto haptic feeback - 0x14 for enables, 0x00 disables
+		 - 2b unknown - (0x00, 0x2e)
+		 - 43b unused
+		 
+		Format for data when configuring led:
+		 - uint8 led
+		 - uint8 unknonw
+		 - 59b unused
+		"""
+		if len(data) != 61 : raise ValueError("Invalid configuration size")
+		self._cmsg.insert(0, struct.pack('>BBB61s',
+			SCPacketType.CONFIGURE, 0x32, size, data),)
+	
+	
 	def disable_auto_haptic(self):
-		self._ctx.handleEvents()
-		self._sendControl(struct.pack('>' + 'I' * 1,
-									  0x81000000))
-		self._ctx.handleEvents()
-		self._sendControl(struct.pack('>' + 'I' * 6,
-									  0x87153284,
-									  0x03180000,
-									  0x31020008,
-									  0x07000707,
-									  0x00300000,
-									  0x2f010000))
-		self._ctx.handleEvents()
+		timeout = 3600
+		haptic = 0x00
+		unknown1 = b'\x18\x00\x001\x02\x00\x08\x07\x00\x07\x07\x000'
+		unknown2 = b'\x00\x2e'
+		self.configure_controller(0x15, struct.pack('>H13sB2s43x',
+			timeout, unknown1, haptic, unknown2))
 	
 	
 	def turnoff(self):

@@ -36,17 +36,18 @@ LPERIOD  = 0.5
 DURATION = 1.0
 
 CONTROLER_FORMAT = [
-	('x',   'ukn_00'),
+	('b',   'type'),
 	('x',   'ukn_01'),
-	('H',   'status'),
-	('H',   'seq'),
+	('B',   'status'),
 	('x',   'ukn_02'),
+	('H',   'seq'),
+	('x',   'ukn_03'),
 	('I',   'buttons'),
 	('B',   'ltrig'),
 	('B',   'rtrig'),
-	('x',   'ukn_03'),
 	('x',   'ukn_04'),
 	('x',   'ukn_05'),
+	('x',   'ukn_06'),
 	('h',   'lpad_x'),
 	('h',   'lpad_y'),
 	('h',   'rpad_x'),
@@ -79,13 +80,14 @@ ControllerInput = namedtuple('ControllerInput', ' '.join(CI_NAMES))
 SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
 
 class SCStatus(IntEnum):
-	IDLE  = 2820
-	INPUT = 15361
-	EXIT  = 259
+	IDLE = 0x04
+	INPUT = 0x01
+	HOTPLUG = 0x03
 
 class SCPacketType(IntEnum):
 	OFF = 0x9f
 	AUDIO = 0xb6
+	CONFIGURE = 0x87
 	CALIBRATE_JOYSTICK = 0xbf
 	CALIBRATE_TRACKPAD = 0xa7
 	SET_AUDIO_INDICES = 0xc1
