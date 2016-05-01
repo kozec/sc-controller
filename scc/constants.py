@@ -66,11 +66,13 @@ CONTROLER_FORMAT = [
 FE_STICK	= 1
 FE_TRIGGER	= 2
 FE_PAD		= 3
+FE_GYRO		= 4
 
 LEFT	= "LEFT"
 RIGHT	= "RIGHT"
 WHOLE	= "WHOLE"
 STICK	= "STICK"
+GYRO	= "GYRO"
 
 FORMATS, NAMES = zip(*CONTROLER_FORMAT)
 CI_NAMES = [ x for x in NAMES if not x.startswith('ukn_') ]

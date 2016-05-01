@@ -7,7 +7,7 @@ from scc.profile import Profile
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import SCStatus, SCButtons, SCI_NULL
 from scc.constants import CI_NAMES, ControllerInput
-from scc.constants import LEFT, RIGHT, STICK
+from scc.constants import LEFT, RIGHT, STICK, GYRO
 
 import traceback, logging, time
 log = logging.getLogger("Mapper")
@@ -161,7 +161,6 @@ class Mapper(object):
 	
 	def callback(self, controller, now, sci):
 		# Store state
-		# print sci
 		self.old_state = self.state
 		self.old_buttons = self.buttons
 
@@ -193,6 +192,10 @@ class Mapper(object):
 			if not self.buttons & SCButtons.LPADTOUCH:
 				if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
 					self.profile.stick.whole(self, sci.lpad_x, sci.lpad_y, STICK)
+			
+			# Check gyro
+			if controller.getGyroEnabled():
+				self.profile.gyro.gyro(self, sci.gpitch, sci.gyaw, sci.groll)
 			
 			# Check triggers
 			if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:

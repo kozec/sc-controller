@@ -250,6 +250,11 @@ class SCController(object):
 		self._cmsg.insert(0, data)
 	
 	
+	def getGyroEnabled(self):
+		""" Returns True if gyroscope input is currently enabled """
+		return self._enable_gyros
+	
+	
 	def turnoff(self):
 		log.debug("Turning off the controller...")
 		

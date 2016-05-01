@@ -10,7 +10,7 @@ from scc.constants import SCButtons
 from scc.parser import TalkingActionParser
 from scc.actions import NoAction, XYAction
 from scc.modifiers import ClickModifier, ModeModifier
-from scc.constants import LEFT, RIGHT, WHOLE, STICK
+from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
 
 import json
 
@@ -19,7 +19,8 @@ class Profile(object):
 	RIGHT = RIGHT
 	WHOLE = WHOLE
 	STICK = STICK
-	X, Y = "X", "Y"
+	GYRO  = GYRO
+	X, Y, Z = "X", "Y", "Z"
 	STICK_AXES = { X : "lpad_x", Y : "lpad_y" }
 	LPAD_AXES  = STICK_AXES
 	RPAD_AXES  = { X : "rpad_x", Y : "rpad_y" }
@@ -31,6 +32,7 @@ class Profile(object):
 		self.stick = NoAction()
 		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
 		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
+		self.gyro = NoAction()
 	
 	
 	def save(self, filename):
@@ -38,6 +40,7 @@ class Profile(object):
 		data = {
 			'buttons'	: {},
 			'stick'		: self.stick,
+			'gyro'		: self.gyro,
 			'triggers'	: self.triggers,
 			"left_pad"	: self.pads[Profile.LEFT],
 			"right_pad"	: self.pads[Profile.RIGHT],
@@ -97,8 +100,9 @@ class Profile(object):
 		for x in SCButtons:
 			self.buttons[x] = self._load_action(data["buttons"], x.name)
 		
-		# Stick
+		# Stick & gyro
 		self.stick = self._load_action(data, "stick")
+		self.gyro = self._load_action(data, "gyro")
 		
 		# Triggers
 		self.triggers = {}

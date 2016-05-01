@@ -110,6 +110,14 @@ class Action(object):
 	pad = axis
 	
 	
+	def gyro(self, mapper, pitch, yaw, roll):
+		"""
+		Called when action is set by rotating gyroscope.
+		'pitch', 'yaw' and 'roll' are difference from last gyroscope positions.
+		"""
+		pass
+	
+	
 	def whole(self, mapper, x, y, what):
 		"""
 		Called when action is executed by moving physical stick or touching
@@ -273,7 +281,7 @@ class HatRightAction(HatAction):
 class MouseAction(Action):
 	COMMAND = "mouse"
 	
-	def __init__(self, axis, speed=None):
+	def __init__(self, axis=None, speed=None):
 		Action.__init__(self, axis, speed)
 		self.mouse_axis = axis
 		self.speed = speed or 1
@@ -361,6 +369,10 @@ class MouseAction(Action):
 				mapper.mouse_dq_clear(3)
 			elif self.mouse_axis == Rels.REL_HWHEEL:
 				mapper.mouse_dq_clear(2)
+	
+	
+	def gyro(self, mapper, pitch, yaw, roll):
+		mapper.mouse.moveEvent(yaw * self.speed * -1, pitch * self.speed * -1, False)
 
 
 class TrackballAction(Action):

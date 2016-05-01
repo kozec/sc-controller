@@ -11,12 +11,14 @@
   Note that 'button2' is always optional.
 
 
-### mouse(axis [, speed = 1, acceleration = 0 ])
+### mouse([axis] [, speed = 1, acceleration = 0 ])
 Controls mouse movement or scroll wheel.
 
 - For stick, lets cursor or mouse wheel to be controlled by stick tilt.
 - For pad, does same thing as 'trackball'. You can set pad to move mouse only
   in one axis using this.
+- For gyroscope, controls mouse with changes in controller pitch and roll.
+  Both X and Y mouse axis is controller and 'axis' parameter is ignored.
 - For wheel controlled by pad, emulates finger scroll.
 - For button, pressing button maps to single movement over mouse axis or
   single step on scroll wheel.

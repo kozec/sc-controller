@@ -248,6 +248,8 @@ class ModeModifier(Modifier):
 	def axis(self, mapper, position, what):
 		return self.select(mapper).axis(mapper, position, what)
 	
+	def gyro(self, mapper, pitch, yaw, roll):
+		return self.select(mapper).gyro(mapper, pitch, yaw, roll)
 	
 	def pad(self, mapper, position, what):
 		return self.select(mapper).pad(mapper, position, what)
