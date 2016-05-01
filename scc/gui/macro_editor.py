@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.gui.controller_widget import ControllerButton
-from scc.gui.action_editor import ActionEditor
 from scc.gui.editor import Editor
 from scc.actions import Action, ButtonAction, NoAction
 from scc.macros import Macro, Repeat, SleepAction, PressAction, ReleaseAction
@@ -251,6 +250,7 @@ class MacroEditor(Editor):
 			self.update_action_field()
 			if reopen: self.on_actionb_clicked(trash, data)
 		
+		from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 		ae = ActionEditor(self.app, on_chosen)
 		ae.set_title(_("Edit Action"))
 		self._setup_editor(ae, action)
@@ -319,3 +319,12 @@ class MacroEditor(Editor):
 	def set_pad(self, id, action):
 		""" Setups action editor as editor for pad action """
 		self._set_mode(Action.AC_PAD, id, action)
+	
+	
+	def hide_name(self):
+		"""
+		Hides (and clears) name field.
+		"""
+		self.builder.get_object("lblName").set_visible(False)
+		self.builder.get_object("entName").set_visible(False)
+		self.builder.get_object("entName").set_text("")

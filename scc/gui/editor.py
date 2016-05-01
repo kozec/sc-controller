@@ -30,6 +30,11 @@ class Editor(object):
 		self.builder.get_object("header").set_title(title)
 	
 	
+	def allow_axes(self):
+		""" Allows axes to be selectable, if editor supports it """
+		pass
+	
+	
 	def close(self, *a):
 		self.window.destroy()
 	

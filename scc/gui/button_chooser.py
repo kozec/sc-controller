@@ -8,15 +8,17 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.uinput import Keys
 from scc.actions import ButtonAction, AxisAction, MouseAction, MultiAction
 from scc.actions import HatLeftAction, HatRightAction
 from scc.actions import HatUpAction, HatDownAction
-from scc.gui.editor import Editor
-from scc.gui.dwsnc import headerbar
-from scc.gui.svg_widget import SVGWidget
-from scc.gui.gdk_to_key import keyevent_to_key
+from scc.modifiers import ModeModifier
+from scc.macros import Macro
+from scc.uinput import Keys
 from scc.gui.area_to_action import AREA_TO_ACTION
+from scc.gui.gdk_to_key import keyevent_to_key
+from scc.gui.svg_widget import SVGWidget
+from scc.gui.dwsnc import headerbar
+from scc.gui.editor import Editor
 import os, logging
 log = logging.getLogger("ButtonChooser")
 
@@ -199,4 +201,19 @@ class ButtonChooser(Editor):
 				actions = [ ButtonAction(k) for k in keys ]
 				self.callback(MultiAction(*actions))
 		self.keygrab.hide()
-
+	
+	
+	def on_child_window_chosen_action(self, *a):
+		print "blaaaah", a
+	
+	
+	def on_btModeshift_clicked(self, *a):
+		""" Display Modeshift Editor as child of ButtonChooser """
+		if self.callback:
+			self.callback(ModeModifier(), reopen=True)
+	
+	
+	def on_btMacro_clicked(self, *a):
+		""" Display Macro Editor as child of ButtonChooser """
+		if self.callback:
+			self.callback(Macro(), reopen=True)

@@ -8,8 +8,6 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.gui.controller_widget import ControllerButton
-from scc.gui.action_editor import ActionEditor
-from scc.gui.macro_editor import MacroEditor
 from scc.gui.editor import Editor
 from scc.constants import SCButtons
 from scc.gui.dwsnc import headerbar
@@ -162,9 +160,11 @@ class ModeshiftEditor(Editor):
 	
 	def _choose_editor(self, action, cb):
 		if isinstance(action, Macro):
+			from scc.gui.macro_editor import MacroEditor	# Cannot be imported @ top
 			e = MacroEditor(self.app, cb)
 			e.set_title(_("Edit Macro"))
 		else:
+			from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 			e = ActionEditor(self.app, cb)
 			e.set_title(_("Edit Action"))
 			e.hide_modeshift()
@@ -260,8 +260,8 @@ class ModeshiftEditor(Editor):
 	def set_stick(self, action):
 		""" Setups action editor as editor for stick action """
 		self._set_mode(Action.AC_STICK, Profile.STICK, action)
-
-
+	
+	
 	def set_pad(self, id, action):
 		""" Setups action editor as editor for pad action """
 		self._set_mode(Action.AC_PAD, id, action)

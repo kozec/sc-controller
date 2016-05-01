@@ -14,11 +14,14 @@ from scc.actions import RAxisAction, TrackballAction, TrackpadAction
 from scc.actions import TRIGGER_HALF, TRIGGER_CLICK
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.uinput import Keys, Axes, Rels
+from scc.constants import SCButtons
 from scc.profile import Profile
 from scc.macros import Macro
 from scc.gui.area_to_action import AREA_TO_ACTION, action_to_area
 from scc.gui.parser import GuiActionParser, InvalidAction
+from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.button_chooser import ButtonChooser
+from scc.gui.macro_editor import MacroEditor
 from scc.gui.axis_chooser import AxisChooser
 from scc.gui.svg_widget import SVGWidget
 import os, logging
@@ -207,19 +210,34 @@ class ActionEditor(ButtonChooser):
 	
 	
 	def _grab_multiparam_action(self, cls, param, count, allow_axes=False, store_as_action=False, modifiers=[]):
-		def cb(action):
-			if store_as_action:
-				self._multiparams[param] = action
-			else:
+		def cb(action, reopen=False):
+			if not store_as_action and isinstance(action, ButtonAction):
 				self._multiparams[param] = action.parameters[0]
+			else:
+				self._multiparams[param] = action
 			b.close()
 			self.set_multiparams(cls, count, modifiers)
+			if reopen:
+				self._grab_multiparam_action(cls, param, count, allow_axes=False, store_as_action=False, modifiers=modifiers)
+		def macro_or_mod_cb(trash, action, reopen=False):
+			cb(action, reopen)
 		
-		b, area = None, None
+		b, area, action = None, None, self._multiparams[param]
 		if cls == XYAction:
 			b = AxisChooser(self.app, cb)
 			b.set_title(_("Select Axis"))
 			area = action_to_area(self._multiparams[param])
+		elif isinstance(action, Macro):
+			# Macro on DPAD - display Macro Editor as child window
+			b = MacroEditor(self.app, macro_or_mod_cb)
+			b.set_title(_("Macro for DPAD button"))
+			b.set_button(SCButtons.A, action)	# just random button, ID doesn't matter here
+			b.hide_name()
+		elif isinstance(action, ModeModifier):
+			# Macro on DPAD - display ModeShift Editor as child window
+			b = ModeshiftEditor(self.app, macro_or_mod_cb)
+			b.set_title(_("Modeshift for DPAD button"))
+			b.set_button(SCButtons.A, action)	# just random button, ID doesn't matter here
 		elif store_as_action:
 			b = ButtonChooser(self.app, cb)
 			b.set_title(_("Select Action"))
@@ -229,6 +247,10 @@ class ActionEditor(ButtonChooser):
 			b.set_title(_("Select Button"))
 			action = cls([self._multiparams[param]])
 			area = action_to_area(action)
+		else:
+			log.warning("Unsupported combination for multiparam action: cls=%s, store_as_action=%s, allow_axes=%s",
+				cls, store_as_action, allow_axes)
+			return
 		
 		if allow_axes:
 			b.allow_axes()
@@ -321,7 +343,6 @@ class ActionEditor(ButtonChooser):
 			action = Macro(self._make_action())
 			action.name = action.actions[0].name
 			action.actions[0].name = None
-			self.ac_callback(self.id, action)
 			self.close()
 			self.ac_callback(self.id, action, reopen=True)
 	
@@ -423,29 +444,29 @@ class ActionEditor(ButtonChooser):
 		""" Handles creating actions with multiple parameters """
 		# TODO: This is getting messy, maybe find way how to put it into a loop
 		if count >= 0:
-			self.builder.get_object("lblFullPress").set_label(self.describe_action(cls, self._multiparams[0]))
-			self.builder.get_object("lblDPADUp").set_label(self.describe_action(ButtonAction, self._multiparams[0]))
-			self.builder.get_object("lblAxisX").set_label(self.describe_action(cls, self._multiparams[0]))
+			self.builder.get_object("lblFullPress").set_markup(self.describe_action(cls, self._multiparams[0]))
+			self.builder.get_object("lblDPADUp").set_markup(self.describe_action(ButtonAction, self._multiparams[0]))
+			self.builder.get_object("lblAxisX").set_markup(self.describe_action(cls, self._multiparams[0]))
 		if count >= 1:
-			self.builder.get_object("lblPartPressed").set_label(self.describe_action(cls, self._multiparams[1]))
-			self.builder.get_object("lblDPADDown").set_label(self.describe_action(ButtonAction, self._multiparams[1]))
-			self.builder.get_object("lblAxisY").set_label(self.describe_action(cls, self._multiparams[1]))
+			self.builder.get_object("lblPartPressed").set_markup(self.describe_action(cls, self._multiparams[1]))
+			self.builder.get_object("lblDPADDown").set_markup(self.describe_action(ButtonAction, self._multiparams[1]))
+			self.builder.get_object("lblAxisY").set_markup(self.describe_action(cls, self._multiparams[1]))
 		if count >= 2:
-			self.builder.get_object("lblDPADLeft").set_label(self.describe_action(ButtonAction, self._multiparams[2]))
+			self.builder.get_object("lblDPADLeft").set_markup(self.describe_action(ButtonAction, self._multiparams[2]))
 			if type(self._multiparams[2]) in (float, int):
 				self.builder.get_object("sclPartialLevel").set_value(self._multiparams[2])
 		if count >= 3:
-			self.builder.get_object("lblDPADRight").set_label(self.describe_action(ButtonAction, self._multiparams[3]))
+			self.builder.get_object("lblDPADRight").set_markup(self.describe_action(ButtonAction, self._multiparams[3]))
 			if type(self._multiparams[3]) in (float, int):
 				self.builder.get_object("sclFullLevel").set_value(self._multiparams[3])
 		if count >= 4:
-			self.builder.get_object("btDPAD7").set_label(self.describe_action(ButtonAction, self._multiparams[4]))
+			self.builder.get_object("btDPAD7").get_child().set_markup(self.describe_action(ButtonAction, self._multiparams[4]))
 		if count >= 5:
-			self.builder.get_object("btDPAD9").set_label(self.describe_action(ButtonAction, self._multiparams[5]))
+			self.builder.get_object("btDPAD9").get_child().set_markup(self.describe_action(ButtonAction, self._multiparams[5]))
 		if count >= 6:
-			self.builder.get_object("btDPAD1").set_label(self.describe_action(ButtonAction, self._multiparams[6]))
+			self.builder.get_object("btDPAD1").get_child().set_markup(self.describe_action(ButtonAction, self._multiparams[6]))
 		if count >= 7:
-			self.builder.get_object("btDPAD3").set_label(self.describe_action(ButtonAction, self._multiparams[7]))
+			self.builder.get_object("btDPAD3").get_child().set_markup(self.describe_action(ButtonAction, self._multiparams[7]))
 		pars = self._multiparams[0:count]
 		while len(pars) > 1 and pars[-1] is None:
 			pars = pars[0:-1]
@@ -589,9 +610,9 @@ class ActionEditor(ButtonChooser):
 		if v is None or type(v) in (int, float, str, unicode):
 			return _('(not set)')
 		elif isinstance(v, Action):
-			if cls == XYAction:
-				return v.describe(Action.AC_STICK)
-			else:
-				return v.describe(Action.AC_BUTTON)
+			dsc = v.describe(Action.AC_STICK if cls == XYAction else Action.AC_BUTTON)
+			if "\n" in dsc:
+				dsc = "<small>" + "\n".join(dsc.split("\n")[0:2]) + "</small>"
+			return dsc
 		else:
 			return (cls(v)).describe(self._mode)

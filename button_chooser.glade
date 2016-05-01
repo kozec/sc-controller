@@ -60,6 +60,30 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
+                <child>
+		          <object class="GtkButton" id="btModeshift">
+		            <property name="label" translatable="yes">Mode Shift</property>
+		            <property name="visible">True</property>
+		            <property name="can_focus">True</property>
+		            <property name="receives_default">True</property>
+		            <signal name="clicked" handler="on_btModeshift_clicked" swapped="no"/>
+		          </object>
+		          <packing>
+		            <property name="position">2</property>
+		          </packing>
+		        </child>
+		        <child>
+		          <object class="GtkButton" id="btMacro">
+		            <property name="label" translatable="yes">Macro</property>
+		            <property name="visible">True</property>
+		            <property name="can_focus">True</property>
+		            <property name="receives_default">True</property>
+		            <signal name="clicked" handler="on_btMacro_clicked" swapped="no"/>
+		          </object>
+		          <packing>
+		            <property name="position">3</property>
+		          </packing>
+		        </child>
       </object>
     </child>
   </object>
