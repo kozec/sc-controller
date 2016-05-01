@@ -161,8 +161,7 @@ class Mapper(object):
 	
 	def callback(self, controller, now, sci):
 		# Store state
-		if sci.status != SCStatus.INPUT:
-			return
+		# print sci
 		self.old_state = self.state
 		self.old_buttons = self.buttons
 

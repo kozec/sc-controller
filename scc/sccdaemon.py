@@ -129,7 +129,6 @@ class SCCDaemon(Daemon):
 	def on_controller_status(self, sc, onoff):
 		if onoff:
 			log.debug("Controller turned ON")
-			sc.disable_auto_haptic()			
 		else:
 			log.debug("Controller turned OFF")
 	
@@ -148,6 +147,7 @@ class SCCDaemon(Daemon):
 		while True:
 			try:
 				sc = SCController(callback=self.mapper.callback)
+				sc.configure_controller(enable_gyros=True)
 				self.mapper.set_controller(sc)
 				sc.setStatusCallback(self.on_controller_status)
 				if self.error is not None:

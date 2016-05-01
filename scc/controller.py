@@ -45,6 +45,8 @@ class SCController(object):
 		self._cmsg = []
 		self._ctx = usb1.USBContext()
 		self._controller_connected = False
+		self._idle_timeout = 600
+		self._enable_gyros = False
 		
 		for i in range(len(PRODUCT_ID)):
 			pid = PRODUCT_ID[i]
@@ -149,6 +151,7 @@ class SCController(object):
 			self._controller_connected = (state == 2)
 			if self._cscallback:
 				self._cscallback(self, self._controller_connected)
+				self.configure_controller()
 		elif self._tup.status == SCStatus.INPUT:
 			self._callback()
 			transfer.submit()
@@ -156,6 +159,7 @@ class SCController(object):
 				self._controller_connected = True
 				if self._cscallback:
 					self._cscallback(self, self._controller_connected)
+					self.configure_controller()
 		else:
 			transfer.submit()
 	
@@ -189,10 +193,21 @@ class SCController(object):
 		self._cb(self, t, self._tup)
 	
 	
-	def configure_controller(self, size, data):
+	def disable_auto_haptic(self):
+		timeout = 3600 # .timeout = u16_to_packet_le(config->idle_timeout),
+		haptic = 0 # 0x14 # 0x00
+		self.configure_controller(0x15, struct.pack('>H13sB2s43x',
+			timeout, unknown1, haptic, unknown2))
+	
+	
+	def configure_controller(self, idle_timeout=None, enable_gyros=None):
 		"""
-		Sends configuration to controller
-		
+		Sets and, if possible, sends configuration to controller.
+		Only value that is provided is changed.
+		'idle_timeout' is in seconds.
+		"""
+		# ------
+		"""
 		packet format:
 		 - uint8_t type
 		 - uint8_t size
@@ -202,7 +217,7 @@ class SCController(object):
 		Format for data when configuring controller:
 		 - uint16 timeout
 		 - 13b unknown - (0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30)
-		 - uint8 enable auto haptic feeback - 0x14 for enables, 0x00 disables
+		 - uint8 enable imu - 0x14 enables, 0x00 disables
 		 - 2b unknown - (0x00, 0x2e)
 		 - 43b unused
 		 
@@ -211,22 +226,40 @@ class SCController(object):
 		 - uint8 unknonw
 		 - 59b unused
 		"""
-		if len(data) != 61 : raise ValueError("Invalid configuration size")
-		self._cmsg.insert(0, struct.pack('>BBB61s',
-			SCPacketType.CONFIGURE, 0x32, size, data),)
-	
-	
-	def disable_auto_haptic(self):
-		timeout = 3600
-		haptic = 0x00
+		
+		if idle_timeout is not None : self._idle_timeout = idle_timeout
+		if enable_gyros is not None : self._enable_gyros = enable_gyros
+		
+		if not self._controller_connected:
+			# Can't configure what's not there
+			return
+		
 		unknown1 = b'\x18\x00\x001\x02\x00\x08\x07\x00\x07\x07\x000'
 		unknown2 = b'\x00\x2e'
-		self.configure_controller(0x15, struct.pack('>H13sB2s43x',
-			timeout, unknown1, haptic, unknown2))
+		timeout1 = self._idle_timeout & 0x00FF
+		timeout2 = (self._idle_timeout & 0xFF00) >> 8
+		size = 0x15
+		data = struct.pack('>BBBBB13sB2s43x',
+			SCPacketType.CONFIGURE,
+			size,
+			0x32,
+			timeout1, timeout2,
+			unknown1,
+			0x14 if self._enable_gyros else 0,
+			unknown2)
+		self._cmsg.insert(0, data)
 	
 	
 	def turnoff(self):
 		log.debug("Turning off the controller...")
+		
+		# Mercilessly stolen from scraw library
+		self._cmsg.insert(0, struct.pack('<BBBBBB',
+				SCPacketType.OFF, 0x04, 0x6f, 0x66, 0x66, 0x21))
+	
+	
+	def enableGyro(self):
+		log.debug("Enabling gyroscopes")
 		
 		# Mercilessly stolen from scraw library
 		self._cmsg.insert(0, struct.pack('<BBBBBB',
