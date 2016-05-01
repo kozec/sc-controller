@@ -247,7 +247,7 @@ class ActionParser(object):
 				# Newline at end of string is not error
 				return self._create_action(action_class, *parameters)
 			t = self._peek_token()
-			if t.type == TokenType.OP and t.value == ')':
+			if t.type == TokenType.OP and t.value in (')', ','):
 				# ')' starts next line
 				return self._create_action(action_class, *parameters)
 			action1 = self._create_action(action_class, *parameters)
