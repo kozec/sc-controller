@@ -73,6 +73,9 @@ RIGHT	= "RIGHT"
 WHOLE	= "WHOLE"
 STICK	= "STICK"
 GYRO	= "GYRO"
+PITCH	= "PITCH"
+YAW		= "YAW"
+ROLL	= "ROL"
 
 FORMATS, NAMES = zip(*CONTROLER_FORMAT)
 CI_NAMES = [ x for x in NAMES if not x.startswith('ukn_') ]

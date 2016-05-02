@@ -11,7 +11,7 @@ from collections import namedtuple
 
 from scc.actions import ACTIONS, NoAction, MultiAction
 from scc.uinput import Keys, Axes, Rels
-from scc.constants import SCButtons
+from scc.constants import SCButtons, PITCH, YAW, ROLL
 from scc.macros import Macro
 
 import token as TokenType
@@ -28,6 +28,9 @@ def build_action_constants():
 		'Axes'		: Axes,
 		'Rels'		: Rels,
 		'None'		: NoAction(),
+		'PITCH'		: PITCH,
+		'YAW'		: YAW,
+		'ROLL'		: ROLL
 	}
 	for tpl in (Keys, Axes, Rels, SCButtons):
 		for x in tpl:

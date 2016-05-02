@@ -195,7 +195,7 @@ class Mapper(object):
 			
 			# Check gyro
 			if controller.getGyroEnabled():
-				self.profile.gyro.gyro(self, sci.gpitch, sci.gyaw, sci.groll)
+				self.profile.gyro.gyro(self, sci.gpitch, sci.gyaw, sci.groll, sci.q1, sci.q2, sci.q3, sci.q4)
 			
 			# Check triggers
 			if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:

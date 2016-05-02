@@ -11,17 +11,28 @@
   Note that 'button2' is always optional.
 
 
-### mouse([axis] [, speed = 1, acceleration = 0 ])
+### mouse(axis [, speed = 1, acceleration = 0 ])
 Controls mouse movement or scroll wheel.
 
 - For stick, lets cursor or mouse wheel to be controlled by stick tilt.
 - For pad, does same thing as 'trackball'. You can set pad to move mouse only
   in one axis using this.
-- For gyroscope, controls mouse with changes in controller pitch and roll.
-  Both X and Y mouse axis is controller and 'axis' parameter is ignored.
+- For gyroscope, controls mouse with changes in controller pitch and roll/yaw.
+  Axis parameter should be either YAW or ROLL (constants) and decides which
+  gyroscope axis controls X mouse axis.
 - For wheel controlled by pad, emulates finger scroll.
 - For button, pressing button maps to single movement over mouse axis or
   single step on scroll wheel.
+
+
+### gyro(axis1, [axis2, [axis3, [speed ]]])
+Maps *changes* in gyroscope pitch, yaw and roll movement into movements of gamepad stick.
+Can be used to map gyroscope to camera when camera can be controlled only with analog stick.
+
+
+### gyroabs(axis1, [axis2, [axis3, [speed ]]])
+Maps absolute gyroscope pitch, yaw and roll movement into movements of gamepad stick.
+Can bee used ot map gyroscope to movement stick or to use controller as racing wheel.
 
 
 ### trackpad([ speed = 1 ])
@@ -50,11 +61,14 @@ stick position, what probably doesn't yields expected results.
 #### dpad8(up, down, left, right, upleft, upright, downleft, downright)
 Same as dpad, with more directions.
 
+
 #### profile(name)
 Loads another profile
 
+
 #### shell(command)
 Executes command on background
+
 
 ### turnoff()
 Turns controller off

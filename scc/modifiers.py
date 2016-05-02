@@ -123,6 +123,7 @@ class ModeModifier(Modifier):
 		self.held_sticks = set()
 		self.held_triggers = {}
 		self.order = []
+		self.old_gyro = None
 		button = None
 		for i in stuff:
 			if self.default is not None:
@@ -248,8 +249,13 @@ class ModeModifier(Modifier):
 	def axis(self, mapper, position, what):
 		return self.select(mapper).axis(mapper, position, what)
 	
-	def gyro(self, mapper, pitch, yaw, roll):
-		return self.select(mapper).gyro(mapper, pitch, yaw, roll)
+	def gyro(self, mapper, pitch, yaw, roll, *q):
+		sel = self.select(mapper)
+		if sel is not self.old_gyro:
+			if self.old_gyro:
+				self.old_gyro.gyro(mapper, 0, 0, 0, *q)
+			self.old_gyro = sel
+		return sel.gyro(mapper, pitch, yaw, roll, *q)
 	
 	def pad(self, mapper, position, what):
 		return self.select(mapper).pad(mapper, position, what)

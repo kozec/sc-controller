@@ -8,10 +8,11 @@ trigger should be pressed.
 """
 from __future__ import unicode_literals
 
-from scc.tools import strip_none, ensure_size
+from scc.tools import strip_none, ensure_size, quat2euler, anglediff
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
-from scc.constants import LEFT, RIGHT, STICK
+from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
+from math import pi as PI
 
 import time, logging
 log = logging.getLogger("Actions")
@@ -110,10 +111,11 @@ class Action(object):
 	pad = axis
 	
 	
-	def gyro(self, mapper, pitch, yaw, roll):
+	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
 		"""
 		Called when action is set by rotating gyroscope.
-		'pitch', 'yaw' and 'roll' are difference from last gyroscope positions.
+		'pitch', 'yaw' and 'roll' represents change in gyroscope rotations.
+		'q1' to 'q4' represents current rotations expressed as quaterion.
 		"""
 		pass
 	
@@ -281,8 +283,8 @@ class HatRightAction(HatAction):
 class MouseAction(Action):
 	COMMAND = "mouse"
 	
-	def __init__(self, axis=None, speed=None):
-		Action.__init__(self, axis, speed)
+	def __init__(self, axis, speed=None):
+		Action.__init__(self, axis, *strip_none(speed))
 		self.mouse_axis = axis
 		self.speed = speed or 1
 	
@@ -317,7 +319,7 @@ class MouseAction(Action):
 	
 	def axis(self, mapper, position, what):
 		p = position * self.speed / 100
-
+		
 		if self.mouse_axis == Rels.REL_X:
 			# This is generaly bad idea for stick...
 			mapper.mouse.moveEvent(p, 0, False)
@@ -371,8 +373,66 @@ class MouseAction(Action):
 				mapper.mouse_dq_clear(2)
 	
 	
-	def gyro(self, mapper, pitch, yaw, roll):
-		mapper.mouse.moveEvent(yaw * self.speed * -1, pitch * self.speed * -1, False)
+	def whole(self, mapper, x, y, what):
+		mapper.mouse.moveEvent(x * self.speed * 0.01, y * self.speed * -0.01, False)
+		mapper.syn_list.add(mapper.mouse)
+		if what == STICK:
+			mapper.force_event.add(FE_STICK)
+	
+	
+	def gyro(self, mapper, pitch, yaw, roll, *a):
+		if self.mouse_axis == YAW:
+			mapper.mouse.moveEvent(yaw * self.speed * -1, pitch * self.speed * -1, False)
+		else:
+			mapper.mouse.moveEvent(roll * self.speed * -1, pitch * self.speed * -1, False)
+		mapper.syn_list.add(mapper.mouse)
+
+
+class GyroAction(Action):
+	COMMAND = "gyro"
+	
+	def __init__(self, axis1, axis2=None, axis3=None, speed=None):
+		Action.__init__(self, axis1, *strip_none(axis2, axis3, speed))
+		self.axes = [ axis1, axis2, axis3 ]
+		self.speed = speed or 1
+	
+	
+	def gyro(self, mapper, *pyr):
+		# p,y,r = quat2euler(sci.q1 / 32768.0, sci.q2 / 32768.0, sci.q3 / 32768.0, sci.q4 / 32768.0)
+		# print "% 7.2f, % 7.2f, % 7.2f" % (p,y,r)
+		# print sci.q1, sci.q2, sci.q3, sci.q4
+		for i in (0, 1, 2):
+			axis = self.axes[i]
+			# 'gyro' cannot map to mouse, but 'mouse' does that.
+			if axis in Axes:
+				mapper.gamepad.axisEvent(axis, pyr[i] * self.speed * -10)
+				mapper.syn_list.add(mapper.gamepad)
+
+
+class GyroAbsAction(GyroAction):
+	COMMAND = "gyroabs"
+	def __init__(self, *blah):
+		GyroAction.__init__(self, *blah)
+		self.ir = None
+	
+	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
+		pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
+		if self.ir is None:
+			# TODO: Move this to controller and allow some way to reset it
+			self.ir = pyr[2]
+		# Covert what quat2euler returns to what controller can use
+		for i in (0, 1):
+			pyr[i] = pyr[i] * (2**15) * 2 * self.speed / PI
+		pyr[2] = anglediff(self.ir, pyr[2]) * (2**15) * 2 * self.speed / PI
+		# Restrict to acceptablle range
+		for i in (0, 1, 2):
+			pyr[i] = int(max(min(pyr[i], 2**15), -(2**15)))
+		# print "% 12.0f, % 12.0f, % 12.5f" % (p,y,r)
+		for i in (0, 1, 2):
+			axis = self.axes[i]
+			if axis in Axes:
+				mapper.gamepad.axisEvent(axis, pyr[i] * self.speed)
+				mapper.syn_list.add(mapper.gamepad)
 
 
 class TrackballAction(Action):

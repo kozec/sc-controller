@@ -6,7 +6,8 @@ Various stuff that I don't care to fit anywhere else.
 """
 from __future__ import unicode_literals
 
-import imp, os, sys, gettext, logging
+from math import pi as PI
+import imp, os, sys, gettext, logging, math
 log = logging.getLogger("tools.py")
 _ = lambda x : x
 
@@ -69,6 +70,28 @@ def ensure_size(n, lst):
 	l = list(lst)
 	while len(l) < n : l.append(None)
 	return l[0:n]
+
+
+def quat2euler(q0, q1, q2, q3):
+	"""
+	Converts quaterion to (pitch, yaw, roll).
+	Values are in -PI to PI range.
+	"""
+	qq0, qq1, qq2, qq3 = q0**2, q1**2, q2**2, q3**2
+	xa = qq0 - qq1 - qq2 + qq3
+	xb = 2 * (q0 * q1 + q2 * q3)
+	xn = 2 * (q0 * q2 - q1 * q3)
+	yn = 2 * (q1 * q2 + q0 * q3)
+	zn = qq3 + qq2 - qq0 - qq1
+	
+	pitch = math.atan2(xb , xa)
+	yaw   = math.atan2(xn , math.sqrt(1 - xn**2))
+	roll  = math.atan2(yn , zn)
+	return pitch, yaw, roll
+
+
+def anglediff(a1, a2):
+	return (a2 - a1 + PI) % (2.0*PI) - PI
 
 
 def static_vars(**kwargs):
