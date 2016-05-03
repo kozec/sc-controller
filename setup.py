@@ -5,7 +5,7 @@ import glob
 uinput = Extension('libuinput', sources = ['scc/uinput.c'])
 
 data_files = [
-				('share/scc', glob.glob("*.glade")),
+				('share/scc/glade', glob.glob("glade/*.glade")),
 				('share/scc/images', glob.glob("images/*.svg")),
 				('share/scc/default_profiles', glob.glob("default_profiles/*.sccprofile")),
 				('share/pixmaps', [ "images/sc-controller.svg" ]),

@@ -17,9 +17,9 @@ if __name__ == "__main__":
 	init_logging()
 
 	from gi.repository import Gtk
-	share = get_share_path()
+	glades = os.path.join(get_share_path(), "glade")
 	images = os.path.join(get_share_path(), "images")
 	Gtk.IconTheme.get_default().append_search_path(images)
 	
 	from scc.gui.app import App
-	App(share, images).run(sys.argv)
+	App(glades, images).run(sys.argv)
