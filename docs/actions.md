@@ -1,5 +1,6 @@
 # Actions
 
+### button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
 - For stick or pad, when it is moved over 'minustrigger', 'button1' is pressed;
   When it is moved back, 'button1' is released. Similary, 'button2' is pressed
   and released when stick (or finger on pad) moves over 'plustrigger' value
