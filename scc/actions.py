@@ -8,7 +8,7 @@ trigger should be pressed.
 """
 from __future__ import unicode_literals
 
-from scc.tools import strip_none, ensure_size, quat2euler, anglediff
+from scc.tools import strip_none, ensure_size, quat2euler, anglediff, _
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
@@ -16,7 +16,6 @@ from math import pi as PI
 
 import time, logging
 log = logging.getLogger("Actions")
-_ = lambda x : x
 
 MOUSE_BUTTONS = ( Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA )
 GAMEPAD_BUTTONS = ( Keys.BTN_A, Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
@@ -48,6 +47,8 @@ class Action(object):
 	AC_STICK = 2
 	AC_TRIGGER = 3
 	AC_PAD = 4
+	# AC_ALL is used only by action editor
+	AC_ALL = 255
 	
 	def __init__(self, *parameters):
 		self.parameters = parameters
@@ -66,7 +67,10 @@ class Action(object):
 	
 	def to_string(self, multiline=False, pad=0):
 		""" Converts action back to string """
-		return (" " * pad) + "%s(%s)" % (self.COMMAND, ", ".join([ str(x) for x in self.parameters ]))
+		return (" " * pad) + "%s(%s)" % (self.COMMAND, ", ".join([
+			x.to_string() if isinstance(x, Action) else str(x)
+			for x in self.parameters
+		]))
 	
 	
 	def button_press(self, mapper):
@@ -505,11 +509,13 @@ class ButtonAction(Action):
 	}
 	
 	def __init__(self, button1, button2 = None, minustrigger = None, plustrigger = None):
+		if button1 is None:
+			button1, button2 = button2, None
 		Action.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
 		self.button = button1
 		self.button2 = button2
 		self.minustrigger = minustrigger
-		self.plustrigger = minustrigger
+		self.plustrigger = plustrigger
 		self._pressed_key = None
 		self._released = True
 	
