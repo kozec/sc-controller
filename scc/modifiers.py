@@ -274,6 +274,60 @@ class ModeModifier(Modifier):
 			return self.select(mapper).whole(mapper, x, y, what)
 
 
+class SensitivityModifier(Modifier):
+	COMMAND = "sens"
+	def __init__(self, *parameters):
+		self.speeds = []
+		action = NoAction()
+		for p in parameters:
+			if type(p) in (int, float) and len(self.speeds) < 3:
+				self.speeds.append(float(p))
+			else:
+				if isinstance(p, Action):
+					action = p
+		while len(self.speeds) < 3:
+			self.speeds.append(1.0)
+		Modifier.__init__(self, action)
+		self.parameters = parameters
+	
+	
+	def describe(self, context):
+		return self.action.describe(context)
+	
+	
+	def button_press(self, mapper):
+		return self.action.button_press(mapper)
+	
+	def button_release(self, mapper):
+		return self.action.button_release(mapper)
+	
+	def trigger(self, mapper, position, old_position):
+		return self.action.trigger(mapper, position * self.speeds[0], old_position)
+	
+	
+	def axis(self, mapper, position, what):
+		return self.action.axis(mapper, position * self.speeds[0], what)
+	
+	
+	def gyro(self, mapper, pitch, yaw, roll, *q):
+		return self.action.gyro(mapper,
+			pitch * self.speeds[0],
+			yaw * self.speeds[1],
+			roll * self.speeds[2],
+			*q)
+	
+	
+	def pad(self, mapper, position, what):
+		return self.action.pad(mapper, position * self.speeds[0], what)
+	
+	
+	def whole(self, mapper, x, y, what):
+		return self.action.pad(mapper,
+			x * self.speeds[0],
+			y * self.speeds[1],
+			what)
+
+
 # Add modifiers to ACTIONS dict
 for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
 	if i.COMMAND is not None:
