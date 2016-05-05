@@ -22,8 +22,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
+from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.actions import XYAction, NoAction
-from scc.modifiers import ModeModifier
 from scc.macros import Macro, Repeat
 from scc.constants import SCButtons
 from scc.profile import Profile
@@ -146,6 +146,8 @@ class App(Gtk.Application, ProfileManager):
 	
 	
 	def _choose_editor(self, action, title):
+		if isinstance(action, SensitivityModifier):
+			action = action.action
 		if isinstance(action, ModeModifier) and not is_gyro_enable(action):
 			e = ModeshiftEditor(self, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))

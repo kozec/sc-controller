@@ -156,6 +156,11 @@ class ActionEditor(Editor):
 			self.ac_callback(self.id, action, reopen=True)
 	
 	
+	def on_exMore_activate(self, ex, *a):
+		rvMore = self.builder.get_object("rvMore")
+		rvMore.set_reveal_child(not ex.get_expanded())
+	
+	
 	def _set_y_field_visible(self, visible):
 		if visible:
 			self.builder.get_object("rvlXLabel").set_reveal_child(True)

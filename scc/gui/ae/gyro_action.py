@@ -9,8 +9,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, MouseAction, MultiAction
+from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.actions import GyroAction, GyroAbsAction
-from scc.modifiers import ModeModifier
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import SCButtons, YAW, ROLL
 from scc.gui.parser import GuiActionParser, InvalidAction
@@ -206,6 +206,8 @@ def is_gyro_enable(modemod):
 		if len(modemod.order) != 1:
 			return False
 		action = modemod.mods[modemod.order[0]]
+		if isinstance(action, SensitivityModifier):
+			action = action.action
 		if isinstance(action, ModeModifier):
 			return False
 		if isinstance(action, MouseAction):
