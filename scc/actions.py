@@ -413,6 +413,25 @@ class GyroAction(Action):
 			if axis in Axes:
 				mapper.gamepad.axisEvent(axis, pyr[i] * self.speed * -10)
 				mapper.syn_list.add(mapper.gamepad)
+	
+	
+	def describe(self, context):
+		if self.name : return self.name
+		rv = []
+		
+		for x in self.axes:
+			if x:
+				s = _(AxisAction.AXIS_NAMES[x][0])
+				if s not in rv:
+					rv.append(s)
+		return "\n".join(rv)
+	
+	
+	def _get_axis_description(self):
+		axis, neg, pos = "%s %s" % (self.id.name, _("Axis")), _("Negative"), _("Positive")
+		if self.id in AxisAction.AXIS_NAMES:
+			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.id] ]
+		return axis, neg, pos
 
 
 class GyroAbsAction(GyroAction):

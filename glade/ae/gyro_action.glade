@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.10"/>
+  <object class="GtkListStore" id="lstGyroButton">
+    <columns>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="lstOutputMode">
+    <columns>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">None</col>
+        <col id="1" translatable="yes">None</col>
+        <col id="2">none</col>
+      </row>
+      <row>
+        <col id="0">mouse([YAW|ROLL])</col>
+        <col id="1" translatable="yes">Mouse (camera)</col>
+        <col id="2">mouse</col>
+      </row>
+      <row>
+        <col id="0">gyro(ABS_RX, [ABS_RY|None, ABS_RY])</col>
+        <col id="1" translatable="yes">Right Stick (camera)</col>
+        <col id="2">right</col>
+      </row>
+      <row>
+        <col id="0">gyroabs(ABS_RX, [ABS_RY|None, ABS_RY])</col>
+        <col id="1" translatable="yes">Right Stick (absolute)</col>
+        <col id="2">right_abs</col>
+      </row>
+      <row>
+        <col id="0">gyro(ABS_X, [ABS_Y|None,ABS_Y])</col>
+        <col id="1" translatable="yes">Left Stick (camera)</col>
+        <col id="2">left</col>
+      </row>
+      <row>
+        <col id="0">gyroabs(ABS_X, [ABS_Y|None, ABS_Y])</col>
+        <col id="1" translatable="yes">Left Stick (absolute)</col>
+        <col id="2">left_abs</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="lstYawRoll">
+    <columns>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">YAW</col>
+        <col id="1" translatable="yes">Yaw</col>
+      </row>
+      <row>
+        <col id="0">ROLL</col>
+        <col id="1" translatable="yes">Roll</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkGrid" id="gyro_action">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="row_spacing">3</property>
+    <property name="column_spacing">10</property>
+    <child>
+      <object class="GtkLabel" id="label1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">X Axis Controlled by	</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkComboBox" id="cbMode">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="hexpand">True</property>
+        <property name="model">lstOutputMode</property>
+        <property name="active">1</property>
+        <signal name="changed" handler="update" swapped="no"/>
+        <child>
+          <object class="GtkCellRendererText" id="text"/>
+          <attributes>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="label5">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Output Mode</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkComboBox" id="cbYawRoll">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="hexpand">True</property>
+        <property name="model">lstYawRoll</property>
+        <property name="active">1</property>
+        <signal name="changed" handler="update" swapped="no"/>
+        <child>
+          <object class="GtkCellRendererText" id="text1"/>
+          <attributes>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="label2">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Gyro Enable Button</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkComboBox" id="cbGyroButton">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="hexpand">True</property>
+        <property name="model">lstGyroButton</property>
+        <property name="active">1</property>
+        <signal name="changed" handler="update" swapped="no"/>
+        <child>
+          <object class="GtkCellRendererText" id="text2"/>
+          <attributes>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">2</property>
+      </packing>
+    </child>
+  </object>
+</interface>

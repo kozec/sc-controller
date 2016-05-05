@@ -15,7 +15,7 @@ from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.ae import AEComponent
 
 import os, logging
-log = logging.getLogger("AE.Axis")
+log = logging.getLogger("AE.AxisAction")
 
 __all__ = [ 'AxisActionComponent' ]
 

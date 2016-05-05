@@ -28,6 +28,7 @@ class ActionEditor(Editor):
 	COMPONENTS = (
 		'axis',
 		'axis_action',
+		'gyro_action',
 		'buttons',
 		'dpad',
 		'per_axis',
