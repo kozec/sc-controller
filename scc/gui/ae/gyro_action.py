@@ -73,7 +73,9 @@ class GyroActionComponent(AEComponent):
 	def set_action(self, mode, action):
 		if self.handles(mode, action):
 			if isinstance(action, ModeModifier):
-				print self.mods.keys()
+				b = action.order[0]
+				action = action.mods[b]
+				self.select_gyro_button(b)
 			else:
 				self.select_gyro_button(None)
 			if isinstance(action, MouseAction):
@@ -112,9 +114,9 @@ class GyroActionComponent(AEComponent):
 		if isinstance(modemod, ModeModifier):
 			if modemod.default:
 				return False
-			if len(modemod.mods) != 0:
+			if len(modemod.order) != 1:
 				return False
-			action = modemod.mods[modemod.mods.keys()[0]]
+			action = modemod.mods[modemod.order[0]]
 			if isinstance(action, ModeModifier):
 				return False
 			return GyroActionComponent._handles(action)
@@ -174,6 +176,8 @@ class GyroActionComponent(AEComponent):
 		cb = self.builder.get_object("cbGyroButton")
 		model = cb.get_model()
 		self._recursing = True
+		if button is not None:
+			button = button.name
 		for row in model:
 			if button == row[0] and row[1] != None:
 				cb.set_active_iter(row.iter)
@@ -190,6 +194,7 @@ class GyroActionComponent(AEComponent):
 		cbGyroButton = self.builder.get_object("cbGyroButton")
 		action = cbMode.get_model().get_value(cbMode.get_active_iter(), 0)
 		yawroll = cbYawRoll.get_model().get_value(cbYawRoll.get_active_iter(), 0)
+		button = cbGyroButton.get_model().get_value(cbGyroButton.get_active_iter(), 0)
 		
 		match = re.match(r"([^\[]+)\[([^\|]+)\|([^\]]+)\](.*)", action)
 		if match:
@@ -198,6 +203,9 @@ class GyroActionComponent(AEComponent):
 				action = "%s%s%s" % (grps[0], grps[1], grps[3])
 			else:
 				action = "%s%s%s" % (grps[0], grps[2], grps[3])
-		
 		action = self.parser.restart(action).parse()
+		
+		if button:
+			action = ModeModifier(getattr(SCButtons, button), action)
+		
 		self.editor.set_action(action)

@@ -20,11 +20,12 @@ from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
+from scc.gui.ae.gyro_action import GyroActionComponent
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
-from scc.constants import SCButtons
 from scc.actions import XYAction, NoAction
-from scc.macros import Macro, Repeat
 from scc.modifiers import ModeModifier
+from scc.macros import Macro, Repeat
+from scc.constants import SCButtons
 from scc.profile import Profile
 
 import os, sys, json, logging
@@ -145,7 +146,7 @@ class App(Gtk.Application, ProfileManager):
 	
 	
 	def _choose_editor(self, action, title):
-		if isinstance(action, ModeModifier):
+		if isinstance(action, ModeModifier) and not GyroActionComponent.is_gyro_enable(action):
 			e = ModeshiftEditor(self, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))
 		elif isinstance(action, Macro):
@@ -363,7 +364,6 @@ class App(Gtk.Application, ProfileManager):
 		Stores action in profile.
 		Returns formely stored action.
 		"""
-		print '_set_action', id, action
 		before = NoAction()
 		if id in BUTTONS:
 			before, self.current.buttons[id] = self.current.buttons[id], action
