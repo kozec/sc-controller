@@ -718,6 +718,12 @@ class MultiAction(Action):
 	def axis(self, *p):
 		for a in self.actions: a.axis(*p)
 	
+	def pad(self, *p):
+		for a in self.actions: a.pad(*p)
+	
+	def gyro(self, *p):
+		for a in self.actions: a.gyro(*p)
+	
 	def whole(self, *p):
 		for a in self.actions: a.whole(*p)
 	
