@@ -102,12 +102,11 @@ class TriggerABComponent(AEComponent):
 		self.grab_action(self.full, cb)
 	
 	
-	def grab_action(self, action, cb):
+	def grab_action(self, button, cb):
 		b = SimpleChooser(self.app, "buttons", cb)
 		b.set_title(_("Select Button"))
-		area = action_to_area(action)
 		b.hide_axes()
-		b.display_action(Action.AC_BUTTON, area)
+		b.display_action(Action.AC_BUTTON, ButtonAction(button))
 		b.show(self.editor.window)
 	
 	

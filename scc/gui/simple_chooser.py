@@ -19,6 +19,7 @@ class SimpleChooser(Editor):
 	
 	def __init__(self, app, component_name, callback):
 		self.app = app
+		self._action = None
 		self.component = None
 		self.callback = callback
 		self.setup_widgets()
@@ -48,6 +49,7 @@ class SimpleChooser(Editor):
 	
 	
 	def display_action(self, mode, action):
+		self._action = action
 		self.component.set_action(mode, action)
 	
 	
