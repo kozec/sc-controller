@@ -277,6 +277,7 @@ class ActionEditor(Editor):
 		self._set_mode(action, Action.AC_GYRO)
 		self.set_action(action)
 		self.hide_macro()
+		self.hide_modeshift()
 		self.id = Profile.GYRO
 	
 	
