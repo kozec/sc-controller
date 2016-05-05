@@ -56,7 +56,7 @@ class AxisComponent(AEComponent, Chooser):
 	
 	
 	def handles(self, mode, action):
-		return isinstance(action, AxisAction) or isinstance(action, MouseAction)
+		return isinstance(action, (AxisAction, MouseAction))
 	
 	
 	def hide_axes(self):

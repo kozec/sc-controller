@@ -8,9 +8,9 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, PRESSABLE
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
-from scc.gui.controller_widget import ControllerPad, ControllerStick
+from scc.gui.controller_widget import ControllerPad, ControllerStick, ControllerGyro
 from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.profile_manager import ProfileManager
 from scc.gui.daemon_manager import DaemonManager
@@ -86,6 +86,8 @@ class App(Gtk.Application, ProfileManager):
 			self.button_widgets[b] = ControllerPad(self, b, self.builder.get_object("bt" + b))
 		for b in STICKS:
 			self.button_widgets[b] = ControllerStick(self, b, self.builder.get_object("bt" + b))
+		for b in GYROS:
+			self.button_widgets[b] = ControllerGyro(self, b, self.builder.get_object("bt" + b))
 		
 		self.builder.get_object("cbProfile").set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
@@ -172,6 +174,11 @@ class App(Gtk.Application, ProfileManager):
 			ae = self._choose_editor(self.current.stick,
 				_("Stick"))
 			ae.set_stick(self.current.stick)
+			ae.show(self.window)
+		elif id in GYROS:
+			ae = self._choose_editor(self.current.gyro,
+				_("Gyro"))
+			ae.set_gyro(self.current.gyro)
 			ae.show(self.window)
 		elif id in PADS:
 			data = NoAction()
@@ -356,6 +363,7 @@ class App(Gtk.Application, ProfileManager):
 		Stores action in profile.
 		Returns formely stored action.
 		"""
+		print '_set_action', id, action
 		before = NoAction()
 		if id in BUTTONS:
 			before, self.current.buttons[id] = self.current.buttons[id], action
@@ -365,6 +373,9 @@ class App(Gtk.Application, ProfileManager):
 			self.button_widgets[id.name].update()
 		elif id in TRIGGERS:
 			before, self.current.triggers[id] = self.current.triggers[id], action
+			self.button_widgets[id].update()
+		elif id in GYROS:
+			before, self.current.gyro = self.current.gyro, action
 			self.button_widgets[id].update()
 		elif id in STICKS + PADS:
 			if id in STICKS:

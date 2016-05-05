@@ -42,13 +42,13 @@ class Action(object):
 	# Used everywhere to convert strings to Action classes and back
 	COMMAND = None
 	
-	# "Action Context" constants used by describe method
-	AC_BUTTON = 1
-	AC_STICK = 2
-	AC_TRIGGER = 3
-	AC_PAD = 4
-	# AC_ALL is used only by action editor
-	AC_ALL = 255
+	# "Action Context" constants
+	AC_BUTTON	= 1 << 0
+	AC_STICK	= 1 << 2
+	AC_TRIGGER	= 1 << 3
+	AC_GYRO		= 1 << 4
+	AC_PAD		= 1 << 5
+	AC_ALL		= 0b11111111
 	
 	def __init__(self, *parameters):
 		self.parameters = parameters
@@ -299,6 +299,8 @@ class MouseAction(Action):
 			return _("Wheel")
 		elif self.parameters[0] == Rels.REL_HWHEEL:
 			return _("Horizontal Wheel")
+		elif self.parameters[0] in (PITCH, YAW, ROLL):
+			return _("Mouse")
 		else:
 			return _("Mouse %s") % (self.parameters[0].name.split("_", 1)[-1],)
 	

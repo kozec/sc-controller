@@ -8,11 +8,12 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
+from scc.actions import Action, ButtonAction, MultiAction, NoAction
 from scc.gui.area_to_action import action_to_area
 from scc.gui.key_grabber import KeyGrabber
+from scc.gui.parser import InvalidAction
 from scc.gui.chooser import Chooser
 from scc.gui.ae import AEComponent
-from scc.actions import Action, ButtonAction, MultiAction, NoAction
 
 import os, logging
 log = logging.getLogger("AE.Buttons")
@@ -59,9 +60,7 @@ class ButtonsComponent(AEComponent, Chooser):
 	
 	def handles(self, mode, action):
 		# Handles ButtonAction and MultiAction if all subactions are ButtonAction
-		if isinstance(action, NoAction):
-			return True
-		if isinstance(action, ButtonAction):
+		if isinstance(action, (ButtonAction, NoAction, InvalidAction)):
 			return True
 		if isinstance(action, MultiAction):
 			if len(action.actions) > 0:

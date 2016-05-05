@@ -9,6 +9,8 @@ class InvalidAction(object):
 	def __init__(self, string, error):
 		self.string = string
 		self.error = error
+		self.name = None
+		print "InvalidAction", self.string
 	
 	
 	def to_string(self, *a):

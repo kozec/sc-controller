@@ -13,6 +13,7 @@ from scc.actions import TRIGGER_HALF, TRIGGER_CLICK
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.area_to_action import action_to_area
 from scc.gui.simple_chooser import SimpleChooser
+from scc.gui.parser import InvalidAction
 
 import os, logging
 log = logging.getLogger("AE.TriggerAB")
@@ -32,7 +33,7 @@ class TriggerABComponent(AEComponent):
 	
 	def handles(self, mode, action):
 		# Handles only None and ButtonAction
-		return isinstance(action, ButtonAction) or isinstance(action, NoAction)
+		return isinstance(action, (ButtonAction, NoAction, InvalidAction))
 	
 	
 	def get_button_title(self):

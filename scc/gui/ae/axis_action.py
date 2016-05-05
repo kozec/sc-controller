@@ -11,7 +11,7 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, AxisAction, MouseAction, XYAction
 from scc.actions import TrackballAction, TrackpadAction
 from scc.uinput import Keys, Axes, Rels
-from scc.gui.parser import GuiActionParser
+from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.ae import AEComponent
 
 import os, logging
@@ -65,9 +65,7 @@ class AxisActionComponent(AEComponent):
 	
 	
 	def handles(self, mode, action):
-		if isinstance(action, NoAction):
-			return True
-		if isinstance(action, TrackballAction):
+		if isinstance(action, (NoAction, TrackballAction, InvalidAction)):
 			return True
 		if isinstance(action, XYAction):
 			p = [ None, None ]
