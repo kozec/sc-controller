@@ -28,6 +28,7 @@ class ActionEditor(Editor):
 	COMPONENTS = (
 		'axis',
 		'axis_action',
+		'gyro',
 		'gyro_action',
 		'buttons',
 		'dpad',
@@ -104,6 +105,7 @@ class ActionEditor(Editor):
 		
 		stActionModes = self.builder.get_object("stActionModes")
 		component.set_action(self._mode, self._action)
+		self._selected_component = component
 		stActionModes.set_visible_child(component.get_widget())
 		
 		stActionModes.show_all()
@@ -200,7 +202,7 @@ class ActionEditor(Editor):
 				self._set_y_field_visible(False)
 		
 		
-		if self._selected_component is None or not self._selected_component.handles(self._mode, action):
+		if self._selected_component is None:
 			self._selected_component = None
 			for component in reversed(sorted(self.components, key = lambda a : a.PRIORITY)):
 				if component.CTXS == Action.AC_ALL or self._mode in component.CTXS:
@@ -211,6 +213,10 @@ class ActionEditor(Editor):
 				self.c_buttons[self._selected_component].set_active(True)
 				if isinstance(action, InvalidAction):
 					self._selected_component.set_action(self._mode, action)
+		elif not self._selected_component.handles(self._mode, action):
+			log.warning("selected_component no longer handles edited action")
+			log.warning(self._selected_component)
+			log.warning(action.to_string())
 	
 	
 	def _set_mode(self, action, mode):

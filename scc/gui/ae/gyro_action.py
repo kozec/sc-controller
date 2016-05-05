@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.actions import Action, NoAction, MouseAction
+from scc.actions import Action, NoAction, MouseAction, MultiAction
 from scc.actions import GyroAction, GyroAbsAction
 from scc.modifiers import ModeModifier
 from scc.uinput import Keys, Axes, Rels
@@ -63,15 +63,18 @@ class GyroActionComponent(AEComponent):
 	def load(self):
 		if self.loaded : return
 		AEComponent.load(self)
+		self._recursing = True
 		cbGyroButton = self.builder.get_object("cbGyroButton")
-		cbGyroButton.set_row_separator_func( lambda model, iter : model.get_value(iter, 1) is None )
-		model = cbGyroButton.get_model()
-		for button, text in self.BUTTONS:
-			model.append(( None if button is None else button.name, text ))	
+		fill_buttons(cbGyroButton)
+		self._recursing = False
 	
 	
 	def set_action(self, mode, action):
 		if self.handles(mode, action):
+			if isinstance(action, NoAction):
+				self.select_gyro_output("none")
+				self.select_gyro_button(None)
+				return
 			if isinstance(action, ModeModifier):
 				b = action.order[0]
 				action = action.mods[b]
@@ -108,27 +111,11 @@ class GyroActionComponent(AEComponent):
 		return _("Joystick or Mouse")
 	
 	
-	@staticmethod
-	def is_gyro_enable(modemod):
-		""" Returns True if ModeModifier instance is used to create "Gyro Enable Button" """
-		if isinstance(modemod, ModeModifier):
-			if modemod.default:
-				return False
-			if len(modemod.order) != 1:
-				return False
-			action = modemod.mods[modemod.order[0]]
-			if isinstance(action, ModeModifier):
-				return False
-			return GyroActionComponent._handles(action)
-		return False
-	
-	
-	@staticmethod
-	def _handles(action):
-		if GyroActionComponent.is_gyro_enable(action):
+	def handles(self, mode, action):
+		if isinstance(action, NoAction):
 			return True
-		if isinstance(action, MouseAction):
-			return True
+		if is_gyro_enable(action):
+			action = action.mods[action.order[0]]
 		if isinstance(action, GyroAction):	# Takes GyroAbsAction as well
 			ap = action.parameters
 			if (len(ap) == 3 and not ap[1]) or len(ap) == 2:
@@ -136,13 +123,10 @@ class GyroActionComponent(AEComponent):
 					return True
 				if ap[0] == Axes.ABS_RX and ap[-1] == Axes.ABS_RY:
 					return True
-		return False
-	
-	
-	def handles(self, mode, action):
-		if isinstance(action, NoAction):
-			return True
-		return GyroActionComponent._handles(action)
+			return False
+		if isinstance(action, MultiAction):
+			return False
+		return True
 	
 	
 	def select_gyro_output(self, key):
@@ -185,8 +169,11 @@ class GyroActionComponent(AEComponent):
 				return
 		self._recursing = False
 	
-	
 	def update(self, *a):
+		pass
+	
+	
+	def send(self, *a):
 		if self._recursing : return
 		
 		cbMode = self.builder.get_object("cbMode")
@@ -209,3 +196,33 @@ class GyroActionComponent(AEComponent):
 			action = ModeModifier(getattr(SCButtons, button), action)
 		
 		self.editor.set_action(action)
+
+
+def is_gyro_enable(modemod):
+	""" Returns True if ModeModifier instance is used to create "Gyro Enable Button" """
+	if isinstance(modemod, ModeModifier):
+		if modemod.default:
+			return False
+		if len(modemod.order) != 1:
+			return False
+		action = modemod.mods[modemod.order[0]]
+		if isinstance(action, ModeModifier):
+			return False
+		if isinstance(action, MouseAction):
+			return True
+		if isinstance(action, GyroAction):	# Takes GyroAbsAction as well
+			return True
+		if isinstance(action, MultiAction):
+			for a in action.actions:
+				if not isinstance(a, GyroAction):
+					return False
+			return True
+	return False
+
+
+def fill_buttons(cb):
+	cb.set_row_separator_func( lambda model, iter : model.get_value(iter, 1) is None )
+	model = cb.get_model()
+	for button, text in GyroActionComponent.BUTTONS:
+		model.append(( None if button is None else button.name, text ))	
+	cb.set_active(0)

@@ -12,7 +12,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, Pango
 from scc.constants import SCButtons, STICK, GYRO, LEFT, RIGHT
-from scc.actions import Action, XYAction
+from scc.actions import Action, XYAction, MultiAction
+from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.profile import Profile
 import os, sys, logging
 
@@ -202,6 +203,15 @@ class ControllerGyro(ControllerWidget):
 	
 	
 	def _set_label(self, action):
+		if is_gyro_enable(action):
+			action = action.mods[action.order[0]]
+		if isinstance(action, MultiAction):
+			rv = []
+			for a in action.actions:
+				d = a.describe(self.ACTION_CONTEXT)
+				if not d in rv : rv.append(d)
+			self.label.set_label("\n".join(rv))
+			return
 		self.label.set_label(action.describe(self.ACTION_CONTEXT))
 	
 	

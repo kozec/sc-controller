@@ -57,8 +57,13 @@ class SimpleChooser(Editor):
 		self.callback(action)
 		self.close()
 		self.window.destroy()
-
-
+	
+	
 	def hide_axes(self):
 		""" Prevents user from selecting axes """
 		self.component.hide_axes()
+	
+	
+	def hide_mouse(self):
+		""" Prevents user from selecting mouse-related stuff """
+		self.component.hide_mouse()

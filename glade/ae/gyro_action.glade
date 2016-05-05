@@ -73,6 +73,8 @@
   <object class="GtkGrid" id="gyro_action">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="margin_left">30</property>
+    <property name="margin_right">30</property>
     <property name="row_spacing">3</property>
     <property name="column_spacing">10</property>
     <child>
@@ -97,7 +99,7 @@
         <property name="hexpand">True</property>
         <property name="model">lstOutputMode</property>
         <property name="active">1</property>
-        <signal name="changed" handler="update" swapped="no"/>
+        <signal name="changed" handler="send" swapped="no"/>
         <child>
           <object class="GtkCellRendererText" id="text"/>
           <attributes>
@@ -132,7 +134,7 @@
         <property name="hexpand">True</property>
         <property name="model">lstYawRoll</property>
         <property name="active">1</property>
-        <signal name="changed" handler="update" swapped="no"/>
+        <signal name="changed" handler="send" swapped="no"/>
         <child>
           <object class="GtkCellRendererText" id="text1"/>
           <attributes>
@@ -149,6 +151,7 @@
       <object class="GtkLabel" id="label2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_top">20</property>
         <property name="label" translatable="yes">Gyro Enable Button</property>
         <property name="xalign">0</property>
         <attributes>
@@ -164,10 +167,11 @@
       <object class="GtkComboBox" id="cbGyroButton">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_top">20</property>
         <property name="hexpand">True</property>
         <property name="model">lstGyroButton</property>
         <property name="active">1</property>
-        <signal name="changed" handler="update" swapped="no"/>
+        <signal name="changed" handler="send" swapped="no"/>
         <child>
           <object class="GtkCellRendererText" id="text2"/>
           <attributes>

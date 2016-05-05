@@ -9,10 +9,11 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
-from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.controller_widget import ControllerPad, ControllerStick, ControllerGyro
+from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.profile_manager import ProfileManager
+from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
 from scc.gui.macro_editor import MacroEditor
@@ -20,7 +21,6 @@ from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
-from scc.gui.ae.gyro_action import GyroActionComponent
 from scc.paths import get_daemon_path, get_config_path, get_profiles_path
 from scc.actions import XYAction, NoAction
 from scc.modifiers import ModeModifier
@@ -146,7 +146,7 @@ class App(Gtk.Application, ProfileManager):
 	
 	
 	def _choose_editor(self, action, title):
-		if isinstance(action, ModeModifier) and not GyroActionComponent.is_gyro_enable(action):
+		if isinstance(action, ModeModifier) and not is_gyro_enable(action):
 			e = ModeshiftEditor(self, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))
 		elif isinstance(action, Macro):

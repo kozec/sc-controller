@@ -28,7 +28,6 @@ class AxisComponent(AEComponent, Chooser):
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
 		Chooser.__init__(self, app)
-		self.axes_allowed = True
 	
 	
 	def load(self):
@@ -57,8 +56,3 @@ class AxisComponent(AEComponent, Chooser):
 	
 	def handles(self, mode, action):
 		return isinstance(action, (AxisAction, MouseAction))
-	
-	
-	def hide_axes(self):
-		""" Prevents user from selecting axes """
-		self.axes_allowed = False

@@ -30,6 +30,8 @@ class Chooser(Editor):
 		self.app = app
 		self.active_area = None		# Area that is permanently hilighted on the image
 		self.images = []
+		self.axes_allowed = True
+		self.mouse_allowed = True
 	
 	
 	def setup_image(self):
@@ -59,6 +61,8 @@ class Chooser(Editor):
 			if AREA_TO_ACTION[area][0] in AXIS_ACTION_CLASSES:
 				if not self.axes_allowed:
 					return
+			if not self.mouse_allowed and "MOUSE" in area :
+				return
 		background.hilight({
 			self.active_area : Chooser.ACTIVE_COLOR,
 			area : Chooser.HILIGHT_COLOR
@@ -73,6 +77,8 @@ class Chooser(Editor):
 			cls, params = AREA_TO_ACTION[area][0], AREA_TO_ACTION[area][1:]
 			if not self.axes_allowed and cls in AXIS_ACTION_CLASSES:
 				return
+			if not self.mouse_allowed and "MOUSE" in area :
+				return
 			self.area_action_selected(area, cls(*params))
 		else:
 			log.warning("Click on unknown area: %s" % (area,))
@@ -82,5 +88,11 @@ class Chooser(Editor):
 		raise Exception("Override me!")
 	
 	
-	def on_child_window_chosen_action(self, *a):
-		print "blaaaah", a
+	def hide_axes(self):
+		""" Prevents user from selecting axes """
+		self.axes_allowed = False
+	
+	
+	def hide_mouse(self):
+		""" Prevents user from selecting mouse-related stuff """
+		self.mouse_allowed = False
