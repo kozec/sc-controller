@@ -154,6 +154,8 @@ class ModeshiftEditor(Editor):
 			ae.set_trigger(self.id, action)
 		elif self.mode == Action.AC_STICK:
 			ae.set_stick(action)
+		elif self.mode == Action.AC_GYRO:
+			ae.set_gyro(action)
 		elif self.mode == Action.AC_PAD:
 			ae.set_pad(self.id, action)		
 	
@@ -265,3 +267,8 @@ class ModeshiftEditor(Editor):
 	def set_pad(self, id, action):
 		""" Setups action editor as editor for pad action """
 		self._set_mode(Action.AC_PAD, id, action)
+	
+	
+	def set_gyro(self, action):
+		""" Setups editor as editor for button action """
+		self._set_mode(Action.AC_GYRO, Profile.GYRO, action)
