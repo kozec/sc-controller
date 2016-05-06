@@ -127,6 +127,36 @@ class ActionEditor(Editor):
 			self._action.name = None
 	
 	
+	def hide_sensitivity(self, *indexes):
+		"""
+		Hides sensitivity settings for one or more axes.
+		Used when editing whatever is not a gyro.
+		"""
+		for i in (0, 1, 2):
+			for widget in self.sens_widgets[i]:
+				widget.set_sensitive(i not in indexes)
+				widget.set_visible(i not in indexes)
+		self.builder.get_object("lblSensitivityHeader").set_visible(len(indexes) < 3)
+	
+	
+	def hide_require_click(self):
+		"""
+		Hides 'Require Click' checkbox.
+		Used when editing everythin but pad.
+		"""
+		self.builder.get_object("cbRequireClick").set_visible(False)
+	
+	
+	def hide_advanced_settings(self):
+		"""
+		Hides entire 'Advanced Settings' expander.
+		"""
+		self.hide_sensitivity()
+		self.hide_require_click()
+		self.builder.get_object("exMore").set_visible(False)
+		self.builder.get_object("rvMore").set_visible(False)
+	
+	
 	def on_btClearSens_clicked(self, source, *a):
 		for scale, label, button in self.sens_widgets:
 			if source == button:
@@ -271,6 +301,7 @@ class ActionEditor(Editor):
 	def set_button(self, button, action):
 		""" Setups action editor as editor for button action """
 		self._set_mode(action, Action.AC_BUTTON)
+		self.hide_advanced_settings()
 		self.set_action(action)
 		self.id = button
 
@@ -278,6 +309,8 @@ class ActionEditor(Editor):
 	def set_trigger(self, trigger, action):
 		""" Setups action editor as editor for trigger action """
 		self._set_mode(action, Action.AC_TRIGGER)
+		self.hide_sensitivity(1, 2) # YZ
+		self.hide_require_click()
 		self.set_action(action)
 		self.hide_macro()
 		self.id = trigger
@@ -286,6 +319,8 @@ class ActionEditor(Editor):
 	def set_stick(self, action):
 		""" Setups action editor as editor for stick action """
 		self._set_mode(action, Action.AC_STICK)
+		self.hide_sensitivity(2) # Z only
+		self.hide_require_click()
 		self.set_action(action)
 		self.hide_macro()
 		self.id = Profile.STICK
@@ -295,6 +330,7 @@ class ActionEditor(Editor):
 		""" Setups action editor as editor for stick action """
 		self._set_mode(action, Action.AC_GYRO)
 		self.set_action(action)
+		self.hide_require_click()
 		self.hide_macro()
 		self.hide_modeshift()
 		self.id = Profile.GYRO
@@ -303,6 +339,7 @@ class ActionEditor(Editor):
 	def set_pad(self, id, action):
 		""" Setups action editor as editor for pad action """
 		self._set_mode(action, Action.AC_PAD)
+		self.hide_sensitivity(2) # Z only
 		self.set_action(action)
 		self.hide_macro()
 		self.id = id
