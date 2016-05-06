@@ -73,6 +73,15 @@ class Action(object):
 		]))
 	
 	
+	def strip(self):
+		"""
+		For modifier, returns first child action that actually
+		does something (first non-modifier).
+		For everything else, returns itself.
+		"""
+		return self
+	
+	
 	def button_press(self, mapper):
 		"""
 		Called when action is executed by pressing physical gamepad button.

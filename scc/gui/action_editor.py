@@ -292,14 +292,14 @@ class ActionEditor(Editor):
 			self._selected_component = None
 			for component in reversed(sorted(self.components, key = lambda a : a.PRIORITY)):
 				if component.CTXS == Action.AC_ALL or self._mode in component.CTXS:
-					if component.handles(self._mode, action):
+					if component.handles(self._mode, action.strip()):
 						self._selected_component = component
 						break
 			if self._selected_component:
 				self.c_buttons[self._selected_component].set_active(True)
 				if isinstance(action, InvalidAction):
 					self._selected_component.set_action(self._mode, action)
-		elif not self._selected_component.handles(self._mode, action):
+		elif not self._selected_component.handles(self._mode, action.strip()):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
 			log.warning(action.to_string())

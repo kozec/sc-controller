@@ -46,6 +46,10 @@ class ClickModifier(Modifier):
 		return "click( " + self.action.to_string() + " )"
 	
 	
+	def strip(self):
+		return self.action.strip()
+	
+	
 	def encode(self):
 		rv = self.action.encode()
 		rv['click'] = True
@@ -142,6 +146,16 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		if self.default is None:
 			self.default = NoAction()
+	
+	
+	def strip(self):
+		# Returns default action or action assigned to first modifier
+		if self.default:
+			return self.default.strip()
+		if len(self.order) > 0:
+			return self.mods[self.order[0]].strip()
+		# Empty ModeModifier
+		return NoAction()
 	
 	
 	def __str__(self):
@@ -289,6 +303,10 @@ class SensitivityModifier(Modifier):
 			self.speeds.append(1.0)
 		Modifier.__init__(self, action)
 		self.parameters = parameters
+	
+	
+	def strip(self):
+		return self.action.strip()
 	
 	
 	def describe(self, context):
