@@ -234,14 +234,14 @@ class AxisAction(Action):
 	def axis(self, mapper, position, what):
 		p = float(position - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, p)
+		mapper.gamepad.axisEvent(self.id, clamp_axis(self.id, p))
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
 	def trigger(self, mapper, position, old_position):
 		p = float(position - TRIGGER_MIN) / (TRIGGER_MAX - TRIGGER_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, p)
+		mapper.gamepad.axisEvent(self.id, clamp_axis(self.id, p))
 		mapper.syn_list.add(mapper.gamepad)
 
 
@@ -420,7 +420,7 @@ class GyroAction(Action):
 			axis = self.axes[i]
 			# 'gyro' cannot map to mouse, but 'mouse' does that.
 			if axis in Axes:
-				mapper.gamepad.axisEvent(axis, pyr[i] * self.speed * -10)
+				mapper.gamepad.axisEvent(axis, clamp_axis(axis, pyr[i] * self.speed * -10))
 				mapper.syn_list.add(mapper.gamepad)
 	
 	
@@ -465,7 +465,7 @@ class GyroAbsAction(GyroAction):
 		for i in (0, 1, 2):
 			axis = self.axes[i]
 			if axis in Axes:
-				mapper.gamepad.axisEvent(axis, pyr[i] * self.speed)
+				mapper.gamepad.axisEvent(axis, clamp_axis(axis, pyr[i] * self.speed))
 				mapper.syn_list.add(mapper.gamepad)
 
 
@@ -967,6 +967,18 @@ class NoAction(Action):
 		return "NoAction"
 
 	__repr__ = __str__
+
+
+def clamp_axis(id, value):
+	""" Returns value clamped between min/max allowed for axis """
+	if id in (Axes.ABS_Z, Axes.ABS_RZ):
+		# Triggers
+		return max(TRIGGER_MIN, min(TRIGGER_MAX, value))
+	if id in (Axes.ABS_HAT0X, Axes.ABS_HAT0Y):
+		# DPAD
+		return max(-1, min(1, value))
+	# Everything else
+	return max(STICK_PAD_MIN, min(STICK_PAD_MAX, value))
 
 
 # Generate dict of { 'actionname' : ActionClass } for later use
