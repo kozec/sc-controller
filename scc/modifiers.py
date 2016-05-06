@@ -39,11 +39,11 @@ class ClickModifier(Modifier):
 	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
-			return ((" " * pad) + "click(\n" +
-				self.action.to_string(True, pad + 2) +
-				(" " * pad) + ")")
-		else:
-			return "click( " + self.action.to_string() + " )"
+			childstr = self.action.to_string(True, pad + 2)
+			if "\n" in childstr:
+				return ((" " * pad) + "click(\n" +
+					childstr + "\n" + (" " * pad) + ")")
+		return "click( " + self.action.to_string() + " )"
 	
 	
 	def encode(self):
@@ -293,6 +293,16 @@ class SensitivityModifier(Modifier):
 	
 	def describe(self, context):
 		return self.action.describe(context)
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if multiline:
+			childstr = self.action.to_string(True, pad + 2)
+			if "\n" in childstr:
+				return ((" " * pad) + "sens(" +
+					(", ".join([ str(p) for p in self.parameters[0:-1] ])) + ",\n" +
+					childstr + "\n" + (" " * pad) + ")")
+		return Modifier.to_string(self, multiline, pad)
 	
 	
 	def button_press(self, mapper):

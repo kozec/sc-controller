@@ -6,24 +6,24 @@
     <property name="lower">0.01</property>
     <property name="upper">10.01</property>
     <property name="value">1</property>
-    <property name="step_increment">0.01</property>
-    <property name="page_increment">0.10000000000000001</property>
+    <property name="step_increment">0.10000000000000001</property>
+    <property name="page_increment">1</property>
     <property name="page_size">0.01</property>
   </object>
   <object class="GtkAdjustment" id="adjSensitivityY">
     <property name="lower">0.01</property>
     <property name="upper">10.01</property>
     <property name="value">1</property>
-    <property name="step_increment">0.01</property>
-    <property name="page_increment">0.10000000000000001</property>
+    <property name="step_increment">0.10000000000000001</property>
+    <property name="page_increment">1</property>
     <property name="page_size">0.01</property>
   </object>
   <object class="GtkAdjustment" id="adjSensitivityZ">
     <property name="lower">0.01</property>
     <property name="upper">10.01</property>
     <property name="value">1</property>
-    <property name="step_increment">0.01</property>
-    <property name="page_increment">0.10000000000000001</property>
+    <property name="step_increment">0.10000000000000001</property>
+    <property name="page_increment">1</property>
     <property name="page_size">0.01</property>
   </object>
   <object class="GtkWindow" id="Dialog">
@@ -329,6 +329,7 @@
                     <property name="adjustment">adjSensitivityX</property>
                     <property name="round_digits">1</property>
                     <property name="value_pos">right</property>
+                    <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -343,6 +344,7 @@
                     <property name="adjustment">adjSensitivityY</property>
                     <property name="round_digits">1</property>
                     <property name="value_pos">right</property>
+                    <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -357,6 +359,7 @@
                     <property name="adjustment">adjSensitivityZ</property>
                     <property name="round_digits">1</property>
                     <property name="value_pos">right</property>
+                    <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -447,6 +450,7 @@
                     <property name="margin_bottom">5</property>
                     <property name="xalign">0</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="update_modifiers" swapped="no"/>
                     <child>
                       <object class="GtkLabel" id="label4">
                         <property name="visible">True</property>

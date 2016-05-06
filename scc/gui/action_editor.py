@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.modifiers import Modifier, ClickModifier, ModeModifier
+from scc.modifiers import Modifier, ClickModifier, ModeModifier, SensitivityModifier
 from scc.actions import Action, XYAction, NoAction
 from scc.profile import Profile
 from scc.macros import Macro
@@ -215,6 +215,42 @@ class ActionEditor(Editor):
 			self.builder.get_object("entActionY").set_text("")
 	
 	
+	def update_modifiers(self, *a):
+		"""
+		Called when sensitivity or 'require click' combobox value changes.
+		"""
+		self.set_action(self._action) # calls generate_modifiers in turn
+	
+	
+	def generate_modifiers(self, action, index=-1):
+		# Load numbers from sensitivity sliders
+		any_sens, sens = False, [1.0] * 3
+		for i in (0, 1, 2):
+			sens[i] = self.sens_widgets[i][0].get_value()
+			any_sens = any_sens or (sens[i] != 1.0)
+		# Strip 1.0's
+		while len(sens) > 0 and sens[-1] == 1.0: sens = sens[0:-1]
+		
+		if isinstance(action, XYAction):
+			# XYAction has to be topmost
+			return XYAction(
+				self.generate_modifiers(action.x, 0),
+				self.generate_modifiers(action.y, 1),
+			)
+		if any_sens and index < 0:
+			# Not called for XYAction parameter
+			sens.append(action)
+			action = SensitivityModifier(*sens)
+		elif any_sens and len(sens) > index:
+			# Called for XYAction parameter and sensitivity is specified
+			action = SensitivityModifier(sens[index], action)
+		
+		cbRequireClick = self.builder.get_object("cbRequireClick")
+		if cbRequireClick.get_active():
+			action = ClickModifier(action)
+		return action
+	
+	
 	def set_action(self, action):
 		"""
 		Updates Action field(s) on bottom and recolors apropriate image area,
@@ -233,6 +269,7 @@ class ActionEditor(Editor):
 			entAction.set_name("entAction")
 			btOK.set_sensitive(True)
 			self._action = action
+			action = self.generate_modifiers(action)
 		
 			if isinstance(action, XYAction):
 				entAction.set_text(action.actions[0].to_string())

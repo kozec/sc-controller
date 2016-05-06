@@ -38,6 +38,7 @@ class CustomActionComponent(AEComponent):
 
 
 	def set_action(self, mode, action):
+		action = self.editor.generate_modifiers(action)
 		print "custom:set_action", action
 		tbCustomAction = self.builder.get_object("tbCustomAction")
 		tbCustomAction.set_text(action.to_string(True))
