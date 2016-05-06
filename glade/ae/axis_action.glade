@@ -41,17 +41,17 @@
         <col id="2" translatable="yes">dpad</col>
       </row>
       <row>
-        <col id="0">XY( mouse(Rels.REL_HWHEEL, sensitivity), mouse(Rels.REL_WHEEL, sensitivity) )</col>
+        <col id="0">XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) )</col>
         <col id="1" translatable="yes">Mouse Wheel</col>
         <col id="2" translatable="yes">wheel</col>
       </row>
       <row>
-        <col id="0">trackpad(sensitivity)</col>
+        <col id="0">trackpad()</col>
         <col id="1" translatable="yes">Trackpad (Mouse)</col>
         <col id="2" translatable="yes">trackpad</col>
       </row>
       <row>
-        <col id="0">trackball(sensitivity)</col>
+        <col id="0">trackball()</col>
         <col id="1" translatable="yes">Trackball (Mouse)</col>
         <col id="2" translatable="yes">trackball</col>
       </row>
@@ -99,82 +99,6 @@
         <property name="expand">False</property>
         <property name="fill">True</property>
         <property name="position">1</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkRevealer" id="rvSensitivity">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="margin_left">40</property>
-        <property name="margin_right">40</property>
-        <property name="transition_type">crossfade</property>
-        <property name="reveal_child">True</property>
-        <child>
-          <object class="GtkBox" id="vbSensitivity">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <child>
-              <object class="GtkLabel" id="lblSensitivity">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_top">10</property>
-                <property name="label" translatable="yes">Sensitivity</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkScale" id="sclSensitivity">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="margin_top">10</property>
-                <property name="adjustment">adjSensitivity</property>
-                <property name="fill_level">10</property>
-                <property name="round_digits">2</property>
-                <property name="digits">2</property>
-                <property name="value_pos">right</property>
-                <signal name="value-changed" handler="on_cbAxisOutput_changed" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="on_btScaleClear">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="margin_top">10</property>
-                <signal name="clicked" handler="on_btScaleClear_clicked" swapped="no"/>
-                <child>
-                  <object class="GtkImage" id="image6">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-clear</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-          </object>
-        </child>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">2</property>
       </packing>
     </child>
   </object>

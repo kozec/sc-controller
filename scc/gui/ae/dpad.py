@@ -9,7 +9,6 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, DPadAction, DPad8Action
-from scc.modifiers import ClickModifier
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.action_editor import ActionEditor
 
@@ -35,8 +34,6 @@ class DPADComponent(AEComponent):
 	
 	def set_action(self, mode, action):
 		if self.handles(mode, action):
-			if isinstance(action, ClickModifier):
-				action = action.action
 			for i in xrange(0, len(action.actions)):
 				self.actions[i] = action.actions[i]
 		for i in xrange(0, 8):
@@ -56,8 +53,6 @@ class DPADComponent(AEComponent):
 	
 	
 	def handles(self, mode, action):
-		if isinstance(action, ClickModifier):
-			action = action.action
 		return isinstance(action, DPadAction) # DPad8Action is derived from DPadAction
 	
 	
@@ -69,8 +64,6 @@ class DPADComponent(AEComponent):
 		else:
 			# 4-way dpad
 			action = DPadAction(*self.actions[0:4])
-		if self.builder.get_object("cbDPADNeedsClick").get_active():
-			action = ClickModifier(action)
 		self.editor.set_action(action)
 	
 	
@@ -94,7 +87,3 @@ class DPADComponent(AEComponent):
 		ae.set_title(_("Select DPAD Action"))
 		ae.set_button(i, self.actions[i])
 		ae.show(self.app.window)
-	
-	
-	def on_cbDPADNeedsClick_toggled(self, *a):
-		self.on_cbDPADType_changed()
