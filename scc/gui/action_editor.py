@@ -255,7 +255,7 @@ class ActionEditor(Editor):
 			# Not called for XYAction parameter
 			sens.append(action)
 			action = SensitivityModifier(*sens)
-		elif len(sens) > index:
+		elif len(sens) > index and index >= 0:
 			# Called for XYAction parameter and sensitivity is specified
 			action = SensitivityModifier(sens[index], action)
 		
@@ -271,13 +271,22 @@ class ActionEditor(Editor):
 		"""
 		cbRequireClick = self.builder.get_object("cbRequireClick")
 		
+		if isinstance(action, XYAction):
+			return XYAction(
+				self.load_modifiers(action.x, 0),
+				self.load_modifiers(action.y, 1)
+			)
+		
 		while isinstance(action, (ClickModifier, SensitivityModifier)):
 			if isinstance(action, ClickModifier):
 				self.click = True
 				action = action.action
 			if isinstance(action, SensitivityModifier):
-				for i in xrange(0, len(self.sens)):
-					self.sens[i] = action.speeds[i]
+				if index < 0:
+					for i in xrange(0, len(self.sens)):
+						self.sens[i] = action.speeds[i]
+				else:
+					self.sens[index] = action.speeds[0]
 				action = action.action
 		
 		self._recursing = True

@@ -323,6 +323,10 @@ class SensitivityModifier(Modifier):
 		return Modifier.to_string(self, multiline, pad)
 	
 	
+	def __str__(self):
+		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
+	
+	
 	def button_press(self, mapper):
 		return self.action.button_press(mapper)
 	
