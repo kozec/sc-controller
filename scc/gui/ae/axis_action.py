@@ -43,8 +43,9 @@ class AxisActionComponent(AEComponent):
 			elif isinstance(action, XYAction):
 				p = [ None, None ]
 				for x in (0, 1):
-					if len(action.actions[0].parameters) >= x:
-						p[x] = action.actions[x].parameters[0]
+					if len(action.actions[0].strip().parameters) >= x:
+						if len(action.actions[x].strip().parameters) > 0:
+							p[x] = action.actions[x].strip().parameters[0]
 				if p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
 					self.select_axis_output("lstick")
 					self.set_sensitivity(action.actions[0])
@@ -70,8 +71,9 @@ class AxisActionComponent(AEComponent):
 		if isinstance(action, XYAction):
 			p = [ None, None ]
 			for x in (0, 1):
-				if len(action.actions[0].parameters) >= x:
-					p[x] = action.actions[x].parameters[0]
+				if len(action.actions[0].strip().parameters) >= x:
+					if len(action.actions[x].strip().parameters) > 0:
+						p[x] = action.actions[x].strip().parameters[0]
 			if p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
 				return True
 			elif p[0] == Axes.ABS_RX and p[1] == Axes.ABS_RY:
@@ -98,6 +100,7 @@ class AxisActionComponent(AEComponent):
 	
 	def set_sensitivity(self, action):
 		""" Sets value for sensitivity slider, if value is defined in action """
+		action = action.strip()
 		try:
 			sensitivity = float(action.parameters[1])
 		except:

@@ -39,11 +39,15 @@ class ClickModifier(Modifier):
 	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
-			return ((" " * pad) + "click(\n" +
-				self.action.to_string(True, pad + 2) +
-				(" " * pad) + ")")
-		else:
-			return "click( " + self.action.to_string() + " )"
+			childstr = self.action.to_string(True, pad + 2)
+			if "\n" in childstr:
+				return ((" " * pad) + "click(\n" +
+					childstr + "\n" + (" " * pad) + ")")
+		return "click( " + self.action.to_string() + " )"
+	
+	
+	def strip(self):
+		return self.action.strip()
 	
 	
 	def encode(self):
@@ -142,6 +146,16 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		if self.default is None:
 			self.default = NoAction()
+	
+	
+	def strip(self):
+		# Returns default action or action assigned to first modifier
+		if self.default:
+			return self.default.strip()
+		if len(self.order) > 0:
+			return self.mods[self.order[0]].strip()
+		# Empty ModeModifier
+		return NoAction()
 	
 	
 	def __str__(self):
@@ -272,6 +286,78 @@ class ModeModifier(Modifier):
 					b.whole(mapper, x, y, what)
 		else:
 			return self.select(mapper).whole(mapper, x, y, what)
+
+
+class SensitivityModifier(Modifier):
+	COMMAND = "sens"
+	def __init__(self, *parameters):
+		self.speeds = []
+		action = NoAction()
+		for p in parameters:
+			if type(p) in (int, float) and len(self.speeds) < 3:
+				self.speeds.append(float(p))
+			else:
+				if isinstance(p, Action):
+					action = p
+		while len(self.speeds) < 3:
+			self.speeds.append(1.0)
+		Modifier.__init__(self, action)
+		self.parameters = parameters
+	
+	
+	def strip(self):
+		return self.action.strip()
+	
+	
+	def describe(self, context):
+		return self.action.describe(context)
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if multiline:
+			childstr = self.action.to_string(True, pad + 2)
+			if "\n" in childstr:
+				return ((" " * pad) + "sens(" +
+					(", ".join([ str(p) for p in self.parameters[0:-1] ])) + ",\n" +
+					childstr + "\n" + (" " * pad) + ")")
+		return Modifier.to_string(self, multiline, pad)
+	
+	
+	def __str__(self):
+		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
+	
+	
+	def button_press(self, mapper):
+		return self.action.button_press(mapper)
+	
+	def button_release(self, mapper):
+		return self.action.button_release(mapper)
+	
+	def trigger(self, mapper, position, old_position):
+		return self.action.trigger(mapper, position * self.speeds[0], old_position)
+	
+	
+	def axis(self, mapper, position, what):
+		return self.action.axis(mapper, position * self.speeds[0], what)
+	
+	
+	def gyro(self, mapper, pitch, yaw, roll, *q):
+		return self.action.gyro(mapper,
+			pitch * self.speeds[0],
+			yaw * self.speeds[1],
+			roll * self.speeds[2],
+			*q)
+	
+	
+	def pad(self, mapper, position, what):
+		return self.action.pad(mapper, position * self.speeds[0], what)
+	
+	
+	def whole(self, mapper, x, y, what):
+		return self.action.pad(mapper,
+			x * self.speeds[0],
+			y * self.speeds[1],
+			what)
 
 
 # Add modifiers to ACTIONS dict

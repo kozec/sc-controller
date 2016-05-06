@@ -12,7 +12,7 @@
   Note that 'button2' is always optional.
 
 
-### mouse(axis [, speed = 1, acceleration = 0 ])
+### mouse(axis)
 Controls mouse movement or scroll wheel.
 
 - For stick, lets cursor or mouse wheel to be controlled by stick tilt.
@@ -26,21 +26,21 @@ Controls mouse movement or scroll wheel.
   single step on scroll wheel.
 
 
-### gyro(axis1, [axis2, [axis3, [speed ]]])
+### gyro(axis1 [, axis2 [, axis3]])
 Maps *changes* in gyroscope pitch, yaw and roll movement into movements of gamepad stick.
 Can be used to map gyroscope to camera when camera can be controlled only with analog stick.
 
 
-### gyroabs(axis1, [axis2, [axis3, [speed ]]])
+### gyroabs(axis1 [, axis2 [, axis3]])
 Maps absolute gyroscope pitch, yaw and roll movement into movements of gamepad stick.
 Can bee used ot map gyroscope to movement stick or to use controller as racing wheel.
 
 
-### trackpad([ speed = 1 ])
+### trackpad()
 Available only for pads. Acts as trackpad - sliding finger over the pad moves the mouse.
 
 
-### trackball([ speed = 1 ])
+### trackball()
 Available only for pads. Acts as trackball.
 
 
@@ -85,6 +85,9 @@ buttons only when pressed.
 #### mode(button1, action1, [button2, action2... buttonN, actionN] [, default] )
 Defines mode shifting. If physical buttonX is pressed, actionX is executed.
 Optional default action is executed if none from specified buttons is pressed.
+
+#### sens(x_axis [, y_axis [, z_axis]], action)
+Modifies sensitivity of physical stick or pad.
 
 
 # Shortcuts:

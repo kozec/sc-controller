@@ -73,6 +73,15 @@ class Action(object):
 		]))
 	
 	
+	def strip(self):
+		"""
+		For modifier, returns first child action that actually
+		does something (first non-modifier).
+		For everything else, returns itself.
+		"""
+		return self
+	
+	
 	def button_press(self, mapper):
 		"""
 		Called when action is executed by pressing physical gamepad button.
@@ -834,9 +843,9 @@ class XYAction(Action):
 	
 	def __init__(self, x=None, y=None):
 		Action.__init__(self, *strip_none(x, y))
-		self.actions = strip_none(x, y)
 		self.x = x or NoAction()
 		self.y = y or NoAction()
+		self.actions = (self.x, self.y)
 	
 	# XYAction no sense with button and trigger-related events
 	def button_press(self, *a):

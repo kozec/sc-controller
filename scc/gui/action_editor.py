@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.modifiers import Modifier, ClickModifier, ModeModifier
+from scc.modifiers import Modifier, ClickModifier, ModeModifier, SensitivityModifier
 from scc.actions import Action, XYAction, NoAction
 from scc.profile import Profile
 from scc.macros import Macro
@@ -43,6 +43,9 @@ class ActionEditor(Editor):
 		self.id = None
 		self.components = []	# List of available components
 		self.c_buttons = {} 	# Component-to-button dict
+		self.sens_widgets = []	# Sensitivity sliders, labels and 'clear' buttons
+		self.sens = [1.0] * 3	# Sensitivity slider values
+		self.click = False		# Click modifier value. None for disabled
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback	# This is different callback than ButtonChooser uses
@@ -54,6 +57,8 @@ class ActionEditor(Editor):
 					ActionEditor.css,
 					Gtk.STYLE_PROVIDER_PRIORITY_USER)
 		self._action = NoAction()
+		self._selected_component = None
+		self._modifiers_enabled = True
 		self._multiparams = [ None ] * 8
 		self._mode = None
 		self._recursing = False
@@ -65,6 +70,13 @@ class ActionEditor(Editor):
 		self.window = self.builder.get_object("Dialog")
 		self.builder.connect_signals(self)
 		headerbar(self.builder.get_object("header"))
+		XYZ = "XYZ"	# duh
+		for i in (0, 1, 2):
+			self.sens_widgets.append((
+				self.builder.get_object("sclSens%s" % (XYZ[i],)),
+				self.builder.get_object("lblSens%s" % (XYZ[i],)),
+				self.builder.get_object("btClearSens%s" % (XYZ[i],)),
+			))
 	
 	
 	def load_components(self):
@@ -105,7 +117,10 @@ class ActionEditor(Editor):
 		
 		stActionModes = self.builder.get_object("stActionModes")
 		component.set_action(self._mode, self._action)
+		if self._selected_component is not None:
+			self._selected_component.hidden()
 		self._selected_component = component
+		self._selected_component.shown()
 		stActionModes.set_visible_child(component.get_widget())
 		
 		stActionModes.show_all()
@@ -117,6 +132,43 @@ class ActionEditor(Editor):
 		self._action.name = entName.get_text().strip(" \t\r\n")
 		if len(self._action.name) < 1:
 			self._action.name = None
+	
+	
+	def hide_sensitivity(self, *indexes):
+		"""
+		Hides sensitivity settings for one or more axes.
+		Used when editing whatever is not a gyro.
+		"""
+		for i in (0, 1, 2):
+			for widget in self.sens_widgets[i]:
+				widget.set_sensitive(i not in indexes)
+				widget.set_visible(i not in indexes)
+		self.sens = self.sens[0:len(indexes)+1]
+		self.builder.get_object("lblSensitivityHeader").set_visible(len(indexes) < 3)
+	
+	
+	def hide_require_click(self):
+		"""
+		Hides 'Require Click' checkbox.
+		Used when editing everythin but pad.
+		"""
+		self.builder.get_object("cbRequireClick").set_visible(False)
+	
+	
+	def hide_advanced_settings(self):
+		"""
+		Hides entire 'Advanced Settings' expander.
+		"""
+		self.hide_sensitivity()
+		self.hide_require_click()
+		self.builder.get_object("exMore").set_visible(False)
+		self.builder.get_object("rvMore").set_visible(False)
+	
+	
+	def on_btClearSens_clicked(self, source, *a):
+		for scale, label, button in self.sens_widgets:
+			if source == button:
+				scale.set_value(1.0)
 	
 	
 	def on_btClear_clicked	(self, *a):
@@ -131,7 +183,7 @@ class ActionEditor(Editor):
 		""" Handler for OK button """
 		if self.ac_callback is not None:
 			self._set_title()
-			self.ac_callback(self.id, self._action)
+			self.ac_callback(self.id, self.generate_modifiers(self._action))
 		self.close()
 	
 	
@@ -139,7 +191,7 @@ class ActionEditor(Editor):
 		""" Asks main window to close this one and display modeshift editor """
 		if self.ac_callback is not None:
 			# Convert current action into modeshift and send it to main window
-			action = ModeModifier(self._action)
+			action = ModeModifier(self.generate_modifiers(self._action))
 			self.close()
 			self.ac_callback(self.id, action, reopen=True)
 	
@@ -149,11 +201,16 @@ class ActionEditor(Editor):
 		if self.ac_callback is not None:
 			# Convert current action into modeshift and send it to main window
 			self._set_title()
-			action = Macro(self._action)
+			action = Macro(self.generate_modifiers(self._action))
 			action.name = action.actions[0].name
 			action.actions[0].name = None
 			self.close()
 			self.ac_callback(self.id, action, reopen=True)
+	
+	
+	def on_exMore_activate(self, ex, *a):
+		rvMore = self.builder.get_object("rvMore")
+		rvMore.set_reveal_child(not ex.get_expanded())
 	
 	
 	def _set_y_field_visible(self, visible):
@@ -166,6 +223,89 @@ class ActionEditor(Editor):
 			self.builder.get_object("entActionY").set_text("")
 	
 	
+	def update_modifiers(self, *a):
+		"""
+		Called when sensitivity or 'require click' combobox value changes.
+		"""
+		if self._recursing : return
+		cbRequireClick = self.builder.get_object("cbRequireClick")
+		
+		set_action = False
+		for i in xrange(0, len(self.sens)):
+			if self.sens[i] != self.sens_widgets[i][0].get_value():
+				self.sens[i] = self.sens_widgets[i][0].get_value()
+				set_action = True
+				
+		if self.click is not None:
+			if cbRequireClick.get_active() != self.click:
+				self.click = cbRequireClick.get_active()
+				set_action = True
+		
+		if set_action:
+			self.set_action(self._action)
+	
+	
+	def generate_modifiers(self, action, index=-1):
+		if not self._modifiers_enabled:
+			# Editing in custom aciton dialog, don't meddle with that
+			return action
+		# Strip 1.0's from sensitivity values
+		sens = [] + self.sens
+		while len(sens) > 0 and sens[-1] == 1.0: sens = sens[0:-1]
+		
+		if isinstance(action, XYAction):
+			# XYAction has to be topmost
+			return XYAction(
+				self.generate_modifiers(action.x, 0),
+				self.generate_modifiers(action.y, 1),
+			)
+		if len(sens) > 0 and index < 0:
+			# Not called for XYAction parameter
+			sens.append(action)
+			action = SensitivityModifier(*sens)
+		elif len(sens) > index and index >= 0:
+			# Called for XYAction parameter and sensitivity is specified
+			action = SensitivityModifier(sens[index], action)
+		
+		if self.click:
+			action = ClickModifier(action)
+		return action
+	
+	
+	def load_modifiers(self, action, index=-1):
+		"""
+		Parses action for modifiers and updates UI accordingly.
+		Returns action without parsed modifiers.
+		"""
+		cbRequireClick = self.builder.get_object("cbRequireClick")
+		
+		if isinstance(action, XYAction):
+			return XYAction(
+				self.load_modifiers(action.x, 0),
+				self.load_modifiers(action.y, 1)
+			)
+		
+		while isinstance(action, (ClickModifier, SensitivityModifier)):
+			if isinstance(action, ClickModifier):
+				self.click = True
+				action = action.action
+			if isinstance(action, SensitivityModifier):
+				if index < 0:
+					for i in xrange(0, len(self.sens)):
+						self.sens[i] = action.speeds[i]
+				else:
+					self.sens[index] = action.speeds[0]
+				action = action.action
+		
+		self._recursing = True
+		cbRequireClick.set_active(self.click)
+		for i in xrange(0, len(self.sens)):
+			self.sens_widgets[i][0].set_value(self.sens[i])
+		self._recursing = False
+		
+		return action
+	
+	
 	def set_action(self, action):
 		"""
 		Updates Action field(s) on bottom and recolors apropriate image area,
@@ -174,16 +314,22 @@ class ActionEditor(Editor):
 		entAction = self.builder.get_object("entAction")
 		entActionY = self.builder.get_object("entActionY")
 		btOK = self.builder.get_object("btOK")
-
+		
+		# Load modifiers and update UI if needed
+		action = self.load_modifiers(action)
+		
+		# Check for InvalidAction and display error message if found
 		if isinstance(action, InvalidAction):
 			btOK.set_sensitive(False)
 			entAction.set_name("error")
 			entAction.set_text(str(action.error))
 			self._set_y_field_visible(False)
 		else:
+			# Treat XYAction specialy
 			entAction.set_name("entAction")
 			btOK.set_sensitive(True)
 			self._action = action
+			action = self.generate_modifiers(action)
 		
 			if isinstance(action, XYAction):
 				entAction.set_text(action.actions[0].to_string())
@@ -201,19 +347,19 @@ class ActionEditor(Editor):
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
 		
-		
+		# Send changed action into selected component
 		if self._selected_component is None:
 			self._selected_component = None
 			for component in reversed(sorted(self.components, key = lambda a : a.PRIORITY)):
 				if component.CTXS == Action.AC_ALL or self._mode in component.CTXS:
-					if component.handles(self._mode, action):
+					if component.handles(self._mode, action.strip()):
 						self._selected_component = component
 						break
 			if self._selected_component:
 				self.c_buttons[self._selected_component].set_active(True)
 				if isinstance(action, InvalidAction):
 					self._selected_component.set_action(self._mode, action)
-		elif not self._selected_component.handles(self._mode, action):
+		elif not self._selected_component.handles(self._mode, action.strip()):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
 			log.warning(action.to_string())
@@ -252,6 +398,7 @@ class ActionEditor(Editor):
 	def set_button(self, button, action):
 		""" Setups action editor as editor for button action """
 		self._set_mode(action, Action.AC_BUTTON)
+		self.hide_advanced_settings()
 		self.set_action(action)
 		self.id = button
 
@@ -259,6 +406,8 @@ class ActionEditor(Editor):
 	def set_trigger(self, trigger, action):
 		""" Setups action editor as editor for trigger action """
 		self._set_mode(action, Action.AC_TRIGGER)
+		self.hide_sensitivity(1, 2) # YZ
+		self.hide_require_click()
 		self.set_action(action)
 		self.hide_macro()
 		self.id = trigger
@@ -267,6 +416,8 @@ class ActionEditor(Editor):
 	def set_stick(self, action):
 		""" Setups action editor as editor for stick action """
 		self._set_mode(action, Action.AC_STICK)
+		self.hide_sensitivity(2) # Z only
+		self.hide_require_click()
 		self.set_action(action)
 		self.hide_macro()
 		self.id = Profile.STICK
@@ -276,6 +427,7 @@ class ActionEditor(Editor):
 		""" Setups action editor as editor for stick action """
 		self._set_mode(action, Action.AC_GYRO)
 		self.set_action(action)
+		self.hide_require_click()
 		self.hide_macro()
 		self.hide_modeshift()
 		self.id = Profile.GYRO
@@ -284,9 +436,20 @@ class ActionEditor(Editor):
 	def set_pad(self, id, action):
 		""" Setups action editor as editor for pad action """
 		self._set_mode(action, Action.AC_PAD)
+		self.hide_sensitivity(2) # Z only
 		self.set_action(action)
 		self.hide_macro()
 		self.id = id
+	
+	
+	def set_modifiers_enabled(self, enabled):
+		exMore = self.builder.get_object("exMore")
+		rvMore = self.builder.get_object("rvMore")
+		if self._modifiers_enabled != enabled and not enabled:
+			exMore.set_expanded(False)
+			rvMore.set_reveal_child(False)
+		exMore.set_sensitive(enabled)
+		self._modifiers_enabled = enabled
 	
 	
 	def hide_modeshift(self):

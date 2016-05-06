@@ -45,7 +45,6 @@ class ButtonsComponent(AEComponent, Chooser):
 	
 	
 	def set_action(self, mode, action):
-		print "set_action", mode, action, self.handles(mode, action)
 		if self.handles(mode, action):
 			area = action_to_area(action)
 			if area is not None:

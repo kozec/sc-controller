@@ -38,6 +38,7 @@ class CustomActionComponent(AEComponent):
 
 
 	def set_action(self, mode, action):
+		action = self.editor.generate_modifiers(action)
 		print "custom:set_action", action
 		tbCustomAction = self.builder.get_object("tbCustomAction")
 		tbCustomAction.set_text(action.to_string(True))
@@ -64,3 +65,11 @@ class CustomActionComponent(AEComponent):
 					txt = "XY(" + x + "," + y + ")"
 			action = self.parser.restart(txt).parse()
 			self.editor.set_action(action)
+	
+	
+	def shown(self):
+		self.editor.set_modifiers_enabled(False)
+	
+	
+	def hidden(self):
+		self.editor.set_modifiers_enabled(True)
