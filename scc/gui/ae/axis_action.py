@@ -44,7 +44,8 @@ class AxisActionComponent(AEComponent):
 				p = [ None, None ]
 				for x in (0, 1):
 					if len(action.actions[0].strip().parameters) >= x:
-						p[x] = action.actions[x].strip().parameters[0]
+						if len(action.actions[x].strip().parameters) > 0:
+							p[x] = action.actions[x].strip().parameters[0]
 				if p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
 					self.select_axis_output("lstick")
 					self.set_sensitivity(action.actions[0])
@@ -71,7 +72,8 @@ class AxisActionComponent(AEComponent):
 			p = [ None, None ]
 			for x in (0, 1):
 				if len(action.actions[0].strip().parameters) >= x:
-					p[x] = action.actions[x].strip().parameters[0]
+					if len(action.actions[x].strip().parameters) > 0:
+						p[x] = action.actions[x].strip().parameters[0]
 			if p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
 				return True
 			elif p[0] == Axes.ABS_RX and p[1] == Axes.ABS_RY:
