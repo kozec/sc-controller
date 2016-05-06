@@ -57,6 +57,8 @@ class ActionEditor(Editor):
 					ActionEditor.css,
 					Gtk.STYLE_PROVIDER_PRIORITY_USER)
 		self._action = NoAction()
+		self._selected_component = None
+		self._modifiers_enabled = True
 		self._multiparams = [ None ] * 8
 		self._mode = None
 		self._recursing = False
@@ -115,7 +117,10 @@ class ActionEditor(Editor):
 		
 		stActionModes = self.builder.get_object("stActionModes")
 		component.set_action(self._mode, self._action)
+		if self._selected_component is not None:
+			self._selected_component.hidden()
 		self._selected_component = component
+		self._selected_component.shown()
 		stActionModes.set_visible_child(component.get_widget())
 		
 		stActionModes.show_all()
@@ -241,6 +246,9 @@ class ActionEditor(Editor):
 	
 	
 	def generate_modifiers(self, action, index=-1):
+		if not self._modifiers_enabled:
+			# Editing in custom aciton dialog, don't meddle with that
+			return action
 		# Strip 1.0's from sensitivity values
 		sens = [] + self.sens
 		while len(sens) > 0 and sens[-1] == 1.0: sens = sens[0:-1]
@@ -432,6 +440,16 @@ class ActionEditor(Editor):
 		self.set_action(action)
 		self.hide_macro()
 		self.id = id
+	
+	
+	def set_modifiers_enabled(self, enabled):
+		exMore = self.builder.get_object("exMore")
+		rvMore = self.builder.get_object("rvMore")
+		if self._modifiers_enabled != enabled and not enabled:
+			exMore.set_expanded(False)
+			rvMore.set_reveal_child(False)
+		exMore.set_sensitive(enabled)
+		self._modifiers_enabled = enabled
 	
 	
 	def hide_modeshift(self):

@@ -65,3 +65,11 @@ class CustomActionComponent(AEComponent):
 					txt = "XY(" + x + "," + y + ")"
 			action = self.parser.restart(txt).parse()
 			self.editor.set_action(action)
+	
+	
+	def shown(self):
+		self.editor.set_modifiers_enabled(False)
+	
+	
+	def hidden(self):
+		self.editor.set_modifiers_enabled(True)

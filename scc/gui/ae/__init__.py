@@ -29,6 +29,16 @@ class AEComponent(object):
 		raise Exception("Implement me!")
 	
 	
+	def shown(self):
+		""" Called after user switches TO page """
+		pass
+	
+	
+	def hidden(self):
+		""" Called after user switches AWAY from page """
+		pass
+	
+	
 	def load(self):
 		if self.loaded : return
 		self.builder = Gtk.Builder()
@@ -40,6 +50,7 @@ class AEComponent(object):
 	
 	def is_loaded(self):
 		return self.loaded
+	
 	
 	def handles(self, mode, action):
 		"""

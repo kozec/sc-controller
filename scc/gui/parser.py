@@ -13,8 +13,13 @@ class InvalidAction(object):
 		print "InvalidAction", self.string
 	
 	
+	def strip(self):
+		return self
+	
+	
 	def to_string(self, *a):
 		return self.string
+	
 	
 	def describe(self, *a):
 		return _("(invalid)")
