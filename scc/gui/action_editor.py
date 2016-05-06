@@ -43,6 +43,7 @@ class ActionEditor(Editor):
 		self.id = None
 		self.components = []	# List of available components
 		self.c_buttons = {} 	# Component-to-button dict
+		self.sens_widgets = []	# Sensitivity sliders, labels and 'clear' buttons
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback	# This is different callback than ButtonChooser uses
@@ -65,6 +66,13 @@ class ActionEditor(Editor):
 		self.window = self.builder.get_object("Dialog")
 		self.builder.connect_signals(self)
 		headerbar(self.builder.get_object("header"))
+		XYZ = "XYZ"	# duh
+		for i in (0, 1, 2):
+			self.sens_widgets.append((
+				self.builder.get_object("sclSens%s" % (XYZ[i],)),
+				self.builder.get_object("lblSens%s" % (XYZ[i],)),
+				self.builder.get_object("btClearSens%s" % (XYZ[i],)),
+			))
 	
 	
 	def load_components(self):
@@ -117,6 +125,12 @@ class ActionEditor(Editor):
 		self._action.name = entName.get_text().strip(" \t\r\n")
 		if len(self._action.name) < 1:
 			self._action.name = None
+	
+	
+	def on_btClearSens_clicked(self, source, *a):
+		for scale, label, button in self.sens_widgets:
+			if source == button:
+				scale.set_value(1.0)
 	
 	
 	def on_btClear_clicked	(self, *a):
