@@ -44,6 +44,8 @@ class ActionEditor(Editor):
 		self.components = []	# List of available components
 		self.c_buttons = {} 	# Component-to-button dict
 		self.sens_widgets = []	# Sensitivity sliders, labels and 'clear' buttons
+		self.sens = [1.0] * 3	# Sensitivity slider values
+		self.click = False		# Click modifier value. None for disabled
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback	# This is different callback than ButtonChooser uses
@@ -136,6 +138,7 @@ class ActionEditor(Editor):
 			for widget in self.sens_widgets[i]:
 				widget.set_sensitive(i not in indexes)
 				widget.set_visible(i not in indexes)
+		self.sens = self.sens[0:len(indexes)+1]
 		self.builder.get_object("lblSensitivityHeader").set_visible(len(indexes) < 3)
 	
 	
@@ -175,7 +178,7 @@ class ActionEditor(Editor):
 		""" Handler for OK button """
 		if self.ac_callback is not None:
 			self._set_title()
-			self.ac_callback(self.id, self._action)
+			self.ac_callback(self.id, self.generate_modifiers(self._action))
 		self.close()
 	
 	
@@ -183,7 +186,7 @@ class ActionEditor(Editor):
 		""" Asks main window to close this one and display modeshift editor """
 		if self.ac_callback is not None:
 			# Convert current action into modeshift and send it to main window
-			action = ModeModifier(self._action)
+			action = ModeModifier(self.generate_modifiers(self._action))
 			self.close()
 			self.ac_callback(self.id, action, reopen=True)
 	
@@ -193,7 +196,7 @@ class ActionEditor(Editor):
 		if self.ac_callback is not None:
 			# Convert current action into modeshift and send it to main window
 			self._set_title()
-			action = Macro(self._action)
+			action = Macro(self.generate_modifiers(self._action))
 			action.name = action.actions[0].name
 			action.actions[0].name = None
 			self.close()
@@ -219,16 +222,27 @@ class ActionEditor(Editor):
 		"""
 		Called when sensitivity or 'require click' combobox value changes.
 		"""
-		self.set_action(self._action) # calls generate_modifiers in turn
+		if self._recursing : return
+		cbRequireClick = self.builder.get_object("cbRequireClick")
+		
+		set_action = False
+		for i in xrange(0, len(self.sens)):
+			if self.sens[i] != self.sens_widgets[i][0].get_value():
+				self.sens[i] = self.sens_widgets[i][0].get_value()
+				set_action = True
+				
+		if self.click is not None:
+			if cbRequireClick.get_active() != self.click:
+				self.click = cbRequireClick.get_active()
+				set_action = True
+		
+		if set_action:
+			self.set_action(self._action)
 	
 	
 	def generate_modifiers(self, action, index=-1):
-		# Load numbers from sensitivity sliders
-		any_sens, sens = False, [1.0] * 3
-		for i in (0, 1, 2):
-			sens[i] = self.sens_widgets[i][0].get_value()
-			any_sens = any_sens or (sens[i] != 1.0)
-		# Strip 1.0's
+		# Strip 1.0's from sensitivity values
+		sens = [] + self.sens
 		while len(sens) > 0 and sens[-1] == 1.0: sens = sens[0:-1]
 		
 		if isinstance(action, XYAction):
@@ -237,17 +251,41 @@ class ActionEditor(Editor):
 				self.generate_modifiers(action.x, 0),
 				self.generate_modifiers(action.y, 1),
 			)
-		if any_sens and index < 0:
+		if len(sens) > 0 and index < 0:
 			# Not called for XYAction parameter
 			sens.append(action)
 			action = SensitivityModifier(*sens)
-		elif any_sens and len(sens) > index:
+		elif len(sens) > index:
 			# Called for XYAction parameter and sensitivity is specified
 			action = SensitivityModifier(sens[index], action)
 		
-		cbRequireClick = self.builder.get_object("cbRequireClick")
-		if cbRequireClick.get_active():
+		if self.click:
 			action = ClickModifier(action)
+		return action
+	
+	
+	def load_modifiers(self, action, index=-1):
+		"""
+		Parses action for modifiers and updates UI accordingly.
+		Returns action without parsed modifiers.
+		"""
+		cbRequireClick = self.builder.get_object("cbRequireClick")
+		
+		while isinstance(action, (ClickModifier, SensitivityModifier)):
+			if isinstance(action, ClickModifier):
+				self.click = True
+				action = action.action
+			if isinstance(action, SensitivityModifier):
+				for i in xrange(0, len(self.sens)):
+					self.sens[i] = action.speeds[i]
+				action = action.action
+		
+		self._recursing = True
+		cbRequireClick.set_active(self.click)
+		for i in xrange(0, len(self.sens)):
+			self.sens_widgets[i][0].set_value(self.sens[i])
+		self._recursing = False
+		
 		return action
 	
 	
@@ -259,13 +297,18 @@ class ActionEditor(Editor):
 		entAction = self.builder.get_object("entAction")
 		entActionY = self.builder.get_object("entActionY")
 		btOK = self.builder.get_object("btOK")
-
+		
+		# Load modifiers and update UI if needed
+		action = self.load_modifiers(action)
+		
+		# Check for InvalidAction and display error message if found
 		if isinstance(action, InvalidAction):
 			btOK.set_sensitive(False)
 			entAction.set_name("error")
 			entAction.set_text(str(action.error))
 			self._set_y_field_visible(False)
 		else:
+			# Treat XYAction specialy
 			entAction.set_name("entAction")
 			btOK.set_sensitive(True)
 			self._action = action
@@ -287,7 +330,7 @@ class ActionEditor(Editor):
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
 		
-		
+		# Send changed action into selected component
 		if self._selected_component is None:
 			self._selected_component = None
 			for component in reversed(sorted(self.components, key = lambda a : a.PRIORITY)):
