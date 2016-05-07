@@ -91,9 +91,11 @@ class ControllerButton(ControllerWidget):
 			txt = self.app.current.buttons[self.id].describe(self.ACTION_CONTEXT)
 			if len(txt) > LONG_TEXT or "\n" in txt:
 				txt = "\n".join(txt.split("\n")[0:2])
+				txt = txt.replace("<", "&lt;").replace(">", "&gt;")
 				self.label.set_markup("<small>%s</small>" % (txt,))
 			else:
-				self.label.set_label(txt)
+				txt = txt.replace("<", "&lt;").replace(">", "&gt;")
+				self.label.set_markup(txt)
 		else:
 			self.label.set_label(_("(no action)"))
 
@@ -151,7 +153,9 @@ class ControllerStick(ControllerWidget):
 	def update(self):
 		action = self.app.current.buttons[SCButtons.STICK]
 		self._set_label(self.app.current.stick)
-		self.pressed.set_markup("<small>Pressed: %s</small>" % (action.describe(self.ACTION_CONTEXT),))
+		txt = action.describe(self.ACTION_CONTEXT)
+		txt = txt.replace("<", "&lt;").replace(">", "&gt;")
+		self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
 
 
 class ControllerTrigger(ControllerButton):
@@ -174,7 +178,9 @@ class ControllerPad(ControllerStick):
 			pressed = self.app.current.buttons[SCButtons.RPAD]
 		
 		self._set_label(action)
-		self.pressed.set_markup("<small>Pressed: %s</small>" % (pressed.describe(self.ACTION_CONTEXT),))
+		txt = pressed.describe(self.ACTION_CONTEXT)
+		txt = txt.replace("<", "&lt;").replace(">", "&gt;")
+		self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
 
 
 class ControllerGyro(ControllerWidget):
