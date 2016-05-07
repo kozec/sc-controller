@@ -82,6 +82,15 @@ class Action(object):
 		return self
 	
 	
+	def set_haptic(self, hapticdata):
+		"""
+		Set haptic feedback settings for this action, if supported.
+		
+		'hapticdata' has to be HapticData instance.
+		Called by HapticModifier.
+		"""
+		pass # Does nothing by default
+	
 	def button_press(self, mapper):
 		"""
 		Called when action is executed by pressing physical gamepad button.
@@ -167,6 +176,16 @@ class Action(object):
 		return "<Action '%s', %s>" % (self.COMMAND, self.parameters)
 	
 	__repr__ = __str__
+
+
+class HapticEnabledAction(Action):
+	def __init__(self, *parameters):
+		Action.__init__(self, *parameters)
+		self.haptic = None
+	
+	
+	def set_haptic(self, hd):
+		self.haptic = hd
 
 
 class AxisAction(Action):
@@ -507,7 +526,7 @@ class TrackpadAction(TrackballAction):
 		return "Trackpad"
 
 
-class ButtonAction(Action):
+class ButtonAction(HapticEnabledAction):
 	COMMAND = "button"
 	SPECIAL_NAMES = {
 		Keys.BTN_LEFT	: "Mouse Left",
@@ -541,7 +560,7 @@ class ButtonAction(Action):
 	def __init__(self, button1, button2 = None, minustrigger = None, plustrigger = None):
 		if button1 is None:
 			button1, button2 = button2, None
-		Action.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
+		HapticEnabledAction.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
 		self.button = button1
 		self.button2 = button2
 		self.minustrigger = minustrigger
@@ -607,6 +626,8 @@ class ButtonAction(Action):
 	
 	def button_press(self, mapper):
 		ButtonAction._button_press(mapper, self.button)
+		if self.haptic:
+			mapper.send_haptic(self.haptic)
 	
 	
 	def button_release(self, mapper):

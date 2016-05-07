@@ -9,9 +9,9 @@ from __future__ import unicode_literals
 from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
+from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
 from scc.actions import ACTIONS, NoAction, MultiAction
 from scc.uinput import Keys, Axes, Rels
-from scc.constants import SCButtons, PITCH, YAW, ROLL
 from scc.macros import Macro
 
 import token as TokenType
@@ -27,12 +27,13 @@ def build_action_constants():
 		'Keys'		: Keys,
 		'Axes'		: Axes,
 		'Rels'		: Rels,
+		'HapticPos'	: HapticPos,
 		'None'		: NoAction(),
 		'PITCH'		: PITCH,
 		'YAW'		: YAW,
-		'ROLL'		: ROLL
+		'ROLL'		: ROLL,
 	}
-	for tpl in (Keys, Axes, Rels, SCButtons):
+	for tpl in (Keys, Axes, Rels, SCButtons, HapticPos):
 		for x in tpl:
 			rv[x.name] = x
 	return rv

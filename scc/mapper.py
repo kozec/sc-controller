@@ -73,6 +73,13 @@ class Mapper(object):
 		return self.controller
 	
 	
+	def send_haptic(self, hapticdata):
+		""" Sends haptic feedback to controller """
+		if self.controller is None:
+			log.warning("Trying to add feedback while controller instance is not set")
+		else:
+			self.controller.addFeedback(*hapticdata.data)
+	
 	def schedule(self, delay, cb):
 		"""
 		Schedules callback to be ran no sooner than after 'delay's.

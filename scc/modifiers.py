@@ -11,6 +11,7 @@ from __future__ import unicode_literals
 from scc.actions import Action, NoAction, ACTIONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
+from scc.controller import HapticData
 
 import time, logging
 log = logging.getLogger("Modifiers")
@@ -358,6 +359,62 @@ class SensitivityModifier(Modifier):
 			x * self.speeds[0],
 			y * self.speeds[1],
 			what)
+
+
+class FeedbackModifier(Modifier):
+	COMMAND = "feedback"
+	
+	def __init__(self, *parameters):
+		if len(parameters) < 2:
+			raise TypeError("Not enought parameters")
+		self.action = parameters[-1]
+		self.haptic = HapticData(*parameters[:-1])
+		self.action.set_haptic(self.haptic)
+		
+		Modifier.__init__(self, self.action)
+		self.parameters = parameters
+
+
+	def describe(self, context):
+		return self.action.describe(context)
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if multiline:
+			childstr = self.action.to_string(True, pad + 2)
+			if "\n" in childstr:
+				return ((" " * pad) + "feedback(" +
+					(", ".join([ str(p) for p in self.parameters[0:-1] ])) + ",\n" +
+					childstr + "\n" + (" " * pad) + ")")
+		return Modifier.to_string(self, multiline, pad)
+	
+	
+	def __str__(self):
+		return "<with Feedback %s>" % (self.speeds, self.action)
+	
+	
+	def button_press(self, *a):
+		return self.action.button_press(*a)
+	
+	def button_release(self, *a):
+		return self.action.button_release(*a)
+	
+	def trigger(self, *a):
+		return self.action.trigger(*a)
+	
+	
+	def axis(self, *a):
+		return self.action.axis(*a)
+	
+	
+	def pad(self, *a):
+		return self.action.pad(*a)
+	
+	
+	def whole(self, *a):
+		return self.action.whole(*a)
+
+
 
 
 # Add modifiers to ACTIONS dict

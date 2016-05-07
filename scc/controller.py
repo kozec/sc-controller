@@ -132,9 +132,13 @@ class SCController(object):
 		@param int period	   signal period from 0 to 65535
 		@param int count		number of period to play
 		"""
-		self._cmsg.insert(0, struct.pack('<BBBHHH',
-				SCPacketType.FEEDBACK, 0x07, position,
-				amplitude, period, count))
+		if position == HapticPos.BOTH:
+			self.addFeedback(HapticPos.LEFT, amplitude, period, count)
+			self.addFeedback(HapticPos.RIGHT, amplitude, period, count)
+		else:
+			self._cmsg.insert(0, struct.pack('<BBBHHH',
+					SCPacketType.FEEDBACK, 0x07, position,
+					amplitude, period, count))
 	
 	def _processReceivedData(self, transfer):
 		"""Private USB async Rx function"""
@@ -289,3 +293,16 @@ class SCController(object):
 		"""Fucntion to run in order to process usb events"""
 		if self._handle and self._ctx:
 			self._ctx.handleEvents()
+
+
+class HapticData(object):
+	""" Simple container to hold haptic feedback settings """
+	
+	def __init__(self, position, amplitude=256, period=100, count=1):
+		data = tuple([ int(x) for x in (position, amplitude, period, count) ])
+		if data[0] not in (HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH):
+			raise ValueError("Invalid position")
+		for i in (1,2,3):
+			if data[i] > 0x8000 or data[i] < 0:
+				raise ValueError("Value out of range")
+		self.data = data
