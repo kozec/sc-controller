@@ -82,12 +82,21 @@ Used to create action that occurs only if pad or stick is pressed.
 For example, `click(dpad(...))` set to pad will create dpad that activates
 buttons only when pressed.
 
+
 #### mode(button1, action1, [button2, action2... buttonN, actionN] [, default] )
 Defines mode shifting. If physical buttonX is pressed, actionX is executed.
 Optional default action is executed if none from specified buttons is pressed.
 
+
 #### sens(x_axis [, y_axis [, z_axis]], action)
 Modifies sensitivity of physical stick or pad.
+
+
+#### feedback(side, [amplitude=256 [, period=100 [, count=1 ]]], action)
+Enables haptic feedback for specified action, if action supports it.
+Side has to be one of LEFT, RIGHT or BOTH. All remaining numbers can be anything
+from 1 to 32768, but note that setting count to large number will start long
+running feedback that you may not be able to stop.
 
 
 # Shortcuts:
