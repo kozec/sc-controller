@@ -298,11 +298,20 @@ class SCController(object):
 class HapticData(object):
 	""" Simple container to hold haptic feedback settings """
 	
-	def __init__(self, position, amplitude=256, period=100, count=1):
+	def __init__(self, position, amplitude=256, frequency=4, period=1024, count=1):
+		"""
+		'frequency' is used only when emulating touchpad and describes how many
+		pixels should mouse travell between two feedback ticks.
+		"""
 		data = tuple([ int(x) for x in (position, amplitude, period, count) ])
 		if data[0] not in (HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH):
 			raise ValueError("Invalid position")
 		for i in (1,2,3):
 			if data[i] > 0x8000 or data[i] < 0:
 				raise ValueError("Value out of range")
-		self.data = data
+		# frequency is multiplied by 1000 just so I don't have big numbers everywhere;
+		# it's float until here, so user still can make pad squeak if he wish
+		frequency = int(max(1.0, frequency * 1000.0))
+		
+		self.data = data				# send to controller
+		self.frequency = frequency		# used internally

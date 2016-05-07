@@ -46,7 +46,9 @@ class Mapper(object):
 		self.keypress_list = []
 		self.keyrelease_list = []
 		self.mouse_dq = [ deque(maxlen=8), deque(maxlen=8), deque(maxlen=8), deque(maxlen=8) ] # x, y, wheel, hwheel
-		self.mouse_tb = [ False, False ]	# trackball mode for mouse / wheel
+		self.mouse_tb = [ False, False ]		# trackball mode for mouse / wheel
+		self.mouse_feedback = [ None, None ]	# for mouse / wheel
+		self.travelled = [ 0, 0 ]				# for mouse / wheel, used when generating "rolling ball" feedback
 		self.syn_list = set()
 		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
@@ -73,12 +75,13 @@ class Mapper(object):
 		return self.controller
 	
 	
-	def send_haptic(self, hapticdata):
+	def send_feedback(self, hapticdata):
 		""" Sends haptic feedback to controller """
 		if self.controller is None:
 			log.warning("Trying to add feedback while controller instance is not set")
 		else:
 			self.controller.addFeedback(*hapticdata.data)
+	
 	
 	def schedule(self, delay, cb):
 		"""
@@ -96,7 +99,7 @@ class Mapper(object):
 			self.mouse_dq[axis].clear()
 	
 	
-	def mouse_dq_add(self, axis, position, speed):
+	def mouse_dq_add(self, axis, position, speed, hapticdata):
 		""" Used by trackpad, trackball and mouse wheel emulation """
 		t = self.mouse_movements[axis]
 		if t is None:
@@ -106,6 +109,7 @@ class Mapper(object):
 				prev = position
 			t = self.mouse_movements[axis] = [ prev, 0, False ]
 		self.mouse_dq[axis].append(position)
+		self.mouse_feedback[0] = hapticdata
 		
 		try:
 			t[1] = int(sum(self.mouse_dq[axis]) / len(self.mouse_dq[axis]))
@@ -242,7 +246,7 @@ class Mapper(object):
 		mx, my = self._get_mouse_movement(0), self._get_mouse_movement(1)
 		wx, wy = self._get_mouse_movement(2), self._get_mouse_movement(3)
 		if mx != 0 or my != 0:
-			self.mouse.moveEvent(mx, my * -1, False)
+			self.travelled[0] += self.mouse.moveEvent(mx, my * -1, False)
 			self.syn_list.add(self.mouse)
 			self.mouse_movements[0] = self.mouse_movements[1] = None
 		if wx != 0 or wy != 0:
@@ -253,8 +257,16 @@ class Mapper(object):
 		if self.mouse_tb[0]:
 			dist = self.mouse.moveEvent(0, 0, True)
 			self.syn_list.add(self.mouse)
-			if not dist:
+			if dist:
+				self.travelled[0] += dist
+			else:
 				self.mouse_tb[0] = False
+				self.mouse_feedback[0] = None
+		
+		if self.mouse_feedback[0]:
+			if self.travelled[0] > self.mouse_feedback[0].frequency:
+				self.travelled[0] -= self.mouse_feedback[0].frequency
+				self.send_feedback(self.mouse_feedback[0])
 		if self.mouse_tb[1]:
 			dist = self.mouse.scrollEvent(0, 0, True)
 			self.syn_list.add(self.mouse)

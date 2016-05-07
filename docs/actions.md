@@ -1,6 +1,6 @@
 # Actions
 
-### button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
+#### button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
 - For stick or pad, when it is moved over 'minustrigger', 'button1' is pressed;
   When it is moved back, 'button1' is released. Similary, 'button2' is pressed
   and released when stick (or finger on pad) moves over 'plustrigger' value
@@ -12,7 +12,7 @@
   Note that 'button2' is always optional.
 
 
-### mouse(axis)
+#### mouse(axis)
 Controls mouse movement or scroll wheel.
 
 - For stick, lets cursor or mouse wheel to be controlled by stick tilt.
@@ -26,21 +26,21 @@ Controls mouse movement or scroll wheel.
   single step on scroll wheel.
 
 
-### gyro(axis1 [, axis2 [, axis3]])
+#### gyro(axis1 [, axis2 [, axis3]])
 Maps *changes* in gyroscope pitch, yaw and roll movement into movements of gamepad stick.
 Can be used to map gyroscope to camera when camera can be controlled only with analog stick.
 
 
-### gyroabs(axis1 [, axis2 [, axis3]])
+#### gyroabs(axis1 [, axis2 [, axis3]])
 Maps absolute gyroscope pitch, yaw and roll movement into movements of gamepad stick.
 Can bee used ot map gyroscope to movement stick or to use controller as racing wheel.
 
 
-### trackpad()
+#### trackpad()
 Available only for pads. Acts as trackpad - sliding finger over the pad moves the mouse.
 
 
-### trackball()
+#### trackball()
 Available only for pads. Acts as trackball.
 
 
@@ -71,7 +71,7 @@ Loads another profile
 Executes command on background
 
 
-### turnoff()
+#### turnoff()
 Turns controller off
 
 
@@ -92,11 +92,14 @@ Optional default action is executed if none from specified buttons is pressed.
 Modifies sensitivity of physical stick or pad.
 
 
-#### feedback(side, [amplitude=256 [, period=100 [, count=1 ]]], action)
+#### feedback(side, [amplitude=256 [, frequency=4 [, period=100 [, count=1 ]]]], action)
 Enables haptic feedback for specified action, if action supports it.
 Side has to be one of LEFT, RIGHT or BOTH. All remaining numbers can be anything
 from 1 to 32768, but note that setting count to large number will start long
 running feedback that you may not be able to stop.
+
+'frequency' is used only when emulating touchpad and describes how many pixels
+should mouse travell between two feedback ticks.
 
 
 # Shortcuts:

@@ -488,10 +488,10 @@ class GyroAbsAction(GyroAction):
 				mapper.syn_list.add(mapper.gamepad)
 
 
-class TrackballAction(Action):
+class TrackballAction(HapticEnabledAction):
 	COMMAND = "trackball"
 	def __init__(self, speed=None):
-		Action.__init__(self, speed)
+		HapticEnabledAction.__init__(self, speed)
 		self.speed = speed or 1
 		self.trackpadmode = False
 
@@ -505,8 +505,8 @@ class TrackballAction(Action):
 				# Pad was just pressed
 				mapper.do_trackball(0, True)
 			if x != 0.0 or y != 0.0:
-				mapper.mouse_dq_add(0, x, self.speed)
-				mapper.mouse_dq_add(1, y, self.speed)
+				mapper.mouse_dq_add(0, x, self.speed, self.haptic)
+				mapper.mouse_dq_add(1, y, self.speed, self.haptic)
 			mapper.force_event.add(FE_PAD)
 		elif mapper.was_touched(what):
 			# Pad was just released
@@ -627,7 +627,7 @@ class ButtonAction(HapticEnabledAction):
 	def button_press(self, mapper):
 		ButtonAction._button_press(mapper, self.button)
 		if self.haptic:
-			mapper.send_haptic(self.haptic)
+			mapper.send_feedback(self.haptic)
 	
 	
 	def button_release(self, mapper):
