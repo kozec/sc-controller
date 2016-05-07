@@ -247,7 +247,6 @@ class App(Gtk.Application, ProfileManager):
 		iter = cb.get_active_iter()
 		f = model.get_value(iter, 1)
 		if f is None:
-			# TODO: New profile dialog
 			if self.current_file is None:
 				cb.set_active(0)
 			else:

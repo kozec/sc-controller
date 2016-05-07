@@ -26,6 +26,7 @@ class ButtonsComponent(AEComponent, Chooser):
 	NAME = "buttons"
 	IMAGES = { "buttons" : "buttons.svg" }
 	CTXS = Action.AC_BUTTON,
+	PRIORITY = 1
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)

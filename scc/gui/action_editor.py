@@ -34,6 +34,7 @@ class ActionEditor(Editor):
 		'dpad',
 		'per_axis',
 		'trigger_ab',
+		'special_action',
 		'custom',
 	)
 	css = None
@@ -163,6 +164,32 @@ class ActionEditor(Editor):
 		self.hide_require_click()
 		self.builder.get_object("exMore").set_visible(False)
 		self.builder.get_object("rvMore").set_visible(False)
+	
+	
+	def hide_modeshift(self):
+		"""
+		Hides Mode Shift button.
+		Used when displaying ActionEditor from ModeshiftEditor
+		"""
+		self.builder.get_object("btModeshift").set_visible(False)
+	
+	
+	def hide_macro(self):
+		"""
+		Hides Macro button.
+		Used when displaying ActionEditor from MacroEditor
+		"""
+		self.builder.get_object("btMacro").set_visible(False)
+	
+	
+	def hide_name(self):
+		"""
+		Hides (and clears) name field.
+		Used when displaying ActionEditor from MacroEditor
+		"""
+		self.builder.get_object("lblName").set_visible(False)
+		self.builder.get_object("entName").set_visible(False)
+		self.builder.get_object("entName").set_text("")
 	
 	
 	def on_btClearSens_clicked(self, source, *a):
@@ -450,29 +477,3 @@ class ActionEditor(Editor):
 			rvMore.set_reveal_child(False)
 		exMore.set_sensitive(enabled)
 		self._modifiers_enabled = enabled
-	
-	
-	def hide_modeshift(self):
-		"""
-		Hides Mode Shift button.
-		Used when displaying ActionEditor from ModeshiftEditor
-		"""
-		self.builder.get_object("btModeshift").set_visible(False)
-	
-	
-	def hide_macro(self):
-		"""
-		Hides Macro button.
-		Used when displaying ActionEditor from MacroEditor
-		"""
-		self.builder.get_object("btMacro").set_visible(False)
-	
-	
-	def hide_name(self):
-		"""
-		Hides (and clears) name field.
-		Used when displaying ActionEditor from MacroEditor
-		"""
-		self.builder.get_object("lblName").set_visible(False)
-		self.builder.get_object("entName").set_visible(False)
-		self.builder.get_object("entName").set_text("")
