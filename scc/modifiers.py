@@ -26,7 +26,7 @@ class Modifier(Action):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
 	
 	def set_haptic(self, hapticdata):
-		self.action.set_haptic(hapticdata)
+		return self.action.set_haptic(hapticdata)
 	
 	__repr__ = __str__
 
@@ -153,10 +153,12 @@ class ModeModifier(Modifier):
 	
 	
 	def set_haptic(self, hapticdata):
+		supports = False
 		if self.default:
-			self.default.set_haptic(hapticdata)
+			supports = self.default.set_haptic(hapticdata) or supports
 		for a in self.mods.values():
-			a.set_haptic(hapticdata)
+			supports = a.set_haptic(hapticdata) or supports
+		return supports
 	
 	
 	def strip(self):

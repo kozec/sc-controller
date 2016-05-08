@@ -12,7 +12,7 @@ from scc.tools import strip_none, ensure_size, quat2euler, anglediff, _
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
-from math import pi as PI
+from math import pi as PI, sqrt
 
 import time, logging
 log = logging.getLogger("Actions")
@@ -85,11 +85,13 @@ class Action(object):
 	def set_haptic(self, hapticdata):
 		"""
 		Set haptic feedback settings for this action, if supported.
+		Returns True if action supports haptic feedback.
 		
 		'hapticdata' has to be HapticData instance.
 		Called by HapticModifier.
 		"""
-		pass # Does nothing by default
+		return False
+	
 	
 	def button_press(self, mapper):
 		"""
@@ -129,8 +131,7 @@ class Action(object):
 		
 		'pad' calls 'axis' by default
 		"""
-		pass
-	pad = axis
+		return self.axis(mapper, position, what)
 	
 	
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
@@ -186,6 +187,7 @@ class HapticEnabledAction(Action):
 	
 	def set_haptic(self, hd):
 		self.haptic = hd
+		return True
 
 
 class AxisAction(Action):
@@ -207,6 +209,7 @@ class AxisAction(Action):
 	def __init__(self, id, min = None, max = None):
 		Action.__init__(self, id, *strip_none(min, max))
 		self.id = id
+		self._old_pos = 0
 		if self.id in TRIGGERS:
 			self.min = TRIGGER_MIN if min is None else min
 			self.max = TRIGGER_MAX if max is None else max
@@ -721,9 +724,12 @@ class MultiAction(Action):
 	
 	
 	def set_haptic(self, hapticdata):
+		supports = False
 		for a in self.actions:
 			if a:
-				a.set_haptic(hapticdata)
+				# Only first feedback-supporting action should do feedback
+				supports = supports or a.set_haptic(hapticdata)
+		return supports
 	
 	
 	def describe(self, context):
@@ -788,9 +794,11 @@ class DPadAction(Action):
 	
 	
 	def set_haptic(self, hapticdata):
+		supports = False
 		for a in self.actions:
 			if a:
-				a.set_haptic(hapticdata)
+				supports = a.set_haptic(hapticdata) or supports
+		return supports
 	
 	
 	def describe(self, context):
@@ -869,22 +877,31 @@ class DPad8Action(DPadAction):
 		return "8-Way DPad"
 
 
-class XYAction(Action):
+class XYAction(HapticEnabledAction):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "XY"
 	
 	def __init__(self, x=None, y=None):
-		Action.__init__(self, *strip_none(x, y))
+		HapticEnabledAction.__init__(self, *strip_none(x, y))
 		self.x = x or NoAction()
 		self.y = y or NoAction()
 		self.actions = (self.x, self.y)
+		self._old_distance = 0
+		self._travelled = 0
 	
 	
 	def set_haptic(self, hapticdata):
-		self.x.set_haptic(hapticdata)
-		self.y.set_haptic(hapticdata)
+		supports = False
+		supports = self.x.set_haptic(hapticdata) or supports
+		supports = self.y.set_haptic(hapticdata) or supports
+		if not supports:
+			# Child action has no feedback support, do feedback here
+			self.haptic = hapticdata
+			self.big_click = hapticdata * 4
+			return True
+		return supports
 	
 	
 	# XYAction no sense with button and trigger-related events
@@ -903,6 +920,21 @@ class XYAction(Action):
 	
 	
 	def whole(self, mapper, x, y, what):
+		if self.haptic:
+			# Compute travelled distance and send 'small clicks' when user moves
+			# finger around the pad.
+			# Also, if user moves finger over circle around 2/3 area of pad,
+			# send one 'big click'.
+			distance = sqrt(x*x + y*y)
+			self._travelled += abs(self._old_distance - distance)
+			is_close = distance > STICK_PAD_MAX * 2 / 3
+			was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
+			if is_close != was_close:
+				mapper.send_feedback(self.big_click)
+			elif self._travelled > self.haptic.frequency:
+				self._travelled = 0
+				mapper.send_feedback(self.haptic)
+			self._old_distance = distance
 		if what in (LEFT, RIGHT):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
