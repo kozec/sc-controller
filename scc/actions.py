@@ -93,6 +93,16 @@ class Action(object):
 		return False
 	
 	
+	def set_speed(self, x, y, z):
+		"""
+		Set speed multiplier (sensitivity) for this action, if supported.
+		Returns True if action supports setting this.
+		
+		Called by SensitivityModifier
+		"""
+		return False
+	
+	
 	def button_press(self, mapper):
 		"""
 		Called when action is executed by pressing physical gamepad button.
@@ -321,7 +331,15 @@ class MouseAction(HapticEnabledAction):
 	def __init__(self, axis, speed=None):
 		HapticEnabledAction.__init__(self, axis, *strip_none(speed))
 		self.mouse_axis = axis
-		self.speed = speed or 1
+		if speed:
+			self.speed = (speed, speed)
+		else:
+			self.speed = (1.0, 1.0)
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = (x, y)
+		return True
 	
 	
 	def describe(self, context):
@@ -339,13 +357,13 @@ class MouseAction(HapticEnabledAction):
 	def button_press(self, mapper):
 		# This is generaly bad idea...
 		if self.mouse_axis == Rels.REL_X:
-			mapper.mouse.moveEvent(1000 * self.speed, 0, False)
+			mapper.mouse.moveEvent(1000 * self.speed[0], 0, False)
 			mapper.syn_list.add(mapper.mouse)
 		elif self.mouse_axis == Rels.REL_Y:
-			mapper.mouse.moveEvent(0, 1000 * self.speed, False)
+			mapper.mouse.moveEvent(0, 1000 * self.speed[1], False)
 			mapper.syn_list.add(mapper.mouse)
 		elif self.mouse_axis == Rels.REL_WHEEL:
-			mapper.mouse.scrollEvent(0, 2000 * self.speed, False)
+			mapper.mouse.scrollEvent(0, 2000 * self.speed[0], False)
 			mapper.syn_list.add(mapper.mouse)
 	
 	
@@ -355,22 +373,24 @@ class MouseAction(HapticEnabledAction):
 	
 	
 	def axis(self, mapper, position, what):
-		p = position * self.speed / 100
-		
 		if self.mouse_axis == Rels.REL_X:
 			# This is generaly bad idea for stick...
+			p = position * self.speed[0] / 100
 			mapper.mouse.moveEvent(p, 0, False)
 			mapper.syn_list.add(mapper.mouse)
 		elif self.mouse_axis == Rels.REL_Y:
 			# ... this as well...
+			p = position * self.speed[1] / 100
 			mapper.mouse.moveEvent(0, -p, False)
 			mapper.syn_list.add(mapper.mouse)
 		elif self.mouse_axis == Rels.REL_WHEEL:
 			# ... but this should kinda work
+			p = position * self.speed[0] / 100
 			mapper.mouse.scrollEvent(0, p * self.speed * 2.0, False)
 			mapper.syn_list.add(mapper.mouse)
 		elif self.mouse_axis == Rels.REL_HWHEEL:
 			# and this as well
+			p = position * self.speed[1] / 100
 			mapper.mouse.scrollEvent(p * self.speed * 2.0, 0, False)
 			mapper.syn_list.add(mapper.mouse)
 		mapper.force_event.add(FE_STICK)
@@ -385,13 +405,13 @@ class MouseAction(HapticEnabledAction):
 				elif self.mouse_axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
 					mapper.do_trackball(1, True)
 			if self.mouse_axis == Rels.REL_X:
-				mapper.mouse_dq_add(0, position, -self.speed, self.haptic)
+				mapper.mouse_dq_add(0, position, -self.speed[0], self.haptic)
 			elif self.mouse_axis == Rels.REL_Y:
-				mapper.mouse_dq_add(1, position, -self.speed, self.haptic)
+				mapper.mouse_dq_add(1, position, -self.speed[1], self.haptic)
 			elif self.mouse_axis == Rels.REL_HWHEEL:
-				mapper.mouse_dq_add(2, position, -self.speed, self.haptic)
+				mapper.mouse_dq_add(2, position, -self.speed[0], self.haptic)
 			elif self.mouse_axis == Rels.REL_WHEEL:
-				mapper.mouse_dq_add(3, position, -self.speed, self.haptic)
+				mapper.mouse_dq_add(3, position, -self.speed[1], self.haptic)
 			mapper.force_event.add(FE_PAD)
 				
 		elif mapper.was_touched(what):
@@ -411,7 +431,7 @@ class MouseAction(HapticEnabledAction):
 	
 	
 	def whole(self, mapper, x, y, what):
-		mapper.mouse.moveEvent(x * self.speed * 0.01, y * self.speed * -0.01, False)
+		mapper.mouse.moveEvent(x * self.speed[0] * 0.01, y * self.speed[1] * -0.01, False)
 		mapper.syn_list.add(mapper.mouse)
 		if what == STICK:
 			mapper.force_event.add(FE_STICK)
@@ -419,19 +439,24 @@ class MouseAction(HapticEnabledAction):
 	
 	def gyro(self, mapper, pitch, yaw, roll, *a):
 		if self.mouse_axis == YAW:
-			mapper.mouse.moveEvent(yaw * self.speed * -1, pitch * self.speed * -1, False)
+			mapper.mouse.moveEvent(yaw * -self.speed[0], pitch * -self.speed[1], False)
 		else:
-			mapper.mouse.moveEvent(roll * self.speed * -1, pitch * self.speed * -1, False)
+			mapper.mouse.moveEvent(roll * -self.speed[0], pitch * -self.speed[1], False)
 		mapper.syn_list.add(mapper.mouse)
 
 
 class GyroAction(Action):
 	COMMAND = "gyro"
 	
-	def __init__(self, axis1, axis2=None, axis3=None, speed=None):
-		Action.__init__(self, axis1, *strip_none(axis2, axis3, speed))
+	def __init__(self, axis1, axis2=None, axis3=None):
+		Action.__init__(self, axis1, *strip_none(axis2, axis3))
 		self.axes = [ axis1, axis2, axis3 ]
-		self.speed = speed or 1
+		self.speed = (1.0, 1.0, 1.0)
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = (x, y, z)
+		return True
 	
 	
 	def gyro(self, mapper, *pyr):
@@ -442,7 +467,7 @@ class GyroAction(Action):
 			axis = self.axes[i]
 			# 'gyro' cannot map to mouse, but 'mouse' does that.
 			if axis in Axes:
-				mapper.gamepad.axisEvent(axis, clamp_axis(axis, pyr[i] * self.speed * -10))
+				mapper.gamepad.axisEvent(axis, clamp_axis(axis, pyr[i] * self.speed[i] * -10))
 				mapper.syn_list.add(mapper.gamepad)
 	
 	
@@ -473,6 +498,7 @@ class GyroAbsAction(GyroAction, HapticEnabledAction):
 		self.ir = None
 		self._was_oor = False
 	
+	
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
 		pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
 		if self.ir is None:
@@ -480,8 +506,8 @@ class GyroAbsAction(GyroAction, HapticEnabledAction):
 			self.ir = pyr[2]
 		# Covert what quat2euler returns to what controller can use
 		for i in (0, 1):
-			pyr[i] = pyr[i] * (2**15) * 2 * self.speed / PI
-		pyr[2] = anglediff(self.ir, pyr[2]) * (2**15) * 2 * self.speed / PI
+			pyr[i] = pyr[i] * (2**15) * 2 * self.speed[i] / PI
+		pyr[2] = anglediff(self.ir, pyr[2]) * (2**15) * 2 * self.speed[2] / PI
 		# Restrict to acceptablle range
 		if self.haptic:
 			oor = False # oor - Out Of Range
@@ -506,7 +532,7 @@ class GyroAbsAction(GyroAction, HapticEnabledAction):
 		for i in (0, 1, 2):
 			axis = self.axes[i]
 			if axis in Axes:
-				mapper.gamepad.axisEvent(axis, clamp_axis(axis, pyr[i] * self.speed))
+				mapper.gamepad.axisEvent(axis, clamp_axis(axis, pyr[i] * self.speed[i]))
 				mapper.syn_list.add(mapper.gamepad)
 
 
@@ -514,12 +540,21 @@ class TrackballAction(HapticEnabledAction):
 	COMMAND = "trackball"
 	def __init__(self, speed=None):
 		HapticEnabledAction.__init__(self, speed)
-		self.speed = speed or 1
+		if speed:
+			self.speed = (speed, speed)
+		else:
+			self.speed = (1.0, 1.0)
 		self.trackpadmode = False
-
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = (x, y)
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return "Trackball"
+	
 	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
@@ -527,8 +562,8 @@ class TrackballAction(HapticEnabledAction):
 				# Pad was just pressed
 				mapper.do_trackball(0, True)
 			if x != 0.0 or y != 0.0:
-				mapper.mouse_dq_add(0, x, self.speed, self.haptic)
-				mapper.mouse_dq_add(1, y, self.speed, self.haptic)
+				mapper.mouse_dq_add(0, x, self.speed[0], self.haptic)
+				mapper.mouse_dq_add(1, y, self.speed[1], self.haptic)
 			mapper.force_event.add(FE_PAD)
 		elif mapper.was_touched(what):
 			# Pad was just released
@@ -751,6 +786,13 @@ class MultiAction(Action):
 		return supports
 	
 	
+	def set_speed(self, x, y, z):
+		supports = False
+		for a in self.actions:
+			supports = a.set_speed(x, y, z) or supports
+		return supports
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		if isinstance(self.actions[0], ButtonAction):
@@ -923,6 +965,13 @@ class XYAction(HapticEnabledAction):
 		return supports
 	
 	
+	def set_speed(self, x, y, z):
+		supports = False
+		supports = self.x.set_speed(x, y, z) or supports
+		supports = self.y.set_speed(x, y, z) or supports
+		return supports
+	
+	
 	# XYAction no sense with button and trigger-related events
 	def button_press(self, *a):
 		pass
@@ -1068,12 +1117,12 @@ def clamp_axis(id, value):
 	""" Returns value clamped between min/max allowed for axis """
 	if id in (Axes.ABS_Z, Axes.ABS_RZ):
 		# Triggers
-		return max(TRIGGER_MIN, min(TRIGGER_MAX, value))
+		return int(max(TRIGGER_MIN, min(TRIGGER_MAX, value)))
 	if id in (Axes.ABS_HAT0X, Axes.ABS_HAT0Y):
 		# DPAD
-		return max(-1, min(1, value))
+		return int(max(-1, min(1, value)))
 	# Everything else
-	return max(STICK_PAD_MIN, min(STICK_PAD_MAX, value))
+	return int(max(STICK_PAD_MIN, min(STICK_PAD_MAX, value)))
 
 
 # Generate dict of { 'actionname' : ActionClass } for later use

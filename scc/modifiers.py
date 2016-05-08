@@ -28,6 +28,9 @@ class Modifier(Action):
 	def set_haptic(self, hapticdata):
 		return self.action.set_haptic(hapticdata)
 	
+	def set_speed(self, x, y, z):
+		return self.action.set_speed(x, y, z)
+	
 	__repr__ = __str__
 
 
@@ -158,6 +161,15 @@ class ModeModifier(Modifier):
 			supports = self.default.set_haptic(hapticdata) or supports
 		for a in self.mods.values():
 			supports = a.set_haptic(hapticdata) or supports
+		return supports
+	
+	
+	def set_speed(self, x, y, z):
+		supports = False
+		if self.default:
+			supports = self.default.set_speed(x, y, z) or supports
+		for a in self.mods.values():
+			supports = a.set_speed(x, y, z) or supports
 		return supports
 	
 	
@@ -305,6 +317,7 @@ class ModeModifier(Modifier):
 class SensitivityModifier(Modifier):
 	COMMAND = "sens"
 	def __init__(self, *parameters):
+		# TODO: remove self.speeds
 		self.speeds = []
 		action = NoAction()
 		for p in parameters:
@@ -316,6 +329,7 @@ class SensitivityModifier(Modifier):
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
 		Modifier.__init__(self, action)
+		action.set_speed(*self.speeds)
 		self.parameters = parameters
 	
 	
@@ -341,38 +355,26 @@ class SensitivityModifier(Modifier):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
 	
 	
-	def button_press(self, mapper):
-		return self.action.button_press(mapper)
+	def button_press(self, *a):
+		return self.action.button_press(*a)
 	
-	def button_release(self, mapper):
-		return self.action.button_release(mapper)
+	def button_release(self, *a):
+		return self.action.button_release(*a)
 	
-	def trigger(self, mapper, position, old_position):
-		return self.action.trigger(mapper, position * self.speeds[0], old_position)
+	def trigger(self, *a):
+		return self.action.trigger(*a)
 	
+	def axis(self, *a):
+		return self.action.axis(*a)
 	
-	def axis(self, mapper, position, what):
-		return self.action.axis(mapper, position * self.speeds[0], what)
+	def gyro(self, *a):
+		return self.action.gyro(*a)
 	
+	def pad(self, *a):
+		return self.action.pad(*a)
 	
-	def gyro(self, mapper, pitch, yaw, roll, *q):
-		# TODO: FIXME: Support for gyroabs sensitivity
-		return self.action.gyro(mapper,
-			pitch * self.speeds[0],
-			yaw * self.speeds[1],
-			roll * self.speeds[2],
-			*q)
-	
-	
-	def pad(self, mapper, position, what):
-		return self.action.pad(mapper, position * self.speeds[0], what)
-	
-	
-	def whole(self, mapper, x, y, what):
-		return self.action.pad(mapper,
-			x * self.speeds[0],
-			y * self.speeds[1],
-			what)
+	def whole(self, *a):
+		return self.action.whole(*a)
 
 
 class FeedbackModifier(Modifier):
@@ -416,23 +418,17 @@ class FeedbackModifier(Modifier):
 	def trigger(self, *a):
 		return self.action.trigger(*a)
 	
-	
 	def axis(self, *a):
 		return self.action.axis(*a)
-	
 	
 	def gyro(self, *a):
 		return self.action.gyro(*a)
 	
-	
 	def pad(self, *a):
 		return self.action.pad(*a)
 	
-	
 	def whole(self, *a):
 		return self.action.whole(*a)
-
-
 
 
 # Add modifiers to ACTIONS dict
