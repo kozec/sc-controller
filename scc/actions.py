@@ -312,11 +312,11 @@ class HatRightAction(HatAction):
 		HatAction.__init__(self, id, 0, STICK_PAD_MIN)
 
 
-class MouseAction(Action):
+class MouseAction(HapticEnabledAction):
 	COMMAND = "mouse"
 	
 	def __init__(self, axis, speed=None):
-		Action.__init__(self, axis, *strip_none(speed))
+		HapticEnabledAction.__init__(self, axis, *strip_none(speed))
 		self.mouse_axis = axis
 		self.speed = speed or 1
 	
@@ -382,13 +382,13 @@ class MouseAction(Action):
 				elif self.mouse_axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
 					mapper.do_trackball(1, True)
 			if self.mouse_axis == Rels.REL_X:
-				mapper.mouse_dq_add(0, position, -self.speed)
+				mapper.mouse_dq_add(0, position, -self.speed, self.haptic)
 			elif self.mouse_axis == Rels.REL_Y:
-				mapper.mouse_dq_add(1, position, -self.speed)
+				mapper.mouse_dq_add(1, position, -self.speed, self.haptic)
 			elif self.mouse_axis == Rels.REL_HWHEEL:
-				mapper.mouse_dq_add(2, position, -self.speed)
+				mapper.mouse_dq_add(2, position, -self.speed, self.haptic)
 			elif self.mouse_axis == Rels.REL_WHEEL:
-				mapper.mouse_dq_add(3, position, -self.speed)
+				mapper.mouse_dq_add(3, position, -self.speed, self.haptic)
 			mapper.force_event.add(FE_PAD)
 				
 		elif mapper.was_touched(what):
@@ -884,8 +884,12 @@ class XYAction(Action):
 	
 	
 	def whole(self, mapper, x, y, what):
-		self.x.axis(mapper, x, what)
-		self.y.axis(mapper, y, what)
+		if what in (LEFT, RIGHT):
+			self.x.pad(mapper, x, what)
+			self.y.pad(mapper, y, what)
+		else:
+			self.x.axis(mapper, x, what)
+			self.y.axis(mapper, y, what)
 	
 	
 	def pad(self, mapper, x, y, what):
