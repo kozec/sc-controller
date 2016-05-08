@@ -521,8 +521,8 @@ class GyroAbsAction(GyroAction, HapticEnabledAction):
 			self.ir = pyr[2]
 		# Covert what quat2euler returns to what controller can use
 		for i in (0, 1):
-			pyr[i] = pyr[i] * (2**15) * 2 * self.speed[i] / PI
-		pyr[2] = anglediff(self.ir, pyr[2]) * (2**15) * 2 * self.speed[2] / PI
+			pyr[i] = pyr[i] * (2**15) * self.speed[i] * 2 / PI
+		pyr[2] = anglediff(self.ir, pyr[2]) * (2**15) * self.speed[2] * 2 / PI
 		# Restrict to acceptablle range
 		if self.haptic:
 			oor = False # oor - Out Of Range
