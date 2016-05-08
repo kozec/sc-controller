@@ -338,6 +338,7 @@ class SensitivityModifier(Modifier):
 	
 	
 	def describe(self, context):
+		if self.name: return self.name
 		return self.action.describe(context)
 	
 	
@@ -374,6 +375,7 @@ class FeedbackModifier(Modifier):
 
 
 	def describe(self, context):
+		if self.name: return self.name
 		return self.action.describe(context)
 	
 	
