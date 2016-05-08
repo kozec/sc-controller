@@ -355,26 +355,8 @@ class SensitivityModifier(Modifier):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
 	
 	
-	def button_press(self, *a):
-		return self.action.button_press(*a)
-	
-	def button_release(self, *a):
-		return self.action.button_release(*a)
-	
-	def trigger(self, *a):
-		return self.action.trigger(*a)
-	
-	def axis(self, *a):
-		return self.action.axis(*a)
-	
-	def gyro(self, *a):
-		return self.action.gyro(*a)
-	
-	def pad(self, *a):
-		return self.action.pad(*a)
-	
-	def whole(self, *a):
-		return self.action.whole(*a)
+	def compress(self):
+		return self.action.compress()
 
 
 class FeedbackModifier(Modifier):
@@ -409,26 +391,8 @@ class FeedbackModifier(Modifier):
 		return "<with Feedback %s>" % (self.speeds, self.action)
 	
 	
-	def button_press(self, *a):
-		return self.action.button_press(*a)
-	
-	def button_release(self, *a):
-		return self.action.button_release(*a)
-	
-	def trigger(self, *a):
-		return self.action.trigger(*a)
-	
-	def axis(self, *a):
-		return self.action.axis(*a)
-	
-	def gyro(self, *a):
-		return self.action.gyro(*a)
-	
-	def pad(self, *a):
-		return self.action.pad(*a)
-	
-	def whole(self, *a):
-		return self.action.whole(*a)
+	def compress(self):
+		return self.action.compress()
 
 
 # Add modifiers to ACTIONS dict

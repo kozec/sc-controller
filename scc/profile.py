@@ -115,7 +115,20 @@ class Profile(object):
 			self.pads[y] = self._load_action(data, key)
 		
 		return self
-
+	
+	
+	def compress(self):
+		"""
+		Calls compress on every action to throw out some redundant stuff.
+		Note that calling save() after compress() will break stuff.
+		"""
+		for dct in (self.buttons, self.triggers, self.pads):
+			for x in dct:
+				dct[x] = dct[x].compress()
+		self.stick = self.stick.compress()
+		self.gyro = self.gyro.compress()
+	
+	
 class Encoder(json.JSONEncoder):
 	def default(self, obj):
 		if hasattr(obj, "encode"):

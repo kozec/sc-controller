@@ -78,6 +78,21 @@ class Action(object):
 		For modifier, returns first child action that actually
 		does something (first non-modifier).
 		For everything else, returns itself.
+		
+		Used only to determine effective action type in editor.
+		"""
+		return self
+	
+	
+	def compress(self):
+		"""
+		For most of actions, returns itself.
+		
+		For few special cases, like FeedbackModifier and SensitivityModifier,
+		returns child action.
+		
+		Called after profile is loaded and feedback/sensitivity settings are
+		applied, when original modifier doesn't do anything anymore.
 		"""
 		return self
 	
