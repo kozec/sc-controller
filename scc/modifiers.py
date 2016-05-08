@@ -276,6 +276,7 @@ class ModeModifier(Modifier):
 	def axis(self, mapper, position, what):
 		return self.select(mapper).axis(mapper, position, what)
 	
+	
 	def gyro(self, mapper, pitch, yaw, roll, *q):
 		sel = self.select(mapper)
 		if sel is not self.old_gyro:
@@ -355,6 +356,7 @@ class SensitivityModifier(Modifier):
 	
 	
 	def gyro(self, mapper, pitch, yaw, roll, *q):
+		# TODO: FIXME: Support for gyroabs sensitivity
 		return self.action.gyro(mapper,
 			pitch * self.speeds[0],
 			yaw * self.speeds[1],
@@ -417,6 +419,10 @@ class FeedbackModifier(Modifier):
 	
 	def axis(self, *a):
 		return self.action.axis(*a)
+	
+	
+	def gyro(self, *a):
+		return self.action.gyro(*a)
 	
 	
 	def pad(self, *a):

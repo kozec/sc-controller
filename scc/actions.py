@@ -21,8 +21,8 @@ MOUSE_BUTTONS = ( Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE,
 GAMEPAD_BUTTONS = ( Keys.BTN_A, Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
 		Keys.BTN_SELECT, Keys.BTN_START, Keys.BTN_MODE, Keys.BTN_THUMBL, Keys.BTN_THUMBR )
 TRIGGERS = ( Axes.ABS_Z, Axes.ABS_RZ )
-STICK_PAD_MIN = -32767
-STICK_PAD_MAX = 32767
+STICK_PAD_MIN = -32768
+STICK_PAD_MAX = 32768
 STICK_PAD_MIN_HALF = STICK_PAD_MIN / 3
 STICK_PAD_MAX_HALF = STICK_PAD_MAX / 3
 
@@ -465,11 +465,13 @@ class GyroAction(Action):
 		return axis, neg, pos
 
 
-class GyroAbsAction(GyroAction):
+class GyroAbsAction(GyroAction, HapticEnabledAction):
 	COMMAND = "gyroabs"
 	def __init__(self, *blah):
 		GyroAction.__init__(self, *blah)
+		self.haptic = None	# Can't call HapticEnabledAction, it'll create diamond
 		self.ir = None
+		self._was_oor = False
 	
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
 		pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
@@ -481,8 +483,25 @@ class GyroAbsAction(GyroAction):
 			pyr[i] = pyr[i] * (2**15) * 2 * self.speed / PI
 		pyr[2] = anglediff(self.ir, pyr[2]) * (2**15) * 2 * self.speed / PI
 		# Restrict to acceptablle range
-		for i in (0, 1, 2):
-			pyr[i] = int(max(min(pyr[i], 2**15), -(2**15)))
+		if self.haptic:
+			oor = False # oor - Out Of Range
+			for i in (0, 1, 2):
+				pyr[i] = int(pyr[i])
+				if pyr[i] > STICK_PAD_MAX:
+					pyr[i] = STICK_PAD_MAX
+					oor = True
+				elif pyr[i] < STICK_PAD_MIN:
+					pyr[i] = STICK_PAD_MIN
+					oor = True
+			if oor:
+				if not self._was_oor:
+					mapper.send_feedback(self.haptic)
+					self._was_oor = True
+			else:
+				self._was_oor = False
+		else:
+			for i in (0, 1, 2):
+				pyr[i] = int(max(min(pyr[i], STICK_PAD_MAX), STICK_PAD_MIN))
 		# print "% 12.0f, % 12.0f, % 12.5f" % (p,y,r)
 		for i in (0, 1, 2):
 			axis = self.axes[i]
