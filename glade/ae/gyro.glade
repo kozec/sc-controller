@@ -18,7 +18,7 @@
     <property name="orientation">vertical</property>
     <property name="spacing">20</property>
     <child>
-      <object class="GtkGrid">
+      <object class="GtkGrid" id="whatthefuckubuntu">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="row_spacing">2</property>
@@ -241,7 +241,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkBox">
+      <object class="GtkBox" id="ihaveid">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="spacing">10</property>
