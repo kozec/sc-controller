@@ -25,6 +25,9 @@ class Modifier(Action):
 	def __str__(self):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
 	
+	def set_haptic(self, hapticdata):
+		self.action.set_haptic(hapticdata)
+	
 	__repr__ = __str__
 
 
@@ -147,6 +150,13 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		if self.default is None:
 			self.default = NoAction()
+	
+	
+	def set_haptic(self, hapticdata):
+		if self.default:
+			self.default.set_haptic(hapticdata)
+		for a in self.mods.values():
+			a.set_haptic(hapticdata)
 	
 	
 	def strip(self):

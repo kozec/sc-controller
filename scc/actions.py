@@ -720,6 +720,12 @@ class MultiAction(Action):
 			self.actions.append(action)
 	
 	
+	def set_haptic(self, hapticdata):
+		for a in self.actions:
+			if a:
+				a.set_haptic(hapticdata)
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		if isinstance(self.actions[0], ButtonAction):
@@ -779,6 +785,13 @@ class DPadAction(Action):
 		self.actions = ensure_size(4, actions)
 		self.eight = False
 		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
+	
+	
+	def set_haptic(self, hapticdata):
+		for a in self.actions:
+			if a:
+				a.set_haptic(hapticdata)
+	
 	
 	def describe(self, context):
 		if self.name: return self.name
@@ -867,6 +880,12 @@ class XYAction(Action):
 		self.x = x or NoAction()
 		self.y = y or NoAction()
 		self.actions = (self.x, self.y)
+	
+	
+	def set_haptic(self, hapticdata):
+		self.x.set_haptic(hapticdata)
+		self.y.set_haptic(hapticdata)
+	
 	
 	# XYAction no sense with button and trigger-related events
 	def button_press(self, *a):

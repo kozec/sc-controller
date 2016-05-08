@@ -2,12 +2,13 @@
 from __future__ import unicode_literals
 
 from collections import deque
-from scc.uinput import Gamepad, Keyboard, Mouse
-from scc.profile import Profile
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
+from scc.uinput import Gamepad, Keyboard, Mouse, Rels
 from scc.constants import SCStatus, SCButtons, SCI_NULL
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import CI_NAMES, ControllerInput
 from scc.constants import LEFT, RIGHT, STICK, GYRO
+from scc.profile import Profile
+
 
 import traceback, logging, time
 log = logging.getLogger("Mapper")
@@ -109,7 +110,10 @@ class Mapper(object):
 				prev = position
 			t = self.mouse_movements[axis] = [ prev, 0, False ]
 		self.mouse_dq[axis].append(position)
-		self.mouse_feedback[0] = hapticdata
+		if axis >= 2:	# 2 - wheel, 3 - horisontal wheel
+			self.mouse_feedback[1] = hapticdata
+		else:
+			self.mouse_feedback[0] = hapticdata
 		
 		try:
 			t[1] = int(sum(self.mouse_dq[axis]) / len(self.mouse_dq[axis]))
@@ -250,7 +254,9 @@ class Mapper(object):
 			self.syn_list.add(self.mouse)
 			self.mouse_movements[0] = self.mouse_movements[1] = None
 		if wx != 0 or wy != 0:
-			self.mouse.scrollEvent(wx, wy, False)
+			if self.mouse.scrollEvent(wx, wy, False):
+				# Returns True
+				self.travelled[1] += 500
 			self.syn_list.add(self.mouse)
 			self.mouse_movements[2] = self.mouse_movements[3] = None
 		# Generate events - trackball
@@ -263,13 +269,22 @@ class Mapper(object):
 				self.mouse_tb[0] = False
 				self.mouse_feedback[0] = None
 		
-		if self.mouse_feedback[0]:
-			if self.travelled[0] > self.mouse_feedback[0].frequency:
-				self.travelled[0] -= self.mouse_feedback[0].frequency
-				self.send_feedback(self.mouse_feedback[0])
 		if self.mouse_tb[1]:
 			dist = self.mouse.scrollEvent(0, 0, True)
 			self.syn_list.add(self.mouse)
-			if not dist:
+			if dist:
+				# scrollEvent returns True, not number
+				self.travelled[1] += 500
+			else:
 				self.mouse_tb[1] = False
+				self.mouse_feedback[1] = None
+		
+		for i in (0, 1):
+			if self.mouse_feedback[i]:
+				# print i, self.travelled[i], self.mouse_feedback[i].frequency
+				if self.travelled[i] > self.mouse_feedback[i].frequency:
+					self.travelled[i] -= self.mouse_feedback[i].frequency
+					self.send_feedback(self.mouse_feedback[i])
+		
+		
 		self.sync()
