@@ -176,8 +176,6 @@ class SCController(object):
 	
 	
 	def _callbackTimer(self):
-		
-		print "_callbackTimer"
 		t = time.time()
 		d = t - self._lastusb
 		self._timer.cancel()
