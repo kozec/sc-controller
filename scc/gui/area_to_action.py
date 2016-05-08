@@ -50,6 +50,16 @@ AREA_TO_ACTION = {
 	'ABS_RX'			: (AxisAction, Axes.ABS_RX),
 	'ABS_RY'			: (AxisAction, Axes.ABS_RY),
 	
+	# Halves
+	'MINUSHALF_X'		: (AxisAction, Axes.ABS_X, 0, -32767),
+	'PLUSHALF_X'		: (AxisAction, Axes.ABS_X, 0, 32767),
+	'MINUSHALF_Y'		: (AxisAction, Axes.ABS_Y, 0, -32767),
+	'PLUSHALF_Y'		: (AxisAction, Axes.ABS_Y, 0, 32767),
+	'MINUSHALF_RX'		: (AxisAction, Axes.ABS_RX, 0, -32767),
+	'PLUSHALF_RX'		: (AxisAction, Axes.ABS_RX, 0, 32767),
+	'MINUSHALF_RY'		: (AxisAction, Axes.ABS_RY, 0, -32767),
+	'PLUSHALF_RY'		: (AxisAction, Axes.ABS_RY, 0, 32767),
+	
 	# Triggers
 	'ABS_Z'				: (AxisAction, Axes.ABS_Z),
 	'ABS_RZ'			: (AxisAction, Axes.ABS_RZ),
