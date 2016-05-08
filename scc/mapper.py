@@ -283,7 +283,7 @@ class Mapper(object):
 			if self.mouse_feedback[i]:
 				# print i, self.travelled[i], self.mouse_feedback[i].frequency
 				if self.travelled[i] > self.mouse_feedback[i].frequency:
-					self.travelled[i] -= self.mouse_feedback[i].frequency
+					self.travelled[i] = 0
 					self.send_feedback(self.mouse_feedback[i])
 		
 		
