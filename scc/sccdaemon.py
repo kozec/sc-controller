@@ -70,6 +70,18 @@ class SCCDaemon(Daemon):
 		p = Profile(TalkingActionParser())
 		p.load(filename).compress()
 		self.profile_file = filename
+		
+		if self.mapper.profile.gyro and not p.gyro:
+			# Turn off gyro sensor that was enabled but is no longer needed
+			if self.mapper.get_controller():
+				log.debug("Turning gyrosensor OFF")
+				self.mapper.get_controller().configure_controller(enable_gyros=False)
+		elif not self.mapper.profile.gyro and p.gyro:
+			# Turn on gyro sensor that was turned off, if profile has gyro action set
+			if self.mapper.get_controller():
+				log.debug("Turning gyrosensor ON")
+				self.mapper.get_controller().configure_controller(enable_gyros=True)
+		
 		# This last line kinda depends on GIL...
 		self.mapper.profile = p
 		# Notify all connected clients about change
@@ -147,7 +159,7 @@ class SCCDaemon(Daemon):
 		while True:
 			try:
 				sc = SCController(callback=self.mapper.callback)
-				sc.configure_controller(enable_gyros=True)
+				sc.configure_controller(enable_gyros=bool(self.mapper.profile.gyro))
 				self.mapper.set_controller(sc)
 				sc.setStatusCallback(self.on_controller_status)
 				if self.error is not None:
