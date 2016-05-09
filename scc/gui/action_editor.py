@@ -8,8 +8,11 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.modifiers import Modifier, ClickModifier, ModeModifier, SensitivityModifier
+from scc.modifiers import Modifier, ClickModifier, ModeModifier
+from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.actions import Action, XYAction, NoAction
+from scc.controller import HapticData
+from scc.constants import HapticPos
 from scc.profile import Profile
 from scc.macros import Macro
 from scc.gui.modeshift_editor import ModeshiftEditor
@@ -22,31 +25,39 @@ import os, logging, importlib, types
 log = logging.getLogger("ActionEditor")
 
 
+COMPONENTS = (								# List of known modules (components) in scc.gui.ae package
+	'axis',
+	'axis_action',
+	'gyro',
+	'gyro_action',
+	'buttons',
+	'dpad',
+	'per_axis',
+	'trigger_ab',
+	'special_action',
+	'custom',
+)
+XYZ = "XYZ"									# Sensitivity settings keys
+AFP = ("Amplitude", "Frequency", "Period")	# Feedback settings keys
+FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
+
+
 class ActionEditor(Editor):
 	GLADE = "action_editor.glade"
 	ERROR_CSS = " #error {background-color:green; color:red;} "
-	COMPONENTS = (
-		'axis',
-		'axis_action',
-		'gyro',
-		'gyro_action',
-		'buttons',
-		'dpad',
-		'per_axis',
-		'trigger_ab',
-		'special_action',
-		'custom',
-	)
 	css = None
 
 	def __init__(self, app, callback):
 		self.app = app
 		self.id = None
-		self.components = []	# List of available components
-		self.c_buttons = {} 	# Component-to-button dict
-		self.sens_widgets = []	# Sensitivity sliders, labels and 'clear' buttons
-		self.sens = [1.0] * 3	# Sensitivity slider values
-		self.click = False		# Click modifier value. None for disabled
+		self.components = []			# List of available components
+		self.c_buttons = {} 			# Component-to-button dict
+		self.sens_widgets = []			# Sensitivity sliders, labels and 'clear' buttons
+		self.feedback_widgets = []		# Feedback settings sliders, labels and 'clear' buttons, plus default value as last item
+		self.sens = [1.0] * 3			# Sensitivity slider values
+		self.feedback = [0.0] * 3		# Feedback slider values, set later
+		self.feedback_position = None	# None for 'disabled'
+		self.click = False				# Click modifier value. None for disabled
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback	# This is different callback than ButtonChooser uses
@@ -71,19 +82,27 @@ class ActionEditor(Editor):
 		self.window = self.builder.get_object("Dialog")
 		self.builder.connect_signals(self)
 		headerbar(self.builder.get_object("header"))
-		XYZ = "XYZ"	# duh
 		for i in (0, 1, 2):
 			self.sens_widgets.append((
 				self.builder.get_object("sclSens%s" % (XYZ[i],)),
 				self.builder.get_object("lblSens%s" % (XYZ[i],)),
 				self.builder.get_object("btClearSens%s" % (XYZ[i],)),
 			))
+		for key in AFP:
+			i = AFP.index(key)
+			self.feedback[i] = self.builder.get_object("sclF%s" % (key,)).get_value()
+			self.feedback_widgets.append((
+				self.builder.get_object("sclF%s" % (key,)),
+				self.builder.get_object("lblF%s" % (key,)),
+				self.builder.get_object("btClearF%s" % (key,)),
+				self.feedback[i]	# default value
+			))
 	
 	
 	def load_components(self):
 		""" Loads list of editor components """
 		# Import and load components
-		for c in self.COMPONENTS:
+		for c in COMPONENTS:
 			mod = importlib.import_module("scc.gui.ae.%s" % (c,))
 			for x in dir(mod):
 				cls = getattr(mod, x)
@@ -198,6 +217,12 @@ class ActionEditor(Editor):
 				scale.set_value(1.0)
 	
 	
+	def on_btClearFeedback_clicked(self, source, *a):
+		for scale, label, button, default in self.feedback_widgets:
+			if source == button:
+				scale.set_value(default)
+	
+	
 	def on_btClear_clicked	(self, *a):
 		""" Handler for clear button """
 		action = NoAction()
@@ -252,47 +277,72 @@ class ActionEditor(Editor):
 	
 	def update_modifiers(self, *a):
 		"""
-		Called when sensitivity or 'require click' combobox value changes.
+		Called when sensitivity, feedback or 'require click' setting changes.
 		"""
 		if self._recursing : return
 		cbRequireClick = self.builder.get_object("cbRequireClick")
+		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+		cbFeedback = self.builder.get_object("cbFeedback")
+		rvFeedback = self.builder.get_object("rvFeedback")
 		
 		set_action = False
 		for i in xrange(0, len(self.sens)):
 			if self.sens[i] != self.sens_widgets[i][0].get_value():
 				self.sens[i] = self.sens_widgets[i][0].get_value()
 				set_action = True
-				
+		
+		for i in xrange(0, len(self.feedback)):
+			if self.feedback[i] != self.feedback_widgets[i][0].get_value():
+				self.feedback[i] = self.feedback_widgets[i][0].get_value()
+				set_action = True
+		
+		if cbFeedback.get_active():
+			feedback_position = FEEDBACK_SIDES[cbFeedbackSide.get_active()]
+		else:
+			feedback_position = None
+		if self.feedback_position != feedback_position:
+			self.feedback_position = feedback_position
+			set_action = True
+		
 		if self.click is not None:
 			if cbRequireClick.get_active() != self.click:
 				self.click = cbRequireClick.get_active()
 				set_action = True
 		
+		rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
+		
 		if set_action:
 			self.set_action(self._action)
 	
 	
-	def generate_modifiers(self, action, index=-1):
+	def generate_modifiers(self, action):
 		if not self._modifiers_enabled:
 			# Editing in custom aciton dialog, don't meddle with that
 			return action
+		
 		# Strip 1.0's from sensitivity values
 		sens = [] + self.sens
-		while len(sens) > 0 and sens[-1] == 1.0: sens = sens[0:-1]
+		while len(sens) > 0 and sens[-1] == 1.0:
+			sens = sens[0:-1]
 		
-		if isinstance(action, XYAction):
-			# XYAction has to be topmost
-			return XYAction(
-				self.generate_modifiers(action.x, 0),
-				self.generate_modifiers(action.y, 1),
-			)
-		if len(sens) > 0 and index < 0:
-			# Not called for XYAction parameter
+		# Strip defaults from feedback values
+		feedback = [] + self.feedback
+		while len(feedback) > 0 and feedback[-1] == self.feedback_widgets[len(feedback)-1][-1]:
+			feedback = feedback[0:-1]
+		
+		if len(sens) > 0:
+			# Build arguments
 			sens.append(action)
+			# Create modifier
 			action = SensitivityModifier(*sens)
-		elif len(sens) > index and index >= 0:
-			# Called for XYAction parameter and sensitivity is specified
-			action = SensitivityModifier(sens[index], action)
+		
+		if self.feedback_position != None:
+			# Build FeedbackModifier arguments
+			cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+			feedback = [ FEEDBACK_SIDES[cbFeedbackSide.get_active()] ] + feedback
+			feedback += [ action ]
+			# Create modifier
+			action = FeedbackModifier(*feedback)
 		
 		if self.click:
 			action = ClickModifier(action)
@@ -305,16 +355,19 @@ class ActionEditor(Editor):
 		Returns action without parsed modifiers.
 		"""
 		cbRequireClick = self.builder.get_object("cbRequireClick")
+		cbFeedback = self.builder.get_object("cbFeedback")
+		rvFeedback = self.builder.get_object("rvFeedback")
+		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		
-		if isinstance(action, XYAction):
-			return XYAction(
-				self.load_modifiers(action.x, 0),
-				self.load_modifiers(action.y, 1)
-			)
-		
-		while isinstance(action, (ClickModifier, SensitivityModifier)):
+		while isinstance(action, (ClickModifier, SensitivityModifier, FeedbackModifier)):
 			if isinstance(action, ClickModifier):
 				self.click = True
+				action = action.action
+			if isinstance(action, FeedbackModifier):
+				self.feedback_position = action.haptic.get_position()
+				self.feedback[0] = action.haptic.get_amplitude()
+				self.feedback[1] = action.haptic.get_frequency()
+				self.feedback[2] = action.haptic.get_period()
 				action = action.action
 			if isinstance(action, SensitivityModifier):
 				if index < 0:
@@ -328,6 +381,12 @@ class ActionEditor(Editor):
 		cbRequireClick.set_active(self.click)
 		for i in xrange(0, len(self.sens)):
 			self.sens_widgets[i][0].set_value(self.sens[i])
+		if self.feedback_position != None:
+			cbFeedbackSide.set_active(FEEDBACK_SIDES.index(self.feedback_position))
+			cbFeedback.set_active(True)
+			rvFeedback.set_reveal_child(cbFeedback.get_sensitive())
+			for i in xrange(0, len(self.feedback)):
+				self.feedback_widgets[i][0].set_value(self.feedback[i])
 		self._recursing = False
 		
 		return action
@@ -352,20 +411,21 @@ class ActionEditor(Editor):
 			entAction.set_text(str(action.error))
 			self._set_y_field_visible(False)
 		else:
-			# Treat XYAction specialy
+			# Check for XYAction and treat it specialy
 			entAction.set_name("entAction")
 			btOK.set_sensitive(True)
 			self._action = action
-			action = self.generate_modifiers(action)
-		
 			if isinstance(action, XYAction):
-				entAction.set_text(action.actions[0].to_string())
-				if len(action.actions) < 2:
+				entAction.set_text(self.generate_modifiers(action.x).to_string())
+				if not action.y:
 					entActionY.set_text("")
 				else:
-					entActionY.set_text(action.actions[1].to_string())
+					entActionY.set_text(self.generate_modifiers(action.y).to_string())
 				self._set_y_field_visible(True)
+				action = self.generate_modifiers(action)
 			else:
+				action = self.generate_modifiers(action)
+				
 				if hasattr(action, 'string') and "\n" not in action.string:
 					# Stuff generated by my special parser
 					entAction.set_text(action.string)
@@ -373,6 +433,11 @@ class ActionEditor(Editor):
 					# Actions generated elsewhere
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
+			# Check if action supports feedback
+			if action.set_haptic(HapticData(HapticPos.LEFT)):
+				self.set_feedback_settings_enabled(True)
+			else:
+				self.set_feedback_settings_enabled(False)
 		
 		# Send changed action into selected component
 		if self._selected_component is None:
@@ -467,6 +532,15 @@ class ActionEditor(Editor):
 		self.set_action(action)
 		self.hide_macro()
 		self.id = id
+	
+	def set_feedback_settings_enabled(self, enabled):
+		cbFeedback = self.builder.get_object("cbFeedback")
+		rvFeedback = self.builder.get_object("rvFeedback")
+		cbFeedback.set_sensitive(enabled)
+		if enabled:
+			rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
+		else:
+			rvFeedback.set_reveal_child(False)
 	
 	
 	def set_modifiers_enabled(self, enabled):

@@ -62,13 +62,13 @@ class SCCDaemon(Daemon):
 	def load_profile(self, filename):
 		self.profile_file = filename
 		if self.mapper is not None:
-			self.mapper.profile.load(filename)
+			self.mapper.profile.load(filename).compress()
 	
 	
 	def _set_profile(self, filename):
 		# Called from socket server thread
 		p = Profile(TalkingActionParser())
-		p.load(filename)
+		p.load(filename).compress()
 		self.profile_file = filename
 		
 		if self.mapper.profile.gyro and not p.gyro:
@@ -132,7 +132,7 @@ class SCCDaemon(Daemon):
 		self.mapper.shell_command_callback = self._shell_command
 		if self.profile_file is not None:
 			try:
-				self.mapper.profile.load(self.profile_file)
+				self.mapper.profile.load(self.profile_file).compress()
 			except Exception, e:
 				log.warning("Failed to load profile. Starting with no mappings.")
 				log.warning("Reason: %s", e)

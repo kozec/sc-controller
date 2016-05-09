@@ -25,6 +25,12 @@ class Modifier(Action):
 	def __str__(self):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
 	
+	def set_haptic(self, hapticdata):
+		return self.action.set_haptic(hapticdata)
+	
+	def set_speed(self, x, y, z):
+		return self.action.set_speed(x, y, z)
+	
 	__repr__ = __str__
 
 
@@ -149,6 +155,24 @@ class ModeModifier(Modifier):
 			self.default = NoAction()
 	
 	
+	def set_haptic(self, hapticdata):
+		supports = False
+		if self.default:
+			supports = self.default.set_haptic(hapticdata) or supports
+		for a in self.mods.values():
+			supports = a.set_haptic(hapticdata) or supports
+		return supports
+	
+	
+	def set_speed(self, x, y, z):
+		supports = False
+		if self.default:
+			supports = self.default.set_speed(x, y, z) or supports
+		for a in self.mods.values():
+			supports = a.set_speed(x, y, z) or supports
+		return supports
+	
+	
 	def strip(self):
 		# Returns default action or action assigned to first modifier
 		if self.default:
@@ -264,6 +288,7 @@ class ModeModifier(Modifier):
 	def axis(self, mapper, position, what):
 		return self.select(mapper).axis(mapper, position, what)
 	
+	
 	def gyro(self, mapper, pitch, yaw, roll, *q):
 		sel = self.select(mapper)
 		if sel is not self.old_gyro:
@@ -292,6 +317,7 @@ class ModeModifier(Modifier):
 class SensitivityModifier(Modifier):
 	COMMAND = "sens"
 	def __init__(self, *parameters):
+		# TODO: remove self.speeds
 		self.speeds = []
 		action = NoAction()
 		for p in parameters:
@@ -303,6 +329,7 @@ class SensitivityModifier(Modifier):
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
 		Modifier.__init__(self, action)
+		action.set_speed(*self.speeds)
 		self.parameters = parameters
 	
 	
@@ -311,6 +338,7 @@ class SensitivityModifier(Modifier):
 	
 	
 	def describe(self, context):
+		if self.name: return self.name
 		return self.action.describe(context)
 	
 	
@@ -328,37 +356,8 @@ class SensitivityModifier(Modifier):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
 	
 	
-	def button_press(self, mapper):
-		return self.action.button_press(mapper)
-	
-	def button_release(self, mapper):
-		return self.action.button_release(mapper)
-	
-	def trigger(self, mapper, position, old_position):
-		return self.action.trigger(mapper, position * self.speeds[0], old_position)
-	
-	
-	def axis(self, mapper, position, what):
-		return self.action.axis(mapper, position * self.speeds[0], what)
-	
-	
-	def gyro(self, mapper, pitch, yaw, roll, *q):
-		return self.action.gyro(mapper,
-			pitch * self.speeds[0],
-			yaw * self.speeds[1],
-			roll * self.speeds[2],
-			*q)
-	
-	
-	def pad(self, mapper, position, what):
-		return self.action.pad(mapper, position * self.speeds[0], what)
-	
-	
-	def whole(self, mapper, x, y, what):
-		return self.action.pad(mapper,
-			x * self.speeds[0],
-			y * self.speeds[1],
-			what)
+	def compress(self):
+		return self.action.compress()
 
 
 class FeedbackModifier(Modifier):
@@ -376,45 +375,36 @@ class FeedbackModifier(Modifier):
 
 
 	def describe(self, context):
+		if self.name: return self.name
 		return self.action.describe(context)
 	
 	
 	def to_string(self, multiline=False, pad=0):
+		# Convert all but last parameters to string, using int() for amplitude and period
+		pars = list(self.parameters[0:-1])
+		if len(pars) >= 1: pars[0] = str(pars[0])		# Side
+		if len(pars) >= 2: pars[1] = str(int(pars[1]))	# Amplitude
+		if len(pars) >= 3: pars[2] = str(pars[2])		# Frequency
+		if len(pars) >= 4: pars[3] = str(int(pars[3]))	# period
+		
 		if multiline:
 			childstr = self.action.to_string(True, pad + 2)
 			if "\n" in childstr:
 				return ((" " * pad) + "feedback(" +
-					(", ".join([ str(p) for p in self.parameters[0:-1] ])) + ",\n" +
+					", ".join(pars) + ",\n" +
 					childstr + "\n" + (" " * pad) + ")")
-		return Modifier.to_string(self, multiline, pad)
+		return ("feedback(" + ", ".join(pars) + ", " +
+			self.action.to_string(False) + ")")
 	
 	
 	def __str__(self):
-		return "<with Feedback %s>" % (self.speeds, self.action)
+		return "<with Feedback %s>" % (self.action,)
 	
+	def strip(self):
+		return self.action.strip()
 	
-	def button_press(self, *a):
-		return self.action.button_press(*a)
-	
-	def button_release(self, *a):
-		return self.action.button_release(*a)
-	
-	def trigger(self, *a):
-		return self.action.trigger(*a)
-	
-	
-	def axis(self, *a):
-		return self.action.axis(*a)
-	
-	
-	def pad(self, *a):
-		return self.action.pad(*a)
-	
-	
-	def whole(self, *a):
-		return self.action.whole(*a)
-
-
+	def compress(self):
+		return self.action.compress()
 
 
 # Add modifiers to ACTIONS dict
