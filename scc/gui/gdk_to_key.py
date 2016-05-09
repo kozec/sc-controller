@@ -16,6 +16,7 @@ GDK_TO_KEY = {
 	Gdk.KEY_Print		: Keys.KEY_PRINT,
 	Gdk.KEY_Scroll_Lock	: Keys.KEY_SCROLLLOCK,
 	Gdk.KEY_Sys_Req		: Keys.KEY_SYSRQ,
+	Gdk.KEY_Pause		: Keys.KEY_PAUSE,
 	
 	# Row 2
 	Gdk.KEY_quoteleft	: Keys.KEY_GRAVE,	# tilde
