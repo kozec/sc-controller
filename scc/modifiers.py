@@ -390,7 +390,7 @@ class FeedbackModifier(Modifier):
 	
 	
 	def __str__(self):
-		return "<with Feedback %s>" % (self.speeds, self.action)
+		return "<with Feedback %s>" % (self.action,)
 	
 	
 	def compress(self):

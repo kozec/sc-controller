@@ -317,6 +317,21 @@ class HapticData(object):
 		self.frequency = frequency		# used internally
 	
 	
+	def get_position(self):
+		return self.data[0]
+	
+	def get_amplitude(self):
+		return self.data[1]
+	
+	def get_frequency(self):
+		return self.frequency
+	
+	def get_period(self):
+		return self.data[2]
+	
+	def get_count(self):
+		return self.data[3]
+	
 	def __mul__(self, by):
 		"""
 		Allows multiplying HapticData by scalar to get same values
