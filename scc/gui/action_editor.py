@@ -300,8 +300,9 @@ class ActionEditor(Editor):
 		sens = [] + self.sens
 		while len(sens) > 0 and sens[-1] == 1.0: sens = sens[0:-1]
 		
-		sens.append(action)
-		action = SensitivityModifier(*sens)
+		if len(sens) > 0:
+			sens.append(action)
+			action = SensitivityModifier(*sens)
 		
 		if self.click:
 			action = ClickModifier(action)
