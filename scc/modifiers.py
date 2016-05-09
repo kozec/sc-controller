@@ -400,6 +400,8 @@ class FeedbackModifier(Modifier):
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
 	
+	def strip(self):
+		return self.action.strip()
 	
 	def compress(self):
 		return self.action.compress()
