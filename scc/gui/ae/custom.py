@@ -51,17 +51,6 @@ class CustomActionComponent(AEComponent):
 		txCustomAction = self.builder.get_object("txCustomAction")
 		txt = tbCustomAction.get_text(tbCustomAction.get_start_iter(), tbCustomAction.get_end_iter(), True)
 		if len(txt.strip(" \t\r\n")) > 0:
-			if txt.startswith("X:"):
-				# Special case, there are two separate actions for X and Y axis defined
-				index = txt.find("Y:")
-				if index == -1:
-					# There is actions for X axis but not for Y
-					txt = "XY(" + txt[2:] + ")"
-				else:
-					# Both X and Y actions are defined
-					x = txt[2:index]
-					y = txt[index+2:]
-					txt = "XY(" + x + "," + y + ")"
 			action = self.parser.restart(txt).parse()
 			self.editor.set_action(action)
 	

@@ -1035,19 +1035,13 @@ class XYAction(HapticEnabledAction):
 	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
-			rv = []
-			i = 0
-			for a in (self.x, self.y):
-				if a:
-					if i == 0:
-						rv += [ "X:" ]
-					elif i == 1:
-						rv += [ "Y:" ]
-					i += 1
-					rv += [ "  " + x for x in a.to_string(True).split("\n") ]
+			rv = [ (" " * pad) + "XY(" ]
+			rv += self.x.to_string(True, pad + 2).split("\n")
+			rv += [ (" " * pad) + "," ]
+			rv += self.y.to_string(True, pad + 2).split("\n")
+			rv += [ (" " * pad) + ")" ]
 			return "\n".join(rv)
-		
-		if self.y:
+		elif self.y:
 			return "XY(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
 		else:
 			return "XY(" + self.x.to_string() + ")"
