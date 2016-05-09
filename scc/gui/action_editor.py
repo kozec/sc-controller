@@ -10,6 +10,8 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.modifiers import Modifier, ClickModifier, ModeModifier, SensitivityModifier
 from scc.actions import Action, XYAction, NoAction
+from scc.controller import HapticData
+from scc.constants import HapticPos
 from scc.profile import Profile
 from scc.macros import Macro
 from scc.gui.modeshift_editor import ModeshiftEditor
@@ -42,11 +44,12 @@ class ActionEditor(Editor):
 	def __init__(self, app, callback):
 		self.app = app
 		self.id = None
-		self.components = []	# List of available components
-		self.c_buttons = {} 	# Component-to-button dict
-		self.sens_widgets = []	# Sensitivity sliders, labels and 'clear' buttons
-		self.sens = [1.0] * 3	# Sensitivity slider values
-		self.click = False		# Click modifier value. None for disabled
+		self.components = []		# List of available components
+		self.c_buttons = {} 		# Component-to-button dict
+		self.sens_widgets = []		# Sensitivity sliders, labels and 'clear' buttons
+		self.feedback_widgets = []	# Feedback settings sliders, labels and 'clear' buttons, plus default value as last item
+		self.sens = [1.0] * 3		# Sensitivity slider values
+		self.click = False			# Click modifier value. None for disabled
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback	# This is different callback than ButtonChooser uses
@@ -77,6 +80,13 @@ class ActionEditor(Editor):
 				self.builder.get_object("sclSens%s" % (XYZ[i],)),
 				self.builder.get_object("lblSens%s" % (XYZ[i],)),
 				self.builder.get_object("btClearSens%s" % (XYZ[i],)),
+			))
+		for i in ("Amplitude", "Frequency", "Period"):
+			self.feedback_widgets.append((
+				self.builder.get_object("sclF%s" % (i,)),
+				self.builder.get_object("lblF%s" % (i,)),
+				self.builder.get_object("btClearF%s" % (i,)),
+				self.builder.get_object("sclF%s" % (i,)).get_value()
 			))
 	
 	
@@ -198,6 +208,12 @@ class ActionEditor(Editor):
 				scale.set_value(1.0)
 	
 	
+	def on_btClearFeedback_clicked(self, source, *a):
+		for scale, label, button, default in self.feedback_widgets:
+			if source == button:
+				scale.set_value(default)
+	
+	
 	def on_btClear_clicked	(self, *a):
 		""" Handler for clear button """
 		action = NoAction()
@@ -252,10 +268,12 @@ class ActionEditor(Editor):
 	
 	def update_modifiers(self, *a):
 		"""
-		Called when sensitivity or 'require click' combobox value changes.
+		Called when sensitivity, feedback or 'require click' setting changes.
 		"""
 		if self._recursing : return
 		cbRequireClick = self.builder.get_object("cbRequireClick")
+		cbFeedback = self.builder.get_object("cbFeedback")
+		rvFeedback = self.builder.get_object("rvFeedback")
 		
 		set_action = False
 		for i in xrange(0, len(self.sens)):
@@ -267,6 +285,8 @@ class ActionEditor(Editor):
 			if cbRequireClick.get_active() != self.click:
 				self.click = cbRequireClick.get_active()
 				set_action = True
+		
+		rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
 		
 		if set_action:
 			self.set_action(self._action)
@@ -373,6 +393,11 @@ class ActionEditor(Editor):
 					# Actions generated elsewhere
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
+			# Check if action supports feedback
+			if action.set_haptic(HapticData(HapticPos.LEFT)):
+				self.set_feedback_settings_enabled(True)
+			else:
+				self.set_feedback_settings_enabled(False)
 		
 		# Send changed action into selected component
 		if self._selected_component is None:
@@ -467,6 +492,15 @@ class ActionEditor(Editor):
 		self.set_action(action)
 		self.hide_macro()
 		self.id = id
+	
+	def set_feedback_settings_enabled(self, enabled):
+		cbFeedback = self.builder.get_object("cbFeedback")
+		rvFeedback = self.builder.get_object("rvFeedback")
+		cbFeedback.set_sensitive(enabled)
+		if enabled:
+			rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
+		else:
+			rvFeedback.set_reveal_child(False)
 	
 	
 	def set_modifiers_enabled(self, enabled):

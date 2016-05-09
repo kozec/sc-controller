@@ -869,14 +869,6 @@ class DPadAction(Action):
 		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
 	
 	
-	def set_haptic(self, hapticdata):
-		supports = False
-		for a in self.actions:
-			if a:
-				supports = a.set_haptic(hapticdata) or supports
-		return supports
-	
-	
 	def describe(self, context):
 		if self.name: return self.name
 		return "DPad"
