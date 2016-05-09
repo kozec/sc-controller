@@ -107,7 +107,7 @@ class Area:
 	""" Basicaly just rectangle with name """
 	def __init__(self, translation, element):
 		self.name = element.attrib['id'].split("_")[1]
-		if self.name in ("LSTICK", "RSTICK", "DPAD", "ABS", "MOUSE"):
+		if self.name in ("LSTICK", "RSTICK", "DPAD", "ABS", "MOUSE", "MINUSHALF", "PLUSHALF"):
 			# Special cases
 			self.name = "_".join(element.attrib['id'].split("_")[1:3])
 		self.x = float(element.attrib['x']) + translation[0]
