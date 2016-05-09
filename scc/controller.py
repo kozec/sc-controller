@@ -324,7 +324,7 @@ class HapticData(object):
 		return self.data[1]
 	
 	def get_frequency(self):
-		return self.frequency
+		return float(self.frequency) / 1000.0
 	
 	def get_period(self):
 		return self.data[2]

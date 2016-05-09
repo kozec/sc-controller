@@ -39,6 +39,7 @@ COMPONENTS = (								# List of known modules (components) in scc.gui.ae package
 )
 XYZ = "XYZ"									# Sensitivity settings keys
 AFP = ("Amplitude", "Frequency", "Period")	# Feedback settings keys
+FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
 
 
 class ActionEditor(Editor):
@@ -280,6 +281,7 @@ class ActionEditor(Editor):
 		"""
 		if self._recursing : return
 		cbRequireClick = self.builder.get_object("cbRequireClick")
+		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		cbFeedback = self.builder.get_object("cbFeedback")
 		rvFeedback = self.builder.get_object("rvFeedback")
 		
@@ -288,7 +290,20 @@ class ActionEditor(Editor):
 			if self.sens[i] != self.sens_widgets[i][0].get_value():
 				self.sens[i] = self.sens_widgets[i][0].get_value()
 				set_action = True
-				
+		
+		for i in xrange(0, len(self.feedback)):
+			if self.feedback[i] != self.feedback_widgets[i][0].get_value():
+				self.feedback[i] = self.feedback_widgets[i][0].get_value()
+				set_action = True
+		
+		if cbFeedback.get_active():
+			feedback_position = FEEDBACK_SIDES[cbFeedbackSide.get_active()]
+		else:
+			feedback_position = None
+		if self.feedback_position != feedback_position:
+			self.feedback_position = feedback_position
+			set_action = True
+		
 		if self.click is not None:
 			if cbRequireClick.get_active() != self.click:
 				self.click = cbRequireClick.get_active()
@@ -304,13 +319,30 @@ class ActionEditor(Editor):
 		if not self._modifiers_enabled:
 			# Editing in custom aciton dialog, don't meddle with that
 			return action
+		
 		# Strip 1.0's from sensitivity values
 		sens = [] + self.sens
-		while len(sens) > 0 and sens[-1] == 1.0: sens = sens[0:-1]
+		while len(sens) > 0 and sens[-1] == 1.0:
+			sens = sens[0:-1]
+		
+		# Strip defaults from feedback values
+		feedback = [] + self.feedback
+		while len(feedback) > 0 and feedback[-1] == self.feedback_widgets[len(feedback)-1][-1]:
+			feedback = feedback[0:-1]
 		
 		if len(sens) > 0:
+			# Build arguments
 			sens.append(action)
+			# Create modifier
 			action = SensitivityModifier(*sens)
+		
+		if self.feedback_position != None:
+			# Build FeedbackModifier arguments
+			cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+			feedback = [ FEEDBACK_SIDES[cbFeedbackSide.get_active()] ] + feedback
+			feedback += [ action ]
+			# Create modifier
+			action = FeedbackModifier(*feedback)
 		
 		if self.click:
 			action = ClickModifier(action)
@@ -350,12 +382,7 @@ class ActionEditor(Editor):
 		for i in xrange(0, len(self.sens)):
 			self.sens_widgets[i][0].set_value(self.sens[i])
 		if self.feedback_position != None:
-			if self.feedback_position == HapticPos.LEFT:
-				cbFeedbackSide.set_active(0)
-			elif self.feedback_position == HapticPos.RIGHT:
-				cbFeedbackSide.set_active(1)
-			else:
-				cbFeedbackSide.set_active(2)
+			cbFeedbackSide.set_active(FEEDBACK_SIDES.index(self.feedback_position))
 			cbFeedback.set_active(True)
 			rvFeedback.set_reveal_child(cbFeedback.get_sensitive())
 			for i in xrange(0, len(self.feedback)):

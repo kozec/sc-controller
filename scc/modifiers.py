@@ -380,13 +380,21 @@ class FeedbackModifier(Modifier):
 	
 	
 	def to_string(self, multiline=False, pad=0):
+		# Convert all but last parameters to string, using int() for amplitude and period
+		pars = list(self.parameters[0:-1])
+		if len(pars) >= 1: pars[0] = str(pars[0])		# Side
+		if len(pars) >= 2: pars[1] = str(int(pars[1]))	# Amplitude
+		if len(pars) >= 3: pars[2] = str(pars[2])		# Frequency
+		if len(pars) >= 4: pars[3] = str(int(pars[3]))	# period
+		
 		if multiline:
 			childstr = self.action.to_string(True, pad + 2)
 			if "\n" in childstr:
 				return ((" " * pad) + "feedback(" +
-					(", ".join([ str(p) for p in self.parameters[0:-1] ])) + ",\n" +
+					", ".join(pars) + ",\n" +
 					childstr + "\n" + (" " * pad) + ")")
-		return Modifier.to_string(self, multiline, pad)
+		return ("feedback(" + ", ".join(pars) + ", " +
+			self.action.to_string(False) + ")")
 	
 	
 	def __str__(self):
