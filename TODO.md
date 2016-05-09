@@ -1,7 +1,6 @@
 List of (possibly) planned features in no particular order
 
 "Easy" stuff:
-- Haptic feedback support
 - Configurable gamepad type (e.g. 4 axes and 16 buttons)
 - Mouse regions
 - Selector for media keys
@@ -28,10 +27,11 @@ OSD related stuff:
 
 
 **Done** stuff:
+- Haptic feedback support
 - Gyroscope input
-- 8-way DPAD
-- Trigger settings
-- DPAD that acts only when clicked
 - Gamepad button as modifier (modeshift)
 - Macros
 - Turbo
+- Trigger settings
+- DPAD that acts only when clicked
+- 8-way DPAD
