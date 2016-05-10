@@ -12,6 +12,7 @@ from scc.modifiers import SensitivityModifier, ModeModifier
 from scc.modifiers import ClickModifier, FeedbackModifier
 from scc.parser import TalkingActionParser
 from scc.actions import NoAction, XYAction
+from scc.lib.jsonencoder import JSONEncoder
 
 import json
 
@@ -149,9 +150,11 @@ class Profile(object):
 		self.stick = self.stick.compress()
 		self.gyro = self.gyro.compress()
 	
-	
-class Encoder(json.JSONEncoder):
+
+class Encoder(JSONEncoder):
 	def default(self, obj):
+		#if type(obj) in (list, tuple):
+		#	return basestring("[" + ", ".join(self.encode(x) for x in obj) + " ]")
 		if hasattr(obj, "encode"):
 			return obj.encode()
 		return json.JSONEncoder.default(self, obj)
