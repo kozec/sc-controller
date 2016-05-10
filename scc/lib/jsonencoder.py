@@ -299,7 +299,7 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
 				raise ValueError("Circular reference detected")
 			markers[markerid] = lst
 		buf = '['
-		if True: #  _indent is not None:
+		if False: #  _indent is not None:
 			_current_indent_level += 1
 			newline_indent = '\n' + (' ' * (_indent * _current_indent_level))
 			separator = _item_separator + newline_indent
