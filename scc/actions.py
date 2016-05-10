@@ -55,6 +55,16 @@ class Action(object):
 		self.name = None
 		self.delay_after = DEFAULT_DELAY
 	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { 'action' : self.to_string() }
+		if self.name: rv['name'] = self.name
+		return rv
+	
+	def __str__(self):
+		return "<Action '%s', %s>" % (self.COMMAND, self.parameters)
+	
+	__repr__ = __str__
 	
 	def describe(self, context):
 		"""
@@ -189,19 +199,6 @@ class Action(object):
 		'old_position' contains last known trigger position.
 		"""
 		log.warn("Action %s can't handle trigger event", self.__class__.__name__)
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { 'action' : self.to_string() }
-		if self.name: rv['name'] = self.name
-		return rv
-	
-	
-	def __str__(self):
-		return "<Action '%s', %s>" % (self.COMMAND, self.parameters)
-	
-	__repr__ = __str__
 
 
 class HapticEnabledAction(Action):

@@ -6,11 +6,12 @@ Handles mapping profile stored in json file
 """
 from __future__ import unicode_literals
 
-from scc.constants import SCButtons
+from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
+from scc.constants import SCButtons, HapticPos
+from scc.modifiers import SensitivityModifier, ModeModifier
+from scc.modifiers import ClickModifier, FeedbackModifier
 from scc.parser import TalkingActionParser
 from scc.actions import NoAction, XYAction
-from scc.modifiers import ClickModifier, ModeModifier
-from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
 
 import json
 
@@ -38,12 +39,13 @@ class Profile(object):
 	def save(self, filename):
 		""" Saves profile into file. Returns self """
 		data = {
-			'buttons'	: {},
-			'stick'		: self.stick,
-			'gyro'		: self.gyro,
-			'triggers'	: self.triggers,
-			"left_pad"	: self.pads[Profile.LEFT],
-			"right_pad"	: self.pads[Profile.RIGHT],
+			'buttons'		: {},
+			'stick'			: self.stick,
+			'gyro'			: self.gyro,
+			'trigger_left'	: self.triggers[Profile.LEFT],
+			'trigger_right'	: self.triggers[Profile.RIGHT],
+			"pad_left"		: self.pads[Profile.LEFT],
+			"pad_right"		: self.pads[Profile.RIGHT],
 		}
 		
 		for i in self.buttons:
@@ -77,6 +79,16 @@ class Profile(object):
 			x = self._load_action(data["X"]) if "X" in data else NoAction()
 			y = self._load_action(data["Y"]) if "Y" in data else NoAction()
 			a = XYAction(x, y)
+		if "sensitivity" in data:
+			args = data["sensitivity"]
+			args.append(a)
+			a = SensitivityModifier(*args)
+		if "feedback" in data:
+			args = data["feedback"]
+			if hasattr(HapticPos, args[0]):
+				args[0] = getattr(HapticPos, args[0])
+			args.append(a)
+			a = FeedbackModifier(*args)
 		if "click" in data:
 			a = ClickModifier(a)
 		if "name" in data:
@@ -105,14 +117,23 @@ class Profile(object):
 		self.gyro = self._load_action(data, "gyro")
 		
 		# Triggers
-		self.triggers = {}
-		for x in Profile.TRIGGERS:
-			self.triggers[x] = self._load_action(data["triggers"], x)
+		if "triggers" in data:
+			# Old format
+			self.triggers = ({
+				x : self._load_action(data["triggers"], x) for x in Profile.TRIGGERS
+			})
+		else:
+			# New format
+			self.triggers = {
+				Profile.LEFT	: self._load_action(data, "trigger_left"),
+				Profile.RIGHT	: self._load_action(data, "trigger_right"),
+			}
 		
 		# Pads
-		self.pads = {}
-		for (y, key) in ( (Profile.LEFT, "left_pad"), (Profile.RIGHT, "right_pad") ):
-			self.pads[y] = self._load_action(data, key)
+		self.pads = {
+			Profile.LEFT	: self._load_action(data, "pad_left"),
+			Profile.RIGHT	: self._load_action(data, "pad_right"),
+		}
 		
 		return self
 	

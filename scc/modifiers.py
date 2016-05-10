@@ -9,8 +9,8 @@ For example, click() modifier executes action only if pad is pressed.
 from __future__ import unicode_literals
 
 from scc.actions import Action, NoAction, ACTIONS
+from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
-from scc.constants import LEFT, RIGHT, STICK, SCButtons
 from scc.controller import HapticData
 
 import time, logging
@@ -31,6 +31,11 @@ class Modifier(Action):
 	def set_speed(self, x, y, z):
 		return self.action.set_speed(x, y, z)
 	
+	def encode(self):
+		rv = self.action.encode()
+		if self.name: rv['name'] = self.name
+		return rv
+		
 	__repr__ = __str__
 
 
@@ -58,9 +63,8 @@ class ClickModifier(Modifier):
 	
 	
 	def encode(self):
-		rv = self.action.encode()
+		rv = Modifier.encode(self)
 		rv['click'] = True
-		if self.name: rv['name'] = self.name
 		return rv
 	
 	
@@ -355,6 +359,10 @@ class SensitivityModifier(Modifier):
 	def __str__(self):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
 	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv['sensitivity'] = self.speeds
+		return rv
 	
 	def compress(self):
 		return self.action.compress()
@@ -399,6 +407,17 @@ class FeedbackModifier(Modifier):
 	
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv['feedback'] = list(self.parameters[0:-1])
+		if self.haptic.get_position() == HapticPos.LEFT:
+			rv['feedback'][0] = "LEFT"
+		elif self.haptic.get_position() == HapticPos.RIGHT:
+			rv['feedback'][0] = "RIGHT"
+		else:
+			rv['feedback'][0] = "BOTH"
+		return rv
 	
 	def strip(self):
 		return self.action.strip()
