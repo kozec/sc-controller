@@ -117,24 +117,31 @@ class Profile(object):
 		self.stick = self._load_action(data, "stick")
 		self.gyro = self._load_action(data, "gyro")
 		
-		# Triggers
 		if "triggers" in data:
 			# Old format
+			# Triggers
 			self.triggers = ({
 				x : self._load_action(data["triggers"], x) for x in Profile.TRIGGERS
 			})
+			
+			# Pads
+			self.pads = {
+				Profile.LEFT	: self._load_action(data, "left_pad"),
+				Profile.RIGHT	: self._load_action(data, "right_pad"),
+			}
 		else:
 			# New format
+			# Triggers
 			self.triggers = {
 				Profile.LEFT	: self._load_action(data, "trigger_left"),
 				Profile.RIGHT	: self._load_action(data, "trigger_right"),
 			}
 		
-		# Pads
-		self.pads = {
-			Profile.LEFT	: self._load_action(data, "pad_left"),
-			Profile.RIGHT	: self._load_action(data, "pad_right"),
-		}
+			# Pads
+			self.pads = {
+				Profile.LEFT	: self._load_action(data, "pad_left"),
+				Profile.RIGHT	: self._load_action(data, "pad_right"),
+			}
 		
 		return self
 	

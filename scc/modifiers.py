@@ -68,6 +68,11 @@ class ClickModifier(Modifier):
 		return rv
 	
 	
+	def compress(self):
+		self.action = self.action.compress()
+		return self
+	
+	
 	# For button press & co it's safe to assume that they are being pressed...
 	def button_press(self, mapper):
 		return self.action.button_press(mapper)
@@ -185,6 +190,14 @@ class ModeModifier(Modifier):
 			return self.mods[self.order[0]].strip()
 		# Empty ModeModifier
 		return NoAction()
+	
+	
+	def compress(self):
+		if self.default:
+			self.default = self.default.compress()
+		for button in self.mods:
+			self.mods[button] = self.mods[button].compress()
+		return self
 	
 	
 	def __str__(self):

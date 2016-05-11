@@ -319,22 +319,22 @@ class HatAction(AxisAction):
 class HatUpAction(HatAction):
 	COMMAND = "hatup"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MAX)
+		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
 	
 class HatDownAction(HatAction):
 	COMMAND = "hatdown"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MIN)
+		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
 
 class HatLeftAction(HatAction):
 	COMMAND = "hatleft"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MAX)
+		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
 	
 class HatRightAction(HatAction):
 	COMMAND = "hatright"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MIN)
+		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
 
 
 class MouseAction(HapticEnabledAction):
@@ -789,6 +789,12 @@ class MultiAction(Action):
 			self.actions.append(action)
 	
 	
+	def compress(self):
+		nw = [ x.compress() for x in self.actions ]
+		self.actions = nw
+		return self
+	
+	
 	def set_haptic(self, hapticdata):
 		supports = False
 		for a in self.actions:
@@ -869,6 +875,13 @@ class DPadAction(Action):
 	def describe(self, context):
 		if self.name: return self.name
 		return "DPad"
+	
+	
+	def compress(self):
+		nw = [ x.compress() for x in self.actions ]
+		self.actions = nw
+		return self
+	
 	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
@@ -955,6 +968,12 @@ class XYAction(HapticEnabledAction):
 		self.actions = (self.x, self.y)
 		self._old_distance = 0
 		self._travelled = 0
+	
+	
+	def compress(self):
+		self.x = self.x.compress()
+		self.y = self.y.compress()
+		return self
 	
 	
 	def set_haptic(self, hapticdata):
