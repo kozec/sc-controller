@@ -39,8 +39,10 @@ def get_default_profiles_path():
 	or ./default_profiles if program is being started from
 	extracted source tarball
 	"""
-	if __main__.__file__.endswith(".py"):
+	if __main__.__file__.endswith(".py") or __main__.__file__.startswith("scripts/"):
 		# Started as script with something like './scc.py'
+		# or from root directory of source tree with
+		# something like 'scripts/sc-controller'
 		local = os.path.join(os.path.split(__file__)[0], "../default_profiles")
 		local = os.path.normpath(local)
 		if os.path.exists(local):
@@ -56,8 +58,10 @@ def get_share_path():
 	Usually "/usr/share/scc" or "./" if program is being started from
 	extracted source tarball
 	"""
-	if __main__.__file__.endswith(".py"):
+	if __main__.__file__.endswith(".py") or __main__.__file__.startswith("scripts/"):
 		# Started as script with something like './scc.py'
+		# or from root directory of source tree with
+		# something like 'scripts/sc-controller'
 		local = os.path.join(os.path.split(__file__)[0], "../")
 		local = os.path.normpath(local)
 		if os.path.exists(local):
@@ -75,8 +79,10 @@ def get_daemon_path():
 	Should be /usr/bin/scc-daemon if program is installed or
 	./scc-daemon.py if program is being started from extracted source tarball
 	"""
-	if __main__.__file__.endswith(".py"):
+	if __main__.__file__.endswith(".py") or __main__.__file__.startswith("scripts/"):
 		# Started as script with something like './scc.py'
+		# or from root directory of source tree with
+		# something like 'scripts/sc-controller'
 		local = os.path.join(os.path.split(__file__)[0], "../scc-daemon.py")
 		local = os.path.normpath(local)
 		if os.path.exists(local):
