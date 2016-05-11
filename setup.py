@@ -2,8 +2,6 @@
 from distutils.core import setup, Extension
 import glob
 
-uinput = Extension('libuinput', sources = ['scc/uinput.c'])
-
 data_files = [
 				('share/scc/glade', glob.glob("glade/*.glade")),
 				('share/scc/glade/ae', glob.glob("glade/ae/*.glade")),
@@ -15,12 +13,16 @@ data_files = [
 ]
 
 setup(name='sccontroller',
-      version='1.0',
-      description='Standalone controller maping tool',
-      author='kozec',
-      packages=['scc', 'scc.gui', 'scc.gui.ae', 'scc.lib'],
-	  data_files = data_files,
-      scripts=['scripts/sc-controller', 'scripts/scc-daemon'],
-      license='GPL2',
-      platforms=['Linux'],
-      ext_modules=[uinput,])
+		version='1.0',
+		description='Standalone controller maping tool',
+		author='kozec',
+		packages=['scc', 'scc.gui', 'scc.gui.ae', 'scc.lib'],
+		data_files = data_files,
+		scripts=['scripts/sc-controller', 'scripts/scc-daemon'],
+		license='GPL2',
+		platforms=['Linux'],
+		ext_modules=[
+			Extension('libuinput', sources = ['scc/uinput.c']),
+			Extension('libx11osd', sources = ['scc/osd/x11osd.c']),
+		]
+)

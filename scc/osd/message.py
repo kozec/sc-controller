@@ -7,10 +7,12 @@ Display message that just sits there
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gdk, GLib
+from scc.tools import find_lib
 
-import os, sys, json, logging
+from gi.repository import Gtk, Gdk, GLib, GdkX11
+import os, sys, json, ctypes, logging
 log = logging.getLogger("osd.message")
+
 
 class Message(Gtk.Window):
 	# TODO: Configurable
@@ -40,6 +42,7 @@ class Message(Gtk.Window):
 		self.set_wmclass("sc-osd-message", "sc-osd-message")
 		self.set_decorated(False)
 		self.stick()
+		self.set_keep_above(True)
 		self.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
 		
 		self.l = Gtk.Label()
@@ -49,8 +52,24 @@ class Message(Gtk.Window):
 		self.add(self.l)
 	
 	
+	def make_window_clicktrough(self):
+		lib, search_paths = find_lib("libx11osd", os.path.dirname(__file__))
+		if not lib:
+			raise OSError('Cant find libx11osd. searched at:\n {}'.format(
+				'\n'.join(search_paths)
+			)
+		)
+		lib = ctypes.CDLL(lib)
+		dpy = ctypes.c_void_p(hash(GdkX11.x11_get_default_xdisplay()))		# I have no idea why this works...
+		win = ctypes.c_ulong(self.get_window().get_xid())					# Window -> XID -> unsigned long
+		lib.make_window_clicktrough(dpy, win)
+	
+	
 	def show(self):
 		self.show_all()
+		self.realize()
+		self.make_window_clicktrough()
+	
 	
 	def run(self, argv):
 		self.show()

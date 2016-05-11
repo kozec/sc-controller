@@ -110,3 +110,18 @@ def get_so_extensions():
 	for ext, _, typ in imp.get_suffixes():
 		if typ == imp.C_EXTENSION:
 			yield ext
+
+
+def find_lib(name, base_path):
+	"""
+	Returns (filename, search_paths) if named library is found
+	or (None, search_paths) if not.
+	"""
+	search_paths = []
+	for extension in get_so_extensions():
+		search_paths.append(os.path.abspath(os.path.normpath(os.path.join( base_path, '..', name + extension ))))
+		search_paths.append(os.path.abspath(os.path.normpath(os.path.join( base_path, '../..', name + extension ))))
+	for path in search_paths:
+		if os.path.exists(path):
+			return path, search_paths
+	return None, search_paths
