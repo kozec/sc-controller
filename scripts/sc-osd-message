@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-import os, sys, signal
+import os, sys, signal, argparse
 
 def sigint(*a):
 	print("\n*break*")
@@ -16,18 +16,23 @@ if __name__ == "__main__":
 	from scc.tools import init_logging
 	from scc.paths import get_share_path
 	init_logging()
-
+	
+	parser = argparse.ArgumentParser(description=__doc__)
+	parser.add_argument('text', type=str, help="text to display")
+	parser.add_argument('-t', type=float, metavar="seconds", default=5,
+			help="time before message is hidden (default: 5)")
+	parser.add_argument('-x', type=int, metavar="pixels",  default=20,
+			help="horizontal message position in pixels, from left side of screen." +
+			"Use negative value to specify as distance from right side (default: 20)")
+	parser.add_argument('-y', type=int, metavar="pixels",  default=-20,
+			help="vertical message position in pixels, from top side of screen." +
+			"Use negative value to specify as distance from bottom side (default: -20)")
+	args = parser.parse_args()
+	
 	from gi.repository import Gtk
 	glades = os.path.join(get_share_path(), "glade")
 	images = os.path.join(get_share_path(), "images")
 	Gtk.IconTheme.get_default().append_search_path(images)
 	
 	from scc.osd.message import Message
-	try:
-		text = sys.argv[1]
-	except IndexError:
-		print >>sys.stderr, "Required parameter missing"
-		print >>sys.stderr, "Usage: %s 'text to display'" % (sys.argv[0],)
-		sys.exit(1)
-	
-	Message(text).run(sys.argv[2:])
+	Message(args.text, args.t, args.x, args.y).run(sys.argv[2:])

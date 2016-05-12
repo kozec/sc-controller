@@ -29,7 +29,7 @@ class Message(Gtk.Window):
 		}
 	"""
 	
-	def __init__(self, text):
+	def __init__(self, text, timeout=5, x=20, y=-20):
 		Gtk.Window.__init__(self)
 		css = Gtk.CssProvider()
 		css.load_from_data(str(Message.CSS))
@@ -37,7 +37,9 @@ class Message(Gtk.Window):
 				Gdk.Screen.get_default(), css,
 				Gtk.STYLE_PROVIDER_PRIORITY_USER)
 		
-		
+		self.timeout = timeout
+		self.mainloop = GLib.MainLoop()
+		self.position = (x, y)
 		self.set_name("osd-message")
 		self.set_wmclass("sc-osd-message", "sc-osd-message")
 		self.set_decorated(False)
@@ -67,10 +69,23 @@ class Message(Gtk.Window):
 		self.l.show_all()
 		self.realize()
 		self.get_window().set_override_redirect(True)
+		x, y = self.position
+		if x < 0:	# Negative X position is counted from right border
+			x = Gdk.Screen.width() - self.get_allocated_size()[0].width + x + 1
+		if y < 0:	# Negative Y position is counted from bottom border
+			y = Gdk.Screen.height() - self.get_allocated_size()[0].height + y + 1
+		
+		self.move(x, y)
 		Gtk.Window.show(self)
 		self.make_window_clicktrough()
+		
+		GLib.timeout_add_seconds(self.timeout, self.quit)
 	
 	
 	def run(self, argv):
 		self.show()
-		GLib.MainLoop().run()
+		self.mainloop.run()
+	
+	
+	def quit(self):
+		self.mainloop.quit()
