@@ -140,7 +140,7 @@ class DaemonManager(GObject.GObject):
 	def set_profile(self, filename):
 		""" Asks daemon to change profile """
 		if self.alive and self.connection is not None:
-			self.connection.get_output_stream().write_all(filename.encode("utf-8") + b"\n", None)
+			self.connection.get_output_stream().write_all(b"Profile:" + filename.encode("utf-8") + b"\n", None)
 	
 	
 	def stop(self):

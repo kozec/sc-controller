@@ -1,24 +1,6 @@
 #!/usr/bin/env python2
 """
 SC-Controller - Daemon class
-
-To control running daemon instance, unix socket in user directory is used.
-Controlling "protocol" is dead-simple:
- - When new connection is accepted, daemon sends some info:
-      SCCDaemon
-      Version: 0.1
-      PID: 123456
-      Current profile: filename.json
-      Ready.
- - Everything important is sent in "Key: data<LF>" format.
- - "Ready." is sent only if daemon is working as expected. In case of error,
-   "Error: description" is sent (may be sent repeadedly). When error is
-   cleared, "Ready." is sent again to indicate that emulation works again.
- - Connection is held until client side closes it.
- - Recieved line is treated as filename of profie, that should be loaded istead
-   currently active profile.
- - If profile is loaded, daemon responds with 'OK'.
- - If loading fails, error along with entire backtrace is sent to client side.
 """
 from __future__ import unicode_literals
 from scc.tools import _
@@ -220,18 +202,24 @@ class SCCDaemon(Daemon):
 		while True:
 			line = rfile.readline()
 			if len(line) == 0: break
-			self.lock.acquire()
-			try:
-				filename = line.decode("utf-8").strip("\t\n ")
-				self._set_profile(filename)
-				log.info("Loaded profile '%s'", filename)
-				self.lock.release()
-				wfile.write("OK\n")
-			except Exception, e:
-				log.error(e)
-				self.lock.release()
-				tb = traceback.format_exc()
-				wfile.write(unicode(tb).encode("utf-8"))
+			if len(line.strip("\t\n ")) == 0:
+				# Empty line
+				continue
+			if line.startswith("Profile:"):
+				self.lock.acquire()
+				try:
+					filename = line[8:].decode("utf-8").strip("\t\n ")
+					self._set_profile(filename)
+					log.info("Loaded profile '%s'", filename)
+					self.lock.release()
+					wfile.write(b"OK.\n")
+				except Exception, e:
+					log.error(e)
+					self.lock.release()
+					tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+					wfile.write(b"Fail: " + tb + b"\n")
+			else:
+				wfile.write(b"Fail: Unknown command\n")
 		
 		self.lock.acquire()
 		self.clients.remove(wfile)
