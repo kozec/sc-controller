@@ -42,6 +42,8 @@ class Message(Gtk.Window):
 		self.set_wmclass("sc-osd-message", "sc-osd-message")
 		self.set_decorated(False)
 		self.stick()
+		self.set_skip_taskbar_hint(True)
+		self.set_skip_pager_hint(True)
 		self.set_keep_above(True)
 		self.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
 		
@@ -66,8 +68,10 @@ class Message(Gtk.Window):
 	
 	
 	def show(self):
-		self.show_all()
+		self.l.show_all()
 		self.realize()
+		self.get_window().set_override_redirect(True)
+		Gtk.Window.show(self)
 		self.make_window_clicktrough()
 	
 	
