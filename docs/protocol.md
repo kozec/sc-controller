@@ -19,6 +19,16 @@ Connection is then held until client side closes it.
 #### `Current profile: filename.sccprofile`
 Sent to every client when profile file is loaded and used. Automatically sent when connnection is accepted and when profile is changed.
 
+#### `Event: source values`
+Sent to client that requested locking of source (that is button, pad or axis).
+
+List of possible events:
+- `Event: B 1` - Sent when button is pressed. *B* is button, is one of *SCButtons.\** constants.
+- `Event: B 0` - Sent when button is released. *B* is button one of *SCButtons.\** constants.
+- `Event: STICK x y` - Sent when stick position is changed. *x* and *y* are new values.
+- `Event: LEFT x y` - Sent when finger on left pad is moved. *x* and *y* is new position.
+- `Event: RIGHT x y` - Sent when finger on right pad is moved. *x* and *y* is new position.
+
 #### `Error: description`
 Sent to every client when error is detected. May be sent repeadedly, until error condition is cleared.
 After that, `Ready.` is sent to indicate that emulation works again.
@@ -44,9 +54,21 @@ Identifies daemon version. Automatically sent when connnection is accepted.
 
 # Commands sent from client to daemon
 
+#### `Lock: button1 button2...`
+Locks physical button, axis or pad. Events from locked sources are not processed normally, but sent to client that initiated lock.
+
+Only one client can have one source locked at one time. Second attempt to lock already locked source will fail and `Fail: cannot lock <button>` will be sent as response. Locking is done only if all requested sources are free and in such case, daemon responds with `OK.`
+
+While source is locked, daemon keeps sending `Event: ...` messages every time when button is pressed, released, axis moved, etc...
+
+Unlocking is done automatically when client is disconnected, or using `Unlock.` message.
+
 #### `Profile: filename.sccprofile`
 Asks daemon to load another profile. No escaping or quouting is needed, everything after colon is used as filename, only spaces and tabs are stripped.
 
 If profile is sucessfully loaded, daemon responds with `OK.` to client that initiated loading and sends `Current profile: ...` message to all clients.
 
 If loading fails, daemon responds with `Fail: ....` message where error with entire backtrace is sent. Backtrace is escaped to fit it on single line.
+
+#### `Unlock.`
+Unlocks everything locked with `Lock...` messages sent by same client. This operation cannot fail (and does nothing if there is nothing to unlock), so daemon always responds with `OK.`

@@ -8,12 +8,13 @@ from scc.tools import _
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBErrorAccess, USBErrorBusy, USBErrorPipe
 from scc.paths import get_profiles_path, get_default_profiles_path
+from scc.constants import SCButtons, LEFT, RIGHT, STICK
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
 from scc.tools import set_logging_level
-from scc.constants import SCButtons
 from scc.uinput import Keys, Axes
 from scc.profile import Profile
+from scc.actions import Action
 from scc.mapper import Mapper
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
@@ -66,6 +67,9 @@ class SCCDaemon(Daemon):
 		
 		# This last line kinda depends on GIL...
 		self.mapper.profile = p
+		# Re-apply all locks
+		for c in self.clients:
+			c.reaply_locks(self)
 		# Notify all connected clients about change
 		self._send_to_all(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
 	
@@ -75,9 +79,9 @@ class SCCDaemon(Daemon):
 		Sends message to all connect clients.
 		Message should be utf-8 encoded str.
 		"""
-		for wfile in self.clients:
+		for client in self.clients:
 			try:
-				wfile.write(message_str)
+				client.wfile.write(message_str)
 			except: pass
 	
 	
@@ -129,7 +133,7 @@ class SCCDaemon(Daemon):
 	
 	def sigterm(self, *a):
 		log.debug("SIGTERM")
-		self.remove_socket()
+		self._remove_socket()
 		sys.exit(0)
 	
 	
@@ -189,7 +193,8 @@ class SCCDaemon(Daemon):
 	
 	def _sshandler(self, rfile, wfile):
 		self.lock.acquire()
-		self.clients.add(wfile)
+		client = Client(rfile, wfile)
+		self.clients.add(client)
 		wfile.write(b"SCCDaemon\n")
 		wfile.write(("Version: %s\n" % (SCCDaemon.VERSION,)).encode("utf-8"))
 		wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
@@ -198,31 +203,16 @@ class SCCDaemon(Daemon):
 			wfile.write(b"Ready.\n")
 		else:
 			wfile.write(("Error: %s\n" % (self.error,)).encode("utf-8"))
+		
 		self.lock.release()
 		while True:
 			line = rfile.readline()
 			if len(line) == 0: break
-			if len(line.strip("\t\n ")) == 0:
-				# Empty line
-				continue
-			if line.startswith("Profile:"):
-				self.lock.acquire()
-				try:
-					filename = line[8:].decode("utf-8").strip("\t\n ")
-					self._set_profile(filename)
-					log.info("Loaded profile '%s'", filename)
-					self.lock.release()
-					wfile.write(b"OK.\n")
-				except Exception, e:
-					log.error(e)
-					self.lock.release()
-					tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
-					wfile.write(b"Fail: " + tb + b"\n")
-			else:
-				wfile.write(b"Fail: Unknown command\n")
-		
+			if len(line.strip("\t\n ")) > 0:
+				self._handle_message(client, line.strip("\n"))
 		self.lock.acquire()
-		self.clients.remove(wfile)
+		client.unlock_actions(self)
+		self.clients.remove(client)
 		self.lock.release()
 	
 	
@@ -276,7 +266,127 @@ class SCCDaemon(Daemon):
 						s.close()
 	
 	
-	def remove_socket(self):
+	def _handle_message(self, client, message):
+		"""
+		Handles message recieved from client.
+		"""
+		if message.startswith("Profile:"):
+			self.lock.acquire()
+			try:
+				filename = message[8:].decode("utf-8").strip("\t ")
+				self._set_profile(filename)
+				log.info("Loaded profile '%s'", filename)
+				self.lock.release()
+				client.wfile.write(b"OK.\n")
+			except Exception, e:
+				log.error(e)
+				self.lock.release()
+				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+				client.wfile.write(b"Fail: " + tb + b"\n")
+		elif message.startswith("Lock:"):
+			to_lock = [ x for x in message[5:].strip(" \t\r").split(" ") ]
+			self.lock.acquire()
+			try:
+				for l in to_lock:
+					if not self._can_lock_action(SCCDaemon.source_to_constant(l)):
+						client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
+						self.lock.release()
+						return
+			except ValueError, e:
+				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+				client.wfile.write(b"Fail: " + tb + b"\n")
+				self.lock.release()
+				return
+			for l in to_lock:
+				self._lock_action(SCCDaemon.source_to_constant(l), client)
+			self.lock.release()
+			client.wfile.write(b"OK.\n")
+		elif message.startswith("Unlock."):
+			self.lock.acquire()
+			client.unlock_actions(self)
+			self.lock.release()
+			client.wfile.write(b"OK.\n")
+		else:
+			client.wfile.write(b"Fail: Unknown command\n")
+	
+	
+	def _can_lock_action(self, what):
+		"""
+		Returns True if action assigned to axis,
+		pad or button is not yet locked.
+		
+		Should be called while self.lock is acquired.
+		"""
+		if what in SCButtons:
+			return not isinstance(self.mapper.profile.buttons[what], LockedAction)
+		if what in (LEFT, RIGHT):
+			return not isinstance(self.mapper.profile.pads[what], LockedAction)
+		return False
+	
+	
+	def _lock_action(self, what, client):
+		"""
+		Locks action so event can be send to client instead of handling it.
+		
+		Should be called while self.lock is acquired.
+		"""
+		if what in SCButtons:
+			a = self.mapper.profile.buttons[what].compress()
+			self.mapper.profile.buttons[what] = LockedAction(what, client, a)
+			return
+		if what in (LEFT, RIGHT):
+			a = self.mapper.profile.pads[what].compress()
+			self.mapper.profile.pads[what] = LockedAction(what, client, a)
+			return
+		# TODO: Triggers
+			
+		# Shouldn't really reach here
+		log.warning("Failed to lock action: Don't know what is %s", what)
+	
+	
+	def _unlock_action(self, what):
+		"""
+		Unlocks action so event can be handled normally.
+		
+		Should be called while self.lock is acquired.
+		"""
+		if what in SCButtons:
+			a = self.mapper.profile.buttons[what].original_action
+			self.mapper.profile.buttons[what] = a
+			return
+		if what in (LEFT, RIGHT):
+			a = self.mapper.profile.pads[what].original_action
+			self.mapper.profile.pads[what] = a
+			return
+		# TODO: Triggers
+			
+		# Shouldn't really reach here
+		log.warning("Failed to unlock action: Don't know what is %s", what)
+	
+	
+	@staticmethod
+	def source_to_constant(s):
+		"""
+		Turns string as 'A', 'LEFT' or 'ABS_X' into one of SCButtons.*,
+		LEFT, RIGHT or STICK constants.
+		
+		Raises ValueError if passed string cannot be converted.
+		
+		Used when parsing `Lock: ...` message
+		"""
+		s = s.strip(" \t\r\n")
+		if hasattr(SCButtons, s):
+			return getattr(SCButtons, s)
+		if s == "LEFT":
+			return LEFT
+		elif s == "RIGHT":
+			return RIGHT
+		elif s == "STICK":
+			return STICK
+		raise ValueError("Unknown source: %s" % (s,))
+	
+	
+	def _remove_socket(self):
 		self.sserver.shutdown()
 		if os.path.exists(self.socket_file):
 			os.unlink(self.socket_file)
@@ -291,5 +401,48 @@ class SCCDaemon(Daemon):
 			self.run()
 		except KeyboardInterrupt:
 			log.debug("Break")
-		self.remove_socket()
+		self._remove_socket()
 		sys.exit(0)
+
+
+class Client(object):
+	def __init__(self, rfile, wfile):
+		self.rfile = rfile
+		self.wfile = wfile
+		self.locked_actions = set()
+	
+	
+	def unlock_actions(self, daemon):
+		""" Should be called while daemon.lock is acquired """
+		s, self.locked_actions = self.locked_actions, set()
+		for a in s:
+			daemon._unlock_action(a.what)
+	
+	
+	def reaply_locks(self, daemon):
+		"""
+		Called after profile is changed.
+		Should be called while daemon.lock is acquired
+		"""
+		s, self.locked_actions = self.locked_actions, set()
+		for a in s:
+			daemon._lock_action(a.what, self)
+
+
+
+class LockedAction(Action):
+	def __init__(self, what, client, original_action):
+		self.what = what
+		self.client = client
+		self.original_action = original_action
+		self.client.locked_actions.add(self)
+	
+	
+	def button_press(self, mapper):
+		self.client.wfile.write(("Event: %s 1\n" % (self.what.name,)).encode("utf-8"))
+	
+	def button_release(self, mapper):
+		self.client.wfile.write(("Event: %s 0\n" % (self.what.name,)).encode("utf-8"))
+	
+	def whole(self, mapper, x, y, what):
+		self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))
