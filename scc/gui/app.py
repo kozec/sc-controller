@@ -44,7 +44,7 @@ class App(Gtk.Application, ProfileManager):
 						imagepath="/usr/share/scc/images"):
 		Gtk.Application.__init__(self,
 				application_id="me.kozec.scc",
-				flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+				flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.NON_UNIQUE )
 		ProfileManager.__init__(self)
 		# Setup Gtk.Application
 		self.setup_commandline()
