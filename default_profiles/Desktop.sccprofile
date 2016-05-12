@@ -12,20 +12,21 @@
 		"Y"     : { "action": "button(Keys.KEY_TAB)" }
 	},
 	
-	"triggers": {
-		"LEFT"  : { "action": "button(Keys.BTN_RIGHT)" }, 
-		"RIGHT" : { "action": "button(Keys.BTN_LEFT)" }
-	},
+	"trigger_left":  { "action": "button(Keys.BTN_RIGHT)" }, 
+	"trigger_right": { "action": "button(Keys.BTN_LEFT)" },
 	
-	"stick": {
-		"action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))"
-	}, 
+	"gyro": {}, 
 	
-	"left_pad": {
+	"pad_left": {
 		"X": { "action": "mouse(Rels.REL_HWHEEL, 1.0)" }, 
-		"Y": { "action": "mouse(Rels.REL_WHEEL, 1.0)" }
+		"Y": { "action": "mouse(Rels.REL_WHEEL, 1.0)" },
+		"feedback": ["LEFT", 1052.0]
 	},
-	"right_pad": {
-		"action": "trackball(1.0)"
-	}
+	
+	"pad_right": {
+		"action": "trackball(1.0)",
+		"feedback": ["RIGHT", 256]
+	},
+	
+	"stick": { "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))" }
 }

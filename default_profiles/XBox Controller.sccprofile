@@ -15,22 +15,23 @@
 		"RGRIP"  : { "action" : "button(Keys.BTN_X)" }
 	},
 	
-	"triggers" : {
-		"LEFT"  : { "action" : "axis(Axes.ABS_Z)" },
-		"RIGHT" : { "action" : "axis(Axes.ABS_RZ)" }
-	},
+	"trigger_left":  { "action": "axis(Axes.ABS_Z)" },
+	"trigger_right": { "action": "axis(Axes.ABS_RZ)" }
+	,
+	"gyro": {}, 
 	
 	"stick" : {
 		"X"	: { "action" : "axis(Axes.ABS_X)" },
 		"Y"	: { "action" : "raxis(Axes.ABS_Y)" }
 	},
 	
-	"left_pad" : {
+	"pad_left" : {
 		"action" : "dpad(hatup(Axes.ABS_HAT0Y), hatdown(Axes.ABS_HAT0Y), hatleft(Axes.ABS_HAT0X), hatright(Axes.ABS_HAT0X) )"
 	},
 	
-	"right_pad" : {
+	"pad_right" : {
 		"X"	: { "action" : "axis(Axes.ABS_RX)" },
-		"Y"	: { "action" : "raxis(Axes.ABS_RY)" }
+		"Y"	: { "action" : "raxis(Axes.ABS_RY)" },
+		"feedback": ["RIGHT", 256]
 	}
 }
