@@ -665,7 +665,7 @@
                             <property name="active">0</property>
                             <signal name="changed" handler="update_modifiers" swapped="no"/>
                             <child>
-                              <object class="GtkCellRendererText"/>
+                              <object class="GtkCellRendererText" id="nowthishastohaveidtoo"/>
                               <attributes>
                                 <attribute name="text">0</attribute>
                               </attributes>
