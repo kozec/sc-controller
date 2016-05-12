@@ -23,6 +23,5 @@ setup(name='sccontroller',
 		platforms=['Linux'],
 		ext_modules=[
 			Extension('libuinput', sources = ['scc/uinput.c']),
-			Extension('libx11osd', sources = ['scc/osd/x11osd.c']),
 		]
 )

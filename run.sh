@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ ! -e libuinput.so ] || [ ! -e libx11osd.so ] ; then
-	echo "Required library is missing, building it."
+if [ ! -e libuinput.so ] ; then
+	echo "libuinput.so is missing, building one"
 	echo "Please wait, this should be done only once."
 	echo ""
 	
@@ -14,10 +14,6 @@ if [ ! -e libuinput.so ] || [ ! -e libx11osd.so ] ; then
 	if [ ! -e libuinput.so ] ; then
 		ln -s build/$LIB/libuinput.so libuinput.so || exit 1
 		echo Symlinked libuinput.so '->' build/$LIB/libuinput.so
-	fi
-	if [ ! -e libx11osd.so ] ; then
-		ln -s build/$LIB/libx11osd.so libx11osd.so || exit 1
-		echo Symlinked libx11osd.so '->' build/$LIB/libx11osd.so
 	fi
 	echo ""
 fi

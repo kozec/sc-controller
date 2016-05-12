@@ -7,10 +7,10 @@ Display message that just sits there
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from scc.tools import find_lib
-
 from gi.repository import Gtk, Gdk, GLib, GdkX11
-import os, sys, json, ctypes, logging
+from scc.lib import xfixes
+
+import os, sys, json, logging
 log = logging.getLogger("osd.message")
 
 
@@ -55,16 +55,12 @@ class Message(Gtk.Window):
 	
 	
 	def make_window_clicktrough(self):
-		lib, search_paths = find_lib("libx11osd", os.path.dirname(__file__))
-		if not lib:
-			raise OSError('Cant find libx11osd. searched at:\n {}'.format(
-				'\n'.join(search_paths)
-			)
-		)
-		lib = ctypes.CDLL(lib)
-		dpy = ctypes.c_void_p(hash(GdkX11.x11_get_default_xdisplay()))		# I have no idea why this works...
-		win = ctypes.c_ulong(self.get_window().get_xid())					# Window -> XID -> unsigned long
-		lib.make_window_clicktrough(dpy, win)
+		dpy = xfixes.Display(hash(GdkX11.x11_get_default_xdisplay()))		# I have no idea why this works...
+		win = xfixes.XID(self.get_window().get_xid())
+		reg = xfixes.create_region(dpy, None, 0)
+		xfixes.set_window_shape_region (dpy, win, xfixes.SHAPE_BOUNDING, 0, 0, 0)
+		xfixes.set_window_shape_region (dpy, win, xfixes.SHAPE_INPUT, 0, 0, reg)
+		xfixes.destroy_region (dpy, reg)
 	
 	
 	def show(self):
