@@ -17,17 +17,38 @@ log = logging.getLogger("osd")
 class OSDWindow(Gtk.Window):
 	# TODO: Configurable css
 	CSS = """
-		#osd-message {
+		#osd-message, #osd-menu {
 			background-color: black;
 			border: 6px lime double;
 		}
 		
 		#osd-label {
 			color: lime;
-			border: 0px black none;
-			margin: 15px 15px 15px 15px;
+			border: none;
 			font-size: xx-large;
+			margin: 15px 15px 15px 15px;
 		}
+		
+		#osd-menu {
+			padding: 7px 7px 7px 7px;
+		}
+		
+		#osd-menu-item, #osd-menu-item-selected {
+			color: #00E000;
+			border-radius: 0;
+			font-size: x-large;
+			background-image: none;
+			background-color: black;
+			margin: 0px 0px 2px 0px;
+			border: 1px #004000 solid;
+		}
+		
+		#osd-menu-item-selected {
+			color: #00FF00;
+			background-color: #000070;
+			border: 1px #00FF00 solid;
+		}
+		
 	"""
 	
 	def __init__(self, wmclass, x=20, y=-20):
