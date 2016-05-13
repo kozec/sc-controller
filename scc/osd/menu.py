@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, GLib
+from scc.paths import get_share_path
 from scc.osd import OSDWindow
 
 import os, sys, logging
@@ -28,7 +29,14 @@ class Menu(OSDWindow):
 			b.set_relief(Gtk.ReliefStyle.NONE)
 			self.items.append(( id, b ))
 		
-		self.add(self.v)
+		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
+		self.i = Gtk.Image.new_from_file(cursor)
+		self.i.set_name("osd-menu-cursor")
+		
+		self.f = Gtk.Fixed()
+		self.f.add(self.v)
+		self.f.add(self.i)
+		self.add(self.f)
 		self._selected = None
 		self.select(0)
 	

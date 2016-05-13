@@ -49,6 +49,9 @@ class OSDWindow(Gtk.Window):
 			border: 1px #00FF00 solid;
 		}
 		
+		#osd-menu-cursor {
+		}
+		
 	"""
 	
 	def __init__(self, wmclass, x=20, y=-20):
