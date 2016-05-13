@@ -26,6 +26,7 @@ class OSDWindow(Gtk.Window):
 			color: lime;
 			border: 0px black none;
 			margin: 15px 15px 15px 15px;
+			font-size: xx-large;
 		}
 	"""
 	

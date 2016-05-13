@@ -15,7 +15,6 @@ log = logging.getLogger("osd.message")
 
 
 class Message(OSDWindow):
-	
 	def __init__(self, text, timeout=5, x=20, y=-20):
 		OSDWindow.__init__(self, "osd-message", x=x, y=y)
 		
@@ -23,7 +22,7 @@ class Message(OSDWindow):
 		
 		self.l = Gtk.Label()
 		self.l.set_name("osd-label")
-		self.l.set_markup("<span font_size='xx-large'>%s</span>" % (text,))
+		self.l.set_label(text)
 		
 		self.add(self.l)
 	
