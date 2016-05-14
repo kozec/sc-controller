@@ -10,7 +10,7 @@ from scc.tools import _, set_logging_level
 from gi.repository import Gtk, Gdk, GLib, GdkX11
 from scc.lib import xfixes
 
-import os, sys, logging
+import os, sys, argparse, logging
 log = logging.getLogger("osd")
 
 
@@ -53,13 +53,19 @@ class OSDWindow(Gtk.Window):
 		}
 		
 	"""
+	EPILOG = ""
 	
-	def __init__(self, wmclass, x=20, y=-20):
+	def __init__(self, wmclass):
 		Gtk.Window.__init__(self)
 		self._apply_css()
 		
+		self.argparser = argparse.ArgumentParser(description=__doc__,
+			formatter_class=argparse.RawDescriptionHelpFormatter,
+			epilog=self.EPILOG)
+		self._add_arguments()
+		self.exit_code = -1
 		self.mainloop = GLib.MainLoop()
-		self.position = (x, y)
+		self.position = (20, -20)
 		self.set_name(wmclass)
 		self.set_wmclass(wmclass, wmclass)
 		self.set_decorated(False)
@@ -78,6 +84,26 @@ class OSDWindow(Gtk.Window):
 				Gdk.Screen.get_default(), css,
 				Gtk.STYLE_PROVIDER_PRIORITY_USER)
 	
+	
+	def _add_arguments(self):
+		""" Should be overriden AND called by child class """
+		self.argparser.add_argument('-x', type=int, metavar="pixels", default=20,
+			help="""horizontal position in pixels, from left side of screen.
+			Use negative value to specify as distance from right side (default: 20)""")
+		self.argparser.add_argument('-y', type=int, metavar="pixels", default=-20,
+			help="""vertical position in pixels, from top side of screen.
+			Use negative value to specify as distance from bottom side (default: -20)""")
+	
+	
+	def parse_argumets(self, argv):
+		""" Returns True on success """
+		try:
+			self.args = self.argparser.parse_args(argv[1:])
+		except BaseException, e:	# Includes SystemExit
+			return False
+		del self.argparser
+		self.position = (self.args.x, self.args.y)
+		return True
 	
 	def make_window_clicktrough(self):
 		dpy = xfixes.Display(hash(GdkX11.x11_get_default_xdisplay()))		# I have no idea why this works...
@@ -103,10 +129,15 @@ class OSDWindow(Gtk.Window):
 		self.make_window_clicktrough()
 	
 	
-	def run(self, argv):
+	def get_exit_code(self):
+		return self.exit_code
+	
+	
+	def run(self):
 		self.show()
 		self.mainloop.run()
 	
 	
-	def quit(self):
+	def quit(self, code=-1):
+		self.exit_code = code
 		self.mainloop.quit()

@@ -1,9 +1,9 @@
 #!/usr/bin/env python2
-import os, sys, signal, argparse
+import os, sys, signal
 
 def sigint(*a):
 	print("\n*break*")
-	sys.exit(0)
+	sys.exit(-1)
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint)
@@ -17,41 +17,9 @@ if __name__ == "__main__":
 	from scc.paths import get_share_path
 	init_logging()
 	
-	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--confirm-with', type=str, metavar="button", default='A',
-			help="button used to confirm choice (default: A)")
-	parser.add_argument('--cancel-with', type=str, metavar="button", default='B',
-			help="button used to cancel menu (default: B)")
-	parser.add_argument('--confirm-with-release', action='store_true',
-			help="confirm choice with button release instead of button press")
-	parser.add_argument('--cancel-with-release', action='store_true',
-			help="cancel menu with button release instead of button press")
-	parser.add_argument('-x', type=int, metavar="pixels",  default=20,
-			help="horizontal menu position in pixels, from left side of screen." +
-			"Use negative value to specify as distance from right side (default: 20)")
-	parser.add_argument('-y', type=int, metavar="pixels",  default=-20,
-			help="vertical menu position in pixels, from top side of screen." +
-			"Use negative value to specify as distance from bottom side (default: -20)")
-
-	parser.add_argument('items', type=str, nargs='+', metavar='id title', help="Menu items")
-
-	args = parser.parse_args()
-	if len(args.items) % 2 != 0:
-		print '%s: error: invalid number of arguments' % (sys.argv[0])
-		sys.exit(1)	
-	
-	from gi.repository import Gtk
-	glades = os.path.join(get_share_path(), "glade")
-	images = os.path.join(get_share_path(), "images")
-	Gtk.IconTheme.get_default().append_search_path(images)
-	
-	# Parse item list to (id, title) tuples
-	menuitems = [
-		(args.items[i * 2], args.items[(i * 2) + 1])
-		for i in xrange(0, len(args.items) / 2)
-	]
-	
 	from scc.osd.menu import Menu
-	Menu(menuitems, args.x, args.y).run(sys.argv[2:])
-	
-	
+	m = Menu()
+	if not m.parse_argumets(sys.argv):
+		sys.exit(1)
+	m.run()
+	sys.exit(m.get_exit_code())
