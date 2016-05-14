@@ -206,7 +206,11 @@ class SCCDaemon(Daemon):
 		
 		self.lock.release()
 		while True:
-			line = rfile.readline()
+			try:
+				line = rfile.readline()
+			except Exception:
+				# Connection terminated
+				break
 			if len(line) == 0: break
 			if len(line.strip("\t\n ")) > 0:
 				self._handle_message(client, line.strip("\n"))

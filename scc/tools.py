@@ -90,6 +90,11 @@ def quat2euler(q0, q1, q2, q3):
 	return pitch, yaw, roll
 
 
+def point_in_gtkrect(rect, x, y):
+	return (x > rect.x and y > rect.y and
+		x < rect.x + rect.width and y < rect.y + rect.height)
+
+
 def anglediff(a1, a2):
 	return (a2 - a1 + PI) % (2.0*PI) - PI
 

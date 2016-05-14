@@ -13,6 +13,7 @@ from scc.paths import get_share_path
 from scc.osd import OSDWindow
 from scc.osd.timermanager import TimerManager
 from scc.gui.daemon_manager import DaemonManager
+from scc.tools import point_in_gtkrect
 
 import os, sys, logging
 log = logging.getLogger("osd.menu")
@@ -38,16 +39,16 @@ class Menu(OSDWindow, TimerManager):
 		self.items = [( 0, Gtk.Button.new_with_label("None") )]
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
-		self.i = Gtk.Image.new_from_file(cursor)
-		self.i.set_name("osd-menu-cursor")
+		self.cursor = Gtk.Image.new_from_file(cursor)
+		self.cursor.set_name("osd-menu-cursor")
 		
 		self.f = Gtk.Fixed()
 		self.f.add(self.v)
-		# self.f.add(self.i)
 		self.add(self.f)
 		
 		self._direction = 0		# Movement direction
 		self._selected = None
+		self._use_cursor = False
 		self._control_with = STICK
 		self._confirm_with = 'A'
 		self._cancel_with = 'B'
@@ -68,6 +69,8 @@ class Menu(OSDWindow, TimerManager):
 			help="confirm choice with button release instead of button press")
 		self.argparser.add_argument('--cancel-with-release', action='store_true',
 			help="cancel menu with button release instead of button press")
+		self.argparser.add_argument('--use-cursor', '-u', action='store_true',
+			help="display and use cursor")
 		self.argparser.add_argument('items', type=str, nargs='+', metavar='id title',
 			help="Menu items")
 	
@@ -83,6 +86,11 @@ class Menu(OSDWindow, TimerManager):
 		self._control_with = self.args.control_with
 		self._confirm_with = self.args.confirm_with
 		self._cancel_with = self.args.cancel_with
+		
+		if self.args.use_cursor:
+			self.f.add(self.cursor)
+			self.f.show_all()
+			self._use_cursor = True
 		
 		# Parse item list to (id, title) tuples
 		menuitems = [
@@ -149,15 +157,25 @@ class Menu(OSDWindow, TimerManager):
 	def on_event(self, daemon, what, data):
 		if what == self._control_with:
 			x, y = data
-			if y < STICK_PAD_MIN / 3 and self._direction != 1:
-				self._direction = 1
-				self.on_move()
-			if y > STICK_PAD_MAX / 3 and self._direction != -1:
-				self._direction = -1
-				self.on_move()
-			if y < STICK_PAD_MAX / 3 and y > STICK_PAD_MIN / 3 and self._direction != 0:
-				self._direction = 0
-				self.cancel_timer("move")
+			if self._use_cursor:
+				max_w = self.get_allocation().width - (self.cursor.get_allocation().width * 0.8)
+				max_h = self.get_allocation().height - (self.cursor.get_allocation().height * 1.0)
+				x = ((x / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w
+				y = (0.5 - (y / (STICK_PAD_MAX * 2.0))) * max_h
+				self.f.move(self.cursor, int(x), int(y))
+				for i in self.items:
+					if point_in_gtkrect(i[1].get_allocation(), x, y):
+						self.select(self.items.index(i))
+			else:
+				if y < STICK_PAD_MIN / 3 and self._direction != 1:
+					self._direction = 1
+					self.on_move()
+				if y > STICK_PAD_MAX / 3 and self._direction != -1:
+					self._direction = -1
+					self.on_move()
+				if y < STICK_PAD_MAX / 3 and y > STICK_PAD_MIN / 3 and self._direction != 0:
+					self._direction = 0
+					self.cancel_timer("move")
 		elif what == self._cancel_with:
 			if data[0] == 0:	# Button released
 				self.quit(-1)
