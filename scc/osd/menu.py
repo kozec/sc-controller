@@ -9,11 +9,12 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, GLib
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
-from scc.paths import get_share_path
-from scc.osd import OSDWindow
-from scc.osd.timermanager import TimerManager
-from scc.gui.daemon_manager import DaemonManager
 from scc.tools import point_in_gtkrect
+from scc.paths import get_share_path
+from scc.gui.daemon_manager import DaemonManager
+from scc.osd.timermanager import TimerManager
+from scc.osd.menu_data import MenuData
+from scc.osd import OSDWindow
 
 import os, sys, logging
 log = logging.getLogger("osd.menu")
@@ -36,7 +37,6 @@ class Menu(OSDWindow, TimerManager):
 		
 		self.v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		self.v.set_name("osd-menu")
-		self.items = [( 0, Gtk.Button.new_with_label("None") )]
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
 		self.cursor = Gtk.Image.new_from_file(cursor)
@@ -71,6 +71,9 @@ class Menu(OSDWindow, TimerManager):
 			help="cancel menu with button release instead of button press")
 		self.argparser.add_argument('--use-cursor', '-u', action='store_true',
 			help="display and use cursor")
+		self.argparser.add_argument('--from-profile', '-p', type=str,
+			metavar="profile_file menu_name",
+			help="load menu items from profile file")
 		self.argparser.add_argument('items', type=str, nargs='+', metavar='id title',
 			help="Menu items")
 	
@@ -78,9 +81,21 @@ class Menu(OSDWindow, TimerManager):
 	def parse_argumets(self, argv):
 		if not OSDWindow.parse_argumets(self, argv):
 			return False
-		if len(self.args.items) % 2 != 0:
-			print >>sys.stderr, '%s: error: invalid number of arguments' % (sys.argv[0])
-			return False
+		if self.args.from_profile:
+			try:
+				self.items = MenuData.from_profile(self.args.from_profile, self.args.items[0])
+			except IOError:
+				print >>sys.stderr, '%s: error: profile file not found' % (sys.argv[0])
+				return False
+			except ValueError:
+				print >>sys.stderr, '%s: error: menu not found' % (sys.argv[0])
+				return False
+		else:
+			try:
+				self.items = MenuData.from_args(self.args.items)
+			except ValueError:
+				print >>sys.stderr, '%s: error: invalid number of arguments' % (sys.argv[0])
+				return False
 		
 		# Parse simpler arguments
 		self._control_with = self.args.control_with
@@ -92,28 +107,20 @@ class Menu(OSDWindow, TimerManager):
 			self.f.show_all()
 			self._use_cursor = True
 		
-		# Parse item list to (id, title) tuples
-		menuitems = [
-			(self.args.items[i * 2], self.args.items[(i * 2) + 1])
-			for i in xrange(0, len(self.args.items) / 2)
-		]
-		self.items = []
-		
 		# Create buttons that are displayed on screen
-		for id, label in menuitems:
-			b = Gtk.Button.new_with_label(label)
-			self.v.pack_start(b, True, True, 0)
-			b.set_name("osd-menu-item")
-			b.set_relief(Gtk.ReliefStyle.NONE)
-			self.items.append(( id, b ))
+		for item in self.items:
+			item.widget = Gtk.Button.new_with_label(item.label)
+			self.v.pack_start(item.widget, True, True, 0)
+			item.widget.set_name("osd-menu-item")
+			item.widget.set_relief(Gtk.ReliefStyle.NONE)
 		return True
 	
 	
 	def select(self, index):
 		if self._selected:
-			self._selected[1].set_name("osd-menu-item")
+			self._selected.widget.set_name("osd-menu-item")
 		self._selected = self.items[index]
-		self._selected[1].set_name("osd-menu-item-selected")
+		self._selected.widget.set_name("osd-menu-item-selected")
 	
 	
 	def run(self):
@@ -164,7 +171,7 @@ class Menu(OSDWindow, TimerManager):
 				y = (0.5 - (y / (STICK_PAD_MAX * 2.0))) * max_h
 				self.f.move(self.cursor, int(x), int(y))
 				for i in self.items:
-					if point_in_gtkrect(i[1].get_allocation(), x, y):
+					if point_in_gtkrect(i.widget.get_allocation(), x, y):
 						self.select(self.items.index(i))
 			else:
 				if y < STICK_PAD_MIN / 3 and self._direction != 1:
@@ -181,7 +188,7 @@ class Menu(OSDWindow, TimerManager):
 				self.quit(-1)
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
-				print self._selected[0]
+				print self._selected.id
 				self.quit(0)
 		else:
 			print ">>>", what
