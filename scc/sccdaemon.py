@@ -317,6 +317,12 @@ class SCCDaemon(Daemon):
 		
 		Should be called while self.lock is acquired.
 		"""
+		if what == STICK:
+			if isinstance(self.mapper.profile.buttons[SCButtons.STICK], LockedAction):
+				return False
+			if isinstance(self.mapper.profile.stick, LockedAction):
+				return False
+			return True
 		if what in SCButtons:
 			return not isinstance(self.mapper.profile.buttons[what], LockedAction)
 		if what in (LEFT, RIGHT):
@@ -330,6 +336,10 @@ class SCCDaemon(Daemon):
 		
 		Should be called while self.lock is acquired.
 		"""
+		if what == STICK:
+			a = self.mapper.profile.stick.compress()
+			self.mapper.profile.stick = LockedAction(what, client, a)
+			return
 		if what in SCButtons:
 			a = self.mapper.profile.buttons[what].compress()
 			self.mapper.profile.buttons[what] = LockedAction(what, client, a)
@@ -350,6 +360,10 @@ class SCCDaemon(Daemon):
 		
 		Should be called while self.lock is acquired.
 		"""
+		if what == STICK:
+			a = self.mapper.profile.stick.original_action
+			self.mapper.profile.stick = a
+			return
 		if what in SCButtons:
 			a = self.mapper.profile.buttons[what].original_action
 			self.mapper.profile.buttons[what] = a
@@ -375,14 +389,10 @@ class SCCDaemon(Daemon):
 		Used when parsing `Lock: ...` message
 		"""
 		s = s.strip(" \t\r\n")
+		if s in (STICK, LEFT, RIGHT):
+			return s
 		if hasattr(SCButtons, s):
 			return getattr(SCButtons, s)
-		if s == "LEFT":
-			return LEFT
-		elif s == "RIGHT":
-			return RIGHT
-		elif s == "STICK":
-			return STICK
 		raise ValueError("Unknown source: %s" % (s,))
 	
 	
@@ -417,6 +427,7 @@ class Client(object):
 		s, self.locked_actions = self.locked_actions, set()
 		for a in s:
 			daemon._unlock_action(a.what)
+			log.debug("%s unlocked", a.what)
 	
 	
 	def reaply_locks(self, daemon):
@@ -436,6 +447,7 @@ class LockedAction(Action):
 		self.client = client
 		self.original_action = original_action
 		self.client.locked_actions.add(self)
+		log.debug("%s locked by %s", what, client)
 	
 	
 	def button_press(self, mapper):

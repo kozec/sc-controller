@@ -26,6 +26,10 @@ class DaemonManager(GObject.GObject):
 		dead ()
 			Emited after daemon is killed (or exits for some other reason)
 		
+		event (pad_stick_or_button, values)
+			Emited when pad, stick or button is locked using lock() method
+			and position or pressed state of that button is changed
+		
 		profile-changed (profile)
 			Emited after profile is changed. Profile is filename of currently
 			active profile
@@ -39,6 +43,7 @@ class DaemonManager(GObject.GObject):
 			b"alive"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"dead"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"error"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
 			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
@@ -51,6 +56,7 @@ class DaemonManager(GObject.GObject):
 		self.connecting = False
 		self.buffer = ""
 		self._connect()
+		self._requests = []
 	
 	
 	def _connect(self):
@@ -118,6 +124,19 @@ class DaemonManager(GObject.GObject):
 				log.debug("Daemon is ready.")
 				self.alive = True
 				self.emit('alive')
+			elif line.startswith("Ok."):
+				if len(self._requests) > 0:
+					success_cb, error_cb = self._requests[-1]
+					self._requests = self._requests[0:-1]
+					success_cb()
+			elif line.startswith("Fail:"):
+				if len(self._requests) > 0:
+					success_cb, error_cb = self._requests[-1]
+					self._requests = self._requests[0:-1]
+					error_cb(line[5:].strip())
+			elif line.startswith("Event:"):
+				data = line[6:].strip().split(" ")
+				self.emit('event', data[0], [ int(x) for x in data[1:] ])
 			elif line.startswith("Error:"):
 				error = line.split(":", 1)[-1].strip()
 				self.alive = True
@@ -137,10 +156,24 @@ class DaemonManager(GObject.GObject):
 		return self.alive
 	
 	
+	def _request(self, message, success_cb, error_cb):
+		"""
+		Creates request and remembers callback for next 'Ok' or 'Fail' message.
+		"""
+		if self.alive and self.connection is not None:
+			self._requests.append(( success_cb, error_cb ))
+			(self.connection.get_output_stream()
+				.write_all(message.encode('utf-8') + b'\n', None))
+		else:
+			# Instant failure
+			error_cb("Not connected.")
+	
 	def set_profile(self, filename):
 		""" Asks daemon to change profile """
-		if self.alive and self.connection is not None:
-			self.connection.get_output_stream().write_all(b"Profile:" + filename.encode("utf-8") + b"\n", None)
+		def nocallback(*a):
+			# This one doesn't need error checking
+			pass
+		self._request("Profile: %s" % (filename,), nocallback, nocallback)
 	
 	
 	def stop(self):
@@ -165,3 +198,16 @@ class DaemonManager(GObject.GObject):
 		Restarts the daemon and forces connection to be created immediately.
 		"""
 		self.start(mode="restart")
+	
+	
+	def lock(self, success_cb, error_cb, *what_to_lock):
+		"""
+		Locks physical button, axis or pad. Events from locked sources are
+		sent to this client and processed using 'event' singal, until
+		unlock_all() is called.
+		
+		Calls success_cb() on success or error_cb(error) on failure.
+		"""
+		what = " ".join(what_to_lock)
+		self._request("Lock: %s" % (what,), success_cb, error_cb)
+
