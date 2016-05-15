@@ -87,7 +87,7 @@ class SCCDaemon(Daemon):
 			except: pass
 	
 	
-	def on_sa_turnoff_(self, mapper, action):
+	def on_sa_turnoff(self, mapper, action):
 		""" Called when 'turnoff' action is used """
 		if mapper.get_controller():
 			mapper.get_controller().turnoff()
