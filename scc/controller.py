@@ -43,6 +43,7 @@ class SCController(object):
 		self._cb = callback
 		self._cscallback = None		# Controller State Callback
 		self._cmsg = []
+		self._claimed = []
 		self._ctx = usb1.USBContext()
 		self._controller_connected = False
 		self._idle_timeout = 600
@@ -76,6 +77,7 @@ class SCController(object):
 					setting.getSubClass() == 0 and
 					setting.getProtocol() == 0):
 					self._handle.claimInterface(number)
+					self._claimed.append(number)
 		
 		self._transfer_list = []
 		transfer = self._handle.getTransfer()
@@ -97,6 +99,17 @@ class SCController(object):
 
 		self._tup = None
 		self._lastusb = time.time()
+	
+	
+	def reset(self):
+		self.unclaim()
+		self._handle.resetDevice()
+	
+	
+	def unclaim(self):
+		for number in self._claimed:
+			self._handle.releaseInterface(number)
+		self._claimed = []
 	
 	
 	def setStatusCallback(self, callback):
@@ -282,9 +295,20 @@ class SCController(object):
 					if len(self._cmsg) > 0:
 						cmsg = self._cmsg.pop()
 						self._sendControl(cmsg)
-
-			except usb1.USBErrorInterrupted:
+				try:
+					# Normally, code reaches here only when usb dongle gets stuck
+					# in some weird "yes, Im here but don't talk to me" state.
+					# Reseting fixes it.
+					self.reset()
+					log.info("Performed dongle reset")
+				except Exception:
+					# Unless code reaches here because dongle was removed.
+					pass
+			except usb1.USBErrorInterrupted, e:
+				log.error(e)
 				pass
+			finally:
+				self.unclaim()
 
 
 	def handleEvents(self):

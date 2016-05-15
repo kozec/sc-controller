@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.lib.daemon import Daemon
-from scc.lib.usb1 import USBErrorAccess, USBErrorBusy, USBErrorPipe
+from scc.lib.usb1 import USBError
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
@@ -158,6 +158,7 @@ class SCCDaemon(Daemon):
 		self.start_listening()
 		while True:
 			try:
+				sc = None
 				sc = SCController(callback=self.mapper.callback)
 				sc.configure_controller(enable_gyros=bool(self.mapper.profile.gyro))
 				self.mapper.set_controller(sc)
@@ -168,7 +169,9 @@ class SCCDaemon(Daemon):
 					self._send_to_all(b"Ready.\n")
 				self.lock.release()
 				sc.run()
-			except (ValueError, USBErrorAccess, USBErrorBusy, USBErrorPipe), e:
+				# Reaches here only if USB dongle is disconnected or gets stuck
+				self.lock.acquire()
+			except (ValueError, USBError), e:
 				# When SCController fails to initialize, daemon should
 				# still stay alive, so it is able to report this failure.
 				#
@@ -178,6 +181,7 @@ class SCCDaemon(Daemon):
 				# fixed by higher power (aka. user)
 				was_error = self.error is not None
 				self.error = unicode(e)
+				if sc: sc.unclaim()
 				try:
 					self.lock.release()
 				except: pass
