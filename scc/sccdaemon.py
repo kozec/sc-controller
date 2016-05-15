@@ -150,7 +150,7 @@ class SCCDaemon(Daemon):
 		self.lock.acquire()
 		self.start_listening()
 		while True:
-			#try:
+			try:
 				sc = SCController(callback=self.mapper.callback)
 				sc.configure_controller(enable_gyros=bool(self.mapper.profile.gyro))
 				self.mapper.set_controller(sc)

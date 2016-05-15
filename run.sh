@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Ensure correct cwd
+cd "$(dirname "$0")"
+
+# Check if libuinput.so is available
 if [ ! -e libuinput.so ] ; then
 	echo "libuinput.so is missing, building one"
 	echo "Please wait, this should be done only once."
@@ -18,4 +22,10 @@ if [ ! -e libuinput.so ] ; then
 	echo ""
 fi
 
-python2 scc.py $@
+# Set PATH
+SCRIPTS="$(pwd)/scripts"
+export PATH="$SCRIPTS":"$PATH"
+export PYTHONPATH=".":"$PYTHONPATH"
+
+# Execute
+python2 'scripts/sc-controller' $@

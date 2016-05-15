@@ -130,3 +130,17 @@ def find_lib(name, base_path):
 		if os.path.exists(path):
 			return path, search_paths
 	return None, search_paths
+
+
+def find_binary(name):
+	"""
+	Returns full path to script or binary.
+	
+	This is done simply by searching PATH environment variable.
+	"""
+	for i in os.environ['PATH'].split(":"):
+		path = os.path.join(i, name)
+		if os.path.exists(path):
+			return path
+	# Not found, return name back and hope for miracle
+	return name

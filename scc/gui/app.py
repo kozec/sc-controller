@@ -21,7 +21,7 @@ from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
-from scc.paths import get_daemon_path, get_config_path, get_profiles_path
+from scc.paths import get_config_path, get_profiles_path
 from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.actions import XYAction, NoAction
 from scc.macros import Macro, Repeat

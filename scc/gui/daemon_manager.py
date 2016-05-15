@@ -10,7 +10,8 @@ probably too crazy even for me.
 """
 from __future__ import unicode_literals
 
-from scc.paths import get_daemon_path, get_daemon_socket
+from scc.paths import get_daemon_socket
+from scc.tools import find_binary
 from gi.repository import GObject, Gio, GLib
 
 import os, sys, logging
@@ -178,7 +179,7 @@ class DaemonManager(GObject.GObject):
 	
 	def stop(self):
 		""" Stops the daemon """
-		Gio.Subprocess.new([ get_daemon_path(), "/dev/null", "stop" ], Gio.SubprocessFlags.NONE)
+		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", "stop" ], Gio.SubprocessFlags.NONE)
 	
 	
 	def start(self, mode="start"):
@@ -189,7 +190,7 @@ class DaemonManager(GObject.GObject):
 			# Just to clean up living connection
 			self.alive = None
 			self._on_daemon_died()
-		Gio.Subprocess.new([ get_daemon_path(), "/dev/null", mode ], Gio.SubprocessFlags.NONE)
+		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", mode ], Gio.SubprocessFlags.NONE)
 		self._connect()
 	
 	
