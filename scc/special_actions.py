@@ -2,24 +2,45 @@
 """
 SC Controller - Special Actions
 
-Moved from actions just to keep it shorter.
+Special Action is "special" since it cannot be handled by mapper alone.
+Instead, on_sa_<actionname> method on handler instance set by
+mapper.set_special_actions_handler() is called to do whatever action is supposed
+to do. If handler is not set, or doesn't have reqiuired method defined,
+action only prints warning to console.
 """
 from __future__ import unicode_literals
 
 from scc.actions import Action, NoAction, ButtonAction, ACTIONS, MOUSE_BUTTONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
+from scc.tools import strip_none
 
 import time, logging
 log = logging.getLogger("SActions")
 _ = lambda x : x
 
 
-class ChangeProfileAction(Action):
+class SpecialAction(Action):
+	def execute(self, mapper):
+		sa = mapper.get_special_actions_handler()
+		h_name = "on_sa_%s" % (self.COMMAND,)
+		if sa is None:
+			log.warning("Mapper can't handle special actions (set_special_actions_handler never called)")
+		elif hasattr(sa, h_name):
+			return getattr(sa, h_name)(mapper, self)
+		else:
+			log.warning("Mapper can't handle '%s' action" % (self.COMMAND,))
+	
+	# Prevent warnings when special action is bound to button
+	def button_press(self, mapper): pass
+	def button_release(self, mapper): pass
+
+
+class ChangeProfileAction(SpecialAction):
 	COMMAND = "profile"
 	
 	def __init__(self, profile):
-		Action.__init__(self, profile)
+		SpecialAction.__init__(self, profile)
 		self.profile = profile
 	
 	def describe(self, context):
@@ -29,20 +50,15 @@ class ChangeProfileAction(Action):
 	
 	def to_string(self, multiline=False, pad=0):
 		return (" " * pad) + "%s('%s')" % (self.COMMAND, self.profile.encode('string_escape'))
-
-
-	def button_press(self, mapper):
-		pass
 	
 	def button_release(self, mapper):
-		# Can be executed only when releasing button
-		if mapper.change_profile_callback is None:
-			log.warning("Mapper can't change profile by controller action")
-		else:
-			mapper.change_profile_callback(self.profile)
+		# Execute only when button is released (executing this when button
+		# is pressed would send following button_release event to another
+		# action from loaded profile)
+		self.execute(mapper)
 
 
-class ShellCommandAction(Action):
+class ShellCommandAction(SpecialAction):
 	COMMAND = "shell"
 	
 	def __init__(self, command):
@@ -59,17 +75,11 @@ class ShellCommandAction(Action):
 	
 	
 	def button_press(self, mapper):
-		# Can be executed only when pressing button
-		if mapper.shell_command_callback is None:
-			log.warning("Mapper can't execute commands")
-		else:
-			mapper.shell_command_callback(self.command)
-	
-	def button_release(self, mapper):
-		pass
+		# Execute only when button is pressed
+		self.execute(mapper)
 
 
-class TurnOffAction(Action):
+class TurnOffAction(SpecialAction):
 	COMMAND = "turnoff"
 	
 	def __init__(self):
@@ -84,16 +94,11 @@ class TurnOffAction(Action):
 		return (" " * pad) + "%s()" % (self.COMMAND,)
 	
 	
-	def button_press(self, mapper):
-		pass
-	
-	
 	def button_release(self, mapper):
-		# Can be executed only by releasing button
-		# (not by pressing it)
-		if mapper.get_controller():
-			mapper.get_controller().turnoff()
-
+		# Execute only when button is released (executing this when button
+		# is pressed would hold stuck any other action bound to same button,
+		# as button_release is not sent after controller turns off)
+		self.execute(mapper)
 
 
 # Add macros to ACTIONS dict

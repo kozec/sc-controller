@@ -85,12 +85,20 @@ class SCCDaemon(Daemon):
 			except: pass
 	
 	
-	def _shell_command(self, command):
-		os.system(command + " &")
+	def on_sa_turnoff_(self, mapper, action):
+		""" Called when 'turnoff' action is used """
+		if mapper.get_controller():
+			mapper.get_controller().turnoff()
 	
 	
-	def _set_profile_action(self, name):
-		# Called when 'profile' action is bound to button and used
+	def on_sa_shell(self, mapper, action):
+		""" Called when 'shell' action is used """
+		os.system(action.command + " &")
+	
+	
+	def on_sa_profile(self, mapper, action):
+		""" Called when 'profile' action is used """
+		name = action.profile
 		if name.startswith(".") or "/" in name:
 			# Small sanity check
 			log.error("Cannot load profile: Profile '%s' not found", name)
@@ -114,8 +122,7 @@ class SCCDaemon(Daemon):
 	def on_start(self):
 		os.chdir(self.cwd)
 		self.mapper = Mapper(Profile(TalkingActionParser()))
-		self.mapper.change_profile_callback = self._set_profile_action
-		self.mapper.shell_command_callback = self._shell_command
+		self.mapper.set_special_actions_handler(self)
 		if self.profile_file is not None:
 			try:
 				self.mapper.profile.load(self.profile_file).compress()
@@ -143,7 +150,7 @@ class SCCDaemon(Daemon):
 		self.lock.acquire()
 		self.start_listening()
 		while True:
-			try:
+			#try:
 				sc = SCController(callback=self.mapper.callback)
 				sc.configure_controller(enable_gyros=bool(self.mapper.profile.gyro))
 				self.mapper.set_controller(sc)

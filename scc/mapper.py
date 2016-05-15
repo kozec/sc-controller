@@ -38,10 +38,9 @@ class Mapper(object):
 			yscale=Mouse.DEFAULT_SCR_XSCALE
 		)
 		
-		# Set some stuff to None just to have it overriden
-		# by SCCDaemon class
-		self.change_profile_callback = None
-		self.shell_command_callback = None
+		# Set by SCCDaemon instance; Used to handle actions
+		# from scc.special_actions
+		self._sa_handler = None
 		
 		# Setup emulation
 		self.keypress_list = []
@@ -74,6 +73,14 @@ class Mapper(object):
 	def get_controller(self):
 		""" Returns assigned controller device or None if no controller is set """
 		return self.controller
+	
+	
+	def set_special_actions_handler(self, sa):
+		self._sa_handler = sa
+	
+	
+	def get_special_actions_handler(self):
+		return self._sa_handler
 	
 	
 	def send_feedback(self, hapticdata):
