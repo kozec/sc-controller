@@ -75,6 +75,10 @@ Executes command on background
 Turns controller off
 
 
+#### osd(text, [timeout=5])
+Displays text in OSD.
+
+
 # Modifiers:
 
 #### click(action)

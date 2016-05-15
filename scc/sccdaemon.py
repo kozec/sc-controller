@@ -11,14 +11,15 @@ from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.constants import SCButtons, LEFT, RIGHT, STICK
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
-from scc.tools import set_logging_level
+from scc.tools import set_logging_level, find_binary
 from scc.uinput import Keys, Axes
 from scc.profile import Profile
 from scc.actions import Action
 from scc.mapper import Mapper
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
-import os, sys, signal, socket, select, time, logging, threading, traceback
+import os, sys, signal, socket, select, time, logging
+import threading, traceback, subprocess
 log = logging.getLogger("SCCDaemon")
 tlog = logging.getLogger("Socket Thread")
 
@@ -36,6 +37,7 @@ class SCCDaemon(Daemon):
 		self.sserver = None
 		self.mapper = None
 		self.error = None
+		self.osd_message = None
 		self.lock = threading.Lock()
 		self.profile_file = None
 		self.clients = set()
@@ -93,7 +95,19 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_shell(self, mapper, action):
 		""" Called when 'shell' action is used """
-		os.system(action.command + " &")
+		os.system(action.command.encode('string_escape') + " &")
+	
+	
+	def on_sa_osd(self, mapper, action):
+		""" Called when 'osd' action is used """
+		if self.osd_message is not None:
+			# Don't have two OSD messages visible at once
+			self.osd_message.terminate()
+		self.osd_message = subprocess.Popen([
+			find_binary('sc-osd-message'),
+			"-t", str(action.timeout),
+			str(action.text)
+		])
 	
 	
 	def on_sa_profile(self, mapper, action):

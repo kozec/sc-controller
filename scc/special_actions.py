@@ -101,6 +101,32 @@ class TurnOffAction(SpecialAction):
 		self.execute(mapper)
 
 
+class OSDAction(SpecialAction):
+	COMMAND = "osd"
+	
+	def __init__(self, text, timeout=None):
+		Action.__init__(self, text, *strip_none(timeout))
+		self.text = text
+		self.timeout = timeout or 5
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("OSD Message")
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if len(self.parameters) == 1:
+			return (" " * pad) + "%s('%s')" % (self.COMMAND, self.parameters[0].encode('string_escape'))
+		else:
+			return (" " * pad) + "%s('%s', %s)" % (self.COMMAND,
+				self.parameters[0].encode('string_escape'),
+				self.parameters[1]
+			)
+	
+	
+	def button_press(self, mapper):
+		self.execute(mapper)
+
 # Add macros to ACTIONS dict
 for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
 	if i.COMMAND is not None:
