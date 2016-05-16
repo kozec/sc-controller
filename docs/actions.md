@@ -63,6 +63,12 @@ stick position, what probably doesn't yields expected results.
 Same as dpad, with more directions.
 
 
+### press(button)
+Presses button and leaves it pressed.
+
+### release(button)
+Releases pressed button.
+
 #### profile(name)
 Loads another profile
 
@@ -106,6 +112,12 @@ running feedback that you may not be able to stop.
 should mouse travell between two feedback ticks.
 
 
+#### osd(action, [timeout=5])
+Displays action description in OSD and executes it normally.
+Works only if executed by pressing physical button or with `dpad`. Otherwise
+just executes child action.
+
+
 # Shortcuts:
 #### raxis(id)
 Shortcut for `axis(id, 32767, -32767)`, that is call to axis with min/max values
@@ -144,11 +156,6 @@ Turbo / rapid fire mode. Repeats macro (or even single action) until physical bu
 
 - `repeat(button(BTN_X))` deals with "mash X to not die" events in some games.
 
-### press(button)
-Presses button and leaves it pressed.
-
-### release(button)
-Releases pressed button button.
 
 
 # Examples

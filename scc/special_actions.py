@@ -10,9 +10,10 @@ action only prints warning to console.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, NoAction, ButtonAction, ACTIONS, MOUSE_BUTTONS
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
+from scc.actions import Action, NoAction, ButtonAction
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
+from scc.actions import ACTIONS, MOUSE_BUTTONS
 from scc.tools import strip_none
 
 import time, logging
@@ -45,6 +46,8 @@ class ChangeProfileAction(SpecialAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
+		if context == Action.AC_OSD:
+			return _("Profile: %s") % (self.profile,)
 		return _("Profile Change")
 	
 	
@@ -87,6 +90,8 @@ class TurnOffAction(SpecialAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
+		if context == Action.AC_OSD:
+			return _("Turning controller OFF")
 		return _("Turn Off the Controller")
 	
 	
@@ -102,15 +107,26 @@ class TurnOffAction(SpecialAction):
 
 
 class OSDAction(SpecialAction):
+	"""
+	Displays text in OSD, or, if used as modifier, displays action description
+	and executes that action.
+	"""
 	COMMAND = "osd"
+	DEFAULT_TIMEOUT = 5
 	
 	def __init__(self, text, timeout=None):
 		Action.__init__(self, text, *strip_none(timeout))
+		self.action = None
 		self.text = text
-		self.timeout = timeout or 5
+		if isinstance(text, Action):
+			self.action = text
+			self.text = self.action.describe(Action.AC_OSD)
+		self.timeout = timeout or self.DEFAULT_TIMEOUT
 	
 	def describe(self, context):
 		if self.name: return self.name
+		if self.action:
+			return _("%s (with OSD)") % (self.action.describe(context), )
 		return _("OSD Message")
 	
 	
@@ -124,8 +140,54 @@ class OSDAction(SpecialAction):
 			)
 	
 	
+	def strip(self):
+		if self.action:
+			self.action = self.action.strip()
+		return self
+	
+	
+	def compress(self):
+		if self.action:
+			self.action = self.action.compress()
+		return self
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		if self.timeout == self.DEFAULT_TIMEOUT:
+			rv['osd'] = True
+		else:
+			rv['osd'] = self.timeout
+		return rv
+	
+	
 	def button_press(self, mapper):
 		self.execute(mapper)
+		if self.action:
+			return self.action.button_press(mapper)
+	
+	
+	def button_release(self, mapper):
+		if self.action:
+			return self.action.button_release(mapper)
+	
+	
+	def trigger(self, mapper, position, old_position):
+		if self.action:
+			return self.action.trigger(mapper, position, old_position)
+	
+	def axis(self, mapper, position, what):
+		if self.action:
+			return self.action.axis(mapper, position, what)
+	
+	def pad(self, mapper, position, what):
+		if self.action:
+			return self.action.pad(mapper, position, what)
+	
+	def whole(self, mapper, x, y, what):
+		if self.action:
+			return self.action.whole(mapper, x, y, what)
+
 
 # Add macros to ACTIONS dict
 for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:

@@ -38,6 +38,7 @@ class Action(object):
 	AC_TRIGGER	= 1 << 3
 	AC_GYRO		= 1 << 4
 	AC_PAD		= 1 << 5
+	AC_OSD		= 1 << 8
 	AC_ALL		= 0b11111111
 	
 	def __init__(self, *parameters):

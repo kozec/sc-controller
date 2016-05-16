@@ -12,6 +12,7 @@ from scc.modifiers import SensitivityModifier, ModeModifier
 from scc.modifiers import ClickModifier, FeedbackModifier
 from scc.parser import TalkingActionParser
 from scc.actions import NoAction, XYAction
+from scc.special_actions import OSDAction
 from scc.lib.jsonencoder import JSONEncoder
 
 import json
@@ -90,6 +91,10 @@ class Profile(object):
 				args[0] = getattr(HapticPos, args[0])
 			args.append(a)
 			a = FeedbackModifier(*args)
+		if "osd" in data:
+			a = OSDAction(a)
+			if data["osd"] is not True:
+				a.timeout = float(data["osd"])
 		if "click" in data:
 			a = ClickModifier(a)
 		if "name" in data:
