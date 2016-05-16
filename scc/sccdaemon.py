@@ -110,6 +110,40 @@ class SCCDaemon(Daemon):
 		])
 	
 	
+	def on_sa_menu(self, mapper, action):
+		""" Called when 'osd' action is used """
+		def threaded():
+			p = subprocess.Popen([
+				find_binary('sc-osd-menu'),
+				"--from-profile", self.profile_file,
+				str(action.menu_id)
+			], stdout=subprocess.PIPE)
+			rv = p.communicate()
+			if p.returncode == 0:
+				item_id = rv[0].strip()
+				self.lock.acquire()
+				try:
+					menuaction = self.mapper.profile.menus[action.menu_id].get_by_id(item_id).action
+					try:
+						menuaction.button_press(self.mapper)
+					except Exception, e:
+						log.error("Error while processing menu action")
+						log.error(traceback.format_exc())
+				except:
+					# action =... may fail in ~20 ways
+					log.warning("Selected menu item is no longer valid.")
+				self.lock.release()
+			else:
+				self.lock.acquire()
+				log.warning("Failed to show menu")
+				self.lock.release()
+		
+		if action.menu_id in self.mapper.profile.menus:
+			threading.Thread(target=threaded).start()
+		else:
+			log.warning("Cannot show menu: There is no menu with id '%s' defined." % (action.menu_id,))
+	
+	
 	def on_sa_profile(self, mapper, action):
 		""" Called when 'profile' action is used """
 		name = action.profile

@@ -28,6 +28,22 @@ class MenuData(object):
 		return iter(self.__items)
 	
 	
+	def __str__(self):
+		return ("<Menu with IDs: '" 
+			+ ("', '".join([ i.id for i in self.__items ])) + "' >")
+	
+	
+	def get_by_id(self, id):
+		"""
+		Returns item with specified ID.
+		Throws KeyError if there is no such item.
+		"""
+		for a in self:
+			if a.id == id:
+				return a
+		raise KeyError("No such item")
+	
+	
 	def index(self, a):
 		return self.__items.index(a)
 	
@@ -55,6 +71,28 @@ class MenuData(object):
 	
 	
 	@staticmethod
+	def from_json_data(data, action_parser=None):
+		"""
+		Loads menu from parsed JSON dict.
+		Actions are parsed only if action_parser is set to ActionParser instance.
+		"""
+		m = MenuData()
+		for i in data:
+			if "id" not in i:
+				# Cannot add menu without ID
+				continue
+			if action_parser:
+				# TODO: Action parsing (OSD doesn't need it anyway)
+				raise Exception("TODO!")
+			else:
+				action = NoAction()
+			label = i["name"] if "name" in i else i["id"]
+			m.__items.append(MenuItem(i["id"], label, action))
+		
+		return m
+	
+	
+	@staticmethod
 	def from_profile(filename, menuname, action_parser=None):
 		"""
 		Loads menu from JSON profile file.
@@ -70,20 +108,8 @@ class MenuData(object):
 		if menuname not in data["menus"]:
 			raise ValueError("Menu not found")
 		
-		m = MenuData()
-		for i in data["menus"][menuname]:
-			if "id" not in i:
-				# Cannot add menu without ID
-				continue
-			if action_parser:
-				# TODO: Action parsing (OSD doesn't need it anyway)
-				raise Exception("TODO!")
-			else:
-				action = NoAction()
-			label = i["name"] if "name" in i else i["id"]
-			m.__items.append(MenuItem(i["id"], label, action))
-		
-		return m
+		return MenuData.from_json_data(data["menus"][menuname], action_parser)
+
 
 class MenuItem(object):
 	""" Really just dummy container """

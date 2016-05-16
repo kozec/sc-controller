@@ -81,8 +81,12 @@ Executes command on background
 Turns controller off
 
 
-#### osd(text, [timeout=5])
+#### osd(text [, timeout=5])
 Displays text in OSD.
+
+
+#### menu(menu_id [, confirm_button=A [, cancel_button=B]])
+Displays OSD menu.
 
 
 # Modifiers:

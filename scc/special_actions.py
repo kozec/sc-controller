@@ -10,9 +10,9 @@ action only prints warning to console.
 """
 from __future__ import unicode_literals
 
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
 from scc.actions import Action, NoAction, ButtonAction
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.actions import ACTIONS, MOUSE_BUTTONS
 from scc.tools import strip_none
 
@@ -187,6 +187,29 @@ class OSDAction(SpecialAction):
 	def whole(self, mapper, x, y, what):
 		if self.action:
 			return self.action.whole(mapper, x, y, what)
+
+
+class MenuAction(SpecialAction):
+	"""
+	Displays menu defined in profile or globally.
+	"""
+	COMMAND = "menu"
+	DEFAULT_CONFIRM = SCButtons.A
+	DEFAULT_CANCEL = SCButtons.B
+	
+	def __init__(self, menu_id, confirm_with=None, cancel_with=None):
+		Action.__init__(self, menu_id, *strip_none(confirm_with, cancel_with))
+		self.menu_id = menu_id
+		self.confirm_with = confirm_with or self.DEFAULT_CONFIRM
+		self.cancel_with = cancel_with or self.DEFAULT_CANCEL
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Menu")
+	
+	
+	def button_press(self, mapper):
+		self.execute(mapper)
 
 
 # Add macros to ACTIONS dict

@@ -14,6 +14,7 @@ from scc.parser import TalkingActionParser
 from scc.actions import NoAction, XYAction
 from scc.special_actions import OSDAction
 from scc.lib.jsonencoder import JSONEncoder
+from scc.menu_data import MenuData
 
 import json
 
@@ -32,6 +33,7 @@ class Profile(object):
 	def __init__(self, parser):
 		self.parser = parser
 		self.buttons = { x : NoAction() for x in SCButtons }
+		self.menus = {}
 		self.stick = NoAction()
 		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
 		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
@@ -140,6 +142,12 @@ class Profile(object):
 			Profile.LEFT	: self._load_action(data, "pad_left"),
 			Profile.RIGHT	: self._load_action(data, "pad_right"),
 		}
+		
+		# Menus
+		self.menus = {}
+		if "menus" in data:
+			for id in data["menus"]:
+				self.menus[id] = MenuData.from_json_data(data["menus"][id])
 		
 		return self
 	
