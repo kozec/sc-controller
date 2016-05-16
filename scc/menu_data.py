@@ -7,7 +7,6 @@ Container for list of menu items + required parsers
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from scc.actions import NoAction
 import json
 
 class MenuData(object):
@@ -85,7 +84,7 @@ class MenuData(object):
 				# TODO: Action parsing (OSD doesn't need it anyway)
 				raise Exception("TODO!")
 			else:
-				action = NoAction()
+				action = None
 			label = i["name"] if "name" in i else i["id"]
 			m.__items.append(MenuItem(i["id"], label, action))
 		
@@ -113,7 +112,7 @@ class MenuData(object):
 
 class MenuItem(object):
 	""" Really just dummy container """
-	def __init__(self, id, label, action=NoAction()):
+	def __init__(self, id, label, action=None):
 		self.id = id
 		self.label = label
 		self.action = action

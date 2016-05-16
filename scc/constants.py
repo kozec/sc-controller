@@ -24,7 +24,6 @@
 
 from collections import namedtuple
 from scc.lib import IntEnum
-from scc.uinput import Keys, Axes
 import struct
 
 VENDOR_ID = 0x28de
@@ -129,10 +128,6 @@ class HapticPos(IntEnum):
 	BOTH = 2	# emulated
 
 
-MOUSE_BUTTONS = ( Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA )
-GAMEPAD_BUTTONS = ( Keys.BTN_A, Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
-		Keys.BTN_SELECT, Keys.BTN_START, Keys.BTN_MODE, Keys.BTN_THUMBL, Keys.BTN_THUMBR )
-TRIGGERS = ( Axes.ABS_Z, Axes.ABS_RZ )
 STICK_PAD_MIN = -32768
 STICK_PAD_MAX = 32768
 STICK_PAD_MIN_HALF = STICK_PAD_MIN / 3
