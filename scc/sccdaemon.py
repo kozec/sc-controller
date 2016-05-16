@@ -110,14 +110,14 @@ class SCCDaemon(Daemon):
 		])
 	
 	
-	def on_sa_menu(self, mapper, action):
+	def on_sa_menu(self, mapper, action, *pars):
 		""" Called when 'osd' action is used """
 		def threaded():
 			p = subprocess.Popen([
 				find_binary('sc-osd-menu'),
-				"--from-profile", self.profile_file,
-				str(action.menu_id)
-			], stdout=subprocess.PIPE)
+				"--cancel-with", action.cancel_with.name,
+				"--from-profile", self.profile_file, str(action.menu_id)
+			] + list(pars), stdout=subprocess.PIPE)
 			rv = p.communicate()
 			if p.returncode == 0:
 				item_id = rv[0].strip()

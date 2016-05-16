@@ -22,13 +22,13 @@ _ = lambda x : x
 
 
 class SpecialAction(Action):
-	def execute(self, mapper):
+	def execute(self, mapper, *a):
 		sa = mapper.get_special_actions_handler()
 		h_name = "on_sa_%s" % (self.COMMAND,)
 		if sa is None:
 			log.warning("Mapper can't handle special actions (set_special_actions_handler never called)")
 		elif hasattr(sa, h_name):
-			return getattr(sa, h_name)(mapper, self)
+			return getattr(sa, h_name)(mapper, self, *a)
 		else:
 			log.warning("Mapper can't handle '%s' action" % (self.COMMAND,))
 	
@@ -202,6 +202,7 @@ class MenuAction(SpecialAction):
 		self.menu_id = menu_id
 		self.confirm_with = confirm_with or self.DEFAULT_CONFIRM
 		self.cancel_with = cancel_with or self.DEFAULT_CANCEL
+		self._menu_shown = False
 	
 	def describe(self, context):
 		if self.name: return self.name
@@ -210,6 +211,16 @@ class MenuAction(SpecialAction):
 	
 	def button_press(self, mapper):
 		self.execute(mapper)
+	
+	def whole(self, mapper, x, y, what):
+		if self._menu_shown:
+			if what == LEFT:
+				if not mapper.is_pressed(SCButtons.LPADTOUCH):
+					self._menu_shown = False
+			return
+		self._menu_shown = True
+		self.cancel_with = SCButtons.LPADTOUCH
+		self.execute(mapper, '--control-with', LEFT, '--use-cursor')
 
 
 # Add macros to ACTIONS dict

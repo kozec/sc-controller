@@ -54,6 +54,11 @@ class Menu(OSDWindow, TimerManager):
 		self._cancel_with = 'B'
 	
 	
+	def show(self, *a):
+		OSDWindow.show(self, *a)
+		# GLib.idle_add(self.quit)
+	
+	
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 		self.argparser.add_argument('--control-with', '-c', type=str,
@@ -191,4 +196,4 @@ class Menu(OSDWindow, TimerManager):
 				print self._selected.id
 				self.quit(0)
 		else:
-			print ">>>", what
+			print >>sys.stderr, ">>>", what
