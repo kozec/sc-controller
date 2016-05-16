@@ -39,6 +39,11 @@ Indicates error client that sent request.
 #### `OK.`
 Indicates sucess to client that sent request.
 
+### `OSD: tool param1 param2...`
+Send to scc-osd-daemon when osd-related action is requested.
+*tool* can be *'message'* or *'menu'*, *params* are same as command-line arguments for related
+sc-osd-* script.
+
 #### `PID: xyz`
 Reports PID of *scc-daemon* instance. Automatically sent when connnection is accepted.
 
@@ -69,6 +74,16 @@ Asks daemon to load another profile. No escaping or quouting is needed, everythi
 If profile is sucessfully loaded, daemon responds with `OK.` to client that initiated loading and sends `Current profile: ...` message to all clients.
 
 If loading fails, daemon responds with `Fail: ....` message where error with entire backtrace is sent. Backtrace is escaped to fit it on single line.
+
+#### `Register: osd`
+Send by scc-osd-daemon to register client connection as one made by scc-osd-daemon.
+When sent by more than one client, daemon will automatically close forme connection
+before registering new one.
+Daemon responds with `OK.`
+
+#### `Selected: menu_id item_id`
+Send by scc-osd-daemon when user chooses item from displayed menu.
+Daemon responds with `OK.`
 
 #### `Unlock.`
 Unlocks everything locked with `Lock...` messages sent by same client. This operation cannot fail (and does nothing if there is nothing to unlock), so daemon always responds with `OK.`

@@ -48,15 +48,36 @@ class Menu(OSDWindow, TimerManager):
 		
 		self._direction = 0		# Movement direction
 		self._selected = None
+		self._menuid = None
 		self._use_cursor = False
 		self._control_with = STICK
 		self._confirm_with = 'A'
 		self._cancel_with = 'B'
 	
 	
-	def show(self, *a):
-		OSDWindow.show(self, *a)
-		# GLib.idle_add(self.quit)
+	def use_daemon(self, d):
+		"""
+		Allows (re)using already existin DaemonManager instance in same process
+		"""
+		self.daemon = d
+		self._cononect_handlers()
+		self.on_daemon_connected(self.daemon)
+	
+	
+	def get_menuid(self):
+		"""
+		Returns ID of used menu.
+		"""
+		return self._menuid
+	
+	
+	def get_selected_item_id(self):
+		"""
+		Returns ID of selected item or None if nothing is selected.
+		"""
+		if self._selected:
+			return self._selected.id
+		return None
 	
 	
 	def _add_arguments(self):
@@ -88,7 +109,8 @@ class Menu(OSDWindow, TimerManager):
 			return False
 		if self.args.from_profile:
 			try:
-				self.items = MenuData.from_profile(self.args.from_profile, self.args.items[0])
+				self._menuid = self.args.items[0]
+				self.items = MenuData.from_profile(self.args.from_profile, self._menuid)
 			except IOError:
 				print >>sys.stderr, '%s: error: profile file not found' % (sys.argv[0])
 				return False
@@ -98,6 +120,7 @@ class Menu(OSDWindow, TimerManager):
 		else:
 			try:
 				self.items = MenuData.from_args(self.args.items)
+				self._menuid = None
 			except ValueError:
 				print >>sys.stderr, '%s: error: invalid number of arguments' % (sys.argv[0])
 				return False
@@ -128,17 +151,26 @@ class Menu(OSDWindow, TimerManager):
 		self._selected.widget.set_name("osd-menu-item-selected")
 	
 	
-	def run(self):
-		self.daemon = DaemonManager()
+	def _cononect_handlers(self):
 		self.daemon.connect('dead', self.on_daemon_died)
 		self.daemon.connect('error', self.on_daemon_died)
 		self.daemon.connect('event', self.on_event)
 		self.daemon.connect('alive', self.on_daemon_connected)
-		self.select(0)
+	
+	
+	def run(self):
+		self.daemon = DaemonManager()
+		self._cononect_handlers()
 		OSDWindow.run(self)
 	
 	
+	def show(self, *a):
+		self.select(0)
+		OSDWindow.show(self, *a)
+	
+	
 	def on_daemon_died(self, *a):
+		log.error("Daemon died")
 		self.quit(2)
 	
 	
@@ -154,6 +186,11 @@ class Menu(OSDWindow, TimerManager):
 		
 		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
 		self.daemon.lock(success, self.on_failed_to_lock, *locks)
+	
+	
+	def quit(self, code=-1):
+		self.daemon.unlock_all()
+		OSDWindow.quit(self, code)
 	
 	
 	def on_move(self):
@@ -193,7 +230,6 @@ class Menu(OSDWindow, TimerManager):
 				self.quit(-1)
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
-				print self._selected.id
 				self.quit(0)
 		else:
 			print >>sys.stderr, ">>>", what

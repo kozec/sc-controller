@@ -1,0 +1,24 @@
+#!/usr/bin/env python2
+import os, sys, signal, argparse
+
+def sigint(*a):
+	print("\n*break*")
+	sys.exit(0)
+
+if __name__ == "__main__":
+	signal.signal(signal.SIGINT, sigint)
+
+	import gi
+	gi.require_version('Gtk', '3.0')
+	gi.require_version('Rsvg', '2.0')
+	gi.require_version('GdkX11', '3.0')
+	
+	from scc.tools import init_logging, set_logging_level
+	from scc.paths import get_share_path
+	init_logging()
+	set_logging_level('debug' in sys.argv, 'debug' in sys.argv)
+	
+	from scc.osd.osd_daemon import OSDDaemon
+	d = OSDDaemon()
+	d.run()
+	sys.exit(d.get_exit_code())

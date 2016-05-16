@@ -37,7 +37,7 @@ class SCCDaemon(Daemon):
 		self.sserver = None
 		self.mapper = None
 		self.error = None
-		self.osd_message = None
+		self.osd_daemon = None
 		self.lock = threading.Lock()
 		self.profile_file = None
 		self.clients = set()
@@ -98,50 +98,44 @@ class SCCDaemon(Daemon):
 		os.system(action.command.encode('string_escape') + " &")
 	
 	
+	def _osd(self, *data):
+		# Pre-format data
+		#   - convert everything to string
+		data = [ unicode(x) for x in data ]
+		#   - escape quotes
+		data = [ x.encode('string_escape') if ('"' in x or "'" in x) else x for x in data ]
+		#   - quote strings with spaces
+		data = [ "'%s'" % (x,) if " " in x else x for x in data ]
+		#   - encode and merge together
+		data = b"OSD: %s\n" % (b" ".join([x.encode('utf-8') for x in data ]),)
+		
+		# Check if scc-osd-daemon is available
+		self.lock.acquire()
+		if not self.osd_daemon:
+			self.lock.release()
+			log.warning("Cannot show OSD; there is no scc-osd-daemon registered")
+			return
+		# Send request
+		try:
+			self.osd_daemon.wfile.write(data)
+			self.osd_daemon.wfile.flush()
+		except Exception, e:
+			log.error("Failed to display OSD: %s", e)
+			self.osd_daemon = None
+		self.lock.release()
+	
+	
 	def on_sa_osd(self, mapper, action):
 		""" Called when 'osd' action is used """
-		if self.osd_message is not None:
-			# Don't have two OSD messages visible at once
-			self.osd_message.terminate()
-		self.osd_message = subprocess.Popen([
-			find_binary('sc-osd-message'),
-			"-t", str(action.timeout),
-			str(action.text)
-		])
+		self._osd('message', '-t', action.timeout, action.text)
 	
 	
 	def on_sa_menu(self, mapper, action, *pars):
 		""" Called when 'osd' action is used """
-		def threaded():
-			p = subprocess.Popen([
-				find_binary('sc-osd-menu'),
-				"--cancel-with", action.cancel_with.name,
-				"--from-profile", self.profile_file, str(action.menu_id)
-			] + list(pars), stdout=subprocess.PIPE)
-			rv = p.communicate()
-			if p.returncode == 0:
-				item_id = rv[0].strip()
-				self.lock.acquire()
-				try:
-					menuaction = self.mapper.profile.menus[action.menu_id].get_by_id(item_id).action
-					try:
-						menuaction.button_press(self.mapper)
-					except Exception, e:
-						log.error("Error while processing menu action")
-						log.error(traceback.format_exc())
-				except:
-					# action =... may fail in ~20 ways
-					log.warning("Selected menu item is no longer valid.")
-				self.lock.release()
-			else:
-				self.lock.acquire()
-				log.warning("Failed to show menu")
-				self.lock.release()
-		
-		if action.menu_id in self.mapper.profile.menus:
-			threading.Thread(target=threaded).start()
-		else:
-			log.warning("Cannot show menu: There is no menu with id '%s' defined." % (action.menu_id,))
+		self._osd('menu',
+			"--cancel-with", action.cancel_with.name,
+			"--from-profile", self.profile_file, action.menu_id,
+			*pars)
 	
 	
 	def on_sa_profile(self, mapper, action):
@@ -197,6 +191,8 @@ class SCCDaemon(Daemon):
 		signal.signal(signal.SIGTERM, self.sigterm)
 		self.lock.acquire()
 		self.start_listening()
+		# TODO: use subprocess, handle when killed
+		os.system('scc-osd-daemon debug </dev/null &')
 		while True:
 			try:
 				sc = SCController(callback=self.mapper.callback)
@@ -271,6 +267,9 @@ class SCCDaemon(Daemon):
 				self._handle_message(client, line.strip("\n"))
 		self.lock.acquire()
 		client.unlock_actions(self)
+		if self.osd_daemon == client:
+			log.info("scc-osd-daemon lost")
+			self.osd_daemon = None
 		self.clients.remove(client)
 		self.lock.release()
 	
@@ -364,6 +363,28 @@ class SCCDaemon(Daemon):
 			self.lock.acquire()
 			client.unlock_actions(self)
 			self.lock.release()
+			client.wfile.write(b"OK.\n")
+		elif message.startswith("Selected:"):
+			self.lock.acquire()
+			menuaction = None
+			try:
+				menu_id, item_id = message[9:].strip().split(" ")[:2]
+				menuaction = self.mapper.profile.menus[menu_id].get_by_id(item_id).action
+				client.wfile.write(b"OK.\n")
+			except:
+				log.warning("Selected menu item is no longer valid.")
+				client.wfile.write(b"Fail: Selected menu item is no longer valid\n")
+			self.lock.release()
+			print "Selected:", menuaction
+		elif message == "Register: osd":
+			self.lock.acquire()
+			if self.osd_daemon:
+				try:
+					self.osd_daemon.wfile.close()
+				except: pass
+			self.osd_daemon = client
+			self.lock.release()
+			log.info("Registered scc-osd-daemon")
 			client.wfile.write(b"OK.\n")
 		else:
 			client.wfile.write(b"Fail: Unknown command\n")

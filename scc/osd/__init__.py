@@ -57,15 +57,15 @@ class OSDWindow(Gtk.Window):
 	
 	def __init__(self, wmclass):
 		Gtk.Window.__init__(self)
-		self._apply_css()
+		OSDWindow._apply_css()
 		
 		self.argparser = argparse.ArgumentParser(description=__doc__,
 			formatter_class=argparse.RawDescriptionHelpFormatter,
 			epilog=self.EPILOG)
 		self._add_arguments()
 		self.exit_code = -1
-		self.mainloop = GLib.MainLoop()
 		self.position = (20, -20)
+		self.mainloop = None
 		self.set_name(wmclass)
 		self.set_wmclass(wmclass, wmclass)
 		self.set_decorated(False)
@@ -134,10 +134,14 @@ class OSDWindow(Gtk.Window):
 	
 	
 	def run(self):
+		self.mainloop = GLib.MainLoop()
 		self.show()
 		self.mainloop.run()
 	
 	
 	def quit(self, code=-1):
 		self.exit_code = code
-		self.mainloop.quit()
+		if self.mainloop:
+			self.mainloop.quit()
+		else:
+			self.destroy()

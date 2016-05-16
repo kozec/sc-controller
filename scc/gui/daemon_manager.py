@@ -24,6 +24,10 @@ class DaemonManager(GObject.GObject):
 		alive ()
 			Emited after daemon is started or found to be alraedy running
 		
+		unknown-msg (message)
+			Emited when message that can't be parsed internally
+			is recieved from daemon.
+		
 		dead ()
 			Emited after daemon is killed (or exits for some other reason)
 		
@@ -42,6 +46,7 @@ class DaemonManager(GObject.GObject):
 	
 	__gsignals__ = {
 			b"alive"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"unknown-msg"		: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"dead"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"error"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
@@ -125,7 +130,7 @@ class DaemonManager(GObject.GObject):
 				log.debug("Daemon is ready.")
 				self.alive = True
 				self.emit('alive')
-			elif line.startswith("Ok."):
+			elif line.startswith("OK."):
 				if len(self._requests) > 0:
 					success_cb, error_cb = self._requests[-1]
 					self._requests = self._requests[0:-1]
@@ -147,6 +152,11 @@ class DaemonManager(GObject.GObject):
 				profile = line.split(":", 1)[-1].strip()
 				log.debug("Daemon reported profile change: %s", profile)
 				self.emit('profile-changed', profile)
+			elif line.startswith("PID:") or line == "SCCDaemon":
+				# ignore
+				pass
+			else:
+				self.emit('unknown-msg', line)
 		# Connection is held forever to detect when daemon exits
 		self.connection.get_input_stream().read_bytes_async(102400,
 			1, None, self._on_read_data)
@@ -157,7 +167,7 @@ class DaemonManager(GObject.GObject):
 		return self.alive
 	
 	
-	def _request(self, message, success_cb, error_cb):
+	def request(self, message, success_cb, error_cb):
 		"""
 		Creates request and remembers callback for next 'Ok' or 'Fail' message.
 		"""
@@ -174,7 +184,7 @@ class DaemonManager(GObject.GObject):
 		def nocallback(*a):
 			# This one doesn't need error checking
 			pass
-		self._request("Profile: %s" % (filename,), nocallback, nocallback)
+		self.request("Profile: %s" % (filename,), nocallback, nocallback)
 	
 	
 	def stop(self):
@@ -210,5 +220,8 @@ class DaemonManager(GObject.GObject):
 		Calls success_cb() on success or error_cb(error) on failure.
 		"""
 		what = " ".join(what_to_lock)
-		self._request("Lock: %s" % (what,), success_cb, error_cb)
-
+		self.request("Lock: %s" % (what,), success_cb, error_cb)
+	
+	
+	def unlock_all(self):
+		self.request("Unlock.", lambda *a: False, lambda *a: False)
