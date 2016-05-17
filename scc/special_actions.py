@@ -131,12 +131,15 @@ class OSDAction(SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
+		if isinstance(self.parameters[0], Action):
+			p0str = self.parameters[0].to_string()
+		else:
+			p0str = str(self.parameters[0]).encode('string_escape')
 		if len(self.parameters) == 1:
-			return (" " * pad) + "%s('%s')" % (self.COMMAND, self.parameters[0].encode('string_escape'))
+			return (" " * pad) + "%s('%s')" % (self.COMMAND, p0str)
 		else:
 			return (" " * pad) + "%s('%s', %s)" % (self.COMMAND,
-				self.parameters[0].encode('string_escape'),
-				self.parameters[1]
+				p0str, self.parameters[1]
 			)
 	
 	
@@ -153,7 +156,7 @@ class OSDAction(SpecialAction):
 	
 	
 	def encode(self):
-		rv = Modifier.encode(self)
+		rv = SpecialAction.encode(self)
 		if self.timeout == self.DEFAULT_TIMEOUT:
 			rv['osd'] = True
 		else:
