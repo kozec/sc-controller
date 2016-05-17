@@ -101,6 +101,11 @@ class SVGWidget(Gtk.EventBox):
 			self.cache[cache_id] = svg.get_pixbuf()
 		
 		self.image.set_from_pixbuf(self.cache[cache_id])
+	
+	
+	def get_pixbuf(self):
+		""" Returns currently displayed pixbuf """
+		return self.image.get_pixbuf()
 
 
 class Area:
