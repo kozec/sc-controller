@@ -42,7 +42,7 @@ Indicates sucess to client that sent request.
 ### `OSD: tool param1 param2...`
 Send to scc-osd-daemon when osd-related action is requested.
 *tool* can be *'message'* or *'menu'*, *params* are same as command-line arguments for related
-sc-osd-* script.
+scc-osd-* script.
 
 #### `PID: xyz`
 Reports PID of *scc-daemon* instance. Automatically sent when connnection is accepted.
