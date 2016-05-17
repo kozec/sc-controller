@@ -365,8 +365,22 @@ class SCCDaemon(Daemon):
 			self.lock.release()
 			client.wfile.write(b"OK.\n")
 		elif message.startswith("Selected:"):
-			self.lock.acquire()
 			menuaction = None
+			def press(mapper):
+				try:
+					menuaction.button_press(mapper)
+					self.mapper.schedule(0.1, release)
+				except Exception, e:
+					log.error("Error while processing menu action")
+					log.error(traceback.format_exc())
+			def release(mapper):
+				try:
+					menuaction.button_release(mapper)
+				except Exception, e:
+					log.error("Error while processing menu action")
+					log.error(traceback.format_exc())
+			
+			self.lock.acquire()
 			try:
 				menu_id, item_id = message[9:].strip().split(" ")[:2]
 				menuaction = self.mapper.profile.menus[menu_id].get_by_id(item_id).action
@@ -374,8 +388,9 @@ class SCCDaemon(Daemon):
 			except:
 				log.warning("Selected menu item is no longer valid.")
 				client.wfile.write(b"Fail: Selected menu item is no longer valid\n")
+			if menuaction:
+				self.mapper.schedule(0, press)
 			self.lock.release()
-			print "Selected:", menuaction
 		elif message == "Register: osd":
 			self.lock.acquire()
 			if self.osd_daemon:

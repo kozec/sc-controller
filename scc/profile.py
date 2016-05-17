@@ -8,13 +8,10 @@ from __future__ import unicode_literals
 
 from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
-from scc.modifiers import SensitivityModifier, ModeModifier
-from scc.modifiers import ClickModifier, FeedbackModifier
-from scc.parser import TalkingActionParser
-from scc.actions import NoAction, XYAction
-from scc.special_actions import OSDAction
 from scc.lib.jsonencoder import JSONEncoder
+from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
+from scc.actions import NoAction
 
 import json
 
@@ -62,92 +59,42 @@ class Profile(object):
 		return self
 	
 	
-	def _load_action(self, data, key=None):
-		"""
-		Converts dict returned by json.loads into action.
-		Returns NoAction when parser returns None.
-		"""
-		if key is not None:
-			# Allow calling _load_action(data["buttons"], button), it's shorter
-			# than 'if button in data["buttons"]: ...'
-			if key in data:
-				return self._load_action(data[key], None)
-			else:
-				return NoAction()
-		
-		a = NoAction()
-		if "action" in data:
-			a = self.parser.restart(data["action"]).parse() or NoAction()
-		if "X" in data or "Y" in data:
-			# "action" is ignored if either "X" or "Y" is there
-			x = self._load_action(data["X"]) if "X" in data else NoAction()
-			y = self._load_action(data["Y"]) if "Y" in data else NoAction()
-			a = XYAction(x, y)
-		if "sensitivity" in data:
-			args = data["sensitivity"]
-			args.append(a)
-			a = SensitivityModifier(*args)
-		if "feedback" in data:
-			args = data["feedback"]
-			if hasattr(HapticPos, args[0]):
-				args[0] = getattr(HapticPos, args[0])
-			args.append(a)
-			a = FeedbackModifier(*args)
-		if "osd" in data:
-			a = OSDAction(a)
-			if data["osd"] is not True:
-				a.timeout = float(data["osd"])
-		if "click" in data:
-			a = ClickModifier(a)
-		if "name" in data:
-			a.name = data["name"]
-		if "modes" in data:
-			args = []
-			for button in data['modes']:
-				if hasattr(SCButtons, button):
-					args += [ getattr(SCButtons, button), self._load_action(data['modes'][button]) ]
-			if a:
-				args += [ a ]
-			a = ModeModifier(*args)
-		return a
-		
-	
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
 		data = json.loads(open(filename, "r").read())
 		# Buttons
 		self.buttons = {}
 		for x in SCButtons:
-			self.buttons[x] = self._load_action(data["buttons"], x.name)
+			self.buttons[x] = self.parser.from_json_data(data["buttons"], x.name)
 		
 		# Stick & gyro
-		self.stick = self._load_action(data, "stick")
-		self.gyro = self._load_action(data, "gyro")
+		self.stick = self.parser.from_json_data(data, "stick")
+		self.gyro = self.parser.from_json_data(data, "gyro")
 		
 		# Triggers
 		if "triggers" in data:
 			# Old format
 			self.triggers = ({
-				x : self._load_action(data["triggers"], x) for x in Profile.TRIGGERS
+				x : self.parser.from_json_data(data["triggers"], x) for x in Profile.TRIGGERS
 			})
 		else:
 			# New format
 			self.triggers = {
-				Profile.LEFT	: self._load_action(data, "trigger_left"),
-				Profile.RIGHT	: self._load_action(data, "trigger_right"),
+				Profile.LEFT	: self.parser.from_json_data(data, "trigger_left"),
+				Profile.RIGHT	: self.parser.from_json_data(data, "trigger_right"),
 			}
 		
 		# Pads
 		self.pads = {
-			Profile.LEFT	: self._load_action(data, "pad_left"),
-			Profile.RIGHT	: self._load_action(data, "pad_right"),
+			Profile.LEFT	: self.parser.from_json_data(data, "pad_left"),
+			Profile.RIGHT	: self.parser.from_json_data(data, "pad_right"),
 		}
 		
 		# Menus
 		self.menus = {}
 		if "menus" in data:
 			for id in data["menus"]:
-				self.menus[id] = MenuData.from_json_data(data["menus"][id])
+				self.menus[id] = MenuData.from_json_data(data["menus"][id], self.parser)
 		
 		return self
 	

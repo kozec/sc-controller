@@ -61,7 +61,7 @@ class OSDDaemon(object):
 			m = Message()
 			m.parse_argumets(args)
 			m.show()
-		if message.startswith("OSD: menu"):
+		elif message.startswith("OSD: menu"):
 			args = shlex.split(message)[1:]
 			m = Menu()
 			m.connect('destroy', self.on_menu_closed)

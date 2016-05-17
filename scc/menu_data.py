@@ -80,11 +80,9 @@ class MenuData(object):
 			if "id" not in i:
 				# Cannot add menu without ID
 				continue
+			action = None
 			if action_parser:
-				# TODO: Action parsing (OSD doesn't need it anyway)
-				raise Exception("TODO!")
-			else:
-				action = None
+				action = action_parser.from_json_data(i)
 			label = i["name"] if "name" in i else i["id"]
 			m.__items.append(MenuItem(i["id"], label, action))
 		
