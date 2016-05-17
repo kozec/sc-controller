@@ -134,11 +134,11 @@ class OSDAction(SpecialAction):
 		if isinstance(self.parameters[0], Action):
 			p0str = self.parameters[0].to_string()
 		else:
-			p0str = str(self.parameters[0]).encode('string_escape')
+			p0str = "'%s'" % (str(self.parameters[0]).encode('string_escape'),)
 		if len(self.parameters) == 1:
-			return (" " * pad) + "%s('%s')" % (self.COMMAND, p0str)
+			return (" " * pad) + "%s(%s)" % (self.COMMAND, p0str)
 		else:
-			return (" " * pad) + "%s('%s', %s)" % (self.COMMAND,
+			return (" " * pad) + "%s(%s, %s)" % (self.COMMAND,
 				p0str, self.parameters[1]
 			)
 	
@@ -156,12 +156,15 @@ class OSDAction(SpecialAction):
 	
 	
 	def encode(self):
-		rv = SpecialAction.encode(self)
-		if self.timeout == self.DEFAULT_TIMEOUT:
-			rv['osd'] = True
+		if self.action:
+			rv = self.action.encode()
+			if self.timeout == self.DEFAULT_TIMEOUT:
+				rv['osd'] = True
+			else:
+				rv['osd'] = self.timeout
+			return rv
 		else:
-			rv['osd'] = self.timeout
-		return rv
+			return SpecialAction.encode(self)
 	
 	
 	def button_press(self, mapper):
@@ -212,8 +215,15 @@ class MenuAction(SpecialAction):
 		return _("Menu")
 	
 	
+	def to_string(self, multiline=False, pad=0):
+		pars = [] + list(self.parameters)
+		pars[0] = "'%s'" % (str(pars[0]).encode('string_escape'),)
+		return (" " * pad) + "%s(%s)" % (self.COMMAND, ",".join(pars))
+	
+	
 	def button_press(self, mapper):
 		self.execute(mapper)
+	
 	
 	def whole(self, mapper, x, y, what):
 		if self._menu_shown:

@@ -65,9 +65,11 @@ class OSDDaemon(object):
 			args = shlex.split(message)[1:]
 			m = Menu()
 			m.connect('destroy', self.on_menu_closed)
-			m.parse_argumets(args)
-			m.show()
-			m.use_daemon(self.daemon)
+			if m.parse_argumets(args):
+				m.show()
+				m.use_daemon(self.daemon)
+			else:
+				log.error("Failed to show menu")
 		else:
 			log.warning("Unknown command from daemon: '%s'", message)
 	

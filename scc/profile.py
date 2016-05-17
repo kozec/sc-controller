@@ -47,6 +47,7 @@ class Profile(object):
 			'trigger_right'	: self.triggers[Profile.RIGHT],
 			"pad_left"		: self.pads[Profile.LEFT],
 			"pad_right"		: self.pads[Profile.RIGHT],
+			"menus"			: { id : self.menus[id].encode() for id in self.menus }
 		}
 		
 		for i in self.buttons:

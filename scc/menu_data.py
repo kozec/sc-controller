@@ -47,6 +47,20 @@ class MenuData(object):
 		return self.__items.index(a)
 	
 	
+	def encode(self):
+		""" Returns menu data as dict storable in json (profile) file """
+		rv = []
+		for i in self:
+			if i.action:
+				item_data = i.action.encode()
+			else:
+				item_data = {}
+			item_data['id'] = i.id
+			item_data['name'] = i.label
+			rv.append(item_data)
+		return rv
+	
+	
 	@staticmethod
 	def from_args(data):
 		"""
