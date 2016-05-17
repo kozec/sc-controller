@@ -19,6 +19,7 @@ class OSDDaemon(object):
 	def __init__(self):
 		self.exit_code = -1
 		self.mainloop = GLib.MainLoop()
+		self._registered = False
 		OSDWindow._apply_css()
 	
 	
@@ -39,11 +40,13 @@ class OSDDaemon(object):
 	def on_daemon_connected(self, *a):
 		def success(*a):
 			log.info("Sucessfully registered as scc-osd-daemon")
+			self._registered = True
 		def failure(why):
 			log.error("Failed to registered as scc-osd-daemon: %s", why)
 			self.quit(1)
 		
-		self.daemon.request('Register: osd', success, failure)
+		if not self._registered:
+			self.daemon.request('Register: osd', success, failure)
 	
 	
 	def on_menu_closed(self, m):
@@ -77,7 +80,6 @@ class OSDDaemon(object):
 	def run(self):
 		self.daemon = DaemonManager()
 		self.daemon.connect('dead', self.on_daemon_died)
-		self.daemon.connect('error', self.on_daemon_died)
 		self.daemon.connect('alive', self.on_daemon_connected)
 		self.daemon.connect('unknown-msg', self.on_unknown_message)
 		self.mainloop.run()
