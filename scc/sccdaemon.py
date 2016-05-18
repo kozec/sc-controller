@@ -152,7 +152,6 @@ class SCCDaemon(Daemon):
 			p += [ "--from-profile", self.profile_file, action.menu_id ]
 		p += list(pars)
 		
-		print p
 		self._osd(*p)
 	
 	on_sa_gridmenu = on_sa_menu
