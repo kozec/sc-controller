@@ -8,17 +8,19 @@ from scc.tools import _
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBErrorAccess, USBErrorBusy, USBErrorPipe
 from scc.paths import get_profiles_path, get_default_profiles_path
+from scc.paths import get_menus_path, get_default_menus_path
 from scc.constants import SCButtons, LEFT, RIGHT, STICK
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
 from scc.tools import set_logging_level, find_binary
+from scc.menu_data import MenuData
 from scc.uinput import Keys, Axes
 from scc.profile import Profile
 from scc.actions import Action
 from scc.mapper import Mapper
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
-import os, sys, signal, socket, select, time, logging
+import os, sys, signal, socket, select, time, json, logging
 import threading, traceback, subprocess
 log = logging.getLogger("SCCDaemon")
 tlog = logging.getLogger("Socket Thread")
@@ -133,10 +135,25 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_menu(self, mapper, action, *pars):
 		""" Called when 'osd' action is used """
-		self._osd('menu',
-			"--cancel-with", action.cancel_with.name,
-			"--from-profile", self.profile_file, action.menu_id,
-			*pars)
+		p = [ 'menu',
+			"--confirm-with", action.confirm_with.name,
+			"--cancel-with", action.cancel_with.name
+		]
+		if "." in action.menu_id:
+			path = None
+			for d in ( get_menus_path(), get_default_menus_path() ):
+				if os.path.exists(os.path.join(d, action.menu_id)):
+					path = os.path.join(d, action.menu_id)
+			if not path:
+				log.error("Cannot show menu: Menu '%s' not found", action.menu_id)
+				return
+			p += [ "--from-file", path ]
+		else:
+			p += [ "--from-profile", self.profile_file, action.menu_id ]
+		p += list(pars)
+		
+		print p
+		self._osd(*p)
 	
 	
 	def on_sa_profile(self, mapper, action):
@@ -398,7 +415,14 @@ class SCCDaemon(Daemon):
 			self.lock.acquire()
 			try:
 				menu_id, item_id = message[9:].strip().split(" ")[:2]
-				menuaction = self.mapper.profile.menus[menu_id].get_by_id(item_id).action
+				menuaction = None
+				if "." in menu_id:
+					# TODO: Move this common place
+					data = json.loads(open(menu_id, "r").read())
+					menudata = MenuData.from_json_data(data, TalkingActionParser())
+					menuaction = menudata.get_by_id(item_id).action
+				else:
+					menuaction = self.mapper.profile.menus[menu_id].get_by_id(item_id).action
 				client.wfile.write(b"OK.\n")
 			except:
 				log.warning("Selected menu item is no longer valid.")

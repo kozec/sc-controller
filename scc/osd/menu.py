@@ -16,7 +16,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.osd.timermanager import TimerManager
 from scc.osd import OSDWindow
 
-import os, sys, logging
+import os, sys, json, logging
 log = logging.getLogger("osd.menu")
 
 
@@ -101,7 +101,10 @@ class Menu(OSDWindow, TimerManager):
 		self.argparser.add_argument('--from-profile', '-p', type=str,
 			metavar="profile_file menu_name",
 			help="load menu items from profile file")
-		self.argparser.add_argument('items', type=str, nargs='+', metavar='id title',
+		self.argparser.add_argument('--from-file', '-f', type=str,
+			metavar="filename",
+			help="load menu items from json file")
+		self.argparser.add_argument('items', type=str, nargs='*', metavar='id title',
 			help="Menu items")
 	
 	
@@ -117,6 +120,14 @@ class Menu(OSDWindow, TimerManager):
 				return False
 			except ValueError:
 				print >>sys.stderr, '%s: error: menu not found' % (sys.argv[0])
+				return False
+		elif self.args.from_file:
+			try:
+				data = json.loads(open(self.args.from_file, "r").read())
+				self._menuid = self.args.from_file
+				self.items = MenuData.from_json_data(data)
+			except:
+				print >>sys.stderr, '%s: error: failed to loade menu file' % (sys.argv[0])
 				return False
 		else:
 			try:

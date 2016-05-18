@@ -69,6 +69,8 @@ class MenuData(object):
 		"""
 		if len(data) % 2 != 0:
 			raise ValueError("Odd number of items")
+		if len(data) < 1:
+			raise ValueError("Not items")
 		
 		# Rearange data into list of pair tuples
 		data = [

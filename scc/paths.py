@@ -51,6 +51,33 @@ def get_default_profiles_path():
 	return "/usr/share/scc/default_profiles"
 
 
+def get_menus_path():
+	"""
+	Returns directory where profiles are stored.
+	~/.config/scc/profiles under normal conditions.
+	"""
+	return os.path.join(get_config_path(), "menus")
+
+
+def get_default_menus_path():
+	"""
+	Returns directory where default profiles are stored.
+	Probably something like /usr/share/scc/default_profiles,
+	or ./default_profiles if program is being started from
+	extracted source tarball
+	"""
+	if __main__.__file__.startswith("scripts/"):
+		# Started from root directory of source tree with
+		# something like 'scripts/sc-controller'
+		local = os.path.join(os.path.split(__file__)[0], "../default_menus")
+		local = os.path.normpath(local)
+		if os.path.exists(local):
+			return local
+	if os.path.exists("/usr/local/share/scc/default_menus"):
+		return "/usr/local/share/scc/default_menus"
+	return "/usr/share/scc/default_menus"
+
+
 def get_share_path():
 	"""
 	Returns directory where shared files are kept.

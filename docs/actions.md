@@ -94,9 +94,8 @@ sense when menu is assigned to left pad.
 If 'show_with_release' is set to true, menu is displayed only after button
 is released.
 
-'menu' can be either id of menu defined in same profile file, filename relative to
-`~/.config/scc/menus` directory or one of following special menus:
-- `special:profiles` - lists all defined profiles
+'menu' can be either id of menu defined in same profile file or filename
+relative to `~/.config/scc/menus` directory.
 
 
 # Modifiers:
