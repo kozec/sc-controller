@@ -33,6 +33,7 @@ class SCCDaemon(Daemon):
 		set_logging_level(True, True)
 		Daemon.__init__(self, piddile)
 		self.started = False
+		self.exiting = False
 		self.socket_file = socket_file
 		self.sserver = None
 		self.mapper = None
@@ -181,18 +182,32 @@ class SCCDaemon(Daemon):
 	
 	
 	def sigterm(self, *a):
-		log.debug("SIGTERM")
-		self._remove_socket()
+		self.exiting = True
+		if self.osd_daemon:
+			self.osd_daemon.wfile.close()
 		sys.exit(0)
 	
 	
+	def start_osd(self):
+		""" Starts OSD Daemon on bacgkround (if possible) """
+		def threaded():
+			while not self.exiting:
+				p = subprocess.Popen([ find_binary('scc-osd-daemon'),
+					'debug' ], stdin=None)
+				p.communicate()
+				if not self.exiting:
+					log.warning("osd-daemon died; restarting")
+					time.sleep(5)
+		
+		threading.Thread(target=threaded).start()
+
+
 	def run(self):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)
 		self.lock.acquire()
 		self.start_listening()
-		# TODO: use subprocess, handle when killed
-		os.system('scc-osd-daemon debug </dev/null &')
+		self.start_osd()
 		while True:
 			try:
 				sc = SCController(callback=self.mapper.callback)
@@ -506,8 +521,7 @@ class SCCDaemon(Daemon):
 			self.run()
 		except KeyboardInterrupt:
 			log.debug("Break")
-		self._remove_socket()
-		sys.exit(0)
+		self.sigterm()
 
 
 class Client(object):

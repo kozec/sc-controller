@@ -136,8 +136,11 @@ def find_binary(name):
 	"""
 	Returns full path to script or binary.
 	
-	This is done simply by searching PATH environment variable.
+	With some exceptions, this is done simply by searching PATH environment variable.
 	"""
+	if name in ("osd_daemon", "scc-osd-daemon"):
+		# Special case, this one is not supposed to go to /usr/bin
+		return os.path.join(os.path.split(__file__)[0], "osd", "osd_daemon.py")
 	for i in os.environ['PATH'].split(":"):
 		path = os.path.join(i, name)
 		if os.path.exists(path):
