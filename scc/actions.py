@@ -10,29 +10,23 @@ from __future__ import unicode_literals
 
 from scc.tools import strip_none, ensure_size, quat2euler, anglediff, _
 from scc.uinput import Keys, Axes, Rels
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
+from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
+from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
 from math import pi as PI, sqrt
 
 import time, logging
 log = logging.getLogger("Actions")
 
+# Default delay after action, if used in macro. May be overriden using sleep() action.
+DEFAULT_DELAY = 0.01
 MOUSE_BUTTONS = ( Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA )
 GAMEPAD_BUTTONS = ( Keys.BTN_A, Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
 		Keys.BTN_SELECT, Keys.BTN_START, Keys.BTN_MODE, Keys.BTN_THUMBL, Keys.BTN_THUMBR )
 TRIGGERS = ( Axes.ABS_Z, Axes.ABS_RZ )
-STICK_PAD_MIN = -32768
-STICK_PAD_MAX = 32768
-STICK_PAD_MIN_HALF = STICK_PAD_MIN / 3
-STICK_PAD_MAX_HALF = STICK_PAD_MAX / 3
 
-TRIGGER_MIN = 0
-TRIGGER_HALF = 50
-TRIGGER_CLICK = 254 # Values under this are generated until trigger clicks
-TRIGGER_MAX = 255
-
-# Default delay after action, if used in macro. May be overriden using sleep() action.
-DEFAULT_DELAY = 0.01
 
 class Action(object):
 	"""
@@ -48,6 +42,7 @@ class Action(object):
 	AC_TRIGGER	= 1 << 3
 	AC_GYRO		= 1 << 4
 	AC_PAD		= 1 << 5
+	AC_OSD		= 1 << 8
 	AC_ALL		= 0b11111111
 	
 	def __init__(self, *parameters):

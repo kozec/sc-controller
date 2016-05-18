@@ -90,6 +90,11 @@ def quat2euler(q0, q1, q2, q3):
 	return pitch, yaw, roll
 
 
+def point_in_gtkrect(rect, x, y):
+	return (x > rect.x and y > rect.y and
+		x < rect.x + rect.width and y < rect.y + rect.height)
+
+
 def anglediff(a1, a2):
 	return (a2 - a1 + PI) % (2.0*PI) - PI
 
@@ -110,3 +115,35 @@ def get_so_extensions():
 	for ext, _, typ in imp.get_suffixes():
 		if typ == imp.C_EXTENSION:
 			yield ext
+
+
+def find_lib(name, base_path):
+	"""
+	Returns (filename, search_paths) if named library is found
+	or (None, search_paths) if not.
+	"""
+	search_paths = []
+	for extension in get_so_extensions():
+		search_paths.append(os.path.abspath(os.path.normpath(os.path.join( base_path, '..', name + extension ))))
+		search_paths.append(os.path.abspath(os.path.normpath(os.path.join( base_path, '../..', name + extension ))))
+	for path in search_paths:
+		if os.path.exists(path):
+			return path, search_paths
+	return None, search_paths
+
+
+def find_binary(name):
+	"""
+	Returns full path to script or binary.
+	
+	With some exceptions, this is done simply by searching PATH environment variable.
+	"""
+	if name in ("osd_daemon", "scc-osd-daemon"):
+		# Special case, this one is not supposed to go to /usr/bin
+		return os.path.join(os.path.split(__file__)[0], "osd", "osd_daemon.py")
+	for i in os.environ['PATH'].split(":"):
+		path = os.path.join(i, name)
+		if os.path.exists(path):
+			return path
+	# Not found, return name back and hope for miracle
+	return name

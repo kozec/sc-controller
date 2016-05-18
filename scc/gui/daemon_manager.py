@@ -10,7 +10,8 @@ probably too crazy even for me.
 """
 from __future__ import unicode_literals
 
-from scc.paths import get_daemon_path, get_daemon_socket
+from scc.paths import get_daemon_socket
+from scc.tools import find_binary
 from gi.repository import GObject, Gio, GLib
 
 import os, sys, logging
@@ -23,8 +24,16 @@ class DaemonManager(GObject.GObject):
 		alive ()
 			Emited after daemon is started or found to be alraedy running
 		
+		unknown-msg (message)
+			Emited when message that can't be parsed internally
+			is recieved from daemon.
+		
 		dead ()
 			Emited after daemon is killed (or exits for some other reason)
+		
+		event (pad_stick_or_button, values)
+			Emited when pad, stick or button is locked using lock() method
+			and position or pressed state of that button is changed
 		
 		profile-changed (profile)
 			Emited after profile is changed. Profile is filename of currently
@@ -37,8 +46,10 @@ class DaemonManager(GObject.GObject):
 	
 	__gsignals__ = {
 			b"alive"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"unknown-msg"		: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"dead"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"error"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
 			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
@@ -51,6 +62,7 @@ class DaemonManager(GObject.GObject):
 		self.connecting = False
 		self.buffer = ""
 		self._connect()
+		self._requests = []
 	
 	
 	def _connect(self):
@@ -118,6 +130,19 @@ class DaemonManager(GObject.GObject):
 				log.debug("Daemon is ready.")
 				self.alive = True
 				self.emit('alive')
+			elif line.startswith("OK."):
+				if len(self._requests) > 0:
+					success_cb, error_cb = self._requests[-1]
+					self._requests = self._requests[0:-1]
+					success_cb()
+			elif line.startswith("Fail:"):
+				if len(self._requests) > 0:
+					success_cb, error_cb = self._requests[-1]
+					self._requests = self._requests[0:-1]
+					error_cb(line[5:].strip())
+			elif line.startswith("Event:"):
+				data = line[6:].strip().split(" ")
+				self.emit('event', data[0], [ int(x) for x in data[1:] ])
 			elif line.startswith("Error:"):
 				error = line.split(":", 1)[-1].strip()
 				self.alive = True
@@ -127,6 +152,11 @@ class DaemonManager(GObject.GObject):
 				profile = line.split(":", 1)[-1].strip()
 				log.debug("Daemon reported profile change: %s", profile)
 				self.emit('profile-changed', profile)
+			elif line.startswith("PID:") or line == "SCCDaemon":
+				# ignore
+				pass
+			else:
+				self.emit('unknown-msg', line)
 		# Connection is held forever to detect when daemon exits
 		self.connection.get_input_stream().read_bytes_async(102400,
 			1, None, self._on_read_data)
@@ -137,15 +167,29 @@ class DaemonManager(GObject.GObject):
 		return self.alive
 	
 	
+	def request(self, message, success_cb, error_cb):
+		"""
+		Creates request and remembers callback for next 'Ok' or 'Fail' message.
+		"""
+		if self.alive and self.connection is not None:
+			self._requests.append(( success_cb, error_cb ))
+			(self.connection.get_output_stream()
+				.write_all(message.encode('utf-8') + b'\n', None))
+		else:
+			# Instant failure
+			error_cb("Not connected.")
+	
 	def set_profile(self, filename):
 		""" Asks daemon to change profile """
-		if self.alive and self.connection is not None:
-			self.connection.get_output_stream().write_all(filename.encode("utf-8") + b"\n", None)
+		def nocallback(*a):
+			# This one doesn't need error checking
+			pass
+		self.request("Profile: %s" % (filename,), nocallback, nocallback)
 	
 	
 	def stop(self):
 		""" Stops the daemon """
-		Gio.Subprocess.new([ get_daemon_path(), "/dev/null", "stop" ], Gio.SubprocessFlags.NONE)
+		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", "stop" ], Gio.SubprocessFlags.NONE)
 	
 	
 	def start(self, mode="start"):
@@ -156,7 +200,7 @@ class DaemonManager(GObject.GObject):
 			# Just to clean up living connection
 			self.alive = None
 			self._on_daemon_died()
-		Gio.Subprocess.new([ get_daemon_path(), "/dev/null", mode ], Gio.SubprocessFlags.NONE)
+		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", mode ], Gio.SubprocessFlags.NONE)
 		self._connect()
 	
 	
@@ -165,3 +209,19 @@ class DaemonManager(GObject.GObject):
 		Restarts the daemon and forces connection to be created immediately.
 		"""
 		self.start(mode="restart")
+	
+	
+	def lock(self, success_cb, error_cb, *what_to_lock):
+		"""
+		Locks physical button, axis or pad. Events from locked sources are
+		sent to this client and processed using 'event' singal, until
+		unlock_all() is called.
+		
+		Calls success_cb() on success or error_cb(error) on failure.
+		"""
+		what = " ".join(what_to_lock)
+		self.request("Lock: %s" % (what,), success_cb, error_cb)
+	
+	
+	def unlock_all(self):
+		self.request("Unlock.", lambda *a: False, lambda *a: False)

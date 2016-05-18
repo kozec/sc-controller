@@ -2,7 +2,7 @@
 """
 SC Controller - ActionParser
 
-Parses action(s) expressed as string (loaded from JSON file) into
+Parses action(s) expressed as string or in dict loaded from json file into
 one or more Action instances.
 """
 from __future__ import unicode_literals
@@ -10,7 +10,10 @@ from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
 from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
-from scc.actions import ACTIONS, NoAction, MultiAction
+from scc.actions import ACTIONS, NoAction, MultiAction, XYAction
+from scc.modifiers import SensitivityModifier, ModeModifier
+from scc.modifiers import ClickModifier, FeedbackModifier
+from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
 
@@ -32,6 +35,8 @@ def build_action_constants():
 		'PITCH'		: PITCH,
 		'YAW'		: YAW,
 		'ROLL'		: ROLL,
+		'True'		: True,
+		'False'		: False,
 	}
 	for tpl in (Keys, Axes, Rels, SCButtons, HapticPos):
 		for x in tpl:
@@ -57,6 +62,58 @@ class ActionParser(object):
 	
 	def __init__(self, string=""):
 		self.restart(string)
+	
+	
+	def from_json_data(self, data, key=None):
+		"""
+		Converts dict stored in profile file into action.
+		
+		May throw ParseError.
+		"""
+		if key is not None:
+			# Don't fail if called for non-existent key, return NoAction instead.
+			# Using this is sorter than
+			# calling 'if button in data["buttons"]: ...' everywhere
+			if key in data:
+				return self.from_json_data(data[key], None)
+			else:
+				return NoAction()
+		
+		a = NoAction()
+		if "action" in data:
+			a = self.restart(data["action"]).parse() or NoAction()
+		if "X" in data or "Y" in data:
+			# "action" is ignored if either "X" or "Y" is there
+			x = self.from_json_data(data["X"]) if "X" in data else NoAction()
+			y = self.from_json_data(data["Y"]) if "Y" in data else NoAction()
+			a = XYAction(x, y)
+		if "sensitivity" in data:
+			args = data["sensitivity"]
+			args.append(a)
+			a = SensitivityModifier(*args)
+		if "feedback" in data:
+			args = data["feedback"]
+			if hasattr(HapticPos, args[0]):
+				args[0] = getattr(HapticPos, args[0])
+			args.append(a)
+			a = FeedbackModifier(*args)
+		if "osd" in data:
+			a = OSDAction(a)
+			if data["osd"] is not True:
+				a.timeout = float(data["osd"])
+		if "click" in data:
+			a = ClickModifier(a)
+		if "name" in data:
+			a.name = data["name"]
+		if "modes" in data:
+			args = []
+			for button in data['modes']:
+				if hasattr(SCButtons, button):
+					args += [ getattr(SCButtons, button), self.from_json_data(data['modes'][button]) ]
+			if a:
+				args += [ a ]
+			a = ModeModifier(*args)
+		return a
 	
 	
 	def restart(self, string):

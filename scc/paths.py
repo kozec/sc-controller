@@ -39,8 +39,9 @@ def get_default_profiles_path():
 	or ./default_profiles if program is being started from
 	extracted source tarball
 	"""
-	if __main__.__file__.endswith(".py"):
-		# Started as script with something like './scc.py'
+	if __main__.__file__.startswith("scripts/"):
+		# Started from root directory of source tree with
+		# something like 'scripts/sc-controller'
 		local = os.path.join(os.path.split(__file__)[0], "../default_profiles")
 		local = os.path.normpath(local)
 		if os.path.exists(local):
@@ -50,43 +51,57 @@ def get_default_profiles_path():
 	return "/usr/share/scc/default_profiles"
 
 
+def get_menus_path():
+	"""
+	Returns directory where profiles are stored.
+	~/.config/scc/profiles under normal conditions.
+	"""
+	return os.path.join(get_config_path(), "menus")
+
+
+def get_default_menus_path():
+	"""
+	Returns directory where default profiles are stored.
+	Probably something like /usr/share/scc/default_profiles,
+	or ./default_profiles if program is being started from
+	extracted source tarball
+	"""
+	if __main__.__file__.startswith("scripts/"):
+		# Started from root directory of source tree with
+		# something like 'scripts/sc-controller'
+		local = os.path.join(os.path.split(__file__)[0], "../default_menus")
+		local = os.path.normpath(local)
+		if os.path.exists(local):
+			return local
+	if os.path.exists("/usr/local/share/scc/default_menus"):
+		return "/usr/local/share/scc/default_menus"
+	return "/usr/share/scc/default_menus"
+
+
 def get_share_path():
 	"""
 	Returns directory where shared files are kept.
 	Usually "/usr/share/scc" or "./" if program is being started from
 	extracted source tarball
 	"""
-	if __main__.__file__.endswith(".py"):
-		# Started as script with something like './scc.py'
+	if __main__.__file__.startswith("scripts/"):
+		# Started from root directory of source tree with
+		# something like 'scripts/sc-controller'
 		local = os.path.join(os.path.split(__file__)[0], "../")
 		local = os.path.normpath(local)
 		if os.path.exists(local):
 			return local
+	if __main__.__file__.endswith("osd_daemon.py"):
+		# Special case
+		if not __main__.__file__.startswith("/usr/local"):
+			if not __main__.__file__.startswith("/usr/lib"):
+				local = os.path.join(os.path.split(__file__)[0], "../")
+				local = os.path.normpath(local)
+				if os.path.exists(local):
+					return local
 	if os.path.exists("/usr/local/share/scc/"):
 		return "/usr/local/share/scc/"
 	return "/usr/share/scc/"
-
-
-
-def get_daemon_path():
-	"""
-	Returns path to sccdaemon "binary".
-	
-	Should be /usr/bin/scc-daemon if program is installed or
-	./scc-daemon.py if program is being started from extracted source tarball
-	"""
-	if __main__.__file__.endswith(".py"):
-		# Started as script with something like './scc.py'
-		local = os.path.join(os.path.split(__file__)[0], "../scc-daemon.py")
-		local = os.path.normpath(local)
-		if os.path.exists(local):
-			return local
-	for x in ("/usr/bin/scc-daemon", "/usr/local/bin/scc-daemon"):
-		# TODO: This is maybe possible in less insane way
-		if os.path.exists(x):
-			return x
-	# Nothing found, just hope for miracles...
-	return "scc-daemon"
 
 
 def get_pid_file():

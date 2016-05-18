@@ -63,6 +63,12 @@ stick position, what probably doesn't yields expected results.
 Same as dpad, with more directions.
 
 
+### press(button)
+Presses button and leaves it pressed.
+
+### release(button)
+Releases pressed button.
+
 #### profile(name)
 Loads another profile
 
@@ -73,6 +79,23 @@ Executes command on background
 
 #### turnoff()
 Turns controller off
+
+
+#### osd([timeout=5], text)
+Displays text in OSD.
+
+
+#### menu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
+Displays OSD menu.
+'confirm_button' and 'cancel_button' sets which gamepad button should be used to
+confirm/cancel menu - for examplem setting 'cancel_button' to LPADTOUCH may have
+sense when menu is assigned to left pad.
+
+If 'show_with_release' is set to true, menu is displayed only after button
+is released.
+
+'menu' can be either id of menu defined in same profile file or filename
+relative to `~/.config/scc/menus` directory.
 
 
 # Modifiers:
@@ -100,6 +123,12 @@ running feedback that you may not be able to stop.
 
 'frequency' is used only when emulating touchpad and describes how many pixels
 should mouse travell between two feedback ticks.
+
+
+#### osd([timeout=5], action)
+Displays action description in OSD and executes it normally.
+Works only if executed by pressing physical button or with `dpad`. Otherwise
+just executes child action.
 
 
 # Shortcuts:
@@ -140,11 +169,6 @@ Turbo / rapid fire mode. Repeats macro (or even single action) until physical bu
 
 - `repeat(button(BTN_X))` deals with "mash X to not die" events in some games.
 
-### press(button)
-Presses button and leaves it pressed.
-
-### release(button)
-Releases pressed button button.
 
 
 # Examples

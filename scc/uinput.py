@@ -28,8 +28,7 @@ import time
 from math import pi, copysign, sqrt
 from scc.lib import IntEnum
 from scc.cheader import defines
-
-from scc.tools import get_so_extensions
+from scc.tools import find_lib
 
 from collections import deque
 
@@ -191,27 +190,10 @@ class UInput(object):
 			self._a, self._amin, self._amax, self._afuzz, self._aflat = zip(*axes)
 
 		self._r = rels
-		possible_paths = []
-		for extension in get_so_extensions():
-			possible_paths.append(
-				os.path.abspath(
-					os.path.normpath(
-						os.path.join(
-							os.path.dirname(__file__),
-							'..',
-							'libuinput' + extension
-						)
-					)
-				)
-			)
-		lib = None
-		for path in possible_paths:
-			if os.path.exists(path):
-				lib = path
-				break
+		lib, search_paths = find_lib("libuinput", os.path.dirname(__file__))
 		if not lib:
-			raise OSError('Cant find linuinput. searched at:\n {}'.format(
-				'\n'.join(possible_paths)
+			raise OSError('Cant find libuinput. searched at:\n {}'.format(
+				'\n'.join(search_paths)
 			)
 		)
 		self._lib = ctypes.CDLL(lib)
