@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 """
 SC-Controller - OSD Daemon
 
@@ -5,6 +7,11 @@ Controls stuff displayed as OSD.
 """
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
+
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('Rsvg', '2.0')
+gi.require_version('GdkX11', '3.0')
 
 from gi.repository import Gtk, GLib
 from scc.gui.daemon_manager import DaemonManager
@@ -83,3 +90,14 @@ class OSDDaemon(object):
 		self.daemon.connect('alive', self.on_daemon_connected)
 		self.daemon.connect('unknown-msg', self.on_unknown_message)
 		self.mainloop.run()
+
+
+if __name__ == "__main__":
+	from scc.tools import init_logging, set_logging_level
+	from scc.paths import get_share_path
+	init_logging()
+	set_logging_level('debug' in sys.argv, 'debug' in sys.argv)
+	
+	d = OSDDaemon()
+	d.run()
+	sys.exit(d.get_exit_code())
