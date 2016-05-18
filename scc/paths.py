@@ -64,6 +64,14 @@ def get_share_path():
 		local = os.path.normpath(local)
 		if os.path.exists(local):
 			return local
+	if __main__.__file__.endswith("osd_daemon.py"):
+		# Special case
+		if not __main__.__file__.startswith("/usr/local"):
+			if not __main__.__file__.startswith("/usr/lib"):
+				local = os.path.join(os.path.split(__file__)[0], "../")
+				local = os.path.normpath(local)
+				if os.path.exists(local):
+					return local
 	if os.path.exists("/usr/local/share/scc/"):
 		return "/usr/local/share/scc/"
 	return "/usr/share/scc/"
