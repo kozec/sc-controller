@@ -204,6 +204,7 @@ class MenuAction(SpecialAction):
 	Displays menu defined in profile or globally.
 	"""
 	COMMAND = "menu"
+	MENU_TYPE = "menu"
 	DEFAULT_CONFIRM = SCButtons.A
 	DEFAULT_CANCEL = SCButtons.B
 	
@@ -238,6 +239,14 @@ class MenuAction(SpecialAction):
 	def whole(self, mapper, x, y, what):
 		if not mapper.was_pressed(SCButtons.LPADTOUCH):
 			self.execute(mapper, '--control-with', LEFT, '--use-cursor')
+
+
+class GridMenuAction(MenuAction):
+	"""
+	Same as menu, but displayed in grid
+	"""
+	COMMAND = "gridmenu"
+	MENU_TYPE = "gridmenu"
 
 
 # Add macros to ACTIONS dict

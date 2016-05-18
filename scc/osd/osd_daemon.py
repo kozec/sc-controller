@@ -18,6 +18,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow
 from scc.osd.message import Message
 from scc.osd.menu import Menu
+from scc.osd.grid_menu import GridMenu
 
 import os, sys, shlex, logging
 log = logging.getLogger("osd.daemon")
@@ -73,12 +74,12 @@ class OSDDaemon(object):
 			m = Message()
 			m.parse_argumets(args)
 			m.show()
-		elif message.startswith("OSD: menu"):
+		elif message.startswith("OSD: menu") or message.startswith("OSD: gridmenu"):
 			args = shlex.split(message)[1:]
 			if self._menu:
 				log.warning("Another menu already visible - refusing to show menu")
 			else:
-				self._menu = Menu()
+				self._menu = GridMenu() if "gridmenu" in message else Menu()
 				self._menu.connect('destroy', self.on_menu_closed)
 				if self._menu.parse_argumets(args):
 					self._menu.show()
