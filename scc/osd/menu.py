@@ -50,6 +50,7 @@ class Menu(OSDWindow, TimerManager):
 		self._selected = None
 		self._menuid = None
 		self._use_cursor = False
+		self._eh_ids = []
 		self._control_with = STICK
 		self._confirm_with = 'A'
 		self._cancel_with = 'B'
@@ -152,10 +153,12 @@ class Menu(OSDWindow, TimerManager):
 	
 	
 	def _cononect_handlers(self):
-		self.daemon.connect('dead', self.on_daemon_died)
-		self.daemon.connect('error', self.on_daemon_died)
-		self.daemon.connect('event', self.on_event)
-		self.daemon.connect('alive', self.on_daemon_connected)
+		self._eh_ids += [
+			self.daemon.connect('dead', self.on_daemon_died),
+			self.daemon.connect('error', self.on_daemon_died),
+			self.daemon.connect('event', self.on_event),
+			self.daemon.connect('alive', self.on_daemon_connected),
+		]
 	
 	
 	def run(self):
@@ -190,6 +193,9 @@ class Menu(OSDWindow, TimerManager):
 	
 	def quit(self, code=-1):
 		self.daemon.unlock_all()
+		for x in self._eh_ids:
+			self.daemon.disconnect(x)
+		self._eh_ids = []
 		OSDWindow.quit(self, code)
 	
 	
@@ -231,5 +237,3 @@ class Menu(OSDWindow, TimerManager):
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
 				self.quit(0)
-		else:
-			print >>sys.stderr, ">>>", what

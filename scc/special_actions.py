@@ -114,14 +114,18 @@ class OSDAction(SpecialAction):
 	COMMAND = "osd"
 	DEFAULT_TIMEOUT = 5
 	
-	def __init__(self, text, timeout=None):
-		Action.__init__(self, text, *strip_none(timeout))
+	def __init__(self, *parameters):
+		Action.__init__(self, *parameters)
 		self.action = None
-		self.text = text
-		if isinstance(text, Action):
-			self.action = text
+		self.timeout = self.DEFAULT_TIMEOUT
+		if len(parameters) > 1:
+			# timeout parameter included
+			self.timeout = parameters[0]
+		if isinstance(parameters[-1], Action):
+			self.action = parameters[-1]
 			self.text = self.action.describe(Action.AC_OSD)
-		self.timeout = timeout or self.DEFAULT_TIMEOUT
+		else:
+			self.text = unicode(parameters[-1])
 	
 	def describe(self, context):
 		if self.name: return self.name
@@ -203,12 +207,12 @@ class MenuAction(SpecialAction):
 	DEFAULT_CONFIRM = SCButtons.A
 	DEFAULT_CANCEL = SCButtons.B
 	
-	def __init__(self, menu_id, confirm_with=None, cancel_with=None):
-		Action.__init__(self, menu_id, *strip_none(confirm_with, cancel_with))
+	def __init__(self, menu_id, confirm_with=None, cancel_with=None, show_with_release=None):
+		Action.__init__(self, menu_id, *strip_none(confirm_with, cancel_with, show_with_release))
 		self.menu_id = menu_id
 		self.confirm_with = confirm_with or self.DEFAULT_CONFIRM
 		self.cancel_with = cancel_with or self.DEFAULT_CANCEL
-		self._menu_shown = False
+		self.show_with_release = show_with_release not in (None, False)
 	
 	def describe(self, context):
 		if self.name: return self.name
@@ -222,18 +226,18 @@ class MenuAction(SpecialAction):
 	
 	
 	def button_press(self, mapper):
-		self.execute(mapper)
+		if not self.show_with_release:
+			self.execute(mapper)
+	
+	
+	def button_release(self, mapper):
+		if self.show_with_release:
+			self.execute(mapper)
 	
 	
 	def whole(self, mapper, x, y, what):
-		if self._menu_shown:
-			if what == LEFT:
-				if not mapper.is_pressed(SCButtons.LPADTOUCH):
-					self._menu_shown = False
-			return
-		self._menu_shown = True
-		self.cancel_with = SCButtons.LPADTOUCH
-		self.execute(mapper, '--control-with', LEFT, '--use-cursor')
+		if not mapper.was_pressed(SCButtons.LPADTOUCH):
+			self.execute(mapper, '--control-with', LEFT, '--use-cursor')
 
 
 # Add macros to ACTIONS dict

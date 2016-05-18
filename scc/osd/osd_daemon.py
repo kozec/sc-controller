@@ -26,6 +26,7 @@ class OSDDaemon(object):
 	def __init__(self):
 		self.exit_code = -1
 		self.mainloop = GLib.MainLoop()
+		self._menu = None
 		self._registered = False
 		OSDWindow._apply_css()
 	
@@ -58,6 +59,7 @@ class OSDDaemon(object):
 	
 	def on_menu_closed(self, m):
 		""" Called after OSD menu is hidden from screen """
+		self._menu = None
 		if m.get_exit_code() == 0:
 			# 0 means that user selected item and confirmed selection
 			self.daemon.request(
@@ -73,13 +75,17 @@ class OSDDaemon(object):
 			m.show()
 		elif message.startswith("OSD: menu"):
 			args = shlex.split(message)[1:]
-			m = Menu()
-			m.connect('destroy', self.on_menu_closed)
-			if m.parse_argumets(args):
-				m.show()
-				m.use_daemon(self.daemon)
+			if self._menu:
+				log.warning("Another menu already visible - refusing to show menu")
 			else:
-				log.error("Failed to show menu")
+				self._menu = Menu()
+				self._menu.connect('destroy', self.on_menu_closed)
+				if self._menu.parse_argumets(args):
+					self._menu.show()
+					self._menu.use_daemon(self.daemon)
+				else:
+					log.error("Failed to show menu")
+					self._menu = None
 		else:
 			log.warning("Unknown command from daemon: '%s'", message)
 	

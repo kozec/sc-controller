@@ -35,6 +35,8 @@ def build_action_constants():
 		'PITCH'		: PITCH,
 		'YAW'		: YAW,
 		'ROLL'		: ROLL,
+		'True'		: True,
+		'False'		: False,
 	}
 	for tpl in (Keys, Axes, Rels, SCButtons, HapticPos):
 		for x in tpl:

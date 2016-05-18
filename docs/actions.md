@@ -81,12 +81,22 @@ Executes command on background
 Turns controller off
 
 
-#### osd(text [, timeout=5])
+#### osd([timeout=5], text)
 Displays text in OSD.
 
 
-#### menu(menu_id [, confirm_button=A [, cancel_button=B]])
+#### menu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
 Displays OSD menu.
+'confirm_button' and 'cancel_button' sets which gamepad button should be used to
+confirm/cancel menu - for examplem setting 'cancel_button' to LPADTOUCH may have
+sense when menu is assigned to left pad.
+
+If 'show_with_release' is set to true, menu is displayed only after button
+is released.
+
+'menu' can be either id of menu defined in same profile file, filename relative to
+`~/.config/scc/menus` directory or one of following special menus:
+- `special:profiles` - lists all defined profiles
 
 
 # Modifiers:
@@ -116,7 +126,7 @@ running feedback that you may not be able to stop.
 should mouse travell between two feedback ticks.
 
 
-#### osd(action, [timeout=5])
+#### osd([timeout=5], action)
 Displays action description in OSD and executes it normally.
 Works only if executed by pressing physical button or with `dpad`. Otherwise
 just executes child action.
