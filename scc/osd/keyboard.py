@@ -30,7 +30,7 @@ class Keyboard(OSDWindow, TimerManager):
    2  - error, failed to access sc-daemon, sc-daemon reported error or died while menu is displayed.
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
-	REPEAT_DELAY = 0.5
+	HILIGHT_COLOR = "#00688D"
 	
 	def __init__(self):
 		OSDWindow.__init__(self, "osd-menu")
@@ -50,6 +50,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self.cursor_right.set_name("osd-menu-cursor")
 		
 		self._eh_ids = []
+		self._hovers = { self.cursor_left : None, self.cursor_right : None }
+		
 		self.f = Gtk.Fixed()
 		self.f.add(self.background)
 		self.f.add(self.cursor_left)
@@ -141,8 +143,16 @@ class Keyboard(OSDWindow, TimerManager):
 		x = (limit[0] + w * 0.5) + x * w * 0.5
 		y = (limit[1] + h * 0.5) + y * h * 0.5
 		
-		
 		self.f.move(cursor, int(x), int(y))
+		for a in self.background.areas:
+			if a.contains(x, y):
+				if a != self._hovers[cursor]:
+					self._hovers[cursor] = a
+					self.background.hilight({
+						"AREA_" + a.name : Keyboard.HILIGHT_COLOR
+						for a in [ a for a in self._hovers.values() if a ]
+					})
+				break
 
 
 PId4 = math.pi / 4.0

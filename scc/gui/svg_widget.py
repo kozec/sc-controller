@@ -141,11 +141,13 @@ class SVGWidget(Gtk.EventBox):
 
 
 class Area:
+	SPECIAL_CASES = ( "LSTICK", "RSTICK", "DPAD", "ABS", "MOUSE",
+		"MINUSHALF", "PLUSHALF", "KEYCODE" )
+	
 	""" Basicaly just rectangle with name """
 	def __init__(self, translation, element):
 		self.name = element.attrib['id'].split("_")[1]
-		if self.name in ("LSTICK", "RSTICK", "DPAD", "ABS", "MOUSE", "MINUSHALF", "PLUSHALF"):
-			# Special cases
+		if self.name in Area.SPECIAL_CASES:
 			self.name = "_".join(element.attrib['id'].split("_")[1:3])
 		self.x = float(element.attrib['x']) + translation[0]
 		self.y = float(element.attrib['y']) + translation[1]
