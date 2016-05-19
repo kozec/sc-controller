@@ -77,7 +77,39 @@ class SVGWidget(Gtk.EventBox):
 				return a.name
 		self.emit('leave')
 		return None
+	
+	
+	def get_element(self, id):
+		tree = ET.fromstring(self.svg_source)
+		tree.parent = None
+		el = find_by_id(tree, id)
+		if el is not None:
+			def add_parent(parent):
+				for child in parent:
+					child.parent = parent
+					add_parent(child)
+			add_parent(tree)
+			return el
+		return None
+	
+	
+	def get_rect_area(self, xml, x=0, y=0):
+		"""
+		Returns x, y, width and height of rect element relative to document root.
+		"""
+		width, height = 0, 0
+		if 'x' in xml.attrib: x += float(xml.attrib['x'])
+		if 'y' in xml.attrib: y += float(xml.attrib['y'])
+		if 'width' in xml.attrib:  width = float(xml.attrib['width'])
+		if 'height' in xml.attrib: height = float(xml.attrib['height'])
 		
+		if xml.parent is not None:
+			px, py, trash, trash = self.get_rect_area(xml.parent)
+			x += px
+			y += py
+		
+		return x, y, width, height
+	
 	
 	def hilight(self, buttons):
 		""" Hilights specified button, if same ID is found in svg """
@@ -128,7 +160,6 @@ class Area:
 	
 	def __str__(self):
 		return "<Area %s,%s %sx%s>" % (self.x, self.y, self.w, self.h)
-
 
 
 def find_areas(xml, translation, areas):
