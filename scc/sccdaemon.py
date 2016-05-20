@@ -217,7 +217,10 @@ class SCCDaemon(Daemon):
 					log.warning("osd-daemon died; restarting")
 					time.sleep(5)
 		
-		threading.Thread(target=threaded).start()
+		if "DISPLAY" in os.environ:
+			threading.Thread(target=threaded).start()
+		else:
+			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
 
 
 	def run(self):
