@@ -16,9 +16,10 @@ gi.require_version('GdkX11', '3.0')
 from gi.repository import Gtk, GLib
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow
+from scc.osd.grid_menu import GridMenu
+from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
 from scc.osd.menu import Menu
-from scc.osd.grid_menu import GridMenu
 
 import os, sys, shlex, logging
 log = logging.getLogger("osd.daemon")
@@ -27,7 +28,7 @@ class OSDDaemon(object):
 	def __init__(self):
 		self.exit_code = -1
 		self.mainloop = GLib.MainLoop()
-		self._menu = None
+		self._window = None
 		self._registered = False
 		OSDWindow._apply_css()
 	
@@ -60,7 +61,7 @@ class OSDDaemon(object):
 	
 	def on_menu_closed(self, m):
 		""" Called after OSD menu is hidden from screen """
-		self._menu = None
+		self._window = None
 		if m.get_exit_code() == 0:
 			# 0 means that user selected item and confirmed selection
 			self.daemon.request(
@@ -91,17 +92,17 @@ class OSDDaemon(object):
 				self._window.use_daemon(self.daemon)
 		elif message.startswith("OSD: menu") or message.startswith("OSD: gridmenu"):
 			args = shlex.split(message)[1:]
-			if self._menu:
-				log.warning("Another menu already visible - refusing to show menu")
+			if self._window:
+				log.warning("Another OSD is already visible - refusing to show menu")
 			else:
-				self._menu = GridMenu() if "gridmenu" in message else Menu()
-				self._menu.connect('destroy', self.on_menu_closed)
-				if self._menu.parse_argumets(args):
-					self._menu.show()
-					self._menu.use_daemon(self.daemon)
+				self._window = GridMenu() if "gridmenu" in message else Menu()
+				self._window.connect('destroy', self.on_menu_closed)
+				if self._window.parse_argumets(args):
+					self._window.show()
+					self._window.use_daemon(self.daemon)
 				else:
 					log.error("Failed to show menu")
-					self._menu = None
+					self._window = None
 		else:
 			log.warning("Unknown command from daemon: '%s'", message)
 	

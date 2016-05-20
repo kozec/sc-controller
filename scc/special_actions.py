@@ -249,6 +249,29 @@ class GridMenuAction(MenuAction):
 	MENU_TYPE = "gridmenu"
 
 
+class KeyboardAction(SpecialAction):
+	"""
+	Shows OSD keyboard.
+	"""
+	COMMAND = "keyboard"
+	
+	def __init__(self):
+		Action.__init__(self)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("OSD Keyboard")
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s()" % (self.COMMAND,)
+	
+	
+	def button_release(self, mapper):
+		self.execute(mapper)
+
+
 # Add macros to ACTIONS dict
 for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
 	if i.COMMAND is not None:

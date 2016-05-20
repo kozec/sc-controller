@@ -133,6 +133,11 @@ class SCCDaemon(Daemon):
 		self._osd('message', '-t', action.timeout, action.text)
 	
 	
+	def on_sa_keyboard(self, mapper, action):
+		""" Called when 'keyboard' action is used """
+		self._osd('keyboard')
+	
+	
 	def on_sa_menu(self, mapper, action, *pars):
 		""" Called when 'osd' action is used """
 		p = [ action.MENU_TYPE,

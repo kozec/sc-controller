@@ -46,7 +46,7 @@ class Keyboard(OSDWindow, TimerManager):
 		OSDWindow.__init__(self, "osd-menu")
 		TimerManager.__init__(self)
 		self.daemon = None
-		self.keyboard = uinputKeyboard(b"SCC OSD Keyboard")
+		self.keyboard = None
 		self.keymap = Gdk.Keymap.get_default()
 		
 		kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
@@ -148,7 +148,13 @@ class Keyboard(OSDWindow, TimerManager):
 		for x in self._eh_ids:
 			self.daemon.disconnect(x)
 		self._eh_ids = []
+		del self.keyboard
 		OSDWindow.quit(self, code)
+	
+	
+	def show(self, *a):
+		OSDWindow.show(self, *a)
+		self.keyboard = uinputKeyboard(b"SCC OSD Keyboard")
 	
 	
 	def set_cursor_position(self, x, y, cursor, limit):

@@ -8,7 +8,7 @@
 		"RB"     : { "action" : "button(Keys.BTN_TR)" },
 		"BACK"   : { "action" : "button(Keys.BTN_SELECT)" },
 		"START"  : { "action" : "button(Keys.BTN_START)" },
-		"C"      : { "action" : "button(Keys.BTN_MODE)" },
+		"C"     : { "action": "menu('main.menu')" },
 		"LPAD"   : { "action" : "button(Keys.BTN_THUMBL)" },
 		"RPAD"   : { "action" : "button(Keys.BTN_THUMBR)" },
 		"LGRIP"  : { "action" : "button(Keys.BTN_A)" },
