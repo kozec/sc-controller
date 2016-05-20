@@ -35,15 +35,13 @@ class Menu(OSDWindow, TimerManager):
 		TimerManager.__init__(self)
 		self.daemon = None
 		
-		self.v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-		self.v.set_name("osd-menu")
-		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
 		self.cursor = Gtk.Image.new_from_file(cursor)
 		self.cursor.set_name("osd-menu-cursor")
 		
+		self.parent = self.create_parent()
 		self.f = Gtk.Fixed()
-		self.f.add(self.v)
+		self.f.add(self.parent)
 		self.add(self.f)
 		
 		self._direction = 0		# Movement direction
@@ -54,6 +52,17 @@ class Menu(OSDWindow, TimerManager):
 		self._control_with = STICK
 		self._confirm_with = 'A'
 		self._cancel_with = 'B'
+	
+	
+	def create_parent(self):
+		v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+		v.set_name("osd-menu")
+		return v
+	
+	
+	def pack_items(self, parent, items):
+		for item in items:
+			parent.pack_start(item.widget, True, True, 0)
 	
 	
 	def use_daemon(self, d):
@@ -150,9 +159,9 @@ class Menu(OSDWindow, TimerManager):
 		# Create buttons that are displayed on screen
 		for item in self.items:
 			item.widget = Gtk.Button.new_with_label(item.label)
-			self.v.pack_start(item.widget, True, True, 0)
 			item.widget.set_name("osd-menu-item")
 			item.widget.set_relief(Gtk.ReliefStyle.NONE)
+		self.pack_items(self.parent, self.items)
 		return True
 	
 	

@@ -135,7 +135,7 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_menu(self, mapper, action, *pars):
 		""" Called when 'osd' action is used """
-		p = [ 'menu',
+		p = [ action.MENU_TYPE,
 			"--confirm-with", action.confirm_with.name,
 			"--cancel-with", action.cancel_with.name
 		]
@@ -152,8 +152,9 @@ class SCCDaemon(Daemon):
 			p += [ "--from-profile", self.profile_file, action.menu_id ]
 		p += list(pars)
 		
-		print p
 		self._osd(*p)
+	
+	on_sa_gridmenu = on_sa_menu
 	
 	
 	def on_sa_profile(self, mapper, action):

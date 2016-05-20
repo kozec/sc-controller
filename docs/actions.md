@@ -98,6 +98,10 @@ is released.
 relative to `~/.config/scc/menus` directory.
 
 
+#### gridmenu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
+Same as `menu`, but displays items in grid.
+
+
 # Modifiers:
 
 #### click(action)
