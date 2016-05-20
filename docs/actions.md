@@ -102,6 +102,9 @@ relative to `~/.config/scc/menus` directory.
 Same as `menu`, but displays items in grid.
 
 
+#### keyboard()
+Displays on-screen keyboard
+
 # Modifiers:
 
 #### click(action)

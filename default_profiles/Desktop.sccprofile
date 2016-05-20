@@ -3,7 +3,7 @@
 		"A"     : { "action": "button(Keys.KEY_ENTER)" }, 
 		"B"     : { "action": "button(Keys.KEY_ESC)" }, 
 		"BACK"  : { "action": "button(Keys.KEY_BACKSPACE)" }, 
-		"C"     : { "action": "profile('XBox Controller with High Precision Camera')" },
+		"C"     : { "action": "menu('main.menu')" },
 		"LB"    : { "action": "button(Keys.KEY_LEFTCTRL)" }, 
 		"RB"    : { "action": "button(Keys.KEY_LEFTALT)" }, 
 		"RPAD"	: { "action": "button(Keys.BTN_LEFT)" }, 

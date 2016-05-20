@@ -58,6 +58,35 @@ class SVGWidget(Gtk.EventBox):
 		self.image_width = float(tree.attrib["width"])
 	
 	
+	def set_labels(self, labels):
+		tree = ET.fromstring(self.svg_source)
+		
+		def set_text(xml, text):
+			has_valid_children = False
+			for child in xml:
+				if child.tag.endswith("text") or child.tag.endswith("tspan"):
+					has_valid_children = True
+					set_text(child, text)
+			if not has_valid_children:
+				xml.text = text
+		
+		
+		def walk(xml):
+			for child in xml:
+				if 'id' in child.attrib:
+					if child.attrib['id'].startswith("LABEL_"):
+						id = child.attrib['id'][6:]
+						if id in labels:
+							set_text(child, labels[id])
+				walk(child)
+		
+		walk(tree)
+		self.svg_source = ET.tostring(tree)
+		
+		self.cache = {}
+		self.hilight({})
+	
+	
 	def on_mouse_click(self, trash, event):
 		area = self.on_mouse_moved(trash, event)
 		if area is not None:
@@ -77,7 +106,39 @@ class SVGWidget(Gtk.EventBox):
 				return a.name
 		self.emit('leave')
 		return None
+	
+	
+	def get_element(self, id):
+		tree = ET.fromstring(self.svg_source)
+		tree.parent = None
+		el = find_by_id(tree, id)
+		if el is not None:
+			def add_parent(parent):
+				for child in parent:
+					child.parent = parent
+					add_parent(child)
+			add_parent(tree)
+			return el
+		return None
+	
+	
+	def get_rect_area(self, xml, x=0, y=0):
+		"""
+		Returns x, y, width and height of rect element relative to document root.
+		"""
+		width, height = 0, 0
+		if 'x' in xml.attrib: x += float(xml.attrib['x'])
+		if 'y' in xml.attrib: y += float(xml.attrib['y'])
+		if 'width' in xml.attrib:  width = float(xml.attrib['width'])
+		if 'height' in xml.attrib: height = float(xml.attrib['height'])
 		
+		if xml.parent is not None:
+			px, py, trash, trash = self.get_rect_area(xml.parent)
+			x += px
+			y += py
+		
+		return x, y, width, height
+	
 	
 	def hilight(self, buttons):
 		""" Hilights specified button, if same ID is found in svg """
@@ -109,11 +170,13 @@ class SVGWidget(Gtk.EventBox):
 
 
 class Area:
+	SPECIAL_CASES = ( "LSTICK", "RSTICK", "DPAD", "ABS", "MOUSE",
+		"MINUSHALF", "PLUSHALF", "KEY" )
+	
 	""" Basicaly just rectangle with name """
 	def __init__(self, translation, element):
 		self.name = element.attrib['id'].split("_")[1]
-		if self.name in ("LSTICK", "RSTICK", "DPAD", "ABS", "MOUSE", "MINUSHALF", "PLUSHALF"):
-			# Special cases
+		if self.name in Area.SPECIAL_CASES:
 			self.name = "_".join(element.attrib['id'].split("_")[1:3])
 		self.x = float(element.attrib['x']) + translation[0]
 		self.y = float(element.attrib['y']) + translation[1]
@@ -128,7 +191,6 @@ class Area:
 	
 	def __str__(self):
 		return "<Area %s,%s %sx%s>" % (self.x, self.y, self.w, self.h)
-
 
 
 def find_areas(xml, translation, areas):

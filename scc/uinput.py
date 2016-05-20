@@ -636,10 +636,10 @@ class Keyboard(UInput):
 	setDelayPeriod permits to update these values
 	"""
 
-	def __init__(self):
+	def __init__(self, name=b"SCController Keyboard"):
 		super(Keyboard, self).__init__(vendor=0x28de,
 									   product=0x1142,
-									   name=b"SCController Keyboard",
+									   name=name,
 									   keys=Scans.keys(),
 									   axes=[],
 									   rels=[],

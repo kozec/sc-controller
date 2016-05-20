@@ -133,6 +133,11 @@ class SCCDaemon(Daemon):
 		self._osd('message', '-t', action.timeout, action.text)
 	
 	
+	def on_sa_keyboard(self, mapper, action):
+		""" Called when 'keyboard' action is used """
+		self._osd('keyboard')
+	
+	
 	def on_sa_menu(self, mapper, action, *pars):
 		""" Called when 'osd' action is used """
 		p = [ action.MENU_TYPE,
@@ -217,7 +222,10 @@ class SCCDaemon(Daemon):
 					log.warning("osd-daemon died; restarting")
 					time.sleep(5)
 		
-		threading.Thread(target=threaded).start()
+		if "DISPLAY" in os.environ:
+			threading.Thread(target=threaded).start()
+		else:
+			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
 
 
 	def run(self):
@@ -462,6 +470,10 @@ class SCCDaemon(Daemon):
 			if isinstance(self.mapper.profile.stick, LockedAction):
 				return False
 			return True
+		if what == SCButtons.LT:
+			return not isinstance(self.mapper.profile.triggers[LEFT], LockedAction)
+		if what == SCButtons.RT:
+			return not isinstance(self.mapper.profile.triggers[RIGHT], LockedAction)
 		if what in SCButtons:
 			return not isinstance(self.mapper.profile.buttons[what], LockedAction)
 		if what in (LEFT, RIGHT):
@@ -478,6 +490,14 @@ class SCCDaemon(Daemon):
 		if what == STICK:
 			a = self.mapper.profile.stick.compress()
 			self.mapper.profile.stick = LockedAction(what, client, a)
+			return
+		if what == SCButtons.LT:
+			a = self.mapper.profile.triggers[LEFT].compress()
+			self.mapper.profile.triggers[LEFT] = LockedAction(what, client, a)
+			return
+		if what == SCButtons.RT:
+			a = self.mapper.profile.triggers[RIGHT].compress()
+			self.mapper.profile.triggers[RIGHT] = LockedAction(what, client, a)
 			return
 		if what in SCButtons:
 			a = self.mapper.profile.buttons[what].compress()
@@ -502,6 +522,14 @@ class SCCDaemon(Daemon):
 		if what == STICK:
 			a = self.mapper.profile.stick.original_action
 			self.mapper.profile.stick = a
+			return
+		if what == SCButtons.LT:
+			a = self.mapper.profile.triggers[LEFT].original_action
+			self.mapper.profile.triggers[LEFT] = a
+			return
+		if what == SCButtons.RT:
+			a = self.mapper.profile.triggers[RIGHT].original_action
+			self.mapper.profile.triggers[RIGHT] = a
 			return
 		if what in SCButtons:
 			a = self.mapper.profile.buttons[what].original_action
@@ -580,13 +608,18 @@ class Client(object):
 
 
 class LockedAction(Action):
+	MIN_DIFFERENCE = 300
 	def __init__(self, what, client, original_action):
 		self.what = what
 		self.client = client
 		self.original_action = original_action
 		self.client.locked_actions.add(self)
+		self.old_pos = 0, 0
 		log.debug("%s locked by %s", what, client)
 	
+	def trigger(self, mapper, *a):
+		# Currently not used
+		pass
 	
 	def button_press(self, mapper):
 		self.client.wfile.write(("Event: %s 1\n" % (self.what.name,)).encode("utf-8"))
@@ -595,4 +628,6 @@ class LockedAction(Action):
 		self.client.wfile.write(("Event: %s 0\n" % (self.what.name,)).encode("utf-8"))
 	
 	def whole(self, mapper, x, y, what):
-		self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))
+		if abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE):
+			self.old_pos = x, y
+			self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))

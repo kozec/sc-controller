@@ -79,6 +79,7 @@ class DaemonManager(GObject.GObject):
 		if self.alive is True:
 			log.debug("Connection to daemon lost")
 		if self.alive is True or self.alive is None:
+			self.alive = False
 			self.emit("dead")
 		self.alive = False
 		# Close connection, if any
@@ -224,4 +225,5 @@ class DaemonManager(GObject.GObject):
 	
 	
 	def unlock_all(self):
-		self.request("Unlock.", lambda *a: False, lambda *a: False)
+		if self.alive:
+			self.request("Unlock.", lambda *a: False, lambda *a: False)
