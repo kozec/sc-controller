@@ -62,6 +62,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self.cursor_right.set_name("osd-menu-cursor")
 		
 		self._eh_ids = []
+		self._stick = 0, 0
 		self._hovers = { self.cursor_left : None, self.cursor_right : None }
 		self._pressed = { self.cursor_left : None, self.cursor_right : None }
 		
@@ -74,7 +75,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self.set_cursor_position(0, 0, self.cursor_left, self.limit_left)
 		self.set_cursor_position(0, 0, self.cursor_right, self.limit_right)
 		
-		self.update_labels()
+		# self.update_labels() # TODO: Why this doesn't work? :(
 	
 	
 	def use_daemon(self, d):
@@ -197,6 +198,10 @@ class Keyboard(OSDWindow, TimerManager):
 		elif what == RIGHT:
 			x, y = data
 			self.set_cursor_position(x, y, self.cursor_right, self.limit_right)
+		elif what == STICK:
+			self._stick = data
+			if not self.timer_active('stick'):
+				self.timer("stick", 0.05, self._move_window)
 		elif what == SCButtons.LPAD.name:
 			self.key_from_cursor(self.cursor_left, data[0] == 1)
 		elif what == SCButtons.RPAD.name:
@@ -206,6 +211,19 @@ class Keyboard(OSDWindow, TimerManager):
 				self.keyboard.pressEvent([ self.BUTTON_MAP[what] ])
 			else:
 				self.keyboard.releaseEvent([ self.BUTTON_MAP[what] ])
+	
+	
+	def _move_window(self, *a):
+		"""
+		Called by timer while stick is tilted to move window around the screen.
+		"""
+		x, y = self._stick
+		x = x * 50.0 / STICK_PAD_MAX
+		y = y * -50.0 / STICK_PAD_MAX
+		rx, ry = self.get_position()
+		self.move(rx + x, ry + y)
+		if abs(self._stick[0]) > 100 or abs(self._stick[1]) > 100:
+			self.timer("stick", 0.05, self._move_window)
 	
 	
 	def key_from_cursor(self, cursor, pressed):
