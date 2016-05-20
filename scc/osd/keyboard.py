@@ -14,6 +14,7 @@ from scc.constants import SCButtons
 from scc.tools import point_in_gtkrect
 from scc.paths import get_share_path
 from scc.menu_data import MenuData
+from scc.uinput import Keyboard as uinputKeyboard
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.svg_widget import SVGWidget
 from scc.osd.timermanager import TimerManager
@@ -36,9 +37,10 @@ class Keyboard(OSDWindow, TimerManager):
 		OSDWindow.__init__(self, "osd-menu")
 		TimerManager.__init__(self)
 		self.daemon = None
+		self.keyboard = uinputKeyboard(b"SCC OSD Keyboard")
 		
-		keyboard = os.path.join(get_share_path(), "images", 'keyboard.svg')
-		self.background = SVGWidget(self, keyboard)
+		kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
+		self.background = SVGWidget(self, kbimage)
 		
 		self.limit_left  = self.background.get_rect_area(self.background.get_element("LIMIT_LEFT"))
 		self.limit_right = self.background.get_rect_area(self.background.get_element("LIMIT_RIGHT"))
@@ -111,7 +113,10 @@ class Keyboard(OSDWindow, TimerManager):
 			log.error("Sucessfully locked input")
 			pass
 		
-		locks = [ LEFT, RIGHT, STICK, 'A', 'B' ]
+		locks = [ LEFT, RIGHT, STICK,
+			SCButtons.A.name, SCButtons.B.name,
+			SCButtons.LPAD.name,
+			SCButtons.RPAD.name ]
 		self.daemon.lock(success, self.on_failed_to_lock, *locks)
 	
 	
@@ -122,15 +127,6 @@ class Keyboard(OSDWindow, TimerManager):
 		self._eh_ids = []
 		OSDWindow.quit(self, code)
 	
-	
-	def on_event(self, daemon, what, data):
-		if what == LEFT:
-			x, y = data
-			self.set_cursor_position(x, y, self.cursor_left, self.limit_left)
-		elif what == RIGHT:
-			x, y = data
-			self.set_cursor_position(x, y, self.cursor_right, self.limit_right)
-			
 	
 	def set_cursor_position(self, x, y, cursor, limit):
 		w = limit[2] - (cursor.get_allocation().width * 0.5)
@@ -148,11 +144,46 @@ class Keyboard(OSDWindow, TimerManager):
 			if a.contains(x, y):
 				if a != self._hovers[cursor]:
 					self._hovers[cursor] = a
-					self.background.hilight({
-						"AREA_" + a.name : Keyboard.HILIGHT_COLOR
-						for a in [ a for a in self._hovers.values() if a ]
-					})
-				break
+					self.redraw_background()
+					break
+	
+	
+	def redraw_background(self, *a):
+		self.background.hilight({
+			"AREA_" + a.name : Keyboard.HILIGHT_COLOR
+			for a in [ a for a in self._hovers.values() if a ]
+		})
+
+
+	def on_event(self, daemon, what, data):
+		if what == LEFT:
+			x, y = data
+			self.set_cursor_position(x, y, self.cursor_left, self.limit_left)
+		elif what == RIGHT:
+			x, y = data
+			self.set_cursor_position(x, y, self.cursor_right, self.limit_right)
+		elif what == SCButtons.LPAD.name:
+			self.key_from_cursor(self.cursor_left, data[0] == 1)
+		elif what == SCButtons.RPAD.name:
+			self.key_from_cursor(self.cursor_left, data[0] == 1)
+	
+	
+	def key_from_cursor(self, cursor, pressed):
+		x = self.f.child_get_property(cursor, "x")
+		y = self.f.child_get_property(cursor, "y")
+		
+		for a in self.background.areas:
+			if a.contains(x, y):
+				if a.name.startswith("KEYCODE"):
+					keycode = int(a.name.split("_")[-1])
+					if pressed:
+						print "PRESSED:", a.name
+						self.keyboard.pressEvent([ keycode ])
+					else:
+						print "RELEASED:", a.name
+						self.keyboard.releaseEvent([ keycode ])
+				return
+		
 
 
 PId4 = math.pi / 4.0
