@@ -68,12 +68,27 @@ class OSDDaemon(object):
 				lambda *a : False, lambda *a : False)
 	
 	
+	def on_keyboard_closed(self, *a):
+		""" Called after on-screen keyboard is hidden from the screen """
+		self._window = None
+	
+	
 	def on_unknown_message(self, daemon, message):
 		if message.startswith("OSD: message"):
 			args = shlex.split(message)[1:]
 			m = Message()
 			m.parse_argumets(args)
 			m.show()
+		elif message.startswith("OSD: keyboard"):
+			if self._window:
+				log.warning("Another OSD is already visible - refusing to show menu")
+			else:
+				args = shlex.split(message)[1:]
+				self._window = Keyboard()
+				self._window.connect('destroy', self.on_keyboard_closed)
+				# self._window.parse_argumets(args) # TODO: No arguments so far
+				self._window.show()
+				self._window.use_daemon(self.daemon)
 		elif message.startswith("OSD: menu") or message.startswith("OSD: gridmenu"):
 			args = shlex.split(message)[1:]
 			if self._menu:

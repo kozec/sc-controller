@@ -206,6 +206,8 @@ class Keyboard(OSDWindow, TimerManager):
 			self.key_from_cursor(self.cursor_left, data[0] == 1)
 		elif what == SCButtons.RPAD.name:
 			self.key_from_cursor(self.cursor_right, data[0] == 1)
+		elif what == SCButtons.C.name:
+			self.quit(0)
 		elif what in self.BUTTON_MAP:
 			if data[0]:
 				self.keyboard.pressEvent([ self.BUTTON_MAP[what] ])
