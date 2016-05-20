@@ -579,11 +579,13 @@ class Client(object):
 
 
 class LockedAction(Action):
+	MIN_DIFFERENCE = 300
 	def __init__(self, what, client, original_action):
 		self.what = what
 		self.client = client
 		self.original_action = original_action
 		self.client.locked_actions.add(self)
+		self.old_pos = 0, 0
 		log.debug("%s locked by %s", what, client)
 	
 	
@@ -594,4 +596,6 @@ class LockedAction(Action):
 		self.client.wfile.write(("Event: %s 0\n" % (self.what.name,)).encode("utf-8"))
 	
 	def whole(self, mapper, x, y, what):
-		self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))
+		if abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE):
+			self.old_pos = x, y
+			self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))
