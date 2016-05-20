@@ -81,8 +81,8 @@ class Profile(object):
 			
 			# Pads
 			self.pads = {
-				Profile.LEFT	: self._load_action(data, "left_pad"),
-				Profile.RIGHT	: self._load_action(data, "right_pad"),
+				Profile.LEFT	: self.parser.from_json_data(data, "left_pad"),
+				Profile.RIGHT	: self.parser.from_json_data(data, "right_pad"),
 			}
 		else:
 			# New format
@@ -94,8 +94,8 @@ class Profile(object):
 		
 			# Pads
 			self.pads = {
-				Profile.LEFT	: self._load_action(data, "pad_left"),
-				Profile.RIGHT	: self._load_action(data, "pad_right"),
+				Profile.LEFT	: self.parser.from_json_data(data, "pad_left"),
+				Profile.RIGHT	: self.parser.from_json_data(data, "pad_right"),
 			}
 		
 		# Menus
