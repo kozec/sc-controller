@@ -58,6 +58,35 @@ class SVGWidget(Gtk.EventBox):
 		self.image_width = float(tree.attrib["width"])
 	
 	
+	def set_labels(self, labels):
+		tree = ET.fromstring(self.svg_source)
+		
+		def set_text(xml, text):
+			has_valid_children = False
+			for child in xml:
+				if child.tag.endswith("text") or child.tag.endswith("tspan"):
+					has_valid_children = True
+					set_text(child, text)
+			if not has_valid_children:
+				xml.text = text
+		
+		
+		def walk(xml):
+			for child in xml:
+				if 'id' in child.attrib:
+					if child.attrib['id'].startswith("LABEL_"):
+						id = child.attrib['id'][6:]
+						if id in labels:
+							set_text(child, labels[id])
+				walk(child)
+		
+		walk(tree)
+		self.svg_source = ET.tostring(tree)
+		
+		self.cache = {}
+		self.hilight({})
+	
+	
 	def on_mouse_click(self, trash, event):
 		area = self.on_mouse_moved(trash, event)
 		if area is not None:

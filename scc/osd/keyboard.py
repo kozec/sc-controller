@@ -18,7 +18,7 @@ from scc.menu_data import MenuData
 from scc.uinput import Keys
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.svg_widget import SVGWidget
-from scc.gui.gdk_to_key import GDK_TO_KEY
+from scc.gui.gdk_to_key import KEY_TO_GDK
 from scc.osd.timermanager import TimerManager
 from scc.osd import OSDWindow
 
@@ -73,6 +73,8 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		self.set_cursor_position(0, 0, self.cursor_left, self.limit_left)
 		self.set_cursor_position(0, 0, self.cursor_right, self.limit_right)
+		
+		self.update_labels()
 	
 	
 	def use_daemon(self, d):
@@ -86,6 +88,17 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
+	
+	
+	def update_labels(self):
+		labels = {}
+		for a in self.background.areas:
+			if hasattr(Keys, a.name):
+				key = getattr(Keys, a.name)
+				if key in KEY_TO_GDK:
+					labels[a.name] = chr(Gdk.keyval_to_unicode(KEY_TO_GDK[key]))
+		
+		self.background.set_labels(labels)
 	
 	
 	def parse_argumets(self, argv):
@@ -138,6 +151,9 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def set_cursor_position(self, x, y, cursor, limit):
+		"""
+		Moves cursor image.
+		"""
 		w = limit[2] - (cursor.get_allocation().width * 0.5)
 		h = limit[3] - (cursor.get_allocation().height * 0.5)
 		x = x / float(STICK_PAD_MAX)
@@ -161,6 +177,9 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def redraw_background(self, *a):
+		"""
+		Updates hilighted keys on bacgkround image.
+		"""
 		self.background.hilight({
 			"AREA_" + a.name : Keyboard.HILIGHT_COLOR
 			for a in [ a for a in self._hovers.values() if a ]
@@ -168,6 +187,10 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def on_event(self, daemon, what, data):
+		"""
+		Called when button press, button release or stick / pad update is
+		send by daemon.
+		"""
 		if what == LEFT:
 			x, y = data
 			self.set_cursor_position(x, y, self.cursor_left, self.limit_left)
@@ -186,6 +209,10 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def key_from_cursor(self, cursor, pressed):
+		"""
+		Sends keypress/keyrelease event to emulated keyboard, based on
+		position of cursor on OSD keyboard.
+		"""
 		x = self.f.child_get_property(cursor, "x")
 		y = self.f.child_get_property(cursor, "y")
 		
@@ -193,11 +220,11 @@ class Keyboard(OSDWindow, TimerManager):
 			for a in self.background.areas:
 				if a.contains(x, y):
 					if a.name.startswith("KEY_") and hasattr(Keys, a.name):
-						k = getattr(Keys, a.name)
+						key = getattr(Keys, a.name)
 						if self._pressed[cursor] is not None:
 							self.keyboard.releaseEvent([ self._pressed[cursor] ])
-						self.keyboard.pressEvent([ k ])
-						self._pressed[cursor] = k
+						self.keyboard.pressEvent([ key ])
+						self._pressed[cursor] = key
 					break
 		elif self._pressed[cursor] is not None:
 			self.keyboard.releaseEvent([ self._pressed[cursor] ])
@@ -207,6 +234,9 @@ class Keyboard(OSDWindow, TimerManager):
 
 PId4 = math.pi / 4.0
 def circle_to_square(x, y):
+	"""
+	Projects coordinate in circle (of radius 1.0) to coordinate in square.
+	"""
 	# Adapted from http://theinstructionlimit.com/squaring-the-thumbsticks
 	
 	# Determine the theta angle

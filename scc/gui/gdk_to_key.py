@@ -99,6 +99,7 @@ for x in dir(Gdk):
 for x in xrange(ord('a'), ord('z')+1):
 	GDK_TO_KEY[getattr(Gdk, "KEY_" + chr(x))] = names["KEY_" + chr(x).upper()]
 
+KEY_TO_GDK = { GDK_TO_KEY[a] : a for a in GDK_TO_KEY }
 
 def keyevent_to_key(event):
 	keymap = Gdk.Keymap.get_default()
