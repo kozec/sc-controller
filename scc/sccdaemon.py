@@ -461,6 +461,10 @@ class SCCDaemon(Daemon):
 			if isinstance(self.mapper.profile.stick, LockedAction):
 				return False
 			return True
+		if what == SCButtons.LT:
+			return not isinstance(self.mapper.profile.triggers[LEFT], LockedAction)
+		if what == SCButtons.RT:
+			return not isinstance(self.mapper.profile.triggers[RIGHT], LockedAction)
 		if what in SCButtons:
 			return not isinstance(self.mapper.profile.buttons[what], LockedAction)
 		if what in (LEFT, RIGHT):
@@ -477,6 +481,14 @@ class SCCDaemon(Daemon):
 		if what == STICK:
 			a = self.mapper.profile.stick.compress()
 			self.mapper.profile.stick = LockedAction(what, client, a)
+			return
+		if what == SCButtons.LT:
+			a = self.mapper.profile.triggers[LEFT].compress()
+			self.mapper.profile.triggers[LEFT] = LockedAction(what, client, a)
+			return
+		if what == SCButtons.RT:
+			a = self.mapper.profile.triggers[RIGHT].compress()
+			self.mapper.profile.triggers[RIGHT] = LockedAction(what, client, a)
 			return
 		if what in SCButtons:
 			a = self.mapper.profile.buttons[what].compress()
@@ -501,6 +513,14 @@ class SCCDaemon(Daemon):
 		if what == STICK:
 			a = self.mapper.profile.stick.original_action
 			self.mapper.profile.stick = a
+			return
+		if what == SCButtons.LT:
+			a = self.mapper.profile.triggers[LEFT].original_action
+			self.mapper.profile.triggers[LEFT] = a
+			return
+		if what == SCButtons.RT:
+			a = self.mapper.profile.triggers[RIGHT].original_action
+			self.mapper.profile.triggers[RIGHT] = a
 			return
 		if what in SCButtons:
 			a = self.mapper.profile.buttons[what].original_action
@@ -588,6 +608,9 @@ class LockedAction(Action):
 		self.old_pos = 0, 0
 		log.debug("%s locked by %s", what, client)
 	
+	def trigger(self, mapper, *a):
+		# Currently not used
+		pass
 	
 	def button_press(self, mapper):
 		self.client.wfile.write(("Event: %s 1\n" % (self.what.name,)).encode("utf-8"))

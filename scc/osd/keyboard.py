@@ -34,6 +34,13 @@ class Keyboard(OSDWindow, TimerManager):
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	HILIGHT_COLOR = "#00688D"
+	BUTTON_MAP = {
+		SCButtons.A.name : Keys.KEY_ENTER,
+		SCButtons.B.name : Keys.KEY_ESC,
+		SCButtons.LB.name : Keys.KEY_BACKSPACE,
+		SCButtons.RB.name : Keys.KEY_SPACE,
+		SCButtons.LGRIP.name : Keys.KEY_LEFTSHIFT,
+	}
 	
 	def __init__(self):
 		OSDWindow.__init__(self, "osd-menu")
@@ -117,10 +124,8 @@ class Keyboard(OSDWindow, TimerManager):
 			log.info("Sucessfully locked input")
 			pass
 		
-		locks = [ LEFT, RIGHT, STICK,
-			SCButtons.A.name, SCButtons.B.name,
-			SCButtons.LPAD.name,
-			SCButtons.RPAD.name ]
+		# Lock everything just in case
+		locks = [ LEFT, RIGHT, STICK ] + [ b.name for b in SCButtons ]
 		self.daemon.lock(success, self.on_failed_to_lock, *locks)
 	
 	
@@ -160,8 +165,8 @@ class Keyboard(OSDWindow, TimerManager):
 			"AREA_" + a.name : Keyboard.HILIGHT_COLOR
 			for a in [ a for a in self._hovers.values() if a ]
 		})
-
-
+	
+	
 	def on_event(self, daemon, what, data):
 		if what == LEFT:
 			x, y = data
@@ -173,6 +178,11 @@ class Keyboard(OSDWindow, TimerManager):
 			self.key_from_cursor(self.cursor_left, data[0] == 1)
 		elif what == SCButtons.RPAD.name:
 			self.key_from_cursor(self.cursor_right, data[0] == 1)
+		elif what in self.BUTTON_MAP:
+			if data[0]:
+				self.keyboard.pressEvent([ self.BUTTON_MAP[what] ])
+			else:
+				self.keyboard.releaseEvent([ self.BUTTON_MAP[what] ])
 	
 	
 	def key_from_cursor(self, cursor, pressed):
