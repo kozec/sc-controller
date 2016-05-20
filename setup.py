@@ -19,7 +19,7 @@ setup(name='sccontroller',
 		packages=['scc', 'scc.gui', 'scc.gui.ae', 'scc.lib', 'scc.osd'],
 		data_files = data_files,
 		scripts=['scripts/sc-controller', 'scripts/scc-daemon',
-			'scripts/scc-osd-message', 'scripts/scc-osd-menu']
+			'scripts/scc-osd-message', 'scripts/scc-osd-menu'],
 		license='GPL2',
 		platforms=['Linux'],
 		ext_modules=[
