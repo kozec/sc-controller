@@ -7,16 +7,18 @@ Display menu that user can navigate through and print chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, Gdk, GLib
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
 from scc.constants import SCButtons
+from scc.uinput import Keyboard as uinputKeyboard
 from scc.tools import point_in_gtkrect
 from scc.paths import get_share_path
 from scc.menu_data import MenuData
-from scc.uinput import Keyboard as uinputKeyboard
+from scc.uinput import Keys
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.svg_widget import SVGWidget
+from scc.gui.gdk_to_key import GDK_TO_KEY
 from scc.osd.timermanager import TimerManager
 from scc.osd import OSDWindow
 
@@ -38,6 +40,7 @@ class Keyboard(OSDWindow, TimerManager):
 		TimerManager.__init__(self)
 		self.daemon = None
 		self.keyboard = uinputKeyboard(b"SCC OSD Keyboard")
+		self.keymap = Gdk.Keymap.get_default()
 		
 		kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
 		self.background = SVGWidget(self, kbimage)
@@ -53,6 +56,7 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		self._eh_ids = []
 		self._hovers = { self.cursor_left : None, self.cursor_right : None }
+		self._pressed = { self.cursor_left : None, self.cursor_right : None }
 		
 		self.f = Gtk.Fixed()
 		self.f.add(self.background)
@@ -110,7 +114,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def on_daemon_connected(self, *a):
 		def success(*a):
-			log.error("Sucessfully locked input")
+			log.info("Sucessfully locked input")
 			pass
 		
 		locks = [ LEFT, RIGHT, STICK,
@@ -144,6 +148,9 @@ class Keyboard(OSDWindow, TimerManager):
 			if a.contains(x, y):
 				if a != self._hovers[cursor]:
 					self._hovers[cursor] = a
+					if self._pressed[cursor] is not None:
+						self.keyboard.releaseEvent([ self._pressed[cursor] ])
+						self.key_from_cursor(cursor, True)
 					self.redraw_background()
 					break
 	
@@ -165,24 +172,26 @@ class Keyboard(OSDWindow, TimerManager):
 		elif what == SCButtons.LPAD.name:
 			self.key_from_cursor(self.cursor_left, data[0] == 1)
 		elif what == SCButtons.RPAD.name:
-			self.key_from_cursor(self.cursor_left, data[0] == 1)
+			self.key_from_cursor(self.cursor_right, data[0] == 1)
 	
 	
 	def key_from_cursor(self, cursor, pressed):
 		x = self.f.child_get_property(cursor, "x")
 		y = self.f.child_get_property(cursor, "y")
 		
-		for a in self.background.areas:
-			if a.contains(x, y):
-				if a.name.startswith("KEYCODE"):
-					keycode = int(a.name.split("_")[-1])
-					if pressed:
-						print "PRESSED:", a.name
-						self.keyboard.pressEvent([ keycode ])
-					else:
-						print "RELEASED:", a.name
-						self.keyboard.releaseEvent([ keycode ])
-				return
+		if pressed:
+			for a in self.background.areas:
+				if a.contains(x, y):
+					if a.name.startswith("KEY_") and hasattr(Keys, a.name):
+						k = getattr(Keys, a.name)
+						if self._pressed[cursor] is not None:
+							self.keyboard.releaseEvent([ self._pressed[cursor] ])
+						self.keyboard.pressEvent([ k ])
+						self._pressed[cursor] = k
+					break
+		elif self._pressed[cursor] is not None:
+			self.keyboard.releaseEvent([ self._pressed[cursor] ])
+			self._pressed[cursor] = None
 		
 
 

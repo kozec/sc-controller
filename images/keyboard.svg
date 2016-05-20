@@ -28,9 +28,9 @@
      showgrid="false"
      showguides="false"
      units="px"
-     inkscape:current-layer="layer4"
-     inkscape:cx="932.03572"
-     inkscape:cy="-52.43201"
+     inkscape:current-layer="g9048"
+     inkscape:cx="368.69028"
+     inkscape:cy="224.89868"
      inkscape:document-units="px"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
@@ -39,7 +39,7 @@
      inkscape:window-width="1994"
      inkscape:window-x="2661"
      inkscape:window-y="5"
-     inkscape:zoom="2" />
+     inkscape:zoom="1.4142136" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -339,7 +339,7 @@
        transform="translate(12,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_49"
+         id="AREA_KEY_GRAVE"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="59"
          x="0"
@@ -363,7 +363,7 @@
        transform="translate(75,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_52"
+         id="AREA_KEY_Z"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -389,7 +389,7 @@
        transform="translate(147,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_53"
+         id="AREA_KEY_X"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -415,7 +415,7 @@
        transform="translate(219,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_54"
+         id="AREA_KEY_C"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -441,7 +441,7 @@
        transform="translate(291,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_55"
+         id="AREA_KEY_V"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="70"
          x="0"
@@ -467,7 +467,7 @@
        transform="translate(365,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_56"
+         id="AREA_KEY_B"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="80"
          x="0"
@@ -493,7 +493,7 @@
        transform="translate(449,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_57"
+         id="AREA_KEY_N"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="70"
          x="0"
@@ -519,7 +519,7 @@
        transform="translate(523,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_58"
+         id="AREA_KEY_M"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -545,7 +545,7 @@
        transform="translate(595,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_59"
+         id="AREA_KEY_COMMA"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="64.599998"
          x="0"
@@ -571,7 +571,7 @@
        transform="translate(663.6,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_60"
+         id="AREA_KEY_DOT"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="64.599998"
          x="0"
@@ -597,7 +597,7 @@
        transform="translate(732.2,177)">
       <rect
          height="81"
-         id="AREA_KEYCODE_61"
+         id="AREA_KEY_SLASH"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="64.599998"
          x="0"
@@ -615,7 +615,7 @@
              id="tspan4940"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Serif';-inkscape-font-specification:'DejaVu Serif';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="32.299999"
-             y="120">?</tspan></tspan></text>
+             y="120">/</tspan></tspan></text>
     </g>
   </g>
   <g
@@ -630,7 +630,7 @@
        transform="translate(12,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_20"
+         id="AREA_KEY_MINUS"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="45"
          x="0"
@@ -655,7 +655,7 @@
        transform="translate(61,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_38"
+         id="AREA_KEY_A"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="75"
          x="0"
@@ -681,7 +681,7 @@
        transform="translate(140,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_39"
+         id="AREA_KEY_S"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -707,7 +707,7 @@
        transform="translate(212,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_40"
+         id="AREA_KEY_D"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="62"
          x="0"
@@ -733,7 +733,7 @@
        transform="translate(278,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_41"
+         id="AREA_KEY_F"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="62"
          x="0"
@@ -759,7 +759,7 @@
        transform="translate(344,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_42"
+         id="AREA_KEY_G"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="60.5"
          x="0"
@@ -785,7 +785,7 @@
        transform="translate(408.5,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_43"
+         id="AREA_KEY_H"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="60.5"
          x="0"
@@ -811,7 +811,7 @@
        transform="translate(473,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_44"
+         id="AREA_KEY_J"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="62"
          x="0"
@@ -837,7 +837,7 @@
        transform="translate(539,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_45"
+         id="AREA_KEY_K"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -863,7 +863,7 @@
        transform="translate(611,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_46"
+         id="AREA_KEY_L"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -889,7 +889,7 @@
        transform="translate(683,102)">
       <rect
          height="67"
-         id="AREA_KEYCODE_36"
+         id="AREA_KEY_ENTER"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="114"
          x="0"
@@ -921,7 +921,7 @@
        transform="translate(12,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_24"
+         id="AREA_KEY_Q"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="75"
          x="0"
@@ -947,7 +947,7 @@
        transform="translate(91,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_25"
+         id="AREA_KEY_W"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="72"
          x="0"
@@ -973,7 +973,7 @@
        transform="translate(167,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_26"
+         id="AREA_KEY_E"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="62"
          x="0"
@@ -999,7 +999,7 @@
        transform="translate(233,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_27"
+         id="AREA_KEY_R"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="62"
          x="0"
@@ -1025,7 +1025,7 @@
        transform="translate(299,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_28"
+         id="AREA_KEY_T"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="62"
          x="0"
@@ -1051,7 +1051,7 @@
        transform="translate(365,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_29"
+         id="AREA_KEY_Y"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="80"
          x="0"
@@ -1077,7 +1077,7 @@
        transform="translate(449,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_30"
+         id="AREA_KEY_U"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="62"
          x="0"
@@ -1103,7 +1103,7 @@
        transform="translate(515,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_31"
+         id="AREA_KEY_I"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="62"
          x="0"
@@ -1130,7 +1130,7 @@
        inkscape:label="#g9158">
       <rect
          height="82"
-         id="AREA_KEYCODE_32"
+         id="AREA_KEY_O"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="72"
          x="0"
@@ -1157,7 +1157,7 @@
        inkscape:label="#g9170">
       <rect
          height="82"
-         id="AREA_KEYCODE_33"
+         id="AREA_KEY_P"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="75"
          x="0"
@@ -1183,7 +1183,7 @@
        transform="translate(736,13)">
       <rect
          height="82"
-         id="AREA_KEYCODE_51"
+         id="AREA_KEY_BACKSLASH"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="61"
          x="0"
@@ -1215,7 +1215,7 @@
        transform="translate(12,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_10"
+         id="AREA_KEY_1"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1241,7 +1241,7 @@
        transform="translate(84,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_11"
+         id="AREA_KEY_2"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1267,7 +1267,7 @@
        transform="translate(156,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_12"
+         id="AREA_KEY_3"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1293,7 +1293,7 @@
        transform="translate(228,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_13"
+         id="AREA_KEY_4"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1319,7 +1319,7 @@
        transform="translate(300,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_14"
+         id="AREA_KEY_5"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1345,7 +1345,7 @@
        transform="translate(441,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_15"
+         id="AREA_KEY_6"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1371,7 +1371,7 @@
        transform="translate(513,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_16"
+         id="AREA_KEY_7"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1397,7 +1397,7 @@
        transform="translate(585,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_17"
+         id="AREA_KEY_8"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1423,7 +1423,7 @@
        transform="translate(657,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_18"
+         id="AREA_KEY_9"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"
@@ -1449,7 +1449,7 @@
        transform="translate(729,-58)">
       <rect
          height="64.5"
-         id="AREA_KEYCODE_19"
+         id="AREA_KEY_0"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000075;fill-opacity:1;fill-rule:nonzero;stroke:#00448d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          width="68"
          x="0"

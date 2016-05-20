@@ -142,7 +142,7 @@ class SVGWidget(Gtk.EventBox):
 
 class Area:
 	SPECIAL_CASES = ( "LSTICK", "RSTICK", "DPAD", "ABS", "MOUSE",
-		"MINUSHALF", "PLUSHALF", "KEYCODE" )
+		"MINUSHALF", "PLUSHALF", "KEY" )
 	
 	""" Basicaly just rectangle with name """
 	def __init__(self, translation, element):
