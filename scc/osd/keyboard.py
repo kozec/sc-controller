@@ -75,7 +75,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self.set_cursor_position(0, 0, self.cursor_left, self.limit_left)
 		self.set_cursor_position(0, 0, self.cursor_right, self.limit_right)
 		
-		# self.update_labels() # TODO: Why this doesn't work? :(
+		self.update_labels()
 	
 	
 	def use_daemon(self, d):
@@ -93,11 +93,20 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def update_labels(self):
 		labels = {}
+		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
 		for a in self.background.areas:
 			if hasattr(Keys, a.name):
 				key = getattr(Keys, a.name)
 				if key in KEY_TO_GDK:
-					labels[a.name] = chr(Gdk.keyval_to_unicode(KEY_TO_GDK[key]))
+					found, keys = self.keymap.get_entries_for_keyval(KEY_TO_GDK[key])
+					if found:
+						for k in keys:
+							code = Gdk.keyval_to_unicode(
+								self.keymap.translate_keyboard_state(k.keycode, mt, 1)
+								.keyval)
+							if code != 0:
+								labels[a.name] = unichr(code)
+								break
 		
 		self.background.set_labels(labels)
 	
