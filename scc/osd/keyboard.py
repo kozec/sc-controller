@@ -188,7 +188,8 @@ class Keyboard(OSDWindow, TimerManager):
 					if self._pressed[cursor] is not None:
 						self.keyboard.releaseEvent([ self._pressed[cursor] ])
 						self.key_from_cursor(cursor, True)
-					self.redraw_background()
+					if not self.timer_active('redraw'):
+						self.timer('redraw', 0.01, self.redraw_background)
 					break
 	
 	
