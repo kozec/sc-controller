@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, GLib, GdkX11
-from scc.lib import xfixes
+from scc.lib import xwrappers as X
 
 import os, sys, argparse, logging
 log = logging.getLogger("osd")
@@ -106,12 +106,12 @@ class OSDWindow(Gtk.Window):
 		return True
 	
 	def make_window_clicktrough(self):
-		dpy = xfixes.Display(hash(GdkX11.x11_get_default_xdisplay()))		# I have no idea why this works...
-		win = xfixes.XID(self.get_window().get_xid())
-		reg = xfixes.create_region(dpy, None, 0)
-		xfixes.set_window_shape_region (dpy, win, xfixes.SHAPE_BOUNDING, 0, 0, 0)
-		xfixes.set_window_shape_region (dpy, win, xfixes.SHAPE_INPUT, 0, 0, reg)
-		xfixes.destroy_region (dpy, reg)
+		dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))		# I have no idea why this works...
+		win = X.XID(self.get_window().get_xid())
+		reg = X.create_region(dpy, None, 0)
+		X.set_window_shape_region (dpy, win, X.SHAPE_BOUNDING, 0, 0, 0)
+		X.set_window_shape_region (dpy, win, X.SHAPE_INPUT, 0, 0, reg)
+		X.destroy_region (dpy, reg)
 	
 	
 	def show(self):

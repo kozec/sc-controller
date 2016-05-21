@@ -1,13 +1,13 @@
 #!/usr/bin/env python2
 
 """
-Basic and incomplete wrapper for XFixes library.
+Python wrapper for some X-related stuff.
 """
 
 from ctypes import CDLL, POINTER, c_void_p, Structure
 from ctypes import c_ulong, c_int, c_short, c_ushort
 
-libXFixes = CDLL('libXfixes.so.3')
+libXFixes = CDLL('libXfixes.so')
 
 # Types
 XID = c_ulong
