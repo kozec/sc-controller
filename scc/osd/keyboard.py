@@ -11,9 +11,9 @@ from gi.repository import Gtk, Gdk, GdkX11, GLib
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
 from scc.constants import SCButtons
+from scc.paths import get_share_path, get_config_path
 from scc.uinput import Keyboard as uinputKeyboard
 from scc.tools import point_in_gtkrect
-from scc.paths import get_share_path
 from scc.menu_data import MenuData
 from scc.uinput import Keys
 from scc.lib import xwrappers as X
@@ -52,7 +52,11 @@ class Keyboard(OSDWindow, TimerManager):
 		self.keymap = Gdk.Keymap.get_default()
 		self.keymap.connect('state-changed', self.on_state_changed)
 		
-		kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
+		
+		kbimage = os.path.join(get_config_path(), 'keyboard.svg')
+		if not os.path.exists(kbimage):
+			# Prefer image in ~/.config/scc, but load default one as fallback
+			kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
 		self.background = SVGWidget(self, kbimage)
 		
 		self.limit_left  = self.background.get_rect_area(self.background.get_element("LIMIT_LEFT"))
