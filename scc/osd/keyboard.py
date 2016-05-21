@@ -100,22 +100,26 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def update_labels(self):
 		labels = {}
+		# Get current layout group
 		dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))		# Still no idea why...
 		group = X.get_xkb_state(dpy).group
+		# Get state of shift/alt/ctrl key
 		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
 		for a in self.background.areas:
-			if hasattr(Keys, a.name):
+			# Iterate over all translatable keys...
+			if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_GDK:
+				# Try to convert GKD key to keycode
 				key = getattr(Keys, a.name)
-				if key in KEY_TO_GDK:
-					found, keys = self.keymap.get_entries_for_keyval(KEY_TO_GDK[key])
-					if found:
-						for k in keys:
-							code = Gdk.keyval_to_unicode(
-								self.keymap.translate_keyboard_state(k.keycode, mt, group)
-								.keyval)
-							if code != 0:
-								labels[a.name] = unichr(code)
-								break
+				found, keys = self.keymap.get_entries_for_keyval(KEY_TO_GDK[key])
+				if not found: continue
+				for k in sorted(keys, key=lambda a : a.level):
+					# Try to convert keycode to label
+					code = Gdk.keyval_to_unicode(
+						self.keymap.translate_keyboard_state(k.keycode, mt, group)
+						.keyval)
+					if code != 0:
+						labels[a.name] = unichr(code)
+						break
 		
 		self.background.set_labels(labels)
 	
