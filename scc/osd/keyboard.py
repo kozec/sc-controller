@@ -7,7 +7,7 @@ Display menu that user can navigate through and print chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GdkX11, GLib
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
 from scc.constants import SCButtons
@@ -16,6 +16,7 @@ from scc.tools import point_in_gtkrect
 from scc.paths import get_share_path
 from scc.menu_data import MenuData
 from scc.uinput import Keys
+from scc.lib import xwrappers as X
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import KEY_TO_GDK
@@ -48,6 +49,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self.daemon = None
 		self.keyboard = None
 		self.keymap = Gdk.Keymap.get_default()
+		self.keymap.connect('state-changed', self.on_state_changed)
 		
 		kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
 		self.background = SVGWidget(self, kbimage)
@@ -75,7 +77,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self.set_cursor_position(0, 0, self.cursor_left, self.limit_left)
 		self.set_cursor_position(0, 0, self.cursor_right, self.limit_right)
 		
-		self.update_labels()
+		self.timer('labels', 0.1, self.update_labels)
 	
 	
 	def use_daemon(self, d):
@@ -87,12 +89,19 @@ class Keyboard(OSDWindow, TimerManager):
 		self.on_daemon_connected(self.daemon)
 	
 	
+	def on_state_changed(self, x11keymap):
+		if not self.timer_active('labels'):
+			self.timer('labels', 0.1, self.update_labels)
+	
+	
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 	
 	
 	def update_labels(self):
 		labels = {}
+		dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))		# Still no idea why...
+		group = X.get_xkb_state(dpy).group
 		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
 		for a in self.background.areas:
 			if hasattr(Keys, a.name):
@@ -102,7 +111,7 @@ class Keyboard(OSDWindow, TimerManager):
 					if found:
 						for k in keys:
 							code = Gdk.keyval_to_unicode(
-								self.keymap.translate_keyboard_state(k.keycode, mt, 1)
+								self.keymap.translate_keyboard_state(k.keycode, mt, group)
 								.keyval)
 							if code != 0:
 								labels[a.name] = unichr(code)
