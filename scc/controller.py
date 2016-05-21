@@ -161,15 +161,16 @@ class SCController(object):
 			return
 		
 		data = transfer.getBuffer()
-		self._tup = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), data))
-		if self._tup.status == SCStatus.HOTPLUG:
+		tup = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), data))
+		if tup.status == SCStatus.HOTPLUG:
 			transfer.submit()
 			state, = struct.unpack('<xxxxB59x', data)
 			self._controller_connected = (state == 2)
 			if self._cscallback:
 				self._cscallback(self, self._controller_connected)
 				self.configure_controller()
-		elif self._tup.status == SCStatus.INPUT:
+		elif tup.status == SCStatus.INPUT:
+			self._tup = tup
 			self._callback()
 			transfer.submit()
 			if not self._controller_connected:
