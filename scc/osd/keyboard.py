@@ -7,7 +7,7 @@ Display menu that user can navigate through and print chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GdkX11, GLib
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
 from scc.constants import SCButtons
@@ -16,6 +16,7 @@ from scc.tools import point_in_gtkrect
 from scc.paths import get_share_path
 from scc.menu_data import MenuData
 from scc.uinput import Keys
+from scc.lib import xwrappers as X
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import KEY_TO_GDK
@@ -43,11 +44,12 @@ class Keyboard(OSDWindow, TimerManager):
 	}
 	
 	def __init__(self):
-		OSDWindow.__init__(self, "osd-menu")
+		OSDWindow.__init__(self, "osd-keyboard")
 		TimerManager.__init__(self)
 		self.daemon = None
 		self.keyboard = None
 		self.keymap = Gdk.Keymap.get_default()
+		self.keymap.connect('state-changed', self.on_state_changed)
 		
 		kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
 		self.background = SVGWidget(self, kbimage)
@@ -57,25 +59,29 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
 		self.cursor_left = Gtk.Image.new_from_file(cursor)
-		self.cursor_left.set_name("osd-menu-cursor")
+		self.cursor_left.set_name("osd-keyboard-cursor")
 		self.cursor_right = Gtk.Image.new_from_file(cursor)
-		self.cursor_right.set_name("osd-menu-cursor")
+		self.cursor_right.set_name("osd-keyboard-cursor")
 		
 		self._eh_ids = []
 		self._stick = 0, 0
 		self._hovers = { self.cursor_left : None, self.cursor_right : None }
 		self._pressed = { self.cursor_left : None, self.cursor_right : None }
 		
+		self.c = Gtk.Box()
+		self.c.set_name("osd-keyboard-container")
+		
 		self.f = Gtk.Fixed()
 		self.f.add(self.background)
 		self.f.add(self.cursor_left)
 		self.f.add(self.cursor_right)
-		self.add(self.f)
+		self.c.add(self.f)
+		self.add(self.c)
 		
 		self.set_cursor_position(0, 0, self.cursor_left, self.limit_left)
 		self.set_cursor_position(0, 0, self.cursor_right, self.limit_right)
 		
-		# self.update_labels() # TODO: Why this doesn't work? :(
+		self.timer('labels', 0.1, self.update_labels)
 	
 	
 	def use_daemon(self, d):
@@ -87,17 +93,37 @@ class Keyboard(OSDWindow, TimerManager):
 		self.on_daemon_connected(self.daemon)
 	
 	
+	def on_state_changed(self, x11keymap):
+		if not self.timer_active('labels'):
+			self.timer('labels', 0.1, self.update_labels)
+	
+	
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 	
 	
 	def update_labels(self):
 		labels = {}
+		# Get current layout group
+		dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))		# Still no idea why...
+		group = X.get_xkb_state(dpy).group
+		# Get state of shift/alt/ctrl key
+		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
 		for a in self.background.areas:
-			if hasattr(Keys, a.name):
+			# Iterate over all translatable keys...
+			if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_GDK:
+				# Try to convert GKD key to keycode
 				key = getattr(Keys, a.name)
-				if key in KEY_TO_GDK:
-					labels[a.name] = chr(Gdk.keyval_to_unicode(KEY_TO_GDK[key]))
+				found, keys = self.keymap.get_entries_for_keyval(KEY_TO_GDK[key])
+				if not found: continue
+				for k in sorted(keys, key=lambda a : a.level):
+					# Try to convert keycode to label
+					code = Gdk.keyval_to_unicode(
+						self.keymap.translate_keyboard_state(k.keycode, mt, group)
+						.keyval)
+					if code != 0:
+						labels[a.name] = unichr(code)
+						break
 		
 		self.background.set_labels(labels)
 	
@@ -179,7 +205,8 @@ class Keyboard(OSDWindow, TimerManager):
 					if self._pressed[cursor] is not None:
 						self.keyboard.releaseEvent([ self._pressed[cursor] ])
 						self.key_from_cursor(cursor, True)
-					self.redraw_background()
+					if not self.timer_active('redraw'):
+						self.timer('redraw', 0.01, self.redraw_background)
 					break
 	
 	
