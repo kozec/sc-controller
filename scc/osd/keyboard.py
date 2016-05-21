@@ -44,7 +44,7 @@ class Keyboard(OSDWindow, TimerManager):
 	}
 	
 	def __init__(self):
-		OSDWindow.__init__(self, "osd-menu")
+		OSDWindow.__init__(self, "osd-keyboard")
 		TimerManager.__init__(self)
 		self.daemon = None
 		self.keyboard = None
@@ -59,20 +59,24 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
 		self.cursor_left = Gtk.Image.new_from_file(cursor)
-		self.cursor_left.set_name("osd-menu-cursor")
+		self.cursor_left.set_name("osd-keyboard-cursor")
 		self.cursor_right = Gtk.Image.new_from_file(cursor)
-		self.cursor_right.set_name("osd-menu-cursor")
+		self.cursor_right.set_name("osd-keyboard-cursor")
 		
 		self._eh_ids = []
 		self._stick = 0, 0
 		self._hovers = { self.cursor_left : None, self.cursor_right : None }
 		self._pressed = { self.cursor_left : None, self.cursor_right : None }
 		
+		self.c = Gtk.Box()
+		self.c.set_name("osd-keyboard-container")
+		
 		self.f = Gtk.Fixed()
 		self.f.add(self.background)
 		self.f.add(self.cursor_left)
 		self.f.add(self.cursor_right)
-		self.add(self.f)
+		self.c.add(self.f)
+		self.add(self.c)
 		
 		self.set_cursor_position(0, 0, self.cursor_left, self.limit_left)
 		self.set_cursor_position(0, 0, self.cursor_right, self.limit_right)

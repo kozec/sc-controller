@@ -17,7 +17,7 @@ log = logging.getLogger("osd")
 class OSDWindow(Gtk.Window):
 	# TODO: Configurable css
 	CSS = """
-		#osd-message, #osd-menu {
+		#osd-message, #osd-menu, #osd-keyboard {
 			background-color: black;
 			border: 6px lime double;
 		}
@@ -31,6 +31,10 @@ class OSDWindow(Gtk.Window):
 		
 		#osd-menu {
 			padding: 7px 7px 7px 7px;
+		}
+		
+		#osd-keyboard-container {
+			padding: 6px 6px 6px 6px;
 		}
 		
 		#osd-menu-item, #osd-menu-item-selected {
@@ -49,9 +53,8 @@ class OSDWindow(Gtk.Window):
 			border: 1px #00FF00 solid;
 		}
 		
-		#osd-menu-cursor {
+		#osd-menu-cursor, #osd-keyboard-cursor {
 		}
-		
 	"""
 	EPILOG = ""
 	

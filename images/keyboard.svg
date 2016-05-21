@@ -7,11 +7,11 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   height="412.0788"
+   height="405"
    id="svg2"
    version="1.1"
-   viewBox="0 0 809.99997 412.07879"
-   width="810"
+   viewBox="0 0 799.99997 404.99999"
+   width="800"
    sodipodi:docname="keyboard.svg"
    inkscape:version="0.91 r13725">
   <defs
@@ -28,18 +28,18 @@
      showgrid="false"
      showguides="false"
      units="px"
-     inkscape:current-layer="g9981"
-     inkscape:cx="399.87989"
-     inkscape:cy="-31.394706"
+     inkscape:current-layer="layer3"
+     inkscape:cx="676.29933"
+     inkscape:cy="126.34075"
      inkscape:document-units="px"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:window-height="1025"
      inkscape:window-maximized="0"
      inkscape:window-width="1680"
-     inkscape:window-x="112"
-     inkscape:window-y="30"
-     inkscape:zoom="0.50000001" />
+     inkscape:window-x="116"
+     inkscape:window-y="-7"
+     inkscape:zoom="2" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -48,7 +48,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -56,31 +56,26 @@
      id="layer3"
      style="display:inline"
      inkscape:groupmode="layer"
-     inkscape:label="Background">
+     inkscape:label="Background"
+     transform="translate(-3.0517578e-5,0)">
     <rect
-       height="410.0788"
+       height="405"
        id="rect8773"
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#00ff00;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-       width="808"
-       x="1"
-       y="1" />
-    <rect
-       height="402.74936"
-       id="rect8773-9"
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:0;fill-rule:nonzero;stroke:#00ff00;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        width="800"
-       x="5"
-       y="5" />
+       x="0"
+       y="0" />
   </g>
   <g
      inkscape:groupmode="layer"
      id="layer4"
      inkscape:label="row5"
-     style="display:inline">
+     style="display:inline"
+     transform="translate(-3.0517578e-5,0)">
     <g
        style="display:inline"
        id="g10117-6"
-       transform="translate(12.001291,267.99982)">
+       transform="translate(6.626291,263.82304)">
       <rect
          height="67"
          id="AREA_SHIFT"
@@ -120,7 +115,7 @@
     <g
        style="display:inline"
        id="g10117-6-6"
-       transform="translate(721.56327,268.00732)">
+       transform="translate(716.18827,263.83054)">
       <rect
          height="67"
          id="AREA_CHARS"
@@ -194,7 +189,7 @@
     <g
        style="display:inline"
        id="g10117-6-65"
-       transform="translate(94.00129,267.99982)">
+       transform="translate(88.62629,263.82304)">
       <rect
          height="67"
          id="AREA_BACKPACE"
@@ -255,7 +250,7 @@
     <g
        style="display:inline"
        id="g10117-6-65-0"
-       transform="translate(194.7084,267.99982)">
+       transform="translate(189.3334,263.82304)">
       <rect
          height="67"
          id="AREA_SPACE"
@@ -329,7 +324,7 @@
     <g
        style="display:inline"
        id="g10117-6-6-0"
-       transform="translate(641.56327,268.00732)">
+       transform="translate(636.18827,263.83054)">
       <rect
          height="67"
          id="AREA_CHARS-7"
@@ -393,13 +388,13 @@
   <g
      id="g9981"
      style="display:inline"
-     transform="translate(0,1)"
+     transform="translate(-3.0517578e-5,1)"
      inkscape:groupmode="layer"
      inkscape:label="row4">
     <g
        id="g8534"
        style="display:inline"
-       transform="translate(12,177)">
+       transform="translate(6.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_GRAVE"
@@ -423,7 +418,7 @@
     </g>
     <g
        id="g9983"
-       transform="translate(75,177)">
+       transform="translate(69.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_Z"
@@ -450,7 +445,7 @@
     <g
        id="g9995"
        style="display:inline"
-       transform="translate(147,177)">
+       transform="translate(141.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_X"
@@ -477,7 +472,7 @@
     <g
        id="g10007"
        style="display:inline"
-       transform="translate(219,177)">
+       transform="translate(213.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_C"
@@ -504,7 +499,7 @@
     <g
        id="g10019"
        style="display:inline"
-       transform="translate(291,177)">
+       transform="translate(285.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_V"
@@ -531,7 +526,7 @@
     <g
        id="g10043"
        style="display:inline"
-       transform="translate(365,177)">
+       transform="translate(359.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_B"
@@ -558,7 +553,7 @@
     <g
        id="g10055"
        style="display:inline"
-       transform="translate(449,177)">
+       transform="translate(443.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_N"
@@ -585,7 +580,7 @@
     <g
        id="g10067"
        style="display:inline"
-       transform="translate(523,177)">
+       transform="translate(517.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_M"
@@ -612,7 +607,7 @@
     <g
        id="g10079"
        style="display:inline"
-       transform="translate(595,177)">
+       transform="translate(589.625,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_COMMA"
@@ -639,7 +634,7 @@
     <g
        id="g10091"
        style="display:inline"
-       transform="translate(663.6,177)">
+       transform="translate(658.225,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_DOT"
@@ -666,7 +661,7 @@
     <g
        id="g10103"
        style="display:inline"
-       transform="translate(732.2,177)">
+       transform="translate(726.825,172.82322)">
       <rect
          height="81"
          id="AREA_KEY_SLASH"
@@ -694,13 +689,13 @@
   <g
      id="g10115"
      style="display:inline"
-     transform="translate(0,1)"
+     transform="translate(-3.0517578e-5,1)"
      inkscape:groupmode="layer"
      inkscape:label="row3">
     <g
        id="g8503-0-21"
        style="display:inline"
-       transform="translate(12,102)">
+       transform="translate(6.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_MINUS"
@@ -726,7 +721,7 @@
     </g>
     <g
        id="g10117"
-       transform="translate(61,102)">
+       transform="translate(55.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_A"
@@ -753,7 +748,7 @@
     <g
        id="g10129"
        style="display:inline"
-       transform="translate(140,102)">
+       transform="translate(134.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_S"
@@ -780,7 +775,7 @@
     <g
        id="g10141"
        style="display:inline"
-       transform="translate(212,102)">
+       transform="translate(206.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_D"
@@ -807,7 +802,7 @@
     <g
        id="g10153"
        style="display:inline"
-       transform="translate(278,102)">
+       transform="translate(272.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_F"
@@ -834,7 +829,7 @@
     <g
        id="g10165"
        style="display:inline"
-       transform="translate(344,102)">
+       transform="translate(338.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_G"
@@ -861,7 +856,7 @@
     <g
        id="g10177"
        style="display:inline"
-       transform="translate(408.5,102)">
+       transform="translate(403.125,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_H"
@@ -888,7 +883,7 @@
     <g
        id="g10189"
        style="display:inline"
-       transform="translate(473,102)">
+       transform="translate(467.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_J"
@@ -915,7 +910,7 @@
     <g
        id="g10201"
        style="display:inline"
-       transform="translate(539,102)">
+       transform="translate(533.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_K"
@@ -942,7 +937,7 @@
     <g
        id="g10213"
        style="display:inline"
-       transform="translate(611,102)">
+       transform="translate(605.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_L"
@@ -969,7 +964,7 @@
     <g
        id="g10225"
        style="display:inline"
-       transform="translate(683,102)">
+       transform="translate(677.625,97.823223)">
       <rect
          height="67"
          id="AREA_KEY_ENTER"
@@ -1036,12 +1031,12 @@
   <g
      id="g9048"
      style="display:inline"
-     transform="translate(0,1)"
+     transform="translate(-3.0517578e-5,1)"
      inkscape:groupmode="layer"
      inkscape:label="row2">
     <g
        id="g9050"
-       transform="translate(12,13)">
+       transform="translate(6.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_Q"
@@ -1068,7 +1063,7 @@
     <g
        id="g9074"
        style="display:inline"
-       transform="translate(91,13)">
+       transform="translate(85.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_W"
@@ -1095,7 +1090,7 @@
     <g
        id="g9086"
        style="display:inline"
-       transform="translate(167,13)">
+       transform="translate(161.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_E"
@@ -1122,7 +1117,7 @@
     <g
        id="g9098"
        style="display:inline"
-       transform="translate(233,13)">
+       transform="translate(227.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_R"
@@ -1149,7 +1144,7 @@
     <g
        id="g9110"
        style="display:inline"
-       transform="translate(299,13)">
+       transform="translate(293.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_T"
@@ -1176,7 +1171,7 @@
     <g
        id="g9122"
        style="display:inline"
-       transform="translate(365,13)">
+       transform="translate(359.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_Y"
@@ -1203,7 +1198,7 @@
     <g
        id="g9134"
        style="display:inline"
-       transform="translate(449,13)">
+       transform="translate(443.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_U"
@@ -1230,7 +1225,7 @@
     <g
        id="g9146"
        style="display:inline"
-       transform="translate(515,13)">
+       transform="translate(509.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_I"
@@ -1257,7 +1252,7 @@
     <g
        id="adasxas"
        style="display:inline"
-       transform="translate(581,13)"
+       transform="translate(575.625,8.8232233)"
        inkscape:label="#g9158">
       <rect
          height="82"
@@ -1285,7 +1280,7 @@
     <g
        id="45trvgfd"
        style="display:inline"
-       transform="translate(657,13)"
+       transform="translate(651.625,8.8232233)"
        inkscape:label="#g9170">
       <rect
          height="82"
@@ -1313,7 +1308,7 @@
     <g
        id="g9182"
        style="display:inline"
-       transform="translate(736,13)">
+       transform="translate(730.625,8.8232233)">
       <rect
          height="82"
          id="AREA_KEY_BACKSLASH"
@@ -1341,12 +1336,12 @@
   <g
      id="layer2"
      style="display:inline"
-     transform="translate(0,1)"
+     transform="translate(-3.0517578e-5,1)"
      inkscape:groupmode="layer"
      inkscape:label="row1">
     <g
        id="g8503"
-       transform="translate(12,-58)">
+       transform="translate(6.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_1"
@@ -1372,7 +1367,7 @@
     <g
        id="g8503-1"
        style="display:inline"
-       transform="translate(84,-58)">
+       transform="translate(78.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_2"
@@ -1398,7 +1393,7 @@
     <g
        id="g8503-4"
        style="display:inline"
-       transform="translate(156,-58)">
+       transform="translate(150.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_3"
@@ -1424,7 +1419,7 @@
     <g
        id="g8503-2"
        style="display:inline"
-       transform="translate(228,-58)">
+       transform="translate(222.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_4"
@@ -1450,7 +1445,7 @@
     <g
        id="g8503-8"
        style="display:inline"
-       transform="translate(300,-58)">
+       transform="translate(294.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_5"
@@ -1476,7 +1471,7 @@
     <g
        id="g8503-0"
        style="display:inline"
-       transform="translate(441,-58)">
+       transform="translate(435.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_6"
@@ -1502,7 +1497,7 @@
     <g
        id="g8503-0-2"
        style="display:inline"
-       transform="translate(513,-58)">
+       transform="translate(507.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_7"
@@ -1528,7 +1523,7 @@
     <g
        id="g8503-0-6"
        style="display:inline"
-       transform="translate(585,-58)">
+       transform="translate(579.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_8"
@@ -1554,7 +1549,7 @@
     <g
        id="g8503-0-4"
        style="display:inline"
-       transform="translate(657,-58)">
+       transform="translate(651.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_9"
@@ -1580,7 +1575,7 @@
     <g
        id="g8503-0-3"
        style="display:inline"
-       transform="translate(729,-58)">
+       transform="translate(723.625,-62.176777)">
       <rect
          height="64.5"
          id="AREA_KEY_0"
@@ -1608,22 +1603,23 @@
      id="layer1"
      style="display:inline;opacity:0"
      inkscape:groupmode="layer"
-     inkscape:label="limits">
+     inkscape:label="limits"
+     transform="translate(-3.0517578e-5,0)">
     <rect
        height="286.98175"
        id="LIMIT_LEFT"
        style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#028d00;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        width="381.082"
-       x="28.48287"
-       y="14.231447"
+       x="23.10787"
+       y="10.05467"
        inkscape:label="#rect4152" />
     <rect
        height="287.02466"
        id="LIMIT_RIGHT"
        style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#028d00;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        width="385.19727"
-       x="403.6698"
-       y="14.450872"
+       x="398.2948"
+       y="10.274096"
        inkscape:label="#rect4152" />
   </g>
 </svg>
