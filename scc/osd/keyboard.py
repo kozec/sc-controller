@@ -41,6 +41,7 @@ class Keyboard(OSDWindow, TimerManager):
 		SCButtons.LB.name : Keys.KEY_BACKSPACE,
 		SCButtons.RB.name : Keys.KEY_SPACE,
 		SCButtons.LGRIP.name : Keys.KEY_LEFTSHIFT,
+		SCButtons.RGRIP.name : Keys.KEY_RIGHTALT,
 	}
 	
 	def __init__(self):
