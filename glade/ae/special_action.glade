@@ -23,6 +23,10 @@
         <col id="1" translatable="yes">Change Profile</col>
       </row>
       <row>
+        <col id="0">keyboard</col>
+        <col id="1" translatable="yes">Display On-Screen Keyboard</col>
+      </row>
+      <row>
         <col id="0">shell</col>
         <col id="1" translatable="yes">Execute Command</col>
       </row>

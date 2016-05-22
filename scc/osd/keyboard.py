@@ -91,7 +91,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def use_daemon(self, d):
 		"""
-		Allows (re)using already existin DaemonManager instance in same process
+		Allows (re)using already existing DaemonManager instance in same process
 		"""
 		self.daemon = d
 		self._cononect_handlers()
@@ -103,11 +103,8 @@ class Keyboard(OSDWindow, TimerManager):
 			self.timer('labels', 0.1, self.update_labels)
 	
 	
-	def _add_arguments(self):
-		OSDWindow._add_arguments(self)
-	
-	
 	def update_labels(self):
+		""" Updates keyboard labels based on active X keymap """
 		labels = {}
 		# Get current layout group
 		dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))		# Still no idea why...
@@ -118,10 +115,15 @@ class Keyboard(OSDWindow, TimerManager):
 			# Iterate over all translatable keys...
 			if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_GDK:
 				# Try to convert GKD key to keycode
-				key = getattr(Keys, a.name)
-				found, keys = self.keymap.get_entries_for_keyval(KEY_TO_GDK[key])
+				gdkkey = KEY_TO_GDK[getattr(Keys, a.name)]
+				found, entries = self.keymap.get_entries_for_keyval(gdkkey)
+				
+				if gdkkey == Gdk.KEY_equal:
+					# Special case, GDK reports nonsense here
+					entries = [ [ e for e in entries if e.level == 0 ][-1] ]
+				
 				if not found: continue
-				for k in sorted(keys, key=lambda a : a.level):
+				for k in sorted(entries, key=lambda a : a.level):
 					# Try to convert keycode to label
 					code = Gdk.keyval_to_unicode(
 						self.keymap.translate_keyboard_state(k.keycode, mt, group)
@@ -244,13 +246,13 @@ class Keyboard(OSDWindow, TimerManager):
 			self.key_from_cursor(self.cursor_left, data[0] == 1)
 		elif what == SCButtons.RPAD.name:
 			self.key_from_cursor(self.cursor_right, data[0] == 1)
-		elif what == SCButtons.C.name:
-			self.quit(0)
 		elif what in self.BUTTON_MAP:
 			if data[0]:
 				self.keyboard.pressEvent([ self.BUTTON_MAP[what] ])
 			else:
 				self.keyboard.releaseEvent([ self.BUTTON_MAP[what] ])
+		elif what in [ b.name for b in SCButtons ]:
+			self.quit(0)
 	
 	
 	def _move_window(self, *a):
