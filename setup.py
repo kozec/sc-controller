@@ -21,7 +21,7 @@ setup(name='sccontroller',
 		data_files = data_files,
 		scripts=['scripts/sc-controller', 'scripts/scc-daemon',
 			'scripts/scc-osd-message', 'scripts/scc-osd-menu',
-			'scripts/scc-osd-keyboard' ]
+			'scripts/scc-osd-keyboard'],
 		license='GPL2',
 		platforms=['Linux'],
 		ext_modules=[
