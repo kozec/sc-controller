@@ -20,13 +20,13 @@ UI-only stuff:
 
 
 OSD related stuff:
-- OSD
-- on-screen keyboard
 - Touch-Menu
 - Radial Menu for the Joystick/Trackpad
 
 
 **Done** stuff:
+- OSD
+- on-screen keyboard
 - Haptic feedback support
 - Gyroscope input
 - Gamepad button as modifier (modeshift)

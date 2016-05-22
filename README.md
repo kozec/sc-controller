@@ -11,6 +11,7 @@ Features:
 - Supports profiles switchable in GUI or with controller button
 - Stick, Pads and Gyroscope input
 - Haptic Feedback support
+- On-Screen Keyboard for desktop *and* in games.
 - Macros, rapid fire, modeshift...
 - Emulates XBox360 controller, mouse, trackball and keyboard.
 
@@ -19,13 +20,14 @@ Based on [Standalone Steam Controller Driver](https://github.com/ynsta/steamcont
 Packages:
 - Ubuntu (deb-based distros): in [OpenSUSE Build Service](http://software.opensuse.org/download.html?project=home%3Akozec&package=sc-controller).
 - Fedora, SUSE (rpm-based distros): in [OpenSUSE Build Service](http://software.opensuse.org/download.html?project=home%3Akozec&package=sc-controller).
+- Arch, Manjaro: in [AUR](https://aur.archlinux.org/packages/sc-controller-git/)
 
 To run without package:
-- download [latest release](https://github.com/kozec/sc-controller/releases/latest)
-- `./run.sh`
+- download and extract [latest release](https://github.com/kozec/sc-controller/releases/latest)
+- navigate to extracted directory and execute `./run.sh`
 
 To install without package:
-- download [latest release](https://github.com/kozec/sc-controller/releases/latest)
+- download and extract  [latest release](https://github.com/kozec/sc-controller/releases/latest)
 - `python2 setup.py build`
 - `python2 setup.py install`
 
