@@ -215,8 +215,8 @@ class SCCDaemon(Daemon):
 		""" Starts OSD Daemon on bacgkround (if possible) """
 		def threaded():
 			while not self.exiting:
-				p = subprocess.Popen([ find_binary('scc-osd-daemon'),
-					'debug' ], stdin=None)
+				p = subprocess.Popen([ sys.executable,
+					find_binary('scc-osd-daemon'), 'debug' ], stdin=None)
 				p.communicate()
 				if not self.exiting:
 					log.warning("osd-daemon died; restarting")
