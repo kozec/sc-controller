@@ -28,9 +28,9 @@
      showgrid="false"
      showguides="true"
      units="px"
-     inkscape:current-layer="layer3"
-     inkscape:cx="149.16529"
-     inkscape:cy="25.947628"
+     inkscape:current-layer="layer2"
+     inkscape:cx="463.95776"
+     inkscape:cy="337.23933"
      inkscape:document-units="px"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
@@ -39,7 +39,7 @@
      inkscape:window-width="1746"
      inkscape:window-x="69"
      inkscape:window-y="0"
-     inkscape:zoom="1" />
+     inkscape:zoom="5.6568542" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -75,7 +75,7 @@
        style="display:inline"
        id="layer1-7"
        inkscape:label="Layer 1"
-       transform="translate(-219.37374,-526.17696)">
+       transform="translate(-223.37374,-526.17696)">
       <path
          sodipodi:nodetypes="cccccccccc"
          inkscape:connector-curvature="0"
@@ -96,7 +96,7 @@
     </g>
     <g
        style="display:inline"
-       transform="translate(-215.37374,-488.17696)"
+       transform="translate(-219.37374,-488.17696)"
        id="layer1-4"
        inkscape:label="Layer 1">
       <path
@@ -253,12 +253,12 @@
            y="356.83054">Esc</tspan></tspan></text>
     <path
        style="display:inline;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 73.313791,360.68732 15.375,0 0,-16.625 5.5625,0 -13.4375,-13.4375 -13.09375,13.09375 5.78125,0 z"
+       d="m 67.313791,360.68732 15.375,0 0,-16.625 5.5625,0 -13.4375,-13.4375 -13.09375,13.09375 5.78125,0 z"
        id="path4866-1"
        inkscape:connector-curvature="0" />
     <path
        style="display:inline;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 95.24927,392.68722 0,-15.375 -16.625,0 0,-5.5625 -13.4375,13.4375 13.09375,13.09375 0,-5.78125 z"
+       d="m 89.24927,392.68722 0,-15.375 -16.625,0 0,-5.5625 -13.4375,13.4375 13.09375,13.09375 0,-5.78125 z"
        id="path4866-7-8"
        inkscape:connector-curvature="0" />
   </g>
@@ -512,7 +512,7 @@
              id="tspan4886"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
-             y="120">Y</tspan></tspan></text>
+             y="120">Z</tspan></tspan></text>
     </g>
     <g
        id="g9995"
@@ -1212,7 +1212,7 @@
              id="tspan4772"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
-             y="120">.</tspan></tspan></text>
+             y="120">E</tspan></tspan></text>
     </g>
     <g
        id="g9098"
@@ -1462,7 +1462,7 @@
              id="tspan4688"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
-             y="113">a</tspan></tspan></text>
+             y="113">1</tspan></tspan></text>
     </g>
     <g
        id="g8503-1"
@@ -1488,7 +1488,7 @@
              id="tspan4700"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
-             y="113">b</tspan></tspan></text>
+             y="113">2</tspan></tspan></text>
     </g>
     <g
        id="g8503-4"
@@ -1576,7 +1576,7 @@
          height="64.5"
          id="AREA_KEY_6"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#162082;fill-opacity:1;fill-rule:nonzero;stroke:#262b5e;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-         width="100"
+         width="102.50781"
          x="0"
          y="67.602768"
          inkscape:label="#rect4152" />
@@ -1584,15 +1584,16 @@
          id="LABEL_KEY_6"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          sodipodi:linespacing="125%"
-         xml:space="preserve"><tspan
+         xml:space="preserve"
+         x="2"><tspan
            id="tspan4716"
            sodipodi:role="line"
-           x="50"
+           x="52"
            y="113"><tspan
              id="tspan4718"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
-             x="50"
-             y="113">^</tspan></tspan></text>
+             x="52"
+             y="113">6</tspan></tspan></text>
     </g>
     <g
        id="g8503-0-2"
@@ -1602,23 +1603,24 @@
          height="64.5"
          id="AREA_KEY_7"
          style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#162082;fill-opacity:1;fill-rule:nonzero;stroke:#262b5e;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-         width="68"
-         x="0"
+         width="65.967072"
+         x="2.032932"
          y="67.602768"
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_7"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          sodipodi:linespacing="125%"
-         xml:space="preserve"><tspan
+         xml:space="preserve"
+         x="2"><tspan
            id="tspan4722"
            sodipodi:role="line"
-           x="34"
+           x="36"
            y="113"><tspan
              id="tspan4724"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
-             x="34"
-             y="113">y</tspan></tspan></text>
+             x="36"
+             y="113">7</tspan></tspan></text>
     </g>
     <g
        id="g8503-0-6"
@@ -1696,7 +1698,7 @@
              id="tspan4742"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
-             y="113">z</tspan></tspan></text>
+             y="113">0</tspan></tspan></text>
     </g>
   </g>
   <g
