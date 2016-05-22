@@ -9,7 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import ChangeProfileAction, ShellCommandAction
-from scc.special_actions import TurnOffAction
+from scc.special_actions import TurnOffAction, KeyboardAction
 from scc.actions import Action, NoAction
 from scc.gui.profile_manager import ProfileManager
 from scc.gui.parser import GuiActionParser
@@ -58,6 +58,9 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 			elif isinstance(action, ChangeProfileAction):
 				self._current_profile = action.profile
 				self.select_action_type("profile")
+			elif isinstance(action, KeyboardAction):
+				self._current_profile = action.profile
+				self.select_action_type("keyboard")
 			else:
 				self.select_action_type("none")
 	
@@ -88,7 +91,8 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 	
 	
 	def handles(self, mode, action):
-		return isinstance(action, (NoAction, TurnOffAction, ShellCommandAction, ChangeProfileAction))
+		return isinstance(action, (NoAction, TurnOffAction, ShellCommandAction,
+			ChangeProfileAction, KeyboardAction))
 	
 	
 	def select_action_type(self, key):
@@ -114,6 +118,10 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 		elif key == "profile":
 			stActionData.set_visible_child(self.builder.get_object("vbProfile"))
 			self.on_cbProfile_changed()
+		elif key == "keyboard":
+			stActionData.set_visible_child(self.builder.get_object("nothing"))
+			if not self._recursing:
+				self.editor.set_action(KeyboardAction())
 		elif key == "turnoff":
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			if not self._recursing:
