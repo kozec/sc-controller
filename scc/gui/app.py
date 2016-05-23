@@ -67,6 +67,14 @@ class App(Gtk.Application, UserDataManager):
 		self.button_widgets = {}
 		self.undo = []
 		self.redo = []
+		
+		def aaa():
+			from scc.gui.menu_editor import MenuEditor
+			me = MenuEditor(self, None)
+			me.set_menu('menu1')
+			me.show(self.window)
+		
+		GLib.idle_add(aaa)
 	
 	
 	def setup_widgets(self):

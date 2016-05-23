@@ -45,7 +45,6 @@ FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
 class ActionEditor(Editor):
 	GLADE = "action_editor.glade"
 	ERROR_CSS = " #error {background-color:green; color:red;} "
-	css = None
 
 	def __init__(self, app, callback):
 		self.app = app
@@ -61,13 +60,7 @@ class ActionEditor(Editor):
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback	# This is different callback than ButtonChooser uses
-		if ActionEditor.css is None:
-			ActionEditor.css = Gtk.CssProvider()
-			ActionEditor.css.load_from_data(str(ActionEditor.ERROR_CSS))
-			Gtk.StyleContext.add_provider_for_screen(
-					Gdk.Screen.get_default(),
-					ActionEditor.css,
-					Gtk.STYLE_PROVIDER_PRIORITY_USER)
+		Editor.install_error_css()
 		self._action = NoAction()
 		self._selected_component = None
 		self._modifiers_enabled = True
