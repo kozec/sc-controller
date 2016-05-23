@@ -26,7 +26,7 @@ class UserDataManager(object):
 		if not os.path.exists(profiles_path):
 			log.info("Creting profile directory '%s'" % (profiles_path,))
 			os.makedirs(profiles_path)
-		menus_path = get_profiles_path()
+		menus_path = get_menus_path()
 		if not os.path.exists(menus_path):
 			log.info("Creting menu directory '%s'" % (menus_path,))
 			os.makedirs(menus_path)
