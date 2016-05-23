@@ -204,6 +204,9 @@ class Keyboard(OSDWindow, TimerManager):
 		x = (limit[0] + w * 0.5) + x * w * 0.5
 		y = (limit[1] + h * 0.5) + y * h * 0.5
 		
+		x -= cursor.get_allocation().width * 0.5
+		y -= cursor.get_allocation().height * 0.5
+		
 		self.f.move(cursor, int(x), int(y))
 		for a in self.background.areas:
 			if a.contains(x, y):
