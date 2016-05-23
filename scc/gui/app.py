@@ -11,8 +11,8 @@ from gi.repository import Gtk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
 from scc.gui.controller_widget import ControllerPad, ControllerStick, ControllerGyro
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
+from scc.gui.userdata_manager import UserDataManager
 from scc.gui.modeshift_editor import ModeshiftEditor
-from scc.gui.profile_manager import ProfileManager
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
@@ -31,7 +31,7 @@ from scc.profile import Profile
 import os, sys, json, logging
 log = logging.getLogger("App")
 
-class App(Gtk.Application, ProfileManager):
+class App(Gtk.Application, UserDataManager):
 	"""
 	Main application / window.
 	"""
@@ -45,7 +45,7 @@ class App(Gtk.Application, ProfileManager):
 		Gtk.Application.__init__(self,
 				application_id="me.kozec.scc",
 				flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.NON_UNIQUE )
-		ProfileManager.__init__(self)
+		UserDataManager.__init__(self)
 		# Setup Gtk.Application
 		self.setup_commandline()
 		# Setup DaemonManager

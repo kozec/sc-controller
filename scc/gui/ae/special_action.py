@@ -9,9 +9,10 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import ChangeProfileAction, ShellCommandAction
-from scc.special_actions import TurnOffAction, KeyboardAction
+from scc.special_actions import TurnOffAction, KeyboardAction, OSDAction
+from scc.special_actions import MenuAction
 from scc.actions import Action, NoAction
-from scc.gui.profile_manager import ProfileManager
+from scc.gui.userdata_manager import UserDataManager
 from scc.gui.parser import GuiActionParser
 from scc.gui.ae import AEComponent
 
@@ -21,7 +22,7 @@ log = logging.getLogger("AE.SpecialAction")
 __all__ = [ 'SAComponent' ]
 
 
-class SpecialActionComponent(AEComponent, ProfileManager):
+class SpecialActionComponent(AEComponent, UserDataManager):
 	GLADE = "ae/special_action.glade"
 	NAME = "special_action"
 	CTXS = Action.AC_BUTTON,
@@ -29,10 +30,11 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
-		ProfileManager.__init__(self)
+		UserDataManager.__init__(self)
 		self._recursing = False
-		self._profile_load_started = False
+		self._userdata_load_started = False
 		self._current_profile = None
+		self._current_menu = None
 		self.parser = GuiActionParser()
 	
 	
@@ -42,9 +44,10 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 	
 	
 	def shown(self):
-		if not self._profile_load_started:
-			self._profile_load_started = True
+		if not self._userdata_load_started:
+			self._userdata_load_started = True
 			self.load_profile_list()
+			self.load_menu_list()
 	
 	
 	def set_action(self, mode, action):
@@ -58,9 +61,15 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 			elif isinstance(action, ChangeProfileAction):
 				self._current_profile = action.profile
 				self.select_action_type("profile")
+			elif isinstance(action, MenuAction):
+				self._current_menu = action.menu_id
+				self.select_action_type("menu")
 			elif isinstance(action, KeyboardAction):
-				self._current_profile = action.profile
 				self.select_action_type("keyboard")
+			elif isinstance(action, OSDAction):
+				self.select_action_type("osd")
+				enOSDText = self.builder.get_object("enOSDText")
+				enOSDText.set_text(action.text)
 			else:
 				self.select_action_type("none")
 	
@@ -86,13 +95,41 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 		self._recursing = False
 	
 	
+	def on_menus_loaded(self, menus):
+		cb = self.builder.get_object("cbMenus")
+		cb.set_row_separator_func( lambda model, iter : model.get_value(iter, 1) is None )
+		model = cb.get_model()
+		model.clear()
+		i, current_index = 0, 0
+		# Add menus from profile
+		for key in self.app.current.menus:
+			model.append((key, key))
+			if self._current_menu == key:
+				current_index = i
+			i += 1
+		if i > 0:
+			model.append((None, None))	# Separator
+			i += 1
+		for f in menus:
+			name = f.get_basename()
+			key = name
+			model.append((name, key))
+			if self._current_menu == key:
+				current_index = i
+			i += 1
+		
+		self._recursing = True
+		cb.set_active(current_index)
+		self._recursing = False
+	
+	
 	def get_button_title(self):
 		return _("Special Action")
 	
 	
 	def handles(self, mode, action):
 		return isinstance(action, (NoAction, TurnOffAction, ShellCommandAction,
-			ChangeProfileAction, KeyboardAction))
+			ChangeProfileAction, KeyboardAction, OSDAction, MenuAction))
 	
 	
 	def select_action_type(self, key):
@@ -122,6 +159,13 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			if not self._recursing:
 				self.editor.set_action(KeyboardAction())
+		elif key == "osd":
+			stActionData.set_visible_child(self.builder.get_object("vbOSD"))
+			if not self._recursing:
+				self.editor.set_action(OSDAction(""))
+		elif key == "menu":
+			stActionData.set_visible_child(self.builder.get_object("grMenu"))
+			self.on_cbMenus_changed()
 		elif key == "turnoff":
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			if not self._recursing:
@@ -148,7 +192,26 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 		self.editor.set_action(ChangeProfileAction(name))
 	
 	
+	def on_cbMenus_changed(self, *a):
+		""" Called when user chooses menu in selection combo """
+		if self._recursing : return
+		cb = self.builder.get_object("cbMenus")
+		model = cb.get_model()
+		iter = cb.get_active_iter()
+		if iter is None:
+			# Empty list
+			return
+		name = model.get_value(iter, 1)
+		self.editor.set_action(MenuAction(name))
+	
+	
 	def on_enCommand_changed(self, *a):
 		if self._recursing : return
 		enCommand = self.builder.get_object("enCommand")
 		self.editor.set_action(ShellCommandAction(enCommand.get_text()))
+	
+	
+	def on_enOSDText_changed(self, *a):
+		if self._recursing : return
+		enOSDText = self.builder.get_object("enOSDText")
+		self.editor.set_action(OSDAction(enOSDText.get_text()))
