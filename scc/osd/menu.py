@@ -237,6 +237,10 @@ class Menu(OSDWindow, TimerManager):
 				max_h = self.get_allocation().height - (self.cursor.get_allocation().height * 1.0)
 				x = ((x / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w
 				y = (0.5 - (y / (STICK_PAD_MAX * 2.0))) * max_h
+				
+				x -= self.cursor.get_allocation().width * 0.5
+				y -= self.cursor.get_allocation().height * 0.5
+				
 				self.f.move(self.cursor, int(x), int(y))
 				for i in self.items:
 					if point_in_gtkrect(i.widget.get_allocation(), x, y):
