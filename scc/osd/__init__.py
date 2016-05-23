@@ -123,9 +123,9 @@ class OSDWindow(Gtk.Window):
 		self.get_window().set_override_redirect(True)
 		x, y = self.position
 		if x < 0:	# Negative X position is counted from right border
-			x = Gdk.Screen.width() - self.get_allocated_size()[0].width + x + 1
+			x = Gdk.Screen.width() - self.get_allocated_width() + x + 1
 		if y < 0:	# Negative Y position is counted from bottom border
-			y = Gdk.Screen.height() - self.get_allocated_size()[0].height + y + 1
+			y = Gdk.Screen.height() - self.get_allocated_height() + y + 1
 		
 		self.move(x, y)
 		Gtk.Window.show(self)
