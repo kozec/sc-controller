@@ -7,8 +7,22 @@ Python wrapper for some X-related stuff.
 from ctypes import CDLL, POINTER, c_void_p, Structure
 from ctypes import c_ulong, c_int, c_uint, c_short, c_ushort, c_ubyte
 
-libXFixes = CDLL('libXfixes.so')
-libX11 = CDLL('libX11.so')
+
+def _load_lib(*names):
+	"""
+	Tries multiple alternative names to load .so library.
+	"""
+	for l in names:
+		try:
+			return CDLL(l)
+		except OSError:
+			pass
+	raise OSError("Failed to load %s, library not found" % (names[0],))
+
+
+libXFixes = _load_lib('libXfixes.so', 'libXfixes.so.3')
+libX11 = _load_lib('libX11.so', 'libX11.so.6')
+
 
 # Types
 XID = c_ulong
