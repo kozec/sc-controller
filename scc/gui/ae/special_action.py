@@ -59,7 +59,6 @@ class SpecialActionComponent(AEComponent, ProfileManager):
 				self._current_profile = action.profile
 				self.select_action_type("profile")
 			elif isinstance(action, KeyboardAction):
-				self._current_profile = action.profile
 				self.select_action_type("keyboard")
 			else:
 				self.select_action_type("none")
