@@ -1,25 +1,25 @@
 [{
-    "id": "item0", 
-    "action": "profile('Desktop')",
-    "osd": true,
-    "name": "Switch Profile: Desktop"
-},{
+    "action": "profile('Desktop')", 
     "id": "item1", 
-    "action": "profile('XBox Controller with High Precision Camera')",
-    "osd": true,
-    "name": "Switch Profile: XBox with High Precision Camera"
+    "name": "Profile: Desktop", 
+    "osd": true
 }, {
+    "action": "profile('XBox Controller with High Precision Camera')", 
     "id": "item2", 
-    "action": "profile('XBox Controller')",
-    "osd": true,
-    "name": "Switch Profile: XBox Controller"
+    "name": "Profile: XBox Controller with High Precision Camera", 
+    "osd": true
 }, {
+    "action": "profile('XBox Controller')", 
     "id": "item3", 
-    "action": "turnoff",
-    "osd": true,
-    "name": "Switch Turn OFF the Controller"
+    "name": "Profile: XBox Controller", 
+    "osd": true
 }, {
+    "action": "turnoff()", 
     "id": "item4", 
-    "action": "keyboard",
+    "name": "Turning controller OFF", 
+    "osd": true
+}, {
+    "action": "keyboard()", 
+    "id": "item5", 
     "name": "Display Keyboard"
 }]

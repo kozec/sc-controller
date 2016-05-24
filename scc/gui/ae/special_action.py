@@ -149,8 +149,10 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 	
 	
 	def handles(self, mode, action):
+		if isinstance(action, OSDAction) and action.action is None:
+			return True
 		return isinstance(action, (NoAction, TurnOffAction, ShellCommandAction,
-			ChangeProfileAction, KeyboardAction, OSDAction, MenuAction))
+			ChangeProfileAction, KeyboardAction, MenuAction))
 	
 	
 	def select_action_type(self, key):

@@ -151,7 +151,7 @@ class OSDAction(SpecialAction):
 	
 	def strip(self):
 		if self.action:
-			self.action = self.action.strip()
+			return self.action.strip()
 		return self
 	
 	
