@@ -8,10 +8,6 @@ List of (possibly) planned features in no particular order
 - Cycling Buttons
 
 
-Hard stuff:
-- Spining mouse wheel rotation
-
-
 UI-only stuff:
 - Profile import / export
 - Process monitor (or active window monitor) with switch
@@ -27,6 +23,7 @@ OSD related stuff:
 - OSD
 - Menu in OSD
 - on-screen keyboard
+- Spining mouse wheel rotation
 - Haptic feedback support
 - Gyroscope input
 - Gamepad button as modifier (modeshift)
