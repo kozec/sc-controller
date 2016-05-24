@@ -35,8 +35,17 @@ class CustomActionComponent(AEComponent):
 	
 	def get_button_title(self):
 		return _("Custom Action")
-
-
+	
+	
+	def load(self):
+		if self.loaded : return
+		AEComponent.load(self)
+		try:
+			txCustomAction = self.builder.get_object("txCustomAction")
+			txCustomAction.set_monospace(True)
+		except: pass
+	
+	
 	def set_action(self, mode, action):
 		action = self.editor.generate_modifiers(action)
 		tbCustomAction = self.builder.get_object("tbCustomAction")

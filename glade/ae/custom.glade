@@ -42,7 +42,6 @@
             <property name="left_margin">5</property>
             <property name="right_margin">5</property>
             <property name="buffer">tbCustomAction</property>
-            <property name="monospace">True</property>
           </object>
         </child>
       </object>
