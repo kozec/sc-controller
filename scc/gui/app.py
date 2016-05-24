@@ -251,7 +251,6 @@ class App(Gtk.Application, UserDataManager):
 				cb.set_active(0)
 			else:
 				self.select_profile(self.current_file.get_path())
-			
 			new_name = os.path.split(self.current_file.get_path())[-1]
 			if new_name.endswith(".mod"): new_name = new_name[0:-4]
 			if new_name.endswith(".sccprofile"): new_name = new_name[0:-11]
@@ -262,6 +261,15 @@ class App(Gtk.Application, UserDataManager):
 			dlg.set_transient_for(self.window)
 			dlg.show()
 		else:
+			modpath = f.get_path() + ".mod"
+			if os.path.exists(modpath):
+				log.debug("Removing .mod file '%s'", modpath)
+				try:
+					os.unlink(modpath)
+				except Exception, e:
+					log.warning("Failed to remove .mod file")
+					log.warning(e)
+			
 			self.load_profile(f)
 			if not self.daemon_changed_profile:
 				self.dm.set_profile(f.get_path())
@@ -471,12 +479,6 @@ class App(Gtk.Application, UserDataManager):
 	
 	def on_daemon_profile_changed(self, trash, profile):
 		current_changed = self.builder.get_object("rvProfileChanged").get_reveal_child()
-		if profile.endswith(".mod"):
-			try:
-				os.unlink(profile)
-			except Exception, e:
-				log.warning("Failed to remove .mod file")
-				log.warning(e)
 		if self.just_started or not current_changed:
 			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
 			self.daemon_changed_profile = True
