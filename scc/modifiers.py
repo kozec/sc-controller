@@ -12,8 +12,9 @@ from scc.actions import Action, NoAction, ACTIONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.controller import HapticData
+from math import sqrt
 
-import time, logging, math
+import time, logging
 log = logging.getLogger("Modifiers")
 _ = lambda x : x
 
@@ -214,7 +215,7 @@ class DeadzoneModifier(Modifier):
 	
 	
 	def whole(self, mapper, x, y, what):
-		dist = math.sqrt(x*x + y*y)
+		dist = sqrt(x*x + y*y)
 		if dist < -self.upper or dist > self.upper: x, y = 0, 0
 		if dist > -self.lower and dist < self.lower: x, y = 0, 0
 		return self.action.whole(mapper, x, y, what)
