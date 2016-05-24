@@ -62,7 +62,7 @@ class SCController(object):
 				break
 
 		if self._handle is None:
-			raise ValueError('Controler Device not found')
+			raise ValueError('Controller Device not found')
 
 		self._ccidx = ccidx
 		dev = self._handle.getDevice()
