@@ -2,6 +2,7 @@
 Name=SC Controller
 GenericName=SC Controller
 Comment=Edits controller mappings
+Comment[ru]=Настройка контроллера
 Exec=sc-controller
 Type=Application
 Icon=sc-controller
