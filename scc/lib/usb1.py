@@ -169,7 +169,7 @@ except AttributeError:
 # From a comment in libusb-1.0: "Some devices choke on size > 255"
 STRING_LENGTH = 255
 
-# As of v3 of USB specs, there cannot be more than 7 hubs from controler to
+# As of v3 of USB specs, there cannot be more than 7 hubs from controller to
 # device.
 PATH_MAX_DEPTH = 7
 
