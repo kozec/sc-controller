@@ -131,6 +131,8 @@ class OSDAction(SpecialAction):
 		if self.name: return self.name
 		if self.action:
 			return _("%s (with OSD)") % (self.action.describe(context), )
+		elif context == Action.AC_OSD:
+			return _("Display '%s'" % self.text)
 		return _("OSD Message")
 	
 	
