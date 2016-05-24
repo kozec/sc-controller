@@ -11,6 +11,7 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.actions import Action, XYAction, NoAction
+from scc.special_actions import OSDAction
 from scc.controller import HapticData
 from scc.constants import HapticPos
 from scc.profile import Profile
@@ -45,7 +46,6 @@ FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
 class ActionEditor(Editor):
 	GLADE = "action_editor.glade"
 	ERROR_CSS = " #error {background-color:green; color:red;} "
-	css = None
 
 	def __init__(self, app, callback):
 		self.app = app
@@ -58,16 +58,11 @@ class ActionEditor(Editor):
 		self.feedback = [0.0] * 3		# Feedback slider values, set later
 		self.feedback_position = None	# None for 'disabled'
 		self.click = False				# Click modifier value. None for disabled
+		self.osd = False				# 'OSD enabled' value.
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback	# This is different callback than ButtonChooser uses
-		if ActionEditor.css is None:
-			ActionEditor.css = Gtk.CssProvider()
-			ActionEditor.css.load_from_data(str(ActionEditor.ERROR_CSS))
-			Gtk.StyleContext.add_provider_for_screen(
-					Gdk.Screen.get_default(),
-					ActionEditor.css,
-					Gtk.STYLE_PROVIDER_PRIORITY_USER)
+		Editor.install_error_css()
 		self._action = NoAction()
 		self._selected_component = None
 		self._modifiers_enabled = True
@@ -170,9 +165,26 @@ class ActionEditor(Editor):
 	def hide_require_click(self):
 		"""
 		Hides 'Require Click' checkbox.
-		Used when editing everythin but pad.
+		Used when editing everything but pad.
 		"""
 		self.builder.get_object("cbRequireClick").set_visible(False)
+	
+	
+	def hide_enable_feedback(self):
+		"""
+		Hides 'Enable Feedback' checkbox.
+		Used when editing buttons.
+		"""
+		self.builder.get_object("cbFeedback").set_visible(False)
+	
+	
+	def hide_osd(self):
+		"""
+		Hides 'Display OSD' checkbox.
+		Used randomly.
+		"""
+		print "HIDE OSD"
+		self.builder.get_object("cbOSD").set_visible(False)
 	
 	
 	def hide_advanced_settings(self):
@@ -284,6 +296,7 @@ class ActionEditor(Editor):
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		cbFeedback = self.builder.get_object("cbFeedback")
 		rvFeedback = self.builder.get_object("rvFeedback")
+		cbOSD = self.builder.get_object("cbOSD")
 		
 		set_action = False
 		for i in xrange(0, len(self.sens)):
@@ -307,6 +320,11 @@ class ActionEditor(Editor):
 		if self.click is not None:
 			if cbRequireClick.get_active() != self.click:
 				self.click = cbRequireClick.get_active()
+				set_action = True
+		
+		if self.osd is not None:
+			if cbOSD.get_active() != self.osd:
+				self.osd = cbOSD.get_active()
 				set_action = True
 		
 		rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
@@ -346,7 +364,20 @@ class ActionEditor(Editor):
 		
 		if self.click:
 			action = ClickModifier(action)
+		
+		if self.osd:
+			action = OSDAction(action)
+		
 		return action
+	
+	@staticmethod
+	def is_modifier(a):
+		if isinstance(a, (ClickModifier, SensitivityModifier, FeedbackModifier)):
+			return True
+		if isinstance(a, OSDAction):
+			if a.action is not None:
+				return True
+		return False
 	
 	
 	def load_modifiers(self, action, index=-1):
@@ -358,8 +389,12 @@ class ActionEditor(Editor):
 		cbFeedback = self.builder.get_object("cbFeedback")
 		rvFeedback = self.builder.get_object("rvFeedback")
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+		cbOSD = self.builder.get_object("cbOSD")
 		
-		while isinstance(action, (ClickModifier, SensitivityModifier, FeedbackModifier)):
+		while ActionEditor.is_modifier(action):
+			if isinstance(action, OSDAction):
+				self.osd = True
+				action = action.action
 			if isinstance(action, ClickModifier):
 				self.click = True
 				action = action.action
@@ -379,6 +414,7 @@ class ActionEditor(Editor):
 		
 		self._recursing = True
 		cbRequireClick.set_active(self.click)
+		cbOSD.set_active(self.osd)
 		for i in xrange(0, len(self.sens)):
 			self.sens_widgets[i][0].set_value(self.sens[i])
 		if self.feedback_position != None:
@@ -490,7 +526,9 @@ class ActionEditor(Editor):
 	def set_button(self, button, action):
 		""" Setups action editor as editor for button action """
 		self._set_mode(action, Action.AC_BUTTON)
-		self.hide_advanced_settings()
+		self.hide_sensitivity(0, 1, 2)
+		self.hide_enable_feedback()
+		self.hide_require_click()
 		self.set_action(action)
 		self.id = button
 
@@ -500,6 +538,7 @@ class ActionEditor(Editor):
 		self._set_mode(action, Action.AC_TRIGGER)
 		self.hide_sensitivity(1, 2) # YZ
 		self.hide_require_click()
+		self.hide_osd()
 		self.set_action(action)
 		self.hide_macro()
 		self.id = trigger
@@ -510,6 +549,7 @@ class ActionEditor(Editor):
 		self._set_mode(action, Action.AC_STICK)
 		self.hide_sensitivity(2) # Z only
 		self.hide_require_click()
+		self.hide_osd()
 		self.set_action(action)
 		self.hide_macro()
 		self.id = Profile.STICK
@@ -520,6 +560,7 @@ class ActionEditor(Editor):
 		self._set_mode(action, Action.AC_GYRO)
 		self.set_action(action)
 		self.hide_require_click()
+		self.hide_osd()
 		self.hide_macro()
 		self.hide_modeshift()
 		self.id = Profile.GYRO
@@ -530,6 +571,7 @@ class ActionEditor(Editor):
 		self._set_mode(action, Action.AC_PAD)
 		self.hide_sensitivity(2) # Z only
 		self.set_action(action)
+		self.hide_osd()
 		self.hide_macro()
 		self.id = id
 	

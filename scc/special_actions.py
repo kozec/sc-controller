@@ -131,6 +131,8 @@ class OSDAction(SpecialAction):
 		if self.name: return self.name
 		if self.action:
 			return _("%s (with OSD)") % (self.action.describe(context), )
+		elif context == Action.AC_OSD:
+			return _("Display '%s'" % self.text)
 		return _("OSD Message")
 	
 	
@@ -149,7 +151,7 @@ class OSDAction(SpecialAction):
 	
 	def strip(self):
 		if self.action:
-			self.action = self.action.strip()
+			return self.action.strip()
 		return self
 	
 	
@@ -261,6 +263,8 @@ class KeyboardAction(SpecialAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
+		if context == Action.AC_OSD:
+			return _("Display Keyboard")
 		return _("OSD Keyboard")
 	
 	

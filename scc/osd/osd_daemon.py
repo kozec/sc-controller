@@ -75,23 +75,25 @@ class OSDDaemon(object):
 	
 	
 	def on_unknown_message(self, daemon, message):
+		if not message.startswith("OSD:"):
+			return
 		if message.startswith("OSD: message"):
-			args = shlex.split(message)[1:]
+			args = split(message)[1:]
 			m = Message()
 			m.parse_argumets(args)
 			m.show()
 		elif message.startswith("OSD: keyboard"):
 			if self._window:
-				log.warning("Another OSD is already visible - refusing to show menu")
+				log.warning("Another OSD is already visible - refusing to show keyboard")
 			else:
-				args = shlex.split(message)[1:]
+				args = split(message)[1:]
 				self._window = Keyboard()
 				self._window.connect('destroy', self.on_keyboard_closed)
 				# self._window.parse_argumets(args) # TODO: No arguments so far
 				self._window.show()
 				self._window.use_daemon(self.daemon)
 		elif message.startswith("OSD: menu") or message.startswith("OSD: gridmenu"):
-			args = shlex.split(message)[1:]
+			args = split(message)[1:]
 			if self._window:
 				log.warning("Another OSD is already visible - refusing to show menu")
 			else:
@@ -113,6 +115,13 @@ class OSDDaemon(object):
 		self.daemon.connect('alive', self.on_daemon_connected)
 		self.daemon.connect('unknown-msg', self.on_unknown_message)
 		self.mainloop.run()
+
+
+def split(s):
+	lex = shlex.shlex(s, posix=True)
+	lex.escapedquotes = '"\''
+	lex.whitespace_split = True
+	return list(lex)
 
 
 if __name__ == "__main__":

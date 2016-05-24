@@ -125,12 +125,15 @@ class Keyboard(OSDWindow, TimerManager):
 				if not found: continue
 				for k in sorted(entries, key=lambda a : a.level):
 					# Try to convert keycode to label
-					code = Gdk.keyval_to_unicode(
-						self.keymap.translate_keyboard_state(k.keycode, mt, group)
-						.keyval)
-					if code != 0:
-						labels[a.name] = unichr(code)
-						break
+					try:
+						code = Gdk.keyval_to_unicode(
+							self.keymap.translate_keyboard_state(k.keycode, mt, group)
+							.keyval)
+						if code != 0:
+							labels[a.name] = unichr(code)
+							break
+					except AttributeError:
+						pass
 		
 		self.background.set_labels(labels)
 	
@@ -203,6 +206,9 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		x = (limit[0] + w * 0.5) + x * w * 0.5
 		y = (limit[1] + h * 0.5) + y * h * 0.5
+		
+		x -= cursor.get_allocation().width * 0.5
+		y -= cursor.get_allocation().height * 0.5
 		
 		self.f.move(cursor, int(x), int(y))
 		for a in self.background.areas:

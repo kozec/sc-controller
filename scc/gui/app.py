@@ -11,8 +11,8 @@ from gi.repository import Gtk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
 from scc.gui.controller_widget import ControllerPad, ControllerStick, ControllerGyro
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
+from scc.gui.userdata_manager import UserDataManager
 from scc.gui.modeshift_editor import ModeshiftEditor
-from scc.gui.profile_manager import ProfileManager
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
@@ -31,7 +31,7 @@ from scc.profile import Profile
 import os, sys, json, logging
 log = logging.getLogger("App")
 
-class App(Gtk.Application, ProfileManager):
+class App(Gtk.Application, UserDataManager):
 	"""
 	Main application / window.
 	"""
@@ -45,7 +45,7 @@ class App(Gtk.Application, ProfileManager):
 		Gtk.Application.__init__(self,
 				application_id="me.kozec.scc",
 				flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.NON_UNIQUE )
-		ProfileManager.__init__(self)
+		UserDataManager.__init__(self)
 		# Setup Gtk.Application
 		self.setup_commandline()
 		# Setup DaemonManager
@@ -251,7 +251,6 @@ class App(Gtk.Application, ProfileManager):
 				cb.set_active(0)
 			else:
 				self.select_profile(self.current_file.get_path())
-			
 			new_name = os.path.split(self.current_file.get_path())[-1]
 			if new_name.endswith(".mod"): new_name = new_name[0:-4]
 			if new_name.endswith(".sccprofile"): new_name = new_name[0:-11]
@@ -262,6 +261,15 @@ class App(Gtk.Application, ProfileManager):
 			dlg.set_transient_for(self.window)
 			dlg.show()
 		else:
+			modpath = f.get_path() + ".mod"
+			if os.path.exists(modpath):
+				log.debug("Removing .mod file '%s'", modpath)
+				try:
+					os.unlink(modpath)
+				except Exception, e:
+					log.warning("Failed to remove .mod file")
+					log.warning(e)
+			
 			self.load_profile(f)
 			if not self.daemon_changed_profile:
 				self.dm.set_profile(f.get_path())
@@ -471,12 +479,6 @@ class App(Gtk.Application, ProfileManager):
 	
 	def on_daemon_profile_changed(self, trash, profile):
 		current_changed = self.builder.get_object("rvProfileChanged").get_reveal_child()
-		if profile.endswith(".mod"):
-			try:
-				os.unlink(profile)
-			except Exception, e:
-				log.warning("Failed to remove .mod file")
-				log.warning(e)
 		if self.just_started or not current_changed:
 			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
 			self.daemon_changed_profile = True

@@ -18,11 +18,24 @@ from scc.gui.area_to_action import AREA_TO_ACTION
 
 class Editor(object):
 	""" Common stuff for all editor windows """
+	ERROR_CSS = " #error {background-color:green; color:red;} "
+	_error_css_provider = None
 	
 	def on_window_key_press_event(self, trash, event):
 		""" Checks if pressed key was escape and if yes, closes window """
 		if event.keyval == Gdk.KEY_Escape:
 			self.close()
+	
+	
+	@staticmethod
+	def install_error_css():
+		if Editor._error_css_provider is None:
+			Editor._error_css_provider = Gtk.CssProvider()
+			Editor._error_css_provider.load_from_data(str(Editor.ERROR_CSS))
+			Gtk.StyleContext.add_provider_for_screen(
+					Gdk.Screen.get_default(),
+					Editor._error_css_provider,
+					Gtk.STYLE_PROVIDER_PRIORITY_USER)
 	
 	
 	def set_title(self, title):
@@ -35,6 +48,7 @@ class Editor(object):
 	
 	
 	def show(self, modal_for):
-		self.window.set_transient_for(modal_for)
-		self.window.set_modal(True)
+		if modal_for:
+			self.window.set_transient_for(modal_for)
+			self.window.set_modal(True)
 		self.window.show()
