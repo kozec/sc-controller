@@ -62,8 +62,6 @@ class MenuEditor(Editor):
 		else:
 			self._save_to_file(self.builder.get_object("entName").get_text())
 		self.close()
-		if self.callback:
-			self.callback()
 	
 	
 	def btEdit_clicked_cb(self, *a):
@@ -129,6 +127,7 @@ class MenuEditor(Editor):
 		"""
 		Setups editor for creating new menu.
 		"""
+		rbInProfile = self.builder.get_object("rbInProfile")
 		rbInProfile.set_active(True)
 		self.original_id = None
 		self.original_type = MenuEditor.TYPE_INTERNAL
@@ -155,7 +154,7 @@ class MenuEditor(Editor):
 			self.original_id = id
 			rbInProfile.set_active(True)
 			self.original_type = MenuEditor.TYPE_INTERNAL
-		
+			items = self._load_items_from_profile(id)
 		self.original_id = id
 		entName.set_text(id)
 		
@@ -225,14 +224,19 @@ class MenuEditor(Editor):
 		self.app.current.menus[id] = self._generate_menudata()
 		log.debug("Stored menu ID %s", id)
 		self.app.on_profile_changed()
+		if self.callback:
+			self.callback(id)
 	
 	
 	def _save_to_file(self, id):
 		"""
 		Stores menu in json file
 		"""
-		path = os.path.join(get_menus_path(), "%s.menu" % (id,))
+		id = "%s.menu" % (id,)
+		path = os.path.join(get_menus_path(), id)
 		data = self._generate_menudata()
 		jstr = Encoder(sort_keys=True, indent=4).encode(data)
 		open(path, "w").write(jstr)
 		log.debug("Wrote menu file %s", path)
+		if self.callback:
+			self.callback(id)

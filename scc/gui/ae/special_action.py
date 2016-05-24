@@ -75,12 +75,20 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 				self.select_action_type("none")
 	
 	
+	def on_menu_changed(self, new_id):
+		self._current_menu = new_id
+		self.editor.set_action(MenuAction(new_id))
+		self.load_menu_list()
+	
+	
 	def on_btEditMenu_clicked(self, *a):
 		name = self._get_selected_menu()
 		if name:
 			log.debug("Editing %s", name)
-			me = MenuEditor(self.app, None)
-			me.set_menu('menu1')
+			me = MenuEditor(self.app, self.on_menu_changed)
+			id = self._get_selected_menu()
+			log.debug("Opening editor for menu ID '%s'", id)
+			me.set_menu(id)
 			me.show(self.editor.window)
 	
 	
@@ -112,7 +120,7 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 		model.clear()
 		i, current_index = 0, 0
 		# Add menus from profile
-		for key in self.app.current.menus:
+		for key in sorted(self.app.current.menus):
 			model.append((key, key))
 			if self._current_menu == key:
 				current_index = i
@@ -121,8 +129,10 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 			model.append((None, None))	# Separator
 			i += 1
 		for f in menus:
-			name = f.get_basename()
-			key = name
+			key = f.get_basename()
+			name = key
+			if "." in name:
+				name = _("%s (global)" % (name.split(".")[0]))
 			model.append((name, key))
 			if self._current_menu == key:
 				current_index = i
