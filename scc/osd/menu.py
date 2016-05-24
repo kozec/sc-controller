@@ -162,6 +162,9 @@ class Menu(OSDWindow, TimerManager):
 			item.widget.set_name("osd-menu-item")
 			item.widget.set_relief(Gtk.ReliefStyle.NONE)
 		self.pack_items(self.parent, self.items)
+		if len(self.items) == 0:
+			print >>sys.stderr, '%s: error: no items in menu' % (sys.argv[0])
+			return False
 		return True
 	
 	
