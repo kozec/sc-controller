@@ -114,9 +114,9 @@ class Mapper(object):
 			try:
 				prev = int(sum(self.mouse_dq[axis]) / len(self.mouse_dq[axis]))
 			except ZeroDivisionError:
-				prev = position
+				prev = position * speed
 			t = self.mouse_movements[axis] = [ prev, 0, False ]
-		self.mouse_dq[axis].append(position)
+		self.mouse_dq[axis].append(position * speed)
 		if axis >= 2:	# 2 - wheel, 3 - horisontal wheel
 			self.mouse_feedback[1] = hapticdata
 		else:

@@ -40,10 +40,15 @@
         <col id="1" translatable="yes">DPad</col>
         <col id="2" translatable="yes">dpad</col>
       </row>
-      <row>
+	  <row>
         <col id="0">XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) )</col>
         <col id="1" translatable="yes">Mouse Wheel</col>
         <col id="2" translatable="yes">wheel</col>
+      </row>
+	  <row>
+        <col id="0">circular(Rels.REL_WHEEL)</col>
+        <col id="1" translatable="yes">Mouse Wheel (circular)</col>
+        <col id="2" translatable="yes">circular</col>
       </row>
       <row>
         <col id="0">trackpad()</col>

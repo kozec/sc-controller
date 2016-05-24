@@ -15,7 +15,7 @@ from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
-from math import pi as PI, sqrt
+from math import pi as PI, sqrt, atan2
 
 import time, logging
 log = logging.getLogger("Actions")
@@ -450,6 +450,69 @@ class MouseAction(HapticEnabledAction):
 		else:
 			mapper.mouse.moveEvent(roll * -self.speed[0], pitch * -self.speed[1], False)
 		mapper.syn_list.add(mapper.mouse)
+
+
+class CircularAction(HapticEnabledAction):
+	COMMAND = "circular"
+	
+	def __init__(self, axis):
+		HapticEnabledAction.__init__(self, axis)
+		self.mouse_axis = axis
+		self.speed = 1.0
+		self.angle = None		# Last known finger position
+		self.travelled = 0
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = x
+		return True
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		if self.parameters[0] == Rels.REL_WHEEL:
+			return _("Circular Wheel")
+		elif self.parameters[0] == Rels.REL_HWHEEL:
+			return _("Circular Horizontal Wheel")
+		return _("Circular Mouse %s") % (self.parameters[0].name.split("_", 1)[-1],)
+	
+	
+	def whole(self, mapper, x, y, what):
+		distance = sqrt(x*x + y*y)
+		if distance < STICK_PAD_MAX_HALF:
+			# Finger lifted or too close to middle
+			self.angle = None
+			self.travelled = 0
+		else:
+			# Compute current angle
+			angle = atan2(x, y)
+			# Compute movement
+			if self.angle is None:
+				# Finger just touched the pad
+				self.angle, angle = angle, 0
+			else:
+				self.angle, angle = angle, self.angle - angle
+				if abs(angle) > PI:
+					angle = -angle
+			# Apply bulgarian constant
+			self.travelled += angle * 5000
+			if self.haptic:
+				if abs(self.travelled) > self.haptic.frequency:
+					mapper.send_feedback(self.haptic)
+					self.travelled = 0
+			angle *= 10000.0
+			# Apply movement on axis
+			if self.mouse_axis == Rels.REL_X:
+				mapper.mouse.moveEvent(0, angle * self.speed)
+			elif self.mouse_axis == Rels.REL_Y:
+				mapper.mouse.moveEvent(1, angle * self.speed)
+			elif self.mouse_axis == Rels.REL_HWHEEL:
+				mapper.mouse.scrollEvent(0, angle * self.speed)
+			elif self.mouse_axis == Rels.REL_WHEEL:
+				mapper.mouse.scrollEvent(1, angle * self.speed)
+			else:
+				log.warning("Invalid axis for circular: %s", self.mouse_axis)
+			mapper.force_event.add(FE_PAD)
 
 
 class GyroAction(Action):

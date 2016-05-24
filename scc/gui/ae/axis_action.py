@@ -9,7 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, AxisAction, MouseAction, XYAction
-from scc.actions import TrackballAction, TrackpadAction
+from scc.actions import TrackballAction, TrackpadAction, CircularAction
 from scc.uinput import Keys, Axes, Rels
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.ae import AEComponent
@@ -38,6 +38,8 @@ class AxisActionComponent(AEComponent):
 				self.select_axis_output("trackpad")
 			elif isinstance(action, TrackballAction):
 				self.select_axis_output("trackball")
+			elif isinstance(action, CircularAction):
+				self.select_axis_output("circular")
 			elif isinstance(action, XYAction):
 				p = [ None, None ]
 				for x in (0, 1):
@@ -61,7 +63,7 @@ class AxisActionComponent(AEComponent):
 	
 	
 	def handles(self, mode, action):
-		if isinstance(action, (NoAction, TrackballAction, InvalidAction)):
+		if isinstance(action, (NoAction, TrackballAction, CircularAction, InvalidAction)):
 			return True
 		if isinstance(action, XYAction):
 			p = [ None, None ]

@@ -26,6 +26,11 @@ Controls mouse movement or scroll wheel.
   single step on scroll wheel.
 
 
+#### circular(axis)
+Controls scroll wheel by scrolling finger around pad.
+Axis should be Rels.REL_WHEEL or Rels.HREL_WHEEL.
+
+
 #### gyro(axis1 [, axis2 [, axis3]])
 Maps *changes* in gyroscope pitch, yaw and roll movement into movements of gamepad stick.
 Can be used to map gyroscope to camera when camera can be controlled only with analog stick.
