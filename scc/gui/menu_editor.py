@@ -64,6 +64,20 @@ class MenuEditor(Editor):
 		self.close()
 	
 	
+	def on_tvItems_cursor_changed(self, *a):
+		"""
+		Handles moving cursor in Item List.
+		Basically just sets Edit Item and Remove Item buttons sensitivity.
+		"""
+		tvItems = self.builder.get_object("tvItems")
+		btEdit = self.builder.get_object("btEdit")
+		btRemoveItem = self.builder.get_object("btRemoveItem")
+		
+		model, iter = tvItems.get_selection().get_selected()
+		btRemoveItem.set_sensitive(iter is not None)
+		btEdit.set_sensitive(iter is not None)
+	
+	
 	def btEdit_clicked_cb(self, *a):
 		""" Handler for "Edit Item" button """
 		tvItems = self.builder.get_object("tvItems")
@@ -79,16 +93,32 @@ class MenuEditor(Editor):
 	
 	def on_btAddItem_clicked(self, *a):
 		""" Handler for "Add Item" button """
-		model = self.builder.get_object("tvItems").get_model()
+		tvItems = self.builder.get_object("tvItems")
+		model = tvItems.get_model()
 		id = "newitem_%s" % (self.next_new_item_id,)
 		self.next_new_item_id += 1
 		o = GObject.GObject()
 		o.item = MenuItem(id, NoAction().describe(Action.AC_OSD), NoAction())
-		model.append(( o, o.item.label ))
+		iter = model.append(( o, o.item.label ))
+		tvItems.get_selection().select_iter(iter)
+		self.on_tvItems_cursor_changed()
+		self.btEdit_clicked_cb()
 	
+	
+	def on_btRemoveItem_clicked(self, *a):
+		""" Handler for "Delete Item" button """
+		tvItems = self.builder.get_object("tvItems")
+		model, iter = tvItems.get_selection().get_selected()
+		if iter is not None:
+			model.remove(iter)
+		self.on_tvItems_cursor_changed()
+		
 	
 	def on_entName_changed(self, *a):
 		id = self.builder.get_object("entName").get_text()
+		if len(id.strip()) == 0:
+			self._bad_id_no_id()
+			return
 		if "." in id or "/" in id:
 			self._bad_id_chars()
 			return
@@ -112,6 +142,9 @@ class MenuEditor(Editor):
 		self.builder.get_object("rvInvalidID").set_reveal_child(False)
 		self.builder.get_object("btSave").set_sensitive(True)
 	
+	def _bad_id_no_id(self, *a):
+		self.builder.get_object("btSave").set_sensitive(False)
+	
 	def _bad_id_duplicate(self, *a):
 		self.builder.get_object("lblNope").set_label(_('Invalid Menu ID: Menu with same ID already exists.'))
 		self.builder.get_object("rvInvalidID").set_reveal_child(True)
@@ -128,10 +161,11 @@ class MenuEditor(Editor):
 		Setups editor for creating new menu.
 		"""
 		rbInProfile = self.builder.get_object("rbInProfile")
+		entName = self.builder.get_object("entName")
+		
 		rbInProfile.set_active(True)
 		self.original_id = None
 		self.original_type = MenuEditor.TYPE_INTERNAL
-		
 		entName.set_text("")
 	
 	

@@ -137,6 +137,9 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 			if self._current_menu == key:
 				current_index = i
 			i += 1
+		if i > 0:
+			model.append((None, None))	# Separator
+		model.append(( _("New Menu..."), "" ))
 		
 		self._recursing = True
 		cb.set_active(current_index)
@@ -229,6 +232,14 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 		""" Called when user chooses menu in selection combo """
 		if self._recursing : return
 		name = self._get_selected_menu()
+		if name == "":
+			# 'New menu' selected
+			self.load_menu_list()
+			log.debug("Creating editor for new menu")
+			me = MenuEditor(self.app, self.on_menu_changed)
+			me.set_new_menu()
+			me.show(self.editor.window)
+			return
 		if name:
 			self.editor.set_action(MenuAction(name))
 	

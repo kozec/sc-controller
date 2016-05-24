@@ -200,6 +200,7 @@
                 <child>
                   <object class="GtkToolButton" id="btEdit">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="is_important">True</property>
                     <property name="label" translatable="yes">_Edit Item</property>
@@ -226,10 +227,12 @@
                 <child>
                   <object class="GtkToolButton" id="btRemoveItem">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">_Remove</property>
                     <property name="use_underline">True</property>
                     <property name="stock_id">gtk-remove</property>
+                    <signal name="clicked" handler="on_btRemoveItem_clicked" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -289,6 +292,7 @@
                             <property name="headers_visible">False</property>
                             <property name="reorderable">True</property>
                             <property name="rubber_banding">True</property>
+                            <signal name="cursor-changed" handler="on_tvItems_cursor_changed" swapped="no"/>
                             <signal name="row-activated" handler="btEdit_clicked_cb" swapped="no"/>
                             <child internal-child="selection">
                               <object class="GtkTreeSelection"/>
