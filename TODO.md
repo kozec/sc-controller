@@ -4,7 +4,6 @@ List of (possibly) planned features in no particular order
 - Configurable gamepad type (e.g. 4 axes and 16 buttons)
 - Mouse regions
 - Selector for media keys
-- UI for configuring profile switch action
 - double click
 - Cycling Buttons
 
@@ -26,6 +25,7 @@ OSD related stuff:
 
 **Done** stuff:
 - OSD
+- Menu in OSD
 - on-screen keyboard
 - Haptic feedback support
 - Gyroscope input

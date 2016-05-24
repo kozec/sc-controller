@@ -11,7 +11,7 @@ Features:
 - Supports profiles switchable in GUI or with controller button
 - Stick, Pads and Gyroscope input
 - Haptic Feedback support
-- On-Screen Keyboard for desktop *and* in games.
+- OSD, Menus, On-Screen Keyboard for desktop *and* in games.
 - Macros, rapid fire, modeshift...
 - Emulates XBox360 controller, mouse, trackball and keyboard.
 
