@@ -9,11 +9,11 @@ For example, click() modifier executes action only if pad is pressed.
 from __future__ import unicode_literals
 
 from scc.actions import Action, NoAction, ACTIONS
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.controller import HapticData
 
-import time, logging
+import time, logging, math
 log = logging.getLogger("Modifiers")
 _ = lambda x : x
 
@@ -128,6 +128,96 @@ class ClickModifier(Modifier):
 		if mapper.was_pressed(SCButtons.RPAD):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
+
+
+class DeadzoneModifier(Modifier):
+	COMMAND = "deadzone"
+	
+	def __init__(self, *stuff):
+		Modifier.__init__(self, stuff[-1])
+		
+		if len(stuff) == 3:
+			# lower, upper, action
+			self.lower = stuff[0]
+			self.upper = stuff[1]
+		elif len(stuff) == 2:
+			# lower, action
+			self.lower = stuff[0]
+			self.upper = STICK_PAD_MAX
+		else:
+			raise ValueError("Invalid parameters for 'deadzone'")
+	
+	
+	def set_haptic(self, hapticdata):
+		if self.action:
+			return self.action.set_haptic(hapticdata)
+		return False
+	
+	
+	def set_speed(self, x, y, z):
+		if self.action:
+			return self.action.set_speed(x, y, z)
+		return False
+	
+	
+	def strip(self):
+		return self.action.strip()
+	
+	
+	def __str__(self):
+		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
+	
+	__repr__ = __str__
+	
+	
+	def describe(self, context):
+		dsc = self.action.describe(context)
+		if "\n" in dsc:
+			return "%s\n(with deadzone)" % (dsc,)
+		else:
+			return "%s (with deadzone)" % (dsc,)
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if self.upper == STICK_PAD_MAX:
+			return "deadzone(%s, %s)" % (
+				self.lower, self.action.to_string(multiline))
+		else:
+			return "deadzone(%s, %s, %s)" % (
+				self.lower, self.upper, self.action.to_string(multiline))
+	
+	
+	def encode(self):
+		rv = self.action.encode()
+		rv['deadzone'] = {}
+		rv['deadzone']['upper'] = self.upper
+		rv['deadzone']['lower'] = self.lower
+		return rv
+	
+	
+	def trigger(self, mapper, position, old_position):
+		if position < self.lower or position > self.upper:
+			position = 0
+		return self.action.trigger(mapper, position, old_position)
+		
+	
+	def axis(self, mapper, position, what):
+		if position < -self.upper or position > self.upper: position = 0
+		if position > -self.lower and position < self.lower: position = 0
+		return self.action.axis(mapper, position, what)
+	
+	
+	def pad(self, mapper, position, what):
+		if position < -self.upper or position > self.upper: position = 0
+		if position > -self.lower and position < self.lower: position = 0
+		return self.action.pad(mapper, position, what)
+	
+	
+	def whole(self, mapper, x, y, what):
+		dist = math.sqrt(x*x + y*y)
+		if dist < -self.upper or dist > self.upper: x, y = 0, 0
+		if dist > -self.lower and dist < self.lower: x, y = 0, 0
+		return self.action.whole(mapper, x, y, what)
 
 
 class ModeModifier(Modifier):

@@ -132,6 +132,10 @@ running feedback that you may not be able to stop.
 should mouse travell between two feedback ticks.
 
 
+#### deadzone(lower, [upper, ] action)
+Enables deadzone on trigger, pad or stick.
+
+
 #### osd([timeout=5], action)
 Displays action description in OSD and executes it normally.
 Works only if executed by pressing physical button or with `dpad`. Otherwise

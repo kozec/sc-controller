@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 """
 SC-Controller - Action Editor
-
-Allows to edit button or trigger action.
 """
 from __future__ import unicode_literals
 from scc.tools import _
@@ -10,6 +8,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
+from scc.modifiers import DeadzoneModifier
 from scc.actions import Action, XYAction, NoAction
 from scc.special_actions import OSDAction
 from scc.controller import HapticData
@@ -40,6 +39,7 @@ COMPONENTS = (								# List of known modules (components) in scc.gui.ae package
 )
 XYZ = "XYZ"									# Sensitivity settings keys
 AFP = ("Amplitude", "Frequency", "Period")	# Feedback settings keys
+DZN = ("Lower", "Upper")					# Deadzone settings key
 FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
 
 
@@ -54,8 +54,11 @@ class ActionEditor(Editor):
 		self.c_buttons = {} 			# Component-to-button dict
 		self.sens_widgets = []			# Sensitivity sliders, labels and 'clear' buttons
 		self.feedback_widgets = []		# Feedback settings sliders, labels and 'clear' buttons, plus default value as last item
+		self.deadzone_widgets = []		# Deadzone settings sliders and 'clear' buttons, plus default value as last item
 		self.sens = [1.0] * 3			# Sensitivity slider values
 		self.feedback = [0.0] * 3		# Feedback slider values, set later
+		self.deadzone = [0] * 2			# Deadzone slider values, set later
+		self.deadzone_enabled = False
 		self.feedback_position = None	# None for 'disabled'
 		self.click = False				# Click modifier value. None for disabled
 		self.osd = False				# 'OSD enabled' value.
@@ -91,6 +94,14 @@ class ActionEditor(Editor):
 				self.builder.get_object("lblF%s" % (key,)),
 				self.builder.get_object("btClearF%s" % (key,)),
 				self.feedback[i]	# default value
+			))
+		for key in DZN:
+			i = DZN.index(key)
+			self.deadzone[i] = self.builder.get_object("sclDZ%s" % (key,)).get_value()
+			self.deadzone_widgets.append((
+				self.builder.get_object("sclDZ%s" % (key,)),
+				self.builder.get_object("btClearDZ%s" % (key,)),
+				self.deadzone[i]	# default value
 			))
 	
 	
@@ -183,8 +194,15 @@ class ActionEditor(Editor):
 		Hides 'Display OSD' checkbox.
 		Used randomly.
 		"""
-		print "HIDE OSD"
 		self.builder.get_object("cbOSD").set_visible(False)
+	
+	
+	def hide_hide_enable_deadzones(self):
+		"""
+		Hides 'Enable Deadzone' checkbox.
+		Used when editing buttons.
+		"""
+		self.builder.get_object("cbDeadzone").set_visible(False)
 	
 	
 	def hide_advanced_settings(self):
@@ -231,6 +249,12 @@ class ActionEditor(Editor):
 	
 	def on_btClearFeedback_clicked(self, source, *a):
 		for scale, label, button, default in self.feedback_widgets:
+			if source == button:
+				scale.set_value(default)
+	
+	
+	def on_btClearDeadzone_clicked(self, source, *a):
+		for scale, button, default in self.deadzone_widgets:
 			if source == button:
 				scale.set_value(default)
 	
@@ -296,6 +320,8 @@ class ActionEditor(Editor):
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		cbFeedback = self.builder.get_object("cbFeedback")
 		rvFeedback = self.builder.get_object("rvFeedback")
+		cbDeadzone = self.builder.get_object("cbDeadzone")
+		rvDeadzone = self.builder.get_object("rvDeadzone")
 		cbOSD = self.builder.get_object("cbOSD")
 		
 		set_action = False
@@ -308,6 +334,15 @@ class ActionEditor(Editor):
 			if self.feedback[i] != self.feedback_widgets[i][0].get_value():
 				self.feedback[i] = self.feedback_widgets[i][0].get_value()
 				set_action = True
+		
+		for i in xrange(0, len(self.deadzone)):
+			if self.deadzone[i] != self.deadzone_widgets[i][0].get_value():
+				self.deadzone[i] = self.deadzone_widgets[i][0].get_value()
+				set_action = True
+		
+		if self.deadzone_enabled != cbDeadzone.get_active():
+			self.deadzone_enabled = cbDeadzone.get_active()
+			set_action = True
 		
 		if cbFeedback.get_active():
 			feedback_position = FEEDBACK_SIDES[cbFeedbackSide.get_active()]
@@ -328,6 +363,7 @@ class ActionEditor(Editor):
 				set_action = True
 		
 		rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
+		rvDeadzone.set_reveal_child(cbDeadzone.get_active() and cbDeadzone.get_sensitive())
 		
 		if set_action:
 			self.set_action(self._action)
@@ -362,6 +398,9 @@ class ActionEditor(Editor):
 			# Create modifier
 			action = FeedbackModifier(*feedback)
 		
+		if self.deadzone_enabled:
+			action = DeadzoneModifier(self.deadzone[0], self.deadzone[1], action)
+		
 		if self.click:
 			action = ClickModifier(action)
 		
@@ -372,7 +411,8 @@ class ActionEditor(Editor):
 	
 	@staticmethod
 	def is_modifier(a):
-		if isinstance(a, (ClickModifier, SensitivityModifier, FeedbackModifier)):
+		if isinstance(a, (ClickModifier, SensitivityModifier, DeadzoneModifier,
+				FeedbackModifier)):
 			return True
 		if isinstance(a, OSDAction):
 			if a.action is not None:
@@ -389,6 +429,8 @@ class ActionEditor(Editor):
 		cbFeedback = self.builder.get_object("cbFeedback")
 		rvFeedback = self.builder.get_object("rvFeedback")
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+		cbDeadzone = self.builder.get_object("cbDeadzone")
+		rvDeadzone = self.builder.get_object("rvDeadzone")
 		cbOSD = self.builder.get_object("cbOSD")
 		
 		while ActionEditor.is_modifier(action):
@@ -403,6 +445,11 @@ class ActionEditor(Editor):
 				self.feedback[0] = action.haptic.get_amplitude()
 				self.feedback[1] = action.haptic.get_frequency()
 				self.feedback[2] = action.haptic.get_period()
+				action = action.action
+			if isinstance(action, DeadzoneModifier):
+				self.deadzone_enabled = True
+				self.deadzone[0] = action.lower
+				self.deadzone[1] = action.upper
 				action = action.action
 			if isinstance(action, SensitivityModifier):
 				if index < 0:
@@ -423,6 +470,11 @@ class ActionEditor(Editor):
 			rvFeedback.set_reveal_child(cbFeedback.get_sensitive())
 			for i in xrange(0, len(self.feedback)):
 				self.feedback_widgets[i][0].set_value(self.feedback[i])
+		if self.deadzone_enabled:
+			cbDeadzone.set_active(True)
+			rvDeadzone.set_reveal_child(cbDeadzone.get_sensitive())
+			for i in xrange(0, len(self.deadzone)):
+				self.deadzone_widgets[i][0].set_value(self.deadzone[i])
 		self._recursing = False
 		
 		return action
@@ -528,6 +580,7 @@ class ActionEditor(Editor):
 		self._set_mode(action, Action.AC_BUTTON)
 		self.hide_sensitivity(0, 1, 2)
 		self.hide_enable_feedback()
+		self.hide_hide_enable_deadzones()
 		self.hide_require_click()
 		self.set_action(action)
 		self.id = button
@@ -538,6 +591,7 @@ class ActionEditor(Editor):
 		self._set_mode(action, Action.AC_TRIGGER)
 		self.hide_sensitivity(1, 2) # YZ
 		self.hide_require_click()
+		self.hide_hide_enable_deadzones()
 		self.hide_osd()
 		self.set_action(action)
 		self.hide_macro()
@@ -560,6 +614,7 @@ class ActionEditor(Editor):
 		self._set_mode(action, Action.AC_GYRO)
 		self.set_action(action)
 		self.hide_require_click()
+		self.hide_hide_enable_deadzones()
 		self.hide_osd()
 		self.hide_macro()
 		self.hide_modeshift()
@@ -574,6 +629,7 @@ class ActionEditor(Editor):
 		self.hide_osd()
 		self.hide_macro()
 		self.id = id
+	
 	
 	def set_feedback_settings_enabled(self, enabled):
 		cbFeedback = self.builder.get_object("cbFeedback")

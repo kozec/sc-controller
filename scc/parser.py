@@ -10,9 +10,10 @@ from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
 from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.actions import ACTIONS, NoAction, MultiAction, XYAction
+from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
 from scc.modifiers import SensitivityModifier, ModeModifier
-from scc.modifiers import ClickModifier, FeedbackModifier
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
@@ -87,6 +88,10 @@ class ActionParser(object):
 			x = self.from_json_data(data["X"]) if "X" in data else NoAction()
 			y = self.from_json_data(data["Y"]) if "Y" in data else NoAction()
 			a = XYAction(x, y)
+		if "deadzone" in data:
+			lower = data["deadzone"]["lower"] if "lower" in data["deadzone"] else STICK_PAD_MIN
+			upper = data["deadzone"]["upper"] if "upper" in data["deadzone"] else STICK_PAD_MAX
+			a = DeadzoneModifier(lower, upper, a)
 		if "sensitivity" in data:
 			args = data["sensitivity"]
 			args.append(a)
