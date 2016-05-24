@@ -223,7 +223,9 @@ class SCCDaemon(Daemon):
 					time.sleep(5)
 		
 		if "DISPLAY" in os.environ:
-			threading.Thread(target=threaded).start()
+			t = threading.Thread(target=threaded)
+			t.daemon = True
+			t.start()
 		else:
 			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
 
