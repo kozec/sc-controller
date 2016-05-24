@@ -28,7 +28,7 @@ Controls mouse movement or scroll wheel.
 
 #### circular(axis)
 Controls scroll wheel by scrolling finger around pad.
-Axis should be Rels.REL_WHEEL or Rels.HREL_WHEEL.
+Axis should be Rels.REL_WHEEL or Rels.REL_HWHEEL.
 
 
 #### gyro(axis1 [, axis2 [, axis3]])
