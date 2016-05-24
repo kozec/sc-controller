@@ -104,13 +104,13 @@ class SCCDaemon(Daemon):
 	def _osd(self, *data):
 		# Pre-format data
 		#   - convert everything to string
-		data = [ unicode(x) for x in data ]
+		data = [ unicode(x).encode("utf-8") for x in data ]
 		#   - escape quotes
-		data = [ x.encode('string_escape') if ('"' in x or "'" in x) else x for x in data ]
+		data = [ x.encode('string_escape') if (b'"' in x or b"'" in x) else x for x in data ]
 		#   - quote strings with spaces
-		data = [ "'%s'" % (x,) if " " in x else x for x in data ]
+		data = [ b"'%s'" % (x,) if b" " in x else x for x in data ]
 		#   - encode and merge together
-		data = b"OSD: %s\n" % (b" ".join([x.encode('utf-8') for x in data ]),)
+		data = b"OSD: %s\n" % (b" ".join(data),)
 		
 		# Check if scc-osd-daemon is available
 		self.lock.acquire()
