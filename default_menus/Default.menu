@@ -17,7 +17,7 @@
     "id": "item3", 
     "action": "turnoff",
     "osd": true,
-    "name": "Switch Turn OFF the Controller"
+    "name": "Turn OFF the Controller"
 }, {
     "id": "item4", 
     "action": "keyboard",
