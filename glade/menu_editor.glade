@@ -2,6 +2,14 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkListStore" id="lstItems">
+    <columns>
+      <!-- column-name item -->
+      <column type="GObject"/>
+      <!-- column-name label -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="Dialog">
     <property name="width_request">650</property>
     <property name="can_focus">False</property>
@@ -104,38 +112,114 @@
           </packing>
         </child>
         <child>
-          <object class="GtkGrid">
+          <object class="GtkToolbar" id="tbItems">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="valign">end</property>
             <child>
-              <object class="GtkFrame" id="frItems">
-                <property name="height_request">300</property>
+              <object class="GtkToolButton" id="btEdit">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_top">10</property>
-                <property name="hexpand">True</property>
-                <property name="vexpand">True</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">none</property>
+                <property name="is_important">True</property>
+                <property name="label" translatable="yes">_Edit Item</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-edit</property>
+                <signal name="clicked" handler="btEdit_clicked_cb" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" id="sep17">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="draw">False</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="btRemoveItem">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">_Remove</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-remove</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="btAddItem">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">_Add</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-add</property>
+                <signal name="clicked" handler="on_btAddItem_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">3</property>
+            <property name="width">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFrame" id="frItems">
+            <property name="height_request">300</property>
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">10</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="label_xalign">0</property>
+            <property name="shadow_type">none</property>
+            <child>
+              <object class="GtkAlignment" id="alFuckWhyIHaveToNameAllThisShit">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="vexpand">False</property>
+                <property name="top_padding">12</property>
+                <property name="left_padding">12</property>
                 <child>
-                  <object class="GtkAlignment" id="alFuckWhyIHaveToNameAllThisShit">
+                  <object class="GtkScrolledWindow" id="swItems">
+                    <property name="name">sw</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="vexpand">False</property>
-                    <property name="left_padding">12</property>
+                    <property name="can_focus">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkScrolledWindow" id="swItems">
-                        <property name="name">sw</property>
+                      <object class="GtkTreeView" id="tvItems">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="vexpand">True</property>
-                        <property name="shadow_type">in</property>
+                        <property name="model">lstItems</property>
+                        <property name="headers_visible">False</property>
+                        <property name="reorderable">True</property>
+                        <property name="rubber_banding">True</property>
+                        <signal name="row-activated" handler="btEdit_clicked_cb" swapped="no"/>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection"/>
+                        </child>
                         <child>
-                          <object class="GtkTreeView" id="tvItems">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <child internal-child="selection">
-                              <object class="GtkTreeSelection"/>
+                          <object class="GtkTreeViewColumn" id="clItemLabel">
+                            <property name="title" translatable="yes">Item</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="clItemLabelText"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
                             </child>
                           </object>
                         </child>
@@ -143,77 +227,17 @@
                     </child>
                   </object>
                 </child>
-                <child type="label">
-                  <object class="GtkLabel" id="lblItems">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Items</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
-                  </object>
-                </child>
               </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
             </child>
-            <child>
-              <object class="GtkToolbar" id="tbItems">
+            <child type="label">
+              <object class="GtkLabel" id="lblItems">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="valign">end</property>
-                <child>
-                  <object class="GtkToolButton" id="btAddItem">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">_Add</property>
-                    <property name="use_underline">True</property>
-                    <property name="stock_id">gtk-add</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkToolButton" id="btRemoveItem">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">_Remove</property>
-                    <property name="use_underline">True</property>
-                    <property name="stock_id">gtk-remove</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
-                  </packing>
-                </child>
+                <property name="label" translatable="yes">Items</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
               </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
-                <property name="label" translatable="yes">Blaaaah
-blaah
-something
-
-
-here.</property>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-                <property name="height">2</property>
-              </packing>
             </child>
           </object>
           <packing>
@@ -230,15 +254,15 @@ here.</property>
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
         <child>
-          <object class="GtkButton" id="btOK">
-            <property name="label">gtk-ok</property>
+          <object class="GtkButton" id="btSave">
+            <property name="label">gtk-save</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="can_default">True</property>
             <property name="has_default">True</property>
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btOK_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btSave_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="pack_type">end</property>
@@ -247,135 +271,5 @@ here.</property>
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkAdjustment" id="adjFAmplitude">
-    <property name="lower">16</property>
-    <property name="upper">32768</property>
-    <property name="value">512</property>
-    <property name="step_increment">32</property>
-    <property name="page_increment">128</property>
-    <property name="page_size">128</property>
-  </object>
-  <object class="GtkAdjustment" id="adjFFrequency">
-    <property name="lower">1</property>
-    <property name="upper">10000</property>
-    <property name="value">4</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-    <property name="page_size">10</property>
-  </object>
-  <object class="GtkAdjustment" id="adjFPeriod">
-    <property name="lower">16</property>
-    <property name="upper">32768</property>
-    <property name="value">1024</property>
-    <property name="step_increment">32</property>
-    <property name="page_increment">128</property>
-    <property name="page_size">128</property>
-  </object>
-  <object class="GtkAdjustment" id="adjSensitivityX">
-    <property name="lower">0.01</property>
-    <property name="upper">10.01</property>
-    <property name="value">1</property>
-    <property name="step_increment">0.10000000000000001</property>
-    <property name="page_increment">1</property>
-    <property name="page_size">0.01</property>
-  </object>
-  <object class="GtkAdjustment" id="adjSensitivityY">
-    <property name="lower">0.01</property>
-    <property name="upper">10.01</property>
-    <property name="value">1</property>
-    <property name="step_increment">0.10000000000000001</property>
-    <property name="page_increment">1</property>
-    <property name="page_size">0.01</property>
-  </object>
-  <object class="GtkAdjustment" id="adjSensitivityZ">
-    <property name="lower">0.01</property>
-    <property name="upper">10.01</property>
-    <property name="value">1</property>
-    <property name="step_increment">0.10000000000000001</property>
-    <property name="page_increment">1</property>
-    <property name="page_size">0.01</property>
-  </object>
-  <object class="GtkListStore" id="lstDPADType">
-    <columns>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name action -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">Simple</col>
-        <col id="1">dpad</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">8-Way</col>
-        <col id="1">dpad8</col>
-      </row>
-    </data>
-  </object>
-  <object class="GtkListStore" id="lstFeedbackSide">
-    <columns>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name action -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">Left</col>
-        <col id="1">LEFT</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Right</col>
-        <col id="1">RIGHT</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Both</col>
-        <col id="1">BOTH</col>
-      </row>
-    </data>
-  </object>
-  <object class="GtkListStore" id="lstOutputMode">
-    <columns>
-      <!-- column-name action -->
-      <column type="gchararray"/>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name key -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">XY( axis(Axes.ABS_X), raxis(Axes.ABS_Y) )</col>
-        <col id="1" translatable="yes">Left Stick</col>
-        <col id="2" translatable="yes">lstick</col>
-      </row>
-      <row>
-        <col id="0">XY( axis(Axes.ABS_RX), raxis(Axes.ABS_RY) )</col>
-        <col id="1" translatable="yes">Right Stick</col>
-        <col id="2" translatable="yes">rstick</col>
-      </row>
-      <row>
-        <col id="0">XY( axis(Axes.ABS_HAT0X), raxis(Axes.ABS_HAT0Y) )</col>
-        <col id="1" translatable="yes">DPad</col>
-        <col id="2" translatable="yes">dpad</col>
-      </row>
-      <row>
-        <col id="0">XY( mouse(Rels.REL_HWHEEL, sensitivity), mouse(Rels.REL_WHEEL, sensitivity) )</col>
-        <col id="1" translatable="yes">Mouse Wheel</col>
-        <col id="2" translatable="yes">wheel</col>
-      </row>
-      <row>
-        <col id="0">trackpad(sensitivity)</col>
-        <col id="1" translatable="yes">Trackpad (Mouse)</col>
-        <col id="2" translatable="yes">trackpad</col>
-      </row>
-      <row>
-        <col id="0">trackball(sensitivity)</col>
-        <col id="1" translatable="yes">Trackball (Mouse)</col>
-        <col id="2" translatable="yes">trackball</col>
-      </row>
-    </data>
   </object>
 </interface>

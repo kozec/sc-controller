@@ -13,11 +13,12 @@ from scc.special_actions import TurnOffAction, KeyboardAction, OSDAction
 from scc.special_actions import MenuAction
 from scc.actions import Action, NoAction
 from scc.gui.userdata_manager import UserDataManager
+from scc.gui.menu_editor import MenuEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.ae import AEComponent
 
 import os, logging
-log = logging.getLogger("AE.SpecialAction")
+log = logging.getLogger("AE.SA")
 
 __all__ = [ 'SAComponent' ]
 
@@ -74,6 +75,15 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 				self.select_action_type("none")
 	
 	
+	def on_btEditMenu_clicked(self, *a):
+		name = self._get_selected_menu()
+		if name:
+			log.debug("Editing %s", name)
+			me = MenuEditor(self.app, None)
+			me.set_menu('menu1')
+			me.show(self.editor.window)
+	
+	
 	def on_profiles_loaded(self, profiles):
 		cb = self.builder.get_object("cbProfile")
 		model = cb.get_model()
@@ -120,6 +130,7 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 		
 		self._recursing = True
 		cb.set_active(current_index)
+		self.builder.get_object("btEditMenu").set_sensitive(True)
 		self._recursing = False
 	
 	
@@ -192,17 +203,22 @@ class SpecialActionComponent(AEComponent, UserDataManager):
 		self.editor.set_action(ChangeProfileAction(name))
 	
 	
-	def on_cbMenus_changed(self, *a):
-		""" Called when user chooses menu in selection combo """
-		if self._recursing : return
+	def _get_selected_menu(self):
 		cb = self.builder.get_object("cbMenus")
 		model = cb.get_model()
 		iter = cb.get_active_iter()
 		if iter is None:
 			# Empty list
-			return
-		name = model.get_value(iter, 1)
-		self.editor.set_action(MenuAction(name))
+			return None
+		return model.get_value(iter, 1)
+	
+	
+	def on_cbMenus_changed(self, *a):
+		""" Called when user chooses menu in selection combo """
+		if self._recursing : return
+		name = self._get_selected_menu()
+		if name:
+			self.editor.set_action(MenuAction(name))
 	
 	
 	def on_enCommand_changed(self, *a):

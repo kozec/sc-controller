@@ -6,13 +6,14 @@ Container for list of menu items + required parsers
 """
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
+from scc.actions import Action
 
 import json
 
 class MenuData(object):
 	""" Contains list of menu items. Indexable """
-	def __init__(self):
-		self.__items = []
+	def __init__(self, *items):
+		self.__items = list(items)
 	
 	
 	def __len__(self):
@@ -92,15 +93,25 @@ class MenuData(object):
 		Actions are parsed only if action_parser is set to ActionParser instance.
 		"""
 		m = MenuData()
+		used_ids = set()
 		for i in data:
 			if "id" not in i:
 				# Cannot add menu without ID
 				continue
 			action = None
+			id = i["id"]
+			if id in used_ids:
+				# Cannot add duplicate ID
+				continue
 			if action_parser:
 				action = action_parser.from_json_data(i)
-			label = i["name"] if "name" in i else i["id"]
-			m.__items.append(MenuItem(i["id"], label, action))
+			used_ids.add(id)
+			label = id
+			if "name" in i:
+				label = i["name"]
+			elif action:
+				label = action.describe(Action.AC_OSD)
+			m.__items.append(MenuItem(id, label, action))
 		
 		return m
 	

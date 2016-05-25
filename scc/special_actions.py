@@ -261,6 +261,8 @@ class KeyboardAction(SpecialAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
+		if context == Action.AC_OSD:
+			return _("Display Keyboard")
 		return _("OSD Keyboard")
 	
 	
