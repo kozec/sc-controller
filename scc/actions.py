@@ -7,9 +7,12 @@ stick, pad or trigger is generated - typicaly what emulated button, stick or
 trigger should be pressed.
 """
 from __future__ import unicode_literals
+from scc.tools import _
 
-from scc.tools import strip_none, ensure_size, quat2euler, anglediff, _
+from scc.tools import strip_none, ensure_size, quat2euler
+from scc.tools import anglediff, circle_to_square
 from scc.uinput import Keys, Axes, Rels
+from scc.lib import xwrappers as X
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
 from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
@@ -519,6 +522,33 @@ class CircularAction(HapticEnabledAction):
 			else:
 				log.warning("Invalid axis for circular: %s", self.mouse_axis)
 			mapper.force_event.add(FE_PAD)
+
+
+class AreaAction(HapticEnabledAction):
+	COMMAND = "area"
+	
+	def __init__(self, x1, y1, x2, y2):
+		HapticEnabledAction.__init__(self, x1, x2, y1, y2)
+		self.x1 = x1
+		self.y1 = y1
+		self.w = float(x2 - x1)
+		self.h = float(y2 - y1)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Mouse Region")
+	
+	
+	def whole(self, mapper, x, y, what):
+		x = x / float(STICK_PAD_MAX)
+		y = y / float(STICK_PAD_MAX)
+		x, y = circle_to_square(x, y)
+		x = max(0, (x + 1.0) * 0.5)
+		y = max(0, (1.0 - y) * 0.5)
+		x = int(self.x1 + self.w * x)
+		y = int(self.y1 + self.h * y)
+		X.set_mouse_pos(mapper.xdisplay, x, y)
 
 
 class GyroAction(Action):

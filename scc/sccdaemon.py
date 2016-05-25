@@ -5,6 +5,7 @@ SC-Controller - Daemon class
 from __future__ import unicode_literals
 from scc.tools import _
 
+from scc.lib import xwrappers as X
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
 from scc.paths import get_profiles_path, get_default_profiles_path
@@ -37,6 +38,7 @@ class SCCDaemon(Daemon):
 		self.started = False
 		self.exiting = False
 		self.socket_file = socket_file
+		self.xdisplay = None
 		self.sserver = None
 		self.mapper = None
 		self.error = None
@@ -211,6 +213,20 @@ class SCCDaemon(Daemon):
 		sys.exit(0)
 	
 	
+	def connect_x(self):
+		""" Creates connection to X Server """
+		if "DISPLAY" not in os.environ:
+			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
+			self.xdisplay = None
+			return
+		self.xdisplay = X.open_display(os.environ["DISPLAY"])
+		if not self.xdisplay:
+			log.warning("Failed to connect to XServer. Some functionality will be unavailable")
+			self.xdisplay = None
+			return
+		log.debug("Connected to XServer %s", os.environ["DISPLAY"])
+	
+	
 	def start_osd(self):
 		""" Starts OSD Daemon on bacgkround (if possible) """
 		def threaded():
@@ -222,12 +238,9 @@ class SCCDaemon(Daemon):
 					log.warning("osd-daemon died; restarting")
 					time.sleep(5)
 		
-		if "DISPLAY" in os.environ:
-			t = threading.Thread(target=threaded)
-			t.daemon = True
-			t.start()
-		else:
-			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
+		t = threading.Thread(target=threaded)
+		t.daemon = True
+		t.start()
 
 
 	def run(self):
@@ -235,7 +248,11 @@ class SCCDaemon(Daemon):
 		signal.signal(signal.SIGTERM, self.sigterm)
 		self.lock.acquire()
 		self.start_listening()
-		self.start_osd()
+		self.connect_x()
+		self.mapper.xdisplay = self.xdisplay	# TODO: Move somewhere
+		if self.xdisplay:
+			# Available only with XServer
+			self.start_osd()
 		while True:
 			try:
 				sc = None

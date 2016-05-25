@@ -31,6 +31,19 @@ Controls scroll wheel by scrolling finger around pad.
 Axis should be Rels.REL_WHEEL or Rels.REL_HWHEEL.
 
 
+#### area(x1, y1, x2, y2)
+Creates 1:1 mapping between finger position on pad and mouse position in
+specified screen area. Coordinates are in pixels with (0,0) on top,left corner.
+Negative number can be used to count from other side of screen.
+
+
+#### relarea(x1, y1, x2, y2)
+Creates 1:1 mapping between finger position on pad and mouse position in
+specified screen area. Coordinates are fractions of screen width and height,
+(0,0) is top,left and (1,1) bottom,right corner of screen. Negative number can be
+used to count from other side of screen.
+
+
 #### gyro(axis1 [, axis2 [, axis3]])
 Maps *changes* in gyroscope pitch, yaw and roll movement into movements of gamepad stick.
 Can be used to map gyroscope to camera when camera can be controlled only with analog stick.

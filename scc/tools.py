@@ -6,8 +6,8 @@ Various stuff that I don't care to fit anywhere else.
 """
 from __future__ import unicode_literals
 
-from math import pi as PI
-import imp, os, sys, gettext, logging, math
+from math import pi as PI, sin, cos, atan2, sqrt
+import imp, os, sys, gettext, logging
 log = logging.getLogger("tools.py")
 _ = lambda x : x
 
@@ -84,9 +84,9 @@ def quat2euler(q0, q1, q2, q3):
 	yn = 2 * (q1 * q2 + q0 * q3)
 	zn = qq3 + qq2 - qq0 - qq1
 	
-	pitch = math.atan2(xb , xa)
-	yaw   = math.atan2(xn , math.sqrt(1 - xn**2))
-	roll  = math.atan2(yn , zn)
+	pitch = atan2(xb , xa)
+	yaw   = atan2(xn , sqrt(1 - xn**2))
+	roll  = atan2(yn , zn)
 	return pitch, yaw, roll
 
 
@@ -147,3 +147,33 @@ def find_binary(name):
 			return path
 	# Not found, return name back and hope for miracle
 	return name
+
+
+PId4 = PI / 4.0
+def circle_to_square(x, y):
+	"""
+	Projects coordinate in circle (of radius 1.0) to coordinate in square.
+	"""
+	# Adapted from http://theinstructionlimit.com/squaring-the-thumbsticks
+	
+	# Determine the theta angle
+	angle = atan2(y, x) + PI
+	
+	squared = 0, 0
+	# Scale according to which wall we're clamping to
+	# X+ wall
+	if angle <= PId4 or angle > 7.0 * PId4:
+		squared = x * (1.0 / cos(angle)), y * (1.0 / cos(angle))
+	# Y+ wall
+	elif angle > PId4 and angle <= 3.0 * PId4:
+		squared = x * (1.0 / sin(angle)), y * (1.0 / sin(angle))
+	# X- wall
+	elif angle > 3.0 * PId4 and angle <= 5.0 * PId4:
+		squared = x * (-1.0 / cos(angle)), y * (-1.0 / cos(angle))
+	# Y- wall
+	elif angle > 5.0 * PId4 and angle <= 7.0 * PId4:
+		squared = x * (-1.0 / sin(angle)), y * (-1.0 / sin(angle))
+	else:
+		raise ValueError("Invalid angle...?")
+	
+	return squared

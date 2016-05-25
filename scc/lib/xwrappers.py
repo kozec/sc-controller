@@ -5,7 +5,7 @@ Python wrapper for some X-related stuff.
 """
 
 from ctypes import CDLL, POINTER, c_void_p, Structure
-from ctypes import c_ulong, c_int, c_uint, c_short, c_ushort, c_ubyte
+from ctypes import c_ulong, c_int, c_uint, c_short, c_ushort, c_ubyte, c_char_p
 
 
 def _load_lib(*names):
@@ -68,12 +68,19 @@ XKBUSECOREKBD	= 0x0100
 
 # Functions
 create_region = libXFixes.XFixesCreateRegion
-create_region.argtypes = [c_void_p, POINTER(XRectangle), c_int]
+create_region.argtypes = [ c_void_p, POINTER(XRectangle), c_int ]
 create_region.restype = XserverRegion
 set_window_shape_region = libXFixes.XFixesSetWindowShapeRegion
-set_window_shape_region.argtypes = [c_void_p, XID, c_int, c_int, c_int, XserverRegion]
+set_window_shape_region.argtypes = [ c_void_p, XID, c_int, c_int, c_int, XserverRegion ]
 destroy_region = libXFixes.XFixesDestroyRegion
-destroy_region.argtypes = [c_void_p, XserverRegion]
+destroy_region.argtypes = [ c_void_p, XserverRegion ]
+open_display = libX11.XOpenDisplay
+open_display.argtypes = [ c_char_p ]
+open_display.restype = c_void_p
+get_default_root_window = libX11.XDefaultRootWindow
+get_default_root_window.argtypes = [ c_void_p ]
+warp_pointer = libX11.XWarpPointer
+warp_pointer.argtypes = [ c_void_p, XID, XID, c_int, c_int, c_int, c_int, c_int, c_int ]
 
 # Wrapped functions
 _xkb_get_state = libX11.XkbGetState
@@ -85,3 +92,6 @@ def get_xkb_state(dpy):
 	_xkb_get_state(dpy, XKBUSECOREKBD, rec)
 	return rec
 
+def set_mouse_pos(dpy, x, y):
+	root = get_default_root_window(dpy)
+	warp_pointer(dpy, root, 0, 0, 0, 0, 0, x, y)

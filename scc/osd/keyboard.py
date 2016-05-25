@@ -13,7 +13,7 @@ from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
 from scc.constants import SCButtons
 from scc.paths import get_share_path, get_config_path
 from scc.uinput import Keyboard as uinputKeyboard
-from scc.tools import point_in_gtkrect
+from scc.tools import point_in_gtkrect, circle_to_square
 from scc.menu_data import MenuData
 from scc.uinput import Keys
 from scc.lib import xwrappers as X
@@ -23,7 +23,7 @@ from scc.gui.gdk_to_key import KEY_TO_GDK
 from scc.osd.timermanager import TimerManager
 from scc.osd import OSDWindow
 
-import os, sys, math, json, logging
+import os, sys, json, logging
 log = logging.getLogger("osd.menu")
 
 
@@ -296,34 +296,4 @@ class Keyboard(OSDWindow, TimerManager):
 		elif self._pressed[cursor] is not None:
 			self.keyboard.releaseEvent([ self._pressed[cursor] ])
 			self._pressed[cursor] = None
-		
 
-
-PId4 = math.pi / 4.0
-def circle_to_square(x, y):
-	"""
-	Projects coordinate in circle (of radius 1.0) to coordinate in square.
-	"""
-	# Adapted from http://theinstructionlimit.com/squaring-the-thumbsticks
-	
-	# Determine the theta angle
-	angle = math.atan2(y, x) + math.pi
-	
-	squared = 0, 0
-	# Scale according to which wall we're clamping to
-	# X+ wall
-	if angle <= PId4 or angle > 7.0 * PId4:
-		squared = x * (1.0 / math.cos(angle)), y * (1.0 / math.cos(angle))
-	# Y+ wall
-	elif angle > PId4 and angle <= 3.0 * PId4:
-		squared = x * (1.0 / math.sin(angle)), y * (1.0 / math.sin(angle))
-	# X- wall
-	elif angle > 3.0 * PId4 and angle <= 5.0 * PId4:
-		squared = x * (-1.0 / math.cos(angle)), y * (-1.0 / math.cos(angle))
-	# Y- wall
-	elif angle > 5.0 * PId4 and angle <= 7.0 * PId4:
-		squared = x * (-1.0 / math.sin(angle)), y * (-1.0 / math.sin(angle))
-	else:
-		raise ValueError("Invalid angle...?")
-	
-	return squared
