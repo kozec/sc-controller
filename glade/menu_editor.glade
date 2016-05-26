@@ -20,7 +20,7 @@
     <property name="type_hint">dialog</property>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
-      <object class="GtkBox">
+      <object class="GtkBox" id="iHateUselessIDs">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
@@ -37,7 +37,7 @@
                 <property name="orientation">vertical</property>
                 <property name="message_type">error</property>
                 <child internal-child="action_area">
-                  <object class="GtkButtonBox">
+                  <object class="GtkButtonBox" id="kuaaaaaa">
                     <property name="can_focus">False</property>
                     <property name="spacing">6</property>
                     <property name="layout_style">end</property>
@@ -52,7 +52,7 @@
                   </packing>
                 </child>
                 <child internal-child="content_area">
-                  <object class="GtkBox">
+                  <object class="GtkBox" id="nonimportatboxthatneedsidjustbecauseofubuntu1">
                     <property name="can_focus">False</property>
                     <property name="spacing">16</property>
                     <child>
@@ -295,7 +295,7 @@
                             <signal name="cursor-changed" handler="on_tvItems_cursor_changed" swapped="no"/>
                             <signal name="row-activated" handler="btEdit_clicked_cb" swapped="no"/>
                             <child internal-child="selection">
-                              <object class="GtkTreeSelection"/>
+                              <object class="GtkTreeSelection" id="nonimportatboxthatneedsidjustbecauseofubunt"/>
                             </child>
                             <child>
                               <object class="GtkTreeViewColumn" id="clItemLabel">
