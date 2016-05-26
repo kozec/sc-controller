@@ -492,8 +492,14 @@ class CircularAction(HapticEnabledAction):
 				self.angle, angle = angle, 0
 			else:
 				self.angle, angle = angle, self.angle - angle
-				if abs(angle) > PI:
-					angle = -angle
+				# Ensure we don't wrap from pi to -pi creating a large delta
+				if angle > PI:
+					# Subtract a full rotation to counter the wrapping
+					angle -= 2 * PI
+				# And same from -pi to pi
+				elif angle < -PI:
+					# Add a full rotation to counter the wrapping
+					angle += 2 * PI
 			# Apply bulgarian constant
 			self.travelled += angle * 5000
 			if self.haptic:
