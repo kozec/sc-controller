@@ -125,15 +125,14 @@ class Keyboard(OSDWindow, TimerManager):
 				if not found: continue
 				for k in sorted(entries, key=lambda a : a.level):
 					# Try to convert keycode to label
-					try:
-						code = Gdk.keyval_to_unicode(
-							self.keymap.translate_keyboard_state(k.keycode, mt, group)
-							.keyval)
-						if code != 0:
-							labels[a.name] = unichr(code)
-							break
-					except AttributeError:
-						pass
+					translation = self.keymap.translate_keyboard_state(k.keycode, mt, group)
+					if hasattr(translation, "keyval"):
+						code = Gdk.keyval_to_unicode(translation.keyval)
+					else:
+						code = Gdk.keyval_to_unicode(translation[1])
+					if code != 0:
+						labels[a.name] = unichr(code)
+						break
 		
 		self.background.set_labels(labels)
 	
