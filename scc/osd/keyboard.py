@@ -210,7 +210,8 @@ class Keyboard(OSDWindow, TimerManager):
 		x -= cursor.get_allocation().width * 0.5
 		y -= cursor.get_allocation().height * 0.5
 		
-		self.f.move(cursor, int(x), int(y))
+		cursor.position = int(x), int(y)
+		self.f.move(cursor, *cursor.position)
 		for a in self.background.areas:
 			if a.contains(x, y):
 				if a != self._hovers[cursor]:
@@ -281,8 +282,7 @@ class Keyboard(OSDWindow, TimerManager):
 		Sends keypress/keyrelease event to emulated keyboard, based on
 		position of cursor on OSD keyboard.
 		"""
-		x = self.f.child_get_property(cursor, "x")
-		y = self.f.child_get_property(cursor, "y")
+		x, y = cursor.position
 		
 		if pressed:
 			for a in self.background.areas:
