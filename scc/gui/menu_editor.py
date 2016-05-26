@@ -160,6 +160,7 @@ class MenuEditor(Editor):
 		"""
 		Setups editor for creating new menu.
 		"""
+		self.set_title(_("New Menu"))
 		rbInProfile = self.builder.get_object("rbInProfile")
 		entName = self.builder.get_object("entName")
 		
