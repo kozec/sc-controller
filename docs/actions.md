@@ -31,17 +31,21 @@ Controls scroll wheel by scrolling finger around pad.
 Axis should be Rels.REL_WHEEL or Rels.REL_HWHEEL.
 
 
-#### area(x1, y1, x2, y2)
+#### area(x1, y1, x2, y2), winarea(x1, y1, x2, y2)
 Creates 1:1 mapping between finger position on pad and mouse position in
 specified screen area. Coordinates are in pixels with (0,0) on top,left corner.
 Negative number can be used to count from other side of screen.
 
+`winarea` does same thing but with position relative to current window instead of entire screen.
 
-#### relarea(x1, y1, x2, y2)
+
+#### relarea(x1, y1, x2, y2), relwinarea(x1, y1, x2, y2)
 Creates 1:1 mapping between finger position on pad and mouse position in
 specified screen area. Coordinates are fractions of screen width and height,
 (0,0) is top,left and (1,1) bottom,right corner of screen. Negative number can be
 used to count from other side of screen.
+
+`relwinarea` does same thing but with position relative to current window instead of entire screen.
 
 
 #### gyro(axis1 [, axis2 [, axis3]])

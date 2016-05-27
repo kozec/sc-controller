@@ -544,19 +544,39 @@ class AreaAction(HapticEnabledAction):
 		return _("Mouse Region")
 	
 	
+	def transform_coords(self, mapper):
+		"""
+		Transform coordinates specified as action arguments in whatever current
+		class represents into rectangle in pixels.
+		
+		Overrided by subclasses.
+		"""
+		if self.needs_query_screen:
+			screen = X.get_screen_size(mapper.xdisplay)
+			x1, x2, y1, y2 = self.coords
+			if x1 < 0 : x1 = screen[0] + x1
+			if y1 < 0 : y1 = screen[1] + y1
+			if x2 < 0 : x2 = screen[0] + x2
+			if y2 < 0 : y2 = screen[1] + y2
+			return x1, x2, y1, y2
+		return self.coords
+	
+	
+	def set_mouse(self, mapper, x, y):
+		"""
+		Performs final mouse position setting.
+		Overrided by subclasses.
+		"""
+		X.set_mouse_pos(mapper.xdisplay, x, y)
+	
+	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
 			# Store mouse position if pad was just touched
 			if self.orig_position is None:
 				self.orig_position = X.get_mouse_pos(mapper.xdisplay)
 			# Compute coordinates specified from other side of screen if needed
-			x1, x2, y1, y2 = self.coords
-			if self.needs_query_screen:
-				screen = X.get_screen_size(mapper.xdisplay)
-				if x1 < 0 : x1 = screen[0] + x1
-				if y1 < 0 : y1 = screen[1] + y1
-				if x2 < 0 : x2 = screen[0] + x2
-				if y2 < 0 : y2 = screen[1] + y2
+			x1, x2, y1, y2 = self.transform_coords(mapper)
 			# Transform position on circne to position on rectangle
 			x = x / float(STICK_PAD_MAX)
 			y = y / float(STICK_PAD_MAX)
@@ -569,11 +589,31 @@ class AreaAction(HapticEnabledAction):
 			x = int(x1 + w * x)
 			y = int(y1 + h * y)
 			# Set position
-			X.set_mouse_pos(mapper.xdisplay, x, y)
+			self.set_mouse(mapper, x, y)
 		elif mapper.was_touched(what):
 			# Pad just released
 			X.set_mouse_pos(mapper.xdisplay, *self.orig_position)
 			self.orig_position = None
+
+
+class WinAreaAction(AreaAction):
+	COMMAND = "winarea"
+	
+	def transform_coords(self, mapper):
+		if self.needs_query_screen:
+			w_size = X.get_window_size(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
+			x1, x2, y1, y2 = self.coords
+			if x1 < 0 : x1 = w_size[0] + x1
+			if y1 < 0 : y1 = w_size[1] + y1
+			if x2 < 0 : x2 = w_size[0] + x2
+			if y2 < 0 : y2 = w_size[1] + y2
+			return x1, x2, y1, y2
+		return self.coords
+	
+	
+	def set_mouse(self, mapper, x, y):
+		X.set_mouse_pos(mapper.xdisplay, x, y, X.get_current_window(mapper.xdisplay))
+	
 
 
 class GyroAction(Action):
