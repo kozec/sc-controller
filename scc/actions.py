@@ -529,6 +529,7 @@ class AreaAction(HapticEnabledAction):
 	
 	def __init__(self, x1, y1, x2, y2):
 		HapticEnabledAction.__init__(self, x1, x2, y1, y2)
+		self.orig_position = None
 		self.x1 = x1
 		self.y1 = y1
 		self.w = float(x2 - x1)
@@ -541,14 +542,21 @@ class AreaAction(HapticEnabledAction):
 	
 	
 	def whole(self, mapper, x, y, what):
-		x = x / float(STICK_PAD_MAX)
-		y = y / float(STICK_PAD_MAX)
-		x, y = circle_to_square(x, y)
-		x = max(0, (x + 1.0) * 0.5)
-		y = max(0, (1.0 - y) * 0.5)
-		x = int(self.x1 + self.w * x)
-		y = int(self.y1 + self.h * y)
-		X.set_mouse_pos(mapper.xdisplay, x, y)
+		if mapper.is_touched(what):
+			if self.orig_position is None:
+				self.orig_position = X.get_mouse_pos(mapper.xdisplay)
+			x = x / float(STICK_PAD_MAX)
+			y = y / float(STICK_PAD_MAX)
+			x, y = circle_to_square(x, y)
+			x = max(0, (x + 1.0) * 0.5)
+			y = max(0, (1.0 - y) * 0.5)
+			x = int(self.x1 + self.w * x)
+			y = int(self.y1 + self.h * y)
+			X.set_mouse_pos(mapper.xdisplay, x, y)
+		elif mapper.was_touched(what):
+			# Pad just released
+			X.set_mouse_pos(mapper.xdisplay, *self.orig_position)
+			self.orig_position = None
 
 
 class GyroAction(Action):
