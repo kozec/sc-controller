@@ -86,6 +86,9 @@ warp_pointer.argtypes = [ c_void_p, XID, XID, c_int, c_int, c_int, c_int, c_int,
 query_pointer = libX11.XQueryPointer
 query_pointer.argtypes = [ c_void_p, XID, POINTER(XID), POINTER(XID),
 	POINTER(c_int), POINTER(c_int), POINTER(c_int), POINTER(c_int), POINTER(c_uint) ]
+get_geometry = libX11.XGetGeometry
+get_geometry.argtypes = [ c_void_p, XID, POINTER(XID), POINTER(c_int), POINTER(c_int),
+	POINTER(c_uint), POINTER(c_uint), POINTER(c_uint), POINTER(c_uint) ]
 
 # Wrapped functions
 _xkb_get_state = libX11.XkbGetState
@@ -97,18 +100,45 @@ def get_xkb_state(dpy):
 	_xkb_get_state(dpy, XKBUSECOREKBD, rec)
 	return rec
 
-def set_mouse_pos(dpy, x, y):
-	root = get_default_root_window(dpy)
-	warp_pointer(dpy, 0, root, 0, 0, 0, 0, x, y)
-	flush(dpy)
 
-def get_mouse_pos(dpy):
-	root = get_default_root_window(dpy)
-	root_return, child_return = XID(), XID()
+def get_window_size(dpy, window):
+	root_return = XID()
 	x, y = c_int(), c_int()
-	child_x_return, child_y_return = c_int(), c_int()
-	mask_return = c_uint()
-	query_pointer(dpy, root, byref(root_return), byref(child_return),
+	width, height = c_uint(), c_uint()
+	border_width, depth = c_uint(), c_uint()
+	get_geometry(dpy, window, byref(root_return), byref(x), byref(y),
+		byref(width), byref(height), byref(border_width), byref(depth))
+	return width.value, height.value
+
+
+def get_screen_size(dpy):
+	return get_window_size(dpy, get_default_root_window(dpy))
+
+
+def get_mouse_pos(dpy, relative_to=None):
+	"""
+	Returns mouse position relative to specified window or to screen, if no
+	window is specified.
+	"""
+	if relative_to is None:
+		relative_to = get_default_root_window(dpy)
+	root_return, child = XID(), XID()
+	x, y = c_int(), c_int()
+	child_x, child_y = c_int(), c_int()
+	mask = c_uint()
+	
+	query_pointer(dpy, relative_to, byref(root_return), byref(child),
 		byref(x), byref(y),
-		byref(child_x_return), byref(child_y_return), byref(mask_return))
+		byref(child_x), byref(child_y), byref(mask))
 	return x.value, y.value
+
+
+def set_mouse_pos(dpy, x, y, relative_to=None):
+	"""
+	Sets mouse position relative to specified window or to screen, if no
+	window is specified.
+	"""
+	if relative_to is None:
+		relative_to = get_default_root_window(dpy)
+	warp_pointer(dpy, 0, relative_to, 0, 0, 0, 0, x, y)
+	flush(dpy)

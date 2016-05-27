@@ -529,11 +529,14 @@ class AreaAction(HapticEnabledAction):
 	
 	def __init__(self, x1, y1, x2, y2):
 		HapticEnabledAction.__init__(self, x1, x2, y1, y2)
+		# Make sure that lower number is first - movement gets inverted otherwise
+		if x2 < x1 : x1, x2 = x2, x1
+		if y2 < y1 : y1, y2 = y2, y1
+		# orig_position will store mouse position to return to when finger leaves pad
 		self.orig_position = None
-		self.x1 = x1
-		self.y1 = y1
-		self.w = float(x2 - x1)
-		self.h = float(y2 - y1)
+		self.coords = x1, x2, y1, y2
+		# needs_query_screen is True if any coordinate has to be computed
+		self.needs_query_screen = x1 < 0 or y1 < 0 or x2 < 0 or y2 < 0
 	
 	
 	def describe(self, context):
@@ -543,15 +546,29 @@ class AreaAction(HapticEnabledAction):
 	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
+			# Store mouse position if pad was just touched
 			if self.orig_position is None:
 				self.orig_position = X.get_mouse_pos(mapper.xdisplay)
+			# Compute coordinates specified from other side of screen if needed
+			x1, x2, y1, y2 = self.coords
+			if self.needs_query_screen:
+				screen = X.get_screen_size(mapper.xdisplay)
+				if x1 < 0 : x1 = screen[0] + x1
+				if y1 < 0 : y1 = screen[1] + y1
+				if x2 < 0 : x2 = screen[0] + x2
+				if y2 < 0 : y2 = screen[1] + y2
+			# Transform position on circne to position on rectangle
 			x = x / float(STICK_PAD_MAX)
 			y = y / float(STICK_PAD_MAX)
 			x, y = circle_to_square(x, y)
+			# Perform magic
 			x = max(0, (x + 1.0) * 0.5)
 			y = max(0, (1.0 - y) * 0.5)
-			x = int(self.x1 + self.w * x)
-			y = int(self.y1 + self.h * y)
+			w = float(x2 - x1)
+			h = float(y2 - y1)
+			x = int(x1 + w * x)
+			y = int(y1 + h * y)
+			# Set position
 			X.set_mouse_pos(mapper.xdisplay, x, y)
 		elif mapper.was_touched(what):
 			# Pad just released
