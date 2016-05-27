@@ -596,6 +596,19 @@ class AreaAction(HapticEnabledAction):
 			self.orig_position = None
 
 
+class RelAreaAction(AreaAction):
+	COMMAND = "relarea"
+	
+	def transform_coords(self, mapper):
+		screen = X.get_screen_size(mapper.xdisplay)
+		x1, x2, y1, y2 = self.coords
+		x1 = screen[0] * x1
+		y1 = screen[1] * y1
+		x2 = screen[0] * x2
+		y2 = screen[1] * y2
+		return x1, x2, y1, y2
+
+
 class WinAreaAction(AreaAction):
 	COMMAND = "winarea"
 	
@@ -613,7 +626,20 @@ class WinAreaAction(AreaAction):
 	
 	def set_mouse(self, mapper, x, y):
 		X.set_mouse_pos(mapper.xdisplay, x, y, X.get_current_window(mapper.xdisplay))
+
+
+class RelWinAreaAction(WinAreaAction):
+	COMMAND = "relwinarea"
 	
+	def transform_coords(self, mapper):
+		w_size = X.get_window_size(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
+		x1, x2, y1, y2 = self.coords
+		x1 = w_size[0] * x1
+		y1 = w_size[1] * y1
+		x2 = w_size[0] * x2
+		y2 = w_size[1] * y2
+		return x1, x2, y1, y2
+
 
 
 class GyroAction(Action):

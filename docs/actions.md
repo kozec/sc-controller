@@ -42,8 +42,7 @@ Negative number can be used to count from other side of screen.
 #### relarea(x1, y1, x2, y2), relwinarea(x1, y1, x2, y2)
 Creates 1:1 mapping between finger position on pad and mouse position in
 specified screen area. Coordinates are fractions of screen width and height,
-(0,0) is top,left and (1,1) bottom,right corner of screen. Negative number can be
-used to count from other side of screen.
+(0,0) is top,left and (1,1) bottom,right corner of screen.
 
 `relwinarea` does same thing but with position relative to current window instead of entire screen.
 
