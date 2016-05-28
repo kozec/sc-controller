@@ -565,7 +565,7 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 	SA = COMMAND = "area"
 	
 	def __init__(self, x1, y1, x2, y2):
-		Action.__init__(self, x1, x2, y1, y2)
+		Action.__init__(self, x1, y1, x2, y2)
 		HapticEnabledAction.__init__(self)
 		OSDEnabledAction.__init__(self)
 		# Make sure that lower number is first - movement gets inverted otherwise
@@ -573,7 +573,7 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 		if y2 < y1 : y1, y2 = y2, y1
 		# orig_position will store mouse position to return to when finger leaves pad
 		self.orig_position = None
-		self.coords = x1, x2, y1, y2
+		self.coords = x1, y1, x2, y2
 		# needs_query_screen is True if any coordinate has to be computed
 		self.needs_query_screen = x1 < 0 or y1 < 0 or x2 < 0 or y2 < 0
 	
@@ -592,12 +592,12 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 		"""
 		if self.needs_query_screen:
 			screen = X.get_screen_size(mapper.xdisplay)
-			x1, x2, y1, y2 = self.coords
+			x1, y1, x2, y2 = self.coords
 			if x1 < 0 : x1 = screen[0] + x1
 			if y1 < 0 : y1 = screen[1] + y1
 			if x2 < 0 : x2 = screen[0] + x2
 			if y2 < 0 : y2 = screen[1] + y2
-			return x1, x2, y1, y2
+			return x1, y1, x2, y2
 		return self.coords
 	
 	
@@ -624,11 +624,11 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 			# Store mouse position if pad was just touched
 			if self.orig_position is None:
 				if self.osd_enabled:
-					x1, x2, y1, y2 = self.transform_osd_coords(mapper)
+					x1, y1, x2, y2 = self.transform_osd_coords(mapper)
 					self.execute(mapper, int(x1), int(y1), int(x2), int(y2))
 				self.orig_position = X.get_mouse_pos(mapper.xdisplay)
 			# Compute coordinates specified from other side of screen if needed
-			x1, x2, y1, y2 = self.transform_coords(mapper)
+			x1, y1, x2, y2 = self.transform_coords(mapper)
 			# Transform position on circne to position on rectangle
 			x = x / float(STICK_PAD_MAX)
 			y = y / float(STICK_PAD_MAX)
@@ -655,12 +655,12 @@ class RelAreaAction(AreaAction):
 	
 	def transform_coords(self, mapper):
 		screen = X.get_screen_size(mapper.xdisplay)
-		x1, x2, y1, y2 = self.coords
+		x1, y1, x2, y2 = self.coords
 		x1 = screen[0] * x1
 		y1 = screen[1] * y1
 		x2 = screen[0] * x2
 		y2 = screen[1] * y2
-		return x1, x2, y1, y2
+		return x1, y1, x2, y2
 
 
 class WinAreaAction(AreaAction):
@@ -669,23 +669,23 @@ class WinAreaAction(AreaAction):
 	def transform_coords(self, mapper):
 		if self.needs_query_screen:
 			w_size = X.get_window_size(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
-			x1, x2, y1, y2 = self.coords
+			x1, y1, x2, y2 = self.coords
 			if x1 < 0 : x1 = w_size[0] + x1
 			if y1 < 0 : y1 = w_size[1] + y1
 			if x2 < 0 : x2 = w_size[0] + x2
 			if y2 < 0 : y2 = w_size[1] + y2
-			return x1, x2, y1, y2
+			return x1, y1, x2, y2
 		return self.coords
 	
 	
 	def transform_osd_coords(self, mapper):
 		wx, wy, ww, wh = X.get_window_geometry(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
-		x1, x2, y1, y2 = self.coords
+		x1, y1, x2, y2 = self.coords
 		x1 = wx + x1 if x1 >= 0 else wx + ww + x1
 		y1 = wy + y1 if y1 >= 0 else wy + wh + y1
 		x2 = wx + x2 if x2 >= 0 else wx + ww + x2
 		y2 = wy + y2 if y2 >= 0 else wy + wh + y2
-		return x1, x2, y1, y2
+		return x1, y1, x2, y2
 	
 	
 	def set_mouse(self, mapper, x, y):
@@ -697,23 +697,22 @@ class RelWinAreaAction(WinAreaAction):
 	
 	def transform_coords(self, mapper):
 		w_size = X.get_window_size(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
-		x1, x2, y1, y2 = self.coords
+		x1, y1, x2, y2 = self.coords
 		x1 = w_size[0] * x1
 		y1 = w_size[1] * y1
 		x2 = w_size[0] * x2
 		y2 = w_size[1] * y2
-		return x1, x2, y1, y2
+		return x1, y1, x2, y2
 	
 	
 	def transform_osd_coords(self, mapper):
 		wx, wy, ww, wh = X.get_window_geometry(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
-		x1, x2, y1, y2 = self.coords
+		x1, y1, x2, y2 = self.coords
 		x1 = wx + float(ww) * x1
 		y1 = wy + float(wh) * y1
 		x2 = wx + float(ww) * x2
 		y2 = wy + float(wh) * y2
-		return x1, x2, y1, y2
-
+		return x1, y1, x2, y2
 
 
 class GyroAction(Action):
