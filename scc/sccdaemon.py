@@ -135,6 +135,14 @@ class SCCDaemon(Daemon):
 		self._osd('message', '-t', action.timeout, action.text)
 	
 	
+	def on_sa_area(self, mapper, action, x1, y1, x2, y2):
+		""" Called when *AreaAction has OSD enabled """
+		self._osd('area', '-x', x1, '-y', y1, '--width', x2-x1, '--height', y2-y1)
+	
+	
+	def on_sa_clear_osd(self, *a):
+		self._osd('clear')
+	
 	def on_sa_keyboard(self, mapper, action):
 		""" Called when 'keyboard' action is used """
 		self._osd('keyboard')

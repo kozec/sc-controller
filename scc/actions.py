@@ -199,15 +199,50 @@ class Action(object):
 		log.warn("Action %s can't handle trigger event", self.__class__.__name__)
 
 
-class HapticEnabledAction(Action):
-	def __init__(self, *parameters):
-		Action.__init__(self, *parameters)
+class HapticEnabledAction(object):
+	""" Action that can generate haptic feedback """
+	def __init__(self):
 		self.haptic = None
 	
 	
 	def set_haptic(self, hd):
 		self.haptic = hd
 		return True
+
+
+class OSDEnabledAction(object):
+	""" Action that displays some sort of OSD when executed """
+	def __init__(self):
+		self.osd_enabled = False
+	
+	
+	def enable_osd(self, timeout):
+		# timeout not used by anything so far
+		self.osd_enabled = True
+
+
+class SpecialAction(object):
+	"""
+	Action that needs to call special_actions_handler (aka sccdaemon instance)
+	to actually do something.
+	"""
+	SA = ""
+	def execute_named(self, name, mapper, *a):
+		sa = mapper.get_special_actions_handler()
+		h_name = "on_sa_%s" % (name,)
+		if sa is None:
+			log.warning("Mapper can't handle special actions (set_special_actions_handler never called)")
+		elif hasattr(sa, h_name):
+			return getattr(sa, h_name)(mapper, self, *a)
+		else:
+			log.warning("Mapper can't handle '%s' action" % (name,))
+	
+	def execute(self, mapper, *a):
+		self.execute_named(self.SA, mapper, *a)
+	
+	# Prevent warnings when special action is bound to button
+	def button_press(self, mapper): pass
+	def button_release(self, mapper): pass
 
 
 class AxisAction(Action):
@@ -335,11 +370,12 @@ class HatRightAction(HatAction):
 		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
 
 
-class MouseAction(HapticEnabledAction):
+class MouseAction(Action, HapticEnabledAction):
 	COMMAND = "mouse"
 	
 	def __init__(self, axis, speed=None):
-		HapticEnabledAction.__init__(self, axis, *strip_none(speed))
+		Action.__init__(self, axis, *strip_none(speed))
+		HapticEnabledAction.__init__(self)
 		self.mouse_axis = axis
 		if speed:
 			self.speed = (speed, speed)
@@ -455,11 +491,12 @@ class MouseAction(HapticEnabledAction):
 		mapper.syn_list.add(mapper.mouse)
 
 
-class CircularAction(HapticEnabledAction):
+class CircularAction(Action, HapticEnabledAction):
 	COMMAND = "circular"
 	
 	def __init__(self, axis):
-		HapticEnabledAction.__init__(self, axis)
+		Action.__init__(self, axis)
+		HapticEnabledAction.__init__(self)
 		self.mouse_axis = axis
 		self.speed = 1.0
 		self.angle = None		# Last known finger position
@@ -524,11 +561,13 @@ class CircularAction(HapticEnabledAction):
 			mapper.force_event.add(FE_PAD)
 
 
-class AreaAction(HapticEnabledAction):
-	COMMAND = "area"
+class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
+	SA = COMMAND = "area"
 	
 	def __init__(self, x1, y1, x2, y2):
-		HapticEnabledAction.__init__(self, x1, x2, y1, y2)
+		Action.__init__(self, x1, x2, y1, y2)
+		HapticEnabledAction.__init__(self)
+		OSDEnabledAction.__init__(self)
 		# Make sure that lower number is first - movement gets inverted otherwise
 		if x2 < x1 : x1, x2 = x2, x1
 		if y2 < y1 : y1, y2 = y2, y1
@@ -572,11 +611,13 @@ class AreaAction(HapticEnabledAction):
 	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
-			# Store mouse position if pad was just touched
-			if self.orig_position is None:
-				self.orig_position = X.get_mouse_pos(mapper.xdisplay)
 			# Compute coordinates specified from other side of screen if needed
 			x1, x2, y1, y2 = self.transform_coords(mapper)
+			# Store mouse position if pad was just touched
+			if self.orig_position is None:
+				if self.osd_enabled:
+					self.execute(mapper, int(x1), int(y1), int(x2), int(y2))
+				self.orig_position = X.get_mouse_pos(mapper.xdisplay)
 			# Transform position on circne to position on rectangle
 			x = x / float(STICK_PAD_MAX)
 			y = y / float(STICK_PAD_MAX)
@@ -593,6 +634,8 @@ class AreaAction(HapticEnabledAction):
 		elif mapper.was_touched(what):
 			# Pad just released
 			X.set_mouse_pos(mapper.xdisplay, *self.orig_position)
+			if self.osd_enabled:
+				self.execute_named("clear_osd", mapper)
 			self.orig_position = None
 
 
@@ -691,6 +734,7 @@ class GyroAbsAction(GyroAction, HapticEnabledAction):
 	COMMAND = "gyroabs"
 	def __init__(self, *blah):
 		GyroAction.__init__(self, *blah)
+		HapticEnabledAction.__init__(self)
 		self.haptic = None	# Can't call HapticEnabledAction, it'll create diamond
 		self.ir = None
 		self._was_oor = False
@@ -733,10 +777,11 @@ class GyroAbsAction(GyroAction, HapticEnabledAction):
 				mapper.syn_list.add(mapper.gamepad)
 
 
-class TrackballAction(HapticEnabledAction):
+class TrackballAction(Action, HapticEnabledAction):
 	COMMAND = "trackball"
 	def __init__(self, speed=None):
-		HapticEnabledAction.__init__(self, speed)
+		Action.__init__(self, speed)
+		HapticEnabledAction.__init__(self)
 		if speed:
 			self.speed = (speed, speed)
 		else:
@@ -780,7 +825,7 @@ class TrackpadAction(TrackballAction):
 		return "Trackpad"
 
 
-class ButtonAction(HapticEnabledAction):
+class ButtonAction(Action, HapticEnabledAction):
 	COMMAND = "button"
 	SPECIAL_NAMES = {
 		Keys.BTN_LEFT	: "Mouse Left",
@@ -814,7 +859,8 @@ class ButtonAction(HapticEnabledAction):
 	def __init__(self, button1, button2 = None, minustrigger = None, plustrigger = None):
 		if button1 is None:
 			button1, button2 = button2, None
-		HapticEnabledAction.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
+		Action.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
+		HapticEnabledAction.__init__(self)
 		self.button = button1
 		self.button2 = button2
 		self.minustrigger = minustrigger
@@ -1140,14 +1186,15 @@ class DPad8Action(DPadAction):
 		return "8-Way DPad"
 
 
-class XYAction(HapticEnabledAction):
+class XYAction(Action, HapticEnabledAction):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "XY"
 	
 	def __init__(self, x=None, y=None):
-		HapticEnabledAction.__init__(self, *strip_none(x, y))
+		Action.__init__(self, *strip_none(x, y))
+		HapticEnabledAction.__init__(self)
 		self.x = x or NoAction()
 		self.y = y or NoAction()
 		self.actions = (self.x, self.y)

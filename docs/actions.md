@@ -158,7 +158,8 @@ Enables deadzone on trigger, pad or stick.
 
 
 #### osd([timeout=5], action)
-Displays action description in OSD and executes it normally.
+Enables on screen display for action. In most cases just displays action
+description in OSD and executes it normally.
 Works only if executed by pressing physical button or with `dpad`. Otherwise
 just executes child action.
 

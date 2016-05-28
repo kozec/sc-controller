@@ -12,8 +12,8 @@ from __future__ import unicode_literals
 
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
-from scc.actions import Action, NoAction, ButtonAction
-from scc.actions import ACTIONS, MOUSE_BUTTONS
+from scc.actions import Action, NoAction, SpecialAction, ButtonAction
+from scc.actions import OSDEnabledAction, ACTIONS, MOUSE_BUTTONS
 from scc.tools import strip_none
 
 import time, logging
@@ -21,27 +21,11 @@ log = logging.getLogger("SActions")
 _ = lambda x : x
 
 
-class SpecialAction(Action):
-	def execute(self, mapper, *a):
-		sa = mapper.get_special_actions_handler()
-		h_name = "on_sa_%s" % (self.COMMAND,)
-		if sa is None:
-			log.warning("Mapper can't handle special actions (set_special_actions_handler never called)")
-		elif hasattr(sa, h_name):
-			return getattr(sa, h_name)(mapper, self, *a)
-		else:
-			log.warning("Mapper can't handle '%s' action" % (self.COMMAND,))
-	
-	# Prevent warnings when special action is bound to button
-	def button_press(self, mapper): pass
-	def button_release(self, mapper): pass
-
-
-class ChangeProfileAction(SpecialAction):
-	COMMAND = "profile"
+class ChangeProfileAction(Action, SpecialAction):
+	SA = COMMAND = "profile"
 	
 	def __init__(self, profile):
-		SpecialAction.__init__(self, profile)
+		Action.__init__(self, profile)
 		self.profile = profile
 	
 	def describe(self, context):
@@ -61,8 +45,8 @@ class ChangeProfileAction(SpecialAction):
 		self.execute(mapper)
 
 
-class ShellCommandAction(SpecialAction):
-	COMMAND = "shell"
+class ShellCommandAction(Action, SpecialAction):
+	SA = COMMAND = "shell"
 	
 	def __init__(self, command):
 		Action.__init__(self, command)
@@ -82,8 +66,8 @@ class ShellCommandAction(SpecialAction):
 		self.execute(mapper)
 
 
-class TurnOffAction(SpecialAction):
-	COMMAND = "turnoff"
+class TurnOffAction(Action, SpecialAction):
+	SA = COMMAND = "turnoff"
 	
 	def __init__(self):
 		Action.__init__(self)
@@ -106,12 +90,12 @@ class TurnOffAction(SpecialAction):
 		self.execute(mapper)
 
 
-class OSDAction(SpecialAction):
+class OSDAction(Action, SpecialAction):
 	"""
 	Displays text in OSD, or, if used as modifier, displays action description
 	and executes that action.
 	"""
-	COMMAND = "osd"
+	SA = COMMAND = "osd"
 	DEFAULT_TIMEOUT = 5
 	
 	def __init__(self, *parameters):
@@ -126,6 +110,8 @@ class OSDAction(SpecialAction):
 			self.text = self.action.describe(Action.AC_OSD)
 		else:
 			self.text = unicode(parameters[-1])
+		if self.action and isinstance(self.action, OSDEnabledAction):
+			self.action.enable_osd(self.timeout)
 	
 	def describe(self, context):
 		if self.name: return self.name
@@ -157,6 +143,8 @@ class OSDAction(SpecialAction):
 	
 	def compress(self):
 		if self.action:
+			if isinstance(self.action, OSDEnabledAction):
+				return self.action.compress()
 			self.action = self.action.compress()
 		return self
 	
@@ -201,11 +189,11 @@ class OSDAction(SpecialAction):
 			return self.action.whole(mapper, x, y, what)
 
 
-class MenuAction(SpecialAction):
+class MenuAction(Action, SpecialAction):
 	"""
 	Displays menu defined in profile or globally.
 	"""
-	COMMAND = "menu"
+	SA = COMMAND = "menu"
 	MENU_TYPE = "menu"
 	DEFAULT_CONFIRM = SCButtons.A
 	DEFAULT_CANCEL = SCButtons.B
@@ -251,11 +239,11 @@ class GridMenuAction(MenuAction):
 	MENU_TYPE = "gridmenu"
 
 
-class KeyboardAction(SpecialAction):
+class KeyboardAction(Action, SpecialAction):
 	"""
 	Shows OSD keyboard.
 	"""
-	COMMAND = "keyboard"
+	SA = COMMAND = "keyboard"
 	
 	def __init__(self):
 		Action.__init__(self)

@@ -22,6 +22,10 @@ class OSDWindow(Gtk.Window):
 			border: 6px lime double;
 		}
 		
+		#osd-area {
+			background-color: lime;
+		}
+		
 		#osd-label {
 			color: lime;
 			border: none;

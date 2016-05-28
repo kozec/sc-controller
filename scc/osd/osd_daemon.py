@@ -20,6 +20,7 @@ from scc.osd.grid_menu import GridMenu
 from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
 from scc.osd.menu import Menu
+from scc.osd.area import Area
 
 import os, sys, shlex, logging
 log = logging.getLogger("osd.daemon")
@@ -105,6 +106,24 @@ class OSDDaemon(object):
 				else:
 					log.error("Failed to show menu")
 					self._window = None
+		elif message.startswith("OSD: area"):
+			args = split(message)[1:]
+			if self._window:
+				log.warning("Another OSD is already visible - refusing to show area")
+			else:
+				args = split(message)[1:]
+				self._window = Area()
+				self._window.connect('destroy', self.on_keyboard_closed)
+				if self._window.parse_argumets(args):
+					self._window.show()
+				else:
+					self._window.quit()
+					self._window = None
+		elif message.startswith("OSD: clear"):
+			# Clears active OSD window (if any)
+			if self._window:
+				self._window.quit()
+				self._window = None
 		else:
 			log.warning("Unknown command from daemon: '%s'", message)
 	
