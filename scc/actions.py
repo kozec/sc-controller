@@ -601,6 +601,16 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 		return self.coords
 	
 	
+	def transform_osd_coords(self, mapper):
+		"""
+		Same as transform_coords, but returns coordinates in screen space even
+		if action sets mouse position relative to window.
+		
+		Overrided by subclasses.
+		"""
+		return self.transform_coords(mapper)
+	
+	
 	def set_mouse(self, mapper, x, y):
 		"""
 		Performs final mouse position setting.
@@ -611,13 +621,14 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
-			# Compute coordinates specified from other side of screen if needed
-			x1, x2, y1, y2 = self.transform_coords(mapper)
 			# Store mouse position if pad was just touched
 			if self.orig_position is None:
 				if self.osd_enabled:
+					x1, x2, y1, y2 = self.transform_osd_coords(mapper)
 					self.execute(mapper, int(x1), int(y1), int(x2), int(y2))
 				self.orig_position = X.get_mouse_pos(mapper.xdisplay)
+			# Compute coordinates specified from other side of screen if needed
+			x1, x2, y1, y2 = self.transform_coords(mapper)
 			# Transform position on circne to position on rectangle
 			x = x / float(STICK_PAD_MAX)
 			y = y / float(STICK_PAD_MAX)
@@ -667,6 +678,16 @@ class WinAreaAction(AreaAction):
 		return self.coords
 	
 	
+	def transform_osd_coords(self, mapper):
+		wx, wy, ww, wh = X.get_window_geometry(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
+		x1, x2, y1, y2 = self.coords
+		x1 = wx + x1 if x1 >= 0 else wx + ww + x1
+		y1 = wy + y1 if y1 >= 0 else wy + wh + y1
+		x2 = wx + x2 if x2 >= 0 else wx + ww + x2
+		y2 = wy + y2 if y2 >= 0 else wy + wh + y2
+		return x1, x2, y1, y2
+	
+	
 	def set_mouse(self, mapper, x, y):
 		X.set_mouse_pos(mapper.xdisplay, x, y, X.get_current_window(mapper.xdisplay))
 
@@ -681,6 +702,16 @@ class RelWinAreaAction(WinAreaAction):
 		y1 = w_size[1] * y1
 		x2 = w_size[0] * x2
 		y2 = w_size[1] * y2
+		return x1, x2, y1, y2
+	
+	
+	def transform_osd_coords(self, mapper):
+		wx, wy, ww, wh = X.get_window_geometry(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
+		x1, x2, y1, y2 = self.coords
+		x1 = wx + float(ww) * x1
+		y1 = wy + float(wh) * y1
+		x2 = wx + float(ww) * x2
+		y2 = wy + float(wh) * y2
 		return x1, x2, y1, y2
 
 

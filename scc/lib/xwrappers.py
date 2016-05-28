@@ -29,6 +29,7 @@ libXext = _load_lib('libXext.so', 'libXext.so.6')
 # Types
 XID = c_ulong
 Pixmap = XID
+Colormap = XID
 Atom = c_ulong
 XserverRegion = c_ulong
 GC = c_void_p
@@ -60,6 +61,32 @@ class XkbStateRec(Structure):
 		('lookup_mods', c_ubyte),
 		('compat_lookup_mods', c_ubyte),
 		('ptr_buttons', c_ushort),
+	]
+
+class XWindowAttributes(Structure):
+	_fields_ = [
+		('x', c_int),
+		('y', c_int),
+		('width', c_int),
+		('height', c_int),
+		('depth', c_int),
+		('visual', c_void_p),
+		('root', XID),
+		('i_class', c_int),
+		('bit_gravity', c_int),
+		('win_gravity', c_int),
+		('backing_store', c_int),
+		('backing_planes', c_ulong),
+		('backing_pixel', c_ulong),
+		('save_under', c_bool),
+		('colormap', Colormap),
+		('map_installed', c_bool),
+		('map_state', c_int),
+		('all_event_masks', c_long),
+		('your_event_mask', c_long),
+		('do_not_propagate_mask', c_long),
+		('map_installed', c_bool),
+		('screen', c_void_p)
 	]
 
 
@@ -112,10 +139,15 @@ query_pointer.__doc__ = "Returns a lot of nonsense along with mouse cursor posit
 query_pointer.argtypes = [ c_void_p, XID, POINTER(XID), POINTER(XID),
 	POINTER(c_int), POINTER(c_int), POINTER(c_int), POINTER(c_int), POINTER(c_uint) ]
 
-get_geometry = libX11.XGetGeometry
-get_geometry.__doc__ = "Returns window geometry, including its size and position"
-get_geometry.argtypes = [ c_void_p, XID, POINTER(XID), POINTER(c_int), POINTER(c_int),
-	POINTER(c_uint), POINTER(c_uint), POINTER(c_uint), POINTER(c_uint) ]
+get_window_attributes = libX11.XGetWindowAttributes
+get_window_attributes.__doc__ = "https://tronche.com/gui/x/xlib/window-information/XGetWindowAttributes.html"
+get_window_attributes.argtypes = [ c_void_p, XID, POINTER(XWindowAttributes) ]
+
+translate_coordinates = libX11.XTranslateCoordinates
+translate_coordinates.argtypes = [ c_void_p, XID, XID, c_int, c_int,
+	POINTER(c_int), POINTER(c_int), POINTER(XID) ]
+translate_coordinates.restype = c_bool
+
 
 get_input_focus = libX11.XGetInputFocus
 get_input_focus.__doc__ = """Returns window that currently have window focus.
@@ -183,14 +215,23 @@ def get_xkb_state(dpy):
 
 
 def get_window_size(dpy, window):
-	root_return = XID()
+	attrs = XWindowAttributes()
+	get_window_attributes(dpy, window, byref(attrs))
+	return attrs.width, attrs.height
+
+
+def get_window_geometry(dpy, win):
+	""" Returns window x,y,width,height """
+	attrs = XWindowAttributes()
+	get_window_attributes(dpy, win, byref(attrs))
 	x, y = c_int(), c_int()
-	width, height = c_uint(), c_uint()
-	border_width, depth = c_uint(), c_uint()
-	get_geometry(dpy, window, byref(root_return), byref(x), byref(y),
-		byref(width), byref(height), byref(border_width), byref(depth))
-	# print x, y, width, height
-	return width.value, height.value
+	trash = XID()
+	if translate_coordinates(dpy, win, get_default_root_window(dpy),
+			0, 0, byref(x), byref(y), byref(trash)):
+		return x.value, y.value, attrs.width, attrs.height
+	else:
+		# translate_coordinates failed
+		return attrs.x, attrs.y, attrs.width, attrs.height
 
 
 def get_screen_size(dpy):

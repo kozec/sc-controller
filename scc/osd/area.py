@@ -82,10 +82,3 @@ class Area(OSDWindow, TimerManager):
 		
 		X.free_gc(dpy, gc)
 		X.free_pixmap(dpy, mask)
-
-
-if __name__ == "__main__":
-	mainloop = GLib.MainLoop()
-	a = Area()
-	a.show()
-	mainloop.run()
