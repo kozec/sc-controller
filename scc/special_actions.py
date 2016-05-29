@@ -158,7 +158,7 @@ class OSDAction(Action, SpecialAction):
 				rv['osd'] = self.timeout
 			return rv
 		else:
-			return SpecialAction.encode(self)
+			return Action.encode(self)
 	
 	
 	def button_press(self, mapper):
