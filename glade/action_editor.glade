@@ -120,7 +120,6 @@
         <property name="margin_right">10</property>
         <property name="margin_top">10</property>
         <property name="margin_bottom">10</property>
-        <property name="column_homogeneous">True</property>
         <child>
           <object class="GtkEntry" id="entName">
             <property name="visible">True</property>
@@ -134,7 +133,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">0</property>
-            <property name="width">2</property>
           </packing>
         </child>
         <child>
@@ -150,7 +148,7 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">2</property>
-            <property name="width">3</property>
+            <property name="width">2</property>
           </packing>
         </child>
         <child>
@@ -200,7 +198,7 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">5</property>
-            <property name="width">3</property>
+            <property name="width">2</property>
           </packing>
         </child>
         <child>
@@ -249,7 +247,7 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">6</property>
-            <property name="width">3</property>
+            <property name="width">2</property>
           </packing>
         </child>
         <child>
@@ -267,7 +265,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">1</property>
-            <property name="width">2</property>
           </packing>
         </child>
         <child>
@@ -276,7 +273,6 @@
             <property name="can_focus">False</property>
             <property name="margin_left">20</property>
             <property name="label" translatable="yes">Action Type</property>
-            <property name="ellipsize">end</property>
             <property name="xalign">0</property>
             <attributes>
               <attribute name="weight" value="bold"/>
@@ -293,9 +289,9 @@
             <property name="can_focus">False</property>
             <property name="no_show_all">True</property>
             <property name="margin_left">20</property>
+            <property name="margin_right">50</property>
             <property name="margin_bottom">4</property>
             <property name="label" translatable="yes">Action Name</property>
-            <property name="ellipsize">end</property>
             <property name="xalign">0</property>
             <attributes>
               <attribute name="weight" value="bold"/>
@@ -330,7 +326,7 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">3</property>
-            <property name="width">3</property>
+            <property name="width">2</property>
           </packing>
         </child>
         <child>
@@ -1008,7 +1004,7 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">4</property>
-            <property name="width">3</property>
+            <property name="width">2</property>
           </packing>
         </child>
       </object>

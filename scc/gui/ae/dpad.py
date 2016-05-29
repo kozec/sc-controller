@@ -1,8 +1,8 @@
 #!/usr/bin/env python2
 """
-SC-Controller - Action Editor - Button Component
+SC-Controller - Action Editor - "DPAD or Menu"
 
-Assigns emulated button to physical button
+Setups DPAD emulation or menu display
 """
 from __future__ import unicode_literals
 from scc.tools import _
@@ -10,7 +10,9 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, DPadAction, DPad8Action
 from scc.gui.ae import AEComponent, describe_action
+from scc.gui.ae.menu_action import MenuActionCofC
 from scc.gui.action_editor import ActionEditor
+from scc.special_actions import MenuAction
 
 
 import os, logging
@@ -19,7 +21,7 @@ log = logging.getLogger("AE.DPAD")
 __all__ = [ 'DPADComponent' ]
 
 
-class DPADComponent(AEComponent):
+class DPADComponent(AEComponent, MenuActionCofC):
 	GLADE = "ae/dpad.glade"
 	NAME = "dpad"
 	CTXS = Action.AC_STICK, Action.AC_PAD,
@@ -29,15 +31,31 @@ class DPADComponent(AEComponent):
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
+		MenuActionCofC.__init__(self)
+		self._userdata_load_started = False
 		self.actions = [ NoAction() ] * 8
 	
 	
+	def shown(self):
+		if not self._userdata_load_started:
+			self._userdata_load_started = True
+			self.load_menu_list()
+	
+	
 	def set_action(self, mode, action):
-		if self.handles(mode, action):
+		if isinstance(action, DPadAction):
 			for i in xrange(0, len(action.actions)):
 				self.actions[i] = action.actions[i]
+			if isinstance(action, DPad8Action):
+				self.select_action_type("dpad8")
+			else:
+				self.select_action_type("dpad")
+		elif isinstance(action, MenuAction):
+			self._current_menu = action.menu_id
+			self.select_action_type("menu")
 		for i in xrange(0, 8):
 			self.set_button_desc(i)
+		self.on_cbActionType_changed()
 	
 	
 	def set_button_desc(self, i):
@@ -49,29 +67,54 @@ class DPADComponent(AEComponent):
 	
 	
 	def get_button_title(self):
-		return _("DPAD")
+		return _("DPAD or Menu")
 	
 	
 	def handles(self, mode, action):
+		if MenuActionCofC.handles(self, mode, action):
+			return True
 		return isinstance(action, DPadAction) # DPad8Action is derived from DPadAction
 	
 	
 	def update(self):
-		cb = self.builder.get_object("cbDPADType")
-		if cb.get_active() == 1:
+		cb = self.builder.get_object("cbActionType")
+		key = cb.get_model().get_value(cb.get_active_iter(), 1)
+		if key == "dpad8":
 			# 8-way dpad
-			action = DPad8Action(*self.actions)
-		else:
+			self.editor.set_action(DPad8Action(*self.actions))
+		elif key == "dpad":
 			# 4-way dpad
-			action = DPadAction(*self.actions[0:4])
-		self.editor.set_action(action)
+			self.editor.set_action(DPadAction(*self.actions[0:4]))
+		else:
+			# Menu
+			self.on_cbMenus_changed()
 	
 	
-	def on_cbDPADType_changed(self, *a):
-		cb = self.builder.get_object("cbDPADType")
-		for i in self.DPAD8_WIDGETS:
-			self.builder.get_object(i).set_visible(cb.get_active() == 1)
+	def on_cbActionType_changed(self, *a):
+		if self._recursing: return
+		cb = self.builder.get_object("cbActionType")
+		stActionData = self.builder.get_object("stActionData")
+		key = cb.get_model().get_value(cb.get_active_iter(), 1)
+		if key in ("dpad", "dpad8"):
+			for i in self.DPAD8_WIDGETS:
+				self.builder.get_object(i).set_visible(key == "dpad8")
+			stActionData.set_visible_child(self.builder.get_object("grDPAD"))
+		else: # key == "menu"
+			stActionData.set_visible_child(self.builder.get_object("grMenu"))
 		self.update()
+	
+	
+	def select_action_type(self, key):
+		""" Just sets combobox value """
+		cb = self.builder.get_object("cbActionType")
+		model = cb.get_model()
+		self._recursing = True
+		for row in model:
+			if key == row[1]:
+				cb.set_active_iter(row.iter)
+				self._recursing = False
+				return
+		self._recursing = False
 	
 	
 	def on_choosen(self, i, action):
