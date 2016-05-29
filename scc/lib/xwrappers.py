@@ -106,9 +106,9 @@ open_display.__doc__ = "Opens connection to XDisplay"
 open_display.argtypes = [ c_char_p ]
 open_display.restype = c_void_p
 
-xfree = libX11.XFree
-xfree.__doc__ = "Used to free some resource returned by XLib"
-xfree.argtypes = [ c_void_p ]
+free = libX11.XFree
+free.__doc__ = "Used to free some resource returned by XLib"
+free.argtypes = [ c_void_p ]
 
 create_region = libXFixes.XFixesCreateRegion
 create_region.__doc__ = "Creates rectanglular region for use with set_window_shape_region"
@@ -267,22 +267,34 @@ def set_mouse_pos(dpy, x, y, relative_to=None):
 	flush(dpy)
 
 
+def get_window_prop(dpy, window, prop_name, max_size=2):
+	"""
+	Returns (nitems, property) of specified window or (-1, None) if anything fails.
+	Returned 'property' is POINTER(c_void_p) and has to be freed using X.free().
+	"""
+	prop_atom = intern_atom(dpy, prop_name, False)
+	type_return, format_return = Atom(), Atom()
+	nitems, bytes_after = c_ulong(), c_ulong()
+	prop = c_void_p()
+	
+	if SUCCESS == get_window_property(dpy, window,
+				prop_atom, 0, max_size, False, ANYPROPERTYTYPE,
+				byref(type_return), byref(format_return), byref(nitems),
+				byref(bytes_after), byref(prop)):
+		return nitems.value, prop
+	return -1, None
+
+
 def get_current_window(dpy):
 	"""
 	Returns active window or root window if there is no active.
 	"""
 	# Try using WM-provided info first
-	NET_ACTIVE_WINDOW = intern_atom(dpy, "_NET_ACTIVE_WINDOW", False)
-	type_return, format_return = Atom(), Atom()
-	nitems, bytes_after = c_ulong(), c_ulong()
-	prop = c_void_p()
-	
-	if SUCCESS == get_window_property(dpy, get_default_root_window(dpy),
-				NET_ACTIVE_WINDOW, 0, 2, False, ANYPROPERTYTYPE,
-				byref(type_return), byref(format_return), byref(nitems),
-				byref(bytes_after), byref(prop)):
+	trash, prop = get_window_prop(dpy,
+			get_default_root_window(dpy), "_NET_ACTIVE_WINDOW")
+	if prop is not None:
 		rv = cast(prop, POINTER(Atom)).contents.value
-		xfree(prop)
+		free(prop)
 		return rv
 	
 	# Fall-back to something what probably can't work anyway
@@ -292,3 +304,16 @@ def get_current_window(dpy):
 		return get_default_root_window(dpy)
 	return win
 
+
+def get_window_type(dpy, window):
+	"""
+	Returns _NET_WM_WINDOW_TYPE value for window specified or None if anything
+	fails while recieving it.
+	"""
+	trash, prop = get_window_prop(dpy,
+			get_default_root_window(dpy), "_NET_WM_WINDOW_TYPE")
+	if prop is not None:
+		rv = cast(prop, POINTER(Atom)).contents.value
+		free(prop)
+		return rv
+	return None

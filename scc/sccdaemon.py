@@ -257,9 +257,9 @@ class SCCDaemon(Daemon):
 		self.lock.acquire()
 		self.start_listening()
 		self.connect_x()
-		self.mapper.xdisplay = self.xdisplay	# TODO: Move somewhere
 		if self.xdisplay:
 			# Available only with XServer
+			self.mapper.set_xdisplay(self.xdisplay)
 			self.start_osd()
 		while True:
 			try:

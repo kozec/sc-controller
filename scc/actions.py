@@ -591,7 +591,7 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 		Overrided by subclasses.
 		"""
 		if self.needs_query_screen:
-			screen = X.get_screen_size(mapper.xdisplay)
+			screen = X.get_screen_size(mapper.get_xdisplay())
 			x1, y1, x2, y2 = self.coords
 			if x1 < 0 : x1 = screen[0] + x1
 			if y1 < 0 : y1 = screen[1] + y1
@@ -616,7 +616,16 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 		Performs final mouse position setting.
 		Overrided by subclasses.
 		"""
-		X.set_mouse_pos(mapper.xdisplay, x, y)
+		X.set_mouse_pos(mapper.get_xdisplay(), x, y)
+	
+	
+	def update_osd_area(self, area, mapper):
+		"""
+		Updates area instance directly instead of calling daemon and letting
+		it talking through socket.
+		"""
+		x1, y1, x2, y2 = self.transform_osd_coords(mapper)
+		area.update(x1, y1, x2-x1, y2-y1)
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -626,7 +635,7 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 				if self.osd_enabled:
 					x1, y1, x2, y2 = self.transform_osd_coords(mapper)
 					self.execute(mapper, int(x1), int(y1), int(x2), int(y2))
-				self.orig_position = X.get_mouse_pos(mapper.xdisplay)
+				self.orig_position = X.get_mouse_pos(mapper.get_xdisplay())
 			# Compute coordinates specified from other side of screen if needed
 			x1, y1, x2, y2 = self.transform_coords(mapper)
 			# Transform position on circne to position on rectangle
@@ -644,7 +653,7 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 			self.set_mouse(mapper, x, y)
 		elif mapper.was_touched(what):
 			# Pad just released
-			X.set_mouse_pos(mapper.xdisplay, *self.orig_position)
+			X.set_mouse_pos(mapper.get_xdisplay(), *self.orig_position)
 			if self.osd_enabled:
 				self.execute_named("clear_osd", mapper)
 			self.orig_position = None
@@ -654,7 +663,7 @@ class RelAreaAction(AreaAction):
 	COMMAND = "relarea"
 	
 	def transform_coords(self, mapper):
-		screen = X.get_screen_size(mapper.xdisplay)
+		screen = X.get_screen_size(mapper.get_xdisplay())
 		x1, y1, x2, y2 = self.coords
 		x1 = screen[0] * x1
 		y1 = screen[1] * y1
@@ -668,7 +677,7 @@ class WinAreaAction(AreaAction):
 	
 	def transform_coords(self, mapper):
 		if self.needs_query_screen:
-			w_size = X.get_window_size(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
+			w_size = X.get_window_size(mapper.get_xdisplay(), mapper.get_current_window())
 			x1, y1, x2, y2 = self.coords
 			if x1 < 0 : x1 = w_size[0] + x1
 			if y1 < 0 : y1 = w_size[1] + y1
@@ -679,7 +688,7 @@ class WinAreaAction(AreaAction):
 	
 	
 	def transform_osd_coords(self, mapper):
-		wx, wy, ww, wh = X.get_window_geometry(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
+		wx, wy, ww, wh = X.get_window_geometry(mapper.get_xdisplay(), mapper.get_current_window())
 		x1, y1, x2, y2 = self.coords
 		x1 = wx + x1 if x1 >= 0 else wx + ww + x1
 		y1 = wy + y1 if y1 >= 0 else wy + wh + y1
@@ -689,14 +698,14 @@ class WinAreaAction(AreaAction):
 	
 	
 	def set_mouse(self, mapper, x, y):
-		X.set_mouse_pos(mapper.xdisplay, x, y, X.get_current_window(mapper.xdisplay))
+		X.set_mouse_pos(mapper.get_xdisplay(), x, y, mapper.get_current_window())
 
 
 class RelWinAreaAction(WinAreaAction):
 	COMMAND = "relwinarea"
 	
 	def transform_coords(self, mapper):
-		w_size = X.get_window_size(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
+		w_size = X.get_window_size(mapper.get_xdisplay(), mapper.get_current_window())
 		x1, y1, x2, y2 = self.coords
 		x1 = w_size[0] * x1
 		y1 = w_size[1] * y1
@@ -706,7 +715,7 @@ class RelWinAreaAction(WinAreaAction):
 	
 	
 	def transform_osd_coords(self, mapper):
-		wx, wy, ww, wh = X.get_window_geometry(mapper.xdisplay, X.get_current_window(mapper.xdisplay))
+		wx, wy, ww, wh = X.get_window_geometry(mapper.get_xdisplay(), mapper.get_current_window())
 		x1, y1, x2, y2 = self.coords
 		x1 = wx + float(ww) * x1
 		y1 = wy + float(wh) * y1

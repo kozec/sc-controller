@@ -7,11 +7,15 @@ Assigns emulated axis to trigger
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GdkX11, GLib
+from ctypes import c_void_p, byref, cast, c_ulong, POINTER
 from scc.actions import Action, NoAction, AxisAction, MouseAction, XYAction
 from scc.actions import TrackballAction, TrackpadAction, CircularAction
 from scc.actions import AreaAction, WinAreaAction, RelAreaAction, RelWinAreaAction
 from scc.uinput import Keys, Axes, Rels
+from scc.lib import xwrappers as X
+from scc.osd.timermanager import TimerManager
+from scc.osd.area import Area
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.ae import AEComponent
 
@@ -21,7 +25,7 @@ log = logging.getLogger("AE.AxisAction")
 __all__ = [ 'AxisActionComponent' ]
 
 
-class AxisActionComponent(AEComponent):
+class AxisActionComponent(AEComponent, TimerManager):
 	GLADE = "ae/axis_action.glade"
 	NAME = "axis_action"
 	CTXS = Action.AC_STICK, Action.AC_PAD,
@@ -29,8 +33,10 @@ class AxisActionComponent(AEComponent):
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
+		TimerManager.__init__(self)
 		self._recursing = False
 		self.relative_area = False
+		self.osd_area_instance = None
 		self.parser = GuiActionParser()
 	
 	
@@ -41,17 +47,24 @@ class AxisActionComponent(AEComponent):
 		cbAreaType.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) == "-" )
 	
 	
+	def hidden(self):
+		self.update_osd_area(None)
+	
+	
 	def set_action(self, mode, action):
 		if self.handles(mode, action):
+			if isinstance(action, AreaAction):
+				self.load_area_action(action)
+				self.select_action_type("area")
+				self.update_osd_area(action)
+				return
+			self.update_osd_area(None)
 			if isinstance(action, TrackpadAction):
 				self.select_action_type("trackpad")
 			elif isinstance(action, TrackballAction):
 				self.select_action_type("trackball")
 			elif isinstance(action, CircularAction):
 				self.select_action_type("circular")
-			elif isinstance(action, AreaAction):
-				self.load_area_action(action)
-				self.select_action_type("area")
 			elif isinstance(action, XYAction):
 				p = [ None, None ]
 				for x in (0, 1):
@@ -68,6 +81,20 @@ class AxisActionComponent(AEComponent):
 					self.select_action_type("wheel")
 			else:
 				self.select_action_type("none")
+	
+	
+	def update_osd_area(self, action):
+		""" Updates preview area displayed on screen """
+		if action:
+			if self.osd_area_instance is None:
+				self.osd_area_instance = Area()
+				self.osd_area_instance.show()
+			action.update_osd_area(self.osd_area_instance, FakeMapper(self.editor))
+			self.timer("area", 0.5, self.update_osd_area, action)
+		elif self.osd_area_instance:
+			self.osd_area_instance.quit()
+			self.osd_area_instance = None
+			self.cancel_timer("area")
 	
 	
 	def load_area_action(self, action):
@@ -96,12 +123,12 @@ class AxisActionComponent(AEComponent):
 				key = "window-%s%s" % (t1, t2)
 			else:
 				key = "screen-%s%s" % (t1, t2)
+		
+		self._recursing = True
 		self.builder.get_object("sbAreaX1").set_value(x1)
 		self.builder.get_object("sbAreaY1").set_value(y1)
 		self.builder.get_object("sbAreaX2").set_value(x2)
 		self.builder.get_object("sbAreaY2").set_value(y2)
-		
-		self._recursing = True
 		for row in cbAreaType.get_model():
 			if key == row[1]:
 				cbAreaType.set_active_iter(row.iter)
@@ -147,6 +174,9 @@ class AxisActionComponent(AEComponent):
 		else: # "screen" in key
 			cls = AreaAction
 			self.relative_area = False
+		if not self.relative_area:
+			x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+			
 		return cls(x1, y1, x2, y2)
 	
 	
@@ -189,7 +219,10 @@ class AxisActionComponent(AEComponent):
 	
 	
 	def on_area_options_changed(self, *a):
-		self.editor.set_action(self.make_area_action())
+		if self._recursing : return
+		action = self.make_area_action()
+		self.editor.set_action(action)
+		self.update_osd_area(action)
 		for x in ('sbAreaX1', 'sbAreaX2', 'sbAreaY1', 'sbAreaY2'):
 			spin = self.builder.get_object(x)
 			if self.relative_area:
@@ -203,7 +236,7 @@ class AxisActionComponent(AEComponent):
 		if self.relative_area:
 			button.set_text("%s %%" % (button.get_value()))
 		else:
-			button.set_text("%s px" % (button.get_value()))
+			button.set_text("%s px" % (int(button.get_value())))
 	
 	
 	def on_sbArea_focus_out_event(self, button, *a):
@@ -222,9 +255,63 @@ class AxisActionComponent(AEComponent):
 		if key == 'area':
 			stActionData.set_visible_child(self.builder.get_object("grArea"))
 			action = self.make_area_action()
+			self.update_osd_area(action)
 		else:
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			action = cbAxisOutput.get_model().get_value(cbAxisOutput.get_active_iter(), 0)
 			action = self.parser.restart(action).parse()
+			self.update_osd_area(None)
 		
 		self.editor.set_action(action)
+
+
+class FakeMapper(object):
+	"""
+	Class that pretends to be mapper used when calling update_osd_area.
+	It has two purposes: To provide get_xdisplay() method that does what it says
+	and get_active_window() that returns any other window but window that
+	belongs to SC-Controller gui application.
+	"""
+	def __init__(self, editor):
+		self._xdisplay = X.Display(hash(GdkX11.x11_get_default_xdisplay()))
+		self.editor = editor
+	
+	def get_xdisplay(self):
+		return self._xdisplay
+	
+	def get_current_window(self):
+		"""
+		Gets last active window that was not part of SC-Controller.
+		Uses _NET_CLIENT_LIST_STACKING property of root window, value provided
+		by window manager. If that fail (because of no or not ICCM compilant WM),
+		simply returns root window.
+		"""
+		root = X.get_default_root_window(self._xdisplay)
+		NET_WM_WINDOW_TYPE_NORMAL = X.intern_atom(self._xdisplay,
+				"_NET_WM_WINDOW_TYPE_NORMAL" , False)
+		my_windows = [ x.get_xid() for x
+				in Gdk.Screen.get_default().get_toplevel_windows() ]
+		nitems, prop = X.get_window_prop(self._xdisplay,
+				root, "_NET_CLIENT_LIST_STACKING", max_size=0x8000)
+		
+		if nitems > 0:
+			for i in reversed(xrange(0, nitems)):
+				window = cast(prop, POINTER(X.XID))[i]
+				if window in my_windows:
+					# skip over my own windows
+					continue
+				tp = X.get_window_prop(self._xdisplay, window,
+						"_NET_WM_WINDOW_TYPE")[-1]
+				if tp is not None:
+					tpval = cast(tp, POINTER(X.Atom)).contents.value
+					X.free(tp)
+					if tpval != NET_WM_WINDOW_TYPE_NORMAL:
+						# skip over non-normal windows
+						continue
+				X.free(prop)
+				return window
+		if prop is not None:
+			X.free(prop)
+		
+		# Failed to get property or there is not any usable window
+		return root

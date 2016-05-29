@@ -56,6 +56,15 @@ class Area(OSDWindow, TimerManager):
 		self.make_hole(self.BORDER_WIDTH)
 	
 	
+	def update(self, x, y, width, height):
+		""" Updates area size and position """
+		self.position = x, y
+		self.size = max(1, width), max(1, height) # Size can't be <1 or GTK will crash
+		self.move(*self.position)
+		self.resize(*self.size)
+		self.make_hole(self.BORDER_WIDTH)
+	
+	
 	def make_hole(self, border_width):
 		"""
 		Uses shape extension to create hole in window...

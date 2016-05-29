@@ -118,6 +118,17 @@ class ActionEditor(Editor):
 		self._selected_component = None
 	
 	
+	def on_Dialog_destroy(self, *a):
+		if self._selected_component is not None:
+			self._selected_component.hidden()
+	
+	
+	def close(self):
+		self.on_Dialog_destroy()
+		Editor.close(self)
+		
+	
+	
 	def on_action_type_changed(self, obj):
 		"""
 		Called when user clicks on one of Action Type buttons.
@@ -144,7 +155,8 @@ class ActionEditor(Editor):
 		stActionModes = self.builder.get_object("stActionModes")
 		component.set_action(self._mode, self._action)
 		if self._selected_component is not None:
-			self._selected_component.hidden()
+			if self._selected_component != component:
+				self._selected_component.hidden()
 		self._selected_component = component
 		self._selected_component.shown()
 		stActionModes.set_visible_child(component.get_widget())

@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from collections import deque
+from scc.lib import xwrappers as X
 from scc.uinput import Gamepad, Keyboard, Mouse, Rels
 from scc.constants import SCStatus, SCButtons, SCI_NULL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
@@ -19,6 +20,7 @@ class Mapper(object):
 	def __init__(self, profile):
 		self.profile = profile
 		self.controller = None
+		self.xdisplay = None
 		
 		# Create virtual devices
 		log.debug("Creating virtual devices")
@@ -82,6 +84,22 @@ class Mapper(object):
 	def get_special_actions_handler(self):
 		return self._sa_handler
 	
+	
+	def set_xdisplay(self, x):
+		self.xdisplay = x
+	
+	
+	def get_xdisplay(self):
+		return self.xdisplay
+	
+	
+	def get_current_window(self):
+		"""
+		Returns window id of current window or None if xdisplay is not set
+		"""
+		if self.xdisplay:
+			return X.get_current_window(self.xdisplay)
+		return None
 	
 	def send_feedback(self, hapticdata):
 		""" Sends haptic feedback to controller """
