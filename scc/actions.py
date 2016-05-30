@@ -52,6 +52,11 @@ class Action(object):
 		self.parameters = parameters
 		self.name = None
 		self.delay_after = DEFAULT_DELAY
+		# internal, insignificant and never saved value used only by editor.
+		# Has to be set to iterable of callbacks to do something usefull;
+		# Callbacks in lilst are called with cb(app, action) after action is
+		# set while editting the profile.
+		self.on_action_set = None
 	
 	def encode(self):
 		""" Called from json encoder """
@@ -625,7 +630,7 @@ class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
 		it talking through socket.
 		"""
 		x1, y1, x2, y2 = self.transform_osd_coords(mapper)
-		area.update(x1, y1, x2-x1, y2-y1)
+		area.update(int(x1), int(y1), int(x2-x1), int(y2-y1))
 	
 	
 	def whole(self, mapper, x, y, what):

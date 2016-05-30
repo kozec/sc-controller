@@ -29,13 +29,22 @@ class AEComponent(object):
 		raise Exception("Implement me!")
 	
 	
+	# TODO: Rename this to on_shown
 	def shown(self):
 		""" Called after user switches TO page """
 		pass
 	
 	
+	# TODO: Rename this to on_shown
 	def hidden(self):
 		""" Called after user switches AWAY from page """
+		pass
+	
+	
+	def on_ok(self, action):
+		"""
+		Called when user presses OK, after action is send to main window
+		"""
 		pass
 	
 	

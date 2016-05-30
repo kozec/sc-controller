@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.19.0 -->
+<!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkListStore" id="lstDPADType">
@@ -32,6 +32,7 @@
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
         <property name="margin_left">30</property>
+        <property name="margin_top">20</property>
         <property name="hexpand">True</property>
         <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
         <child>
@@ -87,6 +88,7 @@
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
+        <property name="margin_top">20</property>
         <property name="hexpand">True</property>
         <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
         <child>
@@ -199,6 +201,7 @@
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
         <property name="margin_right">30</property>
+        <property name="margin_top">20</property>
         <property name="hexpand">True</property>
         <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
         <child>
@@ -290,6 +293,7 @@
         <property name="receives_default">True</property>
         <property name="no_show_all">True</property>
         <property name="margin_left">30</property>
+        <property name="margin_top">20</property>
         <property name="hexpand">True</property>
         <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
       </object>
@@ -306,6 +310,7 @@
         <property name="receives_default">True</property>
         <property name="no_show_all">True</property>
         <property name="margin_right">30</property>
+        <property name="margin_top">20</property>
         <property name="hexpand">True</property>
         <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
       </object>

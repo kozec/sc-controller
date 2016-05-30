@@ -12,7 +12,10 @@ from ctypes import c_void_p, byref, cast, c_ulong, POINTER
 from scc.actions import Action, NoAction, AxisAction, MouseAction, XYAction
 from scc.actions import TrackballAction, TrackpadAction, CircularAction
 from scc.actions import AreaAction, WinAreaAction, RelAreaAction, RelWinAreaAction
+from scc.actions import ButtonAction
+from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
+from scc.constants import SCButtons
 from scc.lib import xwrappers as X
 from scc.osd.timermanager import TimerManager
 from scc.osd.area import Area
@@ -129,11 +132,49 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self.builder.get_object("sbAreaY1").set_value(y1)
 		self.builder.get_object("sbAreaX2").set_value(x2)
 		self.builder.get_object("sbAreaY2").set_value(y2)
+		self.builder.get_object("cbAreaOSDEnabled").set_active(self.editor.osd)
+		self.builder.get_object("cbAreaClickEnabled").set_active(self.pressing_pad_clicks())
 		for row in cbAreaType.get_model():
 			if key == row[1]:
 				cbAreaType.set_active_iter(row.iter)
 				break
 		self._recursing = False
+	
+	
+	def on_cbAreaOSDEnabled_toggled(self, *a):
+		self.editor.builder.get_object("cbOSD").set_active(
+			self.builder.get_object("cbAreaOSDEnabled").get_active())
+	
+	
+	def pressing_pad_clicks(self):
+		"""
+		Returns True if currently edited pad is set to press left mouse
+		button when pressed.
+		(yes, this is used somewhere)
+		"""
+		side = getattr(SCButtons, self.editor.get_id())
+		c_action = self.app.current.buttons[side]
+		if isinstance(c_action, ButtonAction):
+			return c_action.button == Keys.BTN_LEFT
+		return False
+	
+	
+	def on_ok(self, action):
+		if isinstance(action.strip(), AreaAction):
+			# Kinda hacky way to set action on LPAD press or RPAD press
+			# when user selects Mouse Area as ouput and checks
+			# 'Pressing the Pad Clicks' checkbox
+			side = getattr(SCButtons, self.editor.get_id())
+			clicks = self.pressing_pad_clicks()
+			
+			if self.builder.get_object("cbAreaClickEnabled").get_active():
+				if not clicks:
+					# Turn pad press into mouse clicks
+					self.app.set_action(side, ButtonAction(Keys.BTN_LEFT))
+			else:
+				if clicks:
+					# Clear action created above if checkbox is uncheck
+					self.app.set_action(side, NoAction())
 	
 	
 	def make_area_action(self):

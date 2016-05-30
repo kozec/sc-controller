@@ -198,7 +198,7 @@ class App(Gtk.Application, UserDataManager):
 	def on_btUndo_clicked(self, *a):
 		if len(self.undo) < 1: return
 		undo, self.undo = self.undo[-1], self.undo[0:-1]
-		self._set_action(undo.id, undo.before)
+		self.set_action(undo.id, undo.before)
 		self.redo.append(undo)
 		self.builder.get_object("btRedo").set_sensitive(True)
 		if len(self.undo) < 1:
@@ -209,7 +209,7 @@ class App(Gtk.Application, UserDataManager):
 	def on_btRedo_clicked(self, *a):
 		if len(self.redo) < 1: return
 		redo, self.redo = self.redo[-1], self.redo[0:-1]
-		self._set_action(redo.id, redo.after)
+		self.set_action(redo.id, redo.after)
 		self.undo.append(redo)
 		self.builder.get_object("btUndo").set_sensitive(True)
 		if len(self.redo) < 1:
@@ -358,7 +358,7 @@ class App(Gtk.Application, UserDataManager):
 	
 	
 	def on_action_chosen(self, id, action, reopen=False):
-		before = self._set_action(id, action)
+		before = self.set_action(id, action)
 		if type(before) != type(action) or before.to_string() != action.to_string():
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
@@ -368,7 +368,7 @@ class App(Gtk.Application, UserDataManager):
 			self.show_editor(id)
 	
 	
-	def _set_action(self, id, action):
+	def set_action(self, id, action):
 		"""
 		Stores action in profile.
 		Returns formely stored action.

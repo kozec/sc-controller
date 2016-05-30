@@ -126,7 +126,11 @@ class ActionEditor(Editor):
 	def close(self):
 		self.on_Dialog_destroy()
 		Editor.close(self)
-		
+	
+	
+	def get_id(self):
+		""" Returns ID of input that is being edited """
+		return self.id
 	
 	
 	def on_action_type_changed(self, obj):
@@ -283,7 +287,10 @@ class ActionEditor(Editor):
 		""" Handler for OK button """
 		if self.ac_callback is not None:
 			self._set_title()
-			self.ac_callback(self.id, self.generate_modifiers(self._action))
+			a = self.generate_modifiers(self._action)
+			self.ac_callback(self.id, a)
+			if self._selected_component:
+				self._selected_component.on_ok(a)
 		self.close()
 	
 	
@@ -637,10 +644,10 @@ class ActionEditor(Editor):
 		""" Setups action editor as editor for pad action """
 		self._set_mode(action, Action.AC_PAD)
 		self.hide_sensitivity(2) # Z only
+		self.id = id
 		self.set_action(action)
 		self.hide_osd()
 		self.hide_macro()
-		self.id = id
 	
 	
 	def set_feedback_settings_enabled(self, enabled):
