@@ -32,6 +32,7 @@ class DPADComponent(AEComponent, MenuActionCofC):
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
 		MenuActionCofC.__init__(self)
+		self._recursing = False
 		self._userdata_load_started = False
 		self.actions = [ NoAction() ] * 8
 	

@@ -227,8 +227,15 @@ class MenuAction(Action, SpecialAction):
 	
 	
 	def whole(self, mapper, x, y, what):
-		if not mapper.was_pressed(SCButtons.LPADTOUCH):
-			self.execute(mapper, '--control-with', LEFT, '--use-cursor')
+		if what in (LEFT, RIGHT):
+			# Can be used only with pads
+			if what == LEFT:
+				confirm, cancel = "LPAD", SCButtons.LPADTOUCH
+			else:
+				confirm, cancel = "RPAD", SCButtons.RPADTOUCH
+			if not mapper.was_pressed(cancel):
+				self.execute(mapper, '--control-with', what, '--use-cursor',
+					'--confirm-with', confirm, '--cancel-with', cancel.name)
 
 
 class GridMenuAction(MenuAction):
