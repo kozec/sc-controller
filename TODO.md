@@ -2,7 +2,6 @@ List of (possibly) planned features in no particular order
 
 "Easy" stuff:
 - Configurable gamepad type (e.g. 4 axes and 16 buttons)
-- Mouse regions
 - Selector for media keys
 - double click
 - Cycling Buttons
@@ -15,13 +14,14 @@ UI-only stuff:
 
 
 OSD related stuff:
-- Touch-Menu
 - Radial Menu for the Joystick/Trackpad
 
 
 **Done** stuff:
 - OSD
 - Menu in OSD
+- Touch-Menu
+- Mouse regions
 - on-screen keyboard
 - Spining mouse wheel rotation
 - Haptic feedback support
