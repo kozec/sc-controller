@@ -51,26 +51,27 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 	
 	def set_action(self, mode, action):
 		if self.handles(mode, action):
+			cb = self.builder.get_object("cbActionType")
 			if isinstance(action, TurnOffAction):
-				self.select_action_type("turnoff")
+				self.set_cb(cb, "turnoff")
 			elif isinstance(action, ShellCommandAction):
-				self.select_action_type("shell")
+				self.set_cb(cb, "shell")
 				enCommand = self.builder.get_object("enCommand")
 				enCommand.set_text(action.command)
 			elif isinstance(action, ChangeProfileAction):
 				self._current_profile = action.profile
-				self.select_action_type("profile")
+				self.set_cb(cb, "profile")
 			elif isinstance(action, MenuAction):
 				self._current_menu = action.menu_id
-				self.select_action_type("menu")
+				self.set_cb(cb, "menu")
 			elif isinstance(action, KeyboardAction):
-				self.select_action_type("keyboard")
+				self.set_cb(cb, "keyboard")
 			elif isinstance(action, OSDAction):
-				self.select_action_type("osd")
+				self.set_cb(cb, "osd")
 				enOSDText = self.builder.get_object("enOSDText")
 				enOSDText.set_text(action.text)
 			else:
-				self.select_action_type("none")
+				self.set_cb(cb, "none")
 	
 	
 	def on_profiles_loaded(self, profiles):
@@ -105,19 +106,6 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 			return True
 		return isinstance(action, (NoAction, TurnOffAction, ShellCommandAction,
 			ChangeProfileAction, KeyboardAction))
-	
-	
-	def select_action_type(self, key):
-		""" Just sets combobox value """
-		cb = self.builder.get_object("cbActionType")
-		model = cb.get_model()
-		self._recursing = True
-		for row in model:
-			if key == row[0]:
-				cb.set_active_iter(row.iter)
-				self._recursing = False
-				return
-		self._recursing = False
 	
 	
 	def on_cbActionType_changed(self, *a):

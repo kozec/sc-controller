@@ -9,10 +9,10 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, DPadAction, DPad8Action
+from scc.special_actions import MenuAction, GridMenuAction
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
 from scc.gui.action_editor import ActionEditor
-from scc.special_actions import MenuAction
 
 
 import os, logging
@@ -44,16 +44,22 @@ class DPADComponent(AEComponent, MenuActionCofC):
 	
 	
 	def set_action(self, mode, action):
+		cb = self.builder.get_object("cbActionType")
 		if isinstance(action, DPadAction):
 			for i in xrange(0, len(action.actions)):
 				self.actions[i] = action.actions[i]
 			if isinstance(action, DPad8Action):
-				self.select_action_type("dpad8")
+				self.set_cb(cb, "dpad8", 1)
 			else:
-				self.select_action_type("dpad")
+				self.set_cb(cb, "dpad", 1)
 		elif isinstance(action, MenuAction):
+			cbm = self.builder.get_object("cbMenuType")
 			self._current_menu = action.menu_id
-			self.select_action_type("menu")
+			self.set_cb(cb, "menu", 1)
+			if isinstance(action, GridMenuAction):
+				self.set_cb(cbm, "gridmenu", 1)
+			else:
+				self.set_cb(cbm, "menu", 1)
 		for i in xrange(0, 8):
 			self.set_button_desc(i)
 		self.on_cbActionType_changed()
@@ -103,19 +109,6 @@ class DPADComponent(AEComponent, MenuActionCofC):
 		else: # key == "menu"
 			stActionData.set_visible_child(self.builder.get_object("grMenu"))
 		self.update()
-	
-	
-	def select_action_type(self, key):
-		""" Just sets combobox value """
-		cb = self.builder.get_object("cbActionType")
-		model = cb.get_model()
-		self._recursing = True
-		for row in model:
-			if key == row[1]:
-				cb.set_active_iter(row.iter)
-				self._recursing = False
-				return
-		self._recursing = False
 	
 	
 	def on_choosen(self, i, action):
