@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.special_actions import MenuAction
+from scc.special_actions import MenuAction, GridMenuAction
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.menu_editor import MenuEditor
 from scc.gui.parser import GuiActionParser
@@ -105,4 +105,10 @@ class MenuActionCofC(UserDataManager):
 			me.show(self.editor.window)
 			return
 		if name:
-			self.editor.set_action(MenuAction(name))
+			cbm = self.builder.get_object("cbMenuType")
+			if cbm and  cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
+				# Grid menu
+				self.editor.set_action(GridMenuAction(name))
+			else:
+				# Normal menu
+				self.editor.set_action(MenuAction(name))
