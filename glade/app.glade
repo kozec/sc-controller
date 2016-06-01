@@ -130,6 +130,15 @@
       </object>
     </child>
     <child>
+      <object class="GtkMenuItem" id="mnuAbout">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">About</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuAbout_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
       <object class="GtkMenuItem" id="mnuExit">
         <property name="visible">True</property>
         <property name="can_focus">False</property>

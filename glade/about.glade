@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.10"/>
+  <object class="GtkAboutDialog" id="Dialog">
+    <property name="can_focus">False</property>
+    <property name="icon">../images/sc-controller-small.svg</property>
+    <property name="type_hint">dialog</property>
+    <property name="program_name">SC-Controller</property>
+    <property name="copyright" translatable="yes">Code&amp;UI © 2016 Kozec</property>
+    <property name="comments" translatable="yes">User-mode driver and GTK3 based GUI for Steam Controller.
+
+</property>
+    <property name="website">https://github.com/kozec/sc-controller</property>
+    <property name="website_label" translatable="yes">GitHub</property>
+    <property name="logo">../images/sc-controller-small.svg</property>
+    <property name="license_type">gpl-2-0</property>
+    <signal name="response" handler="on_dialog_response" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="aboutdialog-vbox1">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="aboutdialog-action_area1">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

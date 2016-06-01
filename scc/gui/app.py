@@ -429,6 +429,11 @@ class App(Gtk.Application, UserDataManager):
 		self.quit()
 	
 	
+	def on_mnuAbout_activate(self, *a):
+		from scc.gui.aboutdialog import AboutDialog
+		AboutDialog(self).show(self.window)
+	
+	
 	def on_daemon_alive(self, *a):
 		self.set_daemon_status("alive")
 		self.hide_error()
