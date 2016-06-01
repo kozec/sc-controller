@@ -56,18 +56,19 @@ class AxisActionComponent(AEComponent, TimerManager):
 	
 	def set_action(self, mode, action):
 		if self.handles(mode, action):
+			cb = self.builder.get_object("cbAxisOutput")
 			if isinstance(action, AreaAction):
 				self.load_area_action(action)
-				self.select_action_type("area")
+				self.set_cb(cb, "area", 2)
 				self.update_osd_area(action)
 				return
 			self.update_osd_area(None)
 			if isinstance(action, TrackpadAction):
-				self.select_action_type("trackpad")
+				self.set_cb(cb, "trackpad", 2)
 			elif isinstance(action, TrackballAction):
-				self.select_action_type("trackball")
+				self.set_cb(cb, "trackball", 2)
 			elif isinstance(action, CircularAction):
-				self.select_action_type("circular")
+				self.set_cb(cb, "circular", 2)
 			elif isinstance(action, XYAction):
 				p = [ None, None ]
 				for x in (0, 1):
@@ -75,15 +76,15 @@ class AxisActionComponent(AEComponent, TimerManager):
 						if len(action.actions[x].strip().parameters) > 0:
 							p[x] = action.actions[x].strip().parameters[0]
 				if p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
-					self.select_action_type("lstick")
+					self.set_cb(cb, "lstick", 2)
 				elif p[0] == Axes.ABS_RX and p[1] == Axes.ABS_RY:
-					self.select_action_type("rstick")
+					self.set_cb(cb, "rstick", 2)
 				elif p[0] == Axes.ABS_HAT0X and p[1] == Axes.ABS_HAT0Y:
-					self.select_action_type("dpad")
+					self.set_cb(cb, "dpad", 2)
 				elif p[0] == Rels.REL_HWHEEL and p[1] == Rels.REL_WHEEL:
-					self.select_action_type("wheel")
+					self.set_cb(cb, "wheel", 2)
 			else:
-				self.select_action_type("none")
+				self.set_cb(cb, "none", 2)
 	
 	
 	def update_osd_area(self, action):
@@ -244,19 +245,6 @@ class AxisActionComponent(AEComponent, TimerManager):
 			elif p[0] == Rels.REL_HWHEEL and p[1] == Rels.REL_WHEEL:
 				return True
 		return False
-	
-	
-	def select_action_type(self, key):
-		""" Just sets combobox value """
-		model = self.builder.get_object("lstOutputMode")
-		cb = self.builder.get_object("cbAxisOutput")
-		self._recursing = True
-		for row in model:
-			if key == row[2]:
-				cb.set_active_iter(row.iter)
-				self._recursing = False
-				return
-		self._recursing = False
 	
 	
 	def on_area_options_changed(self, *a):

@@ -79,6 +79,18 @@ class AEComponent(object):
 	
 	def get_widget(self):
 		return self.widget
+	
+	
+	def set_cb(self, cb, key, keyindex=0):
+		""" Sets combobox value """
+		model = cb.get_model()
+		self._recursing = True
+		for row in model:
+			if key == row[keyindex]:
+				cb.set_active_iter(row.iter)
+				self._recursing = False
+				return
+		self._recursing = False
 
 
 def describe_action(mode, cls, v):
