@@ -106,7 +106,7 @@ class MenuActionCofC(UserDataManager):
 			return
 		if name:
 			cbm = self.builder.get_object("cbMenuType")
-			if cbm and  cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
+			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
 				# Grid menu
 				self.editor.set_action(GridMenuAction(name))
 			else:

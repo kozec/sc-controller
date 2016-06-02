@@ -44,8 +44,10 @@ class DPADComponent(AEComponent, MenuActionCofC):
 	
 	
 	def set_action(self, mode, action):
+		cbm = self.builder.get_object("cbMenuType")
 		cb = self.builder.get_object("cbActionType")
 		if isinstance(action, DPadAction):
+			self.set_cb(cbm, "menu", 1)
 			for i in xrange(0, len(action.actions)):
 				self.actions[i] = action.actions[i]
 			if isinstance(action, DPad8Action):
@@ -53,7 +55,6 @@ class DPADComponent(AEComponent, MenuActionCofC):
 			else:
 				self.set_cb(cb, "dpad", 1)
 		elif isinstance(action, MenuAction):
-			cbm = self.builder.get_object("cbMenuType")
 			self._current_menu = action.menu_id
 			self.set_cb(cb, "menu", 1)
 			if isinstance(action, GridMenuAction):
