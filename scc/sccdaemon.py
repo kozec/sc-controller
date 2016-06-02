@@ -8,9 +8,9 @@ from scc.tools import _
 from scc.lib import xwrappers as X
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
+from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
-from scc.constants import SCButtons, LEFT, RIGHT, STICK
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
 from scc.tools import set_logging_level, find_binary
@@ -30,7 +30,6 @@ class ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer): daemon_thread
 
 
 class SCCDaemon(Daemon):
-	VERSION = "0.1"
 	
 	def __init__(self, piddile, socket_file):
 		set_logging_level(True, True)
@@ -319,7 +318,7 @@ class SCCDaemon(Daemon):
 		client = Client(rfile, wfile)
 		self.clients.add(client)
 		wfile.write(b"SCCDaemon\n")
-		wfile.write(("Version: %s\n" % (SCCDaemon.VERSION,)).encode("utf-8"))
+		wfile.write(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
 		wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
 		wfile.write(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
 		if self.error is None:
@@ -366,7 +365,7 @@ class SCCDaemon(Daemon):
 						continue
 					reads.append(connection)
 					connection.send(b"SCCDaemon\n")
-					connection.send(("Version: %s\n" % (SCCDaemon.VERSION,)).encode("utf-8"))
+					connection.send(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
 					connection.send(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
 					connection.send(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
 				else:

@@ -23,9 +23,9 @@ from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.paths import get_config_path, get_profiles_path
 from scc.modifiers import ModeModifier, SensitivityModifier
+from scc.constants import SCButtons, DAEMON_VERSION
 from scc.actions import XYAction, NoAction
 from scc.macros import Macro, Repeat
-from scc.constants import SCButtons
 from scc.profile import Profile
 
 import os, sys, json, logging
@@ -51,6 +51,7 @@ class App(Gtk.Application, UserDataManager):
 		# Setup DaemonManager
 		self.dm = DaemonManager()
 		self.dm.connect("alive", self.on_daemon_alive)
+		self.dm.connect("version", self.on_daemon_version)
 		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
 		self.dm.connect("error", self.on_daemon_error)
 		self.dm.connect("dead", self.on_daemon_dead)
@@ -61,6 +62,7 @@ class App(Gtk.Application, UserDataManager):
 		self.recursing = False
 		self.daemon_changed_profile = False
 		self.background = None
+		self.outdated_version = None
 		self.current = Profile(GuiActionParser())
 		self.current_file = None
 		self.just_started = True
@@ -439,6 +441,20 @@ class App(Gtk.Application, UserDataManager):
 		self.hide_error()
 		if self.current_file is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
+	
+	
+	def on_daemon_version(self, daemon, version):
+		"""
+		Checks if reported version matches expected one.
+		If not, daemon is restarted.
+		"""
+		if version != DAEMON_VERSION and self.outdated_version != version:
+			log.warning(
+				"Running daemon instance is too old (version %s, expected %s). Restarting...",
+				version, DAEMON_VERSION)
+			self.outdated_version = version
+			self.set_daemon_status("unknown")
+			self.dm.restart()
 	
 	
 	def on_daemon_error(self, trash, error):

@@ -24,10 +24,6 @@ class DaemonManager(GObject.GObject):
 		alive ()
 			Emited after daemon is started or found to be alraedy running
 		
-		unknown-msg (message)
-			Emited when message that can't be parsed internally
-			is recieved from daemon.
-		
 		dead ()
 			Emited after daemon is killed (or exits for some other reason)
 		
@@ -35,13 +31,20 @@ class DaemonManager(GObject.GObject):
 			Emited when pad, stick or button is locked using lock() method
 			and position or pressed state of that button is changed
 		
+		error (description)
+			Emited when daemon reports error, most likely not being able to
+			access to USB dongle.
+		
 		profile-changed (profile)
 			Emited after profile is changed. Profile is filename of currently
 			active profile
 		
-		error (description)
-			Emited when daemon reports error, most likely not being able to
-			access to USB dongle.
+		unknown-msg (message)
+			Emited when message that can't be parsed internally
+			is recieved from daemon.
+		
+		version (ver)
+			Emited daemon reports its version - usually only once per connection.
 	"""
 	
 	__gsignals__ = {
@@ -51,6 +54,7 @@ class DaemonManager(GObject.GObject):
 			b"error"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
 			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"version"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
 	RECONNECT_INTERVAL = 5
@@ -127,6 +131,7 @@ class DaemonManager(GObject.GObject):
 			if line.startswith("Version:"):
 				version = line.split(":", 1)[-1].strip()
 				log.debug("Connected to daemon, version %s", version)
+				self.emit('version', version)
 			elif line.startswith("Ready."):
 				log.debug("Daemon is ready.")
 				self.alive = True
@@ -159,8 +164,9 @@ class DaemonManager(GObject.GObject):
 			else:
 				self.emit('unknown-msg', line)
 		# Connection is held forever to detect when daemon exits
-		self.connection.get_input_stream().read_bytes_async(102400,
-			1, None, self._on_read_data)
+		if self.connection:
+			self.connection.get_input_stream().read_bytes_async(102400,
+				1, None, self._on_read_data)
 	
 	
 	def is_alive(self):

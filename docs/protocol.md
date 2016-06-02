@@ -8,7 +8,7 @@ When new connection is accepted, daemon sends some info:
 
 ```
 SCCDaemon
-Version: 0.1
+Version: 0.2.6
 PID: 123456
 Current profile: filename.sccprofile
 Ready.
@@ -20,7 +20,7 @@ Connection is then held until client side closes it.
 ### Messages sends by daemon:
 
 #### `Current profile: filename.sccprofile`
-Sent to every client when profile file is loaded and used. Automatically sent when connnection is accepted and when profile is changed.
+Sent to every client when profile file is loaded and used. Automatically sent when connection is accepted and when profile is changed.
 
 #### `Event: source values`
 Sent to client that requested locking of source (that is button, pad or axis).
@@ -48,17 +48,17 @@ Send to scc-osd-daemon when osd-related action is requested.
 scc-osd-* script.
 
 #### `PID: xyz`
-Reports PID of *scc-daemon* instance. Automatically sent when connnection is accepted.
+Reports PID of *scc-daemon* instance. Automatically sent when connection is accepted.
 
 #### `Ready.`
-Automatically sent when connnection is accepted to indicate that there is no error and daemon is working as expected.
+Automatically sent when connection is accepted to indicate that there is no error and daemon is working as expected.
 
 #### `SCCDaemon`
-Just identification message, automatically sent when connnection is accepted.
+Just identification message, automatically sent when connection is accepted.
 Can be either ignored or used to check if remote side really is *scc-daemon*.
 
-#### `Version: x.y`
-Identifies daemon version. Automatically sent when connnection is accepted.
+#### `Version: x.y.z`
+Identifies daemon version. Automatically sent when connection is accepted.
 
 ## Commands sent from client to daemon
 
