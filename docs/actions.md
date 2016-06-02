@@ -139,6 +139,13 @@ Defines mode shifting. If physical buttonX is pressed, actionX is executed.
 Optional default action is executed if none from specified buttons is pressed.
 
 
+#### doubleclick(doubleclick_action [, normal_action])
+Executes action if user double-clicks button.
+Optional normal_action parameter specifies action that is executed when user
+click button only once. This action is executed after small delay needed to
+detect double-clicking.
+
+
 #### sens(x_axis [, y_axis [, z_axis]], action)
 Modifies sensitivity of physical stick or pad.
 

@@ -119,6 +119,13 @@ class Mapper(object):
 		self.scheduled_tasks.sort(key=lambda a: a[0])
 	
 	
+	def remove_scheduled(self, cb):
+		""" Removes scheduled task by callback. """
+		self.scheduled_tasks = [
+			(w, c) for (w, c) in self.scheduled_tasks if cb != c
+		]
+	
+	
 	def mouse_dq_clear(self, *axes):
 		""" Used by trackpad, trackball and mouse wheel emulation """
 		for axis in axes:

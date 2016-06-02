@@ -13,7 +13,7 @@ from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.actions import ACTIONS, NoAction, MultiAction, XYAction
 from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
-from scc.modifiers import SensitivityModifier, ModeModifier
+from scc.modifiers import SensitivityModifier, ModeModifier, DoubleclickModifier
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
@@ -118,6 +118,9 @@ class ActionParser(object):
 			if a:
 				args += [ a ]
 			a = ModeModifier(*args)
+		if "doubleclick" in data:
+			args = [ self.from_json_data(data['doubleclick']), a ]
+			a = DoubleclickModifier(*args)
 		return a
 	
 	

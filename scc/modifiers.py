@@ -422,6 +422,120 @@ class ModeModifier(Modifier):
 			return self.select(mapper).whole(mapper, x, y, what)
 
 
+class DoubleclickModifier(Modifier):
+	COMMAND = "doubleclick"
+	DEAFAULT_TIMEOUT = 0.2
+	
+	def __init__(self, doubleclickaction, normalaction=None):
+		Modifier.__init__(self)
+		self.action = doubleclickaction
+		self.normalaction = normalaction or NoAction()
+		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
+		self.waiting = False
+		self.pressed = False
+		self.active = None
+	
+	
+	def set_haptic(self, hapticdata):
+		supports = self.action.set_haptic(hapticdata)
+		if self.normalaction:
+			supports = self.normalaction.set_haptic(hapticdata) or supports
+		return supports
+	
+	
+	def set_speed(self, x, y, z):
+		supports = self.action.set_speed(x, y, z)
+		if self.normalaction:
+			supports = self.normalaction.set_speed(x, y, z) or supports
+		return supports
+	
+	
+	def strip(self):
+		return self.action.strip()
+	
+	
+	def compress(self):
+		self.action = self.action.compress()
+		if self.normalaction:
+			self.normalaction = self.normalaction.compress()
+		return self
+	
+	
+	def __str__(self):
+		l = [ self.action ]
+		if self.normalaction:
+			l += [ self.normalaction ]
+		return "<Modifier '%s', %s>" % (self.COMMAND, l)
+	
+	__repr__ = __str__
+	
+	
+	def describe(self, context):
+		l = [ self.action ]
+		if self.normalaction:
+			l += [ self.normalaction ]
+		return "\n".join([ x.describe(context) for x in l ])
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		l = [ self.action ]
+		if self.normalaction:
+			l += [ self.normalaction ]
+		if multiline:
+			rv = [ (" " * pad) + "doubleclick(" ]
+			for x in l:
+				rv += x.to_string(True, pad+2).split("\n")
+				rv[-1] += ","
+			if rv[-1][-1] == ",":
+				rv[-1] = rv[-1][0:-1]
+			rv += [ (" " * pad) + ")" ]
+			return "\n".join(rv)
+		else:
+			rv = [ x.to_string(False) for x in l ]
+			return "doubleclick(" + ", ".join(rv) + ")"
+	
+	
+	def encode(self):
+		if self.normalaction:
+			rv = self.normalaction.encode()
+		else:
+			rv = {}
+		rv['doubleclick'] = self.action.encode()
+		if self.name: rv['name'] = self.name
+		return rv
+	
+	
+	def button_press(self, mapper):
+		self.pressed = True
+		if self.waiting:
+			mapper.remove_scheduled(self.on_timeout)
+			self.waiting = False
+			self.active = self.action
+			self.active.button_press(mapper)
+		else:
+			self.waiting = True
+			mapper.schedule(self.timeout, self.on_timeout)
+	
+	
+	def button_release(self, mapper):
+		self.pressed = False
+		if self.active:
+			self.active.button_release(mapper)
+			self.active = None
+	
+	
+	def on_timeout(self, mapper, *a):
+		if self.waiting:
+			self.waiting = False
+			if self.normalaction:
+				if self.pressed:
+					self.active = self.normalaction
+					self.active.button_press(mapper)
+				else:
+					self.normalaction.button_press(mapper)
+					self.normalaction.button_release(mapper)
+
+
 class SensitivityModifier(Modifier):
 	COMMAND = "sens"
 	def __init__(self, *parameters):
