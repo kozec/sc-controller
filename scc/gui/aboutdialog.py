@@ -28,8 +28,8 @@ class AboutDialog(Editor):
 		app_ver = "(unknown version)"
 		try:
 			import pkg_resources, scc
-			if scc.__file__.startswith(pkg_resources.require("sc-controller")[0].location):
-				app_ver = pkg_resources.require("sc-controller")[0].version
+			if scc.__file__.startswith(pkg_resources.require("sccontroller")[0].location):
+				app_ver = "v" + pkg_resources.require("sccontroller")[0].version
 		except:
 			# pkg_resources is not available or __version__ file missing
 			# There is no reason to crash on this.

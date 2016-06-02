@@ -14,7 +14,7 @@ data_files = [
 ]
 
 setup(name='sccontroller',
-		version='0.2.4',
+		version='0.2.6',
 		description='Standalone controller maping tool',
 		author='kozec',
 		packages=['scc', 'scc.gui', 'scc.gui.ae', 'scc.lib', 'scc.osd'],
