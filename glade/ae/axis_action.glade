@@ -227,7 +227,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkLabel" id="label_n1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
@@ -266,7 +266,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkLabel" id="label_n2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
@@ -297,7 +297,7 @@
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
                     <child>
-                      <object class="GtkLabel">
+                      <object class="GtkLabel" id="label_n3">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Pressing the Pad Clicks</property>
@@ -322,7 +322,7 @@
                     <property name="draw_indicator">True</property>
                     <signal name="toggled" handler="on_cbAreaOSDEnabled_toggled" swapped="no"/>
                     <child>
-                      <object class="GtkLabel">
+                      <object class="GtkLabel" id="label_n4">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Display Area While Pad is Being Touched</property>
@@ -351,7 +351,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="label_n6">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_top">10</property>
@@ -384,7 +384,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="label_n9">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_top">10</property>
@@ -416,7 +416,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="label_n10">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_top">10</property>
@@ -449,7 +449,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="label_n15">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_top">10</property>
