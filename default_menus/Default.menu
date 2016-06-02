@@ -16,7 +16,7 @@
 }, {
     "action": "turnoff()", 
     "id": "item4", 
-    "name": "Turning controller OFF", 
+    "name": "Turn controller OFF", 
     "osd": true
 }, {
     "action": "keyboard()", 

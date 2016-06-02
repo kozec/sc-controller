@@ -1,3 +1,6 @@
+SCCDaemon Protocol specification
+--------------------------------
+
 To control running daemon instance, unix socket in user directory is used.
 Controlling protocol uses case-sensitive messages terminated by newline. Message type and message arguments are delimited by `:`.
 
@@ -14,7 +17,7 @@ Ready.
 Connection is then held until client side closes it.
 
 
-# Messages sends by daemon:
+### Messages sends by daemon:
 
 #### `Current profile: filename.sccprofile`
 Sent to every client when profile file is loaded and used. Automatically sent when connnection is accepted and when profile is changed.
@@ -57,7 +60,7 @@ Can be either ignored or used to check if remote side really is *scc-daemon*.
 #### `Version: x.y`
 Identifies daemon version. Automatically sent when connnection is accepted.
 
-# Commands sent from client to daemon
+## Commands sent from client to daemon
 
 #### `Lock: button1 button2...`
 Locks physical button, axis or pad. Events from locked sources are not processed normally, but sent to client that initiated lock.
