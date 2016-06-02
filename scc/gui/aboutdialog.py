@@ -25,7 +25,7 @@ class AboutDialog(Editor):
 		self.builder.connect_signals(self)
 		
 		# Get app version
-		app_ver = "unknown"
+		app_ver = "(unknown version)"
 		try:
 			import pkg_resources, scc
 			if scc.__file__.startswith(pkg_resources.require("sc-controller")[0].location):
@@ -34,8 +34,9 @@ class AboutDialog(Editor):
 			# pkg_resources is not available or __version__ file missing
 			# There is no reason to crash on this.
 			pass
-		# Display versions in UI
-		self.window.set_version(app_ver)
+		# Display version in UI
+		self.builder.get_object("lblVersion").set_label(app_ver)
+	
 	
 	def show(self, modal_for):
 		if modal_for:
