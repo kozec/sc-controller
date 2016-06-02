@@ -1,7 +1,7 @@
 SC-Controller profile file specification
 ----------------------------------------
 
-Profile file contains json-encoded dictonary with specific keys. Missing keys are substituted with defaults, unknwon keys are ignored.
+Profile file contains json-encoded dictonary with specific keys. Missing keys are substituted with defaults, unknwon keys are ignored. See [Desktop.sccprofile](../default_profiles/Desktop.sccprofile) for example.
 
 Root dictonary has to contain following keys:
 - `buttons`         - contains subkey for controller buttons. See [buttons](#buttons).
