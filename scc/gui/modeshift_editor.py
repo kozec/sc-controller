@@ -11,8 +11,8 @@ from scc.gui.controller_widget import ControllerButton
 from scc.gui.editor import Editor
 from scc.constants import SCButtons
 from scc.gui.dwsnc import headerbar
+from scc.modifiers import ModeModifier, DoubleclickModifier, HoldModifier
 from scc.actions import Action, NoAction
-from scc.modifiers import ModeModifier
 from scc.profile import Profile
 from scc.macros import Macro
 
@@ -51,9 +51,10 @@ class ModeshiftEditor(Editor):
 		self.id = None
 		self.mode = Action.AC_BUTTON
 		self.ac_callback = callback
+		self.current_page = 0
+		self.actions = ( [], [], [] )
+		self.nomods = [ NoAction(), NoAction(), NoAction() ]
 		self.setup_widgets()
-		self.actions = []
-		self.default = NoAction()
 	
 	
 	def setup_widgets(self):
@@ -64,15 +65,36 @@ class ModeshiftEditor(Editor):
 		
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
 		cbButtonChooser.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) is None )
-		model = cbButtonChooser.get_model()
-		for button, text in self.BUTTONS:
-			model.append(( None if button is None else button.name, text ))
-		cbButtonChooser.set_active(0)
+		
+		b = lambda a : self.builder.get_object(a)
+		self.action_widgets = (
+			# Order goes: Grid, 1st Action Button, Clear Button
+			# 1st group, 'pressed'
+			( b('grActions'),		b('btDefault'),		b('btClearDefault') ),
+			# 2nd group, 'hold'
+			( b('grHold'),			b('btHold'),		b('btClearHold') ),
+			# 2nd group, 'double-click'
+			( b('grDoubleClick'),	b('btDoubleClick'),	b('btClearDoubleClick') ),
+		)
+		
+		self._fill_button_chooser()
 		headerbar(self.builder.get_object("header"))
 	
 	
-	def _add_action(self, button, action):
-		grActions = self.builder.get_object("grActions")
+	def _fill_button_chooser(self, *a):
+		cbButtonChooser = self.builder.get_object("cbButtonChooser")
+		model = cbButtonChooser.get_model()
+		model.clear()
+		for button, text in self.BUTTONS:
+			if any([ True for x in self.actions[self.current_page] if x[0] == button ]):
+				# Skip already added buttons
+				continue
+			model.append(( None if button is None else button.name, text ))
+		cbButtonChooser.set_active(0)
+	
+	
+	def _add_action(self, index, button, action):
+		grActions = self.action_widgets[index][0]
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
 		model = cbButtonChooser.get_model()
 		
@@ -86,44 +108,44 @@ class ModeshiftEditor(Editor):
 			cbButtonChooser.set_active(0)
 		except: pass
 		
-		i = len(self.actions) + 1
+		i = len(self.actions[index]) + 1
 		l = Gtk.Label()
 		l.set_markup("<b>%s</b>" % (button.name,))
 		l.set_xalign(0.0)
 		b = Gtk.Button.new_with_label(action.describe(self.mode))
 		b.set_property("hexpand", True)
-		b.connect('clicked', self.on_actionb_clicked, button)
+		b.connect('clicked', self.on_actionb_clicked, index, button)
 		clearb = Gtk.Button()
 		clearb.set_image(Gtk.Image.new_from_stock("gtk-delete", Gtk.IconSize.SMALL_TOOLBAR))
 		clearb.set_relief(Gtk.ReliefStyle.NONE)
-		clearb.connect('clicked', self.on_clearb_clicked, button)
+		clearb.connect('clicked', self.on_clearb_clicked, index, button)
 		grActions.attach(l,			0, i, 1, 1)
 		grActions.attach(b,			1, i, 1, 1)
 		grActions.attach(clearb,	2, i, 1, 1)
 		
-		self.actions.append([ button, action, l, b, clearb ])
+		self.actions[index].append([ button, action, l, b, clearb ])
 		grActions.show_all()
 	
 	
-	def on_clearb_clicked(self, trash, button):
-		grActions = self.builder.get_object("grActions")
+	def on_clearb_clicked(self, trash, index, button):
+		grActions = self.action_widgets[index][0]
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
 		model = cbButtonChooser.get_model()
 		# Remove requested action from the list
-		for i in xrange(0, len(self.actions)):
-			if self.actions[i][0] == button:
-				button, action, l, b, clearb = self.actions[i]
+		for i in xrange(0, len(self.actions[index])):
+			if self.actions[index][i][0] == button:
+				button, action, l, b, clearb = self.actions[index][i]
 				for w in (l, b, clearb): grActions.remove(w)
-				del self.actions[i]
+				del self.actions[index][i]
 				break
 		# Move everything after that action one position up
 		# - remove it
-		for j in xrange(i, len(self.actions)):
-			button, action, l, b, clearb = self.actions[j]
+		for j in xrange(i, len(self.actions[index])):
+			button, action, l, b, clearb = self.actions[index][j]
 			for w in (l, b, clearb): grActions.remove(w)
 		# - add it again
-		for j in xrange(i, len(self.actions)):
-			button, action, l, b, clearb = self.actions[j]
+		for j in xrange(i, len(self.actions[index])):
+			button, action, l, b, clearb = self.actions[index][j]
 			grActions.attach(l,			0, j + 1, 1, 1)
 			grActions.attach(b,			1, j + 1, 1, 1)
 			grActions.attach(clearb,	2, j + 1, 1, 1)
@@ -171,10 +193,10 @@ class ModeshiftEditor(Editor):
 			e.set_title(_("Edit Action"))
 			e.hide_modeshift()
 		return e
-
 	
-	def on_actionb_clicked(self, trash, clicked_button):
-		for i in self.actions:
+	
+	def on_actionb_clicked(self, trash, index, clicked_button):
+		for i in self.actions[index]:
 			button, action, l, b, clearb = i
 			if button == clicked_button:
 				def on_chosen(id, action, reopen=False):
@@ -188,31 +210,37 @@ class ModeshiftEditor(Editor):
 				return
 	
 	
-	def on_btDefault_clicked(self, *a):
-		btDefault = self.builder.get_object("btDefault")
-		def on_chosen(id, action, reopen=False):
-			btDefault.set_label(action.describe(self.mode))
-			self.default = action
-			if reopen: self.on_btDefault_clicked()
+	def on_ntbMore_switch_page(self, ntb, box, index):
+		self.current_page = index
+		self._fill_button_chooser()
+	
+	
+	def on_nomodbt_clicked(self, button, *a):
+		actionButton = self.action_widgets[self.current_page][1]
 		
-		ae = self._choose_editor(self.default, on_chosen)
-		self._setup_editor(ae, self.default)
+		def on_chosen(id, action, reopen=False):
+			actionButton.set_label(action.describe(self.mode))
+			self.nomods[self.current_page] = action
+			if reopen: self.on_nomodbt_clicked(actionButton)
+		
+		ae = self._choose_editor(self.nomods[self.current_page], on_chosen)
+		self._setup_editor(ae, self.nomods[self.current_page])
 		ae.show(self.window)
 	
 	
-	def on_btClearDefault_clicked(self, *a):
-		self.default = NoAction()
-		btDefault = self.builder.get_object("btDefault")
-		btDefault.set_label(self.default.describe(self.mode))
+	def on_nomodclear_clicked(self, button, *a):
+		self.nomods[self.current_page] = NoAction()
+		actionButton = self.action_widgets[self.current_page][1]
+		actionButton.set_label(self.nomods[self.current_page].describe(self.mode))
 	
 	
 	def on_btAddAction_clicked(self, *a):
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
 		b = getattr(SCButtons, cbButtonChooser.get_model().get_value(cbButtonChooser.get_active_iter(), 0))
-		self._add_action(b, NoAction())
+		self._add_action(self.current_page, b, NoAction())
 	
 	
-	def on_btClear_clicked	(self, *a):
+	def on_btClear_clicked(self, *a):
 		""" Handler for clear button """
 		action = NoAction()
 		if self.ac_callback is not None:
@@ -223,30 +251,50 @@ class ModeshiftEditor(Editor):
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
 		pars = []
-		for button, action, l, b, clearb in self.actions:
+		# TODO: Other pages
+		for button, action, l, b, clearb in self.actions[0]:
 			pars += [ button, action ]
-		if self.default:
-			pars += [ self.default ]
+		if self.nomods[0]:
+			pars += [ self.nomods[0] ]
 		action = ModeModifier(*pars)
 		if len(pars) == 0:
 			# No action is actually set
 			action = NoAction()
 		elif len(pars) == 1:
 			# Only default action left
-			action = self.default
+			action = self.nomods[0]
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, action)
 		self.close()
+	
+	
+	def _load_modemod(self, index, action):
+		for key in action.mods:
+			self._add_action(index, key, action.mods[key])
+	
+	
+	def _set_nomod_button(self, index, action):
+		self.nomods[index] = action
+		actionButton = self.action_widgets[index][1]
+		actionButton.set_label(action.describe(self.mode))
+		if isinstance(action, ModeModifier):
+			self._load_modemod(index, action)
 	
 	
 	def _set_mode(self, mode, id, action):
 		btDefault = self.builder.get_object("btDefault")
 		self.id = id
 		self.mode = mode
-		for key in action.mods:
-			self._add_action(key, action.mods[key])
-		self.default = action.default
-		btDefault.set_label(self.default.describe(self.mode))
+		
+		if isinstance(action, ModeModifier):
+			self._load_modemod(0, action)
+			self._set_nomod_button(0, action.default)
+			self._set_nomod_button(1, NoAction())
+			self._set_nomod_button(2, NoAction())
+		elif isinstance(action, DoubleclickModifier):	# includes HoldModifier
+			self._set_nomod_button(0, action.normalaction)
+			self._set_nomod_button(1, action.holdaction)
+			self._set_nomod_button(2, action.action)
 	
 	
 	def set_button(self, id, action):

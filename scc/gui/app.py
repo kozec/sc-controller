@@ -23,6 +23,7 @@ from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.paths import get_config_path, get_profiles_path
 from scc.modifiers import ModeModifier, SensitivityModifier
+from scc.modifiers import DoubleclickModifier, HoldModifier
 from scc.constants import SCButtons, DAEMON_VERSION
 from scc.actions import XYAction, NoAction
 from scc.macros import Macro, Repeat
@@ -150,7 +151,7 @@ class App(Gtk.Application, UserDataManager):
 	def _choose_editor(self, action, title):
 		if isinstance(action, SensitivityModifier):
 			action = action.action
-		if isinstance(action, ModeModifier) and not is_gyro_enable(action):
+		if isinstance(action, (ModeModifier, DoubleclickModifier, HoldModifier)) and not is_gyro_enable(action):
 			e = ModeshiftEditor(self, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))
 		elif isinstance(action, Macro):

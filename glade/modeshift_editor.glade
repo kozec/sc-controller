@@ -59,113 +59,15 @@
           </packing>
         </child>
         <child>
-          <object class="GtkGrid" id="grActions">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="row_spacing">5</property>
-            <property name="column_spacing">15</property>
-            <property name="row_homogeneous">True</property>
-            <child>
-              <object class="GtkButton" id="btClearDefault">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="on_btClearDefault_clicked" swapped="no"/>
-                <child>
-                  <object class="GtkImage" id="image1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-clear</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btDefault">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="hexpand">True</property>
-                <signal name="clicked" handler="on_btDefault_clicked" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label2">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">(nothing pressed)</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label4">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">double click</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btDoubleclick">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="hexpand">True</property>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btClearDoubleclick">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <child>
-                  <object class="GtkImage" id="image3">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-clear</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
-            <property name="width">2</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkBox" id="box1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="margin_top">10</property>
             <child>
               <object class="GtkComboBox" id="cbButtonChooser">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_right">5</property>
-                <property name="margin_top">20</property>
                 <property name="hexpand">True</property>
                 <property name="model">lstControllerButtons</property>
                 <property name="active">0</property>
@@ -188,7 +90,6 @@
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="margin_left">5</property>
-                <property name="margin_top">20</property>
                 <signal name="clicked" handler="on_btAddAction_clicked" swapped="no"/>
                 <child>
                   <object class="GtkImage" id="image2">
@@ -207,19 +108,307 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">3</property>
+            <property name="top_attach">2</property>
             <property name="width">2</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="label3">
+          <object class="GtkNotebook" id="ntbMore">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can_focus">True</property>
             <property name="vexpand">True</property>
+            <signal name="switch-page" handler="on_ntbMore_switch_page" swapped="no"/>
+            <child>
+              <object class="GtkBox" id="vbPress">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkGrid" id="grActions">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">10</property>
+                    <property name="margin_right">10</property>
+                    <property name="margin_top">10</property>
+                    <property name="row_spacing">5</property>
+                    <property name="column_spacing">15</property>
+                    <property name="row_homogeneous">True</property>
+                    <child>
+                      <object class="GtkButton" id="btClearDefault">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <signal name="clicked" handler="on_nomodclear_clicked" swapped="no"/>
+                        <child>
+                          <object class="GtkImage" id="image1">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="stock">gtk-clear</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="btDefault">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="hexpand">True</property>
+                        <signal name="clicked" handler="on_nomodbt_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label2">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">(pressed alone)</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblPad">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="vexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">Press</property>
+              </object>
+              <packing>
+                <property name="tab_fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="vbHold">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkGrid" id="grHold">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">10</property>
+                    <property name="margin_right">10</property>
+                    <property name="margin_top">10</property>
+                    <property name="row_spacing">5</property>
+                    <property name="column_spacing">15</property>
+                    <property name="row_homogeneous">True</property>
+                    <child>
+                      <object class="GtkButton" id="btClearHold">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <signal name="clicked" handler="on_nomodclear_clicked" swapped="no"/>
+                        <child>
+                          <object class="GtkImage" id="image3">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="stock">gtk-clear</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="btHold">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="hexpand">True</property>
+                        <signal name="clicked" handler="on_nomodbt_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label4">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">(held alone)</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblPad2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="vexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">Hold</property>
+              </object>
+              <packing>
+                <property name="position">1</property>
+                <property name="tab_fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="vbDoubleClick">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkGrid" id="grDoubleClick">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">10</property>
+                    <property name="margin_right">10</property>
+                    <property name="margin_top">10</property>
+                    <property name="row_spacing">5</property>
+                    <property name="column_spacing">15</property>
+                    <property name="row_homogeneous">True</property>
+                    <child>
+                      <object class="GtkButton" id="btClearDoubleClick">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <signal name="clicked" handler="on_nomodclear_clicked" swapped="no"/>
+                        <child>
+                          <object class="GtkImage" id="image4">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="stock">gtk-clear</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="btDoubleClick">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="hexpand">True</property>
+                        <signal name="clicked" handler="on_nomodbt_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label5">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">(double-clicked)</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblPad1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="vexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">Double-click</property>
+              </object>
+              <packing>
+                <property name="position">2</property>
+                <property name="tab_fill">False</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">2</property>
+            <property name="top_attach">1</property>
             <property name="width">2</property>
           </packing>
         </child>
