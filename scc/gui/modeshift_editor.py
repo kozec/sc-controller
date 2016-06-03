@@ -250,22 +250,36 @@ class ModeshiftEditor(Editor):
 	
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
+		action = self._save_modemod(0)
+		hold_action = self._save_modemod(1)
+		dbl_action = self._save_modemod(2)
+		if hold_action:
+			action = HoldModifier(hold_action, action)
+			if dbl_action:
+				action.action = dbl_action
+		elif dbl_action:
+			action = DoubleclickModifier(hold_action, action)
+		print action.to_string(True, 4)
+		if self.ac_callback is not None:
+			self.ac_callback(self.id, action)
+		self.close()
+	
+	def _save_modemod(self, index):
+		""" Generates ModeModifier from page in Notebook """
 		pars = []
 		# TODO: Other pages
-		for button, action, l, b, clearb in self.actions[0]:
+		for button, action, l, b, clearb in self.actions[index]:
 			pars += [ button, action ]
-		if self.nomods[0]:
-			pars += [ self.nomods[0] ]
+		if self.nomods[index]:
+			pars += [ self.nomods[index] ]
 		action = ModeModifier(*pars)
 		if len(pars) == 0:
 			# No action is actually set
 			action = NoAction()
 		elif len(pars) == 1:
 			# Only default action left
-			action = self.nomods[0]
-		if self.ac_callback is not None:
-			self.ac_callback(self.id, action)
-		self.close()
+			action = self.nomods[index]
+		return action
 	
 	
 	def _load_modemod(self, index, action):
@@ -274,11 +288,13 @@ class ModeshiftEditor(Editor):
 	
 	
 	def _set_nomod_button(self, index, action):
-		self.nomods[index] = action
-		actionButton = self.action_widgets[index][1]
-		actionButton.set_label(action.describe(self.mode))
 		if isinstance(action, ModeModifier):
 			self._load_modemod(index, action)
+			self.nomods[index] = action.default
+		else:
+			self.nomods[index] = action
+		actionButton = self.action_widgets[index][1]
+		actionButton.set_label(self.nomods[index].describe(self.mode))
 	
 	
 	def _set_mode(self, mode, id, action):

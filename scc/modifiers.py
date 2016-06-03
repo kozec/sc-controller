@@ -505,23 +505,26 @@ class DoubleclickModifier(Modifier):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		l = [ self.action ]
+		firstline, lastline = "", ""
+		if self.action:
+			firstline += DoubleclickModifier.COMMAND + "(" + self.action.to_string() + ","
+			lastline += ")"
 		if self.holdaction:
-			l = [ self.holdaction ]
-		if self.normalaction:
-			l += [ self.normalaction ]
+			firstline += HoldModifier.COMMAND + "(" + self.holdaction.to_string() + ","
+			lastline += ")"
+		
 		if multiline:
-			rv = [ (" " * pad) + self.COMMAND + "(" ]
-			for x in l:
-				rv += x.to_string(True, pad+2).split("\n")
-				rv[-1] += ","
-			if rv[-1][-1] == ",":
-				rv[-1] = rv[-1][0:-1]
-			rv += [ (" " * pad) + ")" ]
+			if self.normalaction:
+				rv = [ (" " * pad) + firstline ]
+				rv += self.normalaction.to_string(True, pad+2).split("\n")
+				rv += [ (" " * pad) + lastline ]
+			else:
+				rv = [ firstline.strip(",") + lastline ]
 			return "\n".join(rv)
+		elif self.normalaction:
+			return firstline + self.normalaction.to_string() + lastline
 		else:
-			rv = [ x.to_string(False) for x in l ]
-			return self.COMMAND + "(" + ", ".join(rv) + ")"
+			return firstline.strip(",") + lastline
 	
 	
 	def encode(self):
