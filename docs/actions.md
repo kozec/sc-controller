@@ -145,6 +145,14 @@ Optional normal_action parameter specifies action that is executed when user
 click button only once. This action is executed after small delay needed to
 detect double-clicking.
 
+#### hold(hold_action [, normal_action])
+Executes action if user holds button for longer time.
+Optional normal_action parameter specifies action that is executed when user
+click button shortly.
+
+Hold and doubleclick can be combined together by writing
+`hold(hold_action, doubleclick(doubleclick_action, normal_action))`
+
 
 #### sens(x_axis [, y_axis [, z_axis]], action)
 Modifies sensitivity of physical stick or pad.

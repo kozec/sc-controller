@@ -430,7 +430,8 @@ class DoubleclickModifier(Modifier):
 		Modifier.__init__(self)
 		self.action = doubleclickaction
 		self.normalaction = normalaction or NoAction()
-		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
+		self.holdaction = NoAction()
+		self.timeout = self.DEAFAULT_TIMEOUT
 		self.waiting = False
 		self.pressed = False
 		self.active = None
@@ -440,6 +441,8 @@ class DoubleclickModifier(Modifier):
 		supports = self.action.set_haptic(hapticdata)
 		if self.normalaction:
 			supports = self.normalaction.set_haptic(hapticdata) or supports
+		if self.holdaction:
+			supports = self.holdaction.set_haptic(hapticdata) or supports
 		return supports
 	
 	
@@ -447,17 +450,36 @@ class DoubleclickModifier(Modifier):
 		supports = self.action.set_speed(x, y, z)
 		if self.normalaction:
 			supports = self.normalaction.set_speed(x, y, z) or supports
+		if self.holdaction:
+			supports = self.holdaction.set_speed(x, y, z) or supports
 		return supports
 	
 	
 	def strip(self):
+		if self.holdaction:
+			return self.holdaction.strip()
 		return self.action.strip()
 	
 	
 	def compress(self):
 		self.action = self.action.compress()
-		if self.normalaction:
-			self.normalaction = self.normalaction.compress()
+		self.holdaction = self.holdaction.compress()
+		self.normalaction = self.normalaction.compress()
+		
+		if isinstance(self.normalaction, DoubleclickModifier):
+			self.action = self.action.compress() or self.normalaction.action.compress()
+			self.holdaction = self.holdaction.compress() or self.normalaction.holdaction.compress()
+			self.normalaction = self.normalaction.normalaction.compress()
+		elif isinstance(self.action, HoldModifier):
+			self.holdaction = self.action.holdaction.compress()
+			self.action = self.action.normalaction.compress()
+		elif isinstance(self.holdaction, DoubleclickModifier):
+			self.action = self.holdaction.action.compress()
+			self.holdaction = self.holdaction.normalaction.compress()
+		elif isinstance(self.holdaction, DoubleclickModifier):
+			self.action = self.action.compress() or self.holdaction.action.compress()
+			self.normalaction = self.normalaction.compress() or self.holdaction.normalaction.compress()
+			self.holdaction = self.holdaction.holdaction.compress()
 		return self
 	
 	
@@ -465,13 +487,18 @@ class DoubleclickModifier(Modifier):
 		l = [ self.action ]
 		if self.normalaction:
 			l += [ self.normalaction ]
-		return "<Modifier '%s', %s>" % (self.COMMAND, l)
+		return "<Modifier %s dbl='%s' hold='%s' normal='%s'>" % (
+			self.COMMAND, self.action, self.holdaction, self.normalaction )
 	
 	__repr__ = __str__
 	
 	
 	def describe(self, context):
-		l = [ self.action ]
+		l = [ ]
+		if self.action:
+			l += [ self.action ]
+		if self.holdaction:
+			l += [ self.holdaction ]
 		if self.normalaction:
 			l += [ self.normalaction ]
 		return "\n".join([ x.describe(context) for x in l ])
@@ -479,10 +506,12 @@ class DoubleclickModifier(Modifier):
 	
 	def to_string(self, multiline=False, pad=0):
 		l = [ self.action ]
+		if self.holdaction:
+			l = [ self.holdaction ]
 		if self.normalaction:
 			l += [ self.normalaction ]
 		if multiline:
-			rv = [ (" " * pad) + "doubleclick(" ]
+			rv = [ (" " * pad) + self.COMMAND + "(" ]
 			for x in l:
 				rv += x.to_string(True, pad+2).split("\n")
 				rv[-1] += ","
@@ -492,7 +521,7 @@ class DoubleclickModifier(Modifier):
 			return "\n".join(rv)
 		else:
 			rv = [ x.to_string(False) for x in l ]
-			return "doubleclick(" + ", ".join(rv) + ")"
+			return self.COMMAND + "(" + ", ".join(rv) + ")"
 	
 	
 	def encode(self):
@@ -501,6 +530,8 @@ class DoubleclickModifier(Modifier):
 		else:
 			rv = {}
 		rv['doubleclick'] = self.action.encode()
+		if self.holdaction:
+			rv['hold'] = self.holdaction.encode()
 		if self.name: rv['name'] = self.name
 		return rv
 	
@@ -508,18 +539,28 @@ class DoubleclickModifier(Modifier):
 	def button_press(self, mapper):
 		self.pressed = True
 		if self.waiting:
+			# Double-click happened
 			mapper.remove_scheduled(self.on_timeout)
 			self.waiting = False
 			self.active = self.action
 			self.active.button_press(mapper)
 		else:
+			# First click, start the timer
 			self.waiting = True
 			mapper.schedule(self.timeout, self.on_timeout)
 	
 	
 	def button_release(self, mapper):
 		self.pressed = False
-		if self.active:
+		if self.waiting and self.active is None and not self.action:
+			# In HoldModifier, button released before timeout
+			mapper.remove_scheduled(self.on_timeout)
+			self.waiting = False
+			if self.normalaction:
+				self.normalaction.button_press(mapper)
+				self.normalaction.button_release(mapper)
+		elif self.active:
+			# Released held button
 			self.active.button_release(mapper)
 			self.active = None
 	
@@ -527,13 +568,25 @@ class DoubleclickModifier(Modifier):
 	def on_timeout(self, mapper, *a):
 		if self.waiting:
 			self.waiting = False
-			if self.normalaction:
-				if self.pressed:
-					self.active = self.normalaction
-					self.active.button_press(mapper)
-				else:
-					self.normalaction.button_press(mapper)
-					self.normalaction.button_release(mapper)
+			if self.pressed:
+				# Timeouted while button is still pressed
+				self.active = self.holdaction if self.holdaction else self.normalaction
+				self.active.button_press(mapper)
+			elif self.normalaction:
+				# User did short click and nothing else
+				self.normalaction.button_press(mapper)
+				self.normalaction.button_release(mapper)
+
+
+class HoldModifier(DoubleclickModifier):
+	# Hold modifier is implemented as part of DoubleclickModifier, because
+	# situation when both are assigned to same button needs to be treated
+	# specially.
+	COMMAND = "hold"
+	
+	def __init__(self, holdaction, normalaction=None):
+		DoubleclickModifier.__init__(self, NoAction(), normalaction)
+		self.holdaction = holdaction
 
 
 class SensitivityModifier(Modifier):
