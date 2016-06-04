@@ -38,10 +38,11 @@ class SCCDaemon(Daemon):
 		self.exiting = False
 		self.socket_file = socket_file
 		self.xdisplay = None
-		self.sserver = None
+		self.sserver = None			# UnixStreamServer instance
 		self.mapper = None
 		self.error = None
 		self.osd_daemon = None
+		self.subprocs = []
 		self.lock = threading.Lock()
 		self.profile_file = None
 		self.clients = set()
@@ -217,6 +218,10 @@ class SCCDaemon(Daemon):
 		self.exiting = True
 		if self.osd_daemon:
 			self.osd_daemon.wfile.close()
+			self.osd_daemon = None
+		for p in self.subprocs:
+			p.kill()
+		self.subprocs = []
 		sys.exit(0)
 	
 	
@@ -226,29 +231,16 @@ class SCCDaemon(Daemon):
 			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
 			self.xdisplay = None
 			return
+		
 		self.xdisplay = X.open_display(os.environ["DISPLAY"])
-		if not self.xdisplay:
+		if self.xdisplay:
+			log.debug("Connected to XServer %s", os.environ["DISPLAY"])
+			self.mapper.set_xdisplay(self.xdisplay)
+			self.subprocs.append(Subprocess("scc-osd-daemon", True))
+		else:
 			log.warning("Failed to connect to XServer. Some functionality will be unavailable")
 			self.xdisplay = None
-			return
-		log.debug("Connected to XServer %s", os.environ["DISPLAY"])
 	
-	
-	def start_osd(self):
-		""" Starts OSD Daemon on bacgkround (if possible) """
-		def threaded():
-			while not self.exiting:
-				p = subprocess.Popen([ sys.executable,
-					find_binary('scc-osd-daemon'), 'debug' ], stdin=None)
-				p.communicate()
-				if not self.exiting:
-					log.warning("osd-daemon died; restarting")
-					time.sleep(5)
-		
-		t = threading.Thread(target=threaded)
-		t.daemon = True
-		t.start()
-
 
 	def run(self):
 		log.debug("Starting SCCDaemon...")
@@ -256,10 +248,6 @@ class SCCDaemon(Daemon):
 		self.lock.acquire()
 		self.start_listening()
 		self.connect_x()
-		if self.xdisplay:
-			# Available only with XServer
-			self.mapper.set_xdisplay(self.xdisplay)
-			self.start_osd()
 		while True:
 			try:
 				sc = None
@@ -634,6 +622,7 @@ class Client(object):
 
 
 class LockedAction(Action):
+	""" Temporal action used to send requested inputs to client """
 	MIN_DIFFERENCE = 300
 	def __init__(self, what, client, original_action):
 		self.what = what
@@ -657,3 +646,40 @@ class LockedAction(Action):
 		if abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE):
 			self.old_pos = x, y
 			self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))
+
+
+class Subprocess(object):
+	"""
+	Part of scc-daemon executed as another process, killed along with scc-daemon.
+	Currently scc-osd-daemon and scc-windowswitch-daemon.
+	"""
+	
+	def __init__(self, binary_name, debug, restart_after=5):
+		self.binary_name = binary_name
+		self.restart_after = restart_after
+		self.args = [ sys.executable, find_binary(binary_name) ]
+		if debug:
+			self.args.append('debug')
+		self._killed = False
+		self.p = None
+		self.t = threading.Thread(target=self._threaded)
+		self.t.daemon = True
+		self.t.start()
+	
+	
+	def _threaded(self, *a):
+		while not self._killed:
+			self.p = subprocess.Popen(self.args, stdin=None)
+			self.p.communicate()
+			self.p = None
+			if not self._killed:
+				log.warning("%s died; restarting after %ss",
+					self.binary_name, self.restart_after)
+				time.sleep(self.restart_after)
+	
+	
+	def kill(self):
+		self._killed = True
+		if self.p:
+			self.p.kill()
+		self.p = None

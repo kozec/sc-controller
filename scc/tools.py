@@ -13,20 +13,22 @@ _ = lambda x : x
 
 LOG_FORMAT				= "%(levelname)s %(name)-13s %(message)s"
 
-def init_logging():
+def init_logging(prefix="", suffix=""):
 	"""
 	Initializes logging, sets custom logging format and adds one
 	logging level with name and method to call.
+	
+	prefix and suffix arguments can be used to modify log level prefixes.
 	"""
 	logging.basicConfig(format=LOG_FORMAT)
 	logger = logging.getLogger()
 	# Rename levels
-	logging.addLevelName(10, "D")	# Debug
-	logging.addLevelName(20, "I")	# Info
-	logging.addLevelName(30, "W")	# Warning
-	logging.addLevelName(40, "E")	# Error
+	logging.addLevelName(10, prefix + "D" + suffix)	# Debug
+	logging.addLevelName(20, prefix + "I" + suffix)	# Info
+	logging.addLevelName(30, prefix + "W" + suffix)	# Warning
+	logging.addLevelName(40, prefix + "E" + suffix)	# Error
 	# Create additional, "verbose" level
-	logging.addLevelName(15, "V")	# Verbose
+	logging.addLevelName(15, prefix + "V" + suffix)	# Verbose
 	# Add 'logging.verbose' method
 	def verbose(self, msg, *args, **kwargs):
 		return self.log(15, msg, *args, **kwargs)
