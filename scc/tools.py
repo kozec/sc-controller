@@ -140,9 +140,12 @@ def find_binary(name):
 	
 	With some exceptions, this is done simply by searching PATH environment variable.
 	"""
-	if name in ("osd_daemon", "scc-osd-daemon"):
+	if name.startswith("scc-osd-daemon"):
 		# Special case, this one is not supposed to go to /usr/bin
-		return os.path.join(os.path.split(__file__)[0], "osd", "osd_daemon.py")
+		return os.path.join(os.path.split(__file__)[0], "x11", "scc-osd-daemon.py")
+	if name.startswith("scc-autoswitch-daemon"):
+		# As above
+		return os.path.join(os.path.split(__file__)[0], "x11", "scc-autoswitch-daemon.py")
 	for i in os.environ['PATH'].split(":"):
 		path = os.path.join(i, name)
 		if os.path.exists(path):
