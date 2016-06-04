@@ -9,11 +9,10 @@ from scc.lib import xwrappers as X
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
-from scc.paths import get_profiles_path, get_default_profiles_path
+from scc.tools import set_logging_level, find_binary, find_profile
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
-from scc.tools import set_logging_level, find_binary
 from scc.menu_data import MenuData
 from scc.uinput import Keys, Axes
 from scc.profile import Profile
@@ -179,19 +178,17 @@ class SCCDaemon(Daemon):
 			# Small sanity check
 			log.error("Cannot load profile: Profile '%s' not found", name)
 			return
-		filename = name + ".sccprofile"
-		for p in (get_profiles_path(), get_default_profiles_path()):
-			path = os.path.join(p, filename)
-			if os.path.exists(path):
-				self.lock.acquire()
-				try:
-					self._set_profile(path)
-					self.lock.release()
-					log.info("Loaded profile '%s'", name)
-				except Exception, e:
-					self.lock.release()
-					log.error(e)
-				return
+		path = find_profile(name)
+		if path:
+			self.lock.acquire()
+			try:
+				self._set_profile(path)
+				self.lock.release()
+				log.info("Loaded profile '%s'", name)
+			except Exception, e:
+				self.lock.release()
+				log.error(e)
+			return
 		log.error("Cannot load profile: Profile '%s' not found", name)
 	
 	

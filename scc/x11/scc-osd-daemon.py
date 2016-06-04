@@ -44,7 +44,7 @@ class OSDDaemon(object):
 	
 	
 	def on_daemon_died(self, *a):
-		log.error("Daemon died")
+		log.error("Connection to daemon lost")
 		self.quit(2)
 	
 	
