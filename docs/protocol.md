@@ -71,8 +71,16 @@ While source is locked, daemon keeps sending `Event: ...` messages every time wh
 
 Unlocking is done automatically when client is disconnected, or using `Unlock.` message.
 
+#### `OSD: text to display`
+Asks daemon to display OSD message. No escaping or quoting is needed, everything after colon is displayed
+as text.
+
+If OSD cannot be used (for example because daemon runs without X server), daemon responds with `Fail: ....` message.
+Otherwise daemon responds with `OK.`. Note that doesn't necessary mean that OSD is visible to user, only
+that scc-daemon managed to send request to scc-osd-daemon.
+
 #### `Profile: filename.sccprofile`
-Asks daemon to load another profile. No escaping or quouting is needed, everything after colon is used as filename, only spaces and tabs are stripped.
+Asks daemon to load another profile. No escaping or quoting is needed, everything after colon is used as filename, only spaces and tabs are stripped.
 
 If profile is sucessfully loaded, daemon responds with `OK.` to client that initiated loading and sends `Current profile: ...` message to all clients.
 

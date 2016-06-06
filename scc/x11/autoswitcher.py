@@ -5,9 +5,10 @@ SC-Controller - Autoswitch Daemon
 Observes active window and commands scc-daemon to change profiles as needed.
 """
 from __future__ import unicode_literals
+from scc.tools import _
 
 from scc.lib import xwrappers as X
-from scc.tools import set_logging_level, find_profile
+from scc.tools import find_profile
 from scc.paths import get_daemon_socket
 from scc.config import Config
 
@@ -78,13 +79,17 @@ class AutoSwitcher(object):
 		pars = X.get_window_title(self.dpy, w), X.get_window_class(self.dpy, w)
 		for c in self.conds:
 			if c.matches(*pars):
-				path = find_profile(self.conds[c])
+				profile_name = self.conds[c]
+				path = find_profile(profile_name)
 				if path:
 					self.lock.acquire()
 					if path != self.current_profile and not self.current_profile.endswith(".mod"):
 						# Switch only if target profile is not active
 						# and active profile is not being editted.
 						try:
+							if self.config['autoswitch_osd']:
+								msg = (_("Switched to profile") + " " + profile_name)
+								self.socket.send(b"OSD: " + msg.encode('utf-8') + b"\n")
 							self.socket.send(b"Profile: " + path.encode('utf-8') + b"\n")
 						except:
 							self.lock.release()

@@ -103,6 +103,7 @@ class SCCDaemon(Daemon):
 	
 	
 	def _osd(self, *data):
+		""" Returns True on success """
 		# Pre-format data
 		#   - convert everything to string
 		data = [ unicode(x).encode("utf-8") for x in data ]
@@ -118,7 +119,7 @@ class SCCDaemon(Daemon):
 		if not self.osd_daemon:
 			self.lock.release()
 			log.warning("Cannot show OSD; there is no scc-osd-daemon registered")
-			return
+			return False
 		# Send request
 		try:
 			self.osd_daemon.wfile.write(data)
@@ -126,7 +127,10 @@ class SCCDaemon(Daemon):
 		except Exception, e:
 			log.error("Failed to display OSD: %s", e)
 			self.osd_daemon = None
+			self.lock.release()
+			return False
 		self.lock.release()
+		return True
 	
 	
 	def on_sa_osd(self, mapper, action):
@@ -397,6 +401,17 @@ class SCCDaemon(Daemon):
 				self.lock.release()
 				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
 				client.wfile.write(b"Fail: " + tb + b"\n")
+		elif message.startswith("OSD:"):
+			if not self.osd_daemon:
+				client.wfile.write(b"Fail: Cannot show OSD; there is no scc-osd-daemon registered\n")
+			else:
+				try:
+					text = message[5:].decode("utf-8").strip("\t ")
+					if not self._osd("message", text):
+						raise Exception()
+					client.wfile.write(b"Ok.\n")
+				except Exception:
+					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Lock:"):
 			to_lock = [ x for x in message[5:].strip(" \t\r").split(" ") ]
 			self.lock.acquire()

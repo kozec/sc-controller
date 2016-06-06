@@ -14,6 +14,10 @@ log = logging.getLogger("Config")
 
 
 class Config(object):
+	DEFAULTS = {
+		"autoswitch_osd":	True,	# True to show OSD message when profile is autoswitched
+		"autoswitch":		[],		# Empty list of conditions	
+	}
 	
 	def __init__(self):
 		self.filename = os.path.join(get_config_path(), "config.json")
@@ -35,9 +39,10 @@ class Config(object):
 		Returns True if anything gets changed.
 		"""
 		rv = False
-		if "autoswitch" not in self.values:
-			self.values['autoswitch'] = []
-			rv = True
+		for d in self.DEFAULTS:
+			if d not in self.values:
+				self.values[d] = self.DEFAULTS[d]
+				rv = True
 		return rv
 	
 	
