@@ -375,7 +375,7 @@ class HatRightAction(HatAction):
 		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
 
 
-class MouseAction(Action, HapticEnabledAction):
+class MouseAction(HapticEnabledAction, Action):
 	COMMAND = "mouse"
 	
 	def __init__(self, axis, speed=None):
@@ -496,7 +496,7 @@ class MouseAction(Action, HapticEnabledAction):
 		mapper.syn_list.add(mapper.mouse)
 
 
-class CircularAction(Action, HapticEnabledAction):
+class CircularAction(HapticEnabledAction, Action):
 	COMMAND = "circular"
 	
 	def __init__(self, axis):
@@ -566,7 +566,7 @@ class CircularAction(Action, HapticEnabledAction):
 			mapper.force_event.add(FE_PAD)
 
 
-class AreaAction(Action, SpecialAction, HapticEnabledAction, OSDEnabledAction):
+class AreaAction(HapticEnabledAction, Action, SpecialAction, OSDEnabledAction):
 	SA = COMMAND = "area"
 	
 	def __init__(self, x1, y1, x2, y2):
@@ -774,7 +774,7 @@ class GyroAction(Action):
 		return axis, neg, pos
 
 
-class GyroAbsAction(GyroAction, HapticEnabledAction):
+class GyroAbsAction(HapticEnabledAction, GyroAction):
 	COMMAND = "gyroabs"
 	def __init__(self, *blah):
 		GyroAction.__init__(self, *blah)
@@ -821,7 +821,7 @@ class GyroAbsAction(GyroAction, HapticEnabledAction):
 				mapper.syn_list.add(mapper.gamepad)
 
 
-class TrackballAction(Action, HapticEnabledAction):
+class TrackballAction(HapticEnabledAction, Action):
 	COMMAND = "trackball"
 	def __init__(self, speed=None):
 		Action.__init__(self, speed)
@@ -869,7 +869,7 @@ class TrackpadAction(TrackballAction):
 		return "Trackpad"
 
 
-class ButtonAction(Action, HapticEnabledAction):
+class ButtonAction(HapticEnabledAction, Action):
 	COMMAND = "button"
 	SPECIAL_NAMES = {
 		Keys.BTN_LEFT	: "Mouse Left",
@@ -1230,7 +1230,7 @@ class DPad8Action(DPadAction):
 		return "8-Way DPad"
 
 
-class XYAction(Action, HapticEnabledAction):
+class XYAction(HapticEnabledAction, Action):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
