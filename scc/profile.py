@@ -128,4 +128,4 @@ class Encoder(JSONEncoder):
 		#	return basestring("[" + ", ".join(self.encode(x) for x in obj) + " ]")
 		if hasattr(obj, "encode"):
 			return obj.encode()
-		return json.JSONEncoder.default(self, obj)
+		return JSONEncoder.default(self, obj)
