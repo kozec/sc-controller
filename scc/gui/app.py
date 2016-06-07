@@ -13,6 +13,7 @@ from scc.gui.controller_widget import ControllerPad, ControllerStick, Controller
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.modeshift_editor import ModeshiftEditor
+from scc.gui.global_settings import GlobalSettings
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
@@ -197,6 +198,10 @@ class App(Gtk.Application, UserDataManager):
 			ae.set_pad(id, data)
 			ae.show(self.window)
 	
+	
+	def on_mnuGlobalSettings_activate(self, *a):
+		gs = GlobalSettings(self)
+		gs.show(self.window)
 	
 	def on_btUndo_clicked(self, *a):
 		if len(self.undo) < 1: return
