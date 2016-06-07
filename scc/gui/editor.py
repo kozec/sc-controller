@@ -16,6 +16,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import keyevent_to_key
 from scc.gui.area_to_action import AREA_TO_ACTION
 
+import os
+
 class Editor(object):
 	""" Common stuff for all editor windows """
 	ERROR_CSS = " #error {background-color:green; color:red;} "
@@ -25,6 +27,13 @@ class Editor(object):
 		""" Checks if pressed key was escape and if yes, closes window """
 		if event.keyval == Gdk.KEY_Escape:
 			self.close()
+	
+	
+	def setup_widgets(self):
+		self.builder = Gtk.Builder()
+		self.builder.add_from_file(os.path.join(self.app.gladepath, self.GLADE))
+		self.window = self.builder.get_object("Dialog")
+		self.builder.connect_signals(self)
 	
 	
 	@staticmethod
