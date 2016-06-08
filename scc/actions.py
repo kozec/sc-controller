@@ -911,8 +911,8 @@ class ButtonAction(HapticEnabledAction, Action):
 			button1, button2 = button2, None
 		Action.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
 		HapticEnabledAction.__init__(self)
-		self.button = button1
-		self.button2 = button2
+		self.button = button1 or None
+		self.button2 = button2 or None
 		self.minustrigger = minustrigger
 		self.plustrigger = plustrigger
 		self._pressed_key = None
@@ -921,16 +921,28 @@ class ButtonAction(HapticEnabledAction, Action):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		if self.button in ButtonAction.SPECIAL_NAMES:
-			return _(ButtonAction.SPECIAL_NAMES[self.button])
 		elif self.button == Rels.REL_WHEEL:
 			if len(self.parameters) < 2 or self.parameters[1] > 0:
 				return _("Wheel UP")
 			else:
 				return _("Wheel DOWN")
-		elif self.button in MOUSE_BUTTONS:
-			return _("Mouse %s") % (self.button,)
-		return self.button.name.split("_", 1)[-1]
+		else:
+			rv = [ ]
+			for x in (self.button, self.button2):
+				if x:
+					rv.append(ButtonAction.describe_button(x))
+			return ", ".join(rv)
+	
+	
+	@staticmethod
+	def describe_button(button):
+		if button in ButtonAction.SPECIAL_NAMES:
+			return _(ButtonAction.SPECIAL_NAMES[button])
+		elif button in MOUSE_BUTTONS:
+			return _("Mouse %s") % (button,)
+		elif button is None: # or isinstance(button, NoAction):
+			return "None"
+		return button.name.split("_", 1)[-1]
 	
 	
 	def describe_short(self):
