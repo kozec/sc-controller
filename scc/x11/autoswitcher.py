@@ -12,7 +12,7 @@ from scc.tools import find_profile
 from scc.paths import get_daemon_socket
 from scc.config import Config
 
-import os, sys, time, socket, threading, logging
+import os, sys, re, time, socket, threading, logging
 log = logging.getLogger("AutoSwitcher")
 
 class AutoSwitcher(object):
@@ -131,17 +131,37 @@ class Condition(object):
 		At least one parameter has to be specified; regexp has to be
 		compiled regular expression.
 		"""
-		if not ( title or title or regexp or wm_class ):
-			raise ValueError("Empty Condition")
 		self.exact_title = exact_title
 		self.title = title
 		self.regexp = regexp
+		if type(self.regexp) in (str, unicode):
+			self.regexp = re.compile(self.regexp)
 		self.wm_class = wm_class
+		self.empty = not ( title or title or regexp or wm_class )
 	
 	
 	def __str__(self):
 		return "<Condition title=%s, exact_title=%s, regexp=%s, wm_class=%s>" % (
 			self.title, self.exact_title, self.regexp, self.wm_class)
+	
+	
+	def describe(self):
+		"""
+		Returns string that describes condition in human-readable form.
+		Used in GUI.
+		"""
+		rv = []
+		if self.title:
+			rv += [ _("title contains '%s'") % (self.title,) ]
+		if self.exact_title:
+			rv += [ _("title is '%s'") % (self.exact_title,) ]
+		if self.regexp:
+			rv += [ _("title matches '%s'") % (self.regexp.pattern,) ]
+		if self.wm_class:
+			rv += [ _("class is '%s'") % (self.wm_class,) ]
+		if rv:
+			return _("and ").join(rv)
+		return _("matches nothing")
 	
 	
 	@staticmethod
@@ -173,6 +193,10 @@ class Condition(object):
 		
 		wm_class is what xwrappers.get_window_class returns, tuple of two strings.
 		"""
+		if self.empty:
+			# Empty condition matches nothing
+			return False
+		
 		if self.wm_class:
 			if self.wm_class != wm_class[0] and self.wm_class != wm_class[1]:
 				# Window class matching is enabled and window doesn't match

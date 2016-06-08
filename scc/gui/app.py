@@ -29,6 +29,7 @@ from scc.constants import SCButtons, DAEMON_VERSION
 from scc.actions import XYAction, NoAction
 from scc.macros import Macro, Repeat
 from scc.profile import Profile
+from scc.config import Config
 
 import os, sys, json, logging
 log = logging.getLogger("App")
@@ -58,6 +59,7 @@ class App(Gtk.Application, UserDataManager):
 		self.dm.connect("error", self.on_daemon_error)
 		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
+		self.config = Config()
 		self.gladepath = gladepath
 		self.imagepath = imagepath
 		self.builder = None
@@ -110,6 +112,7 @@ class App(Gtk.Application, UserDataManager):
 		main_area.put(self.background, 0, 0)
 		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		headerbar(self.builder.get_object("hbWindow"))
+		
 	
 	
 	def check(self):

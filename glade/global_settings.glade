@@ -8,6 +8,8 @@
       <column type="GObject"/>
       <!-- column-name label -->
       <column type="gchararray"/>
+      <!-- column-name profile -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="Dialog">
@@ -89,7 +91,6 @@
                     <property name="can_focus">True</property>
                     <property name="hexpand">True</property>
                     <property name="model">lstItems</property>
-                    <property name="headers_visible">False</property>
                     <property name="reorderable">True</property>
                     <property name="rubber_banding">True</property>
                     <signal name="cursor-changed" handler="on_tvItems_cursor_changed" swapped="no"/>
@@ -98,12 +99,25 @@
                       <object class="GtkTreeSelection" id="nonimportatboxthatneedsidjustbecauseofubunt"/>
                     </child>
                     <child>
-                      <object class="GtkTreeViewColumn" id="clItemLabel">
-                        <property name="title" translatable="yes">Item</property>
+                      <object class="GtkTreeViewColumn" id="clWhen">
+                        <property name="resizable">True</property>
+                        <property name="title" translatable="yes">When window...</property>
                         <child>
-                          <object class="GtkCellRendererText" id="clItemLabelText"/>
+                          <object class="GtkCellRendererText" id="crWhen"/>
                           <attributes>
                             <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="clProfile">
+                        <property name="resizable">True</property>
+                        <property name="title" translatable="yes">... switch to profile</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="crProfile"/>
+                          <attributes>
+                            <attribute name="text">2</attribute>
                           </attributes>
                         </child>
                       </object>
@@ -144,7 +158,7 @@
                     <property name="receives_default">True</property>
                     <property name="hexpand">False</property>
                     <property name="vexpand">False</property>
-                    <signal name="activate" handler="btEdit_clicked_cb" swapped="no"/>
+                    <signal name="clicked" handler="btEdit_clicked_cb" swapped="no"/>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
@@ -204,7 +218,7 @@
                     <property name="margin_left">10</property>
                     <property name="hexpand">False</property>
                     <property name="vexpand">False</property>
-                    <signal name="activate" handler="on_btRemoveItem_clicked" swapped="no"/>
+                    <signal name="clicked" handler="on_btRemove_clicked" swapped="no"/>
                     <child>
                       <object class="GtkImage">
                         <property name="visible">True</property>
@@ -228,7 +242,7 @@
                     <property name="margin_left">10</property>
                     <property name="hexpand">False</property>
                     <property name="vexpand">False</property>
-                    <signal name="activate" handler="on_btAddItem_clicked" swapped="no"/>
+                    <signal name="clicked" handler="on_btAdd_clicked" swapped="no"/>
                     <child>
                       <object class="GtkImage">
                         <property name="visible">True</property>
@@ -247,11 +261,8 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">5</property>
+                <property name="top_attach">4</property>
               </packing>
-            </child>
-            <child>
-              <placeholder/>
             </child>
           </object>
         </child>
@@ -273,6 +284,244 @@
         <property name="can_focus">False</property>
         <property name="title">Settings</property>
         <property name="show_close_button">True</property>
+      </object>
+    </child>
+  </object>
+  <object class="GtkListStore" id="lstProfile">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name giofile -->
+      <column type="GObject"/>
+      <!-- column-name changed -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkWindow" id="ConditionEditor">
+    <property name="width_request">500</property>
+    <property name="can_focus">False</property>
+    <property name="role">condition editor</property>
+    <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="skip_pager_hint">True</property>
+    <property name="transient_for">Dialog</property>
+    <signal name="delete-event" handler="on_ConditionEditor_destroy" swapped="no"/>
+    <signal name="key-press-event" handler="on_ConditionEditor_key_press_event" swapped="no"/>
+    <child>
+      <object class="GtkBox" id="vbox321">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">20</property>
+        <property name="margin_right">25</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">15</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="label3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">5</property>
+            <property name="label" translatable="yes">Condition</property>
+            <property name="xalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkCheckButton" id="cbMatchTitle">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">5</property>
+            <property name="xalign">0</property>
+            <property name="draw_indicator">True</property>
+            <child>
+              <object class="GtkLabel" id="label74">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Match Window Title</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vbBox1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">20</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkEntry" id="entTitle">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <signal name="changed" handler="on_entTitle_changed" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbExactTitle">
+                <property name="label" translatable="yes">Match exact title</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="xalign">0</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbExactTitle_toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbRegExp">
+                <property name="label" translatable="yes">Use regular expression</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="xalign">0</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbRegExp_toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkCheckButton" id="cbMatchClass">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="margin_top">15</property>
+            <property name="margin_bottom">5</property>
+            <property name="xalign">0</property>
+            <property name="draw_indicator">True</property>
+            <child>
+              <object class="GtkLabel" id="label1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Match Window Class</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="entClass">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="margin_left">20</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">4</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label2">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">15</property>
+            <property name="label" translatable="yes">Profile to Activate</property>
+            <property name="xalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">5</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkComboBox" id="cbProfile">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="margin_top">5</property>
+            <property name="model">lstProfile</property>
+            <child>
+              <object class="GtkCellRendererText" id="cellrenderertext1"/>
+              <attributes>
+                <attribute name="text">0</attribute>
+              </attributes>
+            </child>
+            <child>
+              <object class="GtkCellRendererText" id="cellrenderertext2">
+                <property name="xalign">1</property>
+                <property name="alignment">right</property>
+                <property name="style">italic</property>
+              </object>
+              <attributes>
+                <attribute name="text">2</attribute>
+              </attributes>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">6</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child type="titlebar">
+      <object class="GtkHeaderBar" id="header2">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="title">Edit Condition</property>
+        <property name="show_close_button">True</property>
+        <child>
+          <object class="GtkButton" id="btSave">
+            <property name="label">gtk-save</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_btSave_clicked" swapped="no"/>
+          </object>
+        </child>
       </object>
     </child>
   </object>

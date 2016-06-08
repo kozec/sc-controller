@@ -47,6 +47,18 @@ class Editor(object):
 					Gtk.STYLE_PROVIDER_PRIORITY_USER)
 	
 	
+	def set_cb(self, cb, key, keyindex=0):
+		""" Sets combobox value """
+		model = cb.get_model()
+		self._recursing = True
+		for row in model:
+			if key == row[keyindex]:
+				cb.set_active_iter(row.iter)
+				self._recursing = False
+				return
+		self._recursing = False
+	
+	
 	def set_title(self, title):
 		self.window.set_title(title)
 		self.builder.get_object("header").set_title(title)
