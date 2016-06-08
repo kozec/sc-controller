@@ -207,7 +207,7 @@ class App(Gtk.Application, UserDataManager):
 	
 	def save_config(self):
 		self.config.save()
-		# TODO: Ask daemon to reload config
+		self.dm.reconfigure()
 	
 	
 	def on_mnuGlobalSettings_activate(self, *a):

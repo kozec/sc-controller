@@ -192,12 +192,21 @@ class DaemonManager(GObject.GObject):
 			# Instant failure
 			error_cb("Not connected.")
 	
+	@classmethod
+	def nocallback(*a):
+		""" Used when request doesn't needs callback """
+		pass
+	
 	def set_profile(self, filename):
 		""" Asks daemon to change profile """
-		def nocallback(*a):
-			# This one doesn't need error checking
-			pass
-		self.request("Profile: %s" % (filename,), nocallback, nocallback)
+		self.request("Profile: %s" % (filename,),
+				DaemonManager.nocallback, DaemonManager.nocallback)
+	
+	
+	def reconfigure(self):
+		""" Asks daemon reload configuration file """
+		self.request("Reconfigure.", DaemonManager.nocallback,
+				DaemonManager.nocallback)
 	
 	
 	def stop(self):

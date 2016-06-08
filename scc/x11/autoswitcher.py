@@ -70,7 +70,11 @@ class AutoSwitcher(object):
 					profile = line.split(":", 1)[-1].strip()
 					log.debug("Daemon reported profile change: %s", profile)
 					self.current_profile = profile
-					
+				elif line.startswith("Reconfigured."):
+					log.debug("Reloading config...")
+					self.config = Config()
+					self.parse_conditions()
+			
 			self.lock.release()
 	
 	
