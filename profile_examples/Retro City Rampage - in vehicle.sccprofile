@@ -1,0 +1,64 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.KEY_ENTER)", 
+            "name": "Exit Vehicle"
+        }, 
+        "B": {
+            "action": "button(Keys.KEY_LEFTSHIFT)", 
+            "name": "Shoot / Horn"
+        }, 
+        "C": {
+            "action": "menu('Default.menu')"
+        }, 
+        "LGRIP": {
+            "action": "profile('Retro City Rampage - on foot') and osd('On Foot')", 
+            "name": "Switch to on foot controlls"
+        }, 
+        "LPAD": {
+            "action": "button(Keys.BTN_THUMBL)"
+        }, 
+        "RB": {
+            "action": "button(Keys.KEY_PAGEDOWN)", 
+            "name": "Next Weapon"
+        }, 
+        "RPAD": {
+            "action": "button(Keys.BTN_THUMBR)"
+        }, 
+        "START": {
+            "action": "button(Keys.KEY_ESC)", 
+            "name": "Pause/Menu"
+        }, 
+        "X": {
+            "action": "button(Keys.KEY_LEFTCTRL)", 
+            "name": "Pickup/Throw"
+        }, 
+        "Y": {
+            "action": "button(Keys.BTN_WEST)"
+        }
+    }, 
+    "gyro": {}, 
+    "menus": {}, 
+    "pad_left": {}, 
+    "pad_right": {
+        "X": {
+            "action": "axis(Axes.ABS_X)"
+        }, 
+        "Y": {
+            "action": "raxis(Axes.ABS_Y)"
+        }, 
+        "sensitivity": [3.8, 1.0, 1.0]
+    }, 
+    "stick": {
+        "action": "dpad(None, None, button(Keys.KEY_A), button(Keys.KEY_D))", 
+        "name": "Steer"
+    }, 
+    "trigger_left": {
+        "action": "button(Keys.KEY_S)", 
+        "name": "Brake"
+    }, 
+    "trigger_right": {
+        "action": "button(Keys.KEY_W)", 
+        "name": "Accelerate"
+    }
+}
