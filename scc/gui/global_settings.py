@@ -37,6 +37,19 @@ class GlobalSettings(Editor, UserDataManager):
 		self.on_tvItems_cursor_changed()
 	
 	
+	def save_config(self):
+		""" Transfers conditions from UI back to config """
+		tvItems = self.builder.get_object("tvItems")
+		conds = []
+		for row in tvItems.get_model():
+			conds.append(dict(
+				condition = row[0].condition.encode(),
+				profile = row[2]
+			))
+		self.app.config['autoswitch'] = conds
+		self.app.save_config()
+	
+	
 	def btEdit_clicked_cb(self, *a):
 		""" Handler for "Edit condition" button """
 		tvItems = self.builder.get_object("tvItems")
@@ -69,7 +82,7 @@ class GlobalSettings(Editor, UserDataManager):
 			cbExactTitle.set_active(True)
 			cbMatchTitle.set_active(True)
 		elif condition.regexp:
-			entTitle.set_text(condition.regexp)
+			entTitle.set_text(condition.regexp.pattern)
 			cbRegExp.set_active(True)
 			cbMatchTitle.set_active(True)
 		if condition.wm_class:
@@ -115,6 +128,7 @@ class GlobalSettings(Editor, UserDataManager):
 		model.set_value(iter, 1, condition.describe())
 		model.set_value(iter, 2, profile)
 		self.on_ConditionEditor_destroy(ce)
+		self.save_config()
 	
 	
 	def on_btAdd_clicked(self, *a):

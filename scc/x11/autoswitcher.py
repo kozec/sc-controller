@@ -181,7 +181,7 @@ class Condition(object):
 		if self.exact_title:
 			rv['exact_title'] = self.exact_title
 		if self.regexp:
-			rv['regexp'] = self.regexp
+			rv['regexp'] = self.regexp.pattern
 		if self.wm_class:
 			rv['wm_class'] = self.wm_class
 		return rv

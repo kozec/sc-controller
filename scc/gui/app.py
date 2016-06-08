@@ -112,7 +112,6 @@ class App(Gtk.Application, UserDataManager):
 		main_area.put(self.background, 0, 0)
 		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		headerbar(self.builder.get_object("hbWindow"))
-		
 	
 	
 	def check(self):
@@ -202,9 +201,15 @@ class App(Gtk.Application, UserDataManager):
 			ae.show(self.window)
 	
 	
+	def save_config(self):
+		self.config.save()
+		# TODO: Ask daemon to reload config
+	
+	
 	def on_mnuGlobalSettings_activate(self, *a):
 		gs = GlobalSettings(self)
 		gs.show(self.window)
+	
 	
 	def on_btUndo_clicked(self, *a):
 		if len(self.undo) < 1: return
