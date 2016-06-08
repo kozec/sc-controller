@@ -53,6 +53,9 @@ Reports PID of *scc-daemon* instance. Automatically sent when connection is acce
 #### `Ready.`
 Automatically sent when connection is accepted to indicate that there is no error and daemon is working as expected.
 
+#### `Reconfigured.`
+Sent to all clients when daemon receives `Reconfigure.` message.
+
 #### `SCCDaemon`
 Just identification message, automatically sent when connection is accepted.
 Can be either ignored or used to check if remote side really is *scc-daemon*.
@@ -85,6 +88,12 @@ Asks daemon to load another profile. No escaping or quoting is needed, everythin
 If profile is sucessfully loaded, daemon responds with `OK.` to client that initiated loading and sends `Current profile: ...` message to all clients.
 
 If loading fails, daemon responds with `Fail: ....` message where error with entire backtrace is sent. Backtrace is escaped to fit it on single line.
+
+#### `Reconfigure.`
+Asks daemon to reload configuration file (`~/.config/scc/config.json`).
+Currently, daemon doesn't really reads this file, but sends `Reconfigured.` message
+to all connected clients, what should cause them to reload configuration file as well. 
+Daemon responds with `OK.`
 
 #### `Register: osd`
 Send by scc-osd-daemon to register client connection as one made by scc-osd-daemon.

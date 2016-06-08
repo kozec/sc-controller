@@ -435,6 +435,13 @@ class SCCDaemon(Daemon):
 			client.unlock_actions(self)
 			self.lock.release()
 			client.wfile.write(b"OK.\n")
+		elif message.startswith("Reconfigure."):
+			self.lock.acquire()
+			try:
+				client.wfile.write(b"OK.\n")
+				self._send_to_all("Reconfigured.\n".encode("utf-8"))
+			except: pass
+			self.lock.release()
 		elif message.startswith("Selected:"):
 			menuaction = None
 			def press(mapper):
