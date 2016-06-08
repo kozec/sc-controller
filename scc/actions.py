@@ -269,6 +269,7 @@ class AxisAction(Action):
 	def __init__(self, id, min = None, max = None):
 		Action.__init__(self, id, *strip_none(min, max))
 		self.id = id
+		self.speed = 1.0
 		self._old_pos = 0
 		if self.id in TRIGGERS:
 			self.min = TRIGGER_MIN if min is None else min
@@ -276,6 +277,11 @@ class AxisAction(Action):
 		else:
 			self.min = STICK_PAD_MIN if min is None else min
 			self.max = STICK_PAD_MAX if max is None else max
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = x
+		return True	
 	
 	
 	def _get_axis_description(self):
@@ -314,14 +320,14 @@ class AxisAction(Action):
 	
 	
 	def axis(self, mapper, position, what):
-		p = float(position - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
+		p = float(position * self.speed - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
 		mapper.gamepad.axisEvent(self.id, clamp_axis(self.id, p))
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
 	def trigger(self, mapper, position, old_position):
-		p = float(position - TRIGGER_MIN) / (TRIGGER_MAX - TRIGGER_MIN)
+		p = float(position * self.speed - TRIGGER_MIN) / (TRIGGER_MAX - TRIGGER_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
 		mapper.gamepad.axisEvent(self.id, clamp_axis(self.id, p))
 		mapper.syn_list.add(mapper.gamepad)
@@ -1266,8 +1272,8 @@ class XYAction(HapticEnabledAction, Action):
 	
 	def set_speed(self, x, y, z):
 		supports = False
-		supports = self.x.set_speed(x, y, z) or supports
-		supports = self.y.set_speed(x, y, z) or supports
+		supports = self.x.set_speed(x, 1, 1) or supports
+		supports = self.y.set_speed(y, 1, 1) or supports
 		return supports
 	
 	
