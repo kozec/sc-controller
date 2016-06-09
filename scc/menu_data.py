@@ -111,7 +111,7 @@ class MenuData(object):
 		for i in data:
 			item = None
 			if "generator" in i and i["generator"] in MENU_GENERATORS:
-				item = MENU_GENERATORS[i["generator"]]()
+				item = MENU_GENERATORS[i["generator"]](**i)
 			elif "separator" in i:
 				item = Separator(i["name"] if "name" in i else None)
 			elif "submenu" in i:
@@ -186,6 +186,14 @@ class Submenu(MenuItem):
 class MenuGenerator(object):
 	GENERATOR_NAME = None
 	""" Generates list of MenuItems """ 
+	
+	def __init__(self, **b):
+		"""
+		Passed are all keys loaded from json dict that defined this generator.
+		__init__ of generator should ignore all unknown keys.
+		"""
+		pass
+	
 	def generate(self):
 		return []
 

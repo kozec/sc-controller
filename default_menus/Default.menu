@@ -1,14 +1,15 @@
 [{
-	"separator": true,
-	"name": "Recent profiles"
+    "separator": true,
+    "name": "Recent profiles"
 }, {
-    "generator": "recent"
+    "generator": "recent",
+    "rows": 3
 }, {
     "submenu": "Profiles.menu",
-	"name": "All Profiles"
+    "name": "All Profiles"
 }, {
-	"separator": true,
-	"name": "Options"
+    "separator": true,
+    "name": "Options"
 }, {
     "action": "turnoff()", 
     "id": "item4", 
