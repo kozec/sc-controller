@@ -112,10 +112,6 @@ class App(Gtk.Application, UserDataManager):
 		main_area.put(self.background, 0, 0)
 		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		headerbar(self.builder.get_object("hbWindow"))
-		
-		gs = GlobalSettings(self)
-		gs.show(self.window)
-		
 	
 	
 	def check(self):

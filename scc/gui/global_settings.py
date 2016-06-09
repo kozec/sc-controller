@@ -149,6 +149,7 @@ class GlobalSettings(Editor, UserDataManager):
 		model, iter = tvItems.get_selection().get_selected()
 		if iter is not None:
 			model.remove(iter)
+		self.save_config()
 		self.on_tvItems_cursor_changed()
 	
 	
