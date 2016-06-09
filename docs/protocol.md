@@ -95,10 +95,12 @@ Currently, daemon doesn't really reads this file, but sends `Reconfigured.` mess
 to all connected clients, what should cause them to reload configuration file as well. 
 Daemon responds with `OK.`
 
-#### `Register: osd`
-Send by scc-osd-daemon to register client connection as one made by scc-osd-daemon.
-When sent by more than one client, daemon will automatically close forme connection
+#### `Register: value`
+Send by scc-osd-daemon and scc-autoswitch-daemon to register their client connections.
+When sent with same value with two or more clients, daemon will automatically close former connection
 before registering new one.
+scc-osd-daemon sends `Register: osd`
+scc-autoswitch-daemon `Register: autoswitch`
 Daemon responds with `OK.`
 
 #### `Selected: menu_id item_id`

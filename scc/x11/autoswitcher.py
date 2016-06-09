@@ -12,7 +12,7 @@ from scc.tools import find_profile
 from scc.paths import get_daemon_socket
 from scc.config import Config
 
-import os, sys, re, time, socket, threading, logging
+import os, sys, re, time, socket, traceback, threading, logging
 log = logging.getLogger("AutoSwitcher")
 
 class AutoSwitcher(object):
@@ -47,6 +47,7 @@ class AutoSwitcher(object):
 		try:
 			self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 			self.socket.connect(get_daemon_socket())
+			self.socket.send(b"Register: autoswitch\n")
 		except Exception:
 			log.error("Failed to connect to scc-daemon")
 			os._exit(1)
