@@ -28,7 +28,7 @@ class AutoSwitcher(object):
 		self.connected = False
 		self.exit_code = None
 		self.current_profile = None
-		self.conds = AutoSwitcher.parse_conditions()
+		self.conds = AutoSwitcher.parse_conditions(self.config)
 	
 	
 	@staticmethod
