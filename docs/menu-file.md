@@ -1,7 +1,10 @@
 SC-Controller menu file specification
 ----------------------------------------
 
-Menu file contains json-encoded list with menu items - actions.
+Menu file contains json-encoded list with menu items - actions and
+menu generators.
+
+### Menu Items
 
 Every menu item is defined by action, in same way  as action would be defined
 [in profile file](profile-file.md#Action_definition) with one additional
@@ -23,4 +26,29 @@ Example:
 	  "name": "Turn controller OFF", 
 	}]
 
-Specifies menu with two items.
+specifies menu with two items.
+
+### Menu Generators
+
+Generator is something that generates menu items automatically. It is defined
+by dict with `generator` key, where value is type of generator to use.
+
+Example:
+
+	[{
+	  "generator": "profiles"
+	}, {
+	  "id": "item2", 
+	  "action": "turnoff()", 
+	  "name": "Turn controller OFF", 
+	}]
+
+specifies menu with list of all profiles, followed by one normal menu item.
+
+
+### Available generators
+Only one so far...
+
+#### `profiles`
+Generates menu item for each available profile. Selecting item will switch to represented profile.
+
