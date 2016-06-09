@@ -28,6 +28,7 @@ class AutoSwitcher(object):
 		self.connected = False
 		self.exit_code = None
 		self.current_profile = None
+		self.current_window = None
 		self.conds = AutoSwitcher.parse_conditions(self.config)
 	
 	
@@ -98,13 +99,17 @@ class AutoSwitcher(object):
 				elif line.startswith("Reconfigured."):
 					log.debug("Reloading config...")
 					self.config = Config()
-					self.parse_conditions()
+					self.parse_conditions(self.config)
 			
 			self.lock.release()
 	
 	
 	def check(self, *a):
 		w = X.get_current_window(self.dpy)
+		if w == self.current_window or not self.current_profile:
+			# Window not switched or profile is not known yet
+			return
+		self.current_window = w
 		pars = X.get_window_title(self.dpy, w), X.get_window_class(self.dpy, w)
 		for c in self.conds:
 			if c.matches(*pars):
