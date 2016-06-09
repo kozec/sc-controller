@@ -15,7 +15,7 @@ class MenuData(object):
 	def __init__(self, *items):
 		self.__items = list(items)
 	
-	def generate(self):
+	def generate(self, menuhandler):
 		"""
 		Converts all generators into MenuItems (by calling .generate() on them)
 		and returns generated MenuData.
@@ -25,7 +25,7 @@ class MenuData(object):
 		items = []
 		for i in self:
 			if isinstance(i, MenuGenerator):
-				items.extend(i.generate())
+				items.extend(i.generate(menuhandler))
 			else:
 				items.append(i)
 		return MenuData(*items)
@@ -194,7 +194,7 @@ class MenuGenerator(object):
 		"""
 		pass
 	
-	def generate(self):
+	def generate(self, menuhandler):
 		return []
 
 

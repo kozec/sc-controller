@@ -7,6 +7,7 @@ Observes active window and commands scc-daemon to change profiles as needed.
 from __future__ import unicode_literals
 from scc.tools import _
 
+from scc.menu_data import MenuGenerator, MenuItem, Separator, MENU_GENERATORS
 from scc.lib import xwrappers as X
 from scc.tools import find_profile
 from scc.paths import get_daemon_socket
@@ -222,3 +223,54 @@ class Condition(object):
 			return False
 		
 		return True
+
+
+class AutoswitchOptsMenuGenerator(MenuGenerator):
+	""" Generates entire Autoswich Options submenu """
+	GENERATOR_NAME = "autoswitch"
+	
+	def callback(self, menu, daemon, menuitem):
+		print "callback", menuitem
+	
+	
+	def generate(self, menuhandler):
+		rv = []
+		win = X.get_current_window(menuhandler.xdisplay)
+		if not win:
+			# Bail out if active window cannot be determined
+			rv.append(self.mk_item(None, _("No active window")))
+			rv.append(self.mk_item("as::close", _("Close")))
+			return rv
+		
+		title = X.get_window_title(menuhandler.xdisplay, win)
+		wm_class = X.get_window_class(menuhandler.xdisplay, win)
+		assigned_prof = None
+		conds = AutoSwitcher.parse_conditions(Config())
+		for c in conds:
+			if c.matches(title, wm_class):
+				assigned_prof = conds[c]
+				break
+		assigned_prof = None
+		if win:
+			display_title = title or _("No Title")
+			rv.append(self.mk_item(None, _("Current Window: %s") % (title[0:25],)))
+			if assigned_prof:
+				rv.append(self.mk_item(None, _("Assigned Profile: %s") % (assigned_prof,)))
+			else:
+				rv.append(self.mk_item(None, _("No Profile Assigned")))
+			rv.append(Separator())
+			rv.append(Separator())
+			rv.append(Separator())
+			if assigned_prof:
+				rv.append(self.mk_item("as::unassign", _("Unassign Profile")))
+			rv.append(self.mk_item("as::assign", _("Assign Current Profile")))
+		return rv
+	
+	
+	def mk_item(self, id, title):
+		""" Creates menu item and assigns callback """
+		menuitem = MenuItem(id, title)
+		menuitem.callback = self.callback
+		return menuitem
+
+MENU_GENERATORS[AutoswitchOptsMenuGenerator.GENERATOR_NAME] = AutoswitchOptsMenuGenerator

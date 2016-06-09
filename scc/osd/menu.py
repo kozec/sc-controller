@@ -7,18 +7,22 @@ Display menu that user can navigate through and print chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Gdk, GdkX11
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.menu_data import MenuData, Separator, Submenu
 from scc.tools import point_in_gtkrect, find_menu
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd.timermanager import TimerManager
 from scc.paths import get_share_path
+from scc.lib import xwrappers as X
 from scc.osd import OSDWindow
 
-import scc.osd.menu_generators
 import os, sys, json, logging
 log = logging.getLogger("osd.menu")
+
+# Fill MENU_GENERATORS dict
+import scc.osd.menu_generators
+import scc.x11.autoswitcher
 
 
 class Menu(OSDWindow, TimerManager):
@@ -37,6 +41,7 @@ class Menu(OSDWindow, TimerManager):
 		OSDWindow.__init__(self, "osd-menu")
 		TimerManager.__init__(self)
 		self.daemon = None
+		self.xdisplay = X.Display(hash(GdkX11.x11_get_default_xdisplay()))	# Magic
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
 		self.cursor = Gtk.Image.new_from_file(cursor)
@@ -172,7 +177,7 @@ class Menu(OSDWindow, TimerManager):
 			self._use_cursor = True
 		
 		# Create buttons that are displayed on screen
-		self.items = self.items.generate()
+		self.items = self.items.generate(self)
 		for item in self.items:
 			item.widget = self.generate_widget(item)
 		self.pack_items(self.parent, self.items)
