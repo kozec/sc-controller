@@ -25,6 +25,7 @@ class Menu(OSDWindow, TimerManager):
 	EPILOG="""Exit codes:
    0  - clean exit, user selected option
   -1  - clean exit, user canceled menu
+  -2  - clean exit, menu closed from callback method
    1  - error, invalid arguments
    2  - error, failed to access sc-daemon, sc-daemon reported error or died while menu is displayed.
    3  - erorr, failed to lock input stick, pad or button(s)
@@ -239,7 +240,7 @@ class Menu(OSDWindow, TimerManager):
 		self.daemon.lock(success, self.on_failed_to_lock, *locks)
 	
 	
-	def quit(self, code=-1):
+	def quit(self, code=-2):
 		self.daemon.unlock_all()
 		for x in self._eh_ids:
 			self.daemon.disconnect(x)
@@ -302,4 +303,7 @@ class Menu(OSDWindow, TimerManager):
 				self.quit(-1)
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
-				self.quit(0)
+				if self._selected.callback:
+					self._selected.callback(self, self.daemon, self._selected)
+				else:
+					self.quit(0)

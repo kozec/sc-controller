@@ -161,11 +161,12 @@ class MenuData(object):
 
 class MenuItem(object):
 	""" Really just dummy container """
-	def __init__(self, id, label, action=None):
+	def __init__(self, id, label, action=None, callback=None):
 		self.id = id
 		self.label = label
 		self.action = action
-		self.widget = None	# May be set by UI code
+		self.callback = callback	# If defined, called when user chooses menu instead of using action
+		self.widget = None			# May be set by UI code
 
 
 class Separator(MenuItem):

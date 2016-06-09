@@ -413,6 +413,17 @@ class SCCDaemon(Daemon):
 				self.lock.release()
 				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
 				client.wfile.write(b"Fail: " + tb + b"\n")
+		elif message.startswith("OSD:"):
+			if not self.osd_daemon:
+				client.wfile.write(b"Fail: Cannot show OSD; there is no scc-osd-daemon registered\n")
+			else:
+				try:
+					text = message[5:].decode("utf-8").strip("\t ")
+					if not self._osd("message", text):
+						raise Exception()
+					client.wfile.write(b"Ok.\n")
+				except Exception:
+					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Lock:"):
 			to_lock = [ x for x in message[5:].strip(" \t\r").split(" ") ]
 			self.lock.acquire()
