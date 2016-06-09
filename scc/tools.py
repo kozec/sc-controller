@@ -6,6 +6,7 @@ Various stuff that I don't care to fit anywhere else.
 """
 from __future__ import unicode_literals
 
+from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
 import imp, os, sys, gettext, logging
@@ -116,6 +117,24 @@ def get_so_extensions():
 	for ext, _, typ in imp.get_suffixes():
 		if typ == imp.C_EXTENSION:
 			yield ext
+
+
+def find_profile(name):
+	"""
+	Returns filename for specified profile name.
+	This is done by searching for name + '.sccprofile' in ~/.config/scc/profiles
+	first and in /usr/share/scc/default_profiles if file is not found in first
+	location.
+	
+	Returns None if profile cannot be found.
+	"""
+	filename = "%s.sccprofile" % (name,)
+	for p in (get_profiles_path(), get_default_profiles_path()):
+		path = os.path.join(p, filename)
+		if os.path.exists(path):
+			return path
+	return None
+
 
 def find_menu(name):
 	"""

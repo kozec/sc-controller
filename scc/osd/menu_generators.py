@@ -8,15 +8,19 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from scc.paths import get_profiles_path, get_default_profiles_path
+from scc.tools import find_profile
 from scc.menu_data import MenuGenerator, MenuItem, MENU_GENERATORS
+from scc.config import Config
 
 import os, sys, json, logging
 log = logging.getLogger("osd.menu_gen")
 
 class ProfileListMenuGenerator(MenuGenerator):
+	""" Generates list of all available profiles """
 	GENERATOR_NAME = "profiles"
 	
-	def callback(self, menu, daemon, menuitem):
+	@staticmethod
+	def callback(menu, daemon, menuitem):
 		daemon.set_profile(menuitem.filename)
 		menu.hide()
 		def on_response(*a):
@@ -37,6 +41,37 @@ class ProfileListMenuGenerator(MenuGenerator):
 			menuitem.filename = all_profiles[p]
 			menuitem.callback = self.callback
 			rv.append(menuitem)
+		return rv
+
+
+class RecentListMenuGenerator(MenuGenerator):
+	""" Generates list of X recently used profiles """
+	GENERATOR_NAME = "recent"
+	
+	def __init__(self, rows=5, **b):
+		self.rows = rows
+	
+	
+	def callback(self, menu, daemon, menuitem):
+		daemon.set_profile(menuitem.filename)
+		menu.hide()
+		def on_response(*a):
+			menu.quit(-2)
+		daemon.request(b"OSD: " + menuitem.label.encode("utf-8") + b"\n",
+			on_response, on_response)
+	
+	
+	def generate(self):
+		rv = []
+		for p in Config()['recent_profiles']:
+			filename = find_profile(p)
+			if filename:
+				menuitem = MenuItem("generated", p)
+				menuitem.filename = filename
+				menuitem.callback = ProfileListMenuGenerator.callback
+				rv.append(menuitem)
+			if len(rv) >= self.rows:
+				break
 		return rv
 
 
