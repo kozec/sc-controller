@@ -69,6 +69,7 @@ class DaemonManager(GObject.GObject):
 		self.connection = None
 		self.connecting = False
 		self.buffer = ""
+		self._profile = None
 		self._connect()
 		self._requests = []
 	
@@ -159,9 +160,9 @@ class DaemonManager(GObject.GObject):
 				log.debug("Daemon reported error '%s'", error)
 				self.emit('error', error)
 			elif line.startswith("Current profile:"):
-				profile = line.split(":", 1)[-1].strip()
-				log.debug("Daemon reported profile change: %s", profile)
-				self.emit('profile-changed', profile)
+				self._profile = line.split(":", 1)[-1].strip()
+				log.debug("Daemon reported profile change: %s", self._profile)
+				self.emit('profile-changed', self._profile)
 			elif line.startswith("Reconfigured."):
 				self.emit('reconfigured')
 			elif line.startswith("PID:") or line == "SCCDaemon":
@@ -196,6 +197,13 @@ class DaemonManager(GObject.GObject):
 	def nocallback(*a):
 		""" Used when request doesn't needs callback """
 		pass
+	
+	def get_profile(self):
+		"""
+		Returns last used profile reported by daemon.
+		May return None.
+		"""
+		return self._profile
 	
 	def set_profile(self, filename):
 		""" Asks daemon to change profile """

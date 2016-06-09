@@ -42,8 +42,29 @@ class AutoSwitcher(object):
 				# Failure here is not fatal
 				log.error("Failed to parse autoswitcher condition '%s'", c)
 				log.error(e)
-		log.debug("Parsed %s conditions", len(conds))
+		log.debug("Parsed %s autoswitcher conditions", len(conds))
 		return conds
+	
+	
+	@staticmethod
+	def assign(conds, title, wm_class, profile):
+		AutoSwitcher.unassign(conds, title, wm_class, profile)
+		c = Condition(wm_class=wm_class[0])
+		conds[c] = profile
+	
+	
+	@staticmethod
+	def unassign(conds, title, wm_class, profile):
+		"""
+		Removes any condition that matches given title/class/profile combination
+		"""
+		count = 0
+		for c in conds.keys():
+			if conds[c] == profile:
+				if c.matches(title, wm_class):
+					del conds[c]
+					count += 1
+		log.debug("Removed %s autoswitcher conditions", count)
 	
 	
 	def connect_daemon(self, *a):
@@ -230,7 +251,30 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 	GENERATOR_NAME = "autoswitch"
 	
 	def callback(self, menu, daemon, menuitem):
-		print "callback", menuitem
+		def on_response(*a):
+			menu.quit(-2)
+		if menuitem.id in ("as::unassign", "as::assign"):
+			if menuitem.id == "as::unassign":
+				AutoSwitcher.unassign(self.conds, self.title, self.wm_class, self.assigned_prof)
+			else:
+				if menu.daemon.get_profile():
+					profile = os.path.split(menu.daemon.get_profile())[-1]
+					if profile.endswith(".mod"):
+						profile = profile[0:-4]
+					if profile.endswith(".sccprofile"):
+						profile = profile[0:-11]
+					AutoSwitcher.assign(self.conds, self.title, self.wm_class, profile)
+			cfg = Config()
+			cfg["autoswitch"] = [
+				dict(
+					condition = c.encode(),
+					profile = self.conds[c]
+				) for c in self.conds
+			]
+			cfg.save()
+			daemon.request(b"Reconfigure.\n", on_response, on_response)
+		else:
+			on_response()
 	
 	
 	def generate(self, menuhandler):
@@ -242,34 +286,36 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 			rv.append(self.mk_item("as::close", _("Close")))
 			return rv
 		
-		title = X.get_window_title(menuhandler.xdisplay, win)
-		wm_class = X.get_window_class(menuhandler.xdisplay, win)
-		assigned_prof = None
-		conds = AutoSwitcher.parse_conditions(Config())
-		for c in conds:
-			if c.matches(title, wm_class):
-				assigned_prof = conds[c]
+		self.title = X.get_window_title(menuhandler.xdisplay, win)
+		self.wm_class = X.get_window_class(menuhandler.xdisplay, win)
+		self.assigned_prof = None
+		self.conds = AutoSwitcher.parse_conditions(Config())
+		for c in self.conds:
+			if c.matches(self.title, self.wm_class):
+				self.assigned_prof = self.conds[c]
 				break
 		if win:
-			display_title = title or _("No Title")
-			rv.append(self.mk_item(None, _("Current Window: %s") % (title[0:25],)))
-			if assigned_prof:
-				rv.append(self.mk_item(None, _("Assigned Profile: %s") % (assigned_prof,)))
+			display_title = self.title or _("No Title")
+			rv.append(self.mk_item(None, _("Current Window: %s") % (self.title[0:25],)))
+			if self.assigned_prof:
+				rv.append(self.mk_item(None, _("Assigned Profile: %s") % (self.assigned_prof,)))
 			else:
 				rv.append(self.mk_item(None, _("No Profile Assigned")))
 			rv.append(Separator())
 			rv.append(Separator())
 			rv.append(Separator())
-			if assigned_prof:
+			if self.assigned_prof:
 				rv.append(self.mk_item("as::unassign", _("Unassign Profile")))
 			rv.append(self.mk_item("as::assign", _("Assign Current Profile")))
 		return rv
 	
 	
-	def mk_item(self, id, title):
+	def mk_item(self, id, title, **kws):
 		""" Creates menu item and assigns callback """
 		menuitem = MenuItem(id, title)
 		menuitem.callback = self.callback
+		for k in kws:
+			setattr(menuitem, k, kws[k])
 		return menuitem
 
 MENU_GENERATORS[AutoswitchOptsMenuGenerator.GENERATOR_NAME] = AutoswitchOptsMenuGenerator
