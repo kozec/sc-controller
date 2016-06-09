@@ -21,8 +21,9 @@ from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
 from scc.osd.menu import Menu
 from scc.osd.area import Area
+from scc.config import Config
 
-import os, sys, shlex, logging
+import os, sys, shlex, logging, time
 log = logging.getLogger("osd.daemon")
 
 class OSDDaemon(object):
@@ -31,6 +32,8 @@ class OSDDaemon(object):
 		self.mainloop = GLib.MainLoop()
 		self._window = None
 		self._registered = False
+		self._last_profile_change = 0
+		self._recent_profiles_undo = None
 		OSDWindow._apply_css()
 	
 	
@@ -41,6 +44,35 @@ class OSDDaemon(object):
 	
 	def get_exit_code(self):
 		return self.exit_code
+	
+	
+	def on_profile_changed(self, daemon, profile):
+		name = os.path.split(profile)[-1]
+		if name.endswith(".sccprofile") and not name.startswith("."):
+			# Ignore .mod and hidden files
+			name = name[0:-11]
+			c = Config()
+			recents = c['recent_profiles']
+			if len(recents) and recents[0] == name:
+				# Already first in recent list
+				return
+			
+			if time.time() - self._last_profile_change < 2.0:
+				# Profiles are changing too fast, probably because user
+				# is using scroll wheel over profile combobox
+				if self._recent_profiles_undo:
+					recents = [] + self._recent_profiles_undo
+			self._last_profile_change = time.time()
+			self._recent_profiles_undo = [] + recents
+			
+			while name in recents:
+				recents.remove(name)
+			recents.insert(0, name)
+			if len(recents) > c['recent_max']:
+				recents = recents[0:c['recent_max']]
+			c['recent_profiles'] = recents
+			c.save()
+			log.debug("Updated recent profile list")
 	
 	
 	def on_daemon_died(self, *a):
@@ -130,8 +162,9 @@ class OSDDaemon(object):
 	
 	def run(self):
 		self.daemon = DaemonManager()
-		self.daemon.connect('dead', self.on_daemon_died)
 		self.daemon.connect('alive', self.on_daemon_connected)
+		self.daemon.connect('dead', self.on_daemon_died)
+		self.daemon.connect('profile-changed', self.on_profile_changed)
 		self.daemon.connect('unknown-msg', self.on_unknown_message)
 		self.mainloop.run()
 

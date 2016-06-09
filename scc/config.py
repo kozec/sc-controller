@@ -16,7 +16,15 @@ log = logging.getLogger("Config")
 class Config(object):
 	DEFAULTS = {
 		"autoswitch_osd":	True,	# True to show OSD message when profile is autoswitched
-		"autoswitch":		[],		# Empty list of conditions	
+		"autoswitch":		[],		# Empty list of conditions
+		"recent_max":		10,		# Number of profiles to keep
+		"recent_profiles":	[		# Hard-coded list of profiles from default_profiles/
+			# This is actually updated by scc-osd-daemon. It may sound random,
+			# but that's only thing actually using this list.
+			"Desktop",
+			"XBox Controller with High Precision Camera",
+			"XBox Controller"
+		]
 	}
 	
 	def __init__(self):
@@ -78,7 +86,6 @@ class Config(object):
 	
 	def set(self, key, value):
 		self.values[key] = value
-		self.save()
 	
 	__getitem__ = get
 	__setitem__ = set
