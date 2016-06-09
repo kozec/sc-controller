@@ -279,11 +279,16 @@ class Menu(OSDWindow, TimerManager):
 	
 	def next_item(self):
 		""" Selects next menu item, based on self._direction """
-		i = 0
+		start, i = -1, 0
 		try:
-			i = self.items.index(self._selected) + self._direction
+			start = self.items.index(self._selected)
+			i = start + self._direction
 		except: pass
 		while True:
+			if i == start:
+				# Cannot find valid menu item
+				print "looped over"
+				break
 			if i >= len(self.items):
 				i = 0
 				continue
@@ -294,6 +299,7 @@ class Menu(OSDWindow, TimerManager):
 				# Not a separator
 				break
 			i += self._direction
+			if start < 0: start = 0
 	
 	
 	def on_move(self):
