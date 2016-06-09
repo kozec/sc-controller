@@ -170,7 +170,7 @@ class MenuItem(object):
 
 class Separator(MenuItem):
 	""" Internally, separator is MenuItem without action and id """
-	def __init__(self, label):
+	def __init__(self, label=None):
 		MenuItem.__init__(self, None, label)
 
 

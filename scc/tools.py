@@ -148,7 +148,9 @@ def find_menu(name):
 	"""
 	for p in (get_menus_path(), get_default_menus_path()):
 		path = os.path.join(p, name)
+		print path
 		if os.path.exists(path):
+			print "FOUND"
 			return path
 	return None
 

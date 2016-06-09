@@ -11,9 +11,12 @@
     "separator": true,
     "name": "Options"
 }, {
+    "submenu": ".autoswitch.menu",
+    "name": "Autoswitch Options"
+}, {
     "action": "turnoff()", 
     "id": "item4", 
-    "name": "Turn controller OFF", 
+    "name": "Turn Controller OFF", 
     "osd": true
 }, {
     "action": "keyboard()", 

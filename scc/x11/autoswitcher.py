@@ -27,20 +27,22 @@ class AutoSwitcher(object):
 		self.connected = False
 		self.exit_code = None
 		self.current_profile = None
-		self.parse_conditions()
+		self.conds = AutoSwitcher.parse_conditions()
 	
 	
-	def parse_conditions(self):
+	@staticmethod
+	def parse_conditions(config):
 		""" Parses conditions from config """
-		self.conds = {}
-		for c in self.config['autoswitch']:
+		conds = {}
+		for c in config['autoswitch']:
 			try:
-				self.conds[Condition.parse(c['condition'])] = c['profile']
+				conds[Condition.parse(c['condition'])] = c['profile']
 			except Exception, e:
 				# Failure here is not fatal
 				log.error("Failed to parse autoswitcher condition '%s'", c)
 				log.error(e)
-		log.debug("Parsed %s conditions", len(self.conds))
+		log.debug("Parsed %s conditions", len(conds))
+		return conds
 	
 	
 	def connect_daemon(self, *a):

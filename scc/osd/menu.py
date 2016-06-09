@@ -212,7 +212,11 @@ class Menu(OSDWindow, TimerManager):
 				box.pack_start(label1, True, True, 1)
 				box.pack_start(label2, False, True, 1)
 				widget.add(box)
-			widget.set_name("osd-menu-item")
+				widget.set_name("osd-menu-item")
+			elif item.id is None:
+				widget.set_name("osd-menu-dummy")
+			else:
+				widget.set_name("osd-menu-item")
 			return widget
 	
 	
