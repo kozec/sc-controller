@@ -7,33 +7,41 @@ Display menu that user can navigate through and print chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Gdk, GdkX11
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
-from scc.tools import point_in_gtkrect
-from scc.paths import get_share_path
-from scc.menu_data import MenuData
+from scc.menu_data import MenuData, Separator, Submenu
+from scc.tools import point_in_gtkrect, find_menu
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd.timermanager import TimerManager
+from scc.paths import get_share_path
+from scc.lib import xwrappers as X
 from scc.osd import OSDWindow
 
 import os, sys, json, logging
 log = logging.getLogger("osd.menu")
+
+# Fill MENU_GENERATORS dict
+import scc.osd.menu_generators
+import scc.x11.autoswitcher
 
 
 class Menu(OSDWindow, TimerManager):
 	EPILOG="""Exit codes:
    0  - clean exit, user selected option
   -1  - clean exit, user canceled menu
+  -2  - clean exit, menu closed from callback method
    1  - error, invalid arguments
    2  - error, failed to access sc-daemon, sc-daemon reported error or died while menu is displayed.
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	REPEAT_DELAY = 0.5
+	SUBMENU_OFFSET = 50
 	
 	def __init__(self):
 		OSDWindow.__init__(self, "osd-menu")
 		TimerManager.__init__(self)
 		self.daemon = None
+		self.xdisplay = X.Display(hash(GdkX11.x11_get_default_xdisplay()))	# Magic
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
 		self.cursor = Gtk.Image.new_from_file(cursor)
@@ -44,6 +52,8 @@ class Menu(OSDWindow, TimerManager):
 		self.f.add(self.parent)
 		self.add(self.f)
 		
+		self._submenu = None
+		self._is_submenu = False
 		self._direction = 0		# Movement direction
 		self._selected = None
 		self._menuid = None
@@ -53,6 +63,13 @@ class Menu(OSDWindow, TimerManager):
 		self._confirm_with = 'A'
 		self._cancel_with = 'B'
 	
+	
+	def set_is_submenu(self):
+		"""
+		Marks menu as submenu. This changes behaviour of some methods,
+		especially disables (un)locking of input stick and buttons.
+		"""
+		self._is_submenu = True
 	
 	def create_parent(self):
 		v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -70,8 +87,9 @@ class Menu(OSDWindow, TimerManager):
 		Allows (re)using already existin DaemonManager instance in same process
 		"""
 		self.daemon = d
-		self._cononect_handlers()
-		self.on_daemon_connected(self.daemon)
+		if not self._is_submenu:
+			self._cononect_handlers()
+			self.on_daemon_connected(self.daemon)
 	
 	
 	def get_menuid(self):
@@ -113,6 +131,8 @@ class Menu(OSDWindow, TimerManager):
 		self.argparser.add_argument('--from-file', '-f', type=str,
 			metavar="filename",
 			help="load menu items from json file")
+		self.argparser.add_argument('--print-items', action='store_true',
+			help="prints menu items to stdout")
 		self.argparser.add_argument('items', type=str, nargs='*', metavar='id title',
 			help="Menu items")
 	
@@ -131,13 +151,13 @@ class Menu(OSDWindow, TimerManager):
 				print >>sys.stderr, '%s: error: menu not found' % (sys.argv[0])
 				return False
 		elif self.args.from_file:
-			try:
-				data = json.loads(open(self.args.from_file, "r").read())
-				self._menuid = self.args.from_file
-				self.items = MenuData.from_json_data(data)
-			except:
-				print >>sys.stderr, '%s: error: failed to loade menu file' % (sys.argv[0])
-				return False
+			#try:
+			data = json.loads(open(self.args.from_file, "r").read())
+			self._menuid = self.args.from_file
+			self.items = MenuData.from_json_data(data)
+			#except:
+			#	print >>sys.stderr, '%s: error: failed to load menu file' % (sys.argv[0])
+			#	return False
 		else:
 			try:
 				self.items = MenuData.from_args(self.args.items)
@@ -157,22 +177,62 @@ class Menu(OSDWindow, TimerManager):
 			self._use_cursor = True
 		
 		# Create buttons that are displayed on screen
+		self.items = self.items.generate(self)
 		for item in self.items:
-			item.widget = Gtk.Button.new_with_label(item.label)
-			item.widget.set_name("osd-menu-item")
-			item.widget.set_relief(Gtk.ReliefStyle.NONE)
+			item.widget = self.generate_widget(item)
 		self.pack_items(self.parent, self.items)
 		if len(self.items) == 0:
 			print >>sys.stderr, '%s: error: no items in menu' % (sys.argv[0])
 			return False
+		
+		if self.args.print_items:
+			max_id_len = max(*[ len(x.id) for x in self.items ])
+			row_format ="{:>%s}:\t{}" % (max_id_len,)
+			for item in self.items:
+				print row_format.format(item.id, item.label)
 		return True
+	
+	
+	def generate_widget(self, item):
+		""" Generates gtk widget for specified menutitem """
+		if isinstance(item, Separator) and item.label:
+			widget = Gtk.Button.new_with_label(item.label)
+			widget.set_relief(Gtk.ReliefStyle.NONE)
+			widget.set_name("osd-menu-separator")
+			return widget
+		elif isinstance(item, Separator):
+			widget = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+			widget.set_name("osd-menu-separator")
+			return widget
+		else:
+			widget = Gtk.Button.new_with_label(item.label)
+			widget.set_relief(Gtk.ReliefStyle.NONE)
+			widget.get_children()[0].set_xalign(0)
+			if isinstance(item, Submenu):
+				item.callback = self.show_submenu
+				label1 = widget.get_children()[0]
+				label2 = Gtk.Label(">>")
+				box = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+				widget.remove(label1)
+				box.pack_start(label1, True, True, 1)
+				box.pack_start(label2, False, True, 1)
+				widget.add(box)
+				widget.set_name("osd-menu-item")
+			elif item.id is None:
+				widget.set_name("osd-menu-dummy")
+			else:
+				widget.set_name("osd-menu-item")
+			return widget
 	
 	
 	def select(self, index):
 		if self._selected:
 			self._selected.widget.set_name("osd-menu-item")
-		self._selected = self.items[index]
-		self._selected.widget.set_name("osd-menu-item-selected")
+		if self.items[index].id:
+			self._selected = self.items[index]
+			self._selected.widget.set_name("osd-menu-item-selected")
+			return True
+		return False
 	
 	
 	def _cononect_handlers(self):
@@ -191,7 +251,10 @@ class Menu(OSDWindow, TimerManager):
 	
 	
 	def show(self, *a):
-		self.select(0)
+		if not self.select(0):
+			self._direction = 1
+			self.next_item()
+			self._direction = 0
 		OSDWindow.show(self, *a)
 	
 	
@@ -214,25 +277,78 @@ class Menu(OSDWindow, TimerManager):
 		self.daemon.lock(success, self.on_failed_to_lock, *locks)
 	
 	
-	def quit(self, code=-1):
-		self.daemon.unlock_all()
-		for x in self._eh_ids:
-			self.daemon.disconnect(x)
-		self._eh_ids = []
+	def quit(self, code=-2):
+		if not self._is_submenu:
+			self.daemon.unlock_all()
+			for x in self._eh_ids:
+				self.daemon.disconnect(x)
+			self._eh_ids = []
 		OSDWindow.quit(self, code)
 	
 	
+	def next_item(self):
+		""" Selects next menu item, based on self._direction """
+		start, i = -1, 0
+		try:
+			start = self.items.index(self._selected)
+			i = start + self._direction
+		except: pass
+		while True:
+			if i == start:
+				# Cannot find valid menu item
+				self.select(start)
+				break
+			if i >= len(self.items):
+				i = 0
+				continue
+			if i < 0:
+				i = len(self.items) - 1
+				continue
+			if self.select(i):
+				# Not a separator
+				break
+			i += self._direction
+			if start < 0: start = 0
+	
+	
 	def on_move(self):
-		i = self.items.index(self._selected) + self._direction
-		if i >= len(self.items):
-			i = 0
-		elif i < 0:
-			i = len(self.items) - 1
-		self.select(i)
+		self.next_item()
 		self.timer("move", self.REPEAT_DELAY, self.on_move)
 	
 	
+	def on_submenu_closed(self, *a):
+		if self._submenu.get_exit_code() in (0, -2):
+			self.quit(self._submenu.get_exit_code())
+			self._selected = self._submenu._selected
+		self._submenu = None
+	
+	
+	def show_submenu(self, trash, trash2, menuitem):
+		""" Called when user chooses menu item pointing to submenu """
+		filename = find_menu(menuitem.filename)
+		if filename:
+			self._submenu = self.__class__()
+			sub_pos = list(self.position)
+			for i in (0, 1):
+				sub_pos[i] = (sub_pos[i] - self.SUBMENU_OFFSET
+						if sub_pos[i] < 0 else sub_pos[i] + self.SUBMENU_OFFSET)
+					
+			self._submenu.parse_argumets(["menu.py",
+				"-x", str(sub_pos[0]), "-y", str(sub_pos[1]),
+			 	"--from-file", filename,
+				"--control-with", self._control_with,
+				"--confirm-with", self._confirm_with,
+				"--cancel-with", self._cancel_with
+			])
+			self._submenu.set_is_submenu()
+			self._submenu.use_daemon(self.daemon)
+			self._submenu.connect('destroy', self.on_submenu_closed)
+			self._submenu.show()
+	
+	
 	def on_event(self, daemon, what, data):
+		if self._submenu:
+			return self._submenu.on_event(daemon, what, data)
 		if what == self._control_with:
 			x, y = data
 			if self._use_cursor:
@@ -263,4 +379,7 @@ class Menu(OSDWindow, TimerManager):
 				self.quit(-1)
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
-				self.quit(0)
+				if self._selected.callback:
+					self._selected.callback(self, self.daemon, self._selected)
+				else:
+					self.quit(0)

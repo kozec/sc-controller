@@ -7,6 +7,7 @@ Various stuff that I don't care to fit anywhere else.
 from __future__ import unicode_literals
 
 from scc.paths import get_profiles_path, get_default_profiles_path
+from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
 import imp, os, sys, gettext, logging
 log = logging.getLogger("tools.py")
@@ -133,6 +134,23 @@ def find_profile(name):
 	for p in (get_profiles_path(), get_default_profiles_path()):
 		path = os.path.join(p, filename)
 		if os.path.exists(path):
+			return path
+	return None
+
+
+def find_menu(name):
+	"""
+	Returns filename for specified menu name.
+	This is done by searching for name in ~/.config/scc/menus
+	first and in /usr/share/scc/default_menus later.
+	
+	Returns None if menu cannot be found.
+	"""
+	for p in (get_menus_path(), get_default_menus_path()):
+		path = os.path.join(p, name)
+		print path
+		if os.path.exists(path):
+			print "FOUND"
 			return path
 	return None
 

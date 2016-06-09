@@ -8,13 +8,27 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 from scc.actions import Action
 
-import json
+import json, os
 
 class MenuData(object):
 	""" Contains list of menu items. Indexable """
 	def __init__(self, *items):
 		self.__items = list(items)
 	
+	def generate(self, menuhandler):
+		"""
+		Converts all generators into MenuItems (by calling .generate() on them)
+		and returns generated MenuData.
+		
+		Returns new MenuData instance.
+		"""
+		items = []
+		for i in self:
+			if isinstance(i, MenuGenerator):
+				items.extend(i.generate(menuhandler))
+			else:
+				items.append(i)
+		return MenuData(*items)
 	
 	def __len__(self):
 		return len(self.__items)
@@ -95,23 +109,32 @@ class MenuData(object):
 		m = MenuData()
 		used_ids = set()
 		for i in data:
-			if "id" not in i:
+			item = None
+			if "generator" in i and i["generator"] in MENU_GENERATORS:
+				item = MENU_GENERATORS[i["generator"]](**i)
+			elif "separator" in i:
+				item = Separator(i["name"] if "name" in i else None)
+			elif "submenu" in i:
+				item = Submenu(i["submenu"], i["name"] if "name" in i else None)
+			elif "id" not in i:
 				# Cannot add menu without ID
 				continue
-			action = None
-			id = i["id"]
-			if id in used_ids:
-				# Cannot add duplicate ID
-				continue
-			if action_parser:
-				action = action_parser.from_json_data(i)
-			used_ids.add(id)
-			label = id
-			if "name" in i:
-				label = i["name"]
-			elif action:
-				label = action.describe(Action.AC_OSD)
-			m.__items.append(MenuItem(id, label, action))
+			else:
+				action = None
+				id = i["id"]
+				if id in used_ids:
+					# Cannot add duplicate ID
+					continue
+				if action_parser:
+					action = action_parser.from_json_data(i)
+				used_ids.add(id)
+				label = id
+				if "name" in i:
+					label = i["name"]
+				elif action:
+					label = action.describe(Action.AC_OSD)
+				item = MenuItem(id, label, action)
+			m.__items.append(item)
 		
 		return m
 	
@@ -137,8 +160,43 @@ class MenuData(object):
 
 class MenuItem(object):
 	""" Really just dummy container """
-	def __init__(self, id, label, action=None):
+	def __init__(self, id, label, action=None, callback=None):
 		self.id = id
 		self.label = label
 		self.action = action
-		self.widget = None	# May be set by UI code
+		self.callback = callback	# If defined, called when user chooses menu instead of using action
+		self.widget = None			# May be set by UI code
+
+
+class Separator(MenuItem):
+	""" Internally, separator is MenuItem without action and id """
+	def __init__(self, label=None):
+		MenuItem.__init__(self, None, label)
+
+
+class Submenu(MenuItem):
+	""" Internally, separator is MenuItem without action and id """
+	def __init__(self, filename, label=None):
+		if not label:
+			label = ".".join(os.path.split(filename)[-1].split(".")[0:-1])
+		self.filename = filename
+		MenuItem.__init__(self, Submenu, label)
+
+
+class MenuGenerator(object):
+	GENERATOR_NAME = None
+	""" Generates list of MenuItems """ 
+	
+	def __init__(self, **b):
+		"""
+		Passed are all keys loaded from json dict that defined this generator.
+		__init__ of generator should ignore all unknown keys.
+		"""
+		pass
+	
+	def generate(self, menuhandler):
+		return []
+
+
+# Holds dict of knowm menu ganerators, but generated elsewhere
+MENU_GENERATORS = { }
