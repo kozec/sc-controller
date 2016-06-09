@@ -16,6 +16,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import keyevent_to_key
 from scc.gui.area_to_action import AREA_TO_ACTION
 
+import os
+
 class Editor(object):
 	""" Common stuff for all editor windows """
 	ERROR_CSS = " #error {background-color:green; color:red;} "
@@ -27,6 +29,13 @@ class Editor(object):
 			self.close()
 	
 	
+	def setup_widgets(self):
+		self.builder = Gtk.Builder()
+		self.builder.add_from_file(os.path.join(self.app.gladepath, self.GLADE))
+		self.window = self.builder.get_object("Dialog")
+		self.builder.connect_signals(self)
+	
+	
 	@staticmethod
 	def install_error_css():
 		if Editor._error_css_provider is None:
@@ -36,6 +45,18 @@ class Editor(object):
 					Gdk.Screen.get_default(),
 					Editor._error_css_provider,
 					Gtk.STYLE_PROVIDER_PRIORITY_USER)
+	
+	
+	def set_cb(self, cb, key, keyindex=0):
+		""" Sets combobox value """
+		model = cb.get_model()
+		self._recursing = True
+		for row in model:
+			if key == row[keyindex]:
+				cb.set_active_iter(row.iter)
+				self._recursing = False
+				return
+		self._recursing = False
 	
 	
 	def set_title(self, title):

@@ -39,6 +39,9 @@ class DaemonManager(GObject.GObject):
 			Emited after profile is changed. Profile is filename of currently
 			active profile
 		
+		reconfigured()
+			Emited when daemon reports change in configuration file
+		
 		unknown-msg (message)
 			Emited when message that can't be parsed internally
 			is recieved from daemon.
@@ -49,11 +52,12 @@ class DaemonManager(GObject.GObject):
 	
 	__gsignals__ = {
 			b"alive"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"unknown-msg"		: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"dead"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"error"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
 			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"reconfigured"		: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"unknown-msg"		: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"version"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
@@ -158,6 +162,8 @@ class DaemonManager(GObject.GObject):
 				profile = line.split(":", 1)[-1].strip()
 				log.debug("Daemon reported profile change: %s", profile)
 				self.emit('profile-changed', profile)
+			elif line.startswith("Reconfigured."):
+				self.emit('reconfigured')
 			elif line.startswith("PID:") or line == "SCCDaemon":
 				# ignore
 				pass
@@ -186,12 +192,21 @@ class DaemonManager(GObject.GObject):
 			# Instant failure
 			error_cb("Not connected.")
 	
+	@classmethod
+	def nocallback(*a):
+		""" Used when request doesn't needs callback """
+		pass
+	
 	def set_profile(self, filename):
 		""" Asks daemon to change profile """
-		def nocallback(*a):
-			# This one doesn't need error checking
-			pass
-		self.request("Profile: %s" % (filename,), nocallback, nocallback)
+		self.request("Profile: %s" % (filename,),
+				DaemonManager.nocallback, DaemonManager.nocallback)
+	
+	
+	def reconfigure(self):
+		""" Asks daemon reload configuration file """
+		self.request("Reconfigure.", DaemonManager.nocallback,
+				DaemonManager.nocallback)
 	
 	
 	def stop(self):

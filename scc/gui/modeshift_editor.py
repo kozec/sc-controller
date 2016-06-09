@@ -58,10 +58,7 @@ class ModeshiftEditor(Editor):
 	
 	
 	def setup_widgets(self):
-		self.builder = Gtk.Builder()
-		self.builder.add_from_file(os.path.join(self.app.gladepath, self.GLADE))
-		self.window = self.builder.get_object("Dialog")
-		self.builder.connect_signals(self)
+		Editor.setup_widgets(self)
 		
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
 		cbButtonChooser.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) is None )

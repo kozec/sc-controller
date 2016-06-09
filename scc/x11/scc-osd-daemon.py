@@ -44,7 +44,7 @@ class OSDDaemon(object):
 	
 	
 	def on_daemon_died(self, *a):
-		log.error("Daemon died")
+		log.error("Connection to daemon lost")
 		self.quit(2)
 	
 	
@@ -146,7 +146,7 @@ def split(s):
 if __name__ == "__main__":
 	from scc.tools import init_logging, set_logging_level
 	from scc.paths import get_share_path
-	init_logging()
+	init_logging(suffix=" OSD")
 	set_logging_level('debug' in sys.argv, 'debug' in sys.argv)
 	
 	d = OSDDaemon()

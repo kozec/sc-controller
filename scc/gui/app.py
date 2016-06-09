@@ -13,6 +13,7 @@ from scc.gui.controller_widget import ControllerPad, ControllerStick, Controller
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.modeshift_editor import ModeshiftEditor
+from scc.gui.global_settings import GlobalSettings
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.action_editor import ActionEditor
@@ -28,6 +29,7 @@ from scc.constants import SCButtons, DAEMON_VERSION
 from scc.actions import XYAction, NoAction
 from scc.macros import Macro, Repeat
 from scc.profile import Profile
+from scc.config import Config
 
 import os, sys, json, logging
 log = logging.getLogger("App")
@@ -57,6 +59,7 @@ class App(Gtk.Application, UserDataManager):
 		self.dm.connect("error", self.on_daemon_error)
 		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
+		self.config = Config()
 		self.gladepath = gladepath
 		self.imagepath = imagepath
 		self.builder = None
@@ -196,6 +199,16 @@ class App(Gtk.Application, UserDataManager):
 				ae = self._choose_editor(data, _("Right Pad"))
 			ae.set_pad(id, data)
 			ae.show(self.window)
+	
+	
+	def save_config(self):
+		self.config.save()
+		self.dm.reconfigure()
+	
+	
+	def on_mnuGlobalSettings_activate(self, *a):
+		gs = GlobalSettings(self)
+		gs.show(self.window)
 	
 	
 	def on_btUndo_clicked(self, *a):

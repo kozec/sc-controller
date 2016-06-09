@@ -19,10 +19,7 @@ class AboutDialog(Editor):
 	
 	
 	def setup_widgets(self):
-		self.builder = Gtk.Builder()
-		self.builder.add_from_file(os.path.join(self.app.gladepath, self.GLADE))
-		self.window = self.builder.get_object("Dialog")
-		self.builder.connect_signals(self)
+		Editor.setup_widgets(self)
 		
 		# Get app version
 		app_ver = "(unknown version)"

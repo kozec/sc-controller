@@ -9,15 +9,15 @@ from scc.lib import xwrappers as X
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
-from scc.paths import get_profiles_path, get_default_profiles_path
+from scc.tools import set_logging_level, find_binary, find_profile
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
-from scc.tools import set_logging_level, find_binary
 from scc.menu_data import MenuData
 from scc.uinput import Keys, Axes
 from scc.profile import Profile
 from scc.actions import Action
+from scc.config import Config
 from scc.mapper import Mapper
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
@@ -38,10 +38,12 @@ class SCCDaemon(Daemon):
 		self.exiting = False
 		self.socket_file = socket_file
 		self.xdisplay = None
-		self.sserver = None
+		self.sserver = None			# UnixStreamServer instance
 		self.mapper = None
 		self.error = None
 		self.osd_daemon = None
+		self.autoswitch_daemon = None
+		self.subprocs = []
 		self.lock = threading.Lock()
 		self.profile_file = None
 		self.clients = set()
@@ -103,6 +105,7 @@ class SCCDaemon(Daemon):
 	
 	
 	def _osd(self, *data):
+		""" Returns True on success """
 		# Pre-format data
 		#   - convert everything to string
 		data = [ unicode(x).encode("utf-8") for x in data ]
@@ -118,7 +121,7 @@ class SCCDaemon(Daemon):
 		if not self.osd_daemon:
 			self.lock.release()
 			log.warning("Cannot show OSD; there is no scc-osd-daemon registered")
-			return
+			return False
 		# Send request
 		try:
 			self.osd_daemon.wfile.write(data)
@@ -126,7 +129,10 @@ class SCCDaemon(Daemon):
 		except Exception, e:
 			log.error("Failed to display OSD: %s", e)
 			self.osd_daemon = None
+			self.lock.release()
+			return False
 		self.lock.release()
+		return True
 	
 	
 	def on_sa_osd(self, mapper, action):
@@ -178,19 +184,17 @@ class SCCDaemon(Daemon):
 			# Small sanity check
 			log.error("Cannot load profile: Profile '%s' not found", name)
 			return
-		filename = name + ".sccprofile"
-		for p in (get_profiles_path(), get_default_profiles_path()):
-			path = os.path.join(p, filename)
-			if os.path.exists(path):
-				self.lock.acquire()
-				try:
-					self._set_profile(path)
-					self.lock.release()
-					log.info("Loaded profile '%s'", name)
-				except Exception, e:
-					self.lock.release()
-					log.error(e)
-				return
+		path = find_profile(name)
+		if path:
+			self.lock.acquire()
+			try:
+				self._set_profile(path)
+				self.lock.release()
+				log.info("Loaded profile '%s'", name)
+			except Exception, e:
+				self.lock.release()
+				log.error(e)
+			return
 		log.error("Cannot load profile: Profile '%s' not found", name)
 	
 	
@@ -215,8 +219,12 @@ class SCCDaemon(Daemon):
 	
 	def sigterm(self, *a):
 		self.exiting = True
-		if self.osd_daemon:
-			self.osd_daemon.wfile.close()
+		for d in (self.osd_daemon, self.autoswitch_daemon):
+			if d: d.wfile.close()
+		self.osd_daemon, self.autoswitch_daemon = None, None
+		for p in self.subprocs:
+			p.kill()
+		self.subprocs = []
 		sys.exit(0)
 	
 	
@@ -226,29 +234,19 @@ class SCCDaemon(Daemon):
 			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
 			self.xdisplay = None
 			return
+		
 		self.xdisplay = X.open_display(os.environ["DISPLAY"])
-		if not self.xdisplay:
+		if self.xdisplay:
+			log.debug("Connected to XServer %s", os.environ["DISPLAY"])
+			self.mapper.set_xdisplay(self.xdisplay)
+			self.subprocs.append(Subprocess("scc-osd-daemon", True))
+			if len(Config()["autoswitch"]):
+				# Start scc-autoswitch-daemon only if there are some switch rules defined
+				self.subprocs.append(Subprocess("scc-autoswitch-daemon", True))
+		else:
 			log.warning("Failed to connect to XServer. Some functionality will be unavailable")
 			self.xdisplay = None
-			return
-		log.debug("Connected to XServer %s", os.environ["DISPLAY"])
 	
-	
-	def start_osd(self):
-		""" Starts OSD Daemon on bacgkround (if possible) """
-		def threaded():
-			while not self.exiting:
-				p = subprocess.Popen([ sys.executable,
-					find_binary('scc-osd-daemon'), 'debug' ], stdin=None)
-				p.communicate()
-				if not self.exiting:
-					log.warning("osd-daemon died; restarting")
-					time.sleep(5)
-		
-		t = threading.Thread(target=threaded)
-		t.daemon = True
-		t.start()
-
 
 	def run(self):
 		log.debug("Starting SCCDaemon...")
@@ -256,10 +254,6 @@ class SCCDaemon(Daemon):
 		self.lock.acquire()
 		self.start_listening()
 		self.connect_x()
-		if self.xdisplay:
-			# Available only with XServer
-			self.mapper.set_xdisplay(self.xdisplay)
-			self.start_osd()
 		while True:
 			try:
 				sc = None
@@ -303,7 +297,7 @@ class SCCDaemon(Daemon):
 		
 		class SSHandler(StreamRequestHandler):
 			def handle(self):
-				instance._sshandler(self.rfile, self.wfile)
+				instance._sshandler(self.connection, self.rfile, self.wfile)
 		
 		self.sserver = ThreadingUnixStreamServer(self.socket_file, SSHandler)
 		t = threading.Thread(target=self.sserver.serve_forever)
@@ -313,9 +307,9 @@ class SCCDaemon(Daemon):
 		log.debug("Created control socket %s", self.socket_file)
 	
 	
-	def _sshandler(self, rfile, wfile):
+	def _sshandler(self, connection, rfile, wfile):
 		self.lock.acquire()
-		client = Client(rfile, wfile)
+		client = Client(connection, rfile, wfile)
 		self.clients.add(client)
 		wfile.write(b"SCCDaemon\n")
 		wfile.write(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
@@ -341,6 +335,9 @@ class SCCDaemon(Daemon):
 		if self.osd_daemon == client:
 			log.info("scc-osd-daemon lost")
 			self.osd_daemon = None
+		if self.autoswitch_daemon == client:
+			log.info("scc-autoswitch-daemon lost")
+			self.autoswitch_daemon = None
 		self.clients.remove(client)
 		self.lock.release()
 	
@@ -412,6 +409,17 @@ class SCCDaemon(Daemon):
 				self.lock.release()
 				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
 				client.wfile.write(b"Fail: " + tb + b"\n")
+		elif message.startswith("OSD:"):
+			if not self.osd_daemon:
+				client.wfile.write(b"Fail: Cannot show OSD; there is no scc-osd-daemon registered\n")
+			else:
+				try:
+					text = message[5:].decode("utf-8").strip("\t ")
+					if not self._osd("message", text):
+						raise Exception()
+					client.wfile.write(b"Ok.\n")
+				except Exception:
+					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Lock:"):
 			to_lock = [ x for x in message[5:].strip(" \t\r").split(" ") ]
 			self.lock.acquire()
@@ -435,6 +443,23 @@ class SCCDaemon(Daemon):
 			client.unlock_actions(self)
 			self.lock.release()
 			client.wfile.write(b"OK.\n")
+		elif message.startswith("Reconfigure."):
+			self.lock.acquire()
+			# Start or stop scc-autoswitch-daemon as needed
+			need_autoswitch_daemon = len(Config()["autoswitch"]) > 0
+			if need_autoswitch_daemon and self.xdisplay and not self.autoswitch_daemon:
+				self.subprocs.append(Subprocess("scc-autoswitch-daemon", True))
+			elif not need_autoswitch_daemon and self.autoswitch_daemon:
+				print "OLD self.subprocs", self.subprocs
+				self._remove_subproccess("scc-autoswitch-daemon")
+				print "NEW self.subprocs", self.subprocs
+				self.autoswitch_daemon.close()
+				self.autoswitch_daemon = None
+			try:
+				client.wfile.write(b"OK.\n")
+				self._send_to_all("Reconfigured.\n".encode("utf-8"))
+			except: pass
+			self.lock.release()
 		elif message.startswith("Selected:"):
 			menuaction = None
 			def press(mapper):
@@ -469,18 +494,37 @@ class SCCDaemon(Daemon):
 			if menuaction:
 				self.mapper.schedule(0, press)
 			self.lock.release()
-		elif message == "Register: osd":
+		elif message.startswith("Register:"):
 			self.lock.acquire()
-			if self.osd_daemon:
-				try:
-					self.osd_daemon.wfile.close()
-				except: pass
-			self.osd_daemon = client
+			if message.strip().endswith("osd"):
+				if self.osd_daemon: self.osd_daemon.close()
+				self.osd_daemon = client
+				log.info("Registered scc-osd-daemon")
+			elif message.strip().endswith("autoswitch"):
+				if self.autoswitch_daemon: self.autoswitch_daemon.close()
+				self.autoswitch_daemon = client
+				log.info("Registered scc-autoswitch-daemon")
 			self.lock.release()
-			log.info("Registered scc-osd-daemon")
 			client.wfile.write(b"OK.\n")
 		else:
 			client.wfile.write(b"Fail: Unknown command\n")
+	
+	
+	def _remove_subproccess(self, binary_name):
+		"""
+		Removes subproccess started with specified binary name from list of
+		managed subproccesses, effectively preventing daemon from
+		auto-restarting it.
+		
+		Should be called while lock is acquired
+		"""
+		n = []
+		for i in self.subprocs:
+			if i.binary_name == binary_name:
+				i.mark_killed()
+			else:
+				n.append(i)
+		self.subprocs = n
 	
 	
 	def _can_lock_action(self, what):
@@ -608,10 +652,19 @@ class SCCDaemon(Daemon):
 
 
 class Client(object):
-	def __init__(self, rfile, wfile):
+	def __init__(self, connection, rfile, wfile):
+		self.connection = connection
 		self.rfile = rfile
 		self.wfile = wfile
 		self.locked_actions = set()
+	
+	
+	def close(self):
+		""" Closes connection to this client """
+		try:
+			self.connection.shutdown(True)
+		except:
+			pass
 	
 	
 	def unlock_actions(self, daemon):
@@ -634,6 +687,7 @@ class Client(object):
 
 
 class LockedAction(Action):
+	""" Temporal action used to send requested inputs to client """
 	MIN_DIFFERENCE = 300
 	def __init__(self, what, client, original_action):
 		self.what = what
@@ -657,3 +711,48 @@ class LockedAction(Action):
 		if abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE):
 			self.old_pos = x, y
 			self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))
+
+
+class Subprocess(object):
+	"""
+	Part of scc-daemon executed as another process, killed along with scc-daemon.
+	Currently scc-osd-daemon and scc-windowswitch-daemon.
+	"""
+	
+	def __init__(self, binary_name, debug, restart_after=5):
+		self.binary_name = binary_name
+		self.restart_after = restart_after
+		self.args = [ sys.executable, find_binary(binary_name) ]
+		if debug:
+			self.args.append('debug')
+		self._killed = False
+		self.p = None
+		self.t = threading.Thread(target=self._threaded)
+		self.t.daemon = True
+		self.t.start()
+	
+	
+	def _threaded(self, *a):
+		while not self._killed:
+			self.p = subprocess.Popen(self.args, stdin=None)
+			self.p.communicate()
+			self.p = None
+			if not self._killed:
+				log.warning("%s died; restarting after %ss",
+					self.binary_name, self.restart_after)
+				time.sleep(self.restart_after)
+	
+	
+	def mark_killed(self):
+		"""
+		Prevents subprocess from being automatically restarted, but doesn't
+		really kill it.
+		"""
+		self._killed = True
+	
+	
+	def kill(self):
+		self.mark_killed()
+		if self.p:
+			self.p.kill()
+		self.p = None

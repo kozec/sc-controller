@@ -44,6 +44,11 @@ class XRectangle(Structure):
 		('height', c_ushort),
 	]
 
+class XClassHint(Structure):
+	_fields_ = [
+		('res_name', c_char_p),
+		('res_class', c_char_p),
+	]
 
 class XkbStateRec(Structure):
 	_fields_ = [
@@ -143,6 +148,7 @@ get_window_attributes = libX11.XGetWindowAttributes
 get_window_attributes.__doc__ = "https://tronche.com/gui/x/xlib/window-information/XGetWindowAttributes.html"
 get_window_attributes.argtypes = [ c_void_p, XID, POINTER(XWindowAttributes) ]
 
+
 translate_coordinates = libX11.XTranslateCoordinates
 translate_coordinates.argtypes = [ c_void_p, XID, XID, c_int, c_int,
 	POINTER(c_int), POINTER(c_int), POINTER(XID) ]
@@ -162,6 +168,16 @@ get_window_property.argtypes = [ c_void_p, XID, Atom, c_long, c_long, c_bool,
 	Atom, POINTER(Atom), POINTER(Atom), POINTER(c_ulong), POINTER(c_ulong),
 	POINTER(c_void_p) ]
 get_window_property.restype = c_int
+
+alloc_class_hint = libX11.XAllocClassHint
+alloc_class_hint.restype = POINTER(XClassHint)
+alloc_class_hint.argtypes = []
+alloc_class_hint.__doc__ = 	"""Allocates and returns a pointer to a XClassHint
+	structure. Returned pointer has to be deallocated using free()"""
+
+get_class_hint = libX11.XGetClassHint
+get_class_hint.argtypes = [ c_void_p, XID, POINTER(XClassHint) ]
+get_class_hint.restype = c_int
 
 intern_atom = libX11.XInternAtom
 intern_atom.__doc__ = "Returns integer ID for specified Atom name."
@@ -310,10 +326,40 @@ def get_window_type(dpy, window):
 	Returns _NET_WM_WINDOW_TYPE value for window specified or None if anything
 	fails while recieving it.
 	"""
-	trash, prop = get_window_prop(dpy,
-			get_default_root_window(dpy), "_NET_WM_WINDOW_TYPE")
-	if prop is not None:
+	trash, prop = get_window_prop(dpy, window, "_NET_WM_WINDOW_TYPE")
+	if prop is not None and prop.value is not None:
 		rv = cast(prop, POINTER(Atom)).contents.value
 		free(prop)
 		return rv
 	return None
+
+
+def get_window_title(dpy, window):
+	"""
+	Returns window title or None if title cannot be obtained.
+	"""
+	for prop_name in ("_NET_WM_NAME", "WM_NAME"):
+		trash, prop = get_window_prop(dpy, window, prop_name, max_size=2048)
+		if prop:
+			try:
+				value = cast(prop, c_char_p).value.decode('utf-8')
+				free(prop)
+				return value
+			except: pass
+			free(prop)
+	return None
+
+
+def get_window_class(dpy, window):
+	"""
+	Returns window class or None, None if class cannot be obtained.
+	"""
+	s = alloc_class_hint()
+	if s:
+		if get_class_hint(dpy, window, s):
+			value = s.contents.res_name.decode('utf-8'), s.contents.res_class.decode('utf-8')
+			free(s)
+			return value
+		free(s)
+	
+	return None, None

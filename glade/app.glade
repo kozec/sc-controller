@@ -124,6 +124,15 @@
       </object>
     </child>
     <child>
+      <object class="GtkMenuItem" id="mnuGlobalSettings">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Settings</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuGlobalSettings_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
       <object class="GtkSeparatorMenuItem" id="menuitem1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>

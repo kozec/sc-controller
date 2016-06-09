@@ -101,6 +101,7 @@ class Mapper(object):
 			return X.get_current_window(self.xdisplay)
 		return None
 	
+	
 	def send_feedback(self, hapticdata):
 		""" Sends haptic feedback to controller """
 		if self.controller is None:

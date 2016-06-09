@@ -6,6 +6,7 @@ Various stuff that I don't care to fit anywhere else.
 """
 from __future__ import unicode_literals
 
+from scc.paths import get_profiles_path, get_default_profiles_path
 from math import pi as PI, sin, cos, atan2, sqrt
 import imp, os, sys, gettext, logging
 log = logging.getLogger("tools.py")
@@ -13,20 +14,22 @@ _ = lambda x : x
 
 LOG_FORMAT				= "%(levelname)s %(name)-13s %(message)s"
 
-def init_logging():
+def init_logging(prefix="", suffix=""):
 	"""
 	Initializes logging, sets custom logging format and adds one
 	logging level with name and method to call.
+	
+	prefix and suffix arguments can be used to modify log level prefixes.
 	"""
 	logging.basicConfig(format=LOG_FORMAT)
 	logger = logging.getLogger()
 	# Rename levels
-	logging.addLevelName(10, "D")	# Debug
-	logging.addLevelName(20, "I")	# Info
-	logging.addLevelName(30, "W")	# Warning
-	logging.addLevelName(40, "E")	# Error
+	logging.addLevelName(10, prefix + "D" + suffix)	# Debug
+	logging.addLevelName(20, prefix + "I" + suffix)	# Info
+	logging.addLevelName(30, prefix + "W" + suffix)	# Warning
+	logging.addLevelName(40, prefix + "E" + suffix)	# Error
 	# Create additional, "verbose" level
-	logging.addLevelName(15, "V")	# Verbose
+	logging.addLevelName(15, prefix + "V" + suffix)	# Verbose
 	# Add 'logging.verbose' method
 	def verbose(self, msg, *args, **kwargs):
 		return self.log(15, msg, *args, **kwargs)
@@ -117,6 +120,23 @@ def get_so_extensions():
 			yield ext
 
 
+def find_profile(name):
+	"""
+	Returns filename for specified profile name.
+	This is done by searching for name + '.sccprofile' in ~/.config/scc/profiles
+	first and in /usr/share/scc/default_profiles if file is not found in first
+	location.
+	
+	Returns None if profile cannot be found.
+	"""
+	filename = "%s.sccprofile" % (name,)
+	for p in (get_profiles_path(), get_default_profiles_path()):
+		path = os.path.join(p, filename)
+		if os.path.exists(path):
+			return path
+	return None
+
+
 def find_lib(name, base_path):
 	"""
 	Returns (filename, search_paths) if named library is found
@@ -138,9 +158,12 @@ def find_binary(name):
 	
 	With some exceptions, this is done simply by searching PATH environment variable.
 	"""
-	if name in ("osd_daemon", "scc-osd-daemon"):
+	if name.startswith("scc-osd-daemon"):
 		# Special case, this one is not supposed to go to /usr/bin
-		return os.path.join(os.path.split(__file__)[0], "osd", "osd_daemon.py")
+		return os.path.join(os.path.split(__file__)[0], "x11", "scc-osd-daemon.py")
+	if name.startswith("scc-autoswitch-daemon"):
+		# As above
+		return os.path.join(os.path.split(__file__)[0], "x11", "scc-autoswitch-daemon.py")
 	for i in os.environ['PATH'].split(":"):
 		path = os.path.join(i, name)
 		if os.path.exists(path):

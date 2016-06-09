@@ -53,6 +53,9 @@ Reports PID of *scc-daemon* instance. Automatically sent when connection is acce
 #### `Ready.`
 Automatically sent when connection is accepted to indicate that there is no error and daemon is working as expected.
 
+#### `Reconfigured.`
+Sent to all clients when daemon receives `Reconfigure.` message.
+
 #### `SCCDaemon`
 Just identification message, automatically sent when connection is accepted.
 Can be either ignored or used to check if remote side really is *scc-daemon*.
@@ -71,17 +74,33 @@ While source is locked, daemon keeps sending `Event: ...` messages every time wh
 
 Unlocking is done automatically when client is disconnected, or using `Unlock.` message.
 
+#### `OSD: text to display`
+Asks daemon to display OSD message. No escaping or quoting is needed, everything after colon is displayed
+as text.
+
+If OSD cannot be used (for example because daemon runs without X server), daemon responds with `Fail: ....` message.
+Otherwise daemon responds with `OK.`. Note that doesn't necessary mean that OSD is visible to user, only
+that scc-daemon managed to send request to scc-osd-daemon.
+
 #### `Profile: filename.sccprofile`
-Asks daemon to load another profile. No escaping or quouting is needed, everything after colon is used as filename, only spaces and tabs are stripped.
+Asks daemon to load another profile. No escaping or quoting is needed, everything after colon is used as filename, only spaces and tabs are stripped.
 
 If profile is sucessfully loaded, daemon responds with `OK.` to client that initiated loading and sends `Current profile: ...` message to all clients.
 
 If loading fails, daemon responds with `Fail: ....` message where error with entire backtrace is sent. Backtrace is escaped to fit it on single line.
 
-#### `Register: osd`
-Send by scc-osd-daemon to register client connection as one made by scc-osd-daemon.
-When sent by more than one client, daemon will automatically close forme connection
+#### `Reconfigure.`
+Asks daemon to reload configuration file (`~/.config/scc/config.json`).
+Currently, daemon doesn't really reads this file, but sends `Reconfigured.` message
+to all connected clients, what should cause them to reload configuration file as well. 
+Daemon responds with `OK.`
+
+#### `Register: value`
+Send by scc-osd-daemon and scc-autoswitch-daemon to register their client connections.
+When sent with same value with two or more clients, daemon will automatically close former connection
 before registering new one.
+scc-osd-daemon sends `Register: osd`
+scc-autoswitch-daemon `Register: autoswitch`
 Daemon responds with `OK.`
 
 #### `Selected: menu_id item_id`
