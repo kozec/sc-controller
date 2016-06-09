@@ -95,17 +95,20 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 			if c.matches(title, wm_class):
 				assigned_prof = conds[c]
 				break
+		assigned_prof = None
 		if win:
 			display_title = title or _("No Title")
 			rv.append(self.mk_item(None, _("Current Window: %s") % (title[0:25],)))
 			if assigned_prof:
 				rv.append(self.mk_item(None, _("Assigned Profile: %s") % (assigned_prof,)))
+			else:
+				rv.append(self.mk_item(None, _("No Profile Assigned")))
 			rv.append(Separator())
 			rv.append(Separator())
 			rv.append(Separator())
-			rv.append(self.mk_item("as::assign", _("Assign Current Profile")))
 			if assigned_prof:
-				rv.append(self.mk_item("as::unassign", _("Unassign Assigned")))
+				rv.append(self.mk_item("as::unassign", _("Unassign Profile")))
+			rv.append(self.mk_item("as::assign", _("Assign Current Profile")))
 		return rv
 	
 	
