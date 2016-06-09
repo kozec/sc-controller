@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 from scc.actions import Action
 
-import json
+import json, os
 
 class MenuData(object):
 	""" Contains list of menu items. Indexable """
@@ -113,10 +113,9 @@ class MenuData(object):
 			if "generator" in i and i["generator"] in MENU_GENERATORS:
 				item = MENU_GENERATORS[i["generator"]]()
 			elif "separator" in i:
-				if "name" in i:
-					item = Separator(i["name"])
-				else:
-					item = Separator(None)
+				item = Separator(i["name"] if "name" in i else None)
+			elif "submenu" in i:
+				item = Submenu(i["submenu"], i["name"] if "name" in i else None)
 			elif "id" not in i:
 				# Cannot add menu without ID
 				continue
@@ -173,6 +172,15 @@ class Separator(MenuItem):
 	""" Internally, separator is MenuItem without action and id """
 	def __init__(self, label):
 		MenuItem.__init__(self, None, label)
+
+
+class Submenu(MenuItem):
+	""" Internally, separator is MenuItem without action and id """
+	def __init__(self, filename, label=None):
+		if not label:
+			label = ".".join(os.path.split(filename)[-1].split(".")[0:-1])
+		self.filename = filename
+		MenuItem.__init__(self, Submenu, label)
 
 
 class MenuGenerator(object):

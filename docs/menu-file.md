@@ -1,8 +1,8 @@
 SC-Controller menu file specification
 ----------------------------------------
 
-Menu file contains json-encoded list with menu items (actions), separators and
-menu generators.
+Menu file contains json-encoded list with menu items (actions), submenus,
+separators and menu generators.
 
 ### Menu Items
 
@@ -27,6 +27,25 @@ Example:
 	}]
 
 specifies menu with two items.
+
+### Submenus
+
+Submenu is reference to another menu file (submenu cannot be defined in same
+file or profile file). When selected, another menu is loaded and drawn over
+original menu.
+Submenu is dict with `submenu` key, value of key is filename relative to
+`~/.config/scc/menus` or `/usr/share/scc/default_menus/`, whichever exists, in
+that order.
+`name` key may be defined.
+
+Example:
+
+	[{
+	  "submenu": "profiles.menu", 
+	  "name": "All Profiles"
+	}]
+
+specifies menu with sumbmenu called "All Profiles" defined in *profiles.menu*
 
 ### Separators
 

@@ -116,7 +116,8 @@ If 'show_with_release' is set to true, menu is displayed only after button
 is released.
 
 'menu' can be either id of menu defined in same profile file or filename
-relative to `~/.config/scc/menus` directory.
+relative to `~/.config/scc/menus` or `/usr/share/scc/default_menus/`, whichever
+exists, in that order.
 
 
 #### gridmenu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])

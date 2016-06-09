@@ -6,6 +6,7 @@ Various stuff that I don't care to fit anywhere else.
 """
 from __future__ import unicode_literals
 
+from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
 import imp, os, sys, gettext, logging
 log = logging.getLogger("tools.py")
@@ -115,6 +116,20 @@ def get_so_extensions():
 	for ext, _, typ in imp.get_suffixes():
 		if typ == imp.C_EXTENSION:
 			yield ext
+
+def find_menu(name):
+	"""
+	Returns filename for specified menu name.
+	This is done by searching for name in ~/.config/scc/menus
+	first and in /usr/share/scc/default_menus later.
+	
+	Returns None if menu cannot be found.
+	"""
+	for p in (get_menus_path(), get_default_menus_path()):
+		path = os.path.join(p, name)
+		if os.path.exists(path):
+			return path
+	return None
 
 
 def find_lib(name, base_path):

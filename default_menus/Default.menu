@@ -1,18 +1,5 @@
 [{
-    "action": "profile('Desktop')", 
-    "id": "item1", 
-    "name": "Profile: Desktop", 
-    "osd": true
-}, {
-    "action": "profile('XBox Controller with High Precision Camera')", 
-    "id": "item2", 
-    "name": "Profile: XBox Controller with High Precision Camera", 
-    "osd": true
-}, {
-    "action": "profile('XBox Controller')", 
-    "id": "item3", 
-    "name": "Profile: XBox Controller", 
-    "osd": true
+    "submenu": "Profiles.menu"
 }, {
     "action": "turnoff()", 
     "id": "item4", 
