@@ -250,7 +250,6 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 			if c.matches(title, wm_class):
 				assigned_prof = conds[c]
 				break
-		assigned_prof = None
 		if win:
 			display_title = title or _("No Title")
 			rv.append(self.mk_item(None, _("Current Window: %s") % (title[0:25],)))

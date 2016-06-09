@@ -296,7 +296,7 @@ class Menu(OSDWindow, TimerManager):
 		while True:
 			if i == start:
 				# Cannot find valid menu item
-				print "looped over"
+				self.select(start)
 				break
 			if i >= len(self.items):
 				i = 0
