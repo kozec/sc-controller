@@ -16,6 +16,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.osd.timermanager import TimerManager
 from scc.osd import OSDWindow
 
+import scc.osd.menu_generators
 import os, sys, json, logging
 log = logging.getLogger("osd.menu")
 
@@ -113,6 +114,8 @@ class Menu(OSDWindow, TimerManager):
 		self.argparser.add_argument('--from-file', '-f', type=str,
 			metavar="filename",
 			help="load menu items from json file")
+		self.argparser.add_argument('--print-items', action='store_true',
+			help="prints menu items to stdout")
 		self.argparser.add_argument('items', type=str, nargs='*', metavar='id title',
 			help="Menu items")
 	
@@ -157,6 +160,7 @@ class Menu(OSDWindow, TimerManager):
 			self._use_cursor = True
 		
 		# Create buttons that are displayed on screen
+		self.items = self.items.generate()
 		for item in self.items:
 			item.widget = Gtk.Button.new_with_label(item.label)
 			item.widget.set_name("osd-menu-item")
@@ -165,6 +169,12 @@ class Menu(OSDWindow, TimerManager):
 		if len(self.items) == 0:
 			print >>sys.stderr, '%s: error: no items in menu' % (sys.argv[0])
 			return False
+		
+		if self.args.print_items:
+			max_id_len = max(*[ len(x.id) for x in self.items ])
+			row_format ="{:>%s}:\t{}" % (max_id_len,)
+			for item in self.items:
+				print row_format.format(item.id, item.label)
 		return True
 	
 	

@@ -15,6 +15,20 @@ class MenuData(object):
 	def __init__(self, *items):
 		self.__items = list(items)
 	
+	def generate(self):
+		"""
+		Converts all generators into MenuItems (by calling .generate() on them)
+		and returns generated MenuData.
+		
+		Returns new MenuData instance.
+		"""
+		items = []
+		for i in self:
+			if isinstance(i, MenuGenerator):
+				items.extend(i.generate())
+			else:
+				items.append(i)
+		return MenuData(*items)
 	
 	def __len__(self):
 		return len(self.__items)
@@ -95,23 +109,28 @@ class MenuData(object):
 		m = MenuData()
 		used_ids = set()
 		for i in data:
-			if "id" not in i:
+			item = None
+			if "generator" in i and i["generator"] in MENU_GENERATORS:
+				item = MENU_GENERATORS[i["generator"]]()
+			elif "id" not in i:
 				# Cannot add menu without ID
 				continue
-			action = None
-			id = i["id"]
-			if id in used_ids:
-				# Cannot add duplicate ID
-				continue
-			if action_parser:
-				action = action_parser.from_json_data(i)
-			used_ids.add(id)
-			label = id
-			if "name" in i:
-				label = i["name"]
-			elif action:
-				label = action.describe(Action.AC_OSD)
-			m.__items.append(MenuItem(id, label, action))
+			else:
+				action = None
+				id = i["id"]
+				if id in used_ids:
+					# Cannot add duplicate ID
+					continue
+				if action_parser:
+					action = action_parser.from_json_data(i)
+				used_ids.add(id)
+				label = id
+				if "name" in i:
+					label = i["name"]
+				elif action:
+					label = action.describe(Action.AC_OSD)
+				item = MenuItem(id, label, action)
+			m.__items.append(item)
 		
 		return m
 	
@@ -142,3 +161,14 @@ class MenuItem(object):
 		self.label = label
 		self.action = action
 		self.widget = None	# May be set by UI code
+
+
+class MenuGenerator(object):
+	GENERATOR_NAME = None
+	""" Generates list of MenuItems """ 
+	def generate(self):
+		return []
+
+
+# Holds dict of knowm menu ganerators, but generated elsewhere
+MENU_GENERATORS = { }
