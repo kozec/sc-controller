@@ -11,7 +11,7 @@ from gi.repository import Gtk, GLib
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.tools import point_in_gtkrect
 from scc.paths import get_share_path
-from scc.menu_data import MenuData
+from scc.menu_data import MenuData, Separator
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd.timermanager import TimerManager
 from scc.osd import OSDWindow
@@ -134,13 +134,13 @@ class Menu(OSDWindow, TimerManager):
 				print >>sys.stderr, '%s: error: menu not found' % (sys.argv[0])
 				return False
 		elif self.args.from_file:
-			try:
-				data = json.loads(open(self.args.from_file, "r").read())
-				self._menuid = self.args.from_file
-				self.items = MenuData.from_json_data(data)
-			except:
-				print >>sys.stderr, '%s: error: failed to loade menu file' % (sys.argv[0])
-				return False
+			#try:
+			data = json.loads(open(self.args.from_file, "r").read())
+			self._menuid = self.args.from_file
+			self.items = MenuData.from_json_data(data)
+			#except:
+			#	print >>sys.stderr, '%s: error: failed to load menu file' % (sys.argv[0])
+			#	return False
 		else:
 			try:
 				self.items = MenuData.from_args(self.args.items)
@@ -162,9 +162,18 @@ class Menu(OSDWindow, TimerManager):
 		# Create buttons that are displayed on screen
 		self.items = self.items.generate()
 		for item in self.items:
-			item.widget = Gtk.Button.new_with_label(item.label)
-			item.widget.set_name("osd-menu-item")
-			item.widget.set_relief(Gtk.ReliefStyle.NONE)
+			if isinstance(item, Separator):
+				if item.label:
+					item.widget = Gtk.Button.new_with_label(item.label)
+					item.widget.set_relief(Gtk.ReliefStyle.NONE)
+				else:
+					item.widget = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+				item.widget.set_name("osd-menu-separator")
+			else:
+				item.widget = Gtk.Button.new_with_label(item.label)
+				item.widget.set_name("osd-menu-item")
+				item.widget.set_relief(Gtk.ReliefStyle.NONE)
+				item.widget.get_children()[0].set_xalign(0)
 		self.pack_items(self.parent, self.items)
 		if len(self.items) == 0:
 			print >>sys.stderr, '%s: error: no items in menu' % (sys.argv[0])
@@ -181,8 +190,11 @@ class Menu(OSDWindow, TimerManager):
 	def select(self, index):
 		if self._selected:
 			self._selected.widget.set_name("osd-menu-item")
-		self._selected = self.items[index]
-		self._selected.widget.set_name("osd-menu-item-selected")
+		if self.items[index].id:
+			self._selected = self.items[index]
+			self._selected.widget.set_name("osd-menu-item-selected")
+			return True
+		return False
 	
 	
 	def _cononect_handlers(self):
@@ -201,7 +213,10 @@ class Menu(OSDWindow, TimerManager):
 	
 	
 	def show(self, *a):
-		self.select(0)
+		if not self.select(0):
+			self._direction = 1
+			self.next_item()
+			self._direction = 0
 		OSDWindow.show(self, *a)
 	
 	
@@ -232,13 +247,27 @@ class Menu(OSDWindow, TimerManager):
 		OSDWindow.quit(self, code)
 	
 	
+	def next_item(self):
+		""" Selects next menu item, based on self._direction """
+		i = 0
+		try:
+			i = self.items.index(self._selected) + self._direction
+		except: pass
+		while True:
+			if i >= len(self.items):
+				i = 0
+				continue
+			if i < 0:
+				i = len(self.items) - 1
+				continue
+			if self.select(i):
+				# Not a separator
+				break
+			i += self._direction
+	
+	
 	def on_move(self):
-		i = self.items.index(self._selected) + self._direction
-		if i >= len(self.items):
-			i = 0
-		elif i < 0:
-			i = len(self.items) - 1
-		self.select(i)
+		self.next_item()
 		self.timer("move", self.REPEAT_DELAY, self.on_move)
 	
 	

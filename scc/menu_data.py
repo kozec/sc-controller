@@ -112,6 +112,11 @@ class MenuData(object):
 			item = None
 			if "generator" in i and i["generator"] in MENU_GENERATORS:
 				item = MENU_GENERATORS[i["generator"]]()
+			elif "separator" in i:
+				if "name" in i:
+					item = Separator(i["name"])
+				else:
+					item = Separator(None)
 			elif "id" not in i:
 				# Cannot add menu without ID
 				continue
@@ -161,6 +166,12 @@ class MenuItem(object):
 		self.label = label
 		self.action = action
 		self.widget = None	# May be set by UI code
+
+
+class Separator(MenuItem):
+	""" Internally, separator is MenuItem without action and id """
+	def __init__(self, label):
+		MenuItem.__init__(self, None, label)
 
 
 class MenuGenerator(object):

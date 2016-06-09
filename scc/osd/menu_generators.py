@@ -17,9 +17,9 @@ class ProfileListMenuGenerator(MenuGenerator):
 	
 	def generate(self):
 		return [
-			MenuItem("profile:One",		"Profile: Desktop"),
-			MenuItem("profile:Two",		"Profile: XBox Controller"),
-			MenuItem("profile:Three",	"Profile: Whatever")
+			MenuItem("profile:One",		"Desktop"),
+			MenuItem("profile:Two",		"XBox Controller"),
+			MenuItem("profile:Three",	"Whatever")
 		]
 
 

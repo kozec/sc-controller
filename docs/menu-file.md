@@ -1,7 +1,7 @@
 SC-Controller menu file specification
 ----------------------------------------
 
-Menu file contains json-encoded list with menu items - actions and
+Menu file contains json-encoded list with menu items (actions), separators and
 menu generators.
 
 ### Menu Items
@@ -27,6 +27,12 @@ Example:
 	}]
 
 specifies menu with two items.
+
+### Separators
+
+Separator is empty space that splits menu into two or more logical blocks.
+Name, if set, is displayed in different way from menu items. Separator is
+defined by dict with `separator` key set to True.
 
 ### Menu Generators
 

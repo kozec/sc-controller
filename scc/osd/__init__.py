@@ -51,6 +51,15 @@ class OSDWindow(Gtk.Window):
 			border: 1px #004000 solid;
 		}
 		
+		#osd-menu-separator {
+			color: #109010;
+			font-size: large;
+			background-image: none;
+			background-color: black;
+			margin: 5px 0px 0px 0px;
+			padding: 0px 0px 0px 0px;
+		}
+		
 		#osd-menu-item-selected {
 			color: #00FF00;
 			background-color: #000070;
