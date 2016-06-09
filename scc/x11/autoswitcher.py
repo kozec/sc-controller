@@ -290,6 +290,8 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 		self.wm_class = X.get_window_class(menuhandler.xdisplay, win)
 		self.assigned_prof = None
 		self.conds = AutoSwitcher.parse_conditions(Config())
+		if self.title and "-" in self.title:
+			self.title = self.title.split("-")[-1]
 		for c in self.conds:
 			if c.matches(self.title, self.wm_class):
 				self.assigned_prof = self.conds[c]
