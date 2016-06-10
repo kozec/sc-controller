@@ -84,7 +84,7 @@ class MenuEditor(Editor):
 		else:
 			btRemoveItem.set_sensitive(True)
 			o = model.get_value(iter, 0)
-			if isinstance(o.item, MenuItem):
+			if isinstance(o.item, (MenuItem, RecentListMenuGenerator)):
 				btEdit.set_sensitive(True)
 			else:
 				btEdit.set_sensitive(False)
