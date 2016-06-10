@@ -29,8 +29,8 @@ class CustomActionComponent(AEComponent):
 	
 	
 	def handles(self, mode, action):
-		# Custom Action Editor handles everything
-		return True
+		# Custom Action Editor handles all actions"
+		return isinstance(action, Action)
 	
 	
 	def get_button_title(self):

@@ -113,7 +113,7 @@
     <signal name="destroy" handler="on_Dialog_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
-      <object class="GtkGrid" id="grid1">
+      <object class="GtkGrid" id="grEditor">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">10</property>
@@ -152,7 +152,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="box12">
+          <object class="GtkBox" id="vbActionStr">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_top">20</property>
@@ -268,7 +268,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="label2">
+          <object class="GtkLabel" id="lblActionType">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_left">20</property>

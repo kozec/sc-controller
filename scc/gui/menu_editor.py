@@ -45,14 +45,17 @@ class MenuEditor(Editor):
 		headerbar(self.builder.get_object("header"))
 	
 	
-	def on_action_chosen(self, id, action):
+	def on_action_chosen(self, id, action, reopen=False):
 		model = self.builder.get_object("tvItems").get_model()
 		for i in model:
-			if i[0].item.id == id:
-				i[0].item.action = action
-				i[0].item.label = action.describe(Action.AC_OSD)
-				i[1] = i[0].item.describe()
-				break
+			if hasattr(i[0].item, "id"):
+				if i[0].item.id == id:
+					i[0].item.action = action
+					i[0].item.label = action.describe(Action.AC_OSD)
+					i[1] = i[0].item.describe()
+					break
+		if reopen:
+			self.btEdit_clicked_cb()
 	
 	
 	def on_btSave_clicked(self, *a):
@@ -91,12 +94,38 @@ class MenuEditor(Editor):
 		""" Handler for "Edit Item" button """
 		tvItems = self.builder.get_object("tvItems")
 		model, iter = tvItems.get_selection().get_selected()
-		o = model.get_value(iter, 0)
+		item = model.get_value(iter, 0).item
+		# Setup editor
 		e = ActionEditor(self.app, self.on_action_chosen)
-		e.hide_macro()
-		e.hide_modeshift()
-		e.set_title(_("Edit Menu Action"))
-		e.set_button(o.item.id, o.item.action)
+		if isinstance(item, Separator):
+			e.set_title(_("Edit Separator"))
+			e.hide_editor()
+			e.set_menu_item(item, _("Separator Name"))
+		elif isinstance(item, Submenu):
+			e.set_title(_("Edit Submenu"))
+			e.hide_action_str()
+			e.hide_clear()
+			e.force_page(e.load_component("menu_only"), True)
+			e.set_menu_item(item, _("Menu Label"))
+		elif isinstance(item, MenuItem):
+			e = ActionEditor(self.app, self.on_action_chosen)
+			e.set_title(_("Edit Menu Action"))
+			e.hide_modeshift()
+			e.hide_macro()
+			e.set_button(item.id, item.action)
+		elif isinstance(item, RecentListMenuGenerator):
+			e.set_title(_("Edit Recent List"))
+			e.hide_action_str()
+			e.hide_clear()
+			e.hide_name()
+			c = e.load_component("recent_list")
+			e.force_page(c, True)
+			c.set_row_count(item.rows)
+			e.set_menu_item(item)
+		else:
+			# Cannot edit this
+			return
+		# Display editor
 		e.show(self.window)
 	
 	
