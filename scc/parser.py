@@ -126,8 +126,8 @@ class ActionParser(object):
 			if isinstance(a, DoubleclickModifier):
 				a.holdaction = self.from_json_data(data['hold'])
 			else:
-				args = [ self.from_json_data(data['doubleclick']), a ]
-				a = holdaction(*args)
+				args = [ self.from_json_data(data['hold']), a ]
+				a = HoldModifier(*args)
 		return a
 	
 	
