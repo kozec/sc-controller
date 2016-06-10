@@ -46,7 +46,6 @@ class MenuEditor(Editor):
 	
 	
 	def on_action_chosen(self, id, a, reopen=False):
-		print id, a
 		model = self.builder.get_object("tvItems").get_model()
 		for i in model:
 			item = i[0].item
@@ -57,7 +56,6 @@ class MenuEditor(Editor):
 					i[0].item = item = Submenu(
 						a.get_current_page().get_selected_menu(),
 						a.get_name())
-					print ">>", item
 				elif isinstance(item, RecentListMenuGenerator):
 					i[0].item = item = RecentListMenuGenerator(
 						rows = a.get_current_page().get_row_count())
@@ -274,7 +272,6 @@ class MenuEditor(Editor):
 			self.set_new_menu()
 		else:
 			for i in items:
-				print i
 				self._add_menuitem(i)
 	
 	
