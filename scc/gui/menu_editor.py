@@ -26,7 +26,10 @@ class MenuEditor(Editor):
 	TYPE_INTERNAL	= 1
 	TYPE_GLOBAL		= 2
 	
-
+	
+	OPEN = set()	# Set of menus that are being edited.
+	
+	
 	def __init__(self, app, callback):
 		self.app = app
 		self.next_auto_id = 1
@@ -254,6 +257,7 @@ class MenuEditor(Editor):
 		entName = self.builder.get_object("entName")
 		
 		if "." in id:
+			self.original_id = id
 			id = id.split(".")[0]
 			rbGlobal.set_active(True)
 			self.original_type = MenuEditor.TYPE_GLOBAL
@@ -263,7 +267,7 @@ class MenuEditor(Editor):
 			rbInProfile.set_active(True)
 			self.original_type = MenuEditor.TYPE_INTERNAL
 			items = self._load_items_from_profile(id)
-		self.original_id = id
+		MenuEditor.OPEN.add(self.original_id)
 		entName.set_text(id)
 		
 		model = self.builder.get_object("tvItems").get_model()
@@ -273,6 +277,15 @@ class MenuEditor(Editor):
 		else:
 			for i in items:
 				self._add_menuitem(i)
+	
+	def on_Dialog_delete_event(self, *a):
+		MenuEditor.OPEN.remove(self.original_id)
+		return False
+	
+	
+	def close(self, *a):
+		MenuEditor.OPEN.remove(self.original_id)
+		Editor.close(self)
 	
 	
 	def _load_items_from_file(self, id):

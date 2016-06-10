@@ -99,8 +99,8 @@ class MenuActionCofC(UserDataManager):
 		
 		self._recursing = True
 		cb.set_active(current_index)
-		self.builder.get_object("btEditMenu").set_sensitive(True)
 		self._recursing = False
+		self.on_cbMenus_changed()
 	
 	
 	def handles(self, mode, action):
@@ -130,4 +130,5 @@ class MenuActionCofC(UserDataManager):
 			me.show(self.editor.window)
 			return
 		if name:
+			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
 			self.editor.set_action(MenuAction(name))
