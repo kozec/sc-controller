@@ -48,6 +48,19 @@ class MenuEditor(Editor):
 		headerbar(self.builder.get_object("header"))
 	
 	
+	def allow_menus(self, allow_globals, allow_in_profile):
+		"""
+		Sets which type of menu should be selectable.
+		By default, both are enabled.
+		"""
+		if not allow_globals:
+			self.builder.get_object("rbGlobal").set_sensitive(False)
+			self.builder.get_object("rbInProfile").set_active(True)
+		else:
+			self.builder.get_object("rbInProfile").set_sensitive(False)
+			self.builder.get_object("rbGlobal").set_active(True)
+	
+	
 	def on_action_chosen(self, id, a, reopen=False):
 		model = self.builder.get_object("tvItems").get_model()
 		for i in model:

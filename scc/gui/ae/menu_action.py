@@ -64,6 +64,7 @@ class MenuActionCofC(UserDataManager):
 			id = self.get_selected_menu()
 			log.debug("Opening editor for menu ID '%s'", id)
 			me.set_menu(id)
+			me.allow_menus(self.allow_globals, self.allow_in_profile)
 			me.show(self.editor.window)
 	
 	
@@ -127,6 +128,7 @@ class MenuActionCofC(UserDataManager):
 			log.debug("Creating editor for new menu")
 			me = MenuEditor(self.app, self.on_menu_changed)
 			me.set_new_menu()
+			me.allow_menus(self.allow_globals, self.allow_in_profile)
 			me.show(self.editor.window)
 			return
 		if name:
