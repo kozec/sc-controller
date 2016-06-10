@@ -18,6 +18,7 @@
     <property name="window_position">center</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <signal name="delete-event" handler="on_Dialog_delete_event" swapped="no"/>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
       <object class="GtkBox" id="iHateUselessIDs">
@@ -240,13 +241,70 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkToolButton" id="btAddItem">
+                  <object class="GtkMenuToolButton" id="btMnuAdd">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">_Add</property>
                     <property name="use_underline">True</property>
                     <property name="stock_id">gtk-add</property>
                     <signal name="clicked" handler="on_btAddItem_clicked" swapped="no"/>
+                    <child type="menu">
+                      <object class="GtkMenu" id="mnuAdd">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkMenuItem" id="mnuAddItem">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Add Action</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="on_btAddItem_clicked" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="mnuAddSeparator">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Add Separator</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="on_mnuAddSeparator_clicked" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="mnuAddSubmenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Add Submenu</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="on_mnuAddSubmenu_clicked" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSeparatorMenuItem" id="mnuSep714">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="mnuAddProfList">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Add List of All Profiles</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="on_mnuAddProfList_clicked" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="mnuAddRecentList">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Add List of Recent Profiles</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="on_mnuAddRecentList_clicked" swapped="no"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -344,6 +402,7 @@
       <object class="GtkHeaderBar" id="header">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="has_subtitle">False</property>
         <property name="show_close_button">True</property>
         <child>
           <object class="GtkButton" id="btSave">

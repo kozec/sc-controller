@@ -11,8 +11,9 @@ from gi.repository import Gtk, Gdk, GLib, GObject
 from scc.gui.action_editor import ActionEditor
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
+from scc.osd.menu_generators import ProfileListMenuGenerator, RecentListMenuGenerator
+from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
 from scc.paths import get_menus_path, get_default_menus_path
-from scc.menu_data import MenuData, MenuItem
 from scc.parser import TalkingActionParser
 from scc.actions import Action, NoAction
 from scc.profile import Encoder
@@ -25,10 +26,13 @@ class MenuEditor(Editor):
 	TYPE_INTERNAL	= 1
 	TYPE_GLOBAL		= 2
 	
-
+	
+	OPEN = set()	# Set of menus that are being edited.
+	
+	
 	def __init__(self, app, callback):
 		self.app = app
-		self.next_new_item_id = 1
+		self.next_auto_id = 1
 		self.callback = callback
 		self.original_id = None
 		self.original_type = MenuEditor.TYPE_INTERNAL
@@ -44,14 +48,42 @@ class MenuEditor(Editor):
 		headerbar(self.builder.get_object("header"))
 	
 	
-	def on_action_chosen(self, id, action):
+	def allow_menus(self, allow_globals, allow_in_profile):
+		"""
+		Sets which type of menu should be selectable.
+		By default, both are enabled.
+		"""
+		if not allow_globals:
+			self.builder.get_object("rbGlobal").set_sensitive(False)
+			self.builder.get_object("rbInProfile").set_active(True)
+		else:
+			self.builder.get_object("rbInProfile").set_sensitive(False)
+			self.builder.get_object("rbGlobal").set_active(True)
+	
+	
+	def on_action_chosen(self, id, a, reopen=False):
 		model = self.builder.get_object("tvItems").get_model()
 		for i in model:
-			if i[0].item.id == id:
-				i[0].item.action = action
-				i[0].item.label = action.describe(Action.AC_OSD)
-				i[1] = i[0].item.label
+			item = i[0].item
+			if item.id == id:
+				if isinstance(item, Separator):
+					item.label = a.get_name()
+				elif isinstance(item, Submenu):
+					i[0].item = item = Submenu(
+						a.get_current_page().get_selected_menu(),
+						a.get_name())
+				elif isinstance(item, RecentListMenuGenerator):
+					i[0].item = item = RecentListMenuGenerator(
+						rows = a.get_current_page().get_row_count())
+				elif isinstance(item, MenuItem):
+					item.action = a
+					item.label = action.describe(Action.AC_OSD)
+				else:
+					raise TypeError("Edited %s" % (item.__class__.__name__))
+				i[1] = item.describe()
 				break
+		if reopen:
+			self.btEdit_clicked_cb()
 	
 	
 	def on_btSave_clicked(self, *a):
@@ -74,35 +106,97 @@ class MenuEditor(Editor):
 		btRemoveItem = self.builder.get_object("btRemoveItem")
 		
 		model, iter = tvItems.get_selection().get_selected()
-		btRemoveItem.set_sensitive(iter is not None)
-		btEdit.set_sensitive(iter is not None)
+		if iter is None:
+			btRemoveItem.set_sensitive(False)
+			btEdit.set_sensitive(False)
+		else:
+			btRemoveItem.set_sensitive(True)
+			o = model.get_value(iter, 0)
+			if isinstance(o.item, (MenuItem, RecentListMenuGenerator)):
+				btEdit.set_sensitive(True)
+			else:
+				btEdit.set_sensitive(False)
 	
 	
 	def btEdit_clicked_cb(self, *a):
 		""" Handler for "Edit Item" button """
 		tvItems = self.builder.get_object("tvItems")
 		model, iter = tvItems.get_selection().get_selected()
-		o = model.get_value(iter, 0)
+		item = model.get_value(iter, 0).item
+		# Setup editor
 		e = ActionEditor(self.app, self.on_action_chosen)
-		e.hide_macro()
-		e.hide_modeshift()
-		e.set_title(_("Edit Menu Action"))
-		e.set_button(o.item.id, o.item.action)
+		if isinstance(item, Separator):
+			e.set_title(_("Edit Separator"))
+			e.hide_editor()
+			e.set_menu_item(item, _("Separator Name"))
+		elif isinstance(item, Submenu):
+			e.set_title(_("Edit Submenu"))
+			e.hide_action_str()
+			e.hide_clear()
+			(e.force_page(e.load_component("menu_only"), True)
+				.allow_menus(True, False)
+				.set_selected_menu(item.filename))
+			e.set_menu_item(item, _("Menu Label"))
+		elif isinstance(item, MenuItem):
+			e = ActionEditor(self.app, self.on_action_chosen)
+			e.set_title(_("Edit Menu Action"))
+			e.hide_modeshift()
+			e.hide_macro()
+			e.set_button(item.id, item.action)
+		elif isinstance(item, RecentListMenuGenerator):
+			e.set_title(_("Edit Recent List"))
+			e.hide_action_str()
+			e.hide_clear()
+			e.hide_name()
+			(e.force_page(e.load_component("recent_list"), True)
+				.set_row_count(item.rows))
+			e.set_menu_item(item)
+		else:
+			# Cannot edit this
+			return
+		# Display editor
 		e.show(self.window)
 	
 	
-	def on_btAddItem_clicked(self, *a):
-		""" Handler for "Add Item" button """
+	def _add_menuitem(self, item):
+		""" Adds MenuItem or MenuGenerator object """
 		tvItems = self.builder.get_object("tvItems")
 		model = tvItems.get_model()
-		id = "newitem_%s" % (self.next_new_item_id,)
-		self.next_new_item_id += 1
 		o = GObject.GObject()
-		o.item = MenuItem(id, NoAction().describe(Action.AC_OSD), NoAction())
-		iter = model.append(( o, o.item.label ))
+		if not item.id:
+			item.id = "_auto_id_%s" % (self.next_auto_id,)
+			self.next_auto_id += 1
+		o.item = item
+		iter = model.append(( o, o.item.describe() ))
 		tvItems.get_selection().select_iter(iter)
 		self.on_tvItems_cursor_changed()
+	
+	
+	def on_btAddItem_clicked(self, *a):
+		""" Handler for "Add Action" button and menu item """
+		item = MenuItem(None, NoAction().describe(Action.AC_OSD), NoAction())
+		self._add_menuitem(item)
 		self.btEdit_clicked_cb()
+	
+	
+	def on_mnuAddSeparator_clicked(self, *a):
+		""" Handler for "Add Separator" menu item """
+		self._add_menuitem(Separator())
+	
+	
+	def on_mnuAddSubmenu_clicked(self, *a):
+		""" Handler for "Add Separator" menu item """
+		self._add_menuitem(Submenu(""))
+	
+	
+	def on_mnuAddProfList_clicked(self, *a):
+		""" Handler for "Add List of All Profiles" menu item """
+		self._add_menuitem(ProfileListMenuGenerator())
+	
+	
+	def on_mnuAddRecentList_clicked(self, *a):
+		""" Handler for "Add List of Recent Profiles" menu item """
+		self._add_menuitem(RecentListMenuGenerator())
 	
 	
 	def on_btRemoveItem_clicked(self, *a):
@@ -180,13 +274,13 @@ class MenuEditor(Editor):
 		rbInProfile = self.builder.get_object("rbInProfile")
 		entName = self.builder.get_object("entName")
 		
+		MenuEditor.OPEN.add(id)
 		if "." in id:
 			id = id.split(".")[0]
 			rbGlobal.set_active(True)
 			self.original_type = MenuEditor.TYPE_GLOBAL
 			items = self._load_items_from_file(id)
 		else:
-			self.original_id = id
 			rbInProfile.set_active(True)
 			self.original_type = MenuEditor.TYPE_INTERNAL
 			items = self._load_items_from_profile(id)
@@ -199,9 +293,21 @@ class MenuEditor(Editor):
 			self.set_new_menu()
 		else:
 			for i in items:
-				o = GObject.GObject()
-				o.item = i
-				model.append(( o, i.label ))
+				self._add_menuitem(i)
+	
+	def on_Dialog_delete_event(self, *a):
+		try:
+			if self.original_type == MenuEditor.TYPE_GLOBAL:
+				MenuEditor.OPEN.remove(self.original_id + ".menu")
+			else:
+				MenuEditor.OPEN.remove(self.original_id)
+		except KeyError: pass
+		return False
+	
+	
+	def close(self, *a):
+		self.on_Dialog_delete_event()
+		Editor.close(self)
 	
 	
 	def _load_items_from_file(self, id):

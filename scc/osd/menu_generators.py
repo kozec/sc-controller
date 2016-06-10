@@ -28,6 +28,11 @@ class ProfileListMenuGenerator(MenuGenerator):
 		daemon.request(b"OSD: " + menuitem.label.encode("utf-8") + b"\n",
 			on_response, on_response)
 	
+	
+	def describe(self):
+		return _("[ All Profiles ]")
+	
+	
 	def generate(self, menuhandler):
 		# TODO: Cannot load directory content asynchronously here and I'm
 		# TODO: not happy about it
@@ -49,10 +54,28 @@ class RecentListMenuGenerator(MenuGenerator):
 	GENERATOR_NAME = "recent"
 	
 	def __init__(self, rows=5, **b):
+		MenuGenerator.__init__(self)
 		self.rows = rows
 	
 	
 	def generate(self, menuhandler):
+		return _("[ %s Recent Profiles ]") % (self.rows,)
+
+	
+	def encode(self):
+		return { "generator" : self.GENERATOR_NAME, "rows" : self.rows }
+	
+	
+	def callback(self, menu, daemon, menuitem):
+		daemon.set_profile(menuitem.filename)
+		menu.hide()
+		def on_response(*a):
+			menu.quit(-2)
+		daemon.request(b"OSD: " + menuitem.label.encode("utf-8") + b"\n",
+			on_response, on_response)
+	
+	
+	def generate(self):
 		rv = []
 		for p in Config()['recent_profiles']:
 			filename = find_profile(p)

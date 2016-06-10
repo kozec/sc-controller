@@ -86,6 +86,12 @@ class Action(object):
 		]))
 	
 	
+	def set_name(self, name):
+		""" Sets display name of action. Returns self. """
+		self.name = name
+		return self
+	
+	
 	def strip(self):
 		"""
 		For modifier, returns first child action that actually

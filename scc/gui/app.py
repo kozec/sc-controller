@@ -31,6 +31,7 @@ from scc.macros import Macro, Repeat
 from scc.profile import Profile
 from scc.config import Config
 
+import scc.osd.menu_generators
 import os, sys, json, logging
 log = logging.getLogger("App")
 

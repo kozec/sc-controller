@@ -211,7 +211,8 @@ class Menu(OSDWindow, TimerManager):
 			if isinstance(item, Submenu):
 				item.callback = self.show_submenu
 				label1 = widget.get_children()[0]
-				label2 = Gtk.Label(">>")
+				label2 = Gtk.Label(_(">>"))
+				label2.set_property("margin-left", 30)
 				box = Gtk.Box(Gtk.Orientation.HORIZONTAL)
 				widget.remove(label1)
 				box.pack_start(label1, True, True, 1)

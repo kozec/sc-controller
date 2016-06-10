@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 """
 SC-Controller - Action Editor
+
+Also doubles as Menu Item Editor in some cases
 """
 from __future__ import unicode_literals
 from scc.tools import _
@@ -46,11 +48,14 @@ FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
 class ActionEditor(Editor):
 	GLADE = "action_editor.glade"
 	ERROR_CSS = " #error {background-color:green; color:red;} "
+	
+	AEC_MENUITEM = -1
 
 	def __init__(self, app, callback):
 		self.app = app
 		self.id = None
 		self.components = []			# List of available components
+		self.loaded_components = set()	# by class name
 		self.c_buttons = {} 			# Component-to-button dict
 		self.sens_widgets = []			# Sensitivity sliders, labels and 'clear' buttons
 		self.feedback_widgets = []		# Feedback settings sliders, labels and 'clear' buttons, plus default value as last item
@@ -106,13 +111,24 @@ class ActionEditor(Editor):
 		""" Loads list of editor components """
 		# Import and load components
 		for c in COMPONENTS:
-			mod = importlib.import_module("scc.gui.ae.%s" % (c,))
-			for x in dir(mod):
-				cls = getattr(mod, x)
-				if isinstance(cls, (type, types.ClassType)) and issubclass(cls, AEComponent):
-					if cls is not AEComponent:
-						self.components.append(cls(self.app, self))
+			self.load_component(c)
 		self._selected_component = None
+	
+	
+	def load_component(self, class_name):
+		"""
+		Loads and adds new component to editor.
+		Returns component instance.
+		"""
+		mod = importlib.import_module("scc.gui.ae.%s" % (class_name,))
+		for x in dir(mod):
+			cls = getattr(mod, x)
+			if isinstance(cls, (type, types.ClassType)) and issubclass(cls, AEComponent):
+				if cls is not AEComponent:
+					self.loaded_components.add(class_name)
+					instance = cls(self.app, self)
+					self.components.append(instance)
+					return instance
 	
 	
 	def on_Dialog_destroy(self, *a):
@@ -165,6 +181,45 @@ class ActionEditor(Editor):
 		stActionModes.show_all()
 	
 	
+	def force_page(self, component, remove_rest=False):
+		"""
+		Forces action editor to display page with specified component.
+		If 'remove_rest' is True, removes all other pages.
+		
+		Returns 'component'
+		"""
+		stActionModes = self.builder.get_object("stActionModes")
+		component.load()
+		for c in stActionModes.get_children():
+			if c != component:
+				stActionModes.remove(c)
+		
+		if component.get_widget() not in stActionModes.get_children():
+			stActionModes.add(component.get_widget())
+		
+		component.set_action(self._mode, self._action)
+		if self._selected_component is not None:
+			if self._selected_component != component:
+				self._selected_component.hidden()
+		self._selected_component = component
+		self._selected_component.shown()
+		stActionModes.set_visible_child(component.get_widget())
+		stActionModes.show_all()
+		
+		return component
+	
+	
+	def get_name(self):
+		""" Returns action name as set in editor entry """
+		entName = self.builder.get_object("entName")
+		return entName.get_text().strip(" \t")
+	
+	
+	def get_current_page(self):
+		""" Returns currently displayed page (component) """
+		return self._selected_component
+	
+	
 	def _set_title(self):
 		""" Copies title from text entry into action instance """
 		entName = self.builder.get_object("entName")
@@ -184,6 +239,12 @@ class ActionEditor(Editor):
 				widget.set_visible(i not in indexes)
 		self.sens = self.sens[0:len(indexes)+1]
 		self.builder.get_object("lblSensitivityHeader").set_visible(len(indexes) < 3)
+	
+	
+	def hide_modifiers(self):
+		""" Hides (and disables) all modifiers """
+		self.set_modifiers_enabled(False)
+		self.builder.get_object("exMore").set_visible(False)
 	
 	
 	def hide_require_click(self):
@@ -244,6 +305,29 @@ class ActionEditor(Editor):
 		self.builder.get_object("btMacro").set_visible(False)
 	
 	
+	def hide_action_buttons(self):
+		""" Hides action buttons, effectivelly disallowing user to change action type """
+		for x in ("lblActionType", "vbActionButtons"):
+			self.builder.get_object(x).set_visible(False)
+		self.hide_modeshift()
+		self.hide_macro()
+	
+	
+	def hide_action_str(self):
+		""" Hides bottom part with action displayed as string """
+		self.builder.get_object("vbActionStr").set_visible(False)
+		self.builder.get_object("grEditor").set_property("margin-bottom", 30)
+		
+	
+	
+	def hide_editor(self):
+		""" Hides everything but action buttons and action name field """
+		self.builder.get_object("stActionModes").set_visible(False)
+		self.hide_action_str()
+		self.hide_modeshift()
+		self.hide_macro()
+	
+	
 	def hide_name(self):
 		"""
 		Hides (and clears) name field.
@@ -252,6 +336,11 @@ class ActionEditor(Editor):
 		self.builder.get_object("lblName").set_visible(False)
 		self.builder.get_object("entName").set_visible(False)
 		self.builder.get_object("entName").set_text("")
+	
+	
+	def hide_clear(self):
+		""" Hides clear buttton """
+		self.builder.get_object("btClear").set_visible(False)
 	
 	
 	def on_btClearSens_clicked(self, source, *a):
@@ -284,8 +373,11 @@ class ActionEditor(Editor):
 		""" Handler for OK button """
 		if self.ac_callback is not None:
 			self._set_title()
-			a = self.generate_modifiers(self._action)
-			self.ac_callback(self.id, a)
+			if self._mode == ActionEditor.AEC_MENUITEM:
+				self.ac_callback(self.id, self)
+			else:
+				a = self.generate_modifiers(self._action)
+				self.ac_callback(self.id, a)
 			if self._selected_component:
 				self._selected_component.on_ok(a)
 		self.close()
@@ -552,7 +644,8 @@ class ActionEditor(Editor):
 						self._selected_component = component
 						break
 			if self._selected_component:
-				self.c_buttons[self._selected_component].set_active(True)
+				if self._selected_component in self.c_buttons:
+					self.c_buttons[self._selected_component].set_active(True)
 				if isinstance(action, InvalidAction):
 					self._selected_component.set_action(self._mode, action)
 		elif not self._selected_component.handles(self._mode, action.strip()):
@@ -565,7 +658,7 @@ class ActionEditor(Editor):
 		""" Common part of editor setup """
 		self._mode = mode
 		# Clear pages and 'action type' buttons
-		entName = self.builder.get_object("entName")		
+		entName = self.builder.get_object("entName")
 		vbActionButtons = self.builder.get_object("vbActionButtons")
 		stActionModes = self.builder.get_object("stActionModes")
 		stActionModes = self.builder.get_object("stActionModes")
@@ -588,7 +681,7 @@ class ActionEditor(Editor):
 			entName.set_text("")
 		else:
 			entName.set_text(action.name)
-		vbActionButtons.show_all()	
+		vbActionButtons.show_all()
 	
 	
 	def set_button(self, button, action):
@@ -645,6 +738,28 @@ class ActionEditor(Editor):
 		self.set_action(action)
 		self.hide_osd()
 		self.hide_macro()
+	
+	
+	def set_menu_item(self, item, title_for_name_label=None):
+		"""
+		Setups action editor in way that allows editing only action name.
+		
+		In this mode, callback is called with editor instance instead of
+		generated action as 2nd argument.
+		"""
+		entName = self.builder.get_object("entName")
+		self._mode = ActionEditor.AEC_MENUITEM
+		if hasattr(item, "label") and item.label:
+			entName.set_text(item.label)
+		else:
+			entName.set_text("")
+		self.hide_osd()
+		self.hide_action_buttons()
+		self.hide_modifiers()
+		self.set_action(NoAction())
+		self.id = item.id
+		if title_for_name_label:
+			self.builder.get_object("lblName").set_label(title_for_name_label)
 	
 	
 	def set_feedback_settings_enabled(self, enabled):
