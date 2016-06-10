@@ -256,18 +256,17 @@ class MenuEditor(Editor):
 		rbInProfile = self.builder.get_object("rbInProfile")
 		entName = self.builder.get_object("entName")
 		
+		MenuEditor.OPEN.add(id)
 		if "." in id:
-			self.original_id = id
 			id = id.split(".")[0]
 			rbGlobal.set_active(True)
 			self.original_type = MenuEditor.TYPE_GLOBAL
 			items = self._load_items_from_file(id)
 		else:
-			self.original_id = id
 			rbInProfile.set_active(True)
 			self.original_type = MenuEditor.TYPE_INTERNAL
 			items = self._load_items_from_profile(id)
-		MenuEditor.OPEN.add(self.original_id)
+		self.original_id = id
 		entName.set_text(id)
 		
 		model = self.builder.get_object("tvItems").get_model()
@@ -279,12 +278,17 @@ class MenuEditor(Editor):
 				self._add_menuitem(i)
 	
 	def on_Dialog_delete_event(self, *a):
-		MenuEditor.OPEN.remove(self.original_id)
+		try:
+			if self.original_type == MenuEditor.TYPE_GLOBAL:
+				MenuEditor.OPEN.remove(self.original_id + ".menu")
+			else:
+				MenuEditor.OPEN.remove(self.original_id)
+		except KeyError: pass
 		return False
 	
 	
 	def close(self, *a):
-		MenuEditor.OPEN.remove(self.original_id)
+		self.on_Dialog_delete_event()
 		Editor.close(self)
 	
 	
