@@ -282,6 +282,10 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 			on_response()
 	
 	
+	def describe(self):
+		return _("[ All Profiles ]")
+	
+	
 	def generate(self, menuhandler):
 		rv = []
 		win = X.get_current_window(menuhandler.xdisplay)

@@ -75,7 +75,7 @@ class RecentListMenuGenerator(MenuGenerator):
 			on_response, on_response)
 	
 	
-	def generate(self):
+	def generate(self, menuhandler):
 		rv = []
 		for p in Config()['recent_profiles']:
 			filename = find_profile(p)
