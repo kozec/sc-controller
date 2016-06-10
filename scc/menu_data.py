@@ -66,13 +66,7 @@ class MenuData(object):
 		""" Returns menu data as dict storable in json (profile) file """
 		rv = []
 		for i in self:
-			if i.action:
-				item_data = i.action.encode()
-			else:
-				item_data = {}
-			item_data['id'] = i.id
-			item_data['name'] = i.label
-			rv.append(item_data)
+			rv.append(i.encode())
 		return rv
 	
 	
@@ -166,12 +160,40 @@ class MenuItem(object):
 		self.action = action
 		self.callback = callback	# If defined, called when user chooses menu instead of using action
 		self.widget = None			# May be set by UI code
+	
+	
+	def describe(self):
+		"""
+		Returns user-friendly description of MenuItem or MenuGenerator.
+		"""
+		return self.label
+	
+	
+	def encode(self):
+		""" Returns item data as dict storable in json (profile) file """
+		if self.action:
+			rv = self.action.encode()
+		else:
+			rv = {}
+		rv['id'] = self.id
+		rv['name'] = self.label
+		return rv
 
 
 class Separator(MenuItem):
 	""" Internally, separator is MenuItem without action and id """
-	def __init__(self, label):
+	def __init__(self, label=None):
 		MenuItem.__init__(self, None, label)
+	
+	
+	def describe(self):
+		return _("---- Separator ----")
+	
+	
+	def encode(self):
+		if self.label:
+			return { "separator" : True, "name" : self.label }
+		return { "separator" : True }
 
 
 class Submenu(MenuItem):
@@ -181,6 +203,15 @@ class Submenu(MenuItem):
 			label = ".".join(os.path.split(filename)[-1].split(".")[0:-1])
 		self.filename = filename
 		MenuItem.__init__(self, Submenu, label)
+	
+	def describe(self):
+		return self.filename + "  " + _(">>")
+	
+	
+	def encode(self):
+		if self.label:
+			return { "submenu" : self.filename, "name" : self.label }
+		return { "submenu" : self.filename }
 
 
 class MenuGenerator(object):
@@ -193,6 +224,18 @@ class MenuGenerator(object):
 		__init__ of generator should ignore all unknown keys.
 		"""
 		pass
+	
+	
+	def describe(self):
+		"""
+		Returns user-friendly description of MenuItem or MenuGenerator.
+		"""
+		return "[ %s ] " % (self.__class__.__name__,)
+	
+	
+	def encode(self):
+		""" Returns generator data as dict storable in json (profile) file """
+		return { "generator" : self.GENERATOR_NAME }
 	
 	def generate(self):
 		return []

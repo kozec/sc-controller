@@ -11,8 +11,9 @@ from gi.repository import Gtk, Gdk, GLib, GObject
 from scc.gui.action_editor import ActionEditor
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
+from scc.osd.menu_generators import ProfileListMenuGenerator, RecentListMenuGenerator
+from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
 from scc.paths import get_menus_path, get_default_menus_path
-from scc.menu_data import MenuData, MenuItem
 from scc.parser import TalkingActionParser
 from scc.actions import Action, NoAction
 from scc.profile import Encoder
@@ -50,7 +51,7 @@ class MenuEditor(Editor):
 			if i[0].item.id == id:
 				i[0].item.action = action
 				i[0].item.label = action.describe(Action.AC_OSD)
-				i[1] = i[0].item.label
+				i[1] = i[0].item.describe()
 				break
 	
 	
@@ -74,8 +75,16 @@ class MenuEditor(Editor):
 		btRemoveItem = self.builder.get_object("btRemoveItem")
 		
 		model, iter = tvItems.get_selection().get_selected()
-		btRemoveItem.set_sensitive(iter is not None)
-		btEdit.set_sensitive(iter is not None)
+		if iter is None:
+			btRemoveItem.set_sensitive(False)
+			btEdit.set_sensitive(False)
+		else:
+			btRemoveItem.set_sensitive(True)
+			o = model.get_value(iter, 0)
+			if isinstance(o.item, MenuItem):
+				btEdit.set_sensitive(True)
+			else:
+				btEdit.set_sensitive(False)
 	
 	
 	def btEdit_clicked_cb(self, *a):
@@ -91,18 +100,39 @@ class MenuEditor(Editor):
 		e.show(self.window)
 	
 	
-	def on_btAddItem_clicked(self, *a):
-		""" Handler for "Add Item" button """
+	def _add_menuitem(self, item):
+		""" Adds MenuItem or MenuGenerator object """
 		tvItems = self.builder.get_object("tvItems")
 		model = tvItems.get_model()
-		id = "newitem_%s" % (self.next_new_item_id,)
-		self.next_new_item_id += 1
 		o = GObject.GObject()
-		o.item = MenuItem(id, NoAction().describe(Action.AC_OSD), NoAction())
-		iter = model.append(( o, o.item.label ))
+		o.item = item
+		iter = model.append(( o, o.item.describe() ))
 		tvItems.get_selection().select_iter(iter)
 		self.on_tvItems_cursor_changed()
+	
+	
+	def on_btAddItem_clicked(self, *a):
+		""" Handler for "Add Action" button and menu item """
+		id = "newitem_%s" % (self.next_new_item_id,)
+		item = MenuItem(id, NoAction().describe(Action.AC_OSD), NoAction())
+		self.next_new_item_id += 1
+		self._add_menuitem(item)
 		self.btEdit_clicked_cb()
+	
+	
+	def on_mnuAddSeparator_clicked(self, *a):
+		""" Handler for "Add Separator" menu item """
+		self._add_menuitem(Separator())
+	
+	
+	def on_mnuAddProfList_clicked(self, *a):
+		""" Handler for "Add List of All Profiles" menu item """
+		self._add_menuitem(ProfileListMenuGenerator())
+	
+	
+	def on_mnuAddRecentList_clicked(self, *a):
+		""" Handler for "Add List of Recent Profiles" menu item """
+		self._add_menuitem(RecentListMenuGenerator())
 	
 	
 	def on_btRemoveItem_clicked(self, *a):
@@ -199,9 +229,8 @@ class MenuEditor(Editor):
 			self.set_new_menu()
 		else:
 			for i in items:
-				o = GObject.GObject()
-				o.item = i
-				model.append(( o, i.label ))
+				print i
+				self._add_menuitem(i)
 	
 	
 	def _load_items_from_file(self, id):

@@ -72,8 +72,12 @@ specifies menu with list of all profiles, followed by one normal menu item.
 
 
 ### Available generators
-Only one so far...
 
 #### `profiles`
-Generates menu item for each available profile. Selecting item will switch to represented profile.
+Generates menu item for each available profile. Selecting item will switch to
+represented profile.
+
+#### `recent`
+Generates menu item for *X* recently selected profiles. *X* is 5 by default and
+can be set with additional `rows` key.
 

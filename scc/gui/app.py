@@ -28,6 +28,7 @@ from scc.macros import Macro, Repeat
 from scc.constants import SCButtons
 from scc.profile import Profile
 
+import scc.osd.menu_generators
 import os, sys, json, logging
 log = logging.getLogger("App")
 
