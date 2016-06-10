@@ -48,6 +48,8 @@ FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
 class ActionEditor(Editor):
 	GLADE = "action_editor.glade"
 	ERROR_CSS = " #error {background-color:green; color:red;} "
+	
+	AEC_MENUITEM = -1
 
 	def __init__(self, app, callback):
 		self.app = app
@@ -207,6 +209,17 @@ class ActionEditor(Editor):
 		stActionModes.show_all()
 	
 	
+	def get_name(self):
+		""" Returns action name as set in editor entry """
+		entName = self.builder.get_object("entName")
+		return entName.get_text()
+	
+	
+	def get_current_page(self):
+		""" Returns currently displayed page (component) """
+		return self._selected_component
+	
+	
 	def _set_title(self):
 		""" Copies title from text entry into action instance """
 		entName = self.builder.get_object("entName")
@@ -360,8 +373,11 @@ class ActionEditor(Editor):
 		""" Handler for OK button """
 		if self.ac_callback is not None:
 			self._set_title()
-			a = self.generate_modifiers(self._action)
-			self.ac_callback(self.id, a)
+			if self._mode == ActionEditor.AEC_MENUITEM:
+				self.ac_callback(self.id, self)
+			else:
+				a = self.generate_modifiers(self._action)
+				self.ac_callback(self.id, a)
 			if self._selected_component:
 				self._selected_component.on_ok(a)
 		self.close()
@@ -725,9 +741,14 @@ class ActionEditor(Editor):
 	
 	
 	def set_menu_item(self, item, title_for_name_label=None):
-		""" Setups action editor in way that allows editing only action name """
+		"""
+		Setups action editor in way that allows editing only action name.
+		
+		In this mode, callback is called with editor instance instead of
+		generated action as 2nd argument.
+		"""
 		entName = self.builder.get_object("entName")
-		self._mode = 0
+		self._mode = ActionEditor.AEC_MENUITEM
 		if hasattr(item, "label") and item.label:
 			entName.set_text(item.label)
 		else:
@@ -736,6 +757,7 @@ class ActionEditor(Editor):
 		self.hide_action_buttons()
 		self.hide_modifiers()
 		self.set_action(NoAction())
+		self.id = item.id
 		if title_for_name_label:
 			self.builder.get_object("lblName").set_label(title_for_name_label)
 	

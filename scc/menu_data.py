@@ -187,7 +187,10 @@ class Separator(MenuItem):
 	
 	
 	def describe(self):
-		return _("---- Separator ----")
+		if self.label:
+			return _("----[ %s ]----") % (self.label,)
+		else:
+			return _("---- Separator ----")
 	
 	
 	def encode(self):
@@ -205,7 +208,7 @@ class Submenu(MenuItem):
 		MenuItem.__init__(self, Submenu, label)
 	
 	def describe(self):
-		return self.filename + "  " + _(">>")
+		return self.label + "  " + _(">>")
 	
 	
 	def encode(self):
@@ -223,7 +226,7 @@ class MenuGenerator(object):
 		Passed are all keys loaded from json dict that defined this generator.
 		__init__ of generator should ignore all unknown keys.
 		"""
-		pass
+		self.id = None		# Used only in editor
 	
 	
 	def describe(self):

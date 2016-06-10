@@ -29,7 +29,7 @@ class MenuEditor(Editor):
 
 	def __init__(self, app, callback):
 		self.app = app
-		self.next_new_item_id = 1
+		self.next_auto_id = 1
 		self.callback = callback
 		self.original_id = None
 		self.original_type = MenuEditor.TYPE_INTERNAL
@@ -45,15 +45,26 @@ class MenuEditor(Editor):
 		headerbar(self.builder.get_object("header"))
 	
 	
-	def on_action_chosen(self, id, action, reopen=False):
+	def on_action_chosen(self, id, a, reopen=False):
+		print id, a
 		model = self.builder.get_object("tvItems").get_model()
 		for i in model:
-			if hasattr(i[0].item, "id"):
-				if i[0].item.id == id:
-					i[0].item.action = action
-					i[0].item.label = action.describe(Action.AC_OSD)
-					i[1] = i[0].item.describe()
-					break
+			item = i[0].item
+			if item.id == id:
+				if isinstance(item, Separator):
+					item.label = a.get_name()
+				elif isinstance(item, Submenu):
+					item = Submenu(item.filename, a.get_name())
+					i[0].item = item
+				elif isinstance(item, RecentListMenuGenerator):
+					item.rows = a.get_current_page().get_row_count()
+				elif isinstance(item, MenuItem):
+					item.action = a
+					item.label = action.describe(Action.AC_OSD)
+				else:
+					raise TypeError("Edited %s" % (item.__class__.__name__))
+				i[1] = item.describe()
+				break
 		if reopen:
 			self.btEdit_clicked_cb()
 	
@@ -134,6 +145,9 @@ class MenuEditor(Editor):
 		tvItems = self.builder.get_object("tvItems")
 		model = tvItems.get_model()
 		o = GObject.GObject()
+		if not item.id:
+			item.id = "_auto_id_%s" % (self.next_auto_id,)
+			self.next_auto_id += 1
 		o.item = item
 		iter = model.append(( o, o.item.describe() ))
 		tvItems.get_selection().select_iter(iter)
@@ -142,9 +156,7 @@ class MenuEditor(Editor):
 	
 	def on_btAddItem_clicked(self, *a):
 		""" Handler for "Add Action" button and menu item """
-		id = "newitem_%s" % (self.next_new_item_id,)
-		item = MenuItem(id, NoAction().describe(Action.AC_OSD), NoAction())
-		self.next_new_item_id += 1
+		item = MenuItem(None, NoAction().describe(Action.AC_OSD), NoAction())
 		self._add_menuitem(item)
 		self.btEdit_clicked_cb()
 	

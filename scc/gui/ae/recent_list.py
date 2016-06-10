@@ -40,3 +40,7 @@ class RecentListGenComponent(AEComponent):
 	
 	def set_row_count(self, count):
 		self.builder.get_object("sclNumOfProfiles").set_value(count)
+	
+	
+	def get_row_count(self):
+		return int(self.builder.get_object("sclNumOfProfiles").get_value())

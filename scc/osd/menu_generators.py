@@ -54,6 +54,7 @@ class RecentListMenuGenerator(MenuGenerator):
 	GENERATOR_NAME = "recent"
 	
 	def __init__(self, rows=5, **b):
+		MenuGenerator.__init__(self)
 		self.rows = rows
 	
 	
