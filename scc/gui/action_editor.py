@@ -188,6 +188,8 @@ class ActionEditor(Editor):
 		"""
 		Forces action editor to display page with specified component.
 		If 'remove_rest' is True, removes all other pages.
+		
+		Returns 'component'
 		"""
 		stActionModes = self.builder.get_object("stActionModes")
 		component.load()
@@ -205,14 +207,15 @@ class ActionEditor(Editor):
 		self._selected_component = component
 		self._selected_component.shown()
 		stActionModes.set_visible_child(component.get_widget())
-		
 		stActionModes.show_all()
+		
+		return component
 	
 	
 	def get_name(self):
 		""" Returns action name as set in editor entry """
 		entName = self.builder.get_object("entName")
-		return entName.get_text()
+		return entName.get_text().strip(" \t")
 	
 	
 	def get_current_page(self):

@@ -54,10 +54,13 @@ class MenuEditor(Editor):
 				if isinstance(item, Separator):
 					item.label = a.get_name()
 				elif isinstance(item, Submenu):
-					item = Submenu(item.filename, a.get_name())
-					i[0].item = item
+					i[0].item = item = Submenu(
+						a.get_current_page().get_selected_menu(),
+						a.get_name())
+					print ">>", item
 				elif isinstance(item, RecentListMenuGenerator):
-					item.rows = a.get_current_page().get_row_count()
+					i[0].item = item = RecentListMenuGenerator(
+						rows = a.get_current_page().get_row_count())
 				elif isinstance(item, MenuItem):
 					item.action = a
 					item.label = action.describe(Action.AC_OSD)
@@ -116,7 +119,9 @@ class MenuEditor(Editor):
 			e.set_title(_("Edit Submenu"))
 			e.hide_action_str()
 			e.hide_clear()
-			e.force_page(e.load_component("menu_only"), True)
+			(e.force_page(e.load_component("menu_only"), True)
+				.allow_menus(True, False)
+				.set_selected_menu(item.filename))
 			e.set_menu_item(item, _("Menu Label"))
 		elif isinstance(item, MenuItem):
 			e = ActionEditor(self.app, self.on_action_chosen)
@@ -129,9 +134,8 @@ class MenuEditor(Editor):
 			e.hide_action_str()
 			e.hide_clear()
 			e.hide_name()
-			c = e.load_component("recent_list")
-			e.force_page(c, True)
-			c.set_row_count(item.rows)
+			(e.force_page(e.load_component("recent_list"), True)
+				.set_row_count(item.rows))
 			e.set_menu_item(item)
 		else:
 			# Cannot edit this
