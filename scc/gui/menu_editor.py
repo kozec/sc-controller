@@ -171,6 +171,11 @@ class MenuEditor(Editor):
 		self._add_menuitem(Separator())
 	
 	
+	def on_mnuAddSubmenu_clicked(self, *a):
+		""" Handler for "Add Separator" menu item """
+		self._add_menuitem(Submenu(""))
+	
+	
 	def on_mnuAddProfList_clicked(self, *a):
 		""" Handler for "Add List of All Profiles" menu item """
 		self._add_menuitem(ProfileListMenuGenerator())
