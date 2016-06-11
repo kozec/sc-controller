@@ -17,12 +17,12 @@
 		"RPAD"	: { "action": "OSK.press(RIGHT)" }
 	},
 	
-	"trigger_left":  { "action": "OSK.press(LEFT)" },
+	"trigger_left":  { },
 	"trigger_right": { "action": "button(Keys.KEY_LEFTCTRL)" },
 	
 	"gyro": {}, 
 	
-	"pad_left": { "action": "OSK.cursor(LEFT)" },
+	"pad_left": { "action": "OSK.cursor(LEFT)" 	},
 	"pad_right": { "action": "OSK.cursor(RIGHT)" },
 	
 	"stick": { "action": "OSK.move()" }
