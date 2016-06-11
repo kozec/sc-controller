@@ -112,6 +112,8 @@ class OSDWindow(Gtk.Window):
 		self.argparser.add_argument('-y', type=int, metavar="pixels", default=-20,
 			help="""vertical position in pixels, from top side of screen.
 			Use negative value to specify as distance from bottom side (default: -20)""")
+		self.argparser.add_argument('-d', action='store_true',
+			help="""display debug messages""")
 	
 	
 	def parse_argumets(self, argv):
@@ -122,7 +124,10 @@ class OSDWindow(Gtk.Window):
 			return False
 		del self.argparser
 		self.position = (self.args.x, self.args.y)
+		if self.args.d:
+			set_logging_level(True, True)
 		return True
+	
 	
 	def make_window_clicktrough(self):
 		dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))		# I have no idea why this works...
