@@ -100,7 +100,7 @@ class AutoSwitcher(object):
 				elif line.startswith("Reconfigured."):
 					log.debug("Reloading config...")
 					self.config = Config()
-					self.parse_conditions(self.config)
+					self.conds = AutoSwitcher.parse_conditions(self.config)
 			
 			self.lock.release()
 	
