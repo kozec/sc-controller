@@ -49,7 +49,6 @@ class AutoSwitcher(object):
 	
 	@staticmethod
 	def assign(conds, title, wm_class, profile):
-		AutoSwitcher.unassign(conds, title, wm_class, profile)
 		c = Condition(wm_class=wm_class[0])
 		conds[c] = profile
 	
@@ -57,11 +56,13 @@ class AutoSwitcher(object):
 	@staticmethod
 	def unassign(conds, title, wm_class, profile):
 		"""
-		Removes any condition that matches given title/class/profile combination
+		Removes any condition that matches given title/class/profile combination.
+		'profile' can be None, in which case, removes removes any condition
+		that matches title or wm class.
 		"""
 		count = 0
 		for c in conds.keys():
-			if conds[c] == profile:
+			if profile is None or conds[c] == profile:
 				if c.matches(title, wm_class):
 					del conds[c]
 					count += 1
@@ -268,6 +269,7 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 						profile = profile[0:-4]
 					if profile.endswith(".sccprofile"):
 						profile = profile[0:-11]
+					AutoSwitcher.unassign(self.conds, self.title, self.wm_class, None)
 					AutoSwitcher.assign(self.conds, self.title, self.wm_class, profile)
 			cfg = Config()
 			cfg["autoswitch"] = [
