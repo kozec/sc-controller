@@ -178,7 +178,7 @@ class Keyboard(OSDWindow, TimerManager):
 			log.info("Sucessfully locked input")
 			pass
 		
-		# Lock everything just in case
+		# Lock everything
 		locks = [ LEFT, RIGHT, STICK ] + [ b.name for b in SCButtons ]
 		self.daemon.lock(success, self.on_failed_to_lock, *locks)
 	
@@ -194,7 +194,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def show(self, *a):
 		OSDWindow.show(self, *a)
-		self.profile.load(find_profile(".scc-osd.keyboard"))
+		self.profile.load(find_profile(".scc-osd.keyboard")).compress()
 		self.mapper = SlaveMapper(self.profile, keyboard=b"SCC OSD Keyboard")
 		self.mapper.set_special_actions_handler(self)
 	

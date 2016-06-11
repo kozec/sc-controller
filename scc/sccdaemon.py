@@ -577,7 +577,6 @@ class SCCDaemon(Daemon):
 			a = self.mapper.profile.pads[what].compress()
 			self.mapper.profile.pads[what] = LockedAction(what, client, a)
 			return
-		# TODO: Triggers
 			
 		# Shouldn't really reach here
 		log.warning("Failed to lock action: Don't know what is %s", what)
@@ -697,15 +696,18 @@ class LockedAction(Action):
 		self.old_pos = 0, 0
 		log.debug("%s locked by %s", what, client)
 	
-	def trigger(self, mapper, *a):
-		# Currently not used
-		pass
+	def trigger(self, mapper, position, old_position):
+		self.client.wfile.write(("Event: %s %s %s\n" % (
+			self.what.name, position, old_position)).encode("utf-8"))
+	
 	
 	def button_press(self, mapper):
 		self.client.wfile.write(("Event: %s 1\n" % (self.what.name,)).encode("utf-8"))
 	
+	
 	def button_release(self, mapper):
 		self.client.wfile.write(("Event: %s 0\n" % (self.what.name,)).encode("utf-8"))
+	
 	
 	def whole(self, mapper, x, y, what):
 		if abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE):

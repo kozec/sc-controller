@@ -11,6 +11,7 @@ from __future__ import unicode_literals
 
 from scc.lib import Enum
 from scc.actions import Action, SpecialAction, ACTIONS
+from scc.constants import TRIGGER_HALF
 from scc.tools import strip_none
 
 import time, logging
@@ -18,7 +19,25 @@ log = logging.getLogger("OSDKeyActs")
 _ = lambda x : x
 
 
-class CloseOSDKeyboardAction(Action, SpecialAction):
+class OSDKeyboardAction(Action, SpecialAction):
+	def __init__(self, *a):
+		Action.__init__(self, *a)
+		self.speed = 1.0
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = x
+		return True
+	
+	
+	def trigger(self, mapper, p, old_p):
+		if p * self.speed >= TRIGGER_HALF and old_p * self.speed < TRIGGER_HALF:
+			self.button_press(mapper)
+		elif p * self.speed < TRIGGER_HALF and old_p * self.speed >= TRIGGER_HALF:
+			self.button_release(mapper)
+
+
+class CloseOSDKeyboardAction(OSDKeyboardAction):
 	SA = COMMAND = "close"
 	
 	def describe(self, context):
@@ -51,7 +70,7 @@ class KeyboardCursorAction(Action, SpecialAction):
 		return (" " * pad) + "%s(%s)" % (self.COMMAND, self.side)
 
 
-class MoveKeyboardAction(Action, SpecialAction):
+class MoveKeyboardAction(OSDKeyboardAction):
 	SA = COMMAND = "move"
 	
 	def whole(self, mapper, x, y, what):
@@ -62,11 +81,11 @@ class MoveKeyboardAction(Action, SpecialAction):
 		return (" " * pad) + "%s()" % (self.COMMAND,)
 
 
-class PressKeyboardButtonAction(Action, SpecialAction):
+class PressKeyboardButtonAction(OSDKeyboardAction):
 	SA = COMMAND = "press"
 	
 	def __init__(self, side):
-		Action.__init__(self, side)
+		OSDKeyboardAction.__init__(self, side)
 		if hasattr(side, "name"): side = side.name
 		self.side = side
 	

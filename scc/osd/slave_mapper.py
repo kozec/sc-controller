@@ -10,7 +10,7 @@ Used by on-screen keyboard.
 from __future__ import unicode_literals
 
 from collections import deque
-from scc.constants import SCButtons, LEFT, RIGHT, STICK
+from scc.constants import SCButtons, LEFT, RIGHT, STICK, TRIGGER_MAX
 from scc.mapper import Mapper
 
 
@@ -51,6 +51,10 @@ class SlaveMapper(Mapper):
 		"""
 		if what == STICK:
 			self.profile.stick.whole(self, data[0], data[1], what)
+		elif what == SCButtons.LT.name:
+			self.profile.triggers[LEFT].trigger(self, *data)
+		elif what == SCButtons.RT.name:
+			self.profile.triggers[RIGHT].trigger(self, *data)
 		elif hasattr(SCButtons, what):
 			x = getattr(SCButtons, what)
 			self.old_buttons = self.buttons
@@ -63,6 +67,6 @@ class SlaveMapper(Mapper):
 				self.profile.buttons[x].button_release(self)
 		elif what in (LEFT, RIGHT):
 			self.profile.pads[what].whole(self, data[0], data[1], what)
-		#else:
-		#	print ">>>", what, data
+		else:
+			print ">>>", what, data
 		self.generate_events()
