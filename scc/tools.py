@@ -190,6 +190,9 @@ def find_binary(name):
 	return name
 
 
+clamp = lambda low, value, high : min(high, max(low, value))
+
+
 PId4 = PI / 4.0
 def circle_to_square(x, y):
 	"""

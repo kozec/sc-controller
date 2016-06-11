@@ -17,7 +17,7 @@
 		"RPAD"	: { "action": "OSK.press(RIGHT)" }
 	},
 	
-	"trigger_left":  { },
+	"trigger_left":  { "action": "OSK.press(LEFT)" },
 	"trigger_right": { "action": "button(Keys.KEY_LEFTCTRL)" },
 	
 	"gyro": {}, 

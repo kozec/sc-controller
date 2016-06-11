@@ -59,7 +59,13 @@ class KeyboardCursorAction(Action, SpecialAction):
 	def __init__(self, side):
 		Action.__init__(self, side)
 		if hasattr(side, "name"): side = side.name
+		self.speed = (1.0, 1.0)
 		self.side = side
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = (x, y)
+		return True	
 	
 	
 	def whole(self, mapper, x, y, what):

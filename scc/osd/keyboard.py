@@ -11,7 +11,7 @@ from gi.repository import Gtk, Gdk, GdkX11, GLib
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
 from scc.constants import SCButtons
-from scc.tools import point_in_gtkrect, circle_to_square, find_profile
+from scc.tools import point_in_gtkrect, circle_to_square, find_profile, clamp
 from scc.paths import get_share_path, get_config_path
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
@@ -87,9 +87,6 @@ class Keyboard(OSDWindow, TimerManager):
 		self.f.add(self.cursors[RIGHT])
 		self.c.add(self.f)
 		self.add(self.c)
-		
-		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
-		self.set_cursor_position(0, 0, self.cursors[RIGHT], self.limits[RIGHT])
 		
 		self.timer('labels', 0.1, self.update_labels)
 	
@@ -197,6 +194,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self.profile.load(find_profile(".scc-osd.keyboard")).compress()
 		self.mapper = SlaveMapper(self.profile, keyboard=b"SCC OSD Keyboard")
 		self.mapper.set_special_actions_handler(self)
+		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
+		self.set_cursor_position(0, 0, self.cursors[RIGHT], self.limits[RIGHT])
 	
 	
 	def on_event(self, daemon, what, data):
@@ -213,7 +212,10 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def on_sa_cursor(self, mapper, action, x, y):
-		self.set_cursor_position(x, y, self.cursors[action.side], self.limits[action.side])
+		self.set_cursor_position(
+			x * action.speed[0],
+			y * action.speed[1],
+			self.cursors[action.side], self.limits[action.side])
 	
 	
 	def on_sa_move(self, mapper, action, x, y):
@@ -237,11 +239,17 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		x, y = circle_to_square(x, y)
 		
-		x = (limit[0] + w * 0.5) + x * w * 0.5
-		y = (limit[1] + h * 0.5) + y * h * 0.5
+		x = clamp(
+			cursor.get_allocation().width * 0.5,
+			(limit[0] + w * 0.5) + x * w * 0.5,
+			self.get_allocation().width - cursor.get_allocation().width
+			) - cursor.get_allocation().width * 0.5
 		
-		x -= cursor.get_allocation().width * 0.5
-		y -= cursor.get_allocation().height * 0.5
+		y = clamp(
+			cursor.get_allocation().height * 0.5,
+			(limit[1] + h * 0.5) + y * h * 0.5,
+			self.get_allocation().height - cursor.get_allocation().height
+			) - cursor.get_allocation().height * 0.5
 		
 		cursor.position = int(x), int(y)
 		self.f.move(cursor, *cursor.position)
