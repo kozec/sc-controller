@@ -8,6 +8,7 @@ data_files = [
 				('share/scc/images', glob.glob("images/*.svg")),
 				('share/scc/default_profiles', glob.glob("default_profiles/*.sccprofile")),
 				('share/scc/default_menus', glob.glob("default_menus/*.menu")),
+				('share/scc/default_menus', glob.glob("default_menus/.*.menu")),
 				('share/pixmaps', [ "images/sc-controller.svg" ]),
 				('share/applications', ['sc-controller.desktop'] )
 				

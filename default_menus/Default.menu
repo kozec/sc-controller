@@ -6,7 +6,7 @@
     "rows": 3
 }, {
     "submenu": "Profiles.menu",
-    "name": "All Profiles Blah Blah Blah"
+    "name": "All Profiles"
 }, {
     "separator": true,
     "name": "Options"
