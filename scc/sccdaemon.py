@@ -450,9 +450,7 @@ class SCCDaemon(Daemon):
 			if need_autoswitch_daemon and self.xdisplay and not self.autoswitch_daemon:
 				self.subprocs.append(Subprocess("scc-autoswitch-daemon", True))
 			elif not need_autoswitch_daemon and self.autoswitch_daemon:
-				print "OLD self.subprocs", self.subprocs
 				self._remove_subproccess("scc-autoswitch-daemon")
-				print "NEW self.subprocs", self.subprocs
 				self.autoswitch_daemon.close()
 				self.autoswitch_daemon = None
 			try:

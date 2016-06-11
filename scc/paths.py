@@ -36,19 +36,10 @@ def get_default_profiles_path():
 	"""
 	Returns directory where default profiles are stored.
 	Probably something like /usr/share/scc/default_profiles,
-	or ./default_profiles if program is being started from
-	extracted source tarball
+	or $SCC_SHARED/default_profiles if program is being started from
+	script extracted from source tarball
 	"""
-	if __main__.__file__.startswith("scripts/") or __main__.__file__.startswith("./scripts/"):
-		# Started from root directory of source tree with
-		# something like 'scripts/sc-controller'
-		local = os.path.join(os.path.split(__file__)[0], "../default_profiles")
-		local = os.path.normpath(local)
-		if os.path.exists(local):
-			return local
-	if os.path.exists("/usr/local/share/scc/default_profiles"):
-		return "/usr/local/share/scc/default_profiles"
-	return "/usr/share/scc/default_profiles"
+	return os.path.join(get_share_path(), "default_profiles")
 
 
 def get_menus_path():
@@ -66,39 +57,17 @@ def get_default_menus_path():
 	or ./default_profiles if program is being started from
 	extracted source tarball
 	"""
-	if __main__.__file__.startswith("scripts/") or __main__.__file__.startswith("./scripts/"):
-		# Started from root directory of source tree with
-		# something like 'scripts/sc-controller'
-		local = os.path.join(os.path.split(__file__)[0], "../default_menus")
-		local = os.path.normpath(local)
-		if os.path.exists(local):
-			return local
-	if os.path.exists("/usr/local/share/scc/default_menus"):
-		return "/usr/local/share/scc/default_menus"
-	return "/usr/share/scc/default_menus"
+	return os.path.join(get_share_path(), "default_menus")
 
 
 def get_share_path():
 	"""
 	Returns directory where shared files are kept.
-	Usually "/usr/share/scc" or "./" if program is being started from
-	extracted source tarball
+	Usually "/usr/share/scc" or $SCC_SHARED if program is being started from
+	script extracted from source tarball
 	"""
-	if __main__.__file__.startswith("scripts/") or __main__.__file__.startswith("./scripts/"):
-		# Started from root directory of source tree with
-		# something like 'scripts/sc-controller'
-		local = os.path.join(os.path.split(__file__)[0], "../")
-		local = os.path.normpath(local)
-		if os.path.exists(local):
-			return local
-	if __main__.__file__.endswith("-daemon.py"):
-		# Special case
-		if not __main__.__file__.startswith("/usr/local"):
-			if not __main__.__file__.startswith("/usr/lib"):
-				local = os.path.join(os.path.split(__file__)[0], "../")
-				local = os.path.normpath(local)
-				if os.path.exists(local):
-					return local
+	if "SCC_SHARED" in os.environ:
+		return os.environ["SCC_SHARED"]
 	if os.path.exists("/usr/local/share/scc/"):
 		return "/usr/local/share/scc/"
 	return "/usr/share/scc/"

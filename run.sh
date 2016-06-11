@@ -26,6 +26,7 @@ fi
 SCRIPTS="$(pwd)/scripts"
 export PATH="$SCRIPTS":"$PATH"
 export PYTHONPATH=".":"$PYTHONPATH"
+export SCC_SHARED="$(pwd)"
 
 # Execute
 python2 'scripts/sc-controller' $@

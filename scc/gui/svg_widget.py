@@ -254,6 +254,5 @@ def recolor(element, color):
 		for child in element:
 			if recolor(child, color):
 				return True
-	print element
 	return False
 

@@ -7,5 +7,6 @@ cd "$(dirname "$0")"
 SCRIPTS="$(pwd)/scripts"
 export PATH="$SCRIPTS":"$PATH"
 export PYTHONPATH=".":"$PYTHONPATH"
+export SCC_SHARED="$(pwd)"
 
 python2 'scripts/scc-daemon' $@
