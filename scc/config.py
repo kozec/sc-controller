@@ -29,6 +29,11 @@ class Config(object):
 	
 	def __init__(self):
 		self.filename = os.path.join(get_config_path(), "config.json")
+		self.reload()
+	
+	
+	def reload(self):
+		""" (Re)loads configuration. Works as load(), but handles exceptions """
 		try:
 			self.load()
 		except Exception, e:

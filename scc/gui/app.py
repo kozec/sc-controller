@@ -57,6 +57,7 @@ class App(Gtk.Application, UserDataManager):
 		self.dm.connect("alive", self.on_daemon_alive)
 		self.dm.connect("version", self.on_daemon_version)
 		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
+		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		self.dm.connect("error", self.on_daemon_error)
 		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
@@ -511,6 +512,10 @@ class App(Gtk.Application, UserDataManager):
 			if self.ribar.get_parent() is not None:
 				self.ribar.get_parent().remove(self.ribar)
 		self.ribar = None
+	
+	
+	def on_daemon_reconfigured(self, *a):
+		self.config.reload()
 	
 	
 	def on_daemon_profile_changed(self, trash, profile):

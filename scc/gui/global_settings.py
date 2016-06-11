@@ -7,7 +7,7 @@ Currently setups only one thing...
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gdk, GObject
+from gi.repository import Gdk, GObject, GLib
 from scc.x11.autoswitcher import Condition
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor
@@ -24,12 +24,28 @@ class GlobalSettings(Editor, UserDataManager):
 		self.setup_widgets()
 		self.load_conditions()
 		self.load_profile_list()
+		self._eh_ids = (
+			self.app.dm.connect('reconfigured', self.on_daemon_reconfigured),
+		)
 	
+	
+	def on_daemon_reconfigured(self, *a):
+		# config is reloaded in main window 'reconfigured' handler.
+		# Using GLib.idle_add here ensures that main window hanlder will run
+		# *before* self.load_conditions
+		GLib.idle_add(self.load_conditions)
+	
+	
+	def on_Dialog_destroy(self, *a):
+		for x in self._eh_ids:
+			self.app.dm.disconnect(x)
+		self._eh_ids = ()
 	
 	def load_conditions(self):
 		""" Transfers autoswitch conditions from config to UI """
 		tvItems = self.builder.get_object("tvItems")
 		model = tvItems.get_model()
+		model.clear()
 		for x in self.app.config['autoswitch']:
 			o = GObject.GObject()
 			o.condition = Condition.parse(x['condition'])
