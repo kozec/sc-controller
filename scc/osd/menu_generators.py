@@ -10,7 +10,6 @@ from scc.tools import _, set_logging_level
 from scc.menu_data import MenuGenerator, MenuItem, MENU_GENERATORS
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.tools import find_profile
-from scc.config import Config
 
 import os, sys, json, logging
 log = logging.getLogger("osd.menu_gen")
@@ -76,8 +75,9 @@ class RecentListMenuGenerator(MenuGenerator):
 	
 	
 	def generate(self, menuhandler):
+		print menuhandler
 		rv = []
-		for p in Config()['recent_profiles']:
+		for p in menuhandler.config['recent_profiles']:
 			filename = find_profile(p)
 			if filename:
 				menuitem = MenuItem("generated", p)

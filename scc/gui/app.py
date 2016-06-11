@@ -515,6 +515,7 @@ class App(Gtk.Application, UserDataManager):
 	
 	
 	def on_daemon_reconfigured(self, *a):
+		log.debug("Reloading config...")
 		self.config.reload()
 	
 	

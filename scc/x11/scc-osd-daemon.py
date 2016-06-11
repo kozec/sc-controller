@@ -30,6 +30,7 @@ class OSDDaemon(object):
 	def __init__(self):
 		self.exit_code = -1
 		self.mainloop = GLib.MainLoop()
+		self.config = None
 		self._window = None
 		self._registered = False
 		self._last_profile_change = 0
@@ -46,13 +47,17 @@ class OSDDaemon(object):
 		return self.exit_code
 	
 	
+	def on_daemon_reconfigured(self, *a):
+		log.debug("Reloading config...")
+		self.config.reload()
+	
+	
 	def on_profile_changed(self, daemon, profile):
 		name = os.path.split(profile)[-1]
 		if name.endswith(".sccprofile") and not name.startswith("."):
 			# Ignore .mod and hidden files
 			name = name[0:-11]
-			c = Config()
-			recents = c['recent_profiles']
+			recents = self.config['recent_profiles']
 			if len(recents) and recents[0] == name:
 				# Already first in recent list
 				return
@@ -68,10 +73,10 @@ class OSDDaemon(object):
 			while name in recents:
 				recents.remove(name)
 			recents.insert(0, name)
-			if len(recents) > c['recent_max']:
-				recents = recents[0:c['recent_max']]
-			c['recent_profiles'] = recents
-			c.save()
+			if len(recents) > self.config['recent_max']:
+				recents = recents[0:self.config['recent_max']]
+			self.config['recent_profiles'] = recents
+			self.config.save()
 			log.debug("Updated recent profile list")
 	
 	
@@ -132,6 +137,7 @@ class OSDDaemon(object):
 			else:
 				self._window = GridMenu() if "gridmenu" in message else Menu()
 				self._window.connect('destroy', self.on_menu_closed)
+				self._window.use_config(self.config)
 				if self._window.parse_argumets(args):
 					self._window.show()
 					self._window.use_daemon(self.daemon)
@@ -162,9 +168,11 @@ class OSDDaemon(object):
 	
 	def run(self):
 		self.daemon = DaemonManager()
+		self.config = Config()
 		self.daemon.connect('alive', self.on_daemon_connected)
 		self.daemon.connect('dead', self.on_daemon_died)
 		self.daemon.connect('profile-changed', self.on_profile_changed)
+		self.daemon.connect('reconfigured', self.on_daemon_reconfigured)
 		self.daemon.connect('unknown-msg', self.on_unknown_message)
 		self.mainloop.run()
 

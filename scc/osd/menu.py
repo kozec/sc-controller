@@ -15,6 +15,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.osd.timermanager import TimerManager
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
+from scc.config import Config
 from scc.osd import OSDWindow
 
 import os, sys, json, logging
@@ -41,6 +42,7 @@ class Menu(OSDWindow, TimerManager):
 		OSDWindow.__init__(self, "osd-menu")
 		TimerManager.__init__(self)
 		self.daemon = None
+		self.config = None
 		self.xdisplay = X.Display(hash(GdkX11.x11_get_default_xdisplay()))	# Magic
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
@@ -84,12 +86,21 @@ class Menu(OSDWindow, TimerManager):
 	
 	def use_daemon(self, d):
 		"""
-		Allows (re)using already existin DaemonManager instance in same process
+		Allows (re)using already existing DaemonManager instance in same process.
+		use_config() should be be called before parse_argumets() if this is used.
 		"""
 		self.daemon = d
 		if not self._is_submenu:
 			self._cononect_handlers()
 			self.on_daemon_connected(self.daemon)
+	
+	
+	def use_config(self, c):
+		"""
+		Allows reusing already existin Config instance in same process.
+		Has to be called before parse_argumets()
+		"""
+		self.config = c
 	
 	
 	def get_menuid(self):
@@ -140,6 +151,9 @@ class Menu(OSDWindow, TimerManager):
 	def parse_argumets(self, argv):
 		if not OSDWindow.parse_argumets(self, argv):
 			return False
+		if not self.config:
+			raise "Asdadsa"
+			self.config = Config()
 		if self.args.from_profile:
 			try:
 				self._menuid = self.args.items[0]
@@ -274,6 +288,8 @@ class Menu(OSDWindow, TimerManager):
 			log.error("Sucessfully locked input")
 			pass
 		
+		if not self.config:
+			self.config = Config()
 		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
 		self.daemon.lock(success, self.on_failed_to_lock, *locks)
 	
@@ -334,6 +350,7 @@ class Menu(OSDWindow, TimerManager):
 				sub_pos[i] = (sub_pos[i] - self.SUBMENU_OFFSET
 						if sub_pos[i] < 0 else sub_pos[i] + self.SUBMENU_OFFSET)
 					
+			self._submenu.use_config(self.config)
 			self._submenu.parse_argumets(["menu.py",
 				"-x", str(sub_pos[0]), "-y", str(sub_pos[1]),
 			 	"--from-file", filename,
