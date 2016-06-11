@@ -39,7 +39,7 @@ def get_default_profiles_path():
 	or ./default_profiles if program is being started from
 	extracted source tarball
 	"""
-	if __main__.__file__.startswith("scripts/"):
+	if __main__.__file__.startswith("scripts/") or __main__.__file__.startswith("./scripts/"):
 		# Started from root directory of source tree with
 		# something like 'scripts/sc-controller'
 		local = os.path.join(os.path.split(__file__)[0], "../default_profiles")
@@ -66,7 +66,7 @@ def get_default_menus_path():
 	or ./default_profiles if program is being started from
 	extracted source tarball
 	"""
-	if __main__.__file__.startswith("scripts/"):
+	if __main__.__file__.startswith("scripts/") or __main__.__file__.startswith("./scripts/"):
 		# Started from root directory of source tree with
 		# something like 'scripts/sc-controller'
 		local = os.path.join(os.path.split(__file__)[0], "../default_menus")
@@ -84,7 +84,7 @@ def get_share_path():
 	Usually "/usr/share/scc" or "./" if program is being started from
 	extracted source tarball
 	"""
-	if __main__.__file__.startswith("scripts/"):
+	if __main__.__file__.startswith("scripts/") or __main__.__file__.startswith("./scripts/"):
 		# Started from root directory of source tree with
 		# something like 'scripts/sc-controller'
 		local = os.path.join(os.path.split(__file__)[0], "../")

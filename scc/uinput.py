@@ -308,10 +308,10 @@ class Gamepad(UInput):
 	Gamepad uinput class, create a Xbox360 gamepad device
 	"""
 
-	def __init__(self):
+	def __init__(self, name):
 		super(Gamepad, self).__init__(vendor=0x045e,
 									  product=0x028e,
-									  name=b"Microsoft X-Box 360 pad",
+									  name=name,
 									  keys=[Keys.BTN_START,
 											Keys.BTN_MODE,
 											Keys.BTN_SELECT,
@@ -355,10 +355,10 @@ class Mouse(UInput):
 
 	DEFAULT_SCR_MEAN_LEN = 10
 
-	def __init__(self):
+	def __init__(self, name):
 		super(Mouse, self).__init__(vendor=0x28de,
 									product=0x1142,
-									name=b"SCController Mouse",
+									name=name,
 									keys=[Keys.BTN_LEFT,
 										  Keys.BTN_RIGHT,
 										  Keys.BTN_MIDDLE,
@@ -636,7 +636,7 @@ class Keyboard(UInput):
 	setDelayPeriod permits to update these values
 	"""
 
-	def __init__(self, name=b"SCController Keyboard"):
+	def __init__(self, name):
 		super(Keyboard, self).__init__(vendor=0x28de,
 									   product=0x1142,
 									   name=name,
@@ -683,3 +683,30 @@ class Keyboard(UInput):
 		if len(rem):
 			self.synEvent()
 			self._pressed -= set(rem)
+
+
+class Dummy(object):
+	""" Fake uinput device that does nothing, but has all required methods """
+	def __init__(self, *a, **b):
+		pass
+	
+	def keyEvent(self, *a, **b):
+		pass
+	
+	axisEvent = keyEvent
+	relEvent = keyEvent
+	scanEvent = keyEvent
+	synEvent = keyEvent
+	setDelayPeriod = keyEvent
+	updateParams = keyEvent
+	updateScrollParams = keyEvent
+	moveEvent = keyEvent
+	scrollEvent = keyEvent
+	pressEvent = keyEvent
+	releaseEvent = keyEvent
+	
+	def keyManaged(self, ev):
+		return False
+	
+	axisManaged = keyManaged
+	relManaged = keyManaged

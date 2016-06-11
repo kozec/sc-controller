@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from collections import deque
 from scc.lib import xwrappers as X
-from scc.uinput import Gamepad, Keyboard, Mouse, Rels
+from scc.uinput import Gamepad, Keyboard, Mouse, Dummy, Rels
 from scc.constants import SCStatus, SCButtons, SCI_NULL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import CI_NAMES, ControllerInput
@@ -17,19 +17,26 @@ log = logging.getLogger("Mapper")
 class Mapper(object):
 	DEBUG = False
 	
-	def __init__(self, profile):
+	def __init__(self, profile, keyboard=b"SCController Keyboard",
+				mouse=b"SCController Mouse",
+				gamepad=b"Microsoft X-Box 360 pad"):
+		"""
+		If any of keyboard, mouse or gamepad is set to None, that device
+		will not be emulated.
+		"""
 		self.profile = profile
 		self.controller = None
 		self.xdisplay = None
 		
 		# Create virtual devices
 		log.debug("Creating virtual devices")
-		self.gamepad = Gamepad()
-		log.debug("Gamepad:  %s" % (self.gamepad, ))
-		self.keyboard = Keyboard()
+		self.keyboard = Keyboard(name=keyboard) if keyboard else Dummy()
 		log.debug("Keyboard: %s" % (self.keyboard, ))
-		self.mouse = Mouse()
+		self.mouse = Mouse(name=mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
+		self.gamepad = Gamepad(name=gamepad) if gamepad else Dummy()
+		log.debug("Gamepad:  %s" % (self.gamepad, ))
+		
 		self.mouse.updateParams(
 			friction=Mouse.DEFAULT_FRICTION,
 			xscale=Mouse.DEFAULT_XSCALE,
@@ -270,8 +277,10 @@ class Mapper(object):
 			cb = self.scheduled_tasks[0][1]
 			self.scheduled_tasks = self.scheduled_tasks[1:]
 			cb(self)
-		
-		
+		self.generate_events()
+	
+	
+	def generate_events(self):
 		# Generate events - keys
 		if len(self.keypress_list):
 			self.keyboard.pressEvent(self.keypress_list)

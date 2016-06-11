@@ -275,7 +275,7 @@ class ActionParser(object):
 			raise ParseError("Invalid number of parameters for '%s'" % (cls.COMMAND))
 	
 	
-	def _parse_action(self):
+	def _parse_action(self, frm=ACTIONS):
 		"""
 		Parses one action, that is one of:
 		 - something(params)
@@ -286,10 +286,10 @@ class ActionParser(object):
 		t = self._next_token()
 		if t.type != TokenType.NAME:
 			raise ParseError("Expected action name, got '%s'" % (t.value,))
-		if t.value not in ACTIONS:
+		if t.value not in frm:
 			raise ParseError("Unknown action '%s'" % (t.value,))
 		action_name = t.value
-		action_class = ACTIONS[action_name]
+		action_class = frm[action_name]
 		
 		# Check if there are any tokens left - return action without parameters
 		# if not
@@ -300,6 +300,13 @@ class ActionParser(object):
 		# parameters from it
 		t = self._peek_token()
 		parameters = []
+		if t.type == TokenType.OP and t.value == '.':
+			# ACTION dict can have nested dicts; SOMETHING.action
+			if type(action_class) == dict:
+				self._next_token()
+				return self._parse_action(action_class)
+			else:
+				raise ParseError("Unexpected '.' after '%s'" % (action_name,))
 		if t.type == TokenType.OP and t.value == '(':
 			parameters  = self._parse_parameters()
 			if not self._tokens_left():
