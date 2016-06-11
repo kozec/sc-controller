@@ -8,7 +8,6 @@ List of (possibly) planned features in no particular order
 
 UI-only stuff:
 - Profile import / export
-- Process monitor (or active window monitor) with switch
 - Copy & paste
 
 
@@ -17,6 +16,7 @@ OSD related stuff:
 
 
 **Done** stuff:
+- Process monitor (or active window monitor) with switch
 - OSD
 - Menu in OSD
 - Touch-Menu
