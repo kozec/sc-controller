@@ -22,8 +22,10 @@ class GlobalSettings(Editor, UserDataManager):
 		UserDataManager.__init__(self)
 		self.app = app
 		self.setup_widgets()
-		self.load_conditions()
+		self.app.config.reload()
+		self.load_autoswitch()
 		self.load_profile_list()
+		self._recursing = False
 		self._eh_ids = (
 			self.app.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		)
@@ -33,7 +35,7 @@ class GlobalSettings(Editor, UserDataManager):
 		# config is reloaded in main window 'reconfigured' handler.
 		# Using GLib.idle_add here ensures that main window hanlder will run
 		# *before* self.load_conditions
-		GLib.idle_add(self.load_conditions)
+		GLib.idle_add(self.load_autoswitch)
 	
 	
 	def on_Dialog_destroy(self, *a):
@@ -41,21 +43,27 @@ class GlobalSettings(Editor, UserDataManager):
 			self.app.dm.disconnect(x)
 		self._eh_ids = ()
 	
-	def load_conditions(self):
-		""" Transfers autoswitch conditions from config to UI """
+	
+	def load_autoswitch(self):
+		""" Transfers autoswitch settings from config to UI """
 		tvItems = self.builder.get_object("tvItems")
+		cbShowOSD = self.builder.get_object("cbShowOSD")
 		model = tvItems.get_model()
 		model.clear()
 		for x in self.app.config['autoswitch']:
 			o = GObject.GObject()
 			o.condition = Condition.parse(x['condition'])
 			model.append((o, o.condition.describe(), x['profile']))
+		self._recursing = True
 		self.on_tvItems_cursor_changed()
+		cbShowOSD.set_active(bool(self.app.config['autoswitch_osd']))
+		self._recursing = False
 	
 	
 	def save_config(self):
-		""" Transfers conditions from UI back to config """
+		""" Transfers settings from UI back to config """
 		tvItems = self.builder.get_object("tvItems")
+		cbShowOSD = self.builder.get_object("cbShowOSD")
 		conds = []
 		for row in tvItems.get_model():
 			conds.append(dict(
@@ -63,7 +71,13 @@ class GlobalSettings(Editor, UserDataManager):
 				profile = row[2]
 			))
 		self.app.config['autoswitch'] = conds
+		self.app.config['autoswitch_osd'] = cbShowOSD.get_active()
 		self.app.save_config()
+	
+	
+	def on_cbShowOSD_toggled(self, cb):
+		if self._recursing: return
+		self.save_config()
 	
 	
 	def btEdit_clicked_cb(self, *a):

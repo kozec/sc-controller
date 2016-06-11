@@ -111,6 +111,7 @@ class AutoSwitcher(object):
 			# Window not switched or profile is not known yet
 			return
 		self.current_window = w
+		log.debug("Window switched: %s", w)
 		pars = X.get_window_title(self.dpy, w), X.get_window_class(self.dpy, w)
 		for c in self.conds:
 			if c.matches(*pars):
