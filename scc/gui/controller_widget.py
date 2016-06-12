@@ -105,8 +105,8 @@ class ControllerButton(ControllerWidget):
 
 class ControllerStick(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_STICK
-	def __init__(self, app, name, use_icon, widget):
-		self.pressed = Gtk.Label()
+	def __init__(self, app, name, use_icon, enable_press, widget):
+		self.pressed = Gtk.Label() if enable_press else None
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
 		
 		grid = Gtk.Grid()
@@ -114,14 +114,18 @@ class ControllerStick(ControllerWidget):
 		self.widget.connect('motion-notify-event', self.on_cursor_motion)
 		self.label.set_property("vexpand", True)
 		self.label.set_property("hexpand", True)
-		self.label.set_xalign(0.0); self.label.set_yalign(0.5)
-		self.pressed.set_property("hexpand", True)
-		self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
+		if self.pressed:
+			self.label.set_xalign(0.0); self.label.set_yalign(0.5)
+			self.pressed.set_property("hexpand", True)
+			self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
+			grid.attach(self.pressed, 2, 2, 1, 1)
+		else:
+			self.label.set_xalign(0.5); self.label.set_yalign(0.5)
+			self.pressed = None
 		if self.icon:
 			self.icon.set_margin_right(5)
 			grid.attach(self.icon, 1, 1, 1, 2)
 		grid.attach(self.label, 2, 1, 1, 1)
-		grid.attach(self.pressed, 2, 2, 1, 1)
 		self.over_icon = False
 		self.widget.add(grid)
 		self.widget.show_all()
@@ -159,7 +163,8 @@ class ControllerStick(ControllerWidget):
 		self._set_label(self.app.current.stick)
 		txt = action.describe(self.ACTION_CONTEXT)
 		txt = txt.replace("<", "&lt;").replace(">", "&gt;")
-		self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
+		if self.pressed:
+			self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
 
 
 class ControllerTrigger(ControllerButton):
@@ -184,7 +189,8 @@ class ControllerPad(ControllerStick):
 		self._set_label(action)
 		txt = pressed.describe(self.ACTION_CONTEXT)
 		txt = txt.replace("<", "&lt;").replace(">", "&gt;")
-		self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
+		if self.pressed:
+			self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
 
 
 class ControllerGyro(ControllerWidget):

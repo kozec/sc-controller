@@ -22,7 +22,7 @@ class BindingEditor(object):
 		self.button_widgets = {}
 	
 	
-	def create_binding_buttons(self, use_icons=True):
+	def create_binding_buttons(self, use_icons=True, enable_press=True):
 		"""
 		Creates ControllerWidget instances for available Gtk.Buttons defined
 		in glade file.
@@ -38,11 +38,11 @@ class BindingEditor(object):
 		for b in PADS:
 			w = self.builder.get_object("bt" + b)
 			if w:
-				self.button_widgets[b] = ControllerPad(self, b, use_icons, w)
+				self.button_widgets[b] = ControllerPad(self, b, use_icons, enable_press, w)
 		for b in STICKS:
 			w = self.builder.get_object("bt" + b)
 			if w:
-				self.button_widgets[b] = ControllerStick(self, b, use_icons, w)
+				self.button_widgets[b] = ControllerStick(self, b, use_icons, enable_press, w)
 		for b in GYROS:
 			w = self.builder.get_object("bt" + b)
 			if w:

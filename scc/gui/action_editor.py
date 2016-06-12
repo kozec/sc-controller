@@ -698,9 +698,9 @@ class ActionEditor(Editor):
 		self.id = button
 
 	
-	def set_trigger(self, trigger, action):
+	def set_trigger(self, trigger, action, mode=Action.AC_TRIGGER):
 		""" Setups action editor as editor for trigger action """
-		self._set_mode(action, Action.AC_TRIGGER)
+		self._set_mode(action, mode)
 		self.hide_sensitivity(1, 2) # YZ
 		self.hide_require_click()
 		self.hide_hide_enable_deadzones()
@@ -710,9 +710,9 @@ class ActionEditor(Editor):
 		self.id = trigger
 	
 	
-	def set_stick(self, action):
+	def set_stick(self, action, mode=Action.AC_STICK):
 		""" Setups action editor as editor for stick action """
-		self._set_mode(action, Action.AC_STICK)
+		self._set_mode(action, mode)
 		self.hide_sensitivity(2) # Z only
 		self.hide_require_click()
 		self.hide_osd()
