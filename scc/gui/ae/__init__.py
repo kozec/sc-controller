@@ -4,13 +4,14 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.tools import strip_none, ensure_size
 from scc.actions import Action, NoAction, XYAction
+from scc.tools import strip_none, ensure_size
+from scc.gui import ComboSetter
 
 import os, logging
 log = logging.getLogger("AE")
 
-class AEComponent(object):
+class AEComponent(ComboSetter):
 	GLADE = None
 	NAME = None
 	PRIORITY = 0
@@ -79,18 +80,7 @@ class AEComponent(object):
 	
 	def get_widget(self):
 		return self.widget
-	
-	
-	def set_cb(self, cb, key, keyindex=0):
-		""" Sets combobox value """
-		model = cb.get_model()
-		self._recursing = True
-		for row in model:
-			if key == row[keyindex]:
-				cb.set_active_iter(row.iter)
-				self._recursing = False
-				return
-		self._recursing = False
+
 
 
 def describe_action(mode, cls, v):

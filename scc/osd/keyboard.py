@@ -39,6 +39,7 @@ class Keyboard(OSDWindow, TimerManager):
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	HILIGHT_COLOR = "#00688D"
+	OSK_PROF_NAME = ".scc-osd.keyboard"
 	BUTTON_MAP = {
 		SCButtons.A.name : Keys.KEY_ENTER,
 		SCButtons.B.name : Keys.KEY_ESC,
@@ -164,7 +165,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def on_reconfigured(self, *a):
-		self.profile.load(find_profile(".scc-osd.keyboard")).compress()
+		self.profile.load(find_profile(Keyboard.OSK_PROF_NAME)).compress()
 		log.debug("Reloaded profile")
 	
 	
@@ -199,7 +200,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def show(self, *a):
 		OSDWindow.show(self, *a)
-		self.profile.load(find_profile(".scc-osd.keyboard")).compress()
+		self.profile.load(find_profile(Keyboard.OSK_PROF_NAME)).compress()
 		self.mapper = SlaveMapper(self.profile, keyboard=b"SCC OSD Keyboard")
 		self.mapper.set_special_actions_handler(self)
 		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
