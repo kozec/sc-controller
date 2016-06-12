@@ -27,7 +27,7 @@ class SVGWidget(Gtk.EventBox):
 	}
 	
 	
-	def __init__(self, app, filename):
+	def __init__(self, app, filename, init_hilighted=True):
 		Gtk.EventBox.__init__(self)
 		self.app = app
 		self.cache = {}
@@ -41,7 +41,8 @@ class SVGWidget(Gtk.EventBox):
 		self.image_width = 1
 		self.image = Gtk.Image()
 		self.parse_image()
-		self.hilight({})
+		if init_hilighted:
+			self.hilight({})
 		self.add(self.image)
 		self.show_all()
 	
@@ -56,6 +57,32 @@ class SVGWidget(Gtk.EventBox):
 		tree = ET.fromstring(self.svg_source)
 		find_areas(tree, (0, 0), self.areas)
 		self.image_width = float(tree.attrib["width"])
+	
+	
+	def recolor(self, backgrounds, strokes):
+		tree = ET.fromstring(self.svg_source)
+		
+		def walk(xml, s_from, s_to):
+			for child in xml:
+				if 'style' in child.attrib:
+					if s_from in child.attrib['style']:
+						child.attrib['style'] = child.attrib['style'].replace(s_from, s_to)
+				walk(child, s_from, s_to)
+		
+		for k in backgrounds:
+			s_from = "fill:#%s" % (k,)
+			s_to   = "fill:#%s" % (backgrounds[k],)
+			walk(tree, s_from, s_to)
+		
+		for k in strokes:
+			s_from = "stroke:#%s" % (k,)
+			s_to   = "stroke:#%s" % (strokes[k],)
+			walk(tree, s_from, s_to)
+		
+		self.svg_source = ET.tostring(tree)
+		
+		self.cache = {}
+		self.hilight({})
 	
 	
 	def set_labels(self, labels):

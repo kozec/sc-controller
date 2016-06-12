@@ -17,6 +17,7 @@ from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
 from scc.actions import ACTIONS
 from scc.profile import Profile
+from scc.config import Config
 from scc.uinput import Keys
 from scc.lib import xwrappers as X
 from scc.gui.daemon_manager import DaemonManager
@@ -38,8 +39,9 @@ class Keyboard(OSDWindow, TimerManager):
    2  - error, failed to access sc-daemon, sc-daemon reported error or died while menu is displayed.
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
-	HILIGHT_COLOR = "#00688D"
 	OSK_PROF_NAME = ".scc-osd.keyboard"
+	RECOLOR_BACKGROUNDS = ( "button1", "button2", "text", "background" )
+	RECOLOR_STROKES = ( "button1_border", "button2_border", "text" )
 	BUTTON_MAP = {
 		SCButtons.A.name : Keys.KEY_ENTER,
 		SCButtons.B.name : Keys.KEY_ESC,
@@ -58,12 +60,14 @@ class Keyboard(OSDWindow, TimerManager):
 		self.keymap.connect('state-changed', self.on_state_changed)
 		ACTIONS['OSK'] = OSK
 		self.profile = Profile(TalkingActionParser())
+		self.config = Config()
 		
 		kbimage = os.path.join(get_config_path(), 'keyboard.svg')
 		if not os.path.exists(kbimage):
 			# Prefer image in ~/.config/scc, but load default one as fallback
 			kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
-		self.background = SVGWidget(self, kbimage)
+		self.background = SVGWidget(self, kbimage, init_hilighted=False)
+		self.recolor(kbimage + ".json")
 		
 		self.limits = {}
 		self.limits[LEFT]  = self.background.get_rect_area(self.background.get_element("LIMIT_LEFT"))
@@ -92,6 +96,28 @@ class Keyboard(OSDWindow, TimerManager):
 		self.add(self.c)
 		
 		self.timer('labels', 0.1, self.update_labels)
+	
+	
+	def recolor(self, jsonfile):
+		source_colors = {}
+		try:
+			# Try to read json file and bail out if it fails
+			source_colors = json.loads(open(jsonfile, "r").read())['colors']
+		except Exception, e:
+			log.warning("Failed to load keyboard description")
+			log.warning(e)
+		
+		backgrounds, strokes = {}, {}
+		
+		for k in Keyboard.RECOLOR_BACKGROUNDS:
+			if k in self.config['osk_colors'] and k in source_colors:
+				backgrounds[source_colors[k]] = self.config['osk_colors'][k]
+		
+		for k in Keyboard.RECOLOR_STROKES:
+			if k in self.config['osk_colors'] and k in source_colors:
+				strokes[source_colors[k]] = self.config['osk_colors'][k]
+		
+		self.background.recolor(backgrounds, strokes)
 	
 	
 	def use_daemon(self, d):
@@ -279,7 +305,7 @@ class Keyboard(OSDWindow, TimerManager):
 		Updates hilighted keys on bacgkround image.
 		"""
 		self.background.hilight({
-			"AREA_" + a.name : Keyboard.HILIGHT_COLOR
+			"AREA_" + a.name : "#" + self.config['osk_colors']['hilight']
 			for a in [ a for a in self._hovers.values() if a ]
 		})
 	
