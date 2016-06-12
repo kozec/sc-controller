@@ -4,6 +4,9 @@ SC-Controller - BindingEditor
 
 Base class for main application window and OSD Keyboard bindings editor.
 """
+from __future__ import unicode_literals
+from scc.tools import _
+
 from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.modifiers import DoubleclickModifier, HoldModifier
 from scc.macros import Macro, Repeat
@@ -12,6 +15,7 @@ from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PR
 from scc.gui.controller_widget import ControllerPad, ControllerStick, ControllerGyro
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
 from scc.gui.modeshift_editor import ModeshiftEditor
+from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.action_editor import ActionEditor
 from scc.gui.macro_editor import MacroEditor
 

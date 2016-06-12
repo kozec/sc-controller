@@ -11,7 +11,6 @@ from gi.repository import Gtk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.global_settings import GlobalSettings
-from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
 from scc.gui.parser import GuiActionParser
