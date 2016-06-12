@@ -24,7 +24,7 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import KEY_TO_GDK
 from scc.osd.timermanager import TimerManager
 from scc.osd.slave_mapper import SlaveMapper
-from scc.osd.keyboard_actions import OSK
+from scc.osd.osk_actions import OSK
 from scc.osd import OSDWindow
 
 import os, sys, json, logging

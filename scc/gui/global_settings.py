@@ -19,7 +19,7 @@ from scc.gui.editor import Editor
 from scc.gui import ComboSetter
 from scc.x11.autoswitcher import Condition
 from scc.osd.keyboard import Keyboard as OSDKeyboard
-from scc.osd.keyboard_actions import OSK
+from scc.osd.osk_actions import OSK
 
 import re, logging
 log = logging.getLogger("GS")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 """
-SC Controller - OSD Keyboard Actions
+SC Controller - On Screen Keyboard Actions
 
 Special Actions that are used to bind functions like closing keyboard or moving
 cursors around.
