@@ -196,7 +196,7 @@ class Condition(object):
 		if self.wm_class:
 			rv += [ _("class is '%s'") % (self.wm_class,) ]
 		if rv:
-			return _("and ").join(rv)
+			return _(" and ").join(rv)
 		return _("matches nothing")
 	
 	
