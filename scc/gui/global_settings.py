@@ -113,18 +113,21 @@ class GlobalSettings(Editor, UserDataManager):
 			ent.set_text("")
 		# Setup editor
 		if condition.title:
-			entTitle.set_text(condition.title)
+			entTitle.set_text(condition.title or "")
 			cbMatchTitle.set_active(True)
 		elif condition.exact_title:
-			entTitle.set_text(condition.title)
+			entTitle.set_text(condition.exact_title or "")
 			cbExactTitle.set_active(True)
 			cbMatchTitle.set_active(True)
 		elif condition.regexp:
-			entTitle.set_text(condition.regexp.pattern)
+			try:
+				entTitle.set_text(condition.regexp.pattern)
+			except:
+				entTitle.set_text("")
 			cbRegExp.set_active(True)
 			cbMatchTitle.set_active(True)
 		if condition.wm_class:
-			entClass.set_text(condition.wm_class)
+			entClass.set_text(condition.wm_class or "")
 			cbMatchClass.set_active(True)
 		
 		# Show editor
