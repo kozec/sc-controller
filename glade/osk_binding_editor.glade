@@ -10,6 +10,7 @@
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
     <signal name="delete-event" handler="hide_dont_destroy" swapped="no"/>
+    <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
       <object class="GtkGrid">
         <property name="visible">True</property>
