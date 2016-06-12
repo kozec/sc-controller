@@ -15,6 +15,7 @@ from scc.tools import point_in_gtkrect, circle_to_square, find_profile, clamp
 from scc.paths import get_share_path, get_config_path
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
+from scc.actions import ACTIONS
 from scc.profile import Profile
 from scc.uinput import Keys
 from scc.lib import xwrappers as X
@@ -23,9 +24,9 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import KEY_TO_GDK
 from scc.osd.timermanager import TimerManager
 from scc.osd.slave_mapper import SlaveMapper
+from scc.osd.keyboard_actions import OSK
 from scc.osd import OSDWindow
 
-import scc.osd.keyboard_actions
 import os, sys, json, logging
 log = logging.getLogger("osd.menu")
 
@@ -54,6 +55,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self.mapper = None
 		self.keymap = Gdk.Keymap.get_default()
 		self.keymap.connect('state-changed', self.on_state_changed)
+		ACTIONS['OSK'] = OSK
 		self.profile = Profile(TalkingActionParser())
 		
 		kbimage = os.path.join(get_config_path(), 'keyboard.svg')

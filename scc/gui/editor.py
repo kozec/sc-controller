@@ -47,6 +47,15 @@ class Editor(object):
 					Gtk.STYLE_PROVIDER_PRIORITY_USER)
 	
 	
+	def hide_dont_destroy(self, w, *a):
+		"""
+		When used as handler for 'delete-event' signal, prevents window from
+		being destroyed after closing.
+		"""
+		w.hide()
+		return True
+	
+	
 	def set_cb(self, cb, key, keyindex=0):
 		""" Sets combobox value """
 		model = cb.get_model()

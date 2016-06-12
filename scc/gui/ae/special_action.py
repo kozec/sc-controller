@@ -37,11 +37,6 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 		self._current_profile = None
 	
 	
-	def load(self):
-		if self.loaded : return
-		AEComponent.load(self)
-	
-	
 	def shown(self):
 		if not self._userdata_load_started:
 			self._userdata_load_started = True

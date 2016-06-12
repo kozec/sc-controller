@@ -8,26 +8,19 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
-from scc.gui.controller_widget import ControllerPad, ControllerStick, ControllerGyro
-from scc.gui.controller_widget import ControllerButton, ControllerTrigger
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
 from scc.gui.userdata_manager import UserDataManager
-from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.global_settings import GlobalSettings
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.daemon_manager import DaemonManager
-from scc.gui.action_editor import ActionEditor
-from scc.gui.macro_editor import MacroEditor
+from scc.gui.binding_editor import BindingEditor
 from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.paths import get_config_path, get_profiles_path
-from scc.modifiers import ModeModifier, SensitivityModifier
-from scc.modifiers import DoubleclickModifier, HoldModifier
 from scc.constants import SCButtons, DAEMON_VERSION
-from scc.actions import XYAction, NoAction
-from scc.macros import Macro, Repeat
+from scc.actions import NoAction
 from scc.profile import Profile
 from scc.config import Config
 
@@ -35,7 +28,7 @@ import scc.osd.menu_generators
 import os, sys, json, logging
 log = logging.getLogger("App")
 
-class App(Gtk.Application, UserDataManager):
+class App(Gtk.Application, UserDataManager, BindingEditor):
 	"""
 	Main application / window.
 	"""
@@ -50,6 +43,7 @@ class App(Gtk.Application, UserDataManager):
 				application_id="me.kozec.scc",
 				flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.NON_UNIQUE )
 		UserDataManager.__init__(self)
+		BindingEditor.__init__(self)
 		# Setup Gtk.Application
 		self.setup_commandline()
 		# Setup DaemonManager
@@ -86,17 +80,7 @@ class App(Gtk.Application, UserDataManager):
 		self.window.set_title(_("SC Controller"))
 		self.window.set_wmclass("SC Controller", "SC Controller")
 		self.ribar = None
-		
-		for b in BUTTONS:
-			self.button_widgets[b] = ControllerButton(self, b, self.builder.get_object("bt" + b.name))
-		for b in TRIGGERS:
-			self.button_widgets[b] = ControllerTrigger(self, b, self.builder.get_object("btTrigger" + b))
-		for b in PADS:
-			self.button_widgets[b] = ControllerPad(self, b, self.builder.get_object("bt" + b))
-		for b in STICKS:
-			self.button_widgets[b] = ControllerStick(self, b, self.builder.get_object("bt" + b))
-		for b in GYROS:
-			self.button_widgets[b] = ControllerGyro(self, b, self.builder.get_object("bt" + b))
+		self.create_binding_buttons()
 		
 		self.builder.get_object("cbProfile").set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
@@ -114,6 +98,8 @@ class App(Gtk.Application, UserDataManager):
 		main_area.put(self.background, 0, 0)
 		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		headerbar(self.builder.get_object("hbWindow"))
+		
+		self.on_mnuGlobalSettings_activate()
 	
 	
 	def check(self):
@@ -153,41 +139,26 @@ class App(Gtk.Application, UserDataManager):
 		self.hilight(button)
 	
 	
-	def _choose_editor(self, action, title):
-		if isinstance(action, SensitivityModifier):
-			action = action.action
-		if isinstance(action, (ModeModifier, DoubleclickModifier, HoldModifier)) and not is_gyro_enable(action):
-			e = ModeshiftEditor(self, self.on_action_chosen)
-			e.set_title(_("Mode Shift for %s") % (title,))
-		elif isinstance(action, Macro):
-			e = MacroEditor(self, self.on_action_chosen)
-			e.set_title(_("Macro for %s") % (title,))
-		else:
-			e = ActionEditor(self, self.on_action_chosen)
-			e.set_title(title)
-		return e
-		
-	
 	def show_editor(self, id, press=False):
 		if id in SCButtons:
 			title = _("%s Button") % (id.name,)
 			if press:
 				title = _("%s Press") % (id.name,)
-			ae = self._choose_editor(self.current.buttons[id], title)
+			ae = self.choose_editor(self.current.buttons[id], title)
 			ae.set_button(id, self.current.buttons[id])
 			ae.show(self.window)
 		elif id in TRIGGERS:
-			ae = self._choose_editor(self.current.triggers[id],
+			ae = self.choose_editor(self.current.triggers[id],
 				_("%s Trigger") % (id,))
 			ae.set_trigger(id, self.current.triggers[id])
 			ae.show(self.window)
 		elif id in STICKS:
-			ae = self._choose_editor(self.current.stick,
+			ae = self.choose_editor(self.current.stick,
 				_("Stick"))
 			ae.set_stick(self.current.stick)
 			ae.show(self.window)
 		elif id in GYROS:
-			ae = self._choose_editor(self.current.gyro,
+			ae = self.choose_editor(self.current.gyro,
 				_("Gyro"))
 			ae.set_gyro(self.current.gyro)
 			ae.show(self.window)
@@ -195,10 +166,10 @@ class App(Gtk.Application, UserDataManager):
 			data = NoAction()
 			if id == "LPAD":
 				data = self.current.pads[Profile.LEFT]
-				ae = self._choose_editor(data, _("Left Pad"))
+				ae = self.choose_editor(data, _("Left Pad"))
 			else:
 				data = self.current.pads[Profile.RIGHT]
-				ae = self._choose_editor(data, _("Right Pad"))
+				ae = self.choose_editor(data, _("Right Pad"))
 			ae.set_pad(id, data)
 			ae.show(self.window)
 	
@@ -216,7 +187,7 @@ class App(Gtk.Application, UserDataManager):
 	def on_btUndo_clicked(self, *a):
 		if len(self.undo) < 1: return
 		undo, self.undo = self.undo[-1], self.undo[0:-1]
-		self.set_action(undo.id, undo.before)
+		self.set_action(self.current, undo.id, undo.before)
 		self.redo.append(undo)
 		self.builder.get_object("btRedo").set_sensitive(True)
 		if len(self.undo) < 1:
@@ -227,7 +198,7 @@ class App(Gtk.Application, UserDataManager):
 	def on_btRedo_clicked(self, *a):
 		if len(self.redo) < 1: return
 		redo, self.redo = self.redo[-1], self.redo[0:-1]
-		self.set_action(redo.id, redo.after)
+		self.set_action(self.current, redo.id, redo.after)
 		self.undo.append(redo)
 		self.builder.get_object("btUndo").set_sensitive(True)
 		if len(self.redo) < 1:
@@ -376,7 +347,7 @@ class App(Gtk.Application, UserDataManager):
 	
 	
 	def on_action_chosen(self, id, action, reopen=False):
-		before = self.set_action(id, action)
+		before = self.set_action(self.current, id, action)
 		if type(before) != type(action) or before.to_string() != action.to_string():
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
@@ -384,35 +355,6 @@ class App(Gtk.Application, UserDataManager):
 		self.on_profile_changed()
 		if reopen:
 			self.show_editor(id)
-	
-	
-	def set_action(self, id, action):
-		"""
-		Stores action in profile.
-		Returns formely stored action.
-		"""
-		before = NoAction()
-		if id in BUTTONS:
-			before, self.current.buttons[id] = self.current.buttons[id], action
-			self.button_widgets[id].update()
-		if id in PRESSABLE:
-			before, self.current.buttons[id] = self.current.buttons[id], action
-			self.button_widgets[id.name].update()
-		elif id in TRIGGERS:
-			before, self.current.triggers[id] = self.current.triggers[id], action
-			self.button_widgets[id].update()
-		elif id in GYROS:
-			before, self.current.gyro = self.current.gyro, action
-			self.button_widgets[id].update()
-		elif id in STICKS + PADS:
-			if id in STICKS:
-				before, self.current.stick = self.current.stick, action
-			elif id == "LPAD":
-				before, self.current.pads[Profile.LEFT] = self.current.pads[Profile.LEFT], action
-			else:
-				before, self.current.pads[Profile.RIGHT] = self.current.pads[Profile.RIGHT], action
-			self.button_widgets[id].update()
-		return before
 	
 	
 	def on_background_area_hover(self, trash, area):

@@ -46,7 +46,8 @@ class Action(object):
 	AC_GYRO		= 1 << 4
 	AC_PAD		= 1 << 5
 	AC_OSD		= 1 << 8
-	AC_ALL		= 0b11111111
+	AC_OSK		= 1 << 9	# On screen keyboard
+	AC_ALL		= 0b111111111
 	
 	def __init__(self, *parameters):
 		self.parameters = parameters

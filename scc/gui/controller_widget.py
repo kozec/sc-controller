@@ -32,7 +32,7 @@ LONG_TEXT = 12
 class ControllerWidget:
 	ACTION_CONTEXT = None
 
-	def __init__(self, app, id, widget):
+	def __init__(self, app, id, use_icon, widget):
 		self.app = app
 		self.id = id
 		self.name = id if type(id) in (str, unicode) else id.name
@@ -40,7 +40,7 @@ class ControllerWidget:
 		
 		self.label = Gtk.Label()
 		self.label.set_ellipsize(Pango.EllipsizeMode.END)
-		self.icon = Gtk.Image.new_from_file(self.get_image())
+		self.icon = Gtk.Image.new_from_file(self.get_image()) if use_icon else None
 		self.update()
 		
 		self.widget.connect('enter', self.on_cursor_enter)
@@ -71,15 +71,18 @@ class ControllerWidget:
 class ControllerButton(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_BUTTON
 
-	def __init__(self, app, name, widget):
-		ControllerWidget.__init__(self, app, name, widget)
+	def __init__(self, app, name, use_icon, widget):
+		ControllerWidget.__init__(self, app, name, use_icon, widget)
 
-		vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
-		separator = Gtk.Separator(orientation = Gtk.Orientation.VERTICAL)
-		vbox.pack_start(self.icon, False, False, 1)
-		vbox.pack_start(separator, False, False, 1)
-		vbox.pack_start(self.label, False, True, 1)
-		self.widget.add(vbox)
+		if use_icon:
+			vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+			separator = Gtk.Separator(orientation = Gtk.Orientation.VERTICAL)
+			vbox.pack_start(self.icon, False, False, 1)
+			vbox.pack_start(separator, False, False, 1)
+			vbox.pack_start(self.label, False, True, 1)
+			self.widget.add(vbox)
+		else:
+			self.widget.add(self.label)
 		self.widget.show_all()
 		self.label.set_max_width_chars(12)
 		if name == "C":
@@ -102,9 +105,9 @@ class ControllerButton(ControllerWidget):
 
 class ControllerStick(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_STICK
-	def __init__(self, app, name, widget):
+	def __init__(self, app, name, use_icon, widget):
 		self.pressed = Gtk.Label()
-		ControllerWidget.__init__(self, app, name, widget)
+		ControllerWidget.__init__(self, app, name, use_icon, widget)
 		
 		grid = Gtk.Grid()
 		self.widget.set_events(Gdk.EventMask.POINTER_MOTION_MASK)
@@ -114,8 +117,9 @@ class ControllerStick(ControllerWidget):
 		self.label.set_xalign(0.0); self.label.set_yalign(0.5)
 		self.pressed.set_property("hexpand", True)
 		self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
-		self.icon.set_margin_right(5)
-		grid.attach(self.icon, 1, 1, 1, 2)
+		if self.icon:
+			self.icon.set_margin_right(5)
+			grid.attach(self.icon, 1, 1, 1, 2)
 		grid.attach(self.label, 2, 1, 1, 1)
 		grid.attach(self.pressed, 2, 2, 1, 1)
 		self.over_icon = False
@@ -185,9 +189,9 @@ class ControllerPad(ControllerStick):
 
 class ControllerGyro(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_GYRO
-	def __init__(self, app, name, widget):
+	def __init__(self, app, name, use_icon, widget):
 		self.pressed = Gtk.Label()
-		ControllerWidget.__init__(self, app, name, widget)
+		ControllerWidget.__init__(self, app, name, use_icon, widget)
 		
 		grid = Gtk.Grid()
 		self.label.set_property("vexpand", True)
@@ -195,7 +199,8 @@ class ControllerGyro(ControllerWidget):
 		self.label.set_xalign(0.0); self.label.set_yalign(0.5)
 		self.pressed.set_property("hexpand", True)
 		self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
-		self.icon.set_margin_right(5)
+		if self.icon:
+			self.icon.set_margin_right(5)
 		grid.attach(self.icon, 1, 1, 1, 2)
 		grid.attach(self.label, 2, 1, 1, 1)
 		grid.attach(self.pressed, 2, 2, 1, 1)

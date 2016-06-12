@@ -27,29 +27,48 @@
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <child>
-          <object class="GtkGrid">
+          <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="margin_left">10</property>
+            <property name="margin_right">10</property>
+            <property name="margin_top">10</property>
+            <property name="margin_bottom">10</property>
+            <property name="orientation">vertical</property>
             <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
+              <object class="GtkFrame">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label_xalign">0</property>
+                <property name="shadow_type">none</property>
+                <child>
+                  <object class="GtkButton" id="butEditKeyboardBindings">
+                    <property name="label" translatable="yes">Edit Button Bindings...</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_left">50</property>
+                    <property name="margin_right">50</property>
+                    <property name="margin_top">5</property>
+                    <signal name="clicked" handler="on_butEditKeyboardBindings_clicked" swapped="no"/>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Bindings</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
             </child>
             <child>
               <placeholder/>
@@ -352,10 +371,11 @@
     <property name="role">condition editor</property>
     <property name="resizable">False</property>
     <property name="modal">True</property>
+    <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
     <property name="transient_for">Dialog</property>
-    <signal name="delete-event" handler="on_ConditionEditor_destroy" swapped="no"/>
+    <signal name="delete-event" handler="hide_dont_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_ConditionEditor_key_press_event" swapped="no"/>
     <child>
       <object class="GtkBox" id="vbox321">

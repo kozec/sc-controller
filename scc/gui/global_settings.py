@@ -9,6 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gdk, GObject, GLib
 from scc.x11.autoswitcher import Condition
+from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor
 
@@ -25,6 +26,7 @@ class GlobalSettings(Editor, UserDataManager):
 		self.app.config.reload()
 		self.load_autoswitch()
 		self.load_profile_list()
+		self.osk_binding_editor = None
 		self._recursing = False
 		self._eh_ids = (
 			self.app.dm.connect('reconfigured', self.on_daemon_reconfigured),
@@ -78,6 +80,12 @@ class GlobalSettings(Editor, UserDataManager):
 	def on_cbShowOSD_toggled(self, cb):
 		if self._recursing: return
 		self.save_config()
+	
+	
+	def on_butEditKeyboardBindings_clicked(self, *a):
+		if not self.osk_binding_editor:
+			self.osk_binding_editor = OSKBindingEditor(self.app)
+		self.osk_binding_editor.show(self.window)
 	
 	
 	def btEdit_clicked_cb(self, *a):
@@ -157,7 +165,7 @@ class GlobalSettings(Editor, UserDataManager):
 		o.condition = condition
 		model.set_value(iter, 1, condition.describe())
 		model.set_value(iter, 2, profile)
-		self.on_ConditionEditor_destroy(ce)
+		self.hide_dont_destroy(ce)
 		self.save_config()
 	
 	
@@ -215,12 +223,7 @@ class GlobalSettings(Editor, UserDataManager):
 	def on_ConditionEditor_key_press_event(self, w, event):
 		""" Checks if pressed key was escape and if yes, closes window """
 		if event.keyval == Gdk.KEY_Escape:
-			self.on_ConditionEditor_destroy(w)
-	
-	
-	def on_ConditionEditor_destroy(self, w, *a):
-		w.hide()
-		return True
+			self.hide_dont_destroy(w)
 	
 	
 	def on_cbExactTitle_toggled(self, tg):

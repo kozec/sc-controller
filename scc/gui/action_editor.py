@@ -38,6 +38,9 @@ COMPONENTS = (								# List of known modules (components) in scc.gui.ae package
 	'trigger_ab',
 	'special_action',
 	'custom',
+	# OSK-only components
+	'osk_action',
+	'osk_buttons',
 )
 XYZ = "XYZ"									# Sensitivity settings keys
 AFP = ("Amplitude", "Frequency", "Period")	# Feedback settings keys
@@ -121,7 +124,7 @@ class ActionEditor(Editor):
 		Returns component instance.
 		"""
 		mod = importlib.import_module("scc.gui.ae.%s" % (class_name,))
-		for x in dir(mod):
+		for x in mod.__all__:
 			cls = getattr(mod, x)
 			if isinstance(cls, (type, types.ClassType)) and issubclass(cls, AEComponent):
 				if cls is not AEComponent:
@@ -684,9 +687,9 @@ class ActionEditor(Editor):
 		vbActionButtons.show_all()
 	
 	
-	def set_button(self, button, action):
+	def set_button(self, button, action, mode=Action.AC_BUTTON):
 		""" Setups action editor as editor for button action """
-		self._set_mode(action, Action.AC_BUTTON)
+		self._set_mode(action, mode)
 		self.hide_sensitivity(0, 1, 2)
 		self.hide_enable_feedback()
 		self.hide_hide_enable_deadzones()
