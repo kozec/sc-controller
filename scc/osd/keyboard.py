@@ -152,6 +152,7 @@ class Keyboard(OSDWindow, TimerManager):
 			self.daemon.connect('dead', self.on_daemon_died),
 			self.daemon.connect('error', self.on_daemon_died),
 			self.daemon.connect('event', self.on_event),
+			self.daemon.connect('reconfigured', self.on_reconfigured),
 			self.daemon.connect('alive', self.on_daemon_connected),
 		]
 	
@@ -160,6 +161,11 @@ class Keyboard(OSDWindow, TimerManager):
 		self.daemon = DaemonManager()
 		self._cononect_handlers()
 		OSDWindow.run(self)
+	
+	
+	def on_reconfigured(self, *a):
+		self.profile.load(find_profile(".scc-osd.keyboard")).compress()
+		log.debug("Reloaded profile")
 	
 	
 	def on_daemon_died(self, *a):
