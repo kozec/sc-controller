@@ -24,7 +24,8 @@ class Config(object):
 			"Desktop",
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
-		]
+		],
+		"osk_colors": { 'hilight' : '00688D' }
 	}
 	
 	def __init__(self):
