@@ -2,7 +2,7 @@
 """
 SC-Controller - Action Editor - On Screen Keyboard Action Component
 
-Assigns actions from scc.osd.keyboard_actions
+Assigns actions from scc.osd.osk_actions
 """
 from __future__ import unicode_literals
 from scc.tools import _
@@ -12,8 +12,8 @@ from scc.actions import Action, NoAction
 from scc.constants import LEFT, RIGHT
 from scc.gui.ae import AEComponent
 from scc.gui.parser import GuiActionParser
-from scc.osd.keyboard_actions import OSKAction, CloseOSKAction, OSKCursorAction
-from scc.osd.keyboard_actions import MoveOSKAction, OSKPressAction
+from scc.osd.osk_actions import OSKAction, CloseOSKAction, OSKCursorAction
+from scc.osd.osk_actions import MoveOSKAction, OSKPressAction
 
 import os, logging
 log = logging.getLogger("AE.SA")

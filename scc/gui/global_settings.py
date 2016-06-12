@@ -8,23 +8,33 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gdk, GObject, GLib
-from scc.x11.autoswitcher import Condition
+from scc.constants import LEFT, RIGHT
+from scc.tools import find_profile
+from scc.actions import ACTIONS
+from scc.profile import Profile
 from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
+from scc.gui.parser import GuiActionParser
 from scc.gui.editor import Editor
+from scc.gui import ComboSetter
+from scc.x11.autoswitcher import Condition
+from scc.osd.keyboard import Keyboard as OSDKeyboard
+from scc.osd.osk_actions import OSK
 
 import re, logging
 log = logging.getLogger("GS")
 
-class GlobalSettings(Editor, UserDataManager):
+class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	GLADE = "global_settings.glade"
 	
 	def __init__(self, app):
 		UserDataManager.__init__(self)
 		self.app = app
 		self.setup_widgets()
+		self._recursing = False
 		self.app.config.reload()
-		self.load_autoswitch()
+		ACTIONS['OSK'] = OSK
+		self.load_settings()
 		self.load_profile_list()
 		self.osk_binding_editor = None
 		self._recursing = False
@@ -37,13 +47,19 @@ class GlobalSettings(Editor, UserDataManager):
 		# config is reloaded in main window 'reconfigured' handler.
 		# Using GLib.idle_add here ensures that main window hanlder will run
 		# *before* self.load_conditions
-		GLib.idle_add(self.load_autoswitch)
+		GLib.idle_add(self.load_settings)
 	
 	
 	def on_Dialog_destroy(self, *a):
 		for x in self._eh_ids:
 			self.app.dm.disconnect(x)
 		self._eh_ids = ()
+		del ACTIONS['OSK']
+	
+	
+	def load_settings(self):
+		self.load_autoswitch()
+		self.load_osk()
 	
 	
 	def load_autoswitch(self):
@@ -60,6 +76,54 @@ class GlobalSettings(Editor, UserDataManager):
 		self.on_tvItems_cursor_changed()
 		cbShowOSD.set_active(bool(self.app.config['autoswitch_osd']))
 		self._recursing = False
+	
+	
+	def load_osk(self):
+		cbStickAction = self.builder.get_object("cbStickAction")
+		cbTriggersAction = self.builder.get_object("cbTriggersAction")
+		profile = Profile(GuiActionParser())
+		profile.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		triggers = "%s|%s" % (
+				profile.triggers[LEFT].to_string(),
+				profile.triggers[RIGHT].to_string()
+		)
+		
+		if not self.set_cb(cbStickAction, profile.stick.to_string(), keyindex=1):
+			self.add_custom(cbStickAction, profile.stick.to_string())
+		if not self.set_cb(cbTriggersAction, triggers, keyindex=1):
+			self.add_custom(cbTriggersAction, triggers)
+	
+	
+	def add_custom(self, cb, key):
+		for k in cb.get_model():
+			if k[2]:
+				k[1] = key
+				self.set_cb(cb, key, keyindex=1)
+				return
+		cb.get_model().append(( _("(customized)"), key, True ))
+		self.set_cb(cb, key, keyindex=1)
+	
+	
+	def on_cbStickAction_changed(self, cb):
+		if self._recursing: return
+		key = cb.get_model().get_value(cb.get_active_iter(), 1)
+		profile = Profile(GuiActionParser())
+		profile.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		profile.stick = GuiActionParser().restart(key).parse()
+		profile.save(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		self.app.dm.reconfigure()
+	
+	
+	def on_cbTriggersAction_changed(self, cb):
+		if self._recursing: return
+		key = cb.get_model().get_value(cb.get_active_iter(), 1)
+		l, r = key.split("|")
+		profile = Profile(GuiActionParser())
+		profile.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		profile.triggers[LEFT]  = GuiActionParser().restart(l).parse()
+		profile.triggers[RIGHT] = GuiActionParser().restart(r).parse()
+		profile.save(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		self.app.dm.reconfigure()
 	
 	
 	def save_config(self):

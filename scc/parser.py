@@ -180,6 +180,10 @@ class ActionParser(object):
 				# Action used as parameter
 				self.index -= 1 # go step back and reparse as action
 				parameter = self._parse_action()
+			elif self._tokens_left() and t.value in ACTIONS and type(ACTIONS[t.value]) == dict and self._peek_token().value == '.':
+				# SOMETHING.Action used as parameter
+				self.index -= 1 # go step back and reparse as action
+				parameter = self._parse_action()
 			else:
 				# Constant
 				if not t.value in ActionParser.CONSTS:

@@ -2,6 +2,37 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkDialog">
+    <property name="can_focus">False</property>
+    <property name="type_hint">dialog</property>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkListStore" id="lstItems">
     <columns>
       <!-- column-name item -->
@@ -11,6 +42,70 @@
       <!-- column-name profile -->
       <column type="gchararray"/>
     </columns>
+  </object>
+  <object class="GtkListStore" id="lstProfile">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name giofile -->
+      <column type="GObject"/>
+      <!-- column-name changed -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="lstStickAction">
+    <columns>
+      <!-- column-name label -->
+      <column type="gchararray"/>
+      <!-- column-name action -->
+      <column type="gchararray"/>
+      <!-- column-name is_custom -->
+      <column type="gboolean"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Move Keyboard</col>
+        <col id="1">OSK.move()</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Emulate Arrows</col>
+        <col id="1">dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Emulate Arrows, Move Keyboard when Left Grip is Pressed</col>
+        <col id="1">mode(LGRIP, OSK.move(), dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT)))</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Emulate Arrows, Move Keyboard when Right Grip is Pressed</col>
+        <col id="1">mode(RGRIP, OSK.move(), dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT)))</col>
+        <col id="2">False</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="lstTriggersAction">
+    <columns>
+      <!-- column-name label -->
+      <column type="gchararray"/>
+      <!-- column-name action -->
+      <column type="gchararray"/>
+      <!-- column-name is_custom -->
+      <column type="gboolean"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Shift and Ctrl</col>
+        <col id="1">button(Keys.KEY_LEFTSHIFT)|button(Keys.KEY_LEFTCTRL)</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Press Keyboard Buttons</col>
+        <col id="1">OSK.press(LEFT)|OSK.press(RIGHT)</col>
+        <col id="2">False</col>
+      </row>
+    </data>
   </object>
   <object class="GtkWindow" id="Dialog">
     <property name="width_request">650</property>
@@ -23,58 +118,122 @@
     <signal name="destroy" handler="on_Dialog_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
-      <object class="GtkNotebook">
+      <object class="GtkNotebook" id="notebook7">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <child>
-          <object class="GtkBox">
+          <object class="GtkGrid" id="grid3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_left">10</property>
             <property name="margin_right">10</property>
             <property name="margin_top">10</property>
             <property name="margin_bottom">10</property>
-            <property name="orientation">vertical</property>
             <child>
-              <object class="GtkFrame">
+              <object class="GtkLabel" id="label8">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">none</property>
-                <child>
-                  <object class="GtkButton" id="butEditKeyboardBindings">
-                    <property name="label" translatable="yes">Edit Button Bindings...</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_left">50</property>
-                    <property name="margin_right">50</property>
-                    <property name="margin_top">5</property>
-                    <signal name="clicked" handler="on_butEditKeyboardBindings_clicked" swapped="no"/>
-                  </object>
-                </child>
-                <child type="label">
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Bindings</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
-                  </object>
-                </child>
+                <property name="label" translatable="yes">Bindings</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">2</property>
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkLabel" id="label9">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">10</property>
+                <property name="margin_top">5</property>
+                <property name="label" translatable="yes">Stick</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+              </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkLabel" id="label10">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">10</property>
+                <property name="margin_top">5</property>
+                <property name="label" translatable="yes">Triggers</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="butEditKeyboardBindings">
+                <property name="label" translatable="yes">Advanced...</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="margin_left">50</property>
+                <property name="margin_right">50</property>
+                <property name="margin_top">15</property>
+                <property name="hexpand">True</property>
+                <signal name="clicked" handler="on_butEditKeyboardBindings_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="cbStickAction">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_right">20</property>
+                <property name="margin_top">5</property>
+                <property name="hexpand">True</property>
+                <property name="model">lstStickAction</property>
+                <signal name="changed" handler="on_cbStickAction_changed" swapped="no"/>
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="cbTriggersAction">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_right">20</property>
+                <property name="margin_top">5</property>
+                <property name="hexpand">True</property>
+                <property name="model">lstTriggersAction</property>
+                <signal name="changed" handler="on_cbTriggersAction_changed" swapped="no"/>
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">2</property>
+              </packing>
             </child>
           </object>
         </child>
@@ -354,16 +513,6 @@
         <property name="show_close_button">True</property>
       </object>
     </child>
-  </object>
-  <object class="GtkListStore" id="lstProfile">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name giofile -->
-      <column type="GObject"/>
-      <!-- column-name changed -->
-      <column type="gchararray"/>
-    </columns>
   </object>
   <object class="GtkWindow" id="ConditionEditor">
     <property name="width_request">500</property>

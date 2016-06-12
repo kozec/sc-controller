@@ -8,16 +8,16 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gdk
-from scc.actions import Action, ACTIONS
 from scc.paths import get_profiles_path
 from scc.constants import SCButtons
 from scc.tools import find_profile
 from scc.profile import Profile
+from scc.actions import Action
 from scc.gui.binding_editor import BindingEditor
 from scc.gui.controller_widget import TRIGGERS, STICKS
 from scc.gui.parser import GuiActionParser
 from scc.gui.editor import Editor
-from scc.osd.keyboard_actions import OSK
+from scc.osd.keyboard import Keyboard as OSDKeyboard
 
 import os, logging
 log = logging.getLogger("OSKEdit")
@@ -25,16 +25,14 @@ log = logging.getLogger("OSKEdit")
 
 class OSKBindingEditor(Editor, BindingEditor):
 	GLADE = "osk_binding_editor.glade"
-	OSK_PROF_NAME = ".scc-osd.keyboard"
 	
 	def __init__(self, app):
 		BindingEditor.__init__(self)
 		self.app = app
 		self.gladepath = app.gladepath
 		self.imagepath = app.imagepath
-		ACTIONS['OSK'] = OSK
 		self.current = Profile(GuiActionParser())
-		self.current.load(find_profile(OSKBindingEditor.OSK_PROF_NAME))
+		self.current.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
 		self.setup_widgets()
 	
 	
@@ -81,6 +79,6 @@ class OSKBindingEditor(Editor, BindingEditor):
 		Calls on_profile_saved when done
 		"""
 		self.current.save(os.path.join(get_profiles_path(),
-				OSKBindingEditor.OSK_PROF_NAME + ".sccprofile"))
+				OSDKeyboard.OSK_PROF_NAME + ".sccprofile"))
 		# OSK reloads profile when daemon reports configuration change
 		self.app.dm.reconfigure()
