@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gdk, GObject, GLib
+from scc.modifiers import SensitivityModifier
 from scc.constants import LEFT, RIGHT
 from scc.tools import find_profile
 from scc.actions import ACTIONS
@@ -19,7 +20,7 @@ from scc.gui.editor import Editor
 from scc.gui import ComboSetter
 from scc.x11.autoswitcher import Condition
 from scc.osd.keyboard import Keyboard as OSDKeyboard
-from scc.osd.osk_actions import OSK
+from scc.osd.osk_actions import OSK, OSKCursorAction
 
 import re, logging
 log = logging.getLogger("GS")
@@ -83,15 +84,26 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbTriggersAction = self.builder.get_object("cbTriggersAction")
 		profile = Profile(GuiActionParser())
 		profile.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		self._recursing = True
+		
+		# Load triggers
 		triggers = "%s|%s" % (
 				profile.triggers[LEFT].to_string(),
 				profile.triggers[RIGHT].to_string()
 		)
-		
-		if not self.set_cb(cbStickAction, profile.stick.to_string(), keyindex=1):
-			self.add_custom(cbStickAction, profile.stick.to_string())
 		if not self.set_cb(cbTriggersAction, triggers, keyindex=1):
 			self.add_custom(cbTriggersAction, triggers)
+		
+		# Load stick
+		if not self.set_cb(cbStickAction, profile.stick.to_string(), keyindex=1):
+			self.add_custom(cbStickAction, profile.stick.to_string())
+		
+		# Load sensitivity
+		s = profile.pads[LEFT].compress().speed
+		self.builder.get_object("sclSensX").set_value(s[0])
+		self.builder.get_object("sclSensY").set_value(s[1])
+		
+		self._recursing = False
 	
 	
 	def add_custom(self, cb, key):
@@ -104,26 +116,41 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.set_cb(cb, key, keyindex=1)
 	
 	
+	def _load_osk_profile(self):
+		"""
+		Loads and returns on-screen keyboard profile.
+		Used by methods that are changing it.
+		"""
+		profile = Profile(GuiActionParser())
+		profile.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		return profile
+	
+	
+	def _save_osk_profile(self, profile):
+		"""
+		Saves on-screen keyboard profile and calls daemon.reconfigure()
+		Used by methods that are changing it.
+		"""
+		profile.save(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		self.app.dm.reconfigure()
+	
+	
 	def on_cbStickAction_changed(self, cb):
 		if self._recursing: return
 		key = cb.get_model().get_value(cb.get_active_iter(), 1)
-		profile = Profile(GuiActionParser())
-		profile.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		profile = self._load_osk_profile()
 		profile.stick = GuiActionParser().restart(key).parse()
-		profile.save(find_profile(OSDKeyboard.OSK_PROF_NAME))
-		self.app.dm.reconfigure()
+		self._save_osk_profile(profile)
 	
 	
 	def on_cbTriggersAction_changed(self, cb):
 		if self._recursing: return
 		key = cb.get_model().get_value(cb.get_active_iter(), 1)
 		l, r = key.split("|")
-		profile = Profile(GuiActionParser())
-		profile.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		profile = self._load_osk_profile()
 		profile.triggers[LEFT]  = GuiActionParser().restart(l).parse()
 		profile.triggers[RIGHT] = GuiActionParser().restart(r).parse()
-		profile.save(find_profile(OSDKeyboard.OSK_PROF_NAME))
-		self.app.dm.reconfigure()
+		self._save_osk_profile(profile)
 	
 	
 	def save_config(self):
@@ -311,6 +338,28 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			cbExactTitle = self.builder.get_object("cbExactTitle")
 			cbMatchTitle.set_active(True)
 			cbExactTitle.set_active(False)
+	
+	
+	def on_btClearSensX_clicked(self, *a):
+		self.builder.get_object("sclSensX").set_value(1.0)
+	
+	def on_btClearSensY_clicked(self, *a):
+		self.builder.get_object("sclSensY").set_value(1.0)
+	
+	
+	def on_sens_value_changed(self, *a):
+		if self._recursing : return
+		s = (self.builder.get_object("sclSensX").get_value(),
+			self.builder.get_object("sclSensY").get_value())
+		
+		profile = self._load_osk_profile()
+		if s == (1.0, 1.0):
+			profile.pads[LEFT]  = OSKCursorAction(LEFT)
+			profile.pads[RIGHT] = OSKCursorAction(RIGHT)
+		else:
+			profile.pads[LEFT]  = SensitivityModifier(s[0], s[1], OSKCursorAction(LEFT))
+			profile.pads[RIGHT] = SensitivityModifier(s[0], s[1], OSKCursorAction(RIGHT))
+		self._save_osk_profile(profile)
 	
 	
 	def on_entTitle_changed(self, ent):

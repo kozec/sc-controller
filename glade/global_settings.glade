@@ -33,6 +33,22 @@
       </object>
     </child>
   </object>
+  <object class="GtkAdjustment" id="adjSensitivityX">
+    <property name="lower">0.01</property>
+    <property name="upper">10.01</property>
+    <property name="value">1</property>
+    <property name="step_increment">0.10000000000000001</property>
+    <property name="page_increment">1</property>
+    <property name="page_size">0.01</property>
+  </object>
+  <object class="GtkAdjustment" id="adjSensitivityY">
+    <property name="lower">0.01</property>
+    <property name="upper">10.01</property>
+    <property name="value">1</property>
+    <property name="step_increment">0.10000000000000001</property>
+    <property name="page_increment">1</property>
+    <property name="page_size">0.01</property>
+  </object>
   <object class="GtkListStore" id="lstItems">
     <columns>
       <!-- column-name item -->
@@ -142,7 +158,7 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
-                <property name="width">2</property>
+                <property name="width">4</property>
               </packing>
             </child>
             <child>
@@ -190,7 +206,7 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">3</property>
-                <property name="width">2</property>
+                <property name="width">4</property>
               </packing>
             </child>
             <child>
@@ -212,6 +228,7 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">1</property>
+                <property name="width">3</property>
               </packing>
             </child>
             <child>
@@ -233,6 +250,132 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">2</property>
+                <property name="width">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label4">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">20</property>
+                <property name="label" translatable="yes">Pad Sensitivity</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">4</property>
+                <property name="width">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label5">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">10</property>
+                <property name="margin_top">5</property>
+                <property name="label" translatable="yes">Horizontal</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label6">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">10</property>
+                <property name="margin_top">5</property>
+                <property name="label" translatable="yes">Vertical</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">6</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="sclSensX">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_top">5</property>
+                <property name="hexpand">True</property>
+                <property name="adjustment">adjSensitivityX</property>
+                <property name="round_digits">1</property>
+                <property name="value_pos">right</property>
+                <signal name="value-changed" handler="on_sens_value_changed" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="sclSensY">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_top">5</property>
+                <property name="hexpand">True</property>
+                <property name="adjustment">adjSensitivityY</property>
+                <property name="round_digits">1</property>
+                <property name="value_pos">right</property>
+                <signal name="value-changed" handler="on_sens_value_changed" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">6</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btClearSensX">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">20</property>
+                <property name="margin_top">5</property>
+                <signal name="clicked" handler="on_btClearSensX_clicked" swapped="no"/>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="stock">gtk-clear</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">3</property>
+                <property name="top_attach">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btClearSensY">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">20</property>
+                <property name="margin_top">5</property>
+                <signal name="clicked" handler="on_btClearSensY_clicked" swapped="no"/>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="stock">gtk-clear</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">3</property>
+                <property name="top_attach">6</property>
               </packing>
             </child>
           </object>
