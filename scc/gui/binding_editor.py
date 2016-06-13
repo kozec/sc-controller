@@ -11,6 +11,7 @@ from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.modifiers import DoubleclickModifier, HoldModifier
 from scc.macros import Macro, Repeat
 from scc.actions import NoAction
+from scc.profile import Profile
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
 from scc.gui.controller_widget import ControllerPad, ControllerStick, ControllerGyro
 from scc.gui.controller_widget import ControllerButton, ControllerTrigger
