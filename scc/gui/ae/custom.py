@@ -47,7 +47,7 @@ class CustomActionComponent(AEComponent):
 	
 	
 	def set_action(self, mode, action):
-		action = self.editor.generate_modifiers(action)
+		action = self.editor.generate_modifiers(action, from_custom=True)
 		tbCustomAction = self.builder.get_object("tbCustomAction")
 		tbCustomAction.set_text(action.to_string(True))
 	
@@ -61,7 +61,7 @@ class CustomActionComponent(AEComponent):
 		txt = tbCustomAction.get_text(tbCustomAction.get_start_iter(), tbCustomAction.get_end_iter(), True)
 		if len(txt.strip(" \t\r\n")) > 0:
 			action = self.parser.restart(txt).parse()
-			self.editor.set_action(action)
+			self.editor.set_action(action, from_custom=True)
 	
 	
 	def shown(self):
