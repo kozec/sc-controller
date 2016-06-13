@@ -56,9 +56,12 @@ class MenuEditor(Editor):
 		if not allow_globals:
 			self.builder.get_object("rbGlobal").set_sensitive(False)
 			self.builder.get_object("rbInProfile").set_active(True)
-		else:
-			self.builder.get_object("rbInProfile").set_sensitive(False)
+		elif not allow_in_profile:
 			self.builder.get_object("rbGlobal").set_active(True)
+			self.builder.get_object("rbInProfile").set_sensitive(False)
+		else:
+			self.builder.get_object("rbGlobal").set_active(True)
+			self.builder.get_object("rbInProfile").set_sensitive(True)
 	
 	
 	def on_action_chosen(self, id, a, reopen=False):
