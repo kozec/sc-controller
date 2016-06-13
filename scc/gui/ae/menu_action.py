@@ -102,7 +102,9 @@ class MenuActionCofC(UserDataManager):
 		self._recursing = True
 		cb.set_active(current_index)
 		self._recursing = False
-		self.on_cbMenus_changed()
+		name = self.get_selected_menu()
+		if name:
+			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
 	
 	
 	def handles(self, mode, action):
@@ -135,7 +137,6 @@ class MenuActionCofC(UserDataManager):
 		if name:
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
 			cbm = self.builder.get_object("cbMenuType")
-			print cbm.get_model().get_value(cbm.get_active_iter(), 1)
 			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
 				# Grid menu
 				self.editor.set_action(GridMenuAction(name))
