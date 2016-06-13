@@ -278,16 +278,18 @@ class Keyboard(OSDWindow, TimerManager):
 			cursor.get_allocation().width * 0.5,
 			(limit[0] + w * 0.5) + x * w * 0.5,
 			self.get_allocation().width - cursor.get_allocation().width
-			) - cursor.get_allocation().width * 0.5
+			)
 		
 		y = clamp(
 			cursor.get_allocation().height * 0.5,
 			(limit[1] + h * 0.5) + y * h * 0.5,
 			self.get_allocation().height - cursor.get_allocation().height
-			) - cursor.get_allocation().height * 0.5
+			)
 		
 		cursor.position = int(x), int(y)
-		self.f.move(cursor, *cursor.position)
+		self.f.move(cursor,
+			x - cursor.get_allocation().width * 0.5,
+			y - cursor.get_allocation().height * 0.5)
 		for a in self.background.areas:
 			if a.contains(x, y):
 				if a != self._hovers[cursor]:
