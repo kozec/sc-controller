@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.tools import strip_none, ensure_size, quat2euler
-from scc.tools import anglediff, circle_to_square
+from scc.tools import anglediff, circle_to_square, clamp
 from scc.uinput import Keys, Axes, Rels
 from scc.lib import xwrappers as X
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
@@ -825,7 +825,7 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 				self._was_oor = False
 		else:
 			for i in (0, 1, 2):
-				pyr[i] = int(max(min(pyr[i], STICK_PAD_MAX), STICK_PAD_MIN))
+				pyr[i] = int(clamp(STICK_PAD_MIN, pyr[i], STICK_PAD_MAX))
 		# print "% 12.0f, % 12.0f, % 12.5f" % (p,y,r)
 		for i in (0, 1, 2):
 			axis = self.axes[i]
