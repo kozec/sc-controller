@@ -329,6 +329,9 @@ class FakeMapper(object):
 				if window in my_windows:
 					# skip over my own windows
 					continue
+				if not X.is_window_visible(self._xdisplay, window):
+					# skip minimized and invisible windows
+					continue
 				tp = X.get_window_prop(self._xdisplay, window,
 						"_NET_WM_WINDOW_TYPE")[-1]
 				if tp is not None:

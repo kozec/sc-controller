@@ -104,6 +104,8 @@ XKBUSECOREKBD	= 0x0100
 ANYPROPERTYTYPE	= 0L
 SUCCESS			= 0
 
+ISVIEWABLE		= 2
+
 
 # Functions
 open_display = libX11.XOpenDisplay
@@ -234,6 +236,13 @@ def get_window_size(dpy, window):
 	attrs = XWindowAttributes()
 	get_window_attributes(dpy, window, byref(attrs))
 	return attrs.width, attrs.height
+
+
+def is_window_visible(dpy, window):
+	""" Return True if window mapping state is IsViewable """
+	attrs = XWindowAttributes()
+	get_window_attributes(dpy, window, byref(attrs))
+	return attrs.map_state == ISVIEWABLE
 
 
 def get_window_geometry(dpy, win):
