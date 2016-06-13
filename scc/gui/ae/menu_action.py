@@ -88,6 +88,7 @@ class MenuActionCofC(UserDataManager):
 			for f in menus:
 				key = f.get_basename()
 				name = key
+				if name.startswith("."): continue
 				if "." in name:
 					name = _("%s (global)" % (name.split(".")[0]))
 				model.append((name, key))
