@@ -54,13 +54,15 @@ class MenuEditor(Editor):
 		By default, both are enabled.
 		"""
 		if not allow_globals:
-			self.builder.get_object("rbGlobal").set_sensitive(False)
 			self.builder.get_object("rbInProfile").set_active(True)
+			self.builder.get_object("rbGlobal").set_sensitive(False)
+			self.builder.get_object("rbInProfile").set_sensitive(True)
 		elif not allow_in_profile:
 			self.builder.get_object("rbGlobal").set_active(True)
+			self.builder.get_object("rbGlobal").set_sensitive(True)
 			self.builder.get_object("rbInProfile").set_sensitive(False)
 		else:
-			self.builder.get_object("rbGlobal").set_active(True)
+			self.builder.get_object("rbGlobal").set_sensitive(True)
 			self.builder.get_object("rbInProfile").set_sensitive(True)
 	
 	
@@ -80,7 +82,7 @@ class MenuEditor(Editor):
 						rows = a.get_current_page().get_row_count())
 				elif isinstance(item, MenuItem):
 					item.action = a
-					item.label = action.describe(Action.AC_OSD)
+					item.label = item.action.describe(Action.AC_OSD)
 				else:
 					raise TypeError("Edited %s" % (item.__class__.__name__))
 				i[1] = item.describe()

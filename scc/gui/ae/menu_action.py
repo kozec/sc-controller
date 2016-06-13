@@ -129,17 +129,16 @@ class MenuActionCofC(UserDataManager):
 			log.debug("Creating editor for new menu")
 			me = MenuEditor(self.app, self.on_menu_changed)
 			me.set_new_menu()
-			print "A", self.allow_globals, self.allow_in_profile
 			me.allow_menus(self.allow_globals, self.allow_in_profile)
 			me.show(self.editor.window)
 			return
 		if name:
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
 			cbm = self.builder.get_object("cbMenuType")
+			print cbm.get_model().get_value(cbm.get_active_iter(), 1)
 			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
 				# Grid menu
 				self.editor.set_action(GridMenuAction(name))
 			else:
 				# Normal menu
 				self.editor.set_action(MenuAction(name))
-			self.editor.set_action(MenuAction(name))
