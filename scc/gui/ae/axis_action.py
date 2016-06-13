@@ -171,11 +171,11 @@ class AxisActionComponent(AEComponent, TimerManager):
 			if self.builder.get_object("cbAreaClickEnabled").get_active():
 				if not clicks:
 					# Turn pad press into mouse clicks
-					self.app.set_action(side, ButtonAction(Keys.BTN_LEFT))
+					self.app.set_action(self.app.current, side, ButtonAction(Keys.BTN_LEFT))
 			else:
 				if clicks:
 					# Clear action created above if checkbox is uncheck
-					self.app.set_action(side, NoAction())
+					self.app.set_action(self.app.current, side, NoAction())
 	
 	
 	def make_area_action(self):
