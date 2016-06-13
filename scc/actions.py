@@ -1078,7 +1078,7 @@ class MultiAction(Action):
 		for x in actions:
 			if type(x) == list:
 				self._add_all(x)
-			else:
+			elif x:
 				self._add(x)
 	
 	

@@ -34,7 +34,7 @@ class Chooser(Editor):
 		self.mouse_allowed = True
 	
 	
-	def setup_image(self):
+	def setup_image(self, grid_columns=0):
 		for id in self.IMAGES:
 			parent = self.builder.get_object(id)
 			if parent is not None:
@@ -43,7 +43,12 @@ class Chooser(Editor):
 				image.connect('leave', self.on_background_area_hover, None)
 				image.connect('click', self.on_background_area_click)
 				self.images.append(image)
-				parent.pack_start(image, True, True, 0)
+				if grid_columns:
+					# Grid
+					parent.attach(image, 0, 0, grid_columns, 1)
+				else:
+					# Box
+					parent.pack_start(image, True, True, 0)
 				parent.show_all()
 	
 	

@@ -31,6 +31,7 @@ class TriggerABComponent(AEComponent):
 		self.half = None
 		self.full = None
 	
+	
 	def handles(self, mode, action):
 		# Handles only None and ButtonAction
 		return isinstance(action, (ButtonAction, NoAction, InvalidAction))
