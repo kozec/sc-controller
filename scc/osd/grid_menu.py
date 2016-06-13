@@ -25,6 +25,8 @@ class GridMenu(Menu):
 	
 	def pack_items(self, parent, items):
 		ipr = int(math.sqrt(max(1, len(items)-1))+1)	# items per row
+		if len(items) == 6 : ipr = 3	# Special (common) cases
+		if len(items) == 8 : ipr = 4	# Special (common) cases
 		x, y = 0, 0
 		for item in items:
 			parent.attach(item.widget, x, y, 1, 1)
