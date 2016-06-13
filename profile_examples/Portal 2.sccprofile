@@ -1,0 +1,96 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.KEY_SPACE)", 
+            "name": "Jump / Confirm"
+        }, 
+        "B": {
+            "action": "button(Keys.KEY_LEFTCTRL)", 
+            "name": "Crouch"
+        }, 
+        "BACK": {
+            "action": "button(Keys.KEY_ESC)", 
+            "name": "Menu / Cancel"
+        }, 
+        "C": {
+            "action": "menu('Default.menu')", 
+            "doubleclick": {}, 
+            "hold": {
+                "action": "menu('Default.menu')"
+            }
+        }, 
+        "LB": {
+            "action": "menu('Save-Load')", 
+            "name": "Quick Save / Quick Load"
+        }, 
+        "LGRIP": {
+            "action": "button(Keys.KEY_G)", 
+            "name": "Gestures"
+        }, 
+        "LPAD": {
+            "action": "button(Keys.BTN_MIDDLE)", 
+            "name": "Toggle Zoom"
+        }, 
+        "RB": {
+            "action": "button(Keys.BTN_MIDDLE)", 
+            "name": "Zoom"
+        }, 
+        "RGRIP": {
+            "action": "button(Keys.KEY_F)", 
+            "name": "Comm"
+        }, 
+        "RPAD": {
+            "action": "button(Keys.BTN_THUMBR)"
+        }, 
+        "START": {
+            "action": "button(Keys.KEY_ESC)", 
+            "name": "Menu / Cancel"
+        }, 
+        "X": {
+            "action": "button(Keys.KEY_E)", 
+            "name": "Use"
+        }, 
+        "Y": {
+            "action": "button(Keys.KEY_TAB)", 
+            "name": "Partner View"
+        }
+    }, 
+    "gyro": {}, 
+    "menus": {
+        "Save-Load": [{
+            "action": "button(Keys.KEY_F6)", 
+            "id": "item1", 
+            "name": "Quick Save"
+        }, {
+            "action": "button(Keys.KEY_F7)", 
+            "id": "item2", 
+            "name": "Quick Load"
+        }]
+    }, 
+    "pad_left": {
+        "X": {
+            "action": "mouse(Rels.REL_HWHEEL)"
+        }, 
+        "Y": {
+            "action": "mouse(Rels.REL_WHEEL)"
+        }, 
+        "feedback": ["LEFT", 1052.0], 
+        "name": "Zoom"
+    }, 
+    "pad_right": {
+        "action": "trackball(None)", 
+        "feedback": ["RIGHT", 256]
+    }, 
+    "stick": {
+        "action": "dpad(button(Keys.KEY_UP) and button(Keys.KEY_W), button(Keys.KEY_DOWN) and button(Keys.KEY_S), button(Keys.KEY_LEFT) and button(Keys.KEY_A), button(Keys.KEY_RIGHT) and button(Keys.KEY_D))", 
+        "name": "Move"
+    }, 
+    "trigger_left": {
+        "action": "button(Keys.BTN_LEFT)", 
+        "name": "Fire Blue Portal"
+    }, 
+    "trigger_right": {
+        "action": "button(Keys.BTN_RIGHT)", 
+        "name": "Fire Orange Portal"
+    }
+}
