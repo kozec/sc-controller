@@ -53,7 +53,7 @@ class AxisComponent(AEComponent, Chooser):
 		if self.handles(mode, action):
 			if isinstance(action, MultiAction) and len(action.actions) == 2:
 				# axis + button on fully pressed trigger
-				self.full = action.actions[0].button
+				self.full = action.actions[0].button2
 				self.builder.get_object("lblFullPressed").set_label(describe_action(Action.AC_BUTTON, ButtonAction, self.full))
 				action = action.actions[1]
 			area = action_to_area(action)

@@ -914,8 +914,6 @@ class ButtonAction(HapticEnabledAction, Action):
 	}
 	
 	def __init__(self, button1, button2 = None, minustrigger = None, plustrigger = None):
-		if button1 is None:
-			button1, button2 = button2, None
 		Action.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
 		HapticEnabledAction.__init__(self)
 		self.button = button1 or None
