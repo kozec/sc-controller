@@ -87,6 +87,7 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		self.c = Gtk.Box()
 		self.c.set_name("osd-keyboard-container")
+		self.c.set_border_width(5)
 		
 		self.f = Gtk.Fixed()
 		self.f.add(self.background)

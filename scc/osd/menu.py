@@ -219,8 +219,8 @@ class Menu(OSDWindow, TimerManager):
 			widget.set_name("osd-menu-separator")
 			return widget
 		elif isinstance(item, Separator):
-			widget = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-			widget.set_name("osd-menu-separator")
+			widget = Gtk.Label()
+			widget.set_name("osd-menu-separator-empty")
 			return widget
 		else:
 			widget = Gtk.Button.new_with_label(item.label)

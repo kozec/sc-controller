@@ -37,40 +37,38 @@ class OSDWindow(Gtk.Window):
 			
 		}
 		
-		#osd-menu-ubuntu-padding {
-			padding: 5px 0px 0px 0px;
-		}
-		
-		#osd-keyboard-container {
-			padding: 6px 6px 6px 6px;
-		}
-		
-		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy {
+		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy, #osd-menu-separator {
 			color: #FFFFFF;
 			border-radius: 0;
 			font-size: x-large;
 			background-image: none;
-			background-color: black;
-			margin: 0px 0px 2px 0px;
+			background-color: #2C001E;
 			padding: 0px 20px 2px 20px;
+			border-left: 4px #FFFFFF solid;
+			border-right: 4px #FFFFFF solid;
 		}
 		
 		#osd-menu-item {
-			border: 1px #FFFFFF solid;
+			
 		}
 		
 		#osd-menu-separator {
 			color: #845876;
 			font-size: large;
-			background-image: none;
-			background-color: black;
 			padding: 0px 0px 0px 0px;
 		}
 		
 		#osd-menu-item-selected {
-			color: #E95420;
-			background: #000070;
-			border: 1px #00FF00 solid;
+			color: #2C001E;
+			background: #FFFFFF;
+			border-left: 4px #FFFFFF solid;
+			border-right: 4px #FFFFFF solid;
+			border-top: 1px #E95420 solid;
+			border-bottom: 1px #E95420 solid;
+		}
+		
+		#osd-menu-separator-empty {
+			font-size: xx-small;
 		}
 		
 		#osd-menu-cursor, #osd-keyboard-cursor {
