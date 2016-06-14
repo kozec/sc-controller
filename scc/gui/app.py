@@ -209,9 +209,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		model.clear()
 		i = 0
 		current_profile, current_index = self.load_profile_selection(), 0
-		for f in profiles:
+		for f in sorted(profiles, key=lambda f: f.get_basename()):
 			name = f.get_basename()
 			if name.endswith(".mod"):
+				continue
+			if name.startswith("."):
 				continue
 			if name.endswith(".sccprofile"):
 				name = name[0:-11]
