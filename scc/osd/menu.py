@@ -221,7 +221,10 @@ class Menu(OSDWindow, TimerManager):
 		else:
 			widget = Gtk.Button.new_with_label(item.label)
 			widget.set_relief(Gtk.ReliefStyle.NONE)
-			widget.get_children()[0].set_xalign(0)
+			if hasattr(widget.get_children()[0], "set_xalign"):
+				widget.get_children()[0].set_xalign(0)
+			else:
+				widget.get_children()[0].set_halign(Gtk.Align.START)
 			if isinstance(item, Submenu):
 				item.callback = self.show_submenu
 				label1 = widget.get_children()[0]

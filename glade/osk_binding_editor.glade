@@ -12,7 +12,7 @@
     <signal name="delete-event" handler="hide_dont_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
-      <object class="GtkGrid">
+      <object class="GtkGrid" id="gruid7">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">20</property>
@@ -22,7 +22,7 @@
         <property name="row_spacing">2</property>
         <property name="column_spacing">20</property>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="grid8">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">A</property>
@@ -34,7 +34,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="grid9">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">B</property>
@@ -46,7 +46,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label10">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">X</property>
@@ -58,7 +58,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label11">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Y</property>
@@ -70,7 +70,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label12">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_top">10</property>
@@ -83,7 +83,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label13">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Start</property>
@@ -95,7 +95,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label14">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_top">10</property>
@@ -108,7 +108,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label15">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Left Bumper</property>
@@ -120,7 +120,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label16">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_top">10</property>
@@ -133,7 +133,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label17">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Right Bumper</property>
@@ -299,7 +299,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label21">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">C</property>
@@ -327,7 +327,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_top">10</property>

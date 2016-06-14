@@ -2,16 +2,16 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
-  <object class="GtkDialog">
+  <object class="GtkDialog" id="notThatDialog">
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkBox">
+      <object class="GtkBox" id="box47">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox">
+          <object class="GtkButtonBox" id="box88">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
@@ -219,7 +219,7 @@
                 <property name="model">lstStickAction</property>
                 <signal name="changed" handler="on_cbStickAction_changed" swapped="no"/>
                 <child>
-                  <object class="GtkCellRendererText"/>
+                  <object class="GtkCellRendererText" id="crt1"/>
                   <attributes>
                     <attribute name="text">0</attribute>
                   </attributes>
@@ -241,7 +241,7 @@
                 <property name="model">lstTriggersAction</property>
                 <signal name="changed" handler="on_cbTriggersAction_changed" swapped="no"/>
                 <child>
-                  <object class="GtkCellRendererText"/>
+                  <object class="GtkCellRendererText" id="crt2"/>
                   <attributes>
                     <attribute name="text">0</attribute>
                   </attributes>
@@ -344,7 +344,7 @@
                 <property name="margin_top">5</property>
                 <signal name="clicked" handler="on_btClearSensX_clicked" swapped="no"/>
                 <child>
-                  <object class="GtkImage">
+                  <object class="GtkImage" id="image77">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="stock">gtk-clear</property>
@@ -366,7 +366,7 @@
                 <property name="margin_top">5</property>
                 <signal name="clicked" handler="on_btClearSensY_clicked" swapped="no"/>
                 <child>
-                  <object class="GtkImage">
+                  <object class="GtkImage" id="image89">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="stock">gtk-clear</property>
@@ -381,7 +381,7 @@
           </object>
         </child>
         <child type="tab">
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label18">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">On-Screen Keyboard</property>
@@ -526,11 +526,11 @@
                     <property name="vexpand">False</property>
                     <signal name="clicked" handler="btEdit_clicked_cb" swapped="no"/>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkBox" id="box4">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkImage">
+                          <object class="GtkImage" id="image34">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="stock">gtk-edit</property>
@@ -543,7 +543,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel">
+                          <object class="GtkLabel" id="label90">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_left">5</property>
@@ -586,7 +586,7 @@
                     <property name="vexpand">False</property>
                     <signal name="clicked" handler="on_btRemove_clicked" swapped="no"/>
                     <child>
-                      <object class="GtkImage">
+                      <object class="GtkImage" id="image35">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="stock">gtk-remove</property>
@@ -610,7 +610,7 @@
                     <property name="vexpand">False</property>
                     <signal name="clicked" handler="on_btAdd_clicked" swapped="no"/>
                     <child>
-                      <object class="GtkImage">
+                      <object class="GtkImage" id="image39">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="stock">gtk-add</property>
