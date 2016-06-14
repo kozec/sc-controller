@@ -152,7 +152,6 @@ class Menu(OSDWindow, TimerManager):
 		if not OSDWindow.parse_argumets(self, argv):
 			return False
 		if not self.config:
-			raise "Asdadsa"
 			self.config = Config()
 		if self.args.from_profile:
 			try:
