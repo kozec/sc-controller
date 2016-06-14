@@ -80,8 +80,13 @@ class Menu(OSDWindow, TimerManager):
 	
 	
 	def pack_items(self, parent, items):
+		p1 = Gtk.Label(); p1.set_name("osd-menu-ubuntu-padding")
+		p2 = Gtk.Label(); p2.set_name("osd-menu-ubuntu-padding")
+		
+		parent.pack_start(p1, True, True, 0)
 		for item in items:
 			parent.pack_start(item.widget, True, True, 0)
+		parent.pack_start(p2, True, True, 0)
 	
 	
 	def use_daemon(self, d):

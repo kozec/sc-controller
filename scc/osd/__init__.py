@@ -18,23 +18,27 @@ class OSDWindow(Gtk.Window):
 	# TODO: Configurable css
 	CSS = """
 		#osd-message, #osd-menu, #osd-keyboard {
-			background-color: black;
-			border: 6px lime double;
-		}
-		
-		#osd-area {
-			background-color: lime;
+			background-color: #2C001E;
+			border: 4px #FFFFFF solid;
 		}
 		
 		#osd-label {
-			color: lime;
+			color: #FFFFFF;
 			border: none;
 			font-size: xx-large;
-			margin: 15px 15px 15px 15px;
+			padding: 15px 15px 15px 15px;
+		}
+		
+		#osd-area {
+			background-color: #77216F;
 		}
 		
 		#osd-menu {
-			padding: 7px 7px 7px 7px;
+			
+		}
+		
+		#osd-menu-ubuntu-padding {
+			padding: 5px 0px 0px 0px;
 		}
 		
 		#osd-keyboard-container {
@@ -42,30 +46,30 @@ class OSDWindow(Gtk.Window):
 		}
 		
 		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy {
-			color: #00E000;
+			color: #FFFFFF;
 			border-radius: 0;
 			font-size: x-large;
 			background-image: none;
 			background-color: black;
 			margin: 0px 0px 2px 0px;
+			padding: 0px 20px 2px 20px;
 		}
 		
 		#osd-menu-item {
-			border: 1px #004000 solid;
+			border: 1px #FFFFFF solid;
 		}
 		
 		#osd-menu-separator {
-			color: #109010;
+			color: #845876;
 			font-size: large;
 			background-image: none;
 			background-color: black;
-			margin: 5px 0px 0px 0px;
 			padding: 0px 0px 0px 0px;
 		}
 		
 		#osd-menu-item-selected {
-			color: #00FF00;
-			background-color: #000070;
+			color: #E95420;
+			background: #000070;
 			border: 1px #00FF00 solid;
 		}
 		
