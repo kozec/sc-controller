@@ -31,5 +31,7 @@
 		"feedback": ["RIGHT", 256]
 	},
 	
-	"stick": { "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))" }
+	"stick": { "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))" },
+	
+	"version": 1
 }

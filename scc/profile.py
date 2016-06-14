@@ -16,6 +16,9 @@ from scc.actions import NoAction
 import json
 
 class Profile(object):
+	VERSION = 1		# Current profile version. When loading profile file
+					# with version lower than this, auto-conversion may happen
+	
 	LEFT  = LEFT
 	RIGHT = RIGHT
 	WHOLE = WHOLE
@@ -47,7 +50,8 @@ class Profile(object):
 			'trigger_right'	: self.triggers[Profile.RIGHT],
 			"pad_left"		: self.pads[Profile.LEFT],
 			"pad_right"		: self.pads[Profile.RIGHT],
-			"menus"			: { id : self.menus[id].encode() for id in self.menus }
+			"menus"			: { id : self.menus[id].encode() for id in self.menus },
+			"version"		: Profile.VERSION
 		}
 		
 		for i in self.buttons:
@@ -63,6 +67,12 @@ class Profile(object):
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
 		data = json.loads(open(filename, "r").read())
+		# Version
+		try:
+			version = int(data["version"])
+		except:
+			version = 0
+		
 		# Buttons
 		self.buttons = {}
 		for x in SCButtons:
@@ -107,6 +117,10 @@ class Profile(object):
 						raise ValueError("Invalid character '%s' in menu id '%s'" % (invalid_char, id))
 				self.menus[id] = MenuData.from_json_data(data["menus"][id], self.parser)
 		
+		# Conversion
+		if version < Profile.VERSION:
+			self._convert(version)
+		
 		return self
 	
 	
@@ -121,6 +135,34 @@ class Profile(object):
 		self.stick = self.stick.compress()
 		self.gyro = self.gyro.compress()
 	
+	
+	def _convert(self, from_version):
+		""" Performs conversion from older profile version """
+		if from_version < 1:
+			from scc.modifiers import ModeModifier, HoldModifier
+			from scc.special_actions import MenuAction
+			# Add 'display Default.menu if center button is held' for old profiles
+			c = self.buttons[SCButtons.C]
+			if not c:
+				# Nothing set to C button
+				self.buttons[SCButtons.C] = HoldModifier(
+					MenuAction("Default.menu"),
+					normalaction = MenuAction("Default.menu")
+				)
+			elif hasattr(c, "holdaction") and c.holdaction:
+				# Already set to something, don't overwrite it
+				pass
+			elif c.to_string().startswith("OSK."):
+				# Special case, don't touch this either
+				pass
+			else:
+				self.buttons[SCButtons.C] = HoldModifier(
+					MenuAction("Default.menu"),
+					normalaction = self.buttons[SCButtons.C]
+				)
+
+
+
 
 class Encoder(JSONEncoder):
 	def default(self, obj):

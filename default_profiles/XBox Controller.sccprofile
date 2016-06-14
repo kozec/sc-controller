@@ -36,5 +36,7 @@
 		"X"	: { "action" : "axis(Axes.ABS_RX)" },
 		"Y"	: { "action" : "raxis(Axes.ABS_RY)" },
 		"feedback": ["RIGHT", 256]
-	}
+	},
+	
+	"version": 1
 }

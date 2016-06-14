@@ -35,5 +35,7 @@
 	"pad_right" : {
 		"action" : "trackball",
 		"feedback": ["RIGHT", 256]
-	}
+	},
+	
+	"version": 1
 }
