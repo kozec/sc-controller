@@ -9,6 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gdk, GObject, GLib
 from scc.modifiers import SensitivityModifier
+from scc.paths import get_profiles_path
 from scc.constants import LEFT, RIGHT
 from scc.tools import find_profile
 from scc.actions import ACTIONS
@@ -22,7 +23,7 @@ from scc.x11.autoswitcher import Condition
 from scc.osd.keyboard import Keyboard as OSDKeyboard
 from scc.osd.osk_actions import OSK, OSKCursorAction
 
-import re, logging
+import re, os, logging
 log = logging.getLogger("GS")
 
 class GlobalSettings(Editor, UserDataManager, ComboSetter):
@@ -131,7 +132,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		Saves on-screen keyboard profile and calls daemon.reconfigure()
 		Used by methods that are changing it.
 		"""
-		profile.save(find_profile(OSDKeyboard.OSK_PROF_NAME))
+		profile.save(os.path.join(get_profiles_path(),
+				OSDKeyboard.OSK_PROF_NAME + ".sccprofile"))
 		self.app.dm.reconfigure()
 	
 	
