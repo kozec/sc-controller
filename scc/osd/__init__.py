@@ -64,7 +64,7 @@ class OSDWindow(Gtk.Window):
 		}
 		
 		#osd-menu-item-selected {
-			color: #00FF00;
+			color: #fcfce9e84f4f;
 			background-color: #000070;
 			border: 1px #00FF00 solid;
 		}

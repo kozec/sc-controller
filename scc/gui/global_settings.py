@@ -62,6 +62,17 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	def load_settings(self):
 		self.load_autoswitch()
 		self.load_osk()
+		self.load_colors()
+	
+	
+	def load_colors(self):
+		for k in self.app.config["osd_colors"]:
+			w = self.builder.get_object("cb%s" % (k,))
+			if w:
+				success, color = Gdk.Color.parse("#%s" % (self.app.config["osd_colors"][k],))
+				if not success:
+					success, color = Gdk.Color.parse("#%s" % (self.app.config.DEFAULTS["osd_colors"][k],))
+				w.set_color(color)
 	
 	
 	def load_autoswitch(self):
@@ -153,6 +164,22 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		profile.triggers[LEFT]  = GuiActionParser().restart(l).parse()
 		profile.triggers[RIGHT] = GuiActionParser().restart(r).parse()
 		self._save_osk_profile(profile)
+	
+	
+	def on_osd_color_set(self, *a):
+		"""
+		Called when user selects color.
+		"""
+		# Following lambdas converts Gdk.Color into #rrggbb notation.
+		# Gdk.Color can do similar, except it uses #rrrrggggbbbb notation that
+		# is not understood by Gdk css parser....
+		striphex = lambda a: hex(a).strip("0x").zfill(2)
+		tohex = lambda a: "".join([ striphex(int(x * 0xFF)) for x in a.to_floats() ])
+		for k in self.app.config["osd_colors"]:
+			w = self.builder.get_object("cb%s" % (k,))
+			if w:
+				self.app.config["osd_colors"][k] = tohex(w.get_color())
+		self.app.save_config()
 	
 	
 	def save_config(self):

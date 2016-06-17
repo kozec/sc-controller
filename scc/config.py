@@ -25,6 +25,17 @@ class Config(object):
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
 		],
+		"osd_colors": {
+			"background": "000000000000",
+			"border": "00FF00",
+			"text": "00FF00",
+			"menuitem_border": "004000",
+			"menuitem_hilight": "000070",
+			"menuitem_hilight_text": "FFFFFF",
+			"menuitem_hilight_border": "00FF00",
+			"menuseparator": "109010",
+			
+		},
 		"osk_colors": { 'hilight' : '00688D' }
 	}
 	
