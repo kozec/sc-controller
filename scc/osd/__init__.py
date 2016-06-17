@@ -9,25 +9,25 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, GLib, GdkX11
 from scc.lib import xwrappers as X
+from scc.config import Config
 
 import os, sys, argparse, logging
 log = logging.getLogger("osd")
 
 
 class OSDWindow(Gtk.Window):
-	# TODO: Configurable css
 	CSS = """
 		#osd-message, #osd-menu, #osd-keyboard {
-			background-color: black;
-			border: 6px lime double;
+			background-color: #%(background)s;
+			border: 6px #%(border)s double;
 		}
 		
 		#osd-area {
-			background-color: lime;
+			background-color: #%(border)s;
 		}
 		
 		#osd-label {
-			color: lime;
+			color: #%(text)s;
 			border: none;
 			font-size: xx-large;
 			margin: 15px 15px 15px 15px;
@@ -42,41 +42,42 @@ class OSDWindow(Gtk.Window):
 		}
 		
 		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy {
-			color: #00E000;
+			color: #%(text)s;
 			border-radius: 0;
 			font-size: x-large;
 			background-image: none;
-			background-color: black;
+			background-color: #%(background)s;
 			margin: 0px 0px 2px 0px;
 		}
 		
 		#osd-menu-item {
-			border: 1px #004000 solid;
+			border: 1px #%(menuitem_border)s solid;
 		}
 		
 		#osd-menu-separator {
-			color: #109010;
+			color: #%(menuseparator)s;
 			font-size: large;
 			background-image: none;
-			background-color: black;
+			background-color: #%(background)s;
 			margin: 5px 0px 0px 0px;
 			padding: 0px 0px 0px 0px;
 		}
 		
 		#osd-menu-item-selected {
-			color: #fcfce9e84f4f;
-			background-color: #000070;
-			border: 1px #00FF00 solid;
+			color: #%(menuitem_hilight_text)s;
+			background-color: #%(menuitem_hilight)s;
+			border: 1px #%(menuitem_hilight_border)s solid;
 		}
 		
 		#osd-menu-cursor, #osd-keyboard-cursor {
 		}
 	"""
 	EPILOG = ""
+	css_provider = None			# Used by staticmethods
 	
 	def __init__(self, wmclass):
 		Gtk.Window.__init__(self)
-		OSDWindow._apply_css()
+		OSDWindow._apply_css(Config())
 		
 		self.argparser = argparse.ArgumentParser(description=__doc__,
 			formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -96,11 +97,16 @@ class OSDWindow(Gtk.Window):
 	
 	
 	@staticmethod
-	def _apply_css():
-		css = Gtk.CssProvider()
-		css.load_from_data(str(OSDWindow.CSS))
+	def _apply_css(config):
+		if OSDWindow.css_provider:
+			Gtk.StyleContext.remove_provider_for_screen(
+				Gdk.Screen.get_default(), OSDWindow.css_provider)
+		
+		OSDWindow.css_provider = Gtk.CssProvider()
+		OSDWindow.css_provider.load_from_data(str(OSDWindow.CSS % config['osd_colors']))
 		Gtk.StyleContext.add_provider_for_screen(
-				Gdk.Screen.get_default(), css,
+				Gdk.Screen.get_default(),
+				OSDWindow.css_provider,
 				Gtk.STYLE_PROVIDER_PRIORITY_USER)
 	
 	

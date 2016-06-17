@@ -31,11 +31,13 @@ class OSDDaemon(object):
 		self.exit_code = -1
 		self.mainloop = GLib.MainLoop()
 		self.config = None
+		# hash_of_colors is used to determine if css needs to be reapplied
+		# after configuration change
+		self._hash_of_colors = -1
 		self._window = None
 		self._registered = False
 		self._last_profile_change = 0
 		self._recent_profiles_undo = None
-		OSDWindow._apply_css()
 	
 	
 	def quit(self, code=-1):
@@ -50,6 +52,7 @@ class OSDDaemon(object):
 	def on_daemon_reconfigured(self, *a):
 		log.debug("Reloading config...")
 		self.config.reload()
+		self._check_colorconfig_change()
 	
 	
 	def on_profile_changed(self, daemon, profile):
@@ -166,15 +169,27 @@ class OSDDaemon(object):
 			log.warning("Unknown command from daemon: '%s'", message)
 	
 	
+	def _check_colorconfig_change(self):
+		"""
+		Checks if OSD color configuration is changed and re-applies CSS
+		if needed.
+		"""
+		h = sum([ hash(self.config['osd_colors'][x]) for x in self.config['osd_colors'] ])
+		if self._hash_of_colors != h:
+			self._hash_of_colors = h
+			OSDWindow._apply_css(self.config)
+	
 	def run(self):
 		self.daemon = DaemonManager()
 		self.config = Config()
+		self._check_colorconfig_change()
 		self.daemon.connect('alive', self.on_daemon_connected)
 		self.daemon.connect('dead', self.on_daemon_died)
 		self.daemon.connect('profile-changed', self.on_profile_changed)
 		self.daemon.connect('reconfigured', self.on_daemon_reconfigured)
 		self.daemon.connect('unknown-msg', self.on_unknown_message)
 		self.mainloop.run()
+
 
 
 def split(s):
