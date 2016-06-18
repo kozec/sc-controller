@@ -26,7 +26,7 @@ class Config(object):
 			"XBox Controller"
 		],
 		"osd_colors": {
-			"background": "000000000000",
+			"background": "000000",
 			"border": "00FF00",
 			"text": "00FF00",
 			"menuitem_border": "004000",
