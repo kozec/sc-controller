@@ -128,7 +128,7 @@ class OSDDaemon(object):
 				log.warning("Another OSD is already visible - refusing to show keyboard")
 			else:
 				args = split(message)[1:]
-				self._window = Keyboard()
+				self._window = Keyboard(self.config)
 				self._window.connect('destroy', self.on_keyboard_closed)
 				# self._window.parse_argumets(args) # TODO: No arguments so far
 				self._window.show()
@@ -175,9 +175,16 @@ class OSDDaemon(object):
 		if needed.
 		"""
 		h = sum([ hash(self.config['osd_colors'][x]) for x in self.config['osd_colors'] ])
+		h += sum([ hash(self.config['osk_colors'][x]) for x in self.config['osk_colors'] ])
 		if self._hash_of_colors != h:
 			self._hash_of_colors = h
 			OSDWindow._apply_css(self.config)
+			if self._window and isinstance(self._window, Keyboard):
+				print "OSK!!"
+				self._window.recolor()
+				self._window.update_labels()
+				self._window.redraw_background()
+	
 	
 	def run(self):
 		self.daemon = DaemonManager()

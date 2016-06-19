@@ -38,6 +38,7 @@ class SVGWidget(Gtk.EventBox):
 		self.set_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
 		
 		self.svg_source = open(filename, "r").read()
+		self.current_svg = self.svg_source
 		self.image_width = 1
 		self.image = Gtk.Image()
 		self.parse_image()
@@ -54,7 +55,7 @@ class SVGWidget(Gtk.EventBox):
 		This area list is later used to determine over which button is mouse
 		hovering.
 		"""
-		tree = ET.fromstring(self.svg_source)
+		tree = ET.fromstring(self.current_svg)
 		find_areas(tree, (0, 0), self.areas)
 		self.image_width = float(tree.attrib["width"])
 	
@@ -79,14 +80,14 @@ class SVGWidget(Gtk.EventBox):
 			s_to   = "stroke:#%s" % (strokes[k],)
 			walk(tree, s_from, s_to)
 		
-		self.svg_source = ET.tostring(tree)
+		self.current_svg = ET.tostring(tree)
 		
 		self.cache = {}
 		self.hilight({})
 	
 	
 	def set_labels(self, labels):
-		tree = ET.fromstring(self.svg_source)
+		tree = ET.fromstring(self.current_svg)
 		
 		def set_text(xml, text):
 			has_valid_children = False
@@ -108,7 +109,7 @@ class SVGWidget(Gtk.EventBox):
 				walk(child)
 		
 		walk(tree)
-		self.svg_source = ET.tostring(tree)
+		self.current_svg = ET.tostring(tree)
 		
 		self.cache = {}
 		self.hilight({})
@@ -136,7 +137,7 @@ class SVGWidget(Gtk.EventBox):
 	
 	
 	def get_element(self, id):
-		tree = ET.fromstring(self.svg_source)
+		tree = ET.fromstring(self.current_svg)
 		tree.parent = None
 		el = find_by_id(tree, id)
 		if el is not None:
@@ -174,7 +175,7 @@ class SVGWidget(Gtk.EventBox):
 			# Ok, this is close to madness, but probably better than drawing
 			# 200 images by hand;
 			# 1st, parse source as XML
-			tree = ET.fromstring(self.svg_source)
+			tree = ET.fromstring(self.current_svg)
 			# 2nd, change colors of some elements
 			for button in buttons:
 				el = find_by_id(tree, button)

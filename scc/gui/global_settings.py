@@ -65,14 +65,22 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.load_colors()
 	
 	
+	def _load_color(self, w, dct, key):
+		""" Common part of load_colors """
+		if w:
+			success, color = Gdk.Color.parse("#%s" % (self.app.config[dct][key],))
+			if not success:
+				success, color = Gdk.Color.parse("#%s" % (self.app.config[dct][key],))
+			w.set_color(color)
+	
+	
 	def load_colors(self):
 		for k in self.app.config["osd_colors"]:
 			w = self.builder.get_object("cb%s" % (k,))
-			if w:
-				success, color = Gdk.Color.parse("#%s" % (self.app.config["osd_colors"][k],))
-				if not success:
-					success, color = Gdk.Color.parse("#%s" % (self.app.config.DEFAULTS["osd_colors"][k],))
-				w.set_color(color)
+			self._load_color(w, "osd_colors", k)
+		for k in self.app.config["osk_colors"]:
+			w = self.builder.get_object("cbosk_%s" % (k,))
+			self._load_color(w, "osk_colors", k)
 	
 	
 	def load_autoswitch(self):
@@ -179,6 +187,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			w = self.builder.get_object("cb%s" % (k,))
 			if w:
 				self.app.config["osd_colors"][k] = tohex(w.get_color())
+		for k in self.app.config["osk_colors"]:
+			w = self.builder.get_object("cbosk_%s" % (k,))
+			if w:
+				self.app.config["osk_colors"][k] = tohex(w.get_color())
 		self.app.save_config()
 	
 	

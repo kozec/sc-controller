@@ -26,7 +26,7 @@ class Config(object):
 			"XBox Controller"
 		],
 		"osd_colors": {
-			"background": "000000",
+			"background": "160c00",
 			"border": "00FF00",
 			"text": "00FF00",
 			"menuitem_border": "004000",
@@ -34,9 +34,16 @@ class Config(object):
 			"menuitem_hilight_text": "FFFFFF",
 			"menuitem_hilight_border": "00FF00",
 			"menuseparator": "109010",
-			
 		},
-		"osk_colors": { 'hilight' : '00688D' }
+		"osk_colors": {
+			'hilight' : '00688D',
+			'pressed' : '1A9485',
+			"button1" : "162082",
+			"button1_border" : "262b5e",
+			"button2" : "162d44",
+			"button2_border" : "27323e",
+			"text" : "ffffff"
+		}
 	}
 	
 	def __init__(self):
@@ -68,6 +75,11 @@ class Config(object):
 			if d not in self.values:
 				self.values[d] = self.DEFAULTS[d]
 				rv = True
+		# Special check for nested dicts
+		for key in ("osd_colors", "osk_colors"):
+			if len(self.DEFAULTS[key]) != len(self.values[key]):
+				src = self.DEFAULTS[key]
+				self.values[key] = { k:src[k] for k in src }
 		return rv
 	
 	

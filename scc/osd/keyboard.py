@@ -42,6 +42,7 @@ class Keyboard(OSDWindow, TimerManager):
 	OSK_PROF_NAME = ".scc-osd.keyboard"
 	RECOLOR_BACKGROUNDS = ( "button1", "button2", "text", "background" )
 	RECOLOR_STROKES = ( "button1_border", "button2_border", "text" )
+	
 	BUTTON_MAP = {
 		SCButtons.A.name : Keys.KEY_ENTER,
 		SCButtons.B.name : Keys.KEY_ESC,
@@ -51,7 +52,7 @@ class Keyboard(OSDWindow, TimerManager):
 		SCButtons.RGRIP.name : Keys.KEY_RIGHTALT,
 	}
 	
-	def __init__(self):
+	def __init__(self, config=None):
 		OSDWindow.__init__(self, "osd-keyboard")
 		TimerManager.__init__(self)
 		self.daemon = None
@@ -60,14 +61,14 @@ class Keyboard(OSDWindow, TimerManager):
 		self.keymap.connect('state-changed', self.on_state_changed)
 		ACTIONS['OSK'] = OSK
 		self.profile = Profile(TalkingActionParser())
-		self.config = Config()
+		self.config = config or Config()
 		
-		kbimage = os.path.join(get_config_path(), 'keyboard.svg')
-		if not os.path.exists(kbimage):
+		self.kbimage = os.path.join(get_config_path(), 'keyboard.svg')
+		if not os.path.exists(self.kbimage):
 			# Prefer image in ~/.config/scc, but load default one as fallback
-			kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
-		self.background = SVGWidget(self, kbimage, init_hilighted=False)
-		self.recolor(kbimage + ".json")
+			self.kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
+		self.background = SVGWidget(self, self.kbimage, init_hilighted=False)
+		self.recolor()
 		
 		self.limits = {}
 		self.limits[LEFT]  = self.background.get_rect_area(self.background.get_element("LIMIT_LEFT"))
@@ -84,6 +85,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self._stick = 0, 0
 		self._hovers = { self.cursors[LEFT] : None, self.cursors[RIGHT] : None }
 		self._pressed = { self.cursors[LEFT] : None, self.cursors[RIGHT] : None }
+		self._pressed_areas = {}
 		
 		self.c = Gtk.Box()
 		self.c.set_name("osd-keyboard-container")
@@ -98,20 +100,22 @@ class Keyboard(OSDWindow, TimerManager):
 		self.timer('labels', 0.1, self.update_labels)
 	
 	
-	def recolor(self, jsonfile):
+	def recolor(self):
 		source_colors = {}
 		try:
 			# Try to read json file and bail out if it fails
-			source_colors = json.loads(open(jsonfile, "r").read())['colors']
+			source_colors = json.loads(open(self.kbimage + ".json", "r").read())['colors']
 		except Exception, e:
 			log.warning("Failed to load keyboard description")
 			log.warning(e)
+			return
 		
 		backgrounds, strokes = {}, {}
 		
 		for k in Keyboard.RECOLOR_BACKGROUNDS:
 			if k in self.config['osk_colors'] and k in source_colors:
 				backgrounds[source_colors[k]] = self.config['osk_colors'][k]
+		backgrounds[source_colors["background"]] = self.config['osd_colors']["background"]
 		
 		for k in Keyboard.RECOLOR_STROKES:
 			if k in self.config['osk_colors'] and k in source_colors:
@@ -306,10 +310,16 @@ class Keyboard(OSDWindow, TimerManager):
 		"""
 		Updates hilighted keys on bacgkround image.
 		"""
-		self.background.hilight({
+		hilights = {
 			"AREA_" + a.name : "#" + self.config['osk_colors']['hilight']
 			for a in [ a for a in self._hovers.values() if a ]
+		}
+		hilights.update({
+			"AREA_" + a.name : "#" + self.config['osk_colors']['pressed']
+			for a in self._pressed_areas.values()
 		})
+		
+		self.background.hilight(hilights)
 	
 	
 	def _move_window(self, *a):
@@ -341,8 +351,12 @@ class Keyboard(OSDWindow, TimerManager):
 							self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
 						self.mapper.keyboard.pressEvent([ key ])
 						self._pressed[cursor] = key
+						self._pressed_areas[cursor] = a
 					break
 		elif self._pressed[cursor] is not None:
 			self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
 			self._pressed[cursor] = None
+			del self._pressed_areas[cursor]
+		if not self.timer_active('redraw'):
+			self.timer('redraw', 0.01, self.redraw_background)
 
