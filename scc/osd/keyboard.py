@@ -42,6 +42,7 @@ class Keyboard(OSDWindow, TimerManager):
 	OSK_PROF_NAME = ".scc-osd.keyboard"
 	RECOLOR_BACKGROUNDS = ( "button1", "button2", "text", "background" )
 	RECOLOR_STROKES = ( "button1_border", "button2_border", "text" )
+	
 	BUTTON_MAP = {
 		SCButtons.A.name : Keys.KEY_ENTER,
 		SCButtons.B.name : Keys.KEY_ESC,
@@ -84,6 +85,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self._stick = 0, 0
 		self._hovers = { self.cursors[LEFT] : None, self.cursors[RIGHT] : None }
 		self._pressed = { self.cursors[LEFT] : None, self.cursors[RIGHT] : None }
+		self._pressed_areas = {}
 		
 		self.c = Gtk.Box()
 		self.c.set_name("osd-keyboard-container")
@@ -306,10 +308,16 @@ class Keyboard(OSDWindow, TimerManager):
 		"""
 		Updates hilighted keys on bacgkround image.
 		"""
-		self.background.hilight({
+		hilights = {
 			"AREA_" + a.name : "#" + self.config['osk_colors']['hilight']
 			for a in [ a for a in self._hovers.values() if a ]
+		}
+		hilights.update({
+			"AREA_" + a.name : "#" + self.config['osk_colors']['pressed']
+			for a in self._pressed_areas.values()
 		})
+		
+		self.background.hilight(hilights)
 	
 	
 	def _move_window(self, *a):
@@ -341,8 +349,12 @@ class Keyboard(OSDWindow, TimerManager):
 							self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
 						self.mapper.keyboard.pressEvent([ key ])
 						self._pressed[cursor] = key
+						self._pressed_areas[cursor] = a
 					break
 		elif self._pressed[cursor] is not None:
 			self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
 			self._pressed[cursor] = None
+			del self._pressed_areas[cursor]
+		if not self.timer_active('redraw'):
+			self.timer('redraw', 0.01, self.redraw_background)
 
