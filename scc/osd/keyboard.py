@@ -52,7 +52,7 @@ class Keyboard(OSDWindow, TimerManager):
 		SCButtons.RGRIP.name : Keys.KEY_RIGHTALT,
 	}
 	
-	def __init__(self):
+	def __init__(self, config=None):
 		OSDWindow.__init__(self, "osd-keyboard")
 		TimerManager.__init__(self)
 		self.daemon = None
@@ -61,14 +61,14 @@ class Keyboard(OSDWindow, TimerManager):
 		self.keymap.connect('state-changed', self.on_state_changed)
 		ACTIONS['OSK'] = OSK
 		self.profile = Profile(TalkingActionParser())
-		self.config = Config()
+		self.config = config or Config()
 		
-		kbimage = os.path.join(get_config_path(), 'keyboard.svg')
-		if not os.path.exists(kbimage):
+		self.kbimage = os.path.join(get_config_path(), 'keyboard.svg')
+		if not os.path.exists(self.kbimage):
 			# Prefer image in ~/.config/scc, but load default one as fallback
-			kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
-		self.background = SVGWidget(self, kbimage, init_hilighted=False)
-		self.recolor(kbimage + ".json")
+			self.kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
+		self.background = SVGWidget(self, self.kbimage, init_hilighted=False)
+		self.recolor()
 		
 		self.limits = {}
 		self.limits[LEFT]  = self.background.get_rect_area(self.background.get_element("LIMIT_LEFT"))
@@ -100,20 +100,22 @@ class Keyboard(OSDWindow, TimerManager):
 		self.timer('labels', 0.1, self.update_labels)
 	
 	
-	def recolor(self, jsonfile):
+	def recolor(self):
 		source_colors = {}
 		try:
 			# Try to read json file and bail out if it fails
-			source_colors = json.loads(open(jsonfile, "r").read())['colors']
+			source_colors = json.loads(open(self.kbimage + ".json", "r").read())['colors']
 		except Exception, e:
 			log.warning("Failed to load keyboard description")
 			log.warning(e)
+			return
 		
 		backgrounds, strokes = {}, {}
 		
 		for k in Keyboard.RECOLOR_BACKGROUNDS:
 			if k in self.config['osk_colors'] and k in source_colors:
 				backgrounds[source_colors[k]] = self.config['osk_colors'][k]
+		backgrounds[source_colors["background"]] = self.config['osd_colors']["background"]
 		
 		for k in Keyboard.RECOLOR_STROKES:
 			if k in self.config['osk_colors'] and k in source_colors:
