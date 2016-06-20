@@ -9,7 +9,7 @@ from scc.tools import _
 
 from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.modifiers import DoubleclickModifier, HoldModifier
-from scc.macros import Macro, Repeat
+from scc.macros import Macro, Repeat, Cycle
 from scc.actions import NoAction
 from scc.profile import Profile
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE

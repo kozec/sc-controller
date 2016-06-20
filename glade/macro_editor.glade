@@ -18,6 +18,10 @@
         <col id="0">repeat</col>
         <col id="1" translatable="yes">Repeat</col>
       </row>
+      <row>
+        <col id="0">cycle</col>
+        <col id="1" translatable="yes">Cycle</col>
+      </row>
     </data>
   </object>
   <object class="GtkWindow" id="Dialog">

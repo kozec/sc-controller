@@ -9,8 +9,9 @@ from scc.tools import _
 
 from scc.gui.controller_widget import ControllerButton
 from scc.gui.editor import Editor
+from scc.macros import SleepAction, PressAction, ReleaseAction
 from scc.actions import Action, ButtonAction, NoAction
-from scc.macros import Macro, Repeat, SleepAction, PressAction, ReleaseAction
+from scc.macros import Macro, Repeat, Cycle
 from scc.modifiers import ModeModifier
 from scc.constants import SCButtons
 from scc.profile import Profile
@@ -34,7 +35,28 @@ class MacroEditor(Editor):
 	def update_action_field(self):
 		""" Updates field on bottom """
 		entAction = self.builder.get_object("entAction")
+		cbMacroType = self.builder.get_object("cbMacroType")
+		btAddDelay = self.builder.get_object("btAddDelay")
 		entAction.set_text(self._make_action().to_string())
+		
+		# Disable all action type comboboxes in Cycle mode,
+		# only click is allowed there;
+		# Reenable them if action type is set to anything else.
+		sens = cbMacroType.get_active() != 2
+		for a in self.actions:
+			if isinstance(a[0], ButtonAction) or isinstance(a[0], PressAction):
+				cb = a[1][3]
+				if sens:
+					cb.set_sensitive(True)
+				else:
+					cb.set_active(0)
+					cb.set_sensitive(False)
+			elif isinstance(a[0], SleepAction):
+				l, s = a[1][-2:]
+				l.set_sensitive(sens)
+				s.set_sensitive(sens)
+		# Do same thing for 'Add Delay' button
+		btAddDelay.set_sensitive(sens)
 	
 	
 	def _make_action(self):
@@ -42,15 +64,23 @@ class MacroEditor(Editor):
 		entName = self.builder.get_object("entName")
 		cbMacroType = self.builder.get_object("cbMacroType")
 		pars = [ x[0] for x in self.actions ]
-		action = Macro(*pars)
 		if len(pars) == 0:
 			# No action is actually set
 			action = NoAction()
+		elif cbMacroType.get_active() == 2:
+			# Cycle
+			pars = filter(lambda a : not isinstance(a, SleepAction), pars)
+			action = Cycle(*pars)
 		elif cbMacroType.get_active() == 1:
+			# Repeating macro
+			action = Macro(*pars)
 			action.repeat = True
 		elif len(pars) == 1:
 			# Only one action
 			action = pars[0]
+		else:
+			# Macro
+			action = Macro(*pars)			
 		if entName.get_text().strip() != "":
 			action.name = entName.get_text().strip()
 		return action
@@ -286,8 +316,12 @@ class MacroEditor(Editor):
 		cbMacroType = self.builder.get_object("cbMacroType")
 		self.id = id
 		self.mode = mode
-		if action.repeat:
+		if isinstance(action, Cycle):
+			cbMacroType.set_active(2)
+		elif action.repeat:
 			cbMacroType.set_active(1)
+		else:
+			cbMacroType.set_active(0)
 		for a in action.actions:
 			self._add_action(a)
 		if action.name is not None:

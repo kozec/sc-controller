@@ -106,7 +106,7 @@ class Macro(Action):
 	__repr__ = __str__
 
 
-class Cycle(Action):
+class Cycle(Macro):
 	"""
 	Multiple actions cycling on same button.
 	When button is pressed 1st time, 1st action is executed. 2nd action is
