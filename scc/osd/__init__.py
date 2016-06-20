@@ -102,12 +102,24 @@ class OSDWindow(Gtk.Window):
 			Gtk.StyleContext.remove_provider_for_screen(
 				Gdk.Screen.get_default(), OSDWindow.css_provider)
 		
-		OSDWindow.css_provider = Gtk.CssProvider()
-		OSDWindow.css_provider.load_from_data(str(OSDWindow.CSS % config['osd_colors']))
-		Gtk.StyleContext.add_provider_for_screen(
-				Gdk.Screen.get_default(),
-				OSDWindow.css_provider,
-				Gtk.STYLE_PROVIDER_PRIORITY_USER)
+		try:
+			OSDWindow.css_provider = Gtk.CssProvider()
+			OSDWindow.css_provider.load_from_data(str(OSDWindow.CSS % config['osd_colors']))
+			Gtk.StyleContext.add_provider_for_screen(
+					Gdk.Screen.get_default(),
+					OSDWindow.css_provider,
+					Gtk.STYLE_PROVIDER_PRIORITY_USER)
+		except GLib.Error, e:
+			log.error("Failed to apply css with user settings:")
+			log.error(e)
+			log.error("Retrying with default values")
+			
+			OSDWindow.css_provider = Gtk.CssProvider()
+			OSDWindow.css_provider.load_from_data(str(OSDWindow.CSS % Config.DEFAULTS['osd_colors']))
+			Gtk.StyleContext.add_provider_for_screen(
+					Gdk.Screen.get_default(),
+					OSDWindow.css_provider,
+					Gtk.STYLE_PROVIDER_PRIORITY_USER)
 	
 	
 	def _add_arguments(self):
