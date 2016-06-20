@@ -379,7 +379,7 @@ class ActionEditor(Editor):
 			if self._mode == ActionEditor.AEC_MENUITEM:
 				self.ac_callback(self.id, self)
 			else:
-				a = self.generate_modifiers(self._action)
+				a = self.generate_modifiers(self._action, self._selected_component.NAME=="custom")
 				self.ac_callback(self.id, a)
 			if self._selected_component:
 				self._selected_component.on_ok(a)
@@ -390,7 +390,7 @@ class ActionEditor(Editor):
 		""" Asks main window to close this one and display modeshift editor """
 		if self.ac_callback is not None:
 			# Convert current action into modeshift and send it to main window
-			action = ModeModifier(self.generate_modifiers(self._action))
+			action = ModeModifier(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
 			self.close()
 			self.ac_callback(self.id, action, reopen=True)
 	
@@ -400,7 +400,7 @@ class ActionEditor(Editor):
 		if self.ac_callback is not None:
 			# Convert current action into modeshift and send it to main window
 			self._set_title()
-			action = Macro(self.generate_modifiers(self._action))
+			action = Macro(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
 			action.name = action.actions[0].name
 			action.actions[0].name = None
 			self.close()
@@ -502,12 +502,14 @@ class ActionEditor(Editor):
 			action = SensitivityModifier(*sens)
 		
 		if self.feedback_position != None:
-			# Build FeedbackModifier arguments
 			cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
-			feedback = [ FEEDBACK_SIDES[cbFeedbackSide.get_active()] ] + feedback
-			feedback += [ action ]
-			# Create modifier
-			action = FeedbackModifier(*feedback)
+			cbFeedback = self.builder.get_object("cbFeedback")
+			if from_custom or (cbFeedback.get_active() and cbFeedback.get_sensitive()):
+				# Build FeedbackModifier arguments
+				feedback = [ FEEDBACK_SIDES[cbFeedbackSide.get_active()] ] + feedback
+				feedback += [ action ]
+				# Create modifier
+				action = FeedbackModifier(*feedback)
 		
 		if self.deadzone_enabled:
 			action = DeadzoneModifier(self.deadzone[0], self.deadzone[1], action)
