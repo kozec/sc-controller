@@ -13,7 +13,7 @@ User-mode driver and GTK3 based GUI for Steam Controller.
 - Haptic Feedback support
 - OSD, Menus, On-Screen Keyboard for desktop *and* in games.
 - Automatic profile switching based on active window.
-- Macros, rapid fire, modeshift, mouse regions...
+- Macros, button cycling, rapid fire, modeshift, mouse regions...
 - Emulates XBox360 controller, mouse, trackball and keyboard.
 
 Based on [Standalone Steam Controller Driver](https://github.com/ynsta/steamcontroller) by [Ynsta](https://github.com/ynsta).

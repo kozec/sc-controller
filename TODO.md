@@ -3,7 +3,6 @@ List of (possibly) planned features in no particular order
 "Easy" stuff:
 - Configurable gamepad type (e.g. 4 axes and 16 buttons)
 - Selector for media keys
-- Cycling Buttons
 
 
 UI-only stuff:
@@ -19,6 +18,7 @@ OSD related stuff:
 - Process monitor (or active window monitor) with switch
 - OSD
 - Menu in OSD
+- Cycling Buttons
 - Touch-Menu
 - Mouse regions
 - double click
