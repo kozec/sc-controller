@@ -215,9 +215,11 @@ To insert pause between macro actions, use sleep() action.
 
 #### repeat(action)
 Turbo / rapid fire mode. Repeats macro (or even single action) until physical button is released. Macro is always played to end, even if button is released before macro is finished.
-
 - `repeat(button(BTN_X))` deals with "mash X to not die" events in some games.
 
+#### cycle(action1, action2...)
+Executes different action every time when button is pressed (action1 upon first press, action2 with second, etc.)
+Works only on buttons.
 
 
 # Examples

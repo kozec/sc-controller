@@ -106,6 +106,50 @@ class Macro(Action):
 	__repr__ = __str__
 
 
+class Cycle(Action):
+	"""
+	Multiple actions cycling on same button.
+	When button is pressed 1st time, 1st action is executed. 2nd action is
+	executed for 2nd press et cetera et cetera.
+	"""
+
+	COMMAND = 'cycle'
+	
+	def __init__(self, *parameters):
+		Action.__init__(self, *parameters)
+		self.actions = parameters
+		self._current = 0
+	
+	
+	def button_press(self, mapper):
+		if len(self.actions) > 0:
+			self.actions[self._current].button_press(mapper)
+	
+	
+	def button_release(self, mapper):
+		if len(self.actions) > 0:
+			self.actions[self._current].button_release(mapper)
+			self._current += 1
+			if self._current >= len(self.actions):
+				self._current = 0
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Cycle Actions")
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		lst = ", ".join([ x.to_string() for x in self.actions ])
+		return (" " * pad) + self.COMMAND + "(" + lst + ")"
+	
+	
+	def __str__(self):
+		return "<cycle %s >" % ("; ".join([ str(x) for x in self.actions ]), )
+	
+	__repr__ = __str__
+
+
 class Repeat(Macro):
 	"""
 	Repeats specified action as long as physical button is pressed.
