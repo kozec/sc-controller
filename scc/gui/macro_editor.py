@@ -17,6 +17,7 @@ from scc.constants import SCButtons
 from scc.profile import Profile
 
 from gi.repository import Gtk, Gdk, GLib
+from collections import namedtuple
 import os, logging
 log = logging.getLogger("MacroEditor")
 
@@ -43,18 +44,16 @@ class MacroEditor(Editor):
 		# only click is allowed there;
 		# Reenable them if action type is set to anything else.
 		sens = cbMacroType.get_active() != 2
-		for a in self.actions:
-			if isinstance(a[0], ButtonAction) or isinstance(a[0], PressAction):
-				cb = a[1][3]
+		for ad in self.actions:
+			if isinstance(ad.action, ButtonAction) or isinstance(ad.action, PressAction):
 				if sens:
-					cb.set_sensitive(True)
+					ad.combo.set_sensitive(True)
 				else:
-					cb.set_active(0)
-					cb.set_sensitive(False)
-			elif isinstance(a[0], SleepAction):
-				l, s = a[1][-2:]
-				l.set_sensitive(sens)
-				s.set_sensitive(sens)
+					ad.combo.set_active(0)
+					ad.combo.set_sensitive(False)
+			elif isinstance(ad.action, SleepAction):
+				ad.label.set_sensitive(sens)
+				ad.scale.set_sensitive(sens)
 		# Do same thing for 'Add Delay' button
 		btAddDelay.set_sensitive(sens)
 	
@@ -80,7 +79,7 @@ class MacroEditor(Editor):
 			action = pars[0]
 		else:
 			# Macro
-			action = Macro(*pars)			
+			action = Macro(*pars)
 		if entName.get_text().strip() != "":
 			action.name = entName.get_text().strip()
 		return action
@@ -92,17 +91,16 @@ class MacroEditor(Editor):
 		model = self.builder.get_object("lstPressClickOrHold")
 		i = len(self.actions) + 1
 		action.name = None
+		action_data = None
 		
 		# Buttons
-		upb, downb, clearb = Gtk.Button(), Gtk.Button(), Gtk.Button()
+		button_up, button_down, button_clear = Gtk.Button(), Gtk.Button(), Gtk.Button()
 		b = Gtk.Button.new_with_label(action.describe(self.mode))
-		widgets = [upb, downb, clearb]
 		
 		# Action button
 		b.set_property("hexpand", True)
 		b.set_property("margin-left", 10)
 		b.set_property("margin-right", 10)
-		action_data = [ action, widgets ]
 		
 		if isinstance(action, ButtonAction) or isinstance(action, PressAction):
 			# Combobox
@@ -120,9 +118,11 @@ class MacroEditor(Editor):
 				b.set_label(action.describe_short())
 			else:
 				c.set_active(0)
-			c.connect('changed', self.on_buttonaction_type_change, action_data)
+			action_data = ActionData( action = action, button_up = button_up,
+				button_down = button_down, button_clear = button_clear,
+				combo = c, button_action = b)
 			
-			widgets += [c, b]
+			c.connect('changed', self.on_buttonaction_type_change, i - 1, action_data)
 			grActions.attach(c,			0, i, 1, 1)
 			grActions.attach(b,			1, i, 1, 1)
 		elif isinstance(action, SleepAction):
@@ -132,9 +132,12 @@ class MacroEditor(Editor):
 			l.set_size_request(100, -1)
 			s = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 5, 5000, 5)
 			s.set_draw_value(False)
-			s.connect('change_value', self.on_change_delay, action_data)
 			s.set_value(action.delay * 1000)
-			widgets += [l, s]
+			action_data = ActionData( action = action, button_up = button_up,
+				button_down = button_down, button_clear = button_clear,
+				label = l, scale = s)
+			
+			s.connect('change_value', self.on_change_delay, action_data)
 			grActions.attach(l,			0, i, 1, 1)
 			grActions.attach(s,			1, i, 1, 1)
 			self.on_change_delay(s, None, action.delay * 1000, action_data)
@@ -143,50 +146,53 @@ class MacroEditor(Editor):
 			l = Gtk.Label("")
 			l.set_size_request(100, -1)
 			
-			widgets += [l, b]
+			action_data = ActionData( action = action, button_up = button_up,
+				button_down = button_down, button_clear = button_clear,
+				label = l, button_action = b)
+			
 			grActions.attach(l,			0, i, 1, 1)
 			grActions.attach(b,			1, i, 1, 1)
 		
-		b.connect('clicked',		self.on_actionb_clicked, action_data)
-		upb.connect('clicked',		self.on_moveb_clicked, -1, action_data)
-		downb.connect('clicked',	self.on_moveb_clicked, 1, action_data)
-		clearb.connect('clicked',	self.on_clearb_clicked, action_data)
+		b.connect('clicked',			self.on_actionb_clicked, i - 1, action_data)
+		button_clear.connect('clicked',	self.on_clearb_clicked, action_data)
+		button_up.connect('clicked',	self.on_moveb_clicked, -1, action_data)
+		button_down.connect('clicked',	self.on_moveb_clicked,  1, action_data)
 		
 		# Move Up button
-		upb.set_image(Gtk.Image.new_from_stock("gtk-go-up", Gtk.IconSize.SMALL_TOOLBAR))
-		upb.set_relief(Gtk.ReliefStyle.NONE)
+		button_up.set_image(Gtk.Image.new_from_stock("gtk-go-up", Gtk.IconSize.SMALL_TOOLBAR))
+		button_up.set_relief(Gtk.ReliefStyle.NONE)
 		
 		# Move Down button
-		downb.set_image(Gtk.Image.new_from_stock("gtk-go-down", Gtk.IconSize.SMALL_TOOLBAR))
-		downb.set_relief(Gtk.ReliefStyle.NONE)
+		button_down.set_image(Gtk.Image.new_from_stock("gtk-go-down", Gtk.IconSize.SMALL_TOOLBAR))
+		button_down.set_relief(Gtk.ReliefStyle.NONE)
 		
 		# Clear button
-		clearb.set_image(Gtk.Image.new_from_stock("gtk-delete", Gtk.IconSize.SMALL_TOOLBAR))
-		clearb.set_relief(Gtk.ReliefStyle.NONE)
+		button_clear.set_image(Gtk.Image.new_from_stock("gtk-delete", Gtk.IconSize.SMALL_TOOLBAR))
+		button_clear.set_relief(Gtk.ReliefStyle.NONE)
 		
 		# Pack
-		grActions.attach(upb,		2, i, 1, 1)
-		grActions.attach(downb,		3, i, 1, 1)
-		grActions.attach(clearb,	4, i, 1, 1)
+		grActions.attach(button_up,		2, i, 1, 1)
+		grActions.attach(button_down,	3, i, 1, 1)
+		grActions.attach(button_clear,	4, i, 1, 1)
 		
 		# Disable 'up' button on 1st aciton
 		if len(self.actions) == 0:
-			upb.set_sensitive(False)
+			button_up.set_sensitive(False)
 		# Reenable 'down' button on last action
 		if len(self.actions) > 0:
-			self.actions[-1][1][1].set_sensitive(True)
+			self.actions[-1].button_down.set_sensitive(True)
 		# Disable 'down' on added (now last) action
-		downb.set_sensitive(False)
+		button_down.set_sensitive(False)
 		
 		self.actions.append(action_data)
 		self.update_action_field()
 		grActions.show_all()
 	
 	
-	def on_moveb_clicked(self, trash, direction, data):
+	def on_moveb_clicked(self, trash, direction, action_data):
 		""" Handler for 'move action' buttons """
-		action = data[0]
-		readd = [ x[0] for x in self.actions ]
+		action = action_data.action
+		readd = [ x.action for x in self.actions ]
 		index = readd.index(action) + direction
 		if index < 0:
 			# Not possible to move 1st item up
@@ -200,11 +206,11 @@ class MacroEditor(Editor):
 		self.update_action_field()
 	
 	
-	def on_clearb_clicked(self, trash, data):
+	def on_clearb_clicked(self, trash, action_data):
 		""" Handler for 'delete action' button """
 		self._clear_grid()
-		self.actions.remove(data)
-		readd = [ x[0] for x in self.actions ]
+		self.actions.remove(action_data)
+		readd = [ x.action for x in self.actions ]
 		self._refill_grid(readd)
 		self.update_action_field()
 	
@@ -213,13 +219,13 @@ class MacroEditor(Editor):
 		self.update_action_field()
 	
 	
-	def on_buttonaction_type_change(self, cb, data):
+	def on_buttonaction_type_change(self, cb, i, action_data):
 		if cb.get_active() == 0:
-			data[0] = ButtonAction(data[0].button)
+			self.actions[i] = action_data._replace(action = ButtonAction(action_data.action))
 		elif cb.get_active() == 1:
-			data[0] = PressAction(data[0].button)
+			self.actions[i] = action_data._replace(action = PressAction(action_data.action))
 		else:
-			data[0] = ReleaseAction(data[0].button)
+			self.actions[i] = action_data._replace(action = ReleaseAction(action_data.action))
 		self.update_action_field()
 		
 	
@@ -238,11 +244,11 @@ class MacroEditor(Editor):
 			self._add_action(a)
 	
 	
-	def on_change_delay(self, scale, trash, value, data):
+	def on_change_delay(self, scale, trash, value, action_data):
 		""" Called when delay slider is moved """
 		ms = int(value)
-		action = data[0]
-		label = data[-1][-2]
+		action = action_data.action
+		label = action_data.label
 		action.delay = value / 1000.0
 		if ms < 1000:
 			label.set_markup(_("<b>Delay: %sms</b>") % (ms,))
@@ -264,19 +270,19 @@ class MacroEditor(Editor):
 			ae.set_pad(self.id, action)
 	
 	
-	def on_actionb_clicked(self, trash, data):
+	def on_actionb_clicked(self, button, i, action_data):
 		""" Handler clicking on action name """
-		action, widgets = data
 		def on_chosen(id, action, reopen=False):
-			data[0] = action
-			self._refill_grid([ x[0] for x in self.actions ])
+			readd = [ x.action for x in self.actions ]
+			readd[i] = action
+			self._refill_grid(readd)
 			self.update_action_field()
-			if reopen: self.on_actionb_clicked(trash, data)
+			if reopen: self.on_actionb_clicked(button, i, action_data)
 		
 		from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 		ae = ActionEditor(self.app, on_chosen)
 		ae.set_title(_("Edit Action"))
-		self._setup_editor(ae, action)
+		self._setup_editor(ae, action_data.action)
 		ae.hide_modeshift()
 		ae.hide_macro()
 		ae.hide_name()
@@ -355,3 +361,9 @@ class MacroEditor(Editor):
 		self.builder.get_object("lblName").set_visible(False)
 		self.builder.get_object("entName").set_visible(False)
 		self.builder.get_object("entName").set_text("")
+
+
+ActionData = namedtuple('ActionData',
+	'action, button_up, button_down, button_clear, button_action,'
+	'combo, label, scale')
+ActionData.__new__.__defaults__ = (None,) * len(ActionData._fields)
