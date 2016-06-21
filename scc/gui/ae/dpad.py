@@ -8,8 +8,9 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.actions import Action, NoAction, DPadAction, DPad8Action
+from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
 from scc.special_actions import MenuAction, GridMenuAction
+from scc.uinput import Keys
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
 from scc.gui.action_editor import ActionEditor
@@ -48,12 +49,11 @@ class DPADComponent(AEComponent, MenuActionCofC):
 		cb = self.builder.get_object("cbActionType")
 		if isinstance(action, DPadAction):
 			self.set_cb(cbm, "menu", 1)
-			for i in xrange(0, len(action.actions)):
-				self.actions[i] = action.actions[i]
 			if isinstance(action, DPad8Action):
 				self.set_cb(cb, "dpad8", 1)
 			else:
 				self.set_cb(cb, "dpad", 1)
+			self.update_button_desc(action)
 		elif isinstance(action, MenuAction):
 			self._current_menu = action.menu_id
 			self.set_cb(cb, "menu", 1)
@@ -61,9 +61,14 @@ class DPADComponent(AEComponent, MenuActionCofC):
 				self.set_cb(cbm, "gridmenu", 1)
 			else:
 				self.set_cb(cbm, "menu", 1)
+		self.on_cbActionType_changed()
+	
+	
+	def update_button_desc(self, action):
+		for i in xrange(0, len(action.actions)):
+			self.actions[i] = action.actions[i]
 		for i in xrange(0, 8):
 			self.set_button_desc(i)
-		self.on_cbActionType_changed()
 	
 	
 	def set_button_desc(self, i):
@@ -93,6 +98,21 @@ class DPADComponent(AEComponent, MenuActionCofC):
 		elif key == "dpad":
 			# 4-way dpad
 			self.editor.set_action(DPadAction(*self.actions[0:4]))
+		elif key == "wsad":
+			# special case of 4-way dpad
+			a = DPadAction(ButtonAction(Keys.KEY_W), ButtonAction(Keys.KEY_S),
+				ButtonAction(Keys.KEY_A), ButtonAction(Keys.KEY_D))
+			self.actions = [ None ] * 8
+			self.editor.set_action(a)
+			self.update_button_desc(a)
+		elif key == "arrows":
+			# special case of 4-way dpad
+			a = DPadAction(ButtonAction(Keys.KEY_UP),
+				ButtonAction(Keys.KEY_DOWN), ButtonAction(Keys.KEY_LEFT),
+				ButtonAction(Keys.KEY_RIGHT))
+			self.actions = [ None ] * 8
+			self.editor.set_action(a)
+			self.update_button_desc(a)
 		else:
 			# Menu
 			self.on_cbMenus_changed()
@@ -103,7 +123,7 @@ class DPADComponent(AEComponent, MenuActionCofC):
 		cb = self.builder.get_object("cbActionType")
 		stActionData = self.builder.get_object("stActionData")
 		key = cb.get_model().get_value(cb.get_active_iter(), 1)
-		if key in ("dpad", "dpad8"):
+		if key in ("dpad", "dpad8", "wsad", "arrows"):
 			for i in self.DPAD8_WIDGETS:
 				self.builder.get_object(i).set_visible(key == "dpad8")
 			stActionData.set_visible_child(self.builder.get_object("grDPAD"))

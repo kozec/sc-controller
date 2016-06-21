@@ -45,6 +45,14 @@
         <col id="1">dpad8</col>
       </row>
       <row>
+        <col id="0" translatable="yes">WSAD (DPAD)</col>
+        <col id="1">wsad</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Arrows (DPAD)</col>
+        <col id="1">arrows</col>
+      </row>
+      <row>
         <col id="0" translatable="yes">Menu</col>
         <col id="1">menu</col>
       </row>
