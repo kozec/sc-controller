@@ -83,6 +83,30 @@ class BindingEditor(object):
 		return before
 	
 	
+	def get_action(self, profile, id):
+		"""
+		Returns action for specified id.
+		Returns None if id is not known.
+		"""
+		before = NoAction()
+		if id in BUTTONS:
+			return profile.buttons[id]
+		if id in PRESSABLE:
+			return profile.buttons[id]
+		elif id in TRIGGERS:
+			return profile.triggers[id]
+		elif id in GYROS:
+			return profile.gyro
+		elif id in STICKS + PADS:
+			if id in STICKS:
+				return profile.stick
+			elif id == "LPAD":
+				return profile.pads[Profile.LEFT]
+			else:
+				return profile.pads[Profile.RIGHT]
+		return None
+	
+	
 	def choose_editor(self, action, title):
 		""" Chooses apropripate Editor instance for edited action """
 		if isinstance(action, SensitivityModifier):

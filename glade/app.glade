@@ -765,4 +765,35 @@
       </object>
     </child>
   </object>
+  <object class="GtkMenu" id="mnuPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="mnuClear">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">C_lear</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuClear_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuCopy">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Copy</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuCopy_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuPaste">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Paste</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuPaste_activate" swapped="no"/>
+      </object>
+    </child>
+  </object>
 </interface>

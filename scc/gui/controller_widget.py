@@ -46,6 +46,7 @@ class ControllerWidget:
 		self.widget.connect('enter', self.on_cursor_enter)
 		self.widget.connect('leave', self.on_cursor_leave)
 		self.widget.connect('clicked', self.on_click)
+		self.widget.connect('button-release-event', self.on_button_release)
 	
 	
 	def get_image(self):
@@ -58,6 +59,11 @@ class ControllerWidget:
 	
 	def on_click(self, *a):
 		self.app.show_editor(self.id)
+	
+	def on_button_release(self, bt, event):
+		if event.button == 3:
+			# Rightclick
+			self.app.show_context_menu(self.id)
 	
 	
 	def on_cursor_enter(self, *a):

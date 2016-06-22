@@ -7,7 +7,6 @@ List of (possibly) planned features in no particular order
 
 UI-only stuff:
 - Profile import / export
-- Copy & paste
 
 
 OSD related stuff:
@@ -15,12 +14,13 @@ OSD related stuff:
 
 
 **Done** stuff:
-- Process monitor (or active window monitor) with switch
-- OSD
-- Menu in OSD
+- Copy & paste
 - Cycling Buttons
-- Touch-Menu
+- Process monitor (or active window monitor) with switch
 - Mouse regions
+- Touch-Menu
+- Menu in OSD
+- OSD
 - double click
 - on-screen keyboard
 - Spining mouse wheel rotation

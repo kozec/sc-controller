@@ -7,13 +7,13 @@ Main application window
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gio, GLib
+from gi.repository import Gtk, Gdk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
+from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.global_settings import GlobalSettings
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
-from scc.gui.parser import GuiActionParser
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
@@ -59,6 +59,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.imagepath = imagepath
 		self.builder = None
 		self.recursing = False
+		self.context_menu_for = None
 		self.daemon_changed_profile = False
 		self.background = None
 		self.outdated_version = None
@@ -171,10 +172,59 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			ae.show(self.window)
 	
 	
+	def show_context_menu(self, for_id):
+		""" Sets sensitivity of popup menu items and displays it on screen """
+		mnuPopup = self.builder.get_object("mnuPopup")
+		mnuCopy = self.builder.get_object("mnuCopy")
+		mnuClear = self.builder.get_object("mnuClear")
+		mnuPaste = self.builder.get_object("mnuPaste")
+		self.context_menu_for = for_id
+		clp = Gtk.Clipboard.get_default(Gdk.Display.get_default())
+		mnuCopy.set_sensitive(bool(self.get_action(self.current, for_id)))
+		mnuClear.set_sensitive(bool(self.get_action(self.current, for_id)))
+		mnuPaste.set_sensitive(clp.wait_is_text_available())
+		mnuPopup.popup(None, None, None, None,
+			3, Gtk.get_current_event_time())
+	
+	
 	def save_config(self):
 		self.config.save()
 		self.dm.reconfigure()
 	
+	
+	def on_mnuClear_activate(self, *a):
+		"""
+		Handler for 'Clear' context menu item.
+		Simply sets NoAction to input.
+		"""
+		self.on_action_chosen(self.context_menu_for, NoAction(), False)
+	
+	
+	def on_mnuCopy_activate(self, *a):
+		"""
+		Handler for 'Copy' context menu item.
+		Converts action to string and sends that string to clipboard.
+		"""
+		a = self.get_action(self.current, self.context_menu_for)
+		if a:
+			clp = Gtk.Clipboard.get_default(Gdk.Display.get_default())
+			clp.set_text(a.to_string().encode('utf-8'), -1)
+			clp.store()
+	
+	
+	def on_mnuPaste_activate(self, *a):
+		"""
+		Handler for 'Paste' context menu item.
+		Reads string from clipboard, parses it as action and sets that action
+		on selected input.
+		"""
+		clp = Gtk.Clipboard.get_default(Gdk.Display.get_default())
+		text = clp.wait_for_text()
+		if text:
+			a = GuiActionParser().restart(text.decode('utf-8')).parse()
+			if not isinstance(a, InvalidAction):
+				self.on_action_chosen(self.context_menu_for, a, False)
+		
 	
 	def on_mnuGlobalSettings_activate(self, *a):
 		gs = GlobalSettings(self)
