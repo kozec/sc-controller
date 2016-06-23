@@ -19,6 +19,7 @@ from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.paths import get_config_path, get_profiles_path
 from scc.constants import SCButtons, DAEMON_VERSION
+from scc.tools import check_access
 from scc.actions import NoAction
 from scc.profile import Profile
 from scc.config import Config
@@ -104,7 +105,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		""" Performs various (two) checks and reports possible problems """
 		# TODO: Maybe not best place to do this
 		if os.path.exists("/dev/uinput"):
-			if not os.access("/dev/uinput", os.R_OK | os.W_OK):
+			if not check_access("/dev/uinput"):
 				# Cannot acces uinput
 				msg = _('You don\'t have required access to /dev/uinput.')
 				msg += "\n" + _('This will most likely prevent emulation from working.')
