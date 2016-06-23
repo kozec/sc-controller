@@ -299,12 +299,24 @@ class MacroEditor(Editor):
 		self._add_action(SleepAction(0.5))
 	
 	
-	def on_btClear_clicked	(self, *a):
+	def on_btClear_clicked(self, *a):
 		""" Handler for clear button """
 		action = NoAction()
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, action)
 		self.close()
+	
+	
+	def on_btCustomActionEditor_clicked(self, *a):
+		""" Handler for 'Custom Editor' button """
+		from scc.gui.action_editor import ActionEditor	# Can't be imported on top
+		e = ActionEditor(self.app, self.ac_callback)
+		e.set_button(self.id, self._make_action())
+		e.hide_action_buttons()
+		e.hide_advanced_settings()
+		e.set_title(self.window.get_title())
+		self.close()
+		e.show(self.window.get_transient_for())
 	
 	
 	def on_btOK_clicked(self, *a):

@@ -686,7 +686,8 @@ class ActionEditor(Editor):
 			entName.set_text("")
 		else:
 			entName.set_text(action.name)
-		vbActionButtons.show_all()
+		if vbActionButtons.get_visible():
+			vbActionButtons.show_all()
 	
 	
 	def set_button(self, button, action, mode=Action.AC_BUTTON):

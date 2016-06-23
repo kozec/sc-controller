@@ -245,8 +245,27 @@ class ModeshiftEditor(Editor):
 		self.close()
 	
 	
+	def on_btCustomActionEditor_clicked(self, *a):
+		""" Handler for 'Custom Editor' button """
+		from scc.gui.action_editor import ActionEditor	# Can't be imported on top
+		e = ActionEditor(self.app, self.ac_callback)
+		e.set_button(self.id, self._make_action())
+		e.hide_action_buttons()
+		e.hide_advanced_settings()
+		e.set_title(self.window.get_title())
+		self.close()
+		e.show(self.window.get_transient_for())
+	
+	
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
+		if self.ac_callback is not None:
+			self.ac_callback(self.id, self._make_action())
+		self.close()
+	
+	
+	def _make_action(self):
+		""" Generates and returns Action instance """
 		action = self._save_modemod(0)
 		hold_action = self._save_modemod(1)
 		dbl_action = self._save_modemod(2)
@@ -256,10 +275,8 @@ class ModeshiftEditor(Editor):
 				action.action = dbl_action
 		elif dbl_action:
 			action = DoubleclickModifier(hold_action, action)
-		print action.to_string(True, 4)
-		if self.ac_callback is not None:
-			self.ac_callback(self.id, action)
-		self.close()
+		return action
+	
 	
 	def _save_modemod(self, index):
 		""" Generates ModeModifier from page in Notebook """

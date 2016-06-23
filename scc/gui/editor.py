@@ -9,8 +9,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.uinput import Keys
-from scc.actions import ButtonAction, AxisAction, MouseAction, MultiAction
-from scc.actions import HatLeftAction, HatRightAction
+from scc.actions import MultiAction, HatLeftAction, HatRightAction
+from scc.actions import ButtonAction, AxisAction, MouseAction
 from scc.actions import HatUpAction, HatDownAction
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import keyevent_to_key
@@ -82,3 +82,21 @@ class Editor(object):
 			self.window.set_transient_for(modal_for)
 			self.window.set_modal(True)
 		self.window.show()
+
+
+class ComboSetter(object):
+	
+	def set_cb(self, cb, key, keyindex=0):
+		"""
+		Sets combobox value.
+		Returns True on success or False if key is not found.
+		"""
+		model = cb.get_model()
+		self._recursing = True
+		for row in model:
+			if key == row[keyindex]:
+				cb.set_active_iter(row.iter)
+				self._recursing = False
+				return True
+		self._recursing = False
+		return False

@@ -397,7 +397,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def on_action_chosen(self, id, action, reopen=False):
 		before = self.set_action(self.current, id, action)
-		if type(before) != type(action) or before.to_string() != action.to_string():
+		if before.to_string() != action.to_string():
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
 			self.builder.get_object("btUndo").set_sensitive(True)
