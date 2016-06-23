@@ -21,7 +21,7 @@ __all__ = [ 'MenuOnlyComponent' ]
 class MenuOnlyComponent(AEComponent, MenuActionCofC):
 	GLADE = "ae/menu_only.glade"
 	NAME = "menu_only"
-	CTXS = ()
+	CTXS = Action.AC_MENU,
 	PRIORITY = 0
 	
 	def __init__(self, app, editor):

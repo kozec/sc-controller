@@ -8,8 +8,8 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gdk
+from scc.constants import SCButtons, STICK
 from scc.paths import get_profiles_path
-from scc.constants import SCButtons
 from scc.tools import find_profile
 from scc.profile import Profile
 from scc.actions import Action
@@ -41,27 +41,21 @@ class OSKBindingEditor(Editor, BindingEditor):
 		self.create_binding_buttons(use_icons=False, enable_press=False)
 	
 	
-	def show_editor(self, id, press=False):
-		if id in STICKS or press:
+	def show_editor(self, id):
+		if id in STICKS:
 			ae = self.choose_editor(self.current.stick,
 				_("Stick"))
-			ae.set_stick(self.current.stick, mode=Action.AC_OSK)
-			ae.hide_osd()
-			ae.hide_name()
+			ae.set_input(STICK, self.current.stick, mode=Action.AC_OSK)
 			ae.show(self.window)
 		elif id in SCButtons:
 			title = _("%s Button") % (id.name,)
 			ae = self.choose_editor(self.current.buttons[id], title)
-			ae.set_button(id, self.current.buttons[id], mode=Action.AC_OSK)
-			ae.hide_modifiers()
-			ae.hide_name()
+			ae.set_input(id, self.current.buttons[id], mode = Action.AC_OSK)
 			ae.show(self.window)
 		elif id in TRIGGERS:
 			ae = self.choose_editor(self.current.triggers[id],
 				_("%s Trigger") % (id,))
-			ae.set_trigger(id, self.current.triggers[id], mode=Action.AC_OSK)
-			ae.hide_osd()
-			ae.hide_name()
+			ae.set_input(id, self.current.triggers[id], mode=Action.AC_OSK)
 			ae.show(self.window)
 	
 	

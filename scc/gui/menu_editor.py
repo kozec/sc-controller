@@ -145,9 +145,7 @@ class MenuEditor(Editor):
 		elif isinstance(item, MenuItem):
 			e = ActionEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Edit Menu Action"))
-			e.hide_modeshift()
-			e.hide_macro()
-			e.set_button(item.id, item.action)
+			e.set_input(item.id, item.action, mode = Action.AC_MENU)
 		elif isinstance(item, RecentListMenuGenerator):
 			e.set_title(_("Edit Recent List"))
 			e.hide_action_str()

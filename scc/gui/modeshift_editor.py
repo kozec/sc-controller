@@ -166,19 +166,6 @@ class ModeshiftEditor(Editor):
 			cbButtonChooser.set_active(index)
 	
 	
-	def _setup_editor(self, ae, action):
-		if self.mode == Action.AC_BUTTON:
-			ae.set_button(self.id, action)
-		elif self.mode == Action.AC_TRIGGER:
-			ae.set_trigger(self.id, action)
-		elif self.mode == Action.AC_STICK:
-			ae.set_stick(action)
-		elif self.mode == Action.AC_GYRO:
-			ae.set_gyro(action)
-		elif self.mode == Action.AC_PAD:
-			ae.set_pad(self.id, action)		
-	
-	
 	def _choose_editor(self, action, cb):
 		if isinstance(action, Macro):
 			from scc.gui.macro_editor import MacroEditor	# Cannot be imported @ top
@@ -202,7 +189,7 @@ class ModeshiftEditor(Editor):
 					if reopen: self.on_actionb_clicked(trash, clicked_button)
 				
 				ae = self._choose_editor(action, on_chosen)
-				self._setup_editor(ae, action)
+				ae.set_input(self.id, action, mode = self.mode)
 				ae.show(self.window)
 				return
 	
@@ -221,7 +208,7 @@ class ModeshiftEditor(Editor):
 			if reopen: self.on_nomodbt_clicked(actionButton)
 		
 		ae = self._choose_editor(self.nomods[self.current_page], on_chosen)
-		self._setup_editor(ae, self.nomods[self.current_page])
+		ae.set_input(self.id, self.nomods[self.current_page], mode = self.mode)
 		ae.show(self.window)
 	
 	
@@ -249,7 +236,7 @@ class ModeshiftEditor(Editor):
 		""" Handler for 'Custom Editor' button """
 		from scc.gui.action_editor import ActionEditor	# Can't be imported on top
 		e = ActionEditor(self.app, self.ac_callback)
-		e.set_button(self.id, self._make_action())
+		e.set_input(self.id, self._make_action(), mode = self.mode)
 		e.hide_action_buttons()
 		e.hide_advanced_settings()
 		e.set_title(self.window.get_title())
@@ -311,10 +298,12 @@ class ModeshiftEditor(Editor):
 		actionButton.set_label(self.nomods[index].describe(self.mode))
 	
 	
-	def _set_mode(self, mode, id, action):
+	def set_input(self, id, action, mode=Action.AC_BUTTON):
 		btDefault = self.builder.get_object("btDefault")
 		self.id = id
 		self.mode = mode
+		
+		self.set_title("Modeshift for %s" % (id.name if id in SCButtons else str(id),))
 		
 		if isinstance(action, ModeModifier):
 			self._load_modemod(0, action)
@@ -325,28 +314,9 @@ class ModeshiftEditor(Editor):
 			self._set_nomod_button(0, action.normalaction)
 			self._set_nomod_button(1, action.holdaction)
 			self._set_nomod_button(2, action.action)
-	
-	
-	def set_button(self, id, action):
-		""" Setups editor as editor for button action """
-		self._set_mode(Action.AC_BUTTON, id, action)
-	
-	
-	def set_trigger(self, id, action):
-		""" Setups editor as editor for trigger action """
-		self._set_mode(Action.AC_TRIGGER, id, action)
-	
-	
-	def set_stick(self, action):
-		""" Setups action editor as editor for stick action """
-		self._set_mode(Action.AC_STICK, Profile.STICK, action)
-	
-	
-	def set_pad(self, id, action):
-		""" Setups action editor as editor for pad action """
-		self._set_mode(Action.AC_PAD, id, action)
-	
-	
-	def set_gyro(self, action):
-		""" Setups editor as editor for button action """
-		self._set_mode(Action.AC_GYRO, Profile.GYRO, action)
+		
+		if mode == Action.AC_OSK:
+			# This is kinda bad, but allowing Custom Editor
+			# from OSK editor is in TODO
+			self.builder.get_object("btCustomActionEditor").set_visible(False)
+

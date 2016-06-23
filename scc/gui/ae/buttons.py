@@ -25,7 +25,7 @@ class ButtonsComponent(AEComponent, Chooser):
 	GLADE = "ae/buttons.glade"
 	NAME = "buttons"
 	IMAGES = { "buttons" : "buttons.svg" }
-	CTXS = Action.AC_BUTTON,
+	CTXS = Action.AC_BUTTON, Action.AC_MENU
 	PRIORITY = 1
 	
 	def __init__(self, app, editor):

@@ -143,7 +143,7 @@ class ControllerStick(ControllerWidget):
 	
 	def on_click(self, *a):
 		if self.over_icon:
-			self.app.show_editor(getattr(SCButtons, self.id), True)
+			self.app.show_editor(getattr(SCButtons, self.id))
 		else:
 			self.app.show_editor(self.id)
 	

@@ -47,7 +47,9 @@ class Action(object):
 	AC_PAD		= 1 << 5
 	AC_OSD		= 1 << 8
 	AC_OSK		= 1 << 9	# On screen keyboard
-	AC_ALL		= 0b111111111
+	AC_MENU		= 1 << 10	# Menu Item
+	#		bit 	09876543210
+	AC_ALL		= 0b10111111111	# ALL means everything but OSK
 	
 	def __init__(self, *parameters):
 		self.parameters = parameters
