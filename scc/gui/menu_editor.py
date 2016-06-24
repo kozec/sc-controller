@@ -66,7 +66,7 @@ class MenuEditor(Editor):
 			self.builder.get_object("rbInProfile").set_sensitive(True)
 	
 	
-	def on_action_chosen(self, id, a, reopen=False):
+	def on_action_chosen(self, id, a):
 		model = self.builder.get_object("tvItems").get_model()
 		for i in model:
 			item = i[0].item
@@ -87,8 +87,6 @@ class MenuEditor(Editor):
 					raise TypeError("Edited %s" % (item.__class__.__name__))
 				i[1] = item.describe()
 				break
-		if reopen:
-			self.btEdit_clicked_cb()
 	
 	
 	def on_btSave_clicked(self, *a):
@@ -145,9 +143,7 @@ class MenuEditor(Editor):
 		elif isinstance(item, MenuItem):
 			e = ActionEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Edit Menu Action"))
-			e.hide_modeshift()
-			e.hide_macro()
-			e.set_button(item.id, item.action)
+			e.set_input(item.id, item.action, mode = Action.AC_MENU)
 		elif isinstance(item, RecentListMenuGenerator):
 			e.set_title(_("Edit Recent List"))
 			e.hide_action_str()

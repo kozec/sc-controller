@@ -426,12 +426,12 @@ class DoubleclickModifier(Modifier):
 	COMMAND = "doubleclick"
 	DEAFAULT_TIMEOUT = 0.2
 	
-	def __init__(self, doubleclickaction, normalaction=None):
+	def __init__(self, doubleclickaction, normalaction=None, time=None):
 		Modifier.__init__(self)
 		self.action = doubleclickaction
 		self.normalaction = normalaction or NoAction()
 		self.holdaction = NoAction()
-		self.timeout = self.DEAFAULT_TIMEOUT
+		self.timeout = time or DoubleclickModifier.DEAFAULT_TIMEOUT
 		self.waiting = False
 		self.pressed = False
 		self.active = None
@@ -508,10 +508,10 @@ class DoubleclickModifier(Modifier):
 		firstline, lastline = "", ""
 		if self.action:
 			firstline += DoubleclickModifier.COMMAND + "(" + self.action.to_string() + ","
-			lastline += ")"
 		if self.holdaction:
 			firstline += HoldModifier.COMMAND + "(" + self.holdaction.to_string() + ","
-			lastline += ")"
+		lastline += ", " + str(self.timeout)
+		lastline += ")"
 		
 		if multiline:
 			if self.normalaction:
@@ -535,6 +535,8 @@ class DoubleclickModifier(Modifier):
 		rv['doubleclick'] = self.action.encode()
 		if self.holdaction:
 			rv['hold'] = self.holdaction.encode()
+		if self.timeout != DoubleclickModifier.DEAFAULT_TIMEOUT:
+			rv['time'] = self.timeout
 		if self.name: rv['name'] = self.name
 		return rv
 	
@@ -587,8 +589,8 @@ class HoldModifier(DoubleclickModifier):
 	# specially.
 	COMMAND = "hold"
 	
-	def __init__(self, holdaction, normalaction=None):
-		DoubleclickModifier.__init__(self, NoAction(), normalaction)
+	def __init__(self, holdaction, normalaction=None, time=None):
+		DoubleclickModifier.__init__(self, NoAction(), normalaction, time)
 		self.holdaction = holdaction
 
 

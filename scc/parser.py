@@ -122,12 +122,14 @@ class ActionParser(object):
 		if "doubleclick" in data:
 			args = [ self.from_json_data(data['doubleclick']), a ]
 			a = DoubleclickModifier(*args)
+			if "time" in data: a.timeout = data["time"]
 		if "hold" in data:
 			if isinstance(a, DoubleclickModifier):
 				a.holdaction = self.from_json_data(data['hold'])
 			else:
 				args = [ self.from_json_data(data['hold']), a ]
 				a = HoldModifier(*args)
+			if "time" in data: a.timeout = data["time"]
 		return a
 	
 	

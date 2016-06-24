@@ -140,19 +140,19 @@ Defines mode shifting. If physical buttonX is pressed, actionX is executed.
 Optional default action is executed if none from specified buttons is pressed.
 
 
-#### doubleclick(doubleclick_action [, normal_action])
+#### doubleclick(doubleclick_action [, normal_action [, timeout ]])
 Executes action if user double-clicks button.
 Optional normal_action parameter specifies action that is executed when user
-click button only once. This action is executed after small delay needed to
-detect double-clicking.
+click button only once. Optional time arguments modifies maximum delay in 
+doubleclick and in effect sets delay before normal action is executed.
 
-#### hold(hold_action [, normal_action])
+#### hold(hold_action [, normal_action [, timeout ]])
 Executes action if user holds button for longer time.
 Optional normal_action parameter specifies action that is executed when user
-click button shortly.
+click button shortly. Optional time arguments modifies how long "longer time" is.
 
 Hold and doubleclick can be combined together by writing
-`hold(hold_action, doubleclick(doubleclick_action, normal_action))`
+`hold([time,] hold_action, doubleclick(doubleclick_action, normal_action))`
 
 
 #### sens(x_axis [, y_axis [, z_axis]], action)

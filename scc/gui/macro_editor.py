@@ -258,31 +258,18 @@ class MacroEditor(Editor):
 		self.update_action_field()
 	
 	
-	def _setup_editor(self, ae, action):
-		""" Setups editor used to edit subaction """
-		if self.mode == Action.AC_BUTTON:
-			ae.set_button(self.id, action)
-		elif self.mode == Action.AC_TRIGGER:
-			ae.set_trigger(self.id, action)
-		elif self.mode == Action.AC_STICK:
-			ae.set_stick(action)
-		elif self.mode == Action.AC_PAD:
-			ae.set_pad(self.id, action)
-	
-	
 	def on_actionb_clicked(self, button, i, action_data):
 		""" Handler clicking on action name """
-		def on_chosen(id, action, reopen=False):
+		def on_chosen(id, action):
 			readd = [ x.action for x in self.actions ]
 			readd[i] = action
 			self._refill_grid(readd)
 			self.update_action_field()
-			if reopen: self.on_actionb_clicked(button, i, action_data)
 		
 		from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 		ae = ActionEditor(self.app, on_chosen)
 		ae.set_title(_("Edit Action"))
-		self._setup_editor(ae, action_data.action)
+		ae.set_input(self.id, action_data.action)
 		ae.hide_modeshift()
 		ae.hide_macro()
 		ae.hide_name()
@@ -299,12 +286,25 @@ class MacroEditor(Editor):
 		self._add_action(SleepAction(0.5))
 	
 	
-	def on_btClear_clicked	(self, *a):
+	def on_btClear_clicked(self, *a):
 		""" Handler for clear button """
 		action = NoAction()
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, action)
 		self.close()
+	
+	
+	def on_btCustomActionEditor_clicked(self, *a):
+		""" Handler for 'Custom Editor' button """
+		from scc.gui.action_editor import ActionEditor	# Can't be imported on top
+		e = ActionEditor(self.app, self.ac_callback)
+		e.set_input(self.id, self._make_action(), mode = self.mode)
+		e.hide_action_buttons()
+		e.hide_advanced_settings()
+		e.set_title(self.window.get_title())
+		e.force_page(e.load_component("custom"), True)
+		self.close()
+		e.show(self.get_transient_for())
 	
 	
 	def on_btOK_clicked(self, *a):
@@ -315,13 +315,14 @@ class MacroEditor(Editor):
 		self.close()
 	
 	
-	def _set_mode(self, mode, id, action):
+	def set_input(self, id, action, mode=Action.AC_BUTTON):
 		""" Common part of editor setup """
 		btDefault = self.builder.get_object("btDefault")
 		entName = self.builder.get_object("entName")
 		cbMacroType = self.builder.get_object("cbMacroType")
 		self.id = id
 		self.mode = mode
+		self.set_title("Macro for %s" % (id.name if id in SCButtons else str(id),))
 		if isinstance(action, Cycle):
 			cbMacroType.set_active(2)
 		elif action.repeat:
@@ -332,26 +333,6 @@ class MacroEditor(Editor):
 			self._add_action(a)
 		if action.name is not None:
 			entName.set_text(action.name)
-	
-	
-	def set_button(self, id, action):
-		""" Setups editor as editor for button action """
-		self._set_mode(Action.AC_BUTTON, id, action)
-	
-	
-	def set_trigger(self, id, action):
-		""" Setups editor as editor for trigger action """
-		self._set_mode(Action.AC_TRIGGER, id, action)
-	
-	
-	def set_stick(self, action):
-		""" Setups action editor as editor for stick action """
-		self._set_mode(Action.AC_STICK, Profile.STICK, action)
-
-
-	def set_pad(self, id, action):
-		""" Setups action editor as editor for pad action """
-		self._set_mode(Action.AC_PAD, id, action)
 	
 	
 	def hide_name(self):

@@ -128,5 +128,5 @@ class BindingEditor(object):
 		pass
 	
 	
-	def show_editor(self, id, press=False):
+	def show_editor(self, id):
 		raise TypeError("show_editor not overriden")

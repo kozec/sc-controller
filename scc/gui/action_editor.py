@@ -12,11 +12,13 @@ from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.modifiers import DeadzoneModifier
 from scc.actions import Action, XYAction, NoAction
+from scc.constants import HapticPos, SCButtons
 from scc.special_actions import OSDAction
 from scc.controller import HapticData
-from scc.constants import HapticPos
 from scc.profile import Profile
 from scc.macros import Macro
+from scc.gui.controller_widget import PRESSABLE, TRIGGERS, PADS
+from scc.gui.controller_widget import STICKS, GYROS, BUTTONS
 from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.macro_editor import MacroEditor
 from scc.gui.parser import InvalidAction
@@ -387,24 +389,21 @@ class ActionEditor(Editor):
 	
 	
 	def on_btModeshift_clicked(self, *a):
-		""" Asks main window to close this one and display modeshift editor """
-		if self.ac_callback is not None:
-			# Convert current action into modeshift and send it to main window
-			action = ModeModifier(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
-			self.close()
-			self.ac_callback(self.id, action, reopen=True)
+		""" Convert current action into modeshift and send it to ModeshiftEditor """
+		e = ModeshiftEditor(self.app, self.ac_callback)
+		action = ModeModifier(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
+		e.set_input(self.id, action, mode=self._mode)
+		self.close()
+		e.show(self.get_transient_for())
 	
 	
 	def on_btMacro_clicked(self, *a):
-		""" Asks main window to close this one and display macro editor """
-		if self.ac_callback is not None:
-			# Convert current action into modeshift and send it to main window
-			self._set_title()
-			action = Macro(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
-			action.name = action.actions[0].name
-			action.actions[0].name = None
-			self.close()
-			self.ac_callback(self.id, action, reopen=True)
+		""" Convert current action into macro and send it to MacroEditor """
+		e = MacroEditor(self.app, self.ac_callback)
+		action = Macro(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
+		e.set_input(self.id, action, mode=self._mode)
+		self.close()
+		e.show(self.get_transient_for())
 	
 	
 	def on_exMore_activate(self, ex, *a):
@@ -686,63 +685,74 @@ class ActionEditor(Editor):
 			entName.set_text("")
 		else:
 			entName.set_text(action.name)
-		vbActionButtons.show_all()
+		if vbActionButtons.get_visible():
+			vbActionButtons.show_all()
 	
 	
-	def set_button(self, button, action, mode=Action.AC_BUTTON):
-		""" Setups action editor as editor for button action """
-		self._set_mode(action, mode)
-		self.hide_sensitivity(0, 1, 2)
-		self.hide_enable_feedback()
-		self.hide_hide_enable_deadzones()
-		self.hide_require_click()
-		self.set_action(action)
-		self.id = button
-
-	
-	def set_trigger(self, trigger, action, mode=Action.AC_TRIGGER):
-		""" Setups action editor as editor for trigger action """
-		self._set_mode(action, mode)
-		self.hide_sensitivity(1, 2) # YZ
-		self.hide_require_click()
-		self.hide_hide_enable_deadzones()
-		self.hide_osd()
-		self.set_action(action)
-		self.hide_macro()
-		self.id = trigger
-	
-	
-	def set_stick(self, action, mode=Action.AC_STICK):
-		""" Setups action editor as editor for stick action """
-		self._set_mode(action, mode)
-		self.hide_sensitivity(2) # Z only
-		self.hide_require_click()
-		self.hide_osd()
-		self.set_action(action)
-		self.hide_macro()
-		self.id = Profile.STICK
-	
-	
-	def set_gyro(self, action):
-		""" Setups action editor as editor for stick action """
-		self._set_mode(action, Action.AC_GYRO)
-		self.set_action(action)
-		self.hide_require_click()
-		self.hide_hide_enable_deadzones()
-		self.hide_osd()
-		self.hide_macro()
-		self.hide_modeshift()
-		self.id = Profile.GYRO
-	
-	
-	def set_pad(self, id, action):
-		""" Setups action editor as editor for pad action """
-		self._set_mode(action, Action.AC_PAD)
-		self.hide_sensitivity(2) # Z only
+	def set_input(self, id, action, mode=None):
+		"""
+		Setups action editor for editing specified input.
+		Mode (buttton/axis/trigger...) is either provided or chosen based on id.
+		Also sets title, but that can be overriden by calling set_title after.
+		"""
 		self.id = id
-		self.set_action(action)
-		self.hide_osd()
-		self.hide_macro()
+		if id in SCButtons or mode == Action.AC_MENU:
+			if id in PRESSABLE:
+				self.set_title(_("%s Press") % (id.name,))
+			elif id in SCButtons:
+				self.set_title(id.name,)
+			self._set_mode(action, mode or Action.AC_BUTTON)
+			self.hide_sensitivity(0, 1, 2)
+			self.hide_enable_feedback()
+			self.hide_hide_enable_deadzones()
+			self.hide_require_click()
+			self.set_action(action)
+		elif id in TRIGGERS:
+			self.set_title(_("%s Trigger") % (id,))
+			self._set_mode(action, mode or Action.AC_TRIGGER)
+			self.hide_sensitivity(1, 2) # YZ
+			self.hide_require_click()
+			self.hide_hide_enable_deadzones()
+			self.hide_osd()
+			self.set_action(action)
+			self.hide_macro()
+		elif id in STICKS:
+			self.set_title(_("Stick"))
+			self._set_mode(action, mode or Action.AC_STICK)
+			self.hide_sensitivity(2) # Z only
+			self.hide_require_click()
+			self.hide_osd()
+			self.set_action(action)
+			self.hide_macro()
+			self.id = Profile.STICK
+		elif id in GYROS:
+			self.set_title(_("Gyro"))
+			self._set_mode(action, mode or Action.AC_GYRO)
+			self.set_action(action)
+			self.hide_require_click()
+			self.hide_hide_enable_deadzones()
+			self.hide_osd()
+			self.hide_macro()
+			self.hide_modeshift()
+			self.id = Profile.GYRO
+		elif id in PADS:
+			self._set_mode(action, mode or Action.AC_PAD)
+			self.hide_sensitivity(2) # Z only
+			self.set_action(action)
+			self.hide_osd()
+			self.hide_macro()
+			if id == "LPAD":
+				self.set_title(_("Left Pad"))
+			else:
+				self.set_title(_("Right Pad"))
+		if mode == Action.AC_OSK:
+			self.hide_osd()
+			self.hide_name()
+			self.hide_macro()
+			self.hide_modeshift()
+		elif mode == Action.AC_MENU:
+			self.hide_modeshift()
+			self.hide_macro()
 	
 	
 	def set_menu_item(self, item, title_for_name_label=None):

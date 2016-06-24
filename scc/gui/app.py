@@ -137,39 +137,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.hilight(button)
 	
 	
-	def show_editor(self, id, press=False):
-		if id in SCButtons:
-			title = _("%s Button") % (id.name,)
-			if press:
-				title = _("%s Press") % (id.name,)
-			ae = self.choose_editor(self.current.buttons[id], title)
-			ae.set_button(id, self.current.buttons[id])
-			ae.show(self.window)
-		elif id in TRIGGERS:
-			ae = self.choose_editor(self.current.triggers[id],
-				_("%s Trigger") % (id,))
-			ae.set_trigger(id, self.current.triggers[id])
-			ae.show(self.window)
-		elif id in STICKS:
-			ae = self.choose_editor(self.current.stick,
-				_("Stick"))
-			ae.set_stick(self.current.stick)
-			ae.show(self.window)
-		elif id in GYROS:
-			ae = self.choose_editor(self.current.gyro,
-				_("Gyro"))
-			ae.set_gyro(self.current.gyro)
-			ae.show(self.window)
-		elif id in PADS:
-			data = NoAction()
-			if id == "LPAD":
-				data = self.current.pads[Profile.LEFT]
-				ae = self.choose_editor(data, _("Left Pad"))
-			else:
-				data = self.current.pads[Profile.RIGHT]
-				ae = self.choose_editor(data, _("Right Pad"))
-			ae.set_pad(id, data)
-			ae.show(self.window)
+	def show_editor(self, id):
+		action = self.get_action(self.current, id)
+		ae = self.choose_editor(action, "")
+		ae.set_input(id, action)
+		ae.show(self.window)
 	
 	
 	def show_context_menu(self, for_id):
@@ -395,15 +367,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.save_profile(self.current_file, self.current)
 	
 	
-	def on_action_chosen(self, id, action, reopen=False):
+	def on_action_chosen(self, id, action):
 		before = self.set_action(self.current, id, action)
-		if type(before) != type(action) or before.to_string() != action.to_string():
+		if before.to_string() != action.to_string():
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
 			self.builder.get_object("btUndo").set_sensitive(True)
 		self.on_profile_changed()
-		if reopen:
-			self.show_editor(id)
 	
 	
 	def on_background_area_hover(self, trash, area):

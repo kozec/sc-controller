@@ -25,7 +25,7 @@ __all__ = [ 'DPADComponent' ]
 class DPADComponent(AEComponent, MenuActionCofC):
 	GLADE = "ae/dpad.glade"
 	NAME = "dpad"
-	CTXS = Action.AC_STICK, Action.AC_PAD,
+	CTXS = Action.AC_STICK, Action.AC_PAD
 	PRIORITY = 2
 	
 	DPAD8_WIDGETS = [ 'btDPAD4', 'btDPAD5', 'btDPAD6', 'btDPAD7' ]
@@ -143,5 +143,5 @@ class DPADComponent(AEComponent, MenuActionCofC):
 		i = int(b.get_name())
 		ae = ActionEditor(self.app, self.on_choosen)
 		ae.set_title(_("Select DPAD Action"))
-		ae.set_button(i, self.actions[i])
+		ae.set_input(i, self.actions[i], mode = Action.AC_BUTTON)
 		ae.show(self.app.window)

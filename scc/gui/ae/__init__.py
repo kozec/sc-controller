@@ -6,7 +6,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, XYAction
 from scc.tools import strip_none, ensure_size
-from scc.gui import ComboSetter
+from scc.gui.editor import ComboSetter
 
 import os, logging
 log = logging.getLogger("AE")

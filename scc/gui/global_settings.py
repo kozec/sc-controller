@@ -16,9 +16,8 @@ from scc.actions import ACTIONS
 from scc.profile import Profile
 from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
+from scc.gui.editor import Editor, ComboSetter
 from scc.gui.parser import GuiActionParser
-from scc.gui.editor import Editor
-from scc.gui import ComboSetter
 from scc.x11.autoswitcher import Condition
 from scc.osd.keyboard import Keyboard as OSDKeyboard
 from scc.osd.osk_actions import OSK, OSKCursorAction

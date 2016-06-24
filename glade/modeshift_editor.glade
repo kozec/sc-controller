@@ -2,6 +2,12 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkAdjustment" id="adjTime">
+    <property name="lower">0.01</property>
+    <property name="upper">10</property>
+    <property name="step_increment">0.10000000000000001</property>
+    <property name="page_increment">0.20000000000000001</property>
+  </object>
   <object class="GtkListStore" id="lstControllerButtons">
     <columns>
       <!-- column-name value -->
@@ -11,7 +17,7 @@
     </columns>
   </object>
   <object class="GtkWindow" id="Dialog">
-    <property name="width_request">500</property>
+    <property name="width_request">600</property>
     <property name="can_focus">False</property>
     <property name="role">action-editor</property>
     <property name="resizable">False</property>
@@ -215,6 +221,7 @@
               <object class="GtkBox" id="vbHold">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_bottom">5</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkGrid" id="grHold">
@@ -291,13 +298,58 @@
                     <property name="position">1</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkBox" id="vbHoldTime">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">10</property>
+                    <property name="margin_right">10</property>
+                    <child>
+                      <object class="GtkLabel" id="lblHoldTime">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_right">10</property>
+                        <property name="label" translatable="yes">Hold Time</property>
+                        <property name="xalign">0</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScale" id="sclHoldTime">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="adjustment">adjTime</property>
+                        <property name="round_digits">1</property>
+                        <property name="value_pos">right</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="position">1</property>
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="label70">
+              <object class="GtkLabel" id="lblHold">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="hexpand">True</property>
@@ -312,6 +364,7 @@
               <object class="GtkBox" id="vbDoubleClick">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_bottom">5</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkGrid" id="grDoubleClick">
@@ -320,6 +373,7 @@
                     <property name="margin_left">10</property>
                     <property name="margin_right">10</property>
                     <property name="margin_top">10</property>
+                    <property name="margin_bottom">5</property>
                     <property name="row_spacing">5</property>
                     <property name="column_spacing">15</property>
                     <property name="row_homogeneous">True</property>
@@ -388,13 +442,58 @@
                     <property name="position">1</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkBox" id="vbDoubleClickTime">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">10</property>
+                    <property name="margin_right">10</property>
+                    <child>
+                      <object class="GtkLabel" id="lblDoubleClickTime">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_right">10</property>
+                        <property name="label" translatable="yes">Double-click Time</property>
+                        <property name="xalign">0</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScale" id="sclDoubleClickTime">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="adjustment">adjTime</property>
+                        <property name="round_digits">1</property>
+                        <property name="value_pos">right</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="position">2</property>
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="label92">
+              <object class="GtkLabel" id="lblDoubleClick">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="hexpand">True</property>
@@ -420,18 +519,15 @@
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
         <child>
-          <object class="GtkButton" id="btOK">
-            <property name="label">gtk-ok</property>
+          <object class="GtkButton" id="btCustomActionEditor">
+            <property name="label" translatable="yes">Custom Editor</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="can_default">True</property>
-            <property name="has_default">True</property>
             <property name="receives_default">True</property>
-            <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btOK_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btCustomActionEditor_clicked" swapped="no"/>
           </object>
           <packing>
-            <property name="pack_type">end</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>
@@ -442,6 +538,22 @@
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
             <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btOK">
+            <property name="label">gtk-ok</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="can_default">True</property>
+            <property name="has_default">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_btOK_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="pack_type">end</property>
