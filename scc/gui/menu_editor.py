@@ -66,7 +66,7 @@ class MenuEditor(Editor):
 			self.builder.get_object("rbInProfile").set_sensitive(True)
 	
 	
-	def on_action_chosen(self, id, a, reopen=False):
+	def on_action_chosen(self, id, a):
 		model = self.builder.get_object("tvItems").get_model()
 		for i in model:
 			item = i[0].item
@@ -87,8 +87,6 @@ class MenuEditor(Editor):
 					raise TypeError("Edited %s" % (item.__class__.__name__))
 				i[1] = item.describe()
 				break
-		if reopen:
-			self.btEdit_clicked_cb()
 	
 	
 	def on_btSave_clicked(self, *a):

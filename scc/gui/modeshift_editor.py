@@ -183,10 +183,9 @@ class ModeshiftEditor(Editor):
 		for i in self.actions[index]:
 			button, action, l, b, clearb = i
 			if button == clicked_button:
-				def on_chosen(id, action, reopen=False):
+				def on_chosen(id, action):
 					b.set_label(action.describe(self.mode))
 					i[1] = action
-					if reopen: self.on_actionb_clicked(trash, clicked_button)
 				
 				ae = self._choose_editor(action, on_chosen)
 				ae.set_input(self.id, action, mode = self.mode)
@@ -197,15 +196,16 @@ class ModeshiftEditor(Editor):
 	def on_ntbMore_switch_page(self, ntb, box, index):
 		self.current_page = index
 		self._fill_button_chooser()
+		self.builder.get_object("cbButtonChooser").set_sensitive(box.get_sensitive())
+		self.builder.get_object("btAddAction").set_sensitive(box.get_sensitive())
 	
 	
 	def on_nomodbt_clicked(self, button, *a):
 		actionButton = self.action_widgets[self.current_page][1]
 		
-		def on_chosen(id, action, reopen=False):
+		def on_chosen(id, action):
 			actionButton.set_label(action.describe(self.mode))
 			self.nomods[self.current_page] = action
-			if reopen: self.on_nomodbt_clicked(actionButton)
 		
 		ae = self._choose_editor(self.nomods[self.current_page], on_chosen)
 		ae.set_input(self.id, self.nomods[self.current_page], mode = self.mode)
@@ -241,7 +241,7 @@ class ModeshiftEditor(Editor):
 		e.hide_advanced_settings()
 		e.set_title(self.window.get_title())
 		self.close()
-		e.show(self.window.get_transient_for())
+		e.show(self.get_transient_for())
 	
 	
 	def on_btOK_clicked(self, *a):
@@ -319,4 +319,9 @@ class ModeshiftEditor(Editor):
 			# This is kinda bad, but allowing Custom Editor
 			# from OSK editor is in TODO
 			self.builder.get_object("btCustomActionEditor").set_visible(False)
+		if mode != Action.AC_BUTTON:
+			for w in ("vbHold", "vbDoubleClick", "lblHold", "lblDoubleClick"):
+				self.builder.get_object(w).set_sensitive(False)
+		
+
 

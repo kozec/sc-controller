@@ -59,12 +59,9 @@ class OSKBindingEditor(Editor, BindingEditor):
 			ae.show(self.window)
 	
 	
-	def on_action_chosen(self, id, action, reopen=False):
+	def on_action_chosen(self, id, action):
 		self.set_action(self.current, id, action)
-		if reopen:
-			self.show_editor(id)
-		else:
-			self.save_profile()
+		self.save_profile()
 	
 	
 	def save_profile(self, *a):

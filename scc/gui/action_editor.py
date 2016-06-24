@@ -389,24 +389,21 @@ class ActionEditor(Editor):
 	
 	
 	def on_btModeshift_clicked(self, *a):
-		""" Asks main window to close this one and display modeshift editor """
-		if self.ac_callback is not None:
-			# Convert current action into modeshift and send it to main window
-			action = ModeModifier(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
-			self.close()
-			self.ac_callback(self.id, action, reopen=True)
+		""" Convert current action into modeshift and send it to ModeshiftEditor """
+		e = ModeshiftEditor(self.app, self.ac_callback)
+		action = ModeModifier(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
+		e.set_input(self.id, action, mode=self._mode)
+		self.close()
+		e.show(self.get_transient_for())
 	
 	
 	def on_btMacro_clicked(self, *a):
-		""" Asks main window to close this one and display macro editor """
-		if self.ac_callback is not None:
-			# Convert current action into modeshift and send it to main window
-			self._set_title()
-			action = Macro(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
-			action.name = action.actions[0].name
-			action.actions[0].name = None
-			self.close()
-			self.ac_callback(self.id, action, reopen=True)
+		""" Convert current action into macro and send it to MacroEditor """
+		e = MacroEditor(self.app, self.ac_callback)
+		action = Macro(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
+		e.set_input(self.id, action, mode=self._mode)
+		self.close()
+		e.show(self.get_transient_for())
 	
 	
 	def on_exMore_activate(self, ex, *a):

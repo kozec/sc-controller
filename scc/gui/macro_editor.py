@@ -260,12 +260,11 @@ class MacroEditor(Editor):
 	
 	def on_actionb_clicked(self, button, i, action_data):
 		""" Handler clicking on action name """
-		def on_chosen(id, action, reopen=False):
+		def on_chosen(id, action):
 			readd = [ x.action for x in self.actions ]
 			readd[i] = action
 			self._refill_grid(readd)
 			self.update_action_field()
-			if reopen: self.on_actionb_clicked(button, i, action_data)
 		
 		from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 		ae = ActionEditor(self.app, on_chosen)
@@ -304,7 +303,7 @@ class MacroEditor(Editor):
 		e.hide_advanced_settings()
 		e.set_title(self.window.get_title())
 		self.close()
-		e.show(self.window.get_transient_for())
+		e.show(self.get_transient_for())
 	
 	
 	def on_btOK_clicked(self, *a):

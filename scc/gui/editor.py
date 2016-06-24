@@ -60,6 +60,7 @@ class Editor(object):
 		""" Sets combobox value """
 		model = cb.get_model()
 		self._recursing = True
+		self._transient_for = None
 		for row in model:
 			if key == row[keyindex]:
 				cb.set_active_iter(row.iter)
@@ -77,9 +78,17 @@ class Editor(object):
 		self.window.destroy()
 	
 	
-	def show(self, modal_for):
-		if modal_for:
-			self.window.set_transient_for(modal_for)
+	def get_transient_for(self):
+		"""
+		Returns parent window for this editor. Usually main application window
+		"""
+		return self._transient_for
+	
+	
+	def show(self, transient_for):
+		if transient_for:
+			self._transient_for = transient_for
+			self.window.set_transient_for(transient_for)
 			self.window.set_modal(True)
 		self.window.show()
 

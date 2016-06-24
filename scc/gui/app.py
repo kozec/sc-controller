@@ -367,15 +367,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.save_profile(self.current_file, self.current)
 	
 	
-	def on_action_chosen(self, id, action, reopen=False):
+	def on_action_chosen(self, id, action):
 		before = self.set_action(self.current, id, action)
 		if before.to_string() != action.to_string():
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
 			self.builder.get_object("btUndo").set_sensitive(True)
 		self.on_profile_changed()
-		if reopen:
-			self.show_editor(id)
 	
 	
 	def on_background_area_hover(self, trash, area):
