@@ -240,6 +240,7 @@ class ModeshiftEditor(Editor):
 		e.hide_action_buttons()
 		e.hide_advanced_settings()
 		e.set_title(self.window.get_title())
+		e.force_page(e.load_component("custom"), True)
 		self.close()
 		e.show(self.get_transient_for())
 	

@@ -298,10 +298,11 @@ class MacroEditor(Editor):
 		""" Handler for 'Custom Editor' button """
 		from scc.gui.action_editor import ActionEditor	# Can't be imported on top
 		e = ActionEditor(self.app, self.ac_callback)
-		e.set_input(self.id, self._make_action())
+		e.set_input(self.id, self._make_action(), mode = self.mode)
 		e.hide_action_buttons()
 		e.hide_advanced_settings()
 		e.set_title(self.window.get_title())
+		e.force_page(e.load_component("custom"), True)
 		self.close()
 		e.show(self.get_transient_for())
 	
