@@ -247,19 +247,18 @@ class ModeshiftEditor(Editor):
 	
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
-		action = self._save_modemod(0)
-		hold_action = self._save_modemod(1)
-		dbl_action = self._save_modemod(2)
-		if hold_action:
-			action = HoldModifier(hold_action, action)
-			if dbl_action:
-				action.action = dbl_action
-		elif dbl_action:
-			action = DoubleclickModifier(hold_action, action)
-		print action.to_string(True, 4)
+		normalaction = self._save_modemod(0)
+		holdaction = self._save_modemod(1)
+		dblaction = self._save_modemod(2)
+		if dblaction:
+			action = DoubleclickModifier(dblaction, normalaction)
+			action.holdaction = holdaction
+		elif holdaction:
+			action = HoldModifier(holdaction, normalaction)
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, action)
 		self.close()
+	
 	
 	def _save_modemod(self, index):
 		""" Generates ModeModifier from page in Notebook """
