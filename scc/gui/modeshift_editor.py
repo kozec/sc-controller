@@ -254,15 +254,14 @@ class ModeshiftEditor(Editor):
 	
 	def _make_action(self):
 		""" Generates and returns Action instance """
-		action = self._save_modemod(0)
-		hold_action = self._save_modemod(1)
-		dbl_action = self._save_modemod(2)
-		if hold_action:
-			action = HoldModifier(hold_action, action)
-			if dbl_action:
-				action.action = dbl_action
-		elif dbl_action:
-			action = DoubleclickModifier(hold_action, action)
+		normalaction = self._save_modemod(0)
+		holdaction = self._save_modemod(1)
+		dblaction = self._save_modemod(2)
+		if dblaction:
+			action = DoubleclickModifier(dblaction, normalaction)
+			action.holdaction = holdaction
+		elif holdaction:
+			action = HoldModifier(holdaction, normalaction)
 		return action
 	
 	
