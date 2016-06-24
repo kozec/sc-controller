@@ -262,6 +262,7 @@ class ModeshiftEditor(Editor):
 			action.holdaction = holdaction
 		elif holdaction:
 			action = HoldModifier(holdaction, normalaction)
+		action.timeout = self.builder.get_object("adjTime").get_value()
 		return action
 	
 	
@@ -314,6 +315,7 @@ class ModeshiftEditor(Editor):
 			self._set_nomod_button(0, action.normalaction)
 			self._set_nomod_button(1, action.holdaction)
 			self._set_nomod_button(2, action.action)
+		self.builder.get_object("adjTime").set_value(action.timeout)
 		
 		if mode == Action.AC_OSK:
 			# This is kinda bad, but allowing Custom Editor
