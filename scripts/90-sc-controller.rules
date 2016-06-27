@@ -1,0 +1,8 @@
+# This file allows SC-Controller application and daemon to access Steam Controller or its USB dongle.
+# This is done by allowing read/write access to all users. You may want to change this to something like
+# MODE="0660", GROUP="games" to allow r/w access only to members of that group.
+
+# Valve USB devices
+SUBSYSTEM=="usb", ATTRS{idVendor}=="28de", MODE="0666"
+# uinput kernel module write access (allows keyboard, mouse and gamepad emulation)
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess"
