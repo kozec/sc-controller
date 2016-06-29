@@ -99,6 +99,7 @@ class XWindowAttributes(Structure):
 SHAPE_BOUNDING	= 0
 SHAPE_CLIP		= 1
 SHAPE_INPUT		= 2
+SHAPE_SET		= 0
 
 XKBUSECOREKBD	= 0x0100
 ANYPROPERTYTYPE	= 0L
@@ -190,6 +191,14 @@ create_pixmap = libX11.XCreatePixmap
 create_pixmap.argtypes = [ c_void_p, XID, c_uint, c_uint, c_uint ]
 create_pixmap.restype = Pixmap
 
+create_pixmap_from_bitmap = libX11.XCreatePixmapFromBitmapData
+create_pixmap_from_bitmap.argtypes = [ c_void_p, XID, c_char_p, c_uint, c_uint, c_uint, c_uint, c_uint ]
+create_pixmap_from_bitmap.restype = Pixmap
+
+write_bitmap = libX11.XWriteBitmapFile
+write_bitmap.argtypes = [ c_void_p, c_char_p, Pixmap, c_uint, c_uint, c_int, c_int ]
+write_bitmap.restype = c_int
+
 free_pixmap = libX11.XFreePixmap
 free_pixmap.__doc__ = "Deallocates pixmap created by create_pixmap"
 free_pixmap.argtypes = [ c_void_p, Pixmap ]
@@ -199,6 +208,10 @@ create_gc.__doc__ = "Creates graphics context to draw on"
 create_gc.argtypes = [ c_void_p, XID, c_ulong, c_void_p ]
 create_gc.restype = GC
 
+flush_gc = libX11.XFlushGC
+flush_gc.__doc__ = "Force sending GC component changes"
+flush_gc.argtypes = [ c_void_p, GC ]
+
 free_gc = libX11.XFreeGC
 free_gc.__doc__ = "Deallocates graphics context created by create_gc"
 free_gc.argtypes = [ c_void_p, GC ]
@@ -206,6 +219,13 @@ free_gc.argtypes = [ c_void_p, GC ]
 fill_rectangle = libX11.XFillRectangle
 fill_rectangle.__doc__ = "Draws and fills rectangle on graphics context"
 fill_rectangle.argtypes = [ c_void_p, XID, GC, c_int, c_int, c_uint, c_uint ]
+
+draw_arc = libX11.XDrawArc
+draw_arc.argtypes = [ c_void_p, Pixmap, GC, c_int, c_int, c_uint, c_uint, c_int, c_int ]
+
+fill_arc = libX11.XFillArc
+fill_arc.argtypes = [ c_void_p, Pixmap, GC, c_int, c_int, c_uint, c_uint, c_int, c_int ]
+
 
 set_foreground = libX11.XSetForeground
 set_foreground.__doc__ = "Sets foreground color for drawing on graphics context"

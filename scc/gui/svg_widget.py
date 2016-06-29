@@ -60,6 +60,37 @@ class SVGWidget(Gtk.EventBox):
 		self.image_width = float(tree.attrib["width"])
 	
 	
+	def clone_template(self, id, cb):
+		"""
+		Grabs element with specified ID, creates copy of it and calls callback
+		on that copy. Then reassembles XML again.
+		"""
+		tree = ET.fromstring(self.current_svg)
+		e = self.get_element(id, tree=tree)
+		if e:
+			copy = e.copy()
+			e.parent.append(copy)
+			cb(e)
+			self.current_svg = ET.tostring(tree)
+			
+			self.cache = {}
+			self.hilight({})
+	
+	
+	def remove_element(self, id):
+		"""
+		Removes element with specified ID.
+		"""
+		tree = ET.fromstring(self.current_svg)
+		e = self.get_element(id, tree=tree)
+		if e:
+			e.parent.remove(e)
+			self.current_svg = ET.tostring(tree)
+			
+			self.cache = {}
+			self.hilight({})
+	
+	
 	def recolor(self, backgrounds, strokes):
 		tree = ET.fromstring(self.svg_source)
 		
@@ -89,23 +120,13 @@ class SVGWidget(Gtk.EventBox):
 	def set_labels(self, labels):
 		tree = ET.fromstring(self.current_svg)
 		
-		def set_text(xml, text):
-			has_valid_children = False
-			for child in xml:
-				if child.tag.endswith("text") or child.tag.endswith("tspan"):
-					has_valid_children = True
-					set_text(child, text)
-			if not has_valid_children:
-				xml.text = text
-		
-		
 		def walk(xml):
 			for child in xml:
 				if 'id' in child.attrib:
 					if child.attrib['id'].startswith("LABEL_"):
 						id = child.attrib['id'][6:]
 						if id in labels:
-							set_text(child, labels[id])
+							SVGWidget.set_text(child, labels[id])
 				walk(child)
 		
 		walk(tree)
@@ -113,6 +134,16 @@ class SVGWidget(Gtk.EventBox):
 		
 		self.cache = {}
 		self.hilight({})
+	
+	@staticmethod
+	def set_text(xml, text):
+		has_valid_children = False
+		for child in xml:
+			if child.tag.endswith("text") or child.tag.endswith("tspan"):
+				has_valid_children = True
+				SVGWidget.set_text(child, text)
+		if not has_valid_children:
+			xml.text = text
 	
 	
 	def on_mouse_click(self, trash, event):
@@ -136,8 +167,9 @@ class SVGWidget(Gtk.EventBox):
 		return None
 	
 	
-	def get_element(self, id):
-		tree = ET.fromstring(self.current_svg)
+	def get_element(self, id, tree = None):
+		if not tree:
+			tree = ET.fromstring(self.current_svg)
 		tree.parent = None
 		el = find_by_id(tree, id)
 		if el is not None:
