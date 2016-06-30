@@ -16,7 +16,7 @@ from scc.lib import xwrappers as X
 from scc.osd.menu import Menu
 from scc.osd import OSDWindow
 from scc.config import Config
-from math import pi as PI
+from math import pi as PI, sqrt, atan2
 
 import os, sys, logging
 log = logging.getLogger("osd.menu")
@@ -25,6 +25,7 @@ log = logging.getLogger("osd.menu")
 class RadialMenu(Menu):
 	def __init__(self,):
 		Menu.__init__(self, "osd-radial-menu")
+		self.angle = 0
 	
 	
 	def create_parent(self):
@@ -57,16 +58,6 @@ class RadialMenu(Menu):
 		del self.editor
 	
 	
-	def select(self, index):
-		pass
-		"""
-		if self._selected:
-			self._selected[1].set_name("osd-menu-item")
-		self._selected = self.items[index]
-		self._selected[1].set_name("osd-menu-item-selected")
-		"""
-	
-	
 	def show(self):
 		OSDWindow.show(self)
 
@@ -95,3 +86,26 @@ class RadialMenu(Menu):
 		X.shape_combine_mask(self.xdisplay, win, X.SHAPE_BOUNDING, 0, 0, pixmap, X.SHAPE_SET)
 		
 		X.flush(self.xdisplay)
+	
+	
+	def select(self, index):
+		pass
+		"""
+		if self._selected:
+			self._selected[1].set_name("osd-menu-item")
+		self._selected = self.items[index]
+		self._selected[1].set_name("osd-menu-item-selected")
+		"""
+	
+	
+	def on_event(self, daemon, what, data):
+		if self._submenu:
+			return self._submenu.on_event(daemon, what, data)
+		if what == self._control_with:
+			angle = 10 * int(atan2(*data) * 18.0 / PI)
+			if self.angle != angle:
+				editor = self.b.edit()
+				e = editor.get_element("selector")
+				e.attrib['transform'] = "rotate(%s, 0, 0)" % (angle,)
+				editor.commit()
+				self.angle = angle

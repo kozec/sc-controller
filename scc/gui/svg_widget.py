@@ -313,6 +313,13 @@ class SVGEditor(object):
 		return self
 	
 	
+	def get_element(self, id):
+		"""
+		Returns element by ID or None.
+		"""
+		return SVGWidget.get_element(self._tree, id)
+	
+	
 	@staticmethod
 	def _recolor(tree, s_from, s_to):
 		""" Recursive part of recolor_strokes and recolor_background """
