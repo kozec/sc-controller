@@ -38,8 +38,8 @@ class Menu(OSDWindow, TimerManager):
 	REPEAT_DELAY = 0.5
 	SUBMENU_OFFSET = 50
 	
-	def __init__(self):
-		OSDWindow.__init__(self, "osd-menu")
+	def __init__(self, cls="osd-menu"):
+		OSDWindow.__init__(self, cls)
 		TimerManager.__init__(self)
 		self.daemon = None
 		self.config = None

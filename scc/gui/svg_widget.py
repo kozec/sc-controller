@@ -122,7 +122,6 @@ class SVGWidget(Gtk.EventBox):
 		"""
 		Recursively searches throught XML for anything with ID of 'AREA_SOMETHING'
 		"""
-		# print translation, xml
 		for child in xml:
 			if 'id' in child.attrib:
 				if child.attrib['id'].startswith("AREA_"):
@@ -274,6 +273,18 @@ class SVGEditor(object):
 		return self
 	
 	
+	@staticmethod
+	def _deep_copy(element):
+		""" Creates deep copy of XML element """
+		e = element.copy()
+		for ch in element:
+			copy = SVGEditor._deep_copy(ch)
+			e.remove(ch)
+			e.append(copy)
+			copy.parent = e
+		return e
+	
+	
 	def clone_element(self, id):
 		"""
 		Grabs element with specified ID, duplicates it and returns created
@@ -282,8 +293,8 @@ class SVGEditor(object):
 		Returns None if element cannot be found
 		"""
 		e = SVGWidget.get_element(self._tree, id)
-		if e:
-			copy = e.copy()
+		if e is not None:
+			copy = SVGEditor._deep_copy(e)
 			e.parent.append(copy)
 			copy.parent = e.parent
 			return copy
