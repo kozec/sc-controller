@@ -10,7 +10,7 @@ from scc.tools import _, set_logging_level
 from gi.repository import Gtk, Gdk, GLib, GdkX11
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.menu_data import MenuData, Separator, Submenu
-from scc.gui.svg_widget import SVGWidget
+from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
 from scc.config import Config
@@ -110,14 +110,15 @@ class RadialMenu(OSDWindow):
 		# Create buttons that are displayed on screen
 		self.items = self.items.generate(self)
 		a, addition = 0, 360 / len(self.items)
+		editor = self.b.edit()
 		for item in self.items:
-			def cb(e):
-				SVGWidget.set_text(e, item.label)
-				e.attrib['transform'] = "translate(384, -192) rotate(%s, 0, 0)" % (a,)
-				e.attrib['id'] = "menuitem_" + item.id
-			self.b.clone_template("menuitem_template", cb)
+			e = editor.clone_element("menuitem_template")
+			SVGEditor.set_text(e, item.label)
+			e.attrib['transform'] = "translate(384, -192) rotate(%s, 0, 0)" % (a,)
+			e.attrib['id'] = "menuitem_" + item.id
 			a += addition
-		self.b.remove_element("menuitem_template")
+		editor.remove_element("menuitem_template")
+		editor.commit()
 			
 		#	item.widget = self.generate_widget(item)
 		#self.pack_items(self.parent, self.items)

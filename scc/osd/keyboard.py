@@ -71,8 +71,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self.recolor()
 		
 		self.limits = {}
-		self.limits[LEFT]  = self.background.get_rect_area(self.background.get_element("LIMIT_LEFT"))
-		self.limits[RIGHT] = self.background.get_rect_area(self.background.get_element("LIMIT_RIGHT"))
+		self.limits[LEFT]  = self.background.get_rect_area("LIMIT_LEFT")
+		self.limits[RIGHT] = self.background.get_rect_area("LIMIT_RIGHT")
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
 		self.cursors = {}
@@ -110,18 +110,18 @@ class Keyboard(OSDWindow, TimerManager):
 			log.warning(e)
 			return
 		
-		backgrounds, strokes = {}, {}
+		editor = self.background.edit()
 		
 		for k in Keyboard.RECOLOR_BACKGROUNDS:
 			if k in self.config['osk_colors'] and k in source_colors:
-				backgrounds[source_colors[k]] = self.config['osk_colors'][k]
-		backgrounds[source_colors["background"]] = self.config['osd_colors']["background"]
+				editor.recolor_background(source_colors[k], self.config['osk_colors'][k])
+		editor.recolor_background(source_colors["background"], self.config['osd_colors']["background"])
 		
 		for k in Keyboard.RECOLOR_STROKES:
 			if k in self.config['osk_colors'] and k in source_colors:
-				strokes[source_colors[k]] = self.config['osk_colors'][k]
+				editor.recolor_strokes(source_colors[k], self.config['osk_colors'][k])
 		
-		self.background.recolor(backgrounds, strokes)
+		editor.commit()
 	
 	
 	def use_daemon(self, d):
@@ -169,7 +169,7 @@ class Keyboard(OSDWindow, TimerManager):
 						labels[a.name] = unichr(code)
 						break
 		
-		self.background.set_labels(labels)
+		self.background.edit().set_labels(labels).commit()
 	
 	
 	def parse_argumets(self, argv):
