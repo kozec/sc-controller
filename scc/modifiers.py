@@ -235,6 +235,8 @@ class ModeModifier(Modifier):
 		self.held_triggers = {}
 		self.order = []
 		self.old_gyro = None
+		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
+
 		button = None
 		for i in stuff:
 			if self.default is not None:
