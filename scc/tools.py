@@ -100,7 +100,13 @@ def point_in_gtkrect(rect, x, y):
 
 
 def anglediff(a1, a2):
+	""" Excpects values in radians """
 	return (a2 - a1 + PI) % (2.0*PI) - PI
+
+
+def degdiff(a1, a2):
+	""" Excpects values in degrees """
+	return (a2 - a1 + 180.0) % 360.0 - 180.0
 
 
 def static_vars(**kwargs):

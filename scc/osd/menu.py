@@ -185,9 +185,7 @@ class Menu(OSDWindow, TimerManager):
 		self._cancel_with = self.args.cancel_with
 		
 		if self.args.use_cursor:
-			self.f.add(self.cursor)
-			self.f.show_all()
-			self._use_cursor = True
+			self.enable_cursor()
 		
 		# Create buttons that are displayed on screen
 		self.items = self.items.generate(self)
@@ -204,6 +202,13 @@ class Menu(OSDWindow, TimerManager):
 			for item in self.items:
 				print row_format.format(item.id, item.label)
 		return True
+	
+	
+	def enable_cursor(self):
+		if not self._use_cursor:
+			self.f.add(self.cursor)
+			self.f.show_all()
+			self._use_cursor = True
 	
 	
 	def generate_widget(self, item):

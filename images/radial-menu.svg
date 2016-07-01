@@ -9,9 +9,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="768"
-   height="768"
-   viewBox="0 0 767.99997 768"
+   width="512"
+   height="512"
+   viewBox="0 0 511.99998 512"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
@@ -25,17 +25,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="446.84261"
-     inkscape:cy="690.64702"
+     inkscape:zoom="2"
+     inkscape:cx="400.57725"
+     inkscape:cy="374.27888"
      inkscape:document-units="px"
-     inkscape:current-layer="g4403"
+     inkscape:current-layer="layer3"
      showgrid="false"
      units="px"
-     inkscape:window-width="1973"
-     inkscape:window-height="1165"
-     inkscape:window-x="2636"
-     inkscape:window-y="16"
+     inkscape:window-width="1965"
+     inkscape:window-height="1167"
+     inkscape:window-x="2927"
+     inkscape:window-y="62"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -49,7 +49,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -57,59 +57,71 @@
      inkscape:groupmode="layer"
      id="layer3"
      inkscape:label="Background"
-     style="display:inline"
-     transform="translate(0,568)">
+     style="display:inline">
     <rect
        style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#00ff00;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        id="rect4140"
-       width="768"
-       height="768"
+       width="512"
+       height="512"
        x="0"
-       y="-568" />
+       y="0" />
     <circle
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#00ff00;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#00ff00;stroke-width:3.33338428;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        id="path4210-3"
-       cx="384"
-       cy="-184"
-       r="375" />
-    <circle
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#00ff00;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-       id="path4210"
-       cx="384"
-       cy="-184"
-       r="365" />
-  </g>
-  <g
-     transform="translate(384, 384)"
-     style="display:inline"
-     id="g4403"
-     inkscape:groupmode="layer"
-     inkscape:label="8Items">
-    <path
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000093;fill-opacity:1;fill-rule:nonzero;stroke:#00005a;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-       id="selector"
-       sodipodi:type="arc"
-       sodipodi:cx="0"
-       sodipodi:cy="4"
-       sodipodi:rx="360"
-       sodipodi:ry="360"
-       sodipodi:start="4.3192472"
-       sodipodi:end="5.1211797"
-       d="m -137.91326,-328.53561 a 360,360 0 0 1 281.01325,2.19882 L 0,4 Z" />
-  </g>
-  <g
-     id="menuitem_template"
-     transform="translate(384, 384) rotate(0, 0, 0)">
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;display:inline;fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="0"
-       y="0"
-       id="menuitem_template_text"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan4407"
-         x="0"
-         y="-304">MenuItem</tspan></text>
+       cx="256"
+       cy="256"
+       r="250" />
+    <g
+       id="g4175">
+      <circle
+         r="243.33334"
+         cy="256"
+         cx="256"
+         id="path4210"
+         style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#00ff00;stroke-width:3.33338428;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+    </g>
+    <g
+       transform=""
+       id="menuitem_template">
+      <path
+         d="M 164.05783,38.799492 A 240,240 0 0 1 351.4,40.265375 L 256,256 Z"
+         d-template="M %s,%s A 240,240 0 0 1 %s,%s L 256,256 Z"
+		 radius="240"
+         sodipodi:start="-1.87"
+         sodipodi:end="-1.27"
+         sodipodi:ry="240"
+         sodipodi:rx="240"
+         sodipodi:cy="260.4899"
+         sodipodi:cx="256"
+         sodipodi:type="arc"
+         id="arc"
+         style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000093;fill-opacity:1;fill-rule:nonzero;stroke:#00005a;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+      <g
+         transform="translate(256,112)"
+         id="menuitem_text">
+        <text
+           sodipodi:linespacing="125%"
+           y="0"
+           x="0"
+           style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;display:inline;fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           xml:space="preserve"
+           id="text"><tspan
+             style="font-size:25px"
+             y="-31.25"
+             x="0"
+             id="line0"
+             sodipodi:role="line">.</tspan><tspan
+             id="line1"
+             style="font-size:25px"
+             y="0"
+             x="0"
+             sodipodi:role="line">MenuItem</tspan><tspan
+             id="line2"
+             style="font-size:25px"
+             y="31.25"
+             x="0"
+             sodipodi:role="line">.</tspan></text>
+      </g>
+    </g>
   </g>
 </svg>

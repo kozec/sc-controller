@@ -301,13 +301,16 @@ class SVGEditor(object):
 		return None
 	
 	
-	def remove_element(self, id):
+	def remove_element(self, e):
 		"""
-		Removes element with specified ID.
+		Removes element with specified ID, or, if element is passed,
+		removed that element. If  'id' is None, does nothing.
 		
 		Returns self.
 		"""
-		e = SVGWidget.get_element(self._tree, id)
+		
+		if type(e) in (str, unicode):
+			e = SVGWidget.get_element(self._tree, e)
 		if e is not None:
 			e.parent.remove(e)
 		return self

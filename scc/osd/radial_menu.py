@@ -13,10 +13,11 @@ from scc.menu_data import MenuData, Separator, Submenu
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
+from scc.tools import degdiff
 from scc.osd.menu import Menu
 from scc.osd import OSDWindow
 from scc.config import Config
-from math import pi as PI, sqrt, atan2
+from math import pi as PI, sqrt, atan2, sin, cos
 
 import os, sys, logging
 log = logging.getLogger("osd.menu")
@@ -36,7 +37,10 @@ class RadialMenu(Menu):
 	
 	def parse_argumets(self, argv):
 		self.editor = self.b.edit()
-		return Menu.parse_argumets(self, argv)
+		rv = Menu.parse_argumets(self, argv)
+		if rv:
+			self.enable_cursor()
+		return rv
 	
 	
 	def generate_widget(self, item):
@@ -48,9 +52,48 @@ class RadialMenu(Menu):
 	
 	def pack_items(self, trash, items):
 		index = 0
+		pb = self.b.get_pixbuf()
+		image_width = pb.get_width()
+		item_width = 360 / len(self.items)
+		a1, a2 = (-90 - item_width / 2) * PI / 180, (-90 + item_width / 2) * PI / 180
 		for i in items:
-			a = 360 / len(self.items) * index
-			i.widget.attrib['transform'] = "%s rotate(%s, 0, 0)" % (i.widget.attrib['transform'], a)
+			# Set size of each arc
+			if SVGWidget.get_element(i.widget, "arc") is not None:
+				l = SVGWidget.get_element(i.widget, "arc")
+				radius = float(l.attrib["radius"])	# TODO: Find how to get value of 'sodipodi:rx'
+				l.attrib["d"] = l.attrib["d-template"] % (
+					radius * cos(a1) + image_width / 2,
+					radius * sin(a1) + image_width / 2,
+					radius * cos(a2) + image_width / 2,
+					radius * sin(a2) + image_width / 2,
+				)
+			# Rotate arc to correct position
+			i.a = 360 / len(self.items) * index
+			i.widget.attrib['transform'] = "%s rotate(%s, %s, %s)" % (
+				i.widget.attrib['transform'], i.a, image_width / 2, image_width / 2)
+			# Rotate text in arc to other direction to keep it horisontal
+			if SVGWidget.get_element(i.widget, "menuitem_text") is not None:
+				l = SVGWidget.get_element(i.widget, "menuitem_text")
+				l.attrib['id'] = "text_" + i.id
+				l.attrib['transform'] = "%s rotate(%s)" % (l.attrib['transform'], -i.a)
+			# Place up to 3 lines of item label
+			label = i.label.split("\n")
+			first_line = 0
+			if len(label) == 1:
+				self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
+				self.editor.remove_element(SVGWidget.get_element(i.widget, "line2"))
+				first_line = 1
+			elif len(label) == 2:
+				self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
+				first_line = 1
+			for line in xrange(0, len(label)):
+				l = SVGWidget.get_element(i.widget, "line%s" % (first_line + line,))
+				if l is None:
+					break
+				SVGEditor.set_text(l, label[line])
+			# Continue with next menu item
+			i.index = index
+			
 			index += 1
 		
 		self.editor.remove_element("menuitem_template")
@@ -68,6 +111,10 @@ class RadialMenu(Menu):
 		
 		pixmap = X.create_pixmap(self.xdisplay, win,
 			pb.get_width(), pb.get_height(), 1)
+		width = pb.get_width()
+		height = pb.get_height()
+		self.f.move(self.cursor, int(width / 2), int(height / 2))
+		
 		gc = X.create_gc(self.xdisplay, pixmap, 0, None)
 		X.set_foreground(self.xdisplay, gc, 0)
 		X.fill_rectangle(self.xdisplay, pixmap, gc, 0, 0, pb.get_width(), pb.get_height())
@@ -89,23 +136,34 @@ class RadialMenu(Menu):
 	
 	
 	def select(self, index):
-		pass
-		"""
-		if self._selected:
-			self._selected[1].set_name("osd-menu-item")
 		self._selected = self.items[index]
-		self._selected[1].set_name("osd-menu-item-selected")
-		"""
 	
 	
 	def on_event(self, daemon, what, data):
 		if self._submenu:
 			return self._submenu.on_event(daemon, what, data)
 		if what == self._control_with:
-			angle = 10 * int(atan2(*data) * 18.0 / PI)
-			if self.angle != angle:
-				editor = self.b.edit()
-				e = editor.get_element("selector")
-				e.attrib['transform'] = "rotate(%s, 0, 0)" % (angle,)
-				editor.commit()
-				self.angle = angle
+			x, y = data
+			max_w = self.get_allocation().width - (self.cursor.get_allocation().width * 1.0)
+			max_h = self.get_allocation().height - (self.cursor.get_allocation().height * 1.0)
+			x = ((x * 0.75 / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w
+			y = (0.5 - (y * 0.75 / (STICK_PAD_MAX * 2.0))) * max_h
+			
+			x -= self.cursor.get_allocation().width * 0.5
+			y -= self.cursor.get_allocation().height * 0.5
+			
+			self.f.move(self.cursor, int(x), int(y))
+			x, y = data
+			if x*x + y*y > 2:
+				angle = atan2(*data) * 180.0 / PI
+				half_width = 180.0 / len(self.items)
+				for i in self.items:
+					if abs(degdiff(i.a, angle)) < half_width:
+						if self._selected != i:
+							self._selected = i
+							self.b.hilight({
+								"menuitem_" + i.id : "#" + self.config["osd_colors"]["menuitem_hilight"],
+								"text_" + i.id :  "#" + self.config["osd_colors"]["menuitem_hilight_text"],
+							})
+		else:
+			return Menu.on_event(self, daemon, what, data)
