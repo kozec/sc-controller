@@ -262,6 +262,8 @@ class ModeshiftEditor(Editor):
 			action.holdaction = holdaction
 		elif holdaction:
 			action = HoldModifier(holdaction, normalaction)
+		else:
+			action = normalaction
 		action.timeout = self.builder.get_object("adjTime").get_value()
 		return action
 	
