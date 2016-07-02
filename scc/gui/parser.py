@@ -1,20 +1,16 @@
 from __future__ import unicode_literals
 from scc.parser import ActionParser, ParseError
+from scc.actions import Action
 from scc.tools import _
 
 import logging
 log = logging.getLogger("gui.parse")
 
-class InvalidAction(object):
+class InvalidAction(Action):
 	def __init__(self, string, error):
 		self.string = string
 		self.error = error
 		self.name = None
-		print "InvalidAction", self.string
-	
-	
-	def strip(self):
-		return self
 	
 	
 	def to_string(self, *a):
