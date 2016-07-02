@@ -29,7 +29,7 @@ class CustomActionComponent(AEComponent):
 	
 	
 	def handles(self, mode, action):
-		# Custom Action Editor handles all actions"
+		# Custom Action Editor handles all actions
 		return isinstance(action, Action)
 	
 	

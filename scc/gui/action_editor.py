@@ -60,7 +60,7 @@ class ActionEditor(Editor):
 		self.app = app
 		self.id = None
 		self.components = []			# List of available components
-		self.loaded_components = set()	# by class name
+		self.loaded_components = {}		# by class name
 		self.c_buttons = {} 			# Component-to-button dict
 		self.sens_widgets = []			# Sensitivity sliders, labels and 'clear' buttons
 		self.feedback_widgets = []		# Feedback settings sliders, labels and 'clear' buttons, plus default value as last item
@@ -125,13 +125,15 @@ class ActionEditor(Editor):
 		Loads and adds new component to editor.
 		Returns component instance.
 		"""
+		if class_name in self.loaded_components:
+			return self.loaded_components[class_name]
 		mod = importlib.import_module("scc.gui.ae.%s" % (class_name,))
 		for x in mod.__all__:
 			cls = getattr(mod, x)
 			if isinstance(cls, (type, types.ClassType)) and issubclass(cls, AEComponent):
 				if cls is not AEComponent:
-					self.loaded_components.add(class_name)
 					instance = cls(self.app, self)
+					self.loaded_components[class_name] = instance
 					self.components.append(instance)
 					return instance
 	
@@ -647,11 +649,15 @@ class ActionEditor(Editor):
 					if component.handles(self._mode, action.strip()):
 						self._selected_component = component
 						break
+			if isinstance(action, InvalidAction):
+				c = self.load_component("custom")
+				if c in self.components and (self._mode & c.CTXS) != 0:
+					self._selected_component = c
 			if self._selected_component:
 				if self._selected_component in self.c_buttons:
 					self.c_buttons[self._selected_component].set_active(True)
-				if isinstance(action, InvalidAction):
-					self._selected_component.set_action(self._mode, action)
+			if isinstance(action, InvalidAction):
+				self._selected_component.set_action(self._mode, action)
 		elif not self._selected_component.handles(self._mode, action.strip()):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)

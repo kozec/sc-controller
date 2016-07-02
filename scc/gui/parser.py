@@ -13,6 +13,12 @@ class InvalidAction(Action):
 		self.name = None
 	
 	
+	def __str__(self):
+		return "<Invalid Action '%s'>" % (self.string,)
+	
+	__repr__ = __str__
+	
+	
 	def to_string(self, *a):
 		return self.string
 	
