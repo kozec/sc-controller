@@ -104,11 +104,12 @@ class UserDataManager(object):
 			by_name = {}	# Used to remove overrided file
 			for pdir, enumerator in data:
 				for finfo in enumerator:
-					f = pdir.get_child(finfo.get_name())
-					if finfo.get_name() in by_name:
-						rv.remove(by_name[finfo.get_name()])
-					by_name[finfo.get_name()] = f
-					rv.append(f)
+					if finfo.get_name():
+						f = pdir.get_child(finfo.get_name())
+						if finfo.get_name() in by_name:
+							rv.remove(by_name[finfo.get_name()])
+						by_name[finfo.get_name()] = f
+						rv.append(f)
 			
 			callback(rv)
 	
