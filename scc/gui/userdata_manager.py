@@ -17,7 +17,7 @@ from scc.profile import Profile
 from scc.gui.parser import GuiActionParser
 
 import os, logging
-log = logging.getLogger("ProfileManager")
+log = logging.getLogger("UDataManager")
 
 class UserDataManager(object):
 	
@@ -100,18 +100,30 @@ class UserDataManager(object):
 		"""
 		data[i] = pdir, pdir.enumerate_children_finish(res)
 		if not None in data:
-			rv = []
-			by_name = {}	# Used to remove overrided file
-			for pdir, enumerator in data:
-				for finfo in enumerator:
-					if finfo.get_name():
-						f = pdir.get_child(finfo.get_name())
-						if finfo.get_name() in by_name:
-							rv.remove(by_name[finfo.get_name()])
-						by_name[finfo.get_name()] = f
-						rv.append(f)
+			files = {}
+			try:
+				for pdir, enumerator in data:
+					for finfo in enumerator:
+						name = finfo.get_name()
+						files[name] = pdir.get_child(name)
+			except Exception, e:
+				# https://github.com/kozec/sc-controller/issues/50
+				log.warning("enumerate_children_finish failed: %s", e)
+				files = self._sync_load([ pdir for pdir, enumerator in data])
 			
-			callback(rv)
+			callback(files.values())
+	
+	
+	def _sync_load(self, pdirs):
+		"""
+		Synchronous (= UI lagging) fallback method for those (hopefully) rare
+		cases when enumerate_children_finish returns nonsense.
+		"""
+		files = {}
+		for pdir in pdirs:
+			for name in os.listdir(pdir.get_path()):
+				files[name] = pdir.get_child(name)
+		return files
 	
 	
 	def on_menus_loaded(self, menus): # Overriden in App
