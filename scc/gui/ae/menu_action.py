@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.special_actions import MenuAction, GridMenuAction
+from scc.special_actions import MenuAction, GridMenuAction, RadialMenuAction
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.menu_editor import MenuEditor
 from scc.gui.parser import GuiActionParser
@@ -48,6 +48,19 @@ class MenuActionCofC(UserDataManager):
 		"""
 		self._current_menu = menu
 		# TODO: This currently works only if menu list is not yet loaded
+	
+	
+	@staticmethod
+	def menu_class_to_key(action):
+		"""
+		For subclass of MenuAction, returns correct key to be used in ListStore.
+		"""
+		if isinstance(action, GridMenuAction):
+			return "gridmenu"
+		elif isinstance(action, RadialMenuAction):
+			return "radialmenu"
+		else:
+			return "menu"
 	
 	
 	def on_menu_changed(self, new_id):
@@ -140,6 +153,9 @@ class MenuActionCofC(UserDataManager):
 			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
 				# Grid menu
 				self.editor.set_action(GridMenuAction(name))
+			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "radialmenu":
+				# Circular menu
+				self.editor.set_action(RadialMenuAction(name))
 			else:
 				# Normal menu
 				self.editor.set_action(MenuAction(name))

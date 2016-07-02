@@ -17,6 +17,7 @@ from gi.repository import Gtk, GLib
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow
 from scc.osd.grid_menu import GridMenu
+from scc.osd.radial_menu import RadialMenu
 from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
 from scc.osd.menu import Menu
@@ -115,6 +116,16 @@ class OSDDaemon(object):
 		self._window = None
 	
 	
+	@staticmethod
+	def _is_menu_message(m):
+		""" Returns True if m starts with 'OSD: [grid|radial]menu' """
+		return (
+			m.startswith("OSD: menu")
+			or m.startswith("OSD: gridmenu")
+			or m.startswith("OSD: radialmenu")
+		)
+	
+	
 	def on_unknown_message(self, daemon, message):
 		if not message.startswith("OSD:"):
 			return
@@ -133,12 +144,17 @@ class OSDDaemon(object):
 				# self._window.parse_argumets(args) # TODO: No arguments so far
 				self._window.show()
 				self._window.use_daemon(self.daemon)
-		elif message.startswith("OSD: menu") or message.startswith("OSD: gridmenu"):
+		elif self._is_menu_message(message):
 			args = split(message)[1:]
 			if self._window:
 				log.warning("Another OSD is already visible - refusing to show menu")
 			else:
-				self._window = GridMenu() if "gridmenu" in message else Menu()
+				if message.startswith("OSD: gridmenu"):
+					self._window = GridMenu()
+				elif message.startswith("OSD: radialmenu"):
+					self._window = RadialMenu()
+				else:
+					self._window = Menu()
 				self._window.connect('destroy', self.on_menu_closed)
 				self._window.use_config(self.config)
 				if self._window.parse_argumets(args):

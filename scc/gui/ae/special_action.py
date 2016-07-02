@@ -58,7 +58,9 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 				self.set_cb(cb, "profile")
 			elif isinstance(action, MenuAction):
 				self._current_menu = action.menu_id
+				cbm = self.builder.get_object("cbMenuType")
 				self.set_cb(cb, "menu")
+				self.set_cb(cbm, self.menu_class_to_key(action), 1)
 			elif isinstance(action, KeyboardAction):
 				self.set_cb(cb, "keyboard")
 			elif isinstance(action, OSDAction):

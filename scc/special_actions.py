@@ -246,6 +246,15 @@ class GridMenuAction(MenuAction):
 	MENU_TYPE = "gridmenu"
 
 
+class RadialMenuAction(MenuAction):
+	"""
+	Same as grid menu, which is same as menu but displayed in grid,
+	but displayed as circle.
+	"""
+	COMMAND = "radialmenu"
+	MENU_TYPE = "radialmenu"
+
+
 class KeyboardAction(Action, SpecialAction):
 	"""
 	Shows OSD keyboard.

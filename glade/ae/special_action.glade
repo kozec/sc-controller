@@ -48,6 +48,28 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="lstMenuType">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name action -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">List</col>
+        <col id="1">menu</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Grid</col>
+        <col id="1">gridmenu</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Radial</col>
+        <col id="1">radialmenu</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="lstProfile">
     <columns>
       <!-- column-name name -->
@@ -268,7 +290,8 @@
               <object class="GtkLabel" id="label4">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Menu</property>
+                <property name="margin_bottom">5</property>
+                <property name="label" translatable="yes">Menu Type</property>
                 <property name="xalign">0</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
@@ -281,12 +304,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkComboBox" id="cbMenus">
+              <object class="GtkComboBox" id="cbMenuType">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_right">5</property>
                 <property name="hexpand">True</property>
-                <property name="model">lstMenu</property>
+                <property name="model">lstMenuType</property>
+                <property name="active">0</property>
                 <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext3"/>
@@ -298,6 +321,45 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label6">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">10</property>
+                <property name="margin_bottom">5</property>
+                <property name="label" translatable="yes">Menu</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="cbMenus">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_right">5</property>
+                <property name="hexpand">True</property>
+                <property name="model">lstMenu</property>
+                <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext4"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
               </packing>
             </child>
             <child>
@@ -313,7 +375,7 @@
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">3</property>
               </packing>
             </child>
           </object>

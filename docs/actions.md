@@ -124,6 +124,10 @@ exists, in that order.
 Same as `menu`, but displays items in grid.
 
 
+#### radialmenu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
+Same as `menu`, but displays items in radial menu.
+
+
 #### keyboard()
 Displays on-screen keyboard
 

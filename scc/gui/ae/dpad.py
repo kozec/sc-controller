@@ -9,7 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
-from scc.special_actions import MenuAction, GridMenuAction
+from scc.special_actions import MenuAction
 from scc.uinput import Keys
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
@@ -57,10 +57,7 @@ class DPADComponent(AEComponent, MenuActionCofC):
 		elif isinstance(action, MenuAction):
 			self._current_menu = action.menu_id
 			self.set_cb(cb, "menu", 1)
-			if isinstance(action, GridMenuAction):
-				self.set_cb(cbm, "gridmenu", 1)
-			else:
-				self.set_cb(cbm, "menu", 1)
+			self.set_cb(cbm, self.menu_class_to_key(action), 1)
 		self.on_cbActionType_changed()
 	
 	
