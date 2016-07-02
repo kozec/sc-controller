@@ -25,7 +25,7 @@ __all__ = [ 'OSKButtonsComponent' ]
 
 
 class OSKButtonsComponent(ButtonsComponent):
-	CTXS = Action.AC_OSK,
+	CTXS = Action.AC_OSK
 	PRIORITY = 1
 	IMAGES = { }
 	

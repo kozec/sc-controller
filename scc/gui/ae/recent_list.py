@@ -18,7 +18,7 @@ __all__ = [ 'RecentListGenComponent' ]
 class RecentListGenComponent(AEComponent):
 	GLADE = "ae/recent_list.glade"
 	NAME = "recent_list"
-	CTXS = ()
+	CTXS = 0
 	PRIORITY = 0
 	
 	def __init__(self, app, editor):

@@ -25,7 +25,7 @@ class AxisComponent(AEComponent, Chooser):
 	GLADE = "ae/axis.glade"
 	NAME = "axis"
 	IMAGES = { "axis" : "axistrigger.svg" }
-	CTXS = Action.AC_TRIGGER,
+	CTXS = Action.AC_TRIGGER
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)

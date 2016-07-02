@@ -25,7 +25,7 @@ __all__ = [ 'DPADComponent' ]
 class DPADComponent(AEComponent, MenuActionCofC):
 	GLADE = "ae/dpad.glade"
 	NAME = "dpad"
-	CTXS = Action.AC_STICK, Action.AC_PAD
+	CTXS = Action.AC_STICK | Action.AC_PAD
 	PRIORITY = 2
 	
 	DPAD8_WIDGETS = [ 'btDPAD4', 'btDPAD5', 'btDPAD6', 'btDPAD7' ]

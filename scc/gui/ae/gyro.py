@@ -26,7 +26,7 @@ __all__ = [ 'GyroComponent' ]
 class GyroComponent(AEComponent):
 	GLADE = "ae/gyro.glade"
 	NAME = "gyro"
-	CTXS = Action.AC_GYRO,
+	CTXS = Action.AC_GYRO
 	PRIORITY = 2
 	
 	def __init__(self, app, editor):

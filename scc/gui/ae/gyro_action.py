@@ -25,7 +25,7 @@ __all__ = [ 'GyroActionComponent' ]
 class GyroActionComponent(AEComponent):
 	GLADE = "ae/gyro_action.glade"
 	NAME = "gyro_action"
-	CTXS = Action.AC_GYRO,
+	CTXS = Action.AC_GYRO
 	PRIORITY = 3
 	
 	BUTTONS = (	# in order as displayed in combobox

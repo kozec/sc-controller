@@ -24,7 +24,7 @@ __all__ = [ 'TriggerABComponent' ]
 class TriggerABComponent(AEComponent):
 	GLADE = "ae/trigger_ab.glade"
 	NAME = "trigger_ab"
-	CTXS = Action.AC_TRIGGER,
+	CTXS = Action.AC_TRIGGER
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)

@@ -24,7 +24,7 @@ __all__ = [ 'OSKActionComponent' ]
 class OSKActionComponent(AEComponent):
 	GLADE = "ae/osk_action.glade"
 	NAME = "osk_action"
-	CTXS = Action.AC_OSK,
+	CTXS = Action.AC_OSK
 	PRIORITY = 2
 	
 	def __init__(self, app, editor):

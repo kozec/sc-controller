@@ -26,7 +26,7 @@ __all__ = [ 'SpecialActionComponent' ]
 class SpecialActionComponent(AEComponent, MenuActionCofC):
 	GLADE = "ae/special_action.glade"
 	NAME = "special_action"
-	CTXS = Action.AC_BUTTON, Action.AC_MENU
+	CTXS = Action.AC_BUTTON | Action.AC_MENU
 	PRIORITY = 0
 	
 	def __init__(self, app, editor):

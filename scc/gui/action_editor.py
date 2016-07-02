@@ -643,7 +643,7 @@ class ActionEditor(Editor):
 		if self._selected_component is None:
 			self._selected_component = None
 			for component in reversed(sorted(self.components, key = lambda a : a.PRIORITY)):
-				if component.CTXS == Action.AC_ALL or self._mode in component.CTXS:
+				if (component.CTXS & self._mode) != 0:
 					if component.handles(self._mode, action.strip()):
 						self._selected_component = component
 						break
@@ -671,7 +671,7 @@ class ActionEditor(Editor):
 		# with this mode
 		self.c_buttons = {}
 		for component in reversed(sorted(self.components, key = lambda a : a.PRIORITY)):
-			if component.CTXS == Action.AC_ALL or mode in component.CTXS:
+			if (mode & component.CTXS) != 0:
 				b = Gtk.ToggleButton.new_with_label(component.get_button_title())
 				vbActionButtons.pack_start(b, True, True, 2)
 				b.connect('toggled', self.on_action_type_changed)

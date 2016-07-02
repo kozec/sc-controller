@@ -15,10 +15,9 @@ class AEComponent(ComboSetter):
 	GLADE = None
 	NAME = None
 	PRIORITY = 0
-	# List of contexes (Action.AC_BUTTON, Action.AC_TRIGGER...) that this
-	# compoment can handle. Set to Action.AC_ALL for compoment that handles
-	# all modes.
-	CTXS = ()
+	# Bit mask of contexes (Action.AC_BUTTON | Action.AC_TRIGGER...) that this
+	# compoment can handle.
+	CTXS = 0
 	
 	def __init__(self, app, editor):
 		self.app = app
