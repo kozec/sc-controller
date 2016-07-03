@@ -56,8 +56,8 @@ class RadialMenu(Menu):
 		index = 0
 		pb = self.b.get_pixbuf()
 		image_width = pb.get_width()
-		item_width = 360 / len(self.items)
-		a1, a2 = (-90 - item_width / 2) * PI / 180, (-90 + item_width / 2) * PI / 180
+		item_width = 360.0 / len(self.items)
+		a1, a2 = (-90.0 - item_width * 0.5) * PI / 180.0, (-90.0 + item_width * 0.5) * PI / 180.0
 		for i in items:
 			# Set size of each arc
 			if SVGWidget.get_element(i.widget, "arc") is not None:
@@ -70,7 +70,7 @@ class RadialMenu(Menu):
 					radius * sin(a2) + image_width / 2,
 				)
 			# Rotate arc to correct position
-			i.a = 360 / len(self.items) * index
+			i.a = (360.0 / float(len(self.items))) * float(index)
 			i.widget.attrib['transform'] = "%s rotate(%s, %s, %s)" % (
 				i.widget.attrib['transform'], i.a, image_width / 2, image_width / 2)
 			# Rotate text in arc to other direction to keep it horisontal
