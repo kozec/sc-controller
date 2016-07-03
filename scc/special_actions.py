@@ -11,7 +11,7 @@ action only prints warning to console.
 from __future__ import unicode_literals
 
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
-from scc.constants import LEFT, RIGHT, STICK, SCButtons
+from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, ACTIONS, MOUSE_BUTTONS
 from scc.tools import strip_none
@@ -37,6 +37,7 @@ class ChangeProfileAction(Action, SpecialAction):
 	
 	def to_string(self, multiline=False, pad=0):
 		return (" " * pad) + "%s('%s')" % (self.COMMAND, self.profile.encode('string_escape'))
+	
 	
 	def button_release(self, mapper):
 		# Execute only when button is released (executing this when button
@@ -218,7 +219,13 @@ class MenuAction(Action, SpecialAction):
 	
 	def button_press(self, mapper):
 		if not self.show_with_release:
-			self.execute(mapper)
+			if self.confirm_with == SAME:
+				confirm_with = mapper.get_pressed_button() or self.DEFAULT_CONFIRM
+				self.execute(mapper, '--control-with', STICK, '--use-cursor',
+					'--confirm-with', confirm_with.name,
+					'--cancel-with', self.cancel_with.name)
+			else:
+				self.execute(mapper)
 	
 	
 	def button_release(self, mapper):

@@ -10,7 +10,7 @@ from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
 from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SAME
 from scc.actions import ACTIONS, NoAction, MultiAction, XYAction
 from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
 from scc.modifiers import SensitivityModifier, ModeModifier
@@ -37,6 +37,7 @@ def build_action_constants():
 		'PITCH'		: PITCH,
 		'YAW'		: YAW,
 		'ROLL'		: ROLL,
+		'SAME'		: SAME,
 		'True'		: True,
 		'False'		: False,
 	}

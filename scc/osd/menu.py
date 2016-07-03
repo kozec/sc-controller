@@ -404,7 +404,9 @@ class Menu(OSDWindow, TimerManager):
 				self.quit(-1)
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
-				if self._selected.callback:
+				if self._selected and self._selected.callback:
 					self._selected.callback(self, self.daemon, self._selected)
-				else:
+				elif self._selected:
 					self.quit(0)
+				else:
+					self.quit(-1)

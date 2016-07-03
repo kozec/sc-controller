@@ -109,6 +109,14 @@ def degdiff(a1, a2):
 	return (a2 - a1 + 180.0) % 360.0 - 180.0
 
 
+def nameof(e):
+	"""
+	If 'e' is enum value, returns e.name.
+	Otherwise, returns str(e).
+	"""
+	return e.name if hasattr(e, "name") else str(e)
+
+
 def static_vars(**kwargs):
 	"""Static variable func decorator"""
 

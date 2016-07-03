@@ -109,8 +109,9 @@ Displays text in OSD.
 #### menu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
 Displays OSD menu.
 'confirm_button' and 'cancel_button' sets which gamepad button should be used to
-confirm/cancel menu - for examplem setting 'cancel_button' to LPADTOUCH may have
-sense when menu is assigned to left pad.
+confirm/cancel menu. Additionaly, 'confirm_button' can be set to SAME (constant),
+in which case menu will be closed and selected item choosen when button used to
+display menu is released.
 
 If 'show_with_release' is set to true, menu is displayed only after button
 is released.

@@ -8,8 +8,8 @@ from scc.tools import _
 from scc.lib import xwrappers as X
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
+from scc.tools import set_logging_level, find_binary, find_profile, nameof
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
-from scc.tools import set_logging_level, find_binary, find_profile
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
@@ -148,6 +148,7 @@ class SCCDaemon(Daemon):
 	def on_sa_clear_osd(self, *a):
 		self._osd('clear')
 	
+	
 	def on_sa_keyboard(self, mapper, action):
 		""" Called when 'keyboard' action is used """
 		self._osd('keyboard')
@@ -156,8 +157,8 @@ class SCCDaemon(Daemon):
 	def on_sa_menu(self, mapper, action, *pars):
 		""" Called when 'osd' action is used """
 		p = [ action.MENU_TYPE,
-			"--confirm-with", action.confirm_with.name,
-			"--cancel-with", action.cancel_with.name
+			"--confirm-with", nameof(action.confirm_with),
+			"--cancel-with", nameof(action.cancel_with)
 		]
 		if "." in action.menu_id:
 			path = None

@@ -24,6 +24,8 @@ log = logging.getLogger("osd.menu")
 
 
 class RadialMenu(Menu):
+	MIN_DISTANCE = 3000		# Minimal cursor distance from center (in px^2)
+	
 	def __init__(self,):
 		Menu.__init__(self, "osd-radial-menu")
 		self.angle = 0
@@ -154,7 +156,7 @@ class RadialMenu(Menu):
 			
 			self.f.move(self.cursor, int(x), int(y))
 			x, y = data
-			if x*x + y*y > 2:
+			if abs(x) + abs(y) > RadialMenu.MIN_DISTANCE:
 				angle = atan2(*data) * 180.0 / PI
 				half_width = 180.0 / len(self.items)
 				for i in self.items:

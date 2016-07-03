@@ -8,6 +8,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import MenuAction, GridMenuAction, RadialMenuAction
+from scc.constants import SAME
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.menu_editor import MenuEditor
 from scc.gui.parser import GuiActionParser
@@ -67,6 +68,10 @@ class MenuActionCofC(UserDataManager):
 		self._current_menu = new_id
 		self.editor.set_action(MenuAction(new_id))
 		self.load_menu_list()
+	
+	
+	def on_cbMenuAutoConfirm_toggled(self, *a):
+		self.on_cbMenus_changed()
 	
 	
 	def on_btEditMenu_clicked(self, *a):
@@ -134,6 +139,14 @@ class MenuActionCofC(UserDataManager):
 		return model.get_value(iter, 1)
 	
 	
+	def confirm_with_same_active(self):
+		"""
+		Returns value of 'Confirm selection by releasing the button' checkbox,
+		if there is any.
+		"""
+		return False	# there isn't any by default
+	
+	
 	def on_cbMenus_changed(self, *a):
 		""" Called when user chooses menu in selection combo """
 		if self._recursing : return
@@ -149,13 +162,16 @@ class MenuActionCofC(UserDataManager):
 			return
 		if name:
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
+			params = [ name ]
+			if self.confirm_with_same_active():
+				params += [ SAME ]
 			cbm = self.builder.get_object("cbMenuType")
 			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
 				# Grid menu
-				self.editor.set_action(GridMenuAction(name))
+				self.editor.set_action(GridMenuAction(*params))
 			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "radialmenu":
 				# Circular menu
-				self.editor.set_action(RadialMenuAction(name))
+				self.editor.set_action(RadialMenuAction(*params))
 			else:
 				# Normal menu
-				self.editor.set_action(MenuAction(name))
+				self.editor.set_action(MenuAction(*params))

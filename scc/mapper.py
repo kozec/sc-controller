@@ -214,6 +214,17 @@ class Mapper(object):
 		return self.old_buttons & button
 	
 	
+	def get_pressed_button(self):
+		"""
+		Gets button that was pressed by very last handled event or None,
+		if last event doesn't involved button pressing.
+		"""
+		for x in SCButtons:
+			if x & self.buttons & ~self.old_buttons:
+				return x
+		return None
+	
+	
 	def callback(self, controller, now, sci):
 		# Store state
 		self.old_state = self.state

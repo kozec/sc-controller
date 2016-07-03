@@ -82,6 +82,8 @@ GYRO	= "GYRO"
 PITCH	= "PITCH"
 YAW		= "YAW"
 ROLL	= "ROLL"
+SAME	= "SAME"	# may be used with MenuAction
+
 
 FORMATS, NAMES = zip(*CONTROLER_FORMAT)
 CI_NAMES = [ x for x in NAMES if not x.startswith('ukn_') ]
@@ -94,6 +96,7 @@ class SCStatus(IntEnum):
 	IDLE = 0x04
 	INPUT = 0x01
 	HOTPLUG = 0x03
+
 
 class SCPacketType(IntEnum):
 	OFF = 0x9f
@@ -132,7 +135,6 @@ class HapticPos(IntEnum):
 	RIGHT = 0
 	LEFT = 1
 	BOTH = 2	# emulated
-
 
 STICK_PAD_MIN = -32768
 STICK_PAD_MAX = 32768

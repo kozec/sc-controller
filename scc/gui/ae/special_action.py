@@ -12,6 +12,7 @@ from scc.special_actions import ChangeProfileAction, ShellCommandAction
 from scc.special_actions import TurnOffAction, KeyboardAction, OSDAction
 from scc.special_actions import MenuAction
 from scc.actions import Action, NoAction
+from scc.constants import SAME
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.ae.menu_action import MenuActionCofC
 from scc.gui.menu_editor import MenuEditor
@@ -44,6 +45,11 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 			self.load_menu_list()
 	
 	
+	def confirm_with_same_active(self):
+		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		return cbMenuAutoConfirm.get_active()
+	
+	
 	def set_action(self, mode, action):
 		if self.handles(mode, action):
 			cb = self.builder.get_object("cbActionType")
@@ -61,6 +67,8 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 				cbm = self.builder.get_object("cbMenuType")
 				self.set_cb(cb, "menu")
 				self.set_cb(cbm, self.menu_class_to_key(action), 1)
+				cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+				cbMenuAutoConfirm.set_active(action.confirm_with == SAME)
 			elif isinstance(action, KeyboardAction):
 				self.set_cb(cb, "keyboard")
 			elif isinstance(action, OSDAction):
