@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
-import imp, os, sys, posix1e, gettext, logging
+import imp, os, sys, posix1e, shlex, gettext, logging
 log = logging.getLogger("tools.py")
 _ = lambda x : x
 
@@ -115,6 +115,24 @@ def nameof(e):
 	Otherwise, returns str(e).
 	"""
 	return e.name if hasattr(e, "name") else str(e)
+
+
+def shjoin(lst):
+	""" Joins list into shell-escaped, utf-8 encoded string """
+	s = [ unicode(x).encode("utf-8") for x in lst ]
+	#   - escape quotes
+	s = [ x.encode('string_escape') if (b'"' in x or b"'" in x) else x for x in s ]
+	#   - quote strings with spaces
+	s = [ b"'%s'" % (x,) if b" " in x else x for x in s ]
+	return b" ".join(s)
+
+
+def shsplit(s):
+	""" Returs original list from what shjoin returned """
+	lex = shlex.shlex(s, posix=True)
+	lex.escapedquotes = b'"\''
+	lex.whitespace_split = True
+	return [ x.decode('utf-8') for x in list(lex) ]
 
 
 def static_vars(**kwargs):

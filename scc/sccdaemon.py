@@ -8,9 +8,10 @@ from scc.tools import _
 from scc.lib import xwrappers as X
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
-from scc.tools import set_logging_level, find_binary, find_profile, nameof
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
 from scc.paths import get_menus_path, get_default_menus_path
+from scc.tools import find_profile, nameof, shsplit, shjoin
+from scc.tools import set_logging_level, find_binary
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
 from scc.menu_data import MenuData
@@ -107,14 +108,7 @@ class SCCDaemon(Daemon):
 	def _osd(self, *data):
 		""" Returns True on success """
 		# Pre-format data
-		#   - convert everything to string
-		data = [ unicode(x).encode("utf-8") for x in data ]
-		#   - escape quotes
-		data = [ x.encode('string_escape') if (b'"' in x or b"'" in x) else x for x in data ]
-		#   - quote strings with spaces
-		data = [ b"'%s'" % (x,) if b" " in x else x for x in data ]
-		#   - encode and merge together
-		data = b"OSD: %s\n" % (b" ".join(data),)
+		data = b"OSD: %s\n" % (shjoin(data) ,)
 		
 		# Check if scc-osd-daemon is available
 		self.lock.acquire()
@@ -477,7 +471,7 @@ class SCCDaemon(Daemon):
 			
 			self.lock.acquire()
 			try:
-				menu_id, item_id = message[9:].strip().split(" ")[:2]
+				menu_id, item_id = shsplit(message)[1:]
 				menuaction = None
 				if "." in menu_id:
 					# TODO: Move this common place

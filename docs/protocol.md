@@ -105,6 +105,7 @@ Daemon responds with `OK.`
 
 #### `Selected: menu_id item_id`
 Send by scc-osd-daemon when user chooses item from displayed menu.
+If menu_id or item_id contains spaces or quotes, it should be escaped.
 Daemon responds with `OK.`
 
 #### `Unlock.`

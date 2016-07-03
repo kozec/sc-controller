@@ -22,9 +22,10 @@ from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
 from scc.osd.menu import Menu
 from scc.osd.area import Area
+from scc.tools import shsplit, shjoin
 from scc.config import Config
 
-import os, sys, shlex, logging, time
+import os, sys, logging, time
 log = logging.getLogger("osd.daemon")
 
 class OSDDaemon(object):
@@ -107,7 +108,9 @@ class OSDDaemon(object):
 		if m.get_exit_code() == 0:
 			# 0 means that user selected item and confirmed selection
 			self.daemon.request(
-				'Selected: %s %s' % (m.get_menuid(), m.get_selected_item_id()),
+				'Selected: %s' % ( shjoin([
+					m.get_menuid(), m.get_selected_item_id() 
+				])),
 				lambda *a : False, lambda *a : False)
 	
 	
@@ -130,7 +133,7 @@ class OSDDaemon(object):
 		if not message.startswith("OSD:"):
 			return
 		if message.startswith("OSD: message"):
-			args = split(message)[1:]
+			args = shsplit(message)[1:]
 			m = Message()
 			m.parse_argumets(args)
 			m.show()
@@ -138,14 +141,14 @@ class OSDDaemon(object):
 			if self._window:
 				log.warning("Another OSD is already visible - refusing to show keyboard")
 			else:
-				args = split(message)[1:]
+				args = shsplit(message)[1:]
 				self._window = Keyboard(self.config)
 				self._window.connect('destroy', self.on_keyboard_closed)
 				# self._window.parse_argumets(args) # TODO: No arguments so far
 				self._window.show()
 				self._window.use_daemon(self.daemon)
 		elif self._is_menu_message(message):
-			args = split(message)[1:]
+			args = shsplit(message)[1:]
 			if self._window:
 				log.warning("Another OSD is already visible - refusing to show menu")
 			else:
@@ -164,11 +167,11 @@ class OSDDaemon(object):
 					log.error("Failed to show menu")
 					self._window = None
 		elif message.startswith("OSD: area"):
-			args = split(message)[1:]
+			args = shsplit(message)[1:]
 			if self._window:
 				log.warning("Another OSD is already visible - refusing to show area")
 			else:
-				args = split(message)[1:]
+				args = shsplit(message)[1:]
 				self._window = Area()
 				self._window.connect('destroy', self.on_keyboard_closed)
 				if self._window.parse_argumets(args):
@@ -211,14 +214,6 @@ class OSDDaemon(object):
 		self.daemon.connect('reconfigured', self.on_daemon_reconfigured)
 		self.daemon.connect('unknown-msg', self.on_unknown_message)
 		self.mainloop.run()
-
-
-
-def split(s):
-	lex = shlex.shlex(s, posix=True)
-	lex.escapedquotes = '"\''
-	lex.whitespace_split = True
-	return list(lex)
 
 
 if __name__ == "__main__":
