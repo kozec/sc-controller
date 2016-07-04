@@ -9,7 +9,7 @@ from scc.tools import _
 
 from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.modifiers import DoubleclickModifier, HoldModifier
-from scc.macros import Macro, Repeat, Cycle
+from scc.macros import Macro, Type, Repeat, Cycle
 from scc.actions import NoAction
 from scc.profile import Profile
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
@@ -115,6 +115,10 @@ class BindingEditor(object):
 		if isinstance(action, (ModeModifier, DoubleclickModifier, HoldModifier)) and not is_gyro_enable(action):
 			e = ModeshiftEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))
+		elif isinstance(action, Type):
+			# Type is subclass of Macro
+			e = ActionEditor(self.app, self.on_action_chosen)
+			e.set_title(title)
 		elif isinstance(action, Macro):
 			e = MacroEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Macro for %s") % (title,))

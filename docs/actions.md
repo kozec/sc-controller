@@ -218,6 +218,11 @@ When `;` is placed between actions, they are executed as sequence.
 - `hatup(ABS_Y); hatup(ABS_Y); button(BTN_B); button(BTN_A)` presses 'UP UP B A' on gamepad, as fast as possible
 - `button(KEY_A); button(KEY_B); button(KEY_C)` types 'abc'.
 
+#### type('text')
+Special type of macro where keys to press are specified as string.
+Basically, writing `type("iddqd")` is same thing as `button(KEY_I) ; button(KEY_D) ;
+button(KEY_D); button(KEY_Q); button(KEY_D)`, just much shorter.
+
 #### sleep(x)
 To insert pause between macro actions, use sleep() action.
 - `button(KEY_A); button(KEY_B); sleep(1.0); button(KEY_C)` types 'ab', waits 1s and types 'c'

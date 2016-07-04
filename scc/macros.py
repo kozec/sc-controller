@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from scc.actions import Action, NoAction, ButtonAction, ACTIONS, MOUSE_BUTTONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
+from scc.uinput import Keys
 
 
 import time, logging
@@ -29,6 +30,7 @@ class Macro(Action):
 		Action.__init__(self, *parameters)
 		self.actions = []
 		self.repeat = False
+		self.hold_time = Macro.HOLD_TIME
 		self._active = False
 		self._current = None
 		self._release = None
@@ -61,7 +63,7 @@ class Macro(Action):
 			# Execute next action
 			self._release, self._current = self._current[0], self._current[1:]
 			self._release.button_press(mapper)
-			mapper.schedule(self.HOLD_TIME, self.timer)
+			mapper.schedule(self.hold_time, self.timer)
 		else:
 			# Finish execited action
 			self._release.button_release(mapper)
@@ -104,6 +106,54 @@ class Macro(Action):
 		return "<[ %s ]>" % ("; ".join([ str(x) for x in self.actions ]), )
 	
 	__repr__ = __str__
+
+
+class Type(Macro):
+	"""
+	Special type of Macro where keys to press are specified as string.
+	Basically, writing type("iddqd") is same thing as
+	button(KEY_I) ; button(KEY_D) ; button(KEY_D); button(KEY_Q); button(KEY_D)
+	
+	Recognizes only lowercase letters, uppercase letters, numbers and space.
+	Adding anything else will make action unparseable.
+	"""
+	COMMAND = "type"
+	HOLD_TIME = 0.001
+
+	def __init__(self, string):
+		params = []
+		shift = False
+		for letter in string:
+			if (letter >= 'a' and letter <= 'z') or (letter >= '0' and letter <= '9'):
+				if hasattr(Keys, ("KEY_" + letter).upper()):
+					if shift:
+						params.append(ReleaseAction(Keys.KEY_LEFTSHIFT))
+						shift = False
+					params.append(ButtonAction(getattr(Keys, ("KEY_" + letter).upper())))
+					continue
+			if letter == ' ':
+				params.append(ButtonAction(Keys.KEY_SPACE))
+				continue
+			if letter >= 'A' and letter <= 'Z':
+				if hasattr(Keys, "KEY_" + letter):
+					if not shift:
+						params.append(PressAction(Keys.KEY_LEFTSHIFT))
+						shift = True
+					params.append(ButtonAction(getattr(Keys, "KEY_" + letter)))
+					continue
+			raise ValueError("Invalid character for type(): '%s'" % (letter,))
+		Macro.__init__(self, *params)
+		self.letters = string
+	
+	
+	def encode(self):
+		rv = { 'action' : self.to_string() }
+		if self.name: rv['name'] = self.name
+		return rv
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + self.COMMAND + "(" + repr(self.letters).strip("u") + ")"
 
 
 class Cycle(Macro):
