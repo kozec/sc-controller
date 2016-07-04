@@ -23,8 +23,9 @@ from scc.gui.macro_editor import MacroEditor
 
 class BindingEditor(object):
 	
-	def __init__(self):
+	def __init__(self, app):
 		self.button_widgets = {}
+		self.app = app
 	
 	
 	def create_binding_buttons(self, use_icons=True, enable_press=True):
@@ -112,13 +113,13 @@ class BindingEditor(object):
 		if isinstance(action, SensitivityModifier):
 			action = action.action
 		if isinstance(action, (ModeModifier, DoubleclickModifier, HoldModifier)) and not is_gyro_enable(action):
-			e = ModeshiftEditor(self, self.on_action_chosen)
+			e = ModeshiftEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))
 		elif isinstance(action, Macro):
-			e = MacroEditor(self, self.on_action_chosen)
+			e = MacroEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Macro for %s") % (title,))
 		else:
-			e = ActionEditor(self, self.on_action_chosen)
+			e = ActionEditor(self.app, self.on_action_chosen)
 			e.set_title(title)
 		return e
 	

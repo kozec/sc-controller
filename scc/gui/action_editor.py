@@ -702,7 +702,7 @@ class ActionEditor(Editor):
 		Also sets title, but that can be overriden by calling set_title after.
 		"""
 		self.id = id
-		if id in SCButtons or mode == Action.AC_MENU:
+		if id in SCButtons or mode in (Action.AC_MENU, Action.AC_BUTTON):
 			if id in PRESSABLE:
 				self.set_title(_("%s Press") % (id.name,))
 			elif id in SCButtons:

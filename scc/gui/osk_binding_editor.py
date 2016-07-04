@@ -27,7 +27,7 @@ class OSKBindingEditor(Editor, BindingEditor):
 	GLADE = "osk_binding_editor.glade"
 	
 	def __init__(self, app):
-		BindingEditor.__init__(self)
+		BindingEditor.__init__(self, app)
 		self.app = app
 		self.gladepath = app.gladepath
 		self.imagepath = app.imagepath

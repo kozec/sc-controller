@@ -13,6 +13,7 @@ from scc.special_actions import MenuAction
 from scc.uinput import Keys
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
+from scc.gui.binding_editor import BindingEditor
 from scc.gui.action_editor import ActionEditor
 
 
@@ -22,7 +23,7 @@ log = logging.getLogger("AE.DPAD")
 __all__ = [ 'DPADComponent' ]
 
 
-class DPADComponent(AEComponent, MenuActionCofC):
+class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	GLADE = "ae/dpad.glade"
 	NAME = "dpad"
 	CTXS = Action.AC_STICK | Action.AC_PAD
@@ -33,6 +34,7 @@ class DPADComponent(AEComponent, MenuActionCofC):
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
 		MenuActionCofC.__init__(self)
+		BindingEditor.__init__(self, app)
 		self._recursing = False
 		self._userdata_load_started = False
 		self.actions = [ NoAction() ] * 8
@@ -129,7 +131,7 @@ class DPADComponent(AEComponent, MenuActionCofC):
 		self.update()
 	
 	
-	def on_choosen(self, i, action):
+	def on_action_chosen(self, i, action):
 		self.actions[i] = action
 		self.set_button_desc(i)
 		self.update()
@@ -138,7 +140,8 @@ class DPADComponent(AEComponent, MenuActionCofC):
 	def on_btDPAD_clicked(self, b):
 		""" 'Select DPAD Left Action' handler """
 		i = int(b.get_name())
-		ae = ActionEditor(self.app, self.on_choosen)
+		ae = self.choose_editor(self.actions[i], "")
+		# ae = ActionEditor(self.app, self.on_choosen)
 		ae.set_title(_("Select DPAD Action"))
 		ae.set_input(i, self.actions[i], mode = Action.AC_BUTTON)
 		ae.show(self.app.window)

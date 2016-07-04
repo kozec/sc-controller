@@ -269,7 +269,7 @@ class MacroEditor(Editor):
 		from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 		ae = ActionEditor(self.app, on_chosen)
 		ae.set_title(_("Edit Action"))
-		ae.set_input(self.id, action_data.action)
+		ae.set_input(self.id, action_data.action, mode=self.mode)
 		ae.hide_modeshift()
 		ae.hide_macro()
 		ae.hide_name()

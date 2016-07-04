@@ -43,7 +43,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				application_id="me.kozec.scc",
 				flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.NON_UNIQUE )
 		UserDataManager.__init__(self)
-		BindingEditor.__init__(self)
+		BindingEditor.__init__(self, self)
 		# Setup Gtk.Application
 		self.setup_commandline()
 		# Setup DaemonManager

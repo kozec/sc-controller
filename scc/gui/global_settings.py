@@ -30,6 +30,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	def __init__(self, app):
 		UserDataManager.__init__(self)
+		BindingEditor.__init__(self, app)
 		self.app = app
 		self.setup_widgets()
 		self._recursing = False
