@@ -185,6 +185,10 @@ Works only if executed by pressing physical button or with `dpad`. Otherwise
 just executes child action.
 
 
+#### name(name, action)
+Allow inline setting of action name
+
+
 # Shortcuts:
 #### raxis(id)
 Shortcut for `axis(id, 32767, -32767)`, that is call to axis with min/max values

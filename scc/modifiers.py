@@ -40,6 +40,38 @@ class Modifier(Action):
 	__repr__ = __str__
 
 
+class NameModifier(Modifier):
+	"""
+	Simple modifier that sets name for child action.
+	Used internally.
+	"""
+	COMMAND = "name"
+	
+	def __init__(self, name, action):
+		Modifier.__init__(self, action)
+		self.name = name
+		if self.action:
+			self.action.name = name
+	
+	
+	def strip(self):
+		rv = self.action.strip()
+		rv.name = self.name
+		return rv
+	
+	
+	def compress(self):
+		self.action = self.action.compress()
+		if self.action:
+			self.action.name = self.name
+		return self.action
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return ("name(" + repr(self.name).strip('u') + ", "
+			+ self.action.to_string(multiline, pad) + ")")
+
+
 class ClickModifier(Modifier):
 	COMMAND = "click"
 	

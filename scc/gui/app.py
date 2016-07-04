@@ -21,6 +21,7 @@ from scc.paths import get_config_path, get_profiles_path
 from scc.constants import SCButtons, DAEMON_VERSION
 from scc.tools import check_access
 from scc.actions import NoAction
+from scc.modifiers import NameModifier
 from scc.profile import Profile
 from scc.config import Config
 
@@ -170,7 +171,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Handler for 'Clear' context menu item.
 		Simply sets NoAction to input.
 		"""
-		self.on_action_chosen(self.context_menu_for, NoAction(), False)
+		self.on_action_chosen(self.context_menu_for, NoAction())
 	
 	
 	def on_mnuCopy_activate(self, *a):
@@ -180,6 +181,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		a = self.get_action(self.current, self.context_menu_for)
 		if a:
+			if a.name:
+				a = NameModifier(a.name, a)
 			clp = Gtk.Clipboard.get_default(Gdk.Display.get_default())
 			clp.set_text(a.to_string().encode('utf-8'), -1)
 			clp.store()
@@ -196,7 +199,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if text:
 			a = GuiActionParser().restart(text.decode('utf-8')).parse()
 			if not isinstance(a, InvalidAction):
-				self.on_action_chosen(self.context_menu_for, a, False)
+				self.on_action_chosen(self.context_menu_for, a)
 		
 	
 	def on_mnuGlobalSettings_activate(self, *a):
