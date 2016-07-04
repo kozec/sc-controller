@@ -30,10 +30,7 @@
         "RB": {
             "action": "radialmenu('All Weapons',SAME)", 
             "name": "Weapon Switch"
-        }, 
-        "RGRIP": {
-            "action": "button(Keys.BTN_GAMEPAD); button(Keys.BTN_EAST)"
-        }, 
+        },
         "START": {
             "action": "button(Keys.KEY_ESC)", 
             "name": "Menu / Cancel"
