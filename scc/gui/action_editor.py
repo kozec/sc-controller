@@ -17,6 +17,7 @@ from scc.special_actions import OSDAction
 from scc.controller import HapticData
 from scc.profile import Profile
 from scc.macros import Macro
+from scc.tools import nameof
 from scc.gui.controller_widget import PRESSABLE, TRIGGERS, PADS
 from scc.gui.controller_widget import STICKS, GYROS, BUTTONS
 from scc.gui.modeshift_editor import ModeshiftEditor
@@ -704,9 +705,9 @@ class ActionEditor(Editor):
 		self.id = id
 		if id in SCButtons or mode in (Action.AC_MENU, Action.AC_BUTTON):
 			if id in PRESSABLE:
-				self.set_title(_("%s Press") % (id.name,))
+				self.set_title(_("%s Press") % (nameof(id),))
 			elif id in SCButtons:
-				self.set_title(id.name,)
+				self.set_title(nameof(id),)
 			self._set_mode(action, mode or Action.AC_BUTTON)
 			self.hide_sensitivity(0, 1, 2)
 			self.hide_enable_feedback()

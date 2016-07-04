@@ -11,10 +11,11 @@ from collections import namedtuple
 
 from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SAME
-from scc.actions import ACTIONS, NoAction, MultiAction, XYAction
 from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
 from scc.modifiers import SensitivityModifier, ModeModifier
 from scc.modifiers import HoldModifier, DoubleclickModifier
+from scc.actions import XYAction, DPadAction, DPad8Action
+from scc.actions import ACTIONS, NoAction, MultiAction
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
@@ -131,6 +132,12 @@ class ActionParser(object):
 				args = [ self.from_json_data(data['hold']), a ]
 				a = HoldModifier(*args)
 			if "time" in data: a.timeout = data["time"]
+		if "dpad" in data:
+			args = [ self.from_json_data(x) for x in data["dpad"] ]
+			if len(args) > 4:
+				a = DPad8Action(*args)
+			else:
+				a = DPadAction(*args)
 		return a
 	
 	

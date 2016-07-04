@@ -1183,6 +1183,13 @@ class DPadAction(Action):
 		return self
 	
 	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { 'dpad' : [ x.encode() for x in self.actions ]}
+		if self.name: rv['name'] = self.name
+		return rv
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			rv = [ (" " * pad) + self.COMMAND + "(" ]

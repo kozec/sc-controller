@@ -10,6 +10,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
 from scc.special_actions import MenuAction
+from scc.modifiers import NameModifier
 from scc.uinput import Keys
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
@@ -133,6 +134,8 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	
 	def on_action_chosen(self, i, action):
 		self.actions[i] = action
+		#if action.name:
+		#	action = NameModifier(action.name, action)
 		self.set_button_desc(i)
 		self.update()
 	
@@ -140,8 +143,12 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	def on_btDPAD_clicked(self, b):
 		""" 'Select DPAD Left Action' handler """
 		i = int(b.get_name())
-		ae = self.choose_editor(self.actions[i], "")
+		action = self.actions[i]
+		#f isinstance(action, NameModifier):
+		#action.action.name = action.name
+		#action = action.action
+		ae = self.choose_editor(action, "")
 		# ae = ActionEditor(self.app, self.on_choosen)
 		ae.set_title(_("Select DPAD Action"))
-		ae.set_input(i, self.actions[i], mode = Action.AC_BUTTON)
+		ae.set_input(i, action, mode = Action.AC_BUTTON)
 		ae.show(self.app.window)

@@ -49,6 +49,20 @@ Example:
 is same as
 `"stick" : { "action" : "XY(axis(Axes.ABS_RX), raxis(Axes.ABS_RY))" }`
 
+#### `dpad`
+Turns action into `DPadAction`, allowing to assign different action for each
+side of pad or stick alignment.
+
+Example:
+
+	"dpad" : [
+	  { "action": "button(Keys.KEY_UP)" },
+	  { "action": "button(Keys.KEY_DOWN)" },
+	  { "action": "button(Keys.KEY_LEFT)" },
+	  { "action": "button(Keys.KEY_RIGHT)" }
+	],
+
+
 #### `deadzone`
 Specifies deadzone. Excepts `lower` and `upper` subkeys,
 defaults to *0* and *32767*
