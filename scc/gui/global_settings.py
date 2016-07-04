@@ -30,7 +30,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	def __init__(self, app):
 		UserDataManager.__init__(self)
-		BindingEditor.__init__(self, app)
 		self.app = app
 		self.setup_widgets()
 		self._recursing = False
@@ -38,7 +37,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		ACTIONS['OSK'] = OSK
 		self.load_settings()
 		self.load_profile_list()
-		self.osk_binding_editor = None
 		self._recursing = False
 		self._eh_ids = (
 			self.app.dm.connect('reconfigured', self.on_daemon_reconfigured),
@@ -215,9 +213,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	
 	def on_butEditKeyboardBindings_clicked(self, *a):
-		if not self.osk_binding_editor:
-			self.osk_binding_editor = OSKBindingEditor(self.app)
-		self.osk_binding_editor.show(self.window)
+		e = OSKBindingEditor(self.app)
+		e.show(self.window)
 	
 	
 	def btEdit_clicked_cb(self, *a):
