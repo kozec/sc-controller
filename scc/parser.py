@@ -109,6 +109,12 @@ class ActionParser(object):
 			a = OSDAction(a)
 			if data["osd"] is not True:
 				a.timeout = float(data["osd"])
+		if "dpad" in data:
+			args = [ self.from_json_data(x) for x in data["dpad"] ]
+			if len(args) > 4:
+				a = DPad8Action(*args)
+			else:
+				a = DPadAction(*args)
 		if "click" in data:
 			a = ClickModifier(a)
 		if "name" in data:
@@ -132,12 +138,6 @@ class ActionParser(object):
 				args = [ self.from_json_data(data['hold']), a ]
 				a = HoldModifier(*args)
 			if "time" in data: a.timeout = data["time"]
-		if "dpad" in data:
-			args = [ self.from_json_data(x) for x in data["dpad"] ]
-			if len(args) > 4:
-				a = DPad8Action(*args)
-			else:
-				a = DPadAction(*args)
 		return a
 	
 	
