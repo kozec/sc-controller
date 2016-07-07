@@ -26,6 +26,7 @@
 # <a name="actions"></a>Actions
 
 #### <a name="button"></a> button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
+- For button, simply maps real button to emulated
 - For stick or pad, when it is moved over 'minustrigger', 'button1' is pressed;
   When it is moved back, 'button1' is released. Similary, 'button2' is pressed
   and released when stick (or finger on pad) moves over 'plustrigger' value
@@ -49,6 +50,26 @@ Controls mouse movement or scroll wheel.
 - For wheel controlled by pad, emulates finger scroll.
 - For button, pressing button maps to single movement over mouse axis or
   single step on scroll wheel.
+
+
+
+#### <a name="axis"></a> axis(id [, min = -32767, max = 32767 ])
+- For button, pressing button maps to moving axis full way to 'max'.
+eleasing button returns emulated axis back to 'min'.
+- For stick or pad, simply maps real axis to emulated
+- For trigger, maps trigger position to to emulated axis. Note that default
+  trigger position is not in middle, but in minimal possible value.
+
+
+#### <a name="dpad"></a> dpad(up, down, left, right)
+Emulates dpad. Touchpad is divided into 4 triangular parts and when user touches
+touchped, action is executed depending on finger position.
+Available only for pads and sticks; for stick, works by translating
+stick position, what probably doesn't yields expected results.
+
+
+#### <a name="dpad8"></a> dpad8(up, down, left, right, upleft, upright, downleft, downright)
+Same as dpad, with more directions.
 
 
 #### <a name="circular"></a> circular(axis)
@@ -90,35 +111,19 @@ Available only for pads. Acts as trackpad - sliding finger over the pad moves th
 Available only for pads. Acts as trackball.
 
 
-#### <a name="axis"></a> axis(id [, min = -32767, max = 32767 ])
-- For button, pressing button maps to moving axis full way to 'max'.
-  Releasing button returns emulated axis back to 'min'.
-- For stick or pad, simply maps real axis to emulated
-- For trigger, maps trigger position to to emulated axis. Note that default
-  trigger position is not in middle, but in minimal possible value.
-
-
-#### <a name="dpad"></a> dpad(up, down, left, right)
-Emulates dpad. Touchpad is divided into 4 triangular parts and when user touches
-touchped, action is executed depending on finger position.
-Available only for pads and sticks; for stick, works by translating
-stick position, what probably doesn't yields expected results.
-
-
-#### <a name="dpad"></a> dpad8(up, down, left, right, upleft, upright, downleft, downright)
-Same as dpad, with more directions.
-
-
 #### <a name="press"></a> press(button)
 Presses button and leaves it pressed.
 
+
 #### <a name="release"></a> release(button)
 Releases pressed button.
+
 
 #### <a name="tap"></a> tap(button)
 Presses button for a short while.
 If button is already pressed, releases it, taps it and presses it
 again in quick sequence.
+
 
 #### <a name="profile"></a> profile(name)
 Loads another profile
@@ -224,13 +229,16 @@ Allow inline setting of action name
 Shortcut for `axis(id, 32767, -32767)`, that is call to axis with min/max values
 reversed. Effectively inverted axis mapping.
 
+
 #### <a name="hatup"></a> hatup(id)
 Shortcut for `axis(id, 0, 32767)`, emulates moving hat up or pressing 'up'
 button on dpad.
 
+
 #### <a name="hatdown"></a> hatdown(id)
 Shortcut for `axis(id, 0, -32767)`, emulates moving hat down or pressing 'down'
 button on dpad.
+
 
 #### <a name="hatleft"></a> hatleft(id), hadright(id)
 Same thing as hatup/hatdown, as vertical hat movement and left/right dpad
@@ -243,23 +251,28 @@ buttons are same events on another axis
 It is possible to join two (or more) actions with `and` keyword (or newline) to have them executed together.
 - `button(KEY_LEFTALT) and button(KEY_F4)` presses Alt+F4
 
+
 #### <a name="semicolon"></a> semicolon - sequence (macro)
 When `;` is placed between actions, they are executed as sequence.
 - `hatup(ABS_Y); hatup(ABS_Y); button(BTN_B); button(BTN_A)` presses 'UP UP B A' on gamepad, as fast as possible
 - `button(KEY_A); button(KEY_B); button(KEY_C)` types 'abc'.
+
 
 #### <a name="type"></a> type('text')
 Special type of macro where keys to press are specified as string.
 Basically, writing `type("iddqd")` is same thing as `button(KEY_I) ; button(KEY_D) ;
 button(KEY_D); button(KEY_Q); button(KEY_D)`, just much shorter.
 
+
 #### <a name="sleep"></a> sleep(x)
 To insert pause between macro actions, use sleep() action.
 - `button(KEY_A); button(KEY_B); sleep(1.0); button(KEY_C)` types 'ab', waits 1s and types 'c'
 
+
 #### <a name="repeat"></a> repeat(action)
 Turbo / rapid fire mode. Repeats macro (or even single action) until physical button is released. Macro is always played to end, even if button is released before macro is finished.
 - `repeat(button(BTN_X))` deals with "mash X to not die" events in some games.
+
 
 #### <a name="cycle"></a> cycle(action1, action2...)
 Executes different action every time when button is pressed (action1 upon first press, action2 with second, etc.)
