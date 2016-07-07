@@ -264,6 +264,7 @@ class SCCDaemon(Daemon):
 				sc.run()
 				# Reaches here only if USB dongle is disconnected or gets stuck
 				self.lock.acquire()
+				self.mapper.release_virtual_buttons()
 			except (ValueError, USBError), e:
 				# When SCController fails to initialize, daemon should
 				# still stay alive, so it is able to report this failure.
@@ -281,8 +282,10 @@ class SCCDaemon(Daemon):
 				log.error(e)
 				if not was_error:
 					self._send_to_all(("Error: %s\n" % (self.error,)).encode("utf-8"))
+				self.mapper.release_virtual_buttons()
 				time.sleep(5)
 				self.lock.acquire()
+			self.mapper.release_virtual_buttons()
 	
 	
 	def start_listening(self):

@@ -965,6 +965,17 @@ class ButtonAction(HapticEnabledAction, Action):
 	
 	@staticmethod
 	def _button_press(mapper, button, immediate=False):
+		if button in mapper.pressed and mapper.pressed[button] > 0:
+			# Virtual button is already pressed - generate release event first
+			pc = mapper.pressed[button]
+			ButtonAction._button_release(mapper, button, immediate)
+			# ... then inrease 'press counter' and generate press event as usual
+			mapper.pressed[button] = pc + 1
+		else:
+			mapper.pressed[button] = 1
+		
+		print "press", button
+		
 		if button in MOUSE_BUTTONS:
 			mapper.mouse.keyEvent(button, 1)
 			mapper.syn_list.add(mapper.mouse)
@@ -980,6 +991,18 @@ class ButtonAction(HapticEnabledAction, Action):
 	
 	@staticmethod
 	def _button_release(mapper, button, immediate=False):
+		if button in mapper.pressed:
+			if mapper.pressed[button] > 1:
+				# More than one action pressed this virtual button - decrease
+				# counter, but don't release button yet
+				mapper.pressed[button] -= 1
+				return
+			else:
+				# This is last action that kept virtual button held
+				del mapper.pressed[button]
+		
+		print "release", button
+		
 		if button in MOUSE_BUTTONS:
 			mapper.mouse.keyEvent(button, 0)
 			mapper.syn_list.add(mapper.mouse)

@@ -58,6 +58,7 @@ class Mapper(object):
 		self.mouse_tb = [ False, False ]		# trackball mode for mouse / wheel
 		self.mouse_feedback = [ None, None ]	# for mouse / wheel
 		self.travelled = [ 0, 0 ]				# for mouse / wheel, used when generating "rolling ball" feedback
+		self.pressed = {}						# for ButtonAction, holds number of times virtual button was pressed without releasing it first
 		self.syn_list = set()
 		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
@@ -223,6 +224,17 @@ class Mapper(object):
 			if x & self.buttons & ~self.old_buttons:
 				return x
 		return None
+	
+	
+	def release_virtual_buttons(self):
+		"""
+		Called when daemon is killed or USB dongle is disconnected.
+		Sends button release event for every virtual button that is still being
+		pressed.
+		"""
+		to_release, self.pressed = self.pressed, {}
+		for x in to_release:
+			ButtonAction._button_release(self, x, True)
 	
 	
 	def callback(self, controller, now, sci):
