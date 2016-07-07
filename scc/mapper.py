@@ -37,16 +37,6 @@ class Mapper(object):
 		self.gamepad = Gamepad(name=gamepad) if gamepad else Dummy()
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		
-		self.mouse.updateParams(
-			friction=Mouse.DEFAULT_FRICTION,
-			xscale=Mouse.DEFAULT_XSCALE,
-			yscale=Mouse.DEFAULT_YSCALE)
-		self.mouse.updateScrollParams(
-			friction=0.1, # Mouse.DEFAULT_SCR_FRICTION
-			xscale=Mouse.DEFAULT_SCR_XSCALE,
-			yscale=Mouse.DEFAULT_SCR_XSCALE
-		)
-		
 		# Set by SCCDaemon instance; Used to handle actions
 		# from scc.special_actions
 		self._sa_handler = None
@@ -54,16 +44,12 @@ class Mapper(object):
 		# Setup emulation
 		self.keypress_list = []
 		self.keyrelease_list = []
-		self.mouse_dq = [ deque(maxlen=8), deque(maxlen=8), deque(maxlen=8), deque(maxlen=8) ] # x, y, wheel, hwheel
-		self.mouse_tb = [ False, False ]		# trackball mode for mouse / wheel
-		self.mouse_feedback = [ None, None ]	# for mouse / wheel
-		self.travelled = [ 0, 0 ]				# for mouse / wheel, used when generating "rolling ball" feedback
+		self.mouse_movements = [0, 0, 0, 0]		# mouse x, y, wheel vertical, horisontal
 		self.pressed = {}						# for ButtonAction, holds number of times virtual button was pressed without releasing it first
 		self.syn_list = set()
 		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
 		self.state, self.old_state = SCI_NULL, SCI_NULL
-		self.mouse_movements = [ None, None, None, None ]
 		self.force_event = set()
 	
 	
@@ -136,42 +122,21 @@ class Mapper(object):
 		]
 	
 	
-	def mouse_dq_clear(self, *axes):
-		""" Used by trackpad, trackball and mouse wheel emulation """
-		for axis in axes:
-			self.mouse_dq[axis].clear()
+	def mouse_move(self, dx, dy):
+		"""
+		Moves mouse. Called from actions while callback is being processed.
+		"""
+		self.mouse_movements[0] += dx
+		self.mouse_movements[1] += dy
 	
 	
-	def mouse_dq_add(self, axis, position, speed, hapticdata):
-		""" Used by trackpad, trackball and mouse wheel emulation """
-		t = self.mouse_movements[axis]
-		if t is None:
-			try:
-				prev = int(sum(self.mouse_dq[axis]) / len(self.mouse_dq[axis]))
-			except ZeroDivisionError:
-				prev = position * speed
-			t = self.mouse_movements[axis] = [ prev, 0, False ]
-		self.mouse_dq[axis].append(position * speed)
-		if axis >= 2:	# 2 - wheel, 3 - horisontal wheel
-			self.mouse_feedback[1] = hapticdata
-		else:
-			self.mouse_feedback[0] = hapticdata
-		
-		try:
-			t[1] = int(sum(self.mouse_dq[axis]) / len(self.mouse_dq[axis]))
-		except ZeroDivisionError:
-			t[1] = 0
-	
-	
-	def do_trackball(self, move_or_wheel, stop=False):
-		""" Used to continue mouse movement when user presses or releases pad """
-		self.mouse_tb[move_or_wheel] = not stop
-	
-	
-	def _get_mouse_movement(self, axis):
-		if self.mouse_movements[axis] is None:
-			return 0
-		return self.mouse_movements[axis][1] - self.mouse_movements[axis][0]
+	def mouse_wheel(self, wx, wy):
+		"""
+		Moves mouse wheel.
+		Called from actions while callback is being processed.
+		"""
+		self.mouse_movements[2] += wx
+		self.mouse_movements[3] += wy
 	
 	
 	def is_touched(self, what):
@@ -313,44 +278,12 @@ class Mapper(object):
 			self.keyboard.releaseEvent(self.keyrelease_list)
 			self.keyrelease_list = []
 		# Generate events - mouse
-		mx, my = self._get_mouse_movement(0), self._get_mouse_movement(1)
-		wx, wy = self._get_mouse_movement(2), self._get_mouse_movement(3)
+		mx, my, wx, wy = self.mouse_movements
 		if mx != 0 or my != 0:
-			self.travelled[0] += self.mouse.moveEvent(mx, my * -1, False)
+			self.mouse.moveEvent(mx, my * -1)
 			self.syn_list.add(self.mouse)
-			self.mouse_movements[0] = self.mouse_movements[1] = None
 		if wx != 0 or wy != 0:
-			if self.mouse.scrollEvent(wx, wy, False):
-				# Returns True
-				self.travelled[1] += 500
+			self.mouse.scrollEvent(wx, wy)
 			self.syn_list.add(self.mouse)
-			self.mouse_movements[2] = self.mouse_movements[3] = None
-		# Generate events - trackball
-		if self.mouse_tb[0]:
-			dist = self.mouse.moveEvent(0, 0, True)
-			self.syn_list.add(self.mouse)
-			if dist:
-				self.travelled[0] += dist
-			else:
-				self.mouse_tb[0] = False
-				self.mouse_feedback[0] = None
-		
-		if self.mouse_tb[1]:
-			dist = self.mouse.scrollEvent(0, 0, True)
-			self.syn_list.add(self.mouse)
-			if dist:
-				# scrollEvent returns True, not number
-				self.travelled[1] += 500
-			else:
-				self.mouse_tb[1] = False
-				self.mouse_feedback[1] = None
-		
-		for i in (0, 1):
-			if self.mouse_feedback[i]:
-				# print i, self.travelled[i], self.mouse_feedback[i].frequency
-				if self.travelled[i] > self.mouse_feedback[i].frequency:
-					self.travelled[i] = 0
-					self.send_feedback(self.mouse_feedback[i])
-		
-		
+		self.mouse_movements = [ 0, 0, 0, 0 ]
 		self.sync()

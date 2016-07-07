@@ -104,7 +104,7 @@ Can bee used ot map gyroscope to movement stick or to use controller as racing w
 
 
 #### <a name="trackpad"></a> trackpad()
-Available only for pads. Acts as trackpad - sliding finger over the pad moves the mouse.
+Available only for pads. Acts as trackpad - sliding finger over pad moves the mouse.
 
 
 #### <a name="trackball"></a> trackball()

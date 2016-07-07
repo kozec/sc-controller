@@ -12,8 +12,8 @@
 # furnished to do so, subject to the following conditions:
 #
 # The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
 #
+# all copies or substantial portions of the Software.
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -343,17 +343,11 @@ class Mouse(UInput):
 	updateParams permit to upgrade ball model and move scale
 	"""
 
-	DEFAULT_FRICTION = 10.0
 	DEFAULT_XSCALE = 0.006
 	DEFAULT_YSCALE = 0.006
 
-	DEFAULT_MEAN_LEN = 10
-
-	DEFAULT_SCR_FRICTION = 10.0
 	DEFAULT_SCR_XSCALE = 0.0005
 	DEFAULT_SCR_YSCALE = 0.0005
-
-	DEFAULT_SCR_MEAN_LEN = 10
 
 	def __init__(self, name):
 		super(Mouse, self).__init__(vendor=0x28de,
@@ -371,34 +365,20 @@ class Mouse(UInput):
 										  Rels.REL_HWHEEL])
 		self._dx = 0.0
 		self._dy = 0.0
-		self._xvel = 0.0
-		self._yvel = 0.0
-		self._lastTime = time.time()
 		self.updateParams()
 
 		self._scr_dx = 0.0
 		self._scr_dy = 0.0
-		self._scr_xvel = 0.0
-		self._scr_yvel = 0.0
-		self._scr_lastTime = time.time()
 		self.updateScrollParams()
 
-
 	def updateParams(self,
-					 mass=80.0,
-					 r=0.02,
-					 friction=DEFAULT_FRICTION,
-					 ampli=65536,
-					 degree=40.0,
 					 xscale=DEFAULT_XSCALE,
-					 yscale=DEFAULT_YSCALE,
-					 mean_len=DEFAULT_MEAN_LEN):
+					 yscale=DEFAULT_YSCALE):
 		"""
 		Update Movement parameters
 
 		@param float mass	   mass in g of the ball
 		@param float r		  radius in m of the ball
-		@param float friction   constat friction force applied to the ball
 		@param int ampli		integer amplitude for move from border to border
 		@param float degree	 degree of rotation of the ball for move from border to border
 		@param float xscale	 scale applied on move param to input event on x axis
@@ -407,27 +387,9 @@ class Mouse(UInput):
 		self._xscale = xscale
 		self._yscale = yscale
 
-		self._ampli  = ampli
-		self._degree = degree
-		self._radscale = (degree * pi / 180) / ampli
-		self._mass = mass
-		self._friction = friction
-		self._r = r
-		self._I = (2 * self._mass * self._r**2) / 5.0
-		self._a = self._r * self._friction / self._I
-
-		self._xvel_dq = deque(maxlen=mean_len)
-		self._yvel_dq = deque(maxlen=mean_len)
-
 	def updateScrollParams(self,
-						   mass=20.0,
-						   r=0.005,
-						   friction=DEFAULT_SCR_FRICTION,
-						   ampli=65536,
-						   degree=120.0,
 						   xscale=DEFAULT_SCR_XSCALE,
-						   yscale=DEFAULT_SCR_YSCALE,
-						   mean_len=DEFAULT_SCR_MEAN_LEN):
+						   yscale=DEFAULT_SCR_YSCALE):
 		"""
 		Update Scroll parameters
 
@@ -441,104 +403,31 @@ class Mouse(UInput):
 		"""
 		self._scr_xscale = xscale
 		self._scr_yscale = yscale
-		self._scr_ampli  = ampli
-		self._scr_degree = degree
-		self._scr_radscale = (degree * pi / 180) / ampli
-		self._scr_mass = mass
-		self._scr_friction = friction
-		self._scr_r = r
-		self._scr_I = (2 * self._scr_mass * self._scr_r**2) / 5.0
-		self._scr_a = self._scr_r * self._scr_friction / self._scr_I
-
-		self._scr_xvel_dq = deque(maxlen=mean_len)
-		self._scr_yvel_dq = deque(maxlen=mean_len)
 
 
-	def moveEvent(self, dx=0, dy=0, free=False):
+	def moveEvent(self, dx=0, dy=0):
 		"""
 		Generate move events from parametters and displacement
 
 		@param int dx		   delta movement from last call on x axis
 		@param int dy		   delta movement from last call on y axis
-		@param bool free		set to true for free ball move
-
-		@return float		   absolute distance moved this tick
 
 		"""
-		# Compute time step
-		_tmp = time.time()
-		dt = _tmp - self._lastTime
-		self._lastTime = _tmp
+		self._dx += dx * self._xscale
+		self._dy += dy * self._yscale
+		_syn = False
+		if int(self._dx):
+			self.relEvent(rel=Rels.REL_X, val=int(self._dx))
+			self._dx -= int(self._dx)
+			_syn = True
+		if int(self._dy):
+			self.relEvent(rel=Rels.REL_Y, val=int(self._dy))
+			self._dy -= int(self._dy)
+			_syn = True
+		if _syn:
+			self.synEvent()
 
-		def _genevt():
-			_syn = False
-			if int(self._dx):
-				self.relEvent(rel=Rels.REL_X, val=int(self._dx))
-				self._dx -= int(self._dx)
-				_syn = True
-			if int(self._dy):
-				self.relEvent(rel=Rels.REL_Y, val=int(self._dy))
-				self._dy -= int(self._dy)
-				_syn = True
-			if _syn:
-				self.synEvent()
-
-		if not free:
-			# Compute mouse mouvement from interger part of d * scale
-			self._dx += dx * self._xscale
-			self._dy += dy * self._yscale
-
-			_genevt()
-
-			# Compute instant velocity
-			try:
-				self._xvel = sum(self._xvel_dq) / len(self._xvel_dq)
-				self._yvel = sum(self._yvel_dq) / len(self._yvel_dq)
-			except ZeroDivisionError:
-				self._xvel = 0.0
-				self._yvel = 0.0
-
-			self._xvel_dq.append(dx * self._radscale / dt)
-			self._yvel_dq.append(dy * self._radscale / dt)
-
-		else:
-
-
-			# Free movement update velocity and compute movement
-			self._xvel_dq.clear()
-			self._yvel_dq.clear()
-
-			_hyp = sqrt((self._xvel**2) + (self._yvel**2))
-			if _hyp != 0.0:
-				_ax = self._a * (abs(self._xvel) / _hyp)
-				_ay = self._a * (abs(self._yvel) / _hyp)
-			else:
-				_ax = self._a
-				_ay = self._a
-
-			# Cap friction desceleration
-			_dvx = min(abs(self._xvel), _ax * dt)
-			_dvy = min(abs(self._yvel), _ay * dt)
-			
-			# compute new velocity
-			_xvel = self._xvel - copysign(_dvx, self._xvel)
-			_yvel = self._yvel - copysign(_dvy, self._yvel)
-
-			# compute displacement
-			dx = (((_xvel + self._xvel) / 2) * dt) / self._radscale
-			dy = (((_yvel + self._yvel) / 2) * dt) / self._radscale
-
-			self._xvel = _xvel
-			self._yvel = _yvel
-
-			self._dx += dx * self._xscale
-			self._dy += dy * self._yscale
-
-			_genevt()
-
-		return sqrt((dx**2) + (dy**2))
-
-	def scrollEvent(self, dx=0, dy=0, free=False):
+	def scrollEvent(self, dx=0, dy=0):
 		"""
 		Generate scroll events from parametters and displacement
 
@@ -549,80 +438,20 @@ class Mouse(UInput):
 		@return float		   absolute distance moved this tick
 
 		"""
-		# Compute time step
-		_tmp = time.time()
-		dt = _tmp - self._scr_lastTime
-		self._scr_lastTime = _tmp
-		
-		a_dx, a_dy = dx, dy
-
-		def _genevt():
-			_syn = False
-			if int(self._scr_dx):
-				self.relEvent(rel=Rels.REL_HWHEEL, val=int(copysign(1, self._scr_dx)))
-				self._scr_dx -= int(self._scr_dx)
-				_syn = True
-			if int(self._scr_dy):
-				self.relEvent(rel=Rels.REL_WHEEL,  val=int(copysign(1, self._scr_dy)))
-				self._scr_dy -= int(self._scr_dy)
-				_syn = True
-			if _syn:
-				self.synEvent()
-			return _syn
-
-		if not free:
-			# Compute mouse mouvement from interger part of d * scale
-			self._scr_dx += dx * self._scr_xscale
-			self._scr_dy += dy * self._scr_yscale
-
-			_nev = _genevt()
-
-			# Compute instant velocity
-			try:
-				self._scr_xvel = sum(self._scr_xvel_dq) / len(self._scr_xvel_dq)
-				self._scr_yvel = sum(self._scr_yvel_dq) / len(self._scr_yvel_dq)
-			except ZeroDivisionError:
-				self._scr_xvel = 0.0
-				self._scr_yvel = 0.0
-
-			self._scr_xvel_dq.append(dx * self._scr_radscale / dt)
-			self._scr_yvel_dq.append(dy * self._scr_radscale / dt)
-
-		else:
-			# Free movement update velocity and compute movement
-
-			self._scr_xvel_dq.clear()
-			self._scr_yvel_dq.clear()
-
-			_hyp = sqrt((self._scr_xvel**2) + (self._scr_yvel**2))
-			if _hyp != 0.0:
-				_ax = self._scr_a * (abs(self._scr_xvel) / _hyp)
-				_ay = self._scr_a * (abs(self._scr_yvel) / _hyp)
-			else:
-				_ax = self._scr_a
-				_ay = self._scr_a
-
-			# Cap friction desceleration
-			_dvx = min(abs(self._scr_xvel), _ax * dt)
-			_dvy = min(abs(self._scr_yvel), _ay * dt)
-
-			# compute new velocity
-			_xvel = self._scr_xvel - copysign(_dvx, self._scr_xvel)
-			_yvel = self._scr_yvel - copysign(_dvy, self._scr_yvel)
-
-			# compute displacement
-			dx = (((_xvel + self._scr_xvel) / 2) * dt) / self._scr_radscale
-			dy = (((_yvel + self._scr_yvel) / 2) * dt) / self._scr_radscale
-
-			self._scr_xvel = _xvel
-			self._scr_yvel = _yvel
-
-			self._scr_dx += dx * self._scr_xscale
-			self._scr_dy += dy * self._scr_yscale
-
-			_nev = _genevt()
-		
-		return _nev
+		# Compute mouse mouvement from interger part of d * scale
+		self._scr_dx += dx * self._scr_xscale
+		self._scr_dy += dy * self._scr_yscale
+		_syn = False
+		if int(self._scr_dx):
+			self.relEvent(rel=Rels.REL_HWHEEL, val=int(copysign(1, self._scr_dx)))
+			self._scr_dx -= int(self._scr_dx)
+			_syn = True
+		if int(self._scr_dy):
+			self.relEvent(rel=Rels.REL_WHEEL,  val=int(copysign(1, self._scr_dy)))
+			self._scr_dy -= int(self._scr_dy)
+			_syn = True
+		if _syn:
+			self.synEvent()
 
 
 class Keyboard(UInput):

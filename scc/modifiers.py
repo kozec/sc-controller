@@ -12,7 +12,8 @@ from scc.actions import Action, NoAction, ACTIONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.controller import HapticData
-from math import sqrt
+from math import pi as PI, sqrt, copysign
+from collections import deque
 
 import time, logging
 log = logging.getLogger("Modifiers")
@@ -161,6 +162,138 @@ class ClickModifier(Modifier):
 		if mapper.was_pressed(SCButtons.RPAD):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
+
+
+class BallModifier(Modifier):
+	"""
+	Emulates ball-like movement with inertia and friction.
+	Usefull for trackball and mouse wheel emulation.
+	
+	Reacts only to "whole" or "axis" inputs and sends generated movements as
+	"change" input to child action.
+	"""
+	COMMAND = "ball"
+	
+	DEFAULT_FRICTION = 10.0
+	DEFAULT_MEAN_LEN = 10
+	
+	
+	def __init__(self, *params):
+		# Because action is last parameter, there is need to remove it from
+		# params list and call self._setup() with rest.
+		if len(params) < 1:
+			raise TypeError("At least one argument required")
+		params, action = params[0:-1], params[-1]
+		if not isinstance(action, Action):
+			raise TypeError("Last argument has to be action")
+		if not hasattr(action, "change"):
+			raise TypeError("Target action doesn't can't take ball as input")
+		
+		Modifier.__init__(self, action)
+		# TODO: This is getting awkard :(
+		self._setup(*params)
+	
+	
+	def _setup(self, friction=DEFAULT_FRICTION, mass=80.0,
+			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
+		self._friction = friction
+		self._xvel = 0.0
+		self._yvel = 0.0
+		self._ampli  = ampli
+		self._degree = degree
+		self._radscale = (degree * PI / 180) / ampli
+		self._mass = mass
+		self._r = r
+		self._I = (2 * self._mass * self._r**2) / 5.0
+		self._a = self._r * self._friction / self._I
+		self._xvel_dq = deque(maxlen=mean_len)
+		self._yvel_dq = deque(maxlen=mean_len)
+		self._lastTime = time.time()
+		self._old_pos = None
+	
+	
+	def _stop(self):
+		""" Stops rolling of the 'ball' """
+		self._xvel_dq.clear()
+		self._yvel_dq.clear()
+	
+	
+	def _add(self, dx, dy):
+		# Compute time step
+		_tmp = time.time()
+		dt = _tmp - self._lastTime
+		self._lastTime = _tmp
+		
+		# Compute instant velocity
+		try:
+			self._xvel = sum(self._xvel_dq) / len(self._xvel_dq)
+			self._yvel = sum(self._yvel_dq) / len(self._yvel_dq)
+		except ZeroDivisionError:
+			self._xvel = 0.0
+			self._yvel = 0.0
+
+		self._xvel_dq.append(dx * self._radscale / dt)
+		self._yvel_dq.append(dy * self._radscale / dt)
+	
+	
+	def _roll(self, mapper):
+		# Compute time step
+		_tmp = time.time()
+		dt = _tmp - self._lastTime
+		self._lastTime = _tmp
+		
+		# Free movement update velocity and compute movement
+		self._xvel_dq.clear()
+		self._yvel_dq.clear()
+		
+		_hyp = sqrt((self._xvel**2) + (self._yvel**2))
+		if _hyp != 0.0:
+			_ax = self._a * (abs(self._xvel) / _hyp)
+			_ay = self._a * (abs(self._yvel) / _hyp)
+		else:
+			_ax = self._a
+			_ay = self._a
+		
+		# Cap friction desceleration
+		_dvx = min(abs(self._xvel), _ax * dt)
+		_dvy = min(abs(self._yvel), _ay * dt)
+		
+		# compute new velocity
+		_xvel = self._xvel - copysign(_dvx, self._xvel)
+		_yvel = self._yvel - copysign(_dvy, self._yvel)
+		
+		# compute displacement
+		dx = (((_xvel + self._xvel) / 2) * dt) / self._radscale
+		dy = (((_yvel + self._yvel) / 2) * dt) / self._radscale
+		
+		self._xvel = _xvel
+		self._yvel = _yvel
+		
+		if dx or dy:
+			self.action.change(mapper, dx, dy)
+			mapper.schedule(0, self._roll)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return "Ball(%s)" % (self.action.describe(context))
+	
+	
+	def pad(self, mapper, position, what):
+		self.whole(mapper, position, 0, what)
+	
+	
+	def whole(self, mapper, x, y, what):
+		if mapper.is_touched(what):
+			if self._old_pos and mapper.was_touched(what):
+				dx, dy = x - self._old_pos[0], self._old_pos[1] - y
+				self._add(dx, dy)
+				self.action.change(mapper, dx, dy)
+			else:
+				self._stop()
+			self._old_pos = x, y
+		elif mapper.was_touched(what):
+			self._roll(mapper)
 
 
 class DeadzoneModifier(Modifier):

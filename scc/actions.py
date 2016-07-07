@@ -18,7 +18,7 @@ from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
-from math import pi as PI, sqrt, atan2
+from math import sqrt, atan2
 
 import time, logging
 log = logging.getLogger("Actions")
@@ -393,10 +393,12 @@ class HatRightAction(HatAction):
 class MouseAction(HapticEnabledAction, Action):
 	COMMAND = "mouse"
 	
-	def __init__(self, axis, speed=None):
+	def __init__(self, axis=Rels.REL_X, speed=None):
 		Action.__init__(self, axis, *strip_none(speed))
 		HapticEnabledAction.__init__(self)
-		self.mouse_axis = axis
+		self._mouse_axis = axis
+		self._old_pos = None
+		self._travelled = 0
 		if speed:
 			self.speed = (speed, speed)
 		else:
@@ -422,15 +424,7 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	def button_press(self, mapper):
 		# This is generaly bad idea...
-		if self.mouse_axis == Rels.REL_X:
-			mapper.mouse.moveEvent(1000 * self.speed[0], 0, False)
-			mapper.syn_list.add(mapper.mouse)
-		elif self.mouse_axis == Rels.REL_Y:
-			mapper.mouse.moveEvent(0, 1000 * self.speed[1], False)
-			mapper.syn_list.add(mapper.mouse)
-		elif self.mouse_axis == Rels.REL_WHEEL:
-			mapper.mouse.scrollEvent(0, 2000 * self.speed[0], False)
-			mapper.syn_list.add(mapper.mouse)
+		self.change(mapper, 1, 0)
 	
 	
 	def button_release(self, mapper):
@@ -439,76 +433,64 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	
 	def axis(self, mapper, position, what):
-		if self.mouse_axis == Rels.REL_X:
-			# This is generaly bad idea for stick...
-			p = position * self.speed[0] / 100
-			mapper.mouse.moveEvent(p, 0, False)
-			mapper.syn_list.add(mapper.mouse)
-		elif self.mouse_axis == Rels.REL_Y:
-			# ... this as well...
-			p = position * self.speed[1] / 100
-			mapper.mouse.moveEvent(0, -p, False)
-			mapper.syn_list.add(mapper.mouse)
-		elif self.mouse_axis == Rels.REL_WHEEL:
-			# ... but this should kinda work
-			p = position * self.speed[0] / 100
-			mapper.mouse.scrollEvent(0, p * self.speed * 2.0, False)
-			mapper.syn_list.add(mapper.mouse)
-		elif self.mouse_axis == Rels.REL_HWHEEL:
-			# and this as well
-			p = position * self.speed[1] / 100
-			mapper.mouse.scrollEvent(p * self.speed * 2.0, 0, False)
-			mapper.syn_list.add(mapper.mouse)
+		self.change(mapper, position, 0)
 		mapper.force_event.add(FE_STICK)
 	
 	
 	def pad(self, mapper, position, what):
 		if mapper.is_touched(what):
-			if not mapper.was_touched(what):
-				# Pad was just pressed
-				if self.mouse_axis in (Rels.REL_X, Rels.REL_Y):
-					mapper.do_trackball(0, True)
-				elif self.mouse_axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
-					mapper.do_trackball(1, True)
-			if self.mouse_axis == Rels.REL_X:
-				mapper.mouse_dq_add(0, position, -self.speed[0], self.haptic)
-			elif self.mouse_axis == Rels.REL_Y:
-				mapper.mouse_dq_add(1, position, -self.speed[1], self.haptic)
-			elif self.mouse_axis == Rels.REL_HWHEEL:
-				mapper.mouse_dq_add(2, position, -self.speed[0], self.haptic)
-			elif self.mouse_axis == Rels.REL_WHEEL:
-				mapper.mouse_dq_add(3, position, -self.speed[1], self.haptic)
-			mapper.force_event.add(FE_PAD)
-				
-		elif mapper.was_touched(what):
-			# Pad was just released
-			if self.mouse_axis in (Rels.REL_X, Rels.REL_Y):
-				mapper.do_trackball(0, False)
-			elif self.mouse_axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
-				mapper.do_trackball(1, False)
-			if self.mouse_axis == Rels.REL_X:
-				mapper.mouse_dq_clear(0)
-			elif self.mouse_axis == Rels.REL_Y:
-				mapper.mouse_dq_clear(1)
-			elif self.mouse_axis == Rels.REL_WHEEL:
-				mapper.mouse_dq_clear(3)
-			elif self.mouse_axis == Rels.REL_HWHEEL:
-				mapper.mouse_dq_clear(2)
+			if self._old_pos and mapper.was_touched(what):
+				d = position - self._old_pos[0]
+				self.change(mapper, d, 0)
+			self._old_pos = position, 0
+		else:
+			# Pad just released
+			self._old_pos = None
+	
+	
+	def change(self, mapper, dx, dy):
+		""" Called from BallModifier """
+		if self.haptic:
+			distance = sqrt(dx * dx + dy * dy)
+			if distance > self.haptic.frequency / 10.0:
+				self._travelled += distance
+				if self._travelled > self.haptic.frequency:
+					self._travelled = 0
+					mapper.send_feedback(self.haptic)
+		dx, dy = dx * self.speed[0], dy * self.speed[1]
+		if self._mouse_axis is None:
+			mapper.mouse.moveEvent(dx, dy)
+		elif self._mouse_axis == Rels.REL_X:
+			mapper.mouse_move(dx, 0)
+		elif self._mouse_axis == Rels.REL_Y:
+			mapper.mouse_move(0, dx)
+		elif self._mouse_axis == Rels.REL_WHEEL:
+			mapper.mouse_wheel(0, dx)
+		elif self._mouse_axis == Rels.REL_HWHEEL:
+			mapper.mouse_wheel(dx, 0)
 	
 	
 	def whole(self, mapper, x, y, what):
-		mapper.mouse.moveEvent(x * self.speed[0] * 0.01, y * self.speed[1] * -0.01, False)
-		mapper.syn_list.add(mapper.mouse)
+		self._mouse_axis = None
 		if what == STICK:
+			mapper.mouse_move(x * self.speed[0] * 0.01, y * self.speed[1] * 0.01)
 			mapper.force_event.add(FE_STICK)
+		else:	# left or right pad
+			if mapper.is_touched(what):
+				if self._old_pos and mapper.was_touched(what):
+					dx, dy = x - self._old_pos[0], self._old_pos[1] - y
+					self.change(mapper, dx, dy)
+				self._old_pos = x, y
+			else:
+				# Pad just released
+				self._old_pos = None
 	
 	
 	def gyro(self, mapper, pitch, yaw, roll, *a):
-		if self.mouse_axis == YAW:
-			mapper.mouse.moveEvent(yaw * -self.speed[0], pitch * -self.speed[1], False)
+		if self._mouse_axis == YAW:
+			mapper.mouse_move(yaw * -self.speed[0], pitch * -self.speed[1])
 		else:
-			mapper.mouse.moveEvent(roll * -self.speed[0], pitch * -self.speed[1], False)
-		mapper.syn_list.add(mapper.mouse)
+			mapper.mouse_move(roll * -self.speed[0], pitch * -self.speed[1])
 
 
 class CircularAction(HapticEnabledAction, Action):
@@ -836,52 +818,16 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 				mapper.syn_list.add(mapper.gamepad)
 
 
-class TrackballAction(HapticEnabledAction, Action):
+class TrackballAction(Action):
+	"""
+	ball(trackpad); Never actually instantiated - Exists only to provide
+	backwards compatibility
+	"""
 	COMMAND = "trackball"
-	def __init__(self, speed=None):
-		Action.__init__(self, speed)
-		HapticEnabledAction.__init__(self)
-		if speed:
-			self.speed = (speed, speed)
-		else:
-			self.speed = (1.0, 1.0)
-		self.trackpadmode = False
 	
-	
-	def set_speed(self, x, y, z):
-		self.speed = (x, y)
-	
-	
-	def describe(self, context):
-		if self.name: return self.name
-		return "Trackball"
-	
-	
-	def whole(self, mapper, x, y, what):
-		if mapper.is_touched(what):
-			if not mapper.was_touched(what):
-				# Pad was just pressed
-				mapper.do_trackball(0, True)
-			if x != 0.0 or y != 0.0:
-				mapper.mouse_dq_add(0, x, self.speed[0], self.haptic)
-				mapper.mouse_dq_add(1, y, self.speed[1], self.haptic)
-			mapper.force_event.add(FE_PAD)
-		elif mapper.was_touched(what):
-			# Pad was just released
-			mapper.mouse_dq_clear(0, 1)
-			mapper.do_trackball(0, self.trackpadmode)
-
-
-class TrackpadAction(TrackballAction):
-	COMMAND = "trackpad"
-	
-	def __init__(self, speed=None):
-		TrackballAction.__init__(self, speed)
-		self.trackpadmode = True
-	
-	def describe(self, context):
-		if self.name: return self.name
-		return "Trackpad"
+	def __new__(cls, speed=None):
+		from modifiers import BallModifier
+		return BallModifier(TrackpadAction(speed))
 
 
 class ButtonAction(HapticEnabledAction, Action):
@@ -1295,6 +1241,8 @@ class XYAction(HapticEnabledAction, Action):
 		self.actions = (self.x, self.y)
 		self._old_distance = 0
 		self._travelled = 0
+		if hasattr(self.x, "change") or hasattr(self.y, "change"):
+			self.change = self._change
 	
 	
 	def compress(self):
@@ -1335,6 +1283,14 @@ class XYAction(HapticEnabledAction, Action):
 	# XYAction is what calls axis
 	def axis(self, *a):
 		pass
+	
+	
+	def _change(self, mapper, x, y):
+		""" Not always available """
+		if hasattr(self.x, "change"):
+			self.x.change(mapper, x, 0)
+		if hasattr(self.y, "change"):
+			self.y.change(mapper, -y, 0)
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -1477,6 +1433,7 @@ ACTIONS = {
 	and globals()[x].COMMAND is not None
 }
 ACTIONS["None"] = NoAction
+ACTIONS["trackpad"] = MouseAction
 
 import scc.macros
 import scc.modifiers
