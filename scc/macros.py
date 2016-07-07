@@ -289,6 +289,42 @@ class ReleaseAction(PressAction):
 		ButtonAction._button_release(mapper, self.button)
 
 
+class TapAction(PressAction):
+	"""
+	Presses button for short time.
+	If button is already pressed, generates release-press-release-press
+	events in quick sequence.
+	"""
+	COMMAND = "tap"
+	PR = _("Tap")
+	
+	
+	def button_press(self, mapper):
+		if self.button in mapper.pressed and mapper.pressed[self.button] > 0:
+			# Uses scheduler to generate release-press-release-press sequence.
+			self.lst = [
+				ButtonAction._button_release,
+				ButtonAction._button_press,
+				ButtonAction._button_release,
+				ButtonAction._button_press,
+			]
+			self._rel_tap_press(mapper)
+		else:
+			ButtonAction._button_press(mapper, self.button)
+			mapper.schedule(0, self._scheduled_release)
+	
+	
+	def _rel_tap_press(self, mapper):
+		a, self.lst = self.lst[0], self.lst[1:]
+		a(mapper, self.button)
+		if len(self.lst):
+			mapper.schedule(0, self._rel_tap_press)
+	
+	
+	def _scheduled_release(self, mapper):
+		ButtonAction._button_release(mapper, self.button)
+
+
 # Add macros to ACTIONS dict
 for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
 	if i.COMMAND is not None:

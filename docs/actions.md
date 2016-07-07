@@ -90,6 +90,11 @@ Presses button and leaves it pressed.
 ### release(button)
 Releases pressed button.
 
+### tap(button)
+Presses button for a short while.
+If button is already pressed, releases it, taps it and presses it
+again in quick sequence.
+
 #### profile(name)
 Loads another profile
 

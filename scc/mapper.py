@@ -120,7 +120,8 @@ class Mapper(object):
 	
 	def schedule(self, delay, cb):
 		"""
-		Schedules callback to be ran no sooner than after 'delay's.
+		Schedules callback to be ran no sooner than after delay.
+		Delay is float number in seconds.
 		Callback is called with mapper as only argument.
 		"""
 		when = time.time() + delay
