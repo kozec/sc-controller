@@ -974,8 +974,6 @@ class ButtonAction(HapticEnabledAction, Action):
 		else:
 			mapper.pressed[button] = 1
 		
-		print "press", button
-		
 		if button in MOUSE_BUTTONS:
 			mapper.mouse.keyEvent(button, 1)
 			mapper.syn_list.add(mapper.mouse)
@@ -1000,8 +998,6 @@ class ButtonAction(HapticEnabledAction, Action):
 			else:
 				# This is last action that kept virtual button held
 				del mapper.pressed[button]
-		
-		print "release", button
 		
 		if button in MOUSE_BUTTONS:
 			mapper.mouse.keyEvent(button, 0)
