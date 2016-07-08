@@ -78,8 +78,8 @@ AREA_TO_ACTION = {
 	'MOUSE1'			: (ButtonAction, Keys.BTN_LEFT),
 	'MOUSE2'			: (ButtonAction, Keys.BTN_MIDDLE),
 	'MOUSE3'			: (ButtonAction, Keys.BTN_RIGHT),
-	'MOUSE4'			: (ButtonAction, Rels.REL_WHEEL, 1),
-	'MOUSE5'			: (ButtonAction, Rels.REL_WHEEL, -1),
+	'MOUSE4'			: (MouseAction, Rels.REL_WHEEL, 1),
+	'MOUSE5'			: (MouseAction, Rels.REL_WHEEL, -1),
 	'MOUSE8'			: (ButtonAction, Keys.BTN_SIDE),
 	'MOUSE9'			: (ButtonAction, Keys.BTN_EXTRA),
 }
