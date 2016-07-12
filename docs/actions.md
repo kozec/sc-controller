@@ -38,19 +38,21 @@
   Note that 'button2' is always optional.
 
 
-#### <a name="mouse"></a> mouse(axis)
-Controls mouse movement or scroll wheel.
+#### <a name="mouse"></a> mouse(axis)  
 
 - For stick, lets cursor or mouse wheel to be controlled by stick tilt.
-- For pad, does same thing as 'trackball'. You can set pad to move mouse only
-  in one axis using this.
+- For pad, acts as trackpad - sliding finger over pad moves the mouse.
+  If set to *REL_WHEEL* or *REL_HWHEEL*, emulates finger scroll.
+  You can use `ball(mouse)` to emulate trackball.
 - For gyroscope, controls mouse with changes in controller pitch and roll/yaw.
   Axis parameter should be either YAW or ROLL (constants) and decides which
   gyroscope axis controls X mouse axis.
-- For wheel controlled by pad, emulates finger scroll.
 - For button, pressing button maps to single movement over mouse axis or
   single step on scroll wheel.
 
+
+#### <a name="trackpad"></a> trackpad(axis)
+Merged with [mouse](#mouse), does same thing.
 
 
 #### <a name="axis"></a> axis(id [, min = -32767, max = 32767 ])
@@ -103,12 +105,10 @@ Maps absolute gyroscope pitch, yaw and roll movement into movements of gamepad s
 Can bee used ot map gyroscope to movement stick or to use controller as racing wheel.
 
 
-#### <a name="trackpad"></a> trackpad()
-Available only for pads. Acts as trackpad - sliding finger over pad moves the mouse.
-
-
 #### <a name="trackball"></a> trackball()
-Available only for pads. Acts as trackball.
+Split to [ball](#ball) modifier and [mouse](#mouse) action.
+
+Typing `trackball` works as alias for `ball(mouse())`
 
 
 #### <a name="press"></a> press(button)
@@ -207,6 +207,12 @@ running feedback that you may not be able to stop.
 
 'frequency' is used only when emulating touchpad and describes how many pixels
 should mouse travell between two feedback ticks.
+
+
+#### <a name="ball"></a> ball([friction=10.0, [mass=80.0, ]] action)
+Enables trackball mode. Moving finger over pad will keep repeating same action
+with decreasing speed, based on set mass and friction, until virtual
+'spinning ball' stops moving.
 
 
 #### <a name="deadzone"></a> deadzone(lower, [upper, ] action)
