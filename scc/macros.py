@@ -146,12 +146,6 @@ class Type(Macro):
 		self.letters = string
 	
 	
-	def encode(self):
-		rv = { 'action' : self.to_string() }
-		if self.name: rv['name'] = self.name
-		return rv
-	
-	
 	def to_string(self, multiline=False, pad=0):
 		return (" " * pad) + self.COMMAND + "(" + repr(self.letters).strip("u") + ")"
 

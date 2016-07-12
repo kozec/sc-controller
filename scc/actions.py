@@ -61,11 +61,14 @@ class Action(object):
 		# set while editting the profile.
 		self.on_action_set = None
 	
+	
 	def encode(self):
 		""" Called from json encoder """
 		rv = { 'action' : self.to_string() }
-		if self.name: rv['name'] = self.name
+		if self.get_name():
+			rv['name'] = self.get_name()
 		return rv
+	
 	
 	def __str__(self):
 		return "<Action '%s', %s>" % (self.COMMAND, self.parameters)
@@ -77,7 +80,7 @@ class Action(object):
 		Returns string that describes what action does in human-readable form.
 		Used in GUI.
 		"""
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		return str(self)
 	
 	
@@ -89,9 +92,17 @@ class Action(object):
 		]))
 	
 	
-	def set_name(self, name):
-		""" Sets display name of action. Returns self. """
-		self.name = name
+	def get_name(self):
+		""" Returns action name, as should be displayed in GUI """
+		return self.name
+	
+	
+	def set_name(self, n):
+		"""
+		Sets action name, as should be displayed in GUI.
+		Returns self.
+		"""
+		self.name = n
 		return self
 	
 	
@@ -300,7 +311,7 @@ class AxisAction(Action):
 		return axis, neg, pos
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		axis, neg, pos = self._get_axis_description()
 		if context == Action.AC_BUTTON:
 			for x in self.parameters:
@@ -356,7 +367,7 @@ class RAxisAction(AxisAction):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		axis, neg, pos = self._get_axis_description()
 		if context in (Action.AC_STICK, Action.AC_PAD):
 			xy = "X" if self.parameters[0] in AxisAction.X else "Y"
@@ -367,7 +378,7 @@ class RAxisAction(AxisAction):
 class HatAction(AxisAction):
 	COMMAND = None
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		axis, neg, pos = self._get_axis_description()
 		if "up" in self.COMMAND or "left" in self.COMMAND:
 			return "%s %s" % (axis, neg)
@@ -416,7 +427,7 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		if self._mouse_axis == Rels.REL_WHEEL:
 			return _("Wheel")
 		elif self._mouse_axis == Rels.REL_HWHEEL:
@@ -515,7 +526,7 @@ class CircularAction(HapticEnabledAction, Action):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		if self.mouse_axis == Rels.REL_WHEEL:
 			return _("Circular Wheel")
 		elif self.mouse_axis == Rels.REL_HWHEEL:
@@ -585,7 +596,7 @@ class AreaAction(HapticEnabledAction, Action, SpecialAction, OSDEnabledAction):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		return _("Mouse Region")
 	
 	
@@ -757,7 +768,7 @@ class GyroAction(Action):
 	
 	
 	def describe(self, context):
-		if self.name : return self.name
+		if self.get_name(): return self.get_name()
 		rv = []
 		
 		for x in self.axes:
@@ -877,7 +888,7 @@ class ButtonAction(HapticEnabledAction, Action):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		elif self.button == Rels.REL_WHEEL:
 			if len(self.parameters) < 2 or self.parameters[1] > 0:
 				return _("Wheel UP")
@@ -1039,7 +1050,6 @@ class MultiAction(Action):
 	
 	def __init__(self, *actions):
 		self.actions = []
-		self.name = None
 		self._add_all(actions)
 	
 	
@@ -1081,7 +1091,7 @@ class MultiAction(Action):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		if isinstance(self.actions[0], ButtonAction):
 			# Special case, key combination
 			rv = []
@@ -1142,7 +1152,7 @@ class DPadAction(Action):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		return "DPad"
 	
 	
@@ -1150,13 +1160,6 @@ class DPadAction(Action):
 		nw = [ x.compress() for x in self.actions ]
 		self.actions = nw
 		return self
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { 'dpad' : [ x.encode() for x in self.actions ]}
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def to_string(self, multiline=False, pad=0):
@@ -1227,7 +1230,7 @@ class DPad8Action(DPadAction):
 		self.eight = True
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		return "8-Way DPad"
 
 
@@ -1336,7 +1339,7 @@ class XYAction(HapticEnabledAction, Action):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		rv = []
 		if self.x: rv.append(self.x.describe(context))
 		if self.y: rv.append(self.y.describe(context))
@@ -1357,15 +1360,6 @@ class XYAction(HapticEnabledAction, Action):
 			return "XY(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
 		else:
 			return "XY(" + self.x.to_string() + ")"
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { }
-		if self.x: rv["X"] = self.x.encode()
-		if self.y: rv["Y"] = self.y.encode()
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def __str__(self):
@@ -1390,10 +1384,6 @@ class NoAction(Action):
 	
 	def __nonzero__(self):
 		return False
-	
-	
-	def encode(self):
-		return { }
 	
 	
 	def button_press(self, *a):

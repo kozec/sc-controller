@@ -171,12 +171,13 @@ class MenuItem(object):
 	
 	def encode(self):
 		""" Returns item data as dict storable in json (profile) file """
+		rv = dict(
+			id = self.id,
+			name = self.label
+		)
+
 		if self.action:
-			rv = self.action.encode()
-		else:
-			rv = {}
-		rv['id'] = self.id
-		rv['name'] = self.label
+			rv['action'] = self.action.to_string() 
 		return rv
 
 

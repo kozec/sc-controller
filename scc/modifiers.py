@@ -34,11 +34,13 @@ class Modifier(Action):
 	def set_speed(self, x, y, z):
 		return self.action.set_speed(x, y, z)
 	
-	def encode(self):
-		rv = self.action.encode()
-		if self.name: rv['name'] = self.name
-		return rv
-		
+	def get_name(self):
+		if self.name:
+			return self.name
+		if self.action:
+			return self.action.name 
+		return None
+	
 	__repr__ = __str__
 
 
@@ -51,21 +53,25 @@ class NameModifier(Modifier):
 	
 	def __init__(self, name, action):
 		Modifier.__init__(self, action)
-		self.name = name
+		self.set_name(name)
 		if self.action:
-			self.action.name = name
+			self.action.set_name(name)
+	
+	
+	def get_name(self):
+		return self.name
 	
 	
 	def strip(self):
 		rv = self.action.strip()
-		rv.name = self.name
+		rv.set_name(self.name)
 		return rv
 	
 	
 	def compress(self):
 		self.action = self.action.compress()
 		if self.action:
-			self.action.name = self.name
+			self.action.set_name(self.name)
 		return self.action
 	
 	
@@ -95,12 +101,6 @@ class ClickModifier(Modifier):
 	
 	def strip(self):
 		return self.action.strip()
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['click'] = True
-		return rv
 	
 	
 	def compress(self):
@@ -275,14 +275,8 @@ class BallModifier(Modifier):
 			mapper.schedule(0, self._roll)
 	
 	
-	def encode(self):
-		rv = { 'action' : self.to_string() }
-		if self.name: rv['name'] = self.name
-		return rv
-	
-	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		# Special cases just to make GUI look pretty
 		if isinstance(self.action, MouseAction):
 			return _("Trackball")
@@ -373,14 +367,6 @@ class DeadzoneModifier(Modifier):
 		else:
 			return "deadzone(%s, %s, %s)" % (
 				self.lower, self.upper, self.action.to_string(multiline))
-	
-	
-	def encode(self):
-		rv = self.action.encode()
-		rv['deadzone'] = {}
-		rv['deadzone']['upper'] = self.upper
-		rv['deadzone']['lower'] = self.lower
-		return rv
 	
 	
 	def trigger(self, mapper, position, old_position):
@@ -526,15 +512,6 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
-	
-	
-	def encode(self):
-		rv = self.default.encode()
-		rv['modes'] = {}
-		for key in self.mods:
-			rv['modes'][key.name] = self.mods[key].encode()
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def select(self, mapper):
@@ -716,20 +693,6 @@ class DoubleclickModifier(Modifier):
 			return firstline.strip(",") + lastline
 	
 	
-	def encode(self):
-		if self.normalaction:
-			rv = self.normalaction.encode()
-		else:
-			rv = {}
-		rv['doubleclick'] = self.action.encode()
-		if self.holdaction:
-			rv['hold'] = self.holdaction.encode()
-		if self.timeout != DoubleclickModifier.DEAFAULT_TIMEOUT:
-			rv['time'] = self.timeout
-		if self.name: rv['name'] = self.name
-		return rv
-	
-	
 	def button_press(self, mapper):
 		self.pressed = True
 		if self.waiting:
@@ -807,7 +770,7 @@ class SensitivityModifier(Modifier):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		return self.action.describe(context)
 	
 	
@@ -824,10 +787,6 @@ class SensitivityModifier(Modifier):
 	def __str__(self):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['sensitivity'] = self.speeds
-		return rv
 	
 	def compress(self):
 		return self.action.compress()
@@ -848,7 +807,7 @@ class FeedbackModifier(Modifier):
 
 
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		return self.action.describe(context)
 	
 	
@@ -873,16 +832,6 @@ class FeedbackModifier(Modifier):
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['feedback'] = list(self.parameters[0:-1])
-		if self.haptic.get_position() == HapticPos.LEFT:
-			rv['feedback'][0] = "LEFT"
-		elif self.haptic.get_position() == HapticPos.RIGHT:
-			rv['feedback'][0] = "RIGHT"
-		else:
-			rv['feedback'][0] = "BOTH"
-		return rv
 	
 	def strip(self):
 		return self.action.strip()

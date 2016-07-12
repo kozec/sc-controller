@@ -10,8 +10,8 @@ from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
 from scc.lib.jsonencoder import JSONEncoder
 from scc.parser import TalkingActionParser
+from scc.actions import Action, NoAction
 from scc.menu_data import MenuData
-from scc.actions import NoAction
 
 import json, logging
 log = logging.getLogger("profile")
@@ -162,6 +162,7 @@ class Profile(object):
 					MenuAction("Default.menu"),
 					normalaction = self.buttons[SCButtons.C]
 				)
+		
 		if from_version < 1.1:
 			# Convert old scrolling wheel to new representation
 			from scc.modifiers import FeedbackModifier, BallModifier
@@ -185,8 +186,6 @@ class Profile(object):
 
 class Encoder(JSONEncoder):
 	def default(self, obj):
-		#if type(obj) in (list, tuple):
-		#	return basestring("[" + ", ".join(self.encode(x) for x in obj) + " ]")
 		if hasattr(obj, "encode"):
 			return obj.encode()
 		return JSONEncoder.default(self, obj)

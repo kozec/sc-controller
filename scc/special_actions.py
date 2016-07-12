@@ -29,7 +29,7 @@ class ChangeProfileAction(Action, SpecialAction):
 		self.profile = profile
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		if context == Action.AC_OSD:
 			return _("Profile: %s") % (self.profile,)
 		return _("Profile Change")
@@ -54,7 +54,7 @@ class ShellCommandAction(Action, SpecialAction):
 		self.command = command
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		return _("Execute Command")
 	
 	
@@ -74,7 +74,7 @@ class TurnOffAction(Action, SpecialAction):
 		Action.__init__(self)
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		if context == Action.AC_OSD:
 			return _("Turning controller OFF")
 		return _("Turn Off the Controller")
@@ -115,7 +115,7 @@ class OSDAction(Action, SpecialAction):
 			self.action.enable_osd(self.timeout)
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		if self.action:
 			return _("%s (with OSD)") % (self.action.describe(context), )
 		elif context == Action.AC_OSD:
@@ -148,18 +148,6 @@ class OSDAction(Action, SpecialAction):
 				return self.action.compress()
 			self.action = self.action.compress()
 		return self
-	
-	
-	def encode(self):
-		if self.action:
-			rv = self.action.encode()
-			if self.timeout == self.DEFAULT_TIMEOUT:
-				rv['osd'] = True
-			else:
-				rv['osd'] = self.timeout
-			return rv
-		else:
-			return Action.encode(self)
 	
 	
 	def button_press(self, mapper):
@@ -207,7 +195,7 @@ class MenuAction(Action, SpecialAction):
 		self.show_with_release = show_with_release not in (None, False)
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		return _("Menu")
 	
 	
@@ -273,7 +261,7 @@ class KeyboardAction(Action, SpecialAction):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
+		if self.get_name(): return self.get_name()
 		if context == Action.AC_OSD:
 			return _("Display Keyboard")
 		return _("OSD Keyboard")
