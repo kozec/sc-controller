@@ -13,10 +13,12 @@ from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
 from scc.actions import NoAction
 
-import json
+import json, logging
+log = logging.getLogger("profile")
+
 
 class Profile(object):
-	VERSION = 1		# Current profile version. When loading profile file
+	VERSION = 1.1	# Current profile version. When loading profile file
 					# with version lower than this, auto-conversion may happen
 	
 	LEFT  = LEFT
@@ -160,8 +162,25 @@ class Profile(object):
 					MenuAction("Default.menu"),
 					normalaction = self.buttons[SCButtons.C]
 				)
-
-
+		if from_version < 1.1:
+			# Convert old scrolling wheel to new representation
+			from scc.modifiers import FeedbackModifier, BallModifier
+			from scc.actions import MouseAction, XYAction
+			from scc.uinput import Rels
+			iswheelaction = ( lambda x : isinstance(x, MouseAction) and
+					x.parameters[0] in (Rels.REL_HWHEEL, Rels.REL_WHEEL) )
+			for p in (Profile.LEFT, Profile.RIGHT):
+				a, feedback = self.pads[p], None
+				if isinstance(a, FeedbackModifier):
+					feedback = a.haptic.get_position()
+					a = a.action
+				if isinstance(a, XYAction):
+					if iswheelaction(a.x) or iswheelaction(a.y):
+						n = BallModifier(XYAction(a.x, a.y))
+						if feedback:
+							n = FeedbackModifier(feedback, 4096, 16, n)
+						self.pads[p] = n
+						log.info("Converted %s to %s", a.to_string(), n.to_string())
 
 
 class Encoder(JSONEncoder):
