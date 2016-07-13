@@ -335,6 +335,11 @@ class AxisAction(Action):
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
+	def change(self, mapper, dx, dy):
+		""" Called from BallModifier """
+		self.axis(mapper, clamp(STICK_PAD_MIN, dx, STICK_PAD_MAX), None)
+	
+	
 	def trigger(self, mapper, position, old_position):
 		p = float(position * self.speed - TRIGGER_MIN) / (TRIGGER_MAX - TRIGGER_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
@@ -1285,30 +1290,39 @@ class XYAction(HapticEnabledAction, Action):
 		pass
 	
 	
+	def _haptic(self, mapper, x, y):
+		"""
+		Common part of _change and whole - sends haptic output, if enabled
+		"""
+		# Compute travelled distance and send 'small clicks' when user moves
+		# finger around the pad.
+		# Also, if user moves finger over circle around 2/3 area of pad,
+		# send one 'big click'.
+		distance = sqrt(x*x + y*y)
+		self._travelled += abs(self._old_distance - distance)
+		is_close = distance > STICK_PAD_MAX * 2 / 3
+		was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
+		if is_close != was_close:
+			mapper.send_feedback(self.big_click)
+		elif self._travelled > self.haptic.frequency:
+			self._travelled = 0
+			mapper.send_feedback(self.haptic)
+		self._old_distance = distance
+	
+	
 	def _change(self, mapper, x, y):
 		""" Not always available """
 		if hasattr(self.x, "change"):
 			self.x.change(mapper, x, 0)
 		if hasattr(self.y, "change"):
 			self.y.change(mapper, -y, 0)
+		if self.haptic:
+			self._haptic(mapper, x, y)
 	
 	
 	def whole(self, mapper, x, y, what):
 		if self.haptic:
-			# Compute travelled distance and send 'small clicks' when user moves
-			# finger around the pad.
-			# Also, if user moves finger over circle around 2/3 area of pad,
-			# send one 'big click'.
-			distance = sqrt(x*x + y*y)
-			self._travelled += abs(self._old_distance - distance)
-			is_close = distance > STICK_PAD_MAX * 2 / 3
-			was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
-			if is_close != was_close:
-				mapper.send_feedback(self.big_click)
-			elif self._travelled > self.haptic.frequency:
-				self._travelled = 0
-				mapper.send_feedback(self.haptic)
-			self._old_distance = distance
+			self._haptic(mapper, x, y)
 		if what in (LEFT, RIGHT):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
