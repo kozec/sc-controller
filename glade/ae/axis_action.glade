@@ -146,7 +146,7 @@
         <col id="2">dpad</col>
       </row>
       <row>
-        <col id="0">XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) )</col>
+        <col id="0">ball(XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) ))</col>
         <col id="1" translatable="yes">Mouse Wheel</col>
         <col id="2">wheel</col>
       </row>

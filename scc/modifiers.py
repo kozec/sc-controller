@@ -12,7 +12,7 @@ from scc.actions import Action, MouseAction, XYAction, AxisAction, NoAction, ACT
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.controller import HapticData
-from scc.uinput import Axes
+from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign
 from collections import deque
 
@@ -289,10 +289,14 @@ class BallModifier(Modifier):
 		if isinstance(self.action, XYAction):
 			if isinstance(self.action.x, AxisAction) and isinstance(self.action.y, AxisAction):
 				x, y = self.action.x.parameters[0], self.action.y.parameters[0]
-				if x == Axes.ABS_X and y	 == Axes.ABS_Y:
+				if x == Axes.ABS_X and y == Axes.ABS_Y:
 					return _("Mouse-like LStick")
 				else:
 					return _("Mouse-like RStick")
+			if isinstance(self.action.x, MouseAction) and isinstance(self.action.y, MouseAction):
+				x, y = self.action.x.parameters[0], self.action.y.parameters[0]
+				if x in (Rels.REL_HWHEEL, Rels.REL_WHEEL) and y in (Rels.REL_HWHEEL, Rels.REL_WHEEL):
+					return _("Mouse Wheel")
 			
 		return _("Ball(%s)") % (self.action.describe(context))
 	

@@ -67,7 +67,6 @@ class AxisActionComponent(AEComponent, TimerManager):
 				self.set_cb(cb, "trackpad", 2)
 			elif isinstance(action, BallModifier):
 				self.load_trackball_action(action)
-				self.set_cb(cb, "trackball", 2)
 			elif isinstance(action, CircularAction):
 				self.set_cb(cb, "circular", 2)
 			elif isinstance(action, XYAction):
@@ -104,15 +103,20 @@ class AxisActionComponent(AEComponent, TimerManager):
 	
 	def load_trackball_action(self, action):
 		cbTrackpadType = self.builder.get_object("cbTrackpadType")
+		cbAxisOutput = self.builder.get_object("cbAxisOutput")
 		self._recursing = True
 		if isinstance(action.action, MouseAction):
 			self.set_cb(cbTrackpadType, "mouse", 1)
+			self.set_cb(cbAxisOutput, "trackball", 2)
 		elif isinstance(action.action, XYAction):
 			if isinstance(action.action.x, AxisAction):
 				if action.action.x.parameters[0] == Axes.ABS_X:
 					self.set_cb(cbTrackpadType, "left", 1)
 				else:
 					self.set_cb(cbTrackpadType, "right", 1)
+				self.set_cb(cbAxisOutput, "trackball", 2)
+			elif isinstance(action.action.x, MouseAction):
+				self.set_cb(cbAxisOutput, "wheel", 2)
 		self._recursing = False
 	
 	
@@ -256,8 +260,10 @@ class AxisActionComponent(AEComponent, TimerManager):
 			return True
 		if isinstance(action, BallModifier):
 			if isinstance(action.action, XYAction):
-				return ( isinstance(action.action.x, AxisAction)
-						and isinstance(action.action.x, AxisAction) )
+				return (
+					isinstance(action.action.x, (AxisAction, MouseAction))
+					and isinstance(action.action.x, (AxisAction, MouseAction))
+				)
 			return isinstance(action.action, MouseAction)
 		if isinstance(action, XYAction):
 			p = [ None, None ]
