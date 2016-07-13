@@ -10,9 +10,9 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GdkX11, GLib
 from ctypes import c_void_p, byref, cast, c_ulong, POINTER
 from scc.actions import Action, NoAction, AxisAction, MouseAction, XYAction
-from scc.actions import TrackballAction, TrackpadAction, CircularAction
 from scc.actions import AreaAction, WinAreaAction, RelAreaAction, RelWinAreaAction
-from scc.actions import ButtonAction
+from scc.actions import ButtonAction, CircularAction
+from scc.modifiers import BallModifier
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import SCButtons
@@ -63,9 +63,10 @@ class AxisActionComponent(AEComponent, TimerManager):
 				self.update_osd_area(action)
 				return
 			self.update_osd_area(None)
-			if isinstance(action, TrackpadAction):
+			if isinstance(action, MouseAction):
 				self.set_cb(cb, "trackpad", 2)
-			elif isinstance(action, TrackballAction):
+			elif isinstance(action, BallModifier):
+				self.load_trackball_action(action)
 				self.set_cb(cb, "trackball", 2)
 			elif isinstance(action, CircularAction):
 				self.set_cb(cb, "circular", 2)
@@ -99,6 +100,20 @@ class AxisActionComponent(AEComponent, TimerManager):
 			self.osd_area_instance.quit()
 			self.osd_area_instance = None
 			self.cancel_timer("area")
+	
+	
+	def load_trackball_action(self, action):
+		cbTrackpadType = self.builder.get_object("cbTrackpadType")
+		self._recursing = True
+		if isinstance(action.action, MouseAction):
+			self.set_cb(cbTrackpadType, "mouse", 1)
+		elif isinstance(action.action, XYAction):
+			if isinstance(action.action.x, AxisAction):
+				if action.action.x.parameters[0] == Axes.ABS_X:
+					self.set_cb(cbTrackpadType, "left", 1)
+				else:
+					self.set_cb(cbTrackpadType, "right", 1)
+		self._recursing = False
 	
 	
 	def load_area_action(self, action):
@@ -178,6 +193,15 @@ class AxisActionComponent(AEComponent, TimerManager):
 					self.app.set_action(self.app.current, side, NoAction())
 	
 	
+	def make_trackball_action(self):
+		"""
+		Loads values from UI into trackball-related action
+		"""
+		cbTrackpadType = self.builder.get_object("cbTrackpadType")
+		a = cbTrackpadType.get_model().get_value(cbTrackpadType.get_active_iter(), 2)
+		return self.parser.restart(a).parse()
+
+	
 	def make_area_action(self):
 		"""
 		Loads values from UI into new AreaAction or subclass.
@@ -227,9 +251,14 @@ class AxisActionComponent(AEComponent, TimerManager):
 	
 	
 	def handles(self, mode, action):
-		if isinstance(action, (NoAction, TrackballAction, CircularAction,
+		if isinstance(action, (NoAction, MouseAction, CircularAction,
 					InvalidAction, AreaAction)):
 			return True
+		if isinstance(action, BallModifier):
+			if isinstance(action.action, XYAction):
+				return ( isinstance(action.action.x, AxisAction)
+						and isinstance(action.action.x, AxisAction) )
+			return isinstance(action.action, MouseAction)
 		if isinstance(action, XYAction):
 			p = [ None, None ]
 			for x in (0, 1):
@@ -261,6 +290,12 @@ class AxisActionComponent(AEComponent, TimerManager):
 			self.on_sbArea_output(spin)
 	
 	
+	def on_trackball_options_changed(self, *a):
+		if self._recursing : return
+		action = self.make_trackball_action()
+		self.editor.set_action(action)
+	
+	
 	def on_sbArea_output(self, button, *a):
 		if self.relative_area:
 			button.set_text("%s %%" % (button.get_value()))
@@ -285,6 +320,9 @@ class AxisActionComponent(AEComponent, TimerManager):
 			stActionData.set_visible_child(self.builder.get_object("grArea"))
 			action = self.make_area_action()
 			self.update_osd_area(action)
+		elif key == 'trackball':
+			stActionData.set_visible_child(self.builder.get_object("vbTrackball"))
+			action = self.make_trackball_action()
 		else:
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			action = cbAxisOutput.get_model().get_value(cbAxisOutput.get_active_iter(), 0)

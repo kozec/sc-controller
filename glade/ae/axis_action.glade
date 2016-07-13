@@ -30,6 +30,33 @@
     <property name="page_increment">0.10000000000000001</property>
     <property name="page_size">0.01</property>
   </object>
+  <object class="GtkListStore" id="lsTrackpadType">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+      <!-- column-name action -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Mouse</col>
+        <col id="1">mouse</col>
+        <col id="2">ball(mouse())</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Mouse-like Joystick on LEFT Stick</col>
+        <col id="1">left</col>
+        <col id="2">ball(XY(axis(Axes.ABS_X),axis(Axes.ABS_Y)))</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Mouse-like Joystick on RIGHT Stick</col>
+        <col id="1">right</col>
+        <col id="2">ball(XY(axis(Axes.ABS_RX),axis(Axes.ABS_RY)))</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="lstAreaType">
     <columns>
       <!-- column-name text -->
@@ -134,13 +161,13 @@
         <col id="2">area</col>
       </row>
       <row>
-        <col id="0">trackpad()</col>
+        <col id="0">mouse()</col>
         <col id="1" translatable="yes">Trackpad (Mouse)</col>
         <col id="2">trackpad</col>
       </row>
       <row>
-        <col id="0">trackball()</col>
-        <col id="1" translatable="yes">Trackball (Mouse)</col>
+        <col id="0">ball(mouse())</col>
+        <col id="1" translatable="yes">Trackball</col>
         <col id="2">trackball</col>
       </row>
     </data>
@@ -491,6 +518,60 @@
             <property name="name">page0</property>
             <property name="title" translatable="yes">page0</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vbTrackball">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel" id="label2">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">10</property>
+                <property name="label" translatable="yes">Output As</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="cbTrackpadType">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <property name="model">lsTrackpadType</property>
+                <property name="active">1</property>
+                <signal name="changed" handler="on_trackball_options_changed" swapped="no"/>
+                <child>
+                  <object class="GtkCellRendererText" id="text2"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="name">page1</property>
+            <property name="title" translatable="yes">page1</property>
+            <property name="position">2</property>
           </packing>
         </child>
       </object>

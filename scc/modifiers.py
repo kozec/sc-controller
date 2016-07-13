@@ -8,10 +8,11 @@ For example, click() modifier executes action only if pad is pressed.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, NoAction, ACTIONS
+from scc.actions import Action, MouseAction, XYAction, AxisAction, NoAction, ACTIONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.controller import HapticData
+from scc.uinput import Axes
 from math import pi as PI, sqrt, copysign
 from collections import deque
 
@@ -274,9 +275,26 @@ class BallModifier(Modifier):
 			mapper.schedule(0, self._roll)
 	
 	
+	def encode(self):
+		rv = { 'action' : self.to_string() }
+		if self.name: rv['name'] = self.name
+		return rv
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
-		return "Ball(%s)" % (self.action.describe(context))
+		# Special cases just to make GUI look pretty
+		if isinstance(self.action, MouseAction):
+			return _("Trackball")
+		if isinstance(self.action, XYAction):
+			if isinstance(self.action.x, AxisAction) and isinstance(self.action.y, AxisAction):
+				x, y = self.action.x.parameters[0], self.action.y.parameters[0]
+				if x == Axes.ABS_X and y	 == Axes.ABS_Y:
+					return _("Mouse-like LStick")
+				else:
+					return _("Mouse-like RStick")
+			
+		return _("Ball(%s)") % (self.action.describe(context))
 	
 	
 	def pad(self, mapper, position, what):

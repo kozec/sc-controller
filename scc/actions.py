@@ -398,8 +398,8 @@ class HatRightAction(HatAction):
 class MouseAction(HapticEnabledAction, Action):
 	COMMAND = "mouse"
 	
-	def __init__(self, axis=Rels.REL_X, speed=None):
-		Action.__init__(self, axis, *strip_none(speed))
+	def __init__(self, axis=None, speed=None):
+		Action.__init__(self, *strip_none(axis, speed))
 		HapticEnabledAction.__init__(self)
 		self._mouse_axis = axis
 		self._old_pos = None
@@ -417,14 +417,14 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		if self.parameters[0] == Rels.REL_WHEEL:
+		if self._mouse_axis == Rels.REL_WHEEL:
 			return _("Wheel")
-		elif self.parameters[0] == Rels.REL_HWHEEL:
+		elif self._mouse_axis == Rels.REL_HWHEEL:
 			return _("Horizontal Wheel")
-		elif self.parameters[0] in (PITCH, YAW, ROLL):
+		elif self._mouse_axis in (PITCH, YAW, ROLL, None):
 			return _("Mouse")
 		else:
-			return _("Mouse %s") % (self.parameters[0].name.split("_", 1)[-1],)
+			return _("Mouse %s") % (self._mouse_axis.name.split("_", 1)[-1],)
 	
 	
 	def button_press(self, mapper):
@@ -476,7 +476,6 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	
 	def whole(self, mapper, x, y, what):
-		self._mouse_axis = None
 		if what == STICK:
 			mapper.mouse_move(x * self.speed[0] * 0.01, y * self.speed[1] * 0.01)
 			mapper.force_event.add(FE_STICK)
@@ -517,11 +516,11 @@ class CircularAction(HapticEnabledAction, Action):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		if self.parameters[0] == Rels.REL_WHEEL:
+		if self.mouse_axis == Rels.REL_WHEEL:
 			return _("Circular Wheel")
-		elif self.parameters[0] == Rels.REL_HWHEEL:
+		elif self.mouse_axis == Rels.REL_HWHEEL:
 			return _("Circular Horizontal Wheel")
-		return _("Circular Mouse %s") % (self.parameters[0].name.split("_", 1)[-1],)
+		return _("Circular Mouse %s") % (self.mouse_axis.name.split("_", 1)[-1],)
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -832,7 +831,7 @@ class TrackballAction(Action):
 	
 	def __new__(cls, speed=None):
 		from modifiers import BallModifier
-		return BallModifier(TrackpadAction(speed))
+		return BallModifier(MouseAction(speed=speed))
 
 
 class ButtonAction(HapticEnabledAction, Action):
