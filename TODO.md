@@ -9,11 +9,8 @@ UI-only stuff:
 - Profile import / export
 
 
-OSD related stuff:
-- Radial Menu for the Joystick/Trackpad
-
-
 **Done** stuff:
+- Radial Menu for the Joystick/Trackpad
 - Copy & paste
 - Cycling Buttons
 - Process monitor (or active window monitor) with switch
