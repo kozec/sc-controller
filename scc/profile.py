@@ -18,7 +18,7 @@ log = logging.getLogger("profile")
 
 
 class Profile(object):
-	VERSION = 1.1	# Current profile version. When loading profile file
+	VERSION = 2		# Current profile version. When loading profile file
 					# with version lower than this, auto-conversion may happen
 	
 	LEFT  = LEFT
@@ -75,15 +75,54 @@ class Profile(object):
 		except:
 			version = 0
 		
+		if version < 2:
+			self._load_v1(data)
+			self._convert(version)
+		else:
+			# Buttons
+			self.buttons = {}
+			for x in SCButtons:
+				self.buttons[x] = self.parser.from_json(data["buttons"], x.name)
+			
+			# Stick & gyro
+			self.stick = self.parser.from_json(data, "stick")
+			self.gyro = self.parser.from_json(data, "gyro")
+			
+			# Triggers
+			self.triggers = {
+				Profile.LEFT	: self.parser.from_json(data, "trigger_left"),
+				Profile.RIGHT	: self.parser.from_json(data, "trigger_right"),
+			}
+		
+			# Pads
+			self.pads = {
+				Profile.LEFT	: self.parser.from_json(data, "pad_left"),
+				Profile.RIGHT	: self.parser.from_json(data, "pad_right"),
+			}
+		
+		# Menus
+		self.menus = {}
+		if "menus" in data:
+			for id in data["menus"]:
+				for invalid_char in ".:/":
+					if invalid_char in id:
+						raise ValueError("Invalid character '%s' in menu id '%s'" % (invalid_char, id))
+				self.menus[id] = MenuData.from_json_data(data["menus"][id], self.parser)
+		
+		return self
+	
+	
+	def _load_v1(self, data):
+		""" Old, complicated method used to load old profile files """
 		# Buttons
 		self.buttons = {}
 		for x in SCButtons:
 			self.buttons[x] = self.parser.from_json_data(data["buttons"], x.name)
-		
+
 		# Stick & gyro
 		self.stick = self.parser.from_json_data(data, "stick")
 		self.gyro = self.parser.from_json_data(data, "gyro")
-		
+
 		if "triggers" in data:
 			# Old format
 			# Triggers
@@ -103,27 +142,13 @@ class Profile(object):
 				Profile.LEFT	: self.parser.from_json_data(data, "trigger_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "trigger_right"),
 			}
-		
+
 			# Pads
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "pad_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "pad_right"),
 			}
-		
-		# Menus
-		self.menus = {}
-		if "menus" in data:
-			for id in data["menus"]:
-				for invalid_char in ".:/":
-					if invalid_char in id:
-						raise ValueError("Invalid character '%s' in menu id '%s'" % (invalid_char, id))
-				self.menus[id] = MenuData.from_json_data(data["menus"][id], self.parser)
-		
-		# Conversion
-		if version < Profile.VERSION:
-			self._convert(version)
-		
-		return self
+
 	
 	
 	def compress(self):

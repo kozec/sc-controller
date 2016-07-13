@@ -76,6 +76,12 @@ class ActionParser(object):
 		Converts dict stored in profile file into action.
 		
 		May throw ParseError.
+		
+		*********************************************************
+		After profile version 2, this method exists for backwards
+		compatibility only and it's used only when older profile
+		is being loaded
+		*********************************************************
 		"""
 		if key is not None:
 			# Don't fail if called for non-existent key, return NoAction instead.
@@ -142,6 +148,25 @@ class ActionParser(object):
 				a = HoldModifier(*args)
 			if "time" in data: a.timeout = data["time"]
 		return a
+	
+	
+	def from_json(self, data, subkey):
+		"""
+		Returns parsed 'action' key from json subkey, optionaly with
+		name from 'name' key set.
+		
+		New, simplified version of 'from_json_data'
+		"""
+		if subkey not in data:
+			return NoAction()
+		data = data[subkey]
+		if 'action' in data:
+			a = self.restart(data["action"]).parse()
+			if 'name' in data:
+				a.set_name(str(data['name']))
+			return a
+		else:
+			return NoAction()
 	
 	
 	def restart(self, string):
