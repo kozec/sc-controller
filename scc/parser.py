@@ -318,12 +318,23 @@ class ActionParser(object):
 			raise ParseError("Invalid number of parameters for '%s'" % (cls.COMMAND))
 	
 	
-	def _parse_action(self, frm=ACTIONS):
+	def _allow_newlines(self):
+		""" Moves over newline tokens """
+		while self._tokens_left() and self._peek_token().value == "\n":
+			self._next_token()
+	
+	
+	def _parse_action(self, frm=ACTIONS, level=0):
 		"""
 		Parses one action, that is one of:
 		 - something(params)
 		 - something()
 		 - something
+		
+		'level' argument specifies current level of nesting:
+		- At level 0, everything (|, and, ;) is parsed
+		- At level 1, only | and ; is recognized
+		- At level 2, only | is recognized
 		"""
 		# Check if next token is TokenType.NAME and grab action name from it
 		t = self._next_token()
@@ -356,73 +367,84 @@ class ActionParser(object):
 				return self._create_action(action_class, *parameters)
 			t = self._peek_token()
 		
+		action = self._create_action(action_class, *parameters)
+		
 		# ... or, if it is one of '|', ';', 'and' or 'or' and if yes, parse next action
-		if t.type == TokenType.OP and t.value == '|':
-			# Two (or more) actions joined by '|'
-			self._next_token()
-			while self._tokens_left() and self._peek_token().value == "\n":
-				# Allow newlines after '|''
+		if level <= 2:	# currently always
+			if t.type == TokenType.OP and t.value == '|':
+				# Two (or more) actions joined by '|'
 				self._next_token()
-			if not self._tokens_left():
-				raise ParseError("Expected action after '|'")
-			action1 = self._create_action(action_class, *parameters)
-			action2 = self._parse_action()
-			action = None
-			try:
-				# Try connecting modifier to action
-				if not hasattr(action1, "connect"):
-					raise TypeError("Cannot connect %s to %s" % (action1.COMMAND, action2.COMMAND))
-				action = action1.connect(action2)
-			except TypeError, e:
-				# If that failed, try reverse connection
-				log.debug("Can't pipe %s -> %s, trying reverse", action1.COMMAND, action2.COMMAND)
+				self._allow_newlines() # Allow newlines after '|'
+				if not self._tokens_left():
+					raise ParseError("Expected action after '|'")
+				action2 = self._parse_action(level=2)
 				try:
-					if not hasattr(action2, "connect_left"):
-						raise e
-					action = action2.connect_left(action1)
-				except TypeError, e2:
-					# And if even that fails, throw up
-					# log.exception(e2)
-					log.debug("Nope, can't pipe %s <- %s either", action1.COMMAND, action2.COMMAND)
-					raise ParseError(str(e2))
-			return action
+					# Try connecting modifier to action
+					if not hasattr(action, "connect"):
+						raise TypeError("Cannot connect %s to %s" % (action.COMMAND, action2.COMMAND))
+					action = action.connect(action2)
+				except TypeError, e:
+					# If that failed, try reverse connection
+					log.debug("Can't pipe %s -> %s, trying reverse", action.COMMAND, action2.COMMAND)
+					try:
+						if not hasattr(action2, "connect_left"):
+							raise e
+						action = action2.connect_left(action)
+					except TypeError, e2:
+						# And if even that fails, throw up
+						# log.exception(e2)
+						log.debug("Nope, can't pipe %s <- %s either", action.COMMAND, action2.COMMAND)
+						raise ParseError(str(e2))
+				if not self._tokens_left():
+					return action
+				t = self._peek_token()
 		
-		if t.type == TokenType.NAME and t.value == 'and':
-			# Two (or more) actions joined by 'and'
-			self._next_token()
-			if not self._tokens_left():
-				raise ParseError("Expected action after 'and'")
-			action1 = self._create_action(action_class, *parameters)
-			action2 = self._parse_action()
-			return MultiAction(action1, action2)
-		
-		if t.type == TokenType.NEWLINE or t.value == "\n":
-			# Newline can be used to join actions instead of 'and'
-			self._next_token()
-			if not self._tokens_left():
-				# Newline at end of string is not error
-				return self._create_action(action_class, *parameters)
-			t = self._peek_token()
-			if t.type == TokenType.OP and t.value in (')', ','):
-				# ')' starts next line
-				return self._create_action(action_class, *parameters)
-			action1 = self._create_action(action_class, *parameters)
-			action2 = self._parse_action()
-			return MultiAction(action1, action2)
-		
-		if t.type == TokenType.OP and t.value == ';':
-			# Two (or more) actions joined by ';'
-			self._next_token()
-			while self._tokens_left() and self._peek_token().type == TokenType.NEWLINE:
+		if level <= 1:
+			if t.type == TokenType.OP and t.value == ';':
+				# Two (or more) actions joined by ';'
 				self._next_token()
-			if not self._tokens_left():
-				# Having ';' at end of string is not actually error
-				return self._create_action(action_class, *parameters)
-			action1 = self._create_action(action_class, *parameters)
-			action2 = self._parse_action()
-			return Macro(action1, action2)
+				self._allow_newlines() # Allow newlines after ';'
+				if not self._tokens_left():
+					# Having ';' at end of string is not actually error
+					return action
+				action2 = self._parse_action(level=1)
+				action = Macro(action, action2)
+				if not self._tokens_left():
+					return action
+				t = self._peek_token()
 		
-		return self._create_action(action_class, *parameters)
+		
+		if level <= 0:
+			if t.type == TokenType.NAME and t.value == 'and':
+				# Two (or more) actions joined by 'and'
+				self._next_token()
+				self._allow_newlines() # Allow newlines after 'and'
+				if not self._tokens_left():
+					raise ParseError("Expected action after 'and'")
+				action2 = self._parse_action(level = 0)
+				action = MultiAction(action, action2)
+				if not self._tokens_left():
+					return action
+				t = self._peek_token()
+			
+			elif t.type == TokenType.NEWLINE or t.value == "\n":
+				# Newline can be used to join actions instead of 'and'
+				self._next_token()
+				self._allow_newlines() # Multiple newlines are fine too
+				if not self._tokens_left():
+					# Newline at end of string is not error
+					return action
+				t = self._peek_token()
+				if t.type == TokenType.OP and t.value in (')', ','):
+					# ')' starts next line
+					return self._create_action(action_class, *parameters)
+				action2 = self._parse_action(level = 0)
+				action = MultiAction(action, action2)
+				if not self._tokens_left():
+					return action
+				t = self._peek_token()
+		
+		return action
 	
 	
 	def parse(self):
