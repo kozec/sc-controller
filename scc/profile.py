@@ -202,7 +202,7 @@ class Profile(object):
 					a = a.action
 				if isinstance(a, XYAction):
 					if iswheelaction(a.x) or iswheelaction(a.y):
-						n = BallModifier(XYAction(a.x, a.y))
+						n = BallModifier().connect(XYAction(a.x, a.y))
 						if feedback:
 							n = FeedbackModifier(feedback, 4096, 16).connect_left(n)
 						self.pads[p] = n

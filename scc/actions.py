@@ -836,7 +836,7 @@ class TrackballAction(Action):
 	
 	def __new__(cls, speed=None):
 		from modifiers import BallModifier
-		return BallModifier(MouseAction(speed=speed))
+		return BallModifier().connect(MouseAction(speed=speed))
 
 
 class ButtonAction(HapticEnabledAction, Action):

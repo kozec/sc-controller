@@ -204,19 +204,9 @@ class BallModifier(Modifier):
 	DEFAULT_MEAN_LEN = 10
 	
 	
-	def __init__(self, *params):
-		Modifier.__init__(self)
-		if isinstance(params[0], Action):
-			# TODO: Remove this, merge with _setup. It exists for backwards
-			# compatibility, mainly because I'm retarded :(
-			a, params = params[0], params[1:]
-			self._setup(*params)
-			self.connect(a)
-		else:
-			self._setup(*params)
-		
-	def _setup(self, friction=DEFAULT_FRICTION, mass=80.0,
+	def __init__(self, friction=DEFAULT_FRICTION, mass=80.0,
 			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
+		Modifier.__init__(self)
 		self._friction = friction
 		self._xvel = 0.0
 		self._yvel = 0.0

@@ -12,7 +12,7 @@ from collections import namedtuple
 from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SAME
 from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
-from scc.modifiers import SensitivityModifier, ModeModifier
+from scc.modifiers import SensitivityModifier, ModeModifier, BallModifier
 from scc.modifiers import HoldModifier, DoubleclickModifier
 from scc.actions import XYAction, DPadAction, DPad8Action
 from scc.actions import ACTIONS, NoAction, MultiAction
@@ -107,6 +107,8 @@ class ActionParser(object):
 			a = DeadzoneModifier(lower, upper).connect(a)
 		if "sensitivity" in data:
 			a = SensitivityModifier(*data["sensitivity"]).connect(a)
+		if "ball" in data:
+			a = BallModifier().connect(a)
 		if "feedback" in data:
 			args = data["feedback"]
 			if hasattr(HapticPos, args[0]):
