@@ -12,7 +12,7 @@ from collections import namedtuple
 from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SAME
 from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
-from scc.modifiers import SensitivityModifier, ModeModifier
+from scc.modifiers import SensitivityModifier, ModeModifier, BallModifier
 from scc.modifiers import HoldModifier, DoubleclickModifier
 from scc.actions import XYAction, DPadAction, DPad8Action
 from scc.actions import ACTIONS, NoAction, MultiAction
@@ -94,6 +94,9 @@ class ActionParser(object):
 			x = self.from_json_data(data["X"]) if "X" in data else NoAction()
 			y = self.from_json_data(data["Y"]) if "Y" in data else NoAction()
 			a = XYAction(x, y)
+		if "ball" in data:
+			print "###", a
+			a = BallModifier(a)
 		if "deadzone" in data:
 			lower = data["deadzone"]["lower"] if "lower" in data["deadzone"] else STICK_PAD_MIN
 			upper = data["deadzone"]["upper"] if "upper" in data["deadzone"] else STICK_PAD_MAX

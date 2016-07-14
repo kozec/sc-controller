@@ -276,7 +276,8 @@ class BallModifier(Modifier):
 	
 	
 	def encode(self):
-		rv = { 'action' : self.to_string() }
+		rv = self.action.encode()
+		rv['ball'] = True
 		if self.name: rv['name'] = self.name
 		return rv
 	
