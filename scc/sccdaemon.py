@@ -623,6 +623,9 @@ class SCCDaemon(Daemon):
 		s = s.strip(" \t\r\n")
 		if s in (STICK, LEFT, RIGHT):
 			return s
+		if s == "STICKPRESS":
+			# Special case, as that button is actually named STICK :(
+			return SCButtons.STICK
 		if hasattr(SCButtons, s):
 			return getattr(SCButtons, s)
 		raise ValueError("Unknown source: %s" % (s,))
@@ -698,11 +701,17 @@ class LockedAction(Action):
 	
 	
 	def button_press(self, mapper):
-		self.client.wfile.write(("Event: %s 1\n" % (self.what.name,)).encode("utf-8"))
+		if self.what == SCButtons.STICK:
+			self.client.wfile.write(b"Event: STICKPRESS 1\n")
+		else:
+			self.client.wfile.write(("Event: %s 1\n" % (self.what.name,)).encode("utf-8"))
 	
 	
 	def button_release(self, mapper):
-		self.client.wfile.write(("Event: %s 0\n" % (self.what.name,)).encode("utf-8"))
+		if self.what == SCButtons.STICK:
+			self.client.wfile.write(b"Event: STICKPRESS 0\n")
+		else:
+			self.client.wfile.write(("Event: %s 0\n" % (self.what.name,)).encode("utf-8"))
 	
 	
 	def whole(self, mapper, x, y, what):

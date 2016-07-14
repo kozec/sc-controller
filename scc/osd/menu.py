@@ -17,6 +17,7 @@ from scc.paths import get_share_path
 from scc.lib import xwrappers as X
 from scc.config import Config
 from scc.osd import OSDWindow
+from math import sqrt
 
 import os, sys, json, logging
 log = logging.getLogger("osd.menu")
@@ -371,12 +372,35 @@ class Menu(OSDWindow, TimerManager):
 			self._submenu.show()
 	
 	
+	def _control_equals_cancel(self, daemon, x, y):
+		"""
+		Called by on_event in that very special case when both confirm_with
+		and cancel_with are set to STICK.
+		
+		Separated because RadialMenu overrides on_event and still
+		needs to call this.
+		
+		Returns True if menu was canceled.
+		"""
+		distance = sqrt(x*x + y*y)
+		if distance < STICK_PAD_MAX / 8:
+			self.quit(-1)
+			return True
+		return False
+	
+	
 	def on_event(self, daemon, what, data):
 		if self._submenu:
 			return self._submenu.on_event(daemon, what, data)
 		if what == self._control_with:
 			x, y = data
 			if self._use_cursor:
+				# Special case, both confirm_with and cancel_with
+				# can be set to STICK
+				if self._cancel_with == STICK and self._control_with == STICK:
+					if self._control_equals_cancel(daemon, x, y):
+						return
+				
 				max_w = self.get_allocation().width - (self.cursor.get_allocation().width * 0.8)
 				max_h = self.get_allocation().height - (self.cursor.get_allocation().height * 1.0)
 				x = ((x / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w

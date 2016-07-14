@@ -14,7 +14,9 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, ACTIONS, MOUSE_BUTTONS
+from scc.constants import STICK_PAD_MAX
 from scc.tools import strip_none
+from math import sqrt
 
 import time, logging
 log = logging.getLogger("SActions")
@@ -198,6 +200,7 @@ class MenuAction(Action, SpecialAction):
 	MENU_TYPE = "menu"
 	DEFAULT_CONFIRM = SCButtons.A
 	DEFAULT_CANCEL = SCButtons.B
+	MIN_STICK_DISTANCE = STICK_PAD_MAX / 3
 	
 	def __init__(self, menu_id, confirm_with=None, cancel_with=None, show_with_release=None):
 		Action.__init__(self, menu_id, *strip_none(confirm_with, cancel_with, show_with_release))
@@ -205,6 +208,7 @@ class MenuAction(Action, SpecialAction):
 		self.confirm_with = confirm_with or self.DEFAULT_CONFIRM
 		self.cancel_with = cancel_with or self.DEFAULT_CANCEL
 		self.show_with_release = show_with_release not in (None, False)
+		self._stick_distance = 0
 	
 	def describe(self, context):
 		if self.name: return self.name
@@ -235,7 +239,6 @@ class MenuAction(Action, SpecialAction):
 	
 	def whole(self, mapper, x, y, what):
 		if what in (LEFT, RIGHT):
-			# Can be used only with pads
 			if what == LEFT:
 				confirm, cancel = "LPAD", SCButtons.LPADTOUCH
 			else:
@@ -243,6 +246,13 @@ class MenuAction(Action, SpecialAction):
 			if not mapper.was_pressed(cancel):
 				self.execute(mapper, '--control-with', what, '--use-cursor',
 					'--confirm-with', confirm, '--cancel-with', cancel.name)
+		if what == STICK:
+			# Special case, menu is displayed only if is moved enought
+			distance = sqrt(x*x + y*y)
+			if self._stick_distance < MenuAction.MIN_STICK_DISTANCE and distance > MenuAction.MIN_STICK_DISTANCE:
+				self.execute(mapper, '--control-with', STICK, '--use-cursor',
+					'--confirm-with', "STICKPRESS", '--cancel-with', STICK)
+			self._stick_distance = distance
 
 
 class GridMenuAction(MenuAction):
