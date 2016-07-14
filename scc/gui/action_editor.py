@@ -498,10 +498,8 @@ class ActionEditor(Editor):
 			feedback = feedback[0:-1]
 		
 		if len(sens) > 0:
-			# Build arguments
-			sens.append(action)
-			# Create modifier
-			action = SensitivityModifier(*sens)
+			# Add SensitivityModifier
+			action = SensitivityModifier(*sens).connect(action)
 		
 		if self.feedback_position != None:
 			cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
@@ -509,18 +507,17 @@ class ActionEditor(Editor):
 			if from_custom or (cbFeedback.get_active() and cbFeedback.get_sensitive()):
 				# Build FeedbackModifier arguments
 				feedback = [ FEEDBACK_SIDES[cbFeedbackSide.get_active()] ] + feedback
-				feedback += [ action ]
 				# Create modifier
-				action = FeedbackModifier(*feedback)
+				action = FeedbackModifier(*feedback).connect_left(action)
 		
 		if self.deadzone_enabled:
-			action = DeadzoneModifier(self.deadzone[0], self.deadzone[1], action)
+			action = DeadzoneModifier(self.deadzone[0], self.deadzone[1]).connect(action)
 		
 		if self.click:
-			action = ClickModifier(action)
+			action = ClickModifier().connect(action)
 		
 		if self.osd:
-			action = OSDAction(action)
+			action = OSDAction().connect_left(action)
 		
 		return action
 	
@@ -637,9 +634,12 @@ class ActionEditor(Editor):
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
 			# Check if action supports feedback
-			if action.set_haptic(HapticData(HapticPos.LEFT)):
+			try:
+				action.set_haptic(HapticData(HapticPos.LEFT))
 				self.set_feedback_settings_enabled(True)
-			else:
+			except Exception:
+				# action.set_haptic is _supposed_ to raise exception if feedback
+				# is not supported
 				self.set_feedback_settings_enabled(False)
 		
 		# Send changed action into selected component

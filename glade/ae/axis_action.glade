@@ -43,17 +43,17 @@
       <row>
         <col id="0" translatable="yes">Mouse</col>
         <col id="1">mouse</col>
-        <col id="2">ball(mouse())</col>
+        <col id="2">ball | mouse</col>
       </row>
       <row>
         <col id="0" translatable="yes">Mouse-like Joystick on LEFT Stick</col>
         <col id="1">left</col>
-        <col id="2">ball(XY(axis(Axes.ABS_X),axis(Axes.ABS_Y)))</col>
+        <col id="2">ball | XY(axis(Axes.ABS_X), axis(Axes.ABS_Y))</col>
       </row>
       <row>
         <col id="0" translatable="yes">Mouse-like Joystick on RIGHT Stick</col>
         <col id="1">right</col>
-        <col id="2">ball(XY(axis(Axes.ABS_RX),axis(Axes.ABS_RY)))</col>
+        <col id="2">ball | XY(axis(Axes.ABS_RX), axis(Axes.ABS_RY))</col>
       </row>
     </data>
   </object>
@@ -146,7 +146,7 @@
         <col id="2">dpad</col>
       </row>
       <row>
-        <col id="0">ball(XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) ))</col>
+        <col id="0">ball | XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) )</col>
         <col id="1" translatable="yes">Mouse Wheel</col>
         <col id="2">wheel</col>
       </row>
@@ -166,7 +166,7 @@
         <col id="2">trackpad</col>
       </row>
       <row>
-        <col id="0">ball(mouse())</col>
+        <col id="0">ball | mouse</col>
         <col id="1" translatable="yes">Trackball</col>
         <col id="2">trackball</col>
       </row>

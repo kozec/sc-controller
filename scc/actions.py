@@ -1364,7 +1364,7 @@ class XYAction(HapticEnabledAction, Action):
 	__repr__ = __str__
 
 
-class NoAction(Action):
+class NoAction(Action, HapticEnabledAction):
 	"""
 	Parsed from None.
 	Singleton, treated as False in boolean ops.
