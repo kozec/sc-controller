@@ -360,6 +360,9 @@ class ActionParser(object):
 		if t.type == TokenType.OP and t.value == '|':
 			# Two (or more) actions joined by '|'
 			self._next_token()
+			while self._tokens_left() and self._peek_token().value == "\n":
+				# Allow newlines after '|''
+				self._next_token()
 			if not self._tokens_left():
 				raise ParseError("Expected action after '|'")
 			action1 = self._create_action(action_class, *parameters)
