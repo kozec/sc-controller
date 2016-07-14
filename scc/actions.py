@@ -130,17 +130,6 @@ class Action(object):
 		return self
 	
 	
-	def set_haptic(self, hapticdata):
-		"""
-		Set haptic feedback settings for this action, if supported.
-		Returns True if action supports haptic feedback.
-		
-		'hapticdata' has to be HapticData instance.
-		Called by HapticModifier.
-		"""
-		return False
-	
-	
 	def set_speed(self, x, y, z):
 		"""
 		Set speed multiplier (sensitivity) for this action, if supported.
@@ -231,8 +220,13 @@ class HapticEnabledAction(object):
 	
 	
 	def set_haptic(self, hd):
+		"""
+		Set haptic feedback settings for this action, if supported.
+		
+		'hapticdata' has to be HapticData instance.
+		Called by HapticModifier.
+		"""
 		self.haptic = hd
-		return True
 
 
 class OSDEnabledAction(object):
@@ -1260,14 +1254,16 @@ class XYAction(HapticEnabledAction, Action):
 	
 	def set_haptic(self, hapticdata):
 		supports = False
-		supports = self.x.set_haptic(hapticdata) or supports
-		supports = self.y.set_haptic(hapticdata) or supports
+		if hasattr(self.x, "set_haptic"):
+			self.x.set_haptic(hapticdata)
+			supports = True
+		if hasattr(self.y, "set_haptic"):
+			self.y.set_haptic(hapticdata)
+			supports = True
 		if not supports:
-			# Child action has no feedback support, do feedback here
+			# Neither child action has no feedback support, do feedback here
 			self.haptic = hapticdata
 			self.big_click = hapticdata * 4
-			return True
-		return supports
 	
 	
 	def set_speed(self, x, y, z):

@@ -43,7 +43,7 @@
 - For stick, lets cursor or mouse wheel to be controlled by stick tilt.
 - For pad, acts as trackpad - sliding finger over pad moves the mouse.
   If set to *REL_WHEEL* or *REL_HWHEEL*, emulates finger scroll.
-  You can use `ball(mouse)` to emulate trackball.
+  You can use `ball | mouse` to emulate trackball.
 - For gyroscope, controls mouse with changes in controller pitch and roll/yaw.
   Axis parameter should be either YAW or ROLL (constants) and decides which
   gyroscope axis controls X mouse axis.
@@ -108,7 +108,7 @@ Can bee used ot map gyroscope to movement stick or to use controller as racing w
 #### <a name="trackball"></a> trackball()
 Split to [ball](#ball) modifier and [mouse](#mouse) action.
 
-Typing `trackball` works as alias for `ball(mouse())`
+Typing `trackball` works as alias for `ball | mouse`
 
 
 #### <a name="press"></a> press(button)
@@ -169,7 +169,7 @@ Displays on-screen keyboard
 
 # Modifiers:
 
-#### <a name="click"></a> click(action)
+#### <a name="click"></a> click | action
 Used to create action that occurs only if pad or stick is pressed.
 For example, `click(dpad(...))` set to pad will create dpad that activates
 buttons only when pressed.
@@ -195,11 +195,11 @@ Hold and doubleclick can be combined together by writing
 `hold([time,] hold_action, doubleclick(doubleclick_action, normal_action))`
 
 
-#### <a name="sens"></a> sens(x_axis [, y_axis [, z_axis]], action)
+#### <a name="sens"></a> sens(x_axis [, y_axis [, z_axis]]) | action
 Modifies sensitivity of physical stick or pad.
 
 
-#### <a name="feedback"></a> feedback(side, [amplitude=256 [, frequency=4 [, period=100 [, count=1 ]]]], action)
+#### <a name="feedback"></a> feedback(side, [amplitude=256 [, frequency=4 [, period=100 [, count=1 ]]]])
 Enables haptic feedback for specified action, if action supports it.
 Side has to be one of LEFT, RIGHT or BOTH. All remaining numbers can be anything
 from 1 to 32768, but note that setting count to large number will start long
@@ -208,22 +208,24 @@ running feedback that you may not be able to stop.
 'frequency' is used only when emulating touchpad and describes how many pixels
 should mouse travell between two feedback ticks.
 
+Use as `action | feedback(side)`
 
-#### <a name="ball"></a> ball([friction=10.0, [mass=80.0, ]] action)
+
+#### <a name="ball"></a> ball([friction=10.0, [mass=80.0 ]]) | action
 Enables trackball mode. Moving finger over pad will keep repeating same action
 with decreasing speed, based on set mass and friction, until virtual
 'spinning ball' stops moving.
 
 
-#### <a name="deadzone"></a> deadzone(lower, [upper, ] action)
+#### <a name="deadzone"></a> deadzone(lower, [upper]) | action
 Enables deadzone on trigger, pad or stick.
 
 
-#### <a name="osd"></a> osd([timeout=5], action)
-Enables on screen display for action. In most cases just displays action
-description in OSD and executes it normally.
-Works only if executed by pressing physical button or with `dpad`. Otherwise
-just executes child action.
+#### <a name="osd_mod"></a> osd([timeout=5])
+Enables on-screen message for action. In most cases, just displays action
+description in OSD.
+
+Used as `action | osd`
 
 
 #### <a name="name"></a> name(name, action)

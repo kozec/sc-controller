@@ -99,20 +99,27 @@ class OSDAction(Action, SpecialAction):
 	SA = COMMAND = "osd"
 	DEFAULT_TIMEOUT = 5
 	
-	def __init__(self, *parameters):
-		Action.__init__(self, *parameters)
-		self.action = None
+	def __init__(self, *params):
+		Action.__init__(self, *params)
+		self.action = NoAction()
 		self.timeout = self.DEFAULT_TIMEOUT
-		if len(parameters) > 1:
-			# timeout parameter included
-			self.timeout = parameters[0]
-		if isinstance(parameters[-1], Action):
-			self.action = parameters[-1]
-			self.text = self.action.describe(Action.AC_OSD)
-		else:
-			self.text = unicode(parameters[-1])
-		if self.action and isinstance(self.action, OSDEnabledAction):
-			self.action.enable_osd(self.timeout)
+		self.text = ""
+		if len(params) > 0:
+			if type(params[0]) in (int, float):
+				self.timeout = params[0]
+			else:
+				self.text = unicode(params[0])
+			params = params[1:]
+		if len(params) > 0:
+			self.text = unicode(params[0])
+	
+	
+	def connect_left(self, a):
+		if a and isinstance(a, OSDEnabledAction):
+			a.enable_osd(self.timeout)
+		self.action = a
+		return self
+	
 	
 	def describe(self, context):
 		if self.get_name(): return self.get_name()
@@ -124,16 +131,37 @@ class OSDAction(Action, SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		if isinstance(self.parameters[0], Action):
-			p0str = self.parameters[0].to_string()
+		if self.action:
+			if self.timeout == self.DEFAULT_TIMEOUT:
+				return "%s%s | osd(%s)" % (
+					(" " * pad),
+					self.action.to_string(multiline, pad).lstrip(),
+					self.timeout
+				 )
+			else:
+				return "%s%s | osd" % (
+					(" " * pad),
+					self.action.to_string(multiline, pad).lstrip()
+				 )
 		else:
-			p0str = "'%s'" % (str(self.parameters[0]).encode('string_escape'),)
-		if len(self.parameters) == 1:
-			return (" " * pad) + "%s(%s)" % (self.COMMAND, p0str)
+			if self.timeout == self.DEFAULT_TIMEOUT:
+				return "%sosd('%s')" % (
+					(" " * pad),
+					str(self.text).encode('string_escape')
+				 )
+			else:
+				return "%sosd(%s, '%s')" % (
+					(" " * pad),
+					self.timeout,
+					str(self.text).encode('string_escape')
+				 )
+	
+	
+	def __str__(self):
+		if self.action:
+			return "<OSD as modifier to %s>" % (self.action)
 		else:
-			return (" " * pad) + "%s(%s, %s)" % (self.COMMAND,
-				p0str, self.parameters[1]
-			)
+			return "<OSD '%s'>" % (self.text)
 	
 	
 	def strip(self):

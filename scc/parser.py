@@ -21,7 +21,8 @@ from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
 
 import token as TokenType
-import sys
+import sys, logging
+log = logging.getLogger("Parser")
 
 
 class ParseError(Exception): pass
@@ -103,21 +104,19 @@ class ActionParser(object):
 		if "deadzone" in data:
 			lower = data["deadzone"]["lower"] if "lower" in data["deadzone"] else STICK_PAD_MIN
 			upper = data["deadzone"]["upper"] if "upper" in data["deadzone"] else STICK_PAD_MAX
-			a = DeadzoneModifier(lower, upper, a)
+			a = DeadzoneModifier(lower, upper).connect(a)
 		if "sensitivity" in data:
-			args = data["sensitivity"]
-			args.append(a)
-			a = SensitivityModifier(*args)
+			a = SensitivityModifier(*data["sensitivity"]).connect(a)
 		if "feedback" in data:
 			args = data["feedback"]
 			if hasattr(HapticPos, args[0]):
 				args[0] = getattr(HapticPos, args[0])
-			args.append(a)
-			a = FeedbackModifier(*args)
+			a = FeedbackModifier(*args).connect_left(a)
 		if "osd" in data:
-			a = OSDAction(a)
-			if data["osd"] is not True:
-				a.timeout = float(data["osd"])
+			if data["osd"] is True:
+				a = OSDAction().connect_left(a)
+			else:
+				a = OSDAction(float(data["osd"])).connect_left(a)
 		if "dpad" in data:
 			args = [ self.from_json_data(x) for x in data["dpad"] ]
 			if len(args) > 4:
@@ -125,7 +124,7 @@ class ActionParser(object):
 			else:
 				a = DPadAction(*args)
 		if "click" in data:
-			a = ClickModifier(a)
+			a = ClickModifier().connect(a)
 		if "name" in data:
 			a.name = data["name"]
 		if "modes" in data:
@@ -355,7 +354,34 @@ class ActionParser(object):
 				return self._create_action(action_class, *parameters)
 			t = self._peek_token()
 		
-		# ... or, if it is one of ';', 'and' or 'or' and if yes, parse next action
+		# ... or, if it is one of '|', ';', 'and' or 'or' and if yes, parse next action
+		if t.type == TokenType.OP and t.value == '|':
+			# Two (or more) actions joined by '|'
+			self._next_token()
+			if not self._tokens_left():
+				raise ParseError("Expected action after '|'")
+			action1 = self._create_action(action_class, *parameters)
+			action2 = self._parse_action()
+			action = None
+			try:
+				# Try connecting modifier to action
+				if not hasattr(action1, "connect"):
+					raise TypeError("Cannot connect %s to %s" % (action1.COMMAND, action2.COMMAND))
+				action = action1.connect(action2)
+			except TypeError, e:
+				# If that failed, try reverse connection
+				log.debug("Can't pipe %s -> %s, trying reverse", action1.COMMAND, action2.COMMAND)
+				try:
+					if not hasattr(action2, "connect_left"):
+						raise e
+					action = action2.connect_left(action1)
+				except TypeError, e2:
+					# And if even that fails, throw up
+					# log.exception(e2)
+					log.debug("Nope, can't pipe %s <- %s either", action1.COMMAND, action2.COMMAND)
+					raise ParseError(str(e2))
+			return action
+		
 		if t.type == TokenType.NAME and t.value == 'and':
 			# Two (or more) actions joined by 'and'
 			self._next_token()

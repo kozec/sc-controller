@@ -13,6 +13,7 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.controller import HapticData
 from scc.uinput import Axes, Rels
+from scc.tools import nameof
 from math import pi as PI, sqrt, copysign
 from collections import deque
 
@@ -21,27 +22,43 @@ log = logging.getLogger("Modifiers")
 _ = lambda x : x
 
 class Modifier(Action):
-	def __init__(self, action=None):
-		Action.__init__(self, action)
-		self.action = action or NoAction()
+	def __init__(self):
+		Action.__init__(self)
+		self.action = NoAction()
+	
 	
 	def __str__(self):
-		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
-	
-	def set_haptic(self, hapticdata):
-		return self.action.set_haptic(hapticdata)
-	
-	def set_speed(self, x, y, z):
-		return self.action.set_speed(x, y, z)
-	
-	def get_name(self):
-		if self.name:
-			return self.name
-		if self.action:
-			return self.action.name 
-		return None
+		return "<Modifier '%s' to %s>" % (self.COMMAND, self.action)
 	
 	__repr__ = __str__
+	
+	
+	def set_haptic(self, hapticdata):
+		if self.action:
+			return self.action.set_haptic(hapticdata)
+		return False
+	
+	
+	def set_speed(self, x, y, z):
+		if self.action:
+			return self.action.set_speed(x, y, z)
+		return False
+	
+	
+	def connect(self, action):
+		"""
+		Connects modifier to action on right side of pipe.
+		Raises TypeError if connection is not supported - for example,
+		connecting `sens(2) | button` is not supported.
+		
+		Returns resulting, first-to-be-processed action, usualy self.
+		
+		Connection is attempted two times - for `modifier | action`,
+		first modifier.connect(action) is called. If TypeError is thrown,
+		action.connect_left(modifier) is called and ParseError is generated only
+		if connectLeft method doesn't exists or throws TypeError as well.
+		"""
+		raise TypeError("Cannot connect %s to %s" % (self.COMMAND, action.COMMAND))
 
 
 class NameModifier(Modifier):
@@ -52,10 +69,10 @@ class NameModifier(Modifier):
 	COMMAND = "name"
 	
 	def __init__(self, name, action):
-		Modifier.__init__(self, action)
+		Modifier.__init__(self)
+		self.action = action
 		self.set_name(name)
-		if self.action:
-			self.action.set_name(name)
+		self.action.set_name(name)
 	
 	
 	def get_name(self):
@@ -81,7 +98,16 @@ class NameModifier(Modifier):
 
 
 class ClickModifier(Modifier):
+	"""
+	Allows inputs to be passed only if pad or stick is pressed.
+	Used as `click | something`
+	"""
 	COMMAND = "click"
+	
+	def connect(self, action):
+		# Anything can be connected after click
+		self.action = action
+		return self
 	
 	def describe(self, context):
 		if context in (Action.AC_STICK, Action.AC_PAD):
@@ -91,12 +117,10 @@ class ClickModifier(Modifier):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		if multiline:
-			childstr = self.action.to_string(True, pad + 2)
-			if "\n" in childstr:
-				return ((" " * pad) + "click(\n" +
-					childstr + "\n" + (" " * pad) + ")")
-		return "click( " + self.action.to_string() + " )"
+		return "%sclick | %s" % (
+			(" " * pad),
+			self.action.to_string(multiline, pad).lstrip()
+		)
 	
 	
 	def strip(self):
@@ -117,7 +141,6 @@ class ClickModifier(Modifier):
 	
 	def trigger(self, mapper, position, old_position):
 		return self.action.trigger(mapper, position, old_position)
-	
 	
 	def axis(self, mapper, position, what):
 		if what in (STICK, LEFT) and mapper.is_pressed(SCButtons.LPAD):
@@ -172,6 +195,8 @@ class BallModifier(Modifier):
 	
 	Reacts only to "whole" or "axis" inputs and sends generated movements as
 	"change" input to child action.
+	
+	Used as `ball | mouse` or `ball | XY(axis(ABS_X), axis(ABS_Y))`
 	"""
 	COMMAND = "ball"
 	
@@ -180,21 +205,16 @@ class BallModifier(Modifier):
 	
 	
 	def __init__(self, *params):
-		# Because action is last parameter, there is need to remove it from
-		# params list and call self._setup() with rest.
-		if len(params) < 1:
-			raise TypeError("At least one argument required")
-		params, action = params[0:-1], params[-1]
-		if not isinstance(action, Action):
-			raise TypeError("Last argument has to be action")
-		if not hasattr(action, "change"):
-			raise TypeError("Target action doesn't can't take ball as input")
+		Modifier.__init__(self)
+		if isinstance(params[0], Action):
+			# TODO: Remove this, merge with _setup. It exists for backwards
+			# compatibility, mainly because I'm retarded :(
+			a, params = params[0], params[1:]
+			self._setup(*params)
+			self.connect(a)
+		else:
+			self._setup(*params)
 		
-		Modifier.__init__(self, action)
-		# TODO: This is getting awkard :(
-		self._setup(*params)
-	
-	
 	def _setup(self, friction=DEFAULT_FRICTION, mass=80.0,
 			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
 		self._friction = friction
@@ -211,6 +231,14 @@ class BallModifier(Modifier):
 		self._yvel_dq = deque(maxlen=mean_len)
 		self._lastTime = time.time()
 		self._old_pos = None
+	
+	
+	def connect(self, action):
+		if not hasattr(action, "change"):
+			# Not supported, call supermethod to raise exception
+			Modifier.connect(self, action)
+		self.action = action
+		return self
 	
 	
 	def _stop(self):
@@ -295,6 +323,13 @@ class BallModifier(Modifier):
 		return _("Ball(%s)") % (self.action.describe(context))
 	
 	
+	def to_string(self, multiline=False, pad=0):
+		return "%sball | %s" % (
+			(" " * pad),
+			self.action.to_string(multiline, pad).lstrip()
+		)
+	
+	
 	def pad(self, mapper, position, what):
 		self.whole(mapper, position, 0, what)
 	
@@ -315,41 +350,21 @@ class BallModifier(Modifier):
 class DeadzoneModifier(Modifier):
 	COMMAND = "deadzone"
 	
-	def __init__(self, *stuff):
-		Modifier.__init__(self, stuff[-1])
+	def __init__(self, lower, upper=STICK_PAD_MAX):
+		Modifier.__init__(self)
 		
-		if len(stuff) == 3:
-			# lower, upper, action
-			self.lower = stuff[0]
-			self.upper = stuff[1]
-		elif len(stuff) == 2:
-			# lower, action
-			self.lower = stuff[0]
-			self.upper = STICK_PAD_MAX
-		else:
-			raise ValueError("Invalid parameters for 'deadzone'")
+		self.lower = lower
+		self.upper = upper
 	
 	
-	def set_haptic(self, hapticdata):
-		if self.action:
-			return self.action.set_haptic(hapticdata)
-		return False
-	
-	
-	def set_speed(self, x, y, z):
-		if self.action:
-			return self.action.set_speed(x, y, z)
-		return False
+	def connect(self, action):
+		# Not everything makes sense, but anything can be connected after deadzone
+		self.action = action
+		return self	
 	
 	
 	def strip(self):
 		return self.action.strip()
-	
-	
-	def __str__(self):
-		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
-	
-	__repr__ = __str__
 	
 	
 	def describe(self, context):
@@ -362,11 +377,15 @@ class DeadzoneModifier(Modifier):
 	
 	def to_string(self, multiline=False, pad=0):
 		if self.upper == STICK_PAD_MAX:
-			return "deadzone(%s, %s)" % (
-				self.lower, self.action.to_string(multiline))
+			return "%sdeadzone(%s) | %s" % (
+				(" " * pad), self.lower,
+				self.action.to_string(multiline, pad).lstrip()
+			)
 		else:
-			return "deadzone(%s, %s, %s)" % (
-				self.lower, self.upper, self.action.to_string(multiline))
+			return "%sdeadzone(%s, %s) | %s" % (
+				(" " * pad), self.lower, self.upper,
+				self.action.to_string(multiline, pad).lstrip()
+			)
 	
 	
 	def trigger(self, mapper, position, old_position):
@@ -748,21 +767,25 @@ class HoldModifier(DoubleclickModifier):
 
 class SensitivityModifier(Modifier):
 	COMMAND = "sens"
-	def __init__(self, *parameters):
-		# TODO: remove self.speeds
-		self.speeds = []
-		action = NoAction()
-		for p in parameters:
-			if type(p) in (int, float) and len(self.speeds) < 3:
-				self.speeds.append(float(p))
-			else:
-				if isinstance(p, Action):
-					action = p
-		while len(self.speeds) < 3:
-			self.speeds.append(1.0)
-		Modifier.__init__(self, action)
-		action.set_speed(*self.speeds)
-		self.parameters = parameters
+	def __init__(self, *speeds):
+		Modifier.__init__(self)
+		speeds = [ float(s) for s in speeds ]
+		while len(speeds) < 3:
+			speeds.append(1.0)
+		self.parameters = speeds
+	
+	
+	def connect(self, action):
+		# Anything can be connected to sensitivity
+		self.action = action
+		action.set_speed(*self.parameters)
+		return self
+	
+	
+	def connect(self, action):
+		# Not everything makes sense, but anything can be connected after deadzone
+		self.action = action
+		return self	
 	
 	
 	def strip(self):
@@ -775,17 +798,18 @@ class SensitivityModifier(Modifier):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		if multiline:
-			childstr = self.action.to_string(True, pad + 2)
-			if "\n" in childstr:
-				return ((" " * pad) + "sens(" +
-					(", ".join([ str(p) for p in self.parameters[0:-1] ])) + ",\n" +
-					childstr + "\n" + (" " * pad) + ")")
-		return Modifier.to_string(self, multiline, pad)
+		params = self.parameters
+		while len(params) > 1 and params[-1] == 1.0:
+			params = params[0:-1]
+		return "%ssens(%s) | %s" % (
+			(" " * pad),
+			", ".join([ str(p) for p in params ]),
+			self.action.to_string(multiline, pad).lstrip()
+		)
 	
 	
 	def __str__(self):
-		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
+		return "<Sensitivity=%s, %s>" % (self.parameters, self.action)
 	
 	
 	def compress(self):
@@ -793,44 +817,57 @@ class SensitivityModifier(Modifier):
 
 
 class FeedbackModifier(Modifier):
+	"""
+	Enables haptic feedback for specified action, if action supports
+	haptic feedback.
+	
+	Feedback supporting action has to have set_haptic method defined, usually
+	by inheriting from HapticEnabledAction. If action doesn't have such method,
+	or if calling it raises TypeError, parser will report error.
+	
+	Used as `something | feedback(side)`
+	"""
 	COMMAND = "feedback"
 	
-	def __init__(self, *parameters):
-		if len(parameters) < 2:
-			raise TypeError("Not enought parameters")
-		self.action = parameters[-1]
-		self.haptic = HapticData(*parameters[:-1])
-		self.action.set_haptic(self.haptic)
-		
-		Modifier.__init__(self, self.action)
-		self.parameters = parameters
-
-
+	def __init__(self, *params):
+		""" Takes same params as HapticData """
+		Modifier.__init__(self)
+		self.haptic = HapticData(*params)
+		self.parameters = params
+	
+	
+	def connect_left(self, action):
+		if self.action:
+			# Already has action, but something may be able to connect to it
+			# (for example `ball | mouse | feedback` )
+			if hasattr(action, "connect"):
+				self.action = action.connect(self.action)
+				return self
+		if hasattr(action, "set_haptic"):
+			action.set_haptic(self.haptic)	# May throw TypeError
+			self.action = action
+			return self
+		# Call supermethod to throw error
+		raise TypeError("Cannot attach feedback to %s" % (action.COMMAND))
+	
+	
 	def describe(self, context):
 		if self.get_name(): return self.get_name()
 		return self.action.describe(context)
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		# Convert all but last parameters to string, using int() for amplitude and period
-		pars = list(self.parameters[0:-1])
-		if len(pars) >= 1: pars[0] = str(pars[0])		# Side
-		if len(pars) >= 2: pars[1] = str(int(pars[1]))	# Amplitude
-		if len(pars) >= 3: pars[2] = str(pars[2])		# Frequency
-		if len(pars) >= 4: pars[3] = str(int(pars[3]))	# period
-		
-		if multiline:
-			childstr = self.action.to_string(True, pad + 2)
-			if "\n" in childstr:
-				return ((" " * pad) + "feedback(" +
-					", ".join(pars) + ",\n" +
-					childstr + "\n" + (" " * pad) + ")")
-		return ("feedback(" + ", ".join(pars) + ", " +
-			self.action.to_string(False) + ")")
+		return "%s | feedback(%s)" % (
+			self.action.to_string(multiline, pad),
+			",".join([ nameof(p) for p in self.parameters ])
+		)
 	
 	
 	def __str__(self):
-		return "<with Feedback %s>" % (self.action,)
+		return "<with Feedback %s %s>" % (
+			",".join([ nameof(p) for p in self.parameters ]),
+			self.action
+		)
 	
 	
 	def strip(self):
@@ -844,3 +881,4 @@ class FeedbackModifier(Modifier):
 for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
 	if i.COMMAND is not None:
 		ACTIONS[i.COMMAND] = i
+ACTIONS['sensitivity'] = ACTIONS['sens']

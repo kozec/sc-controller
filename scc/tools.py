@@ -56,6 +56,7 @@ def set_logging_level(verbose, debug):
 		logger.setLevel(11)
 	else:			# INFO and worse
 		logger.setLevel(20)
+		logging.Logger.exception = lambda *a : True
 
 
 def strip_none(*lst):
