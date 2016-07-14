@@ -146,6 +146,11 @@ class RadialMenu(Menu):
 			return self._submenu.on_event(daemon, what, data)
 		if what == self._control_with:
 			x, y = data
+			# Special case, both confirm_with and cancel_with can be set to STICK
+			if self._cancel_with == STICK and self._control_with == STICK:
+				if self._control_equals_cancel(daemon, x, y):
+					return
+			
 			max_w = self.get_allocation().width - (self.cursor.get_allocation().width * 1.0)
 			max_h = self.get_allocation().height - (self.cursor.get_allocation().height * 1.0)
 			x = ((x * 0.75 / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w
