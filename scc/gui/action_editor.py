@@ -566,9 +566,9 @@ class ActionEditor(Editor):
 			if isinstance(action, SensitivityModifier):
 				if index < 0:
 					for i in xrange(0, len(self.sens)):
-						self.sens[i] = action.speeds[i]
+						self.sens[i] = action.parameters[i]
 				else:
-					self.sens[index] = action.speeds[0]
+					self.sens[index] = action.parameters[0]
 				action = action.action
 		
 		self._recursing = True
@@ -616,11 +616,13 @@ class ActionEditor(Editor):
 			btOK.set_sensitive(True)
 			self._action = action
 			if isinstance(action, XYAction):
-				entAction.set_text(self.generate_modifiers(action.x, from_custom).to_string())
-				if not action.y:
-					entActionY.set_text("")
+				prefix, suffix = (self.generate_modifiers(InternalXYAction(action), from_custom)
+					.to_string().split(InternalXYAction.MARK))
+				entAction.set_text("%s%s%s" % (prefix, action.x.to_string(), suffix))
+				if action.y:
+					entActionY.set_text("%s%s%s" % (prefix, action.y.to_string(), suffix))
 				else:
-					entActionY.set_text(self.generate_modifiers(action.y, from_custom).to_string())
+					entActionY.set_text("")
 				self._set_y_field_visible(True)
 				action = self.generate_modifiers(action, from_custom)
 			else:
@@ -802,3 +804,15 @@ class ActionEditor(Editor):
 			rvMore.set_reveal_child(False)
 		exMore.set_sensitive(enabled)
 		self._modifiers_enabled = enabled
+
+
+class InternalXYAction(XYAction):
+	"""
+	Overrides to_string in way that allows spliting it into X and Y fields
+	"""
+	# MARK = "\x01"
+	MARK = "^"
+	
+	def to_string(self, *a):
+		# probably not most iteligent way to do this, but it works
+		return InternalXYAction.MARK

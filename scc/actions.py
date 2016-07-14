@@ -1239,6 +1239,9 @@ class XYAction(HapticEnabledAction, Action):
 		HapticEnabledAction.__init__(self)
 		self.x = x or NoAction()
 		self.y = y or NoAction()
+		if not self.y and isinstance(self.x, XYAction):
+			# Allow doing XY(XY(XY(...))) for no specific reasons
+			self.x, self.y = self.x.x, self.x.y
 		self.actions = (self.x, self.y)
 		self._old_distance = 0
 		self._travelled = 0
@@ -1348,7 +1351,7 @@ class XYAction(HapticEnabledAction, Action):
 		if multiline:
 			rv = [ (" " * pad) + "XY(" ]
 			rv += self.x.to_string(True, pad + 2).split("\n")
-			rv += [ (" " * pad) + "," ]
+			rv[-1] += ","
 			rv += self.y.to_string(True, pad + 2).split("\n")
 			rv += [ (" " * pad) + ")" ]
 			return "\n".join(rv)
