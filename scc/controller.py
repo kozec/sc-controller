@@ -340,6 +340,12 @@ class HapticData(object):
 		self.frequency = frequency		# used internally
 	
 	
+	def with_position(self, position):
+		""" Creates copy of HapticData with position value changed """
+		trash, amplitude, period, count = self.data
+		return HapticData(position, amplitude, self.frequency, period, count)
+	
+	
 	def get_position(self):
 		return self.data[0]
 	

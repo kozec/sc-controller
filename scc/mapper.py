@@ -4,10 +4,9 @@ from __future__ import unicode_literals
 from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import Gamepad, Keyboard, Mouse, Dummy, Rels
-from scc.constants import SCStatus, SCButtons, SCI_NULL
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
-from scc.constants import CI_NAMES, ControllerInput
-from scc.constants import LEFT, RIGHT, STICK, GYRO
+from scc.constants import SCStatus, SCButtons, SCI_NULL, LEFT, RIGHT, STICK
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
+from scc.constants import CI_NAMES, ControllerInput, HapticPos
 from scc.profile import Profile
 
 
@@ -45,6 +44,7 @@ class Mapper(object):
 		self.keypress_list = []
 		self.keyrelease_list = []
 		self.mouse_movements = [0, 0, 0, 0]		# mouse x, y, wheel vertical, horisontal
+		self.feedbacks = [ None, None ]			# left, right
 		self.pressed = {}						# for ButtonAction, holds number of times virtual button was pressed without releasing it first
 		self.syn_list = set()
 		self.scheduled_tasks = []
@@ -96,14 +96,6 @@ class Mapper(object):
 		return None
 	
 	
-	def send_feedback(self, hapticdata):
-		""" Sends haptic feedback to controller """
-		if self.controller is None:
-			log.warning("Trying to add feedback while controller instance is not set")
-		else:
-			self.controller.addFeedback(*hapticdata.data)
-	
-	
 	def schedule(self, delay, cb):
 		"""
 		Schedules callback to be ran no sooner than after delay.
@@ -124,7 +116,8 @@ class Mapper(object):
 	
 	def mouse_move(self, dx, dy):
 		"""
-		Moves mouse. Called from actions while callback is being processed.
+		Schedules mouse movement to be done at end of processing callback.
+		Called from actions while callback is being processed.
 		"""
 		self.mouse_movements[0] += dx
 		self.mouse_movements[1] += dy
@@ -132,11 +125,25 @@ class Mapper(object):
 	
 	def mouse_wheel(self, wx, wy):
 		"""
-		Moves mouse wheel.
+		Schedules mouse wheel movement to be done at end of processing callback.
 		Called from actions while callback is being processed.
 		"""
 		self.mouse_movements[2] += wx
 		self.mouse_movements[3] += wy
+	
+	
+	def send_feedback(self, hapticdata):
+		"""
+		Schedules haptic feedback to be sent at end of processing callback.
+		Called from actions while callback is being processed.
+		"""
+		if hapticdata.get_position() == HapticPos.BOTH:
+			# HapticPos.BOTH is special case as controller doesn't
+			# really support doing that by itself.
+			self.feedbacks[0]  = hapticdata.with_position(HapticPos.LEFT)
+			self.feedbacks[1]  = hapticdata.with_position(HapticPos.RIGHT)
+		else:
+			self.feedbacks[hapticdata.get_position()] = hapticdata
 	
 	
 	def is_touched(self, what):
@@ -286,4 +293,10 @@ class Mapper(object):
 			self.mouse.scrollEvent(wx, wy)
 			self.syn_list.add(self.mouse)
 		self.mouse_movements = [ 0, 0, 0, 0 ]
+		# Generate feedback
+		if self.controller:
+			for x in (0, 1):
+				if self.feedbacks[x]:
+					self.controller.addFeedback(*self.feedbacks[x].data)
+					self.feedbacks[x] = None
 		self.sync()

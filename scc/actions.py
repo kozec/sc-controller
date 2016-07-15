@@ -377,6 +377,7 @@ class HatRightAction(HatAction):
 
 class MouseAction(HapticEnabledAction, Action):
 	COMMAND = "mouse"
+	HAPTIC_FACTOR = 75.0	# Just magic number
 	
 	def __init__(self, axis=None, speed=None):
 		Action.__init__(self, *strip_none(axis, speed))
@@ -421,7 +422,7 @@ class MouseAction(HapticEnabledAction, Action):
 		self.change(mapper, position, 0)
 		mapper.force_event.add(FE_STICK)
 	
-	
+		
 	def pad(self, mapper, position, what):
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
@@ -435,13 +436,6 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	def change(self, mapper, dx, dy):
 		""" Called from BallModifier """
-		if self.haptic:
-			distance = sqrt(dx * dx + dy * dy)
-			if distance > self.haptic.frequency / 10.0:
-				self._travelled += distance
-				if self._travelled > self.haptic.frequency:
-					self._travelled = 0
-					mapper.send_feedback(self.haptic)
 		dx, dy = dx * self.speed[0], dy * self.speed[1]
 		if self._mouse_axis is None:
 			mapper.mouse.moveEvent(dx, dy)
@@ -450,9 +444,16 @@ class MouseAction(HapticEnabledAction, Action):
 		elif self._mouse_axis == Rels.REL_Y:
 			mapper.mouse_move(0, dx)
 		elif self._mouse_axis == Rels.REL_WHEEL:
-			mapper.mouse_wheel(0, dx)
+			mapper.mouse_wheel(0, -dx)
 		elif self._mouse_axis == Rels.REL_HWHEEL:
 			mapper.mouse_wheel(dx, 0)
+		if self.haptic:
+			distance = sqrt(dx * dx + dy * dy)
+			if distance * MouseAction.HAPTIC_FACTOR > self.haptic.frequency:
+				self._travelled += distance
+				if self._travelled > self.haptic.frequency:
+					self._travelled = 0
+					mapper.send_feedback(self.haptic)
 	
 	
 	def whole(self, mapper, x, y, what):
