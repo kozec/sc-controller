@@ -114,30 +114,9 @@ class Action(object):
 		returns child action.
 		
 		Called after profile is loaded and feedback/sensitivity settings are
-		applied, when original modifier doesn't do anything anymore.
+		applied, when modifier doesn't do anything anymore.
 		"""
 		return self
-	
-	
-	def set_haptic(self, hapticdata):
-		"""
-		Set haptic feedback settings for this action, if supported.
-		Returns True if action supports haptic feedback.
-		
-		'hapticdata' has to be HapticData instance.
-		Called by HapticModifier.
-		"""
-		return False
-	
-	
-	def set_speed(self, x, y, z):
-		"""
-		Set speed multiplier (sensitivity) for this action, if supported.
-		Returns True if action supports setting this.
-		
-		Called by SensitivityModifier
-		"""
-		return False
 	
 	
 	def button_press(self, mapper):
@@ -298,6 +277,7 @@ class AxisAction(Action):
 		if self.id in AxisAction.AXIS_NAMES:
 			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.id] ]
 		return axis, neg, pos
+	
 	
 	def describe(self, context):
 		if self.name: return self.name

@@ -16,13 +16,12 @@ from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign
 from collections import deque
 
-import time, logging
+import time, logging, inspect
 log = logging.getLogger("Modifiers")
 _ = lambda x : x
 
 class Modifier(Action):
 	def __init__(self, *params):
-		print "INIT", self.COMMAND, params
 		Action.__init__(self, *params)
 		params = list(params)
 		for p in params:
@@ -32,12 +31,16 @@ class Modifier(Action):
 				break
 		else:
 			self.action = NoAction()
-		print self.COMMAND, params
 		self._mod_init(*params)
 	
+	
 	def _mod_init(self):
-		""" Initializes modifier with all but action parameter """
+		"""
+		Initializes modifier with rest of parameters, after action nparameter
+		was taken from it and stored in self.action
+		"""
 		pass # not needed by default
+	
 	
 	def _mod_to_string(self, params, multiline, pad):
 		""" Adds action at end of params list and generates string """
@@ -66,21 +69,27 @@ class Modifier(Action):
 			childstr
 		)
 	
+	
+	def strip(self):
+		return self.action
+	
+	
+	def compress(self):
+		if self.action:
+			self.action = self.action.compress()
+		return self
+	
+	
 	def __str__(self):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
 	
-	def set_haptic(self, hapticdata):
-		return self.action.set_haptic(hapticdata)
+	__repr__ = __str__
 	
-	def set_speed(self, x, y, z):
-		return self.action.set_speed(x, y, z)
 	
 	def encode(self):
 		rv = self.action.encode()
 		if self.name: rv['name'] = self.name
 		return rv
-		
-	__repr__ = __str__
 
 
 class NameModifier(Modifier):
@@ -103,10 +112,7 @@ class NameModifier(Modifier):
 	
 	
 	def compress(self):
-		self.action = self.action.compress()
-		if self.action:
-			self.action.name = self.name
-		return self.action
+		return self.strip()
 	
 	
 	def to_string(self, multiline=False, pad=0):
@@ -208,10 +214,11 @@ class ClickModifier(Modifier):
 class BallModifier(Modifier):
 	"""
 	Emulates ball-like movement with inertia and friction.
-	Usefull for trackball and mouse wheel emulation.
 	
 	Reacts only to "whole" or "axis" inputs and sends generated movements as
 	"change" input to child action.
+	Target action has to have change(x, y) method defined.
+
 	"""
 	COMMAND = "ball"
 	
@@ -351,18 +358,6 @@ class DeadzoneModifier(Modifier):
 		self.upper = upper
 	
 	
-	def set_haptic(self, hapticdata):
-		if self.action:
-			return self.action.set_haptic(hapticdata)
-		return False
-	
-	
-	def set_speed(self, x, y, z):
-		if self.action:
-			return self.action.set_speed(x, y, z)
-		return False
-	
-	
 	def strip(self):
 		return self.action.strip()
 	
@@ -457,24 +452,6 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		if self.default is None:
 			self.default = NoAction()
-	
-	
-	def set_haptic(self, hapticdata):
-		supports = False
-		if self.default:
-			supports = self.default.set_haptic(hapticdata) or supports
-		for a in self.mods.values():
-			supports = a.set_haptic(hapticdata) or supports
-		return supports
-	
-	
-	def set_speed(self, x, y, z):
-		supports = False
-		if self.default:
-			supports = self.default.set_speed(x, y, z) or supports
-		for a in self.mods.values():
-			supports = a.set_speed(x, y, z) or supports
-		return supports
 	
 	
 	def strip(self):
@@ -641,24 +618,6 @@ class DoubleclickModifier(Modifier):
 		self.active = None
 	
 	
-	def set_haptic(self, hapticdata):
-		supports = self.action.set_haptic(hapticdata)
-		if self.normalaction:
-			supports = self.normalaction.set_haptic(hapticdata) or supports
-		if self.holdaction:
-			supports = self.holdaction.set_haptic(hapticdata) or supports
-		return supports
-	
-	
-	def set_speed(self, x, y, z):
-		supports = self.action.set_speed(x, y, z)
-		if self.normalaction:
-			supports = self.normalaction.set_speed(x, y, z) or supports
-		if self.holdaction:
-			supports = self.holdaction.set_speed(x, y, z) or supports
-		return supports
-	
-	
 	def strip(self):
 		if self.holdaction:
 			return self.holdaction.strip()
@@ -799,7 +758,14 @@ class HoldModifier(DoubleclickModifier):
 
 
 class SensitivityModifier(Modifier):
+	"""
+	Sets action sensitivity, if action supports it.
+	Action that supports such setting has set_speed(x, y, z) method defined.
+	
+	Does nothing otherwise.
+	"""
 	COMMAND = "sens"
+	
 	def _mod_init(self, *speeds):
 		self.speeds = []
 		for s in speeds:
@@ -807,12 +773,16 @@ class SensitivityModifier(Modifier):
 				self.speeds.append(float(s))
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
-		if action:
+		if action and hasattr(action, "set_speed"):
 			action.set_speed(*self.speeds)
 	
 	
 	def strip(self):
 		return self.action.strip()
+	
+	
+	def compress(self):
+		return self.action.compress()
 	
 	
 	def describe(self, context):
@@ -830,21 +800,27 @@ class SensitivityModifier(Modifier):
 	def __str__(self):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
 	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
 		rv['sensitivity'] = self.speeds
 		return rv
-	
-	def compress(self):
-		return self.action.compress()
 
 
 class FeedbackModifier(Modifier):
+	"""
+	Enables feedback for action, action supports it.
+	Action that supports feedback has to have set_haptic(hapticdata)
+	method defined.
+	
+	Does nothing otherwise.
+	"""
 	COMMAND = "feedback"
 	
 	def _mod_init(self, *parameters):
 		self.haptic = HapticData(*parameters)
-		self.action.set_haptic(self.haptic)
+		if self.action.strip() and hasattr(self.action.strip(), "set_haptic"):
+			self.action.strip().set_haptic(self.haptic)
 	
 	
 	def describe(self, context):
@@ -852,30 +828,48 @@ class FeedbackModifier(Modifier):
 		return self.action.describe(context)
 	
 	
+	def _get_pars(self):
+		""" Common part used by encode and to_string """
+		position, amplitude, period, count = self.haptic.data
+		return [ FeedbackModifier._pos_to_str(position), amplitude,
+			int(self.haptic.frequency / 1000), period, count ]
+	
+	
 	def to_string(self, multiline=False, pad=0):
-		pars = []  + self.haptic.data
-		if len(pars) >= 2: pars[1] = int(pars[1])	# Amplitude
-		if len(pars) >= 4: pars[3] = int(pars[3])	# period
-		
+		# Grab arguments
+		pars = self._get_pars()
+		# Remove defaults
+		defs = list(inspect.getargspec(HapticData.__init__).defaults)
+		for i in xrange(1, len(pars)):
+			pars[i] = int(pars[i])
+		while len(defs) and pars[-1] == defs[-1]:
+			pars, defs = pars[:-1], defs[:-1]
 		return self._mod_to_string(pars, multiline, pad)
 	
 	
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
 	
+	
+	@staticmethod
+	def _pos_to_str(pos):
+		if pos == HapticPos.LEFT:
+			return "LEFT"
+		elif pos == HapticPos.RIGHT:
+			return "RIGHT"
+		return "BOTH"	
+	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
-		rv['feedback'] = list(self.parameters)
-		if self.haptic.get_position() == HapticPos.LEFT:
-			rv['feedback'][0] = "LEFT"
-		elif self.haptic.get_position() == HapticPos.RIGHT:
-			rv['feedback'][0] = "RIGHT"
-		else:
-			rv['feedback'][0] = "BOTH"
+		rv['feedback'] = self._get_pars()
+		rv['feedback'][0] = FeedbackModifier._pos_to_str(rv['feedback'][0])
 		return rv
+	
 	
 	def strip(self):
 		return self.action.strip()
+	
 	
 	def compress(self):
 		return self.action.compress()

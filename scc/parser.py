@@ -95,7 +95,6 @@ class ActionParser(object):
 			y = self.from_json_data(data["Y"]) if "Y" in data else NoAction()
 			a = XYAction(x, y)
 		if "ball" in data:
-			print "###", a
 			a = BallModifier(a)
 		if "deadzone" in data:
 			lower = data["deadzone"]["lower"] if "lower" in data["deadzone"] else STICK_PAD_MIN
