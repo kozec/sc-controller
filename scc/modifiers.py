@@ -21,9 +21,50 @@ log = logging.getLogger("Modifiers")
 _ = lambda x : x
 
 class Modifier(Action):
-	def __init__(self, action=None):
-		Action.__init__(self, action)
-		self.action = action or NoAction()
+	def __init__(self, *params):
+		print "INIT", self.COMMAND, params
+		Action.__init__(self, *params)
+		params = list(params)
+		for p in params:
+			if isinstance(p, Action):
+				self.action = p
+				params.remove(p)
+				break
+		else:
+			self.action = NoAction()
+		print self.COMMAND, params
+		self._mod_init(*params)
+	
+	def _mod_init(self):
+		""" Initializes modifier with all but action parameter """
+		pass # not needed by default
+	
+	def _mod_to_string(self, params, multiline, pad):
+		""" Adds action at end of params list and generates string """
+		if multiline:
+			childstr = self.action.to_string(True, pad + 2)
+			if len(params) > 0:
+				return "%s%s(%s,%s%s)" % (
+					" " * pad,
+					self.COMMAND,
+					", ".join([ str(s) for s in params ]),
+					'\n' if '\n' in childstr else ' ',
+					childstr
+				)
+		childstr = self.action.to_string(False, pad)
+		if len(params) > 0:
+			return "%s%s(%s, %s)" % (
+				" " * pad,
+				self.COMMAND,
+				", ".join([ str(s) for s in params ]),
+				childstr
+			)
+		
+		return "%s%s(%s)" % (
+			" " * pad,
+			self.COMMAND,
+			childstr
+		)
 	
 	def __str__(self):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
@@ -49,8 +90,7 @@ class NameModifier(Modifier):
 	"""
 	COMMAND = "name"
 	
-	def __init__(self, name, action):
-		Modifier.__init__(self, action)
+	def _mod_init(self, name):
 		self.name = name
 		if self.action:
 			self.action.name = name
@@ -179,23 +219,7 @@ class BallModifier(Modifier):
 	DEFAULT_MEAN_LEN = 10
 	
 	
-	def __init__(self, *params):
-		# Because action is last parameter, there is need to remove it from
-		# params list and call self._setup() with rest.
-		if len(params) < 1:
-			raise TypeError("At least one argument required")
-		params, action = params[0:-1], params[-1]
-		if not isinstance(action, Action):
-			raise TypeError("Last argument has to be action")
-		if not hasattr(action, "change"):
-			raise TypeError("Target action doesn't can't take ball as input")
-		
-		Modifier.__init__(self, action)
-		# TODO: This is getting awkard :(
-		self._setup(*params)
-	
-	
-	def _setup(self, friction=DEFAULT_FRICTION, mass=80.0,
+	def _mod_init(self, friction=DEFAULT_FRICTION, mass=80.0,
 			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
 		self._friction = friction
 		self._xvel = 0.0
@@ -322,19 +346,9 @@ class BallModifier(Modifier):
 class DeadzoneModifier(Modifier):
 	COMMAND = "deadzone"
 	
-	def __init__(self, *stuff):
-		Modifier.__init__(self, stuff[-1])
-		
-		if len(stuff) == 3:
-			# lower, upper, action
-			self.lower = stuff[0]
-			self.upper = stuff[1]
-		elif len(stuff) == 2:
-			# lower, action
-			self.lower = stuff[0]
-			self.upper = STICK_PAD_MAX
-		else:
-			raise ValueError("Invalid parameters for 'deadzone'")
+	def _mod_init(self, lower, upper=STICK_PAD_MAX):
+		self.lower = lower
+		self.upper = upper
 	
 	
 	def set_haptic(self, hapticdata):
@@ -786,21 +800,15 @@ class HoldModifier(DoubleclickModifier):
 
 class SensitivityModifier(Modifier):
 	COMMAND = "sens"
-	def __init__(self, *parameters):
-		# TODO: remove self.speeds
+	def _mod_init(self, *speeds):
 		self.speeds = []
-		action = NoAction()
-		for p in parameters:
-			if type(p) in (int, float) and len(self.speeds) < 3:
-				self.speeds.append(float(p))
-			else:
-				if isinstance(p, Action):
-					action = p
+		for s in speeds:
+			if type(s) in (int, float):
+				self.speeds.append(float(s))
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
-		Modifier.__init__(self, action)
-		action.set_speed(*self.speeds)
-		self.parameters = parameters
+		if action:
+			action.set_speed(*self.speeds)
 	
 	
 	def strip(self):
@@ -813,13 +821,10 @@ class SensitivityModifier(Modifier):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		if multiline:
-			childstr = self.action.to_string(True, pad + 2)
-			if "\n" in childstr:
-				return ((" " * pad) + "sens(" +
-					(", ".join([ str(p) for p in self.parameters[0:-1] ])) + ",\n" +
-					childstr + "\n" + (" " * pad) + ")")
-		return Modifier.to_string(self, multiline, pad)
+		speeds = [] + self.speeds
+		while speeds[-1] == 1.0:
+			speeds = speeds[0:-1]
+		return self._mod_to_string(speeds, multiline, pad)
 	
 	
 	def __str__(self):
@@ -837,38 +842,22 @@ class SensitivityModifier(Modifier):
 class FeedbackModifier(Modifier):
 	COMMAND = "feedback"
 	
-	def __init__(self, *parameters):
-		if len(parameters) < 2:
-			raise TypeError("Not enought parameters")
-		self.action = parameters[-1]
-		self.haptic = HapticData(*parameters[:-1])
+	def _mod_init(self, *parameters):
+		self.haptic = HapticData(*parameters)
 		self.action.set_haptic(self.haptic)
-		
-		Modifier.__init__(self, self.action)
-		self.parameters = parameters
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		# Convert all but last parameters to string, using int() for amplitude and period
-		pars = list(self.parameters[0:-1])
-		if len(pars) >= 1: pars[0] = str(pars[0])		# Side
-		if len(pars) >= 2: pars[1] = str(int(pars[1]))	# Amplitude
-		if len(pars) >= 3: pars[2] = str(pars[2])		# Frequency
-		if len(pars) >= 4: pars[3] = str(int(pars[3]))	# period
+		pars = []  + self.haptic.data
+		if len(pars) >= 2: pars[1] = int(pars[1])	# Amplitude
+		if len(pars) >= 4: pars[3] = int(pars[3])	# period
 		
-		if multiline:
-			childstr = self.action.to_string(True, pad + 2)
-			if "\n" in childstr:
-				return ((" " * pad) + "feedback(" +
-					", ".join(pars) + ",\n" +
-					childstr + "\n" + (" " * pad) + ")")
-		return ("feedback(" + ", ".join(pars) + ", " +
-			self.action.to_string(False) + ")")
+		return self._mod_to_string(pars, multiline, pad)
 	
 	
 	def __str__(self):
@@ -876,7 +865,7 @@ class FeedbackModifier(Modifier):
 	
 	def encode(self):
 		rv = Modifier.encode(self)
-		rv['feedback'] = list(self.parameters[0:-1])
+		rv['feedback'] = list(self.parameters)
 		if self.haptic.get_position() == HapticPos.LEFT:
 			rv['feedback'][0] = "LEFT"
 		elif self.haptic.get_position() == HapticPos.RIGHT:
