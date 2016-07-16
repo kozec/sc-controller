@@ -12,7 +12,7 @@ from scc.modifiers import SensitivityModifier
 from scc.paths import get_profiles_path
 from scc.constants import LEFT, RIGHT
 from scc.tools import find_profile
-from scc.actions import ACTIONS
+from scc.actions import Action
 from scc.profile import Profile
 from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
@@ -20,9 +20,10 @@ from scc.gui.editor import Editor, ComboSetter
 from scc.gui.parser import GuiActionParser
 from scc.x11.autoswitcher import Condition
 from scc.osd.keyboard import Keyboard as OSDKeyboard
-from scc.osd.osk_actions import OSK, OSKCursorAction
+from scc.osd.osk_actions import OSKCursorAction
+import scc.osd.osk_actions
 
-import re, os, logging
+import re, sys, os, logging
 log = logging.getLogger("GS")
 
 class GlobalSettings(Editor, UserDataManager, ComboSetter):
@@ -34,7 +35,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.setup_widgets()
 		self._recursing = False
 		self.app.config.reload()
-		ACTIONS['OSK'] = OSK
+		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
 		self.load_settings()
 		self.load_profile_list()
 		self._recursing = False
@@ -54,7 +55,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		for x in self._eh_ids:
 			self.app.dm.disconnect(x)
 		self._eh_ids = ()
-		del ACTIONS['OSK']
+		Action.unregister_prefix('OSK')
 	
 	
 	def load_settings(self):

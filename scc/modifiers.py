@@ -8,7 +8,7 @@ For example, click() modifier executes action only if pad is pressed.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, MouseAction, XYAction, AxisAction, NoAction, ACTIONS
+from scc.actions import Action, MouseAction, XYAction, AxisAction, NoAction
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.controller import HapticData
@@ -773,8 +773,8 @@ class SensitivityModifier(Modifier):
 				self.speeds.append(float(s))
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
-		if action and hasattr(action, "set_speed"):
-			action.set_speed(*self.speeds)
+		if self.action and hasattr(self.action, "set_speed"):
+			self.action.set_speed(*self.speeds)
 	
 	
 	def strip(self):
@@ -873,9 +873,3 @@ class FeedbackModifier(Modifier):
 	
 	def compress(self):
 		return self.action.compress()
-
-
-# Add modifiers to ACTIONS dict
-for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
-	if i.COMMAND is not None:
-		ACTIONS[i.COMMAND] = i

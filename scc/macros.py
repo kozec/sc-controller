@@ -6,7 +6,7 @@ Frontier is my favorite.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, NoAction, ButtonAction, ACTIONS, MOUSE_BUTTONS
+from scc.actions import Action, NoAction, ButtonAction, MOUSE_BUTTONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import LEFT, RIGHT, STICK, SCButtons
 from scc.uinput import Keys
@@ -323,9 +323,3 @@ class TapAction(PressAction):
 	
 	def _scheduled_release(self, mapper):
 		ButtonAction._button_release(mapper, self.button)
-
-
-# Add macros to ACTIONS dict
-for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
-	if i.COMMAND is not None:
-		ACTIONS[i.COMMAND] = i

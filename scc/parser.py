@@ -14,8 +14,8 @@ from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
 from scc.modifiers import SensitivityModifier, ModeModifier, BallModifier
 from scc.modifiers import HoldModifier, DoubleclickModifier
-from scc.actions import XYAction, DPadAction, DPad8Action
-from scc.actions import ACTIONS, NoAction, MultiAction
+from scc.actions import Action, XYAction, DPadAction, DPad8Action
+from scc.actions import NoAction, MultiAction
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
@@ -193,7 +193,7 @@ class ActionParser(object):
 				# Action used as parameter
 				self.index -= 1 # go step back and reparse as action
 				parameter = self._parse_action()
-			elif self._tokens_left() and t.value in ACTIONS and type(ACTIONS[t.value]) == dict and self._peek_token().value == '.':
+			elif self._tokens_left() and t.value in Action.ALL and type(Action.ALL[t.value]) == dict and self._peek_token().value == '.':
 				# SOMETHING.Action used as parameter
 				self.index -= 1 # go step back and reparse as action
 				parameter = self._parse_action()
@@ -292,7 +292,7 @@ class ActionParser(object):
 			raise ParseError("Invalid number of parameters for '%s'" % (cls.COMMAND))
 	
 	
-	def _parse_action(self, frm=ACTIONS):
+	def _parse_action(self, frm=Action.ALL):
 		"""
 		Parses one action, that is one of:
 		 - something(params)

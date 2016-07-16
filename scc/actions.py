@@ -21,7 +21,7 @@ from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
 from scc.constants import PARSER_CONSTANTS
 from math import sqrt, atan2
 
-import time, logging, inspect
+import sys, time, logging, inspect
 log = logging.getLogger("Actions")
 
 # Default delay after action, if used in macro. May be overriden using sleep() action.
@@ -34,11 +34,19 @@ TRIGGERS = ( Axes.ABS_Z, Axes.ABS_RZ )
 
 class Action(object):
 	"""
-	Simple action that executes one of predefined methods.
-	See ACTIONS for list of them.
+	Action is what actually does something in SC-Controller. User can assotiate
+	one or more Action to each available button, stick or pad in profile file.
 	"""
-	# Used everywhere to convert strings to Action classes and back
+	
+	# Static dict of all available actions, filled later
+	ALL = {}
+	
+	# Used everywhere, but mainly in parser, to convert strings
+	# to Action classes and back
 	COMMAND = None
+	
+	# Additionaly, action can have aliases that are recognized by parser
+	# ALIASES = ("x", "y", "z")
 	
 	# "Action Context" constants
 	AC_BUTTON	= 1 << 0
@@ -62,16 +70,58 @@ class Action(object):
 		# set while editting the profile.
 		self.on_action_set = None
 	
+	
+	@staticmethod
+	def register(action_cls, prefix=None):
+		"""
+		Registers action class. Basically, adds it to Action.ALL dict.
+		If prefix is specified, action is registered as Prefix.COMMAND.
+		"""
+		dct = Action.ALL
+		if prefix:
+			if not prefix in Action.ALL:
+				Action.ALL[prefix] = {}
+			dct = Action.ALL[prefix]
+		dct[action_cls.COMMAND] = action_cls
+		if hasattr(action_cls, "ALIASES"):
+			for a in action_cls.ALIASES:
+				dct[a] = action_cls
+	
+	
+	@staticmethod
+	def unregister_prefix(prefix):
+		"""
+		Unregisters prefix (as in Prefix.COMMAND) recognized by parser.
+		Returns True on sucess, False if there is no such prefix registered.
+		"""
+		if prefix in Action.ALL:
+			if type(Action.ALL) == dict:
+				del Action.ALL[prefix]
+				return True
+		return False
+	
+	
+	@staticmethod
+	def register_all(module, prefix=None):
+		""" Registers all actions from module """
+		for x in dir(module):
+			g = getattr(module, x)
+			if hasattr(g, 'COMMAND') and g.COMMAND is not None:
+				Action.register(g, prefix=prefix)
+	
+	
 	def encode(self):
 		""" Called from json encoder """
 		rv = { 'action' : self.to_string() }
 		if self.name: rv['name'] = self.name
 		return rv
 	
+	
 	def __str__(self):
 		return "<Action '%s', %s>" % (self.COMMAND, self.parameters)
 	
 	__repr__ = __str__
+	
 	
 	def describe(self, context):
 		"""
@@ -348,10 +398,23 @@ class AxisAction(Action):
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
+	@staticmethod
+	def clamp_axis(id, value):
+		""" Returns value clamped between min/max allowed for axis """
+		if id in (Axes.ABS_Z, Axes.ABS_RZ):
+			# Triggers
+			return int(max(TRIGGER_MIN, min(TRIGGER_MAX, value)))
+		if id in (Axes.ABS_HAT0X, Axes.ABS_HAT0Y):
+			# DPAD
+			return int(max(-1, min(1, value)))
+		# Everything else
+		return int(max(STICK_PAD_MIN, min(STICK_PAD_MAX, value)))
+	
+	
 	def axis(self, mapper, position, what):
 		p = float(position * self.speed - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, clamp_axis(self.id, p))
+		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, p))
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
@@ -363,7 +426,7 @@ class AxisAction(Action):
 	def trigger(self, mapper, position, old_position):
 		p = float(position * self.speed - TRIGGER_MIN) / (TRIGGER_MAX - TRIGGER_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, clamp_axis(self.id, p))
+		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, p))
 		mapper.syn_list.add(mapper.gamepad)
 
 
@@ -417,6 +480,7 @@ class HatRightAction(HatAction):
 
 class MouseAction(HapticEnabledAction, Action):
 	COMMAND = "mouse"
+	ALIASES = ("trackpad", )
 	HAPTIC_FACTOR = 75.0	# Just magic number
 	
 	def __init__(self, axis=None, speed=None):
@@ -773,7 +837,7 @@ class GyroAction(Action):
 			axis = self.axes[i]
 			# 'gyro' cannot map to mouse, but 'mouse' does that.
 			if axis in Axes:
-				mapper.gamepad.axisEvent(axis, clamp_axis(axis, pyr[i] * self.speed[i] * -10))
+				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i] * -10))
 				mapper.syn_list.add(mapper.gamepad)
 	
 	
@@ -839,7 +903,7 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 		for i in (0, 1, 2):
 			axis = self.axes[i]
 			if axis in Axes:
-				mapper.gamepad.axisEvent(axis, clamp_axis(axis, pyr[i] * self.speed[i]))
+				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i]))
 				mapper.syn_list.add(mapper.gamepad)
 
 
@@ -1400,7 +1464,8 @@ class NoAction(Action):
 	Parsed from None.
 	Singleton, treated as False in boolean ops.
 	"""
-	COMMAND = None
+	COMMAND = "None"
+	ALIASES = (None, )
 	_singleton = None
 	
 	def __new__(cls):
@@ -1445,30 +1510,16 @@ class NoAction(Action):
 		return "NoAction"
 
 	__repr__ = __str__
+	
 
+# Register actions from current module
+Action.register_all(sys.modules[__name__])
 
-def clamp_axis(id, value):
-	""" Returns value clamped between min/max allowed for axis """
-	if id in (Axes.ABS_Z, Axes.ABS_RZ):
-		# Triggers
-		return int(max(TRIGGER_MIN, min(TRIGGER_MAX, value)))
-	if id in (Axes.ABS_HAT0X, Axes.ABS_HAT0Y):
-		# DPAD
-		return int(max(-1, min(1, value)))
-	# Everything else
-	return int(max(STICK_PAD_MIN, min(STICK_PAD_MAX, value)))
-
-
-# Generate dict of { 'actionname' : ActionClass } for later use
-ACTIONS = {
-	globals()[x].COMMAND : globals()[x]
-	for x in dir()
-	if hasattr(globals()[x], 'COMMAND')
-	and globals()[x].COMMAND is not None
-}
-ACTIONS["None"] = NoAction
-ACTIONS["trackpad"] = MouseAction
-
+# Import important action modules and register actions from them.
+# (needs to be done at end as all this imports Action class from this module)
 import scc.macros
+Action.register_all(sys.modules['scc.macros'])
 import scc.modifiers
+Action.register_all(sys.modules['scc.modifiers'])
 import scc.special_actions
+Action.register_all(sys.modules['scc.special_actions'])

@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
-from scc.actions import OSDEnabledAction, ACTIONS, MOUSE_BUTTONS
+from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
 from scc.constants import STICK_PAD_MAX
 from scc.tools import strip_none
 from math import sqrt
@@ -295,9 +295,3 @@ class KeyboardAction(Action, SpecialAction):
 	
 	def button_release(self, mapper):
 		self.execute(mapper)
-
-
-# Add macros to ACTIONS dict
-for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
-	if i.COMMAND is not None:
-		ACTIONS[i.COMMAND] = i
