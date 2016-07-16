@@ -145,13 +145,9 @@ class SCController(object):
 		@param int period	   signal period from 0 to 65535
 		@param int count		number of period to play
 		"""
-		if position == HapticPos.BOTH:
-			self.addFeedback(HapticPos.LEFT, amplitude, period, count)
-			self.addFeedback(HapticPos.RIGHT, amplitude, period, count)
-		else:
-			self._cmsg.insert(0, struct.pack('<BBBHHH',
-					SCPacketType.FEEDBACK, 0x07, position,
-					amplitude, period, count))
+		self._cmsg.insert(0, struct.pack('<BBBHHH',
+				SCPacketType.FEEDBACK, 0x07, position,
+				amplitude, period, count))
 	
 	def _processReceivedData(self, transfer):
 		"""Private USB async Rx function"""
