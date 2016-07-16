@@ -84,6 +84,7 @@ YAW		= "YAW"
 ROLL	= "ROLL"
 SAME	= "SAME"	# may be used with MenuAction
 
+PARSER_CONSTANTS = ( LEFT, RIGHT, WHOLE, STICK, GYRO, PITCH, YAW, ROLL, SAME )
 
 FORMATS, NAMES = zip(*CONTROLER_FORMAT)
 CI_NAMES = [ x for x in NAMES if not x.startswith('ukn_') ]

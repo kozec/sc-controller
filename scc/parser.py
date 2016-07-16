@@ -9,8 +9,8 @@ from __future__ import unicode_literals
 from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
-from scc.constants import SCButtons, HapticPos, PITCH, YAW, ROLL
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SAME
+from scc.constants import SCButtons, HapticPos, PARSER_CONSTANTS
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
 from scc.modifiers import SensitivityModifier, ModeModifier, BallModifier
 from scc.modifiers import HoldModifier, DoubleclickModifier
@@ -35,13 +35,11 @@ def build_action_constants():
 		'Rels'		: Rels,
 		'HapticPos'	: HapticPos,
 		'None'		: NoAction(),
-		'PITCH'		: PITCH,
-		'YAW'		: YAW,
-		'ROLL'		: ROLL,
-		'SAME'		: SAME,
 		'True'		: True,
 		'False'		: False,
 	}
+	for c in PARSER_CONSTANTS:
+		rv[c] = c
 	for tpl in (Keys, Axes, Rels, SCButtons, HapticPos):
 		for x in tpl:
 			rv[x.name] = x
@@ -95,7 +93,6 @@ class ActionParser(object):
 			y = self.from_json_data(data["Y"]) if "Y" in data else NoAction()
 			a = XYAction(x, y)
 		if "ball" in data:
-			print "###", a
 			a = BallModifier(a)
 		if "deadzone" in data:
 			lower = data["deadzone"]["lower"] if "lower" in data["deadzone"] else STICK_PAD_MIN
