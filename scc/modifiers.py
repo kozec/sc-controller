@@ -9,8 +9,9 @@ For example, click() modifier executes action only if pad is pressed.
 from __future__ import unicode_literals
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction, NoAction
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.controller import HapticData
 from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign
@@ -88,7 +89,8 @@ class Modifier(Action):
 	
 	def encode(self):
 		rv = self.action.encode()
-		if self.name: rv['name'] = self.name
+		if self.name:
+			rv[NameModifier.COMMAND] = self.name
 		return rv
 
 
@@ -105,6 +107,11 @@ class NameModifier(Modifier):
 			self.action.name = name
 	
 	
+	@staticmethod
+	def decode(data, a, *b):
+		return a.set_name(data[NameModifier.COMMAND])
+	
+	
 	def strip(self):
 		rv = self.action.strip()
 		rv.name = self.name
@@ -116,12 +123,26 @@ class NameModifier(Modifier):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		return ("name(" + repr(self.name).strip('u') + ", "
-			+ self.action.to_string(multiline, pad) + ")")
+		return "%s(%s, %s)" % (
+			self.COMMAND,
+			repr(self.name).strip('u'),
+			self.action.to_string(multiline, pad) 
+		)
 
 
 class ClickModifier(Modifier):
 	COMMAND = "click"
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[ClickModifier.COMMAND] = True
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return ClickModifier(a)
+	
 	
 	def describe(self, context):
 		if context in (Action.AC_STICK, Action.AC_PAD):
@@ -141,12 +162,6 @@ class ClickModifier(Modifier):
 	
 	def strip(self):
 		return self.action.strip()
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['click'] = True
-		return rv
 	
 	
 	def compress(self):
@@ -307,10 +322,14 @@ class BallModifier(Modifier):
 	
 	
 	def encode(self):
-		rv = self.action.encode()
-		rv['ball'] = True
-		if self.name: rv['name'] = self.name
+		rv = Modifier.encode(self)
+		rv[BallModifier.COMMAND] = True
 		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return BallModifier(a)
 	
 	
 	def describe(self, context):
@@ -358,6 +377,24 @@ class DeadzoneModifier(Modifier):
 		self.upper = upper
 	
 	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[DeadzoneModifier.COMMAND] = dict(
+			upper = self.upper,
+			lower = self.lower,
+		)
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return DeadzoneModifier(
+			data["deadzone"]["lower"] if "lower" in data["deadzone"] else STICK_PAD_MIN,
+			data["deadzone"]["upper"] if "upper" in data["deadzone"] else STICK_PAD_MAX,
+			a
+		)
+	
+	
 	def strip(self):
 		return self.action.strip()
 	
@@ -383,14 +420,6 @@ class DeadzoneModifier(Modifier):
 		else:
 			return "deadzone(%s, %s, %s)" % (
 				self.lower, self.upper, self.action.to_string(multiline))
-	
-	
-	def encode(self):
-		rv = self.action.encode()
-		rv['deadzone'] = {}
-		rv['deadzone']['upper'] = self.upper
-		rv['deadzone']['lower'] = self.lower
-		return rv
 	
 	
 	def trigger(self, mapper, position, old_position):
@@ -420,6 +449,7 @@ class DeadzoneModifier(Modifier):
 
 class ModeModifier(Modifier):
 	COMMAND = "mode"
+	PROFILE_KEYS = ("modes",)
 	MIN_TRIGGER = 2		# When trigger is bellow this position, list of held_triggers is cleared
 	MIN_STICK = 2		# When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared
 	
@@ -452,6 +482,28 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		if self.default is None:
 			self.default = NoAction()
+	
+	
+	def encode(self):
+		rv = self.default.encode()
+		modes = {}
+		for key in self.mods:
+			modes[key.name] = self.mods[key].encode()
+		rv[ModeModifier.PROFILE_KEYS[0]] = modes
+		if self.name:
+			rv[NameModifier.COMMAND] = self.name
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		args = []
+		for button in data[ModeModifier.PROFILE_KEYS[0]]:
+			if hasattr(SCButtons, button):
+				args += [ getattr(SCButtons, button), parser.from_json_data(data[ModeModifier.PROFILE_KEYS[0]][button]) ]
+		if a:
+			args += [ a ]
+		return ModeModifier(*args)
 	
 	
 	def strip(self):
@@ -518,15 +570,6 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
-	
-	
-	def encode(self):
-		rv = self.default.encode()
-		rv['modes'] = {}
-		for key in self.mods:
-			rv['modes'][key.name] = self.mods[key].encode()
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def select(self, mapper):
@@ -606,6 +649,7 @@ class ModeModifier(Modifier):
 class DoubleclickModifier(Modifier):
 	COMMAND = "doubleclick"
 	DEAFAULT_TIMEOUT = 0.2
+	TIMEOUT_KEY = "time"
 	
 	def __init__(self, doubleclickaction, normalaction=None, time=None):
 		Modifier.__init__(self)
@@ -616,6 +660,30 @@ class DoubleclickModifier(Modifier):
 		self.waiting = False
 		self.pressed = False
 		self.active = None
+	
+	
+	def encode(self):
+		if self.normalaction:
+			rv = self.normalaction.encode()
+		else:
+			rv = {}
+		rv[DoubleclickModifier.COMMAND] = self.action.encode()
+		if self.holdaction:
+			rv[HoldModifier.COMMAND] = self.holdaction.encode()
+		if self.timeout != DoubleclickModifier.DEAFAULT_TIMEOUT:
+			rv[DoubleclickModifier.TIMEOUT_KEY] = self.timeout
+		if self.name:
+			rv[NameModifier.COMMAND] = self.name
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		args = [ parser.from_json_data(data[DoubleclickModifier.COMMAND]), a ]
+		a = DoubleclickModifier(*args)
+		if DoubleclickModifier.TIMEOUT_KEY in data:
+			a.timeout = data[DoubleclickModifier.TIMEOUT_KEY]
+		return a
 	
 	
 	def strip(self):
@@ -690,20 +758,6 @@ class DoubleclickModifier(Modifier):
 			return firstline.strip(",") + lastline
 	
 	
-	def encode(self):
-		if self.normalaction:
-			rv = self.normalaction.encode()
-		else:
-			rv = {}
-		rv['doubleclick'] = self.action.encode()
-		if self.holdaction:
-			rv['hold'] = self.holdaction.encode()
-		if self.timeout != DoubleclickModifier.DEAFAULT_TIMEOUT:
-			rv['time'] = self.timeout
-		if self.name: rv['name'] = self.name
-		return rv
-	
-	
 	def button_press(self, mapper):
 		self.pressed = True
 		if self.waiting:
@@ -756,6 +810,17 @@ class HoldModifier(DoubleclickModifier):
 		DoubleclickModifier.__init__(self, NoAction(), normalaction, time)
 		self.holdaction = holdaction
 
+	@staticmethod
+	def decode(data, a, parser, *b):
+		if isinstance(a, DoubleclickModifier):
+			a.holdaction = parser.from_json_data(data[HoldModifier.COMMAND])
+		else:
+			args = [ parser.from_json_data(data[HoldModifier.COMMAND]), a ]
+			a = HoldModifier(*args)
+		if DoubleclickModifier.TIMEOUT_KEY in data:
+			a.timeout = data[DoubleclickModifier.TIMEOUT_KEY]
+		return a
+
 
 class SensitivityModifier(Modifier):
 	"""
@@ -765,6 +830,7 @@ class SensitivityModifier(Modifier):
 	Does nothing otherwise.
 	"""
 	COMMAND = "sens"
+	PROFILE_KEYS = ("sensitivity",)
 	
 	def _mod_init(self, *speeds):
 		self.speeds = []
@@ -775,6 +841,19 @@ class SensitivityModifier(Modifier):
 			self.speeds.append(1.0)
 		if self.action and hasattr(self.action, "set_speed"):
 			self.action.set_speed(*self.speeds)
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[SensitivityModifier.PROFILE_KEYS[0]] = self.speeds
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		args = data["sensitivity"]
+		args.append(a)
+		return SensitivityModifier(*args)
 	
 	
 	def strip(self):
@@ -799,12 +878,6 @@ class SensitivityModifier(Modifier):
 	
 	def __str__(self):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['sensitivity'] = self.speeds
-		return rv
 
 
 class FeedbackModifier(Modifier):
@@ -821,6 +894,23 @@ class FeedbackModifier(Modifier):
 		self.haptic = HapticData(*parameters)
 		if self.action.strip() and hasattr(self.action.strip(), "set_haptic"):
 			self.action.strip().set_haptic(self.haptic)
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[FeedbackModifier.COMMAND] = self._get_pars()
+		rv[FeedbackModifier.COMMAND][0] = FeedbackModifier._pos_to_str(
+				rv[FeedbackModifier.COMMAND][0])
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		args = data["feedback"]
+		if hasattr(HapticPos, args[0]):
+			args[0] = getattr(HapticPos, args[0])
+		args.append(a)
+		return FeedbackModifier(*args)	
 	
 	
 	def describe(self, context):
@@ -858,13 +948,6 @@ class FeedbackModifier(Modifier):
 		elif pos == HapticPos.RIGHT:
 			return "RIGHT"
 		return "BOTH"	
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['feedback'] = self._get_pars()
-		rv['feedback'][0] = FeedbackModifier._pos_to_str(rv['feedback'][0])
-		return rv
 	
 	
 	def strip(self):

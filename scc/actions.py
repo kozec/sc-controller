@@ -39,7 +39,8 @@ class Action(object):
 	"""
 	
 	# Static dict of all available actions, filled later
-	ALL = {}
+	ALL = {}	# used by action parser
+	PKEYS = {}	# used by profile parser
 	
 	# Used everywhere, but mainly in parser, to convert strings
 	# to Action classes and back
@@ -47,6 +48,22 @@ class Action(object):
 	
 	# Additionaly, action can have aliases that are recognized by parser
 	# ALIASES = ("x", "y", "z")
+	
+	# If action class has static 'decode' method defined, profile parser 
+	# will look for matching key in profile nodes and call this method to
+	# decode action stored in profile.
+	# Normaly, key to look for is same as COMMAND, but this can be overriden
+	# by setting PROFILE_KEYS to tuple. Additionaly, PROFILE_KEY_PRIORITY can
+	# be used to set which modifier should be parsed first.
+	# This is used mainly by modifiers
+	#
+	PROFILE_KEY_PRIORITY = 0	# default one. Loewer is parsed first
+	# PROFILE_KEYS = ("foo", "bar")
+	#
+	# @staticmethod
+	# def decode(jsondatta, action, parser, profile_version):
+	# 	...
+	# 	return action
 	
 	# "Action Context" constants
 	AC_BUTTON	= 1 << 0
@@ -86,6 +103,13 @@ class Action(object):
 		if hasattr(action_cls, "ALIASES"):
 			for a in action_cls.ALIASES:
 				dct[a] = action_cls
+		
+		if hasattr(action_cls, "decode"):
+			keys = (action_cls.COMMAND,)
+			if hasattr(action_cls, "PROFILE_KEYS"):
+				keys = action_cls.PROFILE_KEYS
+			for k in keys:
+				Action.PKEYS[k] = action_cls
 	
 	
 	@staticmethod
@@ -1218,12 +1242,30 @@ class MultiAction(Action):
 
 class DPadAction(Action):
 	COMMAND = "dpad"
+	PROFILE_KEY_PRIORITY = -10	# First possible
 	
 	def __init__(self, *actions):
 		Action.__init__(self, *actions)
 		self.actions = ensure_size(4, actions)
 		self.eight = False
 		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
+	
+	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { DPadAction.COMMAND : [ x.encode() for x in self.actions ]}
+		if self.name: rv['name'] = self.name
+		return rv	
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		args = [ parser.from_json_data(x) for x in data["dpad"] ]
+		if len(args) > 4:
+			a = DPad8Action(*args)
+		else:
+			a = DPadAction(*args)
+		return a
 	
 	
 	def describe(self, context):
@@ -1235,13 +1277,6 @@ class DPadAction(Action):
 		nw = [ x.compress() for x in self.actions ]
 		self.actions = nw
 		return self
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { 'dpad' : [ x.encode() for x in self.actions ]}
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def to_string(self, multiline=False, pad=0):
@@ -1321,6 +1356,8 @@ class XYAction(HapticEnabledAction, Action):
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "XY"
+	PROFILE_KEYS = ("X", "Y")
+	PROFILE_KEY_PRIORITY = -10	# First possible
 	
 	def __init__(self, x=None, y=None):
 		Action.__init__(self, *strip_none(x, y))
@@ -1332,6 +1369,22 @@ class XYAction(HapticEnabledAction, Action):
 		self._travelled = 0
 		if hasattr(self.x, "change") or hasattr(self.y, "change"):
 			self.change = self._change
+	
+	
+	@staticmethod
+	def decode(data, action, parser, *a):
+		x = parser.from_json_data(data["X"]) if "X" in data else NoAction()
+		y = parser.from_json_data(data["Y"]) if "Y" in data else NoAction()
+		return XYAction(x, y)
+	
+	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { }
+		if self.x: rv["X"] = self.x.encode()
+		if self.y: rv["Y"] = self.y.encode()
+		if self.name: rv['name'] = self.name
+		return rv
 	
 	
 	def compress(self):
@@ -1442,15 +1495,6 @@ class XYAction(HapticEnabledAction, Action):
 			return "XY(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
 		else:
 			return "XY(" + self.x.to_string() + ")"
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { }
-		if self.x: rv["X"] = self.x.encode()
-		if self.y: rv["Y"] = self.y.encode()
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def __str__(self):
