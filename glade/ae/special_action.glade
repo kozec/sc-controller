@@ -40,6 +40,114 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="lstButton">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name button -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">A</col>
+        <col id="1">A</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">B</col>
+        <col id="1">B</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">X</col>
+        <col id="1">X</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Y</col>
+        <col id="1">Y</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Back (select)</col>
+        <col id="1">BACK</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Center</col>
+        <col id="1">C</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Start</col>
+        <col id="1">START</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Grip</col>
+        <col id="1">LGRIP</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Grip</col>
+        <col id="1">RGRIP</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Bumper</col>
+        <col id="1">LB</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Bumper</col>
+        <col id="1">RB</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Trigger</col>
+        <col id="1">LT</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Trigger</col>
+        <col id="1">RT</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Pad Press</col>
+        <col id="1">LPAD</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Pad Press</col>
+        <col id="1">RPAD</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="lstControlWith">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name stickorpad -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Stick</col>
+        <col id="1">STICK</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Pad</col>
+        <col id="1">LEFT</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Pad</col>
+        <col id="1">RIGHT</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="lstMenu">
     <columns>
       <!-- column-name name -->
@@ -379,24 +487,176 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbMenuAutoConfirm">
+              <object class="GtkExpander" id="exMenuControl">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="margin_top">5</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_cbMenuAutoConfirm_toggled" swapped="no"/>
+                <property name="margin_top">10</property>
+                <signal name="activate" handler="on_exMenuControl_activate" swapped="no"/>
                 <child>
-                  <object class="GtkLabel" id="lblMenuAutoConfirm">
+                  <placeholder/>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Confirm selection by releasing the button</property>
+                    <property name="label" translatable="yes">Control Options...</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
                   </object>
                 </child>
               </object>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">4</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRevealer" id="rvMenuControl">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkGrid" id="grMenuControl">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">20</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">10</property>
+                    <child>
+                      <object class="GtkLabel" id="label7">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_right">20</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="label" translatable="yes">Control Menu With</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="lblConfirmWith">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_right">20</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="label" translatable="yes">Confirm Button</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label9">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_right">20</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="label" translatable="yes">Cancel Button</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbMenuAutoConfirm">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="margin_top">5</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_cbMenus_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkLabel" id="lblMenuAutoConfirm">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Confirm selection by releasing the button</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">3</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbControlWith">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="hexpand">True</property>
+                        <property name="model">lstControlWith</property>
+                        <property name="active">0</property>
+                        <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext5"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbConfirmWith">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="hexpand">True</property>
+                        <property name="model">lstButton</property>
+                        <property name="active">0</property>
+                        <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext6"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbCancelWith">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="hexpand">True</property>
+                        <property name="model">lstButton</property>
+                        <property name="active">0</property>
+                        <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext7"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
                 <property name="width">2</property>
               </packing>
             </child>

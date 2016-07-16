@@ -38,6 +38,15 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 		self._current_profile = None
 	
 	
+	def load(self):
+		if self.loaded : return
+		AEComponent.load(self)
+		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		cbCancelWith = self.builder.get_object("cbCancelWith")
+		cbConfirmWith.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) == "-" )
+		cbCancelWith.set_row_separator_func( lambda model, iter : model.get_value(iter, 0)  == "-" )
+	
+	
 	def shown(self):
 		if not self._userdata_load_started:
 			self._userdata_load_started = True
@@ -63,12 +72,8 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 				self._current_profile = action.profile
 				self.set_cb(cb, "profile")
 			elif isinstance(action, MenuAction):
-				self._current_menu = action.menu_id
-				cbm = self.builder.get_object("cbMenuType")
 				self.set_cb(cb, "menu")
-				self.set_cb(cbm, self.menu_class_to_key(action), 1)
-				cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
-				cbMenuAutoConfirm.set_active(action.confirm_with == SAME)
+				self.load_menu_data(action)
 			elif isinstance(action, KeyboardAction):
 				self.set_cb(cb, "keyboard")
 			elif isinstance(action, OSDAction):
@@ -172,3 +177,9 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 		if self._recursing : return
 		enOSDText = self.builder.get_object("enOSDText")
 		self.editor.set_action(OSDAction(enOSDText.get_text()))
+	
+	
+	def on_exMenuControl_activate(self, ex, *a):
+		rvMenuControl = self.builder.get_object("rvMenuControl")
+		rvMenuControl.set_reveal_child(not ex.get_expanded())
+

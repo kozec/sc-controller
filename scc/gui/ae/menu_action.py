@@ -8,7 +8,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import MenuAction, GridMenuAction, RadialMenuAction
-from scc.constants import SAME
+from scc.constants import SCButtons, SAME
+from scc.tools import nameof
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.menu_editor import MenuEditor
 from scc.gui.parser import GuiActionParser
@@ -64,14 +65,27 @@ class MenuActionCofC(UserDataManager):
 			return "menu"
 	
 	
+	def load_menu_data(self, action):
+		self._current_menu = action.menu_id
+		cbm = self.builder.get_object("cbMenuType")
+		self.set_cb(cbm, self.menu_class_to_key(action), 1)
+		
+		cbControlWith = self.builder.get_object("cbControlWith")
+		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		cbCancelWith = self.builder.get_object("cbCancelWith")
+		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		if cbControlWith:
+			self.set_cb(cbControlWith, nameof(action.control_with), 1)
+			self.set_cb(cbConfirmWith, nameof(action.confirm_with), 1)
+			self.set_cb(cbCancelWith, nameof(action.cancel_with), 1)
+		if cbMenuAutoConfirm:
+			cbMenuAutoConfirm.set_active(action.confirm_with == SAME)
+	
+	
 	def on_menu_changed(self, new_id):
 		self._current_menu = new_id
 		self.editor.set_action(MenuAction(new_id))
 		self.load_menu_list()
-	
-	
-	def on_cbMenuAutoConfirm_toggled(self, *a):
-		self.on_cbMenus_changed()
 	
 	
 	def on_btEditMenu_clicked(self, *a):
@@ -148,8 +162,16 @@ class MenuActionCofC(UserDataManager):
 	
 	
 	def on_cbMenus_changed(self, *a):
-		""" Called when user chooses menu in selection combo """
+		""" Called when user changes any menu settings """
 		if self._recursing : return
+		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		cbCancelWith = self.builder.get_object("cbCancelWith")
+		if cbMenuAutoConfirm and cbConfirmWith:
+			lblConfirmWith = self.builder.get_object("lblConfirmWith")
+			lblConfirmWith.set_sensitive(not cbMenuAutoConfirm.get_active())
+			cbConfirmWith.set_sensitive(not cbMenuAutoConfirm.get_active())
+		
 		name = self.get_selected_menu()
 		if name == "":
 			# 'New menu' selected
@@ -161,10 +183,19 @@ class MenuActionCofC(UserDataManager):
 			me.show(self.editor.window)
 			return
 		if name:
+			cbControlWith = self.builder.get_object("cbControlWith")
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
 			params = [ name ]
-			if self.confirm_with_same_active():
-				params += [ SAME ]
+			if cbControlWith:
+				params += [
+					cbControlWith.get_model().get_value(cbControlWith.get_active_iter(), 1),
+					getattr(SCButtons, cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)),
+					getattr(SCButtons, cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1))
+				]
+				if self.confirm_with_same_active():
+					params[2] = SAME
+			elif self.confirm_with_same_active():
+				params += [ STICK, SAME ]
 			cbm = self.builder.get_object("cbMenuType")
 			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
 				# Grid menu

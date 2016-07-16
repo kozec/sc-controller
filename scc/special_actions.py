@@ -15,7 +15,7 @@ from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, ACTIONS, MOUSE_BUTTONS
 from scc.constants import STICK_PAD_MAX
-from scc.tools import strip_none
+from scc.tools import strip_none, nameof
 from math import sqrt
 
 import time, logging
@@ -200,14 +200,21 @@ class MenuAction(Action, SpecialAction):
 	MENU_TYPE = "menu"
 	DEFAULT_CONFIRM = SCButtons.A
 	DEFAULT_CANCEL = SCButtons.B
+	DEFAULT_CONTROL = STICK
 	MIN_STICK_DISTANCE = STICK_PAD_MAX / 3
 	
-	def __init__(self, menu_id, confirm_with=None, cancel_with=None, show_with_release=None):
-		Action.__init__(self, menu_id, *strip_none(confirm_with, cancel_with, show_with_release))
+	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
+					confirm_with=DEFAULT_CONFIRM, cancel_with=DEFAULT_CANCEL,
+					show_with_release=False):
+		if control_with == SAME:
+			# Little touch of backwards compatibility
+			control_with, confirm_with = self.DEFAULT_CONTROL, SAME
+		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release)
 		self.menu_id = menu_id
-		self.confirm_with = confirm_with or self.DEFAULT_CONFIRM
-		self.cancel_with = cancel_with or self.DEFAULT_CANCEL
-		self.show_with_release = show_with_release not in (None, False)
+		self.control_with = control_with
+		self.confirm_with = confirm_with
+		self.cancel_with = cancel_with
+		self.show_with_release = bool(show_with_release)
 		self._stick_distance = 0
 	
 	def describe(self, context):
@@ -216,16 +223,20 @@ class MenuAction(Action, SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		pars = [] + list(self.parameters)
-		pars[0] = "'%s'" % (str(pars[0]).encode('string_escape'),)
-		return (" " * pad) + "%s(%s)" % (self.COMMAND, ",".join(pars))
+		return "%s%s(%s)" % (
+			" " * pad,
+			self.COMMAND,
+			",".join(Action.encode_parameters(self.strip_defaults()))
+		)
 	
 	
 	def button_press(self, mapper):
 		if not self.show_with_release:
 			if self.confirm_with == SAME:
 				confirm_with = mapper.get_pressed_button() or self.DEFAULT_CONFIRM
-				self.execute(mapper, '--control-with', STICK, '--use-cursor',
+				self.execute(mapper,
+					'--control-with', nameof(self.control_with),
+					'--use-cursor',
 					'--confirm-with', confirm_with.name,
 					'--cancel-with', self.cancel_with.name)
 			else:
