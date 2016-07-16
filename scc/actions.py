@@ -9,8 +9,8 @@ trigger should be pressed.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.tools import strip_none, ensure_size, quat2euler
-from scc.tools import anglediff, circle_to_square, clamp
+from scc.tools import strip_none, ensure_size, quat2euler, anglediff
+from scc.tools import circle_to_square, clamp, nameof
 from scc.uinput import Keys, Axes, Rels
 from scc.lib import xwrappers as X
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
@@ -18,9 +18,10 @@ from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
+from scc.constants import PARSER_CONSTANTS
 from math import sqrt, atan2
 
-import time, logging
+import time, logging, inspect
 log = logging.getLogger("Actions")
 
 # Default delay after action, if used in macro. May be overriden using sleep() action.
@@ -179,6 +180,45 @@ class Action(object):
 		being updated
 		"""
 		log.warn("Action %s can't handle whole stick event", self.__class__.__name__)
+	
+	
+	def strip_defaults(self):
+		"""
+		Returns self.parameters list with all default values stripped from right
+		side.
+		That means, if last parameter is default, it's removed from list; if
+		before-last parameter is default, it's removed as well; et cetera et
+		cetera until first non-default parameter is reached.
+		
+		if as_strings is set to True, all parameters are converted to apropriate
+		strings (x.name for enums, x.encode('string_escape') for strings, 
+		"""
+		d = list(inspect.getargspec(self.__class__.__init__).defaults)
+		l = list(self.parameters)
+		while len(d) and len(l) and d[-1] == l[-1]:
+			d, l = d[:-1], l[:-1]
+		return l
+	
+	
+	@staticmethod
+	def encode_parameters(parameters):
+		"""
+		Returns list with parameters encoded to strings in following way:
+		- x.name for enums
+		- str(x) numbers
+		- '%s' % (x.encode('string_escape'),) for strings
+		"""
+		return [ Action._encode_parameter(p) for p in parameters ]
+	
+	
+	@staticmethod
+	def _encode_parameter(parameter):
+		""" Encodes one parameter. Used by encode_parameters """
+		if parameter in PARSER_CONSTANTS:
+			return parameter
+		if type(parameter) in (str, unicode):
+			return "'%s'" % (str(parameter).encode('string_escape'),)
+		return nameof(parameter)
 	
 	
 	def trigger(self, mapper, position, old_position):
