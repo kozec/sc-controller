@@ -1395,8 +1395,12 @@ class XYAction(HapticEnabledAction, Action):
 	
 	def set_haptic(self, hapticdata):
 		supports = False
-		supports = self.x.set_haptic(hapticdata) or supports
-		supports = self.y.set_haptic(hapticdata) or supports
+		if hasattr(self.x, "set_haptic"):
+			self.x.set_haptic(hapticdata)
+			supports = True
+		if hasattr(self.y, "set_haptic"):
+			self.y.set_haptic(hapticdata)
+			supports = True
 		if not supports:
 			# Child action has no feedback support, do feedback here
 			self.haptic = hapticdata

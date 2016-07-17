@@ -213,7 +213,7 @@ class MenuAction(Action, SpecialAction):
 	MIN_STICK_DISTANCE = STICK_PAD_MAX / 3
 	
 	def __init__(self, menu_id, confirm_with=None, cancel_with=None, show_with_release=None):
-		Action.__init__(self, menu_id, *strip_none(confirm_with, cancel_with, show_with_release))
+		Action.__init__(self, menu_id, confirm_with, cancel_with, show_with_release)
 		self.menu_id = menu_id
 		self.confirm_with = confirm_with or self.DEFAULT_CONFIRM
 		self.cancel_with = cancel_with or self.DEFAULT_CANCEL
@@ -228,7 +228,11 @@ class MenuAction(Action, SpecialAction):
 	def to_string(self, multiline=False, pad=0):
 		pars = [] + list(self.parameters)
 		pars[0] = "'%s'" % (str(pars[0]).encode('string_escape'),)
-		return (" " * pad) + "%s(%s)" % (self.COMMAND, ",".join(pars))
+		return "%s%s(%s)" % (
+			(" " * pad),
+			self.COMMAND,
+			",".join(Action.encode_parameters(self.strip_defaults()))
+		)
 	
 	
 	def button_press(self, mapper):
