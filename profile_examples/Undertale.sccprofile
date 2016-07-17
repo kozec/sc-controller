@@ -1,0 +1,50 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.KEY_ENTER)", 
+            "name": "Confirm"
+        }, 
+        "B": {
+            "action": "button(Keys.KEY_LEFTSHIFT)", 
+            "name": "Cancel"
+        }, 
+        "BACK": {
+            "action": "button(Keys.KEY_ESC)", 
+            "name": "Quit"
+        }, 
+        "C": {
+            "action": "menu('Default.menu')"
+        }, 
+        "RPAD": {}, 
+        "START": {
+            "action": "button(Keys.KEY_F4)", 
+            "name": "Fullscreen"
+        }, 
+        "Y": {
+            "action": "button(Keys.KEY_LEFTCTRL)", 
+            "name": "In-Game Menu"
+        }
+    }, 
+    "gyro": {}, 
+    "menus": {}, 
+    "pad_left": {}, 
+    "pad_right": {
+	"action": "trackball(1.0)",
+	"feedback": ["RIGHT", 256]
+    },
+    "stick": {
+	"dpad": [{
+            "action": "button(Keys.KEY_UP)"
+        }, {
+            "action": "button(Keys.KEY_DOWN)"
+        }, {
+            "action": "button(Keys.KEY_LEFT)"
+        }, {
+            "action": "button(Keys.KEY_RIGHT)"
+        }], 
+        "name": "Movement"
+    }, 
+    "trigger_left": {}, 
+    "trigger_right": {}, 
+    "version": 1.1
+}
