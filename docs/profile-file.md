@@ -126,8 +126,20 @@ pad or stick is pressed.
 Example:
 
 	"pad_left": {
-	  "action": "trackball()",
+	  "action": "mouse()",
 	  "click": True
+	},
+
+
+#### `ball`
+If set to True, enables trackball mode. See [ball modifier](actions.md#ball)
+for more info.
+
+Example:
+
+	"pad_left": {
+	  "action": "mouse()",
+	  "ball": True
 	},
 
 
