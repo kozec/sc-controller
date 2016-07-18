@@ -7,6 +7,7 @@ from scc.uinput import Gamepad, Keyboard, Mouse, Dummy, Rels
 from scc.constants import SCStatus, SCButtons, SCI_NULL, LEFT, RIGHT, STICK
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
 from scc.constants import CI_NAMES, ControllerInput, HapticPos
+from scc.actions import ButtonAction
 from scc.profile import Profile
 
 

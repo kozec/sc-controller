@@ -637,7 +637,7 @@ class ActionEditor(Editor):
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
 			# Check if action supports feedback
-			if action.set_haptic(HapticData(HapticPos.LEFT)):
+			if hasattr(action.strip(), "set_haptic"):
 				self.set_feedback_settings_enabled(True)
 			else:
 				self.set_feedback_settings_enabled(False)

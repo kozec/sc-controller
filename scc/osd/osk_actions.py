@@ -5,8 +5,8 @@ SC Controller - On Screen Keyboard Actions
 Special Actions that are used to bind functions like closing keyboard or moving
 cursors around.
 
-Actions defined here are *not* automatically added to ACTIONS dict.
-OSD Keyboard and its binding editor enables them to use with 'OSK.something'
+Actions defined here are *not* automatically registered, but OSD Keyboard
+and its binding editor enables them to use with 'OSK.something'
 syntax.
 """
 from __future__ import unicode_literals
@@ -128,10 +128,3 @@ class OSKPressAction(OSKAction):
 	
 	def to_string(self, multiline=False, pad=0):
 		return (" " * pad) + "OSK.%s(%s)" % (self.COMMAND, self.side)
-
-
-# Add stuff to OSK dict
-OSK = {}
-for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
-	if i.COMMAND is not None:
-		OSK[i.COMMAND] = i

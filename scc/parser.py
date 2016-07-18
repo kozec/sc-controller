@@ -11,11 +11,11 @@ from collections import namedtuple
 
 from scc.constants import SCButtons, HapticPos, PARSER_CONSTANTS
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.actions import Action, XYAction, DPadAction, DPad8Action
+from scc.actions import NoAction, MultiAction
 from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
 from scc.modifiers import SensitivityModifier, ModeModifier, BallModifier
 from scc.modifiers import HoldModifier, DoubleclickModifier
-from scc.actions import XYAction, DPadAction, DPad8Action
-from scc.actions import ACTIONS, NoAction, MultiAction
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
@@ -84,63 +84,18 @@ class ActionParser(object):
 			else:
 				return NoAction()
 		
-		a = NoAction()
 		if "action" in data:
 			a = self.restart(data["action"]).parse() or NoAction()
-		if "X" in data or "Y" in data:
-			# "action" is ignored if either "X" or "Y" is there
-			x = self.from_json_data(data["X"]) if "X" in data else NoAction()
-			y = self.from_json_data(data["Y"]) if "Y" in data else NoAction()
-			a = XYAction(x, y)
-		if "ball" in data:
-			a = BallModifier(a)
-		if "deadzone" in data:
-			lower = data["deadzone"]["lower"] if "lower" in data["deadzone"] else STICK_PAD_MIN
-			upper = data["deadzone"]["upper"] if "upper" in data["deadzone"] else STICK_PAD_MAX
-			a = DeadzoneModifier(lower, upper, a)
-		if "sensitivity" in data:
-			args = data["sensitivity"]
-			args.append(a)
-			a = SensitivityModifier(*args)
-		if "feedback" in data:
-			args = data["feedback"]
-			if hasattr(HapticPos, args[0]):
-				args[0] = getattr(HapticPos, args[0])
-			args.append(a)
-			a = FeedbackModifier(*args)
-		if "osd" in data:
-			a = OSDAction(a)
-			if data["osd"] is not True:
-				a.timeout = float(data["osd"])
-		if "dpad" in data:
-			args = [ self.from_json_data(x) for x in data["dpad"] ]
-			if len(args) > 4:
-				a = DPad8Action(*args)
-			else:
-				a = DPadAction(*args)
-		if "click" in data:
-			a = ClickModifier(a)
-		if "name" in data:
-			a.name = data["name"]
-		if "modes" in data:
-			args = []
-			for button in data['modes']:
-				if hasattr(SCButtons, button):
-					args += [ getattr(SCButtons, button), self.from_json_data(data['modes'][button]) ]
-			if a:
-				args += [ a ]
-			a = ModeModifier(*args)
-		if "doubleclick" in data:
-			args = [ self.from_json_data(data['doubleclick']), a ]
-			a = DoubleclickModifier(*args)
-			if "time" in data: a.timeout = data["time"]
-		if "hold" in data:
-			if isinstance(a, DoubleclickModifier):
-				a.holdaction = self.from_json_data(data['hold'])
-			else:
-				args = [ self.from_json_data(data['hold']), a ]
-				a = HoldModifier(*args)
-			if "time" in data: a.timeout = data["time"]
+		else:
+			a = NoAction()
+		decoders = set()
+		for key in data:
+			if key in Action.PKEYS:
+				decoders.add(Action.PKEYS[key])
+		
+		if decoders:
+			for cls in sorted(decoders, key=lambda a : a.PROFILE_KEY_PRIORITY ):
+				a = cls.decode(data, a, self, 0)	# Profile version is not yet used anywhere
 		return a
 	
 	
@@ -193,7 +148,7 @@ class ActionParser(object):
 				# Action used as parameter
 				self.index -= 1 # go step back and reparse as action
 				parameter = self._parse_action()
-			elif self._tokens_left() and t.value in ACTIONS and type(ACTIONS[t.value]) == dict and self._peek_token().value == '.':
+			elif self._tokens_left() and t.value in Action.ALL and type(Action.ALL[t.value]) == dict and self._peek_token().value == '.':
 				# SOMETHING.Action used as parameter
 				self.index -= 1 # go step back and reparse as action
 				parameter = self._parse_action()
@@ -287,12 +242,12 @@ class ActionParser(object):
 			return cls(*pars)
 		except ValueError, e:
 			raise ParseError(unicode(e))
-		except TypeError, e:
+		except (TypeError, ArgumentError), e:
 			print >>sys.stderr, e
 			raise ParseError("Invalid number of parameters for '%s'" % (cls.COMMAND))
 	
 	
-	def _parse_action(self, frm=ACTIONS):
+	def _parse_action(self, frm=Action.ALL):
 		"""
 		Parses one action, that is one of:
 		 - something(params)

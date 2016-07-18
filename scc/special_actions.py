@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
-from scc.actions import OSDEnabledAction, ACTIONS, MOUSE_BUTTONS
+from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
 from scc.constants import STICK_PAD_MAX
 from scc.tools import strip_none, nameof
 from math import sqrt
@@ -100,6 +100,7 @@ class OSDAction(Action, SpecialAction):
 	"""
 	SA = COMMAND = "osd"
 	DEFAULT_TIMEOUT = 5
+	PROFILE_KEY_PRIORITY = -5	# After XYAction, but beforee everything else
 	
 	def __init__(self, *parameters):
 		Action.__init__(self, *parameters)
@@ -115,6 +116,27 @@ class OSDAction(Action, SpecialAction):
 			self.text = unicode(parameters[-1])
 		if self.action and isinstance(self.action, OSDEnabledAction):
 			self.action.enable_osd(self.timeout)
+	
+	
+	def encode(self):
+		if self.action:
+			rv = self.action.encode()
+			if self.timeout == self.DEFAULT_TIMEOUT:
+				rv[OSDAction.COMMAND] = True
+			else:
+				rv[OSDAction.COMMAND] = self.timeout
+			return rv
+		else:
+			return Action.encode(self)	
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		a = OSDAction(a)
+		if data["osd"] is not True:
+			a.timeout = float(data["osd"])
+		return a
+	
 	
 	def describe(self, context):
 		if self.name: return self.name
@@ -150,18 +172,6 @@ class OSDAction(Action, SpecialAction):
 				return self.action.compress()
 			self.action = self.action.compress()
 		return self
-	
-	
-	def encode(self):
-		if self.action:
-			rv = self.action.encode()
-			if self.timeout == self.DEFAULT_TIMEOUT:
-				rv['osd'] = True
-			else:
-				rv['osd'] = self.timeout
-			return rv
-		else:
-			return Action.encode(self)
 	
 	
 	def button_press(self, mapper):
@@ -306,9 +316,3 @@ class KeyboardAction(Action, SpecialAction):
 	
 	def button_release(self, mapper):
 		self.execute(mapper)
-
-
-# Add macros to ACTIONS dict
-for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
-	if i.COMMAND is not None:
-		ACTIONS[i.COMMAND] = i

@@ -50,7 +50,7 @@ class OSKBindingEditor(Editor, BindingEditor):
 		elif id in SCButtons:
 			title = _("%s Button") % (id.name,)
 			ae = self.choose_editor(self.current.buttons[id], title)
-			ae.set_input(id, self.current.buttons[id], mode = Action.AC_OSK)
+			ae.set_input(id, self.current.buttons[id], mode=Action.AC_OSK)
 			ae.show(self.window)
 		elif id in TRIGGERS:
 			ae = self.choose_editor(self.current.triggers[id],

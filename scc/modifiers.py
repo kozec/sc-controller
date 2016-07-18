@@ -8,38 +8,90 @@ For example, click() modifier executes action only if pad is pressed.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, MouseAction, XYAction, AxisAction, NoAction, ACTIONS
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, STICK_PAD_MAX
+from scc.actions import Action, MouseAction, XYAction, AxisAction, NoAction
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.controller import HapticData
 from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign
 from collections import deque
 
-import time, logging
+import time, logging, inspect
 log = logging.getLogger("Modifiers")
 _ = lambda x : x
 
 class Modifier(Action):
-	def __init__(self, action=None):
-		Action.__init__(self, action)
-		self.action = action or NoAction()
+	def __init__(self, *params):
+		Action.__init__(self, *params)
+		params = list(params)
+		for p in params:
+			if isinstance(p, Action):
+				self.action = p
+				params.remove(p)
+				break
+		else:
+			self.action = NoAction()
+		self._mod_init(*params)
+	
+	
+	def _mod_init(self):
+		"""
+		Initializes modifier with rest of parameters, after action nparameter
+		was taken from it and stored in self.action
+		"""
+		pass # not needed by default
+	
+	
+	def _mod_to_string(self, params, multiline, pad):
+		""" Adds action at end of params list and generates string """
+		if multiline:
+			childstr = self.action.to_string(True, pad + 2)
+			if len(params) > 0:
+				return "%s%s(%s,%s%s)" % (
+					" " * pad,
+					self.COMMAND,
+					", ".join([ str(s) for s in params ]),
+					'\n' if '\n' in childstr else ' ',
+					childstr
+				)
+		childstr = self.action.to_string(False, pad)
+		if len(params) > 0:
+			return "%s%s(%s, %s)" % (
+				" " * pad,
+				self.COMMAND,
+				", ".join([ str(s) for s in params ]),
+				childstr
+			)
+		
+		return "%s%s(%s)" % (
+			" " * pad,
+			self.COMMAND,
+			childstr
+		)
+	
+	
+	def strip(self):
+		return self.action
+	
+	
+	def compress(self):
+		if self.action:
+			self.action = self.action.compress()
+		return self
+	
 	
 	def __str__(self):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
 	
-	def set_haptic(self, hapticdata):
-		return self.action.set_haptic(hapticdata)
+	__repr__ = __str__
 	
-	def set_speed(self, x, y, z):
-		return self.action.set_speed(x, y, z)
 	
 	def encode(self):
 		rv = self.action.encode()
-		if self.name: rv['name'] = self.name
+		if self.name:
+			rv[NameModifier.COMMAND] = self.name
 		return rv
-		
-	__repr__ = __str__
 
 
 class NameModifier(Modifier):
@@ -49,11 +101,15 @@ class NameModifier(Modifier):
 	"""
 	COMMAND = "name"
 	
-	def __init__(self, name, action):
-		Modifier.__init__(self, action)
+	def _mod_init(self, name):
 		self.name = name
 		if self.action:
 			self.action.name = name
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return a.set_name(data[NameModifier.COMMAND])
 	
 	
 	def strip(self):
@@ -63,19 +119,30 @@ class NameModifier(Modifier):
 	
 	
 	def compress(self):
-		self.action = self.action.compress()
-		if self.action:
-			self.action.name = self.name
-		return self.action
+		return self.strip()
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		return ("name(" + repr(self.name).strip('u') + ", "
-			+ self.action.to_string(multiline, pad) + ")")
+		return "%s(%s, %s)" % (
+			self.COMMAND,
+			repr(self.name).strip('u'),
+			self.action.to_string(multiline, pad) 
+		)
 
 
 class ClickModifier(Modifier):
 	COMMAND = "click"
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[ClickModifier.COMMAND] = True
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return ClickModifier(a)
+	
 	
 	def describe(self, context):
 		if context in (Action.AC_STICK, Action.AC_PAD):
@@ -95,12 +162,6 @@ class ClickModifier(Modifier):
 	
 	def strip(self):
 		return self.action.strip()
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['click'] = True
-		return rv
 	
 	
 	def compress(self):
@@ -168,10 +229,11 @@ class ClickModifier(Modifier):
 class BallModifier(Modifier):
 	"""
 	Emulates ball-like movement with inertia and friction.
-	Usefull for trackball and mouse wheel emulation.
 	
 	Reacts only to "whole" or "axis" inputs and sends generated movements as
 	"change" input to child action.
+	Target action has to have change(x, y) method defined.
+
 	"""
 	COMMAND = "ball"
 	
@@ -179,23 +241,7 @@ class BallModifier(Modifier):
 	DEFAULT_MEAN_LEN = 10
 	
 	
-	def __init__(self, *params):
-		# Because action is last parameter, there is need to remove it from
-		# params list and call self._setup() with rest.
-		if len(params) < 1:
-			raise TypeError("At least one argument required")
-		params, action = params[0:-1], params[-1]
-		if not isinstance(action, Action):
-			raise TypeError("Last argument has to be action")
-		if not hasattr(action, "change"):
-			raise TypeError("Target action doesn't can't take ball as input")
-		
-		Modifier.__init__(self, action)
-		# TODO: This is getting awkard :(
-		self._setup(*params)
-	
-	
-	def _setup(self, friction=DEFAULT_FRICTION, mass=80.0,
+	def _mod_init(self, friction=DEFAULT_FRICTION, mass=80.0,
 			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
 		self._friction = friction
 		self._xvel = 0.0
@@ -276,10 +322,14 @@ class BallModifier(Modifier):
 	
 	
 	def encode(self):
-		rv = self.action.encode()
-		rv['ball'] = True
-		if self.name: rv['name'] = self.name
+		rv = Modifier.encode(self)
+		rv[BallModifier.COMMAND] = True
 		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return BallModifier(a)
 	
 	
 	def describe(self, context):
@@ -322,31 +372,27 @@ class BallModifier(Modifier):
 class DeadzoneModifier(Modifier):
 	COMMAND = "deadzone"
 	
-	def __init__(self, *stuff):
-		Modifier.__init__(self, stuff[-1])
-		
-		if len(stuff) == 3:
-			# lower, upper, action
-			self.lower = stuff[0]
-			self.upper = stuff[1]
-		elif len(stuff) == 2:
-			# lower, action
-			self.lower = stuff[0]
-			self.upper = STICK_PAD_MAX
-		else:
-			raise ValueError("Invalid parameters for 'deadzone'")
+	def _mod_init(self, lower, upper=STICK_PAD_MAX):
+		self.lower = lower
+		self.upper = upper
 	
 	
-	def set_haptic(self, hapticdata):
-		if self.action:
-			return self.action.set_haptic(hapticdata)
-		return False
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[DeadzoneModifier.COMMAND] = dict(
+			upper = self.upper,
+			lower = self.lower,
+		)
+		return rv
 	
 	
-	def set_speed(self, x, y, z):
-		if self.action:
-			return self.action.set_speed(x, y, z)
-		return False
+	@staticmethod
+	def decode(data, a, *b):
+		return DeadzoneModifier(
+			data["deadzone"]["lower"] if "lower" in data["deadzone"] else STICK_PAD_MIN,
+			data["deadzone"]["upper"] if "upper" in data["deadzone"] else STICK_PAD_MAX,
+			a
+		)
 	
 	
 	def strip(self):
@@ -376,14 +422,6 @@ class DeadzoneModifier(Modifier):
 				self.lower, self.upper, self.action.to_string(multiline))
 	
 	
-	def encode(self):
-		rv = self.action.encode()
-		rv['deadzone'] = {}
-		rv['deadzone']['upper'] = self.upper
-		rv['deadzone']['lower'] = self.lower
-		return rv
-	
-	
 	def trigger(self, mapper, position, old_position):
 		if position < self.lower or position > self.upper:
 			position = 0
@@ -411,6 +449,7 @@ class DeadzoneModifier(Modifier):
 
 class ModeModifier(Modifier):
 	COMMAND = "mode"
+	PROFILE_KEYS = ("modes",)
 	MIN_TRIGGER = 2		# When trigger is bellow this position, list of held_triggers is cleared
 	MIN_STICK = 2		# When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared
 	
@@ -445,22 +484,26 @@ class ModeModifier(Modifier):
 			self.default = NoAction()
 	
 	
-	def set_haptic(self, hapticdata):
-		supports = False
-		if self.default:
-			supports = self.default.set_haptic(hapticdata) or supports
-		for a in self.mods.values():
-			supports = a.set_haptic(hapticdata) or supports
-		return supports
+	def encode(self):
+		rv = self.default.encode()
+		modes = {}
+		for key in self.mods:
+			modes[key.name] = self.mods[key].encode()
+		rv[ModeModifier.PROFILE_KEYS[0]] = modes
+		if self.name:
+			rv[NameModifier.COMMAND] = self.name
+		return rv
 	
 	
-	def set_speed(self, x, y, z):
-		supports = False
-		if self.default:
-			supports = self.default.set_speed(x, y, z) or supports
-		for a in self.mods.values():
-			supports = a.set_speed(x, y, z) or supports
-		return supports
+	@staticmethod
+	def decode(data, a, parser, *b):
+		args = []
+		for button in data[ModeModifier.PROFILE_KEYS[0]]:
+			if hasattr(SCButtons, button):
+				args += [ getattr(SCButtons, button), parser.from_json_data(data[ModeModifier.PROFILE_KEYS[0]][button]) ]
+		if a:
+			args += [ a ]
+		return ModeModifier(*args)
 	
 	
 	def strip(self):
@@ -527,15 +570,6 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
-	
-	
-	def encode(self):
-		rv = self.default.encode()
-		rv['modes'] = {}
-		for key in self.mods:
-			rv['modes'][key.name] = self.mods[key].encode()
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def select(self, mapper):
@@ -615,6 +649,7 @@ class ModeModifier(Modifier):
 class DoubleclickModifier(Modifier):
 	COMMAND = "doubleclick"
 	DEAFAULT_TIMEOUT = 0.2
+	TIMEOUT_KEY = "time"
 	
 	def __init__(self, doubleclickaction, normalaction=None, time=None):
 		Modifier.__init__(self)
@@ -627,22 +662,28 @@ class DoubleclickModifier(Modifier):
 		self.active = None
 	
 	
-	def set_haptic(self, hapticdata):
-		supports = self.action.set_haptic(hapticdata)
+	def encode(self):
 		if self.normalaction:
-			supports = self.normalaction.set_haptic(hapticdata) or supports
+			rv = self.normalaction.encode()
+		else:
+			rv = {}
+		rv[DoubleclickModifier.COMMAND] = self.action.encode()
 		if self.holdaction:
-			supports = self.holdaction.set_haptic(hapticdata) or supports
-		return supports
+			rv[HoldModifier.COMMAND] = self.holdaction.encode()
+		if self.timeout != DoubleclickModifier.DEAFAULT_TIMEOUT:
+			rv[DoubleclickModifier.TIMEOUT_KEY] = self.timeout
+		if self.name:
+			rv[NameModifier.COMMAND] = self.name
+		return rv
 	
 	
-	def set_speed(self, x, y, z):
-		supports = self.action.set_speed(x, y, z)
-		if self.normalaction:
-			supports = self.normalaction.set_speed(x, y, z) or supports
-		if self.holdaction:
-			supports = self.holdaction.set_speed(x, y, z) or supports
-		return supports
+	@staticmethod
+	def decode(data, a, parser, *b):
+		args = [ parser.from_json_data(data[DoubleclickModifier.COMMAND]), a ]
+		a = DoubleclickModifier(*args)
+		if DoubleclickModifier.TIMEOUT_KEY in data:
+			a.timeout = data[DoubleclickModifier.TIMEOUT_KEY]
+		return a
 	
 	
 	def strip(self):
@@ -717,20 +758,6 @@ class DoubleclickModifier(Modifier):
 			return firstline.strip(",") + lastline
 	
 	
-	def encode(self):
-		if self.normalaction:
-			rv = self.normalaction.encode()
-		else:
-			rv = {}
-		rv['doubleclick'] = self.action.encode()
-		if self.holdaction:
-			rv['hold'] = self.holdaction.encode()
-		if self.timeout != DoubleclickModifier.DEAFAULT_TIMEOUT:
-			rv['time'] = self.timeout
-		if self.name: rv['name'] = self.name
-		return rv
-	
-	
 	def button_press(self, mapper):
 		self.pressed = True
 		if self.waiting:
@@ -783,116 +810,149 @@ class HoldModifier(DoubleclickModifier):
 		DoubleclickModifier.__init__(self, NoAction(), normalaction, time)
 		self.holdaction = holdaction
 
+	@staticmethod
+	def decode(data, a, parser, *b):
+		if isinstance(a, DoubleclickModifier):
+			a.holdaction = parser.from_json_data(data[HoldModifier.COMMAND])
+		else:
+			args = [ parser.from_json_data(data[HoldModifier.COMMAND]), a ]
+			a = HoldModifier(*args)
+		if DoubleclickModifier.TIMEOUT_KEY in data:
+			a.timeout = data[DoubleclickModifier.TIMEOUT_KEY]
+		return a
+
 
 class SensitivityModifier(Modifier):
+	"""
+	Sets action sensitivity, if action supports it.
+	Action that supports such setting has set_speed(x, y, z) method defined.
+	
+	Does nothing otherwise.
+	"""
 	COMMAND = "sens"
-	def __init__(self, *parameters):
-		# TODO: remove self.speeds
+	PROFILE_KEYS = ("sensitivity",)
+	
+	def _mod_init(self, *speeds):
 		self.speeds = []
-		action = NoAction()
-		for p in parameters:
-			if type(p) in (int, float) and len(self.speeds) < 3:
-				self.speeds.append(float(p))
-			else:
-				if isinstance(p, Action):
-					action = p
+		for s in speeds:
+			if type(s) in (int, float):
+				self.speeds.append(float(s))
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
-		Modifier.__init__(self, action)
-		action.set_speed(*self.speeds)
-		self.parameters = parameters
+		if self.action and hasattr(self.action, "set_speed"):
+			self.action.set_speed(*self.speeds)
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[SensitivityModifier.PROFILE_KEYS[0]] = self.speeds
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		args = data["sensitivity"]
+		args.append(a)
+		return SensitivityModifier(*args)
 	
 	
 	def strip(self):
 		return self.action.strip()
 	
 	
+	def compress(self):
+		return self.action.compress()
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		if multiline:
-			childstr = self.action.to_string(True, pad + 2)
-			if "\n" in childstr:
-				return ((" " * pad) + "sens(" +
-					(", ".join([ str(p) for p in self.parameters[0:-1] ])) + ",\n" +
-					childstr + "\n" + (" " * pad) + ")")
-		return Modifier.to_string(self, multiline, pad)
+		speeds = [] + self.speeds
+		while speeds[-1] == 1.0:
+			speeds = speeds[0:-1]
+		return self._mod_to_string(speeds, multiline, pad)
 	
 	
 	def __str__(self):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['sensitivity'] = self.speeds
-		return rv
-	
-	def compress(self):
-		return self.action.compress()
 
 
 class FeedbackModifier(Modifier):
+	"""
+	Enables feedback for action, action supports it.
+	Action that supports feedback has to have set_haptic(hapticdata)
+	method defined.
+	
+	Does nothing otherwise.
+	"""
 	COMMAND = "feedback"
 	
-	def __init__(self, *parameters):
-		if len(parameters) < 2:
-			raise TypeError("Not enought parameters")
-		self.action = parameters[-1]
-		self.haptic = HapticData(*parameters[:-1])
-		self.action.set_haptic(self.haptic)
-		
-		Modifier.__init__(self, self.action)
-		self.parameters = parameters
-
-
+	def _mod_init(self, *parameters):
+		self.haptic = HapticData(*parameters)
+		if self.action.strip() and hasattr(self.action.strip(), "set_haptic"):
+			self.action.strip().set_haptic(self.haptic)
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[FeedbackModifier.COMMAND] = self._get_pars()
+		rv[FeedbackModifier.COMMAND][0] = FeedbackModifier._pos_to_str(
+				rv[FeedbackModifier.COMMAND][0])
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		args = data["feedback"]
+		if hasattr(HapticPos, args[0]):
+			args[0] = getattr(HapticPos, args[0])
+		args.append(a)
+		return FeedbackModifier(*args)	
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
 	
 	
+	def _get_pars(self):
+		""" Common part used by encode and to_string """
+		position, amplitude, period, count = self.haptic.data
+		return [ FeedbackModifier._pos_to_str(position), amplitude,
+			int(self.haptic.frequency / 1000), period, count ]
+	
+	
 	def to_string(self, multiline=False, pad=0):
-		# Convert all but last parameters to string, using int() for amplitude and period
-		pars = list(self.parameters[0:-1])
-		if len(pars) >= 1: pars[0] = str(pars[0])		# Side
-		if len(pars) >= 2: pars[1] = str(int(pars[1]))	# Amplitude
-		if len(pars) >= 3: pars[2] = str(pars[2])		# Frequency
-		if len(pars) >= 4: pars[3] = str(int(pars[3]))	# period
-		
-		if multiline:
-			childstr = self.action.to_string(True, pad + 2)
-			if "\n" in childstr:
-				return ((" " * pad) + "feedback(" +
-					", ".join(pars) + ",\n" +
-					childstr + "\n" + (" " * pad) + ")")
-		return ("feedback(" + ", ".join(pars) + ", " +
-			self.action.to_string(False) + ")")
+		# Grab arguments
+		pars = self._get_pars()
+		# Remove defaults
+		defs = list(inspect.getargspec(HapticData.__init__).defaults)
+		for i in xrange(1, len(pars)):
+			pars[i] = int(pars[i])
+		while len(defs) and pars[-1] == defs[-1]:
+			pars, defs = pars[:-1], defs[:-1]
+		return self._mod_to_string(pars, multiline, pad)
 	
 	
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv['feedback'] = list(self.parameters[0:-1])
-		if self.haptic.get_position() == HapticPos.LEFT:
-			rv['feedback'][0] = "LEFT"
-		elif self.haptic.get_position() == HapticPos.RIGHT:
-			rv['feedback'][0] = "RIGHT"
-		else:
-			rv['feedback'][0] = "BOTH"
-		return rv
+	
+	@staticmethod
+	def _pos_to_str(pos):
+		if pos == HapticPos.LEFT:
+			return "LEFT"
+		elif pos == HapticPos.RIGHT:
+			return "RIGHT"
+		return "BOTH"	
+	
 	
 	def strip(self):
 		return self.action.strip()
 	
+	
 	def compress(self):
 		return self.action.compress()
-
-
-# Add modifiers to ACTIONS dict
-for i in [ globals()[x] for x in dir() if hasattr(globals()[x], 'COMMAND') ]:
-	if i.COMMAND is not None:
-		ACTIONS[i.COMMAND] = i
