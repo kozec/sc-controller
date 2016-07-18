@@ -199,6 +199,10 @@ Hold and doubleclick can be combined together by writing
 Modifies sensitivity of physical stick or pad.
 
 
+#### <a name="rotate"></a> rotate(angle, action)
+Rotates input pad or stick input by given angle.
+
+
 #### <a name="feedback"></a> feedback(side, [amplitude=256 [, frequency=4 [, period=100 [, count=1 ]]]], action)
 Enables haptic feedback for specified action, if action supports it.
 Side has to be one of LEFT, RIGHT or BOTH. All remaining numbers can be anything

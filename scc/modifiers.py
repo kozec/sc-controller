@@ -14,7 +14,7 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.controller import HapticData
 from scc.uinput import Axes, Rels
-from math import pi as PI, sqrt, copysign
+from math import pi as PI, sqrt, copysign, sin, cos
 from collections import deque
 
 import time, logging, inspect
@@ -155,9 +155,16 @@ class ClickModifier(Modifier):
 		if multiline:
 			childstr = self.action.to_string(True, pad + 2)
 			if "\n" in childstr:
-				return ((" " * pad) + "click(\n" +
-					childstr + "\n" + (" " * pad) + ")")
-		return "click( " + self.action.to_string() + " )"
+				return "%s%s(\n%s\n%s)" % (
+					" " * pad,
+					self.COMMAND,
+					childstr,
+					" " * pad
+				)
+		return "%s(%s)" % (
+			self.COMMAND,
+			self.action.to_string()
+		)
 	
 	
 	def strip(self):
@@ -956,3 +963,48 @@ class FeedbackModifier(Modifier):
 	
 	def compress(self):
 		return self.action.compress()
+
+
+class RotateInputModifier(Modifier):
+	""" Rotates ball or stick input along axis """
+	COMMAND = "rotate"
+	
+	def _mod_init(self, angle):
+		self.angle = angle
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[RotateInputModifier.COMMAND] = self.angle
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return RotateInputModifier(float(data['rotate']), a)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return self.action.describe(context)
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return self._mod_to_string((self.angle,), multiline, pad)
+	
+	
+	def strip(self):
+		return self.action.strip()
+	
+	
+	def compress(self):
+		self.action = self.action.compress()
+		return self
+	
+	
+	# This doesn't make sense with anything but 'whole' as input.
+	def whole(self, mapper, x, y, what):
+		angle = self.angle * PI / 180.0
+		rx = x * cos(angle) - y * sin(angle)
+		ry = x * sin(angle) + y * cos(angle)
+		return self.action.whole(mapper, rx, ry, what)

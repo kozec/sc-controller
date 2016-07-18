@@ -92,6 +92,19 @@ Example:
 doubles sensitivity over X and halves over Y axis.
 
 
+#### `rotate`
+Rotates input pad or stick input by given angle.
+
+Example:
+
+	"stick" : {
+	  "action": "trackball()",
+	  "rotate": 15
+	},
+
+doubles sensitivity over X and halves over Y axis.
+
+
 #### `feedback`
 Enables haptic feedback for action. Value is list with one to three values
 specifiing feedback position (*'LEFT'*, *'RIGHT'* or *'BOTH'*),
