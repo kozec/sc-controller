@@ -45,28 +45,25 @@
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjSensitivityX">
-    <property name="lower">0.01</property>
-    <property name="upper">10.01</property>
+    <property name="lower">-10</property>
+    <property name="upper">10</property>
     <property name="value">1</property>
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">1</property>
-    <property name="page_size">0.01</property>
   </object>
   <object class="GtkAdjustment" id="adjSensitivityY">
-    <property name="lower">0.01</property>
-    <property name="upper">10.01</property>
+    <property name="lower">-10</property>
+    <property name="upper">10</property>
     <property name="value">1</property>
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">1</property>
-    <property name="page_size">0.01</property>
   </object>
   <object class="GtkAdjustment" id="adjSensitivityZ">
-    <property name="lower">0.01</property>
-    <property name="upper">10.01</property>
+    <property name="lower">-10</property>
+    <property name="upper">10</property>
     <property name="value">1</property>
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">1</property>
-    <property name="page_size">0.01</property>
   </object>
   <object class="GtkListStore" id="lstDPADType">
     <columns>

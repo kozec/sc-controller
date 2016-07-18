@@ -846,8 +846,8 @@ class SensitivityModifier(Modifier):
 				self.speeds.append(float(s))
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
-		if self.action and hasattr(self.action, "set_speed"):
-			self.action.set_speed(*self.speeds)
+		if self.action and hasattr(self.action.strip(), "set_speed"):
+			self.action.strip().set_speed(*self.speeds)
 	
 	
 	def encode(self):
@@ -899,7 +899,7 @@ class FeedbackModifier(Modifier):
 	
 	def _mod_init(self, *parameters):
 		self.haptic = HapticData(*parameters)
-		if self.action.strip() and hasattr(self.action.strip(), "set_haptic"):
+		if self.action and hasattr(self.action.strip(), "set_haptic"):
 			self.action.strip().set_haptic(self.haptic)
 	
 	
