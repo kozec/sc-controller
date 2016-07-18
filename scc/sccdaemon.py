@@ -275,7 +275,12 @@ class SCCDaemon(Daemon):
 				# fixed by higher power (aka. user)
 				was_error = self.error is not None
 				self.error = unicode(e)
-				if sc: sc.unclaim()
+				if sc:
+					try:
+						sc.unclaim()
+					except Exception, e:
+						log.warning("Failed to unclaim device. Except bad things to happen.")
+						log.warning(e)
 				try:
 					self.lock.release()
 				except: pass
