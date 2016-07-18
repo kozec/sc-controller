@@ -10,7 +10,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
-from scc.modifiers import DeadzoneModifier
+from scc.modifiers import DeadzoneModifier, RotateInputModifier
 from scc.actions import Action, XYAction, NoAction
 from scc.constants import HapticPos, SCButtons
 from scc.special_actions import OSDAction
@@ -72,6 +72,7 @@ class ActionEditor(Editor):
 		self.deadzone_enabled = False
 		self.feedback_position = None	# None for 'disabled'
 		self.click = False				# Click modifier value. None for disabled
+		self.rotation_angle = 0			# RotateInputModifier angle
 		self.osd = False				# 'OSD enabled' value.
 		self.setup_widgets()
 		self.load_components()
@@ -249,6 +250,15 @@ class ActionEditor(Editor):
 		self.builder.get_object("lblSensitivityHeader").set_visible(len(indexes) < 3)
 	
 	
+	def hide_rotation(self):
+		"""
+		Hides input rotation settings.
+		"""
+		for i in ("lblRotationHeader", "lblRotation", "sclRotation", "btClearRotation"):
+			self.builder.get_object(i).set_visible(False)
+		
+	
+	
 	def hide_modifiers(self):
 		""" Hides (and disables) all modifiers """
 		self.set_modifiers_enabled(False)
@@ -292,6 +302,7 @@ class ActionEditor(Editor):
 		Hides entire 'Advanced Settings' expander.
 		"""
 		self.hide_sensitivity()
+		self.hide_rotation()
 		self.hide_require_click()
 		self.builder.get_object("exMore").set_visible(False)
 		self.builder.get_object("rvMore").set_visible(False)
@@ -349,6 +360,11 @@ class ActionEditor(Editor):
 	def hide_clear(self):
 		""" Hides clear buttton """
 		self.builder.get_object("btClear").set_visible(False)
+	
+	
+	
+	def on_btClearRotation_clicked(self, *a):
+		self.builder.get_object("sclRotation").set_value(0.0)
 	
 	
 	def on_btClearSens_clicked(self, source, *a):
@@ -435,6 +451,7 @@ class ActionEditor(Editor):
 		rvFeedback = self.builder.get_object("rvFeedback")
 		cbDeadzone = self.builder.get_object("cbDeadzone")
 		rvDeadzone = self.builder.get_object("rvDeadzone")
+		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
 		
 		set_action = False
@@ -474,6 +491,10 @@ class ActionEditor(Editor):
 			if cbOSD.get_active() != self.osd:
 				self.osd = cbOSD.get_active()
 				set_action = True
+		
+		if self.rotation_angle != sclRotation.get_value():
+			self.rotation_angle = sclRotation.get_value()
+			set_action = True
 		
 		rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
 		rvDeadzone.set_reveal_child(cbDeadzone.get_active() and cbDeadzone.get_sensitive())
@@ -516,18 +537,21 @@ class ActionEditor(Editor):
 		if self.deadzone_enabled:
 			action = DeadzoneModifier(self.deadzone[0], self.deadzone[1], action)
 		
-		if self.click:
-			action = ClickModifier(action)
+		if self.rotation_angle != 0.0:
+			action = RotateInputModifier(self.rotation_angle, action)
 		
 		if self.osd:
 			action = OSDAction(action)
+		
+		if self.click:
+			action = ClickModifier(action)
 		
 		return action
 	
 	@staticmethod
 	def is_modifier(a):
 		if isinstance(a, (ClickModifier, SensitivityModifier, DeadzoneModifier,
-				FeedbackModifier)):
+				FeedbackModifier, RotateInputModifier)):
 			return True
 		if isinstance(a, OSDAction):
 			if a.action is not None:
@@ -546,9 +570,13 @@ class ActionEditor(Editor):
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		cbDeadzone = self.builder.get_object("cbDeadzone")
 		rvDeadzone = self.builder.get_object("rvDeadzone")
+		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
 		
 		while ActionEditor.is_modifier(action):
+			if isinstance(action, RotateInputModifier):
+				self.rotation_angle = action.angle
+				action = action.action
 			if isinstance(action, OSDAction):
 				self.osd = True
 				action = action.action
@@ -577,6 +605,7 @@ class ActionEditor(Editor):
 		self._recursing = True
 		cbRequireClick.set_active(self.click)
 		cbOSD.set_active(self.osd)
+		sclRotation.set_value(self.rotation_angle)
 		for i in xrange(0, len(self.sens)):
 			self.sens_widgets[i][0].set_value(self.sens[i])
 		if self.feedback_position != None:
@@ -710,6 +739,7 @@ class ActionEditor(Editor):
 				self.set_title(nameof(id),)
 			self._set_mode(action, mode or Action.AC_BUTTON)
 			self.hide_sensitivity(0, 1, 2)
+			self.hide_rotation()
 			self.hide_enable_feedback()
 			self.hide_hide_enable_deadzones()
 			self.hide_require_click()
@@ -718,6 +748,7 @@ class ActionEditor(Editor):
 			self.set_title(_("%s Trigger") % (id,))
 			self._set_mode(action, mode or Action.AC_TRIGGER)
 			self.hide_sensitivity(1, 2) # YZ
+			self.hide_rotation()
 			self.hide_require_click()
 			self.hide_hide_enable_deadzones()
 			self.hide_osd()
@@ -736,6 +767,7 @@ class ActionEditor(Editor):
 			self.set_title(_("Gyro"))
 			self._set_mode(action, mode or Action.AC_GYRO)
 			self.set_action(action)
+			self.hide_rotation()
 			self.hide_require_click()
 			self.hide_hide_enable_deadzones()
 			self.hide_osd()
@@ -757,6 +789,7 @@ class ActionEditor(Editor):
 			self.hide_name()
 			self.hide_macro()
 			self.hide_modeshift()
+			self.hide_rotation()
 		elif mode == Action.AC_MENU:
 			self.hide_modeshift()
 			self.hide_macro()

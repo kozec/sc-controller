@@ -1004,7 +1004,7 @@ class RotateInputModifier(Modifier):
 	
 	# This doesn't make sense with anything but 'whole' as input.
 	def whole(self, mapper, x, y, what):
-		angle = self.angle * PI / 180.0
+		angle = self.angle * PI / -180.0
 		rx = x * cos(angle) - y * sin(angle)
 		ry = x * sin(angle) + y * cos(angle)
 		return self.action.whole(mapper, rx, ry, what)
