@@ -14,6 +14,7 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.controller import HapticData
 from scc.uinput import Axes, Rels
+from scc.tools import nameof
 from math import pi as PI, sqrt, copysign, sin, cos
 from collections import deque
 
@@ -51,7 +52,7 @@ class Modifier(Action):
 				return "%s%s(%s,%s%s)" % (
 					" " * pad,
 					self.COMMAND,
-					", ".join([ str(s) for s in params ]),
+					", ".join([ nameof(s) for s in params ]),
 					'\n' if '\n' in childstr else ' ',
 					childstr
 				)
@@ -60,7 +61,7 @@ class Modifier(Action):
 			return "%s%s(%s, %s)" % (
 				" " * pad,
 				self.COMMAND,
-				", ".join([ str(s) for s in params ]),
+				", ".join([ nameof(s) for s in params ]),
 				childstr
 			)
 		
@@ -69,6 +70,18 @@ class Modifier(Action):
 			self.COMMAND,
 			childstr
 		)
+	
+	
+	def strip_defaults(self):
+		"""
+		Overrides Action.strip_defaults; Uses defaults from _mod_init instead
+		of __init__, but does NOT include last of original parameters - action.
+		"""
+		d = list(inspect.getargspec(self.__class__._mod_init).defaults)
+		l = list(self.parameters[0:-1])
+		while len(d) and len(l) and d[-1] == l[-1]:
+			d, l = d[:-1], l[:-1]
+		return l
 	
 	
 	def strip(self):
@@ -896,18 +909,19 @@ class FeedbackModifier(Modifier):
 	Does nothing otherwise.
 	"""
 	COMMAND = "feedback"
+	PROFILE_KEY_PRIORITY = 1
 	
-	def _mod_init(self, *parameters):
-		self.haptic = HapticData(*parameters)
+	def _mod_init(self, position, amplitude=512, frequency=4, period=1024, count=1):
+		self.haptic = HapticData(position, amplitude, frequency, period, count)
 		if self.action and hasattr(self.action.strip(), "set_haptic"):
 			self.action.strip().set_haptic(self.haptic)
 	
 	
 	def encode(self):
 		rv = Modifier.encode(self)
-		rv[FeedbackModifier.COMMAND] = self._get_pars()
-		rv[FeedbackModifier.COMMAND][0] = FeedbackModifier._pos_to_str(
-				rv[FeedbackModifier.COMMAND][0])
+		pars = self.strip_defaults()
+		pars[0] = nameof(pars[0])
+		rv[FeedbackModifier.COMMAND] = pars
 		return rv
 	
 	
@@ -925,36 +939,12 @@ class FeedbackModifier(Modifier):
 		return self.action.describe(context)
 	
 	
-	def _get_pars(self):
-		""" Common part used by encode and to_string """
-		position, amplitude, period, count = self.haptic.data
-		return [ FeedbackModifier._pos_to_str(position), amplitude,
-			int(self.haptic.frequency / 1000), period, count ]
-	
-	
 	def to_string(self, multiline=False, pad=0):
-		# Grab arguments
-		pars = self._get_pars()
-		# Remove defaults
-		defs = list(inspect.getargspec(HapticData.__init__).defaults)
-		for i in xrange(1, len(pars)):
-			pars[i] = int(pars[i])
-		while len(defs) and pars[-1] == defs[-1]:
-			pars, defs = pars[:-1], defs[:-1]
-		return self._mod_to_string(pars, multiline, pad)
+		return self._mod_to_string(self.strip_defaults(), multiline, pad)
 	
 	
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
-	
-	
-	@staticmethod
-	def _pos_to_str(pos):
-		if pos == HapticPos.LEFT:
-			return "LEFT"
-		elif pos == HapticPos.RIGHT:
-			return "RIGHT"
-		return "BOTH"	
 	
 	
 	def strip(self):

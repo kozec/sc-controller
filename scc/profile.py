@@ -177,7 +177,7 @@ class Profile(object):
 				if isinstance(a, XYAction):
 					if iswheelaction(a.x) or iswheelaction(a.y):
 						n = BallModifier(XYAction(a.x, a.y))
-						if feedback:
+						if feedback is not None:
 							n = FeedbackModifier(feedback, 4096, 16, n)
 						self.pads[p] = n
 						log.info("Converted %s to %s", a.to_string(), n.to_string())

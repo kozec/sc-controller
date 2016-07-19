@@ -510,7 +510,7 @@ class MouseAction(HapticEnabledAction, Action):
 	def __init__(self, axis=None, speed=None):
 		Action.__init__(self, *strip_none(axis, speed))
 		HapticEnabledAction.__init__(self)
-		self._mouse_axis = axis
+		self._mouse_axis = axis or None
 		self._old_pos = None
 		self._travelled = 0
 		if speed:

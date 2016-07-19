@@ -343,7 +343,7 @@ class HapticData(object):
 	
 	
 	def get_position(self):
-		return self.data[0]
+		return HapticPos(0)
 	
 	def get_amplitude(self):
 		return self.data[1]
