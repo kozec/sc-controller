@@ -549,7 +549,7 @@
                 <property name="margin_left">20</property>
                 <property name="margin_right">20</property>
                 <property name="model">lsTrackpadType</property>
-                <property name="active">1</property>
+                <property name="active">0</property>
                 <signal name="changed" handler="on_trackball_options_changed" swapped="no"/>
                 <child>
                   <object class="GtkCellRendererText" id="text2"/>
