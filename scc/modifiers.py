@@ -756,26 +756,7 @@ class DoubleclickModifier(Modifier):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		firstline, lastline = "", ""
-		if self.action:
-			firstline += DoubleclickModifier.COMMAND + "(" + self.action.to_string() + ","
-		if self.holdaction:
-			firstline += HoldModifier.COMMAND + "(" + self.holdaction.to_string() + ","
-		lastline += ", " + str(self.timeout)
-		lastline += ")"
-		
-		if multiline:
-			if self.normalaction:
-				rv = [ (" " * pad) + firstline ]
-				rv += self.normalaction.to_string(True, pad+2).split("\n")
-				rv += [ (" " * pad) + lastline ]
-			else:
-				rv = [ firstline.strip(",") + lastline ]
-			return "\n".join(rv)
-		elif self.normalaction:
-			return firstline + self.normalaction.to_string() + lastline
-		else:
-			return firstline.strip(",") + lastline
+		return self._mod_to_string(Action.strip_defaults(self), multiline, pad)
 	
 	
 	def button_press(self, mapper):

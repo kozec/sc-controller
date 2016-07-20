@@ -612,7 +612,7 @@ class CircularAction(HapticEnabledAction, Action):
 	def __init__(self, axis):
 		Action.__init__(self, axis)
 		HapticEnabledAction.__init__(self)
-		self.mouse_axis = axis
+		self._mouse_axis = axis
 		self.speed = 1.0
 		self.angle = None		# Last known finger position
 		self.travelled = 0
@@ -625,11 +625,11 @@ class CircularAction(HapticEnabledAction, Action):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		if self.mouse_axis == Rels.REL_WHEEL:
+		if self._mouse_axis == Rels.REL_WHEEL:
 			return _("Circular Wheel")
-		elif self.mouse_axis == Rels.REL_HWHEEL:
+		elif self._mouse_axis == Rels.REL_HWHEEL:
 			return _("Circular Horizontal Wheel")
-		return _("Circular Mouse %s") % (self.mouse_axis.name.split("_", 1)[-1],)
+		return _("Circular Mouse %s") % (self._mouse_axis.name.split("_", 1)[-1],)
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -663,16 +663,16 @@ class CircularAction(HapticEnabledAction, Action):
 					self.travelled = 0
 			angle *= 10000.0
 			# Apply movement on axis
-			if self.mouse_axis == Rels.REL_X:
+			if self._mouse_axis == Rels.REL_X:
 				mapper.mouse.moveEvent(0, angle * self.speed)
-			elif self.mouse_axis == Rels.REL_Y:
+			elif self._mouse_axis == Rels.REL_Y:
 				mapper.mouse.moveEvent(1, angle * self.speed)
-			elif self.mouse_axis == Rels.REL_HWHEEL:
+			elif self._mouse_axis == Rels.REL_HWHEEL:
 				mapper.mouse.scrollEvent(0, angle * self.speed)
-			elif self.mouse_axis == Rels.REL_WHEEL:
+			elif self._mouse_axis == Rels.REL_WHEEL:
 				mapper.mouse.scrollEvent(1, angle * self.speed)
 			else:
-				log.warning("Invalid axis for circular: %s", self.mouse_axis)
+				log.warning("Invalid axis for circular: %s", self._mouse_axis)
 			mapper.force_event.add(FE_PAD)
 
 
