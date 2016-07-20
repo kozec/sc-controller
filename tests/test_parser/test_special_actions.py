@@ -1,0 +1,83 @@
+from scc.uinput import Keys, Axes, Rels
+from scc.constants import SCButtons, STICK
+from scc.special_actions import *
+from . import _parses_as_itself, parser
+import inspect
+
+MENU_CLASSES = MenuAction, GridMenuAction, RadialMenuAction
+
+class TestSpecialActions(object):
+	
+	def test_tests(self):
+		"""
+		Tests if this class has test for each known SpecialAction defined.
+		"""
+		for cls in Action.ALL.values():
+			if "/special_actions.py" in inspect.getfile(cls):
+				if cls in MENU_CLASSES:
+					# Skip over some hard-coded cases, these have
+					# tests merged together under weird names
+					continue
+				method_name = "test_%s" % (cls.COMMAND,)
+				assert hasattr(self, method_name), \
+					"There is no test for %s" % (cls.COMMAND)
+	
+	
+	def test_profile(self):
+		"""
+		Tests if ChangeProfileAction can be converted to string and parsed
+		back to same action.
+		"""
+		assert _parses_as_itself(ChangeProfileAction("profile"))
+	
+	
+	def test_shell(self):
+		"""
+		Tests if ShellAction can be converted to string and parsed
+		back to same action.
+		"""
+		assert _parses_as_itself(ShellCommandAction("ls -la"))
+	
+	
+	def test_turnoff(self):
+		"""
+		Tests if TurnOffAction can be converted to string and parsed back to
+		same action.
+		"""
+		assert _parses_as_itself(TurnOffAction())
+	
+	
+	def test_osd(self):
+		"""
+		Tests if OSDAction can be converted to string and parsed back to
+		same action.
+		"""
+		# With text
+		assert _parses_as_itself(OSDAction("Hello"))
+		# With subaction
+		assert _parses_as_itself(OSDAction(TurnOffAction()))
+
+
+	def test_menus(self):
+		"""
+		Tests if all Menu*Actions can be converted to string and parsed
+		back to same action.
+		"""
+		for cls in MENU_CLASSES:
+			# Simple
+			assert _parses_as_itself(cls('menu1'))
+			# With arguments
+			assert _parses_as_itself(cls('menu1', STICK))
+			assert _parses_as_itself(cls('menu1', STICK, SCButtons.X))
+			assert _parses_as_itself(cls('menu1', STICK, SCButtons.X,
+				SCButtons.Y))
+			assert _parses_as_itself(cls('menu1', STICK, SCButtons.X,
+				SCButtons.Y, True))
+	
+	
+	def test_keyboard(self):
+		"""
+		Tests if KeyboardAction can be converted to string and parsed back to
+		same action.
+		"""
+		assert _parses_as_itself(KeyboardAction())

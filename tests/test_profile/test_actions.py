@@ -1,0 +1,245 @@
+from scc.uinput import Keys, Axes, Rels
+from scc.actions import *
+from scc.modifiers import BallModifier
+from . import parser
+import inspect
+
+class TestActions(object):
+	
+	def test_tests(self):
+		"""
+		Tests if this class has test for every Action defined in acitons.py.
+		"""
+		for cls in Action.ALL.values():
+			if "/actions.py" in inspect.getfile(cls):
+				if HatAction in cls.__bases__ or cls in (NoAction,) :
+					# Skip over some hard-coded cases, these have
+					# tests merged together under weird names
+					continue
+				method_name = "test_%s" % (cls.COMMAND,)
+				assert hasattr(self, method_name), \
+					"There is no test for %s" % (cls.COMMAND)	
+	
+	
+	def test_none(self):
+		"""
+		Tests if empty json dict or dict without action is parsed NoAction.
+		"""
+		assert isinstance(parser.from_json_data({}), NoAction)
+		assert isinstance(parser.from_json_data({ 'action' : 'None' }), NoAction)
+		assert isinstance(parser.from_json_data({ '___' : 'Invalid' }), NoAction)
+	
+	
+	def test_axis(self):
+		"""
+		Tests if AxisAction is parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'axis(ABS_X)' }), AxisAction)
+		assert parser.from_json_data({ 'action' : 'axis(ABS_X)' }).id == Axes.ABS_X
+	
+	
+	def test_raxis(self):
+		"""
+		Tests if RAxisAction is parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'raxis(ABS_X)' }), RAxisAction)
+		assert parser.from_json_data({ 'action' : 'raxis(ABS_X)' }).id == Axes.ABS_X
+	
+	
+	def test_hats(self):
+		"""
+		Tests if every Hat* actions can be parsed correctly from json.
+		"""	
+		assert isinstance(parser.from_json_data({ 'action' : 'hatup(ABS_X)' }), HatUpAction)
+		assert isinstance(parser.from_json_data({ 'action' : 'hatdown(ABS_X)' }), HatDownAction)
+		assert isinstance(parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }), HatLeftAction)
+		assert isinstance(parser.from_json_data({ 'action' : 'hatright(ABS_X)' }), HatRightAction)
+		
+		assert parser.from_json_data({ 'action' : 'hatup(ABS_X)' }).id == Axes.ABS_X
+		assert parser.from_json_data({ 'action' : 'hatdown(ABS_X)' }).id == Axes.ABS_X
+		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).id == Axes.ABS_X
+		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).id == Axes.ABS_X
+		
+		assert parser.from_json_data({ 'action' : 'hatup(ABS_X)' }).min == 0
+		assert parser.from_json_data({ 'action' : 'hatdown(ABS_X)' }).min == 0
+		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).min == 0
+		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).min == 0
+		
+		assert parser.from_json_data({ 'action' : 'hatup(ABS_X)' }).max == STICK_PAD_MAX - 1
+		assert parser.from_json_data({ 'action' : 'hatdown(ABS_X)' }).max == STICK_PAD_MIN + 1
+		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).max == STICK_PAD_MAX - 1
+		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).max == STICK_PAD_MIN + 1
+	
+	
+	def test_mouse(self):
+		"""
+		Tests if MouseAction is parsed correctly from json.
+		"""
+		assert parser.from_json_data({ 'action' : 'mouse()' })._mouse_axis == None
+		assert parser.from_json_data({ 'action' : 'trackpad()' })._mouse_axis == None
+		assert parser.from_json_data({ 'action' : 'mouse(REL_WHEEL)' })._mouse_axis == Rels.REL_WHEEL
+	
+	
+	def test_circular(self):
+		"""
+		Tests if CircularAction is parsed correctly from json.
+		"""
+		assert parser.from_json_data({ 'action' : 'circular(REL_WHEEL)' })._mouse_axis == Rels.REL_WHEEL
+	
+	
+	def test_area(self):
+		"""
+		Tests if AreaAction are parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'area(10, 10, 50, 50)' }), AreaAction)
+		assert parser.from_json_data({ 'action' : 'area(10, 10, 50, 50)' }).coords == (10, 10, 50, 50)
+	
+	
+	def test_relarea(self):
+		"""
+		Tests if  RelAreaAction are parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'relarea(10, 10, 50, 50)' }), RelAreaAction)
+		assert parser.from_json_data({ 'action' : 'relarea(10, 10, 50, 50)' }).coords == (10, 10, 50, 50)
+	
+	
+	def test_winarea(self):
+		"""
+		Tests if WinAreaAction are parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'winarea(10, 10, 50, 50)' }), WinAreaAction)
+		assert parser.from_json_data({ 'action' : 'winarea(10, 10, 50, 50)' }).coords == (10, 10, 50, 50)
+	
+	
+	def test_relwinarea(self):
+		"""
+		Tests if RelWinAreaAction are parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'relwinarea(10, 10, 50, 50)' }), RelWinAreaAction)
+		assert parser.from_json_data({ 'action' : 'relwinarea(10, 10, 50, 50)' }).coords == (10, 10, 50, 50)
+	
+	
+	def test_gyro(self):
+		"""
+		Tests if GyroAction is parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'gyro(ABS_X)' }), GyroAction)
+		
+		assert parser.from_json_data({ 'action' : 'gyro(ABS_X)' }).axes[0] == Axes.ABS_X
+		assert parser.from_json_data({ 'action' : 'gyro(ABS_X)' }).axes[1] is None
+		assert parser.from_json_data({ 'action' : 'gyro(ABS_X, ABS_Y)' }).axes[1] == Axes.ABS_Y
+		assert parser.from_json_data({ 'action' : 'gyro(ABS_X, ABS_Y)' }).axes[2] is None
+		assert parser.from_json_data({ 'action' : 'gyro(ABS_X, ABS_Y, ABS_Z)' }).axes[2] == Axes.ABS_Z
+		
+	def test_gyroabs(self):
+		"""
+		Tests if GyroAbsAction is parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'gyroabs(ABS_X)' }), GyroAbsAction)
+		
+		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X)' }).axes[0] == Axes.ABS_X
+		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X)' }).axes[1] is None
+		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y)' }).axes[1] == Axes.ABS_Y
+		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y)' }).axes[2] is None
+		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y, ABS_Z)' }).axes[2] == Axes.ABS_Z
+	
+	
+	def test_trackball(self):
+		"""
+		Tests if TrackballAction is parsed correctly from json.
+		"""
+		# assert isinstance(parser.from_json_data({ 'action' : 'trackball' }), TrackballAction)
+		a = parser.from_json_data({ 'action' : 'trackball' })
+		assert isinstance(a, BallModifier)
+		assert isinstance(a.action, MouseAction)
+	
+	
+	def test_button(self):
+		"""
+		Tests if ButtonAction is parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'button(KEY_X)' }), ButtonAction)
+		
+		assert parser.from_json_data({ 'action' : 'button(KEY_X)' }).button == Keys.KEY_X
+		assert parser.from_json_data({ 'action' : 'button(KEY_X)' }).button2 is None
+		assert parser.from_json_data({ 'action' : 'button(KEY_X, KEY_Z)' }).button == Keys.KEY_X
+		assert parser.from_json_data({ 'action' : 'button(KEY_X, KEY_Z)' }).button2 == Keys.KEY_Z
+		
+		assert parser.from_json_data({ 'action' : 'button(KEY_X, KEY_Z, 10, 20)' }).minustrigger == 10
+		assert parser.from_json_data({ 'action' : 'button(KEY_X, KEY_Z, 10, 20)' }).plustrigger == 20
+	
+	
+	def test_multiaction(self):
+		"""
+		Tests if MultiAction is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : 'button(KEY_X) and button(KEY_Y)' })
+		assert isinstance(a, MultiAction)
+		assert isinstance(a.actions[0], ButtonAction)
+		assert a.actions[0].button == Keys.KEY_X
+		assert isinstance(a.actions[1], ButtonAction)
+		assert a.actions[1].button == Keys.KEY_Y
+	
+	
+	def test_dpad(self):
+		"""
+		Tests if DPadAction is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'dpad' : [{
+				'action' : 'button(KEY_A)'
+				} , {
+				'action' : 'button(KEY_B)'
+				} , {
+				'action' : 'button(KEY_C)'
+				} , {
+				'action' : 'button(KEY_D)'
+			}]
+		})
+		
+		assert isinstance(a, DPadAction)
+		for sub in a.actions:
+			assert isinstance(sub, ButtonAction)
+	
+	
+	def test_dpad8(self):
+		"""
+		Tests if DPad8Action is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'dpad' : [{
+				'action' : 'button(KEY_A)'
+				} , {
+				'action' : 'button(KEY_B)'
+				} , {
+				'action' : 'button(KEY_C)'
+				} , {
+				'action' : 'button(KEY_D)'
+				} , {
+				'action' : 'button(KEY_E)'
+				} , {
+				'action' : 'button(KEY_F)'
+				} , {
+				'action' : 'button(KEY_G)'
+				} , {
+				'action' : 'button(KEY_H)'
+			}]
+		})
+		
+		assert isinstance(a, DPadAction)
+		for sub in a.actions:
+			assert isinstance(sub, ButtonAction)
+	
+	
+	def test_XY(self):
+		"""
+		Tests if XYAction is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'X' : { 'action' : 'axis(ABS_X)' },
+			'Y' : { 'action' : 'axis(ABS_Y)' },
+		})
+		
+		assert isinstance(a, XYAction)
+		assert isinstance(a.x, AxisAction)
+		assert isinstance(a.y, AxisAction)
