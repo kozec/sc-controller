@@ -826,7 +826,8 @@ class HoldModifier(DoubleclickModifier):
 class SensitivityModifier(Modifier):
 	"""
 	Sets action sensitivity, if action supports it.
-	Action that supports such setting has set_speed(x, y, z) method defined.
+	Action that supports such setting has set_speed(x, y, z)
+	and get_speed() methods defined.
 	
 	Does nothing otherwise.
 	"""
@@ -852,7 +853,7 @@ class SensitivityModifier(Modifier):
 	
 	@staticmethod
 	def decode(data, a, *b):
-		args = data["sensitivity"]
+		args = list(data["sensitivity"])
 		args.append(a)
 		return SensitivityModifier(*args)
 	
@@ -908,7 +909,7 @@ class FeedbackModifier(Modifier):
 	
 	@staticmethod
 	def decode(data, a, *b):
-		args = data["feedback"]
+		args = list(data["feedback"])
 		if hasattr(HapticPos, args[0]):
 			args[0] = getattr(HapticPos, args[0])
 		args.append(a)

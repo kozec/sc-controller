@@ -314,7 +314,10 @@ class HapticEnabledAction(object):
 	
 	def set_haptic(self, hd):
 		self.haptic = hd
-		return True
+	
+	
+	def get_haptic(self):
+		return self.haptic
 
 
 class OSDEnabledAction(object):
@@ -383,7 +386,10 @@ class AxisAction(Action):
 	
 	def set_speed(self, x, y, z):
 		self.speed = x
-		return True	
+	
+	
+	def get_speed(self):
+		return (self.speed,)
 	
 	
 	def _get_axis_description(self):
@@ -521,7 +527,10 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	def set_speed(self, x, y, z):
 		self.speed = (x, y)
-		return True
+	
+	
+	def get_speed(self):
+		return self.speed
 	
 	
 	def describe(self, context):
@@ -620,7 +629,10 @@ class CircularAction(HapticEnabledAction, Action):
 	
 	def set_speed(self, x, y, z):
 		self.speed = x
-		return True
+	
+	
+	def get_speed(self):
+		return (self.speed,)
 	
 	
 	def describe(self, context):
@@ -676,12 +688,11 @@ class CircularAction(HapticEnabledAction, Action):
 			mapper.force_event.add(FE_PAD)
 
 
-class AreaAction(HapticEnabledAction, Action, SpecialAction, OSDEnabledAction):
+class AreaAction(Action, SpecialAction, OSDEnabledAction):
 	SA = COMMAND = "area"
 	
 	def __init__(self, x1, y1, x2, y2):
 		Action.__init__(self, x1, y1, x2, y2)
-		HapticEnabledAction.__init__(self)
 		OSDEnabledAction.__init__(self)
 		# Make sure that lower number is first - movement gets inverted otherwise
 		if x2 < x1 : x1, x2 = x2, x1
@@ -850,7 +861,10 @@ class GyroAction(Action):
 	
 	def set_speed(self, x, y, z):
 		self.speed = (x, y, z)
-		return True
+	
+	
+	def get_speed(self):
+		return self.speed
 	
 	
 	def gyro(self, mapper, *pyr):
@@ -889,7 +903,6 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 	def __init__(self, *blah):
 		GyroAction.__init__(self, *blah)
 		HapticEnabledAction.__init__(self)
-		self.haptic = None	# Can't call HapticEnabledAction, it'll create diamond
 		self.ir = None
 		self._was_oor = False
 	
@@ -1174,19 +1187,31 @@ class MultiAction(Action):
 	
 	
 	def set_haptic(self, hapticdata):
-		supports = False
 		for a in self.actions:
-			if a:
+			if a and hasattr(a, "set_haptic"):
 				# Only first feedback-supporting action should do feedback
-				supports = supports or a.set_haptic(hapticdata)
-		return supports
+				a.set_haptic(hapticdata)
+				return
+	
+	
+	def get_haptic(self):
+		for a in self.actions:
+			if a and hasattr(a, "set_haptic"):
+				return a.get_haptic()
+		return None
 	
 	
 	def set_speed(self, x, y, z):
-		supports = False
 		for a in self.actions:
-			supports = a.set_speed(x, y, z) or supports
-		return supports
+			if hasattr(a, "set_speed"):
+				a.set_speed(x, y, z)
+	
+	
+	def get_speed(self):
+		for a in self.actions:
+			if hasattr(a, "set_speed"):
+				return a.get_speed()
+		return (1.0,)
 	
 	
 	def describe(self, context):
@@ -1405,15 +1430,26 @@ class XYAction(HapticEnabledAction, Action):
 			# Child action has no feedback support, do feedback here
 			self.haptic = hapticdata
 			self.big_click = hapticdata * 4
-			return True
-		return supports
+	
+	
+	def get_haptic(self):
+		if hasattr(self.x, "set_haptic"):
+			return self.x.get_haptic()
+		if hasattr(self.y, "set_haptic"):
+			return self.y.get_haptic()
+		return self.haptic
 	
 	
 	def set_speed(self, x, y, z):
-		supports = False
-		supports = self.x.set_speed(x, 1, 1) or supports
-		supports = self.y.set_speed(y, 1, 1) or supports
-		return supports
+		self.x.set_speed(x, 1, 1)
+		self.y.set_speed(y, 1, 1)
+	
+	
+	def get_speed(self):
+		rv = [0, 0]
+		if hasattr(self.x, "set_speed"): rv[0] = self.x.get_speed()[0]
+		if hasattr(self.y, "set_speed"): rv[1] = self.y.get_speed()[0]
+		return tuple(rv)
 	
 	
 	# XYAction no sense with button and trigger-related events

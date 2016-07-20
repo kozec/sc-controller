@@ -82,6 +82,32 @@ class Macro(Action):
 				self._release = None
 	
 	
+	def set_haptic(self, hapticdata):
+		for a in self.actions:
+			if a and hasattr(a, "set_haptic"):
+				a.set_haptic(hapticdata)
+	
+	
+	def get_haptic(self):
+		for a in self.actions:
+			if a and hasattr(a, "set_haptic"):
+				return a.get_haptic()
+		return None
+	
+	
+	def set_speed(self, x, y, z):
+		for a in self.actions:
+			if hasattr(a, "set_speed"):
+				a.set_speed(x, y, z)
+	
+	
+	def get_speed(self):
+		for a in self.actions:
+			if hasattr(a, "set_speed"):
+				return a.get_speed()
+		return (1.0,)
+	
+	
 	def button_release(self, mapper):
 		self._active = False
 	
