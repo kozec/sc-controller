@@ -496,7 +496,7 @@
                   <placeholder/>
                 </child>
                 <child type="label">
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="label67">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Control Options...</property>
