@@ -12,10 +12,6 @@ class TestMacros(object):
 		"""
 		for cls in Action.ALL.values():
 			if "/macros.py" in inspect.getfile(cls):
-				#if cls in (HoldModifier, DoubleclickModifier,):
-				#	# Skip over some hard-coded cases, these have
-				#	# tests merged together under weird names
-				#	continue
 				method_name = "test_%s" % (cls.COMMAND,)
 				assert hasattr(self, method_name), \
 					"There is no test for %s" % (cls.COMMAND)
