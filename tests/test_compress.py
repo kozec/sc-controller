@@ -62,8 +62,8 @@ class TestCompress(object):
 	"""
 	
 	def test_tests(self):
-		# Test if there is test_sens_* test for every action that suppports
-		# setting sensitivity.
+		# Test if there is key in CASES for every action that suppports
+		# setting feedback or sensitivity.
 		for cls in Action.ALL.values():
 			if Macro in cls.__bases__:
 				# Skip macros, they are handled separately
