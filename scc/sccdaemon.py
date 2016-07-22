@@ -576,6 +576,11 @@ class SCCDaemon(Daemon):
 			return
 		if what in (LEFT, RIGHT):
 			a = self.mapper.profile.pads[what].compress()
+			if what == LEFT:
+				self.mapper.buttons &= ~SCButtons.LPADTOUCH
+			else:
+				self.mapper.buttons &= ~SCButtons.RPADTOUCH
+			a.whole(self.mapper, 0, 0, what)
 			self.mapper.profile.pads[what] = LockedAction(what, client, a)
 			return
 			
