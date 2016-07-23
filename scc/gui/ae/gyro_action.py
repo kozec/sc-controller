@@ -98,13 +98,11 @@ class GyroActionComponent(AEComponent):
 						self.select_gyro_output("left_abs")
 					else:
 						self.select_gyro_output("left")
-					self.select_yaw_roll(ROLL)
 				elif ap[0] == Axes.ABS_RX and ap[-1] == Axes.ABS_RY:
 					if isinstance(action, GyroAbsAction):
 						self.select_gyro_output("right_abs")
 					else:
 						self.select_gyro_output("right")
-					self.select_yaw_roll(ROLL)
 	
 	
 	def get_button_title(self):
