@@ -501,6 +501,7 @@ class ActionEditor(Editor):
 		
 		if set_action:
 			self.set_action(self._action)
+			self._selected_component.modifier_updated()
 	
 	
 	def generate_modifiers(self, action, from_custom=False):
@@ -601,8 +602,9 @@ class ActionEditor(Editor):
 				else:
 					self.sens[index] = action.speeds[0]
 				action = action.action
+				self._recursing = True
 		
-		self._recursing = True
+		
 		cbRequireClick.set_active(self.click)
 		cbOSD.set_active(self.osd)
 		sclRotation.set_value(self.rotation_angle)
@@ -692,6 +694,21 @@ class ActionEditor(Editor):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
 			log.warning(action.to_string())
+	
+	
+	def set_sensitivity(self, x, y=1.0, z=1.0):
+		""" Sets sensitivity for edited action """
+		self._recursing = True
+		xyz = [ x, y, z ]
+		for i in xrange(0, len(self.sens)):
+			self.sens[i] = xyz[i]
+			self.sens_widgets[i][0].set_value(self.sens[i])
+		self._recursing = False
+	
+	
+	def get_sensitivity(self):
+		""" Returns sensitivity currently set in editor """
+		return tuple(self.sens)	
 	
 	
 	def _set_mode(self, action, mode):

@@ -103,6 +103,28 @@ class GyroActionComponent(AEComponent):
 						self.select_gyro_output("right_abs")
 					else:
 						self.select_gyro_output("right")
+			self.modifier_updated()
+		
+	def modifier_updated(self):
+		cbInvertY = self.builder.get_object("cbInvertY")
+		sens = self.editor.get_sensitivity()
+		inverted = len(sens) >= 2 and sens[1] < 0
+		if cbInvertY.get_active() != inverted:
+			self._recursing = True
+			cbInvertY.set_active(inverted)
+			self._recursing = False
+	
+	
+	def cbInvertY_toggled_cb(self, cb, *a):
+		if self._recursing: return
+		sens = list(self.editor.get_sensitivity())
+		# Ensure that editor accepts Y sensitivity
+		if len(sens) >= 2:
+			sens[1] = abs(sens[1])
+			if cb.get_active():
+				# Ensure that Y sensitivity is negative
+				sens[1] *= -1
+		self.editor.set_sensitivity(*sens)
 	
 	
 	def get_button_title(self):

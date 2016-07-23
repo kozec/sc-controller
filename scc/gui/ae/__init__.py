@@ -77,6 +77,13 @@ class AEComponent(ComboSetter):
 		pass
 	
 	
+	def modifier_updated(self):
+		"""
+		Called when values of any modifier is changed.
+		"""
+		pass
+	
+	
 	def get_widget(self):
 		return self.widget
 
