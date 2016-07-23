@@ -73,7 +73,7 @@ class GyroActionComponent(AEComponent):
 		if self.handles(mode, action):
 			if isinstance(action, NoAction):
 				self.select_gyro_output("none")
-				self.select_gyro_button(None)
+				self.select_gyro_button(SCButtons.RPADTOUCH)
 				return
 			if isinstance(action, ModeModifier):
 				b = action.order[0]
@@ -104,7 +104,8 @@ class GyroActionComponent(AEComponent):
 					else:
 						self.select_gyro_output("right")
 			self.modifier_updated()
-		
+	
+	
 	def modifier_updated(self):
 		cbInvertY = self.builder.get_object("cbInvertY")
 		sens = self.editor.get_sensitivity()
@@ -212,7 +213,7 @@ class GyroActionComponent(AEComponent):
 				action = "%s%s%s" % (grps[0], grps[2], grps[3])
 		action = self.parser.restart(action).parse()
 		
-		if button:
+		if button and action:
 			action = ModeModifier(getattr(SCButtons, button), action)
 		
 		self.editor.set_action(action)

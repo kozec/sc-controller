@@ -704,6 +704,8 @@ class ActionEditor(Editor):
 			self.sens[i] = xyz[i]
 			self.sens_widgets[i][0].set_value(self.sens[i])
 		self._recursing = False
+		self.set_action(self._action)
+		self._selected_component.modifier_updated()
 	
 	
 	def get_sensitivity(self):
