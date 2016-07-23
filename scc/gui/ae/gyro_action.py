@@ -83,7 +83,7 @@ class GyroActionComponent(AEComponent):
 				self.select_gyro_button(None)
 			if isinstance(action, MouseAction):
 				self.select_gyro_output("mouse")
-				if len(action.parameters) >= 2 and action.parameters[1] == YAW:
+				if len(action.parameters) > 0 and action.parameters[0] == YAW:
 					self.select_yaw_roll(YAW)
 				else:
 					self.select_yaw_roll(ROLL)
