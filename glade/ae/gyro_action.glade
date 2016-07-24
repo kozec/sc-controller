@@ -27,8 +27,13 @@
       </row>
       <row>
         <col id="0">mouse([YAW|ROLL])</col>
-        <col id="1" translatable="yes">Mouse (camera)</col>
+        <col id="1" translatable="yes">Mouse (desktop)</col>
         <col id="2">mouse</col>
+      </row>
+      <row>
+        <col id="0">mouse([YAW|ROLL])</col>
+        <col id="1" translatable="yes">Mouse (camera)</col>
+        <col id="2">mouse_cam</col>
       </row>
       <row>
         <col id="0">gyro(ABS_RX, [ABS_RY|None, ABS_RY])</col>

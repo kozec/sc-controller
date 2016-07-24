@@ -194,6 +194,10 @@ class GyroActionComponent(AEComponent):
 		pass
 	
 	
+	def hidden(self):
+		self.editor.set_default_sensitivity(1, 1, 1)
+	
+	
 	def send(self, *a):
 		if self._recursing : return
 		
@@ -201,6 +205,7 @@ class GyroActionComponent(AEComponent):
 		cbYawRoll = self.builder.get_object("cbYawRoll")
 		cbGyroButton = self.builder.get_object("cbGyroButton")
 		action = cbMode.get_model().get_value(cbMode.get_active_iter(), 0)
+		key = cbMode.get_model().get_value(cbMode.get_active_iter(), 2)
 		yawroll = cbYawRoll.get_model().get_value(cbYawRoll.get_active_iter(), 0)
 		button = cbGyroButton.get_model().get_value(cbGyroButton.get_active_iter(), 0)
 		
@@ -215,6 +220,10 @@ class GyroActionComponent(AEComponent):
 		
 		if button and action:
 			action = ModeModifier(getattr(SCButtons, button), action)
+		if key == "mouse":
+			self.editor.set_default_sensitivity(3.5, 3.5, 3.5)
+		else:
+			self.editor.set_default_sensitivity(1, 1, 1)
 		
 		self.editor.set_action(action)
 

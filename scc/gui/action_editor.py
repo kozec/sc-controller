@@ -67,6 +67,7 @@ class ActionEditor(Editor):
 		self.feedback_widgets = []		# Feedback settings sliders, labels and 'clear' buttons, plus default value as last item
 		self.deadzone_widgets = []		# Deadzone settings sliders and 'clear' buttons, plus default value as last item
 		self.sens = [1.0] * 3			# Sensitivity slider values
+		self.sens_defaults = [1.0] * 3	# Clear button clears to this
 		self.feedback = [0.0] * 3		# Feedback slider values, set later
 		self.deadzone = [0] * 2			# Deadzone slider values, set later
 		self.deadzone_enabled = False
@@ -368,9 +369,11 @@ class ActionEditor(Editor):
 	
 	
 	def on_btClearSens_clicked(self, source, *a):
+		i = 0
 		for scale, label, button in self.sens_widgets:
 			if source == button:
-				scale.set_value(1.0)
+				scale.set_value(self.sens_defaults[i])
+				i += 1
 	
 	
 	def on_btClearFeedback_clicked(self, source, *a):
@@ -709,6 +712,25 @@ class ActionEditor(Editor):
 	def get_sensitivity(self):
 		""" Returns sensitivity currently set in editor """
 		return tuple(self.sens)	
+	
+	
+	def set_default_sensitivity(self, x, y=1.0, z=1.0):
+		"""
+		Sets default sensitivity values and, if sensitivity
+		is currently set to defaults, updates it to these values
+		"""
+		xyz = x, y, z
+		update = False
+		self._recursing = True
+		for i in (0, 1, 2):
+			if self.sens[i] == self.sens_defaults[i]:
+				self.sens[i] = xyz[i]
+				self.sens_widgets[i][0].set_value(xyz[i])
+				update = True
+			self.sens_defaults[i] = xyz[i]
+		self._recursing = False
+		if update:
+			self.update_modifiers()
 	
 	
 	def _set_mode(self, action, mode):
