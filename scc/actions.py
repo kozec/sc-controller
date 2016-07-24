@@ -19,7 +19,7 @@ from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
 from scc.constants import PARSER_CONSTANTS
-from math import sqrt, atan2
+from math import sqrt, atan2, pi as PI
 
 import sys, time, logging, inspect
 log = logging.getLogger("Actions")
