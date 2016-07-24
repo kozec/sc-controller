@@ -602,9 +602,8 @@ class ActionEditor(Editor):
 				else:
 					self.sens[index] = action.speeds[0]
 				action = action.action
-				self._recursing = True
 		
-		
+		self._recursing = True
 		cbRequireClick.set_active(self.click)
 		cbOSD.set_active(self.osd)
 		sclRotation.set_value(self.rotation_angle)
@@ -645,10 +644,10 @@ class ActionEditor(Editor):
 			entAction.set_text(str(action.error))
 			self._set_y_field_visible(False)
 		else:
-			# Check for XYAction and treat it specialy
 			entAction.set_name("entAction")
 			btOK.set_sensitive(True)
 			self._action = action
+			# Check for XYAction and treat it specialy
 			if isinstance(action, XYAction):
 				entAction.set_text(self.generate_modifiers(action.x, from_custom).to_string())
 				if not action.y:
@@ -675,7 +674,6 @@ class ActionEditor(Editor):
 		
 		# Send changed action into selected component
 		if self._selected_component is None:
-			self._selected_component = None
 			for component in reversed(sorted(self.components, key = lambda a : a.PRIORITY)):
 				if (component.CTXS & self._mode) != 0:
 					if component.handles(self._mode, action.strip()):
