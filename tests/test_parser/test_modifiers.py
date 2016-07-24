@@ -137,6 +137,9 @@ class TestModifiers(object):
 		assert _parses_as_itself(FeedbackModifier(HapticPos.BOTH, 10, MouseAction()))
 		assert _parses_as_itself(FeedbackModifier(HapticPos.BOTH, 10, 8, MouseAction()))
 		assert _parses_as_itself(FeedbackModifier(HapticPos.BOTH, 10, 8, 512, MouseAction()))
+		# Bellow was failing in past
+		assert _parses_as_itself(FeedbackModifier(HapticPos.LEFT, MouseAction()))
+		assert _parses_as_itself(FeedbackModifier(HapticPos.RIGHT, MouseAction()))
 	
 	
 	def test_rotate(self):

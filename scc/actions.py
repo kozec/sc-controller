@@ -267,9 +267,11 @@ class Action(object):
 		if as_strings is set to True, all parameters are converted to apropriate
 		strings (x.name for enums, x.encode('string_escape') for strings, 
 		"""
-		d = list(inspect.getargspec(self.__class__.__init__).defaults)
+		argspec = inspect.getargspec(self.__class__.__init__)
+		required_count = len(argspec.args) - len(argspec.defaults) - 1
+		d = list(argspec.defaults)
 		l = list(self.parameters)
-		while len(d) and len(l) and d[-1] == l[-1]:
+		while len(d) and len(l) > required_count and d[-1] == l[-1]:
 			d, l = d[:-1], l[:-1]
 		return l
 	
