@@ -4,6 +4,7 @@ VDF file reader.
 """
 import shlex
 
+
 def parse_vdf(fileobj):
 	"""
 	Converts VDF file or file-like object into python dict
@@ -22,7 +23,13 @@ def parse_vdf(fileobj):
 			if key is None:
 				raise ValueError("Dict without key")
 			value = {}
-			stack[-1][key] = value
+			if key in stack[-1]:
+				lst = ensure_list(stack[-1][key])
+				lst.append(value)
+				stack[-1][key] = lst
+			else:
+				stack[-1][key] = value
+			
 			stack.append(value)
 			key = None
 		elif t == "}":
@@ -30,6 +37,11 @@ def parse_vdf(fileobj):
 			stack = stack[0:-1]
 		elif key is None:
 			key = t.strip('"')
+		elif key in stack[-1]:
+			lst = ensure_list(stack[-1][key])
+			lst.append(t.strip('"'))
+			stack[-1][key] = lst
+			key = None
 		else:
 			stack[-1][key] = t.strip('"')
 			key = None
@@ -40,6 +52,15 @@ def parse_vdf(fileobj):
 		raise ValueError("Unfinished dict")
 	
 	return rv
+
+
+def ensure_list(value):
+	"""
+	If value is list, returns same value.
+	Otherwise, returns [ value ]
+	"""
+	return value if type(value) == list else [ value ]
+
 
 if __name__ == "__main__":
 	print parse_vdf(file('app_generic.vdf', "r"))
