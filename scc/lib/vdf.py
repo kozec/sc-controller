@@ -34,9 +34,11 @@ def parse_vdf(fileobj):
 			key = None
 		elif t == "}":
 			# Pop last dict from stack
+			if len(stack) < 2:
+				raise ValueError("'}' without '{'")
 			stack = stack[0:-1]
 		elif key is None:
-			key = t.strip('"')
+			key = t.strip('"').lower()
 		elif key in stack[-1]:
 			lst = ensure_list(stack[-1][key])
 			lst.append(t.strip('"'))
@@ -49,7 +51,7 @@ def parse_vdf(fileobj):
 		t = lexer.get_token()
 	
 	if len(stack) > 1:
-		raise ValueError("Unfinished dict")
+		raise ValueError("'{' without '}'")
 	
 	return rv
 
