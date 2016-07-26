@@ -1038,7 +1038,7 @@ class ButtonAction(HapticEnabledAction, Action):
 	
 	
 	@staticmethod
-	def _button_press(mapper, button, immediate=False):
+	def _button_press(mapper, button, immediate=False, haptic=None):
 		if button in mapper.pressed and mapper.pressed[button] > 0:
 			# Virtual button is already pressed - generate release event first
 			pc = mapper.pressed[button]
@@ -1059,6 +1059,8 @@ class ButtonAction(HapticEnabledAction, Action):
 			mapper.syn_list.add(mapper.keyboard)
 		else:
 			mapper.keypress_list.append(button)
+		if haptic:
+			mapper.send_feedback(haptic)
 	
 	
 	@staticmethod
@@ -1087,7 +1089,7 @@ class ButtonAction(HapticEnabledAction, Action):
 	
 	
 	def button_press(self, mapper):
-		ButtonAction._button_press(mapper, self.button)
+		ButtonAction._button_press(mapper, self.button, haptic=self.haptic)
 		if self.haptic:
 			mapper.send_feedback(self.haptic)
 	
@@ -1125,7 +1127,7 @@ class ButtonAction(HapticEnabledAction, Action):
 		
 		if self.button2 is None:
 			if p >= partial and old_p < partial:
-				ButtonAction._button_press(mapper, self.button)
+				ButtonAction._button_press(mapper, self.button, haptic=self.haptic)
 			elif p < partial and old_p >= partial:
 				ButtonAction._button_release(mapper, self.button)
 		else:
@@ -1142,7 +1144,7 @@ class ButtonAction(HapticEnabledAction, Action):
 				if self._pressed_key != self.button2:
 					if self._pressed_key is not None:
 						ButtonAction._button_release(mapper, self._pressed_key)
-					ButtonAction._button_press(mapper, self.button2)
+					ButtonAction._button_press(mapper, self.button2, haptic=self.haptic)
 					self._pressed_key = self.button2
 					self._released = False
 			else:
