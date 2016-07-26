@@ -994,8 +994,9 @@ class ButtonAction(HapticEnabledAction, Action):
 		HapticEnabledAction.__init__(self)
 		self.button = button1 or None
 		self.button2 = button2 or None
-		self.minustrigger = minustrigger
-		self.plustrigger = plustrigger
+		# minustrigger and plustrigger are not used anymore, __init__ takes
+		# them only for backwards compatibility.
+		# TODO: Remove backwards compatibility
 		self._pressed_key = None
 		self._released = True
 	
@@ -1101,20 +1102,18 @@ class ButtonAction(HapticEnabledAction, Action):
 	def axis(self, mapper, position, what):
 		# Choses which key or button should be pressed or released based on
 		# current stick position.
-		minustrigger = self.minustrigger or STICK_PAD_MIN_HALF
 		
-		if self._pressed_key == self.button and position > minustrigger:
+		if self._pressed_key == self.button and position > STICK_PAD_MIN_HALF:
 			ButtonAction._button_release(mapper, self.button)
 			self._pressed_key = None
-		elif self._pressed_key != self.button and position <= minustrigger:
+		elif self._pressed_key != self.button and position <= STICK_PAD_MIN_HALF:
 			ButtonAction._button_press(mapper, self.button)
 			self._pressed_key = self.button
 		if self.button2 is not None:
-			plustrigger = self.plustrigger or STICK_PAD_MAX_HALF
-			if self._pressed_key == self.button2 and position < plustrigger:
+			if self._pressed_key == self.button2 and position < STICK_PAD_MAX_HALF:
 				ButtonAction._button_release(mapper, self.button2)
 				self._pressed_key = None
-			elif self._pressed_key != self.button2 and position >= plustrigger:
+			elif self._pressed_key != self.button2 and position >= STICK_PAD_MAX_HALF:
 				ButtonAction._button_press(mapper, self.button2)
 				self._pressed_key = self.button2
 	
@@ -1122,16 +1121,14 @@ class ButtonAction(HapticEnabledAction, Action):
 	def trigger(self, mapper, p, old_p):
 		# Choses which key or button should be pressed or released based on
 		# current trigger position.
-		partial = self.minustrigger or TRIGGER_HALF
-		full = self.plustrigger or TRIGGER_CLICK
-		
+		# TODO: Remove this, call to TriggerAction instead
 		if self.button2 is None:
-			if p >= partial and old_p < partial:
+			if p >= TRIGGER_HALF and old_p < TRIGGER_HALF:
 				ButtonAction._button_press(mapper, self.button, haptic=self.haptic)
-			elif p < partial and old_p >= partial:
+			elif p < TRIGGER_HALF and old_p >= TRIGGER_HALF:
 				ButtonAction._button_release(mapper, self.button)
 		else:
-			if p >= partial and p < full:
+			if p >= TRIGGER_HALF and p < TRIGGER_CLICK:
 				if self._pressed_key != self.button and self._released:
 					ButtonAction._button_press(mapper, self.button)
 					self._pressed_key = self.button
@@ -1140,7 +1137,7 @@ class ButtonAction(HapticEnabledAction, Action):
 				if self._pressed_key == self.button:
 					ButtonAction._button_release(mapper, self.button)
 					self._pressed_key = None
-			if p > full and old_p < full:
+			if p > TRIGGER_CLICK and old_p < TRIGGER_CLICK:
 				if self._pressed_key != self.button2:
 					if self._pressed_key is not None:
 						ButtonAction._button_release(mapper, self._pressed_key)
@@ -1544,6 +1541,108 @@ class XYAction(HapticEnabledAction, Action):
 	def __str__(self):
 		return "<XY %s >" % (", ".join([ str(x) for x in self.actions ]), )
 
+	__repr__ = __str__
+
+
+class TriggerAction(Action):
+	"""
+	Used for sticks and pads when actions for X and Y axis are different.
+	"""
+	COMMAND = "trigger"
+	
+	def __init__(self, press_level, *params):
+		Action.__init__(self, press_level, *params)
+		self.press_level = int(press_level)
+		if len(params) == 1:
+			self.release_level = press_level
+			self.action = params[0]
+		elif len(params) == 2:
+			self.release_level = params[0]
+			self.action = params[1]
+		else:
+			raise TypeError("Invalid number of parameters")
+		self.pressed = False
+		# Having AxisAction as child of TriggerAction is special case,
+		# child action recieves trigger events instead of button presses
+		# and button_releases.
+		self.child_is_axis = isinstance(self.action.strip(), AxisAction)
+	
+	
+	def compress(self):
+		self.action = self.action.compress()
+		return self
+	
+	
+	# TriggerAction works only with trigger-related events
+	def button_press(self, *a):
+		pass
+	
+	def button_release(self, *a):
+		pass
+	
+	def axis(self, *a):
+		pass
+	
+	def whole(self, mapper, x, y, what):
+		pass
+	
+	def _press(self, mapper):
+		""" Called when trigger level enters active zone """
+		self.pressed = True
+		if not self.child_is_axis:
+			self.action.button_press(mapper)
+	
+	def _release(self, mapper, old_position):
+		""" Called when trigger level leaves active zone """
+		self.pressed = False
+		if self.child_is_axis:
+			self.action.trigger(mapper, 0, old_position)
+		else:
+			self.action.button_release(mapper)
+	
+	def trigger(self, mapper, position, old_position):
+		# There are 3 modes that TriggerAction can work in
+		if self.release_level > self.press_level:
+			# Mode 1, action is 'pressed' if current level is
+			# between press_level and release_level.
+			if not self.pressed and position >= self.press_level and old_position < self.press_level:
+				self._press(mapper)
+			elif self.pressed and position > self.release_level and old_position <= self.release_level:
+				self._release(mapper, old_position)
+			elif self.pressed and position < self.press_level and old_position >= self.press_level:
+				self._release(mapper, old_position)
+			#else:
+			#	print position
+		if self.release_level == self.press_level:
+			# Mode 2, there is only press_level and action is 'pressed'
+			# while current level is above it.
+			if not self.pressed and position >= self.press_level and old_position < self.press_level:
+				self._press(mapper)
+			elif self.pressed and position < self.press_level and old_position >= self.press_level:
+				self._release(mapper, old_position)
+			#else:
+			#	print position
+		if self.release_level < self.press_level:
+			# Mode 3, action is 'pressed' if current level is above 'press_level'
+			# and then released when it returns beyond 'release_level'.
+			if not self.pressed and position >= self.press_level and old_position < self.press_level:
+				self._press(mapper)
+			elif self.pressed and position < self.release_level and old_position >= self.release_level:
+				self._release(mapper, old_position)
+			#else:
+			#	print position
+		if self.child_is_axis and self.pressed:
+			self.action.trigger(mapper, position, old_position)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return self.action.describe(context)
+	
+	
+	def __str__(self):
+		return "<Trigger %s-%s %s >" % (self.press_level, self.release_level, self.action)
+	
 	__repr__ = __str__
 
 
