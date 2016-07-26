@@ -3,9 +3,9 @@
 Imports VDF profile and converts it to Profile object.
 """
 from scc.uinput import Keys, Axes, Rels
-from scc.modifiers import ClickModifier, DoubleclickModifier, HoldModifier
-from scc.actions import NoAction, ButtonAction, DPadAction
-from scc.actions import CircularAction, MouseAction
+from scc.modifiers import SensitivityModifier, ClickModifier, DoubleclickModifier, HoldModifier
+from scc.actions import NoAction, ButtonAction, DPadAction, XYAction
+from scc.actions import CircularAction, MouseAction, AxisAction
 from scc.parser import ActionParser, ParseError
 from scc.constants import SCButtons
 from scc.profile import Profile
@@ -39,6 +39,8 @@ class VDFProfile(Profile):
 		'VOLUME_UP' : Keys.KEY_VOLUMEUP,
 		'NEXT_TRACK' : Keys.KEY_NEXTSONG,
 		'PREV_TRACK' : Keys.KEY_PREVIOUSSONG,
+		'PAGE_UP' : Keys.KEY_PAGEUP,
+		'PAGE_DOWN' : Keys.KEY_PAGEDOWN,
 		'SINGLE_QUOTE' : Keys.KEY_APOSTROPHE,
 		'RETURN' : Keys.KEY_ENTER,
 		'ESCAPE' : Keys.KEY_ESC,
@@ -145,6 +147,19 @@ class VDFProfile(Profile):
 			raise ParseError("WTF")
 	
 	
+	@staticmethod
+	def get_inputs(grp):
+		"""
+		Returns 'inputs' or 'bindings', whichever exists in passed group.
+		If neither exists, return None.
+		"""
+		if "inputs" in grp:
+			return grp["inputs"]
+		if "bindings" in grp:
+			return grp["bindings"]
+		return None
+	
+	
 	def load(self, filename):
 		"""
 		Loads profile from vdf file. Returns self.
@@ -161,7 +176,8 @@ class VDFProfile(Profile):
 			mode = grp["mode"]
 			if mode in ("switches", "four_buttons"):
 				# ABXY and other buttons
-				inputs = grp["inputs"] if "inputs" in grp else grp["bindings"]
+				inputs = VDFProfile.get_inputs(grp)
+				if not inputs: continue
 				for b in inputs:
 					if b.lower() in VDFProfile.BUTTON_TO_BUTTON:
 						scc_b = VDFProfile.BUTTON_TO_BUTTON[b.lower()]
@@ -173,9 +189,12 @@ class VDFProfile(Profile):
 				continue
 			elif mode == "absolute_mouse":
 				action = MouseAction()
+			elif mode == "joystick_move":
+				action = XYAction(AxisAction(Axes.ABS_X), AxisAction(Axes.ABS_Y))
 			elif mode == "dpad":
 				# Left or right pad
-				inputs = grp["inputs"] if "inputs" in grp else grp["bindings"]
+				inputs = VDFProfile.get_inputs(grp)
+				if not inputs: continue
 				keys = []
 				for k in ("dpad_north", "dpad_south", "dpad_east", "dpad_west"):
 					if k in inputs:
@@ -185,7 +204,8 @@ class VDFProfile(Profile):
 				action = DPadAction(*keys)
 			elif mode == "trigger":
 				half, full = NoAction(), NoAction()
-				inputs = grp["inputs"] if "inputs" in grp else grp["bindings"]
+				inputs = VDFProfile.get_inputs(grp)
+				if not inputs: continue
 				if "click" in inputs:
 					full_action = VDFProfile.parse_vdf_button(inputs["click"])
 				# TODO: Half-pressed trigger here
@@ -204,6 +224,9 @@ class VDFProfile(Profile):
 			# Parse modifiers
 			if "settings" in grp:
 				settings = grp["settings"]
+				if "sensitivity" in settings:
+					sens = float(settings["sensitivity"]) / 100.0
+					action = SensitivityModifier(sens, sens, sens, action)
 				if "requires_click" in settings and settings["requires_click"] == "1":
 					action = ClickModifier(action)
 			
