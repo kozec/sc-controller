@@ -1591,10 +1591,6 @@ class TriggerAction(Action):
 		return self
 	
 	
-	def strip(self):
-		return self.action.strip()
-	
-	
 	# TriggerAction works only with trigger-related events
 	def button_press(self, *a):
 		pass

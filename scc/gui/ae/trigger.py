@@ -38,10 +38,10 @@ class TriggerComponent(AEComponent, BindingEditor):
 	
 	
 	def handles(self, mode, action):
-		if isinstance(action, MultiAction):
-			sucess, half, full, analog = TriggerComponent._split(action)
-			return sucess
-		return isinstance(action, (AxisAction, TriggerAction, NoAction))
+		if isinstance(action, NoAction):
+			return True
+		sucess, half, full, analog = TriggerComponent._split(action)
+		return sucess
 	
 	
 	@staticmethod
@@ -50,7 +50,7 @@ class TriggerComponent(AEComponent, BindingEditor):
 		Splits passed action so it can be displayed in UI.
 		Returns (sucess, half, full, analog), with three actions
 		for each UI element.
-		Note that returned action may be TriggerAction.
+		Note that each returned action may be TriggerAction.
 		
 		If passed action cannot be decoded,
 		'sucess' element of tuple is set to False
@@ -58,12 +58,13 @@ class TriggerComponent(AEComponent, BindingEditor):
 		half, full, analog = NoAction(), NoAction(), NoAction()
 		actions = action.actions if isinstance(action, MultiAction) else [ action ]
 		for a in actions:
-			if isinstance(a.strip(), AxisAction):
+			effective = TriggerComponent._strip_trigger(a).strip()
+			if isinstance(effective, AxisAction):
 				if analog:
 					# UI can do only one analog action per trigger
 					return False, half, full, analog
 				analog = a
-			elif isinstance(a.strip(), MouseAction):
+			elif isinstance(effective, MouseAction):
 				if analog:
 					# UI can do only one analog action per trigger
 					return False, half, full, analog
@@ -97,6 +98,8 @@ class TriggerComponent(AEComponent, BindingEditor):
 			else:
 				# Unhandled action type
 				return False, half, full, analog
+		if full and not half:
+			full, half = NoAction(), full
 		return True, half, full, analog
 	
 	
@@ -146,11 +149,13 @@ class TriggerComponent(AEComponent, BindingEditor):
 		full_level = int(self.builder.get_object("sclFullLevel").get_value())
 		release = self.builder.get_object("cbReleasePartially").get_active()
 		
-		if self.full and release:
-			actions.append(TriggerAction(half_level, full_level, self.half))
-		else:
-			actions.append(TriggerAction(half_level, TRIGGER_MAX, self.half))
-		actions.append(TriggerAction(full_level, TRIGGER_MAX, self.full))
+		if self.half:
+			if self.full and release:
+				actions.append(TriggerAction(half_level, full_level, self.half))
+			else:
+				actions.append(TriggerAction(half_level, TRIGGER_MAX, self.half))
+		if self.full:
+			actions.append(TriggerAction(full_level, TRIGGER_MAX, self.full))
 		
 		if self.analog:
 			analog_start = int(self.builder.get_object("sclARangeStart").get_value())
