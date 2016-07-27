@@ -49,6 +49,22 @@ Example:
 is same as
 `"stick" : { "action" : "XY(axis(Axes.ABS_RX), raxis(Axes.ABS_RY))" }`
 
+
+#### `levels`
+Turns action into `TriggerAction`, allowing to specify lower and upper trigger
+levels among which is action executed.
+
+Example:
+
+	"trigger_left": {
+	  "action": "button(BTN_LEFT)", 
+	  "levels": [127, 255]
+	}, 
+
+Sets action that presses left mouse button, but only if trigger
+is roughly half-pressed.
+
+
 #### `dpad`
 Turns action into `DPadAction`, allowing to assign different action for each
 side of pad or stick alignment.
@@ -154,6 +170,7 @@ Example:
 	  "action": "mouse()",
 	  "ball": True
 	},
+
 
 #### `modes`
 Defines mode shifting (see [mode modifier](actions.md#mode)).
