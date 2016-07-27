@@ -1166,6 +1166,24 @@ class MultiAction(Action):
 		self._add_all(actions)
 	
 	
+	@staticmethod
+	def make(*a):
+		"""
+		Connects two or more actions, ignoring NoActions.
+		Returns resulting MultiAction or just one action if every other
+		parameter is NoAction or only one parameter was passed.
+		Returns NoAction() if there are no parameters,
+		or every parameter is NoAction.
+		"""
+		a = [ a for a in a if a.strip() ]	# 8-)
+		# (^^ NoAction is eveluated as False)
+		if len(a) == 0:
+			return NoAction()
+		if len(a) == 1:
+			return a[0]
+		return MultiAction(*a)
+	
+	
 	def _add_all(self, actions):
 		for x in actions:
 			if type(x) == list:
@@ -1571,6 +1589,10 @@ class TriggerAction(Action):
 	def compress(self):
 		self.action = self.action.compress()
 		return self
+	
+	
+	def strip(self):
+		return self.action.strip()
 	
 	
 	# TriggerAction works only with trigger-related events

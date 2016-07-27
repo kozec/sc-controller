@@ -38,7 +38,7 @@ COMPONENTS = (								# List of known modules (components) in scc.gui.ae package
 	'buttons',
 	'dpad',
 	'per_axis',
-	'trigger_ab',
+	'trigger',
 	'special_action',
 	'custom',
 	# OSK-only components
@@ -779,7 +779,6 @@ class ActionEditor(Editor):
 			self._set_mode(action, mode or Action.AC_BUTTON)
 			self.hide_sensitivity(0, 1, 2)
 			self.hide_rotation()
-			self.hide_enable_feedback()
 			self.hide_hide_enable_deadzones()
 			self.hide_require_click()
 			self.set_action(action)

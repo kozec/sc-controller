@@ -25,7 +25,7 @@ class AxisComponent(AEComponent, Chooser):
 	GLADE = "ae/axis.glade"
 	NAME = "axis"
 	IMAGES = { "axis" : "axistrigger.svg" }
-	CTXS = Action.AC_TRIGGER
+	CTXS = 0
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
@@ -48,8 +48,6 @@ class AxisComponent(AEComponent, Chooser):
 	
 	
 	def set_action(self, mode, action):
-		self.builder.get_object("btFullPress").set_visible(mode == Action.AC_TRIGGER)
-		self.builder.get_object("btFullPressedClear").set_visible(mode == Action.AC_TRIGGER)
 		if self.handles(mode, action):
 			if isinstance(action, MultiAction) and len(action.actions) == 2:
 				# axis + button on fully pressed trigger
@@ -74,33 +72,3 @@ class AxisComponent(AEComponent, Chooser):
 				return False
 			action = action.actions[1]
 		return isinstance(action, (AxisAction, MouseAction))
-	
-	
-	def grab_action(self, button, cb):
-		b = SimpleChooser(self.app, "buttons", cb)
-		b.set_title(_("Select Button"))
-		b.hide_axes()
-		b.display_action(Action.AC_BUTTON, ButtonAction(button))
-		b.show(self.editor.window)
-	
-	
-	def on_btFullPressedClear_clicked(self, *a):
-		self.full = None
-		self.builder.get_object("lblFullPressed").set_label(describe_action(Action.AC_BUTTON, ButtonAction, self.full))
-		if self.active_area:
-			self.on_background_area_click(None, self.active_area)
-		else:
-			self.area_action_selected(None, NoAction())
-	
-	
-	def on_btFullPress_clicked(self, *a):
-		""" 'Select Fully Pressed Action' handler """
-		def cb(action):
-			self.full = action.button
-			self.builder.get_object("lblFullPressed").set_label(describe_action(Action.AC_BUTTON, ButtonAction, self.full))
-			if self.active_area:
-				self.on_background_area_click(None, self.active_area)
-			else:
-				self.area_action_selected(None, NoAction())
-		
-		self.grab_action(self.full, cb)
