@@ -164,9 +164,6 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'button(KEY_X)' }).button2 is None
 		assert parser.from_json_data({ 'action' : 'button(KEY_X, KEY_Z)' }).button == Keys.KEY_X
 		assert parser.from_json_data({ 'action' : 'button(KEY_X, KEY_Z)' }).button2 == Keys.KEY_Z
-		
-		assert parser.from_json_data({ 'action' : 'button(KEY_X, KEY_Z, 10, 20)' }).minustrigger == 10
-		assert parser.from_json_data({ 'action' : 'button(KEY_X, KEY_Z, 10, 20)' }).plustrigger == 20
 	
 	
 	def test_multiaction(self):
@@ -243,3 +240,18 @@ class TestActions(object):
 		assert isinstance(a, XYAction)
 		assert isinstance(a.x, AxisAction)
 		assert isinstance(a.y, AxisAction)
+	
+	
+	def test_trigger(self):
+		"""
+		Tests if TriggerAction is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'action' : 'button(KEY_X)',
+			'levels' : [ 10, 80 ]
+		})
+		
+		assert isinstance(a, TriggerAction)
+		assert isinstance(a.action, ButtonAction)
+		assert a.press_level == 10
+		assert a.release_level == 80

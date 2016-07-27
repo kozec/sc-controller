@@ -215,20 +215,3 @@ class TestModifiers(object):
 		assert _is_axis_with_value(a.normalaction,  Axes.ABS_RX)
 		assert _is_axis_with_value(a.holdaction, Axes.ABS_X)
 		assert not a.action
-
-
-	def test_doubleclick(self):
-		"""
-		Tests if DoubleclickModifier is parsed correctly from json.
-		"""
-		a = parser.from_json_data({
-			'action' : 'axis(ABS_RX)',
-			'doubleclick' : {
-				'action' : "axis(ABS_X)"
-			}
-		})
-		
-		assert isinstance(a, DoubleclickModifier)
-		assert _is_axis_with_value(a.normalaction,  Axes.ABS_RX)
-		assert _is_axis_with_value(a.action, Axes.ABS_X)
-		assert not a.holdaction

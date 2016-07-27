@@ -1614,6 +1614,12 @@ class TriggerAction(Action):
 			self.action.set_haptic(hapticdata)
 	
 	
+	def get_haptic(self):
+		if hasattr(self.action, "get_haptic"):
+			return self.action.get_haptic()
+		return None
+	
+	
 	def compress(self):
 		self.action = self.action.compress()
 		return self

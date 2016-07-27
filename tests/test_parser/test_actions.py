@@ -206,3 +206,14 @@ class TestActions(object):
 			AxisAction(Axes.ABS_X),
 			AxisAction(Axes.ABS_Y)
 		))
+
+
+	def test_trigger(self):
+		"""
+		Tests if TriggerAction can be converted to string and parsed back to
+		same action.
+		"""
+		assert _parses_as_itself(TriggerAction(
+			15, 234,
+			ButtonAction(Keys.KEY_A)
+		))

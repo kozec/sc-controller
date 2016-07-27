@@ -52,7 +52,12 @@ CASES = {
 		'Y' : { 'action' : 'axis(ABS_Y)' },
 		'sensitivity' : (2.0, 3.0,),
 		'feedback' : ('BOTH',)
-	}
+	},
+	'trigger' : {
+		'action' : 'button(KEY_X)',
+		'levels' : [ 10, 80 ],
+		'feedback' : ('BOTH',)
+	},
 }
 
 class TestCompress(object):
