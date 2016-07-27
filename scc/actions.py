@@ -1588,6 +1588,7 @@ class TriggerAction(Action):
 	"""
 	COMMAND = "trigger"
 	PROFILE_KEYS = "levels",
+	PROFILE_KEY_PRIORITY = -3	# After FeedbackModifier, rest doesn't matter
 	
 	def __init__(self, press_level, *params):
 		Action.__init__(self, press_level, *params)
@@ -1620,6 +1621,12 @@ class TriggerAction(Action):
 		""" Called when decoding profile from json """
 		press_level, release_level = data[TriggerAction.PROFILE_KEYS[0]]
 		return TriggerAction(press_level, release_level, a)
+	
+	
+	def set_haptic(self, hapticdata):
+		# Pass haptic settings to child action, if possible
+		if hasattr(self.action, "set_haptic"):
+			self.action.set_haptic(hapticdata)
 	
 	
 	def compress(self):

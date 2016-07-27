@@ -785,11 +785,7 @@ class ActionEditor(Editor):
 		elif id in TRIGGERS:
 			self.set_title(_("%s Trigger") % (id,))
 			self._set_mode(action, mode or Action.AC_TRIGGER)
-			self.hide_sensitivity(1, 2) # YZ
-			self.hide_rotation()
-			self.hide_require_click()
-			self.hide_hide_enable_deadzones()
-			self.hide_osd()
+			self.hide_modifiers()
 			self.set_action(action)
 			self.hide_macro()
 		elif id in STICKS:

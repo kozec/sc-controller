@@ -893,7 +893,7 @@ class FeedbackModifier(Modifier):
 	Does nothing otherwise.
 	"""
 	COMMAND = "feedback"
-	PROFILE_KEY_PRIORITY = 1
+	PROFILE_KEY_PRIORITY = -4
 	
 	def _mod_init(self, position, amplitude=512, frequency=4, period=1024, count=1):
 		self.haptic = HapticData(position, amplitude, frequency, period, count)
