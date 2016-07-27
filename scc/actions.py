@@ -99,10 +99,11 @@ class Action(object):
 			if not prefix in Action.ALL:
 				Action.ALL[prefix] = {}
 			dct = Action.ALL[prefix]
-		dct[action_cls.COMMAND] = action_cls
-		if hasattr(action_cls, "ALIASES"):
-			for a in action_cls.ALIASES:
-				dct[a] = action_cls
+		if action_cls.COMMAND is not None:
+			dct[action_cls.COMMAND] = action_cls
+			if hasattr(action_cls, "ALIASES"):
+				for a in action_cls.ALIASES:
+					dct[a] = action_cls
 		
 		if hasattr(action_cls, "decode"):
 			keys = (action_cls.COMMAND,)
@@ -130,7 +131,7 @@ class Action(object):
 		""" Registers all actions from module """
 		for x in dir(module):
 			g = getattr(module, x)
-			if hasattr(g, 'COMMAND') and g.COMMAND is not None:
+			if hasattr(g, 'COMMAND'):
 				Action.register(g, prefix=prefix)
 	
 	
@@ -1159,11 +1160,28 @@ class MultiAction(Action):
 	Generated when parsing 'and'
 	"""
 	COMMAND = None
+	PROFILE_KEYS = "actions",
+	PROFILE_KEY_PRIORITY = -20	# First possible
 	
 	def __init__(self, *actions):
 		self.actions = []
 		self.name = None
 		self._add_all(actions)
+	
+	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { 'actions' : [ x.encode() for x in self.actions ] }
+		if self.name: rv['name'] = self.name
+		return rv	
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		""" Called when decoding profile from json """
+		return MultiAction.make(*[
+			parser.from_json_data(a) for a in data['actions']
+		])
 	
 	
 	@staticmethod
@@ -1304,6 +1322,7 @@ class DPadAction(Action):
 	
 	@staticmethod
 	def decode(data, a, parser, *b):
+		""" Called when decoding profile from json """
 		args = [ parser.from_json_data(x) for x in data["dpad"] ]
 		if len(args) > 4:
 			a = DPad8Action(*args)
@@ -1401,7 +1420,7 @@ class XYAction(HapticEnabledAction, Action):
 	"""
 	COMMAND = "XY"
 	PROFILE_KEYS = ("X", "Y")
-	PROFILE_KEY_PRIORITY = -10	# First possible
+	PROFILE_KEY_PRIORITY = -10	# First possible, but not before MultiAction
 	
 	def __init__(self, x=None, y=None):
 		Action.__init__(self, *strip_none(x, y))
@@ -1417,6 +1436,7 @@ class XYAction(HapticEnabledAction, Action):
 	
 	@staticmethod
 	def decode(data, action, parser, *a):
+		""" Called when decoding profile from json """
 		x = parser.from_json_data(data["X"]) if "X" in data else NoAction()
 		y = parser.from_json_data(data["Y"]) if "Y" in data else NoAction()
 		return XYAction(x, y)
@@ -1567,6 +1587,7 @@ class TriggerAction(Action):
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "trigger"
+	PROFILE_KEYS = "levels",
 	
 	def __init__(self, press_level, *params):
 		Action.__init__(self, press_level, *params)
@@ -1584,6 +1605,21 @@ class TriggerAction(Action):
 		# child action recieves trigger events instead of button presses
 		# and button_releases.
 		self.child_is_axis = isinstance(self.action.strip(), AxisAction)
+	
+	
+	def encode(self):
+		""" Called from json encoder """
+		rv = self.action.encode()
+		rv[TriggerAction.PROFILE_KEYS[0]] = self.press_level, self.release_level
+		if self.name: rv['name'] = self.name
+		return rv	
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		""" Called when decoding profile from json """
+		press_level, release_level = data[TriggerAction.PROFILE_KEYS[0]]
+		return TriggerAction(press_level, release_level, a)
 	
 	
 	def compress(self):
