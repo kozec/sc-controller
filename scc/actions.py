@@ -1369,6 +1369,7 @@ class DPadAction(Action):
 
 class DPad8Action(DPadAction):
 	COMMAND = "dpad8"
+	PROFILE_KEYS = ()
 
 	def __init__(self, *actions):
 		DPadAction.__init__(self, *actions)

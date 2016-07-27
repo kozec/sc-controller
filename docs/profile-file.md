@@ -155,6 +155,61 @@ Example:
 	  "ball": True
 	},
 
+#### `modes`
+Defines mode shifting (see [mode modifier](actions.md#mode)).
+
+Value is dict with physical key names (A, B, X, Y...) as keys and actions
+for each mode as values. Action on same level as `mode` is used as default
+action.
+
+Example:
+
+	"modes": {
+	  "A": { "action": "mouse()" },
+	  "B": { "action": "XY( axis(Axes.ABS_X), raxis(Axes.ABS_Y) )" }
+	},
+
+defines pad or stick that controls mouse while button A is pressed
+and left virtual stick while button B is pressed.
+
+
+#### `doubleclick`
+Defines action that is executed when user double-clicks with button.
+Optional `time` key can be used on same level as `doubleclick` to modify
+double-click time.
+
+Example:
+
+	"buttons": {
+	  "A": {
+	    "action": "button(KEY_X)",
+	    "doubleclick": { "action": "button(KEY_Z)" },
+		"time": 5
+	  }
+	}
+
+defines button that emulates pressing X key when pressed normally and
+pressing Z key when doubleclicked.
+
+
+#### `hold`
+Defines action that is executed when user holds button for short time.
+Optional `time` key can be used on same level as `hold` to modify
+double-click time.
+
+Example:
+
+	"buttons": {
+	  "A": {
+	    "action": "button(KEY_X)",
+	    "hold": { "action": "button(KEY_Z)" },
+		"time": 5
+	  }
+	}
+
+defines button that emulates pressing X key when pressed normally and
+pressing Z key when holded for 5 seconds.
+
 
 ## <a name="buttons"></a>Buttons
 `buttons` is dictionary with keys for each gamepad button.
