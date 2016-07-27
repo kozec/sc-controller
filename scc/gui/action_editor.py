@@ -38,7 +38,7 @@ COMPONENTS = (								# List of known modules (components) in scc.gui.ae package
 	'buttons',
 	'dpad',
 	'per_axis',
-	'trigger_ab',
+	'trigger',
 	'special_action',
 	'custom',
 	# OSK-only components
@@ -779,18 +779,13 @@ class ActionEditor(Editor):
 			self._set_mode(action, mode or Action.AC_BUTTON)
 			self.hide_sensitivity(0, 1, 2)
 			self.hide_rotation()
-			self.hide_enable_feedback()
 			self.hide_hide_enable_deadzones()
 			self.hide_require_click()
 			self.set_action(action)
 		elif id in TRIGGERS:
 			self.set_title(_("%s Trigger") % (id,))
 			self._set_mode(action, mode or Action.AC_TRIGGER)
-			self.hide_sensitivity(1, 2) # YZ
-			self.hide_rotation()
-			self.hide_require_click()
-			self.hide_hide_enable_deadzones()
-			self.hide_osd()
+			self.hide_modifiers()
 			self.set_action(action)
 			self.hide_macro()
 		elif id in STICKS:

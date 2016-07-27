@@ -18,7 +18,7 @@ log = logging.getLogger("profile")
 
 
 class Profile(object):
-	VERSION = 1.1	# Current profile version. When loading profile file
+	VERSION = 1.2	# Current profile version. When loading profile file
 					# with version lower than this, auto-conversion may happen
 	
 	LEFT  = LEFT
@@ -181,6 +181,46 @@ class Profile(object):
 							n = FeedbackModifier(feedback, 4096, 16, n)
 						self.pads[p] = n
 						log.info("Converted %s to %s", a.to_string(), n.to_string())
+		if from_version < 1.2:
+			# Convert old trigger settings that were done with ButtonAction
+			# to new TriggerAction
+			from scc.constants import TRIGGER_HALF, TRIGGER_MAX, TRIGGER_CLICK
+			from scc.actions import ButtonAction, TriggerAction, MultiAction
+			from scc.uinput import Keys
+			for p in (Profile.LEFT, Profile.RIGHT):
+				if isinstance(self.triggers[p], ButtonAction):
+					buttons, numbers = [], []
+					n = None
+					# There were one or two keys and zero to two numeric
+					# parameters for old button action
+					for param in self.triggers[p].parameters:
+						if param in Keys:
+							buttons.append(param)
+						elif type(param) in (int, float):
+							numbers.append(int(param))
+					if len(numbers) == 0:
+						# Trigger range was not specified, assume defaults
+						numbers = ( TRIGGER_HALF, TRIGGER_CLICK )
+					elif len(numbers) == 1:
+						# Only lower range was specified, add default upper range
+						numbers.append(TRIGGER_CLICK)
+					if len(buttons) == 1:
+						# If only one button was set, trigger should work like
+						# one big button
+						n = TriggerAction(numbers[0], ButtonAction(buttons[0]))
+					elif len(buttons) == 2:
+						# Both buttons were set
+						n = MultiAction(
+							TriggerAction(numbers[0], numbers[1], ButtonAction(buttons[0])),
+							TriggerAction(numbers[1], TRIGGER_MAX, ButtonAction(buttons[1]))
+						)
+					
+					print buttons
+					print numbers
+					if n:
+						log.info("Converted %s to %s",
+							self.triggers[p].to_string(), n.to_string())
+						self.triggers[p] = n
 
 
 class Encoder(JSONEncoder):

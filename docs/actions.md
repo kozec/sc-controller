@@ -25,15 +25,14 @@
 
 # <a name="actions"></a>Actions
 
-#### <a name="button"></a> button(button1 [, button2 = None, minustrigger = -16383, plustrigger = 16383 ])
+#### <a name="button"></a> button(button1 [, button2 = None ])
 - For button, simply maps real button to emulated
-- For stick or pad, when it is moved over 'minustrigger', 'button1' is pressed;
-  When it is moved back, 'button1' is released. Similary, 'button2' is pressed
-  and released when stick (or finger on pad) moves over 'plustrigger' value
-- For trigger, when trigger value goes over 'plustrigger', 'button2' is pressed;
-  then, when trigger value goes over 'minustrigger', 'button2' is released and
-  replaced with 'button1'. Whatever button was emulated by trigger, it is
-  released when trigger is released.
+- For stick or pad, 'button1' is pressed when stick or finger on pad is moved
+  to up or left and 'button2' when to down or right.
+  Using [dpad](#dpad) may be better for such situations.
+- For trigger, when trigger is pressed, but until it clicks, 'button2' is
+  pressed. When trigger clicks 'button2' is released and replaced by 'button1'.
+  If only 'button1' is set, trigger acts as big button.
   
   Note that 'button2' is always optional.
 
@@ -94,6 +93,33 @@ specified screen area. Coordinates are fractions of screen width and height,
 
 `relwinarea` does same thing but with position relative to current window instead of entire screen.
 
+
+#### <a name="trigger"></a> trigger(press_level, [release_level, ] action)
+Maps action to be executed as by button press when trigger is pressed through
+'press_level'. Level goes from 0 to 255, where 255 is level after physical
+trigger clicks.
+Then, optionally, if trigger is pressed through 'release_level', action is
+"released". If release_level is not set, action will be released only after
+trigger value moves back beyond press_level.
+
+It's possible to map multiple actions on different trigger levels using [and](#and).
+
+Examples:
+
+Hold right mouse button while trigger is being pressed, press left button when
+trigger clicks. Right button is released only when trigger is fully released.
+```
+trigger(64, 255, button(BTN_RIGHT)) and trigger(255, button(BTN_LEFT))
+```
+
+Control left virtual trigger while trigger is being pressed and press left button
+just before trigger clicks. If trigger clicks, press enter key and play feedback.
+```
+	trigger(64, 255, axis(ABS_Z))
+and
+	trigger(240, 254, button(BTN_LEFT))
+and
+	trigger(255, feedback(LEFT, button(KEY_ENTER)))```
 
 #### <a name="gyro"></a> gyro(axis1 [, axis2 [, axis3]])
 Maps *changes* in gyroscope pitch, yaw and roll movement into movements of gamepad stick.
