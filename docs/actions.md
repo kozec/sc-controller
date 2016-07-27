@@ -79,7 +79,7 @@ Controls scroll wheel by scrolling finger around pad.
 Axis should be Rels.REL_WHEEL or Rels.REL_HWHEEL.
 
 
-#### <a name="area"></a> area(x1, y1, x2, y2), winarea(x1, y1, x2, y2)
+#### <a name="area"></a> area(x1, y1, x2, y2), <a name="winarea"></a> winarea(x1, y1, x2, y2)
 Creates 1:1 mapping between finger position on pad and mouse position in
 specified screen area. Coordinates are in pixels with (0,0) on top,left corner.
 Negative number can be used to count from other side of screen.
@@ -87,7 +87,7 @@ Negative number can be used to count from other side of screen.
 `winarea` does same thing but with position relative to current window instead of entire screen.
 
 
-#### <a name="relarea"></a> relarea(x1, y1, x2, y2), relwinarea(x1, y1, x2, y2)
+#### <a name="relarea"></a> relarea(x1, y1, x2, y2), <a name="relwinarea"></a> relwinarea(x1, y1, x2, y2)
 Creates 1:1 mapping between finger position on pad and mouse position in
 specified screen area. Coordinates are fractions of screen width and height,
 (0,0) is top,left and (1,1) bottom,right corner of screen.
@@ -109,6 +109,12 @@ Can bee used ot map gyroscope to movement stick or to use controller as racing w
 Split to [ball](#ball) modifier and [mouse](#mouse) action.
 
 Typing `trackball` works as alias for `ball(mouse())`
+
+
+#### <a name="XY"></a> XY(xaction, yaction)
+Provides way to assign two different actions to two stick or pad axes.
+This is automatically handled by GUI, so user usually doesn't need
+to write it directly.
 
 
 #### <a name="press"></a> press(button)
@@ -250,7 +256,7 @@ Shortcut for `axis(id, 0, -32767)`, emulates moving hat down or pressing 'down'
 button on dpad.
 
 
-#### <a name="hatleft"></a> hatleft(id), hadright(id)
+#### <a name="hatleft"></a> hatleft(id), <a name="hatright"></a> hatright(id)
 Same thing as hatup/hatdown, as vertical hat movement and left/right dpad
 buttons are same events on another axis
 
