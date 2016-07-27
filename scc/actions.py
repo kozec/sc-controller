@@ -1491,21 +1491,6 @@ class XYAction(HapticEnabledAction, Action):
 		return tuple(rv)
 	
 	
-	# XYAction no sense with button and trigger-related events
-	def button_press(self, *a):
-		pass
-	
-	def button_release(self, *a):
-		pass
-	
-	def trigger(self, *a):
-		pass
-	
-	# XYAction is what calls axis
-	def axis(self, *a):
-		pass
-	
-	
 	def _haptic(self, mapper, x, y):
 		"""
 		Common part of _change and whole - sends haptic output, if enabled
@@ -1633,19 +1618,6 @@ class TriggerAction(Action):
 		self.action = self.action.compress()
 		return self
 	
-	
-	# TriggerAction works only with trigger-related events
-	def button_press(self, *a):
-		pass
-	
-	def button_release(self, *a):
-		pass
-	
-	def axis(self, *a):
-		pass
-	
-	def whole(self, mapper, x, y, what):
-		pass
 	
 	def _press(self, mapper):
 		""" Called when trigger level enters active zone """
