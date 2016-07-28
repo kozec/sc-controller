@@ -52,6 +52,8 @@ class VDFProfile(Profile):
 		# As SPECIAL_KEYS, but for buttons.
 		'shoulder_left' : Keys.BTN_TL,
 		'shoulder_right' : Keys.BTN_TR,
+		'joystick_left' : Keys.BTN_THUMBL,
+		'joystick_right' : Keys.BTN_THUMBR,
 		'trigger_left' : Keys.BTN_TL2,
 		'trigger_right' : Keys.BTN_TR2,
 	}
