@@ -3,12 +3,12 @@
 Imports VDF profile and converts it to Profile object.
 """
 from scc.uinput import Keys, Axes, Rels
+from scc.modifiers import SensitivityModifier, ClickModifier, FeedbackModifier
 from scc.modifiers import BallModifier, DoubleclickModifier, HoldModifier
-from scc.modifiers import SensitivityModifier, ClickModifier
 from scc.actions import NoAction, ButtonAction, DPadAction, XYAction, TriggerAction
 from scc.actions import CircularAction, MouseAction, AxisAction, MultiAction
+from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK
 from scc.parser import ActionParser, ParseError
-from scc.constants import SCButtons, TRIGGER_CLICK
 from scc.profile import Profile
 from scc.lib.vdf import parse_vdf, ensure_list
 
@@ -62,18 +62,24 @@ class VDFProfile(Profile):
 	
 	
 	@staticmethod
-	def parse_action(string):
+	def parse_action(lst_or_str):
 		"""
-		Parses action from vdf file.
+		Parses action from vdf file. a_string can be either string or list of
+		strings, in which case MultiAction is returned.
+		
 		Returns Action instance or ParseError if action is not recognized.
 		"""
+		if type(lst_or_str) == list:
+			return MultiAction.make(*[ VDFProfile.parse_action(x) for x in lst_or_str ])
 		# Split string into binding type, name and parameters
-		binding, params = string.split(" ", 1)
+		binding, params = lst_or_str.split(" ", 1)
 		if "," in params:
 			params, name = params.split(",", 1)
 		else:
 			params, name = params, None
 		params = params.split(" ")
+		if name:
+			name = name.strip()
 		# Return apropriate Action for binding type
 		if binding in ("key_press", "mouse_button"):
 			if binding == "mouse_button":
@@ -95,6 +101,24 @@ class VDFProfile(Profile):
 				return MouseAction(Rels.REL_WHEEL, 1)
 		else:
 			raise ParseError("Unknown binding: '%s'" % (binding,))
+	
+	
+	@staticmethod
+	def parse_modifiers(group, action, side):
+		"""
+		If passed group or activator has 'settings' key, converts known
+		settings to one or more Modifier.
+		
+		Returns resulting Action
+		"""
+		if "settings" in group:
+			settings = group["settings"]
+			if "haptic_intensity" in settings:
+				action = FeedbackModifier(
+					HapticPos.LEFT if side == Profile.LEFT else HapticPos.RIGHT,
+					1024 * int(settings["haptic_intensity"]), action)
+		
+		return action
 	
 	
 	@staticmethod
@@ -150,6 +174,7 @@ class VDFProfile(Profile):
 					# TODO: Handle multiple bindings
 					bindings = ensure_list(dct_or_str["activators"][k])[0]
 					a = VDFProfile.parse_action(bindings["bindings"]["binding"])
+					a = VDFProfile.parse_modifiers(bindings, a, Profile.RIGHT)
 					# holly...
 				act_actions.append(a)
 			normal, double, hold = act_actions
@@ -196,9 +221,10 @@ class VDFProfile(Profile):
 			raise ParseError("Group without mode")
 		mode = group["mode"]
 		inputs = VDFProfile.get_inputs(group)
+		action = NoAction()
 		if not inputs:
 			# Empty group
-			return NoAction()
+			return action
 		
 		if "settings" in group:
 			settings = group["settings"]
@@ -216,18 +242,23 @@ class VDFProfile(Profile):
 					keys.append(VDFProfile.parse_button(inputs[k]))
 				else:
 					keys.append(NoAction())
-			return DPadAction(*keys)
+			action = DPadAction(*keys)
 		elif mode == "joystick_move":
 			if side == Profile.LEFT:
 				# Left
-				return XYAction(AxisAction(Axes.ABS_X), AxisAction(Axes.ABS_Y))
+				action = XYAction(AxisAction(Axes.ABS_X), AxisAction(Axes.ABS_Y))
 			else:
 				# Right
-				return XYAction(AxisAction(Axes.ABS_RX), AxisAction(Axes.ABS_RY))
+				action = XYAction(AxisAction(Axes.ABS_RX), AxisAction(Axes.ABS_RY))
 		elif mode == "absolute_mouse":
-			return MouseAction()
+			if "click" in inputs:
+				if side == Profile.LEFT:
+					self.buttons[SCButtons.LPAD] = VDFProfile.parse_button(inputs["click"])
+				else:
+					self.buttons[SCButtons.RPAD] = VDFProfile.parse_button(inputs["click"])
+			action = MouseAction()
 		elif mode == "mouse_wheel":
-			return BallModifier(XYAction(MouseAction(Rels.REL_HWHEEL),
+			action = BallModifier(XYAction(MouseAction(Rels.REL_HWHEEL),
 			 	ouseAction(Rels.REL_WHEEL)))
 		elif mode == "trigger":
 			actions = []
@@ -240,9 +271,12 @@ class VDFProfile(Profile):
 			else:
 				actions.append(AxisAction(Axes.ABS_RZ))
 			
-			return MultiAction.make(*actions)
+			action = MultiAction.make(*actions)
 		else:
 			raise ParseError("Unknown mode: '%s'" % (group["mode"],))
+		
+		action = VDFProfile.parse_modifiers(group, action, side)
+		return action
 	
 	
 	def parse_switches(self, group):
