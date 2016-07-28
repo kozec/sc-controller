@@ -113,6 +113,9 @@ class VDFProfile(Profile):
 		"""
 		if "settings" in group:
 			settings = group["settings"]
+			if "sensitivity" in settings:
+				s = float(settings["sensitivity"]) / 100.0
+				action = SensitivityModifier(s, s, s, action)
 			if "haptic_intensity" in settings:
 				action = FeedbackModifier(
 					HapticPos.LEFT if side == Profile.LEFT else HapticPos.RIGHT,
