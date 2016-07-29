@@ -6,6 +6,7 @@ from scc.uinput import Keys, Axes, Rels
 from scc.modifiers import SensitivityModifier, ClickModifier, FeedbackModifier
 from scc.modifiers import BallModifier, DoubleclickModifier, HoldModifier
 from scc.actions import NoAction, ButtonAction, DPadAction, XYAction, TriggerAction
+from scc.actions import HatUpAction, HatDownAction, HatLeftAction, HatRightAction
 from scc.actions import CircularAction, MouseAction, AxisAction, MultiAction
 from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK
 from scc.parser import ActionParser, ParseError
@@ -90,8 +91,19 @@ class VDFProfile(Profile):
 				b = VDFProfile.convert_key_name(params[0])
 			return ButtonAction(b).set_name(name)
 		elif binding == "xinput_button":
-			b = VDFProfile.convert_button_name(params[0])
-			return ButtonAction(b).set_name(name)
+			# Special cases, as dpad is apparently button on Windows
+			b = params[0].strip().lower()
+			if b == "dpad_up":
+				return HatUpAction(Axes.ABS_HAT0Y)
+			elif b == "dpad_down":
+				return HatDownAction(Axes.ABS_HAT0Y)
+			elif b == "dpad_left":
+				return HatLeftAction(Axes.ABS_HAT0X)
+			elif b == "dpad_right":
+				return HatRightAction(Axes.ABS_HAT0X)
+			else:
+				b = VDFProfile.convert_button_name(b)
+				return ButtonAction(b).set_name(name)
 		elif binding in ("mode_shift", "controller_action"):
 			# TODO: This gonna be fun
 			log.warning("Ignoring '%s' binding" % (binding,))
@@ -292,7 +304,6 @@ class VDFProfile(Profile):
 				raise ParseError("Unknown button: '%s'" % (button,))
 			b = VDFProfile.BUTTON_TO_BUTTON[button]
 			self.buttons[b] = VDFProfile.parse_button(inputs[button])
-			print b, self.buttons[b]
 	
 	
 	def parse_input_binding(self, data, group_id, binding):
