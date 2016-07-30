@@ -38,6 +38,8 @@ class MenuOnlyComponent(AEComponent, MenuActionCofC):
 	
 	
 	def set_action(self, mode, action):
+		if isinstance(action, PositionModifier):
+			action = action.action
 		if isinstance(action, MenuAction):
 			self._current_menu = action.menu_id
 	

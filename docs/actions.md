@@ -119,7 +119,8 @@ just before trigger clicks. If trigger clicks, press enter key and play feedback
 and
 	trigger(240, 254, button(BTN_LEFT))
 and
-	trigger(255, feedback(LEFT, button(KEY_ENTER)))```
+	trigger(255, feedback(LEFT, button(KEY_ENTER)))
+```
 
 #### <a name="gyro"></a> gyro(axis1 [, axis2 [, axis3]])
 Maps *changes* in gyroscope pitch, yaw and roll movement into movements of gamepad stick.
@@ -260,6 +261,11 @@ Enables on screen display for action. In most cases just displays action
 description in OSD and executes it normally.
 Works only if executed by pressing physical button or with `dpad`. Otherwise
 just executes child action.
+
+
+#### <a name="position"></a> position(x, y, action)
+Specifies menu position on screen. X is position from left, Y from top. To
+specify position from right or bottom, use negative values.
 
 
 #### <a name="name"></a> name(name, action)

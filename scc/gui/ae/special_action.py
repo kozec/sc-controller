@@ -71,7 +71,7 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 			elif isinstance(action, ChangeProfileAction):
 				self._current_profile = action.profile
 				self.set_cb(cb, "profile")
-			elif isinstance(action, MenuAction):
+			elif MenuActionCofC.handles(self, None, action):
 				self.set_cb(cb, "menu")
 				self.load_menu_data(action)
 			elif isinstance(action, KeyboardAction):
@@ -182,4 +182,8 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 	def on_exMenuControl_activate(self, ex, *a):
 		rvMenuControl = self.builder.get_object("rvMenuControl")
 		rvMenuControl.set_reveal_child(not ex.get_expanded())
-
+	
+	
+	def on_exMenuPosition_activate(self, ex, *a):
+		rvMenuPosition = self.builder.get_object("rvMenuPosition")
+		rvMenuPosition.set_reveal_child(not ex.get_expanded())

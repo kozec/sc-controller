@@ -81,6 +81,20 @@ class TestSpecialActions(object):
 			assert a.show_with_release == True
 	
 	
+	def test_position(self):
+		"""
+		Tests if PositionModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'action' : "menu('some.menu', LEFT, X, Y, True)",
+			'position' : [ -10, 10 ]
+		}).compress()
+		
+		assert isinstance(a, MenuAction)
+		assert a.x == -10
+		assert a.y ==  10
+	
+	
 	def test_keyboard(self):
 		"""
 		Tests if KeyboardAction is parsed correctly from json.

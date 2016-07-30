@@ -8,7 +8,9 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import MenuAction, GridMenuAction, RadialMenuAction
+from scc.special_actions import PositionModifier
 from scc.constants import SCButtons, SAME
+from scc.actions import NoAction
 from scc.tools import nameof
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.menu_editor import MenuEditor
@@ -66,6 +68,15 @@ class MenuActionCofC(UserDataManager):
 	
 	
 	def load_menu_data(self, action):
+		if isinstance(action, PositionModifier):
+			# Load menu position modifier, if used
+			x, y = action.position
+			self.builder.get_object("cbMenuPosX").set_active(0 if x >= 0 else 1)
+			self.builder.get_object("cbMenuPosY").set_active(0 if y >= 0 else 1)
+			self.builder.get_object("spMenuPosX").set_value(abs(x))
+			self.builder.get_object("spMenuPosY").set_value(abs(y))
+			action = action.action
+		
 		self._current_menu = action.menu_id
 		cbm = self.builder.get_object("cbMenuType")
 		self.set_cb(cbm, self.menu_class_to_key(action), 1)
@@ -140,6 +151,8 @@ class MenuActionCofC(UserDataManager):
 	
 	
 	def handles(self, mode, action):
+		if isinstance(action, PositionModifier):
+			return isinstance(action.action, MenuAction)
 		return isinstance(action, MenuAction)
 	
 	
@@ -168,6 +181,7 @@ class MenuActionCofC(UserDataManager):
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		if cbMenuAutoConfirm and cbConfirmWith:
+			# Control Options block exists in UI
 			lblConfirmWith = self.builder.get_object("lblConfirmWith")
 			lblConfirmWith.set_sensitive(not cbMenuAutoConfirm.get_active())
 			cbConfirmWith.set_sensitive(not cbMenuAutoConfirm.get_active())
@@ -183,6 +197,7 @@ class MenuActionCofC(UserDataManager):
 			me.show(self.editor.window)
 			return
 		if name:
+			# There is some menu choosen
 			cbControlWith = self.builder.get_object("cbControlWith")
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
 			params = [ name ]
@@ -196,13 +211,28 @@ class MenuActionCofC(UserDataManager):
 					params[2] = SAME
 			elif self.confirm_with_same_active():
 				params += [ STICK, SAME ]
+			# Grab menu type and choose apropriate action
 			cbm = self.builder.get_object("cbMenuType")
+			action = NoAction()
 			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
 				# Grid menu
-				self.editor.set_action(GridMenuAction(*params))
+				action = GridMenuAction(*params)
 			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "radialmenu":
 				# Circular menu
-				self.editor.set_action(RadialMenuAction(*params))
+				action = RadialMenuAction(*params)
 			else:
 				# Normal menu
-				self.editor.set_action(MenuAction(*params))
+				action = MenuAction(*params)
+			
+			# Apply Menu Position options, if such block exists in UI
+			if self.builder.get_object("spMenuPosX"):
+				cbMenuPosX = self.builder.get_object("cbMenuPosX")
+				cbMenuPosY = self.builder.get_object("cbMenuPosY")
+				x = int(self.builder.get_object("spMenuPosX").get_value())
+				y = int(self.builder.get_object("spMenuPosY").get_value())
+				x *= cbMenuPosX.get_model().get_value(cbMenuPosX.get_active_iter(), 0)
+				y *= cbMenuPosY.get_model().get_value(cbMenuPosY.get_active_iter(), 0)
+				if (x, y) != MenuAction.DEFAULT_POSITION:
+					action = PositionModifier(x, y, action)
+			
+			self.editor.set_action(action)

@@ -75,6 +75,14 @@ class TestSpecialActions(object):
 				SCButtons.Y, True))
 	
 	
+	def test_position(self):
+		"""
+		Tests if PositionModifier can be converted to string and parsed
+		back to same action.
+		"""
+		assert _parses_as_itself(PositionModifier(14, -34, MenuAction('menu1')))
+	
+	
 	def test_keyboard(self):
 		"""
 		Tests if KeyboardAction can be converted to string and parsed back to

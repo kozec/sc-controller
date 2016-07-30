@@ -16,6 +16,7 @@ from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
 from scc.constants import STICK_PAD_MAX
 from scc.tools import strip_none, nameof
+from scc.modifiers import Modifier
 from math import sqrt
 
 import time, logging
@@ -212,6 +213,7 @@ class MenuAction(Action, SpecialAction):
 	DEFAULT_CANCEL = SCButtons.B
 	DEFAULT_CONTROL = STICK
 	MIN_STICK_DISTANCE = STICK_PAD_MAX / 3
+	DEFAULT_POSITION = 10, -10
 	
 	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
 					confirm_with=DEFAULT_CONFIRM, cancel_with=DEFAULT_CANCEL,
@@ -224,6 +226,7 @@ class MenuAction(Action, SpecialAction):
 		self.control_with = control_with
 		self.confirm_with = confirm_with
 		self.cancel_with = cancel_with
+		self.x, self.y = MenuAction.DEFAULT_POSITION
 		self.show_with_release = bool(show_with_release)
 		self._stick_distance = 0
 	
@@ -244,18 +247,24 @@ class MenuAction(Action, SpecialAction):
 		if not self.show_with_release:
 			if self.confirm_with == SAME:
 				confirm_with = mapper.get_pressed_button() or self.DEFAULT_CONFIRM
+				x, y = self.position
 				self.execute(mapper,
 					'--control-with', nameof(self.control_with),
+					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
 					'--confirm-with', confirm_with.name,
 					'--cancel-with', self.cancel_with.name)
 			else:
-				self.execute(mapper)
+				self.execute(mapper,
+					'-x', str(self.x), '-y', str(self.y)
+				)
 	
 	
 	def button_release(self, mapper):
 		if self.show_with_release:
-			self.execute(mapper)
+			self.execute(mapper, '-x',
+				'-x', str(self.x), '-y', str(self.y)
+			)
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -265,14 +274,24 @@ class MenuAction(Action, SpecialAction):
 			else:
 				confirm, cancel = "RPAD", SCButtons.RPADTOUCH
 			if not mapper.was_pressed(cancel):
-				self.execute(mapper, '--control-with', what, '--use-cursor',
-					'--confirm-with', confirm, '--cancel-with', cancel.name)
+				self.execute(mapper,
+					'--control-with', what,
+					'-x', str(self.x), '-y', str(self.y),
+					'--use-cursor',
+					'--confirm-with', confirm,
+					'--cancel-with', cancel.name
+				)
 		if what == STICK:
 			# Special case, menu is displayed only if is moved enought
 			distance = sqrt(x*x + y*y)
 			if self._stick_distance < MenuAction.MIN_STICK_DISTANCE and distance > MenuAction.MIN_STICK_DISTANCE:
-				self.execute(mapper, '--control-with', STICK, '--use-cursor',
-					'--confirm-with', "STICKPRESS", '--cancel-with', STICK)
+				self.execute(mapper,
+					'--control-with', STICK,
+					'-x', str(self.x), '-y', str(self.y),
+					'--use-cursor',
+					'--confirm-with', "STICKPRESS",
+					'--cancel-with', STICK
+				)
 			self._stick_distance = distance
 
 
@@ -316,3 +335,35 @@ class KeyboardAction(Action, SpecialAction):
 	
 	def button_release(self, mapper):
 		self.execute(mapper)
+
+
+class PositionModifier(Modifier):
+	"""
+	Sets position for OSD menu.
+	"""
+	COMMAND = "position"
+	
+	def _mod_init(self, x, y):
+		self.position = (x, y)
+	
+	
+	def compress(self):
+		if isinstance(self.action, MenuAction):
+			self.action.x, self.action.y = self.position
+		return self.action
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[PositionModifier.COMMAND] = self.position
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		x, y = data[PositionModifier.COMMAND]
+		return PositionModifier(x, y, a)
+	
+	
+	def describe(self, context):
+		return self.action.describe(context)
