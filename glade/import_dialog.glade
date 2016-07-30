@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.10"/>
+  <object class="GtkListStore" id="lstProfiles">
+    <columns>
+      <!-- column-name index -->
+      <column type="gint"/>
+      <!-- column-name game -->
+      <column type="gchararray"/>
+      <!-- column-name profile_name -->
+      <column type="gchararray"/>
+      <!-- column-name profile_file -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkTextBuffer" id="textbuffer1"/>
+  <object class="GtkAssistant" id="Dialog">
+    <property name="width_request">550</property>
+    <property name="height_request">700</property>
+    <property name="can_focus">False</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="type_hint">dialog</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="skip_pager_hint">True</property>
+    <property name="use_header_bar">1</property>
+    <signal name="apply" handler="on_apply" swapped="no"/>
+    <signal name="cancel" handler="on_cancel" swapped="no"/>
+    <signal name="prepare" handler="on_prepare" swapped="no"/>
+    <child>
+      <object class="GtkGrid" id="grid1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">10</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">10</property>
+        <child>
+          <object class="GtkScrolledWindow" id="swProfiles">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="margin_top">5</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTreeView" id="tvProfiles">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="model">lstProfiles</property>
+                <property name="search_column">1</property>
+                <property name="show_expanders">False</property>
+                <signal name="cursor-changed" handler="on_tvProfiles_cursor_changed" swapped="no"/>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="tsProfiles"/>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="tvcGame">
+                    <property name="resizable">True</property>
+                    <property name="sizing">autosize</property>
+                    <property name="title" translatable="yes">Game</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="crGame"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="tvcProfile">
+                    <property name="resizable">True</property>
+                    <property name="sizing">autosize</property>
+                    <property name="title" translatable="yes">Profile</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="crProfile"/>
+                      <attributes>
+                        <attribute name="text">2</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Select Profile to Import</property>
+            <property name="xalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRevealer" id="rvLoading">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="transition_type">none</property>
+            <property name="reveal_child">True</property>
+            <child>
+              <object class="GtkLabel" id="lblSearching">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">10</property>
+                <property name="margin_bottom">10</property>
+                <property name="label" translatable="yes">Searching for profiles. This may take som time.</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="page_type">intro</property>
+        <property name="has_padding">False</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkGrid" id="grImportFinished">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">20</property>
+        <property name="margin_right">20</property>
+        <child>
+          <object class="GtkLabel" id="lblImportFinished">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">55</property>
+            <property name="margin_bottom">50</property>
+            <property name="hexpand">True</property>
+            <property name="label" translatable="yes">Import results goes here</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblError">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="label" translatable="yes">Error message:</property>
+            <property name="xalign">0</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">1</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="swError">
+            <property name="height_request">300</property>
+            <property name="can_focus">True</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">10</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTextView" id="tvError">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="buffer">textbuffer1</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">2</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblName">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Enter name for imported profile and click "Apply"</property>
+            <property name="xalign">0</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">3</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="txName">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="margin_top">5</property>
+            <signal name="changed" handler="on_txName_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">4</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="page_type">confirm</property>
+        <property name="has_padding">False</property>
+      </packing>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child internal-child="action_area">
+      <object class="GtkBox" id="box1">
+        <property name="can_focus">False</property>
+        <property name="halign">end</property>
+        <property name="margin_left">6</property>
+        <property name="margin_right">6</property>
+        <property name="margin_start">6</property>
+        <property name="margin_end">6</property>
+        <property name="margin_top">6</property>
+        <property name="margin_bottom">6</property>
+        <property name="spacing">6</property>
+      </object>
+      <packing>
+        <property name="has_padding">False</property>
+      </packing>
+    </child>
+  </object>
+</interface>

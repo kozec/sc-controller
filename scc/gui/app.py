@@ -11,7 +11,6 @@ from gi.repository import Gtk, Gdk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.userdata_manager import UserDataManager
-from scc.gui.global_settings import GlobalSettings
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
 from scc.gui.svg_widget import SVGWidget
@@ -203,7 +202,18 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 	
 	def on_mnuGlobalSettings_activate(self, *a):
+		from scc.gui.global_settings import GlobalSettings
 		gs = GlobalSettings(self)
+		gs.show(self.window)
+	
+	
+	def on_mnuImport_activate(self, *a):
+		"""
+		Handler for 'Import Steam Profile' context menu item.
+		Displays apropriate dialog.
+		"""
+		from scc.gui.import_dialog import ImportDialog
+		gs = ImportDialog(self)
 		gs.show(self.window)
 	
 	
@@ -299,18 +309,29 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		""" Called when new profile name is set and OK is clicked """
 		txNewProfile = self.builder.get_object("txNewProfile")
 		dlg = self.builder.get_object("dlgNewProfile")
+		self.new_profile(self.current, txNewProfile.get_text())
+		dlg.hide()
+	
+	
+	def new_profile(self, profile, name):
+		"""
+		Stores passed profile under specified name, adds it to UI
+		and selects it.
+		"""
 		cb = self.builder.get_object("cbProfile")
-		name = txNewProfile.get_text()
-		filename = txNewProfile.get_text() + ".sccprofile"
+		filename = name + ".sccprofile"
 		path = os.path.join(get_profiles_path(), filename)
 		self.current_file = Gio.File.new_for_path(path)
+		self.current = profile
 		self.recursing = True
 		model = cb.get_model()
 		model.insert(0, ( name, self.current_file, None ))
 		cb.set_active(0)
 		self.recursing = False
-		self.save_profile(self.current_file, self.current)
-		dlg.hide()
+		self.save_profile(self.current_file, profile)
+		for b in self.button_widgets.values():
+			b.update()
+		self.on_profile_saved(self.current_file, False)	# Just to indicate that there are no changes to save
 	
 	
 	def on_profile_loaded(self, profile, giofile):

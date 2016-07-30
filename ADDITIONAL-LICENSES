@@ -1,5 +1,9 @@
-All images under images/ directory are licensed under CC0, https://creativecommons.org/publicdomain/zero/1.0/
+All images under images/ directory, profile files under default_profiles/ and profile_examples/ and menu files under default_menus/ are licensed under CC0, https://creativecommons.org/publicdomain/zero/1.0/
 
 lib/enum.py is licensed under BSD license, as described in that file.
+lib/usb1.py and lib/libusb1.py are licensed under LGPL 2.1, as described in those files.
+lib/jsonencoder.py is licensed under PSFL, https://www.python.org/download/releases/2.7/license/
+lib/xwrappers.py and lib/vdf.py are part of SC-Controller, licensed under GPL2 as rest of the project.
+
 
 Everything else is licensed under GPL2, as described in 'LICENCE' file.
