@@ -257,6 +257,7 @@ class ImportDialog(Editor, ComboSetter):
 				
 				lblImportFinished.set_text(_("Import failed"))
 				
+				error_log.write("\nProfile filename: %s\n" % (filename,))
 				error_log.write("\nProfile dump:\n")
 				try:
 					error_log.write(open(filename, "r").read())

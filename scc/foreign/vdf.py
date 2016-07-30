@@ -8,7 +8,7 @@ from scc.modifiers import BallModifier, DoubleclickModifier, HoldModifier
 from scc.actions import NoAction, ButtonAction, DPadAction, XYAction, TriggerAction
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction, HatRightAction
 from scc.actions import CircularAction, MouseAction, AxisAction, MultiAction
-from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK
+from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK, YAW, ROLL
 from scc.parser import ActionParser, ParseError
 from scc.profile import Profile
 from scc.lib.vdf import parse_vdf, ensure_list
@@ -128,13 +128,24 @@ class VDFProfile(Profile):
 		"""
 		if "settings" in group:
 			settings = group["settings"]
+			sens = 1.0, 1.0, 1.0
 			if "sensitivity" in settings:
 				s = float(settings["sensitivity"]) / 100.0
-				action = SensitivityModifier(s, s, s, action)
+				sens = s, s, s
 			if "haptic_intensity" in settings:
 				action = FeedbackModifier(
 					HapticPos.LEFT if side == Profile.LEFT else HapticPos.RIGHT,
 					1024 * int(settings["haptic_intensity"]), action)
+			if "invert_x" in settings and int(settings["invert_x"]):
+				sens = -1.0 * sens[0], sens[1], sens[2]
+			if "invert_y" in settings and int(settings["invert_y"]):
+				sens = sens[0], -1.0 * sens[1], sens[2]
+			if "invert_z" in settings and int(settings["invert_z"]):
+				sens = sens[0], sens[1], -1.0 * sens[2]
+			
+			if sens != (1.0, 1.0, 1.0):
+				action = SensitivityModifier(sens[0], sens[1], sens[2], action)
+			
 		
 		return action
 	
@@ -218,7 +229,7 @@ class VDFProfile(Profile):
 			return group["inputs"]
 		if "bindings" in group:
 			return group["bindings"]
-		return None
+		return {}
 	
 	
 	@staticmethod
@@ -239,19 +250,14 @@ class VDFProfile(Profile):
 			raise ParseError("Group without mode")
 		mode = group["mode"]
 		inputs = VDFProfile.get_inputs(group)
-		action = NoAction()
-		if not inputs:
-			# Empty group
-			return action
 		
-		if "settings" in group:
-			settings = group["settings"]
-			for o in ("output_trigger", "output_joystick"):
-				if o in settings:
-					if int(settings[o]) <= 1:
-						side = Profile.LEFT
-					else:
-						side = Profile.RIGHT
+		settings = group["settings"] if "settings" in group else {}
+		for o in ("output_trigger", "output_joystick"):
+			if o in settings:
+				if int(settings[o]) <= 1:
+					side = Profile.LEFT
+				else:
+					side = Profile.RIGHT
 		
 		if mode == "dpad":
 			keys = []
@@ -274,7 +280,13 @@ class VDFProfile(Profile):
 					self.buttons[SCButtons.LPAD] = VDFProfile.parse_button(inputs["click"])
 				else:
 					self.buttons[SCButtons.RPAD] = VDFProfile.parse_button(inputs["click"])
-			action = MouseAction()
+			if "gyro_axis" in settings:
+				if int(settings["gyro_axis"]) == 1:
+					action = MouseAction(ROLL)
+				else:
+					action = MouseAction(YAW)
+			else:
+				action = MouseAction()
 		elif mode == "mouse_wheel":
 			action = BallModifier(XYAction(MouseAction(Rels.REL_HWHEEL),
 			 	ouseAction(Rels.REL_WHEEL)))
@@ -324,6 +336,8 @@ class VDFProfile(Profile):
 				self.triggers[Profile.RIGHT] = self.parse_group(group, Profile.RIGHT)
 			elif binding.startswith("joystick"):
 				self.stick = self.parse_group(group, Profile.LEFT)
+			elif binding.startswith("gyro"):
+				self.gyro = self.parse_group(group, Profile.LEFT)
 			else:
 				raise ParseError("Unknown source: '%s'" % (binding,))
 	
@@ -349,7 +363,10 @@ class VDFProfile(Profile):
 			for group_id in gsb:
 				if not gsb[group_id].endswith("inactive"):
 					self.parse_input_binding(data, group_id, gsb[group_id])
-				
+			
+			if "switch_bindings" in p:
+				self.parse_switches(p['switch_bindings'])
+			
 			break	# TODO: Support for multiple presets
 		
 		return self
