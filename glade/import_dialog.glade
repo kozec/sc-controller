@@ -14,6 +14,7 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkTextBuffer" id="textbuffer1"/>
   <object class="GtkAssistant" id="Dialog">
     <property name="width_request">550</property>
     <property name="height_request">700</property>
@@ -24,7 +25,9 @@
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
     <property name="use_header_bar">1</property>
-    <signal name="cancel" handler="on_Dialog_cancel" swapped="no"/>
+    <signal name="apply" handler="on_apply" swapped="no"/>
+    <signal name="cancel" handler="on_cancel" swapped="no"/>
+    <signal name="prepare" handler="on_prepare" swapped="no"/>
     <child>
       <object class="GtkGrid">
         <property name="visible">True</property>
@@ -131,20 +134,90 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkGrid" id="grImportFinished">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Content page</property>
-      </object>
-      <packing>
-        <property name="has_padding">False</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Confirmation page</property>
+        <property name="margin_left">20</property>
+        <property name="margin_right">20</property>
+        <child>
+          <object class="GtkLabel" id="lblImportFinished">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">55</property>
+            <property name="margin_bottom">50</property>
+            <property name="hexpand">True</property>
+            <property name="label" translatable="yes">Import results goes here</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblError">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="label" translatable="yes">Error message:</property>
+            <property name="xalign">0</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">1</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="swError">
+            <property name="height_request">300</property>
+            <property name="can_focus">True</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">10</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTextView" id="tvError">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="buffer">textbuffer1</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">2</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblName">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Enter name for imported profile and click "Apply"</property>
+            <property name="xalign">0</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">3</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="txName">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="margin_top">5</property>
+            <signal name="changed" handler="on_txName_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">4</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
       </object>
       <packing>
         <property name="page_type">confirm</property>
@@ -152,17 +225,13 @@
       </packing>
     </child>
     <child>
-      <object class="GtkHeaderBar">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="title">Import Profile</property>
-        <child>
-          <placeholder/>
-        </child>
-      </object>
-      <packing>
-        <property name="has_padding">False</property>
-      </packing>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
     </child>
     <child type="titlebar">
       <placeholder/>

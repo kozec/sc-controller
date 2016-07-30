@@ -62,6 +62,7 @@ class VDFProfile(Profile):
 	
 	def __init__(self):
 		Profile.__init__(self, ActionParser())
+		self.name = "Unnamed"
 	
 	
 	@staticmethod
@@ -336,6 +337,10 @@ class VDFProfile(Profile):
 		if 'controller_mappings' not in data:
 			raise ValueError("Invalid profile file")
 		data = data['controller_mappings']
+		if 'title' in data:
+			name = data['title'].strip()
+			if name:
+				self.name = name
 		presets = ensure_list(data['preset'])
 		for p in presets:
 			if not 'group_source_bindings' in p:

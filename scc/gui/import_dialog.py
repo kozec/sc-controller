@@ -10,6 +10,8 @@ from scc.tools import _
 from gi.repository import Gdk, GObject, GLib
 from scc.gui.editor import Editor, ComboSetter
 from scc.lib.vdf import parse_vdf
+from scc.foreign.vdf import VDFProfile
+from cStringIO import StringIO
 
 import re, sys, os, collections, threading, logging
 log = logging.getLogger("ImportDialog")
@@ -22,6 +24,7 @@ class ImportDialog(Editor, ComboSetter):
 	def __init__(self, app):
 		self.app = app
 		self.setup_widgets()
+		self.profile = None
 		self.lstProfiles = self.builder.get_object("tvProfiles").get_model()
 		self.q_games    = collections.deque()
 		self.q_profiles = collections.deque()
@@ -69,7 +72,7 @@ class ImportDialog(Editor, ComboSetter):
 		for gameid in cc:
 			if "selected" in cc[gameid] and cc[gameid]["selected"].startswith("workshop"):
 				profile_id = cc[gameid]["selected"].split("/")[-1]
-				listitems.append(( i, gameid, profile_id, profile_id ))
+				listitems.append(( i, gameid, profile_id, None ))
 				i += 1
 				if len(listitems) > 10:
 					GLib.idle_add(self.fill_list, listitems)
@@ -136,14 +139,14 @@ class ImportDialog(Editor, ComboSetter):
 					try:
 						data = parse_vdf(open(filename, "r"))
 						name = data['controller_mappings']['title']
-						GLib.idle_add(self._set_profile_name, index, name)
+						GLib.idle_add(self._set_profile_name, index, name, filename)
 						break
 					except Exception, e:
 						log.error("Failed to read profile name from '%s'", filename)
 						log.exception(e)
 			else:
-				name = _("Profile ID %s") % (profile_id,)
-				GLib.idle_add(self._set_profile_name, index, name)
+				name = _("(not found)")
+				GLib.idle_add(self._set_profile_name, index, name, None)
 	
 	
 	def _load_finished(self):
@@ -171,8 +174,9 @@ class ImportDialog(Editor, ComboSetter):
 	def _set_game_name(self, index, name):
 		self.lstProfiles[index][1] = name
 	
-	def _set_profile_name(self, index, name):
+	def _set_profile_name(self, index, name, filename):
 		self.lstProfiles[index][2] = name
+		self.lstProfiles[index][3] = filename
 	
 	
 	def fill_list(self, items):
@@ -188,9 +192,98 @@ class ImportDialog(Editor, ComboSetter):
 			self.s_profiles.release()
 	
 	
-	def on_Dialog_cancel(self, *a):
+	def on_tvProfiles_cursor_changed(self, *a):
+		"""
+		Called when user selects profile.
+		Check if file for that profile is known and if yes, enables next page.
+		"""
+		tvProfiles = self.builder.get_object("tvProfiles")
+		model, iter = tvProfiles.get_selection().get_selected()
+		filename = model.get_value(iter, 3)
+		self.window.set_page_complete(
+			self.window.get_nth_page(self.window.get_current_page()),
+			filename is not None
+		)
+	
+	
+	def on_txName_changed(self, ent):
+		"""
+		Called when text in profile name field is changed.
+		Basically enables 'Save' button if name is not empty string.
+		"""
+		self.window.set_page_complete(
+			self.window.get_nth_page(self.window.get_current_page()),
+			len(ent.get_text().strip()) > 0 and "/" not in ent.get_text()
+		)
+	
+	
+	def on_prepare(self, trash, child):
+		if child == self.builder.get_object("grImportFinished"):
+			tvProfiles = self.builder.get_object("tvProfiles")
+			lblImportFinished = self.builder.get_object("lblImportFinished")
+			lblError = self.builder.get_object("lblError")
+			tvError = self.builder.get_object("tvError")
+			swError = self.builder.get_object("swError")
+			lblName = self.builder.get_object("lblName")
+			txName = self.builder.get_object("txName")
+			
+			model, iter = tvProfiles.get_selection().get_selected()
+			filename = model.get_value(iter, 3)
+			self.profile = VDFProfile()
+			failed = False
+			error_log = StringIO()
+			handler = logging.StreamHandler(error_log)
+			logging.getLogger().addHandler(handler)
+			swError.set_visible(False)
+			lblError.set_visible(False)
+			lblName.set_visible(True)
+			txName.set_visible(True)
+			
+			try:
+				self.profile.load(filename)
+			except Exception, e:
+				log.exception(e)
+				lblName.set_visible(False)
+				txName.set_visible(False)
+				txName.set_text("")
+				self.profile = None
+				failed = True
+			
+			logging.getLogger().removeHandler(handler)
+			
+			if failed:
+				swError.set_visible(True)
+				lblError.set_visible(True)
+				
+				lblImportFinished.set_text(_("Import failed"))
+				
+				error_log.write("\nProfile dump:\n")
+				try:
+					error_log.write(open(filename, "r").read())
+				except Exception, e:
+					error_log.write("(failed to write: %s)" % (e,))
+				
+				tvError.get_buffer().set_text(error_log.getvalue())
+			elif len(error_log.getvalue()) > 0:
+				# Some warnings were displayed
+				swError.set_visible(True)
+				lblError.set_visible(True)
+				
+				lblImportFinished.set_text(_("Profile imported with warnings"))
+				
+				tvError.get_buffer().set_text(error_log.getvalue())
+				txName.set_text(self.profile.name)
+
+			else:
+				lblImportFinished.set_text(_("Profile sucessfully imported"))
+				txName.set_text(self.profile.name)
+	
+	
+	def on_cancel(self, *a):
 		self.window.destroy()
 	
 	
-	def on_tvProfiles_cursor_changed(self, *a):
-		print self.window
+	def on_apply(self, *a):
+		txName = self.builder.get_object("txName")
+		self.app.new_profile(self.profile, txName.get_text())
+		GLib.idle_add(self.window.destroy)

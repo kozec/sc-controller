@@ -309,18 +309,29 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		""" Called when new profile name is set and OK is clicked """
 		txNewProfile = self.builder.get_object("txNewProfile")
 		dlg = self.builder.get_object("dlgNewProfile")
+		self.new_profile(self.current, txNewProfile.get_text())
+		dlg.hide()
+	
+	
+	def new_profile(self, profile, name):
+		"""
+		Stores passed profile under specified name, adds it to UI
+		and selects it.
+		"""
 		cb = self.builder.get_object("cbProfile")
-		name = txNewProfile.get_text()
-		filename = txNewProfile.get_text() + ".sccprofile"
+		filename = name + ".sccprofile"
 		path = os.path.join(get_profiles_path(), filename)
 		self.current_file = Gio.File.new_for_path(path)
+		self.current = profile
 		self.recursing = True
 		model = cb.get_model()
 		model.insert(0, ( name, self.current_file, None ))
 		cb.set_active(0)
 		self.recursing = False
-		self.save_profile(self.current_file, self.current)
-		dlg.hide()
+		self.save_profile(self.current_file, profile)
+		for b in self.button_widgets.values():
+			b.update()
+		self.on_profile_saved(self.current_file, False)	# Just to indicate that there are no changes to save
 	
 	
 	def on_profile_loaded(self, profile, giofile):
