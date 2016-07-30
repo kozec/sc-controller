@@ -29,7 +29,7 @@
     <signal name="cancel" handler="on_cancel" swapped="no"/>
     <signal name="prepare" handler="on_prepare" swapped="no"/>
     <child>
-      <object class="GtkGrid">
+      <object class="GtkGrid" id="grid1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">10</property>
@@ -37,7 +37,7 @@
         <property name="margin_top">5</property>
         <property name="margin_bottom">10</property>
         <child>
-          <object class="GtkScrolledWindow">
+          <object class="GtkScrolledWindow" id="swProfiles">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="margin_top">5</property>
@@ -55,15 +55,15 @@
                 <property name="show_expanders">False</property>
                 <signal name="cursor-changed" handler="on_tvProfiles_cursor_changed" swapped="no"/>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
+                  <object class="GtkTreeSelection" id="tsProfiles"/>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn">
+                  <object class="GtkTreeViewColumn" id="tvcGame">
                     <property name="resizable">True</property>
                     <property name="sizing">autosize</property>
                     <property name="title" translatable="yes">Game</property>
                     <child>
-                      <object class="GtkCellRendererText"/>
+                      <object class="GtkCellRendererText" id="crGame"/>
                       <attributes>
                         <attribute name="text">1</attribute>
                       </attributes>
@@ -71,12 +71,12 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn">
+                  <object class="GtkTreeViewColumn" id="tvcProfile">
                     <property name="resizable">True</property>
                     <property name="sizing">autosize</property>
                     <property name="title" translatable="yes">Profile</property>
                     <child>
-                      <object class="GtkCellRendererText"/>
+                      <object class="GtkCellRendererText" id="crProfile"/>
                       <attributes>
                         <attribute name="text">2</attribute>
                       </attributes>
@@ -92,7 +92,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Select Profile to Import</property>
@@ -237,7 +237,7 @@
       <placeholder/>
     </child>
     <child internal-child="action_area">
-      <object class="GtkBox">
+      <object class="GtkBox" id="box1">
         <property name="can_focus">False</property>
         <property name="halign">end</property>
         <property name="margin_left">6</property>
