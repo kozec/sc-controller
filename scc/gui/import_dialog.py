@@ -96,16 +96,21 @@ class ImportDialog(Editor, ComboSetter):
 				index, gameid = self.q_games.popleft()
 			except IndexError:
 				break
-			filename = os.path.join(sa_path, "appminifest_%s.acf" % (gameid,))
-			if os.path.exists(filename):
-				try:
-					data = parse_vdf(open(filename, "r"))
-					GLib.idle_add(self._set_game_name, index, data['appstate']['name'])
-				except Exception, e:
-					log.error("Failed to load app manifest for '%s'", gameid)
-					log.exception(e)
+			if gameid.isdigit():
+				name = _("Unknown App ID %s") % (gameid)
+				filename = os.path.join(sa_path, "appmanifest_%s.acf" % (gameid,))
+				if os.path.exists(filename):
+					try:
+						data = parse_vdf(open(filename, "r"))
+						name = data['appstate']['name']
+					except Exception, e:
+						log.error("Failed to load app manifest for '%s'", gameid)
+						log.exception(e)
+				else:
+					log.warning("Skiping non-existing app manifest '%s'", filename)
 			else:
-				log.warning("Skiping non-existing app manifest for '%s'", gameid)
+				name = gameid
+			GLib.idle_add(self._set_game_name, index, name)
 	
 	
 	def _load_profile_names(self):
@@ -125,20 +130,25 @@ class ImportDialog(Editor, ComboSetter):
 			except IndexError:
 				break
 			for user in os.listdir(content_path):
-				filename = os.path.join(content_path, user, gameid, "controller_configuration.vdf")
+				filename = os.path.join(content_path, user, profile_id, "controller_configuration.vdf")
 				if os.path.exists(filename):
+					log.warning("Reading '%s'", filename)
 					try:
 						data = parse_vdf(open(filename, "r"))
-						GLib.idle_add(self._set_profile_name, index, data['controller_mappings']['title'])
+						name = data['controller_mappings']['title']
+						GLib.idle_add(self._set_profile_name, index, name)
+						break
 					except Exception, e:
 						log.error("Failed to read profile name from '%s'", filename)
 						log.exception(e)
-				else:
-					log.warning("Skiping non-existing profile '%s'", filename)
+			else:
+				name = _("Profile ID %s") % (profile_id,)
+				GLib.idle_add(self._set_profile_name, index, name)
 	
 	
 	def _load_finished(self):
 		""" Called in main thread after _load_profiles is finished """
+		self.builder.get_object("rvLoading").set_reveal_child(False)
 		self.loading = False
 		self.s_games.release()
 		self.s_profiles.release()
@@ -176,3 +186,11 @@ class ImportDialog(Editor, ComboSetter):
 			self.s_games.release()
 			self.q_profiles.append(( i[0], i[1], i[2] ))
 			self.s_profiles.release()
+	
+	
+	def on_Dialog_cancel(self, *a):
+		self.window.destroy()
+	
+	
+	def on_tvProfiles_cursor_changed(self, *a):
+		print self.window
