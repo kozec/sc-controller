@@ -280,6 +280,14 @@ class VDFProfile(Profile):
 				else:
 					keys.append(NoAction())
 			action = DPadAction(*keys)
+		elif mode == "four_buttons":
+			keys = []
+			for k in ("button_y", "button_a", "button_x", "button_b"):
+				if k in inputs:
+					keys.append(self.parse_button(inputs[k]))
+				else:
+					keys.append(NoAction())
+			action = DPadAction(*keys)
 		elif mode == "joystick_move":
 			if side == Profile.LEFT:
 				# Left
