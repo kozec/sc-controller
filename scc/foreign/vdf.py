@@ -302,6 +302,19 @@ class VDFProfile(Profile):
 			else:
 				# Right
 				action = XYAction(AxisAction(Axes.ABS_RX), AxisAction(Axes.ABS_RY))
+		elif mode == "joystick_camera":
+			output_joystick = 0
+			if 'output_joystick' in settings:
+				output_joystick = int(settings['output_joystick'])
+			if output_joystick == 0:
+				action = BallModifier(XYAction(AxisAction(Axes.ABS_X), AxisAction(Axes.ABS_Y)))
+			elif output_joystick == 1:
+				action = BallModifier(XYAction(AxisAction(Axes.ABS_RX), AxisAction(Axes.ABS_RY)))
+			else:
+				# TODO: Absolute mouse? Doesn't seems to do anything in Steam
+				action = BallModifier(SensitivityModifier(0.1, 0.1, MouseAction()))
+		elif mode == "mouse_joystick":
+			action = BallModifier(XYAction(AxisAction(Axes.ABS_RX), AxisAction(Axes.ABS_RY)))
 		elif mode == "absolute_mouse":
 			if "click" in inputs:
 				if side == Profile.LEFT:
