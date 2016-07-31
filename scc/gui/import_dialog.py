@@ -116,6 +116,21 @@ class ImportDialog(Editor, ComboSetter):
 			GLib.idle_add(self._set_game_name, index, name)
 	
 	
+	@staticmethod
+	def _find_legacy_bin(path):
+		"""
+		Searchs specified folder for any file ending in '_legacy.bin'
+		and returns full path to first matching file.
+		Returns None if path doesn't point to directory or there is
+		no such file.
+		"""
+		if os.path.exists(path):
+			for f in os.listdir(path):
+				if f.endswith("_legacy.bin"):
+					return os.path.join(path, f)
+		return None
+	
+	
 	def _load_profile_names(self):
 		"""
 		Loads names for profiles ids in q_profiles.
@@ -134,17 +149,23 @@ class ImportDialog(Editor, ComboSetter):
 				break
 			for user in os.listdir(content_path):
 				filename = os.path.join(content_path, user, profile_id, "controller_configuration.vdf")
-				if os.path.exists(filename):
-					log.warning("Reading '%s'", filename)
-					try:
-						data = parse_vdf(open(filename, "r"))
-						name = data['controller_mappings']['title']
-						GLib.idle_add(self._set_profile_name, index, name, filename)
-						break
-					except Exception, e:
-						log.error("Failed to read profile name from '%s'", filename)
-						log.exception(e)
+				if not os.path.exists(filename):
+					# If there is no 'controller_configuration.vdf', try finding *_legacy.bin
+					filename = ImportDialog._find_legacy_bin(os.path.join(content_path, user, profile_id))
+				if not filename or not os.path.exists(filename):
+					# If not even *_legacy.bin is found, skip to next user
+					continue
+				log.info("Reading '%s'", filename)
+				try:
+					data = parse_vdf(open(filename, "r"))
+					name = data['controller_mappings']['title']
+					GLib.idle_add(self._set_profile_name, index, name, filename)
+					break
+				except Exception, e:
+					log.error("Failed to read profile name from '%s'", filename)
+					log.exception(e)
 			else:
+				log.warning("Profile %s for game %s not found.", profile_id, gameid)
 				name = _("(not found)")
 				GLib.idle_add(self._set_profile_name, index, name, None)
 	
