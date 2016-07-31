@@ -146,7 +146,7 @@ class VDFProfile(Profile):
 			if "haptic_intensity" in settings:
 				action = FeedbackModifier(
 					HapticPos.LEFT if side == Profile.LEFT else HapticPos.RIGHT,
-					1024 * int(settings["haptic_intensity"]), action)
+					512 * int(settings["haptic_intensity"]), 8, action)
 			if "invert_x" in settings and int(settings["invert_x"]):
 				sens = -1.0 * sens[0], sens[1], sens[2]
 			if "invert_y" in settings and int(settings["invert_y"]):
