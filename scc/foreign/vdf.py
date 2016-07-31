@@ -175,7 +175,7 @@ class VDFProfile(Profile):
 		elif "LEFT_" in name:
 			key = "KEY_%s" % (name.replace("LEFT_", "LEFT"),)
 		elif "RIGHT_" in name:
-			key = "KEY_%s" % (name.replace("LEFT_", "RIGHT"),)
+			key = "KEY_%s" % (name.replace("RIGHT_", "RIGHT"),)
 		else:
 			key = "KEY_%s" % (name,)
 		if hasattr(Keys, key):
@@ -196,22 +196,25 @@ class VDFProfile(Profile):
 		raise ParseError("Unknown button: '%s'" % (name,))	
 	
 	
-	def parse_button(self, dct_or_str, button=None):
+	def parse_button(self, bdef, button=None):
 		"""
 		Parses button definition from vdf file.
 		Parameter can be either string, as used in v2, or dict used in v3.
 		"""
-		if type(dct_or_str) == str:
+		if type(bdef) == str:
 			# V2
-			return self.parse_action(dct_or_str, button)
-		elif "activators" in dct_or_str:
+			return self.parse_action(bdef, button)
+		elif type(bdef) == list:
+			# V2
+			return MultiAction.make(*[ self.parse_action(x, button) for x in bdef ])
+		elif "activators" in bdef:
 			# V3
 			act_actions = []
 			for k in ("full_press", "double_press", "long_press"):
 				a = NoAction()
-				if k in dct_or_str["activators"]:
+				if k in bdef["activators"]:
 					# TODO: Handle multiple bindings
-					bindings = ensure_list(dct_or_str["activators"][k])[0]
+					bindings = ensure_list(bdef["activators"][k])[0]
 					a = self.parse_action(bindings["bindings"]["binding"], button)
 					a = VDFProfile.parse_modifiers(bindings, a, Profile.RIGHT)
 					# holly...
@@ -226,7 +229,7 @@ class VDFProfile(Profile):
 				action.holdaction = hold
 				return action
 		else:
-			raise ParseError("WTF")
+			log.warning("Failed to parse button definition: %s" % (bdef,))
 	
 	
 	@staticmethod
