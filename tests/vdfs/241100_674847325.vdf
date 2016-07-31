@@ -132,7 +132,7 @@
 		"mode"		"absolute_mouse"
 		"bindings"
 		{
-			"click"		"key_press X"
+			"click"		"key_press X, Dafuq Is This"
 		}
 		"settings"
 		{
@@ -163,13 +163,13 @@
 			"6"		"left_trackpad inactive"
 			"7"		"left_trackpad inactive"
 			"2"		"right_trackpad active"
-			"10"		"right_trackpad active modeshift"
+			"10"	"right_trackpad active modeshift"
 			"3"		"joystick active"
 			"8"		"joystick inactive"
 			"9"		"joystick inactive"
 			"4"		"left_trigger active"
 			"5"		"right_trigger active"
-			"11"		"gyro active"
+			"11"	"gyro active"
 		}
 		"switch_bindings"
 		{
@@ -179,9 +179,9 @@
 				"button_menu"		"key_press TAB, Map"
 				"button_escape"		"key_press ESCAPE, Menu"
 				"left_bumper"		"key_press C, Cockpit View"
-				"button_back_right"		"key_press V"
+				"button_back_right"		"key_press V, View"
 				"right_click"		"mode_shift right_trackpad 10"
-				"button_back_left"		"key_press V"
+				"button_back_left"		"key_press V, Change View"
 			}
 		}
 	}

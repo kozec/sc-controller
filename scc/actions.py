@@ -1215,6 +1215,32 @@ class MultiAction(Action):
 			self._add_all(action.actions)
 		else:
 			self.actions.append(action)
+			if action.name : self.name = action.name
+	
+	
+	def deduplicate(self):
+		"""
+		Removes duplicate actions. This is done by comparing string
+		representations, so it's slow and ususally unnecesary, but can be
+		usefull when importing.
+		
+		Returns new MultiAction, or, if only one action is left, returns
+		that last action.
+		"""
+		actions, strings = [], []
+		# TODO: Action comparison, don't use strings
+		for x in self.actions:
+			s = x.to_string()
+			if s in strings: continue
+			actions.append(x)
+			strings.append(s)
+		if len(actions) == 0:
+			# Impossible
+			return NoAction()
+		elif len(actions) == 1:
+			return actions[0]
+		else:
+			return MultiAction.make(*actions)
 	
 	
 	def compress(self):
