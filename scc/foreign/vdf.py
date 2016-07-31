@@ -7,9 +7,10 @@ from scc.actions import NoAction, ButtonAction, DPadAction, XYAction, TriggerAct
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction, HatRightAction
 from scc.actions import CircularAction, MouseAction, AxisAction, MultiAction
 from scc.modifiers import SensitivityModifier, ClickModifier, FeedbackModifier
+from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK, YAW, ROLL
 from scc.modifiers import BallModifier, DoubleclickModifier
 from scc.modifiers import HoldModifier, ModeModifier
-from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK, YAW, ROLL
+from scc.special_actions import ChangeProfileAction
 from scc.parser import ActionParser, ParseError
 from scc.profile import Profile
 from scc.lib.vdf import parse_vdf, ensure_list
@@ -61,10 +62,12 @@ class VDFProfile(Profile):
 	}
 	
 	
-	def __init__(self):
+	def __init__(self, name = "Unnamed"):
 		Profile.__init__(self, ActionParser())
-		self.name = "Unnamed"
-		self.modeshifts = {}
+		self.name = name
+		self.action_set_id = 0
+		self.action_sets = { 'default' : self }
+		self.action_set_switches = set()
 	
 	
 	def parse_action(self, lst_or_str, button=None):
@@ -118,7 +121,11 @@ class VDFProfile(Profile):
 			)
 			return NoAction()
 		elif binding in ("controller_action"):
-			log.warning("Ignoring '%s' binding" % (binding,))
+			if params[0] == "CHANGE_PRESET":
+				id = int(params[1]) - 1
+				return ChangeProfileAction(".%s:set_%s" % (self.name, id))
+			
+			log.warning("Ignoring controller_action '%s' binding" % (params[0],))
 			return NoAction()
 		elif binding == "mouse_wheel":
 			if params[0].lower() == "scroll_down":
@@ -424,6 +431,47 @@ class VDFProfile(Profile):
 		raise ParseError("Unknown group source binding: '%s'" % (binding,))
 	
 	
+	@staticmethod
+	def _load_preset(data, profile, preset):
+		profile.modeshifts = {}
+		profile.modeshift_buttons = {}
+		if not 'group_source_bindings' in preset:
+			# Empty preset
+			return
+			
+		gsb = preset['group_source_bindings']
+		for group_id in gsb:
+			binding = gsb[group_id]
+			if not binding.endswith("inactive"):
+				profile.parse_input_binding(data, group_id, binding)
+		
+		if "switch_bindings" in preset:
+			profile.parse_switches(preset['switch_bindings'])
+		
+		for b in profile.modeshift_buttons:
+			if profile.modeshift_buttons[b] in profile.modeshifts:
+				# Should be always
+				modeshift = profile.modeshift_buttons[b]
+			else:
+				continue
+			action = profile.modeshifts[modeshift]
+			trash, binding = modeshift
+			old = profile.get_by_binding(binding)
+			profile.set_by_binding(binding, ModeModifier(
+				b, action,
+				old
+			))	
+	
+	
+	@staticmethod
+	def _get_preset_name(data, preset):
+		""" Returns name of specified preset """
+		name = preset["name"].lower()
+		if "actions" in data and name in data['actions']:
+			name = data['actions'][name]['title']
+		return name
+	
+	
 	def load(self, filename):
 		"""
 		Loads profile from vdf file. Returns self.
@@ -437,36 +485,17 @@ class VDFProfile(Profile):
 			name = data['title'].strip()
 			if name:
 				self.name = name
-		self.modeshifts = {}
-		self.modeshift_buttons = {}
 		presets = ensure_list(data['preset'])
 		for p in presets:
-			if not 'group_source_bindings' in p:
-				continue
-			gsb = p['group_source_bindings']
-			for group_id in gsb:
-				binding = gsb[group_id]
-				if not binding.endswith("inactive"):
-					self.parse_input_binding(data, group_id, binding)
-			
-			if "switch_bindings" in p:
-				self.parse_switches(p['switch_bindings'])
-			
-			break	# TODO: Support for multiple presets
-		
-		for b in self.modeshift_buttons:
-			if self.modeshift_buttons[b] in self.modeshifts:
-				# Should be always
-				modeshift = self.modeshift_buttons[b]
+			id = int(p["id"])
+			if id == 0:
+				# Default profile
+				VDFProfile._load_preset(data, self, p)
 			else:
-				continue
-			action = self.modeshifts[modeshift]
-			trash, binding = modeshift
-			old = self.get_by_binding(binding)
-			self.set_by_binding(binding, ModeModifier(
-				b, action,
-				old
-			))
+				aset = VDFProfile(VDFProfile._get_preset_name(data, p))
+				aset.action_set_id = id
+				self.action_sets[aset.name] = aset
+				VDFProfile._load_preset(data, aset, p)
 		
 		return self
 
