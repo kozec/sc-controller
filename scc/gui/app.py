@@ -83,6 +83,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.ribar = None
 		self.create_binding_buttons()
 		
+		self.builder.get_object("content").drag_dest_set(Gtk.DestDefaults.ALL, [
+			Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0)
+			], Gdk.DragAction.COPY
+		)
+		
 		self.builder.get_object("cbProfile").set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
 		
@@ -648,6 +653,22 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			return data['current_profile']
 		except:
 			return None
+	
+	
+	def on_drag_data_received(self, widget, context, x, y, data, info, time):
+		""" Drag-n-drop handler """
+		if str(data.get_data_type()) == "text/uri-list":
+			# Only file can be dropped here
+			if len(data.get_uris()):
+				uri = data.get_uris()[0]
+				giofile = Gio.File.new_for_uri(uri)
+				if giofile.get_path() and giofile.get_path().endswith(".vdf"):
+					# Local file, looks like vdf profile
+					from scc.gui.import_dialog import ImportDialog
+					gs = ImportDialog(self)
+					gs.show(self.window)
+					# Skip first screen and try to import this file
+					gs.on_preload_finished(gs.set_file, giofile.get_path())
 
 
 class UndoRedo(object):

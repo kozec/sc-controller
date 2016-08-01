@@ -30,6 +30,7 @@ class ImportDialog(Editor, ComboSetter):
 		self.q_profiles = collections.deque()
 		self.s_games    = threading.Semaphore(0)
 		self.s_profiles = threading.Semaphore(0)
+		self._on_preload_finished = None
 		threading.Thread(target=self._load_profiles).start()
 		threading.Thread(target=self._load_game_names).start()
 		threading.Thread(target=self._load_profile_names).start()
@@ -176,6 +177,10 @@ class ImportDialog(Editor, ComboSetter):
 		self.loading = False
 		self.s_games.release()
 		self.s_profiles.release()
+		if self._on_preload_finished:
+			cb, data = self._on_preload_finished
+			GLib.idle_add(cb, *data)
+			self._on_preload_finished = None
 	
 	
 	def _find_steamapps(self):
@@ -236,6 +241,21 @@ class ImportDialog(Editor, ComboSetter):
 			self.window.get_nth_page(self.window.get_current_page()),
 			len(ent.get_text().strip()) > 0 and "/" not in ent.get_text()
 		)
+	
+	
+	def on_preload_finished(self, callback, *data):
+		"""
+		Schedules callback to be called after initial profile list is loaded
+		"""
+		self._on_preload_finished = (callback, data)
+	
+	
+	def set_file(self, filename):
+		tvProfiles = self.builder.get_object("tvProfiles")
+		iter = self.lstProfiles.append(( -1, _("No game"), _("Dropped profile"), filename ))
+		tvProfiles.get_selection().select_iter(iter)
+		self.window.set_page_complete(self.window.get_nth_page(0), True)
+		self.window.set_current_page(1)
 	
 	
 	def on_prepare(self, trash, child):
