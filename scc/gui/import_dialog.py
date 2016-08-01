@@ -315,7 +315,7 @@ class ImportDialog(Editor, ComboSetter):
 				
 				tvError.get_buffer().set_text(error_log.getvalue())
 				txName.set_text(self.profile.name)
-
+			
 			else:
 				lblImportFinished.set_text(_("Profile sucessfully imported"))
 				txName.set_text(self.profile.name)

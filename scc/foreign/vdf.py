@@ -3,15 +3,17 @@
 Imports VDF profile and converts it to Profile object.
 """
 from scc.uinput import Keys, Axes, Rels
-from scc.actions import NoAction, ButtonAction, DPadAction, XYAction, TriggerAction
+from scc.actions import Action, NoAction, ButtonAction, DPadAction, XYAction
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction, HatRightAction
-from scc.actions import CircularAction, MouseAction, AxisAction, MultiAction
+from scc.actions import TriggerAction, CircularAction, MouseAction, AxisAction
+from scc.actions import MultiAction
 from scc.modifiers import SensitivityModifier, ClickModifier, FeedbackModifier
 from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK, YAW, ROLL
 from scc.modifiers import BallModifier, DoubleclickModifier
 from scc.modifiers import HoldModifier, ModeModifier
-from scc.special_actions import ChangeProfileAction
+from scc.special_actions import ChangeProfileAction, GridMenuAction
 from scc.parser import ActionParser, ParseError
+from scc.menu_data import MenuData, MenuItem
 from scc.profile import Profile
 from scc.lib.vdf import parse_vdf, ensure_list
 
@@ -69,6 +71,7 @@ class VDFProfile(Profile):
 	def __init__(self, name = "Unnamed"):
 		Profile.__init__(self, ActionParser())
 		self.name = name
+		self.next_menu_id = 1
 		self.action_set_id = 0
 		self.action_sets = { 'default' : self }
 		self.action_set_switches = set()
@@ -321,6 +324,27 @@ class VDFProfile(Profile):
 			action = BallModifier(XYAction(AxisAction(Axes.ABS_RX), AxisAction(Axes.ABS_RY)))
 		elif mode == "scrollwheel":
 			action = BallModifier(XYAction(MouseAction(Rels.REL_HWHEEL), MouseAction(Rels.REL_WHEEL)))
+		elif mode == "touch_menu":
+			# Touch menu is converted to GridMenu
+			items = []
+			next_item_id = 1
+			for k in inputs:
+				action = self.parse_button(inputs[k])
+				items.append(MenuItem(
+					"item_%s" % (next_item_id,),
+					action.describe(Action.AC_BUTTON),
+					action
+				))
+				next_item_id += 1
+			# Menu is stored in profile, with generated ID
+			menu_id = "menu_%s" % (self.next_menu_id,)
+			self.next_menu_id += 1
+			self.menus[menu_id] = MenuData(*items)
+			
+			action = GridMenuAction(menu_id,
+				'LEFT' if side == Profile.LEFT else 'RIGHT',
+				SCButtons.LPAD if side == Profile.LEFT else SCButtons.RPAD
+			)
 		elif mode == "absolute_mouse":
 			if "click" in inputs:
 				if side == Profile.LEFT:
