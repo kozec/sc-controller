@@ -130,7 +130,9 @@ class VDFProfile(Profile):
 		elif binding in ("controller_action"):
 			if params[0] == "CHANGE_PRESET":
 				id = int(params[1]) - 1
-				return ChangeProfileAction(".%s:set_%s" % (self.name, id))
+				cpa = ChangeProfileAction("action_set:%s" % (id,))
+				self.action_set_switches.add(cpa)
+				return cpa
 			
 			log.warning("Ignoring controller_action '%s' binding" % (params[0],))
 			return NoAction()
@@ -515,6 +517,14 @@ class VDFProfile(Profile):
 		return name
 	
 	
+	def action_set_by_id(self, id):
+		""" Returns name of action set with specified id """
+		for s in self.action_sets:
+			if self.action_sets[s].action_set_id == id:
+				return s
+		return None
+	
+	
 	def load(self, filename):
 		"""
 		Loads profile from vdf file. Returns self.
@@ -537,6 +547,7 @@ class VDFProfile(Profile):
 			else:
 				aset = VDFProfile(VDFProfile._get_preset_name(data, p))
 				aset.action_set_id = id
+				aset.action_set_switches = self.action_set_switches
 				self.action_sets[aset.name] = aset
 				VDFProfile._load_preset(data, aset, p)
 		

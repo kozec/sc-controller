@@ -9,8 +9,10 @@ from scc.tools import _
 
 from gi.repository import Gdk, GObject, GLib
 from scc.gui.editor import Editor, ComboSetter
-from scc.lib.vdf import parse_vdf
+from scc.tools import get_profiles_path
 from scc.foreign.vdf import VDFProfile
+from scc.lib.vdf import parse_vdf
+
 from cStringIO import StringIO
 
 import re, sys, os, collections, threading, logging
@@ -232,15 +234,39 @@ class ImportDialog(Editor, ComboSetter):
 		)
 	
 	
-	def on_txName_changed(self, ent):
+	@staticmethod
+	def gen_aset_name(base_name, set_name):
+		""" Generates name for profile converted from action set """
+		if set_name == 'default':
+			return base_name
+		return ("." + base_name + ":" + set_name.lower()).encode('utf-8')
+	
+	
+	def on_txName_changed(self, *a):
 		"""
 		Called when text in profile name field is changed.
 		Basically enables 'Save' button if name is not empty string.
 		"""
+		txName = self.builder.get_object("txName")
+		lblASetsNotice = self.builder.get_object("lblASetsNotice")
+		lblASetList = self.builder.get_object("lblASetList")
+		
 		self.window.set_page_complete(
 			self.window.get_nth_page(self.window.get_current_page()),
-			len(ent.get_text().strip()) > 0 and "/" not in ent.get_text()
+			len(txName.get_text().strip()) > 0 and "/" not in txName.get_text()
 		)
+		if len(self.profile.action_sets) > 1:
+			lblASetsNotice.set_visible(True)
+			lblASetList.set_visible(True)
+			log.info("Imported profile contains action sets")
+			lblASetList.set_text("\n".join([
+				ImportDialog.gen_aset_name(txName.get_text().strip(), x)
+				for x in self.profile.action_sets
+				if x != 'default'
+			]))
+		else:
+			lblASetsNotice.set_visible(False)
+			lblASetList.set_visible(False)	
 	
 	
 	def on_preload_finished(self, callback, *data):
@@ -306,19 +332,20 @@ class ImportDialog(Editor, ComboSetter):
 					error_log.write("(failed to write: %s)" % (e,))
 				
 				tvError.get_buffer().set_text(error_log.getvalue())
-			elif len(error_log.getvalue()) > 0:
-				# Some warnings were displayed
-				swError.set_visible(True)
-				lblError.set_visible(True)
-				
-				lblImportFinished.set_text(_("Profile imported with warnings"))
-				
-				tvError.get_buffer().set_text(error_log.getvalue())
-				txName.set_text(self.profile.name)
-			
 			else:
-				lblImportFinished.set_text(_("Profile sucessfully imported"))
-				txName.set_text(self.profile.name)
+				if len(error_log.getvalue()) > 0:
+					# Some warnings were displayed
+					swError.set_visible(True)
+					lblError.set_visible(True)
+					
+					lblImportFinished.set_text(_("Profile imported with warnings"))
+					
+					tvError.get_buffer().set_text(error_log.getvalue())
+					txName.set_text(self.profile.name)
+				else:
+					lblImportFinished.set_text(_("Profile sucessfully imported"))
+					txName.set_text(self.profile.name)
+				self.on_txName_changed()
 	
 	
 	def on_cancel(self, *a):
@@ -326,6 +353,22 @@ class ImportDialog(Editor, ComboSetter):
 	
 	
 	def on_apply(self, *a):
-		txName = self.builder.get_object("txName")
-		self.app.new_profile(self.profile, txName.get_text())
+		name = self.builder.get_object("txName").get_text().strip()
+		
+		if len(self.profile.action_sets) > 1:
+			# Update ChangeProfileActions with correct profile names
+			for x in self.profile.action_set_switches:
+				id = int(x.profile.split(":")[-1])
+				target_set = self.profile.action_set_by_id(id)
+				x.profile = ImportDialog.gen_aset_name(name, target_set)
+				print id, x.profile
+			
+			# Save action set profiles
+			for k in self.profile.action_sets:
+				if k != 'default':
+					filename = ImportDialog.gen_aset_name(name, k) + ".sccprofile"
+					path = os.path.join(get_profiles_path(), filename)
+					self.profile.action_sets[k].save(path)
+		
+		self.app.new_profile(self.profile, name)
 		GLib.idle_add(self.window.destroy)

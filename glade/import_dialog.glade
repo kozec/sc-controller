@@ -218,6 +218,43 @@
             <property name="width">2</property>
           </packing>
         </child>
+        <child>
+          <object class="GtkLabel" id="lblASetsNotice">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_top">10</property>
+            <property name="label" translatable="yes">Note: Imported profile contains actions sets.
+Each set will be converted into separate, hidden profile with following names:</property>
+            <property name="xalign">0</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">5</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblASetList">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_left">20</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">20</property>
+            <property name="label" translatable="yes">.XYZ.aset_1
+.XYZ.aset_2
+.XYZ.aset_3
+.XYZ.aset_4</property>
+            <property name="xalign">0</property>
+            <attributes>
+              <attribute name="style" value="italic"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">6</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
       </object>
       <packing>
         <property name="page_type">confirm</property>
