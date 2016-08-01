@@ -49,6 +49,8 @@ class VDFProfile(Profile):
 		'RETURN' : Keys.KEY_ENTER,
 		'ESCAPE' : Keys.KEY_ESC,
 		'PERIOD' : Keys.KEY_DOT,
+		'LEFT_CONTROL' : Keys.KEY_LEFTCTRL,
+		'RIGHT_CONTROL' : Keys.KEY_RIGHTCTRL,
 	}
 	
 	SPECIAL_BUTTONS = {
@@ -315,6 +317,8 @@ class VDFProfile(Profile):
 				action = BallModifier(SensitivityModifier(0.1, 0.1, MouseAction()))
 		elif mode == "mouse_joystick":
 			action = BallModifier(XYAction(AxisAction(Axes.ABS_RX), AxisAction(Axes.ABS_RY)))
+		elif mode == "scrollwheel":
+			action = BallModifier(XYAction(MouseAction(Rels.REL_HWHEEL), MouseAction(Rels.REL_WHEEL)))
 		elif mode == "absolute_mouse":
 			if "click" in inputs:
 				if side == Profile.LEFT:
