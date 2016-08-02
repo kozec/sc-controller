@@ -175,7 +175,7 @@ class SCCDaemon(Daemon):
 	def on_sa_profile(self, mapper, action):
 		""" Called when 'profile' action is used """
 		name = action.profile
-		if name.startswith(".") or "/" in name:
+		if "/" in name:
 			# Small sanity check
 			log.error("Cannot load profile: Profile '%s' not found", name)
 			return
