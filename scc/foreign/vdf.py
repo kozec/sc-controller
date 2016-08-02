@@ -7,11 +7,11 @@ from scc.actions import Action, NoAction, ButtonAction, DPadAction, XYAction
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction, HatRightAction
 from scc.actions import TriggerAction, CircularAction, MouseAction, AxisAction
 from scc.actions import MultiAction
+from scc.special_actions import ChangeProfileAction, GridMenuAction, MenuAction
 from scc.modifiers import SensitivityModifier, ClickModifier, FeedbackModifier
 from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK, YAW, ROLL
 from scc.modifiers import BallModifier, DoubleclickModifier
 from scc.modifiers import HoldModifier, ModeModifier
-from scc.special_actions import ChangeProfileAction, GridMenuAction
 from scc.parser import ActionParser, ParseError
 from scc.menu_data import MenuData, MenuItem
 from scc.profile import Profile
@@ -550,6 +550,11 @@ class VDFProfile(Profile):
 				aset.action_set_switches = self.action_set_switches
 				self.action_sets[aset.name] = aset
 				VDFProfile._load_preset(data, aset, p)
+		
+		for aset in self.action_sets.values():
+			aset.buttons[SCButtons.C] = HoldModifier(
+				MenuAction("Default.menu"), MenuAction("Default.menu")
+			)
 		
 		return self
 
