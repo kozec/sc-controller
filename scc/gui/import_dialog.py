@@ -32,6 +32,7 @@ class ImportDialog(Editor, ComboSetter):
 		self.q_profiles = collections.deque()
 		self.s_games    = threading.Semaphore(0)
 		self.s_profiles = threading.Semaphore(0)
+		self.lock = threading.Lock()
 		self._on_preload_finished = None
 		threading.Thread(target=self._load_profiles).start()
 		threading.Thread(target=self._load_game_names).start()
@@ -51,11 +52,13 @@ class ImportDialog(Editor, ComboSetter):
 			for user in os.listdir(p):
 				sharedconfig = os.path.join(p, user, ImportDialog.PROFILE_LIST)
 				if os.path.isfile(sharedconfig):
+					self.lock.acquire()
 					log.debug("Loading sharedconfig from '%s'", sharedconfig)
 					try:
 						i = self._parse_profile_list(i, sharedconfig)
 					except Exception, e:
 						log.exception(e)
+					self.lock.release()
 		
 		GLib.idle_add(self._load_finished)
 	
@@ -105,6 +108,7 @@ class ImportDialog(Editor, ComboSetter):
 			if gameid.isdigit():
 				name = _("Unknown App ID %s") % (gameid)
 				filename = os.path.join(sa_path, "appmanifest_%s.acf" % (gameid,))
+				self.lock.acquire()
 				if os.path.exists(filename):
 					try:
 						data = parse_vdf(open(filename, "r"))
@@ -114,6 +118,7 @@ class ImportDialog(Editor, ComboSetter):
 						log.exception(e)
 				else:
 					log.warning("Skiping non-existing app manifest '%s'", filename)
+				self.lock.release()
 			else:
 				name = gameid
 			GLib.idle_add(self._set_game_name, index, name)
@@ -150,6 +155,7 @@ class ImportDialog(Editor, ComboSetter):
 				index, gameid, profile_id = self.q_profiles.popleft()
 			except IndexError:
 				break
+			self.lock.acquire()
 			for user in os.listdir(content_path):
 				filename = os.path.join(content_path, user, profile_id, "controller_configuration.vdf")
 				if not os.path.exists(filename):
@@ -171,6 +177,7 @@ class ImportDialog(Editor, ComboSetter):
 				log.warning("Profile %s for game %s not found.", profile_id, gameid)
 				name = _("(not found)")
 				GLib.idle_add(self._set_profile_name, index, name, None)
+			self.lock.release()
 	
 	
 	def _load_finished(self):
@@ -299,6 +306,7 @@ class ImportDialog(Editor, ComboSetter):
 			self.profile = VDFProfile()
 			failed = False
 			error_log = StringIO()
+			self.lock.acquire()
 			handler = logging.StreamHandler(error_log)
 			logging.getLogger().addHandler(handler)
 			swError.set_visible(False)
@@ -317,6 +325,7 @@ class ImportDialog(Editor, ComboSetter):
 				failed = True
 			
 			logging.getLogger().removeHandler(handler)
+			self.lock.release()
 			
 			if failed:
 				swError.set_visible(True)
