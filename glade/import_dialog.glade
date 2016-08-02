@@ -182,6 +182,7 @@
               <object class="GtkTextView" id="tvError">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="editable">False</property>
                 <property name="buffer">textbuffer1</property>
               </object>
             </child>
@@ -239,7 +240,7 @@ Each set will be converted into separate, hidden profile with following names:</
             <property name="no_show_all">True</property>
             <property name="margin_left">20</property>
             <property name="margin_top">5</property>
-            <property name="margin_bottom">20</property>
+            <property name="margin_bottom">5</property>
             <property name="label" translatable="yes">.XYZ.aset_1
 .XYZ.aset_2
 .XYZ.aset_3
@@ -252,6 +253,44 @@ Each set will be converted into separate, hidden profile with following names:</
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">6</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblPad">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_bottom">20</property>
+            <property name="hexpand">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">8</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btDump">
+            <property name="label" translatable="yes">Display Profile Dump</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="margin_bottom">20</property>
+            <signal name="clicked" handler="on_btDump_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">8</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblPad2">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="vexpand">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">7</property>
             <property name="width">2</property>
           </packing>
         </child>

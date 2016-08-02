@@ -291,6 +291,26 @@ class ImportDialog(Editor, ComboSetter):
 		self.window.set_current_page(1)
 	
 	
+	def on_btDump_clicked(self, *a):
+		tvError = self.builder.get_object("tvError")
+		swError = self.builder.get_object("swError")
+		btDump = self.builder.get_object("btDump")
+		tvProfiles = self.builder.get_object("tvProfiles")
+		model, iter = tvProfiles.get_selection().get_selected()
+		filename = model.get_value(iter, 3)
+		
+		dump = StringIO()
+		dump.write("\nProfile filename: %s\n" % (filename,))
+		dump.write("\nProfile dump:\n")
+		try:
+			dump.write(open(filename, "r").read())
+		except Exception, e:
+			dump.write("(failed to write: %s)" % (e,))
+		tvError.get_buffer().set_text(dump.getvalue())
+		swError.set_visible(True)
+		btDump.set_sensitive(False)
+	
+	
 	def on_prepare(self, trash, child):
 		if child == self.builder.get_object("grImportFinished"):
 			tvProfiles = self.builder.get_object("tvProfiles")
@@ -300,6 +320,7 @@ class ImportDialog(Editor, ComboSetter):
 			swError = self.builder.get_object("swError")
 			lblName = self.builder.get_object("lblName")
 			txName = self.builder.get_object("txName")
+			btDump = self.builder.get_object("btDump")
 			
 			model, iter = tvProfiles.get_selection().get_selected()
 			filename = model.get_value(iter, 3)
@@ -313,6 +334,7 @@ class ImportDialog(Editor, ComboSetter):
 			lblError.set_visible(False)
 			lblName.set_visible(True)
 			txName.set_visible(True)
+			btDump.set_sensitive(True)
 			
 			try:
 				self.profile.load(filename)
@@ -330,6 +352,7 @@ class ImportDialog(Editor, ComboSetter):
 			if failed:
 				swError.set_visible(True)
 				lblError.set_visible(True)
+				btDump.set_sensitive(False)
 				
 				lblImportFinished.set_text(_("Import failed"))
 				
