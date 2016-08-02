@@ -18,7 +18,7 @@ from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.paths import get_config_path, get_profiles_path
 from scc.constants import SCButtons, DAEMON_VERSION
-from scc.tools import check_access
+from scc.tools import check_access, find_profile
 from scc.actions import NoAction
 from scc.modifiers import NameModifier
 from scc.profile import Profile
@@ -518,9 +518,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			found = self.select_profile(profile)
 			self.daemon_changed_profile = False
 			if not found:
-				# Daemon uses unknown profile, override it with something I know about
-				if self.current_file is not None:
-					self.dm.set_profile(self.current_file.get_path())
+				if os.path.split(profile)[-1].startswith(".") and os.path.exists(profile):
+					# Daemon uses dot profile, display it temporaly
+					log.info("Daemon reported selecting dot profile: '%s'", profile)
+					cb = self.builder.get_object("cbProfile")
+					model = cb.get_model()
+					f = Gio.File.new_for_path(profile)
+					name = ".".join(os.path.split(profile)[-1].split(".")[0:-1])
+					iter = model.insert(0, (name, f, None))
+					cb.set_active_iter(iter)
+				else:
+					# Daemon uses unknown profile, override it with something I know about
+					log.warn("Daemon reported unknown profile: '%s'; Overriding.", profile)
+					if self.current_file is not None:
+						self.dm.set_profile(self.current_file.get_path())
 				
 		self.just_started = False
 	
@@ -589,8 +600,31 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 						# Already selected
 						return True
 					cb.set_active_iter(row.iter)
+					self.remove_dot_profile()
 					return True
 		return False
+	
+	
+	def remove_dot_profile(self):
+		"""
+		Checks if first profile in list begins with dot and if yes, removes it.
+		This is done to undo automatic addition that is done when daemon reports
+		selecting such profile.
+		"""
+		cb = self.builder.get_object("cbProfile")
+		model = cb.get_model()
+		if len(model) == 0:
+			# Nothing to remove
+			return
+		if not model[0][0].startswith("."):
+			# Not dot profile
+			return
+		active = model.get_path(cb.get_active_iter())
+		first = model[0].path
+		if active == first:
+			# Can't remove active item
+			return
+		model.remove(model[0].iter)
 	
 	
 	def set_daemon_status(self, status):
