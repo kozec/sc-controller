@@ -63,7 +63,7 @@ eleasing button returns emulated axis back to 'min'.
 
 
 #### <a name="dpad"></a> dpad(up, down, left, right)
-Emulates dpad. Touchpad is divided into 4 triangular parts and when user touches
+Emulates dpad. Touchpad is divided into 4 triangular parts. When the user touches the
 touchpad, action is executed depending on finger position.
 Available only for pads and sticks; for stick, works by translating
 stick position, what probably doesn't yields expected results.
