@@ -80,7 +80,7 @@ Example:
 
 
 #### `deadzone`
-Specifies deadzone. Expects `lower` and `upper` subkeys,
+Specifies deadzone. Allows for `lower` and `upper` subkeys,
 defaults to *0* and *32767*
 
 Example:
