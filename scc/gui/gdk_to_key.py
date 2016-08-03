@@ -102,7 +102,7 @@ HW_TO_KEY = {
 	75	: Keys.KEY_F9,
 	76	: Keys.KEY_F10,
 	95	: Keys.KEY_F11,
-	95	: Keys.KEY_F12,
+	96	: Keys.KEY_F12,
 	107	: Keys.KEY_PRINT,
 	78	: Keys.KEY_SCROLLLOCK,
 	127		: Keys.KEY_PAUSE,
