@@ -12,11 +12,10 @@ from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.menu_data import MenuData, Separator, Submenu
 from scc.tools import point_in_gtkrect, find_menu
 from scc.gui.daemon_manager import DaemonManager
-from scc.osd.timermanager import TimerManager
+from scc.osd import OSDWindow, StickController
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
 from scc.config import Config
-from scc.osd import OSDWindow
 from math import sqrt
 
 import os, sys, json, logging
@@ -27,7 +26,7 @@ import scc.osd.menu_generators
 import scc.x11.autoswitcher
 
 
-class Menu(OSDWindow, TimerManager):
+class Menu(OSDWindow):
 	EPILOG="""Exit codes:
    0  - clean exit, user selected option
   -1  - clean exit, user canceled menu
@@ -36,12 +35,10 @@ class Menu(OSDWindow, TimerManager):
    2  - error, failed to access sc-daemon, sc-daemon reported error or died while menu is displayed.
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
-	REPEAT_DELAY = 0.5
 	SUBMENU_OFFSET = 50
 	
 	def __init__(self, cls="osd-menu"):
 		OSDWindow.__init__(self, cls)
-		TimerManager.__init__(self)
 		self.daemon = None
 		self.config = None
 		self.xdisplay = X.Display(hash(GdkX11.x11_get_default_xdisplay()))	# Magic
@@ -56,8 +53,9 @@ class Menu(OSDWindow, TimerManager):
 		self.add(self.f)
 		
 		self._submenu = None
+		self._scon = StickController()
+		self._scon.connect("direction", self.on_stick_direction)
 		self._is_submenu = False
-		self._direction = 0		# Movement direction
 		self._selected = None
 		self._menuid = None
 		self._use_cursor = False
@@ -275,9 +273,7 @@ class Menu(OSDWindow, TimerManager):
 	
 	def show(self, *a):
 		if not self.select(0):
-			self._direction = 1
-			self.next_item()
-			self._direction = 0
+			self.next_item(1)
 		OSDWindow.show(self, *a)
 	
 	
@@ -311,12 +307,12 @@ class Menu(OSDWindow, TimerManager):
 		OSDWindow.quit(self, code)
 	
 	
-	def next_item(self):
+	def next_item(self, direction):
 		""" Selects next menu item, based on self._direction """
 		start, i = -1, 0
 		try:
 			start = self.items.index(self._selected)
-			i = start + self._direction
+			i = start + direction
 		except: pass
 		while True:
 			if i == start:
@@ -332,13 +328,8 @@ class Menu(OSDWindow, TimerManager):
 			if self.select(i):
 				# Not a separator
 				break
-			i += self._direction
+			i += direction
 			if start < 0: start = 0
-	
-	
-	def on_move(self):
-		self.next_item()
-		self.timer("move", self.REPEAT_DELAY, self.on_move)
 	
 	
 	def on_submenu_closed(self, *a):
@@ -389,6 +380,11 @@ class Menu(OSDWindow, TimerManager):
 		return False
 	
 	
+	def on_stick_direction(self, trash, x, y):
+		if y != 0:
+			self.next_item(y)
+	
+	
 	def on_event(self, daemon, what, data):
 		if self._submenu:
 			return self._submenu.on_event(daemon, what, data)
@@ -414,15 +410,7 @@ class Menu(OSDWindow, TimerManager):
 					if point_in_gtkrect(i.widget.get_allocation(), x, y):
 						self.select(self.items.index(i))
 			else:
-				if y < STICK_PAD_MIN / 3 and self._direction != 1:
-					self._direction = 1
-					self.on_move()
-				if y > STICK_PAD_MAX / 3 and self._direction != -1:
-					self._direction = -1
-					self.on_move()
-				if y < STICK_PAD_MAX / 3 and y > STICK_PAD_MIN / 3 and self._direction != 0:
-					self._direction = 0
-					self.cancel_timer("move")
+				self._scon.set_stick(x, y)
 		elif what == self._cancel_with:
 			if data[0] == 0:	# Button released
 				self.quit(-1)

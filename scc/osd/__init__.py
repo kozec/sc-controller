@@ -7,7 +7,9 @@ Common methods for OSD-related stuff
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gdk, GLib, GdkX11
+from gi.repository import Gtk, Gdk, GLib, GObject, GdkX11
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.osd.timermanager import TimerManager
 from scc.lib import xwrappers as X
 from scc.config import Config
 
@@ -187,3 +189,49 @@ class OSDWindow(Gtk.Window):
 			self.mainloop.quit()
 		else:
 			self.destroy()
+
+
+class StickController(GObject.GObject, TimerManager):
+	"""
+	Simple utility class that gets fed by with position and emits
+	'direction' signal that can be used as input for menu navigation.
+	
+	Signals:
+	  direction(horisontal, vertical)
+	  
+	  Both values are one of -1, 0, 1 for left/none/right.
+	"""
+	__gsignals__ = {
+			b"direction"			: (GObject.SIGNAL_RUN_FIRST, None, (int, int)),
+	}
+	REPEAT_DELAY = 0.3
+	
+	def __init__(self):
+		GObject.GObject.__init__(self)
+		TimerManager.__init__(self)
+		self._d = [ 0, 0 ]
+	
+	
+	def _move(self, *a):
+		self.emit("direction", *self._d)
+		if any(self._d):
+			self.timer("move", self.REPEAT_DELAY, self._move)
+		else:
+			self.cancel_timer("move")
+	
+	
+	def set_stick(self, *data):
+		changed = False
+		for i in (0, 1):
+			if data[i] < STICK_PAD_MIN / 3 and self._d[i] != 1:
+				self._d[i] = 1
+				changed = True
+			elif data[i] > STICK_PAD_MAX / 3 and self._d[i] != -1:
+				self._d[i] = -1
+				changed = True
+			elif data[i] < STICK_PAD_MAX / 3 and data[i] > STICK_PAD_MIN / 3 and self._d[i] != 0:
+				self._d[i] = 0
+				changed = True
+		
+		if changed:
+			self._move()
