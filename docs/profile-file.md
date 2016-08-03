@@ -80,7 +80,7 @@ Example:
 
 
 #### `deadzone`
-Specifies deadzone. Excepts `lower` and `upper` subkeys,
+Specifies deadzone. Expects `lower` and `upper` subkeys,
 defaults to *0* and *32767*
 
 Example:
@@ -118,12 +118,11 @@ Example:
 	  "rotate": 15
 	},
 
-doubles sensitivity over X and halves over Y axis.
 
 
 #### `feedback`
 Enables haptic feedback for action. Value is list with one to three values
-specifiing feedback position (*'LEFT'*, *'RIGHT'* or *'BOTH'*),
+specifying feedback position (*'LEFT'*, *'RIGHT'* or *'BOTH'*),
 amplitude and frequency.
 
 Example:
@@ -225,7 +224,7 @@ Example:
 	}
 
 defines button that emulates pressing X key when pressed normally and
-pressing Z key when holded for 5 seconds.
+pressing Z key when held for 5 seconds.
 
 
 ## <a name="buttons"></a>Buttons
