@@ -64,7 +64,7 @@ eleasing button returns emulated axis back to 'min'.
 
 #### <a name="dpad"></a> dpad(up, down, left, right)
 Emulates dpad. Touchpad is divided into 4 triangular parts and when user touches
-touchped, action is executed depending on finger position.
+touchpad, action is executed depending on finger position.
 Available only for pads and sticks; for stick, works by translating
 stick position, what probably doesn't yields expected results.
 
@@ -129,7 +129,7 @@ Can be used to map gyroscope to camera when camera can be controlled only with a
 
 #### <a name="gyroabs"></a> gyroabs(axis1 [, axis2 [, axis3]])
 Maps absolute gyroscope pitch, yaw and roll movement into movements of gamepad stick.
-Can bee used ot map gyroscope to movement stick or to use controller as racing wheel.
+Can be used to map gyroscope to movement stick or to use controller as racing wheel.
 
 
 #### <a name="trackball"></a> trackball()
