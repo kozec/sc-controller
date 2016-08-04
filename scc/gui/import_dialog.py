@@ -73,7 +73,12 @@ class ImportDialog(Editor, ComboSetter):
 		Calls GLib.idle_add to send loaded data into UI.
 		"""
 		data = parse_vdf(open(filename, "r"))
+		# Sanity check
+		if "userroamingconfigstore" not in data: return
+		if "controller_config" not in data["userroamingconfigstore"]: return
+		# Grab config
 		cc = data["userroamingconfigstore"]["controller_config"]
+		# Go through all games
 		listitems = []
 		for gameid in cc:
 			if "selected" in cc[gameid] and cc[gameid]["selected"].startswith("workshop"):
