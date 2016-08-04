@@ -111,22 +111,19 @@ class SCCDaemon(Daemon):
 		data = b"OSD: %s\n" % (shjoin(data) ,)
 		
 		# Check if scc-osd-daemon is available
-		self.lock.acquire()
-		if not self.osd_daemon:
-			self.lock.release()
-			log.warning("Cannot show OSD; there is no scc-osd-daemon registered")
-			return False
-		# Send request
-		try:
-			self.osd_daemon.wfile.write(data)
-			self.osd_daemon.wfile.flush()
-		except Exception, e:
-			log.error("Failed to display OSD: %s", e)
-			self.osd_daemon = None
-			self.lock.release()
-			return False
-		self.lock.release()
-		return True
+		with self.lock:
+			if not self.osd_daemon:
+				log.warning("Cannot show OSD; there is no scc-osd-daemon registered")
+				return False
+			# Send request
+			try:
+				self.osd_daemon.wfile.write(data)
+				self.osd_daemon.wfile.flush()
+			except Exception, e:
+				log.error("Failed to display OSD: %s", e)
+				self.osd_daemon = None
+				return False
+			return True
 	
 	
 	def on_sa_osd(self, mapper, action):
@@ -181,14 +178,12 @@ class SCCDaemon(Daemon):
 			return
 		path = find_profile(name)
 		if path:
-			self.lock.acquire()
-			try:
-				self._set_profile(path)
-				self.lock.release()
-				log.info("Loaded profile '%s'", name)
-			except Exception, e:
-				self.lock.release()
-				log.error(e)
+			with self.lock:
+				try:
+					self._set_profile(path)
+					log.info("Loaded profile '%s'", name)
+				except Exception, e:
+					log.error(e)
 			return
 		log.error("Cannot load profile: Profile '%s' not found", name)
 	
@@ -263,7 +258,6 @@ class SCCDaemon(Daemon):
 				self.lock.release()
 				sc.run()
 				# Reaches here only if USB dongle is disconnected or gets stuck
-				self.lock.acquire()
 				self.mapper.release_virtual_buttons()
 			except (ValueError, USBError), e:
 				# When SCController fails to initialize, daemon should
@@ -289,7 +283,7 @@ class SCCDaemon(Daemon):
 					self._send_to_all(("Error: %s\n" % (self.error,)).encode("utf-8"))
 				self.mapper.release_virtual_buttons()
 				time.sleep(5)
-				self.lock.acquire()
+			self.lock.acquire()
 			self.mapper.release_virtual_buttons()
 	
 	
@@ -311,19 +305,18 @@ class SCCDaemon(Daemon):
 	
 	
 	def _sshandler(self, connection, rfile, wfile):
-		self.lock.acquire()
-		client = Client(connection, rfile, wfile)
-		self.clients.add(client)
-		wfile.write(b"SCCDaemon\n")
-		wfile.write(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
-		wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
-		wfile.write(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
-		if self.error is None:
-			wfile.write(b"Ready.\n")
-		else:
-			wfile.write(("Error: %s\n" % (self.error,)).encode("utf-8"))
+		with self.lock:
+			client = Client(connection, rfile, wfile)
+			self.clients.add(client)
+			wfile.write(b"SCCDaemon\n")
+			wfile.write(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
+			wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
+			wfile.write(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
+			if self.error is None:
+				wfile.write(b"Ready.\n")
+			else:
+				wfile.write(("Error: %s\n" % (self.error,)).encode("utf-8"))
 		
-		self.lock.release()
 		while True:
 			try:
 				line = rfile.readline()
@@ -333,16 +326,16 @@ class SCCDaemon(Daemon):
 			if len(line) == 0: break
 			if len(line.strip("\t\n ")) > 0:
 				self._handle_message(client, line.strip("\n"))
-		self.lock.acquire()
-		client.unlock_actions(self)
-		if self.osd_daemon == client:
-			log.info("scc-osd-daemon lost")
-			self.osd_daemon = None
-		if self.autoswitch_daemon == client:
-			log.info("scc-autoswitch-daemon lost")
-			self.autoswitch_daemon = None
-		self.clients.remove(client)
-		self.lock.release()
+		
+		with self.lock:
+			client.unlock_actions(self)
+			if self.osd_daemon == client:
+				log.info("scc-osd-daemon lost")
+				self.osd_daemon = None
+			if self.autoswitch_daemon == client:
+				log.info("scc-autoswitch-daemon lost")
+				self.autoswitch_daemon = None
+			self.clients.remove(client)
 	
 	
 	def _listen_on_socket(self):
@@ -400,18 +393,16 @@ class SCCDaemon(Daemon):
 		Handles message recieved from client.
 		"""
 		if message.startswith("Profile:"):
-			self.lock.acquire()
-			try:
-				filename = message[8:].decode("utf-8").strip("\t ")
-				self._set_profile(filename)
-				log.info("Loaded profile '%s'", filename)
-				self.lock.release()
-				client.wfile.write(b"OK.\n")
-			except Exception, e:
-				log.error(e)
-				self.lock.release()
-				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
-				client.wfile.write(b"Fail: " + tb + b"\n")
+			with self.lock:
+				try:
+					filename = message[8:].decode("utf-8").strip("\t ")
+					self._set_profile(filename)
+					log.info("Loaded profile '%s'", filename)
+					client.wfile.write(b"OK.\n")
+				except Exception, e:
+					log.error(e)
+					tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+					client.wfile.write(b"Fail: " + tb + b"\n")
 		elif message.startswith("OSD:"):
 			if not self.osd_daemon:
 				client.wfile.write(b"Fail: Cannot show OSD; there is no scc-osd-daemon registered\n")
@@ -425,42 +416,38 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Lock:"):
 			to_lock = [ x for x in message[5:].strip(" \t\r").split(" ") ]
-			self.lock.acquire()
-			try:
+			with self.lock:
+				try:
+					for l in to_lock:
+						if not self._can_lock_action(SCCDaemon.source_to_constant(l)):
+							client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
+							return
+				except ValueError, e:
+					tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+					client.wfile.write(b"Fail: " + tb + b"\n")
+					return
 				for l in to_lock:
-					if not self._can_lock_action(SCCDaemon.source_to_constant(l)):
-						client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
-						self.lock.release()
-						return
-			except ValueError, e:
-				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
-				client.wfile.write(b"Fail: " + tb + b"\n")
-				self.lock.release()
-				return
-			for l in to_lock:
-				self._lock_action(SCCDaemon.source_to_constant(l), client)
-			self.lock.release()
-			client.wfile.write(b"OK.\n")
-		elif message.startswith("Unlock."):
-			self.lock.acquire()
-			client.unlock_actions(self)
-			self.lock.release()
-			client.wfile.write(b"OK.\n")
-		elif message.startswith("Reconfigure."):
-			self.lock.acquire()
-			# Start or stop scc-autoswitch-daemon as needed
-			need_autoswitch_daemon = len(Config()["autoswitch"]) > 0
-			if need_autoswitch_daemon and self.xdisplay and not self.autoswitch_daemon:
-				self.subprocs.append(Subprocess("scc-autoswitch-daemon", True))
-			elif not need_autoswitch_daemon and self.autoswitch_daemon:
-				self._remove_subproccess("scc-autoswitch-daemon")
-				self.autoswitch_daemon.close()
-				self.autoswitch_daemon = None
-			try:
+					self._lock_action(SCCDaemon.source_to_constant(l), client)
 				client.wfile.write(b"OK.\n")
-				self._send_to_all("Reconfigured.\n".encode("utf-8"))
-			except: pass
-			self.lock.release()
+		elif message.startswith("Unlock."):
+			with self.lock:
+				client.unlock_actions(self)
+				client.wfile.write(b"OK.\n")
+		elif message.startswith("Reconfigure."):
+			with self.lock:
+				# Start or stop scc-autoswitch-daemon as needed
+				need_autoswitch_daemon = len(Config()["autoswitch"]) > 0
+				if need_autoswitch_daemon and self.xdisplay and not self.autoswitch_daemon:
+					self.subprocs.append(Subprocess("scc-autoswitch-daemon", True))
+				elif not need_autoswitch_daemon and self.autoswitch_daemon:
+					self._remove_subproccess("scc-autoswitch-daemon")
+					self.autoswitch_daemon.close()
+					self.autoswitch_daemon = None
+				try:
+					client.wfile.write(b"OK.\n")
+					self._send_to_all("Reconfigured.\n".encode("utf-8"))
+				except:
+					pass
 		elif message.startswith("Selected:"):
 			menuaction = None
 			def press(mapper):
@@ -477,36 +464,34 @@ class SCCDaemon(Daemon):
 					log.error("Error while processing menu action")
 					log.error(traceback.format_exc())
 			
-			self.lock.acquire()
-			try:
-				menu_id, item_id = shsplit(message)[1:]
-				menuaction = None
-				if "." in menu_id:
-					# TODO: Move this common place
-					data = json.loads(open(menu_id, "r").read())
-					menudata = MenuData.from_json_data(data, TalkingActionParser())
-					menuaction = menudata.get_by_id(item_id).action
-				else:
-					menuaction = self.mapper.profile.menus[menu_id].get_by_id(item_id).action
-				client.wfile.write(b"OK.\n")
-			except:
-				log.warning("Selected menu item is no longer valid.")
-				client.wfile.write(b"Fail: Selected menu item is no longer valid\n")
-			if menuaction:
-				self.mapper.schedule(0, press)
-			self.lock.release()
+			with self.lock:
+				try:
+					menu_id, item_id = shsplit(message)[1:]
+					menuaction = None
+					if "." in menu_id:
+						# TODO: Move this common place
+						data = json.loads(open(menu_id, "r").read())
+						menudata = MenuData.from_json_data(data, TalkingActionParser())
+						menuaction = menudata.get_by_id(item_id).action
+					else:
+						menuaction = self.mapper.profile.menus[menu_id].get_by_id(item_id).action
+					client.wfile.write(b"OK.\n")
+				except:
+					log.warning("Selected menu item is no longer valid.")
+					client.wfile.write(b"Fail: Selected menu item is no longer valid\n")
+				if menuaction:
+					self.mapper.schedule(0, press)
 		elif message.startswith("Register:"):
-			self.lock.acquire()
-			if message.strip().endswith("osd"):
-				if self.osd_daemon: self.osd_daemon.close()
-				self.osd_daemon = client
-				log.info("Registered scc-osd-daemon")
-			elif message.strip().endswith("autoswitch"):
-				if self.autoswitch_daemon: self.autoswitch_daemon.close()
-				self.autoswitch_daemon = client
-				log.info("Registered scc-autoswitch-daemon")
-			self.lock.release()
-			client.wfile.write(b"OK.\n")
+			with self.lock:
+				if message.strip().endswith("osd"):
+					if self.osd_daemon: self.osd_daemon.close()
+					self.osd_daemon = client
+					log.info("Registered scc-osd-daemon")
+				elif message.strip().endswith("autoswitch"):
+					if self.autoswitch_daemon: self.autoswitch_daemon.close()
+					self.autoswitch_daemon = client
+					log.info("Registered scc-autoswitch-daemon")
+				client.wfile.write(b"OK.\n")
 		else:
 			client.wfile.write(b"Fail: Unknown command\n")
 	
