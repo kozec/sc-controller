@@ -474,6 +474,7 @@ class ModeModifier(Modifier):
 	PROFILE_KEYS = ("modes",)
 	MIN_TRIGGER = 2		# When trigger is bellow this position, list of held_triggers is cleared
 	MIN_STICK = 2		# When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared
+	PROFILE_KEY_PRIORITY = 2
 	
 	def __init__(self, *stuff):
 		Modifier.__init__(self)
@@ -672,6 +673,7 @@ class DoubleclickModifier(Modifier):
 	COMMAND = "doubleclick"
 	DEAFAULT_TIMEOUT = 0.2
 	TIMEOUT_KEY = "time"
+	PROFILE_KEY_PRIORITY = 3
 	
 	def __init__(self, doubleclickaction, normalaction=None, time=None):
 		Modifier.__init__(self)
@@ -808,6 +810,7 @@ class HoldModifier(DoubleclickModifier):
 	# situation when both are assigned to same button needs to be treated
 	# specially.
 	COMMAND = "hold"
+	PROFILE_KEY_PRIORITY = 4
 	
 	def __init__(self, holdaction, normalaction=None, time=None):
 		DoubleclickModifier.__init__(self, NoAction(), normalaction, time)
