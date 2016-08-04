@@ -19,7 +19,7 @@ log = logging.getLogger("osd")
 
 class OSDWindow(Gtk.Window):
 	CSS = """
-		#osd-message, #osd-menu, #osd-keyboard {
+		#osd-window, #osd-message, #osd-menu, #osd-keyboard {
 			background-color: #%(background)s;
 			border: 6px #%(border)s double;
 		}

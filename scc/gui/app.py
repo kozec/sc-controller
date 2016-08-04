@@ -18,9 +18,10 @@ from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.paths import get_config_path, get_profiles_path
 from scc.constants import SCButtons, DAEMON_VERSION
+from scc.osd.app_controller import OSDAppController
 from scc.tools import check_access, find_profile
-from scc.actions import NoAction
 from scc.modifiers import NameModifier
+from scc.actions import NoAction
 from scc.profile import Profile
 from scc.config import Config
 
@@ -46,20 +47,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		BindingEditor.__init__(self, self)
 		# Setup Gtk.Application
 		self.setup_commandline()
-		# Setup DaemonManager
-		self.dm = DaemonManager()
-		self.dm.connect("alive", self.on_daemon_alive)
-		self.dm.connect("version", self.on_daemon_version)
-		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
-		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
-		self.dm.connect("error", self.on_daemon_error)
-		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
 		self.config = Config()
 		self.gladepath = gladepath
 		self.imagepath = imagepath
+		self.in_osd = False		# True if app was started with --osd argument
 		self.builder = None
 		self.recursing = False
+		self.osd_controller = None
 		self.context_menu_for = None
 		self.daemon_changed_profile = False
 		self.background = None
@@ -448,6 +443,19 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.hide_error()
 		if self.current_file is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
+		if self.in_osd:
+			self.enter_osd_mode()
+	
+	
+	def enter_osd_mode(self):
+		""" Disables some widgets and asks daemon to lock inputs """
+		log.info("Entering OSD mode")
+		
+		for x in ("vbProfile", "spProfile", "btUndo", "btRedo"):
+			self.builder.get_object(x).set_visible(False)
+		
+		self.osd_controller = OSDAppController(self)
+		self.osd_controller.set_window(self.window)
 	
 	
 	def on_daemon_version(self, daemon, version):
@@ -561,13 +569,24 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def do_startup(self, *a):
 		Gtk.Application.do_startup(self, *a)
+		# Setup DaemonManager
+		self.dm = DaemonManager()
+		self.dm.connect("alive", self.on_daemon_alive)
+		self.dm.connect("version", self.on_daemon_version)
+		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
+		self.dm.connect('reconfigured', self.on_daemon_reconfigured)
+		self.dm.connect("error", self.on_daemon_error)
+		self.dm.connect("dead", self.on_daemon_dead)
+		# Setup profiles
 		self.load_profile_list()
+		# Setup widgets
 		self.setup_widgets()
 		GLib.timeout_add_seconds(2, self.check)
 	
 	
 	def do_local_options(self, trash, lo):
 		set_logging_level(lo.contains("verbose"), lo.contains("debug") )
+		self.in_osd = lo.contains("osd")
 		return -1
 	
 	
@@ -666,6 +685,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
+		aso("osd",		b"o", "OSD mode, window is controlled by gamepad instead of mouse")
 	
 	
 	def save_profile_selection(self, path):
