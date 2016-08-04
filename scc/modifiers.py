@@ -526,7 +526,10 @@ class ModeModifier(Modifier):
 				args += [ getattr(SCButtons, button), parser.from_json_data(data[ModeModifier.PROFILE_KEYS[0]][button]) ]
 		if a:
 			args += [ a ]
-		return ModeModifier(*args)
+		mm = ModeModifier(*args)
+		if "name" in data:
+			mm.name = data["name"]
+		return mm
 	
 	
 	def strip(self):
@@ -559,6 +562,7 @@ class ModeModifier(Modifier):
 	
 	
 	def describe(self, context):
+		if self.name: return self.name
 		l = []
 		if self.default : l.append(self.default)
 		for x in self.order:

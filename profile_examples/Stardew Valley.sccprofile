@@ -89,7 +89,18 @@
         "action": "mouse()", 
         "ball": true, 
         "feedback": ["RIGHT", 256], 
-        "name": "Mouse"
+        "modes": {
+            "LGRIP": {
+                "X": {
+                    "action": "mouse(Rels.REL_HWHEEL)"
+                }, 
+                "Y": {
+                    "action": "mouse(Rels.REL_WHEEL)"
+                }, 
+                "ball": true, 
+                "feedback": ["RIGHT"]
+            }
+        }
     }, 
     "stick": {
         "X": {
