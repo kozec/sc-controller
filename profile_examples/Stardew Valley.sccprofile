@@ -1,0 +1,114 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.BTN_GAMEPAD)", 
+            "name": "OK"
+        }, 
+        "B": {
+            "action": "button(Keys.BTN_EAST)", 
+            "name": "Menu / Cancel"
+        }, 
+        "BACK": {
+            "action": "button(Keys.BTN_SELECT)", 
+            "name": "Journal"
+        }, 
+        "C": {
+            "action": "menu('Default.menu')"
+        }, 
+        "LB": {
+            "action": "axis(Axes.ABS_Z)", 
+            "name": "Prev. Item"
+        }, 
+        "LGRIP": {
+            "action": "button(Keys.KEY_LEFTSHIFT)", 
+            "name": "Walk"
+        }, 
+        "LPAD": {
+            "action": "button(Keys.BTN_THUMBL)"
+        }, 
+        "RB": {
+            "action": "axis(Axes.ABS_RZ)", 
+            "name": "Next Item"
+        }, 
+        "RGRIP": {
+            "action": "button(Keys.BTN_NORTH)", 
+            "name": "Use"
+        }, 
+        "RPAD": {
+            "action": "button(Keys.BTN_THUMBR)"
+        }, 
+        "START": {
+            "action": "button(Keys.KEY_M)", 
+            "name": "Map"
+        }, 
+        "STICK": {
+            "action": "button(Keys.BTN_THUMBL)"
+        }, 
+        "X": {
+            "action": "button(Keys.BTN_NORTH)", 
+            "name": "Use"
+        }, 
+        "Y": {
+            "action": "button(Keys.BTN_WEST)", 
+            "name": "Craft"
+        }
+    }, 
+    "gyro": {}, 
+    "menus": {
+        "Inventory": [{
+            "action": "button(Keys.KEY_1)", 
+            "id": "item1", 
+            "name": "1"
+        }, {
+            "action": "button(Keys.KEY_2)", 
+            "id": "item2", 
+            "name": "2"
+        }, {
+            "action": "button(Keys.KEY_3)", 
+            "id": "item3", 
+            "name": "3"
+        }, {
+            "action": "button(Keys.KEY_4)", 
+            "id": "item4", 
+            "name": "4"
+        }, {
+            "action": "button(Keys.KEY_5)", 
+            "id": "item5", 
+            "name": "5"
+        }, {
+            "action": "button(Keys.KEY_6)", 
+            "id": "item6", 
+            "name": "6"
+        }]
+    }, 
+    "pad_left": {
+        "action": "radialmenu('Inventory')", 
+        "name": "Inventory"
+    }, 
+    "pad_right": {
+        "action": "mouse()", 
+        "ball": true, 
+        "feedback": ["RIGHT", 256], 
+        "name": "Mouse"
+    }, 
+    "stick": {
+        "X": {
+            "action": "axis(Axes.ABS_X)"
+        }, 
+        "Y": {
+            "action": "raxis(Axes.ABS_Y)"
+        }, 
+        "name": "Move"
+    }, 
+    "trigger_left": {
+        "action": "button(Keys.BTN_RIGHT)", 
+        "levels": [254, 255], 
+        "name": "RClick"
+    }, 
+    "trigger_right": {
+        "action": "button(Keys.BTN_LEFT)", 
+        "levels": [254, 255], 
+        "name": "Click"
+    }, 
+    "version": 1.2
+}

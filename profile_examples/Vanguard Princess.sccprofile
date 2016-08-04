@@ -1,0 +1,113 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.BTN_GAMEPAD)", 
+            "name": "Weak Attack"
+        }, 
+        "B": {
+            "action": "button(Keys.BTN_EAST)", 
+            "name": "Normal Attack"
+        }, 
+        "C": {
+            "action": "menu('VP')", 
+            "doubleclick": {}, 
+            "hold": {
+                "action": "menu('Default.menu')", 
+                "position": [10, 10]
+            }, 
+            "position": [20, 20]
+        }, 
+        "LB": {
+            "action": "button(Keys.BTN_TL)", 
+            "name": "Parry"
+        }, 
+        "LGRIP": {
+            "action": "button(Keys.BTN_GAMEPAD)"
+        }, 
+        "LPAD": {
+            "action": "button(Keys.BTN_THUMBL)"
+        }, 
+        "RB": {
+            "action": "button(Keys.BTN_TR)", 
+            "name": "2nd player"
+        }, 
+        "RGRIP": {
+            "action": "button(Keys.BTN_NORTH)"
+        }, 
+        "RPAD": {
+            "action": "button(Keys.BTN_THUMBR)"
+        }, 
+        "START": {
+            "action": "button(Keys.BTN_START)", 
+            "name": "Pause"
+        }, 
+        "STICK": {
+            "action": "button(Keys.BTN_THUMBL)"
+        }, 
+        "X": {
+            "action": "button(Keys.BTN_NORTH)", 
+            "name": "Strong Attack"
+        }, 
+        "Y": {
+            "action": "button(Keys.BTN_WEST)", 
+            "name": "Friend Assist"
+        }
+    }, 
+    "gyro": {}, 
+    "menus": {
+        "VP": [{
+            "action": "button(Keys.KEY_F4)", 
+            "id": "item1", 
+            "name": "Toggle Fullscreen"
+        }, {
+            "actions": [{
+                "action": "button(Keys.BTN_START)"
+            }, {
+                "action": "button(Keys.BTN_GAMEPAD)"
+            }, {
+                "action": "button(Keys.BTN_EAST)"
+            }, {
+                "action": "button(Keys.BTN_NORTH)"
+            }, {
+                "action": "button(Keys.BTN_WEST)"
+            }], 
+            "id": "item2", 
+            "name": "Exit Match"
+        }, {
+            "separator": true
+        }, {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTALT)"
+            }, {
+                "action": "button(Keys.KEY_F4)"
+            }], 
+            "id": "item4", 
+            "name": "Exit Game"
+        }]
+    }, 
+    "pad_left": {
+        "dpad": [{
+            "action": "axis(Axes.ABS_Y, 0, -32767)"
+        }, {
+            "action": "axis(Axes.ABS_Y, 0, 32767)"
+        }, {
+            "action": "axis(Axes.ABS_X, 0, -32767)"
+        }, {
+            "action": "axis(Axes.ABS_X, 0, 32767)"
+        }], 
+        "name": "Move, Jump"
+    }, 
+    "pad_right": {}, 
+    "stick": {
+        "X": {
+            "action": "axis(Axes.ABS_X)"
+        }, 
+        "Y": {
+            "action": "raxis(Axes.ABS_Y)"
+        }, 
+        "name": "Move, Jump"
+    }, 
+    "trigger_left": {}, 
+    "trigger_right": {}, 
+    "version": 1.2
+}
