@@ -6,7 +6,7 @@ from scc.uinput import Keys, Axes, Rels
 from scc.actions import Action, NoAction, ButtonAction, DPadAction, XYAction
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction, HatRightAction
 from scc.actions import TriggerAction, CircularAction, MouseAction, AxisAction
-from scc.actions import MultiAction
+from scc.actions import RelAreaAction, MultiAction
 from scc.special_actions import ChangeProfileAction, GridMenuAction, MenuAction
 from scc.modifiers import SensitivityModifier, ClickModifier, FeedbackModifier
 from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK, YAW, ROLL
@@ -66,6 +66,8 @@ class VDFProfile(Profile):
 		'trigger_left' : Keys.BTN_TL2,
 		'trigger_right' : Keys.BTN_TR2,
 	}
+	
+	REGION_IMPORT_FACTOR = 0.6		# Bulgarian const.
 	
 	
 	def __init__(self, name = "Unnamed"):
@@ -377,6 +379,26 @@ class VDFProfile(Profile):
 				actions.append(AxisAction(Axes.ABS_RZ))
 			
 			action = MultiAction.make(*actions)
+		elif mode == "mouse_region":
+			# Read value and assume dafaults
+			scale = float(settings["scale"]) if "scale" in settings else 100.0
+			x = float(settings["position_x"]) if "position_x" in settings else 50.0
+			y = float(settings["position_y"]) if "position_y" in settings else 50.0
+			w = float(settings["sensitivity_horiz_scale"]) if "sensitivity_horiz_scale" in settings else 100.0
+			h = float(settings["sensitivity_vert_scale"]) if "sensitivity_vert_scale" in settings else 100.0
+			# Apply scale
+			w = w * scale / 100.0
+			h = h * scale / 100.0
+			# Convert to (0, 1) range
+			x, y = x / 100.0, 1.0 - (y / 100.0)
+			w, h = w / 100.0, h / 100.0
+			# Convert to rectangle
+			x1 = max(0.0, x - (w * VDFProfile.REGION_IMPORT_FACTOR))
+			x2 = min(1.0, x + (w * VDFProfile.REGION_IMPORT_FACTOR))
+			y1 = max(0.0, y - (h * VDFProfile.REGION_IMPORT_FACTOR))
+			y2 = min(1.0, y + (h * VDFProfile.REGION_IMPORT_FACTOR))
+			
+			action = RelAreaAction(x1, y1, x2, y2)
 		else:
 			raise ParseError("Unknown mode: '%s'" % (group["mode"],))
 		
