@@ -109,9 +109,9 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="margin_bottom">50</property>
-                <property name="label" translatable="yes">Code&amp;amp;UI © 2016 Kozec
+                <property name="label" translatable="yes">&lt;b&gt;Code&amp;amp;UI © 2016 Kozec&lt;/b&gt;
 
-Source code available on &lt;b&gt;&lt;a href="https://github.com/kozec/sc-controller"&gt;GitHub&lt;/a&gt;&lt;/b&gt;
+Source code available on &lt;a href="https://github.com/kozec/sc-controller"&gt;GitHub&lt;/a&gt;
 
 I'd like to express my biggest thanks
 for all my &lt;b&gt;&lt;a href="https://www.patreon.com/kozec"&gt;Patreon&lt;/a&gt;&lt;/b&gt; supporters, with special mention of
