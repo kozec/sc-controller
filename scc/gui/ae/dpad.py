@@ -102,7 +102,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 			# special case of 4-way dpad
 			a = DPadAction(ButtonAction(Keys.KEY_W), ButtonAction(Keys.KEY_S),
 				ButtonAction(Keys.KEY_A), ButtonAction(Keys.KEY_D))
-			self.actions = [ None ] * 8
+			self.actions = [ NoAction() ] * 8
 			self.editor.set_action(a)
 			self.update_button_desc(a)
 		elif key == "arrows":
@@ -110,7 +110,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 			a = DPadAction(ButtonAction(Keys.KEY_UP),
 				ButtonAction(Keys.KEY_DOWN), ButtonAction(Keys.KEY_LEFT),
 				ButtonAction(Keys.KEY_RIGHT))
-			self.actions = [ None ] * 8
+			self.actions = [ NoAction() ] * 8
 			self.editor.set_action(a)
 			self.update_button_desc(a)
 		else:
