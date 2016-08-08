@@ -4,13 +4,13 @@ SC-Controller - OSDAPPController
 
 Locks gamepad inputs and allows application to be controlled by gamepad.
 
-Instance of OSDAPPController is created by App; Then, every window that is
-supposed to be controlled by gamepad calls set_window method (closing
-is handled with signals.) This thing then scans entire widget hierarchy
+Instance of OSDAPPController is created by scc.app.App; Then, every window that
+is supposed to be controlled by gamepad calls set_window method (closing
+is handled with signals). This thing then scans entire widget hierarchy
 for selectable widgets and does some css magic to change color of selected one.
 """
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 from scc.osd import OSDWindow, StickController
 
 import logging
@@ -24,7 +24,10 @@ class OSDAppController(object):
 		self.scon = StickController()
 		self.dm.connect('event', self.on_input_event)
 		self.scon.connect("direction", self.on_stick_direction)
+		self.selected = 0, 0
+		self.window = None
 		self.map = {}
+		OSDWindow.install_css(app.config)
 	
 	
 	def on_input_event(self, daemon, what, data):
@@ -67,13 +70,11 @@ class OSDAppController(object):
 				y += 1
 			return x, y
 		
-		
 		def scan_hbox(x, y, children):
 			for child in children:
 				x, y = scan(x, y, child)
 				x += 1
 			return x, y
-		
 		
 		def scan(x, y, widget):
 			if not widget.is_visible():
@@ -89,10 +90,31 @@ class OSDAppController(object):
 			elif isinstance(widget, Gtk.Grid):
 				x, y = scan_grid(x, y, widget)
 			elif isinstance(widget, Gtk.Button):
-				print x, y, widget
+				if x not in self.map:
+					self.map[x] = {}
+				self.map[x][y] = widget
+				# print x, y, widget
 			else:
 				print "(ignored)", widget
 			return x, y
 		
 		self.map = {}
 		scan(0, 0, window)
+		self.window = window
+		self.window.set_name("osd-app")
+		self.selected = -1, 0
+		self.next(1, 0)
+	
+	
+	def next(self, dx, dy):
+		x, y = self.selected
+		
+		while True:
+			x, y = x + dx, y + dy
+			if x in self.map and y in self.map[x]:
+				w = self.map[x][y]
+				print "W", w
+				self.window.set_focus(w)
+				break
+			if dx > 0 and x > max(self.map.keys()):
+				x, y = -1, y + 1

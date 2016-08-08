@@ -197,7 +197,7 @@ class OSDDaemon(object):
 		h += sum([ hash(self.config['osk_colors'][x]) for x in self.config['osk_colors'] ])
 		if self._hash_of_colors != h:
 			self._hash_of_colors = h
-			OSDWindow._apply_css(self.config)
+			OSDWindow.install_css(self.config)
 			if self._window and isinstance(self._window, Keyboard):
 				self._window.recolor()
 				self._window.update_labels()

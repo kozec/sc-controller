@@ -71,7 +71,16 @@ class OSDWindow(Gtk.Window):
 			border: 1px #%(menuitem_hilight_border)s solid;
 		}
 		
-		#osd-menu-cursor, #osd-keyboard-cursor {
+		#osd-menu-cursor, #osd-keyboard-cursor { }
+		
+		#osd-app button:focus {
+			border: 1px #%(menuitem_hilight_border)s solid;
+		}
+		
+		#osd-app button:focus, #osd-app button:focus box {
+			background-image: none;
+			color: #%(menuitem_hilight_text)s;
+			background-color: #%(menuitem_hilight)s;
 		}
 	"""
 	EPILOG = ""
@@ -79,7 +88,7 @@ class OSDWindow(Gtk.Window):
 	
 	def __init__(self, wmclass):
 		Gtk.Window.__init__(self)
-		OSDWindow._apply_css(Config())
+		OSDWindow.install_css(Config())
 		
 		self.argparser = argparse.ArgumentParser(description=__doc__,
 			formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -99,7 +108,7 @@ class OSDWindow(Gtk.Window):
 	
 	
 	@staticmethod
-	def _apply_css(config):
+	def install_css(config):
 		if OSDWindow.css_provider:
 			Gtk.StyleContext.remove_provider_for_screen(
 				Gdk.Screen.get_default(), OSDWindow.css_provider)
