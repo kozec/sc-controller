@@ -108,5 +108,16 @@ Send by scc-osd-daemon when user chooses item from displayed menu.
 If menu_id or item_id contains spaces or quotes, it should be escaped.
 Daemon responds with `OK.`
 
+#### `Sniff: button1 button2...`
+Enables 'sniffing' on physical button, axis or pad. Works like Lock, but events from sniffed sources are processed normally and to client at same time.
+
+Any number of clients can sniff same source, so upon this requests, daemon always responds with `OK.`
+While source is being sniffed, daemon keeps sending `Event: ...` messages every time when button is pressed, released, axis moved, etc...
+
+Unlocking is done automatically when client is disconnected, or using `Unlock.` message.
+
 #### `Unlock.`
-Unlocks everything locked with `Lock...` messages sent by same client. This operation cannot fail (and does nothing if there is nothing to unlock), so daemon always responds with `OK.`
+Unlocks everything locked with `Lock...` and `Sniff...` messages sent by same client.
+It is not possible to unlock only one input or only one type of lock.
+
+This operation cannot fail (and does nothing if there is nothing to unlock), so daemon always responds with `OK.`
