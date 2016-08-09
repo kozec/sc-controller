@@ -414,11 +414,11 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"Ok.\n")
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
-		elif message.startswith("Sniff:"):
-			to_sniff = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
+		elif message.startswith("Observe:"):
+			to_observe = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
 			with self.lock:
-				for l in to_sniff:
-					client.sniff_aciton(self, SCCDaemon.source_to_constant(l))
+				for l in to_observe:
+					client.observe_action(self, SCCDaemon.source_to_constant(l))
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Lock:"):
 			to_lock = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
@@ -527,7 +527,7 @@ class SCCDaemon(Daemon):
 		Should be called while self.lock is acquired.
 		"""
 		is_locked = (lambda a: isinstance(a, LockedAction) or
-			(isinstance(a, SniffingAction) and isinstance(a.original_action, LockedAction)))
+			(isinstance(a, ObservingAction) and isinstance(a.original_action, LockedAction)))
 		
 		if what == STICK:
 			if is_locked(self.mapper.profile.buttons[SCButtons.STICK]):
@@ -619,7 +619,7 @@ class Client(object):
 		self.rfile = rfile
 		self.wfile = wfile
 		self.locked_actions = set()
-		self.sniffed_actions = set()
+		self.observed_actions = set()
 	
 	
 	def close(self):
@@ -637,8 +637,8 @@ class Client(object):
 		Should be called while daemon.lock is acquired.
 		"""
 		def lock(action, what):
-			# SniffingAction should be above LockedAction
-			if isinstance(action, SniffingAction):
+			# ObservingAction should be above LockedAction
+			if isinstance(action, ObservingAction):
 				action.original_action = LockedAction(what, self, action.original_action)
 				return action
 			return LockedAction(what, self, action)
@@ -646,19 +646,19 @@ class Client(object):
 		daemon._apply(what, lock, what)
 	
 	
-	def sniff_aciton(self, daemon, what):
+	def observe_action(self, daemon, what):
 		"""
-		Enables sniffing on action so event is both sent to client and handled.
+		Enables observing of action so event is both sent to client and handled.
 		
 		Should be called while daemon.lock is acquired.
 		"""
-		daemon._apply(what, lambda a : SniffingAction(what, self, a))
+		daemon._apply(what, lambda a : ObservingAction(what, self, a))
 	
 	
 	def unlock_actions(self, daemon):
 		""" Should be called while daemon.lock is acquired """
 		def unlock(a):
-			if isinstance(a, SniffingAction):
+			if isinstance(a, ObservingAction):
 				# Needs to be handled specifically, as it is in lock_action
 				a.original_action = unlock(a.original_action)
 				return a
@@ -669,23 +669,23 @@ class Client(object):
 			daemon._apply(a.what, unlock)
 			log.debug("%s unlocked", a.what)
 		
-		def unsniff(a):
+		def unobserve(a):
 			# I'm really proud of that name
-			if isinstance(a, SniffingAction):
+			if isinstance(a, ObservingAction):
 				if a.client == self:
 					return a.original_action
-				a.original_action = unsniff(a.original_action)
+				a.original_action = unobserve(a.original_action)
 				return a
 			if isinstance(a, LockedAction):
-				a.original_action = unsniff(a.original_action)
+				a.original_action = unobserve(a.original_action)
 				return a
 			# Shouldn't be possible to reach here
-			raise TypeError("Removing lock from non-locked action")
+			raise TypeError("Un-observing not observed action")
 		
-		s, self.sniffed_actions = self.sniffed_actions, set()
+		s, self.observed_actions = self.observed_actions, set()
 		for a in s:
-			daemon._apply(a.what, unsniff)
-			log.debug("%s no longer sniffed by %s", a.what, self)
+			daemon._apply(a.what, unobserve)
+			log.debug("%s no longer observed by %s", a.what, self)
 	
 	
 	def reaply_locks(self, daemon):
@@ -701,7 +701,7 @@ class Client(object):
 class ReportingAction(Action):
 	"""
 	Action used to send requested inputs to client.
-	Base for LockedAction and SniffingAction
+	Base for LockedAction and ObservingAction
 	"""
 	MIN_DIFFERENCE = 300
 	
@@ -745,15 +745,15 @@ class LockedAction(ReportingAction):
 		log.debug("%s locked by %s", self.what, self.client)
 
 
-class SniffingAction(ReportingAction):
+class ObservingAction(ReportingAction):
 	"""
 	Similar to LockedAction, send inputs to client *and* executes actions.
 	"""
 	def __init__(self, what, client, original_action):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
-		self.client.sniffed_actions.add(self)
-		log.debug("Enabled sniffing on %s by %s", self.what, self.client)
+		self.client.observed_actions.add(self)
+		log.debug("%s observed %s", self.what, self.client)
 	
 	
 	def trigger(self, mapper, position, old_position):
