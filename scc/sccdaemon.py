@@ -414,8 +414,14 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"Ok.\n")
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
+		elif message.startswith("Sniff:"):
+			to_sniff = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
+			with self.lock:
+				for l in to_sniff:
+					client.sniff_aciton(self, SCCDaemon.source_to_constant(l))
+				client.wfile.write(b"OK.\n")
 		elif message.startswith("Lock:"):
-			to_lock = [ x for x in message[5:].strip(" \t\r").split(" ") ]
+			to_lock = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
 			with self.lock:
 				try:
 					for l in to_lock:
@@ -427,7 +433,7 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"Fail: " + tb + b"\n")
 					return
 				for l in to_lock:
-					self._lock_action(SCCDaemon.source_to_constant(l), client)
+					client.lock_action(self, SCCDaemon.source_to_constant(l))
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Unlock."):
 			with self.lock:
@@ -520,89 +526,52 @@ class SCCDaemon(Daemon):
 		
 		Should be called while self.lock is acquired.
 		"""
+		is_locked = (lambda a: isinstance(a, LockedAction) or
+			(isinstance(a, SniffingAction) and isinstance(a.original_action, LockedAction)))
+		
 		if what == STICK:
-			if isinstance(self.mapper.profile.buttons[SCButtons.STICK], LockedAction):
+			if is_locked(self.mapper.profile.buttons[SCButtons.STICK]):
 				return False
-			if isinstance(self.mapper.profile.stick, LockedAction):
+			if is_locked(self.mapper.profile.stick):
 				return False
 			return True
 		if what == SCButtons.LT:
-			return not isinstance(self.mapper.profile.triggers[LEFT], LockedAction)
+			return not is_locked(self.mapper.profile.triggers[LEFT])
 		if what == SCButtons.RT:
-			return not isinstance(self.mapper.profile.triggers[RIGHT], LockedAction)
+			return not is_locked(self.mapper.profile.triggers[RIGHT])
 		if what in SCButtons:
-			return not isinstance(self.mapper.profile.buttons[what], LockedAction)
+			return not is_locked(self.mapper.profile.buttons[what])
 		if what in (LEFT, RIGHT):
-			return not isinstance(self.mapper.profile.pads[what], LockedAction)
+			return not is_locked(self.mapper.profile.pads[what])
 		return False
 	
 	
-	def _lock_action(self, what, client):
+	def _apply(self, what, callback, *args):
 		"""
-		Locks action so event can be send to client instead of handling it.
+		Applies callback on action that is currently set to input specified
+		by 'what'. Raises ValueError if what is not known.
 		
-		Should be called while self.lock is acquired.
+		For example, if what == STICK, executes
+			self.mapper.profile.stick = callback(self.mapper.profile.stick, *args)
 		"""
 		if what == STICK:
-			a = self.mapper.profile.stick.compress()
-			self.mapper.profile.stick = LockedAction(what, client, a)
-			return
-		if what == SCButtons.LT:
-			a = self.mapper.profile.triggers[LEFT].compress()
-			self.mapper.profile.triggers[LEFT] = LockedAction(what, client, a)
-			return
-		if what == SCButtons.RT:
-			a = self.mapper.profile.triggers[RIGHT].compress()
-			self.mapper.profile.triggers[RIGHT] = LockedAction(what, client, a)
-			return
-		if what in SCButtons:
-			a = self.mapper.profile.buttons[what].compress()
-			self.mapper.profile.buttons[what] = LockedAction(what, client, a)
-			return
-		if what in (LEFT, RIGHT):
-			a = self.mapper.profile.pads[what].compress()
+			self.mapper.profile.stick = callback(self.mapper.profile.stick, *args)
+		elif what == SCButtons.LT:
+			self.mapper.profile.triggers[LEFT] = callback(self.mapper.profile.triggers[LEFT], *args)
+		elif what == SCButtons.RT:
+			self.mapper.profile.triggers[RIGHT] = callback(self.mapper.profile.triggers[RIGHT], *args)
+		elif what in SCButtons:
+			self.mapper.profile.buttons[what] = callback(self.mapper.profile.buttons[what], *args)
+		elif what in (LEFT, RIGHT):
 			if what == LEFT:
 				self.mapper.buttons &= ~SCButtons.LPADTOUCH
 			else:
 				self.mapper.buttons &= ~SCButtons.RPADTOUCH
+			a = callback(self.mapper.profile.pads[what], *args)
 			a.whole(self.mapper, 0, 0, what)
-			self.mapper.profile.pads[what] = LockedAction(what, client, a)
-			return
-			
-		# Shouldn't really reach here
-		log.warning("Failed to lock action: Don't know what is %s", what)
-	
-	
-	def _unlock_action(self, what):
-		"""
-		Unlocks action so event can be handled normally.
-		
-		Should be called while self.lock is acquired.
-		"""
-		if what == STICK:
-			a = self.mapper.profile.stick.original_action
-			self.mapper.profile.stick = a
-			return
-		if what == SCButtons.LT:
-			a = self.mapper.profile.triggers[LEFT].original_action
-			self.mapper.profile.triggers[LEFT] = a
-			return
-		if what == SCButtons.RT:
-			a = self.mapper.profile.triggers[RIGHT].original_action
-			self.mapper.profile.triggers[RIGHT] = a
-			return
-		if what in SCButtons:
-			a = self.mapper.profile.buttons[what].original_action
-			self.mapper.profile.buttons[what] = a
-			return
-		if what in (LEFT, RIGHT):
-			a = self.mapper.profile.pads[what].original_action
 			self.mapper.profile.pads[what] = a
-			return
-		# TODO: Triggers
-			
-		# Shouldn't really reach here
-		log.warning("Failed to unlock action: Don't know what is %s", what)
+		else:
+			raise ValueError("Unknown source: %s" % (what,))
 	
 	
 	@staticmethod
@@ -650,6 +619,7 @@ class Client(object):
 		self.rfile = rfile
 		self.wfile = wfile
 		self.locked_actions = set()
+		self.sniffed_actions = set()
 	
 	
 	def close(self):
@@ -660,12 +630,62 @@ class Client(object):
 			pass
 	
 	
+	def lock_action(self, daemon, what):
+		"""
+		Locks action so event can be send to client instead of handling it.
+		
+		Should be called while daemon.lock is acquired.
+		"""
+		def lock(action, what):
+			# SniffingAction should be above LockedAction
+			if isinstance(action, SniffingAction):
+				action.original_action = LockedAction(what, self, action.original_action)
+				return action
+			return LockedAction(what, self, action)
+		
+		daemon._apply(what, lock, what)
+	
+	
+	def sniff_aciton(self, daemon, what):
+		"""
+		Enables sniffing on action so event is both sent to client and handled.
+		
+		Should be called while daemon.lock is acquired.
+		"""
+		daemon._apply(what, lambda a : SniffingAction(what, self, a))
+	
+	
 	def unlock_actions(self, daemon):
 		""" Should be called while daemon.lock is acquired """
+		def unlock(a):
+			if isinstance(a, SniffingAction):
+				# Needs to be handled specifically, as it is in lock_action
+				a.original_action = unlock(a.original_action)
+				return a
+			return a.original_action
+		
 		s, self.locked_actions = self.locked_actions, set()
 		for a in s:
-			daemon._unlock_action(a.what)
+			daemon._apply(a.what, unlock)
 			log.debug("%s unlocked", a.what)
+		
+		def unsniff(a):
+			# I'm really proud of that name
+			if isinstance(a, SniffingAction):
+				if a.client == self:
+					return a.original_action
+				a.original_action = unsniff(a.original_action)
+				return a
+			if isinstance(a, LockedAction):
+				a.original_action = unsniff(a.original_action)
+				return a
+			# Shouldn't be possible to reach here
+			raise TypeError("Removing lock from non-locked action")
+		
+		s, self.sniffed_actions = self.sniffed_actions, set()
+		for a in s:
+			daemon._apply(a.what, unsniff)
+			log.debug("%s no longer sniffed by %s", a.what, self)
 	
 	
 	def reaply_locks(self, daemon):
@@ -678,17 +698,18 @@ class Client(object):
 			daemon._lock_action(a.what, self)
 
 
-
-class LockedAction(Action):
-	""" Temporal action used to send requested inputs to client """
+class ReportingAction(Action):
+	"""
+	Action used to send requested inputs to client.
+	Base for LockedAction and SniffingAction
+	"""
 	MIN_DIFFERENCE = 300
-	def __init__(self, what, client, original_action):
+	
+	def __init__(self, what, client):
 		self.what = what
 		self.client = client
-		self.original_action = original_action
-		self.client.locked_actions.add(self)
 		self.old_pos = 0, 0
-		log.debug("%s locked by %s", what, client)
+	
 	
 	def trigger(self, mapper, position, old_position):
 		self.client.wfile.write(("Event: %s %s %s\n" % (
@@ -713,6 +734,46 @@ class LockedAction(Action):
 		if abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE):
 			self.old_pos = x, y
 			self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))
+
+
+class LockedAction(ReportingAction):
+	""" Temporal action used to send requested inputs to client """
+	def __init__(self, what, client, original_action):
+		ReportingAction.__init__(self, what, client)
+		self.original_action = original_action
+		self.client.locked_actions.add(self)
+		log.debug("%s locked by %s", self.what, self.client)
+
+
+class SniffingAction(ReportingAction):
+	"""
+	Similar to LockedAction, send inputs to client *and* executes actions.
+	"""
+	def __init__(self, what, client, original_action):
+		ReportingAction.__init__(self, what, client)
+		self.original_action = original_action
+		self.client.sniffed_actions.add(self)
+		log.debug("Enabled sniffing on %s by %s", self.what, self.client)
+	
+	
+	def trigger(self, mapper, position, old_position):
+		ReportingAction.trigger(self, mapper, position, old_position)
+		self.original_action.trigger(mapper, position, old_position)
+	
+	
+	def button_press(self, mapper):
+		ReportingAction.button_press(self, mapper)
+		self.original_action.button_press(mapper)
+	
+	
+	def button_release(self, mapper):
+		ReportingAction.button_release(self, mapper)
+		self.original_action.button_release(mapper)
+	
+	
+	def whole(self, mapper, x, y, what):
+		ReportingAction.whole(self, mapper, x, y, what)
+		self.original_action.whole(mapper, x, y, what)
 
 
 class Subprocess(object):
