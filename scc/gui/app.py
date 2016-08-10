@@ -130,7 +130,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def hilight(self, button):
 		""" Hilights specified button on background image """
 		if button:
-			self.hilights[App.HILIGHT_COLOR] = set(button)
+			self.hilights[App.HILIGHT_COLOR] = set([button])
 		else:
 			self.hilights[App.HILIGHT_COLOR] = set()
 		self._update_background()
