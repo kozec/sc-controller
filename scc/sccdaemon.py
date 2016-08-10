@@ -693,9 +693,12 @@ class Client(object):
 		Called after profile is changed.
 		Should be called while daemon.lock is acquired
 		"""
+		s, self.observed_actions = self.observed_actions, set()
+		for a in s:
+			self.observe_action(daemon, a.what)
 		s, self.locked_actions = self.locked_actions, set()
 		for a in s:
-			daemon._lock_action(a.what, self)
+			self.lock_action(daemon, a.what)
 
 
 class ReportingAction(Action):
