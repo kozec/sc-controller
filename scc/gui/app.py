@@ -35,6 +35,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	IMAGE = "background.svg"
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
+	OBSERVE_COLOR = "#007FFF00"		# ARGB
 	CONFIG = "scc.config.json"
 	
 	def __init__(self, gladepath="/usr/share/scc",
@@ -53,6 +54,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
 		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		self.dm.connect("error", self.on_daemon_error)
+		self.dm.connect("event", self.on_daemon_event_observer)
 		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
 		self.config = Config()
@@ -68,6 +70,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.current_file = None
 		self.just_started = True
 		self.button_widgets = {}
+		self.hilights = { App.HILIGHT_COLOR : set(), App.OBSERVE_COLOR : set() }
 		self.undo = []
 		self.redo = []
 	
@@ -126,7 +129,19 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def hilight(self, button):
 		""" Hilights specified button on background image """
-		self.background.hilight({ button : App.HILIGHT_COLOR })
+		if button:
+			self.hilights[App.HILIGHT_COLOR] = set(button)
+		else:
+			self.hilights[App.HILIGHT_COLOR] = set()
+		self._update_background()
+	
+	
+	def _update_background(self):
+		h = {}
+		for color in self.hilights:
+			for i in self.hilights[color]:
+				h[i] = color
+		self.background.hilight(h)
 	
 	
 	def hint(self, button):
@@ -448,6 +463,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.hide_error()
 		if self.current_file is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
+		self.dm.observe(DaemonManager.nocallback, DaemonManager.nocallback,
+			'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB')
 	
 	
 	def on_daemon_version(self, daemon, version):
@@ -464,7 +481,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.dm.restart()
 	
 	
-	def on_daemon_error(self, trash, error):
+	def on_daemon_error(self, daemon, error):
 		log.debug("Daemon reported error '%s'", error)
 		msg = _('There was an error with enabling emulation: <b>%s</b>') % (error,)
 		# Known errors are handled with aditional message
@@ -482,6 +499,17 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		self.show_error(msg)
 		self.set_daemon_status("dead")
+	
+	
+	def on_daemon_event_observer(self, daemon, what, data):
+		if hasattr(SCButtons, what):
+			if data[0]:
+				self.hilights[App.OBSERVE_COLOR].add(what)
+			else:
+				self.hilights[App.OBSERVE_COLOR].remove(what)
+			self._update_background()
+		else:
+			print "event", what
 	
 	
 	def show_error(self, message):
