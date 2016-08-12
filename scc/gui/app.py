@@ -201,6 +201,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def save_config(self):
 		self.config.save()
 		self.dm.reconfigure()
+		self.enable_test_mode()
 	
 	
 	def on_mnuClear_activate(self, *a):
@@ -481,10 +482,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.hide_error()
 		if self.current_file is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
-		self.dm.observe(DaemonManager.nocallback, self.on_observe_failed,
-			'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
-			'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
-			'RIGHT', 'STICK', 'STICKPRESS')
+		self.enable_test_mode()
+	
+	
+	def enable_test_mode(self):
+		"""
+		Disables and re-enables Input Test mode. If sniffing is disabled in
+		daemon configuration, 2nd call fails and logs error.
+		"""
+		if self.dm.is_alive():
+			self.dm.unlock_all()
+			self.dm.observe(DaemonManager.nocallback, self.on_observe_failed,
+				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
+				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
+				'RIGHT', 'STICK', 'STICKPRESS')
 	
 	
 	def on_observe_failed(self, error):
