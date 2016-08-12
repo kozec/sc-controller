@@ -36,7 +36,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	IMAGE = "background.svg"
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
-	OBSERVE_COLOR = "#007FFF00"		# ARGB
+	OBSERVE_COLOR = "#00007FFF"		# ARGB
 	CONFIG = "scc.config.json"
 	
 	def __init__(self, gladepath="/usr/share/scc",
