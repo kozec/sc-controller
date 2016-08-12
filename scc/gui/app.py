@@ -483,7 +483,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.dm.set_profile(self.current_file.get_path())
 		self.dm.observe(DaemonManager.nocallback, DaemonManager.nocallback,
 			'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
-			'LEFT', 'RIGHT', 'STICK')
+			'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
+			'RIGHT', 'STICK')
 	
 	
 	def on_daemon_version(self, daemon, version):
@@ -543,6 +544,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			y -= data[1] * aw / STICK_PAD_MAX * 0.5
 			# Move circle
 			self.main_area.move(widget, x, y)
+		elif what in ("LT", "RT"):
+			current, old = data
+			what = "LEFT" if what == "LT" else "RIGHT"
+			if current:
+				self.hilights[App.OBSERVE_COLOR].add(what)
+			else:
+				self.hilights[App.OBSERVE_COLOR].remove(what)
+			self._update_background()
 		elif hasattr(SCButtons, what):
 			if data[0]:
 				self.hilights[App.OBSERVE_COLOR].add(what)
