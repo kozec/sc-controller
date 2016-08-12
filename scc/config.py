@@ -25,6 +25,11 @@ class Config(object):
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
 		],
+		# enable_sniffing - If enabled, another program with write access to
+		# ~/.config/scc can ask daemon to send notifications about all
+		# (or only some) inputs.
+		# This enables GUI to display which physical button was pressed to user.
+		"enable_sniffing" : False,
 		"osd_colors": {
 			"background": "160c00",
 			"border": "00FF00",

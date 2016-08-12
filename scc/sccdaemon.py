@@ -415,11 +415,15 @@ class SCCDaemon(Daemon):
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Observe:"):
-			to_observe = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
-			with self.lock:
-				for l in to_observe:
-					client.observe_action(self, SCCDaemon.source_to_constant(l))
-				client.wfile.write(b"OK.\n")
+			if Config()["enable_sniffing"]:
+				to_observe = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
+				with self.lock:
+					for l in to_observe:
+						client.observe_action(self, SCCDaemon.source_to_constant(l))
+					client.wfile.write(b"OK.\n")
+			else:
+				log.warning("Refused 'Observe' request: Sniffing disabled")
+				client.wfile.write(b"Fail: Sniffing disabled.\n")
 		elif message.startswith("Lock:"):
 			to_lock = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
 			with self.lock:

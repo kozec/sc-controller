@@ -481,10 +481,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.hide_error()
 		if self.current_file is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
-		self.dm.observe(DaemonManager.nocallback, DaemonManager.nocallback,
+		self.dm.observe(DaemonManager.nocallback, self.on_observe_failed,
 			'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
 			'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
 			'RIGHT', 'STICK', 'STICKPRESS')
+	
+	
+	def on_observe_failed(self, error):
+		log.debug("Failed to enable test mode: %s", error)
 	
 	
 	def on_daemon_version(self, daemon, version):
