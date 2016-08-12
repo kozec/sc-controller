@@ -1,0 +1,102 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.KEY_SPACE)", 
+            "name": "Jump / Swim Up"
+        }, 
+        "B": {
+            "action": "button(Keys.KEY_X)", 
+            "name": "Weapon Mode"
+        }, 
+        "BACK": {
+            "action": "button(Keys.KEY_TAB)", 
+            "name": "[TAB] Inventory"
+        }, 
+        "C": {
+            "action": "menu('Default.menu')"
+        }, 
+        "LB": {
+            "action": "button(Keys.BTN_MIDDLE)", 
+            "name": "Grenade"
+        }, 
+        "LGRIP": {
+            "action": "button(Keys.KEY_LEFTSHIFT)", 
+            "name": "Sprint"
+        }, 
+        "LPAD": {
+            "action": "button(Keys.KEY_M)", 
+            "name": "Map"
+        }, 
+        "RB": {
+            "action": "button(Keys.KEY_Q)", 
+            "name": "Melle"
+        }, 
+        "RGRIP": {
+            "action": "button(Keys.KEY_Q)", 
+            "name": "Swim Down"
+        }, 
+        "RPAD": {
+            "action": "button(Keys.KEY_T)", 
+            "name": "Torch"
+        }, 
+        "START": {
+            "action": "button(Keys.KEY_ESC)", 
+            "name": "Menu"
+        }, 
+        "STICK": {
+            "action": "button(Keys.KEY_C)", 
+            "name": "Scan"
+        }, 
+        "X": {
+            "action": "button(Keys.KEY_E)", 
+            "name": "(E) Interact"
+        }, 
+        "Y": {
+            "action": "button(Keys.KEY_R)", 
+            "name": "Reload"
+        }
+    }, 
+    "gyro": {}, 
+    "menus": {}, 
+    "pad_left": {
+        "dpad": [{
+            "action": "button(Keys.KEY_UP)"
+        }, {
+            "action": "button(Keys.KEY_DOWN)"
+        }, {
+            "action": "button(Keys.KEY_LEFT)"
+        }, {
+            "action": "button(Keys.KEY_RIGHT)"
+        }], 
+        "name": "Move Map"
+    }, 
+    "pad_right": {
+        "action": "mouse(None, 1.0)", 
+        "ball": true, 
+        "feedback": ["RIGHT", 256], 
+        "name": "Mouse", 
+        "sensitivity": [0.5, 0.5, 1.0]
+    }, 
+    "stick": {
+        "dpad": [{
+            "action": "button(Keys.KEY_W)"
+        }, {
+            "action": "button(Keys.KEY_S)"
+        }, {
+            "action": "button(Keys.KEY_A)"
+        }, {
+            "action": "button(Keys.KEY_D)"
+        }]
+    }, 
+    "trigger_left": {
+        "action": "button(Keys.BTN_RIGHT)", 
+        "levels": [50, 50], 
+        "name": "(RClick) Zoom"
+    }, 
+    "trigger_right": {
+        "action": "button(Keys.BTN_LEFT)", 
+        "levels": [50, 50], 
+        "name": "(LClick) Fire"
+    }, 
+    "version": 1.2
+}
