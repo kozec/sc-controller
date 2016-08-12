@@ -484,7 +484,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.dm.observe(DaemonManager.nocallback, DaemonManager.nocallback,
 			'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
 			'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
-			'RIGHT', 'STICK')
+			'RIGHT', 'STICK', 'STICKPRESS')
 	
 	
 	def on_daemon_version(self, daemon, version):
@@ -544,10 +544,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			y -= data[1] * aw / STICK_PAD_MAX * 0.5
 			# Move circle
 			self.main_area.move(widget, x, y)
-		elif what in ("LT", "RT"):
-			current, old = data
-			what = "LEFT" if what == "LT" else "RIGHT"
-			if current:
+		elif what in ("LT", "RT", "STICKPRESS"):
+			what = {
+				"LT" : "LEFT",
+				"RT" : "RIGHT",
+				"STICKPRESS" : "STICK"
+			}[what]
+			if data[0]:
 				self.hilights[App.OBSERVE_COLOR].add(what)
 			else:
 				self.hilights[App.OBSERVE_COLOR].remove(what)
