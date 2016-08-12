@@ -143,13 +143,13 @@ class DaemonManager(GObject.GObject):
 				self.emit('alive')
 			elif line.startswith("OK."):
 				if len(self._requests) > 0:
-					success_cb, error_cb = self._requests[-1]
-					self._requests = self._requests[0:-1]
+					success_cb, error_cb = self._requests[0]
+					self._requests = self._requests[1:]
 					success_cb()
 			elif line.startswith("Fail:"):
 				if len(self._requests) > 0:
-					success_cb, error_cb = self._requests[-1]
-					self._requests = self._requests[0:-1]
+					success_cb, error_cb = self._requests[0]
+					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Event:"):
 				data = line[6:].strip().split(" ")
@@ -193,10 +193,12 @@ class DaemonManager(GObject.GObject):
 			# Instant failure
 			error_cb("Not connected.")
 	
+	
 	@classmethod
 	def nocallback(*a):
 		""" Used when request doesn't needs callback """
 		pass
+	
 	
 	def get_profile(self):
 		"""
@@ -204,6 +206,7 @@ class DaemonManager(GObject.GObject):
 		May return None.
 		"""
 		return self._profile
+	
 	
 	def set_profile(self, filename):
 		""" Asks daemon to change profile """
@@ -251,6 +254,18 @@ class DaemonManager(GObject.GObject):
 		"""
 		what = " ".join(what_to_lock)
 		self.request("Lock: %s" % (what,), success_cb, error_cb)
+	
+	
+	def observe(self, success_cb, error_cb, *what_to_lock):
+		"""
+		Enables observing on physical button, axis or pad.
+		Events from observed sources are sent to this client and processed
+		using 'event' singal, until unlock_all() is called.
+		
+		Calls success_cb() on success or error_cb(error) on failure.
+		"""
+		what = " ".join(what_to_lock)
+		self.request("Observe: %s" % (what,), success_cb, error_cb)
 	
 	
 	def unlock_all(self):

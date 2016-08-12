@@ -268,6 +268,9 @@ class MenuAction(Action, SpecialAction):
 	
 	
 	def whole(self, mapper, x, y, what):
+		if x == 0 and y == 0:
+			# Sent when pad is released - don't display menu then
+			return
 		if what in (LEFT, RIGHT):
 			if what == LEFT:
 				confirm, cancel = "LPAD", SCButtons.LPADTOUCH

@@ -8,7 +8,8 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.actions import Action, ButtonAction, MouseAction, MultiAction, NoAction
+from scc.actions import Action, ButtonAction, MouseAction
+from scc.actions import AxisAction, MultiAction, NoAction
 from scc.uinput import Rels
 from scc.gui.area_to_action import action_to_area
 from scc.gui.key_grabber import KeyGrabber
@@ -63,6 +64,8 @@ class ButtonsComponent(AEComponent, Chooser):
 		# Handles ButtonAction and MultiAction if all subactions are ButtonAction
 		if isinstance(action, (ButtonAction, NoAction, InvalidAction)):
 			return True
+		if isinstance(action, AxisAction):
+			return len(action.parameters) == 1
 		if isinstance(action, MouseAction):
 			if action.mouse_axis == Rels.REL_WHEEL:
 				return True

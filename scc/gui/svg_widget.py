@@ -80,6 +80,25 @@ class SVGWidget(Gtk.EventBox):
 		return None
 	
 	
+	def get_area(self, id):
+		for a in self.areas:
+			if a.name == id:
+				return a
+		return None
+	
+	
+	def get_area_position(self, area_id):
+		"""
+		Computes and returns area position on image as (x, y, width, height).
+		Returns None if area is not found.
+		"""
+		# TODO: Maybe cache this?
+		a = self.get_area(area_id)
+		if a:
+			return a.x, a.y, a.w, a.h
+		return None
+	
+	
 	@staticmethod
 	def get_element(tree, id):
 		"""

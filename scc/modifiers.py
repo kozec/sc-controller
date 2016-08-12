@@ -474,6 +474,7 @@ class ModeModifier(Modifier):
 	PROFILE_KEYS = ("modes",)
 	MIN_TRIGGER = 2		# When trigger is bellow this position, list of held_triggers is cleared
 	MIN_STICK = 2		# When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared
+	PROFILE_KEY_PRIORITY = 2
 	
 	def __init__(self, *stuff):
 		Modifier.__init__(self)
@@ -525,7 +526,10 @@ class ModeModifier(Modifier):
 				args += [ getattr(SCButtons, button), parser.from_json_data(data[ModeModifier.PROFILE_KEYS[0]][button]) ]
 		if a:
 			args += [ a ]
-		return ModeModifier(*args)
+		mm = ModeModifier(*args)
+		if "name" in data:
+			mm.name = data["name"]
+		return mm
 	
 	
 	def strip(self):
@@ -558,6 +562,7 @@ class ModeModifier(Modifier):
 	
 	
 	def describe(self, context):
+		if self.name: return self.name
 		l = []
 		if self.default : l.append(self.default)
 		for x in self.order:
@@ -672,6 +677,7 @@ class DoubleclickModifier(Modifier):
 	COMMAND = "doubleclick"
 	DEAFAULT_TIMEOUT = 0.2
 	TIMEOUT_KEY = "time"
+	PROFILE_KEY_PRIORITY = 3
 	
 	def __init__(self, doubleclickaction, normalaction=None, time=None):
 		Modifier.__init__(self)
@@ -808,6 +814,7 @@ class HoldModifier(DoubleclickModifier):
 	# situation when both are assigned to same button needs to be treated
 	# specially.
 	COMMAND = "hold"
+	PROFILE_KEY_PRIORITY = 4
 	
 	def __init__(self, holdaction, normalaction=None, time=None):
 		DoubleclickModifier.__init__(self, NoAction(), normalaction, time)

@@ -16,6 +16,8 @@ from scc.gui.binding_editor import BindingEditor
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
+from scc.constants import SCButtons, STICK, STICK_PAD_MAX
+from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.paths import get_config_path, get_profiles_path
 from scc.constants import SCButtons, DAEMON_VERSION
 from scc.osd.app_controller import OSDAppController
@@ -36,6 +38,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	IMAGE = "background.svg"
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
+	OBSERVE_COLOR = "#00007FFF"		# ARGB
 	CONFIG = "scc.config.json"
 	
 	def __init__(self, gladepath="/usr/share/scc",
@@ -47,6 +50,15 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		BindingEditor.__init__(self, self)
 		# Setup Gtk.Application
 		self.setup_commandline()
+		# Setup DaemonManager
+		self.dm = DaemonManager()
+		self.dm.connect("alive", self.on_daemon_alive)
+		self.dm.connect("version", self.on_daemon_version)
+		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
+		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
+		self.dm.connect("error", self.on_daemon_error)
+		self.dm.connect("event", self.on_daemon_event_observer)
+		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
 		self.config = Config()
 		self.gladepath = gladepath
@@ -63,11 +75,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.current_file = None
 		self.just_started = True
 		self.button_widgets = {}
+		self.hilights = { App.HILIGHT_COLOR : set(), App.OBSERVE_COLOR : set() }
 		self.undo = []
 		self.redo = []
 	
 	
 	def setup_widgets(self):
+		# Important stuff
 		self.builder = Gtk.Builder()
 		self.builder.add_from_file(os.path.join(self.gladepath, "app.glade"))
 		self.builder.connect_signals(self)
@@ -78,26 +92,42 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.ribar = None
 		self.create_binding_buttons()
 		
+		# Drag&drop target
 		self.builder.get_object("content").drag_dest_set(Gtk.DestDefaults.ALL, [
 			Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0)
 			], Gdk.DragAction.COPY
 		)
 		
+		# Profile list
 		self.builder.get_object("cbProfile").set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
 		
+		# Top-left Icon
 		self.set_daemon_status("unknown")
 		
+		# 'C' button
 		vbc = self.builder.get_object("vbC")
-		main_area = self.builder.get_object("mainArea")
+		self.main_area = self.builder.get_object("mainArea")
 		vbc.get_parent().remove(vbc)
 		vbc.connect('size-allocate', self.on_vbc_allocated)
+		
+		# Background
 		self.background = SVGWidget(self, os.path.join(self.imagepath, self.IMAGE))
 		self.background.connect('hover', self.on_background_area_hover)
 		self.background.connect('leave', self.on_background_area_hover, None)
 		self.background.connect('click', self.on_background_area_click)
-		main_area.put(self.background, 0, 0)
-		main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
+		self.main_area.put(self.background, 0, 0)
+		self.main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
+		
+		# Test markers (those blue circles over PADs and sticks)
+		self.lpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.rpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.stickTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.main_area.put(self.lpadTest, 40, 40)
+		self.main_area.put(self.rpadTest, 290, 90)
+		self.main_area.put(self.stickTest, 150, 40)
+		
+		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
 	
 	
@@ -121,7 +151,19 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def hilight(self, button):
 		""" Hilights specified button on background image """
-		self.background.hilight({ button : App.HILIGHT_COLOR })
+		if button:
+			self.hilights[App.HILIGHT_COLOR] = set([button])
+		else:
+			self.hilights[App.HILIGHT_COLOR] = set()
+		self._update_background()
+	
+	
+	def _update_background(self):
+		h = {}
+		for color in self.hilights:
+			for i in self.hilights[color]:
+				h[i] = color
+		self.background.hilight(h)
 	
 	
 	def hint(self, button):
@@ -163,6 +205,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def save_config(self):
 		self.config.save()
 		self.dm.reconfigure()
+		if not self.in_osd:
+			self.enable_test_mode()
 	
 	
 	def on_mnuClear_activate(self, *a):
@@ -445,6 +489,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.dm.set_profile(self.current_file.get_path())
 		if self.in_osd:
 			self.enter_osd_mode()
+		else:
+			self.enable_test_mode()
 	
 	
 	def enter_osd_mode(self):
@@ -456,6 +502,23 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		self.osd_controller = OSDAppController(self)
 		self.osd_controller.set_window(self.window)
+	
+	
+	def enable_test_mode(self):
+		"""
+		Disables and re-enables Input Test mode. If sniffing is disabled in
+		daemon configuration, 2nd call fails and logs error.
+		"""
+		if self.dm.is_alive():
+			self.dm.unlock_all()
+			self.dm.observe(DaemonManager.nocallback, self.on_observe_failed,
+				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
+				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
+				'RIGHT', 'STICK', 'STICKPRESS')
+	
+	
+	def on_observe_failed(self, error):
+		log.debug("Failed to enable test mode: %s", error)
 	
 	
 	def on_daemon_version(self, daemon, version):
@@ -472,7 +535,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.dm.restart()
 	
 	
-	def on_daemon_error(self, trash, error):
+	def on_daemon_error(self, daemon, error):
 		log.debug("Daemon reported error '%s'", error)
 		msg = _('There was an error with enabling emulation: <b>%s</b>') % (error,)
 		# Known errors are handled with aditional message
@@ -490,6 +553,50 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		self.show_error(msg)
 		self.set_daemon_status("dead")
+	
+	
+	def on_daemon_event_observer(self, daemon, what, data):
+		if what in (LEFT, RIGHT, STICK):
+			widget, area = {
+				LEFT  : (self.lpadTest,  "LPADTEST"),
+				RIGHT : (self.rpadTest,  "RPADTEST"),
+				STICK : (self.stickTest, "STICKTEST"),
+			}[what]
+			# Check if stick or pad is released
+			if data[0] == data[1] == 0:
+				widget.hide()
+				return
+			if not widget.is_visible():
+				widget.show()
+			# Grab values
+			ax, ay, aw, trash = self.background.get_area_position(area)
+			cw = widget.get_allocation().width
+			# Compute center
+			x, y = ax + aw * 0.5 - cw * 0.5, ay + 1.0 - cw * 0.5
+			# Add pad position
+			x += data[0] * aw / STICK_PAD_MAX * 0.5
+			y -= data[1] * aw / STICK_PAD_MAX * 0.5
+			# Move circle
+			self.main_area.move(widget, x, y)
+		elif what in ("LT", "RT", "STICKPRESS"):
+			what = {
+				"LT" : "LEFT",
+				"RT" : "RIGHT",
+				"STICKPRESS" : "STICK"
+			}[what]
+			if data[0]:
+				self.hilights[App.OBSERVE_COLOR].add(what)
+			else:
+				self.hilights[App.OBSERVE_COLOR].remove(what)
+			self._update_background()
+		elif hasattr(SCButtons, what):
+			if data[0]:
+				self.hilights[App.OBSERVE_COLOR].add(what)
+			else:
+				self.hilights[App.OBSERVE_COLOR].remove(what)
+			self._update_background()
+		else:
+			print "event", what
 	
 	
 	def show_error(self, message):
