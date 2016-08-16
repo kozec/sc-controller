@@ -413,7 +413,7 @@ class SCCDaemon(Daemon):
 					text = message[5:].decode("utf-8").strip("\t ")
 					if not self._osd("message", text):
 						raise Exception()
-					client.wfile.write(b"Ok.\n")
+					client.wfile.write(b"OK.\n")
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Observe:"):
