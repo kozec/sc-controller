@@ -86,6 +86,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		""" Transfers autoswitch settings from config to UI """
 		tvItems = self.builder.get_object("tvItems")
 		cbShowOSD = self.builder.get_object("cbShowOSD")
+		cbInputTestMode = self.builder.get_object("cbInputTestMode")
 		model = tvItems.get_model()
 		model.clear()
 		for x in self.app.config['autoswitch']:
@@ -95,6 +96,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self._recursing = True
 		self.on_tvItems_cursor_changed()
 		cbShowOSD.set_active(bool(self.app.config['autoswitch_osd']))
+		cbInputTestMode.set_active(bool(self.app.config['enable_sniffing']))
 		self._recursing = False
 	
 	
@@ -197,6 +199,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		""" Transfers settings from UI back to config """
 		tvItems = self.builder.get_object("tvItems")
 		cbShowOSD = self.builder.get_object("cbShowOSD")
+		cbInputTestMode = self.builder.get_object("cbInputTestMode")
 		conds = []
 		for row in tvItems.get_model():
 			conds.append(dict(
@@ -205,10 +208,16 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			))
 		self.app.config['autoswitch'] = conds
 		self.app.config['autoswitch_osd'] = cbShowOSD.get_active()
+		self.app.config['enable_sniffing'] = cbInputTestMode.get_active()
 		self.app.save_config()
 	
 	
 	def on_cbShowOSD_toggled(self, cb):
+		if self._recursing: return
+		self.save_config()
+	
+	
+	def on_cbInputTestMode_toggled(self, *a):
 		if self._recursing: return
 		self.save_config()
 	
@@ -381,6 +390,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	def on_btClearSensX_clicked(self, *a):
 		self.builder.get_object("sclSensX").set_value(1.0)
+	
 	
 	def on_btClearSensY_clicked(self, *a):
 		self.builder.get_object("sclSensY").set_value(1.0)
