@@ -19,6 +19,7 @@ log = logging.getLogger("OSDAppCtrl")
 class OSDAppController(object):
 	def __init__(self, app):
 		self.dm = app.dm
+		self.app = app
 		self.dm.lock(self.on_input_lock_success, self.on_input_lock_failed,
 			"LEFT", "RIGHT", "STICK")
 		self.scon = StickController()

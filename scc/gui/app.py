@@ -50,15 +50,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		BindingEditor.__init__(self, self)
 		# Setup Gtk.Application
 		self.setup_commandline()
-		# Setup DaemonManager
-		self.dm = DaemonManager()
-		self.dm.connect("alive", self.on_daemon_alive)
-		self.dm.connect("version", self.on_daemon_version)
-		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
-		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
-		self.dm.connect("error", self.on_daemon_error)
-		self.dm.connect("event", self.on_daemon_event_observer)
-		self.dm.connect("dead", self.on_daemon_dead)
 		# Set variables
 		self.config = Config()
 		self.gladepath = gladepath
@@ -683,6 +674,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
 		self.dm.connect('reconfigured', self.on_daemon_reconfigured)
 		self.dm.connect("error", self.on_daemon_error)
+		self.dm.connect("event", self.on_daemon_event_observer)
 		self.dm.connect("dead", self.on_daemon_dead)
 		# Setup profiles
 		self.load_profile_list()

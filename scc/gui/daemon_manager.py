@@ -269,5 +269,4 @@ class DaemonManager(GObject.GObject):
 	
 	
 	def unlock_all(self):
-		if self.alive:
-			self.request("Unlock.", lambda *a: False, lambda *a: False)
+		self.request("Unlock.", lambda *a: False, lambda *a: False)
