@@ -1,3 +1,0 @@
-daemon:
- python-libusb1 (for python2.7)
-

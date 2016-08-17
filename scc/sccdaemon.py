@@ -42,6 +42,7 @@ class SCCDaemon(Daemon):
 		self.sserver = None			# UnixStreamServer instance
 		self.mapper = None
 		self.error = None
+		self.alone = False			# Set by launching script from --alone flag
 		self.osd_daemon = None
 		self.autoswitch_daemon = None
 		self.subprocs = []
@@ -229,10 +230,11 @@ class SCCDaemon(Daemon):
 		if self.xdisplay:
 			log.debug("Connected to XServer %s", os.environ["DISPLAY"])
 			self.mapper.set_xdisplay(self.xdisplay)
-			self.subprocs.append(Subprocess("scc-osd-daemon", True))
-			if len(Config()["autoswitch"]):
-				# Start scc-autoswitch-daemon only if there are some switch rules defined
-				self.subprocs.append(Subprocess("scc-autoswitch-daemon", True))
+			if not self.alone:
+				self.subprocs.append(Subprocess("scc-osd-daemon", True))
+				if len(Config()["autoswitch"]):
+					# Start scc-autoswitch-daemon only if there are some switch rules defined
+					self.subprocs.append(Subprocess("scc-autoswitch-daemon", True))
 		else:
 			log.warning("Failed to connect to XServer. Some functionality will be unavailable")
 			self.xdisplay = None
@@ -411,7 +413,7 @@ class SCCDaemon(Daemon):
 					text = message[5:].decode("utf-8").strip("\t ")
 					if not self._osd("message", text):
 						raise Exception()
-					client.wfile.write(b"Ok.\n")
+					client.wfile.write(b"OK.\n")
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Observe:"):
