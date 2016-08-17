@@ -25,7 +25,7 @@ class OSDAppController(object):
 		self.dm = app.dm
 		self.app = app
 		self.dm.lock(self.on_input_lock_success, self.on_input_lock_failed,
-			"LEFT", "RIGHT", "STICK")
+			"LEFT", "RIGHT", "STICK", "A", "B", "X", "Y")
 		self.scon = StickController()
 		self.dm.connect('event', self.on_input_event)
 		self.scon.connect("direction", self.on_stick_direction)
@@ -74,3 +74,7 @@ class OSDAppController(object):
 	def on_input_event(self, daemon, what, data):
 		if what == "STICK":
 			self.scon.set_stick(*data)
+		elif what == "A":
+			self.keypress(Keys.KEY_SPACE)
+		elif what == "B":
+			self.keypress(Keys.KEY_ESC)
