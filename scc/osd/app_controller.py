@@ -25,9 +25,7 @@ class OSDAppController(object):
 		self.scon = StickController()
 		self.dm.connect('event', self.on_input_event)
 		self.scon.connect("direction", self.on_stick_direction)
-		self.selected = 0, 0
 		self.window = None
-		self.map = {}
 		OSDWindow.install_css(app.config)
 	
 	
@@ -45,77 +43,30 @@ class OSDAppController(object):
 		log.info("Entered OSD mode")
 	
 	
+	def keypress(self, keyval, hw_keycode):
+		event = Gdk.EventKey()
+		event.type = Gdk.EventType.KEY_PRESS
+		event.window = self.window.get_window()
+		event.time = Gdk.CURRENT_TIME
+		event.state = 0
+		event.keyval = keyval
+		event.hardware_keycode = hw_keycode
+		Gdk.Display.get_default().put_event(event)
+		event.type = Gdk.EventType.KEY_RELEASE
+	
+	
 	def on_stick_direction(self, trash, x, y):
-		print self.window.get_focus()
+		# Hard-coded numbers are taken from gdk_to_key.py
+		if y > 0:
+			self.keypress(Gdk.KEY_Down, 116)
+		elif y < 0:
+			self.keypress(Gdk.KEY_Up, 111)
+		if x > 0:
+			self.keypress(Gdk.KEY_Left, 113)
+		elif x < 0:
+			self.keypress(Gdk.KEY_Right, 114)
 	
 	
 	def set_window(self, window):
-		def scan_grid(x, y, grid):
-			children = {
-				(grid.child_get_property(child, 'left-attach'),
-				grid.child_get_property(child, 'top-attach'))
-				: child
-				for child in grid.get_children() }
-			maxw = max(*[ w for w, h in children])
-			maxh = max(*[ h for w, h in children])
-			for j in xrange(0, maxh + 1):
-				for i in xrange(0, maxw + 1):
-					if (i, j) in children:
-						trash, y = scan(x + i, y, children[(i, j)])
-				y += 1
-			return x, y
-		
-		def scan_vbox(x, y, children):
-			for child in children:
-				x, y = scan(x, y, child)
-				y += 1
-			return x, y
-		
-		def scan_hbox(x, y, children):
-			for child in children:
-				x, y = scan(x, y, child)
-				x += 1
-			return x, y
-		
-		def scan(x, y, widget):
-			if not widget.is_visible():
-				return x, y
-			elif isinstance(widget, Gtk.Window):
-				x, y = scan_vbox(x, y, sorted(widget.get_children(),
-					key = lambda x : not isinstance(x, Gtk.HeaderBar)))
-			elif isinstance(widget, Gtk.Box):
-				if widget.get_orientation() == Gtk.Orientation.HORIZONTAL:
-					x, y = scan_hbox(x, y, widget.get_children())
-				else:
-					x, y = scan_vbox(x, y, widget.get_children())
-			elif isinstance(widget, Gtk.Grid):
-				x, y = scan_grid(x, y, widget)
-			elif isinstance(widget, Gtk.Button):
-				if x not in self.map:
-					self.map[x] = {}
-				self.map[x][y] = widget
-				# print x, y, widget
-			else:
-				print "(ignored)", widget
-			return x, y
-		
-		self.map = {}
-		scan(0, 0, window)
 		self.window = window
 		self.window.set_name("osd-app")
-		self.selected = -1, 0
-		self.next(1, 0)
-	
-	
-	def next(self, dx, dy):
-		x, y = self.selected
-		
-		while True:
-			x, y = x + dx, y + dy
-			if x in self.map and y in self.map[x]:
-				w = self.map[x][y]
-				print "W", w
-				self.window.set_focus(w)
-				break
-			if dx > 0 and x > max(self.map.keys()):
-				x, y = -1, y + 1
