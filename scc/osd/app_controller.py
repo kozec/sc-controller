@@ -12,9 +12,13 @@ for selectable widgets and does some css magic to change color of selected one.
 
 from gi.repository import Gtk, Gdk
 from scc.osd import OSDWindow, StickController
+from scc.gui.gdk_to_key import KEY_TO_GDK, HW_TO_KEY
+from scc.uinput import Keys
 
 import logging
 log = logging.getLogger("OSDAppCtrl")
+
+KEY_TO_HW = { HW_TO_KEY[x] : x for x in HW_TO_KEY }
 
 class OSDAppController(object):
 	def __init__(self, app):
@@ -29,11 +33,6 @@ class OSDAppController(object):
 		OSDWindow.install_css(app.config)
 	
 	
-	def on_input_event(self, daemon, what, data):
-		if what == "STICK":
-			self.scon.set_stick(*data)
-	
-	
 	def on_input_lock_failed(self, *a):
 		log.error("Failed to lock input, cannot enter OSD mode")
 		self.app.quit()
@@ -43,14 +42,14 @@ class OSDAppController(object):
 		log.info("Entered OSD mode")
 	
 	
-	def keypress(self, keyval, hw_keycode):
+	def keypress(self, key):
 		event = Gdk.EventKey()
 		event.type = Gdk.EventType.KEY_PRESS
 		event.window = self.window.get_window()
 		event.time = Gdk.CURRENT_TIME
 		event.state = 0
-		event.keyval = keyval
-		event.hardware_keycode = hw_keycode
+		event.keyval = KEY_TO_GDK[key]
+		event.hardware_keycode = KEY_TO_HW[key]
 		Gdk.Display.get_default().put_event(event)
 		event.type = Gdk.EventType.KEY_RELEASE
 	
@@ -58,15 +57,20 @@ class OSDAppController(object):
 	def on_stick_direction(self, trash, x, y):
 		# Hard-coded numbers are taken from gdk_to_key.py
 		if y > 0:
-			self.keypress(Gdk.KEY_Down, 116)
+			self.keypress(Keys.KEY_DOWN)
 		elif y < 0:
-			self.keypress(Gdk.KEY_Up, 111)
+			self.keypress(Keys.KEY_UP)
 		if x > 0:
-			self.keypress(Gdk.KEY_Left, 113)
+			self.keypress(Keys.KEY_LEFT)
 		elif x < 0:
-			self.keypress(Gdk.KEY_Right, 114)
+			self.keypress(Keys.KEY_RIGHT)
 	
 	
 	def set_window(self, window):
 		self.window = window
 		self.window.set_name("osd-app")
+	
+	
+	def on_input_event(self, daemon, what, data):
+		if what == "STICK":
+			self.scon.set_stick(*data)
