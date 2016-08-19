@@ -119,7 +119,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.main_area.put(self.stickTest, 150, 40)
 		
 		# Headerbar
-		headerbar(self.builder.get_object("hbWindow"))
+		headerbar(self.builder.get_object("headerbar"))
 	
 	
 	def check(self):
@@ -492,7 +492,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.builder.get_object(x).set_visible(False)
 		
 		self.osd_controller = OSDAppController(self)
-		self.osd_controller.set_window(self.window)
+		self.osd_controller.set_window(self,
+			( SCButtons.A, LEFT, _("Select") ),
+			( SCButtons.B, LEFT, _("Exit") ),
+			( SCButtons.Y, RIGHT, _("Save") )
+		)
 	
 	
 	def enable_test_mode(self):

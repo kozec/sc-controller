@@ -11,18 +11,21 @@ for selectable widgets and does some css magic to change color of selected one.
 """
 
 from gi.repository import Gtk, Gdk
-from scc.osd import OSDWindow, StickController
 from scc.gui.gdk_to_key import KEY_TO_GDK, HW_TO_KEY
+from scc.constants import SCButtons, LEFT, RIGHT
+from scc.osd import OSDWindow, StickController
 from scc.uinput import Keys
 
-import logging
+import os, logging
 log = logging.getLogger("OSDAppCtrl")
 
 KEY_TO_HW = { HW_TO_KEY[x] : x for x in HW_TO_KEY }
+COLORED_BUTTONS = SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y
 
 class OSDAppController(object):
 	def __init__(self, app):
 		self.dm = app.dm
+		self.imagepath = app.imagepath
 		self.app = app
 		self.dm.lock(self.on_input_lock_success, self.on_input_lock_failed,
 			"LEFT", "RIGHT", "STICK", "A", "B", "X", "Y")
@@ -66,9 +69,32 @@ class OSDAppController(object):
 			self.keypress(Keys.KEY_RIGHT)
 	
 	
-	def set_window(self, window):
-		self.window = window
+	def set_window(self, window, *buttons):
+		self.window = window.window
 		self.window.set_name("osd-app")
+		headerbar = window.builder.get_object("headerbar")
+		if headerbar:
+			for w in [] + headerbar.get_children():
+				headerbar.remove(w)
+				headerbar.set_show_close_button(False)
+				headerbar.set_title(None)
+				headerbar.set_has_subtitle(False)
+				headerbar.set_decoration_layout("")
+			
+			for b, side, label in buttons:
+				if b in COLORED_BUTTONS:
+					image = Gtk.Image.new_from_file(os.path.join(self.imagepath,
+						"%s_color.svg" % (b.name,)))
+					markup = "<b>%s</b>" % label
+					label = Gtk.Label()
+					label.set_markup(markup)
+					if side == LEFT:
+						headerbar.pack_start(image)
+						headerbar.pack_start(label)
+					else:
+						headerbar.pack_end(label)
+						headerbar.pack_end(image)
+			headerbar.show_all()
 	
 	
 	def on_input_event(self, daemon, what, data):

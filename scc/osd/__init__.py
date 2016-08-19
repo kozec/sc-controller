@@ -73,14 +73,19 @@ class OSDWindow(Gtk.Window):
 		
 		#osd-menu-cursor, #osd-keyboard-cursor { }
 		
+		#osd-app button {
+			border: 4px black double;
+			border-radius: 2;
+		}
+		
 		#osd-app button:focus {
-			border: 1px #%(menuitem_hilight_border)s solid;
+			border: 4px #%(menuitem_hilight_border)s solid;
 		}
 		
 		#osd-app button:focus, #osd-app button:focus box {
 			background-image: none;
-			color: #%(menuitem_hilight_text)s;
-			background-color: #%(menuitem_hilight)s;
+			/* color: #%(menuitem_hilight_text)s; */
+			/* background-color: #%(menuitem_hilight)s; */
 		}
 	"""
 	EPILOG = ""
