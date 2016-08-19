@@ -35,6 +35,7 @@ class OSDAppController(object):
 		self.scon = StickController()
 		self.dm.connect('event', self.on_input_event)
 		self.scon.connect("direction", self.on_stick_direction)
+		self.stack = []
 		self.window = None
 		OSDWindow.install_css(app.config)
 	
@@ -82,6 +83,7 @@ class OSDAppController(object):
 	def set_window(self, window, *buttons):
 		self.window = window
 		self.window.window.set_name("osd-app")
+		self.stack.append(self.window)
 		header = window.builder.get_object("header")
 		if header:
 			for w in [] + header.get_children():
@@ -103,7 +105,14 @@ class OSDAppController(object):
 					header.pack_end(label)
 					header.pack_end(image)
 			header.show_all()
+		self.window.window.connect('destroy', self.on_window_closed)
 	
+	
+	def on_window_closed(self, *a):
+		self.stack = self.stack[0:-1]
+		self.window = self.stack[-1]
+		print "W CLOSED", "window is now ", self.window
+		
 	
 	def on_input_event(self, daemon, what, data):
 		if what == "STICK":
