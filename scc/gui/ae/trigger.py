@@ -38,6 +38,17 @@ class TriggerComponent(AEComponent, BindingEditor):
 		self.analog = NoAction()
 	
 	
+	def load(self):
+		if self.loaded : return
+		AEComponent.load(self)
+		if self.app.in_osd:
+			# Done only in OSD mode
+			for w in ('btFullPressedClear', 'btPartPresedClear',
+						'btFullyPresedClear', 'btAnalogClear',
+						'btARangeStartClear', 'btARangeEndClear'):
+				self.builder.get_object(w).set_visible(False)
+	
+	
 	def handles(self, mode, action):
 		if isinstance(action, NoAction):
 			return True

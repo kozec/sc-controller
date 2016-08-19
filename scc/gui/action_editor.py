@@ -11,8 +11,8 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.modifiers import DeadzoneModifier, RotateInputModifier
+from scc.constants import HapticPos, SCButtons, LEFT, RIGHT
 from scc.actions import Action, XYAction, NoAction
-from scc.constants import HapticPos, SCButtons
 from scc.special_actions import OSDAction
 from scc.controller import HapticData
 from scc.profile import Profile
@@ -113,6 +113,21 @@ class ActionEditor(Editor):
 				self.builder.get_object("btClearDZ%s" % (key,)),
 				self.deadzone[i]	# default value
 			))
+	
+	
+	def show(self, transient_for):
+		Editor.show(self, transient_for)
+		if self.app.in_osd:
+			# Done only in OSD mode
+			self.app.osd_controller.set_window(self,
+				( SCButtons.A, LEFT, _("Select") ),
+				( SCButtons.X, LEFT, _("OK") ),
+				( SCButtons.BACK, LEFT, _("Clear") ),
+				( SCButtons.B, RIGHT, _("Cancel") ),
+			)
+			vbActionButtons = self.builder.get_object("vbActionButtons")
+			for w in vbActionButtons.get_children():
+				w.set_can_focus(False)
 	
 	
 	def load_components(self):
@@ -236,6 +251,26 @@ class ActionEditor(Editor):
 		self._action.name = entName.get_text().strip(" \t\r\n")
 		if len(self._action.name) < 1:
 			self._action.name = None
+	
+	
+	def on_shoulder(self, what):
+		""" Called from app_controller if application is shown in OSD """
+		vbActionButtons = self.builder.get_object("vbActionButtons")
+		buttons, active = [], None
+		for w in vbActionButtons.get_children():
+			if isinstance(w, Gtk.Button):
+				buttons.append(w)
+				if w.get_active():
+					active = w
+		index = 0
+		try:
+			index = buttons.index(active)
+		except: pass
+		if what == "LB":
+			index = max(index - 1, 0)
+		else:
+			index = min(index + 1, len(buttons)  - 1)
+		buttons[index].set_active(True)
 	
 	
 	def hide_sensitivity(self, *indexes):
@@ -742,6 +777,10 @@ class ActionEditor(Editor):
 		stActionModes = self.builder.get_object("stActionModes")
 		stActionModes = self.builder.get_object("stActionModes")
 		
+		if self.app.in_osd:
+			vbActionButtons.pack_start(Gtk.Image.new_from_file(os.path.join(
+				self.app.imagepath, "LB.svg")), False, True, 2)
+		
 		# Go throgh list of components and display buttons that are usable
 		# with this mode
 		self.c_buttons = {}
@@ -755,7 +794,12 @@ class ActionEditor(Editor):
 				component.load()
 				if component.get_widget() not in stActionModes.get_children():
 					stActionModes.add(component.get_widget())
-				
+		
+		if self.app.in_osd:
+			vbActionButtons.pack_start(Gtk.Image.new_from_file(os.path.join(
+				self.app.imagepath, "RB.svg")), False, True, 2)
+		
+		
 		if action.name is None:
 			entName.set_text("")
 		else:
