@@ -63,8 +63,6 @@ class VDFProfile(Profile):
 		'shoulder_right' : Keys.BTN_TR,
 		'joystick_left' : Keys.BTN_THUMBL,
 		'joystick_right' : Keys.BTN_THUMBR,
-		'trigger_left' : Keys.BTN_TL2,
-		'trigger_right' : Keys.BTN_TR2,
 	}
 	
 	REGION_IMPORT_FACTOR = 0.6		# Bulgarian const.
@@ -115,6 +113,10 @@ class VDFProfile(Profile):
 				return HatLeftAction(Axes.ABS_HAT0X)
 			elif b == "dpad_right":
 				return HatRightAction(Axes.ABS_HAT0X)
+			elif b == "trigger_left":
+				return AxisAction(Axes.ABS_Z)
+			elif b == "trigger_right":
+				return AxisAction(Axes.ABS_RZ)
 			else:
 				b = VDFProfile.convert_button_name(b)
 				return ButtonAction(b).set_name(name)
