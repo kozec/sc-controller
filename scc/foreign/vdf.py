@@ -555,6 +555,10 @@ class VDFProfile(Profile):
 		May raise ValueError.
 		"""
 		data = parse_vdf(open(filename, "r"))
+		self.load_data(data)
+	
+	
+	def load_data(self, data):
 		if 'controller_mappings' not in data:
 			raise ValueError("Invalid profile file")
 		data = data['controller_mappings']

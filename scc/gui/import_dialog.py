@@ -11,6 +11,7 @@ from gi.repository import Gdk, GObject, GLib
 from scc.gui.editor import Editor, ComboSetter
 from scc.tools import get_profiles_path
 from scc.foreign.vdf import VDFProfile
+from scc.foreign.vdffz import VDFFZProfile
 from scc.lib.vdf import parse_vdf
 
 from cStringIO import StringIO
@@ -329,7 +330,11 @@ class ImportDialog(Editor, ComboSetter):
 			
 			model, iter = tvProfiles.get_selection().get_selected()
 			filename = model.get_value(iter, 3)
-			self.profile = VDFProfile()
+			if filename.endswith(".vdffz"):
+				self.profile = VDFFZProfile()
+			else:
+				# Best quess
+				self.profile = VDFProfile()
 			failed = False
 			error_log = StringIO()
 			self.lock.acquire()

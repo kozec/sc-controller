@@ -669,7 +669,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def do_command_line(self, cl):
 		Gtk.Application.do_command_line(self, cl)
-		self.activate()
+		if len(cl.get_arguments()) > 1:
+			filename = cl.get_arguments()[-1]
+			giofile = Gio.File.new_for_path(filename)
+			# Local file, looks like vdf profile
+			from scc.gui.import_dialog import ImportDialog
+			gs = ImportDialog(self)
+			def i_told_you_to_quit(*a):
+				sys.exit(0)
+			gs.window.connect('destroy', i_told_you_to_quit)
+			gs.show(self.window)
+			# Skip first screen and try to import this file
+			gs.on_preload_finished(gs.set_file, giofile.get_path())
+		else:
+			self.activate()
 		return 0
 	
 	
@@ -751,8 +764,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				flags=GLib.OptionFlags.IN_MAIN):
 			""" add_simple_option, adds program argument in simple way """
 			o = GLib.OptionEntry()
-			o.long_name = long_name
-			o.short_name = short_name
+			if short_name:
+				o.long_name = long_name
+				o.short_name = short_name
 			o.description = description
 			o.flags = flags
 			o.arg = arg
