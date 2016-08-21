@@ -30,7 +30,7 @@ import struct
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
 daemon will differ one one expected by UI and daemon will be forcefully restarted.
 """
-DAEMON_VERSION = "0.2.12.2"
+DAEMON_VERSION = "0.2.16"
 
 VENDOR_ID = 0x28de
 PRODUCT_ID = [0x1102, 0x1142]
