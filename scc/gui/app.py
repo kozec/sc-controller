@@ -806,13 +806,15 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			if len(data.get_uris()):
 				uri = data.get_uris()[0]
 				giofile = Gio.File.new_for_uri(uri)
-				if giofile.get_path() and giofile.get_path().endswith(".vdf"):
-					# Local file, looks like vdf profile
-					from scc.gui.import_dialog import ImportDialog
-					gs = ImportDialog(self)
-					gs.show(self.window)
-					# Skip first screen and try to import this file
-					gs.on_preload_finished(gs.set_file, giofile.get_path())
+				if giofile.get_path():
+					path = giofile.get_path()
+					if path.endswith(".vdf") or path.endswith(".vdffz"):
+						# Local file, looks like vdf profile
+						from scc.gui.import_dialog import ImportDialog
+						gs = ImportDialog(self)
+						gs.show(self.window)
+						# Skip first screen and try to import this file
+						gs.on_preload_finished(gs.set_file, giofile.get_path())
 
 
 class UndoRedo(object):
