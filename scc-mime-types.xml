@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+	<mime-type type="application/x-steamcontrollerdb-profile">
+		<comment>Steam Controller Database Profile</comment>
+		<sub-class-of type="application/json"/>
+		<generic-icon name="sc-controller"/>
+		<glob priority="75" pattern="*.vdffz"/>
+	</mime-type>
+</mime-info>

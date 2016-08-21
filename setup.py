@@ -12,6 +12,7 @@ data_files = [
 				('share/scc/default_menus', glob.glob("default_menus/*.menu")),
 				('share/scc/default_menus', glob.glob("default_menus/.*.menu")),
 				('share/pixmaps', [ "images/sc-controller.svg" ]),
+				('share/mime/packages', [ "scc-mime-types.xml" ]),
 				('share/applications', ['sc-controller.desktop' ]),
 				('lib/udev/rules.d', glob.glob('scripts/*.rules')),
 				
