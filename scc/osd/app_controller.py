@@ -62,24 +62,6 @@ class OSDAppController(object):
 		#	GLib.idle_add(self.keypress, key, Gdk.EventType.KEY_RELEASE)
 	
 	
-	def on_stick_direction(self, trash, x, y):
-		# Hard-coded numbers are taken from gdk_to_key.py
-		if y < 0:
-			if isinstance(self.window.window.get_focus(), (Gtk.ComboBox, Gtk.ToggleButton, Gtk.Scale)):
-				self.keypress(Keys.KEY_TAB, modifiers=Gdk.ModifierType.SHIFT_MASK)
-			else:
-				self.keypress(Keys.KEY_UP)
-		elif y > 0:
-			if isinstance(self.window.window.get_focus(), (Gtk.ComboBox, Gtk.ToggleButton, Gtk.Scale)):
-				self.keypress(Keys.KEY_TAB)
-			else:
-				self.keypress(Keys.KEY_DOWN)
-		if x > 0:
-			self.keypress(Keys.KEY_LEFT)
-		elif x < 0:
-			self.keypress(Keys.KEY_RIGHT)
-	
-	
 	def set_window(self, window, *buttons):
 		self.window = window
 		self.window.window.set_name("osd-app")
@@ -112,7 +94,56 @@ class OSDAppController(object):
 		self.stack = self.stack[0:-1]
 		self.window = self.stack[-1]
 		print "W CLOSED", "window is now ", self.window
-		
+	
+	
+	@staticmethod
+	def find_cls_in_parents(cls, w):
+		"""
+		Returns 'w' if 'w' is instance of 'cls'.
+		If not, returns nearest parent that is instance of 'cls' or None, if
+		there is no such parent.
+		"""
+		if w is None:
+			return None
+		if isinstance(w, cls):
+			return w
+		return OSDAppController.find_cls_in_parents(cls, w.get_parent())
+	
+	
+	@staticmethod
+	def is_open_combobox(w):
+		"""
+		Returns Ture if 'w' is ComboBox and it's open (rolled out).
+		"""
+		return (
+			OSDAppController.find_cls_in_parents(Gtk.ComboBox, w)
+			and OSDAppController.find_cls_in_parents(Gtk.ToggleButton, w)
+			and OSDAppController.find_cls_in_parents(Gtk.ToggleButton, w).get_active()
+		)
+	
+	
+	def on_stick_direction(self, trash, x, y):
+		# Hard-coded numbers are taken from gdk_to_key.py
+		w = self.window.window.get_focus()
+		if y < 0:
+			if OSDAppController.is_open_combobox(w):
+				self.keypress(Keys.KEY_UP)
+			elif isinstance(w, (Gtk.ComboBox, Gtk.ToggleButton, Gtk.Scale)):
+				self.keypress(Keys.KEY_TAB, modifiers=Gdk.ModifierType.SHIFT_MASK)
+			else:
+				self.keypress(Keys.KEY_UP)
+		elif y > 0:
+			if OSDAppController.is_open_combobox(w):
+				self.keypress(Keys.KEY_DOWN)
+			elif isinstance(w, (Gtk.ComboBox, Gtk.ToggleButton, Gtk.Scale)):
+				self.keypress(Keys.KEY_TAB)
+			else:
+				self.keypress(Keys.KEY_DOWN)
+		if x > 0:
+			self.keypress(Keys.KEY_LEFT)
+		elif x < 0:
+			self.keypress(Keys.KEY_RIGHT)	
+	
 	
 	def on_input_event(self, daemon, what, data):
 		if what == "STICK":
@@ -124,5 +155,5 @@ class OSDAppController(object):
 		elif what in ("RB", "LB") and data[0] == 1:
 			if hasattr(self.window, "on_shoulder"):
 				self.window.on_shoulder(what)
-		elif what == "B":
+		elif what == "B" and data[0] == 0:
 			self.keypress(Keys.KEY_ESC)
