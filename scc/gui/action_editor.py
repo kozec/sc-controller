@@ -128,6 +128,20 @@ class ActionEditor(Editor):
 			vbActionButtons = self.builder.get_object("vbActionButtons")
 			for w in vbActionButtons.get_children():
 				w.set_can_focus(False)
+			self._hide_clear_buttons_in_osd()
+	
+	
+	def _hide_clear_buttons_in_osd(self):
+		"""
+		Called from multiple places, as these buttons are created under various
+		conditions.
+		"""
+		self.builder.get_object("btClearRotation").set_visible(False)
+		for ws in self.sens_widgets:
+			ws[-1].set_visible(False)
+		for lst in self.feedback_widgets, self.deadzone_widgets:
+			for ws in lst:
+				ws[-2].set_visible(False)
 	
 	
 	def load_components(self):
@@ -284,6 +298,8 @@ class ActionEditor(Editor):
 				widget.set_visible(i not in indexes)
 		self.sens = self.sens[0:len(indexes)+1]
 		self.builder.get_object("lblSensitivityHeader").set_visible(len(indexes) < 3)
+		if self.app.osd_controller:
+			self._hide_clear_buttons_in_osd()
 	
 	
 	def hide_rotation(self):

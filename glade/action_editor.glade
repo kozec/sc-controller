@@ -446,6 +446,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
                     <property name="margin_right">20</property>
                     <signal name="clicked" handler="on_btClearSens_clicked" swapped="no"/>
                     <child>
@@ -466,6 +467,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
                     <property name="margin_right">20</property>
                     <signal name="clicked" handler="on_btClearSens_clicked" swapped="no"/>
                     <child>
@@ -486,6 +488,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
                     <property name="margin_right">20</property>
                     <signal name="clicked" handler="on_btClearSens_clicked" swapped="no"/>
                     <child>
@@ -743,6 +746,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="no_show_all">True</property>
                             <property name="margin_right">20</property>
                             <signal name="clicked" handler="on_btClearFeedback_clicked" swapped="no"/>
                             <child>
@@ -763,6 +767,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="no_show_all">True</property>
                             <property name="margin_right">20</property>
                             <signal name="clicked" handler="on_btClearFeedback_clicked" swapped="no"/>
                             <child>
@@ -783,6 +788,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="no_show_all">True</property>
                             <property name="margin_right">20</property>
                             <signal name="clicked" handler="on_btClearFeedback_clicked" swapped="no"/>
                             <child>
@@ -942,6 +948,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="no_show_all">True</property>
                             <property name="margin_right">20</property>
                             <signal name="clicked" handler="on_btClearDeadzone_clicked" swapped="no"/>
                             <child>
@@ -962,6 +969,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="no_show_all">True</property>
                             <property name="margin_right">20</property>
                             <signal name="clicked" handler="on_btClearDeadzone_clicked" swapped="no"/>
                             <child>
@@ -1056,6 +1064,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
                     <property name="margin_right">20</property>
                     <signal name="clicked" handler="on_btClearRotation_clicked" swapped="no"/>
                     <child>

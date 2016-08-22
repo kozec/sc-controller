@@ -125,24 +125,35 @@ class OSDAppController(object):
 	def on_stick_direction(self, trash, x, y):
 		# Hard-coded numbers are taken from gdk_to_key.py
 		w = self.window.window.get_focus()
-		if y < 0:
-			if OSDAppController.is_open_combobox(w):
+		if OSDAppController.is_open_combobox(w):
+			if y < 0:
 				self.keypress(Keys.KEY_UP)
-			elif isinstance(w, (Gtk.ComboBox, Gtk.ToggleButton, Gtk.Scale)):
+			elif y > 0:
+				self.keypress(Keys.KEY_DOWN)
+		elif isinstance(w, (Gtk.ComboBox, Gtk.ToggleButton, Gtk.Scale, Gtk.SpinButton)):
+			if y < 0:
 				self.keypress(Keys.KEY_TAB, modifiers=Gdk.ModifierType.SHIFT_MASK)
-			else:
-				self.keypress(Keys.KEY_UP)
-		elif y > 0:
-			if OSDAppController.is_open_combobox(w):
-				self.keypress(Keys.KEY_DOWN)
-			elif isinstance(w, (Gtk.ComboBox, Gtk.ToggleButton, Gtk.Scale)):
+			elif y > 0:
 				self.keypress(Keys.KEY_TAB)
+			elif isinstance(w, Gtk.SpinButton):
+				if x > 0:
+					self.keypress(Keys.KEY_DOWN)
+				elif x < 0:
+					self.keypress(Keys.KEY_UP)
 			else:
+				if x > 0:
+					self.keypress(Keys.KEY_UP)
+				elif x < 0:
+					self.keypress(Keys.KEY_DOWN)
+		else:
+			if y < 0:
+				self.keypress(Keys.KEY_UP)
+			elif y > 0:
 				self.keypress(Keys.KEY_DOWN)
-		if x > 0:
-			self.keypress(Keys.KEY_LEFT)
-		elif x < 0:
-			self.keypress(Keys.KEY_RIGHT)	
+			if x > 0:
+				self.keypress(Keys.KEY_LEFT)
+			elif x < 0:
+				self.keypress(Keys.KEY_RIGHT)
 	
 	
 	def on_input_event(self, daemon, what, data):
@@ -150,7 +161,7 @@ class OSDAppController(object):
 			self.scon.set_stick(*data)
 		elif what == "A" and data[0] == 1:
 			w = self.window.window.get_focus()
-			if isinstance(w, Gtk.Button):
+			if isinstance(w, (Gtk.Button, Gtk.Expander)):
 				self.keypress(Keys.KEY_SPACE)
 		elif what in ("RB", "LB") and data[0] == 1:
 			if hasattr(self.window, "on_shoulder"):
