@@ -45,6 +45,8 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		cbConfirmWith.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) == "-" )
 		cbCancelWith.set_row_separator_func( lambda model, iter : model.get_value(iter, 0)  == "-" )
+		if self.app.osd_controller:
+			self.builder.get_object("btEditMenu").set_visible(False)
 	
 	
 	def shown(self):

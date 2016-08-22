@@ -41,6 +41,17 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		self.actions = [ NoAction() ] * 8
 	
 	
+	def load(self):
+		if self.loaded : return
+		AEComponent.load(self)
+		if self.app.osd_controller:
+			self.builder.get_object("btEditMenu").set_visible(False)
+			btDPAD1 = self.builder.get_object("btDPAD1")
+			gr = btDPAD1.get_parent()
+			gr.remove(btDPAD1)
+			gr.attach(btDPAD1, 1, 1, 1, 1)
+	
+	
 	def shown(self):
 		if not self._userdata_load_started:
 			self._userdata_load_started = True
