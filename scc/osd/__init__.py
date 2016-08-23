@@ -73,12 +73,16 @@ class OSDWindow(Gtk.Window):
 		
 		#osd-menu-cursor, #osd-keyboard-cursor { }
 		
-		#osd-app button, #osd-app scale {
+		#osd-app button {
 			border: 4px black double;
 			border-radius: 2;
 		}
 		
-		#osd-app button:focus, #osd-app spinbutton:focus, #osd-app scale:focus {
+		#osd-app scale:focus {
+			background-color: #%(menuitem_hilight_border)s;
+		}
+		
+		#osd-app button:focus, #osd-app spinbutton:focus {
 			border: 4px #%(menuitem_hilight_border)s solid;
 		}
 		
