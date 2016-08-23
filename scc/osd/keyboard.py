@@ -210,6 +210,10 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def on_daemon_connected(self, *a):
+		self.lock_inputs()
+	
+	
+	def lock_inputs(self):
 		def success(*a):
 			log.info("Sucessfully locked input")
 			pass
@@ -219,8 +223,12 @@ class Keyboard(OSDWindow, TimerManager):
 		self.daemon.lock(success, self.on_failed_to_lock, *locks)
 	
 	
-	def quit(self, code=-1):
+	def unlock_inputs(self):
 		self.daemon.unlock_all()
+	
+	
+	def quit(self, code=-1):
+		self.unlock_inputs()
 		for x in self._eh_ids:
 			self.daemon.disconnect(x)
 		self._eh_ids = []
@@ -231,10 +239,14 @@ class Keyboard(OSDWindow, TimerManager):
 	def show(self, *a):
 		OSDWindow.show(self, *a)
 		self.profile.load(find_profile(Keyboard.OSK_PROF_NAME)).compress()
-		self.mapper = SlaveMapper(self.profile, keyboard=b"SCC OSD Keyboard")
-		self.mapper.set_special_actions_handler(self)
+		self.create_mapper()
 		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
 		self.set_cursor_position(0, 0, self.cursors[RIGHT], self.limits[RIGHT])
+	
+	
+	def create_mapper(self):
+		self.mapper = SlaveMapper(self.profile, keyboard=b"SCC OSD Keyboard")
+		self.mapper.set_special_actions_handler(self)
 	
 	
 	def on_event(self, daemon, what, data):

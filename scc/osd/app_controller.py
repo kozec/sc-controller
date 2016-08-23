@@ -14,6 +14,8 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.gui.gdk_to_key import KEY_TO_GDK, HW_TO_KEY
 from scc.constants import SCButtons, LEFT, RIGHT
 from scc.osd import OSDWindow, StickController
+from scc.osd.slave_mapper import SlaveMapper
+from scc.osd.keyboard import Keyboard
 from scc.uinput import Keys
 
 import os, logging
@@ -31,13 +33,14 @@ class OSDAppController(object):
 		self.imagepath = app.imagepath
 		self.app = app
 		self.dm.lock(self.on_input_lock_success, self.on_input_lock_failed,
-			*[ x.name for x in SCButtons ])
+			LEFT, RIGHT, *[ x.name for x in SCButtons ])
 		self.scon = StickController()
+		self.child_window = None
 		self.dm.connect('event', self.on_input_event)
 		self.scon.connect("direction", self.on_stick_direction)
 		self.stack = []
 		self.window = None
-		OSDWindow.install_css(app.config)
+		OSDWindow.install_css(self.app.config)
 	
 	
 	def on_input_lock_failed(self, *a):
@@ -157,14 +160,74 @@ class OSDAppController(object):
 	
 	
 	def on_input_event(self, daemon, what, data):
+		if self.child_window:
+			# OSK is displayed
+			return
 		if what == "STICK":
 			self.scon.set_stick(*data)
 		elif what == "A" and data[0] == 1:
 			w = self.window.window.get_focus()
-			if isinstance(w, (Gtk.Button, Gtk.Expander)):
+			if isinstance(w, Gtk.Entry):
+				self.open_osk()
+			elif isinstance(w, (Gtk.Button, Gtk.Expander)):
 				self.keypress(Keys.KEY_SPACE)
 		elif what in ("RB", "LB") and data[0] == 1:
 			if hasattr(self.window, "on_shoulder"):
 				self.window.on_shoulder(what)
 		elif what == "B" and data[0] == 0:
 			self.keypress(Keys.KEY_ESC)
+	
+	
+	def on_keyboard_closed(self, *a):
+		self.child_window = None
+	
+	
+	def open_osk(self, *a):
+		self.child_window = AppCtrlKeyboard(self)
+		self.child_window.connect('destroy', self.on_keyboard_closed)
+		self.child_window.show()
+		self.child_window.use_daemon(self.dm)
+
+
+class AppCtrlKeyboard(Keyboard):
+	def __init__(self, parent):
+		self.parent = parent
+		Keyboard.__init__(self, parent.app.config)
+	
+	
+	def create_mapper(self):
+		# This OSK doesn't need to emulate actual keyboard
+		self.mapper = SlaveMapper(self.profile)
+		self.mapper.set_special_actions_handler(self)
+	
+	
+	def lock_inputs(self):
+		# Inputs are already locked by OSDAppController
+		pass
+	
+	
+	def unlock_inputs(self):
+		# OSDAppController still needs those inputs locked
+		pass
+	
+	
+	def key_from_cursor(self, cursor, pressed):
+		x, y = cursor.position
+		
+		if pressed:
+			for a in self.background.areas:
+				if a.contains(x, y):
+					if a.name.startswith("KEY_") and hasattr(Keys, a.name):
+						key = getattr(Keys, a.name)
+						#if self._pressed[cursor] is not None:
+						#	self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
+						self.parent.keypress(key)
+						self._pressed[cursor] = key
+						self._pressed_areas[cursor] = a
+					break
+		elif self._pressed[cursor] is not None:
+			# self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
+			self._pressed[cursor] = None
+			del self._pressed_areas[cursor]
+		if not self.timer_active('redraw'):
+			self.timer('redraw', 0.01, self.redraw_background)
