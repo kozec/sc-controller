@@ -132,6 +132,20 @@ class TestActions(object):
 		assert _parses_as_itself(GyroAbsAction(Axes.ABS_X, Axes.ABS_Y, Axes.ABS_Z))
 	
 	
+	def test_tilt(self):
+		"""
+		Tests if TiltAction can be converted to string and
+		parsed back to same action.
+		"""
+		# With only one button
+		assert _parses_as_itself(TiltAction( ButtonAction(Keys.KEY_D) ))
+		# With all buttons
+		assert _parses_as_itself(TiltAction(
+			ButtonAction(Keys.KEY_D), ButtonAction(Keys.KEY_U),
+			ButtonAction(Keys.KEY_L), ButtonAction(Keys.KEY_R)
+		))
+	
+	
 	def test_trackball(self):
 		"""
 		Tests if TrackballAction can be converted to string and parsed

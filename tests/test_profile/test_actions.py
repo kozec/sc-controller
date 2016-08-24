@@ -8,7 +8,7 @@ class TestActions(object):
 	
 	def test_tests(self):
 		"""
-		Tests if this class has test for every Action defined in acitons.py.
+		Tests if this class has test for every Action defined in actions.py.
 		"""
 		for cls in Action.ALL.values():
 			if "/actions.py" in inspect.getfile(cls):
@@ -130,7 +130,8 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'gyro(ABS_X, ABS_Y)' }).axes[1] == Axes.ABS_Y
 		assert parser.from_json_data({ 'action' : 'gyro(ABS_X, ABS_Y)' }).axes[2] is None
 		assert parser.from_json_data({ 'action' : 'gyro(ABS_X, ABS_Y, ABS_Z)' }).axes[2] == Axes.ABS_Z
-		
+	
+	
 	def test_gyroabs(self):
 		"""
 		Tests if GyroAbsAction is parsed correctly from json.
@@ -142,6 +143,22 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y)' }).axes[1] == Axes.ABS_Y
 		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y)' }).axes[2] is None
 		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y, ABS_Z)' }).axes[2] == Axes.ABS_Z
+	
+	
+	def test_tilt(self):
+		"""
+		Tests if TiltAction can be converted to string and
+		parsed back to same action.
+		"""
+		# With only one button
+		assert parser.from_json_data({
+			'action' : 'tilt( button(KEY_D) )'
+		}).actions[0].button == Keys.KEY_D
+		
+		# With all buttons
+		assert parser.from_json_data({
+			'action' : 'tilt( button(KEY_D), button(KEY_U), button(KEY_L), button(KEY_R))'
+		}).actions[3].button == Keys.KEY_R
 	
 	
 	def test_trackball(self):

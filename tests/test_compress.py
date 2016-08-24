@@ -29,6 +29,10 @@ CASES = {
 		'action' : 'gyro(ABS_X, ABS_Y, ABS_Z)',
 		'sensitivity' : (2.0, 3.0, 4.0,)
 	},
+	'tilt' : {
+		'action' : 'tilt( button(KEY_D), button(KEY_U), button(KEY_L), button(KEY_R) )',
+		'sensitivity' : (2.0, 3.0, 4.0,)
+	},
 	'gyroabs' : {
 		'action' : 'gyroabs(ABS_X, ABS_Y, ABS_Z)',
 		'sensitivity' : (2.0, 3.0, 4.0),
