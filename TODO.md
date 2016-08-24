@@ -5,11 +5,8 @@ List of (possibly) planned features in no particular order
 - Selector for media keys
 
 
-UI-only stuff:
-- Profile import / export
-
-
 **Done** stuff:
+- Steam Profile import
 - Radial Menu for the Joystick/Trackpad
 - Copy & paste
 - Cycling Buttons
