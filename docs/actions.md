@@ -132,6 +132,12 @@ Maps absolute gyroscope pitch, yaw and roll movement into movements of gamepad s
 Can be used to map gyroscope to movement stick or to use controller as racing wheel.
 
 
+#### <a name="tilt"></a> gyro(front_down, front_up, tilt_left, tilt_right)
+Maps tilting of gamepad into actions. When gamepad is tilt to one of for supported
+sides, assigned action is executed as if by button press and then "released" after
+gamepad is balanced again.
+
+
 #### <a name="trackball"></a> trackball()
 Split to [ball](#ball) modifier and [mouse](#mouse) action.
 
