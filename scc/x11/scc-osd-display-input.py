@@ -44,13 +44,15 @@ class OSDDisplayInput(object):
 	
 	def on_daemon_died(self, *a):
 		log.error("Connection to daemon lost")
-		self.quit(2)
+		self.exit_code = 2
+		self.mainloop.quit()
 	
 	
 	def on_observe_failed(self, *a):
 		# TODO: Better message with explanation?
 		log.error("Failed to lock inputs")
-		self.quit(1)
+		self.exit_code = 1
+		self.mainloop.quit()
 	
 	
 	def on_daemon_connected(self, *a):
