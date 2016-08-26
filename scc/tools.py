@@ -60,19 +60,19 @@ def set_logging_level(verbose, debug):
 
 def strip_none(*lst):
 	""" Returns lst without trailing None's """
-	while len(lst) and lst[-1] is None:
+	while len(lst) and not lst[-1]:
 		lst = lst[0:-1]
 	return lst
 
 
-def ensure_size(n, lst):
+def ensure_size(n, lst, fill_with=None):
 	"""
 	Returns copy of lst with size 'n'.
 	If lst is shorter, None's are appended.
 	If lst is longer, it is cat.
 	"""
 	l = list(lst)
-	while len(l) < n : l.append(None)
+	while len(l) < n : l.append(fill_with)
 	return l[0:n]
 
 

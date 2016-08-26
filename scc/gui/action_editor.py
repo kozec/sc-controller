@@ -37,6 +37,7 @@ COMPONENTS = (								# List of known modules (components) in scc.gui.ae package
 	'gyro_action',
 	'buttons',
 	'dpad',
+	'tilt',
 	'per_axis',
 	'trigger',
 	'special_action',

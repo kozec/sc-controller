@@ -954,7 +954,33 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 				mapper.syn_list.add(mapper.gamepad)
 
 
-class TiltAction(Action):
+class MultichildAction(Action):
+	""" Mixin with nice looking to_string() method """
+	
+	def compress(self):
+		nw = [ x.compress() for x in self.actions ]
+		self.actions = nw
+		return self
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if multiline:
+			rv = [ (" " * pad) + self.COMMAND + "(" ]
+			pad += 2
+			for a in strip_none(*self.actions):
+				rv += [ a.to_string(True, pad) + ","]
+			if rv[-1].endswith(","):
+				rv[-1] = rv[-1][0:-1]
+			pad -= 2
+			rv += [ (" " * pad) + ")" ]
+			return "\n".join(rv)
+		return self.COMMAND + "(" + (", ".join([
+			x.to_string() if x is not None else "None"
+			for x in strip_none(*self.actions)
+		])) + ")"
+
+
+class TiltAction(MultichildAction):
 	COMMAND = "tilt"
 	MIN = 0.75
 	
@@ -968,8 +994,8 @@ class TiltAction(Action):
 		 - Rotated left
 		 - Rotated right
 		"""
-		Action.__init__(self, *strip_none(*actions))
-		self.actions = ensure_size(6, actions)
+		MultichildAction.__init__(self, *strip_none(*actions))
+		self.actions = ensure_size(6, actions, NoAction())
 		self.states = [ None, None, None, None, None, None ]
 		self.speed = (1.0, 1.0, 1.0)
 	
@@ -1007,6 +1033,20 @@ class TiltAction(Action):
 					# Side no longer faces up
 					self.actions[i+1].button_release(mapper)
 					self.states[i+1] = False
+	
+	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { TiltAction.COMMAND : [ x.encode() for x in self.actions ]}
+		if self.name: rv['name'] = self.name
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		""" Called when decoding profile from json """
+		args = [ parser.from_json_data(x) for x in data[TiltAction.COMMAND] ]
+		return TiltAction(*args)
 	
 	
 	def describe(self, context):
@@ -1396,12 +1436,12 @@ class MultiAction(Action):
 	__repr__ = __str__
 
 
-class DPadAction(Action):
+class DPadAction(MultichildAction):
 	COMMAND = "dpad"
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	
 	def __init__(self, *actions):
-		Action.__init__(self, *actions)
+		MultichildAction.__init__(self, *actions)
 		self.actions = ensure_size(4, actions)
 		self.eight = False
 		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
@@ -1411,13 +1451,13 @@ class DPadAction(Action):
 		""" Called from json encoder """
 		rv = { DPadAction.COMMAND : [ x.encode() for x in self.actions ]}
 		if self.name: rv['name'] = self.name
-		return rv	
+		return rv
 	
 	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		""" Called when decoding profile from json """
-		args = [ parser.from_json_data(x) for x in data["dpad"] ]
+		args = [ parser.from_json_data(x) for x in data[DPadAction.COMMAND] ]
 		if len(args) > 4:
 			a = DPad8Action(*args)
 		else:
@@ -1428,29 +1468,6 @@ class DPadAction(Action):
 	def describe(self, context):
 		if self.name: return self.name
 		return "DPad"
-	
-	
-	def compress(self):
-		nw = [ x.compress() for x in self.actions ]
-		self.actions = nw
-		return self
-	
-	
-	def to_string(self, multiline=False, pad=0):
-		if multiline:
-			rv = [ (" " * pad) + self.COMMAND + "(" ]
-			pad += 2
-			for a in self.actions:
-				rv += [ a.to_string(True, pad) + ","]
-			if rv[-1].endswith(","):
-				rv[-1] = rv[-1][0:-1]
-			pad -= 2
-			rv += [ (" " * pad) + ")" ]
-			return "\n".join(rv)
-		return self.COMMAND + "(" + (", ".join([
-			x.to_string() if x is not None else "None"
-			for x in self.actions
-		])) + ")"
 	
 	
 	def whole(self, mapper, x, y, what):

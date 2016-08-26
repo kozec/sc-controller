@@ -66,7 +66,7 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
-      <object class="GtkGrid" id="grDPAD">
+      <object class="GtkGrid" id="grTilt">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">10</property>
@@ -76,16 +76,17 @@
         <property name="row_spacing">5</property>
         <property name="column_spacing">5</property>
         <child>
-          <object class="GtkButton" id="btDPAD2">
+          <object class="GtkButton" id="btTilt2">
             <property name="name">2</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
             <property name="margin_top">20</property>
+            <property name="margin_bottom">20</property>
             <property name="hexpand">True</property>
-            <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
-              <object class="GtkLabel" id="lblDPAD2">
+              <object class="GtkLabel" id="lblTilt2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">(...)</property>
@@ -98,16 +99,17 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="btDPAD1">
-            <property name="name">1</property>
+          <object class="GtkButton" id="btTilt3">
+            <property name="name">3</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
             <property name="margin_top">20</property>
+            <property name="margin_bottom">20</property>
             <property name="hexpand">True</property>
-            <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
-              <object class="GtkLabel" id="lblDPAD1">
+              <object class="GtkLabel" id="lblTilt3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">(...)</property>
@@ -120,7 +122,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="btDPAD0">
+          <object class="GtkButton" id="btTilt0">
             <property name="name">0</property>
             <property name="width_request">200</property>
             <property name="visible">True</property>
@@ -128,9 +130,9 @@
             <property name="receives_default">True</property>
             <property name="margin_top">20</property>
             <property name="hexpand">True</property>
-            <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
-              <object class="GtkLabel" id="lblDPAD0">
+              <object class="GtkLabel" id="lblTilt0">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">(...)</property>
@@ -143,17 +145,17 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="btDPAD3">
-            <property name="name">3</property>
+          <object class="GtkButton" id="btTilt1">
+            <property name="name">1</property>
             <property name="width_request">200</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
             <property name="margin_top">20</property>
             <property name="hexpand">True</property>
-            <signal name="clicked" handler="on_btDPAD_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
-              <object class="GtkLabel" id="lblDPAD3">
+              <object class="GtkLabel" id="lblTilt">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">(...)</property>
@@ -171,7 +173,7 @@
             <property name="can_focus">False</property>
             <property name="margin_left">10</property>
             <property name="margin_right">20</property>
-            <property name="pixbuf">controller-side.png</property>
+            <property name="pixbuf">../../images/controller-side.svg</property>
           </object>
           <packing>
             <property name="left_attach">1</property>
