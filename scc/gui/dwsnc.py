@@ -36,8 +36,12 @@ def headerbar(bar):
 	"""
 	pass	# Not outside of Unity
 
+IS_UNITY = False
+
 if "XDG_CURRENT_DESKTOP" in os.environ and "Unity" in os.environ["XDG_CURRENT_DESKTOP"].split(":"):
 	# User runs Unity
+	IS_UNITY = True
+	
 	def _headerbar(bar):
 		children = [] + bar.get_children()
 		pack_start = []

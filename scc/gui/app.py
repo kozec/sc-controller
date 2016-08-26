@@ -13,6 +13,7 @@ from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
+from scc.gui.statusicon import get_status_icon
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
@@ -126,6 +127,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
 	
+	
+	def setup_statusicon(self):
+		self.statusicon = get_status_icon(self.imagepath, None)
+		# self.statusicon.connect("clicked",        self.cb_statusicon_click)
+		self.statusicon.set("sc-controller", "sc-controller")
+		self.statusicon.show()
 	
 	def check(self):
 		""" Performs various (two) checks and reports possible problems """
@@ -659,6 +666,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Gtk.Application.do_startup(self, *a)
 		self.load_profile_list()
 		self.setup_widgets()
+		self.setup_statusicon()
 		GLib.timeout_add_seconds(2, self.check)
 	
 	
