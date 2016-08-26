@@ -481,7 +481,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_daemon_alive(self, *a):
-		self.set_daemon_status("alive")
+		self.set_daemon_status("alive", True)
 		self.hide_error()
 		if self.current_file is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
@@ -515,7 +515,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				"Running daemon instance is too old (version %s, expected %s). Restarting...",
 				version, DAEMON_VERSION)
 			self.outdated_version = version
-			self.set_daemon_status("unknown")
+			self.set_daemon_status("unknown", False)
 			self.dm.restart()
 	
 	
@@ -536,7 +536,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n" + _("USB dongle was removed.")
 		
 		self.show_error(msg)
-		self.set_daemon_status("dead")
+		self.set_daemon_status("error", True)
 	
 	
 	def on_daemon_event_observer(self, daemon, what, data):
@@ -639,22 +639,23 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if self.just_started:
 			self.dm.restart()
 			self.just_started = False
-			self.set_daemon_status("unknown")
+			self.set_daemon_status("unknown", True)
 			return
-		self.set_daemon_status("dead")
+		self.set_daemon_status("dead", False)
 	
 	
 	def on_mnuEmulationEnabled_toggled(self, cb):
 		if self.recursing : return
 		if cb.get_active():
 			# Turning daemon on
-			self.set_daemon_status("unknown")
+			self.set_daemon_status("unknown", True)
 			cb.set_sensitive(False)
 			self.dm.start()
 		else:
 			# Turning daemon off
-			self.set_daemon_status("unknown")
+			self.set_daemon_status("unknown", False)
 			cb.set_sensitive(False)
+			self.hide_error()
 			self.dm.stop()
 			
 	
@@ -663,7 +664,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.load_profile_list()
 		self.setup_widgets()
 		self.setup_statusicon()
-		self.set_daemon_status("unknown")
+		self.set_daemon_status("unknown", True)
 		GLib.timeout_add_seconds(2, self.check)
 	
 	
@@ -741,7 +742,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		model.remove(model[0].iter)
 	
 	
-	def set_daemon_status(self, status):
+	def set_daemon_status(self, status, daemon_runs):
 		""" Updates image that shows daemon status and menu shown when image is clicked """
 		log.debug("daemon status: %s", status)
 		icon = os.path.join(self.imagepath, "scc-%s.svg" % (status,))
@@ -755,12 +756,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.recursing = True
 		if status == "alive":
 			btDaemon.set_tooltip_text(_("Emulation is active"))
-			mnuEmulationEnabled.set_active(True)
+		elif status == "error":
+			btDaemon.set_tooltip_text(_("Error enabling emulation"))
 		elif status == "dead":
 			btDaemon.set_tooltip_text(_("Emulation is inactive"))
-			mnuEmulationEnabled.set_active(False)
 		else:
 			btDaemon.set_tooltip_text(_("Checking emulation status..."))
+		mnuEmulationEnabled.set_active(daemon_runs)
 		self.recursing = False
 	
 	

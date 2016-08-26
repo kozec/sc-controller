@@ -5,7 +5,7 @@
 ICODIR=./images/		# Directory with icons
 
 for size in 24 ; do
-	for state in alive dead unknown ; do
+	for state in alive dead error unknown ; do
 		echo scc-${state}.png
 		inkscape ${ICODIR}/scc-${state}.svg \
 			--export-area-page \
