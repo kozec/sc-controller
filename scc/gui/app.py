@@ -64,6 +64,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.imagepath = imagepath
 		self.builder = None
 		self.recursing = False
+		self.statusicon = None
+		self.status = "unknown"
 		self.context_menu_for = None
 		self.daemon_changed_profile = False
 		self.background = None
@@ -128,6 +130,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def setup_statusicon(self):
 		menu = self.builder.get_object("mnuDaemon")
 		self.statusicon = get_status_icon(self.imagepath, menu)
+		self.statusicon.connect('clicked', self.on_statusicon_clicked)
+		GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
+	
+	
+	def destroy_statusicon(self):
+		self.statusicon.destroy()
+		self.statusicon = None
 	
 	
 	def check(self):
@@ -205,6 +214,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.config.save()
 		self.dm.reconfigure()
 		self.enable_test_mode()
+	
+	
+	def on_statusicon_clicked(self, *a):
+		""" Handler for user clicking on tray icon button """
+		self.window.set_visible(not self.window.get_visible())
+	
+	
+	def on_window_delete_event(self, *a):
+		""" Called when user tries to close window """
+		if self.config['gui']['enable_status_icon'] and self.config['gui']['minimize_to_status_icon']:
+			# Override closing and hide instead
+			self.window.set_visible(False)
+			return True
+		return False # Allow
 	
 	
 	def on_mnuClear_activate(self, *a):
@@ -663,7 +686,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Gtk.Application.do_startup(self, *a)
 		self.load_profile_list()
 		self.setup_widgets()
-		self.setup_statusicon()
+		if self.app.config['gui']['enable_status_icon']:
+			self.setup_statusicon()
 		self.set_daemon_status("unknown", True)
 		GLib.timeout_add_seconds(2, self.check)
 	
@@ -751,8 +775,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		mnuEmulationEnabled = self.builder.get_object("mnuEmulationEnabled")
 		imgDaemonStatus.set_from_file(icon)
 		mnuEmulationEnabled.set_sensitive(True)
-		GLib.idle_add(self.statusicon.set, "scc-%s" % (status,), _("SC-Controller"))
 		self.window.set_icon_from_file(icon)
+		self.status = status
+		if self.statusicon:
+			GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
 		self.recursing = True
 		if status == "alive":
 			btDaemon.set_tooltip_text(_("Emulation is active"))

@@ -120,7 +120,6 @@ class StatusIcon(GObject.GObject):
 		self.__hidden = False
 		self._set_visible(self.__visible)
 	
-	
 	def _is_forced(self):
 		return self.__force
 	
@@ -215,9 +214,12 @@ class StatusIconGTK3(StatusIcon):
 		# See: http://stackoverflow.com/a/6365904/277882
 		GLib.idle_add(self._on_embedded_change)
 	
+	def destroy(self):
+		self.hide()
+		self._tray = None
+	
 	def set(self, icon=None, text=None):
 		StatusIcon.set(self, icon, text)
-		print "self._tray.set_from_icon_name", self._get_icon(icon)
 		
 		self._tray.set_from_icon_name(self._get_icon(icon))
 		self._tray.set_tooltip_text(self._get_text(text))
@@ -272,11 +274,14 @@ class StatusIconAppIndicator(StatusIconDBus):
 		
 		self._tray.set_status(self._status_active if active else self._status_passive)
 	
+	def destroy(self):
+		self.hide()
+		self._tray = None
+	
 	def set(self, icon=None, text=None):
 		StatusIcon.set(self, icon, text)
 		
 		self._tray.set_icon_full(self._get_icon(icon), self._get_text(text))
-
 
 
 class StatusIconProxy(StatusIcon):
@@ -365,6 +370,12 @@ class StatusIconProxy(StatusIcon):
 			self._status_gtk.hide()
 		if self._status_fb:
 			self._status_fb.hide()
+	
+	def destroy(self):
+		if self._status_gtk:
+			self._status_gtk.destroy()
+		if self._status_fb:
+			self._status_fb.destroy()
 	
 	def show(self):
 		if self._status_gtk:

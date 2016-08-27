@@ -62,8 +62,20 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.load_autoswitch()
 		self.load_osk()
 		self.load_colors()
-		# Load LED
-		self.builder.get_object("sclLED").set_value(self.app.config['led_level'])
+		# Load rest
+		self._recursing = True
+		(self.builder.get_object("cbInputTestMode")
+				.set_active(bool(self.app.config['enable_sniffing'])))
+		(self.builder.get_object("sclLED")
+				.set_value(bool(self.app.config['led_level'])))
+		(self.builder.get_object("cbEnableStatusIcon")
+				.set_active(bool(self.app.config['gui']['enable_status_icon'])))
+		(self.builder.get_object("cbMinimizeToStatusIcon")
+				.set_active(bool(self.app.config['gui']['minimize_to_status_icon'])))
+		(self.builder.get_object("cbMinimizeToStatusIcon")
+				.set_sensitive(self.app.config['gui']['enable_status_icon']))
+		self._recursing = False
+		
 	
 	
 	def _load_color(self, w, dct, key):
@@ -88,7 +100,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		""" Transfers autoswitch settings from config to UI """
 		tvItems = self.builder.get_object("tvItems")
 		cbShowOSD = self.builder.get_object("cbShowOSD")
-		cbInputTestMode = self.builder.get_object("cbInputTestMode")
 		model = tvItems.get_model()
 		model.clear()
 		for x in self.app.config['autoswitch']:
@@ -98,7 +109,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self._recursing = True
 		self.on_tvItems_cursor_changed()
 		cbShowOSD.set_active(bool(self.app.config['autoswitch_osd']))
-		cbInputTestMode.set_active(bool(self.app.config['enable_sniffing']))
 		self._recursing = False
 	
 	
@@ -199,18 +209,32 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	def save_config(self):
 		""" Transfers settings from UI back to config """
+		# Store hard stuff
 		tvItems = self.builder.get_object("tvItems")
 		cbShowOSD = self.builder.get_object("cbShowOSD")
-		cbInputTestMode = self.builder.get_object("cbInputTestMode")
+		cbEnableStatusIcon = self.builder.get_object("cbEnableStatusIcon")
+		cbMinimizeToStatusIcon = self.builder.get_object("cbMinimizeToStatusIcon")
 		conds = []
 		for row in tvItems.get_model():
 			conds.append(dict(
 				condition = row[0].condition.encode(),
 				profile = row[2]
 			))
+		# Apply status icon settings
+		if self.app.config['gui']['enable_status_icon'] != cbEnableStatusIcon.get_active():
+			self.app.config['gui']['enable_status_icon'] = cbEnableStatusIcon.get_active()
+			cbMinimizeToStatusIcon.set_sensitive(cbEnableStatusIcon.get_active())
+			if cbEnableStatusIcon.get_active():
+				self.app.setup_statusicon()
+			else:
+				self.app.destroy_statusicon()
+		# Store rest
 		self.app.config['autoswitch'] = conds
 		self.app.config['autoswitch_osd'] = cbShowOSD.get_active()
-		self.app.config['enable_sniffing'] = cbInputTestMode.get_active()
+		self.app.config['enable_sniffing'] = self.builder.get_object("cbInputTestMode").get_active()
+		self.app.config['gui']['enable_status_icon'] = self.builder.get_object("cbEnableStatusIcon").get_active()
+		self.app.config['gui']['minimize_to_status_icon'] = self.builder.get_object("cbMinimizeToStatusIcon").get_active()
+		# Save
 		self.app.save_config()
 	
 	
@@ -219,7 +243,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.save_config()
 	
 	
-	def on_cbInputTestMode_toggled(self, *a):
+	def on_random_checkbox_toggled(self, *a):
 		if self._recursing: return
 		self.save_config()
 	

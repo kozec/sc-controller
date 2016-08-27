@@ -26,6 +26,11 @@ class Config(object):
 			"XBox Controller"
 		],
 		"led_level": 80,
+		"gui": {
+			# GUI-only settings
+			"enable_status_icon" : False,
+			"minimize_to_status_icon" : True,
+		},
 		# enable_sniffing - If enabled, another program with write access to
 		# ~/.config/scc can ask daemon to send notifications about all
 		# (or only some) inputs.
