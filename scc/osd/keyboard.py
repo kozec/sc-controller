@@ -25,7 +25,7 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import KEY_TO_GDK
 from scc.osd.timermanager import TimerManager
 from scc.osd.slave_mapper import SlaveMapper
-from scc.osd import OSDWindow
+from scc.osd import OSDWindow, create_cursors
 import scc.osd.osk_actions
 
 import os, sys, json, logging
@@ -74,12 +74,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self.limits[LEFT]  = self.background.get_rect_area("LIMIT_LEFT")
 		self.limits[RIGHT] = self.background.get_rect_area("LIMIT_RIGHT")
 		
-		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
-		self.cursors = {}
-		self.cursors[LEFT] = Gtk.Image.new_from_file(cursor)
-		self.cursors[LEFT].set_name("osd-keyboard-cursor")
-		self.cursors[RIGHT] = Gtk.Image.new_from_file(cursor)
-		self.cursors[RIGHT].set_name("osd-keyboard-cursor")
+		self.cursors = create_cursors()
 		
 		self._eh_ids = []
 		self._stick = 0, 0

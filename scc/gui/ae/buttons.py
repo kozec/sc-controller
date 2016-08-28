@@ -40,6 +40,13 @@ class ButtonsComponent(AEComponent, Chooser):
 		if not self.loaded:
 			AEComponent.load(self)
 			self.setup_image()
+			if self.app.osd_controller:
+				self.enable_cursors(self.app.osd_controller)
+	
+	
+	def shown(self):
+		if self.app.osd_controller:
+			self.align_image()
 	
 	
 	def area_action_selected(self, area, action):

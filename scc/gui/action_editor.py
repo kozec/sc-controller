@@ -116,7 +116,6 @@ class ActionEditor(Editor):
 	
 	
 	def show(self, transient_for):
-		Editor.show(self, transient_for)
 		if self.app.in_osd:
 			# Done only in OSD mode
 			self.app.osd_controller.set_window(self,
@@ -129,6 +128,9 @@ class ActionEditor(Editor):
 			for w in vbActionButtons.get_children():
 				w.set_can_focus(False)
 			self._hide_clear_buttons_in_osd()
+		Editor.show(self, transient_for)
+		if self._selected_component:
+			self._selected_component.shown()
 	
 	
 	def _hide_clear_buttons_in_osd(self):

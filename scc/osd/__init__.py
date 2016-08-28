@@ -8,8 +8,9 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, GLib, GObject, GdkX11
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.constants import LEFT, RIGHT, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.osd.timermanager import TimerManager
+from scc.paths import get_share_path
 from scc.lib import xwrappers as X
 from scc.config import Config
 
@@ -255,3 +256,17 @@ class StickController(GObject.GObject, TimerManager):
 		
 		if changed:
 			self._move()
+
+
+def create_cursors():
+	"""
+	Generates two cursor images (Gtk.Image) and returns them as
+	dict of { LEFT: (image), RIGHT: (image) }
+	"""
+	cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
+	cursors = {}
+	cursors[LEFT] = Gtk.Image.new_from_file(cursor)
+	cursors[LEFT].set_name("osd-keyboard-cursor")
+	cursors[RIGHT] = Gtk.Image.new_from_file(cursor)
+	cursors[RIGHT].set_name("osd-keyboard-cursor")
+	return cursors

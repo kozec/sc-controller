@@ -31,7 +31,10 @@ class AEComponent(ComboSetter):
 	
 	# TODO: Rename this to on_shown
 	def shown(self):
-		""" Called after user switches TO page """
+		"""
+		Called after user switches TO page.
+		Maybe called multiple times for same object.
+		"""
 		pass
 	
 	

@@ -21,6 +21,7 @@ from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.paths import get_config_path, get_profiles_path
 from scc.constants import SCButtons, DAEMON_VERSION
 from scc.osd.app_controller import OSDAppController
+from scc.osd import OSDWindow
 from scc.tools import check_access, find_profile
 from scc.modifiers import NameModifier
 from scc.actions import NoAction
@@ -690,6 +691,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def do_local_options(self, trash, lo):
 		set_logging_level(lo.contains("verbose"), lo.contains("debug") )
 		self.in_osd = lo.contains("osd")
+		if self.in_osd:
+			OSDWindow.install_css(self.app.config)
 		return -1
 	
 	

@@ -10,7 +10,7 @@ is handled with signals). This thing then scans entire widget hierarchy
 for selectable widgets and does some css magic to change color of selected one.
 """
 
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GLib, GObject
 from scc.gui.gdk_to_key import KEY_TO_GDK, HW_TO_KEY
 from scc.constants import SCButtons, LEFT, RIGHT
 from scc.osd import OSDWindow, StickController
@@ -27,8 +27,15 @@ BUTTON_IMAGES.update({ x : "%s_color.svg" % (x.name,) for x in (SCButtons.A, SCB
 	SCButtons.X, SCButtons.Y) })
 BUTTON_IMAGES.update({ x : "%s_small.svg" % (x.name,) for x in (SCButtons.BACK,) })
 
-class OSDAppController(object):
+class OSDAppController(GObject.GObject):
+	__gsignals__ = {
+			# Raised as user moves finger(s) on pad(s)
+			b"pad-move"		: (GObject.SIGNAL_RUN_FIRST, None, (str,int,int)),
+			b"pad-click"	: (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+	}
+	
 	def __init__(self, app):
+		GObject.GObject.__init__(self)
 		self.dm = app.dm
 		self.imagepath = app.imagepath
 		self.app = app
@@ -40,7 +47,6 @@ class OSDAppController(object):
 		self.scon.connect("direction", self.on_stick_direction)
 		self.stack = []
 		self.window = None
-		OSDWindow.install_css(self.app.config)
 	
 	
 	def on_input_lock_failed(self, *a):
@@ -176,6 +182,10 @@ class OSDAppController(object):
 				self.window.on_shoulder(what)
 		elif what == "B" and data[0] == 0:
 			self.keypress(Keys.KEY_ESC)
+		elif what in (LEFT, RIGHT):
+			self.emit("pad-move", what, *data)
+		elif what in ("LPAD", "RPAD"):
+			self.emit("pad-click", LEFT if what == "LPAD" else RIGHT)
 	
 	
 	def on_keyboard_closed(self, *a):

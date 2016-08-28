@@ -11,10 +11,13 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.actions import ButtonAction, AxisAction, MouseAction, MultiAction
 from scc.actions import HatLeftAction, HatRightAction
 from scc.actions import HatUpAction, HatDownAction
+from scc.constants import LEFT, RIGHT, STICK_PAD_MAX
 from scc.gui.area_to_action import AREA_TO_ACTION
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
+from scc.osd import create_cursors
+from scc.tools import clamp
 import os, logging
 log = logging.getLogger("Chooser")
 
@@ -43,13 +46,65 @@ class Chooser(Editor):
 				image.connect('leave', self.on_background_area_hover, None)
 				image.connect('click', self.on_background_area_click)
 				self.images.append(image)
+				att = image
+				if self.app.osd_controller:
+					self.fixed = att = Gtk.Fixed()
+					self.fixed.add(image)
 				if grid_columns:
 					# Grid
-					parent.attach(image, 0, 0, grid_columns, 1)
+					parent.attach(att, 0, 0, grid_columns, 1)
 				else:
 					# Box
-					parent.pack_start(image, True, True, 0)
+					parent.pack_start(att, True, True, 0)
 				parent.show_all()
+				# TODO: Multiple images? Is that even used anywhere?
+				break
+	
+	
+	def align_image(self):
+		"""
+		Used only in OSD mode, when image is flaced inside of Gtk.Fixed.
+		Alings said image to center of parent.
+		"""
+		self.align_x = (self.fixed.get_allocated_width() / 2) - (self.images[0].get_allocated_width() / 2)
+		self.fixed.move(self.images[0], self.align_x, 0)
+	
+	
+	def enable_cursors(self, controller):
+		"""
+		Used only in OSD mode.
+		Creates and displays two cursor images.
+		"""
+		self.cursors = create_cursors()
+		self.fixed.add(self.cursors[LEFT])
+		self.fixed.add(self.cursors[RIGHT])
+		controller.connect('pad-move', self.on_cursor_move)
+		controller.connect('pad-click', self.on_cursor_press)
+	
+	
+	def on_cursor_move(self, controller, what, x, y):
+		x = (1.0 + (x / float(STICK_PAD_MAX))) * 0.30
+		y = (1.0 + (y / float(STICK_PAD_MAX) * -1.0)) * 0.5
+		# TODO: Really, remove that multiimage thing...
+		x = x * self.images[0].get_allocated_width()
+		y = clamp(0, y, 0.9) * self.images[0].get_allocated_height()
+		if what != LEFT:
+			x += (self.images[0].get_allocated_width() * 0.4)
+		self.cursors[what].pos = x, y
+
+		event = Gdk.EventKey()
+		event.x, event.y = x, y
+		self.images[0].on_mouse_moved(None, event)
+
+		x += self.align_x 
+		
+		self.fixed.move(self.cursors[what], x, y)
+	
+	
+	def on_cursor_press(self, controller, what):
+		event = Gdk.EventKey()
+		event.x, event.y = self.cursors[what].pos
+		self.images[0].on_mouse_click(None, event)
 	
 	
 	def set_active_area(self, a):
