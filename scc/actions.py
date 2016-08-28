@@ -553,7 +553,10 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	def button_press(self, mapper):
 		# This is generaly bad idea...
-		self.change(mapper, 1, 0)
+		if self._mouse_axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
+			self.change(mapper, 100000, 0)
+		else:
+			self.change(mapper, 100, 0)
 	
 	
 	def button_release(self, mapper):
@@ -580,6 +583,7 @@ class MouseAction(HapticEnabledAction, Action):
 	def change(self, mapper, dx, dy):
 		""" Called from BallModifier """
 		dx, dy = dx * self.speed[0], dy * self.speed[1]
+		print self._mouse_axis, dx
 		if self._mouse_axis is None:
 			mapper.mouse.moveEvent(dx, dy)
 		elif self._mouse_axis == Rels.REL_X:
