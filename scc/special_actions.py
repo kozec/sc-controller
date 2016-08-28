@@ -230,6 +230,7 @@ class MenuAction(Action, SpecialAction):
 		self.show_with_release = bool(show_with_release)
 		self._stick_distance = 0
 	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return _("Menu")
@@ -245,18 +246,19 @@ class MenuAction(Action, SpecialAction):
 	
 	def button_press(self, mapper):
 		if not self.show_with_release:
-			if self.confirm_with == SAME:
+			confirm_with = self.confirm_with
+			args = [ mapper ]
+			if confirm_with == SAME:
 				confirm_with = mapper.get_pressed_button() or self.DEFAULT_CONFIRM
-				self.execute(mapper,
-					'--control-with', nameof(self.control_with),
-					'-x', str(self.x), '-y', str(self.y),
-					'--use-cursor',
-					'--confirm-with', confirm_with.name,
-					'--cancel-with', self.cancel_with.name)
-			else:
-				self.execute(mapper,
-					'-x', str(self.x), '-y', str(self.y)
-				)
+			if nameof(self.control_with) in (LEFT, RIGHT):
+				args += [ '--use-cursor' ]
+			args += [
+				'--control-with', nameof(self.control_with),
+				'-x', str(self.x), '-y', str(self.y),
+				'--confirm-with', confirm_with.name,
+				'--cancel-with', self.cancel_with.name
+			]
+			self.execute(*args)
 	
 	
 	def button_release(self, mapper):
