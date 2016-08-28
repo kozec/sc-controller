@@ -247,7 +247,6 @@ class MenuAction(Action, SpecialAction):
 		if not self.show_with_release:
 			if self.confirm_with == SAME:
 				confirm_with = mapper.get_pressed_button() or self.DEFAULT_CONFIRM
-				x, y = self.position
 				self.execute(mapper,
 					'--control-with', nameof(self.control_with),
 					'-x', str(self.x), '-y', str(self.y),
