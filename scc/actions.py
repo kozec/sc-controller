@@ -528,6 +528,9 @@ class MouseAction(HapticEnabledAction, Action):
 			self.speed = (1.0, 1.0)
 	
 	
+	def get_axis(self):
+		return self._mouse_axis
+	
 	def set_speed(self, x, y, z):
 		self.speed = (x, y)
 	
@@ -1003,8 +1006,9 @@ class ButtonAction(HapticEnabledAction, Action):
 	
 	
 	def describe(self, context):
-		if self.name: return self.name
-		elif self.button == Rels.REL_WHEEL:
+		if self.name:
+			return self.name
+		elif self.button is Rels.REL_WHEEL:
 			if len(self.parameters) < 2 or self.parameters[1] > 0:
 				return _("Wheel UP")
 			else:

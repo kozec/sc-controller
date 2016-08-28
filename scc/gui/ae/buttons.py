@@ -74,7 +74,7 @@ class ButtonsComponent(AEComponent, Chooser):
 		if isinstance(action, AxisAction):
 			return len(action.parameters) == 1
 		if isinstance(action, MouseAction):
-			if action.mouse_axis == Rels.REL_WHEEL:
+			if action.get_axis() == Rels.REL_WHEEL:
 				return True
 		if isinstance(action, MultiAction):
 			if len(action.actions) > 0:
