@@ -68,12 +68,12 @@ class SCCDaemon(Daemon):
 			# Turn off gyro sensor that was enabled but is no longer needed
 			if self.mapper.get_controller():
 				log.debug("Turning gyrosensor OFF")
-				self.mapper.get_controller().configure_controller(enable_gyros=False)
+				self.mapper.get_controller().configure(enable_gyros=False)
 		elif not self.mapper.profile.gyro and p.gyro:
 			# Turn on gyro sensor that was turned off, if profile has gyro action set
 			if self.mapper.get_controller():
 				log.debug("Turning gyrosensor ON")
-				self.mapper.get_controller().configure_controller(enable_gyros=True)
+				self.mapper.get_controller().configure(enable_gyros=True)
 		
 		# This last line kinda depends on GIL...
 		self.mapper.profile = p
@@ -250,7 +250,7 @@ class SCCDaemon(Daemon):
 			try:
 				sc = None
 				sc = SCController(callback=self.mapper.callback)
-				sc.configure_controller(enable_gyros=bool(self.mapper.profile.gyro))
+				sc.configure(enable_gyros=bool(self.mapper.profile.gyro))
 				self.mapper.set_controller(sc)
 				sc.setStatusCallback(self.on_controller_status)
 				if self.error is not None:

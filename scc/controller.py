@@ -166,7 +166,7 @@ class SCController(object):
 			self._controller_connected = (state == 2)
 			if self._cscallback:
 				self._cscallback(self, self._controller_connected)
-				self.configure_controller()
+				self.configure()
 		elif tup.status == SCStatus.INPUT:
 			self._tup = tup
 			self._callback()
@@ -175,7 +175,7 @@ class SCController(object):
 				self._controller_connected = True
 				if self._cscallback:
 					self._cscallback(self, self._controller_connected)
-					self.configure_controller()
+					self.configure()
 		else:
 			transfer.submit()
 	
@@ -207,7 +207,7 @@ class SCController(object):
 		self._cb(self, t, self._tup)
 	
 	
-	def configure_controller(self, idle_timeout=None, enable_gyros=None, led_level=None):
+	def configure(self, idle_timeout=None, enable_gyros=None, led_level=None):
 		"""
 		Sets and, if possible, sends configuration to controller.
 		Only value that is provided is changed.
