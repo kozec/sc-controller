@@ -26,6 +26,7 @@ from scc.lib import usb1
 from scc.constants import VENDOR_ID, PRODUCT_ID, HPERIOD, LPERIOD, DURATION
 from scc.constants import ENDPOINT, CONTROLIDX, FORMATS, ControllerInput
 from scc.constants import SCStatus, SCButtons, HapticPos, SCPacketType
+from scc.constants import SCConfigType
 
 log = logging.getLogger("SCController")
 
@@ -48,6 +49,7 @@ class SCController(object):
 		self._controller_connected = False
 		self._idle_timeout = 600
 		self._enable_gyros = False
+		self._led_level = 80
 		
 		for i in range(len(PRODUCT_ID)):
 			pid = PRODUCT_ID[i]
@@ -128,7 +130,7 @@ class SCController(object):
 	def _sendControl(self, data, timeout=0):
 
 		zeros = b'\x00' * (64 - len(data))
-
+		
 		self._handle.controlWrite(request_type=0x21,
 								  request=0x09,
 								  value=0x0300,
@@ -212,35 +214,36 @@ class SCController(object):
 			timeout, unknown1, haptic, unknown2))
 	
 	
-	def configure_controller(self, idle_timeout=None, enable_gyros=None):
+	def configure_controller(self, idle_timeout=None, enable_gyros=None, led_level=None):
 		"""
 		Sets and, if possible, sends configuration to controller.
 		Only value that is provided is changed.
 		'idle_timeout' is in seconds.
+		'led_level' is precent (0-100)
 		"""
 		# ------
 		"""
 		packet format:
-		 - uint8_t type
-		 - uint8_t size
-		 - uint8_t unknown - 0x32
+		 - uint8_t type - SCPacketType.CONFIGURE
+		 - uint8_t size - 0x03 for led configuration, 0x15 for timeout & gyros
+		 - uint8_t config_type - one of SCConfigType
 		 - 61b data
 		
 		Format for data when configuring controller:
-		 - uint16 timeout
-		 - 13b unknown - (0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30)
-		 - uint8 enable imu - 0x14 enables, 0x00 disables
-		 - 2b unknown - (0x00, 0x2e)
-		 - 43b unused
+		 - uint16	timeout
+		 - 13b		unknown1 - (0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30)
+		 - uint8	enable gyro sensor - 0x14 enables, 0x00 disables
+		 - 2b		unknown2 - (0x00, 0x2e)
+		 - 43b		unused
 		 
 		Format for data when configuring led:
-		 - uint8 led
-		 - uint8 unknonw
-		 - 59b unused
+		 - uint8	led
+		 - 59b		unused
 		"""
 		
 		if idle_timeout is not None : self._idle_timeout = idle_timeout
 		if enable_gyros is not None : self._enable_gyros = enable_gyros
+		if led_level is not None: self._led_level = led_level
 		
 		if not self._controller_connected:
 			# Can't configure what's not there
@@ -250,16 +253,24 @@ class SCController(object):
 		unknown2 = b'\x00\x2e'
 		timeout1 = self._idle_timeout & 0x00FF
 		timeout2 = (self._idle_timeout & 0xFF00) >> 8
-		size = 0x15
-		data = struct.pack('>BBBBB13sB2s43x',
+		led_lvl  = min(100, self._led_level) & 0xFF
+		
+		# Timeout & Gyros
+		self._cmsg.insert(0, struct.pack('>BBBBB13sB2s43x',
 			SCPacketType.CONFIGURE,
-			size,
-			0x32,
+			0x15, # size
+			SCConfigType.TIMEOUT_N_GYROS,
 			timeout1, timeout2,
 			unknown1,
 			0x14 if self._enable_gyros else 0,
-			unknown2)
-		self._cmsg.insert(0, data)
+			unknown2))
+		
+		# LED
+		self._cmsg.insert(0, struct.pack('>BBBB59x',
+			SCPacketType.CONFIGURE,
+			0x03,
+			SCConfigType.LED,
+			led_lvl))
 	
 	
 	def getGyroEnabled(self):
@@ -309,8 +320,14 @@ class SCController(object):
 
 
 	def handleEvents(self):
-		"""Fucntion to run in order to process usb events"""
+		"""
+		Fucntion to run in order to process usb events.
+		Shouldn't be combined with run().
+		"""
 		if self._handle and self._ctx:
+			while len(self._cmsg) > 0:
+				cmsg = self._cmsg.pop()
+				self._sendControl(cmsg)
 			self._ctx.handleEvents()
 
 
