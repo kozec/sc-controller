@@ -231,7 +231,7 @@ class SCController(object):
 		 
 		Format for data when configuring led:
 		 - uint8	led
-		 - 59b		unused
+		 - 60b		unused
 		"""
 		
 		if idle_timeout is not None : self._idle_timeout = idle_timeout
