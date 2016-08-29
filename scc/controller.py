@@ -207,13 +207,6 @@ class SCController(object):
 		self._cb(self, t, self._tup)
 	
 	
-	def disable_auto_haptic(self):
-		timeout = 3600 # .timeout = u16_to_packet_le(config->idle_timeout),
-		haptic = 0 # 0x14 # 0x00
-		self.configure_controller(0x15, struct.pack('>H13sB2s43x',
-			timeout, unknown1, haptic, unknown2))
-	
-	
 	def configure_controller(self, idle_timeout=None, enable_gyros=None, led_level=None):
 		"""
 		Sets and, if possible, sends configuration to controller.
