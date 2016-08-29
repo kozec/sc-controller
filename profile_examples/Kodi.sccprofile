@@ -1,0 +1,130 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.KEY_ENTER)"
+        }, 
+        "B": {
+            "action": "button(Keys.KEY_BACKSPACE)", 
+            "doubleclick": {}, 
+            "hold": {
+                "modes": {
+                    "RT": {
+                        "action": "button(Keys.KEY_B)"
+                    }
+                }
+            }, 
+            "modes": {
+                "RT": {
+                    "action": "button(Keys.KEY_B)", 
+                    "name": "Add bookmark"
+                }
+            }
+        }, 
+        "BACK": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_LEFTALT)"
+            }, {
+                "action": "button(Keys.KEY_LEFT)"
+            }]
+        }, 
+        "C": {
+            "action": "menu('Default.menu')", 
+            "doubleclick": {}, 
+            "hold": {
+                "action": "menu('Default.menu')"
+            }, 
+            "modes": {
+                "RT": {
+                    "action": "shell('sc-controller')"
+                }
+            }
+        }, 
+        "LB": {
+            "action": "button(Keys.KEY_X)", 
+            "modes": {
+                "RT": {
+                    "actions": [{
+                        "action": "button(Keys.KEY_LEFTCTRL)"
+                    }, {
+                        "action": "button(Keys.KEY_S)"
+                    }]
+                }
+            }
+        }, 
+        "LGRIP": {
+            "action": "button(Keys.KEY_UP)", 
+            "modes": {
+                "RT": {
+                    "action": "button(Keys.KEY_LEFT)"
+                }
+            }
+        }, 
+        "LPAD": {
+            "action": "button(Keys.KEY_M)"
+        }, 
+        "RB": {
+            "action": "button(Keys.KEY_BACKSLASH)"
+        }, 
+        "RGRIP": {
+            "action": "button(Keys.KEY_DOWN)", 
+            "modes": {
+                "RT": {
+                    "action": "button(Keys.KEY_RIGHT)"
+                }
+            }
+        }, 
+        "RPAD": {
+            "action": "button(Keys.BTN_LEFT)"
+        }, 
+        "START": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_LEFTALT)"
+            }, {
+                "action": "button(Keys.KEY_RIGHT)"
+            }]
+        }, 
+        "STICK": {
+            "action": "keyboard()"
+        }, 
+        "X": {
+            "action": "button(Keys.KEY_SPACE)"
+        }, 
+        "Y": {
+            "action": "button(Keys.KEY_C)"
+        }
+    }, 
+    "gyro": {}, 
+    "menus": {}, 
+    "pad_left": {
+        "action": "circular(Rels.REL_WHEEL)"
+    }, 
+    "pad_right": {
+        "action": "mouse(None, 1.0)", 
+        "ball": true, 
+        "feedback": ["RIGHT", 256]
+    }, 
+    "stick": {
+        "dpad": [{
+            "action": "button(Keys.KEY_UP)"
+        }, {
+            "action": "button(Keys.KEY_DOWN)"
+        }, {
+            "action": "button(Keys.KEY_LEFT)"
+        }, {
+            "action": "button(Keys.KEY_RIGHT)"
+        }]
+    }, 
+    "trigger_left": {
+        "action": "button(Keys.BTN_RIGHT)", 
+        "levels": [50, 50]
+    }, 
+    "trigger_right": {
+        "action": "button(Keys.BTN_LEFT)", 
+        "levels": [50, 50]
+    }, 
+    "version": 1.2
+}
