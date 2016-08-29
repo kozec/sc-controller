@@ -25,6 +25,7 @@ class Config(object):
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
 		],
+		"led_level": 80,
 		# enable_sniffing - If enabled, another program with write access to
 		# ~/.config/scc can ask daemon to send notifications about all
 		# (or only some) inputs.

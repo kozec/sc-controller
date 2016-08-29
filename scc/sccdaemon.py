@@ -250,7 +250,7 @@ class SCCDaemon(Daemon):
 			try:
 				sc = None
 				sc = SCController(callback=self.mapper.callback)
-				sc.configure(enable_gyros=bool(self.mapper.profile.gyro))
+				sc.configure(enable_gyros=bool(self.mapper.profile.gyro), led_level=Config()["led_level"])
 				self.mapper.set_controller(sc)
 				sc.setStatusCallback(self.on_controller_status)
 				if self.error is not None:
