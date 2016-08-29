@@ -16,7 +16,7 @@
             "modes": {
                 "RT": {
                     "action": "button(Keys.KEY_B)", 
-                    "name": "Zakladka"
+                    "name": "Bookmark"
                 }
             }
         }, 
