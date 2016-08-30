@@ -2,6 +2,11 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkAdjustment" id="adjLED">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkAdjustment" id="adjSensitivityX">
     <property name="lower">0.01</property>
     <property name="upper">10.01</property>
@@ -1124,7 +1129,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">2</property>
               </packing>
             </child>
             <child>
@@ -1132,6 +1137,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">25</property>
+                <property name="margin_right">25</property>
                 <property name="margin_top">5</property>
                 <property name="label" translatable="yes">Allows applications to &lt;b&gt;watch and possibly log&lt;/b&gt; gamepad inputs.
 
@@ -1140,6 +1146,40 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                 <property name="use_markup">True</property>
                 <property name="wrap">True</property>
                 <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label30">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Controller LED brightness</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="sclLED">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_left">25</property>
+                <property name="margin_right">25</property>
+                <property name="margin_top">5</property>
+                <property name="hexpand">True</property>
+                <property name="adjustment">adjLED</property>
+                <property name="round_digits">0</property>
+                <property name="digits">0</property>
+                <property name="value_pos">right</property>
+                <signal name="value-changed" handler="on_sclLED_value_changed" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">0</property>

@@ -47,6 +47,14 @@ class TestSpecialActions(object):
 		assert _parses_as_itself(TurnOffAction())
 	
 	
+	def test_led(self):
+		"""
+		Tests if LockedAction can be converted to string and parsed back to
+		same action.
+		"""
+		assert _parses_as_itself(LedAction(66))
+	
+	
 	def test_osd(self):
 		"""
 		Tests if OSDAction can be converted to string and parsed back to

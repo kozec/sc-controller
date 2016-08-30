@@ -65,6 +65,11 @@ Identifies daemon version. Automatically sent when connection is accepted.
 
 ## Commands sent from client to daemon
 
+#### `Led: brightness`
+Sets brightness of controller led. 'Brightness' is percent in 0 to 100 range.
+Daemon responds with `OK.`, unless 'brightness' cannot be parsed, in which case
+`Fail: ...` with error message is sent.
+
 #### `Lock: button1 button2...`
 Locks physical button, axis or pad. Events from locked sources are not processed normally, but sent to client that initiated lock.
 

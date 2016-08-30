@@ -50,6 +50,15 @@ class TestSpecialActions(object):
 		assert isinstance(a, TurnOffAction)
 	
 	
+	def test_led(self):
+		"""
+		Tests if LockedAction is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "led(66)" })
+		assert isinstance(a, LedAction)
+		assert a.brightness == 66
+	
+	
 	def test_osd(self):
 		"""
 		Tests if OSDAction is parsed correctly from json.

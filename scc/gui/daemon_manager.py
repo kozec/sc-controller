@@ -256,6 +256,14 @@ class DaemonManager(GObject.GObject):
 		self.request("Lock: %s" % (what,), success_cb, error_cb)
 	
 	
+	def set_led_level(self, value):
+		"""
+		Sets brightness of controller led.
+		"""
+		self.request("Led: %s" % (int(value),), DaemonManager.nocallback,
+			DaemonManager.nocallback)
+	
+	
 	def observe(self, success_cb, error_cb, *what_to_lock):
 		"""
 		Enables observing on physical button, axis or pad.
