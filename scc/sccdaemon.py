@@ -11,7 +11,7 @@ from scc.lib.usb1 import USBError
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.tools import find_profile, nameof, shsplit, shjoin
-from scc.tools import set_logging_level, find_binary
+from scc.tools import set_logging_level, find_binary, clamp
 from scc.parser import TalkingActionParser
 from scc.controller import SCController
 from scc.menu_data import MenuData
@@ -99,6 +99,12 @@ class SCCDaemon(Daemon):
 		""" Called when 'turnoff' action is used """
 		if mapper.get_controller():
 			mapper.get_controller().turnoff()
+	
+	
+	def on_sa_led(self, mapper, action):
+		""" Called when 'turnoff' action is used """
+		if mapper.get_controller():
+			mapper.get_controller().configure(led_level = action.brightness)
 	
 	
 	def on_sa_shell(self, mapper, action):
@@ -416,6 +422,14 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"OK.\n")
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
+		elif message.startswith("Led:"):
+			try:
+				number = int(message[4:].decode("utf-8"))
+				number = clamp(0, number, 100)
+			except Exception, e:
+				client.wfile.write(b"Fail: %s\n" % (e,))
+			if self.mapper.get_controller():
+				self.mapper.get_controller().configure(led_level = number)
 		elif message.startswith("Observe:"):
 			if Config()["enable_sniffing"]:
 				to_observe = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]

@@ -14,8 +14,8 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
+from scc.tools import strip_none, nameof, clamp
 from scc.constants import STICK_PAD_MAX
-from scc.tools import strip_none, nameof
 from scc.modifiers import Modifier
 from math import sqrt
 
@@ -91,6 +91,24 @@ class TurnOffAction(Action, SpecialAction):
 		# Execute only when button is released (executing this when button
 		# is pressed would hold stuck any other action bound to same button,
 		# as button_release is not sent after controller turns off)
+		self.execute(mapper)
+
+
+class LedAction(Action, SpecialAction):
+	SA = COMMAND = "led"
+	
+	def __init__(self, brightness):
+		Action.__init__(self, brightness)
+		self.brightness = clamp(0, int(brightness), 100)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Set LED brightness")
+	
+	
+	def button_press(self, mapper):
+		# Execute only when button is pressed
 		self.execute(mapper)
 
 

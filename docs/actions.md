@@ -170,6 +170,10 @@ Executes command on background
 Turns controller off
 
 
+#### <a name="led"></a> led(brightness)
+Sets brightness of controller led. 'Brightness' is percent in 0 to 100 range.
+
+
 #### <a name="osd"></a> osd([timeout=5], text)
 Displays text in OSD.
 
