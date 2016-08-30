@@ -62,6 +62,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.load_autoswitch()
 		self.load_osk()
 		self.load_colors()
+		# Load LED
+		self.builder.get_object("sclLED").set_value(self.app.config['led_level'])
 	
 	
 	def _load_color(self, w, dct, key):
@@ -409,6 +411,12 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			profile.pads[LEFT]  = SensitivityModifier(s[0], s[1], OSKCursorAction(LEFT))
 			profile.pads[RIGHT] = SensitivityModifier(s[0], s[1], OSKCursorAction(RIGHT))
 		self._save_osk_profile(profile)
+	
+	
+	def on_sclLED_value_changed(self, scale, *a):
+		self.app.config["led_level"] = scale.get_value()
+		self.app.dm.set_led_level(scale.get_value())
+		self.app.save_config()
 	
 	
 	def on_entTitle_changed(self, ent):
