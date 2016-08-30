@@ -172,12 +172,23 @@ class SCController(object):
 			self._callback()
 			transfer.submit()
 			if not self._controller_connected:
-				self._controller_connected = True
-				if self._cscallback:
-					self._cscallback(self, self._controller_connected)
-					self.configure()
+				self._set_send_controller_connected()
+		elif not self._controller_connected and tup.status == SCStatus.IDLE:
+			transfer.submit()
+			self._set_send_controller_connected()
 		else:
 			transfer.submit()
+	
+	
+	def _set_send_controller_connected(self):
+		"""
+		Sets self._controller_connected to true and calls callback, if set.
+		Exists simply because above metod needs it on two places.
+		"""
+		self._controller_connected = True
+		if self._cscallback:
+			self._cscallback(self, self._controller_connected)
+			self.configure()
 	
 	
 	def _callback(self):
@@ -285,7 +296,7 @@ class SCController(object):
 			try:
 				while any(x.isSubmitted() for x in self._transfer_list):
 					self._ctx.handleEvents()
-					if len(self._cmsg) > 0:
+					while len(self._cmsg) > 0:
 						cmsg = self._cmsg.pop()
 						self._sendControl(cmsg)
 				try:
