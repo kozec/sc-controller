@@ -279,14 +279,6 @@ class SCController(object):
 				SCPacketType.OFF, 0x04, 0x6f, 0x66, 0x66, 0x21))
 	
 	
-	def enableGyro(self):
-		log.debug("Enabling gyroscopes")
-		
-		# Mercilessly stolen from scraw library
-		self._cmsg.insert(0, struct.pack('<BBBBBB',
-				SCPacketType.OFF, 0x04, 0x6f, 0x66, 0x66, 0x21))
-	
-	
 	def run(self):
 		"""Fucntion to run in order to process usb events"""
 		if self._handle:
