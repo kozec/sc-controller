@@ -257,7 +257,7 @@ class SCController(object):
 		unknown2 = b'\x00\x2e'
 		timeout1 = self._idle_timeout & 0x00FF
 		timeout2 = (self._idle_timeout & 0xFF00) >> 8
-		led_lvl  = min(100, self._led_level) & 0xFF
+		led_lvl  = min(100, int(self._led_level)) & 0xFF
 		
 		# Timeout & Gyros
 		self._cmsg.insert(0, struct.pack('>BBBBB13sB2s43x',
