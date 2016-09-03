@@ -24,6 +24,19 @@ class OSDWindow(Gtk.Window):
 			border: 6px #%(border)s double;
 		}
 		
+		#osd-input-display {
+			background-color: #%(background)s;
+			border: 4px #%(border)s solid;
+		}
+		
+		#osd-input-display box {
+			margin: 15px 15px 15px 15px;
+		}
+		
+		#osd-input-display #released {
+			opacity: 0.25;
+		}
+		
 		#osd-area {
 			background-color: #%(border)s;
 		}
@@ -172,6 +185,7 @@ class OSDWindow(Gtk.Window):
 		if y < 0:	# Negative Y position is counted from bottom border
 			y = Gdk.Screen.height() - self.get_allocated_height() + y + 1
 		
+		print "MOOOVE", x, y
 		self.move(x, y)
 		Gtk.Window.show(self)
 		self.make_window_clicktrough()
