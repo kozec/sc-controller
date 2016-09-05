@@ -954,6 +954,63 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 				mapper.syn_list.add(mapper.gamepad)
 
 
+class TiltAction(Action):
+	COMMAND = "tilt"
+	MIN = 0.75
+	
+	def __init__(self, *actions):
+		"""
+		Order of actions:
+		 - Front faces down
+		 - Front faces up
+		 - Tilted left
+		 - Tilted right
+		 - Rotated left
+		 - Rotated right
+		"""
+		Action.__init__(self, *strip_none(*actions))
+		self.actions = ensure_size(6, actions)
+		self.states = [ None, None, None, None, None, None ]
+		self.speed = (1.0, 1.0, 1.0)
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = (x, y, z)
+	
+	
+	def get_speed(self):
+		return self.speed
+	
+	
+	def gyro(self, mapper, *pyr):
+		q1, q2, q3, q4 = pyr[-4:]
+		pyr = quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0)
+		for j in (0, 1, 2):
+			i = j * 2
+			if self.actions[i]:
+				if pyr[j] < self.speed[j] * TiltAction.MIN * -1 and not self.states[i]:
+					# Side faces down
+					self.actions[i].button_press(mapper)
+					self.states[i] = True
+				elif self.states[i]:
+					# Side no longer faces down
+					self.actions[i].button_release(mapper)
+					self.states[i] = False
+				if pyr[j] > self.speed[j] * TiltAction.MIN and not self.states[i+1]:
+					# Side faces up
+					self.actions[i+1].button_press(mapper)
+					self.states[i+1] = True
+				elif self.states[i+1]:
+					# Side no longer faces up
+					self.actions[i+1].button_release(mapper)
+					self.states[i+1] = False
+	
+	
+	def describe(self, context):
+		if self.name : return self.name
+		return _("Tilt")
+
+
 class TrackballAction(Action):
 	"""
 	ball(trackpad); Never actually instantiated - Exists only to provide
