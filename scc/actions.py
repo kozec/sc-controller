@@ -988,7 +988,7 @@ class TiltAction(Action):
 		for j in (0, 1, 2):
 			i = j * 2
 			if self.actions[i]:
-				if pyr[j] < self.speed[j] * TiltAction.MIN * -1:
+				if pyr[j] < TiltAction.MIN * -1 / self.speed[j]:
 					# Side faces down
 					if not self.states[i]:
 						self.actions[i].button_press(mapper)
@@ -998,7 +998,7 @@ class TiltAction(Action):
 					self.actions[i].button_release(mapper)
 					self.states[i] = False
 			if self.actions[i+1]:
-				if pyr[j] > self.speed[j] * TiltAction.MIN:
+				if pyr[j] > TiltAction.MIN / self.speed[j]:
 					# Side faces up
 					if not self.states[i+1]:
 						self.actions[i+1].button_press(mapper)
