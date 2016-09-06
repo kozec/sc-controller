@@ -997,6 +997,7 @@ class TiltAction(Action):
 					# Side no longer faces down
 					self.actions[i].button_release(mapper)
 					self.states[i] = False
+			if self.actions[i+1]:
 				if pyr[j] > self.speed[j] * TiltAction.MIN:
 					# Side faces up
 					if not self.states[i+1]:
