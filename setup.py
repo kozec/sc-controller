@@ -7,6 +7,7 @@ data_files = [
 				('share/scc/glade/ae', glob.glob("glade/ae/*.glade")),
 				('share/scc/images', glob.glob("images/*.svg")),
 				('share/scc/images', glob.glob("images/*.svg.json")),
+				('share/icons/hicolor/24x24/status', glob.glob("images/24x24/status/*.png")),
 				('share/scc/default_profiles', glob.glob("default_profiles/*.sccprofile")),
 				('share/scc/default_profiles', glob.glob("default_profiles/.*.sccprofile")),
 				('share/scc/default_menus', glob.glob("default_menus/*.menu")),

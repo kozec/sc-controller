@@ -1,32 +1,45 @@
 #!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 """
-SC-Controller - StatusIcon
-"""
+Syncthing-GTK - StatusIcon
 
+"""
 from __future__ import unicode_literals
 
-from gi.repository import GObject, GLib, Gtk
+import locale
+import os
+import sys
+import logging
+
+from gi.repository import GObject
+from gi.repository import GLib
+from gi.repository import Gtk
+
 from scc.gui.dwsnc import IS_UNITY
-from scc.tools import _
+from scc.tools import _ # gettext function
 
-import os, sys, logging
 log = logging.getLogger("StatusIcon")
-
 
 # Taken from Syncthing-GTK, but got all KDE stuff removed, since it doesn't
 # work in latest KDE anymore.
 
+
 #                | MATE      | Unity      | Cinnamon   | Cairo-Dock (classic) | Cairo-Dock (modern) |
 #----------------+-----------+------------+------------+----------------------+---------------------+
 # StatusIconAppI | none      | excellent  | none       | none                 | excellent           |
-# StatusIconGTK3 | excellent | none       | cropped    | cropped              | none                |
+# StatusIconGTK3 | excellent | none       | very good¹ | very good¹           | none                |
+#
+# Notes:
+#  - StatusIconAppIndicator does not implement any fallback (but the original libappindicator did)
+#  - Markers:
+#     ¹ Icon cropped
 
 
 class StatusIcon(GObject.GObject):
 	"""
 	Base class for all status icon backends
 	"""
-	TRAY_TITLE     = _("SC-Controller")
+	TRAY_TITLE     = _("Syncthing")
 	
 	__gsignals__ = {
 		b"clicked": (GObject.SIGNAL_RUN_FIRST, None, ()),
@@ -39,7 +52,7 @@ class StatusIcon(GObject.GObject):
 			"does the icon back-end think that anything is might be shown to the user?",
 			True,
 			GObject.PARAM_READWRITE
-		)	
+		)		
 	}
 	
 	def __init__(self, icon_path, popupmenu, force=False):
@@ -49,7 +62,7 @@ class StatusIcon(GObject.GObject):
 		self.__active    = True
 		self.__visible   = False
 		self.__hidden    = False
-		self.__icon      = "sc-controller"
+		self.__icon      = "si-syncthing-unknown"
 		self.__text      = ""
 		self.__force     = force
 	
@@ -73,11 +86,14 @@ class StatusIcon(GObject.GObject):
 		If either of these are `None` their previous value will be used.
 		
 		@param {String} icon
-		       The name of the icon to show (i.e. `sc-controller`)
+		       The name of the icon to show (i.e. `si-syncthing-idle`)
 		@param {String} text
 		       Some text that indicates what the application is currently doing (generally this be used for the tooltip)
 		"""
-		self.__visible = True
+		if not icon.endswith("-0"): # si-syncthing-0
+			# Ignore first syncing icon state to prevent the icon from flickering
+			# into the main notification bar during initialization
+			self.__visible = True
 		
 		if self.__hidden:
 			self._set_visible(False)
@@ -192,7 +208,7 @@ class StatusIconGTK3(StatusIcon):
 		self._tray.connect("notify::embedded", self._on_embedded_change)
 		
 		self._tray.set_visible(True)
-		# self._tray.set_name("sc-controller")
+		self._tray.set_name("syncthing-gtk")
 		self._tray.set_title(self.TRAY_TITLE)
 		
 		# self._tray.is_embedded() must be called asynchronously
@@ -201,7 +217,7 @@ class StatusIconGTK3(StatusIcon):
 	
 	def set(self, icon=None, text=None):
 		StatusIcon.set(self, icon, text)
-		print "set", icon, text
+		print "self._tray.set_from_icon_name", self._get_icon(icon)
 		
 		self._tray.set_from_icon_name(self._get_icon(icon))
 		self._tray.set_tooltip_text(self._get_text(text))
@@ -247,7 +263,7 @@ class StatusIconAppIndicator(StatusIconDBus):
 		
 		category = appindicator.IndicatorCategory.APPLICATION_STATUS
 		# Whatever icon is set here will be used as a tooltip icon during the entire time to icon is shown
-		self._tray = appindicator.Indicator.new("sc-controller", self._get_icon(), category)
+		self._tray = appindicator.Indicator.new("syncthing-gtk", self._get_icon(), category)
 		self._tray.set_menu(self._get_popupmenu())
 		self._tray.set_title(self.TRAY_TITLE)
 	
@@ -270,7 +286,7 @@ class StatusIconProxy(StatusIcon):
 		self._arguments  = (args, kwargs)
 		self._status_fb  = None
 		self._status_gtk = None
-		self.set("sc-controller", "")
+		self.set("si-syncthing-unknown", "")
 		
 		# Do not ever force-show indicators when they do not think they'll work
 		if "force" in self._arguments[1]:
@@ -312,9 +328,9 @@ class StatusIconProxy(StatusIcon):
 	
 	def _load_fallback(self):
 		if IS_UNITY:
-			status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
+			status_icon_backends = [StatusIconAppIndicator, StatusIconKDE4, StatusIconDummy]
 		else:
-			status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
+			status_icon_backends = [StatusIconKDE4, StatusIconAppIndicator, StatusIconDummy]
 		
 		if not self._status_fb:
 			for StatusIconBackend in status_icon_backends:
@@ -357,5 +373,22 @@ class StatusIconProxy(StatusIcon):
 			self._status_fb.show()
 
 def get_status_icon(*args, **kwargs):
+	# Try selecting backend based on environment variable
+	if "SYNCTHING_STATUS_BACKEND" in os.environ:
+		kwargs["force"] = True
+		
+		status_icon_backend_name = "StatusIcon%s" % (os.environ.get("SYNCTHING_STATUS_BACKEND"))
+		if status_icon_backend_name in globals():
+			try:
+				status_icon = globals()[status_icon_backend_name](*args, **kwargs)
+				log.info("StatusIcon: Using requested backend %s" % (status_icon_backend_name))
+				return status_icon
+			except NotImplementedError:
+				log.error("StatusIcon: Requested backend %s is not supported" % (status_icon_backend_name))
+		else:
+			log.error("StatusIcon: Requested backend %s does not exist" % (status_icon_backend_name))
+		
+		return StatusIconDummy(*args, **kwargs)
+	
 	# Use proxy backend to determine the correct backend while the application is running
 	return StatusIconProxy(*args, **kwargs)

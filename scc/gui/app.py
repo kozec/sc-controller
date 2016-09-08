@@ -99,9 +99,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.builder.get_object("cbProfile").set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
 		
-		# Top-left Icon
-		self.set_daemon_status("unknown")
-		
 		# 'C' button
 		vbc = self.builder.get_object("vbC")
 		self.main_area = self.builder.get_object("mainArea")
@@ -129,10 +126,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def setup_statusicon(self):
-		self.statusicon = get_status_icon(self.imagepath, None)
-		# self.statusicon.connect("clicked",        self.cb_statusicon_click)
-		self.statusicon.set("sc-controller", "sc-controller")
-		self.statusicon.show()
+		menu = self.builder.get_object("mnuDaemon")
+		self.statusicon = get_status_icon(self.imagepath, menu)
+	
 	
 	def check(self):
 		""" Performs various (two) checks and reports possible problems """
@@ -667,6 +663,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.load_profile_list()
 		self.setup_widgets()
 		self.setup_statusicon()
+		self.set_daemon_status("unknown")
 		GLib.timeout_add_seconds(2, self.check)
 	
 	
@@ -747,12 +744,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def set_daemon_status(self, status):
 		""" Updates image that shows daemon status and menu shown when image is clicked """
 		log.debug("daemon status: %s", status)
-		icon = os.path.join(self.imagepath, "status_%s.svg" % (status,))
+		icon = os.path.join(self.imagepath, "scc-%s.svg" % (status,))
 		imgDaemonStatus = self.builder.get_object("imgDaemonStatus")
 		btDaemon = self.builder.get_object("btDaemon")
 		mnuEmulationEnabled = self.builder.get_object("mnuEmulationEnabled")
 		imgDaemonStatus.set_from_file(icon)
 		mnuEmulationEnabled.set_sensitive(True)
+		GLib.idle_add(self.statusicon.set, "scc-%s" % (status,), _("SC-Controller"))
 		self.window.set_icon_from_file(icon)
 		self.recursing = True
 		if status == "alive":
