@@ -74,6 +74,7 @@ class Action(object):
 	AC_OSD		= 1 << 8
 	AC_OSK		= 1 << 9	# On screen keyboard
 	AC_MENU		= 1 << 10	# Menu Item
+	AC_SWITCHER	= 1 << 11	# Autoswitcher display
 	#		bit 	09876543210
 	AC_ALL		= 0b10111111111	# ALL means everything but OSK
 	

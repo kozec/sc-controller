@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 from scc.paths import get_config_path
 from scc.profile import Encoder
+from scc.special_actions import ChangeProfileAction
 
 import os, json, logging
 log = logging.getLogger("Config")
@@ -91,6 +92,13 @@ class Config(object):
 			if len(self.DEFAULTS[key]) != len(self.values[key]):
 				src = self.DEFAULTS[key]
 				self.values[key] = { k:src[k] for k in src }
+		# Special check for autoswitcher after v0.2.17
+		if "autoswitch" in self.values:
+			for a in self.values["autoswitch"]:
+				if "profile" in a:
+					a["action"] = ChangeProfileAction(str(a["profile"])).to_string()
+					del a["profile"]
+					rv = True
 		return rv
 	
 	

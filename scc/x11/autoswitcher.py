@@ -11,6 +11,8 @@ from scc.menu_data import MenuGenerator, MenuItem, Separator, MENU_GENERATORS
 from scc.lib import xwrappers as X
 from scc.tools import find_profile
 from scc.paths import get_daemon_socket
+from scc.parser import TalkingActionParser
+from scc.mapper import Mapper
 from scc.config import Config
 
 import os, sys, re, time, socket, traceback, threading, logging
@@ -24,6 +26,9 @@ class AutoSwitcher(object):
 		self.lock = threading.Lock()
 		self.thread = threading.Thread(target=self.connect_daemon)
 		self.config = Config()
+		self.parser = TalkingActionParser()
+		self.mapper = Mapper(None, keyboard=None, mouse=None, gamepad=None)
+		self.mapper.set_special_actions_handler(self)
 		self.socket = None
 		self.connected = False
 		self.exit_code = None
@@ -38,7 +43,7 @@ class AutoSwitcher(object):
 		conds = {}
 		for c in config['autoswitch']:
 			try:
-				conds[Condition.parse(c['condition'])] = c['profile']
+				conds[Condition.parse(c['condition'])] = c['action']
 			except Exception, e:
 				# Failure here is not fatal
 				log.error("Failed to parse autoswitcher condition '%s'", c)
@@ -50,19 +55,20 @@ class AutoSwitcher(object):
 	@staticmethod
 	def assign(conds, title, wm_class, profile):
 		c = Condition(wm_class=wm_class[0])
-		conds[c] = profile
+		conds[c] = ChangeProfileAction(profile)
 	
 	
 	@staticmethod
 	def unassign(conds, title, wm_class, profile):
 		"""
-		Removes any condition that matches given title/class/profile combination.
-		'profile' can be None, in which case, removes removes any condition
+		Removes any condition that matches given title/class/action combination.
+		'action' can be None, in which case, removes removes any condition
 		that matches title or wm class.
 		"""
 		count = 0
+		cmpwith = ChangeProfileAction(profile).to_string()
 		for c in conds.keys():
-			if profile is None or conds[c] == profile:
+			if profile is None or conds[c] == cmpwith:
 				if c.matches(title, wm_class):
 					del conds[c]
 					count += 1
@@ -115,26 +121,32 @@ class AutoSwitcher(object):
 		pars = X.get_window_title(self.dpy, w), X.get_window_class(self.dpy, w)
 		for c in self.conds:
 			if c.matches(*pars):
-				profile_name = self.conds[c]
-				path = find_profile(profile_name)
-				if path:
-					self.lock.acquire()
-					if path != self.current_profile and not self.current_profile.endswith(".mod"):
-						# Switch only if target profile is not active
-						# and active profile is not being editted.
-						try:
-							if self.config['autoswitch_osd']:
-								msg = (_("Switched to profile") + " " + profile_name)
-								self.socket.send(b"OSD: " + msg.encode('utf-8') + b"\n")
-							self.socket.send(b"Profile: " + path.encode('utf-8') + b"\n")
-						except:
-							self.lock.release()
-							log.error("Socket write failed")
-							os._exit(2)
-							return
+				action = self.parser.restart(self.conds[c]).parse()
+				action.button_press(self.mapper)
+				action.button_release(self.mapper)
+	
+	
+	def on_sa_profile(self, mapper, action):
+		profile_name = action.profile
+		path = find_profile(profile_name)
+		if path:
+			self.lock.acquire()
+			if path != self.current_profile and not self.current_profile.endswith(".mod"):
+				# Switch only if target profile is not active
+				# and active profile is not being editted.
+				try:
+					if self.config['autoswitch_osd']:
+						msg = (_("Switched to profile") + " " + profile_name)
+						self.socket.send(b"OSD: " + msg.encode('utf-8') + b"\n")
+					self.socket.send(b"Profile: " + path.encode('utf-8') + b"\n")
+				except:
 					self.lock.release()
-				else:
-					log.error("Cannot switch to profile '%s', profile file not found", self.conds[c])
+					log.error("Socket write failed")
+					os._exit(2)
+					return
+			self.lock.release()
+		else:
+			log.error("Cannot switch to profile '%s', profile file not found", self.conds[c])
 	
 	
 	def sigint(self, *a):
@@ -273,11 +285,10 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 					AutoSwitcher.unassign(self.conds, self.title, self.wm_class, None)
 					AutoSwitcher.assign(self.conds, self.title, self.wm_class, profile)
 			cfg = Config()
-			cfg["autoswitch"] = [
-				dict(
-					condition = c.encode(),
-					profile = self.conds[c]
-				) for c in self.conds
+			cfg["autoswitch"] = [{
+					"condition" : c.encode(),
+					"action" : self.conds[c]
+				} for c in self.conds
 			]
 			cfg.save()
 			daemon.request(b"Reconfigure.\n", on_response, on_response)

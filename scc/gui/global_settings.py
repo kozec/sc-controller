@@ -8,11 +8,12 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gdk, GObject, GLib
+from scc.special_actions import ChangeProfileAction, TurnOffAction
 from scc.modifiers import SensitivityModifier
+from scc.actions import Action, NoAction
 from scc.paths import get_profiles_path
 from scc.constants import LEFT, RIGHT
 from scc.tools import find_profile
-from scc.actions import Action
 from scc.profile import Profile
 from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
@@ -107,7 +108,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		for x in self.app.config['autoswitch']:
 			o = GObject.GObject()
 			o.condition = Condition.parse(x['condition'])
-			model.append((o, o.condition.describe(), x['profile']))
+			o.action = GuiActionParser().restart(x["action"]).parse()
+			a_str = o.action.describe(Action.AC_SWITCHER)
+			model.append((o, o.condition.describe(), a_str))
 		self._recursing = True
 		self.on_tvItems_cursor_changed()
 		cbShowOSD.set_active(bool(self.app.config['autoswitch_osd']))
@@ -232,10 +235,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbMinimizeToStatusIcon = self.builder.get_object("cbMinimizeToStatusIcon")
 		conds = []
 		for row in tvItems.get_model():
-			conds.append(dict(
-				condition = row[0].condition.encode(),
-				profile = row[2]
-			))
+			conds.append({
+				'condition' : row[0].condition.encode(),
+				'action' : row[0].action.to_string()
+			})
 		# Apply status icon settings
 		if self.app.config['gui']['enable_status_icon'] != cbEnableStatusIcon.get_active():
 			self.app.config['gui']['enable_status_icon'] = cbEnableStatusIcon.get_active()
@@ -280,18 +283,29 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbMatchClass = self.builder.get_object("cbMatchClass")
 		cbExactTitle = self.builder.get_object("cbExactTitle")
 		cbRegExp = self.builder.get_object("cbRegExp")
+		rbProfile = self.builder.get_object("rbProfile")
+		rbTurnOff = self.builder.get_object("rbTurnOff")
+		rbRelease = self.builder.get_object("rbRelease")
 		# Grab data
 		model, iter = tvItems.get_selection().get_selected()
 		o = model.get_value(iter, 0)
 		profile = model.get_value(iter, 2)
 		condition = o.condition
+		action = o.action
 		
 		# Clear editor
-		self.set_cb(cbProfile, profile)
 		for cb in (cbMatchTitle, cbMatchClass, cbExactTitle, cbRegExp):
 			cb.set_active(False)
 		for ent in (entClass, entTitle):
 			ent.set_text("")
+		# Setup action
+		if isinstance(o.action, ChangeProfileAction):
+			rbProfile.set_active(True)
+			self.set_cb(cbProfile, o.action.profile)
+		elif isinstance(o.action, TurnOffAction):
+			rbTurnOff.set_active(True)
+		# elif: TODO: last one
+		
 		# Setup editor
 		if condition.title:
 			entTitle.set_text(condition.title or "")
@@ -324,6 +338,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbMatchClass = self.builder.get_object("cbMatchClass")
 		cbExactTitle = self.builder.get_object("cbExactTitle")
 		cbRegExp = self.builder.get_object("cbRegExp")
+		rbProfile = self.builder.get_object("rbProfile")
+		rbTurnOff = self.builder.get_object("rbTurnOff")
+		rbRelease = self.builder.get_object("rbRelease")
 		ce = self.builder.get_object("ConditionEditor")
 		
 		# Build condition
@@ -339,16 +356,21 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			data['wm_class'] = entClass.get_text()
 		condition = Condition(**data)
 		
-		# Grab selected profile
+		# Grab selected action
 		model, iter = cbProfile.get_model(), cbProfile.get_active_iter()
-		profile = model.get_value(iter, 0)
+		action = NoAction()
+		if rbProfile.get_active():
+			action = ChangeProfileAction(model.get_value(iter, 0))
+		elif rbTurnOff.get_active():
+			action = TurnOffAction()
 		
 		# Grab & update current row
 		model, iter = tvItems.get_selection().get_selected()
 		o = model.get_value(iter, 0)
 		o.condition = condition
+		o.action = action
 		model.set_value(iter, 1, condition.describe())
-		model.set_value(iter, 2, profile)
+		model.set_value(iter, 2, action.describe(Action.AC_SWITCHER))
 		self.hide_dont_destroy(ce)
 		self.save_config()
 	

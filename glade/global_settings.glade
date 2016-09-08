@@ -929,9 +929,9 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkTreeViewColumn" id="clProfile">
+                      <object class="GtkTreeViewColumn" id="clThen">
                         <property name="resizable">True</property>
-                        <property name="title" translatable="yes">... switch to profile</property>
+                        <property name="title" translatable="yes">... then</property>
                         <child>
                           <object class="GtkCellRendererText" id="crProfile"/>
                           <attributes>
@@ -1428,7 +1428,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_top">15</property>
-            <property name="label" translatable="yes">Profile to Activate</property>
+            <property name="label" translatable="yes">Action</property>
             <property name="xalign">0</property>
             <attributes>
               <attribute name="weight" value="bold"/>
@@ -1441,10 +1441,35 @@ grips, triggers, finger positions on both pads and stick angle.</property>
           </packing>
         </child>
         <child>
+          <object class="GtkRadioButton" id="rbProfile">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="margin_top">5</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Activate Profile</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">6</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkComboBox" id="cbProfile">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="margin_left">5</property>
+            <property name="margin_left">25</property>
             <property name="margin_right">5</property>
             <property name="margin_top">5</property>
             <property name="model">lstProfile</property>
@@ -1468,7 +1493,59 @@ grips, triggers, finger positions on both pads and stick angle.</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">6</property>
+            <property name="position">7</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRadioButton" id="rbTurnOff">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="margin_top">5</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <property name="group">rbProfile</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Turn Off Controller</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">8</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRadioButton" id="rbRelease">
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_top">5</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <property name="group">rbProfile</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Release Devices</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">9</property>
           </packing>
         </child>
       </object>

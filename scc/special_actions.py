@@ -35,6 +35,8 @@ class ChangeProfileAction(Action, SpecialAction):
 		if self.name: return self.name
 		if context == Action.AC_OSD:
 			return _("Profile: %s") % (self.profile,)
+		if context == Action.AC_SWITCHER:
+			return _("Switch to %s") % (self.profile,)
 		return _("Profile Change")
 	
 	
