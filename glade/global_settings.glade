@@ -1449,7 +1449,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
             <property name="active">True</property>
             <property name="draw_indicator">True</property>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkLabel" id="label77">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Activate Profile</property>
@@ -1506,7 +1506,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
             <property name="draw_indicator">True</property>
             <property name="group">rbProfile</property>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkLabel" id="label35">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Turn Off Controller</property>
@@ -1532,7 +1532,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
             <property name="draw_indicator">True</property>
             <property name="group">rbProfile</property>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkLabel" id="label36">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Release Devices</property>
