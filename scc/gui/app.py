@@ -14,8 +14,8 @@ from scc.gui.userdata_manager import UserDataManager
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
 from scc.gui.statusicon import get_status_icon
+from scc.gui.dwsnc import headerbar, IS_UNITY
 from scc.gui.svg_widget import SVGWidget
-from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
@@ -223,7 +223,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def on_window_delete_event(self, *a):
 		""" Called when user tries to close window """
-		if self.config['gui']['enable_status_icon'] and self.config['gui']['minimize_to_status_icon']:
+		if not IS_UNITY and self.config['gui']['enable_status_icon'] and self.config['gui']['minimize_to_status_icon']:
 			# Override closing and hide instead
 			self.window.set_visible(False)
 			return True

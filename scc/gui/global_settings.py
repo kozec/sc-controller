@@ -18,6 +18,7 @@ from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
 from scc.gui.parser import GuiActionParser
+from scc.gui.dwsnc import IS_UNITY
 from scc.x11.autoswitcher import Condition
 from scc.osd.keyboard import Keyboard as OSDKeyboard
 from scc.osd.osk_actions import OSKCursorAction
@@ -71,9 +72,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		(self.builder.get_object("cbEnableStatusIcon")
 				.set_active(bool(self.app.config['gui']['enable_status_icon'])))
 		(self.builder.get_object("cbMinimizeToStatusIcon")
-				.set_active(bool(self.app.config['gui']['minimize_to_status_icon'])))
+				.set_active(not IS_UNITY and bool(self.app.config['gui']['minimize_to_status_icon'])))
 		(self.builder.get_object("cbMinimizeToStatusIcon")
-				.set_sensitive(self.app.config['gui']['enable_status_icon']))
+				.set_sensitive(not IS_UNITY and self.app.config['gui']['enable_status_icon']))
 		self._recursing = False
 		
 	
@@ -223,7 +224,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		# Apply status icon settings
 		if self.app.config['gui']['enable_status_icon'] != cbEnableStatusIcon.get_active():
 			self.app.config['gui']['enable_status_icon'] = cbEnableStatusIcon.get_active()
-			cbMinimizeToStatusIcon.set_sensitive(cbEnableStatusIcon.get_active())
+			cbMinimizeToStatusIcon.set_sensitive(not IS_UNITY and cbEnableStatusIcon.get_active())
 			if cbEnableStatusIcon.get_active():
 				self.app.setup_statusicon()
 			else:

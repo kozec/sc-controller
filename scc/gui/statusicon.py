@@ -333,9 +333,9 @@ class StatusIconProxy(StatusIcon):
 	
 	def _load_fallback(self):
 		if IS_UNITY:
-			status_icon_backends = [StatusIconAppIndicator, StatusIconKDE4, StatusIconDummy]
+			status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
 		else:
-			status_icon_backends = [StatusIconKDE4, StatusIconAppIndicator, StatusIconDummy]
+			status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
 		
 		if not self._status_fb:
 			for StatusIconBackend in status_icon_backends:
