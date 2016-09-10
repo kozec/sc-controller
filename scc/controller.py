@@ -97,6 +97,11 @@ class Controller(object):
 		pass
 	
 	
+	def get_gyro_enabled(self):
+		""" Returns True if gyroscope is enabled """
+		return False
+	
+	
 	def feedback(self, data):
 		"""
 		Generates feedback effect, if supported.

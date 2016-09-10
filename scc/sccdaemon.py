@@ -412,8 +412,8 @@ class SCCDaemon(Daemon):
 		self.lock.acquire()
 		self.start_listening()
 		self.connect_x()
-		self.start_drivers()
 		self.lock.release()
+		self.start_drivers()
 		
 		while True:
 			for fn in self.mainloops:
