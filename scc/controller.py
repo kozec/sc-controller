@@ -65,7 +65,7 @@ class Controller(object):
 		Returns generated or user-set name for this controller
 		"""
 		if self._name is None:
-			self._name = "Controller %s" % (self.get_id(),)
+			self._name = "C %s" % (self.get_id(),)
 		return self._name
 	
 	

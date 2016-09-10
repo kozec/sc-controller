@@ -70,6 +70,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.daemon_changed_profile = False
 		self.background = None
 		self.outdated_version = None
+		self.profile_switchers = []
 		self.current = Profile(GuiActionParser())
 		self.current_file = None
 		self.just_started = True
@@ -90,6 +91,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.window.set_wmclass("SC Controller", "SC Controller")
 		self.ribar = None
 		self.create_binding_buttons()
+		
+		self.profile_switchers.append(ProfileSwitcher(
+			self.builder.get_object("vbProfile"),
+			self.builder.get_object("lblProfile"),
+			self.builder.get_object("cbProfile"),
+			self.builder.get_object("rvProfileChanged")
+		))
 		
 		# Drag&drop target
 		self.builder.get_object("content").drag_dest_set(Gtk.DestDefaults.ALL, [
@@ -513,10 +521,34 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def on_daemon_ccunt_changed(self, daemon, before, current):
 		if (before, current) == (0, 1):
-			# Signal is connected only on first controller, so this block is executed
-			# only when number of connected controllers changes from 0 to 1
+			# 'event' signal should be connected only on first controller,
+			# so this block is executed only when number of connected
+			# controllers changes from 0 to 1
 			c = self.dm.get_controllers()[0]
 			c.connect('event', self.on_daemon_event_observer)
+		
+		for i in xrange(0, current):
+			if len(self.profile_switchers) <= i:
+				s = self.add_switcher()
+				self.profile_switchers.append(s)
+			else:
+				s = self.profile_switchers[i]
+			s.set_controller(self.dm.get_controllers()[i])
+	
+	
+	def add_switcher(self):
+		"""
+		Adds new profile switcher widgets on top of window. Called
+		when new controller is connected to daemon.
+		
+		Returns generated ProfileSwitcher instance.
+		"""
+		vbAllProfiles = self.builder.get_object("vbAllProfiles")
+		w = self.profile_switchers[0].clone()
+		vbAllProfiles.pack_start(w.get_main(), False, False, 0)
+		vbAllProfiles.reorder_child(w.get_main(), 0)
+		vbAllProfiles.show_all()
+		return w
 	
 	
 	def enable_test_mode(self):
@@ -862,6 +894,54 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 						gs.show(self.window)
 						# Skip first screen and try to import this file
 						gs.on_preload_finished(gs.set_file, giofile.get_path())
+
+
+class ProfileSwitcher(object):
+	"""
+	Simple wrapper around profile switcher widgets.
+	"""
+	
+	def __init__(self, box, label, combo, revealer):
+		self._box = box
+		self._label = label
+		self._combo = combo
+		self._revealer = revealer
+		self._controller = None
+	
+	
+	def set_controller(self, c):
+		self._controller = c
+		self._label.set_text(c.get_name())
+	
+	
+	def get_main(self):
+		"""
+		Returns main/parent widget that gets added to window
+		"""
+		return self._box
+	
+	
+	def clone(self):
+		"""
+		Creates new ProfileSwitcher with new set of widgets based on this one.
+		"""
+		label = Gtk.Label(self._label.get_text())
+		label.set_size_request(100, -1)
+		label.set_xalign(0)
+		label.set_margin_right(10)
+		rend = Gtk.CellRendererText()
+		combo = Gtk.ComboBox.new_with_model(self._combo.get_model())
+		combo.pack_start(rend, True)
+		combo.add_attribute(rend, "text", 0)
+		combo.set_row_separator_func(
+			lambda model, iter : model.get_value(iter, 1) is None)
+		box = Gtk.Box(Gtk.Orientation.HORIZONTAL, 0)
+		box.pack_start(label, False, True, 0)
+		box.pack_start(combo, True, True, 0)
+		box.set_margin_left(20)
+		box.set_margin_right(40)
+		box.set_margin_bottom(2)
+		return ProfileSwitcher(box, label, combo, None)
 
 
 class UndoRedo(object):
