@@ -42,7 +42,7 @@ class TiltComponent(AEComponent, BindingEditor):
 			self.actions = list(action.actions)
 			while len(self.actions) < 4:
 				self.actions.append(NoAction())
-		self.update_button_desc(action)
+			self.update_button_desc(action)
 	
 	
 	def update_button_desc(self, action):
