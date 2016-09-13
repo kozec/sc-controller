@@ -13,7 +13,7 @@ gi.require_version('Rsvg', '2.0')
 gi.require_version('GdkX11', '3.0')
 
 from gi.repository import Gtk, GLib
-from scc.constants import SCButtons, STICK, STICK_PAD_MAX
+from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICK_PAD_MAX
 from scc.config import Config
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd.message import Message
@@ -34,6 +34,7 @@ class OSDDisplayInput(object):
 		
 		self._positions = {}
 		self._buttons = None
+		self._pads = {}
 		
 		OSDWindow._apply_css(self.config)
 	
@@ -63,7 +64,12 @@ class OSDDisplayInput(object):
 	
 	
 	def on_event(self, daemon, what, data):
-		if hasattr(SCButtons, what):
+		if what in (LEFT, RIGHT):
+			if what not in self._pads:
+				self._pads[what] = PadDisplay(what, self)
+				self.show_display(self._pads[what])
+			self._pads[what].set(*data)
+		elif hasattr(SCButtons, what):
 			if self._buttons is None:
 				self._buttons = ButtonDisplay(self)
 				self._buttons.enable(what)
@@ -155,6 +161,38 @@ class ButtonDisplay(InputDisplay):
 	def disable(self, what):
 		if what in self.buttons:
 			self.buttons[what].set_name("released")
+
+
+class PadDisplay(InputDisplay):
+	# Also displays stick
+	def __init__(self, what, parent):
+		InputDisplay.__init__(self)
+		self.parent = parent
+		print ">>>>", "%s_OSI.svg" % (what,)
+		self.x, y = 0, 0
+		
+		filename = os.path.join(self.parent.imagepath, "%s_OSI.svg" % (what,))
+		i = Gtk.Image.new_from_file(filename)
+		self.cursor = Gtk.Image.new_from_file(os.path.join(self.parent.imagepath, "OSI-cursor.svg"))
+		self.fixed = Gtk.Fixed()
+		self.fixed.add(i)
+		self.fixed.add(self.cursor)
+		self.add(self.fixed)
+		self.show_all()
+	
+	
+	def hide(self):
+		self.parent.remove_display(self)
+		InputDisplay.hide(self)
+		self.destroy()
+	
+	
+	def set(self, x, y):
+		InputDisplay.show(self)
+		cw = self.fixed.get_allocation().width
+		x = (cw * 0.5) + (x * cw / STICK_PAD_MAX * 0.5)
+		y = (cw * 0.5) - (y * cw / STICK_PAD_MAX * 0.5)
+		self.fixed.move(self.cursor, x, y)
 
 
 if __name__ == "__main__":
