@@ -20,6 +20,7 @@ AREA_TO_ACTION = {
 	'THUMBL'			: (ButtonAction, Keys.BTN_THUMBL),
 	'THUMBR'			: (ButtonAction, Keys.BTN_THUMBR),
 	'SELECT'			: (ButtonAction, Keys.BTN_SELECT),
+	'MODE'				: (ButtonAction, Keys.BTN_MODE),
 	'START'				: (ButtonAction, Keys.BTN_START),
 	'A'					: (ButtonAction, Keys.BTN_A),
 	'B'					: (ButtonAction, Keys.BTN_B),
