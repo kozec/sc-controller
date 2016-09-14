@@ -160,11 +160,7 @@ class SCController(Controller):
 	
 	
 	def __repr__(self):
-		return "<SCWireless sc%s>" % (self._serial,)
-	
-	
-	def get_id(self):
-		return "sc%s" % (self._serial,)
+		return "<SCWireless %s>" % (self.get_id(),)
 	
 	
 	def input(self, idata):
@@ -190,6 +186,7 @@ class SCController(Controller):
 	
 	def on_serial_got(self):
 		log.debug("Got wireless SC with serial %s", self._serial)
+		self.set_id("sc%s" % (self._serial,), True)
 		self._driver.daemon.add_controller(self)
 	
 	

@@ -186,9 +186,10 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, id_is_unique = line[11:].strip().split(" ", 1)
+				controller_id, id_is_persistent = line[11:].strip().split(" ", 1)
 				c = self.get_controller(controller_id)
 				c._connected = True
+				c._id_is_persistent = (id_is_persistent == "True")
 				while c in self._controllers:
 					self._controllers.remove(c)
 				self._controllers.append(c)
@@ -319,6 +320,7 @@ class ControllerManager(GObject.GObject):
 		GObject.GObject.__init__(self)
 		self._dm = daemon_manager
 		self._controller_id = controller_id
+		self._id_is_persistent = False
 		self._profile = None
 		self._name = controller_id
 		self._connected = False
@@ -348,6 +350,14 @@ class ControllerManager(GObject.GObject):
 	def get_id(self):
 		""" Returns ID of this controller. Value is cached locally. """
 		return self._controller_id
+	
+	
+	def get_id_is_persistent(self):
+		"""
+		Returns True if ID was generated in way that
+		always generates same ID for same physical controller.
+		"""
+		return self._id_is_persistent
 	
 	
 	def get_name(self):

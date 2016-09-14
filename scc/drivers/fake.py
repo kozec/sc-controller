@@ -33,11 +33,8 @@ if ENV_VAR in os.environ:
 		def __init__(self, number):
 			Controller.__init__(self)
 			self._number = number
+			self.set_id("fake%s" % (self._number,), True)
 		
 		
 		def __repr__(self):
-			return "<FakeController sc%s>" % (self._number,)
-		
-		
-		def get_id(self):
-			return "fake%s" % (self._number,)
+			return "<FakeController %s>" % (self.get_id(),)

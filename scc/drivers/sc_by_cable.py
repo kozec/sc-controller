@@ -34,11 +34,12 @@ class SCByCable(USBDevice, SCController):
 	
 	
 	def __repr__(self):
-		return "<SCByCable sc%s>" % (self._serial,)
+		return "<SCByCable %s>" % (self.get_id(),)
 	
 	
 	def on_serial_got(self):	
 		log.debug("Got wired SC with serial %s", self._serial)
+		self.set_id("sc%s" % (self._serial,), True)
 		self.set_input_interrupt(ENDPOINT, 64, self._wait_input)	
 	
 	

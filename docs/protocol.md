@@ -23,11 +23,12 @@ Connection is then held until client side closes it.
 Informs about total number of connected controllers.
 Always sent after with `Controller:` messages
 
-#### `Controller: controller_id unique`
+#### `Controller: controller_id id_is_persistent`
 Provides info about controller 'n'.
 - `controller_id` is unique string identifier of controller (should stay same at
 least until daemon exits) and doesn't contains spaces.
-- `unique` is True if controller ID is unique and can be used to store settings
+- `id_is_persistent` is True if controller ID is always same for same controller
+and can be used to store settings.
 
 This message is repeated for every connected controller and followed by
 `Controller Count:` message. It is automatically sent to every client when
