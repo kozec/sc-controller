@@ -295,6 +295,7 @@ class SCCDaemon(Daemon):
 	
 	def remove_controller(self, c):
 		c.mapper.release_virtual_buttons()
+		c.set_controller(None)
 		while c in self.controllers:
 			self.controllers.remove(c)
 		log.debug("Controller removed: %s", c)
@@ -380,7 +381,7 @@ class SCCDaemon(Daemon):
 	
 	def _sshandler(self, connection, rfile, wfile):
 		with self.lock:
-			client = Client(connection, rfile, wfile)
+			client = Client(connection, self.default_mapper, rfile, wfile)
 			self.clients.add(client)
 			wfile.write(b"SCCDaemon\n")
 			wfile.write(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
@@ -445,8 +446,8 @@ class SCCDaemon(Daemon):
 				number = clamp(0, number, 100)
 			except Exception, e:
 				client.wfile.write(b"Fail: %s\n" % (e,))
-			if self.mapper.get_controller():
-				self.mapper.get_controller().set_led_level(led_level)
+			if client.mapper.get_controller():
+				client.mapper.get_controller().set_led_level(led_level)
 		elif message.startswith("Observe:"):
 			if Config()["enable_sniffing"]:
 				to_observe = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
@@ -462,7 +463,7 @@ class SCCDaemon(Daemon):
 			with self.lock:
 				try:
 					for l in to_lock:
-						if not self._can_lock_action(SCCDaemon.source_to_constant(l)):
+						if not self._can_lock_action(client.mapper, SCCDaemon.source_to_constant(l)):
 							client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
 							return
 				except ValueError, e:
@@ -496,7 +497,7 @@ class SCCDaemon(Daemon):
 			def press(mapper):
 				try:
 					menuaction.button_press(mapper)
-					self.mapper.schedule(0.1, release)
+					client.mapper.schedule(0.1, release)
 				except Exception, e:
 					log.error("Error while processing menu action")
 					log.error(traceback.format_exc())
@@ -517,13 +518,13 @@ class SCCDaemon(Daemon):
 						menudata = MenuData.from_json_data(data, TalkingActionParser())
 						menuaction = menudata.get_by_id(item_id).action
 					else:
-						menuaction = self.mapper.profile.menus[menu_id].get_by_id(item_id).action
+						menuaction = client.mapper.profile.menus[menu_id].get_by_id(item_id).action
 					client.wfile.write(b"OK.\n")
 				except:
 					log.warning("Selected menu item is no longer valid.")
 					client.wfile.write(b"Fail: Selected menu item is no longer valid\n")
 				if menuaction:
-					self.mapper.schedule(0, press)
+					client.mapper.schedule(0, press)
 		elif message.startswith("Register:"):
 			with self.lock:
 				if message.strip().endswith("osd"):
@@ -556,57 +557,58 @@ class SCCDaemon(Daemon):
 		self.subprocs = n
 	
 	
-	def _can_lock_action(self, what):
+	def _can_lock_action(self, mapper, what):
 		"""
 		Returns True if action assigned to axis,
 		pad or button is not yet locked.
 		
 		Should be called while self.lock is acquired.
 		"""
+		# TODO: Probably move to mapper
 		is_locked = (lambda a: isinstance(a, LockedAction) or
 			(isinstance(a, ObservingAction) and isinstance(a.original_action, LockedAction)))
 		
 		if what == STICK:
-			if is_locked(self.mapper.profile.buttons[SCButtons.STICK]):
+			if is_locked(mapper.profile.buttons[SCButtons.STICK]):
 				return False
-			if is_locked(self.mapper.profile.stick):
+			if is_locked(mapper.profile.stick):
 				return False
 			return True
 		if what == SCButtons.LT:
-			return not is_locked(self.mapper.profile.triggers[LEFT])
+			return not is_locked(mapper.profile.triggers[LEFT])
 		if what == SCButtons.RT:
-			return not is_locked(self.mapper.profile.triggers[RIGHT])
+			return not is_locked(mapper.profile.triggers[RIGHT])
 		if what in SCButtons:
-			return not is_locked(self.mapper.profile.buttons[what])
+			return not is_locked(mapper.profile.buttons[what])
 		if what in (LEFT, RIGHT):
-			return not is_locked(self.mapper.profile.pads[what])
+			return not is_locked(mapper.profile.pads[what])
 		return False
 	
 	
-	def _apply(self, what, callback, *args):
+	def _apply(self, mapper, what, callback, *args):
 		"""
 		Applies callback on action that is currently set to input specified
 		by 'what'. Raises ValueError if what is not known.
 		
 		For example, if what == STICK, executes
-			self.mapper.profile.stick = callback(self.mapper.profile.stick, *args)
+			mapper.profile.stick = callback(mapper.profile.stick, *args)
 		"""
 		if what == STICK:
-			self.mapper.profile.stick = callback(self.mapper.profile.stick, *args)
+			mapper.profile.stick = callback(mapper.profile.stick, *args)
 		elif what == SCButtons.LT:
-			self.mapper.profile.triggers[LEFT] = callback(self.mapper.profile.triggers[LEFT], *args)
+			mapper.profile.triggers[LEFT] = callback(mapper.profile.triggers[LEFT], *args)
 		elif what == SCButtons.RT:
-			self.mapper.profile.triggers[RIGHT] = callback(self.mapper.profile.triggers[RIGHT], *args)
+			mapper.profile.triggers[RIGHT] = callback(mapper.profile.triggers[RIGHT], *args)
 		elif what in SCButtons:
-			self.mapper.profile.buttons[what] = callback(self.mapper.profile.buttons[what], *args)
+			mapper.profile.buttons[what] = callback(mapper.profile.buttons[what], *args)
 		elif what in (LEFT, RIGHT):
 			if what == LEFT:
-				self.mapper.buttons &= ~SCButtons.LPADTOUCH
+				mapper.buttons &= ~SCButtons.LPADTOUCH
 			else:
-				self.mapper.buttons &= ~SCButtons.RPADTOUCH
-			a = callback(self.mapper.profile.pads[what], *args)
-			a.whole(self.mapper, 0, 0, what)
-			self.mapper.profile.pads[what] = a
+				mapper.buttons &= ~SCButtons.RPADTOUCH
+			a = callback(mapper.profile.pads[what], *args)
+			a.whole(mapper, 0, 0, what)
+			mapper.profile.pads[what] = a
 		else:
 			raise ValueError("Unknown source: %s" % (what,))
 	
@@ -651,10 +653,11 @@ class SCCDaemon(Daemon):
 
 
 class Client(object):
-	def __init__(self, connection, rfile, wfile):
+	def __init__(self, connection, mapper, rfile, wfile):
 		self.connection = connection
 		self.rfile = rfile
 		self.wfile = wfile
+		self.mapper = mapper
 		self.locked_actions = set()
 		self.observed_actions = set()
 	
@@ -680,7 +683,7 @@ class Client(object):
 				return action
 			return LockedAction(what, self, action)
 		
-		daemon._apply(what, lock, what)
+		daemon._apply(self.mapper, what, lock, what)
 	
 	
 	def observe_action(self, daemon, what):
@@ -689,7 +692,7 @@ class Client(object):
 		
 		Should be called while daemon.lock is acquired.
 		"""
-		daemon._apply(what, lambda a : ObservingAction(what, self, a))
+		daemon._apply(self.mapper, what, lambda a : ObservingAction(what, self, a))
 	
 	
 	def unlock_actions(self, daemon):
@@ -703,7 +706,7 @@ class Client(object):
 		
 		s, self.locked_actions = self.locked_actions, set()
 		for a in s:
-			daemon._apply(a.what, unlock)
+			daemon._apply(self.mapper, a.what, unlock)
 			log.debug("%s unlocked", a.what)
 		
 		def unobserve(a):
@@ -721,7 +724,7 @@ class Client(object):
 		
 		s, self.observed_actions = self.observed_actions, set()
 		for a in s:
-			daemon._apply(a.what, unobserve)
+			daemon._apply(self.mapper, a.what, unobserve)
 			log.debug("%s no longer observed by %s", a.what, self)
 	
 	
