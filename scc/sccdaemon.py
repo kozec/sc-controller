@@ -258,6 +258,9 @@ class SCCDaemon(Daemon):
 				except Exception, e:
 					log.warning("Failed to load profile. Starting with no mappings.")
 					log.warning("Reason: %s", e)
+		if len(self.controllers) == 2:
+			# TODO: Remove this
+			mapper.profile.load(find_profile("XBox Controller")).compress()
 	
 	
 	def remove_controller(self, c):

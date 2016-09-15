@@ -123,10 +123,10 @@ class USBDevice(object):
 		for inter in self.device[0]:
 			for setting in inter:
 				number = setting.getNumber()
+				if self.handle.kernelDriverActive(number):
+					self.handle.detachKernelDriver(number)
 				ksp = setting.getClass(), setting.getSubClass(), setting.getProtocol()
 				if ksp == (klass, subclass, protocol):
-					if self.handle.kernelDriverActive(number):
-						self.handle.detachKernelDriver(number)
 					self.claim(number)
 	
 	

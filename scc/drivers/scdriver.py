@@ -145,7 +145,7 @@ class SCController(Controller):
 		self._endpoint = endpoint
 		self._idle_timeout = 600
 		self._enable_gyros = False
-		self._led_level = 80
+		self._led_level = 10
 		self._old_state = SCI_NULL
 		self._ccidx = ccidx
 		
