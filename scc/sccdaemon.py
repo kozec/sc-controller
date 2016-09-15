@@ -43,12 +43,13 @@ class SCCDaemon(Daemon):
 		self.error = None
 		self.alone = False			# Set by launching script from --alone flag
 		self.osd_daemon = None
+		self.default_profile = None
 		self.autoswitch_daemon = None
 		self.controllers = []
 		self.mainloops = []
 		self.subprocs = []
 		self.lock = threading.Lock()
-		self.profile_file = None
+		self.default_mapper = self.init_default_mapper()
 		self.clients = set()
 		self.cwd = os.getcwd()
 	
@@ -70,6 +71,24 @@ class SCCDaemon(Daemon):
 		self.mainloops = tuple(self.mainloops)
 	
 	
+	def init_default_mapper(self):
+		"""
+		default_mapper is persistent mapper assigned to first Controller instance.
+		Even if all controllers are removed, this mapper stays active. It exists mainly
+		to provide backwards compatibility and to allow GUI and external programs to
+		work even if there is no controller connected.
+		"""
+		# But, despite all above, it's just mapper as every other :)
+		return self.init_mapper()
+	
+	
+	def set_default_profile(self, profile_file):
+		"""
+		Sets profile that is used for first available controller
+		"""
+		self.default_profile = profile_file
+	
+	
 	def start_drivers(self):
 		for s in self._to_start:
 			s(self)
@@ -85,13 +104,10 @@ class SCCDaemon(Daemon):
 			self.mainloops.append(fn)
 	
 	
-	def load_profile(self, filename):
-		self.profile_file = filename
-	
-	
 	def _send_to_all(self, message_str):
 		"""
 		Sends message to all connect clients.
+		Should be called while lock is acquired.
 		Message should be utf-8 encoded str.
 		"""
 		for client in self.clients:
@@ -173,7 +189,7 @@ class SCCDaemon(Daemon):
 				return
 			p += [ "--from-file", path ]
 		else:
-			p += [ "--from-profile", self.profile_file, action.menu_id ]
+			p += [ "--from-profile", mapper.profile.get_filename(), action.menu_id ]
 		p += list(pars)
 		
 		self._osd(*p)
@@ -240,39 +256,57 @@ class SCCDaemon(Daemon):
 		else:
 			log.warning("Failed to connect to XServer. Some functionality will be unavailable")
 			self.xdisplay = None
-
 	
-	def add_controller(self, c):
+	
+	def init_mapper(self):
+		"""
+		Setups new mapper instance.
+		"""
 		mapper = Mapper(Profile(TalkingActionParser()))
 		mapper.set_special_actions_handler(self)
 		mapper.set_xdisplay(self.xdisplay)
-		c.set_mapper(mapper)
-		self.controllers.append(c)
+		return mapper
+	
+	
+	def load_default_profile(self):
+		try:
+			self.default_mapper.profile.load(self.default_profile).compress()
+		except Exception, e:
+			log.warning("Failed to load profile. Starting with no mappings.")
+			log.warning("Reason: %s", e)
+	
+	
+	def add_controller(self, c):
+		if len(self.controllers) == 0:
+			# First controller added, use default_mapper for it
+			c.set_mapper(self.default_mapper)
+		else:
+			c.set_mapper(self.init_mapper())
 		
-		log.debug("Controller added: %s", c)
 		if len(self.controllers) == 1:
-			# First controller added, set profile on it
-			if self.profile_file is not None:
-				try:
-					mapper.profile.load(self.profile_file).compress()
-				except Exception, e:
-					log.warning("Failed to load profile. Starting with no mappings.")
-					log.warning("Reason: %s", e)
-		if len(self.controllers) == 2:
 			# TODO: Remove this
-			mapper.profile.load(find_profile("XBox Controller")).compress()
+			c.get_mapper().profile.load(find_profile("XBox Controller")).compress()
+		
+		self.controllers.append(c)
+		log.debug("Controller added: %s", c)
+		with self.lock:
+			self._send_to_all(("Controller count: %s\n" % (len(self.controllers),)).encode("utf-8"))
 	
 	
 	def remove_controller(self, c):
 		c.mapper.release_virtual_buttons()
 		while c in self.controllers:
 			self.controllers.remove(c)
+		log.debug("Controller removed: %s", c)
+		with self.lock:
+			self._send_to_all(("Controller count: %s\n" % (len(self.controllers),)).encode("utf-8"))
 	
 	
 	def run(self):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)
 		self.init_drivers()
+		self.load_default_profile()
 		self.lock.acquire()
 		self.start_listening()
 		self.connect_x()
@@ -351,7 +385,8 @@ class SCCDaemon(Daemon):
 			wfile.write(b"SCCDaemon\n")
 			wfile.write(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
 			wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
-			wfile.write(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
+			wfile.write(("Current profile: %s\n" % (self.default_mapper.profile.get_filename(),)).encode("utf-8"))
+			wfile.write(("Controller count: %s\n" % (len(self.controllers),)).encode("utf-8"))
 			if self.error is None:
 				wfile.write(b"Ready.\n")
 			else:
@@ -376,56 +411,6 @@ class SCCDaemon(Daemon):
 				log.info("scc-autoswitch-daemon lost")
 				self.autoswitch_daemon = None
 			self.clients.remove(client)
-	
-	
-	def _listen_on_socket(self):
-		tlog.debug("Listening...")
-		self.socket.listen(2)
-		reads = [ self.socket ]
-		while len(reads):
-			try:
-				readable, trash, errors = select.select(reads, [], reads, 1)
-			except socket.error:
-				# Happens durring exit
-				tlog.debug("Socket lost")
-				return
-			for s in reads:
-				if s is self.socket:
-					try:
-						connection, client = s.accept()
-					except socket.error:
-						# Happens when ^C is pressed
-						continue
-					reads.append(connection)
-					connection.send(b"SCCDaemon\n")
-					connection.send(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
-					connection.send(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
-					connection.send(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
-				else:
-					try:
-						data = s.recv(1024)
-					except socket.error:
-						# Remote side closed
-						data = None
-					if data and "\n" in data:
-						data = data.decode("utf-8")
-						filename = data[0:data.index("\n")]
-						tlog.debug("Loading profile '%s'", filename)
-						try:
-							self._set_profile(filename)
-							connection.send(b"OK\n")
-						except Exception, e:
-							tb = traceback.format_exc()
-							tlog.debug("Failed")
-							tlog.error(e)
-							connection.send(unicode(tb).encode("utf-8"))
-						while s in reads:
-							reads.remove(s)
-						s.close()
-					else:
-						while s in reads:
-							reads.remove(s)
-						s.close()
 	
 	
 	def _handle_message(self, client, message):

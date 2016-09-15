@@ -40,6 +40,7 @@ class Profile(object):
 		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
 		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
 		self.gyro = NoAction()
+		self.filename = None
 	
 	
 	def save(self, filename):
@@ -68,6 +69,7 @@ class Profile(object):
 	
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
+		self.filename = filename
 		data = json.loads(open(filename, "r").read())
 		# Version
 		try:
@@ -124,6 +126,13 @@ class Profile(object):
 			self._convert(version)
 		
 		return self
+	
+	
+	def get_filename(self):
+		"""
+		Returns filename of last loaded file or None.
+		"""
+		return self.filename
 	
 	
 	def compress(self):

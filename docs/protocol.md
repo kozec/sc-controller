@@ -19,8 +19,13 @@ Connection is then held until client side closes it.
 
 ### Messages sends by daemon:
 
+#### `Controller count: n`
+Sent to every client when number of connected controllers is increased or
+decreased. Also sent automatically to every new client.
+
 #### `Current profile: filename.sccprofile`
-Sent to every client when profile file is loaded and used. Automatically sent when connection is accepted and when profile is changed.
+Sent to every client when profile file is loaded and used. Also sent
+automatically to every new client.
 
 #### `Event: source values`
 Sent to client that requested locking of source (that is button, pad or axis).
