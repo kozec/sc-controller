@@ -39,7 +39,7 @@ def init_logging(prefix="", suffix=""):
 	old_log = logging.Logger._log
 	def _log(self, level, msg, args, exc_info=None, extra=None):
 		args = tuple([
-			(c if type(c) is unicode else str(c).decode("utf-8"))
+			(str(c).decode("utf-8") if type(c) is str else c)
 			for c in args
 		])
 		msg = msg if type(msg) is unicode else str(msg).decode("utf-8")
