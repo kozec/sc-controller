@@ -3,10 +3,10 @@
 
 from scc.lib import usb1
 from scc.lib import IntEnum
+from scc.drivers.usb import USBDevice, register_hotplug_device
 from scc.constants import HPERIOD, LPERIOD, DURATION
 from scc.constants import SCButtons, HapticPos
-from scc.drivers.usb import USBDevice, register_hotplug_device
-from scc.drivers import Controller
+from scc.controller import Controller
 from collections import namedtuple
 import struct, time, logging
 
@@ -64,7 +64,6 @@ class Dongle(USBDevice):
 		self.claim_by(klass=3, subclass=0, protocol=0)
 		self._ep = FIRST_ENDPOINT
 		self._controllers = {}
-		self._lastusb = time.time()
 		self._next_interrupt()
 	
 	
@@ -75,7 +74,7 @@ class Dongle(USBDevice):
 		is setup, so driver can detect it when connected.
 		"""
 		self.set_input_interrupt(self._ep, 64, self._on_input)
-		log.debug("Enabled interrupt for %s", self._ep)
+		# log.debug("Enabled interrupt for %s", self._ep)
 		self._ep += 1
 	
 	
@@ -85,7 +84,9 @@ class Dongle(USBDevice):
 		by recieving first input event.
 		"""
 		ccidx = FIRST_CONTROLIDX + endpoint - FIRST_ENDPOINT
-		self._controllers[endpoint] = Controller(ccidx, endpoint)
+		c = SCController(self, ccidx, endpoint)
+		self._controllers[endpoint] = c
+		self.daemon.add_controller(c)
 		if endpoint == self._ep - 1:
 			self._next_interrupt()
 	
@@ -137,23 +138,33 @@ class SCConfigType(IntEnum):
 	TIMEOUT_N_GYROS = 0x32
 
 
-class Controller(object):
-	def __init__(self, ccidx, endpoint):
+class SCController(Controller):
+	def __init__(self, driver, ccidx, endpoint):
+		Controller.__init__(self)
+		self._driver = driver
 		self._endpoint = endpoint
 		self._idle_timeout = 600
 		self._enable_gyros = False
 		self._led_level = 80
-		self._cmsg = []
+		self._old_state = SCI_NULL
 		self._ccidx = ccidx
 		
-		self.configure()
+		self._configure()
 	
 	
 	def input(self, idata):
-		print self._endpoint, idata
+		old_state, self._old_state = self._old_state, idata
+		self.mapper.input(self, time.time(), old_state, idata)
 	
 	
-	def configure(self, idle_timeout=None, enable_gyros=None, led_level=None):
+	def _send_control(self, data, timeout=0):
+		""" Synchronoussly writes controll for controller """
+		
+		zeros = b'\x00' * (64 - len(data))
+		self._driver.send_control(self._ccidx, data)
+	
+	
+	def _configure(self, idle_timeout=None, enable_gyros=None, led_level=None):
 		"""
 		Sets and, if possible, sends configuration to controller.
 		Only value that is provided is changed.
@@ -191,7 +202,7 @@ class Controller(object):
 		led_lvl  = min(100, int(self._led_level)) & 0xFF
 		
 		# Timeout & Gyros
-		self._cmsg.insert(0, struct.pack('>BBBBB13sB2s43x',
+		self._send_control(struct.pack('>BBBBB13sB2s43x',
 			SCPacketType.CONFIGURE,
 			0x15, # size
 			SCConfigType.TIMEOUT_N_GYROS,
@@ -201,11 +212,27 @@ class Controller(object):
 			unknown2))
 		
 		# LED
-		self._cmsg.insert(0, struct.pack('>BBBB59x',
+		self._send_control(struct.pack('>BBBB59x',
 			SCPacketType.CONFIGURE,
 			0x03,
 			SCConfigType.LED,
 			led_lvl))
+	
+	
+	def set_led_level(self, level):
+		self.configure(led_level = level)
+	
+	
+	def set_gyro_enabled(self, enabled):	
+		self.configure(enable_gyros = enabled)
+	
+	
+	def turnoff(self):
+		log.debug("Turning off the controller...")
+		
+		# Mercilessly stolen from scraw library
+		self._send_control(struct.pack('<BBBBBB',
+				SCPacketType.OFF, 0x04, 0x6f, 0x66, 0x66, 0x21))
 	
 	
 	def get_gyro_enabled(self):
@@ -324,13 +351,6 @@ class __unported__(object):
 		
 		self._cb(self, t, self._tup)
 	
-	
-	def turnoff(self):
-		log.debug("Turning off the controller...")
-		
-		# Mercilessly stolen from scraw library
-		self._cmsg.insert(0, struct.pack('<BBBBBB',
-				SCPacketType.OFF, 0x04, 0x6f, 0x66, 0x66, 0x21))
 	
 	
 	def run(self):

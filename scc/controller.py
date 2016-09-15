@@ -25,6 +25,45 @@ import logging
 log = logging.getLogger("SCController")
 
 
+class Controller(object):
+	"""
+	Base class for all controller drivers. Implementations are in
+	scc.dricvers package.
+	
+	Derived class should implement every method from here.
+	"""
+	def __init__(self):
+		self.mapper = None
+	
+	
+	def set_mapper(self, mapper):
+		""" Sets mapper for controller """
+		self.mapper = mapper
+	
+	
+	def get_mapper(self):
+		""" Returns mapper set for controller """
+		return self.mapper
+	
+	
+	def set_led_level(self, level):
+		"""
+		Configures LED intensity, if supported.
+		'level' goes from 0.0 to 100.0
+		"""
+		pass
+	
+	
+	def set_gyro_enabled(self, enabled):
+		""" Enables or disables gyroscope, if supported """
+		pass
+	
+	
+	def turnoff(self):
+		""" Turns off controller, if supported """
+		pass
+	
+
 class HapticData(object):
 	""" Simple container to hold haptic feedback settings """
 	

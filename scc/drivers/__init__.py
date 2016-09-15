@@ -12,11 +12,3 @@ just before daemon startup is complete.
 
 Assigning Mapper to Controller is handled by daemon.
 """
-
-
-class Controller(object):
-	"""
-	Base class for controller driver.
-	"""
-	
-	pass

@@ -40,7 +40,6 @@ class SCCDaemon(Daemon):
 		self.socket_file = socket_file
 		self.xdisplay = None
 		self.sserver = None			# UnixStreamServer instance
-		self.mapper = None
 		self.error = None
 		self.alone = False			# Set by launching script from --alone flag
 		self.osd_daemon = None
@@ -89,34 +88,6 @@ class SCCDaemon(Daemon):
 	
 	def load_profile(self, filename):
 		self.profile_file = filename
-		if self.mapper is not None:
-			self.mapper.profile.load(filename).compress()
-	
-	
-	def _set_profile(self, filename):
-		# Called from socket server thread
-		p = Profile(TalkingActionParser())
-		p.load(filename).compress()
-		self.profile_file = filename
-		
-		if self.mapper.profile.gyro and not p.gyro:
-			# Turn off gyro sensor that was enabled but is no longer needed
-			if self.mapper.get_controller():
-				log.debug("Turning gyrosensor OFF")
-				self.mapper.get_controller().configure(enable_gyros=False)
-		elif not self.mapper.profile.gyro and p.gyro:
-			# Turn on gyro sensor that was turned off, if profile has gyro action set
-			if self.mapper.get_controller():
-				log.debug("Turning gyrosensor ON")
-				self.mapper.get_controller().configure(enable_gyros=True)
-		
-		# This last line kinda depends on GIL...
-		self.mapper.profile = p
-		# Re-apply all locks
-		for c in self.clients:
-			c.reaply_locks(self)
-		# Notify all connected clients about change
-		self._send_to_all(("Current profile: %s\n" % (self.profile_file,)).encode("utf-8"))
 	
 	
 	def _send_to_all(self, message_str):
@@ -232,14 +203,6 @@ class SCCDaemon(Daemon):
 	
 	def on_start(self):
 		os.chdir(self.cwd)
-		self.mapper = Mapper(Profile(TalkingActionParser()))
-		self.mapper.set_special_actions_handler(self)
-		if self.profile_file is not None:
-			try:
-				self.mapper.profile.load(self.profile_file).compress()
-			except Exception, e:
-				log.warning("Failed to load profile. Starting with no mappings.")
-				log.warning("Reason: %s", e)
 	
 	
 	def on_controller_status(self, sc, onoff):
@@ -270,7 +233,6 @@ class SCCDaemon(Daemon):
 		self.xdisplay = X.open_display(os.environ["DISPLAY"])
 		if self.xdisplay:
 			log.debug("Connected to XServer %s", os.environ["DISPLAY"])
-			self.mapper.set_xdisplay(self.xdisplay)
 			if not self.alone:
 				self.subprocs.append(Subprocess("scc-osd-daemon", True))
 				if len(Config()["autoswitch"]):
@@ -279,8 +241,31 @@ class SCCDaemon(Daemon):
 		else:
 			log.warning("Failed to connect to XServer. Some functionality will be unavailable")
 			self.xdisplay = None
-	
 
+	
+	def add_controller(self, c):
+		mapper = Mapper(Profile(TalkingActionParser()))
+		mapper.set_special_actions_handler(self)
+		mapper.set_xdisplay(self.xdisplay)
+		c.set_mapper(mapper)
+		self.controllers.append(c)
+		
+		log.debug("Controller added: %s", c)
+		if len(self.controllers) == 1:
+			# First controller added, set profile on it
+			if self.profile_file is not None:
+				try:
+					mapper.profile.load(self.profile_file).compress()
+				except Exception, e:
+					log.warning("Failed to load profile. Starting with no mappings.")
+					log.warning("Reason: %s", e)
+	
+	
+	def remove_controller(self, c):
+		while c in self.controllers:
+			self.controllers.remove(c)
+	
+	
 	def run(self):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)

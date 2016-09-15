@@ -11,7 +11,7 @@ Callback has to return created USBDevice instance or None.
 """
 from scc.lib import usb1
 
-import struct, time, select, atexit, logging
+import struct, time, select, traceback, atexit, logging
 log = logging.getLogger("USB")
 
 class SelectPoller(object):
@@ -52,6 +52,7 @@ class USBDevice(object):
 		self.device = device
 		self.handle = handle
 		self._claimed = []
+		self._cmsg = []
 		self._transfer_list = []
 	
 	
@@ -72,6 +73,7 @@ class USBDevice(object):
 			except Exception, e:
 				log.error("Failed to handle recieved data")
 				log.error(e)
+				log.error(traceback.format_exc())
 			finally:
 				transfer.submit()
 		
@@ -85,17 +87,25 @@ class USBDevice(object):
 		self._transfer_list.append(transfer)
 	
 	
-	def send_control(self, index, data, timeout=0):
-		""" Synchronoussly writes controll to device """
+	def send_control(self, index, data):
+		""" Schedules writing control to device """
 		zeros = b'\x00' * (64 - len(data))
 		
-		self._handle.controlWrite(request_type=0x21,
-			request=0x09,
-			value=0x0300,
-			index=index,
-			data=data + zeros,
-			timeout=timeout
-		)
+		self._cmsg.insert(0, (
+			0x21,	# request_type
+			0x09,	# request
+			0x0300,	# value
+			index,
+			data + zeros,
+			0		# Timeout
+		))
+	
+	
+	def flush(self):
+		""" Flushes all prepared control messages to device """
+		while len(self._cmsg):
+			msg = self._cmsg.pop()
+			self.handle.controlWrite(*msg)
 	
 	
 	def claim(self, number):
@@ -201,6 +211,9 @@ class USBDriver(object):
 	
 	def mainloop(self):
 		self._poller.poll()
+		for d in self._devices.values():		# TODO: don't use .values() here
+			d.flush()
+
 
 # USBDriver should be instance-wide singleton
 _usb = USBDriver()
