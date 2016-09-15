@@ -583,7 +583,6 @@ class MouseAction(HapticEnabledAction, Action):
 	def change(self, mapper, dx, dy):
 		""" Called from BallModifier """
 		dx, dy = dx * self.speed[0], dy * self.speed[1]
-		print self._mouse_axis, dx
 		if self._mouse_axis is None:
 			mapper.mouse.moveEvent(dx, dy)
 		elif self._mouse_axis == Rels.REL_X:
