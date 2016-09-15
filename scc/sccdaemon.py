@@ -13,16 +13,16 @@ from scc.paths import get_menus_path, get_default_menus_path
 from scc.tools import find_profile, nameof, shsplit, shjoin
 from scc.tools import set_logging_level, find_binary, clamp
 from scc.parser import TalkingActionParser
-from scc.controller import SCController
 from scc.menu_data import MenuData
 from scc.uinput import Keys, Axes
 from scc.profile import Profile
 from scc.actions import Action
 from scc.config import Config
 from scc.mapper import Mapper
+import scc.drivers
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
-import os, sys, signal, socket, select, time, json, logging
+import os, sys, pkgutil, signal, socket, select, time, json, logging
 import threading, traceback, subprocess
 log = logging.getLogger("SCCDaemon")
 tlog = logging.getLogger("Socket Thread")
@@ -45,11 +45,46 @@ class SCCDaemon(Daemon):
 		self.alone = False			# Set by launching script from --alone flag
 		self.osd_daemon = None
 		self.autoswitch_daemon = None
+		self.controllers = []
+		self.mainloops = []
 		self.subprocs = []
 		self.lock = threading.Lock()
 		self.profile_file = None
 		self.clients = set()
 		self.cwd = os.getcwd()
+		self.init_drivers()
+	
+	
+	def init_drivers(self):
+		"""
+		Searchs and initializes all controller drivers.
+		See __init__.py in scc.drivers.
+		"""
+		log.debug("Initializing drivers...")
+		self._to_start = set()	# del-eted later by start_drivers
+		for importer, modname, ispkg in pkgutil.walk_packages(path=scc.drivers.__path__, onerror=lambda x: None):
+			if not ispkg and modname != "driver":
+				mod = getattr(__import__('scc.drivers.%s' % (modname,)).drivers, modname)
+				if hasattr(mod, "init"):
+					getattr(mod, "init")(self)
+				if hasattr(mod, "start"):
+					self._to_start.add(getattr(mod, "start"))
+		self.mainloops = tuple(self.mainloops)
+	
+	
+	def start_drivers(self):
+		for s in self._to_start:
+			s(self)
+		del self._to_start
+	
+	
+	def add_to_mainloop(self, fn):
+		"""
+		Adds function that is called in every mainloop iteration.
+		Can be called only durring initialization, in driver 'init' method.
+		"""
+		if fn not in self.mainloops:
+			self.mainloops.append(fn)
 	
 	
 	def load_profile(self, filename):
@@ -252,6 +287,13 @@ class SCCDaemon(Daemon):
 		self.lock.acquire()
 		self.start_listening()
 		self.connect_x()
+		self.start_drivers()
+		
+		while True:
+			for fn in self.mainloops:
+				fn()
+		
+		'''
 		while True:
 			try:
 				sc = None
@@ -293,7 +335,7 @@ class SCCDaemon(Daemon):
 				time.sleep(5)
 			self.lock.acquire()
 			self.mapper.release_virtual_buttons()
-	
+		'''
 	
 	def start_listening(self):
 		if os.path.exists(self.socket_file):

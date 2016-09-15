@@ -4,9 +4,9 @@ from __future__ import unicode_literals
 from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import Gamepad, Keyboard, Mouse, Dummy, Rels
-from scc.constants import SCStatus, SCButtons, SCI_NULL, LEFT, RIGHT, STICK
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
-from scc.constants import CI_NAMES, ControllerInput, HapticPos
+from scc.constants import SCButtons, LEFT, RIGHT, STICK
+from scc.constants import HapticPos
 from scc.actions import ButtonAction
 from scc.profile import Profile
 
@@ -50,7 +50,7 @@ class Mapper(object):
 		self.syn_list = set()
 		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
-		self.state, self.old_state = SCI_NULL, SCI_NULL
+		self.state, self.old_state = None, None
 		self.force_event = set()
 	
 	
