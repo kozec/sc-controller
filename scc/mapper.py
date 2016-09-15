@@ -298,6 +298,6 @@ class Mapper(object):
 		if self.controller:
 			for x in (0, 1):
 				if self.feedbacks[x]:
-					self.controller.addFeedback(*self.feedbacks[x].data)
+					self.controller.feedback(self.feedbacks[x])
 					self.feedbacks[x] = None
 		self.sync()

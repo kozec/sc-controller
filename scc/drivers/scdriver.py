@@ -220,11 +220,11 @@ class SCController(Controller):
 	
 	
 	def set_led_level(self, level):
-		self.configure(led_level = level)
+		self._configure(led_level = level)
 	
 	
 	def set_gyro_enabled(self, enabled):	
-		self.configure(enable_gyros = enabled)
+		self._configure(enable_gyros = enabled)
 	
 	
 	def turnoff(self):
@@ -237,19 +237,31 @@ class SCController(Controller):
 	
 	def get_gyro_enabled(self):
 		""" Returns True if gyroscope input is currently enabled """
-		return self._enable_gyros	
+		return self._enable_gyros
 	
 	
+	def feedback(self, data):
+		self._feedback(*data.data)
+	
+	
+	def _feedback(self, position, amplitude=128, period=0, count=1):
+		"""
+		Add haptic feedback to be send on next usb tick
+
+		@param int position	 haptic to use 1 for left 0 for right
+		@param int amplitude	signal amplitude from 0 to 65535
+		@param int period	   signal period from 0 to 65535
+		@param int count		number of period to play
+		"""
+		self._send_control(struct.pack('<BBBHHH',
+				SCPacketType.FEEDBACK, 0x07, position,
+				amplitude, period, count))	
+
+
 class __unported__(object):
 	def reset(self):
 		self.unclaim()
 		self._handle.resetDevice()
-	
-	
-	def unclaim(self):
-		for number in self._claimed:
-			self._handle.releaseInterface(number)
-		self._claimed = []
 	
 	
 	def setStatusCallback(self, callback):
@@ -259,60 +271,7 @@ class __unported__(object):
 			takes (SCController, turned_on) as arguments.
 		"""
 		self._cscallback = callback
-	
-	
-	def _sendControl(self, data, timeout=0):
-		
-		zeros = b'\x00' * (64 - len(data))
-		
-		self._handle.controlWrite(request_type=0x21,
-								  request=0x09,
-								  value=0x0300,
-								  index=self._ccidx,
-								  data=data + zeros,
-								  timeout=timeout)
 
-	def addFeedback(self, position, amplitude=128, period=0, count=1):
-		"""
-		Add haptic feedback to be send on next usb tick
-
-		@param int position	 haptic to use 1 for left 0 for right
-		@param int amplitude	signal amplitude from 0 to 65535
-		@param int period	   signal period from 0 to 65535
-		@param int count		number of period to play
-		"""
-		self._cmsg.insert(0, struct.pack('<BBBHHH',
-				SCPacketType.FEEDBACK, 0x07, position,
-				amplitude, period, count))
-	
-	def _processReceivedData(self, transfer):
-		"""Private USB async Rx function"""
-		
-		if (transfer.getStatus() != usb1.TRANSFER_COMPLETED or
-			transfer.getActualLength() != 64):
-			return
-		
-		data = transfer.getBuffer()
-		tup = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), data))
-		if tup.status == SCStatus.HOTPLUG:
-			transfer.submit()
-			state, = struct.unpack('<xxxxB59x', data)
-			self._controller_connected = (state == 2)
-			if self._cscallback:
-				self._cscallback(self, self._controller_connected)
-				self.configure()
-		elif tup.status == SCStatus.INPUT:
-			self._tup = tup
-			self._callback()
-			transfer.submit()
-			if not self._controller_connected:
-				self._set_send_controller_connected()
-		elif not self._controller_connected and tup.status == SCStatus.IDLE:
-			transfer.submit()
-			self._set_send_controller_connected()
-		else:
-			transfer.submit()
-	
 	
 	def _set_send_controller_connected(self):
 		"""

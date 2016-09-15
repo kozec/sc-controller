@@ -39,6 +39,7 @@ class Controller(object):
 	def set_mapper(self, mapper):
 		""" Sets mapper for controller """
 		self.mapper = mapper
+		self.mapper.set_controller(self)
 	
 	
 	def get_mapper(self):
@@ -56,6 +57,14 @@ class Controller(object):
 	
 	def set_gyro_enabled(self, enabled):
 		""" Enables or disables gyroscope, if supported """
+		pass
+	
+	
+	def feedback(self, data):
+		"""
+		Generates feedback effect, if supported.
+		'data' is HapticData instance.
+		"""
 		pass
 	
 	

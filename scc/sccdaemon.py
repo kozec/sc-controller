@@ -51,7 +51,6 @@ class SCCDaemon(Daemon):
 		self.profile_file = None
 		self.clients = set()
 		self.cwd = os.getcwd()
-		self.init_drivers()
 	
 	
 	def init_drivers(self):
@@ -110,7 +109,7 @@ class SCCDaemon(Daemon):
 	def on_sa_led(self, mapper, action):
 		""" Called when 'turnoff' action is used """
 		if mapper.get_controller():
-			mapper.get_controller().configure(led_level = action.brightness)
+			mapper.get_controller().set_led_level(action.brightness)
 	
 	
 	def on_sa_shell(self, mapper, action):
@@ -262,6 +261,7 @@ class SCCDaemon(Daemon):
 	
 	
 	def remove_controller(self, c):
+		c.mapper.release_virtual_buttons()
 		while c in self.controllers:
 			self.controllers.remove(c)
 	
@@ -269,10 +269,12 @@ class SCCDaemon(Daemon):
 	def run(self):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)
+		self.init_drivers()
 		self.lock.acquire()
 		self.start_listening()
 		self.connect_x()
 		self.start_drivers()
+		self.lock.release()
 		
 		while True:
 			for fn in self.mainloops:
@@ -456,7 +458,7 @@ class SCCDaemon(Daemon):
 			except Exception, e:
 				client.wfile.write(b"Fail: %s\n" % (e,))
 			if self.mapper.get_controller():
-				self.mapper.get_controller().configure(led_level = number)
+				self.mapper.get_controller().set_led_level(led_level)
 		elif message.startswith("Observe:"):
 			if Config()["enable_sniffing"]:
 				to_observe = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
