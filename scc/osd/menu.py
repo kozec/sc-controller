@@ -52,6 +52,7 @@ class Menu(OSDWindow):
 		self.f.add(self.parent)
 		self.add(self.f)
 		
+		self._controller = None
 		self._submenu = None
 		self._scon = StickController()
 		self._scon.connect("direction", self.on_stick_direction)
@@ -90,7 +91,7 @@ class Menu(OSDWindow):
 		"""
 		self.daemon = d
 		if not self._is_submenu:
-			self._cononect_handlers()
+			self._connect_handlers()
 			self.on_daemon_connected(self.daemon)
 	
 	
@@ -258,18 +259,17 @@ class Menu(OSDWindow):
 		return False
 	
 	
-	def _cononect_handlers(self):
+	def _connect_handlers(self):
 		self._eh_ids += [
-			self.daemon.connect('dead', self.on_daemon_died),
-			self.daemon.connect('error', self.on_daemon_died),
-			self.daemon.connect('event', self.on_event),
-			self.daemon.connect('alive', self.on_daemon_connected),
+			(self.daemon, self.daemon.connect('dead', self.on_daemon_died)),
+			(self.daemon, self.daemon.connect('error', self.on_daemon_died)),
+			(self.daemon, self.daemon.connect('alive', self.on_daemon_connected)),
 		]
 	
 	
 	def run(self):
 		self.daemon = DaemonManager()
-		self._cononect_handlers()
+		self._connect_handlers()
 		OSDWindow.run(self)
 	
 	
@@ -297,14 +297,23 @@ class Menu(OSDWindow):
 		if not self.config:
 			self.config = Config()
 		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
-		self.daemon.lock(success, self.on_failed_to_lock, *locks)
+		if self.args.controller:
+			self._controller = self.daemon.get_controller(self.args.controller)
+		elif self.daemon.has_controller():
+			self._controller = self.daemon.get_controllers()[0]
+		if self._controller is None or not self._controller.is_connected():
+			# There is no controller connected to daemon
+			self.on_failed_to_lock("Controller not connected")
+		self._eh_ids += [ (self._controller, self._controller.connect('event', self.on_event)) ]
+		self._controller.lock(success, self.on_failed_to_lock, *locks)
 	
 	
 	def quit(self, code=-2):
 		if not self._is_submenu:
-			self.daemon.unlock_all()
-			for x in self._eh_ids:
-				self.daemon.disconnect(x)
+			if self._controller:
+				self._controller.unlock_all()
+			for source, eid in self._eh_ids:
+				source.disconnect(eid)
 			self._eh_ids = []
 		OSDWindow.quit(self, code)
 	

@@ -104,6 +104,34 @@ class SCCDaemon(Daemon):
 			self.mainloops.append(fn)
 	
 	
+	def _set_profile(self, mapper, filename):
+		# Called from socket server thread
+		p = Profile(TalkingActionParser())
+		p.load(filename).compress()
+		self.profile_file = filename
+		
+		if mapper.profile.gyro and not p.gyro:
+			# Turn off gyro sensor that was enabled but is no longer needed
+			if mapper.get_controller():
+				log.debug("Turning gyrosensor OFF")
+				mapper.get_controller().set_gyro_enabled(False)
+		elif not mapper.profile.gyro and p.gyro:
+			# Turn on gyro sensor that was turned off, if profile has gyro action set
+			if mapper.get_controller():
+				log.debug("Turning gyrosensor ON")
+				mapper.get_controller().set_gyro_enabled(True)
+		
+		# This last line kinda depends on GIL...
+		mapper.profile = p
+		# Re-apply all locks
+		for c in self.clients:
+			c.reaply_locks(self)
+		if mapper.get_controller():
+			self.send_profile_info(mapper.get_controller(), self._send_to_all)
+		else:
+			self.send_profile_info(None, self._send_to_all, mapper=mapper)
+	
+	
 	def _send_to_all(self, message_str):
 		"""
 		Sends message to all connect clients.
@@ -179,6 +207,8 @@ class SCCDaemon(Daemon):
 			"--confirm-with", nameof(action.confirm_with),
 			"--cancel-with", nameof(action.cancel_with)
 		]
+		if mapper.get_controller():
+			p += [ "--controller", mapper.get_controller().get_id() ]
 		if "." in action.menu_id:
 			path = None
 			for d in ( get_menus_path(), get_default_menus_path() ):
@@ -192,6 +222,7 @@ class SCCDaemon(Daemon):
 			p += [ "--from-profile", mapper.profile.get_filename(), action.menu_id ]
 		p += list(pars)
 		
+		print p
 		self._osd(*p)
 	
 	on_sa_gridmenu = on_sa_menu
@@ -208,7 +239,7 @@ class SCCDaemon(Daemon):
 		if path:
 			with self.lock:
 				try:
-					self._set_profile(path)
+					self._set_profile(mapper, path)
 					log.info("Loaded profile '%s'", name)
 				except Exception, e:
 					log.error(e)
@@ -290,7 +321,8 @@ class SCCDaemon(Daemon):
 		self.controllers.append(c)
 		log.debug("Controller added: %s", c)
 		with self.lock:
-			self._send_to_all(("Controller count: %s\n" % (len(self.controllers),)).encode("utf-8"))
+			self.send_controller_list(self._send_to_all)
+			self.send_all_profiles(self._send_to_all)
 	
 	
 	def remove_controller(self, c):
@@ -300,7 +332,50 @@ class SCCDaemon(Daemon):
 			self.controllers.remove(c)
 		log.debug("Controller removed: %s", c)
 		with self.lock:
-			self._send_to_all(("Controller count: %s\n" % (len(self.controllers),)).encode("utf-8"))
+			self.send_controller_list(self._send_to_all)
+	
+	
+	def send_controller_list(self, method):
+		"""
+		Sends controller count and list of controllers using provided method
+		"""
+		for c in self.controllers:
+			method(("Controller: %s %s %s\n" % (
+				c.get_id(), c.id_is_persistent(), c.get_name()
+			)).encode("utf-8"))
+		method(("Controller Count: %s\n" % (len(self.controllers),)).encode("utf-8"))
+	
+	
+	def send_profile_info(self, controller, method, mapper=None):
+		"""
+		Sends info about current profile using provided method.
+		Returns True if mapper is default_mapper.
+		"""
+		mapper = mapper if mapper else controller.mapper
+		if controller:
+			method(("Controller profile: %s %s\n" % (
+				controller.get_id(),
+				mapper.profile.get_filename()
+			)).encode("utf-8"))
+		if mapper == self.default_mapper:
+			method(("Current profile: %s\n" % (
+				mapper.profile.get_filename(),
+			)).encode("utf-8"))
+			return True
+		return False
+	
+	
+	def send_all_profiles(self, method):
+		"""
+		Sends info about all profiles assigned to all
+		controllers using provided method.
+		"""
+		# As special case, at least default_mapper profile has to be sent always
+		default_sent = False
+		for c in self.controllers:
+			default_sent = self.send_profile_info(c, method) or default_sent
+		if not default_sent:
+			self.send_profile_info(None, method, mapper=self.default_mapper)
 	
 	
 	def run(self):
@@ -386,8 +461,8 @@ class SCCDaemon(Daemon):
 			wfile.write(b"SCCDaemon\n")
 			wfile.write(("Version: %s\n" % (DAEMON_VERSION,)).encode("utf-8"))
 			wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
-			wfile.write(("Current profile: %s\n" % (self.default_mapper.profile.get_filename(),)).encode("utf-8"))
-			wfile.write(("Controller count: %s\n" % (len(self.controllers),)).encode("utf-8"))
+			self.send_controller_list(wfile.write)
+			self.send_all_profiles(wfile.write)
 			if self.error is None:
 				wfile.write(b"Ready.\n")
 			else:
@@ -422,12 +497,14 @@ class SCCDaemon(Daemon):
 			with self.lock:
 				try:
 					filename = message[8:].decode("utf-8").strip("\t ")
-					self._set_profile(filename)
+					self._set_profile(client.mapper, filename)
 					log.info("Loaded profile '%s'", filename)
 					client.wfile.write(b"OK.\n")
 				except Exception, e:
+					exc = traceback.format_exc()
 					log.error(e)
-					tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+					log.error(exc)
+					tb = unicode(exc).encode("utf-8").encode('string_escape')
 					client.wfile.write(b"Fail: " + tb + b"\n")
 		elif message.startswith("OSD:"):
 			if not self.osd_daemon:
@@ -440,9 +517,20 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"OK.\n")
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
+		elif message.startswith("Controller:"):
+			try:
+				controller_id = message[11:].strip()
+				for c in self.controllers:
+					if c.get_id() == controller_id:
+						client.mapper = c.get_mapper()
+						break
+				else:
+					raise Exception("goto fail")
+			except Exception, e:
+				client.wfile.write(b"Fail: Fail: no such controller\n")
 		elif message.startswith("Led:"):
 			try:
-				number = int(message[4:].decode("utf-8"))
+				number = int(message[4:])
 				number = clamp(0, number, 100)
 			except Exception, e:
 				client.wfile.write(b"Fail: %s\n" % (e,))
@@ -755,28 +843,37 @@ class ReportingAction(Action):
 	
 	
 	def trigger(self, mapper, position, old_position):
-		self.client.wfile.write(("Event: %s %s %s\n" % (
-			self.what.name, position, old_position)).encode("utf-8"))
+		self.client.wfile.write(("Event: %s %s %s %s\n" % (
+			mapper.get_controller().get_id(),
+			self.what.name, position, old_position)
+		).encode("utf-8"))
 	
 	
-	def button_press(self, mapper):
+	def button_press(self, mapper, number=1):
 		if self.what == SCButtons.STICK:
-			self.client.wfile.write(b"Event: STICKPRESS 1\n")
+			self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
+				mapper.get_controller().get_id(),
+				number
+			)).encode("utf-8"))
 		else:
-			self.client.wfile.write(("Event: %s 1\n" % (self.what.name,)).encode("utf-8"))
+			self.client.wfile.write(("Event: %s %s %s\n" % (
+				mapper.get_controller().get_id(),
+				self.what.name,
+				number
+			)).encode("utf-8"))
 	
 	
 	def button_release(self, mapper):
-		if self.what == SCButtons.STICK:
-			self.client.wfile.write(b"Event: STICKPRESS 0\n")
-		else:
-			self.client.wfile.write(("Event: %s 0\n" % (self.what.name,)).encode("utf-8"))
+		self.button_press(mapper, 0)
 	
 	
 	def whole(self, mapper, x, y, what):
 		if abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE):
 			self.old_pos = x, y
-			self.client.wfile.write(("Event: %s %s %s\n" % (what, x, y)).encode("utf-8"))
+			self.client.wfile.write(("Event: %s %s %s %s\n" % (
+				mapper.get_controller().get_id(),
+				what, x, y
+			)).encode("utf-8"))
 
 
 class LockedAction(ReportingAction):
