@@ -518,16 +518,18 @@ class SCCDaemon(Daemon):
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Controller:"):
-			try:
-				controller_id = message[11:].strip()
-				for c in self.controllers:
-					if c.get_id() == controller_id:
-						client.mapper = c.get_mapper()
-						break
-				else:
-					raise Exception("goto fail")
-			except Exception, e:
-				client.wfile.write(b"Fail: Fail: no such controller\n")
+			with self.lock:
+				try:
+					controller_id = message[11:].strip()
+					for c in self.controllers:
+						if c.get_id() == controller_id:
+							client.mapper = c.get_mapper()
+							client.wfile.write(b"OK.\n")
+							break
+					else:
+						raise Exception("goto fail")
+				except Exception, e:
+					client.wfile.write(b"Fail: Fail: no such controller\n")
 		elif message.startswith("Led:"):
 			try:
 				number = int(message[4:])

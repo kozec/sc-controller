@@ -292,7 +292,6 @@ class Menu(OSDWindow):
 	def on_daemon_connected(self, *a):
 		def success(*a):
 			log.error("Sucessfully locked input")
-			pass
 		
 		if not self.config:
 			self.config = Config()
