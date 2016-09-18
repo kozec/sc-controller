@@ -57,25 +57,17 @@ def init(daemon):
 
 
 class Dongle(USBDevice):
+	MAX_ENDPOINTS = 4
+	
 	def __init__(self, device, handle, daemon):
 		self.daemon = daemon
 		USBDevice.__init__(self, device, handle)
 		
 		self.claim_by(klass=3, subclass=0, protocol=0)
-		self._ep = FIRST_ENDPOINT
 		self._controllers = {}
-		self._next_interrupt()
-	
-	
-	def _next_interrupt(self):
-		"""
-		Enables input transfer on next possible controller.
-		Whenever controller with index 'x' is detected, interrupt for 'x+1'
-		is setup, so driver can detect it when connected.
-		"""
-		self.set_input_interrupt(self._ep, 64, self._on_input)
-		# log.debug("Enabled interrupt for %s", self._ep)
-		self._ep += 1
+		for i in xrange(0, Dongle.MAX_ENDPOINTS):
+			# Steam dongle apparently can do only 4 controllers at once
+			self.set_input_interrupt(FIRST_ENDPOINT + i, 64, self._on_input)
 	
 	
 	def _add_controller(self, endpoint):
@@ -87,8 +79,6 @@ class Dongle(USBDevice):
 		c = SCController(self, ccidx, endpoint)
 		self._controllers[endpoint] = c
 		self.daemon.add_controller(c)
-		if endpoint == self._ep - 1:
-			self._next_interrupt()
 	
 	
 	def _on_input(self, endpoint, data):
