@@ -75,7 +75,6 @@ class Controller(object):
 	def set_mapper(self, mapper):
 		""" Sets mapper for controller """
 		self.mapper = mapper
-		self.mapper.set_controller(self)
 	
 	
 	def get_mapper(self):

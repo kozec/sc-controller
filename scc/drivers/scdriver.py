@@ -92,7 +92,8 @@ class Dongle(USBDevice):
 			else:
 				# Controller disconnected
 				if endpoint in self._controllers:
-					self._controllers[endpoint].disconnected()
+					self.daemon.remove_controller(self._controllers[endpoint])
+					del self._controllers[endpoint]
 		elif tup.status == SCStatus.INPUT:
 			if endpoint not in self._controllers:
 				self._add_controller(endpoint)

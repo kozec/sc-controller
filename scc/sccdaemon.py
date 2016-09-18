@@ -50,6 +50,7 @@ class SCCDaemon(Daemon):
 		self.subprocs = []
 		self.lock = threading.Lock()
 		self.default_mapper = self.init_default_mapper()
+		self.free_mappers = [ self.default_mapper ]
 		self.clients = set()
 		self.cwd = os.getcwd()
 	
@@ -299,24 +300,30 @@ class SCCDaemon(Daemon):
 		return mapper
 	
 	
-	def load_default_profile(self):
+	def load_default_profile(self, mapper=None):
+		mapper = mapper or self.default_mapper
 		try:
-			self.default_mapper.profile.load(self.default_profile).compress()
+			mapper.profile.load(self.default_profile).compress()
 		except Exception, e:
 			log.warning("Failed to load profile. Starting with no mappings.")
 			log.warning("Reason: %s", e)
 	
 	
 	def add_controller(self, c):
-		if len(self.controllers) == 0:
-			# First controller added, use default_mapper for it
-			c.set_mapper(self.default_mapper)
+		if len(self.free_mappers) > 0:
+			# Reuse already created mapper, so SCC will not spam system
+			# with fake devices
+			mapper, self.free_mappers = self.free_mappers[0], self.free_mappers[1:]
+			if mapper != self.default_mapper:
+				log.debug("Reused mapper %s for %s", mapper, c)
 		else:
-			c.set_mapper(self.init_mapper())
-		
-		if len(self.controllers) == 1:
-			# TODO: Remove this
-			c.get_mapper().profile.load(find_profile("XBox Controller")).compress()
+			# New controller, but no mapper created
+			mapper = self.init_mapper()
+			self.load_default_profile(mapper)
+		mapper.set_controller(c)
+		c.set_mapper(mapper)
+		if mapper == self.default_mapper:
+			log.debug("Assigned default_mapper to %s", c)
 		
 		self.controllers.append(c)
 		log.debug("Controller added: %s", c)
@@ -326,12 +333,30 @@ class SCCDaemon(Daemon):
 	
 	
 	def remove_controller(self, c):
-		c.mapper.release_virtual_buttons()
-		c.set_controller(None)
-		while c in self.controllers:
-			self.controllers.remove(c)
-		log.debug("Controller removed: %s", c)
+		mapper = c.mapper
+		mapper.release_virtual_buttons()
+		c.disconnected()
+		
 		with self.lock:
+			while c in self.controllers:
+				self.controllers.remove(c)
+			log.debug("Controller removed: %s", c)
+			
+			if mapper == self.default_mapper and len(self.controllers) > 0:
+				# Special case, default_mapper should be always
+				# assigned to something, so if controller with default_mapper
+				# is disconnected, it's reassigned to next available controller
+				swap_c = self.controllers[0]
+				swap_mapper = swap_c.get_mapper()
+				swap_mapper.set_controller(None)
+				swap_c.set_mapper(mapper)
+				mapper.set_controller(swap_c)
+				self.free_mappers.append(swap_mapper)
+				log.debug("Reassigned default_mapper to %s", swap_c)
+			else:
+				mapper.set_controller(None)
+				c.set_mapper(None)
+				self.free_mappers.append(mapper)
 			self.send_controller_list(self._send_to_all)
 	
 	
