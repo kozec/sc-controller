@@ -210,7 +210,7 @@ class USBDriver(object):
 	
 	def register_hotplug_device(self, callback, vendor_id, product_id):
 		self._known_ids[vendor_id, product_id] = callback
-		log.debug("Registered USB driver for %x:%x", vendor_id, product_id)
+		log.debug("Registered hotplug USB driver for %x:%x", vendor_id, product_id)
 	
 	
 	def mainloop(self):

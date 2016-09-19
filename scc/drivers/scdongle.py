@@ -4,16 +4,15 @@
 from scc.lib import usb1
 from scc.lib import IntEnum
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from scc.constants import HPERIOD, LPERIOD, DURATION
 from scc.constants import SCButtons, HapticPos
 from scc.controller import Controller
 from collections import namedtuple
 import struct, time, logging
 
 VENDOR_ID = 0x28de
-PRODUCT_ID = 0x1142 # [0x1102, 0x1142]
-FIRST_ENDPOINT = 2 # [3, 2]
-FIRST_CONTROLIDX = 1 #	[2, 1]
+PRODUCT_ID = 0x1142
+FIRST_ENDPOINT = 2
+FIRST_CONTROLIDX = 1
 INPUT_FORMAT = [
 	('b',   'type'),
 	('x',   'ukn_01'),
@@ -46,7 +45,7 @@ SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' *
 TUP_FORMAT = '<' + ''.join(FORMATS)
 
 
-log = logging.getLogger("SCDriver")
+log = logging.getLogger("SCDongle")
 
 def init(daemon):
 	""" Registers hotplug callback for controller dongle """
@@ -84,6 +83,7 @@ class Dongle(USBDevice):
 		"""
 		ccidx = FIRST_CONTROLIDX + endpoint - FIRST_ENDPOINT
 		c = SCController(self, ccidx, endpoint)
+		c._configure()
 		self._controllers[endpoint] = c
 		self.daemon.add_controller(c)
 	
@@ -105,13 +105,6 @@ class Dongle(USBDevice):
 			if endpoint not in self._controllers:
 				self._add_controller(endpoint)
 			self._controllers[endpoint].input(tup)
-		'''
-		elif not self._controller_connected and tup.status == SCStatus.IDLE:
-			transfer.submit()
-			self._set_send_controller_connected()
-		else:
-			transfer.submit()
-		'''
 
 
 class SCStatus(IntEnum):
@@ -146,8 +139,6 @@ class SCController(Controller):
 		self._led_level = 10
 		self._old_state = SCI_NULL
 		self._ccidx = ccidx
-		
-		self._configure()
 	
 	
 	def input(self, idata):
