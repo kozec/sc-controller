@@ -2,8 +2,8 @@
 
 from scc.lib import usb1
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from scdongle import ControllerInput, SCI_NULL, TUP_FORMAT
-from scdongle import SCStatus, SCPacketType, SCConfigType, SCController
+from sc_dongle import ControllerInput, SCI_NULL, TUP_FORMAT
+from sc_dongle import SCStatus, SCPacketType, SCConfigType, SCController
 import struct, time, logging
 
 VENDOR_ID = 0x28de
