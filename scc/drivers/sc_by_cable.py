@@ -45,3 +45,8 @@ class SCByCable(USBDevice, SCController):
 		if self._ready:
 			self.daemon.remove_controller(self)
 			self._ready = False
+	
+	
+	def turnoff(self):
+		log.warning("Ignoring request to turn off wired controller.")
+	
