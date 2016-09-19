@@ -27,6 +27,11 @@ class DaemonManager(GObject.GObject):
 		alive ()
 			Emited after daemon is started or found to be alraedy running
 		
+		controller-count-changed(before, current)
+			Emited after daemon reports change in controller count, ie when
+			new controller is connnected or disconnected.
+			Also emited shortly after connection to daemon is initiated.
+		
 		dead ()
 			Emited after daemon is killed (or exits for some other reason)
 		
@@ -50,13 +55,14 @@ class DaemonManager(GObject.GObject):
 	"""
 	
 	__gsignals__ = {
-			b"alive"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"dead"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"error"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"reconfigured"		: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"unknown-msg"		: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"version"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"alive"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"controller-count-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (int, int)),
+			b"dead"						: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"error"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"profile-changed"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"reconfigured"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"unknown-msg"				: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"version"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
 	RECONNECT_INTERVAL = 5
@@ -70,6 +76,7 @@ class DaemonManager(GObject.GObject):
 		self._profile = None
 		self._connect()
 		self._requests = []
+		self._old_ccount = 0			# old controller count
 		self._controllers = []			# Ordered as daemon says
 		self._controller_by_id = {}		# Source of memory leak
 	
@@ -190,6 +197,8 @@ class DaemonManager(GObject.GObject):
 			elif line.startswith("Controller Count:"):
 				count = int(line[17:])
 				self._controllers = self._controllers[-count:]
+				self.emit('controller-count-changed', self._old_ccount, count)
+				self._old_ccount = count
 			elif line.startswith("Event:"):
 				data = line[6:].strip().split(" ")
 				self.get_controller(data[0]).emit('event', data[1], [ int(x) for x in data[2:] ])

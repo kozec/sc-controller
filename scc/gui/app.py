@@ -52,12 +52,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		# Setup DaemonManager
 		self.dm = DaemonManager()
 		self.dm.connect("alive", self.on_daemon_alive)
-		self.dm.connect("version", self.on_daemon_version)
+		self.dm.connect("controller-count-changed", self.on_daemon_ccunt_changed)
+		self.dm.connect("dead", self.on_daemon_dead)
+		self.dm.connect("error", self.on_daemon_error)
 		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
 		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
-		self.dm.connect("error", self.on_daemon_error)
-		self.dm.connect("event", self.on_daemon_event_observer)
-		self.dm.connect("dead", self.on_daemon_dead)
+		self.dm.connect("version", self.on_daemon_version)
 		# Set variables
 		self.config = Config()
 		self.gladepath = gladepath
@@ -511,14 +511,27 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.enable_test_mode()
 	
 	
+	def on_daemon_ccunt_changed(self, daemon, before, current):
+		if (before, current) == (0, 1):
+			# Signal is connected only on first controller, so this block is executed
+			# only when number of connected controllers changes from 0 to 1
+			c = self.dm.get_controllers()[0]
+			c.connect('event', self.on_daemon_event_observer)
+	
+	
 	def enable_test_mode(self):
 		"""
 		Disables and re-enables Input Test mode. If sniffing is disabled in
 		daemon configuration, 2nd call fails and logs error.
 		"""
 		if self.dm.is_alive():
-			self.dm.unlock_all()
-			self.dm.observe(DaemonManager.nocallback, self.on_observe_failed,
+			try:
+				c = self.dm.get_controllers()[0]
+			except IndexError:
+				# Zero controllers
+				return
+			c.unlock_all()
+			c.observe(DaemonManager.nocallback, self.on_observe_failed,
 				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
 				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
 				'RIGHT', 'STICK', 'STICKPRESS')
