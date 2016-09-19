@@ -133,7 +133,11 @@ class USBDevice(object):
 	def unclaim(self):
 		""" Unclaims all claimed interfaces """
 		for number in self._claimed:
-			self.handle.releaseInterface(number)
+			try:
+				self.handle.releaseInterface(number)
+			except usb1.USBErrorNoDevice, e:
+				# Safe to ignore, happens when USB is removed
+				pass
 		self._claimed = []
 	
 	
@@ -182,7 +186,7 @@ class USBDriver(object):
 		if event == usb1.HOTPLUG_EVENT_DEVICE_LEFT:
 			if device in self._devices:
 				tp = device.getVendorID(), device.getProductID()
-				log.debug("USB device left: %x:%x", *tp)
+				log.debug("USB device removed: %x:%x", *tp)
 				d = self._devices[device]
 				del self._devices[device]
 				d.close()
@@ -206,7 +210,7 @@ class USBDriver(object):
 	
 	def register_hotplug_device(self, callback, vendor_id, product_id):
 		self._known_ids[vendor_id, product_id] = callback
-		log.debug("Registered USB device %x:%x", vendor_id, product_id)
+		log.debug("Registered USB driver for %x:%x", vendor_id, product_id)
 	
 	
 	def mainloop(self):

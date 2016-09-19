@@ -70,6 +70,13 @@ class Dongle(USBDevice):
 			self.set_input_interrupt(FIRST_ENDPOINT + i, 64, self._on_input)
 	
 	
+	def close(self):
+		# Called when dongle is removed
+		for c in self._controllers.values():
+			self.daemon.remove_controller(c)
+		self._controllers = []
+	
+	
 	def _add_controller(self, endpoint):
 		"""
 		Called when new controller is detected either by HOTPLUG message or
