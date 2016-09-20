@@ -22,9 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from collections import namedtuple
 from scc.lib import IntEnum
-import struct
 
 """
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
@@ -32,42 +30,9 @@ daemon will differ one one expected by UI and daemon will be forcefully restarte
 """
 DAEMON_VERSION = "0.2.17"
 
-VENDOR_ID = 0x28de
-PRODUCT_ID = [0x1102, 0x1142]
-ENDPOINT = [3, 2]
-CONTROLIDX = [2, 1]
-
 HPERIOD  = 0.02
 LPERIOD  = 0.5
 DURATION = 1.0
-
-CONTROLER_FORMAT = [
-	('b',   'type'),
-	('x',   'ukn_01'),
-	('B',   'status'),
-	('x',   'ukn_02'),
-	('H',   'seq'),
-	('x',   'ukn_03'),
-	('I',   'buttons'),
-	('B',   'ltrig'),
-	('B',   'rtrig'),
-	('x',   'ukn_04'),
-	('x',   'ukn_05'),
-	('x',   'ukn_06'),
-	('h',   'lpad_x'),
-	('h',   'lpad_y'),
-	('h',   'rpad_x'),
-	('h',   'rpad_y'),
-	('10x', 'ukn_06'),
-	('h',   'gpitch'),
-	('h',   'groll'),
-	('h',   'gyaw'),
-	('h',   'q1'),
-	('h',   'q2'),
-	('h',   'q3'),
-	('h',   'q4'),
-	('16x', 'ukn_07'),
-]
 
 FE_STICK	= 1
 FE_TRIGGER	= 2
@@ -86,33 +51,6 @@ SAME	= "SAME"	# may be used with MenuAction
 
 PARSER_CONSTANTS = ( LEFT, RIGHT, WHOLE, STICK, GYRO, PITCH, YAW, ROLL, SAME )
 
-FORMATS, NAMES = zip(*CONTROLER_FORMAT)
-CI_NAMES = [ x for x in NAMES if not x.startswith('ukn_') ]
-
-ControllerInput = namedtuple('ControllerInput', ' '.join(CI_NAMES))
-
-SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
-
-class SCStatus(IntEnum):
-	IDLE = 0x04
-	INPUT = 0x01
-	HOTPLUG = 0x03
-
-
-class SCPacketType(IntEnum):
-	OFF = 0x9f
-	AUDIO = 0xb6
-	CONFIGURE = 0x87
-	CALIBRATE_JOYSTICK = 0xbf
-	CALIBRATE_TRACKPAD = 0xa7
-	SET_AUDIO_INDICES = 0xc1
-	FEEDBACK = 0x8f
-	RESET = 0x95
-
-
-class SCConfigType(IntEnum):
-	LED = 0x2d
-	TIMEOUT_N_GYROS = 0x32
 
 
 class SCButtons(IntEnum):

@@ -20,24 +20,28 @@ log = logging.getLogger("DaemonCtrlr")
 
 class DaemonManager(GObject.GObject):
 	"""
+	Communicates with daemon socket and provides wrappers around everything
+	it can do.
+	
 	List of signals:
 		alive ()
 			Emited after daemon is started or found to be alraedy running
 		
+		controller-count-changed(before, current)
+			Emited after daemon reports change in controller count, ie when
+			new controller is connnected or disconnected.
+			Also emited shortly after connection to daemon is initiated.
+		
 		dead ()
 			Emited after daemon is killed (or exits for some other reason)
-		
-		event (pad_stick_or_button, values)
-			Emited when pad, stick or button is locked using lock() method
-			and position or pressed state of that button is changed
 		
 		error (description)
 			Emited when daemon reports error, most likely not being able to
 			access to USB dongle.
 		
 		profile-changed (profile)
-			Emited after profile is changed. Profile is filename of currently
-			active profile
+			Emited after profile set for first controller is changed.
+			Profile is filename of currently active profile
 		
 		reconfigured()
 			Emited when daemon reports change in configuration file
@@ -51,14 +55,14 @@ class DaemonManager(GObject.GObject):
 	"""
 	
 	__gsignals__ = {
-			b"alive"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"dead"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"error"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
-			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"reconfigured"		: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"unknown-msg"		: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"version"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"alive"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"controller-count-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (int, int)),
+			b"dead"						: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"error"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"profile-changed"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"reconfigured"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"unknown-msg"				: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"version"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
 	RECONNECT_INTERVAL = 5
@@ -72,6 +76,37 @@ class DaemonManager(GObject.GObject):
 		self._profile = None
 		self._connect()
 		self._requests = []
+		self._old_ccount = 0			# old controller count
+		self._controllers = []			# Ordered as daemon says
+		self._controller_by_id = {}		# Source of memory leak
+	
+	
+	def get_controllers(self):
+		"""
+		Returns list of all controllers connected to daemon.
+		Value is cached locally.
+		"""
+		return [] + self._controllers
+	
+	
+	def get_controller(self, controller_id):
+		"""
+		Returns ControllerManager instance bound to provided controller_id.
+		Note that this method will return instance for any controller_id,
+		even if controller with such ID is not connected to daemon.
+		
+		For same controller_id, there is always same instance returned.
+		"""
+		if controller_id not in self._controller_by_id:
+			self._controller_by_id[controller_id] = ControllerManager(self, controller_id)
+		return self._controller_by_id[controller_id]
+	
+	
+	def has_controller(self):
+		"""
+		Returns True if there is at lease one controller connected to daemon.
+		"""
+		return len(self._controllers) > 0
 	
 	
 	def _connect(self):
@@ -151,9 +186,22 @@ class DaemonManager(GObject.GObject):
 					success_cb, error_cb = self._requests[0]
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
+			elif line.startswith("Controller:"):
+				controller_id, nameable, name = line[11:].strip().split(" ", 2)
+				c = self.get_controller(controller_id)
+				c._name = name
+				c._connected = True
+				while c in self._controllers:
+					self._controllers.remove(c)
+				self._controllers.append(c)
+			elif line.startswith("Controller Count:"):
+				count = int(line[17:])
+				self._controllers = self._controllers[-count:]
+				self.emit('controller-count-changed', self._old_ccount, count)
+				self._old_ccount = count
 			elif line.startswith("Event:"):
 				data = line[6:].strip().split(" ")
-				self.emit('event', data[0], [ int(x) for x in data[1:] ])
+				self.get_controller(data[0]).emit('event', data[1], [ int(x) for x in data[2:] ])
 			elif line.startswith("Error:"):
 				error = line.split(":", 1)[-1].strip()
 				self.alive = True
@@ -209,7 +257,7 @@ class DaemonManager(GObject.GObject):
 	
 	
 	def set_profile(self, filename):
-		""" Asks daemon to change profile """
+		""" Asks daemon to change 1st controller profile """
 		self.request("Profile: %s" % (filename,),
 				DaemonManager.nocallback, DaemonManager.nocallback)
 	
@@ -242,6 +290,72 @@ class DaemonManager(GObject.GObject):
 		Restarts the daemon and forces connection to be created immediately.
 		"""
 		self.start(mode="restart")
+
+
+
+class ControllerManager(GObject.GObject):
+	"""
+	Represents controller connected to daemon.
+	Returned by DaemonManager.get_controller or DaemonManager.get_controllers.
+	
+	List of signals:
+		event (pad_stick_or_button, values)
+			Emited when pad, stick or button is locked using lock() method
+			and position or pressed state of that button is changed
+		
+		profile-changed (profile)
+			Emited after profile for controller is changed.
+			Profile is filename of currently active profile
+	"""
+	
+	__gsignals__ = {
+			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
+			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+	}
+	
+	def __init__(self, daemon_manager, controller_id):
+		GObject.GObject.__init__(self)
+		self._dm = daemon_manager
+		self._controller_id = controller_id
+		self._profile = None
+		self._name = "Controller %s" % (controller_id,)
+		self._connected = False
+	
+	
+	def __repr__(self):
+		return "<ControllerManager for ID '%s'>" % (self._controller_id,)
+	
+	
+	def _send_id(self):
+		"""
+		Sends Controller: message to daemon, so next message goes to correct
+		controller.
+		"""
+		self._dm.request("Controller: %s" % (self._controller_id,),
+				DaemonManager.nocallback, DaemonManager.nocallback)
+	
+	
+	def is_connected(self):
+		"""
+		Returns True, if controller is still connected to daemon.
+		Value is cached locally.
+		"""
+		return self._connected
+	
+	
+	def get_id(self):
+		""" Returns ID of this controller. Value is cached locally. """
+		return self._controller_id
+	
+	
+	def get_name(self):
+		""" Returns name of this controller. Value is cached locally. """
+		return self._name
+	
+	
+	def get_profile(self):
+		""" Returns profile set for this controller. Value is cached locally. """
+		return self._profile
 	
 	
 	def lock(self, success_cb, error_cb, *what_to_lock):
@@ -253,15 +367,24 @@ class DaemonManager(GObject.GObject):
 		Calls success_cb() on success or error_cb(error) on failure.
 		"""
 		what = " ".join(what_to_lock)
-		self.request("Lock: %s" % (what,), success_cb, error_cb)
+		self._send_id()
+		self._dm.request("Lock: %s" % (what,), success_cb, error_cb)
 	
 	
 	def set_led_level(self, value):
 		"""
 		Sets brightness of controller led.
 		"""
-		self.request("Led: %s" % (int(value),), DaemonManager.nocallback,
+		self._send_id()
+		self._dm.request("Led: %s" % (int(value),), DaemonManager.nocallback,
 			DaemonManager.nocallback)
+	
+	
+	def set_profile(self, filename):
+		""" Asks daemon to change this controller profile """
+		self._send_id()
+		self.request("Profile: %s" % (filename,),
+				DaemonManager.nocallback, DaemonManager.nocallback)
 	
 	
 	def observe(self, success_cb, error_cb, *what_to_lock):
@@ -273,9 +396,11 @@ class DaemonManager(GObject.GObject):
 		Calls success_cb() on success or error_cb(error) on failure.
 		"""
 		what = " ".join(what_to_lock)
-		self.request("Observe: %s" % (what,), success_cb, error_cb)
+		self._send_id()
+		self._dm.request("Observe: %s" % (what,), success_cb, error_cb)
 	
 	
 	def unlock_all(self):
-		if self.alive:
-			self.request("Unlock.", lambda *a: False, lambda *a: False)
+		if self._dm.alive:
+			self._send_id()
+			self._dm.request("Unlock.", lambda *a: False, lambda *a: False)
