@@ -48,7 +48,6 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 	
 	def load_settings(self):
 		pass
-		
 	
 	
 	def _save_osk_profile(self, profile):

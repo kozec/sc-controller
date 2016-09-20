@@ -102,7 +102,7 @@
     <property name="can_focus">False</property>
     <property name="role">action-editor</property>
     <property name="resizable">False</property>
-    <property name="window_position">center</property>
+    <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <signal name="destroy" handler="on_Dialog_destroy" swapped="no"/>
@@ -1269,6 +1269,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
     <property name="role">condition editor</property>
     <property name="resizable">False</property>
     <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
@@ -1494,6 +1495,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
   </object>
   <object class="GtkDialog" id="notThatDialog">
     <property name="can_focus">False</property>
+    <property name="window_position">center-on-parent</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="box47">
