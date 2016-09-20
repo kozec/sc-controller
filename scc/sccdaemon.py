@@ -562,7 +562,7 @@ class SCCDaemon(Daemon):
 			except Exception, e:
 				client.wfile.write(b"Fail: %s\n" % (e,))
 			if client.mapper.get_controller():
-				client.mapper.get_controller().set_led_level(led_level)
+				client.mapper.get_controller().set_led_level(number)
 		elif message.startswith("Observe:"):
 			if Config()["enable_sniffing"]:
 				to_observe = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
