@@ -293,7 +293,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 					self.config['controllers'][x]['icon']
 					for x in self.config['controllers']
 					if 'icon' in self.config['controllers'][x]
-				}				
+				}
 				tp = "%s-" % (self._controller.get_type(),)
 				icons = sorted(( os.path.split(x.get_path())[-1] for x in icons ))
 				for i in icons:

@@ -642,7 +642,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_mnuConfigureController_activate(self, *a):
 		from scc.gui.controller_settings import ControllerSettings
 		mnuPS = self.builder.get_object("mnuPS")
-		cs = ControllerSettings(self, mnuPS.ps)
+		cs = ControllerSettings(self, mnuPS.ps.get_controller())
 		cs.show(self.window)
 	
 	

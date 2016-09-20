@@ -7,6 +7,18 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkListStore" id="lstIcons">
+    <columns>
+      <!-- column-name path -->
+      <column type="gchararray"/>
+      <!-- column-name filename -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name icon -->
+      <column type="GdkPixbuf"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="Dialog">
     <property name="width_request">650</property>
     <property name="can_focus">False</property>
@@ -29,6 +41,7 @@
           <object class="GtkLabel" id="label30">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="margin_top">5</property>
             <property name="label" translatable="yes">LED brightness</property>
             <property name="xalign">0</property>
             <attributes>
@@ -78,6 +91,7 @@
           <object class="GtkLabel" id="label2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="margin_top">5</property>
             <property name="label" translatable="yes">Icon</property>
             <property name="xalign">0</property>
             <attributes>
@@ -90,11 +104,12 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry">
+          <object class="GtkEntry" id="txName">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="margin_left">20</property>
             <property name="margin_right">20</property>
+            <signal name="changed" handler="save_config" swapped="no"/>
           </object>
           <packing>
             <property name="left_attach">0</property>
@@ -102,15 +117,55 @@
           </packing>
         </child>
         <child>
-          <object class="GtkComboBox">
+          <object class="GtkComboBox" id="cbIcon">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_left">20</property>
             <property name="margin_right">20</property>
+            <property name="model">lstIcons</property>
+            <signal name="changed" handler="save_config" swapped="no"/>
+            <child>
+              <object class="GtkCellRendererPixbuf" id="crIcon"/>
+              <attributes>
+                <attribute name="pixbuf">3</attribute>
+              </attributes>
+            </child>
+            <child>
+              <object class="GtkCellRendererText" id="crText"/>
+              <attributes>
+                <attribute name="text">2</attribute>
+              </attributes>
+            </child>
           </object>
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkCheckButton" id="cbAlignOSD">
+            <property name="name">0</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="margin_top">5</property>
+            <property name="draw_indicator">True</property>
+            <signal name="toggled" handler="save_config" swapped="no"/>
+            <child>
+              <object class="GtkLabel" id="label3">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Right-aligned OSD</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">6</property>
           </packing>
         </child>
       </object>
@@ -123,15 +178,5 @@
         <property name="show_close_button">True</property>
       </object>
     </child>
-  </object>
-  <object class="GtkListStore" id="lstItems">
-    <columns>
-      <!-- column-name item -->
-      <column type="GObject"/>
-      <!-- column-name label -->
-      <column type="gchararray"/>
-      <!-- column-name profile -->
-      <column type="gchararray"/>
-    </columns>
   </object>
 </interface>
