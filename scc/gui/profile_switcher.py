@@ -259,11 +259,17 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			self._signal = None
 		self._controller = c
 		if c:
-			self._icon.set_tooltip_text(c.get_name())
+			name = c.get_id()
+			try:
+				name = self.config["controllers"][c.get_id()]["name"]
+			except:
+				# Name not defined
+				pass
+			self._icon.set_tooltip_text(name)
 			self._signal = c.connect('profile-changed', self.on_profile_changed)
 		else:
 			self._icon.set_tooltip_text(_("Profile"))
-		self._update_controller_icon()
+		self.update_icon()
 	
 	
 	def get_controller(self):
@@ -271,7 +277,9 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		return self._controller
 	
 	
-	def _update_controller_icon(self):
+	def update_icon(self):
+		""" Changes displayed icon to whatever is currently set in config """
+		# Called internally and from ControllerSettings
 		if not self._controller or not self._controller.get_id_is_persistent():
 			self._icon.set_from_file(os.path.join(self.imagepath, "controller-icon.svg"))
 			return
@@ -309,6 +317,6 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 					self.config['controllers'][id] = {}
 				self.config['controllers'][id]["icon"] = icon
 				self.config.save()
-				GLib.idle_add(self._update_controller_icon)
+				GLib.idle_add(self.update_icon)
 			
 			self.load_user_data(paths, "*.svg", cb)

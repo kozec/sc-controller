@@ -530,6 +530,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		vbAllProfiles = self.builder.get_object("vbAllProfiles")
 		vbAllProfiles.remove(s)
+		s.destroy()
 	
 	
 	def enable_test_mode(self):
@@ -642,7 +643,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_mnuConfigureController_activate(self, *a):
 		from scc.gui.controller_settings import ControllerSettings
 		mnuPS = self.builder.get_object("mnuPS")
-		cs = ControllerSettings(self, mnuPS.ps.get_controller())
+		cs = ControllerSettings(self, mnuPS.ps.get_controller(), mnuPS.ps)
 		cs.show(self.window)
 	
 	
@@ -670,6 +671,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_daemon_reconfigured(self, *a):
 		log.debug("Reloading config...")
 		self.config.reload()
+		for ps in self.profile_switchers:
+			ps.set_controller(ps.get_controller())
 	
 	
 	def on_daemon_dead(self, *a):

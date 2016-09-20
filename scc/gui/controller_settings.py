@@ -19,10 +19,11 @@ log = logging.getLogger("GS")
 class ControllerSettings(Editor, UserDataManager, ComboSetter):
 	GLADE = "controller_settings.glade"
 	
-	def __init__(self, app, controller):
+	def __init__(self, app, controller, profile_switcher=None):
 		UserDataManager.__init__(self)
 		self.app = app
 		self.controller = controller
+		self.profile_switcher = profile_switcher
 		self.setup_widgets()
 		self.load_icons()
 		self._timer = None
@@ -100,6 +101,8 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		cfg["osd_alignment"] = 1 if cbAlignOSD.get_active() else 0
 		try:
 			cfg["icon"] = cbIcon.get_model().get_value(cbIcon.get_active_iter(), 1)
+			if self.profile_switcher:
+				self.profile_switcher.update_icon()
 		except:
 			# Just in case there are no icons at all
 			pass
