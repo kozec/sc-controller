@@ -40,5 +40,9 @@ if ENV_VAR in os.environ:
 			return "fake"
 		
 		
+		def set_led_level(self, level):
+			log.debug("FakeController %s led level set to %s", self.get_id(), level)
+		
+		
 		def __repr__(self):
 			return "<FakeController %s>" % (self.get_id(),)

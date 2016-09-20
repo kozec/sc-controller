@@ -521,6 +521,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		ps.set_margin_left(margin_left)
 		ps.set_margin_right(margin_right)
 		ps.set_margin_bottom(margin_bottom)
+		ps.connect('right-clicked', self.on_profile_right_clicked)
 		
 		vbAllProfiles.pack_start(ps, False, False, 0)
 		vbAllProfiles.reorder_child(ps, 0)
@@ -541,6 +542,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		vbAllProfiles = self.builder.get_object("vbAllProfiles")
 		vbAllProfiles.remove(s)
+		s.destroy()
 	
 	
 	def enable_test_mode(self):
@@ -643,6 +645,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			print "event", what
 	
 	
+	def on_profile_right_clicked(self, ps):
+		mnuPS = self.builder.get_object("mnuPS")
+		mnuPS.ps = ps
+		mnuPS.popup(None, None, None, None,
+			3, Gtk.get_current_event_time())	
+	
+	
+	def on_mnuConfigureController_activate(self, *a):
+		from scc.gui.controller_settings import ControllerSettings
+		mnuPS = self.builder.get_object("mnuPS")
+		cs = ControllerSettings(self, mnuPS.ps.get_controller(), mnuPS.ps)
+		cs.show(self.window)
+	
+	
 	def show_error(self, message):
 		if self.ribar is None:
 			self.ribar = RIBar(message, Gtk.MessageType.ERROR)
@@ -667,6 +683,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_daemon_reconfigured(self, *a):
 		log.debug("Reloading config...")
 		self.config.reload()
+		for ps in self.profile_switchers:
+			ps.set_controller(ps.get_controller())
 	
 	
 	def on_daemon_dead(self, *a):

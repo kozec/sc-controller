@@ -323,7 +323,6 @@ class ControllerManager(GObject.GObject):
 		self._controller_id = controller_id
 		self._id_is_persistent = False
 		self._profile = None
-		self._name = controller_id
 		self._type = None
 		self._connected = False
 	
@@ -369,11 +368,6 @@ class ControllerManager(GObject.GObject):
 		always generates same ID for same physical controller.
 		"""
 		return self._id_is_persistent
-	
-	
-	def get_name(self):
-		""" Returns name of this controller. """
-		return self._name
 	
 	
 	def get_profile(self):

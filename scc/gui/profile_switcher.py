@@ -19,7 +19,7 @@ from scc.tools import find_profile, find_controller_icon
 import sys, os, random, logging
 log = logging.getLogger("PS")
 
-class ProfileSwitcher(Gtk.Box, UserDataManager):
+class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 	"""
 	List of signals:
 		changed (name, giofile)
@@ -27,6 +27,8 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		new-clicked (name)
 			Emited when user selects 'new profile' option.
 			'name' is of currently selected profile.
+		right-clicked ()
+			Emited whenm user right-clicks anything
 		save-clicked ()
 			Emited when user clicks on save button
 		unknown-profile (name)
@@ -37,6 +39,7 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 	__gsignals__ = {
 			b"changed"					: (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
 			b"new-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"right-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"save-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"unknown-profile"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
@@ -45,7 +48,7 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 						# about profile being switched
 	
 	def __init__(self, imagepath, config):
-		Gtk.Box.__init__(self, Gtk.Orientation.HORIZONTAL, 0)
+		Gtk.EventBox.__init__(self)
 		UserDataManager.__init__(self)
 		self.imagepath = imagepath
 		self.config = config
@@ -65,6 +68,7 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		self._icon = Gtk.Image()
 		self._model = Gtk.ListStore(str, object, str)
 		self._combo = Gtk.ComboBox.new_with_model(self._model)
+		self._box = Gtk.Box(Gtk.Orientation.HORIZONTAL, 0)
 		self._revealer = None
 		self._savebutton = None
 		
@@ -78,11 +82,15 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		self._combo.add_attribute(rend2, "text", 2)
 		self._combo.set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
+		
+		# Signals
 		self._combo.connect('changed', self.on_combo_changed)
+		self.connect("button_press_event", self.on_button_press)
 		
 		# Pack
-		self.pack_start(self._icon, False, True, 0)
-		self.pack_start(self._combo, True, True, 0)
+		self._box.pack_start(self._icon, False, True, 0)
+		self._box.pack_start(self._combo, True, True, 0)
+		self.add(self._box)
 	
 	
 	def set_profile(self, name, create=False):
@@ -190,6 +198,11 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		self._timer = GLib.timeout_add(ProfileSwitcher.SEND_TIMEOUT, run_later)
 	
 	
+	def on_button_press(self, trash, event):
+		if event.button == 3:
+			self.emit('right-clicked')	
+	
+	
 	def on_savebutton_clicked(self, *a):
 		self.emit('save-clicked')
 	
@@ -249,11 +262,17 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 			self._signal = None
 		self._controller = c
 		if c:
-			self._icon.set_tooltip_text(c.get_name())
+			name = c.get_id()
+			try:
+				name = self.config["controllers"][c.get_id()]["name"]
+			except:
+				# Name not defined
+				pass
+			self._icon.set_tooltip_text(name)
 			self._signal = c.connect('profile-changed', self.on_profile_changed)
 		else:
 			self._icon.set_tooltip_text(_("Profile"))
-		self._update_controller_icon()
+		self.update_icon()
 	
 	
 	def get_controller(self):
@@ -261,7 +280,9 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		return self._controller
 	
 	
-	def _update_controller_icon(self):
+	def update_icon(self):
+		""" Changes displayed icon to whatever is currently set in config """
+		# Called internally and from ControllerSettings
 		if not self._controller or not self._controller.get_id_is_persistent():
 			self._icon.set_from_file(os.path.join(self.imagepath, "controller-icon.svg"))
 			return
@@ -283,7 +304,7 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 					self.config['controllers'][x]['icon']
 					for x in self.config['controllers']
 					if 'icon' in self.config['controllers'][x]
-				}				
+				}
 				tp = "%s-" % (self._controller.get_type(),)
 				icons = sorted(( os.path.split(x.get_path())[-1] for x in icons ))
 				for i in icons:
@@ -299,6 +320,6 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 					self.config['controllers'][id] = {}
 				self.config['controllers'][id]["icon"] = icon
 				self.config.save()
-				GLib.idle_add(self._update_controller_icon)
+				GLib.idle_add(self.update_icon)
 			
 			self.load_user_data(paths, "*.svg", cb)
