@@ -96,16 +96,22 @@ class UserDataManager(object):
 	def _on_user_data_loaded(self, pdir, res, data, i, callback):
 		"""
 		Called when enumerate_children_async gets lists of profiles.
-		Called twice for default and user profiles dirs.
+		Usually called twice for default (system) and user directory.
 		"""
-		data[i] = pdir, pdir.enumerate_children_finish(res)
+		try:
+			data[i] = pdir, pdir.enumerate_children_finish(res)
+		except GLib.Error, e:
+			# Usually when directory doesn't exists
+			log.warning("enumerate_children_finish for %s failed: %s",  pdir.get_path(), e)
+			data[i] = None, []
 		if not None in data:
 			files = {}
 			try:
 				for pdir, enumerator in data:
-					for finfo in enumerator:
-						name = finfo.get_name()
-						files[name] = pdir.get_child(name)
+					if pdir:
+						for finfo in enumerator:
+							name = finfo.get_name()
+							files[name] = pdir.get_child(name)
 			except Exception, e:
 				# https://github.com/kozec/sc-controller/issues/50
 				log.warning("enumerate_children_finish failed: %s", e)
