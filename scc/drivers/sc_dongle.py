@@ -77,6 +77,20 @@ class Dongle(USBDevice):
 		self._controllers = []
 	
 	
+	def overwrite_control(self, index, data):
+		"""
+		Similar to send_control, but this one checks and overwrites
+		already scheduled controll for same device/index.
+		"""
+		for x in self._cmsg:
+			x_index, x_data, x_timeout = x[-3:]
+			# First 3 bytes are for PacketType, size and ConfigType
+			if x_index == index and x_data[0:3] == data[0:3]:
+				self._cmsg.remove(x)
+				break
+		self.send_control(index, data)
+	
+	
 	def _add_controller(self, endpoint):
 		"""
 		Called when new controller is detected either by HOTPLUG message or
@@ -171,13 +185,6 @@ class SCController(Controller):
 		self.mapper.input(self, time.time(), old_state, idata)
 	
 	
-	def _send_control(self, data, timeout=0):
-		""" Synchronoussly writes controll for controller """
-		
-		zeros = b'\x00' * (64 - len(data))
-		self._driver.send_control(self._ccidx, data)
-	
-	
 	def read_serial(self):
 		def cb(rawserial):
 			size, serial = struct.unpack(">xBx12s49x", rawserial)
@@ -235,10 +242,9 @@ class SCController(Controller):
 		unknown2 = b'\x00\x2e'
 		timeout1 = self._idle_timeout & 0x00FF
 		timeout2 = (self._idle_timeout & 0xFF00) >> 8
-		led_lvl  = min(100, int(self._led_level)) & 0xFF
 		
 		# Timeout & Gyros
-		self._send_control(struct.pack('>BBBBB13sB2s43x',
+		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBBB13sB2s43x',
 			SCPacketType.CONFIGURE,
 			SCPacketLength.CONFIGURE,
 			SCConfigType.CONFIGURE,
@@ -248,15 +254,22 @@ class SCController(Controller):
 			unknown2))
 		
 		# LED
-		self._send_control(struct.pack('>BBBB59x',
-			SCPacketType.LED,
-			SCPacketLength.LED,
+		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBB59x',
+			SCPacketType.CONFIGURE,
+			0x03,
 			SCConfigType.LED,
-			led_lvl))
+			self._led_level
+		))
 	
 	
 	def set_led_level(self, level):
-		self.configure(led_level = level)
+		self._led_level = min(100, int(level)) & 0xFF
+		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBB59x',
+			SCPacketType.CONFIGURE,
+			0x03,
+			SCConfigType.LED,
+			self._led_level
+		))
 	
 	
 	def set_gyro_enabled(self, enabled):	
@@ -267,9 +280,8 @@ class SCController(Controller):
 		log.debug("Turning off the controller...")
 		
 		# Mercilessly stolen from scraw library
-		self._send_control(struct.pack('<BBBBBB',
-				SCPacketType.OFF, SCPacketLength.OFF,
-				0x6f, 0x66, 0x66, 0x21))
+		self._driver.send_control(self._ccidx, struct.pack('<BBBBBB',
+				SCPacketType.OFF, 0x04, 0x6f, 0x66, 0x66, 0x21))
 	
 	
 	def get_gyro_enabled(self):
@@ -290,6 +302,6 @@ class SCController(Controller):
 		@param int period	   signal period from 0 to 65535
 		@param int count		number of period to play
 		"""
-		self._send_control(struct.pack('<BBBHHH',
-				SCPacketType.FEEDBACK, SCPacketLength.FEEDBACK,
-				position, amplitude, period, count))	
+		self._driver.send_control(self._ccidx, struct.pack('<BBBHHH',
+				SCPacketType.FEEDBACK, 0x07, position,
+				amplitude, period, count))	

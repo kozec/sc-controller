@@ -34,6 +34,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		UserDataManager.__init__(self)
 		self.app = app
 		self.setup_widgets()
+		self._timer = None
 		self._recursing = False
 		self.app.config.reload()
 		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
@@ -68,7 +69,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		(self.builder.get_object("cbInputTestMode")
 				.set_active(bool(self.app.config['enable_sniffing'])))
 		(self.builder.get_object("sclLED")
-				.set_value(bool(self.app.config['led_level'])))
+				.set_value(float(self.app.config['led_level'])))
 		(self.builder.get_object("cbEnableStatusIcon")
 				.set_active(bool(self.app.config['gui']['enable_status_icon'])))
 		(self.builder.get_object("cbMinimizeToStatusIcon")
@@ -206,6 +207,20 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			if w:
 				self.app.config["osk_colors"][k] = tohex(w.get_color())
 		self.app.save_config()
+	
+	
+	def schedule_save_config(self):
+		"""
+		Schedules config saving in 3s.
+		Done to prevent literal madness when user moves slider.
+		"""
+		def cb(*a):
+			self._timer = None
+			self.app.save_config()
+			
+		if self._timer is not None:
+			GLib.source_remove(self._timer)
+		self._timer = GLib.timeout_add_seconds(3, cb)
 	
 	
 	def save_config(self):
@@ -439,9 +454,14 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	
 	def on_sclLED_value_changed(self, scale, *a):
+		if self._recursing: return
 		self.app.config["led_level"] = scale.get_value()
-		self.app.dm.set_led_level(scale.get_value())
-		self.app.save_config()
+		try:
+			self.app.dm.get_controllers()[0].set_led_level(scale.get_value())
+		except IndexError:
+			# Happens when there is no controller connected to daemon
+			pass
+		self.schedule_save_config()
 	
 	
 	def on_entTitle_changed(self, ent):
