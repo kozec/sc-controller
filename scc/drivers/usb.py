@@ -52,7 +52,8 @@ class USBDevice(object):
 		self.device = device
 		self.handle = handle
 		self._claimed = []
-		self._cmsg = []
+		self._cmsg = []		# controll messages
+		self._rmsg = []		# requests (excepts response)
 		self._transfer_list = []
 	
 	
@@ -101,30 +102,19 @@ class USBDevice(object):
 		))
 	
 	
-	def make_request(self, index, data, len=64, timeout=0):
+	def make_request(self, index, callback, data, size=64):
 		"""
-		Synchronously sends request and waits for response.
-		Note that timeout may be doubled as it is used both for sending
-		and reading data.
-		
-		Note that this may crash horribly if used after
-		set_input_interrupt is called.
+		Schedules synchronous request that requires response.
+		Request is done ASAP and provided callback is called with recieved data.
 		"""
-		self.handle.controlWrite(
-			0x21,	# request_type
-			0x09,	# request
-			0x0300,	# value
-			index, data,
-			timeout = timeout
-		)
-		
-		return self.handle.controlRead(
-			0xA1,	# request_type
-			0x01,	# request
-			0x0300,	# value
-			index, len,
-			timeout = timeout
-		)
+		self._rmsg.append((
+			(
+				0x21,	# request_type
+				0x09,	# request
+				0x0300,	# value
+				index, data
+			), index, size, callback
+		))
 	
 	
 	def flush(self):
@@ -132,6 +122,18 @@ class USBDevice(object):
 		while len(self._cmsg):
 			msg = self._cmsg.pop()
 			self.handle.controlWrite(*msg)
+		
+		while len(self._rmsg):
+			msg, index, size, callback = self._rmsg.pop()
+			print msg
+			self.handle.controlWrite(*msg)
+			data = self.handle.controlRead(
+				0xA1,	# request_type
+				0x01,	# request
+				0x0300,	# value
+				index, size
+			)
+			callback(data)
 	
 	
 	def claim(self, number):

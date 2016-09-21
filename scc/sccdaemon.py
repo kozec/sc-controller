@@ -334,7 +334,8 @@ class SCCDaemon(Daemon):
 	
 	def remove_controller(self, c):
 		mapper = c.mapper
-		mapper.release_virtual_buttons()
+		if mapper:
+			mapper.release_virtual_buttons()
 		c.disconnected()
 		
 		with self.lock:
