@@ -123,16 +123,26 @@ class SCPacketType(IntEnum):
 	OFF = 0x9f
 	AUDIO = 0xb6
 	CONFIGURE = 0x87
+	LED = 0x87
 	CALIBRATE_JOYSTICK = 0xbf
 	CALIBRATE_TRACKPAD = 0xa7
 	SET_AUDIO_INDICES = 0xc1
 	FEEDBACK = 0x8f
 	RESET = 0x95
+	GET_SERIAL = 0xAE
+
+
+class SCPacketLength(IntEnum):
+	LED = 0x03
+	OFF = 0x04
+	FEEDBACK = 0x07
+	CONFIGURE = 0x15
+	GET_SERIAL = 0x15
 
 
 class SCConfigType(IntEnum):
 	LED = 0x2d
-	TIMEOUT_N_GYROS = 0x32
+	CONFIGURE = 0x32
 
 
 class SCController(Controller):
@@ -181,7 +191,8 @@ class SCController(Controller):
 		
 		self._driver.make_request(
 			self._ccidx, cb,
-			struct.pack('>BBB61x', 0xae, 0x15, 0x01))
+			struct.pack('>BBB61x',
+				SCPacketType.GET_SERIAL, SCPacketLength.GET_SERIAL, 0x01))
 	
 	
 	def on_serial_got(self):
@@ -200,8 +211,8 @@ class SCController(Controller):
 		"""
 		packet format:
 		 - uint8_t type - SCPacketType.CONFIGURE
-		 - uint8_t size - 0x03 for led configuration, 0x15 for timeout & gyros
-		 - uint8_t config_type - one of SCConfigType
+		 - uint8_t size - SCPacketLength.CONFIGURE or SCPacketLength.LED
+		 - uint8_t config_type - SCConfigType.CONFIGURE or SCConfigType.LED
 		 - 61b data
 		
 		Format for data when configuring controller:
@@ -229,8 +240,8 @@ class SCController(Controller):
 		# Timeout & Gyros
 		self._send_control(struct.pack('>BBBBB13sB2s43x',
 			SCPacketType.CONFIGURE,
-			0x15, # size
-			SCConfigType.TIMEOUT_N_GYROS,
+			SCPacketLength.CONFIGURE,
+			SCConfigType.CONFIGURE,
 			timeout1, timeout2,
 			unknown1,
 			0x14 if self._enable_gyros else 0,
@@ -238,8 +249,8 @@ class SCController(Controller):
 		
 		# LED
 		self._send_control(struct.pack('>BBBB59x',
-			SCPacketType.CONFIGURE,
-			0x03,
+			SCPacketType.LED,
+			SCPacketLength.LED,
 			SCConfigType.LED,
 			led_lvl))
 	
@@ -257,7 +268,8 @@ class SCController(Controller):
 		
 		# Mercilessly stolen from scraw library
 		self._send_control(struct.pack('<BBBBBB',
-				SCPacketType.OFF, 0x04, 0x6f, 0x66, 0x66, 0x21))
+				SCPacketType.OFF, SCPacketLength.OFF,
+				0x6f, 0x66, 0x66, 0x21))
 	
 	
 	def get_gyro_enabled(self):
@@ -279,5 +291,5 @@ class SCController(Controller):
 		@param int count		number of period to play
 		"""
 		self._send_control(struct.pack('<BBBHHH',
-				SCPacketType.FEEDBACK, 0x07, position,
-				amplitude, period, count))	
+				SCPacketType.FEEDBACK, SCPacketLength.FEEDBACK,
+				position, amplitude, period, count))	
