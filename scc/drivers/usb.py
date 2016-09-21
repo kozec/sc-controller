@@ -125,7 +125,6 @@ class USBDevice(object):
 		
 		while len(self._rmsg):
 			msg, index, size, callback = self._rmsg.pop()
-			print msg
 			self.handle.controlWrite(*msg)
 			data = self.handle.controlRead(
 				0xA1,	# request_type
