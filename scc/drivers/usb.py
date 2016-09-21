@@ -101,6 +101,32 @@ class USBDevice(object):
 		))
 	
 	
+	def make_request(self, index, data, len=64, timeout=0):
+		"""
+		Synchronously sends request and waits for response.
+		Note that timeout may be doubled as it is used both for sending
+		and reading data.
+		
+		Note that this may crash horribly if used after
+		set_input_interrupt is called.
+		"""
+		self.handle.controlWrite(
+			0x21,	# request_type
+			0x09,	# request
+			0x0300,	# value
+			index, data,
+			timeout = timeout
+		)
+		
+		return self.handle.controlRead(
+			0xA1,	# request_type
+			0x01,	# request
+			0x0300,	# value
+			index, len,
+			timeout = timeout
+		)
+	
+	
 	def flush(self):
 		""" Flushes all prepared control messages to device """
 		while len(self._cmsg):
