@@ -1,0 +1,159 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.KEY_ENTER)"
+        }, 
+        "B": {
+            "action": "button(Keys.KEY_BACKSPACE)"
+        }, 
+        "BACK": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_LEFTALT)"
+            }, {
+                "action": "button(Keys.KEY_LEFT)"
+            }], 
+            "modes": {
+                "RT": {
+                    "actions": [{
+                        "action": "button(Keys.KEY_LEFTCTRL)"
+                    }, {
+                        "action": "button(Keys.KEY_LEFTSHIFT)"
+                    }, {
+                        "action": "button(Keys.KEY_R)"
+                    }]
+                }
+            }
+        }, 
+        "C": {
+            "action": "menu('Default.menu')", 
+            "doubleclick": {}, 
+            "hold": {
+                "action": "menu('Default.menu')"
+            }, 
+            "modes": {
+                "RT": {
+                    "action": "shell('sc-controller')"
+                }
+            }
+        }, 
+        "LB": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_LEFTSHIFT)"
+            }, {
+                "action": "button(Keys.KEY_TAB)"
+            }]
+        }, 
+        "LGRIP": {
+            "action": "button(Keys.KEY_PAGEDOWN)", 
+            "doubleclick": {
+                "action": "button(Keys.KEY_END)"
+            }, 
+            "modes": {
+                "RT": {
+                    "actions": [{
+                        "action": "button(Keys.KEY_LEFTCTRL)"
+                    }, {
+                        "action": "button(Keys.KEY_KPMINUS)"
+                    }]
+                }
+            }
+        }, 
+        "RB": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_TAB)"
+            }]
+        }, 
+        "RGRIP": {
+            "action": "button(Keys.KEY_PAGEUP)", 
+            "doubleclick": {
+                "action": "button(Keys.KEY_HOME)"
+            }, 
+            "modes": {
+                "RT": {
+                    "actions": [{
+                        "action": "button(Keys.KEY_LEFTCTRL)"
+                    }, {
+                        "action": "button(Keys.KEY_KPPLUS)"
+                    }]
+                }
+            }
+        }, 
+        "RPAD": {
+            "action": "button(Keys.BTN_LEFT)"
+        }, 
+        "START": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_LEFTALT)"
+            }, {
+                "action": "button(Keys.KEY_RIGHT)"
+            }], 
+            "modes": {
+                "RT": {
+                    "actions": [{
+                        "action": "button(Keys.KEY_LEFTCTRL)"
+                    }, {
+                        "action": "button(Keys.KEY_R)"
+                    }]
+                }
+            }
+        }, 
+        "STICK": {
+            "action": "keyboard()"
+        }, 
+        "X": {
+            "action": "button(Keys.KEY_SPACE)"
+        }, 
+        "Y": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_W)"
+            }]
+        }
+    }, 
+    "gyro": {
+        "modes": {
+            "RPADTOUCH": {
+                "action": "mouse(ROLL)"
+            }
+        }, 
+        "sensitivity": [3.5, 3.5, 3.5]
+    }, 
+    "menus": {}, 
+    "pad_left": {
+        "action": "circular(Rels.REL_WHEEL)"
+    }, 
+    "pad_right": {
+        "action": "mouse(None, 1.0)", 
+        "ball": true, 
+        "feedback": ["RIGHT", 256]
+    }, 
+    "stick": {
+        "dpad": [{
+            "action": "button(Keys.KEY_UP)"
+        }, {
+            "action": "button(Keys.KEY_DOWN)"
+        }, {
+            "action": "button(Keys.KEY_LEFT)"
+        }, {
+            "action": "button(Keys.KEY_RIGHT)"
+        }]
+    }, 
+    "trigger_left": {
+        "action": "button(Keys.BTN_RIGHT)", 
+        "levels": [50, 50]
+    }, 
+    "trigger_right": {
+        "action": "button(Keys.BTN_LEFT)", 
+        "levels": [50, 50]
+    }, 
+    "version": 1.2
+}
