@@ -20,19 +20,28 @@ data_files = [
 				
 ]
 
-setup(name='sccontroller',
-		version='0.2.6',
-		description='Standalone controller maping tool',
-		author='kozec',
-		packages=['scc', 'scc.gui', 'scc.gui.ae', 'scc.lib', 'scc.x11',
-			'scc.foreign', 'scc.osd', 'scc.drivers'],
-		data_files = data_files,
-		scripts=['scripts/sc-controller', 'scripts/scc-daemon',
-			'scripts/scc-osd-message', 'scripts/scc-osd-menu',
-			'scripts/scc-osd-keyboard'],
-		license='GPL2',
-		platforms=['Linux'],
-		ext_modules=[
-			Extension('libuinput', sources = ['scc/uinput.c']),
-		]
-)
+packages = [
+	# Required
+	'scc', 'scc.drivers', 'scc.lib',
+	# Usefull
+	'scc.x11', 'scc.osd', 'scc.foreign',
+	# GUI
+	'scc.gui', 'scc.gui.ae'
+]
+
+if __name__ == "__main__":
+	setup(name='sccontroller',
+			version='0.2.6',
+			description='Standalone controller maping tool',
+			author='kozec',
+			packages=packages,
+			data_files = data_files,
+			scripts=['scripts/sc-controller', 'scripts/scc-daemon',
+				'scripts/scc-osd-message', 'scripts/scc-osd-menu',
+				'scripts/scc-osd-keyboard'],
+			license='GPL2',
+			platforms=['Linux'],
+			ext_modules=[
+				Extension('libuinput', sources = ['scc/uinput.c']),
+			]
+	)
