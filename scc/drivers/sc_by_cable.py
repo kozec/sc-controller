@@ -29,7 +29,24 @@ class SCByCable(USBDevice, SCController):
 		self._ready = False
 		
 		self.claim_by(klass=3, subclass=0, protocol=0)
+		self._driver.handle.controlWrite(
+			0x21,	# request_type
+			0x09,	# request
+			0x0300,	# value
+			CONTROLIDX,
+			struct.pack('>BBB61x', 0xae, 0x15, 0x01)
+		)
+		data = self._driver.handle.controlRead(
+			0xA1,	# request_type
+			0x01,	# request
+			0x0300,	# value
+			CONTROLIDX,
+			64
+		)
+		self._serial = "".join(struct.unpack(">xxx12c49x", data))
+		log.debug("Got wired SC with serial %s", self._serial)
 		self.set_input_interrupt(ENDPOINT, 64, self._wait_input)
+	
 	
 	def _wait_input(self, endpoint, data):
 		tup = ControllerInput._make(struct.unpack(TUP_FORMAT, data))
