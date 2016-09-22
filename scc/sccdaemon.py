@@ -417,50 +417,7 @@ class SCCDaemon(Daemon):
 		while True:
 			for fn in self.mainloops:
 				fn()
-		
-		'''
-		while True:
-			try:
-				sc = None
-				sc = SCController(callback=self.mapper.callback)
-				sc.configure(enable_gyros=bool(self.mapper.profile.gyro), led_level=Config()["led_level"])
-				self.mapper.set_controller(sc)
-				sc.setStatusCallback(self.on_controller_status)
-				if self.error is not None:
-					self.error = None
-					log.debug("Recovered after error")
-					self._send_to_all(b"Ready.\n")
-				self.lock.release()
-				sc.run()
-				# Reaches here only if USB dongle is disconnected or gets stuck
-				self.mapper.release_virtual_buttons()
-			except (ValueError, USBError), e:
-				# When SCController fails to initialize, daemon should
-				# still stay alive, so it is able to report this failure.
-				#
-				# As this is most likely caused by hw device being not
-				# connected or busy, daemon will also repeadedly try to
-				# reinitialize SCController instance expecting error to be
-				# fixed by higher power (aka. user)
-				was_error = self.error is not None
-				self.error = unicode(e)
-				if sc:
-					try:
-						sc.unclaim()
-					except Exception, e:
-						log.warning("Failed to unclaim device. Except bad things to happen.")
-						log.warning(e)
-				try:
-					self.lock.release()
-				except: pass
-				log.error(e)
-				if not was_error:
-					self._send_to_all(("Error: %s\n" % (self.error,)).encode("utf-8"))
-				self.mapper.release_virtual_buttons()
-				time.sleep(5)
-			self.lock.acquire()
-			self.mapper.release_virtual_buttons()
-		'''
+	
 	
 	def start_listening(self):
 		if os.path.exists(self.socket_file):
