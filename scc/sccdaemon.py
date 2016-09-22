@@ -161,7 +161,7 @@ class SCCDaemon(Daemon):
 		with self.lock:
 			for c in self.clients:
 				c.close()
-		os.system("%s %s None restart" % ( sys.executable, sys.argv[0] ))
+		os.system("%s %s None restart &" % ( sys.executable, sys.argv[0] ))
 	
 	
 	def on_sa_led(self, mapper, action):

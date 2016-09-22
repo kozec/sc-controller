@@ -8,7 +8,8 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gdk, GObject, GLib
-from scc.special_actions import ChangeProfileAction, TurnOffAction
+from scc.special_actions import TurnOffAction, RestartDaemonAction
+from scc.special_actions import ChangeProfileAction
 from scc.modifiers import SensitivityModifier
 from scc.actions import Action, NoAction
 from scc.paths import get_profiles_path
@@ -285,7 +286,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbRegExp = self.builder.get_object("cbRegExp")
 		rbProfile = self.builder.get_object("rbProfile")
 		rbTurnOff = self.builder.get_object("rbTurnOff")
-		rbRelease = self.builder.get_object("rbRelease")
+		rbRestart = self.builder.get_object("rbRestart")
 		# Grab data
 		model, iter = tvItems.get_selection().get_selected()
 		o = model.get_value(iter, 0)
@@ -304,7 +305,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			self.set_cb(cbProfile, o.action.profile)
 		elif isinstance(o.action, TurnOffAction):
 			rbTurnOff.set_active(True)
-		# elif: TODO: last one
+		elif isinstance(o.action, RestartDaemonAction):
+			rbRestart.set_active(True)
 		
 		# Setup editor
 		if condition.title:
@@ -340,7 +342,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbRegExp = self.builder.get_object("cbRegExp")
 		rbProfile = self.builder.get_object("rbProfile")
 		rbTurnOff = self.builder.get_object("rbTurnOff")
-		rbRelease = self.builder.get_object("rbRelease")
+		rbRestart = self.builder.get_object("rbRestart")
 		ce = self.builder.get_object("ConditionEditor")
 		
 		# Build condition
@@ -363,6 +365,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			action = ChangeProfileAction(model.get_value(iter, 0))
 		elif rbTurnOff.get_active():
 			action = TurnOffAction()
+		elif rbRestart.get_active():
+			action = RestartDaemonAction()
 		
 		# Grab & update current row
 		model, iter = tvItems.get_selection().get_selected()
@@ -381,6 +385,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		model = tvItems.get_model()
 		o = GObject.GObject()
 		o.condition = Condition()
+		o.action = NoAction()
 		iter = model.append((o, o.condition.describe(), "None"))
 		tvItems.get_selection().select_iter(iter)
 		self.on_tvItems_cursor_changed()

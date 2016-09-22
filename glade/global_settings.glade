@@ -1523,10 +1523,10 @@ grips, triggers, finger positions on both pads and stick angle.</property>
           </packing>
         </child>
         <child>
-          <object class="GtkRadioButton" id="rbRelease">
+          <object class="GtkRadioButton" id="rbRestart">
+            <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">False</property>
-            <property name="no_show_all">True</property>
             <property name="margin_top">5</property>
             <property name="active">True</property>
             <property name="draw_indicator">True</property>
@@ -1535,7 +1535,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               <object class="GtkLabel" id="label36">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Release Devices</property>
+                <property name="label" translatable="yes">Restart Daemon</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
                 </attributes>

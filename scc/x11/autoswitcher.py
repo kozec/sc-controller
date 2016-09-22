@@ -130,23 +130,39 @@ class AutoSwitcher(object):
 		profile_name = action.profile
 		path = find_profile(profile_name)
 		if path:
-			self.lock.acquire()
-			if path != self.current_profile and not self.current_profile.endswith(".mod"):
-				# Switch only if target profile is not active
-				# and active profile is not being editted.
-				try:
-					if self.config['autoswitch_osd']:
-						msg = (_("Switched to profile") + " " + profile_name)
-						self.socket.send(b"OSD: " + msg.encode('utf-8') + b"\n")
-					self.socket.send(b"Profile: " + path.encode('utf-8') + b"\n")
-				except:
-					self.lock.release()
-					log.error("Socket write failed")
-					os._exit(2)
-					return
-			self.lock.release()
+			with self.lock:
+				if path != self.current_profile and not self.current_profile.endswith(".mod"):
+					# Switch only if target profile is not active
+					# and active profile is not being editted.
+					try:
+						if self.config['autoswitch_osd']:
+							msg = (_("Switched to profile") + " " + profile_name)
+							self.socket.send(b"OSD: " + msg.encode('utf-8') + b"\n")
+						self.socket.send(b"Profile: " + path.encode('utf-8') + b"\n")
+					except:
+						log.error("Socket write failed")
+						os._exit(2)
+						return
 		else:
 			log.error("Cannot switch to profile '%s', profile file not found", self.conds[c])
+	
+	
+	def on_sa_turnoff(self, mapper, action):
+		with self.lock:
+			try:
+				self.socket.send(b"Turnoff.\n")
+			except:
+				log.error("Socket write failed")
+				os._exit(2)
+	
+	
+	def on_sa_restart(self, *a):
+		with self.lock:
+			try:
+				self.socket.send(b"Restart.\n")
+			except:
+				log.error("Socket write failed")
+				os._exit(2)
 	
 	
 	def sigint(self, *a):
