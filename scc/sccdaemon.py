@@ -929,8 +929,8 @@ class ObservingAction(ReportingAction):
 		self.original_action.trigger(mapper, position, old_position)
 	
 	
-	def button_press(self, mapper):
-		ReportingAction.button_press(self, mapper)
+	def button_press(self, mapper, number=1):
+		ReportingAction.button_press(self, mapper, number)
 		self.original_action.button_press(mapper)
 	
 	
