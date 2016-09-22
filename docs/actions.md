@@ -176,6 +176,10 @@ Executes command on background
 Turns controller off
 
 
+#### <a name="restart"></a> restart()
+Restarts scc-daemon. Don't use unless you have good reason to.
+
+
 #### <a name="led"></a> led(brightness)
 Sets brightness of controller led. 'Brightness' is percent in 0 to 100 range.
 
