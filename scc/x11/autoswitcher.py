@@ -29,6 +29,7 @@ class AutoSwitcher(object):
 		self.parser = TalkingActionParser()
 		self.mapper = Mapper(None, keyboard=None, mouse=None, gamepad=None)
 		self.mapper.set_special_actions_handler(self)
+		self.enabled = False
 		self.socket = None
 		self.connected = False
 		self.exit_code = None
@@ -107,6 +108,9 @@ class AutoSwitcher(object):
 					log.debug("Reloading config...")
 					self.config = Config()
 					self.conds = AutoSwitcher.parse_conditions(self.config)
+				elif line.startswith("Controller Count:"):
+					self.enabled = int(line.split(":")[-1]) > 0
+					log.debug("Enabled: %s", self.enabled)
 			
 			self.lock.release()
 	
@@ -174,7 +178,8 @@ class AutoSwitcher(object):
 		self.thread.start()
 		log.debug("AutoSwitcher started")
 		while self.exit_code is None:
-			self.check()
+			if self.enabled:
+				self.check()
 			time.sleep(self.INTERVAL)
 		return 1
 
