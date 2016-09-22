@@ -156,6 +156,8 @@ class USBDriver(object):
 	def __init__(self):
 		self._known_ids = {}
 		self._devices = {}
+		self._retry_devices = []
+		self._retry_devices_timer = 0
 		self._context = None	# Set by start method
 		self._poller = None		# Set by start method
 	
@@ -192,6 +194,10 @@ class USBDriver(object):
 				d.close()
 			return
 		
+		self.handle_new_device(device)
+	
+	
+	def handle_new_device(self, device):
 		tp = device.getVendorID(), device.getProductID()
 		if tp in self._known_ids:
 			try:
@@ -199,13 +205,19 @@ class USBDriver(object):
 			except usb1.USBError:
 				log.error("Failed to open USB device: %x:%x", *tp)
 				return
-			handled_device = self._known_ids[tp](device, handle)
+			try:
+				handled_device = self._known_ids[tp](device, handle)
+			except usb1.USBErrorBusy:
+				log.error("Failed to claim USB device: %x:%x", *tp)
+				self._retry_devices.append(tp)
+				device.close()
+				return
 			if handled_device:
 				self._devices[device] = handled_device
 				log.debug("USB device added: %x:%x", *tp)
 			else:
 				log.warning("Known USB device ignored: %x:%x", *tp)
-				device.close()
+				device.close()	
 	
 	
 	def register_hotplug_device(self, callback, vendor_id, product_id):
@@ -214,9 +226,20 @@ class USBDriver(object):
 	
 	
 	def mainloop(self):
-		self._poller.poll()
+		self._poller.poll(timeout=1)
 		for d in self._devices.values():		# TODO: don't use .values() here
 			d.flush()
+		if len(self._retry_devices):
+			if time.time() > self._retry_devices_timer:
+				self._retry_devices_timer = time.time() + 5.0
+				lst, self._retry_devices = self._retry_devices, []
+				for vendor, product in lst:
+					try:
+						device = self._context.getByVendorIDAndProductID(vendor, product)
+					except:
+						self._retry_devices.append(( vendor, product ))
+						continue
+					self.handle_new_device(device)
 
 
 # USBDriver should be instance-wide singleton
