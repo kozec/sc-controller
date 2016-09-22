@@ -73,7 +73,8 @@ class Dongle(USBDevice):
 		# Called when dongle is removed
 		for c in self._controllers.values():
 			self.daemon.remove_controller(c)
-		self._controllers = []
+		self._controllers = {}
+		USBDevice.close(self)
 	
 	
 	def overwrite_control(self, index, data):

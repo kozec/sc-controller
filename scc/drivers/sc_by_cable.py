@@ -45,6 +45,7 @@ class SCByCable(USBDevice, SCController):
 		if self._ready:
 			self.daemon.remove_controller(self)
 			self._ready = False
+		USBDevice.close(self)
 	
 	
 	def turnoff(self):

@@ -150,9 +150,17 @@ scc-osd-daemon sends `Register: osd`
 scc-autoswitch-daemon `Register: autoswitch`
 Daemon responds with `OK.`
 
+#### `Restart.`
+Restarts daemon. This has same effect as calling "scc-daemon None restart", as that's exactly what
+gets called. All clients are disconnected immediately, so there is no response.
+
 #### `Selected: menu_id item_id`
 Send by scc-osd-daemon when user chooses item from displayed menu.
 If menu_id or item_id contains spaces or quotes, it should be escaped.
+Daemon responds with `OK.`
+
+#### `Turnoff.`
+Turns off all controllers.
 Daemon responds with `OK.`
 
 #### `Unlock.`

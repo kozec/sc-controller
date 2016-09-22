@@ -61,7 +61,7 @@ class SCCDaemon(Daemon):
 		See __init__.py in scc.drivers.
 		"""
 		log.debug("Initializing drivers...")
-		self._to_start = set()	# del-eted later by start_drivers
+		self._to_start = set()  # del-eted later by start_drivers
 		for importer, modname, ispkg in pkgutil.walk_packages(path=scc.drivers.__path__, onerror=lambda x: None):
 			if not ispkg and modname != "driver":
 				mod = getattr(__import__('scc.drivers.%s' % (modname,)).drivers, modname)
@@ -94,6 +94,11 @@ class SCCDaemon(Daemon):
 		for s in self._to_start:
 			s(self)
 		del self._to_start
+	
+	
+	def stop_drivers(self):
+		for s in self.drivers_to_stop:
+			s(self)
 	
 	
 	def add_to_mainloop(self, fn):
@@ -564,6 +569,16 @@ class SCCDaemon(Daemon):
 					self._send_to_all("Reconfigured.\n".encode("utf-8"))
 				except:
 					pass
+		elif message.startswith("Turnoff."):
+			with self.lock:
+				for c in self.controllers:
+					c.turnoff()
+				client.wfile.write(b"OK.\n")
+		elif message.startswith("Restart."):
+			with self.lock:
+				for c in self.clients:
+					c.close()
+			os.system("%s %s None restart" % ( sys.executable, sys.argv[0] ))
 		elif message.startswith("Selected:"):
 			menuaction = None
 			def press(mapper):
