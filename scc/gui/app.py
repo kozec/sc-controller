@@ -15,6 +15,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
 from scc.gui.statusicon import get_status_icon
 from scc.gui.dwsnc import headerbar, IS_UNITY
+from scc.gui.profile_switcher import ProfileSwitcher
 from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
@@ -55,7 +56,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.dm.connect("controller-count-changed", self.on_daemon_ccunt_changed)
 		self.dm.connect("dead", self.on_daemon_dead)
 		self.dm.connect("error", self.on_daemon_error)
-		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
 		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		self.dm.connect("version", self.on_daemon_version)
 		# Set variables
@@ -71,9 +71,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.background = None
 		self.outdated_version = None
 		self.profile_switchers = []
+		self.current_file = None	# Currently edited file
 		self.controller_count = 0
 		self.current = Profile(GuiActionParser())
-		self.current_file = None
 		self.just_started = True
 		self.button_widgets = {}
 		self.hilights = { App.HILIGHT_COLOR : set(), App.OBSERVE_COLOR : set() }
@@ -93,22 +93,19 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.ribar = None
 		self.create_binding_buttons()
 		
-		self.profile_switchers.append(ProfileSwitcher(
-			self.builder.get_object("vbProfile"),
-			self.builder.get_object("lblProfile"),
-			self.builder.get_object("cbProfile"),
-			self.builder.get_object("rvProfileChanged")
-		))
+		ps = self.add_switcher(10, 10)
+		ps.set_allow_new(True)
+		ps.set_profile(self.load_profile_selection())
+		ps.connect('changed', self.on_profile_selected)
+		ps.connect('new-clicked', self.on_new_clicked)
+		ps.connect('save-clicked', self.on_save_clicked)
+		ps.connect('unknown-profile', self.on_unknown_profile)
 		
 		# Drag&drop target
 		self.builder.get_object("content").drag_dest_set(Gtk.DestDefaults.ALL, [
 			Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0)
 			], Gdk.DragAction.COPY
 		)
-		
-		# Profile list
-		self.builder.get_object("cbProfile").set_row_separator_func(
-			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
 		
 		# 'C' button
 		vbc = self.builder.get_object("vbC")
@@ -299,7 +296,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.builder.get_object("btRedo").set_sensitive(True)
 		if len(self.undo) < 1:
 			self.builder.get_object("btUndo").set_sensitive(False)
-		self.on_profile_changed()
+		self.on_profile_modified()
 	
 	
 	def on_btRedo_clicked(self, *a):
@@ -310,68 +307,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.builder.get_object("btUndo").set_sensitive(True)
 		if len(self.redo) < 1:
 			self.builder.get_object("btRedo").set_sensitive(False)
-		self.on_profile_changed()
+		self.on_profile_modified()
 	
 	
 	def on_profiles_loaded(self, profiles):
-		cb = self.builder.get_object("cbProfile")
-		model = cb.get_model()
-		model.clear()
-		i = 0
-		current_profile, current_index = self.load_profile_selection(), 0
-		for f in sorted(profiles, key=lambda f: f.get_basename()):
-			name = f.get_basename()
-			if name.endswith(".mod"):
-				continue
-			if name.startswith("."):
-				continue
-			if name.endswith(".sccprofile"):
-				name = name[0:-11]
-			if name == current_profile:
-				current_index = i
-			model.append((name, f, None))
-			i += 1
-		model.append(("-", None, None))
-		model.append((_("New profile..."), None, None))
-		
-		if cb.get_active_iter() is None:
-			cb.set_active(current_index)
-	
-	
-	def on_cbProfile_changed(self, cb, *a):
-		""" Called when user chooses profile in selection combo """
-		if self.recursing : return
-		model = cb.get_model()
-		iter = cb.get_active_iter()
-		f = model.get_value(iter, 1)
-		if f is None:
-			if self.current_file is None:
-				cb.set_active(0)
-			else:
-				self.select_profile(self.current_file.get_path())
-			new_name = os.path.split(self.current_file.get_path())[-1]
-			if new_name.endswith(".mod"): new_name = new_name[0:-4]
-			if new_name.endswith(".sccprofile"): new_name = new_name[0:-11]
-			new_name = _("Copy of") + " " + new_name
-			dlg = self.builder.get_object("dlgNewProfile")
-			txNewProfile = self.builder.get_object("txNewProfile")
-			txNewProfile.set_text(new_name)
-			dlg.set_transient_for(self.window)
-			dlg.show()
-		else:
-			modpath = f.get_path() + ".mod"
-			if os.path.exists(modpath):
-				log.debug("Removing .mod file '%s'", modpath)
-				try:
-					os.unlink(modpath)
-				except Exception, e:
-					log.warning("Failed to remove .mod file")
-					log.warning(e)
-			
-			self.load_profile(f)
-			if not self.daemon_changed_profile:
-				self.dm.set_profile(f.get_path())
-			self.save_profile_selection(f.get_path())
+		for ps in self.profile_switchers:
+			ps.set_profile_list(profiles)
 	
 	
 	def on_dlgNewProfile_delete_event(self, dlg, *a):
@@ -387,54 +328,45 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		dlg.hide()
 	
 	
-	def new_profile(self, profile, name):
+	def on_profile_modified(self, *a):
 		"""
-		Stores passed profile under specified name, adds it to UI
-		and selects it.
+		Called when selected profile is modified in memory.
 		"""
-		cb = self.builder.get_object("cbProfile")
-		filename = name + ".sccprofile"
-		path = os.path.join(get_profiles_path(), filename)
-		self.current_file = Gio.File.new_for_path(path)
-		self.current = profile
-		self.recursing = True
-		model = cb.get_model()
-		model.insert(0, ( name, self.current_file, None ))
-		cb.set_active(0)
-		self.recursing = False
-		self.save_profile(self.current_file, profile)
-		for b in self.button_widgets.values():
-			b.update()
-		self.on_profile_saved(self.current_file, False)	# Just to indicate that there are no changes to save
+		self.profile_switchers[0].set_profile_modified(True)
+		
+		if not self.current_file.get_path().endswith(".mod"):
+			mod = self.current_file.get_path() + ".mod"
+			self.current_file = Gio.File.new_for_path(mod)
+		
+		self.save_profile(self.current_file, self.current)
 	
 	
 	def on_profile_loaded(self, profile, giofile):
 		self.current = profile
 		self.current_file = giofile
+		self.profile_switchers[0].set_profile_modified(False)
 		for b in self.button_widgets.values():
 			b.update()
-		self.on_profile_saved(giofile, False)	# Just to indicate that there are no changes to save
 	
 	
-	def on_profile_changed(self, *a):
-		"""
-		Called when selected profile is modified in memory.
-		Displays "changed" next to profile name and shows Save button.
+	def on_profile_selected(self, ps, name, giofile):
+		self.load_profile(giofile)
+		if ps.get_controller():
+			ps.get_controller().set_profile(giofile.get_path())
+	
+	
+	def on_unknown_profile(self, ps, name):
+		log.warn("Daemon reported unknown profile: '%s'; Overriding.", name)
+		if self.current_file is not None:
+			ps.get_controller().set_profile(self.current_file.get_path())
+	
+	
+	def on_save_clicked(self, *a):
+		if self.current_file.get_path().endswith(".mod"):
+			orig = self.current_file.get_path()[0:-4]
+			self.current_file = Gio.File.new_for_path(orig)
 		
-		If sccdaemon is alive, creates 'original.filename.mod' and loads it
-		into daemon to activate changes right away.
-		"""
-		cb = self.builder.get_object("cbProfile")
-		self.builder.get_object("rvProfileChanged").set_reveal_child(True)
-		model = cb.get_model()
-		for row in model:
-			if self.current_file == model.get_value(row.iter, 1):
-				model.set_value(row.iter, 2, _("(changed)"))
-				break
-		
-		if self.dm.is_alive():
-			modfile = Gio.File.new_for_path(self.current_file.get_path() + ".mod")
-			self.save_profile(modfile, self.current)
+		self.save_profile(self.current_file, self.current)
 	
 	
 	def on_profile_saved(self, giofile, send=True):
@@ -448,22 +380,27 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				self.dm.set_profile(giofile.get_path())
 			return
 		
-		cb = self.builder.get_object("cbProfile")
-		self.builder.get_object("rvProfileChanged").set_reveal_child(False)
-		model = cb.get_model()
-		for row in model:
-			if model.get_value(row.iter, 1) == self.current_file:
-				model.set_value(row.iter, 1, giofile)
-			model.set_value(row.iter, 2, None)
-		
+		self.profile_switchers[0].set_profile_modified(False)
 		if send and self.dm.is_alive() and not self.daemon_changed_profile:
 			self.dm.set_profile(giofile.get_path())
 		
-		self.current_file = giofile
+		self.current_file = giofile	
 	
 	
-	def on_btSaveProfile_clicked(self, *a):
-		self.save_profile(self.current_file, self.current)
+	def on_new_clicked(self, ps, name):
+		new_name = _("Copy of %s") % (name,)
+		filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+		i = 0
+		while os.path.exists(filename):
+			i += 1
+			new_name = _("Copy of %s (%s)") % (name, i)
+			filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+		
+		dlg = self.builder.get_object("dlgNewProfile")
+		txNewProfile = self.builder.get_object("txNewProfile")
+		txNewProfile.set_text(new_name)
+		dlg.set_transient_for(self.window)
+		dlg.show()
 	
 	
 	def on_action_chosen(self, id, action):
@@ -472,7 +409,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
 			self.builder.get_object("btUndo").set_sensitive(True)
-		self.on_profile_changed()
+		self.on_profile_modified()
 	
 	
 	def on_background_area_hover(self, trash, area):
@@ -515,7 +452,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_daemon_alive(self, *a):
 		self.set_daemon_status("alive", True)
 		self.hide_error()
-		if self.current_file is not None and not self.just_started:
+		if self.profile_switchers[0].get_file() is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
 		self.enable_test_mode()
 	
@@ -537,7 +474,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		elif count < self.controller_count:
 			# Controller removed
 			while len(self.profile_switchers) > max(1, count):
-				self.remove_switcher(self.profile_switchers.pop())
+				s = self.profile_switchers.pop()
+				s.set_controller(None)
+				self.remove_switcher(s)
 		
 		# Assign controllers to widgets
 		for i in xrange(0, count):
@@ -552,7 +491,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.controller_count = count
 	
 	
-	def add_switcher(self):
+	def new_profile(self, profile, name):
+		filename = os.path.join(get_profiles_path(), name + ".sccprofile")
+		self.current_file = Gio.File.new_for_path(filename)
+		self.save_profile(self.current_file, profile)
+	
+	
+	def add_switcher(self, margin_left=20, margin_right=40, margin_bottom=2):
 		"""
 		Adds new profile switcher widgets on top of window. Called
 		when new controller is connected to daemon.
@@ -560,11 +505,17 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Returns generated ProfileSwitcher instance.
 		"""
 		vbAllProfiles = self.builder.get_object("vbAllProfiles")
-		s = self.profile_switchers[0].clone()
-		vbAllProfiles.pack_start(s.get_main(), False, False, 0)
-		vbAllProfiles.reorder_child(s.get_main(), 0)
+		
+		ps = ProfileSwitcher(self)
+		ps.set_margin_left(margin_left)
+		ps.set_margin_right(margin_right)
+		ps.set_margin_bottom(margin_bottom)
+		
+		vbAllProfiles.pack_start(ps, False, False, 0)
+		vbAllProfiles.reorder_child(ps, 0)
 		vbAllProfiles.show_all()
-		return s
+		self.profile_switchers.append(ps)
+		return ps
 	
 	
 	def remove_switcher(self, s):
@@ -701,32 +652,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.config.reload()
 	
 	
-	def on_daemon_profile_changed(self, trash, profile):
-		current_changed = self.builder.get_object("rvProfileChanged").get_reveal_child()
-		if self.just_started or not current_changed:
-			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
-			self.daemon_changed_profile = True
-			found = self.select_profile(profile)
-			self.daemon_changed_profile = False
-			if not found:
-				if os.path.split(profile)[-1].startswith(".") and os.path.exists(profile):
-					# Daemon uses dot profile, display it temporaly
-					log.info("Daemon reported selecting dot profile: '%s'", profile)
-					cb = self.builder.get_object("cbProfile")
-					model = cb.get_model()
-					f = Gio.File.new_for_path(profile)
-					name = ".".join(os.path.split(profile)[-1].split(".")[0:-1])
-					iter = model.insert(0, (name, f, None))
-					cb.set_active_iter(iter)
-				else:
-					# Daemon uses unknown profile, override it with something I know about
-					log.warn("Daemon reported unknown profile: '%s'; Overriding.", profile)
-					if self.current_file is not None:
-						self.dm.set_profile(self.current_file.get_path())
-				
-		self.just_started = False
-	
-	
 	def on_daemon_dead(self, *a):
 		if self.just_started:
 			self.dm.restart()
@@ -787,30 +712,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def do_activate(self, *a):
 		self.builder.get_object("window").show()
-	
-	
-	def select_profile(self, name):
-		"""
-		Selects profile in profile selection combobox.
-		Returns True on success or False if profile is not in combobox.
-		"""
-		if name.endswith(".mod"): name = name[0:-4]
-		if name.endswith(".sccprofile"): name = name[0:-11]
-		if "/" in name : name = os.path.split(name)[-1]
-		
-		cb = self.builder.get_object("cbProfile")
-		model = cb.get_model()
-		active = cb.get_active_iter()
-		for row in model:
-			if model.get_value(row.iter, 1) is not None:
-				if name == model.get_value(row.iter, 0):
-					if active == row.iter:
-						# Already selected
-						return True
-					cb.set_active_iter(row.iter)
-					self.remove_dot_profile()
-					return True
-		return False
 	
 	
 	def remove_dot_profile(self):
@@ -918,57 +819,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 						gs.show(self.window)
 						# Skip first screen and try to import this file
 						gs.on_preload_finished(gs.set_file, giofile.get_path())
-
-
-class ProfileSwitcher(object):
-	"""
-	Simple wrapper around profile switcher widgets.
-	"""
-	
-	def __init__(self, box, label, combo, revealer):
-		self._box = box
-		self._label = label
-		self._combo = combo
-		self._revealer = revealer
-		self._controller = None
-	
-	
-	def set_controller(self, c):
-		self._controller = c
-		if c:
-			self._label.set_text(c.get_name())
-		else:
-			self._label.set_text(_("Profile"))
-	
-	
-	def get_main(self):
-		"""
-		Returns main/parent widget that gets added to window
-		"""
-		return self._box
-	
-	
-	def clone(self):
-		"""
-		Creates new ProfileSwitcher with new set of widgets based on this one.
-		"""
-		label = Gtk.Label(self._label.get_text())
-		label.set_size_request(100, -1)
-		label.set_xalign(0)
-		label.set_margin_right(10)
-		rend = Gtk.CellRendererText()
-		combo = Gtk.ComboBox.new_with_model(self._combo.get_model())
-		combo.pack_start(rend, True)
-		combo.add_attribute(rend, "text", 0)
-		combo.set_row_separator_func(
-			lambda model, iter : model.get_value(iter, 1) is None)
-		box = Gtk.Box(Gtk.Orientation.HORIZONTAL, 0)
-		box.pack_start(label, False, True, 0)
-		box.pack_start(combo, True, True, 0)
-		box.set_margin_left(20)
-		box.set_margin_right(40)
-		box.set_margin_bottom(2)
-		return ProfileSwitcher(box, label, combo, None)
 
 
 class UndoRedo(object):

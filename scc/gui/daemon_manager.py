@@ -193,6 +193,11 @@ class DaemonManager(GObject.GObject):
 				while c in self._controllers:
 					self._controllers.remove(c)
 				self._controllers.append(c)
+			elif line.startswith("Controller profile:"):
+				controller_id, profile = line[19:].strip().split(" ", 1)
+				c = self.get_controller(controller_id)
+				c._profile = profile.strip()
+				c.emit("profile-changed", c._profile)
 			elif line.startswith("Controller Count:"):
 				count = int(line[17:])
 				self._controllers = self._controllers[-count:]
@@ -381,7 +386,7 @@ class ControllerManager(GObject.GObject):
 	def set_profile(self, filename):
 		""" Asks daemon to change this controller profile """
 		self._send_id()
-		self.request("Profile: %s" % (filename,),
+		self._dm.request("Profile: %s" % (filename,),
 				DaemonManager.nocallback, DaemonManager.nocallback)
 	
 	
