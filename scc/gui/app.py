@@ -71,6 +71,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.background = None
 		self.outdated_version = None
 		self.profile_switchers = []
+		self.controller_count = 0
 		self.current = Profile(GuiActionParser())
 		self.current_file = None
 		self.just_started = True
@@ -519,21 +520,36 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.enable_test_mode()
 	
 	
-	def on_daemon_ccunt_changed(self, daemon, before, current):
-		if (before, current) == (0, 1):
+	def on_daemon_ccunt_changed(self, daemon, count):
+		if (self.controller_count, count) == (0, 1):
+			# First controller connected
+			# 
 			# 'event' signal should be connected only on first controller,
 			# so this block is executed only when number of connected
 			# controllers changes from 0 to 1
 			c = self.dm.get_controllers()[0]
 			c.connect('event', self.on_daemon_event_observer)
-		
-		for i in xrange(0, current):
-			if len(self.profile_switchers) <= i:
+		elif count > self.controller_count:
+			# Controller added
+			while len(self.profile_switchers) < count:
 				s = self.add_switcher()
 				self.profile_switchers.append(s)
-			else:
-				s = self.profile_switchers[i]
-			s.set_controller(self.dm.get_controllers()[i])
+		elif count < self.controller_count:
+			# Controller removed
+			while len(self.profile_switchers) > max(1, count):
+				self.remove_switcher(self.profile_switchers.pop())
+		
+		# Assign controllers to widgets
+		for i in xrange(0, count):
+			c = self.dm.get_controllers()[i]
+			self.profile_switchers[i].set_controller(c)
+		
+		if count < 1:
+			# Special case, no controllers are connected, but one widget
+			# has to stay on screen
+			self.profile_switchers[0].set_controller(None)
+		
+		self.controller_count = count
 	
 	
 	def add_switcher(self):
@@ -544,11 +560,19 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Returns generated ProfileSwitcher instance.
 		"""
 		vbAllProfiles = self.builder.get_object("vbAllProfiles")
-		w = self.profile_switchers[0].clone()
-		vbAllProfiles.pack_start(w.get_main(), False, False, 0)
-		vbAllProfiles.reorder_child(w.get_main(), 0)
+		s = self.profile_switchers[0].clone()
+		vbAllProfiles.pack_start(s.get_main(), False, False, 0)
+		vbAllProfiles.reorder_child(s.get_main(), 0)
 		vbAllProfiles.show_all()
-		return w
+		return s
+	
+	
+	def remove_switcher(self, s):
+		"""
+		Removes given profile switcher from UI.
+		"""
+		vbAllProfiles = self.builder.get_object("vbAllProfiles")
+		vbAllProfiles.remove(s.get_main())
 	
 	
 	def enable_test_mode(self):
@@ -911,7 +935,10 @@ class ProfileSwitcher(object):
 	
 	def set_controller(self, c):
 		self._controller = c
-		self._label.set_text(c.get_name())
+		if c:
+			self._label.set_text(c.get_name())
+		else:
+			self._label.set_text(_("Profile"))
 	
 	
 	def get_main(self):
