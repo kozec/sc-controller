@@ -101,6 +101,35 @@ class USBDevice(object):
 		))
 	
 	
+	def overwrite_control(self, index, data):
+		"""
+		Similar to send_control, but this one checks and overwrites
+		already scheduled controll for same device/index.
+		"""
+		for x in self._cmsg:
+			x_index, x_data, x_timeout = x[-3:]
+			# First 3 bytes are for PacketType, size and ConfigType
+			if x_index == index and x_data[0:3] == data[0:3]:
+				self._cmsg.remove(x)
+				break
+		self.send_control(index, data)	
+	
+	
+	def make_request(self, index, callback, data, size=64):
+		"""
+		Schedules synchronous request that requires response.
+		Request is done ASAP and provided callback is called with recieved data.
+		"""
+		self._rmsg.append((
+			(
+				0x21,	# request_type
+				0x09,	# request
+				0x0300,	# value
+				index, data
+			), index, size, callback
+		))
+	
+	
 	def flush(self):
 		""" Flushes all prepared control messages to device """
 		while len(self._cmsg):
