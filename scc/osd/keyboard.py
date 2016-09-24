@@ -180,11 +180,10 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def _cononect_handlers(self):
 		self._eh_ids += [
-			self.daemon.connect('dead', self.on_daemon_died),
-			self.daemon.connect('error', self.on_daemon_died),
-			self.daemon.connect('event', self.on_event),
-			self.daemon.connect('reconfigured', self.on_reconfigured),
-			self.daemon.connect('alive', self.on_daemon_connected),
+			( self.daemon, self.daemon.connect('dead', self.on_daemon_died) ),
+			( self.daemon, self.daemon.connect('error', self.on_daemon_died) ),
+			( self.daemon, self.daemon.connect('reconfigured', self.on_reconfigured) ),
+			( self.daemon, self.daemon.connect('alive', self.on_daemon_connected) ),
 		]
 	
 	
@@ -214,15 +213,22 @@ class Keyboard(OSDWindow, TimerManager):
 			log.info("Sucessfully locked input")
 			pass
 		
+		c = self.choose_controller(self.daemon)
+		if c is None or not c.is_connected():
+			# There is no controller connected to daemon
+			self.on_failed_to_lock("Controller not connected")
+		
+		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
 		# Lock everything
 		locks = [ LEFT, RIGHT, STICK ] + [ b.name for b in SCButtons ]
-		self.daemon.lock(success, self.on_failed_to_lock, *locks)
+		c.lock(success, self.on_failed_to_lock, *locks)
 	
 	
 	def quit(self, code=-1):
-		self.daemon.unlock_all()
-		for x in self._eh_ids:
-			self.daemon.disconnect(x)
+		if self.get_controller():
+			self.get_controller().unlock_all()
+		for source, eid in self._eh_ids:
+			source.disconnect(eid)
 		self._eh_ids = []
 		del self.mapper
 		OSDWindow.quit(self, code)
