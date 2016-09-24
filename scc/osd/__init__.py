@@ -88,6 +88,7 @@ class OSDWindow(Gtk.Window):
 		self.exit_code = -1
 		self.position = (20, -20)
 		self.mainloop = None
+		self._controller = None
 		self.set_name(wmclass)
 		self.set_wmclass(wmclass, wmclass)
 		self.set_decorated(False)
@@ -136,6 +137,23 @@ class OSDWindow(Gtk.Window):
 			help="""id of controller to use""")
 		self.argparser.add_argument('-d', action='store_true',
 			help="""display debug messages""")
+	
+	
+	def choose_controller(self, daemonmanager):
+		"""
+		Returns first available controller, or, if --controller argument
+		was specified, controller with matching ID.
+		"""
+		if self.args.controller:
+			self._controller = self.daemon.get_controller(self.args.controller)
+		elif self.daemon.has_controller():
+			self._controller = self.daemon.get_controllers()[0]
+		return self._controller
+	
+	
+	def get_controller(self):
+		""" Returns controller chosen by choose_controller """
+		return self._controller
 	
 	
 	def parse_argumets(self, argv):

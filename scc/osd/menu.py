@@ -52,7 +52,6 @@ class Menu(OSDWindow):
 		self.f.add(self.parent)
 		self.add(self.f)
 		
-		self._controller = None
 		self._submenu = None
 		self._scon = StickController()
 		self._scon.connect("direction", self.on_stick_direction)
@@ -72,6 +71,7 @@ class Menu(OSDWindow):
 		especially disables (un)locking of input stick and buttons.
 		"""
 		self._is_submenu = True
+	
 	
 	def create_parent(self):
 		v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -296,21 +296,19 @@ class Menu(OSDWindow):
 		if not self.config:
 			self.config = Config()
 		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
-		if self.args.controller:
-			self._controller = self.daemon.get_controller(self.args.controller)
-		elif self.daemon.has_controller():
-			self._controller = self.daemon.get_controllers()[0]
-		if self._controller is None or not self._controller.is_connected():
+		c = self.choose_controller(self.daemon)
+		if c is None or not c.is_connected():
 			# There is no controller connected to daemon
 			self.on_failed_to_lock("Controller not connected")
-		self._eh_ids += [ (self._controller, self._controller.connect('event', self.on_event)) ]
-		self._controller.lock(success, self.on_failed_to_lock, *locks)
+		
+		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
+		c.lock(success, self.on_failed_to_lock, *locks)
 	
 	
 	def quit(self, code=-2):
 		if not self._is_submenu:
-			if self._controller:
-				self._controller.unlock_all()
+			if self.get_controller():
+				self.get_controller().unlock_all()
 			for source, eid in self._eh_ids:
 				source.disconnect(eid)
 			self._eh_ids = []
