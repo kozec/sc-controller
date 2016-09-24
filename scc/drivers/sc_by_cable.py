@@ -52,11 +52,11 @@ class SCByCable(USBDevice, SCController):
 			self._last_tup = tup
 			self.input(tup)
 		elif tup.status == SCStatus.IDLE:
-			if self._last_tup:
-				# Just to keep scheduler working
-				# TODO: Probably re-enable timer here, wired controller
-				# sends IDLE only once per second
-				self.input(tup)
+			# TODO: Probably use real timer here, wired controller sends IDLE
+			# only once per second
+			if self.get_mapper():
+				# TODO: Also remove run_scheduled at that time
+				self.get_mapper().run_scheduled(time.time())
 	
 	
 	def close(self):
