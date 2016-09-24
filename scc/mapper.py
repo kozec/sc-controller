@@ -270,11 +270,15 @@ class Mapper(object):
 			log.error("Error while processing controller event")
 			log.error(traceback.format_exc())
 		
+		self.run_scheduled(now)
+		self.generate_events()
+	
+	
+	def run_scheduled(self, now):
 		if len(self.scheduled_tasks) > 0 and self.scheduled_tasks[0][0] <= now:
 			cb = self.scheduled_tasks[0][1]
 			self.scheduled_tasks = self.scheduled_tasks[1:]
 			cb(self)
-		self.generate_events()
 	
 	
 	def generate_events(self):
