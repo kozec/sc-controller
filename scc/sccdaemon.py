@@ -9,8 +9,8 @@ from scc.lib import xwrappers as X
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
+from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.paths import get_menus_path, get_default_menus_path
-from scc.tools import find_profile, nameof, shsplit, shjoin
 from scc.tools import set_logging_level, find_binary, clamp
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
@@ -203,7 +203,7 @@ class SCCDaemon(Daemon):
 	
 	
 	def on_sa_menu(self, mapper, action, *pars):
-		""" Called when 'osd' action is used """
+		""" Called when 'menu' action is used """
 		p = [ action.MENU_TYPE,
 			"--confirm-with", nameof(action.confirm_with),
 			"--cancel-with", nameof(action.cancel_with)
@@ -211,10 +211,7 @@ class SCCDaemon(Daemon):
 		if mapper.get_controller():
 			p += [ "--controller", mapper.get_controller().get_id() ]
 		if "." in action.menu_id:
-			path = None
-			for d in ( get_menus_path(), get_default_menus_path() ):
-				if os.path.exists(os.path.join(d, action.menu_id)):
-					path = os.path.join(d, action.menu_id)
+			path = find_menu(action.menu_id)
 			if not path:
 				log.error("Cannot show menu: Menu '%s' not found", action.menu_id)
 				return
