@@ -342,8 +342,9 @@ class Menu(OSDWindow):
 	
 	def on_submenu_closed(self, *a):
 		if self._submenu.get_exit_code() in (0, -2):
-			self.quit(self._submenu.get_exit_code())
+			self._menuid = self._submenu._menuid
 			self._selected = self._submenu._selected
+			self.quit(self._submenu.get_exit_code())
 		self._submenu = None
 	
 	
