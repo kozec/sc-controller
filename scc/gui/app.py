@@ -348,7 +348,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_profile_selected(self, ps, name, giofile):
-		self.load_profile(giofile)
+		if ps == self.profile_switchers[0]:
+			self.load_profile(giofile)
 		if ps.get_controller():
 			ps.get_controller().set_profile(giofile.get_path())
 	
