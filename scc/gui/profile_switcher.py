@@ -122,8 +122,7 @@ class ProfileSwitcher(Gtk.Box):
 	def set_profile_list(self, lst):
 		"""
 		Fills combobox with given list of available profiles.
-		'lst' is expected to be iterable of GIO.File's or another
-		ProfileSwitcher to copy data from.
+		'lst' is expected to be iterable of GIO.File's.
 		"""
 		self._model.clear()
 		i, current_index = 0, 0
@@ -145,6 +144,11 @@ class ProfileSwitcher(Gtk.Box):
 		
 		if self._combo.get_active_iter() is None:
 			self._combo.set_active(current_index)
+	
+	
+	def get_profile_list(self):
+		""" Returns profiles in combobox as iterable of Gio.File's """
+		return ( x[1] for x in self._model if x[1] is not None )
 	
 	
 	def on_combo_changed(self, cb):

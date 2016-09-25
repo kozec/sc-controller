@@ -96,10 +96,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		ps = self.add_switcher(10, 10)
 		ps.set_allow_new(True)
 		ps.set_profile(self.load_profile_selection())
-		ps.connect('changed', self.on_profile_selected)
 		ps.connect('new-clicked', self.on_new_clicked)
 		ps.connect('save-clicked', self.on_save_clicked)
-		ps.connect('unknown-profile', self.on_unknown_profile)
 		
 		# Drag&drop target
 		self.builder.get_object("content").drag_dest_set(Gtk.DestDefaults.ALL, [
@@ -514,7 +512,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		vbAllProfiles.pack_start(ps, False, False, 0)
 		vbAllProfiles.reorder_child(ps, 0)
 		vbAllProfiles.show_all()
+		
+		if len(self.profile_switchers) > 0:
+			ps.set_profile_list(self.profile_switchers[0].get_profile_list())
+		
 		self.profile_switchers.append(ps)
+		ps.connect('changed', self.on_profile_selected)
+		ps.connect('unknown-profile', self.on_unknown_profile)
 		return ps
 	
 	
@@ -523,7 +527,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Removes given profile switcher from UI.
 		"""
 		vbAllProfiles = self.builder.get_object("vbAllProfiles")
-		vbAllProfiles.remove(s.get_main())
+		vbAllProfiles.remove(s)
 	
 	
 	def enable_test_mode(self):
