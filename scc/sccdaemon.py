@@ -279,6 +279,12 @@ class SCCDaemon(Daemon):
 		self.xdisplay = X.open_display(os.environ["DISPLAY"])
 		if self.xdisplay:
 			log.debug("Connected to XServer %s", os.environ["DISPLAY"])
+			
+			for c in self.controllers:
+				if c.get_mapper():
+					c.get_mapper().set_xdisplay(self.xdisplay)
+			for m in self.free_mappers:
+				m.set_xdisplay(self.xdisplay)
 			if not self.alone:
 				self.subprocs.append(Subprocess("scc-osd-daemon", True))
 				if len(Config()["autoswitch"]):
