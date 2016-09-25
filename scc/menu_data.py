@@ -205,7 +205,8 @@ class Submenu(MenuItem):
 		if not label:
 			label = ".".join(os.path.split(filename)[-1].split(".")[0:-1])
 		self.filename = filename
-		MenuItem.__init__(self, Submenu, label)
+		MenuItem.__init__(self, str(id(self)), label)
+	
 	
 	def describe(self):
 		return self.label + "  " + _(">>")
