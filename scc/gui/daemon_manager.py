@@ -186,9 +186,8 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, nameable, name = line[11:].strip().split(" ", 2)
+				controller_id, id_is_unique = line[11:].strip().split(" ", 2)
 				c = self.get_controller(controller_id)
-				c._name = name
 				c._connected = True
 				while c in self._controllers:
 					self._controllers.remove(c)
@@ -321,7 +320,7 @@ class ControllerManager(GObject.GObject):
 		self._dm = daemon_manager
 		self._controller_id = controller_id
 		self._profile = None
-		self._name = "Controller %s" % (controller_id,)
+		self._name = controller_id
 		self._connected = False
 	
 	
@@ -352,7 +351,7 @@ class ControllerManager(GObject.GObject):
 	
 	
 	def get_name(self):
-		""" Returns name of this controller. Value is cached locally. """
+		""" Returns name of this controller. """
 		return self._name
 	
 	

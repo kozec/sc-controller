@@ -178,7 +178,6 @@ class SCController(Controller):
 			if size > 1:
 				serial = serial.strip(" \x00")
 				self._serial = serial
-				self.set_name(self.get_id())
 				self.on_serial_got()
 			else:
 				self._driver._no_serial.append(self)
