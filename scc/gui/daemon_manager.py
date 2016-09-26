@@ -186,7 +186,7 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, id_is_unique = line[11:].strip().split(" ", 2)
+				controller_id, id_is_unique = line[11:].strip().split(" ", 1)
 				c = self.get_controller(controller_id)
 				c._connected = True
 				while c in self._controllers:

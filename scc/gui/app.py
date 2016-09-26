@@ -451,6 +451,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_daemon_alive(self, *a):
 		self.set_daemon_status("alive", True)
 		self.hide_error()
+		self.just_started = False
 		if self.profile_switchers[0].get_file() is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
 		self.enable_test_mode()
