@@ -49,8 +49,8 @@ class SCCDaemon(Daemon):
 		self.mainloops = []
 		self.subprocs = []
 		self.lock = threading.Lock()
-		self.default_mapper = self.init_default_mapper()
-		self.free_mappers = [ self.default_mapper ]
+		self.default_mapper = None
+		self.free_mappers = [ ]
 		self.clients = set()
 		self.cwd = os.getcwd()
 	
@@ -423,6 +423,8 @@ class SCCDaemon(Daemon):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)
 		self.init_drivers()
+		self.default_mapper = self.init_default_mapper()
+		self.free_mappers.append(self.default_mapper)
 		self.load_default_profile()
 		self.lock.acquire()
 		self.start_listening()
