@@ -39,6 +39,9 @@ class ProfileSwitcher(Gtk.Box):
 			b"unknown-profile"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
+	SEND_TIMEOUT = 100	# How many ms should switcher wait before sending event
+						# about profile being switched
+	
 	def __init__(self, userdatamanager=None):
 		Gtk.Box.__init__(self, Gtk.Orientation.HORIZONTAL, 0)
 		self.udm = userdatamanager
@@ -47,6 +50,8 @@ class ProfileSwitcher(Gtk.Box):
 		self._first_time = True
 		self._current = None
 		self._recursing = False
+		self._timer = None	# Used to prevent sending too many request
+							# when user scrolls throught combobox
 		self._signal = None
 		self._controller = None
 	
@@ -153,23 +158,31 @@ class ProfileSwitcher(Gtk.Box):
 	
 	def on_combo_changed(self, cb):
 		if self._recursing : return
-		name = self._model.get_value(cb.get_active_iter(), 0)
-		giofile = self._model.get_value(cb.get_active_iter(), 1)
 		
-		if giofile is None:
-			# 'New profile selected'
-			self._recursing = True
-			if self._current is None:
-				cb.set_active(0)
-			else:
-				self.set_profile(self._current)
-			self._recursing = False
-			
+		def run_later():
 			name = self._model.get_value(cb.get_active_iter(), 0)
-			self.emit('new-clicked', name)
-		else:
-			self._current = name
-			self.emit('changed', name, giofile)
+			giofile = self._model.get_value(cb.get_active_iter(), 1)
+			GLib.source_remove(self._timer)
+			self._timer = None
+			
+			if giofile is None:
+				# 'New profile selected'
+				self._recursing = True
+				if self._current is None:
+					cb.set_active(0)
+				else:
+					self.set_profile(self._current)
+				self._recursing = False
+				
+				name = self._model.get_value(cb.get_active_iter(), 0)
+				self.emit('new-clicked', name)
+			else:
+				self._current = name
+				self.emit('changed', name, giofile)
+		
+		if self._timer is not None:
+			GLib.source_remove(self._timer)
+		self._timer = GLib.timeout_add(ProfileSwitcher.SEND_TIMEOUT, run_later)
 	
 	
 	def on_savebutton_clicked(self, *a):
