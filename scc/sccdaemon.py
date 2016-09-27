@@ -233,7 +233,6 @@ class SCCDaemon(Daemon):
 			p += [ "--from-profile", mapper.profile.get_filename(), action.menu_id ]
 		p += list(pars)
 		
-		print p
 		self._osd(*p)
 	
 	on_sa_gridmenu = on_sa_menu
@@ -350,7 +349,8 @@ class SCCDaemon(Daemon):
 	
 	def remove_controller(self, c):
 		mapper = c.mapper
-		mapper.release_virtual_buttons()
+		if mapper:
+			mapper.release_virtual_buttons()
 		c.disconnected()
 		
 		with self.lock:
@@ -381,8 +381,8 @@ class SCCDaemon(Daemon):
 		Sends controller count and list of controllers using provided method
 		"""
 		for c in self.controllers:
-			method(("Controller: %s %s %s\n" % (
-				c.get_id(), c.id_is_persistent(), c.get_name()
+			method(("Controller: %s %s\n" % (
+				c.get_id(), c.get_id_is_persistent()
 			)).encode("utf-8"))
 		method(("Controller Count: %s\n" % (len(self.controllers),)).encode("utf-8"))
 	
@@ -429,8 +429,8 @@ class SCCDaemon(Daemon):
 		self.lock.acquire()
 		self.start_listening()
 		self.connect_x()
-		self.start_drivers()
 		self.lock.release()
+		self.start_drivers()
 		
 		while True:
 			for fn in self.mainloops:

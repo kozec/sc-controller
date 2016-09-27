@@ -64,6 +64,7 @@ class Dongle(USBDevice):
 		
 		self.claim_by(klass=3, subclass=0, protocol=0)
 		self._controllers = {}
+		self._no_serial = []
 		for i in xrange(0, Dongle.MAX_ENDPOINTS):
 			# Steam dongle apparently can do only 4 controllers at once
 			self.set_input_interrupt(FIRST_ENDPOINT + i, 64, self._on_input)
@@ -98,9 +99,9 @@ class Dongle(USBDevice):
 		"""
 		ccidx = FIRST_CONTROLIDX + endpoint - FIRST_ENDPOINT
 		c = SCController(self, ccidx, endpoint)
-		c._configure()
+		c.configure()
+		c.read_serial()
 		self._controllers[endpoint] = c
-		self.daemon.add_controller(c)
 	
 	
 	def _on_input(self, endpoint, data):
@@ -119,7 +120,12 @@ class Dongle(USBDevice):
 		elif tup.status == SCStatus.INPUT:
 			if endpoint not in self._controllers:
 				self._add_controller(endpoint)
-			self._controllers[endpoint].input(tup)
+			elif len(self._no_serial):
+				for x in self._no_serial:
+					x.read_serial()
+				self._no_serial = []
+			else:
+				self._controllers[endpoint].input(tup)
 
 
 class SCStatus(IntEnum):
@@ -132,16 +138,26 @@ class SCPacketType(IntEnum):
 	OFF = 0x9f
 	AUDIO = 0xb6
 	CONFIGURE = 0x87
+	LED = 0x87
 	CALIBRATE_JOYSTICK = 0xbf
 	CALIBRATE_TRACKPAD = 0xa7
 	SET_AUDIO_INDICES = 0xc1
 	FEEDBACK = 0x8f
 	RESET = 0x95
+	GET_SERIAL = 0xAE
+
+
+class SCPacketLength(IntEnum):
+	LED = 0x03
+	OFF = 0x04
+	FEEDBACK = 0x07
+	CONFIGURE = 0x15
+	GET_SERIAL = 0x15
 
 
 class SCConfigType(IntEnum):
 	LED = 0x2d
-	TIMEOUT_N_GYROS = 0x32
+	CONFIGURE = 0x32
 
 
 class SCController(Controller):
@@ -152,8 +168,13 @@ class SCController(Controller):
 		self._idle_timeout = 600
 		self._enable_gyros = False
 		self._led_level = 10
+		self._serial = "0000000000"
 		self._old_state = SCI_NULL
 		self._ccidx = ccidx
+	
+	
+	def __repr__(self):
+		return "<SCWireless %s>" % (self.get_id(),)
 	
 	
 	def input(self, idata):
@@ -161,7 +182,29 @@ class SCController(Controller):
 		self.mapper.input(self, time.time(), old_state, idata)
 	
 	
-	def _configure(self, idle_timeout=None, enable_gyros=None, led_level=None):
+	def read_serial(self):
+		def cb(rawserial):
+			size, serial = struct.unpack(">xBx12s49x", rawserial)
+			if size > 1:
+				serial = serial.strip(" \x00")
+				self._serial = serial
+				self.on_serial_got()
+			else:
+				self._driver._no_serial.append(self)
+		
+		self._driver.make_request(
+			self._ccidx, cb,
+			struct.pack('>BBB61x',
+				SCPacketType.GET_SERIAL, SCPacketLength.GET_SERIAL, 0x01))
+	
+	
+	def on_serial_got(self):
+		log.debug("Got wireless SC with serial %s", self._serial)
+		self.set_id("sc%s" % (self._serial,), True)
+		self._driver.daemon.add_controller(self)
+	
+	
+	def configure(self, idle_timeout=None, enable_gyros=None, led_level=None):
 		"""
 		Sets and, if possible, sends configuration to controller.
 		Only value that is provided is changed.
@@ -172,8 +215,8 @@ class SCController(Controller):
 		"""
 		packet format:
 		 - uint8_t type - SCPacketType.CONFIGURE
-		 - uint8_t size - 0x03 for led configuration, 0x15 for timeout & gyros
-		 - uint8_t config_type - one of SCConfigType
+		 - uint8_t size - SCPacketLength.CONFIGURE or SCPacketLength.LED
+		 - uint8_t config_type - SCConfigType.CONFIGURE or SCConfigType.LED
 		 - 61b data
 		
 		Format for data when configuring controller:
@@ -200,8 +243,8 @@ class SCController(Controller):
 		# Timeout & Gyros
 		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBBB13sB2s43x',
 			SCPacketType.CONFIGURE,
-			0x15, # size
-			SCConfigType.TIMEOUT_N_GYROS,
+			SCPacketLength.CONFIGURE,
+			SCConfigType.CONFIGURE,
 			timeout1, timeout2,
 			unknown1,
 			0x14 if self._enable_gyros else 0,
@@ -227,7 +270,7 @@ class SCController(Controller):
 	
 	
 	def set_gyro_enabled(self, enabled):	
-		self._configure(enable_gyros = enabled)
+		self.configure(enable_gyros = enabled)
 	
 	
 	def turnoff(self):

@@ -52,7 +52,8 @@ class USBDevice(object):
 		self.device = device
 		self.handle = handle
 		self._claimed = []
-		self._cmsg = []
+		self._cmsg = []		# controll messages
+		self._rmsg = []		# requests (excepts response)
 		self._transfer_list = []
 	
 	
@@ -135,6 +136,17 @@ class USBDevice(object):
 		while len(self._cmsg):
 			msg = self._cmsg.pop()
 			self.handle.controlWrite(*msg)
+		
+		while len(self._rmsg):
+			msg, index, size, callback = self._rmsg.pop()
+			self.handle.controlWrite(*msg)
+			data = self.handle.controlRead(
+				0xA1,	# request_type
+				0x01,	# request
+				0x0300,	# value
+				index, size
+			)
+			callback(data)
 	
 	
 	def claim(self, number):

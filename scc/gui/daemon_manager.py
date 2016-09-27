@@ -27,7 +27,7 @@ class DaemonManager(GObject.GObject):
 		alive ()
 			Emited after daemon is started or found to be alraedy running
 		
-		controller-count-changed(before, current)
+		controller-count-changed(count)
 			Emited after daemon reports change in controller count, ie when
 			new controller is connnected or disconnected.
 			Also emited shortly after connection to daemon is initiated.
@@ -56,7 +56,7 @@ class DaemonManager(GObject.GObject):
 	
 	__gsignals__ = {
 			b"alive"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"controller-count-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (int, int)),
+			b"controller-count-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (int,)),
 			b"dead"						: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"error"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"profile-changed"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
@@ -76,7 +76,6 @@ class DaemonManager(GObject.GObject):
 		self._profile = None
 		self._connect()
 		self._requests = []
-		self._old_ccount = 0			# old controller count
 		self._controllers = []			# Ordered as daemon says
 		self._controller_by_id = {}		# Source of memory leak
 	
@@ -187,18 +186,22 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, nameable, name = line[11:].strip().split(" ", 2)
+				controller_id, id_is_persistent = line[11:].strip().split(" ", 1)
 				c = self.get_controller(controller_id)
-				c._name = name
 				c._connected = True
+				c._id_is_persistent = (id_is_persistent == "True")
 				while c in self._controllers:
 					self._controllers.remove(c)
 				self._controllers.append(c)
+			elif line.startswith("Controller profile:"):
+				controller_id, profile = line[19:].strip().split(" ", 1)
+				c = self.get_controller(controller_id)
+				c._profile = profile.strip()
+				c.emit("profile-changed", c._profile)
 			elif line.startswith("Controller Count:"):
 				count = int(line[17:])
 				self._controllers = self._controllers[-count:]
-				self.emit('controller-count-changed', self._old_ccount, count)
-				self._old_ccount = count
+				self.emit('controller-count-changed', count)
 			elif line.startswith("Event:"):
 				data = line[6:].strip().split(" ")
 				self.get_controller(data[0]).emit('event', data[1], [ int(x) for x in data[2:] ])
@@ -317,8 +320,9 @@ class ControllerManager(GObject.GObject):
 		GObject.GObject.__init__(self)
 		self._dm = daemon_manager
 		self._controller_id = controller_id
+		self._id_is_persistent = False
 		self._profile = None
-		self._name = "Controller %s" % (controller_id,)
+		self._name = controller_id
 		self._connected = False
 	
 	
@@ -348,8 +352,16 @@ class ControllerManager(GObject.GObject):
 		return self._controller_id
 	
 	
+	def get_id_is_persistent(self):
+		"""
+		Returns True if ID was generated in way that
+		always generates same ID for same physical controller.
+		"""
+		return self._id_is_persistent
+	
+	
 	def get_name(self):
-		""" Returns name of this controller. Value is cached locally. """
+		""" Returns name of this controller. """
 		return self._name
 	
 	
@@ -383,7 +395,7 @@ class ControllerManager(GObject.GObject):
 	def set_profile(self, filename):
 		""" Asks daemon to change this controller profile """
 		self._send_id()
-		self.request("Profile: %s" % (filename,),
+		self._dm.request("Profile: %s" % (filename,),
 				DaemonManager.nocallback, DaemonManager.nocallback)
 	
 	

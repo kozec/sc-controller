@@ -30,13 +30,24 @@ class SCByCable(USBDevice, SCController):
 		self._last_tup = None
 		
 		self.claim_by(klass=3, subclass=0, protocol=0)
-		self.set_input_interrupt(ENDPOINT, 64, self._wait_input)
+		self.read_serial()
+	
+	
+	def __repr__(self):
+		return "<SCByCable %s>" % (self.get_id(),)
+	
+	
+	def on_serial_got(self):	
+		log.debug("Got wired SC with serial %s", self._serial)
+		self.set_id("sc%s" % (self._serial,), True)
+		self.set_input_interrupt(ENDPOINT, 64, self._wait_input)	
+	
 	
 	def _wait_input(self, endpoint, data):
 		tup = ControllerInput._make(struct.unpack(TUP_FORMAT, data))
 		if not self._ready:
 			self.daemon.add_controller(self)
-			self._configure()
+			self.configure()
 			self._ready = True
 		if tup.status == SCStatus.INPUT:
 			self._last_tup = tup
