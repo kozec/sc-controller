@@ -14,6 +14,7 @@ RECOLORS = {							# Defines set of hue shifts for controller-icons
 	"3" : 0.9,		# Yellow
 	"4" : 0.2,		# Cyan
 	"5" : 0.8,		# Orange
+	"6" : 0.5,		# Purple
 }
 #	
 
