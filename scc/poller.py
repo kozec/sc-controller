@@ -25,6 +25,8 @@ class Poller(object):
 	
 	
 	def register(self, fd, events, callback):
+		if fd < 0:
+			raise ValueError("Invalid file descriptor")
 		self._events[fd] = events
 		self._callbacks[fd] = callback
 		self._generate_lists()

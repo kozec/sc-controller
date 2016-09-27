@@ -27,9 +27,22 @@
 #include <fcntl.h>
 #include <linux/uinput.h>
 #include <string.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 #pragma GCC diagnostic ignored "-Wunused-result"
+#define MAX_FF_EVENTS 4
+
+struct feedback_effect {
+	bool in_use;
+	bool forever;
+	bool playing;
+	int32_t duration;
+	int32_t delay;
+	int32_t repetitions;
+	struct timespec start_time;
+	struct timespec end_time;
+};
 
 int uinput_init(
 	int	 key_len,
@@ -45,7 +58,7 @@ int uinput_init(
 	int	 keyboard,
 	__u16   vendor,
 	__u16   product,
-	int	rumble,
+	int	ff_effects_max,
 	char *  name)
 {
 	struct uinput_user_dev uidev;
@@ -55,9 +68,9 @@ int uinput_init(
 	memset(&uidev, 0, sizeof(uidev));
 	
 	int mode = O_WRONLY | O_NONBLOCK;
-	if (rumble)
+	if (ff_effects_max > 0)
 		mode = O_RDWR | O_NONBLOCK;
-	fd = open("/dev/uinput", O_RDWR | O_NONBLOCK);
+	fd = open("/dev/uinput", mode);
 	if (fd < 0)
 		return -1;
 
@@ -66,7 +79,6 @@ int uinput_init(
 	uidev.id.vendor = vendor;
 	uidev.id.product = product;
 	uidev.id.version = 1;
-	uidev.ff_effects_max = 1;
 
 	/* Key Event initialisation */
 	if (key_len > 0 && ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0) {
@@ -128,13 +140,14 @@ int uinput_init(
 	}
 	
 	/* rumble initialisation */
-	if (rumble) {
+	if (ff_effects_max > 0) {
 		if (ioctl(fd, UI_SET_EVBIT, EV_FF) < 0)
 			return -13;
 		
 		if (ioctl(fd, UI_SET_FFBIT, FF_RUMBLE) < 0)
 			return -14;
-
+		
+		uidev.ff_effects_max = ff_effects_max;
 	}
 
 	/* submit the uidev */
@@ -225,34 +238,69 @@ void uinput_syn(int fd)
 	write(fd, &ev, sizeof(ev));
 }
 
-int uinput_read(int fd, struct input_event* event) {
-	static struct uinput_ff_upload upload;
-	static struct uinput_ff_erase erase;
-	int n = read(fd, event, sizeof(struct input_event));
+
+int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effects) {
+	static struct uinput_ff_upload upload = { 0 };
+	static struct uinput_ff_erase erase = { 0 };
+	static struct input_event event;
+	int n = read(fd, &event, sizeof(event));
+	int rv = -1;
+	int i;
 	if (n == sizeof(struct input_event)) {
-		switch (event->type) {
+		switch (event.type) {
 			case EV_UINPUT:
-				switch (event->code) {
+				switch (event.code) {
 					case UI_FF_UPLOAD:
-						upload.request_id = event->value;
-						if (ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload) < 0)
-							return 2;
-						if (ioctl(fd, UI_END_FF_UPLOAD, &upload) < 0)
-							return 3;
-						return 0;
+						upload.request_id = event.value;
+						ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
+						upload.retval = -1;
+						if (upload.old.type != 0) {
+							// Updating old effect
+							upload.retval = 0;
+							rv = upload.effect.id = upload.old.id;
+							ff_effects[rv]->in_use = true;
+						} else {
+							// Generating new effect
+							for (i=0; i<ff_effects_max; i++) {
+								if (!ff_effects[i]->in_use) {
+									ff_effects[i]->in_use = true;
+									upload.retval = 0;
+									rv = upload.effect.id = i;
+									break;
+								}
+							}
+						}
+						if (rv >= 0) {
+							ff_effects[rv]->forever = (upload.effect.replay.length == 0);
+							ff_effects[rv]->duration = upload.effect.replay.length;
+							ff_effects[rv]->delay = upload.effect.replay.delay;
+							ff_effects[rv]->repetitions = 0;
+						}
+						ioctl(fd, UI_END_FF_UPLOAD, &upload);
+						break;
 					case UI_FF_ERASE:
-						erase.request_id = event->value;
-						if (ioctl(fd, UI_BEGIN_FF_ERASE, &erase) < 0)
-							return 4;
-						if (ioctl(fd, UI_END_FF_ERASE, &erase) < 0)
-							return 5;
-						return 0;
-					default: break;
+						erase.request_id = event.value;
+						ioctl(fd, UI_BEGIN_FF_ERASE, &erase);
+						if ((erase.effect_id >= 0) && (erase.effect_id < ff_effects_max)) {
+							ff_effects[erase.effect_id]->in_use = false;
+							rv = erase.effect_id;
+						}
+						ioctl(fd, UI_END_FF_ERASE, &erase);
+						break;
+					default:
+						break;
 				}
-			default: break;
+			case EV_FF:
+				if ((event.code >= 0) && (event.code < ff_effects_max) && (ff_effects[event.code]->in_use)) {
+					rv = event.code;
+					ff_effects[rv]->repetitions = event.value;
+				}
+				break;
+			default:
+				break;
 		}
 	}
-	return 1;
+	return rv;
 }
 
 void uinput_destroy(int fd)
