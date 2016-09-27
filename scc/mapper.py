@@ -91,12 +91,29 @@ class Mapper(object):
 	
 	
 	def _rumble_ready(self, fd, event):
-		FF_STATUS_STOPPED	= 0x00
-		FF_STATUS_PLAYING	= 0x01
-		FF_STATUS_MAX		= 0x01
-		ev = self.gamepad.read()
-		if ev:
-			print ev.type, ev.code, ev.value
+		ef = self.gamepad.ff_read()
+		if ef:	# tale of...
+			if not ef.playing and ef.repetitions > 0:
+				
+				# TODO: Scheduler not running anything while controller
+				# is not connected
+				def ef_start(mapper):
+					print "STARTING PLAYBACK OF", ef
+					ef.playing = True
+				
+				def ef_stop(mapper):
+					if not ef.playing: return
+					if ef.repetitions == 0:
+						print "STOPPING PLAYBACK OF", ef
+						ef.playing = False
+					else:
+						ef.repetitions -= 1
+						print "still playing", ef
+						self.schedule(float(ef.duration) / 1000.0, ef_stop)
+				
+				self.schedule(0, ef_start)
+				if not ef.forever:
+					self.schedule(float(ef.duration) / 1000.0, ef_stop)
 	
 	
 	def get_gamepad_name(self):

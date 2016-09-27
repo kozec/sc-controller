@@ -23,12 +23,11 @@
 # THE SOFTWARE.
 
 import os, imp, ctypes, time
-from ctypes import Structure, c_uint16, c_int32, byref
+from ctypes import Structure, POINTER, c_bool, c_uint16, c_int32, byref
 from math import pi, copysign, sqrt
 from scc.lib.libusb1 import timeval
 from scc.cheader import defines
 from scc.lib import IntEnum
-
 from collections import deque
 
 
@@ -37,6 +36,8 @@ if os.path.exists('/usr/include/linux/input-event-codes.h'):
 	CHEAD = defines('/usr/include', 'linux/input-event-codes.h')
 else:
 	CHEAD = defines('/usr/include', 'linux/input.h')
+
+MAX_FEEDBACK_EFFECTS = 4
 
 # Keys enum contains all keys and button from linux/uinput.h (KEY_* BTN_*)
 Keys = IntEnum('Keys', {i: CHEAD[i] for i in CHEAD.keys() if (i.startswith('KEY_') or
@@ -179,6 +180,22 @@ class InputEvent(ctypes.Structure):
 		('value', c_int32)
 	]
 
+class FeedbackEvent(ctypes.Structure):
+	_fields_ = [
+		('in_use', c_bool),
+		('forever', c_bool),
+		('playing', c_bool),
+		('duration', c_int32),
+		('delay', c_int32),
+		('repetitions', c_int32),
+		('start_time', timeval),	# TODO: Should be timespec, checks what I'm breaking here
+		('end_time', timeval),		# TODO: Should be timespec, checks what I'm breaking here
+	]
+
+	def __init__(self):
+		self.in_use = False
+		self.playing = False
+
 
 class UInput(object):
 	"""
@@ -223,6 +240,11 @@ class UInput(object):
 			)
 		)
 		self._lib = ctypes.CDLL(lib)
+		self._ff_events = None
+		if rumble:
+			self._ff_events = (POINTER(FeedbackEvent) * MAX_FEEDBACK_EFFECTS)()
+			for i in xrange(MAX_FEEDBACK_EFFECTS):
+				self._ff_events[i].contents = FeedbackEvent()
 		
 		try:
 			if self._lib.uinput_module_version() != 2:
@@ -245,9 +267,9 @@ class UInput(object):
 		c_product  = ctypes.c_uint16(product)
 		c_version  = ctypes.c_uint16(version)
 		c_keyboard = ctypes.c_int(keyboard)
-		c_rumble   = ctypes.c_int(rumble)
-
+		c_rumble = ctypes.c_int(MAX_FEEDBACK_EFFECTS if rumble else 0)
 		c_name = ctypes.c_char_p(name)
+		
 		self._fd = self._lib.uinput_init(ctypes.c_int(len(self._k)),
 										 c_k,
 										 ctypes.c_int(len(self._a)),
@@ -264,6 +286,8 @@ class UInput(object):
 										 c_version,
 										 c_rumble,
 										 c_name)
+		if self._fd < 0:
+			raise Exception("Failed to create uinput device. Error code: %s" % (self._fd,))
 
 
 	def getDescriptor(self):
@@ -341,11 +365,14 @@ class UInput(object):
 	def relManaged(self, ev):
 		return ev in self._r
 
-	def read(self):
-		ie = InputEvent()
-		if self._lib.uinput_read(self._fd, byref(ie)) == 0:
-			return ie
-		return None
+	def ff_read(self):
+		"""
+		Returns effect that should be played or None if there were no such request.
+		"""
+		id = self._lib.uinput_ff_read(self._fd, MAX_FEEDBACK_EFFECTS, byref(self._ff_events))
+		if id < 0:
+			return None
+		return self._ff_events[id].contents
 
 	def __del__(self):
 		if self._lib:
