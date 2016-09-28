@@ -186,9 +186,10 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, id_is_persistent = line[11:].strip().split(" ", 1)
+				controller_id, type, id_is_persistent = line[11:].strip().split(" ", 2)
 				c = self.get_controller(controller_id)
 				c._connected = True
+				c._type = type
 				c._id_is_persistent = (id_is_persistent == "True")
 				while c in self._controllers:
 					self._controllers.remove(c)
@@ -323,6 +324,7 @@ class ControllerManager(GObject.GObject):
 		self._id_is_persistent = False
 		self._profile = None
 		self._name = controller_id
+		self._type = None
 		self._connected = False
 	
 	
@@ -345,6 +347,15 @@ class ControllerManager(GObject.GObject):
 		Value is cached locally.
 		"""
 		return self._connected
+	
+	
+	def get_type(self):
+		"""
+		Returns string identifier of controller driver.
+		
+		Value is cached locally, but may be None before controller is connected.
+		"""
+		return self._type
 	
 	
 	def get_id(self):

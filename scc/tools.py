@@ -6,6 +6,7 @@ Various stuff that I don't care to fit anywhere else.
 """
 from __future__ import unicode_literals
 
+from scc.paths import get_controller_icons_path, get_default_controller_icons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
@@ -179,6 +180,21 @@ def find_menu(name):
 	Returns None if menu cannot be found.
 	"""
 	for p in (get_menus_path(), get_default_menus_path()):
+		path = os.path.join(p, name)
+		if os.path.exists(path):
+			return path
+	return None
+
+
+def find_controller_icon(name):
+	"""
+	Returns filename for specified controller icon name.
+	This is done by searching for name in ~/.config/controller-icons
+	first and in /usr/share/scc/images/controller-icons later.
+	
+	Returns None if icon cannot be found.
+	"""
+	for p in (get_controller_icons_path(), get_default_controller_icons_path()):
 		path = os.path.join(p, name)
 		if os.path.exists(path):
 			return path

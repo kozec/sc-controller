@@ -40,6 +40,18 @@ class Controller(object):
 		self._id_is_persistent = False
 		next_id += 1
 	
+	def get_type(self):
+		"""
+		This method has to return type identifier - short string without spaces
+		that describes type of controller which should be unique for each
+		driver.
+		String is used by UI to assign icons and, along with ID,
+		to store controller settings.
+		
+		This method has to be overriden.
+		"""
+		raise RuntimeError("Controller.get_type not overriden")
+	
 	
 	def set_id(self, id, is_persistent):
 		"""

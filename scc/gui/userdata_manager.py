@@ -3,7 +3,7 @@
 SC-Controller - Profile Manager
 
 Simple class that manages stuff related to creating, loading, listing (...) of
-user-editable data - that are profiles and menus.
+user-editable data - that are profiles, menus and controller-icons.
 
 Main App class interits from this.
 """
@@ -69,15 +69,15 @@ class UserDataManager(object):
 	
 	def load_profile_list(self):
 		paths = [ get_default_profiles_path(), get_profiles_path() ]
-		self._load_user_data(paths, "*.sccprofile", self.on_profiles_loaded)
+		self.load_user_data(paths, "*.sccprofile", self.on_profiles_loaded)
 	
 	
 	def load_menu_list(self):
 		paths = [ get_default_menus_path(), get_menus_path() ]
-		self._load_user_data(paths, "*.menu", self.on_menus_loaded)
+		self.load_user_data(paths, "*.menu", self.on_menus_loaded)
 	
 	
-	def _load_user_data(self, paths, pattern, callback):
+	def load_user_data(self, paths, pattern, callback):
 		""" Loads lists of profiles. Uses GLib to do it on background. """
 		# First list is for default profiles, 2nd for user profiles
 		# Number is increased when list is loaded until it reaches 2

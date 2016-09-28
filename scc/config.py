@@ -31,6 +31,7 @@ class Config(object):
 			"enable_status_icon" : False,
 			"minimize_to_status_icon" : True,
 		},
+		"controllers": { },
 		# enable_sniffing - If enabled, another program with write access to
 		# ~/.config/scc can ask daemon to send notifications about all
 		# (or only some) inputs.
