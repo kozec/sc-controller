@@ -179,7 +179,10 @@ class SCController(Controller):
 	
 	def input(self, idata):
 		old_state, self._old_state = self._old_state, idata
-		self.mapper.input(self, time.time(), old_state, idata)
+		if self.mapper:
+			# TODO: Swapping entire input method instead of doing this
+			# may be faster. Need to test that.
+			self.mapper.input(self, time.time(), old_state, idata)
 	
 	
 	def read_serial(self):
