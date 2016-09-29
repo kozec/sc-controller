@@ -270,6 +270,9 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 			paths = [ get_default_controller_icons_path(), get_controller_icons_path() ]
 			
 			def cb(icons):
+				if id != self._controller.get_id():
+					# Controller was changed before callback was called
+					return
 				icon = None
 				used_icons = { 
 					self.config['controllers'][x]['icon']

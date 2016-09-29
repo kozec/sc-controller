@@ -470,7 +470,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Controller added
 			while len(self.profile_switchers) < count:
 				s = self.add_switcher()
-				self.profile_switchers.append(s)
 		elif count < self.controller_count:
 			# Controller removed
 			while len(self.profile_switchers) > max(1, count):
