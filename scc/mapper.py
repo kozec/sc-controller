@@ -3,11 +3,12 @@ from __future__ import unicode_literals
 
 from collections import deque
 from scc.lib import xwrappers as X
-from scc.uinput import Gamepad, Keyboard, Mouse, Dummy, Rels
+from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
 from scc.constants import SCButtons, LEFT, RIGHT, STICK
-from scc.constants import HapticPos
+from scc.constants import HapticPos, ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction
+from scc.config import Config
 from scc.profile import Profile
 
 
@@ -19,7 +20,7 @@ class Mapper(object):
 	
 	def __init__(self, profile, keyboard=b"SCController Keyboard",
 				mouse=b"SCController Mouse",
-				gamepad=b"Microsoft X-Box 360 pad"):
+				gamepad=True):
 		"""
 		If any of keyboard, mouse or gamepad is set to None, that device
 		will not be emulated.
@@ -34,7 +35,7 @@ class Mapper(object):
 		log.debug("Keyboard: %s" % (self.keyboard, ))
 		self.mouse = Mouse(name=mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
-		self.gamepad = Gamepad(name=gamepad) if gamepad else Dummy()
+		self.gamepad = self._create_gamepad() if gamepad else Dummy()
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		
 		# Set by SCCDaemon instance; Used to handle actions
@@ -52,6 +53,29 @@ class Mapper(object):
 		self.buttons, self.old_buttons = 0, 0
 		self.state, self.old_state = None, None
 		self.force_event = set()
+	
+	
+	def _create_gamepad(self):
+		""" Parses gamepad configuration and creates apropriate unput device """
+		cfg = Config()
+		keys = ALL_BUTTONS[0:cfg["output"]["buttons"]]
+		vendor = int(cfg["output"]["vendor"], 16)
+		product = int(cfg["output"]["product"], 16)
+		name = cfg["output"]["name"]
+		axes = []
+		i = 0
+		for min, max in cfg["output"]["axes"]:
+			fuzz, flat = 0, 0
+			if abs(max - min) > 32768:
+				fuzz, flat = 16, 128
+			try:
+				axes.append(( ALL_AXES[i], min, max, fuzz, flat ))
+			except IndexError:
+				# Out of axes
+				break
+			i += 1
+		return UInput(vendor=vendor, product=product, name=name, keys=keys,
+			axes=axes, rels=[])
 	
 	
 	def sync(self):
