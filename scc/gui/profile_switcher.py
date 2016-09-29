@@ -259,8 +259,10 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 	
 	
 	def _update_controller_icon(self):
-		if self._controller or not self._controller.get_id_is_persistent():
+		if not self._controller or not self._controller.get_id_is_persistent():
 			self._icon.set_from_file(os.path.join(self.imagepath, "controller-icon.svg"))
+			return
+		
 		id = self._controller.get_id()
 		if id in self.config['controllers'] and "icon" in self.config['controllers'][id]:
 			icon = find_controller_icon(self.config['controllers'][id]['icon'])
