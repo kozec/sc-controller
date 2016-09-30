@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from distutils.core import setup, Extension
+from scc.constants import DAEMON_VERSION
 import glob
 
 data_files = [
@@ -31,7 +32,7 @@ packages = [
 
 if __name__ == "__main__":
 	setup(name = 'sccontroller',
-			version = '0.2.6',
+			version = DAEMON_VERSION,
 			description = 'Standalone controller maping tool',
 			author = 'kozec',
 			packages = packages,
