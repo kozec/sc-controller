@@ -509,6 +509,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		ps.set_margin_left(margin_left)
 		ps.set_margin_right(margin_right)
 		ps.set_margin_bottom(margin_bottom)
+		ps.connect('right-clicked', self.on_profile_right_clicked)
 		
 		vbAllProfiles.pack_start(ps, False, False, 0)
 		vbAllProfiles.reorder_child(ps, 0)
@@ -629,6 +630,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self._update_background()
 		else:
 			print "event", what
+	
+	
+	def on_profile_right_clicked(self, ps):
+		mnuPS = self.builder.get_object("mnuPS")
+		mnuPS.ps = ps
+		mnuPS.popup(None, None, None, None,
+			3, Gtk.get_current_event_time())	
+	
+	
+	def on_mnuConfigureController_activate(self, *a):
+		from scc.gui.controller_settings import ControllerSettings
+		mnuPS = self.builder.get_object("mnuPS")
+		cs = ControllerSettings(self, mnuPS.ps)
+		cs.show(self.window)
 	
 	
 	def show_error(self, message):

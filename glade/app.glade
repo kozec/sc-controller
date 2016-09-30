@@ -689,6 +689,37 @@
       </object>
     </child>
   </object>
+  <object class="GtkMenu" id="mnuPS">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="mnuConfigureController">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Configure Controller</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuConfigureController_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuProfileRename">
+        <property name="visible">True</property>
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Rename Profile</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuProfileDelete">
+        <property name="visible">True</property>
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Delete Profile</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+  </object>
   <object class="GtkMenu" id="mnuPopup">
     <property name="visible">True</property>
     <property name="can_focus">False</property>

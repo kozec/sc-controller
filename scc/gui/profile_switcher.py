@@ -19,7 +19,7 @@ from scc.tools import find_profile, find_controller_icon
 import sys, os, random, logging
 log = logging.getLogger("PS")
 
-class ProfileSwitcher(Gtk.Box, UserDataManager):
+class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 	"""
 	List of signals:
 		changed (name, giofile)
@@ -27,6 +27,8 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		new-clicked (name)
 			Emited when user selects 'new profile' option.
 			'name' is of currently selected profile.
+		right-clicked ()
+			Emited whenm user right-clicks anything
 		save-clicked ()
 			Emited when user clicks on save button
 		unknown-profile (name)
@@ -37,6 +39,7 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 	__gsignals__ = {
 			b"changed"					: (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
 			b"new-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"right-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"save-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"unknown-profile"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
@@ -45,7 +48,7 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 						# about profile being switched
 	
 	def __init__(self, imagepath, config):
-		Gtk.Box.__init__(self, Gtk.Orientation.HORIZONTAL, 0)
+		Gtk.EventBox.__init__(self)
 		UserDataManager.__init__(self)
 		self.imagepath = imagepath
 		self.config = config
@@ -65,6 +68,7 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		self._icon = Gtk.Image()
 		self._model = Gtk.ListStore(str, object, str)
 		self._combo = Gtk.ComboBox.new_with_model(self._model)
+		self._box = Gtk.Box(Gtk.Orientation.HORIZONTAL, 0)
 		self._revealer = None
 		self._savebutton = None
 		
@@ -78,11 +82,15 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		self._combo.add_attribute(rend2, "text", 2)
 		self._combo.set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
+		
+		# Signals
 		self._combo.connect('changed', self.on_combo_changed)
+		self.connect("button_press_event", self.on_button_press)
 		
 		# Pack
-		self.pack_start(self._icon, False, True, 0)
-		self.pack_start(self._combo, True, True, 0)
+		self._box.pack_start(self._icon, False, True, 0)
+		self._box.pack_start(self._combo, True, True, 0)
+		self.add(self._box)
 	
 	
 	def set_profile(self, name, create=False):
@@ -185,6 +193,11 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		if self._timer is not None:
 			GLib.source_remove(self._timer)
 		self._timer = GLib.timeout_add(ProfileSwitcher.SEND_TIMEOUT, run_later)
+	
+	
+	def on_button_press(self, trash, event):
+		if event.button == 3:
+			self.emit('right-clicked')	
 	
 	
 	def on_savebutton_clicked(self, *a):
