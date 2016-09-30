@@ -3,21 +3,23 @@
 SC-Controller - ProfileSwitcher
 
 Set of widgets designed to allow user to select profile, placed in one Gtk.Box:
- [ Label | Combo box with profile selection       (ch) | (S) ]
+ [ Icon | Combo box with profile selection       (ch) | (S) ]
 
-... where (S) is Save button thatn can be shown on demand and (ch) is similar
-change indicator.
+... where (S) is Save button that can be shown on demand and (ch) is change
+indicator drawn in combobox.
 """
 from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, Gio, GLib, GObject
-from scc.tools import find_profile
+from scc.gui.userdata_manager import UserDataManager
+from scc.paths import get_controller_icons_path, get_default_controller_icons_path
+from scc.tools import find_profile, find_controller_icon
 
-import sys, os, logging
+import sys, os, random, logging
 log = logging.getLogger("PS")
 
-class ProfileSwitcher(Gtk.Box):
+class ProfileSwitcher(Gtk.Box, UserDataManager):
 	"""
 	List of signals:
 		changed (name, giofile)
@@ -42,9 +44,11 @@ class ProfileSwitcher(Gtk.Box):
 	SEND_TIMEOUT = 100	# How many ms should switcher wait before sending event
 						# about profile being switched
 	
-	def __init__(self, userdatamanager=None):
+	def __init__(self, imagepath, config):
 		Gtk.Box.__init__(self, Gtk.Orientation.HORIZONTAL, 0)
-		self.udm = userdatamanager
+		UserDataManager.__init__(self)
+		self.imagepath = imagepath
+		self.config = config
 		self.setup_widgets()
 		self._allow_new = False
 		self._first_time = True
@@ -58,18 +62,16 @@ class ProfileSwitcher(Gtk.Box):
 	
 	def setup_widgets(self):
 		# Create
-		self._label = Gtk.Label(_("Profile"))
+		self._icon = Gtk.Image()
 		self._model = Gtk.ListStore(str, object, str)
 		self._combo = Gtk.ComboBox.new_with_model(self._model)
 		self._revealer = None
 		self._savebutton = None
 		
 		# Setup
-		self._label.set_size_request(100, -1)
-		self._label.set_xalign(0)
-		self._label.set_margin_right(10)
 		rend1 = Gtk.CellRendererText()
 		rend2 = Gtk.CellRendererText()
+		self._icon.set_margin_right(10)
 		self._combo.pack_start(rend1, True)
 		self._combo.pack_start(rend2, False)
 		self._combo.add_attribute(rend1, "text", 0)
@@ -79,7 +81,7 @@ class ProfileSwitcher(Gtk.Box):
 		self._combo.connect('changed', self.on_combo_changed)
 		
 		# Pack
-		self.pack_start(self._label, False, True, 0)
+		self.pack_start(self._icon, False, True, 0)
 		self.pack_start(self._combo, True, True, 0)
 	
 	
@@ -244,12 +246,56 @@ class ProfileSwitcher(Gtk.Box):
 			self._signal = None
 		self._controller = c
 		if c:
-			self._label.set_text(c.get_name())
+			self._icon.set_tooltip_text(c.get_name())
 			self._signal = c.connect('profile-changed', self.on_profile_changed)
 		else:
-			self._label.set_text(_("Profile"))
+			self._icon.set_tooltip_text(_("Profile"))
+		self._update_controller_icon()
 	
 	
 	def get_controller(self):
 		""" Returns controller set by set_controller function """
 		return self._controller
+	
+	
+	def _update_controller_icon(self):
+		if not self._controller or not self._controller.get_id_is_persistent():
+			self._icon.set_from_file(os.path.join(self.imagepath, "controller-icon.svg"))
+			return
+		
+		id = self._controller.get_id()
+		if id in self.config['controllers'] and "icon" in self.config['controllers'][id]:
+			icon = find_controller_icon(self.config['controllers'][id]['icon'])
+			self._icon.set_from_file(icon)
+		else:
+			log.debug("There is no icon for controller %s, auto assinging one", id)
+			paths = [ get_default_controller_icons_path(), get_controller_icons_path() ]
+			
+			def cb(icons):
+				if id != self._controller.get_id():
+					# Controller was changed before callback was called
+					return
+				icon = None
+				used_icons = { 
+					self.config['controllers'][x]['icon']
+					for x in self.config['controllers']
+					if 'icon' in self.config['controllers'][x]
+				}				
+				tp = "%s-" % (self._controller.get_type(),)
+				icons = sorted(( os.path.split(x.get_path())[-1] for x in icons ))
+				for i in icons:
+					if i not in used_icons and i.startswith(tp):
+						# Unused icon found
+						icon = i
+						break
+				else:
+					# All icons are already used, assign anything
+					icon = random.choice(icons)
+				log.debug("Auto-assigned icon %s for controller %s", icon, id)
+				if id not in self.config['controllers']:
+					self.config['controllers'][id] = {}
+				self.config['controllers'][id]["icon"] = icon
+				self.config.save()
+				GLib.idle_add(self._update_controller_icon)
+			
+			self.load_user_data(paths, "*.svg", cb)

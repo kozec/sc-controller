@@ -36,5 +36,9 @@ if ENV_VAR in os.environ:
 			self.set_id("fake%s" % (self._number,), True)
 		
 		
+		def get_type(self):
+			return "fake"
+		
+		
 		def __repr__(self):
 			return "<FakeController %s>" % (self.get_id(),)

@@ -60,6 +60,28 @@ def get_default_menus_path():
 	return os.path.join(get_share_path(), "default_menus")
 
 
+def get_controller_icons_path():
+	"""
+	Returns directory where controller icons are stored.
+	~/.config/scc/controller-icons under normal conditions.
+	
+	This directory may not exist.
+	"""
+	return os.path.join(get_config_path(), "controller-icons")
+
+
+def get_default_controller_icons_path():
+	"""
+	Returns directory where controller icons are stored.
+	Probably something like /usr/share/scc/images/controller-icons,
+	or ./images/controller-icons if program is being started from
+	extracted source tarball.
+	
+	This directory should always exist.
+	"""
+	return os.path.join(get_share_path(), "images", "controller-icons")
+
+
 def get_share_path():
 	"""
 	Returns directory where shared files are kept.

@@ -470,7 +470,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Controller added
 			while len(self.profile_switchers) < count:
 				s = self.add_switcher()
-				self.profile_switchers.append(s)
 		elif count < self.controller_count:
 			# Controller removed
 			while len(self.profile_switchers) > max(1, count):
@@ -497,7 +496,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.save_profile(self.current_file, profile)
 	
 	
-	def add_switcher(self, margin_left=20, margin_right=40, margin_bottom=2):
+	def add_switcher(self, margin_left=30, margin_right=40, margin_bottom=2):
 		"""
 		Adds new profile switcher widgets on top of window. Called
 		when new controller is connected to daemon.
@@ -506,7 +505,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		vbAllProfiles = self.builder.get_object("vbAllProfiles")
 		
-		ps = ProfileSwitcher(self)
+		ps = ProfileSwitcher(self.imagepath, self.config)
 		ps.set_margin_left(margin_left)
 		ps.set_margin_right(margin_right)
 		ps.set_margin_bottom(margin_bottom)

@@ -23,10 +23,11 @@ Connection is then held until client side closes it.
 Informs about total number of connected controllers.
 Always sent after with `Controller:` messages
 
-#### `Controller: controller_id id_is_persistent`
+#### `Controller: controller_id type id_is_persistent`
 Provides info about controller 'n'.
 - `controller_id` is unique string identifier of controller (should stay same at
 least until daemon exits) and doesn't contains spaces.
+- `type` is string identifier (without spaces) of driver.
 - `id_is_persistent` is True if controller ID is always same for same controller
 and can be used to store settings.
 
