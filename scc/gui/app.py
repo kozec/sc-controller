@@ -144,19 +144,30 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def check(self):
-		""" Performs various (two) checks and reports possible problems """
+		""" Performs various (three) checks and reports possible problems """
 		# TODO: Maybe not best place to do this
-		if os.path.exists("/dev/uinput"):
-			if not check_access("/dev/uinput"):
-				# Cannot acces uinput
-				msg = _('You don\'t have required access to /dev/uinput.')
-				msg += "\n" + _('This will most likely prevent emulation from working.')
-				msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
-				self.show_error(msg)
-		else:
+		try:
+			kernel_mods = [ line.split(" ")[0] for line in file("/proc/modules", "r").read().split("\n") ]
+		except Exception:
+			# Maybe running on BSD or Windows...
+			kernel_mods = [ ]
+		
+		if len(kernel_mods) > 0 and "uinput" not in kernel_mods:
 			# There is no uinput
-			msg = _('/dev/uinput not found')
-			msg += "\n" + _('Your kernel is either outdated or compiled without uinput support.')
+			msg = _('uinput kernel module not loaded')
+			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
+			self.show_error(msg)
+		elif not os.path.exists("/dev/uinput"):
+			# /dev/uinput missing
+			msg = _('/dev/uinput doesn\'t exists')
+			msg += "\n" + _('uinput kernel module is loaded, but /dev/uinput is missing.')
+			#msg += "\n\n" + _('Please, consult your distribution manual on what in the world could cause this.')
+			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
+			self.show_error(msg)
+		elif not check_access("/dev/uinput"):
+			# Cannot acces uinput
+			msg = _('You don\'t have required access to /dev/uinput.')
+			msg += "\n" + _('This will most likely prevent emulation from working.')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			self.show_error(msg)
 	
@@ -454,6 +465,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.just_started = False
 		if self.profile_switchers[0].get_file() is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
+		GLib.timeout_add_seconds(1, self.check)
 		self.enable_test_mode()
 	
 	
@@ -688,7 +700,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if self.app.config['gui']['enable_status_icon']:
 			self.setup_statusicon()
 		self.set_daemon_status("unknown", True)
-		GLib.timeout_add_seconds(2, self.check)
 	
 	
 	def do_local_options(self, trash, lo):
