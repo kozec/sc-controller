@@ -92,6 +92,9 @@ class ProfileSwitcher(Gtk.Box, UserDataManager):
 		
 		If 'create' is set to True, creates new combobox item if needed.
 		"""
+		if name is None:
+			return
+		
 		if name.endswith(".mod"): name = name[0:-4]
 		if name.endswith(".sccprofile"): name = name[0:-11]
 		if "/" in name : name = os.path.split(name)[-1]
