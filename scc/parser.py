@@ -19,6 +19,7 @@ from scc.modifiers import HoldModifier, DoubleclickModifier
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
+import scc.aliases
 
 import token as TokenType
 import sys

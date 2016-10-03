@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 from scc.paths import get_config_path
 from scc.profile import Encoder
+from scc.uinput import Keys, Axes
 from scc.special_actions import ChangeProfileAction
 
 import os, json, logging
@@ -33,6 +34,24 @@ class Config(object):
 			"minimize_to_status_icon" : True,
 		},
 		"controllers": { },
+		# output - modifies emulated controller
+		# Changing this may be usefull, but can break a lot of things
+		"output": {
+			'vendor'	: '0x045e',
+			'product'	: '0x028e',
+			'name'		: "Microsoft X-Box 360 pad",
+			'buttons'	: 20,
+			'axes'	: [
+				(-32768, 32767),	# Axes.ABS_X
+				(-32768, 32767),	# Axes.ABS_Y
+				(-32768, 32767),	# Axes.ABS_RX
+				(-32768, 32767),	# Axes.ABS_RY
+				(0, 255),			# Axes.ABS_Z
+				(0, 255),			# Axes.ABS_RZ
+				(-1, 1),			# Axes.ABS_HAT0X
+				(-1, 1)				# Axes.ABS_HAT0Y
+			],
+		},
 		# enable_sniffing - If enabled, another program with write access to
 		# ~/.config/scc can ask daemon to send notifications about all
 		# (or only some) inputs.
