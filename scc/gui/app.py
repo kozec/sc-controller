@@ -694,6 +694,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.just_started = False
 			self.set_daemon_status("unknown", True)
 			return
+		
+		for ps in self.profile_switchers:
+			ps.set_controller(None)
+			ps.on_daemon_dead()
 		self.set_daemon_status("dead", False)
 	
 	

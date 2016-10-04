@@ -207,6 +207,11 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		self.emit('save-clicked')
 	
 	
+	def on_daemon_dead(self, *a):
+		""" Called from App when connection to daemon is lost """
+		self._first_time = True
+	
+	
 	def on_profile_changed(self, c, profile):
 		""" Called when controller profile is changed from daemon """
 		if not self.set_profile(profile, True):
