@@ -380,9 +380,10 @@ class SCCDaemon(Daemon):
 				self.free_mappers.append(swap_mapper)
 				log.debug("Reassigned default_mapper to %s", swap_c)
 			else:
-				mapper.set_controller(None)
 				c.set_mapper(None)
-				self.free_mappers.append(mapper)
+				if mapper:
+					mapper.set_controller(None)
+					self.free_mappers.append(mapper)
 			self.send_controller_list(self._send_to_all)
 	
 	
