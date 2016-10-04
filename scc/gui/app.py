@@ -646,6 +646,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_profile_right_clicked(self, ps):
+		self.builder.get_object("mnuConfigureController").set_sensitive(ps.get_controller() is not None)
 		mnuPS = self.builder.get_object("mnuPS")
 		mnuPS.ps = ps
 		mnuPS.popup(None, None, None, None,
