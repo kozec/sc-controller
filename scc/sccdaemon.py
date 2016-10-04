@@ -35,6 +35,7 @@ class SCCDaemon(Daemon):
 	def __init__(self, piddile, socket_file):
 		set_logging_level(True, True)
 		Daemon.__init__(self, piddile)
+		Config()					# Generates ~/.config/scc and default config if needed
 		self.started = False
 		self.exiting = False
 		self.socket_file = socket_file
