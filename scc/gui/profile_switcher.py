@@ -244,7 +244,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 				self._revealer.set_reveal_child(False)
 				self._revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_LEFT)
 				self._revealer.add(self._savebutton)
-				self.pack_start(self._revealer, False, True, 0)
+				self._box.pack_start(self._revealer, False, True, 0)
 				self.show_all()
 			self._revealer.set_reveal_child(True)
 			iter = self._combo.get_active_iter()
