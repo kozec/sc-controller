@@ -702,6 +702,15 @@
       </object>
     </child>
     <child>
+      <object class="GtkMenuItem" id="mnuTurnoffController">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Turn Off Controller</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="mnuTurnoffController_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
       <object class="GtkMenuItem" id="mnuProfileRename">
         <property name="visible">True</property>
         <property name="sensitive">False</property>

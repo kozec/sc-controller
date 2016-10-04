@@ -646,11 +646,15 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_profile_right_clicked(self, ps):
-		self.builder.get_object("mnuConfigureController").set_sensitive(ps.get_controller() is not None)
+		for name in ("mnuConfigureController", "mnuTurnoffController"):
+			# Disable controller-related menu items if controller is not connected
+			obj = self.builder.get_object(name)
+			obj.set_sensitive(ps.get_controller() is not None)
+		
 		mnuPS = self.builder.get_object("mnuPS")
 		mnuPS.ps = ps
 		mnuPS.popup(None, None, None, None,
-			3, Gtk.get_current_event_time())	
+			3, Gtk.get_current_event_time())
 	
 	
 	def on_mnuConfigureController_activate(self, *a):
@@ -659,6 +663,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		cs = ControllerSettings(self, mnuPS.ps.get_controller(), mnuPS.ps)
 		cs.show(self.window)
 	
+	
+	def mnuTurnoffController_activate(self, *a):
+		mnuPS = self.builder.get_object("mnuPS")
+		if mnuPS.ps.get_controller():
+			mnuPS.ps.get_controller().turnoff()
 	
 	def show_error(self, message):
 		if self.ribar is None:

@@ -404,6 +404,13 @@ class ControllerManager(GObject.GObject):
 				DaemonManager.nocallback, DaemonManager.nocallback)
 	
 	
+	def turnoff(self):
+		""" Asks daemon to turn off this controller """
+		self._send_id()
+		self._dm.request("Turnoff.",
+				DaemonManager.nocallback, DaemonManager.nocallback)
+	
+	
 	def observe(self, success_cb, error_cb, *what_to_lock):
 		"""
 		Enables observing on physical button, axis or pad.
