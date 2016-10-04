@@ -10,7 +10,15 @@ from scc.paths import get_controller_icons_path, get_default_controller_icons_pa
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
-import imp, os, sys, posix1e, shlex, gettext, logging
+import imp, os, sys, shlex, gettext, logging
+
+HAVE_POSIX1E = False
+try:
+	import posix1e
+	HAVE_POSIX1E = True
+except ImportError:
+	pass
+
 log = logging.getLogger("tools.py")
 _ = lambda x : x
 
@@ -242,13 +250,14 @@ def check_access(filename, write_required=True):
 	Uses acl first and possix file permisions if acl cannot be used.
 	Returns true only if user has both required access rights.
 	"""
-	for pset in posix1e.ACL(file=filename):
-		if pset.tag_type == posix1e.ACL_USER and pset.qualifier == os.geteuid():
-			if pset.permset.test(posix1e.ACL_READ) and (not write_required or pset.permset.test(posix1e.ACL_WRITE)):
-				return True
-		if pset.tag_type == posix1e.ACL_GROUP and pset.qualifier in os.getgroups():
-			if pset.permset.test(posix1e.ACL_READ) and (not write_required or pset.permset.test(posix1e.ACL_WRITE)):
-				return True
+	if HAVE_POSIX1E:
+		for pset in posix1e.ACL(file=filename):
+			if pset.tag_type == posix1e.ACL_USER and pset.qualifier == os.geteuid():
+				if pset.permset.test(posix1e.ACL_READ) and (not write_required or pset.permset.test(posix1e.ACL_WRITE)):
+					return True
+			if pset.tag_type == posix1e.ACL_GROUP and pset.qualifier in os.getgroups():
+				if pset.permset.test(posix1e.ACL_READ) and (not write_required or pset.permset.test(posix1e.ACL_WRITE)):
+					return True
 	if write_required:
 		return os.access(filename, os.R_OK | os.W_OK)
 	return os.access(filename, os.R_OK)
