@@ -195,6 +195,7 @@ class USBDevice(object):
 
 class USBDriver(object):
 	def __init__(self):
+		self._daemon = None
 		self._known_ids = {}
 		self._devices = {}
 		self._retry_devices = []
@@ -243,19 +244,24 @@ class USBDriver(object):
 		if tp in self._known_ids:
 			try:
 				handle = device.open()
-			except usb1.USBError:
+			except usb1.USBError, e:
 				log.error("Failed to open USB device: %x:%x", *tp)
+				if self._daemon:
+					self._daemon.set_error("Failed to open USB device: %s" % (e,))
 				return
 			try:
 				handled_device = self._known_ids[tp](device, handle)
-			except usb1.USBErrorBusy:
+			except usb1.USBErrorBusy, e:
 				log.error("Failed to claim USB device: %x:%x", *tp)
+				if self._daemon:
+					self._daemon.set_error("Failed to claim USB device: %s" % (e,))
 				self._retry_devices.append(tp)
 				device.close()
 				return
 			if handled_device:
 				self._devices[device] = handled_device
 				log.debug("USB device added: %x:%x", *tp)
+				self._daemon.set_error(None)
 			else:
 				log.warning("Known USB device ignored: %x:%x", *tp)
 				device.close()	
@@ -288,6 +294,7 @@ _usb = USBDriver()
 
 
 def init(daemon):
+	_usb._daemon = daemon
 	daemon.add_to_mainloop(_usb.mainloop)
 
 def start(daemon):

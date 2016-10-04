@@ -386,6 +386,23 @@ class SCCDaemon(Daemon):
 			self.send_controller_list(self._send_to_all)
 	
 	
+	def set_error(self, error):
+		"""
+		Sets error to report. Currently used only by driver to report when USB
+		device cannot be accessed.
+		
+		Error can be None, in which case daemon may report that it is ready to
+		serve to all clients.
+		"""
+		with self.lock:
+			self.error = error
+			if error is None:
+				self.error = None
+				self._send_to_all(b"Ready.\n")
+			elif self.error != error:
+				self._send_to_all(("Error: %s\n" % (self.error,)).encode("utf-8"))
+	
+	
 	def send_controller_list(self, method):
 		"""
 		Sends controller count and list of controllers using provided method
