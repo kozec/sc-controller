@@ -70,8 +70,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self._recursing = True
 		(self.builder.get_object("cbInputTestMode")
 				.set_active(bool(self.app.config['enable_sniffing'])))
-		(self.builder.get_object("sclLED")
-				.set_value(float(self.app.config['led_level'])))
 		(self.builder.get_object("cbEnableStatusIcon")
 				.set_active(bool(self.app.config['gui']['enable_status_icon'])))
 		(self.builder.get_object("cbMinimizeToStatusIcon")
@@ -478,17 +476,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			profile.pads[LEFT]  = SensitivityModifier(s[0], s[1], OSKCursorAction(LEFT))
 			profile.pads[RIGHT] = SensitivityModifier(s[0], s[1], OSKCursorAction(RIGHT))
 		self._save_osk_profile(profile)
-	
-	
-	def on_sclLED_value_changed(self, scale, *a):
-		if self._recursing: return
-		self.app.config["led_level"] = scale.get_value()
-		try:
-			self.app.dm.get_controllers()[0].set_led_level(scale.get_value())
-		except IndexError:
-			# Happens when there is no controller connected to daemon
-			pass
-		self.schedule_save_config()
 	
 	
 	def on_entTitle_changed(self, ent):

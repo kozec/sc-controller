@@ -388,15 +388,6 @@ class ControllerManager(GObject.GObject):
 		self._dm.request("Lock: %s" % (what,), success_cb, error_cb)
 	
 	
-	def set_led_level(self, value):
-		"""
-		Sets brightness of controller led.
-		"""
-		self._send_id()
-		self._dm.request("Led: %s" % (int(value),), DaemonManager.nocallback,
-			DaemonManager.nocallback)
-	
-	
 	def set_profile(self, filename):
 		""" Asks daemon to change this controller profile """
 		self._send_id()

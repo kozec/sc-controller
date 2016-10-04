@@ -166,7 +166,7 @@ class SCCDaemon(Daemon):
 	
 	
 	def on_sa_led(self, mapper, action):
-		""" Called when 'turnoff' action is used """
+		""" Called when 'led' action is used """
 		if mapper.get_controller():
 			mapper.get_controller().set_led_level(action.brightness)
 	

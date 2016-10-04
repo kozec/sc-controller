@@ -27,7 +27,6 @@ class Config(object):
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
 		],
-		"led_level": 80,
 		"gui": {
 			# GUI-only settings
 			"enable_status_icon" : False,
