@@ -145,9 +145,9 @@
         <child>
           <object class="GtkCheckButton" id="cbAlignOSD">
             <property name="name">0</property>
-            <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">False</property>
+            <property name="no_show_all">True</property>
             <property name="margin_top">5</property>
             <property name="draw_indicator">True</property>
             <signal name="toggled" handler="save_config" swapped="no"/>
