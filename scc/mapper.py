@@ -12,7 +12,7 @@ from scc.config import Config
 from scc.profile import Profile
 
 
-import traceback, logging, time
+import traceback, logging, time, os
 log = logging.getLogger("Mapper")
 
 class Mapper(object):
@@ -57,6 +57,11 @@ class Mapper(object):
 	
 	def _create_gamepad(self):
 		""" Parses gamepad configuration and creates apropriate unput device """
+		if "SCC_NOGAMEPAD" in os.environ:
+			# Completly undocumented and for debuging purposes only.
+			# If set, no gamepad is emulated
+			self.gamepad = Dummy()
+			return
 		cfg = Config()
 		keys = ALL_BUTTONS[0:cfg["output"]["buttons"]]
 		vendor = int(cfg["output"]["vendor"], 16)
