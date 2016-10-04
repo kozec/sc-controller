@@ -52,7 +52,6 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		UserDataManager.__init__(self)
 		self.imagepath = imagepath
 		self.config = config
-		self.setup_widgets()
 		self._allow_new = False
 		self._first_time = True
 		self._current = None
@@ -61,6 +60,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 							# when user scrolls throught combobox
 		self._signal = None
 		self._controller = None
+		self.setup_widgets()
 	
 	
 	def setup_widgets(self):
@@ -82,6 +82,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		self._combo.add_attribute(rend2, "text", 2)
 		self._combo.set_row_separator_func(
 			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
+		self.update_icon()
 		
 		# Signals
 		self._combo.connect('changed', self.on_combo_changed)
