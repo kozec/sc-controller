@@ -144,7 +144,7 @@ class OSDDaemon(object):
 				args = shsplit(message)[1:]
 				self._window = Keyboard(self.config)
 				self._window.connect('destroy', self.on_keyboard_closed)
-				# self._window.parse_argumets(args) # TODO: No arguments so far
+				self._window.parse_argumets(args)
 				self._window.show()
 				self._window.use_daemon(self.daemon)
 		elif self._is_menu_message(message):

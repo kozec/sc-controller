@@ -13,8 +13,10 @@ from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
+from scc.gui.statusicon import get_status_icon
+from scc.gui.dwsnc import headerbar, IS_UNITY
+from scc.gui.profile_switcher import ProfileSwitcher
 from scc.gui.svg_widget import SVGWidget
-from scc.gui.dwsnc import headerbar
 from scc.gui.ribar import RIBar
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
@@ -51,24 +53,27 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		# Setup DaemonManager
 		self.dm = DaemonManager()
 		self.dm.connect("alive", self.on_daemon_alive)
-		self.dm.connect("version", self.on_daemon_version)
-		self.dm.connect("profile-changed", self.on_daemon_profile_changed)
-		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
-		self.dm.connect("error", self.on_daemon_error)
-		self.dm.connect("event", self.on_daemon_event_observer)
+		self.dm.connect("controller-count-changed", self.on_daemon_ccunt_changed)
 		self.dm.connect("dead", self.on_daemon_dead)
+		self.dm.connect("error", self.on_daemon_error)
+		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
+		self.dm.connect("version", self.on_daemon_version)
 		# Set variables
 		self.config = Config()
 		self.gladepath = gladepath
 		self.imagepath = imagepath
 		self.builder = None
 		self.recursing = False
+		self.statusicon = None
+		self.status = "unknown"
 		self.context_menu_for = None
 		self.daemon_changed_profile = False
 		self.background = None
 		self.outdated_version = None
+		self.profile_switchers = []
+		self.current_file = None	# Currently edited file
+		self.controller_count = 0
 		self.current = Profile(GuiActionParser())
-		self.current_file = None
 		self.just_started = True
 		self.button_widgets = {}
 		self.hilights = { App.HILIGHT_COLOR : set(), App.OBSERVE_COLOR : set() }
@@ -88,18 +93,17 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.ribar = None
 		self.create_binding_buttons()
 		
+		ps = self.add_switcher(10, 10)
+		ps.set_allow_new(True)
+		ps.set_profile(self.load_profile_selection())
+		ps.connect('new-clicked', self.on_new_clicked)
+		ps.connect('save-clicked', self.on_save_clicked)
+		
 		# Drag&drop target
 		self.builder.get_object("content").drag_dest_set(Gtk.DestDefaults.ALL, [
 			Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0)
 			], Gdk.DragAction.COPY
 		)
-		
-		# Profile list
-		self.builder.get_object("cbProfile").set_row_separator_func(
-			lambda model, iter : model.get_value(iter, 1) is None and model.get_value(iter, 0) == "-" )
-		
-		# Top-left Icon
-		self.set_daemon_status("unknown")
 		
 		# 'C' button
 		vbc = self.builder.get_object("vbC")
@@ -127,20 +131,43 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		headerbar(self.builder.get_object("hbWindow"))
 	
 	
+	def setup_statusicon(self):
+		menu = self.builder.get_object("mnuDaemon")
+		self.statusicon = get_status_icon(self.imagepath, menu)
+		self.statusicon.connect('clicked', self.on_statusicon_clicked)
+		GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
+	
+	
+	def destroy_statusicon(self):
+		self.statusicon.destroy()
+		self.statusicon = None
+	
+	
 	def check(self):
-		""" Performs various (two) checks and reports possible problems """
+		""" Performs various (three) checks and reports possible problems """
 		# TODO: Maybe not best place to do this
-		if os.path.exists("/dev/uinput"):
-			if not check_access("/dev/uinput"):
-				# Cannot acces uinput
-				msg = _('You don\'t have required access to /dev/uinput.')
-				msg += "\n" + _('This will most likely prevent emulation from working.')
-				msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
-				self.show_error(msg)
-		else:
+		try:
+			kernel_mods = [ line.split(" ")[0] for line in file("/proc/modules", "r").read().split("\n") ]
+		except Exception:
+			# Maybe running on BSD or Windows...
+			kernel_mods = [ ]
+		
+		if len(kernel_mods) > 0 and "uinput" not in kernel_mods:
 			# There is no uinput
-			msg = _('/dev/uinput not found')
-			msg += "\n" + _('Your kernel is either outdated or compiled without uinput support.')
+			msg = _('uinput kernel module not loaded')
+			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
+			self.show_error(msg)
+		elif not os.path.exists("/dev/uinput"):
+			# /dev/uinput missing
+			msg = _('/dev/uinput doesn\'t exists')
+			msg += "\n" + _('uinput kernel module is loaded, but /dev/uinput is missing.')
+			#msg += "\n\n" + _('Please, consult your distribution manual on what in the world could cause this.')
+			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
+			self.show_error(msg)
+		elif not check_access("/dev/uinput"):
+			# Cannot acces uinput
+			msg = _('You don\'t have required access to /dev/uinput.')
+			msg += "\n" + _('This will most likely prevent emulation from working.')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			self.show_error(msg)
 	
@@ -204,6 +231,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.enable_test_mode()
 	
 	
+	def on_statusicon_clicked(self, *a):
+		""" Handler for user clicking on tray icon button """
+		self.window.set_visible(not self.window.get_visible())
+	
+	
+	def on_window_delete_event(self, *a):
+		""" Called when user tries to close window """
+		if not IS_UNITY and self.config['gui']['enable_status_icon'] and self.config['gui']['minimize_to_status_icon']:
+			# Override closing and hide instead
+			self.window.set_visible(False)
+			return True
+		return False # Allow
+	
+	
 	def on_mnuClear_activate(self, *a):
 		"""
 		Handler for 'Clear' context menu item.
@@ -264,7 +305,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.builder.get_object("btRedo").set_sensitive(True)
 		if len(self.undo) < 1:
 			self.builder.get_object("btUndo").set_sensitive(False)
-		self.on_profile_changed()
+		self.on_profile_modified()
 	
 	
 	def on_btRedo_clicked(self, *a):
@@ -275,68 +316,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.builder.get_object("btUndo").set_sensitive(True)
 		if len(self.redo) < 1:
 			self.builder.get_object("btRedo").set_sensitive(False)
-		self.on_profile_changed()
+		self.on_profile_modified()
 	
 	
 	def on_profiles_loaded(self, profiles):
-		cb = self.builder.get_object("cbProfile")
-		model = cb.get_model()
-		model.clear()
-		i = 0
-		current_profile, current_index = self.load_profile_selection(), 0
-		for f in sorted(profiles, key=lambda f: f.get_basename()):
-			name = f.get_basename()
-			if name.endswith(".mod"):
-				continue
-			if name.startswith("."):
-				continue
-			if name.endswith(".sccprofile"):
-				name = name[0:-11]
-			if name == current_profile:
-				current_index = i
-			model.append((name, f, None))
-			i += 1
-		model.append(("-", None, None))
-		model.append((_("New profile..."), None, None))
-		
-		if cb.get_active_iter() is None:
-			cb.set_active(current_index)
-	
-	
-	def on_cbProfile_changed(self, cb, *a):
-		""" Called when user chooses profile in selection combo """
-		if self.recursing : return
-		model = cb.get_model()
-		iter = cb.get_active_iter()
-		f = model.get_value(iter, 1)
-		if f is None:
-			if self.current_file is None:
-				cb.set_active(0)
-			else:
-				self.select_profile(self.current_file.get_path())
-			new_name = os.path.split(self.current_file.get_path())[-1]
-			if new_name.endswith(".mod"): new_name = new_name[0:-4]
-			if new_name.endswith(".sccprofile"): new_name = new_name[0:-11]
-			new_name = _("Copy of") + " " + new_name
-			dlg = self.builder.get_object("dlgNewProfile")
-			txNewProfile = self.builder.get_object("txNewProfile")
-			txNewProfile.set_text(new_name)
-			dlg.set_transient_for(self.window)
-			dlg.show()
-		else:
-			modpath = f.get_path() + ".mod"
-			if os.path.exists(modpath):
-				log.debug("Removing .mod file '%s'", modpath)
-				try:
-					os.unlink(modpath)
-				except Exception, e:
-					log.warning("Failed to remove .mod file")
-					log.warning(e)
-			
-			self.load_profile(f)
-			if not self.daemon_changed_profile:
-				self.dm.set_profile(f.get_path())
-			self.save_profile_selection(f.get_path())
+		for ps in self.profile_switchers:
+			ps.set_profile_list(profiles)
 	
 	
 	def on_dlgNewProfile_delete_event(self, dlg, *a):
@@ -352,54 +337,46 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		dlg.hide()
 	
 	
-	def new_profile(self, profile, name):
+	def on_profile_modified(self, *a):
 		"""
-		Stores passed profile under specified name, adds it to UI
-		and selects it.
+		Called when selected profile is modified in memory.
 		"""
-		cb = self.builder.get_object("cbProfile")
-		filename = name + ".sccprofile"
-		path = os.path.join(get_profiles_path(), filename)
-		self.current_file = Gio.File.new_for_path(path)
-		self.current = profile
-		self.recursing = True
-		model = cb.get_model()
-		model.insert(0, ( name, self.current_file, None ))
-		cb.set_active(0)
-		self.recursing = False
-		self.save_profile(self.current_file, profile)
-		for b in self.button_widgets.values():
-			b.update()
-		self.on_profile_saved(self.current_file, False)	# Just to indicate that there are no changes to save
+		self.profile_switchers[0].set_profile_modified(True)
+		
+		if not self.current_file.get_path().endswith(".mod"):
+			mod = self.current_file.get_path() + ".mod"
+			self.current_file = Gio.File.new_for_path(mod)
+		
+		self.save_profile(self.current_file, self.current)
 	
 	
 	def on_profile_loaded(self, profile, giofile):
 		self.current = profile
 		self.current_file = giofile
+		self.profile_switchers[0].set_profile_modified(False)
 		for b in self.button_widgets.values():
 			b.update()
-		self.on_profile_saved(giofile, False)	# Just to indicate that there are no changes to save
 	
 	
-	def on_profile_changed(self, *a):
-		"""
-		Called when selected profile is modified in memory.
-		Displays "changed" next to profile name and shows Save button.
+	def on_profile_selected(self, ps, name, giofile):
+		if ps == self.profile_switchers[0]:
+			self.load_profile(giofile)
+		if ps.get_controller():
+			ps.get_controller().set_profile(giofile.get_path())
+	
+	
+	def on_unknown_profile(self, ps, name):
+		log.warn("Daemon reported unknown profile: '%s'; Overriding.", name)
+		if self.current_file is not None:
+			ps.get_controller().set_profile(self.current_file.get_path())
+	
+	
+	def on_save_clicked(self, *a):
+		if self.current_file.get_path().endswith(".mod"):
+			orig = self.current_file.get_path()[0:-4]
+			self.current_file = Gio.File.new_for_path(orig)
 		
-		If sccdaemon is alive, creates 'original.filename.mod' and loads it
-		into daemon to activate changes right away.
-		"""
-		cb = self.builder.get_object("cbProfile")
-		self.builder.get_object("rvProfileChanged").set_reveal_child(True)
-		model = cb.get_model()
-		for row in model:
-			if self.current_file == model.get_value(row.iter, 1):
-				model.set_value(row.iter, 2, _("(changed)"))
-				break
-		
-		if self.dm.is_alive():
-			modfile = Gio.File.new_for_path(self.current_file.get_path() + ".mod")
-			self.save_profile(modfile, self.current)
+		self.save_profile(self.current_file, self.current)
 	
 	
 	def on_profile_saved(self, giofile, send=True):
@@ -413,22 +390,27 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				self.dm.set_profile(giofile.get_path())
 			return
 		
-		cb = self.builder.get_object("cbProfile")
-		self.builder.get_object("rvProfileChanged").set_reveal_child(False)
-		model = cb.get_model()
-		for row in model:
-			if model.get_value(row.iter, 1) == self.current_file:
-				model.set_value(row.iter, 1, giofile)
-			model.set_value(row.iter, 2, None)
-		
+		self.profile_switchers[0].set_profile_modified(False)
 		if send and self.dm.is_alive() and not self.daemon_changed_profile:
 			self.dm.set_profile(giofile.get_path())
 		
-		self.current_file = giofile
+		self.current_file = giofile	
 	
 	
-	def on_btSaveProfile_clicked(self, *a):
-		self.save_profile(self.current_file, self.current)
+	def on_new_clicked(self, ps, name):
+		new_name = _("Copy of %s") % (name,)
+		filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+		i = 0
+		while os.path.exists(filename):
+			i += 1
+			new_name = _("Copy of %s (%s)") % (name, i)
+			filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+		
+		dlg = self.builder.get_object("dlgNewProfile")
+		txNewProfile = self.builder.get_object("txNewProfile")
+		txNewProfile.set_text(new_name)
+		dlg.set_transient_for(self.window)
+		dlg.show()
 	
 	
 	def on_action_chosen(self, id, action):
@@ -437,7 +419,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# TODO: Maybe better comparison
 			self.undo.append(UndoRedo(id, before, action))
 			self.builder.get_object("btUndo").set_sensitive(True)
-		self.on_profile_changed()
+		self.on_profile_modified()
 	
 	
 	def on_background_area_hover(self, trash, area):
@@ -478,11 +460,89 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_daemon_alive(self, *a):
-		self.set_daemon_status("alive")
+		self.set_daemon_status("alive", True)
 		self.hide_error()
-		if self.current_file is not None and not self.just_started:
+		self.just_started = False
+		if self.profile_switchers[0].get_file() is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
+		GLib.timeout_add_seconds(1, self.check)
 		self.enable_test_mode()
+	
+	
+	def on_daemon_ccunt_changed(self, daemon, count):
+		if (self.controller_count, count) == (0, 1):
+			# First controller connected
+			# 
+			# 'event' signal should be connected only on first controller,
+			# so this block is executed only when number of connected
+			# controllers changes from 0 to 1
+			c = self.dm.get_controllers()[0]
+			c.connect('event', self.on_daemon_event_observer)
+		elif count > self.controller_count:
+			# Controller added
+			while len(self.profile_switchers) < count:
+				s = self.add_switcher()
+		elif count < self.controller_count:
+			# Controller removed
+			while len(self.profile_switchers) > max(1, count):
+				s = self.profile_switchers.pop()
+				s.set_controller(None)
+				self.remove_switcher(s)
+		
+		# Assign controllers to widgets
+		for i in xrange(0, count):
+			c = self.dm.get_controllers()[i]
+			self.profile_switchers[i].set_controller(c)
+		
+		if count < 1:
+			# Special case, no controllers are connected, but one widget
+			# has to stay on screen
+			self.profile_switchers[0].set_controller(None)
+		
+		self.controller_count = count
+	
+	
+	def new_profile(self, profile, name):
+		filename = os.path.join(get_profiles_path(), name + ".sccprofile")
+		self.current_file = Gio.File.new_for_path(filename)
+		self.save_profile(self.current_file, profile)
+	
+	
+	def add_switcher(self, margin_left=30, margin_right=40, margin_bottom=2):
+		"""
+		Adds new profile switcher widgets on top of window. Called
+		when new controller is connected to daemon.
+		
+		Returns generated ProfileSwitcher instance.
+		"""
+		vbAllProfiles = self.builder.get_object("vbAllProfiles")
+		
+		ps = ProfileSwitcher(self.imagepath, self.config)
+		ps.set_margin_left(margin_left)
+		ps.set_margin_right(margin_right)
+		ps.set_margin_bottom(margin_bottom)
+		ps.connect('right-clicked', self.on_profile_right_clicked)
+		
+		vbAllProfiles.pack_start(ps, False, False, 0)
+		vbAllProfiles.reorder_child(ps, 0)
+		vbAllProfiles.show_all()
+		
+		if len(self.profile_switchers) > 0:
+			ps.set_profile_list(self.profile_switchers[0].get_profile_list())
+		
+		self.profile_switchers.append(ps)
+		ps.connect('changed', self.on_profile_selected)
+		ps.connect('unknown-profile', self.on_unknown_profile)
+		return ps
+	
+	
+	def remove_switcher(self, s):
+		"""
+		Removes given profile switcher from UI.
+		"""
+		vbAllProfiles = self.builder.get_object("vbAllProfiles")
+		vbAllProfiles.remove(s)
+		s.destroy()
 	
 	
 	def enable_test_mode(self):
@@ -491,8 +551,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		daemon configuration, 2nd call fails and logs error.
 		"""
 		if self.dm.is_alive():
-			self.dm.unlock_all()
-			self.dm.observe(DaemonManager.nocallback, self.on_observe_failed,
+			try:
+				c = self.dm.get_controllers()[0]
+			except IndexError:
+				# Zero controllers
+				return
+			c.unlock_all()
+			c.observe(DaemonManager.nocallback, self.on_observe_failed,
 				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
 				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
 				'RIGHT', 'STICK', 'STICKPRESS')
@@ -512,7 +577,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				"Running daemon instance is too old (version %s, expected %s). Restarting...",
 				version, DAEMON_VERSION)
 			self.outdated_version = version
-			self.set_daemon_status("unknown")
+			self.set_daemon_status("unknown", False)
 			self.dm.restart()
 	
 	
@@ -533,7 +598,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n" + _("USB dongle was removed.")
 		
 		self.show_error(msg)
-		self.set_daemon_status("dead")
+		self.set_daemon_status("error", True)
 	
 	
 	def on_daemon_event_observer(self, daemon, what, data):
@@ -580,6 +645,30 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			print "event", what
 	
 	
+	def on_profile_right_clicked(self, ps):
+		for name in ("mnuConfigureController", "mnuTurnoffController"):
+			# Disable controller-related menu items if controller is not connected
+			obj = self.builder.get_object(name)
+			obj.set_sensitive(ps.get_controller() is not None)
+		
+		mnuPS = self.builder.get_object("mnuPS")
+		mnuPS.ps = ps
+		mnuPS.popup(None, None, None, None,
+			3, Gtk.get_current_event_time())
+	
+	
+	def on_mnuConfigureController_activate(self, *a):
+		from scc.gui.controller_settings import ControllerSettings
+		mnuPS = self.builder.get_object("mnuPS")
+		cs = ControllerSettings(self, mnuPS.ps.get_controller(), mnuPS.ps)
+		cs.show(self.window)
+	
+	
+	def mnuTurnoffController_activate(self, *a):
+		mnuPS = self.builder.get_object("mnuPS")
+		if mnuPS.ps.get_controller():
+			mnuPS.ps.get_controller().turnoff()
+	
 	def show_error(self, message):
 		if self.ribar is None:
 			self.ribar = RIBar(message, Gtk.MessageType.ERROR)
@@ -604,54 +693,35 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_daemon_reconfigured(self, *a):
 		log.debug("Reloading config...")
 		self.config.reload()
-	
-	
-	def on_daemon_profile_changed(self, trash, profile):
-		current_changed = self.builder.get_object("rvProfileChanged").get_reveal_child()
-		if self.just_started or not current_changed:
-			log.debug("Daemon uses profile '%s', selecting it in UI", profile)
-			self.daemon_changed_profile = True
-			found = self.select_profile(profile)
-			self.daemon_changed_profile = False
-			if not found:
-				if os.path.split(profile)[-1].startswith(".") and os.path.exists(profile):
-					# Daemon uses dot profile, display it temporaly
-					log.info("Daemon reported selecting dot profile: '%s'", profile)
-					cb = self.builder.get_object("cbProfile")
-					model = cb.get_model()
-					f = Gio.File.new_for_path(profile)
-					name = ".".join(os.path.split(profile)[-1].split(".")[0:-1])
-					iter = model.insert(0, (name, f, None))
-					cb.set_active_iter(iter)
-				else:
-					# Daemon uses unknown profile, override it with something I know about
-					log.warn("Daemon reported unknown profile: '%s'; Overriding.", profile)
-					if self.current_file is not None:
-						self.dm.set_profile(self.current_file.get_path())
-				
-		self.just_started = False
+		for ps in self.profile_switchers:
+			ps.set_controller(ps.get_controller())
 	
 	
 	def on_daemon_dead(self, *a):
 		if self.just_started:
 			self.dm.restart()
 			self.just_started = False
-			self.set_daemon_status("unknown")
+			self.set_daemon_status("unknown", True)
 			return
-		self.set_daemon_status("dead")
+		
+		for ps in self.profile_switchers:
+			ps.set_controller(None)
+			ps.on_daemon_dead()
+		self.set_daemon_status("dead", False)
 	
 	
 	def on_mnuEmulationEnabled_toggled(self, cb):
 		if self.recursing : return
 		if cb.get_active():
 			# Turning daemon on
-			self.set_daemon_status("unknown")
+			self.set_daemon_status("unknown", True)
 			cb.set_sensitive(False)
 			self.dm.start()
 		else:
 			# Turning daemon off
-			self.set_daemon_status("unknown")
+			self.set_daemon_status("unknown", False)
 			cb.set_sensitive(False)
+			self.hide_error()
 			self.dm.stop()
 			
 	
@@ -659,7 +729,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Gtk.Application.do_startup(self, *a)
 		self.load_profile_list()
 		self.setup_widgets()
-		GLib.timeout_add_seconds(2, self.check)
+		if self.app.config['gui']['enable_status_icon']:
+			self.setup_statusicon()
+		self.set_daemon_status("unknown", True)
 	
 	
 	def do_local_options(self, trash, lo):
@@ -690,30 +762,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.builder.get_object("window").show()
 	
 	
-	def select_profile(self, name):
-		"""
-		Selects profile in profile selection combobox.
-		Returns True on success or False if profile is not in combobox.
-		"""
-		if name.endswith(".mod"): name = name[0:-4]
-		if name.endswith(".sccprofile"): name = name[0:-11]
-		if "/" in name : name = os.path.split(name)[-1]
-		
-		cb = self.builder.get_object("cbProfile")
-		model = cb.get_model()
-		active = cb.get_active_iter()
-		for row in model:
-			if model.get_value(row.iter, 1) is not None:
-				if name == model.get_value(row.iter, 0):
-					if active == row.iter:
-						# Already selected
-						return True
-					cb.set_active_iter(row.iter)
-					self.remove_dot_profile()
-					return True
-		return False
-	
-	
 	def remove_dot_profile(self):
 		"""
 		Checks if first profile in list begins with dot and if yes, removes it.
@@ -736,25 +784,29 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		model.remove(model[0].iter)
 	
 	
-	def set_daemon_status(self, status):
+	def set_daemon_status(self, status, daemon_runs):
 		""" Updates image that shows daemon status and menu shown when image is clicked """
 		log.debug("daemon status: %s", status)
-		icon = os.path.join(self.imagepath, "status_%s.svg" % (status,))
+		icon = os.path.join(self.imagepath, "scc-%s.svg" % (status,))
 		imgDaemonStatus = self.builder.get_object("imgDaemonStatus")
 		btDaemon = self.builder.get_object("btDaemon")
 		mnuEmulationEnabled = self.builder.get_object("mnuEmulationEnabled")
 		imgDaemonStatus.set_from_file(icon)
 		mnuEmulationEnabled.set_sensitive(True)
 		self.window.set_icon_from_file(icon)
+		self.status = status
+		if self.statusicon:
+			GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
 		self.recursing = True
 		if status == "alive":
 			btDaemon.set_tooltip_text(_("Emulation is active"))
-			mnuEmulationEnabled.set_active(True)
+		elif status == "error":
+			btDaemon.set_tooltip_text(_("Error enabling emulation"))
 		elif status == "dead":
 			btDaemon.set_tooltip_text(_("Emulation is inactive"))
-			mnuEmulationEnabled.set_active(False)
 		else:
 			btDaemon.set_tooltip_text(_("Checking emulation status..."))
+		mnuEmulationEnabled.set_active(daemon_runs)
 		self.recursing = False
 	
 	

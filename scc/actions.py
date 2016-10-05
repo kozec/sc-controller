@@ -74,6 +74,7 @@ class Action(object):
 	AC_OSD		= 1 << 8
 	AC_OSK		= 1 << 9	# On screen keyboard
 	AC_MENU		= 1 << 10	# Menu Item
+	AC_SWITCHER	= 1 << 11	# Autoswitcher display
 	#		bit 	09876543210
 	AC_ALL		= 0b10111111111	# ALL means everything but OSK
 	
@@ -583,7 +584,6 @@ class MouseAction(HapticEnabledAction, Action):
 	def change(self, mapper, dx, dy):
 		""" Called from BallModifier """
 		dx, dy = dx * self.speed[0], dy * self.speed[1]
-		print self._mouse_axis, dx
 		if self._mouse_axis is None:
 			mapper.mouse.moveEvent(dx, dy)
 		elif self._mouse_axis == Rels.REL_X:
@@ -952,6 +952,106 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 			if axis in Axes:
 				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i]))
 				mapper.syn_list.add(mapper.gamepad)
+
+
+class MultichildAction(Action):
+	""" Mixin with nice looking to_string() method """
+	
+	def compress(self):
+		nw = [ x.compress() for x in self.actions ]
+		self.actions = nw
+		return self
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if multiline:
+			rv = [ (" " * pad) + self.COMMAND + "(" ]
+			pad += 2
+			for a in strip_none(*self.actions):
+				rv += [ a.to_string(True, pad) + ","]
+			if rv[-1].endswith(","):
+				rv[-1] = rv[-1][0:-1]
+			pad -= 2
+			rv += [ (" " * pad) + ")" ]
+			return "\n".join(rv)
+		return self.COMMAND + "(" + (", ".join([
+			x.to_string() if x is not None else "None"
+			for x in strip_none(*self.actions)
+		])) + ")"
+
+
+class TiltAction(MultichildAction):
+	COMMAND = "tilt"
+	MIN = 0.75
+	
+	def __init__(self, *actions):
+		"""
+		Order of actions:
+		 - Front faces down
+		 - Front faces up
+		 - Tilted left
+		 - Tilted right
+		 - Rotated left
+		 - Rotated right
+		"""
+		MultichildAction.__init__(self, *strip_none(*actions))
+		self.actions = ensure_size(6, actions, NoAction())
+		self.states = [ None, None, None, None, None, None ]
+		self.speed = (1.0, 1.0, 1.0)
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = (x, y, z)
+	
+	
+	def get_speed(self):
+		return self.speed
+	
+	
+	def gyro(self, mapper, *pyr):
+		q1, q2, q3, q4 = pyr[-4:]
+		pyr = quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0)
+		for j in (0, 1, 2):
+			i = j * 2
+			if self.actions[i]:
+				if pyr[j] < TiltAction.MIN * -1 / self.speed[j]:
+					# Side faces down
+					if not self.states[i]:
+						self.actions[i].button_press(mapper)
+						self.states[i] = True
+				elif self.states[i]:
+					# Side no longer faces down
+					self.actions[i].button_release(mapper)
+					self.states[i] = False
+			if self.actions[i+1]:
+				if pyr[j] > TiltAction.MIN / self.speed[j]:
+					# Side faces up
+					if not self.states[i+1]:
+						self.actions[i+1].button_press(mapper)
+						self.states[i+1] = True
+				elif self.states[i+1]:
+					# Side no longer faces up
+					self.actions[i+1].button_release(mapper)
+					self.states[i+1] = False
+	
+	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { TiltAction.COMMAND : [ x.encode() for x in self.actions ]}
+		if self.name: rv['name'] = self.name
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		""" Called when decoding profile from json """
+		args = [ parser.from_json_data(x) for x in data[TiltAction.COMMAND] ]
+		return TiltAction(*args)
+	
+	
+	def describe(self, context):
+		if self.name : return self.name
+		return _("Tilt")
 
 
 class TrackballAction(Action):
@@ -1336,12 +1436,12 @@ class MultiAction(Action):
 	__repr__ = __str__
 
 
-class DPadAction(Action):
+class DPadAction(MultichildAction):
 	COMMAND = "dpad"
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	
 	def __init__(self, *actions):
-		Action.__init__(self, *actions)
+		MultichildAction.__init__(self, *actions)
 		self.actions = ensure_size(4, actions)
 		self.eight = False
 		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
@@ -1351,13 +1451,13 @@ class DPadAction(Action):
 		""" Called from json encoder """
 		rv = { DPadAction.COMMAND : [ x.encode() for x in self.actions ]}
 		if self.name: rv['name'] = self.name
-		return rv	
+		return rv
 	
 	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		""" Called when decoding profile from json """
-		args = [ parser.from_json_data(x) for x in data["dpad"] ]
+		args = [ parser.from_json_data(x) for x in data[DPadAction.COMMAND] ]
 		if len(args) > 4:
 			a = DPad8Action(*args)
 		else:
@@ -1368,29 +1468,6 @@ class DPadAction(Action):
 	def describe(self, context):
 		if self.name: return self.name
 		return "DPad"
-	
-	
-	def compress(self):
-		nw = [ x.compress() for x in self.actions ]
-		self.actions = nw
-		return self
-	
-	
-	def to_string(self, multiline=False, pad=0):
-		if multiline:
-			rv = [ (" " * pad) + self.COMMAND + "(" ]
-			pad += 2
-			for a in self.actions:
-				rv += [ a.to_string(True, pad) + ","]
-			if rv[-1].endswith(","):
-				rv[-1] = rv[-1][0:-1]
-			pad -= 2
-			rv += [ (" " * pad) + ")" ]
-			return "\n".join(rv)
-		return self.COMMAND + "(" + (", ".join([
-			x.to_string() if x is not None else "None"
-			for x in self.actions
-		])) + ")"
 	
 	
 	def whole(self, mapper, x, y, what):

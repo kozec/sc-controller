@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 from distutils.core import setup, Extension
+from scc.constants import DAEMON_VERSION
 import glob
 
 data_files = [
@@ -7,6 +8,9 @@ data_files = [
 				('share/scc/glade/ae', glob.glob("glade/ae/*.glade")),
 				('share/scc/images', glob.glob("images/*.svg")),
 				('share/scc/images', glob.glob("images/*.svg.json")),
+				('share/scc/images/controller-icons', glob.glob("images/controller-icons/*.svg")),
+				('share/icons/hicolor/24x24/status', glob.glob("images/24x24/status/*.png")),
+				('share/icons/hicolor/22x22/status', glob.glob("images/22x22/status/*.png")),
 				('share/scc/default_profiles', glob.glob("default_profiles/*.sccprofile")),
 				('share/scc/default_profiles', glob.glob("default_profiles/.*.sccprofile")),
 				('share/scc/default_menus', glob.glob("default_menus/*.menu")),
@@ -18,19 +22,28 @@ data_files = [
 				
 ]
 
-setup(name='sccontroller',
-		version='0.2.6',
-		description='Standalone controller maping tool',
-		author='kozec',
-		packages=['scc', 'scc.gui', 'scc.gui.ae', 'scc.lib', 'scc.x11',
-			'scc.foreign', 'scc.osd'],
-		data_files = data_files,
-		scripts=['scripts/sc-controller', 'scripts/scc-daemon',
-			'scripts/scc-osd-message', 'scripts/scc-osd-menu',
-			'scripts/scc-osd-keyboard'],
-		license='GPL2',
-		platforms=['Linux'],
-		ext_modules=[
-			Extension('libuinput', sources = ['scc/uinput.c']),
-		]
-)
+packages = [
+	# Required
+	'scc', 'scc.drivers', 'scc.lib',
+	# Usefull
+	'scc.x11', 'scc.osd', 'scc.foreign',
+	# GUI
+	'scc.gui', 'scc.gui.ae'
+]
+
+if __name__ == "__main__":
+	setup(name = 'sccontroller',
+			version = DAEMON_VERSION,
+			description = 'Standalone controller maping tool',
+			author = 'kozec',
+			packages = packages,
+			data_files = data_files,
+			scripts = ['scripts/sc-controller', 'scripts/scc-daemon',
+				'scripts/scc-osd-message', 'scripts/scc-osd-menu',
+				'scripts/scc-osd-keyboard'],
+			license = 'GPL2',
+			platforms = ['Linux'],
+			ext_modules = [
+				Extension('libuinput', sources = ['scc/uinput.c']),
+			]
+	)

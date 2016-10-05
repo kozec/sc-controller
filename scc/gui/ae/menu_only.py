@@ -7,7 +7,8 @@ Displays page that can edito only MenuAction
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.special_actions import MenuAction
+from scc.special_actions import MenuAction, PositionModifier
+from scc.actions import Action
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.ae.menu_action import MenuActionCofC
 from scc.gui.ae import AEComponent

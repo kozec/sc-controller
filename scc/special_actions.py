@@ -35,6 +35,8 @@ class ChangeProfileAction(Action, SpecialAction):
 		if self.name: return self.name
 		if context == Action.AC_OSD:
 			return _("Profile: %s") % (self.profile,)
+		if context == Action.AC_SWITCHER:
+			return _("Switch to %s") % (self.profile,)
 		return _("Profile Change")
 	
 	
@@ -91,6 +93,27 @@ class TurnOffAction(Action, SpecialAction):
 		# Execute only when button is released (executing this when button
 		# is pressed would hold stuck any other action bound to same button,
 		# as button_release is not sent after controller turns off)
+		self.execute(mapper)
+
+
+class RestartDaemonAction(Action, SpecialAction):
+	SA = COMMAND = "restart"
+	
+	def __init__(self):
+		Action.__init__(self)
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Restart SCC-Daemon")
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s()" % (self.COMMAND,)
+	
+	
+	def button_release(self, mapper):
+		# Execute only when button is released (for same reason as
+		# TurnOffAction does)
 		self.execute(mapper)
 
 

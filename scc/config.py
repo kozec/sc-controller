@@ -8,6 +8,8 @@ from __future__ import unicode_literals
 
 from scc.paths import get_config_path
 from scc.profile import Encoder
+from scc.uinput import Keys, Axes
+from scc.special_actions import ChangeProfileAction
 
 import os, json, logging
 log = logging.getLogger("Config")
@@ -25,7 +27,30 @@ class Config(object):
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
 		],
-		"led_level": 80,
+		"gui": {
+			# GUI-only settings
+			"enable_status_icon" : False,
+			"minimize_to_status_icon" : True,
+		},
+		"controllers": { },
+		# output - modifies emulated controller
+		# Changing this may be usefull, but can break a lot of things
+		"output": {
+			'vendor'	: '0x045e',
+			'product'	: '0x028e',
+			'name'		: "Microsoft X-Box 360 pad",
+			'buttons'	: 20,
+			'axes'	: [
+				(-32768, 32767),	# Axes.ABS_X
+				(-32768, 32767),	# Axes.ABS_Y
+				(-32768, 32767),	# Axes.ABS_RX
+				(-32768, 32767),	# Axes.ABS_RY
+				(0, 255),			# Axes.ABS_Z
+				(0, 255),			# Axes.ABS_RZ
+				(-1, 1),			# Axes.ABS_HAT0X
+				(-1, 1)				# Axes.ABS_HAT0Y
+			],
+		},
 		# enable_sniffing - If enabled, another program with write access to
 		# ~/.config/scc can ask daemon to send notifications about all
 		# (or only some) inputs.
@@ -86,6 +111,13 @@ class Config(object):
 			if len(self.DEFAULTS[key]) != len(self.values[key]):
 				src = self.DEFAULTS[key]
 				self.values[key] = { k:src[k] for k in src }
+		# Special check for autoswitcher after v0.2.17
+		if "autoswitch" in self.values:
+			for a in self.values["autoswitch"]:
+				if "profile" in a:
+					a["action"] = ChangeProfileAction(str(a["profile"])).to_string()
+					del a["profile"]
+					rv = True
 		return rv
 	
 	

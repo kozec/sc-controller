@@ -3,15 +3,16 @@ from __future__ import unicode_literals
 
 from collections import deque
 from scc.lib import xwrappers as X
-from scc.uinput import Gamepad, Keyboard, Mouse, Dummy, Rels
-from scc.constants import SCStatus, SCButtons, SCI_NULL, LEFT, RIGHT, STICK
+from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
-from scc.constants import CI_NAMES, ControllerInput, HapticPos
+from scc.constants import SCButtons, LEFT, RIGHT, STICK
+from scc.constants import HapticPos, ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction
+from scc.config import Config
 from scc.profile import Profile
 
 
-import traceback, logging, time
+import traceback, logging, time, os
 log = logging.getLogger("Mapper")
 
 class Mapper(object):
@@ -19,7 +20,7 @@ class Mapper(object):
 	
 	def __init__(self, profile, keyboard=b"SCController Keyboard",
 				mouse=b"SCController Mouse",
-				gamepad=b"Microsoft X-Box 360 pad"):
+				gamepad=True):
 		"""
 		If any of keyboard, mouse or gamepad is set to None, that device
 		will not be emulated.
@@ -34,7 +35,7 @@ class Mapper(object):
 		log.debug("Keyboard: %s" % (self.keyboard, ))
 		self.mouse = Mouse(name=mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
-		self.gamepad = Gamepad(name=gamepad) if gamepad else Dummy()
+		self.gamepad = self._create_gamepad() if gamepad else Dummy()
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		
 		# Set by SCCDaemon instance; Used to handle actions
@@ -50,8 +51,36 @@ class Mapper(object):
 		self.syn_list = set()
 		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
-		self.state, self.old_state = SCI_NULL, SCI_NULL
+		self.state, self.old_state = None, None
 		self.force_event = set()
+	
+	
+	def _create_gamepad(self):
+		""" Parses gamepad configuration and creates apropriate unput device """
+		if "SCC_NOGAMEPAD" in os.environ:
+			# Completly undocumented and for debuging purposes only.
+			# If set, no gamepad is emulated
+			self.gamepad = Dummy()
+			return
+		cfg = Config()
+		keys = ALL_BUTTONS[0:cfg["output"]["buttons"]]
+		vendor = int(cfg["output"]["vendor"], 16)
+		product = int(cfg["output"]["product"], 16)
+		name = cfg["output"]["name"]
+		axes = []
+		i = 0
+		for min, max in cfg["output"]["axes"]:
+			fuzz, flat = 0, 0
+			if abs(max - min) > 32768:
+				fuzz, flat = 16, 128
+			try:
+				axes.append(( ALL_AXES[i], min, max, fuzz, flat ))
+			except IndexError:
+				# Out of axes
+				break
+			i += 1
+		return UInput(vendor=vendor, product=product, name=name, keys=keys,
+			axes=axes, rels=[])
 	
 	
 	def sync(self):
@@ -211,13 +240,13 @@ class Mapper(object):
 			ButtonAction._button_release(self, x, True)
 	
 	
-	def callback(self, controller, now, sci):
-		# Store state
-		self.old_state = self.state
+	def input(self, controller, now, old_state, state):
+		# Store states
+		self.old_state = old_state
 		self.old_buttons = self.buttons
 
-		self.state = sci
-		self.buttons = sci.buttons
+		self.state = state
+		self.buttons = state.buttons
 		
 		if self.buttons & SCButtons.LPAD and not self.buttons & SCButtons.LPADTOUCH:
 			self.buttons = (self.buttons & ~SCButtons.LPAD) | SCButtons.STICK
@@ -242,39 +271,43 @@ class Mapper(object):
 			
 			# Check stick
 			if not self.buttons & SCButtons.LPADTOUCH:
-				if FE_STICK in fe or self.old_state.lpad_x != sci.lpad_x or self.old_state.lpad_y != sci.lpad_y:
-					self.profile.stick.whole(self, sci.lpad_x, sci.lpad_y, STICK)
+				if FE_STICK in fe or self.old_state.lpad_x != state.lpad_x or self.old_state.lpad_y != state.lpad_y:
+					self.profile.stick.whole(self, state.lpad_x, state.lpad_y, STICK)
 			
 			# Check gyro
-			if controller.getGyroEnabled():
-				self.profile.gyro.gyro(self, sci.gpitch, sci.gyaw, sci.groll, sci.q1, sci.q2, sci.q3, sci.q4)
+			if controller.get_gyro_enabled():
+				self.profile.gyro.gyro(self, state.gpitch, state.gyaw, state.groll, state.q1, state.q2, state.q3, state.q4)
 			
 			# Check triggers
-			if FE_TRIGGER in fe or sci.ltrig != self.old_state.ltrig:
+			if FE_TRIGGER in fe or state.ltrig != self.old_state.ltrig:
 				if LEFT in self.profile.triggers:
-					self.profile.triggers[LEFT].trigger(self, sci.ltrig, self.old_state.ltrig)
-			if FE_TRIGGER in fe or sci.rtrig != self.old_state.rtrig:
+					self.profile.triggers[LEFT].trigger(self, state.ltrig, self.old_state.ltrig)
+			if FE_TRIGGER in fe or state.rtrig != self.old_state.rtrig:
 				if RIGHT in self.profile.triggers:
-					self.profile.triggers[RIGHT].trigger(self, sci.rtrig, self.old_state.rtrig)
+					self.profile.triggers[RIGHT].trigger(self, state.rtrig, self.old_state.rtrig)
 			
 			# Check pads
 			if FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 				# RPAD
-				self.profile.pads[RIGHT].whole(self, sci.rpad_x, sci.rpad_y, RIGHT)
+				self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
 			
 			if (FE_PAD in fe and self.buttons & SCButtons.LPADTOUCH) or self.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
 				# LPAD
-				self.profile.pads[LEFT].whole(self, sci.lpad_x, sci.lpad_y, LEFT)
+				self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
 		except Exception, e:
 			# Log error but don't crash here, it breaks too many things at once
 			log.error("Error while processing controller event")
 			log.error(traceback.format_exc())
 		
+		self.run_scheduled(now)
+		self.generate_events()
+	
+	
+	def run_scheduled(self, now):
 		if len(self.scheduled_tasks) > 0 and self.scheduled_tasks[0][0] <= now:
 			cb = self.scheduled_tasks[0][1]
 			self.scheduled_tasks = self.scheduled_tasks[1:]
 			cb(self)
-		self.generate_events()
 	
 	
 	def generate_events(self):
@@ -298,6 +331,6 @@ class Mapper(object):
 		if self.controller:
 			for x in (0, 1):
 				if self.feedbacks[x]:
-					self.controller.addFeedback(*self.feedbacks[x].data)
+					self.controller.feedback(self.feedbacks[x])
 					self.feedbacks[x] = None
 		self.sync()

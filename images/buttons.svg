@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="actions.svg">
+   sodipodi:docname="buttons.svg">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -25,16 +25,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="298.80978"
-     inkscape:cy="-23.279564"
+     inkscape:zoom="3.959798"
+     inkscape:cx="92.166851"
+     inkscape:cy="149.89203"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="false"
      units="px"
-     inkscape:window-width="1409"
+     inkscape:window-width="1246"
      inkscape:window-height="835"
-     inkscape:window-x="305"
+     inkscape:window-x="468"
      inkscape:window-y="66"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -481,6 +481,17 @@
          id="tspan4482"
          x="545.12415"
          y="850.65393">9</tspan></text>
+    <g
+       transform="matrix(0.83039971,0,0,0.83039971,18.455559,127.06679)"
+       style="display:inline"
+       id="MODE">
+      <circle
+         r="10.761458"
+         cx="429.12402"
+         cy="749.75842"
+         id="path4170-0-8-4-67"
+         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#464646;fill-opacity:0.40392157;fill-rule:evenodd;stroke:#000000;stroke-width:0.58789414;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
+    </g>
   </g>
   <g
      inkscape:groupmode="layer"
@@ -1079,5 +1090,13 @@
        width="52.86615"
        id="AREA_THUMBL"
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
+    <rect
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+       id="AREA_MODE"
+       width="19.515966"
+       height="20.553904"
+       x="364.71899"
+       y="739.01111"
+       ry="0" />
   </g>
 </svg>

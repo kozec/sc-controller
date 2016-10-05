@@ -22,52 +22,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from collections import namedtuple
 from scc.lib import IntEnum
-import struct
+from scc.uinput import Axes, Keys
 
 """
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
 daemon will differ one one expected by UI and daemon will be forcefully restarted.
 """
-DAEMON_VERSION = "0.2.16.1"
-
-VENDOR_ID = 0x28de
-PRODUCT_ID = [0x1102, 0x1142]
-ENDPOINT = [3, 2]
-CONTROLIDX = [2, 1]
+DAEMON_VERSION = "0.3"
 
 HPERIOD  = 0.02
 LPERIOD  = 0.5
 DURATION = 1.0
-
-CONTROLER_FORMAT = [
-	('b',   'type'),
-	('x',   'ukn_01'),
-	('B',   'status'),
-	('x',   'ukn_02'),
-	('H',   'seq'),
-	('x',   'ukn_03'),
-	('I',   'buttons'),
-	('B',   'ltrig'),
-	('B',   'rtrig'),
-	('x',   'ukn_04'),
-	('x',   'ukn_05'),
-	('x',   'ukn_06'),
-	('h',   'lpad_x'),
-	('h',   'lpad_y'),
-	('h',   'rpad_x'),
-	('h',   'rpad_y'),
-	('10x', 'ukn_06'),
-	('h',   'gpitch'),
-	('h',   'groll'),
-	('h',   'gyaw'),
-	('h',   'q1'),
-	('h',   'q2'),
-	('h',   'q3'),
-	('h',   'q4'),
-	('16x', 'ukn_07'),
-]
 
 FE_STICK	= 1
 FE_TRIGGER	= 2
@@ -86,33 +52,6 @@ SAME	= "SAME"	# may be used with MenuAction
 
 PARSER_CONSTANTS = ( LEFT, RIGHT, WHOLE, STICK, GYRO, PITCH, YAW, ROLL, SAME )
 
-FORMATS, NAMES = zip(*CONTROLER_FORMAT)
-CI_NAMES = [ x for x in NAMES if not x.startswith('ukn_') ]
-
-ControllerInput = namedtuple('ControllerInput', ' '.join(CI_NAMES))
-
-SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
-
-class SCStatus(IntEnum):
-	IDLE = 0x04
-	INPUT = 0x01
-	HOTPLUG = 0x03
-
-
-class SCPacketType(IntEnum):
-	OFF = 0x9f
-	AUDIO = 0xb6
-	CONFIGURE = 0x87
-	CALIBRATE_JOYSTICK = 0xbf
-	CALIBRATE_TRACKPAD = 0xa7
-	SET_AUDIO_INDICES = 0xc1
-	FEEDBACK = 0x8f
-	RESET = 0x95
-
-
-class SCConfigType(IntEnum):
-	LED = 0x2d
-	TIMEOUT_N_GYROS = 0x32
 
 
 class SCButtons(IntEnum):
@@ -151,3 +90,17 @@ TRIGGER_MIN = 0
 TRIGGER_HALF = 50
 TRIGGER_CLICK = 254 # Values under this are generated until trigger clicks
 TRIGGER_MAX = 255
+
+ALL_BUTTONS = ( Keys.BTN_START, Keys.BTN_MODE, Keys.BTN_SELECT, Keys.BTN_A,
+	Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
+	Keys.BTN_THUMBL, Keys.BTN_THUMBR, Keys.BTN_WHEEL, Keys.BTN_GEAR_DOWN,
+	Keys.BTN_GEAR_UP, Keys.KEY_OK, Keys.KEY_SELECT, Keys.KEY_GOTO,
+	Keys.KEY_CLEAR, Keys.KEY_OPTION, Keys.KEY_INFO, Keys.KEY_TIME,
+	Keys.KEY_VENDOR, Keys.KEY_ARCHIVE, Keys.KEY_PROGRAM, Keys.KEY_CHANNEL,
+	Keys.KEY_FAVORITES, Keys.KEY_EPG )
+
+ALL_AXES = ( Axes.ABS_X, Axes.ABS_Y, Axes.ABS_RX, Axes.ABS_RY, Axes.ABS_Z,
+	Axes.ABS_RZ, Axes.ABS_HAT0X, Axes.ABS_HAT0Y, Axes.ABS_HAT1X, Axes.ABS_HAT1Y,
+	Axes.ABS_HAT2X, Axes.ABS_HAT2Y, Axes.ABS_HAT3X, Axes.ABS_HAT3Y,
+	Axes.ABS_PRESSURE, Axes.ABS_DISTANCE, Axes.ABS_TILT_X, Axes.ABS_TILT_Y,
+	Axes.ABS_TOOL_WIDTH, Axes.ABS_VOLUME, Axes.ABS_MISC )

@@ -8,16 +8,19 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gdk, GObject, GLib
+from scc.special_actions import TurnOffAction, RestartDaemonAction
+from scc.special_actions import ChangeProfileAction
 from scc.modifiers import SensitivityModifier
+from scc.actions import Action, NoAction
 from scc.paths import get_profiles_path
 from scc.constants import LEFT, RIGHT
 from scc.tools import find_profile
-from scc.actions import Action
 from scc.profile import Profile
 from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
 from scc.gui.parser import GuiActionParser
+from scc.gui.dwsnc import IS_UNITY
 from scc.x11.autoswitcher import Condition
 from scc.osd.keyboard import Keyboard as OSDKeyboard
 from scc.osd.osk_actions import OSKCursorAction
@@ -33,6 +36,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		UserDataManager.__init__(self)
 		self.app = app
 		self.setup_widgets()
+		self._timer = None
 		self._recursing = False
 		self.app.config.reload()
 		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
@@ -62,8 +66,18 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.load_autoswitch()
 		self.load_osk()
 		self.load_colors()
-		# Load LED
-		self.builder.get_object("sclLED").set_value(self.app.config['led_level'])
+		# Load rest
+		self._recursing = True
+		(self.builder.get_object("cbInputTestMode")
+				.set_active(bool(self.app.config['enable_sniffing'])))
+		(self.builder.get_object("cbEnableStatusIcon")
+				.set_active(bool(self.app.config['gui']['enable_status_icon'])))
+		(self.builder.get_object("cbMinimizeToStatusIcon")
+				.set_active(not IS_UNITY and bool(self.app.config['gui']['minimize_to_status_icon'])))
+		(self.builder.get_object("cbMinimizeToStatusIcon")
+				.set_sensitive(not IS_UNITY and self.app.config['gui']['enable_status_icon']))
+		self._recursing = False
+		
 	
 	
 	def _load_color(self, w, dct, key):
@@ -88,17 +102,17 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		""" Transfers autoswitch settings from config to UI """
 		tvItems = self.builder.get_object("tvItems")
 		cbShowOSD = self.builder.get_object("cbShowOSD")
-		cbInputTestMode = self.builder.get_object("cbInputTestMode")
 		model = tvItems.get_model()
 		model.clear()
 		for x in self.app.config['autoswitch']:
 			o = GObject.GObject()
 			o.condition = Condition.parse(x['condition'])
-			model.append((o, o.condition.describe(), x['profile']))
+			o.action = GuiActionParser().restart(x["action"]).parse()
+			a_str = o.action.describe(Action.AC_SWITCHER)
+			model.append((o, o.condition.describe(), a_str))
 		self._recursing = True
 		self.on_tvItems_cursor_changed()
 		cbShowOSD.set_active(bool(self.app.config['autoswitch_osd']))
-		cbInputTestMode.set_active(bool(self.app.config['enable_sniffing']))
 		self._recursing = False
 	
 	
@@ -197,20 +211,48 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.app.save_config()
 	
 	
+	def schedule_save_config(self):
+		"""
+		Schedules config saving in 3s.
+		Done to prevent literal madness when user moves slider.
+		"""
+		def cb(*a):
+			self._timer = None
+			self.app.save_config()
+			
+		if self._timer is not None:
+			GLib.source_remove(self._timer)
+		self._timer = GLib.timeout_add_seconds(3, cb)
+	
+	
 	def save_config(self):
 		""" Transfers settings from UI back to config """
+		# Store hard stuff
 		tvItems = self.builder.get_object("tvItems")
 		cbShowOSD = self.builder.get_object("cbShowOSD")
-		cbInputTestMode = self.builder.get_object("cbInputTestMode")
+		cbEnableStatusIcon = self.builder.get_object("cbEnableStatusIcon")
+		cbMinimizeToStatusIcon = self.builder.get_object("cbMinimizeToStatusIcon")
 		conds = []
 		for row in tvItems.get_model():
-			conds.append(dict(
-				condition = row[0].condition.encode(),
-				profile = row[2]
-			))
+			conds.append({
+				'condition' : row[0].condition.encode(),
+				'action' : row[0].action.to_string()
+			})
+		# Apply status icon settings
+		if self.app.config['gui']['enable_status_icon'] != cbEnableStatusIcon.get_active():
+			self.app.config['gui']['enable_status_icon'] = cbEnableStatusIcon.get_active()
+			cbMinimizeToStatusIcon.set_sensitive(not IS_UNITY and cbEnableStatusIcon.get_active())
+			if cbEnableStatusIcon.get_active():
+				self.app.setup_statusicon()
+			else:
+				self.app.destroy_statusicon()
+		# Store rest
 		self.app.config['autoswitch'] = conds
 		self.app.config['autoswitch_osd'] = cbShowOSD.get_active()
-		self.app.config['enable_sniffing'] = cbInputTestMode.get_active()
+		self.app.config['enable_sniffing'] = self.builder.get_object("cbInputTestMode").get_active()
+		self.app.config['gui']['enable_status_icon'] = self.builder.get_object("cbEnableStatusIcon").get_active()
+		self.app.config['gui']['minimize_to_status_icon'] = self.builder.get_object("cbMinimizeToStatusIcon").get_active()
+		# Save
 		self.app.save_config()
 	
 	
@@ -219,7 +261,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.save_config()
 	
 	
-	def on_cbInputTestMode_toggled(self, *a):
+	def on_random_checkbox_toggled(self, *a):
 		if self._recursing: return
 		self.save_config()
 	
@@ -240,18 +282,30 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbMatchClass = self.builder.get_object("cbMatchClass")
 		cbExactTitle = self.builder.get_object("cbExactTitle")
 		cbRegExp = self.builder.get_object("cbRegExp")
+		rbProfile = self.builder.get_object("rbProfile")
+		rbTurnOff = self.builder.get_object("rbTurnOff")
+		rbRestart = self.builder.get_object("rbRestart")
 		# Grab data
 		model, iter = tvItems.get_selection().get_selected()
 		o = model.get_value(iter, 0)
 		profile = model.get_value(iter, 2)
 		condition = o.condition
+		action = o.action
 		
 		# Clear editor
-		self.set_cb(cbProfile, profile)
 		for cb in (cbMatchTitle, cbMatchClass, cbExactTitle, cbRegExp):
 			cb.set_active(False)
 		for ent in (entClass, entTitle):
 			ent.set_text("")
+		# Setup action
+		if isinstance(o.action, ChangeProfileAction):
+			rbProfile.set_active(True)
+			self.set_cb(cbProfile, o.action.profile)
+		elif isinstance(o.action, TurnOffAction):
+			rbTurnOff.set_active(True)
+		elif isinstance(o.action, RestartDaemonAction):
+			rbRestart.set_active(True)
+		
 		# Setup editor
 		if condition.title:
 			entTitle.set_text(condition.title or "")
@@ -284,6 +338,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbMatchClass = self.builder.get_object("cbMatchClass")
 		cbExactTitle = self.builder.get_object("cbExactTitle")
 		cbRegExp = self.builder.get_object("cbRegExp")
+		rbProfile = self.builder.get_object("rbProfile")
+		rbTurnOff = self.builder.get_object("rbTurnOff")
+		rbRestart = self.builder.get_object("rbRestart")
 		ce = self.builder.get_object("ConditionEditor")
 		
 		# Build condition
@@ -299,16 +356,23 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			data['wm_class'] = entClass.get_text()
 		condition = Condition(**data)
 		
-		# Grab selected profile
+		# Grab selected action
 		model, iter = cbProfile.get_model(), cbProfile.get_active_iter()
-		profile = model.get_value(iter, 0)
+		action = NoAction()
+		if rbProfile.get_active():
+			action = ChangeProfileAction(model.get_value(iter, 0))
+		elif rbTurnOff.get_active():
+			action = TurnOffAction()
+		elif rbRestart.get_active():
+			action = RestartDaemonAction()
 		
 		# Grab & update current row
 		model, iter = tvItems.get_selection().get_selected()
 		o = model.get_value(iter, 0)
 		o.condition = condition
+		o.action = action
 		model.set_value(iter, 1, condition.describe())
-		model.set_value(iter, 2, profile)
+		model.set_value(iter, 2, action.describe(Action.AC_SWITCHER))
 		self.hide_dont_destroy(ce)
 		self.save_config()
 	
@@ -319,6 +383,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		model = tvItems.get_model()
 		o = GObject.GObject()
 		o.condition = Condition()
+		o.action = NoAction()
 		iter = model.append((o, o.condition.describe(), "None"))
 		tvItems.get_selection().select_iter(iter)
 		self.on_tvItems_cursor_changed()
@@ -411,12 +476,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			profile.pads[LEFT]  = SensitivityModifier(s[0], s[1], OSKCursorAction(LEFT))
 			profile.pads[RIGHT] = SensitivityModifier(s[0], s[1], OSKCursorAction(RIGHT))
 		self._save_osk_profile(profile)
-	
-	
-	def on_sclLED_value_changed(self, scale, *a):
-		self.app.config["led_level"] = scale.get_value()
-		self.app.dm.set_led_level(scale.get_value())
-		self.app.save_config()
 	
 	
 	def on_entTitle_changed(self, ent):

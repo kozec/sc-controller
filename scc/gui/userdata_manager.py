@@ -3,7 +3,7 @@
 SC-Controller - Profile Manager
 
 Simple class that manages stuff related to creating, loading, listing (...) of
-user-editable data - that are profiles and menus.
+user-editable data - that are profiles, menus and controller-icons.
 
 Main App class interits from this.
 """
@@ -69,15 +69,15 @@ class UserDataManager(object):
 	
 	def load_profile_list(self):
 		paths = [ get_default_profiles_path(), get_profiles_path() ]
-		self._load_user_data(paths, "*.sccprofile", self.on_profiles_loaded)
+		self.load_user_data(paths, "*.sccprofile", self.on_profiles_loaded)
 	
 	
 	def load_menu_list(self):
 		paths = [ get_default_menus_path(), get_menus_path() ]
-		self._load_user_data(paths, "*.menu", self.on_menus_loaded)
+		self.load_user_data(paths, "*.menu", self.on_menus_loaded)
 	
 	
-	def _load_user_data(self, paths, pattern, callback):
+	def load_user_data(self, paths, pattern, callback):
 		""" Loads lists of profiles. Uses GLib to do it on background. """
 		# First list is for default profiles, 2nd for user profiles
 		# Number is increased when list is loaded until it reaches 2
@@ -96,16 +96,22 @@ class UserDataManager(object):
 	def _on_user_data_loaded(self, pdir, res, data, i, callback):
 		"""
 		Called when enumerate_children_async gets lists of profiles.
-		Called twice for default and user profiles dirs.
+		Usually called twice for default (system) and user directory.
 		"""
-		data[i] = pdir, pdir.enumerate_children_finish(res)
+		try:
+			data[i] = pdir, pdir.enumerate_children_finish(res)
+		except GLib.Error, e:
+			# Usually when directory doesn't exists
+			log.warning("enumerate_children_finish for %s failed: %s",  pdir.get_path(), e)
+			data[i] = None, []
 		if not None in data:
 			files = {}
 			try:
 				for pdir, enumerator in data:
-					for finfo in enumerator:
-						name = finfo.get_name()
-						files[name] = pdir.get_child(name)
+					if pdir:
+						for finfo in enumerator:
+							name = finfo.get_name()
+							files[name] = pdir.get_child(name)
 			except Exception, e:
 				# https://github.com/kozec/sc-controller/issues/50
 				log.warning("enumerate_children_finish failed: %s", e)

@@ -9,8 +9,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, MouseAction, MultiAction
+from scc.actions import GyroAction, GyroAbsAction, TiltAction
 from scc.modifiers import ModeModifier, SensitivityModifier
-from scc.actions import GyroAction, GyroAbsAction
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import SCButtons, YAW, ROLL
 from scc.gui.parser import GuiActionParser, InvalidAction
@@ -145,7 +145,7 @@ class GyroActionComponent(AEComponent):
 				if ap[0] == Axes.ABS_RX and ap[-1] == Axes.ABS_RY:
 					return True
 			return False
-		if isinstance(action, MultiAction):
+		if isinstance(action, (MultiAction, TiltAction)):
 			return False
 		return True
 	

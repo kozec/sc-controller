@@ -72,6 +72,7 @@ class Menu(OSDWindow):
 		"""
 		self._is_submenu = True
 	
+	
 	def create_parent(self):
 		v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		v.set_name("osd-menu")
@@ -90,7 +91,7 @@ class Menu(OSDWindow):
 		"""
 		self.daemon = d
 		if not self._is_submenu:
-			self._cononect_handlers()
+			self._connect_handlers()
 			self.on_daemon_connected(self.daemon)
 	
 	
@@ -258,18 +259,17 @@ class Menu(OSDWindow):
 		return False
 	
 	
-	def _cononect_handlers(self):
+	def _connect_handlers(self):
 		self._eh_ids += [
-			self.daemon.connect('dead', self.on_daemon_died),
-			self.daemon.connect('error', self.on_daemon_died),
-			self.daemon.connect('event', self.on_event),
-			self.daemon.connect('alive', self.on_daemon_connected),
+			(self.daemon, self.daemon.connect('dead', self.on_daemon_died)),
+			(self.daemon, self.daemon.connect('error', self.on_daemon_died)),
+			(self.daemon, self.daemon.connect('alive', self.on_daemon_connected)),
 		]
 	
 	
 	def run(self):
 		self.daemon = DaemonManager()
-		self._cononect_handlers()
+		self._connect_handlers()
 		OSDWindow.run(self)
 	
 	
@@ -292,19 +292,25 @@ class Menu(OSDWindow):
 	def on_daemon_connected(self, *a):
 		def success(*a):
 			log.error("Sucessfully locked input")
-			pass
 		
 		if not self.config:
 			self.config = Config()
 		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
-		self.daemon.lock(success, self.on_failed_to_lock, *locks)
+		c = self.choose_controller(self.daemon)
+		if c is None or not c.is_connected():
+			# There is no controller connected to daemon
+			self.on_failed_to_lock("Controller not connected")
+		
+		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
+		c.lock(success, self.on_failed_to_lock, *locks)
 	
 	
 	def quit(self, code=-2):
 		if not self._is_submenu:
-			self.daemon.unlock_all()
-			for x in self._eh_ids:
-				self.daemon.disconnect(x)
+			if self.get_controller():
+				self.get_controller().unlock_all()
+			for source, eid in self._eh_ids:
+				source.disconnect(eid)
 			self._eh_ids = []
 		OSDWindow.quit(self, code)
 	
@@ -336,8 +342,9 @@ class Menu(OSDWindow):
 	
 	def on_submenu_closed(self, *a):
 		if self._submenu.get_exit_code() in (0, -2):
-			self.quit(self._submenu.get_exit_code())
+			self._menuid = self._submenu._menuid
 			self._selected = self._submenu._selected
+			self.quit(self._submenu.get_exit_code())
 		self._submenu = None
 	
 	

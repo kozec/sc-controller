@@ -79,6 +79,19 @@ Example:
 	],
 
 
+#### `tilt`
+Turns action into `TiltAction`, allowing to assign different action for tilting
+dpad. Works pretty-much as `dpad` on gyro.
+
+Example:
+
+	"tilt" : [
+	  { "action": "button(Keys.KEY_UP)" },
+	  { "action": "button(Keys.KEY_DOWN)" },
+	  { "action": "button(Keys.KEY_LEFT)" },
+	  { "action": "button(Keys.KEY_RIGHT)" }
+	],
+
 #### `deadzone`
 Specifies deadzone. Allows for `lower` and `upper` subkeys,
 defaults to *0* and *32767*

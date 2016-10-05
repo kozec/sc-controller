@@ -1,11 +1,12 @@
 List of (possibly) planned features in no particular order
 
 "Easy" stuff:
-- Configurable gamepad type (e.g. 4 axes and 16 buttons)
 - Selector for media keys
 
 
 **Done** stuff:
+- Multicontroller support
+- Configurable gamepad type (e.g. 4 axes and 16 buttons)
 - Steam Profile import
 - Radial Menu for the Joystick/Trackpad
 - Copy & paste

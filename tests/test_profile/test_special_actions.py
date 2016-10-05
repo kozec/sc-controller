@@ -50,6 +50,14 @@ class TestSpecialActions(object):
 		assert isinstance(a, TurnOffAction)
 	
 	
+	def test_restart(self):
+		"""
+		Tests if RestartDaemonAction is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "restart" })
+		assert isinstance(a, RestartDaemonAction)
+	
+	
 	def test_led(self):
 		"""
 		Tests if LockedAction is parsed correctly from json.

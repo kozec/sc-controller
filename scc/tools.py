@@ -6,10 +6,19 @@ Various stuff that I don't care to fit anywhere else.
 """
 from __future__ import unicode_literals
 
+from scc.paths import get_controller_icons_path, get_default_controller_icons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
-import imp, os, sys, posix1e, shlex, gettext, logging
+import imp, os, sys, shlex, gettext, logging
+
+HAVE_POSIX1E = False
+try:
+	import posix1e
+	HAVE_POSIX1E = True
+except ImportError:
+	pass
+
 log = logging.getLogger("tools.py")
 _ = lambda x : x
 
@@ -39,7 +48,7 @@ def init_logging(prefix="", suffix=""):
 	old_log = logging.Logger._log
 	def _log(self, level, msg, args, exc_info=None, extra=None):
 		args = tuple([
-			(c if type(c) is unicode else str(c).decode("utf-8"))
+			(str(c).decode("utf-8") if type(c) is str else c)
 			for c in args
 		])
 		msg = msg if type(msg) is unicode else str(msg).decode("utf-8")
@@ -60,19 +69,19 @@ def set_logging_level(verbose, debug):
 
 def strip_none(*lst):
 	""" Returns lst without trailing None's """
-	while len(lst) and lst[-1] is None:
+	while len(lst) and not lst[-1]:
 		lst = lst[0:-1]
 	return lst
 
 
-def ensure_size(n, lst):
+def ensure_size(n, lst, fill_with=None):
 	"""
 	Returns copy of lst with size 'n'.
 	If lst is shorter, None's are appended.
 	If lst is longer, it is cat.
 	"""
 	l = list(lst)
-	while len(l) < n : l.append(None)
+	while len(l) < n : l.append(fill_with)
 	return l[0:n]
 
 
@@ -185,6 +194,21 @@ def find_menu(name):
 	return None
 
 
+def find_controller_icon(name):
+	"""
+	Returns filename for specified controller icon name.
+	This is done by searching for name in ~/.config/controller-icons
+	first and in /usr/share/scc/images/controller-icons later.
+	
+	Returns None if icon cannot be found.
+	"""
+	for p in (get_controller_icons_path(), get_default_controller_icons_path()):
+		path = os.path.join(p, name)
+		if os.path.exists(path):
+			return path
+	return None
+
+
 def find_lib(name, base_path):
 	"""
 	Returns (filename, search_paths) if named library is found
@@ -226,13 +250,14 @@ def check_access(filename, write_required=True):
 	Uses acl first and possix file permisions if acl cannot be used.
 	Returns true only if user has both required access rights.
 	"""
-	for pset in posix1e.ACL(file=filename):
-		if pset.tag_type == posix1e.ACL_USER and pset.qualifier == os.geteuid():
-			if pset.permset.test(posix1e.ACL_READ) and (not write_required or pset.permset.test(posix1e.ACL_WRITE)):
-				return True
-		if pset.tag_type == posix1e.ACL_GROUP and pset.qualifier in os.getgroups():
-			if pset.permset.test(posix1e.ACL_READ) and (not write_required or pset.permset.test(posix1e.ACL_WRITE)):
-				return True
+	if HAVE_POSIX1E:
+		for pset in posix1e.ACL(file=filename):
+			if pset.tag_type == posix1e.ACL_USER and pset.qualifier == os.geteuid():
+				if pset.permset.test(posix1e.ACL_READ) and (not write_required or pset.permset.test(posix1e.ACL_WRITE)):
+					return True
+			if pset.tag_type == posix1e.ACL_GROUP and pset.qualifier in os.getgroups():
+				if pset.permset.test(posix1e.ACL_READ) and (not write_required or pset.permset.test(posix1e.ACL_WRITE)):
+					return True
 	if write_required:
 		return os.access(filename, os.R_OK | os.W_OK)
 	return os.access(filename, os.R_OK)

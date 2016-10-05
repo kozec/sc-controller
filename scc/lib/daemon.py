@@ -139,6 +139,7 @@ class Daemon(object):
 	def restart(self):
 		"""Restart the daemon."""
 		self.stop()
+		time.sleep(2)
 		self.start()
 
 	def run(self):
