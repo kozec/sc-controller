@@ -318,6 +318,12 @@ class SCCDaemon(Daemon):
 	
 	def load_default_profile(self, mapper=None):
 		mapper = mapper or self.default_mapper
+		if self.default_profile == None:
+			try:
+				self.default_profile = find_profile(Config()["recent_profiles"][0])
+			except:
+				# Broken config is not reason to fail here
+				pass
 		try:
 			mapper.profile.load(self.default_profile).compress()
 		except Exception, e:

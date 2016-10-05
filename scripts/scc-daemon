@@ -8,13 +8,18 @@ import os, argparse
 def main():
 	init_logging()
 	parser = argparse.ArgumentParser()
-	parser.add_argument('profile', type=str, nargs='+')
+	parser.add_argument('profile', type=str, nargs='*')
 	parser.add_argument('command', type=str, choices=['start', 'stop', 'restart', 'debug'])
 	parser.add_argument('--alone', action='store_true', help="prevent scc-daemon from launching osd-daemon and autoswitch-daemon.")
 	daemon = SCCDaemon(get_pid_file(), get_daemon_socket())
 	args = parser.parse_args()
 	daemon.alone = args.alone
-	daemon.set_default_profile(" ".join(args.profile))
+	
+	profile = " ".join(args.profile)
+	if profile:
+		daemon.set_default_profile(profile)
+		# If no default_profile is set, daemon will try to load last used
+		# from config
 
 	if 'start' == args.command:
 		daemon.start()
