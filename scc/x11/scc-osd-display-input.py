@@ -56,13 +56,6 @@ class OSDDisplayInput(object):
 		self.mainloop.quit()
 	
 	
-	def on_daemon_connected(self, *a):
-		self.daemon.observe(DaemonManager.nocallback, self.on_observe_failed,
-			'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
-			'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
-			'RIGHT', 'STICK', 'STICKPRESS')
-	
-	
 	def on_event(self, daemon, what, data):
 		if what in (LEFT, RIGHT):
 			if what not in self._pads:
@@ -79,6 +72,22 @@ class OSDDisplayInput(object):
 			else:				# Released
 				self._buttons.disable(what)
 			print what, data[0]
+	
+	
+	def on_daemon_connected(self, dm):
+		if len(dm.get_controllers()) < 1:
+			# No controllers to use
+			log.error("Controller not connected")
+			self.exit_code = 3
+			self.mainloop.quit()
+		else:
+			c = dm.get_controllers()[0]
+			c.connect("event", self.on_event)
+			c.observe(DaemonManager.nocallback, self.on_observe_failed,
+				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
+				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
+				'RIGHT', 'STICK', 'STICKPRESS'
+			)
 	
 	
 	def show_display(self, d):
@@ -103,9 +112,8 @@ class OSDDisplayInput(object):
 	
 	def run(self):
 		self.daemon = DaemonManager()
-		self.daemon.connect('alive', self.on_daemon_connected)
 		self.daemon.connect('dead', self.on_daemon_died)
-		self.daemon.connect("event", self.on_event)
+		self.daemon.connect('alive', self.on_daemon_connected)
 		self.mainloop.run()
 
 
