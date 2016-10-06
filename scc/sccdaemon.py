@@ -179,39 +179,11 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_gestures(self, mapper, action, x, y, what):
 		""" Called when 'gestures' action is used """
-		gd = self._start_gesture(mapper, what, action.resolution, None)
-		gd.enable()
-		gd.whole(mapper, x, y, what)
-	
-	
-	def _start_gesture(self, mapper, what, resolution, callback):
-		"""
-		Starts gesture detection on specified pad.
-		Calls callback with gesture string when finished.
-		"""
-		gd = None
-		
-		def cb(detector, gesture):
-			# This callback is expected to be called with lock held
-			self._apply(mapper, what, lambda a : a.original_action)
-			log.debug("Gesture detected on %s: %s", what, gesture)
-		
-		def set(action):
-			# ObservingAction should be above GestureDetector
-			if isinstance(action, ObservingAction):
-				gd.original_action = action.original_action
-				action.original_action = gd
-				return action
-			else:
-				gd.original_action = action
-				return gd
-		
 		with self.lock:
-			gd = GestureDetector(resolution, cb)
-			self._apply(mapper, what, set)
-		
-		log.debug("Desture detection started on %s", what)
-		return gd
+			gd = self._start_gesture(mapper, what, action.resolution, None)
+		gd.enable()
+		log.debug("Gesture detection started on %s", what)
+		gd.whole(mapper, x, y, what)
 	
 	
 	def _osd(self, *data):
@@ -526,6 +498,37 @@ class SCCDaemon(Daemon):
 		log.debug("Created control socket %s", self.socket_file)
 	
 	
+	def _start_gesture(self, mapper, what, resolution, callback):
+		"""
+		Starts gesture detection on specified pad.
+		Calls callback with gesture string when finished.
+		
+		Should be called with lock held.
+		"""
+		gd = None
+		
+		def cb(detector, gesture):
+			# This callback is expected to be called with lock held
+			with self.lock:
+				self._apply(mapper, what, lambda a : a.original_action)
+				log.debug("Gesture detected on %s: %s", what, gesture)
+				callback(gesture)
+		
+		def set(action):
+			# ObservingAction should be above GestureDetector
+			if isinstance(action, ObservingAction):
+				gd.original_action = action.original_action
+				action.original_action = gd
+				return action
+			else:
+				gd.original_action = action
+				return gd
+		
+		gd = GestureDetector(resolution, cb)
+		self._apply(mapper, what, set)
+		return gd	
+	
+	
 	def _sshandler(self, connection, rfile, wfile):
 		with self.lock:
 			client = Client(connection, self.default_mapper, rfile, wfile)
@@ -658,6 +661,17 @@ class SCCDaemon(Daemon):
 			with self.lock:
 				for c in self.controllers:
 					c.turnoff()
+				client.wfile.write(b"OK.\n")
+		elif message.startswith("Gesture:"):
+			try:
+				what, resolution = message[8:].strip().split(" ", 1)
+				resolution = int(resolution)
+			except Exception, e:
+				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+				client.wfile.write(b"Fail: " + tb + b"\n")
+				return
+			with self.lock:
+				client.request_gesture(self, what, resolution)
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Restart."):
 			self.on_sa_restart()
@@ -837,6 +851,25 @@ class Client(object):
 			self.connection.shutdown(True)
 		except:
 			pass
+	
+	
+	def request_gesture(self, daemon, what, resolution):
+		"""
+		Handler used when client requested gesture detection with
+		"Gesture:" message.
+		
+		Should be called while daemon.lock is acquired.
+		"""
+		def cb(gesture):
+			# Called while lock is being held
+			try:
+				self.wfile.write(b"Gesture: %s %s\n" % (what, gesture))
+			except:
+				pass
+		
+		gd = daemon._start_gesture(self.mapper, what, resolution, cb)
+		gd.enable()
+		log.debug("Gesture detection requested on %s", what)
 	
 	
 	def lock_action(self, daemon, what):

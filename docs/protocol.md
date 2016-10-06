@@ -105,8 +105,10 @@ Otherwise, `Fail: no such controller` error message is sent.
 Requests gesture to be detected on one of pads - "side" can be LEFT or RIGHT.
 'resolution' is integer from 2 to 6 and specifies grid size used in gesture
 detection.
-Daemon _always_ responds with `OK.` and then, when gesture detection is completed,
-sends `Gesture: side detectedgesture` message. If gesture detection fails for any
+
+Daemon always responds with `OK.` unless request cannot be parsed.
+Then, when gesture detection is completed, daemon sends
+`Gesture: side detectedgesture` message. If gesture detection fails for any
 reason, sent gesture is empty.
 
 #### `Led: brightness`
