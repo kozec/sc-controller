@@ -23,13 +23,6 @@ class GestureDetector(Action):
 	it constructs instance of this class and leaves everything to it.
 	"""
 	
-	CHARS = [
-		"ABCDEF",
-		"GHIJKL",
-		"MNOPQR",
-		"STUVWX",
-		"XYZ-_=",
-	]
 	
 	def __init__(self, resolution, on_finished):
 		Action.__init__(self)
@@ -41,8 +34,8 @@ class GestureDetector(Action):
 	def enable(self):
 		""" GestureDetector doesn't starts do detect anything until this is called """
 		self._enabled = True
-		self._string = "%s" % (self._resolution,)
-		self._last_char = None
+		self._string = "%s:" % (self._resolution,)
+		self._last = None
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -60,7 +53,10 @@ class GestureDetector(Action):
 				# Convert to small, nice integers
 				x = int(float(x) / STICK_PAD_MAX * 0.5 * self._resolution)
 				y = int(float(y) / STICK_PAD_MAX * 0.5 * self._resolution)
-				char = GestureDetector.CHARS[y][x]
-				if self._last_char != char:
-					self._last_char = char
-					self._string += char
+				if self._last != (x, y):
+					self._last = x, y
+					self._string = "%s%s%s" % (
+						self._string,
+						int(x),
+						chr(65 + y)	# 'A' + y
+					)
