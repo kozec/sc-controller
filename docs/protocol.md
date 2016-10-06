@@ -64,6 +64,9 @@ After that, `Ready.` is sent to indicate that emulation works again.
 #### `Fail: text`
 Indicates error client that sent request.
 
+#### `Gesture: side gesturestring`
+Sent to client that requested gesture to be detected.
+
 #### `OK.`
 Indicates sucess to client that sent request.
 
@@ -98,6 +101,13 @@ for.
 If controller with specified controller_id is known, daemon responds with `OK.`
 Otherwise, `Fail: no such controller` error message is sent.
 
+#### `Gesture: side resolution`
+Requests gesture to be detected on one of pads - "side" can be LEFT or RIGHT.
+'resolution' is integer from 2 to 6 and specifies grid size used in gesture
+detection.
+Daemon _always_ responds with `OK.` and then, when gesture detection is completed,
+sends `Gesture: side detectedgesture` message. If gesture detection fails for any
+reason, sent gesture is empty.
 
 #### `Led: brightness`
 Sets brightness of controller led. 'Brightness' is percent in 0 to 100 range.

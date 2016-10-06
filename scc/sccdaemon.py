@@ -12,6 +12,7 @@ from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.tools import set_logging_level, find_binary, clamp
+from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
 from scc.uinput import Keys, Axes
@@ -174,6 +175,43 @@ class SCCDaemon(Daemon):
 	def on_sa_shell(self, mapper, action):
 		""" Called when 'shell' action is used """
 		os.system(action.command.encode('string_escape') + " &")
+	
+	
+	def on_sa_gestures(self, mapper, action, x, y, what):
+		""" Called when 'gestures' action is used """
+		gd = self._start_gesture(mapper, what, action.resolution, None)
+		gd.enable()
+		gd.whole(mapper, x, y, what)
+	
+	
+	def _start_gesture(self, mapper, what, resolution, callback):
+		"""
+		Starts gesture detection on specified pad.
+		Calls callback with gesture string when finished.
+		"""
+		gd = None
+		
+		def cb(detector, gesture):
+			# This callback is expected to be called with lock held
+			self._apply(mapper, what, lambda a : a.original_action)
+			log.debug("Gesture detected on %s: %s", what, gesture)
+		
+		def set(action):
+			# ObservingAction should be above GestureDetector
+			if isinstance(action, ObservingAction):
+				gd.original_action = action.original_action
+				action.original_action = gd
+				return action
+			else:
+				gd.original_action = action
+				return gd
+		
+		with self.lock:
+			gd = GestureDetector(resolution, cb)
+			self._apply(mapper, what, set)
+		
+		log.debug("Desture detection started on %s", what)
+		return gd
 	
 	
 	def _osd(self, *data):

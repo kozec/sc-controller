@@ -412,3 +412,29 @@ class PositionModifier(Modifier):
 	
 	def describe(self, context):
 		return self.action.describe(context)
+
+
+class GesturesAction(Action, SpecialAction):
+	"""
+	Stars gesture detection on pad
+	"""
+	SA = COMMAND = "gestures"
+	
+	def __init__(self, resolution=3):
+		Action.__init__(self)
+		self.resolution = resolution
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Gestures")
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s()" % (self.COMMAND,)
+	
+	
+	def whole(self, mapper, x, y, what):
+		if (x, y) != (0, 0):
+			# (0, 0) singlanizes released touchpad
+			self.execute(mapper, x, y, what)
