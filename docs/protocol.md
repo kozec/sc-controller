@@ -101,10 +101,13 @@ for.
 If controller with specified controller_id is known, daemon responds with `OK.`
 Otherwise, `Fail: no such controller` error message is sent.
 
-#### `Gesture: side resolution`
-Requests gesture to be detected on one of pads - "side" can be LEFT or RIGHT.
-'resolution' is integer from 2 to 6 and specifies grid size used in gesture
-detection.
+#### `Gesture: side up_angle vh_preference`
+Requests gesture to be detected on one of pads. 'side' can be LEFT or RIGHT.
+'up_angle' is angle in radians and sets how much should be gesture input
+rotated.
+'vh_preference' is angle determining how much should gesture output prefer
+vertical/horizontal directions before diagonals. Setting this to 45 completely
+disables diagonal movement.
 
 Daemon always responds with `OK.` unless request cannot be parsed.
 Then, when gesture detection is completed, daemon sends
