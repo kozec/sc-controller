@@ -28,7 +28,7 @@ from scc.profile import Profile
 from scc.config import Config
 
 import scc.osd.menu_generators
-import os, sys, json, logging
+import os, sys, platform, json, logging
 log = logging.getLogger("App")
 
 class App(Gtk.Application, UserDataManager, BindingEditor):
@@ -147,7 +147,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		""" Performs various (three) checks and reports possible problems """
 		# TODO: Maybe not best place to do this
 		try:
-			kernel_mods = [ line.split(" ")[0] for line in file("/proc/modules", "r").read().split("\n") ]
+			# Dynamic modules
+			rawlist = file("/proc/modules", "r").read().split("\n")
+			kernel_mods = [ line.split(" ")[0] for line in rawlist ]
+			# Built-in modules
+			release = platform.uname()[2]
+			rawlist = file("/lib/modules/%s/modules.builtin" % release, "r").read().split("\n")
+			kernel_mods += [ os.path.split(x)[-1].split(".")[0] for x in rawlist ]
 		except Exception:
 			# Maybe running on BSD or Windows...
 			kernel_mods = [ ]
