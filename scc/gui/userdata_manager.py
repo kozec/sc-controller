@@ -100,7 +100,7 @@ class UserDataManager(object):
 		"""
 		try:
 			data[i] = pdir, pdir.enumerate_children_finish(res)
-		except GLib.Error, e:
+		except Exception, e:
 			# Usually when directory doesn't exists
 			log.warning("enumerate_children_finish for %s failed: %s",  pdir.get_path(), e)
 			data[i] = None, []
