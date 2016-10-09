@@ -368,7 +368,7 @@ class SCCDaemon(Daemon):
 		"""
 		Setups new mapper instance.
 		"""
-		mapper = Mapper(Profile(TalkingActionParser()))
+		mapper = Mapper(Profile(TalkingActionParser()), poller=self.poller)
 		mapper.set_special_actions_handler(self)
 		mapper.set_xdisplay(self.xdisplay)
 		mapper.schedule(1.0, self.fix_xinput)
