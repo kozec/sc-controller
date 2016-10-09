@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 
 # Check for libuinput.so version
 UINPUTSO_VERSION=$(PYTHONPATH="." python2 -c 'import os, ctypes; lib=ctypes.CDLL("./libuinput.so"); print lib.uinput_module_version()')
-if [ x"$UINPUTSO_VERSION" != x"1" ] ; then
+if [ x"$UINPUTSO_VERSION" != x"2" ] ; then
 	echo "libuinput.so is outdated or missing, building one"
 	echo "Please wait, this should be done only once."
 	echo ""

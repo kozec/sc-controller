@@ -25,10 +25,12 @@
 import os
 import ctypes
 import time
+from ctypes import Structure, c_uint16, c_int32, byref
 from math import pi, copysign, sqrt
-from scc.lib import IntEnum
+from scc.lib.libusb1 import timeval
 from scc.cheader import defines
 from scc.tools import find_lib
+from scc.lib import IntEnum
 
 from collections import deque
 
@@ -171,6 +173,13 @@ Scans = {
 	Keys.KEY_FORWARD: 0xc00f3,
 }
 
+class InputEvent(ctypes.Structure):
+	_fields_ = [
+		('time', timeval),
+		('type', c_uint16),
+		('code', c_uint16),
+		('value', c_int32)
+	]
 
 
 class UInput(object):
@@ -181,7 +190,7 @@ class UInput(object):
 	"""
 
 
-	def __init__(self, vendor, product, name, keys, axes, rels, keyboard=False):
+	def __init__(self, vendor, product, name, keys, axes, rels, keyboard=False, rumble=False):
 		self._lib = None
 		self._k = keys
 		if not axes or len(axes) == 0:
@@ -199,7 +208,7 @@ class UInput(object):
 		self._lib = ctypes.CDLL(lib)
 		
 		try:
-			if self._lib.uinput_module_version() != 1:
+			if self._lib.uinput_module_version() != 2:
 				raise Exception()
 		except:
 			import sys
@@ -207,7 +216,7 @@ class UInput(object):
 			print >>sys.stderr, "If you are running sc-controller from source, you can do this by removing 'build' directory"
 			print >>sys.stderr, "and runinng 'run.sh' script"
 			raise Exception("Invalid native module version")
-
+		
 		c_k		= (ctypes.c_uint16 * len(self._k))(*self._k)
 		c_a		= (ctypes.c_uint16 * len(self._a))(*self._a)
 		c_amin	 = (ctypes.c_int32  * len(self._amin ))(*self._amin )
@@ -218,6 +227,7 @@ class UInput(object):
 		c_vendor   = ctypes.c_uint16(vendor)
 		c_product  = ctypes.c_uint16(product)
 		c_keyboard = ctypes.c_int(keyboard)
+		c_rumble = ctypes.c_int(rumble)
 
 		c_name = ctypes.c_char_p(name)
 		self._fd = self._lib.uinput_init(ctypes.c_int(len(self._k)),
@@ -233,7 +243,12 @@ class UInput(object):
 										 c_keyboard,
 										 c_vendor,
 										 c_product,
+										 c_rumble,
 										 c_name)
+
+
+	def getDescriptor(self):
+		return self._fd
 
 
 	def keyEvent(self, key, val):
@@ -307,6 +322,11 @@ class UInput(object):
 	def relManaged(self, ev):
 		return ev in self._r
 
+	def read(self):
+		ie = InputEvent()
+		if self._lib.uinput_read(self._fd, byref(ie)) == 0:
+			return ie
+		return None
 
 	def __del__(self):
 		if self._lib:

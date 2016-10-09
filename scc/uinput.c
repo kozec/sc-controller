@@ -45,6 +45,7 @@ int uinput_init(
 	int	 keyboard,
 	__u16   vendor,
 	__u16   product,
+	int	rumble,
 	char *  name)
 {
 	struct uinput_user_dev uidev;
@@ -52,8 +53,11 @@ int uinput_init(
 	int i;
 
 	memset(&uidev, 0, sizeof(uidev));
-
-	fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+	
+	int mode = O_WRONLY | O_NONBLOCK;
+	if (rumble)
+		mode = O_RDWR | O_NONBLOCK;
+	fd = open("/dev/uinput", O_RDWR | O_NONBLOCK);
 	if (fd < 0)
 		return -1;
 
@@ -62,6 +66,7 @@ int uinput_init(
 	uidev.id.vendor = vendor;
 	uidev.id.product = product;
 	uidev.id.version = 1;
+	uidev.ff_effects_max = 1;
 
 	/* Key Event initialisation */
 	if (key_len > 0 && ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0) {
@@ -121,6 +126,16 @@ int uinput_init(
 			return -10;
 		}
 	}
+	
+	/* rumble initialisation */
+	if (rumble) {
+		if (ioctl(fd, UI_SET_EVBIT, EV_FF) < 0)
+			return -13;
+		
+		if (ioctl(fd, UI_SET_FFBIT, FF_RUMBLE) < 0)
+			return -14;
+
+	}
 
 	/* submit the uidev */
 	if (write(fd, &uidev, sizeof(uidev)) < 0) {
@@ -138,9 +153,8 @@ int uinput_init(
 }
 
 const int uinput_module_version() {
-	return 1;
+	return 2;
 }
-
 
 void uinput_key(int fd, __u16 key, __s32 val)
 {
@@ -209,6 +223,36 @@ void uinput_syn(int fd)
 	ev.code = SYN_REPORT;
 	ev.value = 0;
 	write(fd, &ev, sizeof(ev));
+}
+
+int uinput_read(int fd, struct input_event* event) {
+	static struct uinput_ff_upload upload;
+	static struct uinput_ff_erase erase;
+	int n = read(fd, event, sizeof(struct input_event));
+	if (n == sizeof(struct input_event)) {
+		switch (event->type) {
+			case EV_UINPUT:
+				switch (event->code) {
+					case UI_FF_UPLOAD:
+						upload.request_id = event->value;
+						if (ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload) < 0)
+							return 2;
+						if (ioctl(fd, UI_END_FF_UPLOAD, &upload) < 0)
+							return 3;
+						return 0;
+					case UI_FF_ERASE:
+						erase.request_id = event->value;
+						if (ioctl(fd, UI_BEGIN_FF_ERASE, &erase) < 0)
+							return 4;
+						if (ioctl(fd, UI_END_FF_ERASE, &erase) < 0)
+							return 5;
+						return 0;
+					default: break;
+				}
+			default: break;
+		}
+	}
+	return 1;
 }
 
 void uinput_destroy(int fd)

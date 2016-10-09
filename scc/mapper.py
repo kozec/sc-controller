@@ -20,10 +20,11 @@ class Mapper(object):
 	
 	def __init__(self, profile, keyboard=b"SCController Keyboard",
 				mouse=b"SCController Mouse",
-				gamepad=True):
+				gamepad=True, poller=None):
 		"""
 		If any of keyboard, mouse or gamepad is set to None, that device
 		will not be emulated.
+		If poller is set to instance, emulated gamepad will have rumble enabled.
 		"""
 		self.profile = profile
 		self.controller = None
@@ -35,7 +36,7 @@ class Mapper(object):
 		log.debug("Keyboard: %s" % (self.keyboard, ))
 		self.mouse = Mouse(name=mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
-		self.gamepad = self._create_gamepad() if gamepad else Dummy()
+		self.gamepad = self._create_gamepad(gamepad, poller)
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		
 		# Set by SCCDaemon instance; Used to handle actions
@@ -55,9 +56,9 @@ class Mapper(object):
 		self.force_event = set()
 	
 	
-	def _create_gamepad(self):
+	def _create_gamepad(self, enabled, poller):
 		""" Parses gamepad configuration and creates apropriate unput device """
-		if "SCC_NOGAMEPAD" in os.environ:
+		if not enabled or "SCC_NOGAMEPAD" in os.environ:
 			# Completly undocumented and for debuging purposes only.
 			# If set, no gamepad is emulated
 			self.gamepad = Dummy()
@@ -79,8 +80,20 @@ class Mapper(object):
 				# Out of axes
 				break
 			i += 1
-		return UInput(vendor=vendor, product=product, name=name, keys=keys,
-			axes=axes, rels=[])
+		ui = UInput(vendor=vendor, product=product, name=name, keys=keys,
+			axes=axes, rels=[], rumble=(poller != None))
+		if poller:
+			poller.register(ui.getDescriptor(), poller.POLLIN, self._rumble_ready)
+		return ui
+	
+	
+	def _rumble_ready(self, fd, event):
+		FF_STATUS_STOPPED	= 0x00
+		FF_STATUS_PLAYING	= 0x01
+		FF_STATUS_MAX		= 0x01
+		ev = self.gamepad.read()
+		if ev:
+			print ev.type, ev.code, ev.value
 	
 	
 	def sync(self):
