@@ -20,6 +20,7 @@ from scc.uinput import Keys, Axes
 from scc.profile import Profile
 from scc.actions import Action
 from scc.config import Config
+from scc.poller import Poller
 from scc.mapper import Mapper
 from scc import drivers
 
@@ -41,6 +42,7 @@ class SCCDaemon(Daemon):
 		self.started = False
 		self.exiting = False
 		self.socket_file = socket_file
+		self.poller = Poller()
 		self.xdisplay = None
 		self.sserver = None			# UnixStreamServer instance
 		self.error = None
@@ -49,7 +51,7 @@ class SCCDaemon(Daemon):
 		self.default_profile = None
 		self.autoswitch_daemon = None
 		self.controllers = []
-		self.mainloops = []
+		self.mainloops = [ self.poller.poll ]
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
@@ -98,6 +100,16 @@ class SCCDaemon(Daemon):
 		for s in self._to_start:
 			s(self)
 		del self._to_start
+	
+	
+	def stop_drivers(self):
+		for s in self.drivers_to_stop:
+			s(self)
+	
+	
+	def get_poller(self):
+		""" Returns poller that can be used for polling file descriptors """
+		return self.poller
 	
 	
 	def add_mainloop(self, fn):
