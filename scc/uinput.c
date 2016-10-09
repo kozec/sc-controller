@@ -137,6 +137,10 @@ int uinput_init(
 	return fd;
 }
 
+const int uinput_module_version() {
+	return 1;
+}
+
 
 void uinput_key(int fd, __u16 key, __s32 val)
 {

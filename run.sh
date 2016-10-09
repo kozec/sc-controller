@@ -3,17 +3,22 @@
 # Ensure correct cwd
 cd "$(dirname "$0")"
 
-# Check if libuinput.so is available
-if [ ! -e libuinput.so ] ; then
-	echo "libuinput.so is missing, building one"
+# Check for libuinput.so version
+UINPUTSO_VERSION=$(PYTHONPATH="." python2 -c 'import os, ctypes; lib=ctypes.CDLL("./libuinput.so"); print lib.uinput_module_version()')
+if [ x"$UINPUTSO_VERSION" != x"1" ] ; then
+	echo "libuinput.so is outdated or missing, building one"
 	echo "Please wait, this should be done only once."
-	echo ""
-	
-	python2 setup.py build || exit 1
 	echo ""
 	
 	# Next line generates string like 'lib.linux-x86_64-2.7', directory where libuinput.so was just generated
 	LIB=$( python2 -c 'import platform ; print "lib.linux-%s-%s.%s" % ((platform.machine(),) + platform.python_version_tuple()[0:2])' )
+	
+	if [ -e build/$LIB/libuinput.so ] ; then
+		rm build/$LIB/libuinput.so || exit 1
+	fi
+	
+	python2 setup.py build || exit 1
+	echo ""
 	
 	if [ ! -e libuinput.so ] ; then
 		ln -s build/$LIB/libuinput.so libuinput.so || exit 1
