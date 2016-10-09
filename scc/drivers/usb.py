@@ -14,37 +14,6 @@ from scc.lib import usb1
 import struct, time, select, traceback, atexit, logging
 log = logging.getLogger("USB")
 
-class SelectPoller(object):
-	"""
-	Dummy poller based on select, because it exists on all platforms.
-	WARNING: this class is just for a trivial demonstration, and
-	inherits select() limitations. The most important limitation is
-	that regitering descriptors does not wake/affect a running poll.
-	"""
-	def __init__(self):
-		self._fd_dict = {}
-	
-	
-	def register(self, fd, events):
-		self._fd_dict[fd] = events
-	
-	
-	def unregister(self, fd):
-		self._fd_dict.pop(fd)
-	
-	
-	def poll(self, timeout=None):
-		flag_list = (select.POLLIN, select.POLLOUT, select.POLLPRI)
-		result = {}
-		zp = zip(
-			select.select(*([[
-				fd for fd, events in self._fd_dict.iteritems() if events & flag ]
-				for flag in flag_list] + [timeout])
-			), flag_list, )
-		for fd_list, happened_flag in zp:
-			result[fd] = result.get(fd, 0) | happened_flag
-		return result.items()
-
 
 class USBDevice(object):
 	""" Base class for all handled usb devices """
@@ -201,7 +170,7 @@ class USBDriver(object):
 		self._retry_devices = []
 		self._retry_devices_timer = 0
 		self._context = None	# Set by start method
-		self._poller = None		# Set by start method
+		self._changed = 0
 	
 	
 	def close_all(self):
@@ -211,6 +180,7 @@ class USBDriver(object):
 			d.close()
 	
 	def __del__(self):
+		self._context.setPollFDNotifiers(None, None)
 		self.close_all()
 	
 	
@@ -223,7 +193,21 @@ class USBDriver(object):
 			self.on_hotplug_event,
 			events=usb1.HOTPLUG_EVENT_DEVICE_ARRIVED | usb1.HOTPLUG_EVENT_DEVICE_LEFT,
 		)
-		self._poller = usb1.USBPoller(self._context, SelectPoller())
+		self._context.setPollFDNotifiers(self._register_fd, self._unregister_fd)
+		for fd, events in self._context.getPollFDList():
+			self._register_fd(fd, events)	
+	
+	
+	def _fd_cb(self, *a):
+		self._changed += 1
+	
+	
+	def _register_fd(self, fd, events):
+		self._daemon.get_poller().register(fd, events, self._fd_cb)
+	
+	
+	def _unregister_fd(self, fd):
+		self._daemon.get_poller().unregister(fd, events, self._fd_cb)	
 	
 	
 	def on_hotplug_event(self, context, device, event):
@@ -264,7 +248,7 @@ class USBDriver(object):
 				self._daemon.set_error(None)
 			else:
 				log.warning("Known USB device ignored: %x:%x", *tp)
-				device.close()	
+				device.close()
 	
 	
 	def register_hotplug_device(self, callback, vendor_id, product_id):
@@ -273,7 +257,10 @@ class USBDriver(object):
 	
 	
 	def mainloop(self):
-		self._poller.poll(timeout=1)
+		if self._changed > 0:
+			self._context.handleEventsTimeout()
+			self._changed = 0
+		
 		for d in self._devices.values():		# TODO: don't use .values() here
 			d.flush()
 		if len(self._retry_devices):
@@ -289,9 +276,8 @@ class USBDriver(object):
 					self.handle_new_device(device)
 
 
-# USBDriver should be instance-wide singleton
+# USBDriver should be process-wide singleton
 _usb = USBDriver()
-
 
 def init(daemon):
 	_usb._daemon = daemon
