@@ -204,6 +204,8 @@ class VDFProfile(Profile):
 			key = "KEY_%s" % (name,)
 		if hasattr(Keys, key):
 			return getattr(Keys, key)
+		if hasattr(Keys, key.upper()):
+			return getattr(Keys, key.upper())
 		raise ParseError("Unknown key: '%s'" % (name,))
 	
 	
