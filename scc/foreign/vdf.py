@@ -416,12 +416,23 @@ class VDFProfile(Profile):
 		""" Used for special cases of input groups that contains buttons """
 		inputs = VDFProfile.get_inputs(group)
 		for button in inputs:
-			if button not in VDFProfile.BUTTON_TO_BUTTON:
+			if button in ("trigger_left", "left_trigger"):
+				self.add_by_binding(
+					"left_trigger",
+					AxisAction(Axes.ABS_Z)
+				)
+			elif button in ("trigger_right", "right_trigger"):
+				self.add_by_binding(
+					"right_trigger",
+					AxisAction(Axes.ABS_RZ)
+				)
+			elif button in VDFProfile.BUTTON_TO_BUTTON:
+				self.add_by_binding(
+					VDFProfile.BUTTON_TO_BUTTON[button],
+					self.parse_button(inputs[button], button)
+				)
+			else:
 				raise ParseError("Unknown button: '%s'" % (button,))
-			self.add_by_binding(
-				VDFProfile.BUTTON_TO_BUTTON[button],
-				self.parse_button(inputs[button], button)
-			)
 	
 	
 	def parse_input_binding(self, data, group_id, binding):
