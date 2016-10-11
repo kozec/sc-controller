@@ -145,6 +145,10 @@ class VDFProfile(Profile):
 				return MouseAction(Rels.REL_WHEEL, -1)
 			else:
 				return MouseAction(Rels.REL_WHEEL, 1)
+		elif binding == "game_action":
+			log.warning("Ignoring game_action binding: '%s'" % (lst_or_str,))
+			return NoAction()
+
 		else:
 			raise ParseError("Unknown binding: '%s'" % (binding,))
 	
