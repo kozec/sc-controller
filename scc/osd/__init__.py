@@ -184,9 +184,13 @@ class OSDWindow(Gtk.Window):
 		self.get_window().set_override_redirect(True)
 		x, y = self.position
 		screen = self.get_window().get_screen()
-		geometry = screen.get_monitor_geometry(screen.get_monitor_at_window(screen.get_active_window()))
-		x = x + geometry.x
-		y = y + geometry.y + geometry.height - self.get_window().get_height()
+		active_window = screen.get_active_window()
+		if active_window:
+			screen = screen.get_monitor_at_window(screen.get_active_window())
+			if screen:
+				geometry = screen.get_monitor_geometry(screen)
+				x = x + geometry.x
+				y = y + geometry.y + geometry.height - self.get_window().get_height()
 		if x < 0:	# Negative X position is counted from right border
 			x = Gdk.Screen.width() - self.get_allocated_width() + x + 1
 		if y < 0:	# Negative Y position is counted from bottom border
