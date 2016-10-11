@@ -850,8 +850,11 @@ class SensitivityModifier(Modifier):
 				self.speeds.append(float(s))
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
-		if self.action and hasattr(self.action.strip(), "set_speed"):
-			self.action.strip().set_speed(*self.speeds)
+		if self.action:
+			if hasattr(self.action, "set_speed"):
+				self.action.set_speed(*self.speeds)
+			elif hasattr(self.action.strip(), "set_speed"):
+				self.action.strip().set_speed(*self.speeds)
 	
 	
 	def encode(self):

@@ -14,3 +14,6 @@ def _parses_as_itself(action):
 	m_str = action.to_string(True)
 	assert parser.restart(m_str).parse().to_string() == a_str
 	return True
+
+def _parse_compressed(a_str):
+	return parser.restart(a_str).parse()
