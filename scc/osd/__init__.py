@@ -186,9 +186,9 @@ class OSDWindow(Gtk.Window):
 		screen = self.get_window().get_screen()
 		active_window = screen.get_active_window()
 		if active_window:
-			screen = screen.get_monitor_at_window(screen.get_active_window())
-			if screen:
-				geometry = screen.get_monitor_geometry(screen)
+			monitor = screen.get_monitor_at_window(active_window)
+			if monitor:
+				geometry = screen.get_monitor_geometry(monitor)
 				x = x + geometry.x
 				y = y + geometry.y + geometry.height - self.get_window().get_height()
 		if x < 0:	# Negative X position is counted from right border
