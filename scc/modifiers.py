@@ -725,20 +725,14 @@ class DoubleclickModifier(Modifier):
 		self.holdaction = self.holdaction.compress()
 		self.normalaction = self.normalaction.compress()
 		
-		if isinstance(self.normalaction, DoubleclickModifier):
-			self.action = self.action.compress() or self.normalaction.action.compress()
-			self.holdaction = self.holdaction.compress() or self.normalaction.holdaction.compress()
-			self.normalaction = self.normalaction.normalaction.compress()
-		elif isinstance(self.action, HoldModifier):
-			self.holdaction = self.action.holdaction.compress()
-			self.action = self.action.normalaction.compress()
-		elif isinstance(self.holdaction, DoubleclickModifier):
-			self.action = self.holdaction.action.compress()
-			self.holdaction = self.holdaction.normalaction.compress()
-		elif isinstance(self.holdaction, DoubleclickModifier):
-			self.action = self.action.compress() or self.holdaction.action.compress()
-			self.normalaction = self.normalaction.compress() or self.holdaction.normalaction.compress()
-			self.holdaction = self.holdaction.holdaction.compress()
+		for a in (self.holdaction, self.normalaction):
+			if isinstance(a, HoldModifier):
+				self.holdaction = a.holdaction or self.holdaction
+				self.normalaction = a.normalaction or self.normalaction
+		
+		if isinstance(self.action, HoldModifier):
+			self.holdaction = self.action.holdaction
+			self.action = self.action.normalaction
 		return self
 	
 	
@@ -830,6 +824,22 @@ class HoldModifier(DoubleclickModifier):
 		if DoubleclickModifier.TIMEOUT_KEY in data:
 			a.timeout = data[DoubleclickModifier.TIMEOUT_KEY]
 		return a
+	
+	
+	def compress(self):
+		self.action = self.action.compress()
+		self.holdaction = self.holdaction.compress()
+		self.normalaction = self.normalaction.compress()
+		
+		for a in (self.action, self.normalaction):
+			if isinstance(a, DoubleclickModifier):
+				self.action = a.action or self.action
+				self.normalaction = a.normalaction or self.normalaction
+		
+		if isinstance(self.holdaction, DoubleclickModifier):
+			self.action = self.holdaction.action
+			self.holdaction = self.holdaction.normalaction
+		return self
 
 
 class SensitivityModifier(Modifier):

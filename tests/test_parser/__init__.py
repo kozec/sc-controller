@@ -16,4 +16,4 @@ def _parses_as_itself(action):
 	return True
 
 def _parse_compressed(a_str):
-	return parser.restart(a_str).parse()
+	return parser.restart(a_str).parse().compress()

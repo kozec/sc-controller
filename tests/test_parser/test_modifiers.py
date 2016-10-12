@@ -138,12 +138,22 @@ class TestModifiers(object):
 		Tests if combinations of DoubleclickModifier and HoldModifier
 		are parsed as expected
 		"""
-		#
 		a = _parse_compressed("doubleclick(axis(ABS_X), hold(axis(ABS_Y), axis(ABS_Z)))")
-		# TODO: This
-		# assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_X
-		# assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_Y
-		# assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Z
+		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_X
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_Y
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Z
+		a = _parse_compressed("hold(axis(ABS_X), doubleclick(axis(ABS_Y), axis(ABS_Z)))")
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_X
+		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_Y
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Z
+		a = _parse_compressed("doubleclick(hold(axis(ABS_RX), axis(ABS_RY)), axis(ABS_Z))")
+		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_RY
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_RX
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Z
+		a = _parse_compressed("hold(doubleclick(axis(ABS_Z), axis(ABS_RZ)), axis(ABS_X))")
+		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_Z
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_RZ
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_X
 	
 	
 	def test_sens(self):
@@ -179,3 +189,4 @@ class TestModifiers(object):
 		"""
 		a = _parse_compressed("rotate(61, mouse())")
 		assert isinstance(a, RotateInputModifier)
+
