@@ -507,6 +507,21 @@ class ModeModifier(Modifier):
 			self.default = NoAction()
 	
 	
+	def set_speed(self, *speed):
+		for a in list(self.mods.values()) + [ self.default ]:
+			if hasattr(a, "set_speed"):
+				a.set_speed(*speed)
+
+
+	def get_speed(self):
+		rv = (1.0,)
+		for a in list(self.mods.values()) + [ self.default ]:
+			if hasattr(a, "get_speed"):
+				if len(a.get_speed()) > len(rv):
+					rv = a.get_speed()
+		return rv
+	
+	
 	def encode(self):
 		rv = self.default.encode()
 		modes = {}
@@ -688,6 +703,21 @@ class DoubleclickModifier(Modifier):
 		self.waiting = False
 		self.pressed = False
 		self.active = None
+	
+	
+	def set_speed(self, *speed):
+		for a in ( self.action, self.normalaction, self.holdaction ):
+			if hasattr(a, "set_speed"):
+				a.set_speed(*speed)
+	
+	
+	def get_speed(self):
+		rv = (1.0,)
+		for a in ( self.action, self.normalaction, self.holdaction ):
+			if hasattr(a, "get_speed"):
+				if len(a.get_speed()) > len(rv):
+					rv = a.get_speed()
+		return rv
 	
 	
 	def encode(self):
