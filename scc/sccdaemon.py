@@ -346,6 +346,9 @@ class SCCDaemon(Daemon):
 		c.set_mapper(mapper)
 		if mapper == self.default_mapper:
 			log.debug("Assigned default_mapper to %s", c)
+		if mapper.profile.gyro:
+			log.debug("Turning gyrosensor ON")
+			c.set_gyro_enabled(True)
 		
 		led_level = 80	# Default
 		try:
