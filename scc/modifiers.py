@@ -882,6 +882,7 @@ class SensitivityModifier(Modifier):
 	"""
 	COMMAND = "sens"
 	PROFILE_KEYS = ("sensitivity",)
+	PROFILE_KEY_PRIORITY = 10	# As last as possible, definitelly after ModeShift
 	
 	def _mod_init(self, *speeds):
 		self.speeds = []
