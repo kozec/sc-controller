@@ -174,13 +174,13 @@ class TestModifiers(object):
 		a = _parse_compressed("sens(2, 3, deadzone(2.0, mouse()))")
 		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (2.0, 3.0)
 		
-		# Double and hold modifiers, sensitivity should always end applied all actions
+		# Double and hold modifiers, sensitivity should always end applied to all actions
 		a = _parse_compressed("sens(2, 3, 4, hold(mouse(), doubleclick(axis(ABS_X), gyro(YAW))))")
 		assert isinstance(a.holdaction, MouseAction) and a.holdaction.get_speed() == (2.0, 3.0)
 		assert isinstance(a.action, AxisAction) and a.action.get_speed() == (2.0,)
 		assert isinstance(a.normalaction, GyroAction) and a.normalaction.get_speed() == (2.0, 3.0, 4.0)
 		
-		# Modeshift, sensitivity should always end applied all actions
+		# Modeshift, sensitivity should always end applied to all actions
 		a = _parse_compressed("""sens(2, 3, 4, mode(
 					A, mouse(),
 					B, axis(ABS_Y),
