@@ -51,10 +51,7 @@ class GestureDetector(Action):
 			if (x, y) == (0, 0):
 				# Released
 				self._enabled = False
-				self._on_finished(self, 
-					(self._string + "::" +
-					GestureDetector.cleanup(self._string)
-					))
+				self._on_finished(self, GestureDetector.cleanup(self._string))
 				return
 			else:
 				if self._old_pos is None:
@@ -98,9 +95,7 @@ class GestureDetector(Action):
 		
 		req_len = max(1, int(longest * GestureDetector.SHORT))
 		split = ( x[0] for x in split if len(x) > req_len )
-		almost_clean = "".join(( x[0] for x in groupby(split) ))
-		
-		return "[%s]%s" % (longest, almost_clean)
+		return "".join(( x[0] for x in groupby(split) ))
 	
 	
 	@staticmethod
