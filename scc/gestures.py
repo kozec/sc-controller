@@ -27,9 +27,7 @@ class GestureDetector(Action):
 	# Minimal difference in positions over both axes
 	MIN_MOVEMENT_SIZE = 500.0
 	
-	# Constants used in GestureDetector.cleanup
-	DIRTY_ELS = ("412", "236", "698", "874", "214", "478", "896", "632",
-				 "284", "468", "826", "642", "286", "648", "824", "462")
+	# Constant used in GestureDetector.cleanup
 	SHORT = 0.3
 	
 	
@@ -101,9 +99,6 @@ class GestureDetector(Action):
 		req_len = max(1, int(longest * GestureDetector.SHORT))
 		split = ( x[0] for x in split if len(x) > req_len )
 		almost_clean = "".join(( x[0] for x in groupby(split) ))
-		for dl in GestureDetector.DIRTY_ELS:
-			while dl in almost_clean:
-				almost_clean = almost_clean.replace(dl, "")
 		
 		return "[%s]%s" % (longest, almost_clean)
 	
@@ -116,19 +111,22 @@ class GestureDetector(Action):
 		anything else for my purposes)
 		"""
 		B = 45
+		# As it is next to impossible to make them on purpose, diagonals
+		# are disabled for now
 		if angle > 360 - B or angle < B:
 			return 4	# Left
-		elif angle > B and angle < 90 - B:
-			return 1	# Left-Down
+		# elif angle > B and angle < 90 - B:
+		# 	return 1	# Left-Down
 		elif angle > 90 - B and angle < 90 + B:
 			return 2	# Down
-		elif angle > 90 + B and angle < 180 - B:
-			return 3	# Right-Down
+		# elif angle > 90 + B and angle < 180 - B:
+		# 	return 3	# Right-Down
 		elif angle > 180 - B and angle < 180 + B:
 			return 6	# Rigth
-		elif angle > 180 + B and angle < 270 - B:
-			return 9	# Rigth-Up
+		# elif angle > 180 + B and angle < 270 - B:
+		# 	return 9	# Rigth-Up
 		elif angle > 270 - B and angle < 270 + B:
 			return 8	# Up
-		else:
-			return 7	# Left-Up
+		#else:
+		#	return 7	# Left-Up
+		return 8	# Up
