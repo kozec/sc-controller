@@ -35,8 +35,13 @@ from collections import deque
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):
 	CHEAD = defines('/usr/include', 'linux/input-event-codes.h')
-else:
+elif os.path.exists('/usr/include/linux/input.h'):
 	CHEAD = defines('/usr/include', 'linux/input.h')
+elif os.path.exists('scc/android/input.h'):
+	CHEAD = defines('scc/android', 'input.h')
+else:
+	raise RuntimeError("Cannot find input.h")
+
 
 # Keys enum contains all keys and button from linux/uinput.h (KEY_* BTN_*)
 Keys = IntEnum('Keys', {i: CHEAD[i] for i in CHEAD.keys() if (i.startswith('KEY_') or
