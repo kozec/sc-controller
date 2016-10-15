@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
+from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICK_TILT
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
-from scc.constants import SCButtons, LEFT, RIGHT, STICK
 from scc.constants import HapticPos, ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction
 from scc.config import Config
@@ -51,6 +51,7 @@ class Mapper(object):
 		self.syn_list = set()
 		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
+		self.lpad_touched = False
 		self.state, self.old_state = None, None
 		self.force_event = set()
 	
@@ -287,13 +288,21 @@ class Mapper(object):
 					self.profile.triggers[RIGHT].trigger(self, state.rtrig, self.old_state.rtrig)
 			
 			# Check pads
+			# RPAD
 			if FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
-				# RPAD
 				self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
 			
-			if (FE_PAD in fe and self.buttons & SCButtons.LPADTOUCH) or self.buttons & SCButtons.LPADTOUCH or SCButtons.LPADTOUCH & btn_rem:
-				# LPAD
+			# LPAD
+			if self.buttons & SCButtons.LPADTOUCH:
+				# Pad is being touched now
+				if not self.lpad_touched:
+					self.lpad_touched = True
 				self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+			elif not self.buttons & STICK_TILT:
+				# Pad is not being touched
+				if self.lpad_touched:
+					self.lpad_touched = False
+					self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
 		except Exception, e:
 			# Log error but don't crash here, it breaks too many things at once
 			log.error("Error while processing controller event")

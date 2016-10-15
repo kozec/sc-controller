@@ -74,6 +74,10 @@ class SCButtons(IntEnum):
 	LT			= 0b00000000000000000000001000000000
 	RT			= 0b00000000000000000000000100000000
 
+# If lpad and stick is used at once, this is sent as
+# button with every other packet to signalize that
+# value of lpad_x and lpad_y belongs to stick
+STICK_TILT		= 0b10000000000000000000000000000000
 
 class HapticPos(IntEnum):
 	"""Specify witch pad or trig is used"""
