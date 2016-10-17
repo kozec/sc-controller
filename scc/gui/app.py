@@ -644,7 +644,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		elif hasattr(SCButtons, what):
 			if data[0]:
 				self.hilights[App.OBSERVE_COLOR].add(what)
-			else:
+			elif what in self.hilights[App.OBSERVE_COLOR]:
 				self.hilights[App.OBSERVE_COLOR].remove(what)
 			self._update_background()
 		else:
