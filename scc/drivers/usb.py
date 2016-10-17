@@ -245,14 +245,14 @@ class USBDriver(object):
 			try:
 				handle = device.open()
 			except usb1.USBError, e:
-				log.error("Failed to open USB device: %x:%x", *tp)
+				log.error("Failed to open USB device %x:%x : %s", tp[0], tp[1], e)
 				if self._daemon:
 					self._daemon.set_error("Failed to open USB device: %s" % (e,))
 				return
 			try:
 				handled_device = self._known_ids[tp](device, handle)
 			except usb1.USBErrorBusy, e:
-				log.error("Failed to claim USB device: %x:%x", *tp)
+				log.error("Failed to claim USB device %x:%x : %s", tp[0], tp[1], e)
 				if self._daemon:
 					self._daemon.set_error("Failed to claim USB device: %s" % (e,))
 				self._retry_devices.append(tp)
