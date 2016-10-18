@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 from distutils.core import setup, Extension
 from scc.constants import DAEMON_VERSION
-import glob
+import glob, os
 
 data_files = [
 				('share/scc/glade', glob.glob("glade/*.glade")),
@@ -18,9 +18,15 @@ data_files = [
 				('share/pixmaps', [ "images/sc-controller.svg" ]),
 				('share/mime/packages', [ "scc-mime-types.xml" ]),
 				('share/applications', ['sc-controller.desktop' ]),
-				('lib/udev/rules.d', glob.glob('scripts/*.rules')),
-				
 ]
+
+
+if os.path.exists("/lib/udev/rules.d"):
+	# For some distros, udev rule belongs to /lib/udev
+	data_files += [('/lib/udev/rules.d', glob.glob('scripts/*.rules'))]
+else:
+	# Everywhere else it's /usr/lib, but not /usr/local
+	data_files += [('/usr/lib/udev/rules.d', glob.glob('scripts/*.rules'))]
 
 packages = [
 	# Required
