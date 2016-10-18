@@ -1,0 +1,138 @@
+{
+    "buttons": {
+        "A": {
+            "action": "button(Keys.KEY_ENTER)", 
+            "modes": {
+                "RT": {
+                    "action": "button(Keys.KEY_KPMINUS)"
+                }
+            }
+        }, 
+        "B": {
+            "action": "button(Keys.KEY_E)"
+        }, 
+        "BACK": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_LEFTALT)"
+            }, {
+                "action": "button(Keys.KEY_LEFT)"
+            }], 
+            "modes": {
+                "RT": {
+                    "actions": [{
+                        "action": "button(Keys.KEY_LEFTCTRL)"
+                    }, {
+                        "action": "button(Keys.KEY_LEFTSHIFT)"
+                    }, {
+                        "action": "button(Keys.KEY_R)"
+                    }]
+                }
+            }
+        }, 
+        "C": {
+            "action": "menu('Default.menu')", 
+            "doubleclick": {}, 
+            "hold": {
+                "action": "menu('Default.menu')"
+            }, 
+            "modes": {
+                "RT": {
+                    "action": "shell('sc-controller')"
+                }
+            }
+        }, 
+        "LB": {
+            "action": "button(Keys.KEY_Q)"
+        }, 
+        "LGRIP": {
+            "action": "button(Keys.KEY_LEFTCTRL)", 
+            "modes": {
+                "RT": {
+                    "action": "button(Keys.KEY_LEFT)"
+                }
+            }
+        }, 
+        "LPAD": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTSHIFT)"
+            }, {
+                "action": "button(Keys.KEY_TAB)"
+            }]
+        }, 
+        "RB": {
+            "action": "button(Keys.KEY_F)"
+        }, 
+        "RGRIP": {
+            "action": "button(Keys.KEY_SPACE)", 
+            "modes": {
+                "RT": {
+                    "action": "button(Keys.KEY_RIGHT)"
+                }
+            }
+        }, 
+        "START": {
+            "actions": [{
+                "action": "button(Keys.KEY_LEFTCTRL)"
+            }, {
+                "action": "button(Keys.KEY_LEFTALT)"
+            }, {
+                "action": "button(Keys.KEY_RIGHT)"
+            }], 
+            "modes": {
+                "RT": {
+                    "actions": [{
+                        "action": "button(Keys.KEY_LEFTCTRL)"
+                    }, {
+                        "action": "button(Keys.KEY_R)"
+                    }]
+                }
+            }
+        }, 
+        "X": {
+            "action": "button(Keys.KEY_TAB)"
+        }, 
+        "Y": {
+            "action": "button(Keys.KEY_ESC)"
+        }
+    }, 
+    "gyro": {
+        "modes": {
+            "RPADTOUCH": {
+                "action": "mouse(ROLL)"
+            }
+        }, 
+        "sensitivity": [3.5, 3.5, 3.5]
+    }, 
+    "menus": {}, 
+    "pad_left": {
+        "action": "circular(Rels.REL_WHEEL)"
+    }, 
+    "pad_right": {
+        "action": "mouse(None, 1.0)", 
+        "ball": true, 
+        "feedback": ["RIGHT", 256]
+    }, 
+    "stick": {
+        "dpad": [{
+            "action": "button(Keys.KEY_W)"
+        }, {
+            "action": "button(Keys.KEY_S)"
+        }, {
+            "action": "button(Keys.KEY_A)", 
+            "name": "a"
+        }, {
+            "action": "button(Keys.KEY_D)"
+        }]
+    }, 
+    "trigger_left": {
+        "action": "button(Keys.BTN_RIGHT)", 
+        "levels": [50, 50]
+    }, 
+    "trigger_right": {
+        "action": "button(Keys.BTN_LEFT)", 
+        "levels": [50, 50]
+    }, 
+    "version": 1.2
+}
