@@ -245,7 +245,6 @@ class USBDriver(object):
 			try:
 				handle = device.open()
 			except usb1.USBError, e:
-				print device
 				log.error("Failed to open USB device %x:%x : %s", tp[0], tp[1], e)
 				if self._daemon:
 					self._daemon.set_error("Failed to open USB device: %s" % (e,))
