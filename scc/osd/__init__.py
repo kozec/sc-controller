@@ -19,7 +19,7 @@ log = logging.getLogger("osd")
 
 class OSDWindow(Gtk.Window):
 	CSS = """
-		#osd-message, #osd-menu, #osd-keyboard {
+		#osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
 			background-color: #%(background)s;
 			border: 6px #%(border)s double;
 		}
@@ -35,7 +35,7 @@ class OSDWindow(Gtk.Window):
 			margin: 15px 15px 15px 15px;
 		}
 		
-		#osd-menu {
+		#osd-menu, #osd-gesture {
 			padding: 7px 7px 7px 7px;
 		}
 		
@@ -63,6 +63,12 @@ class OSDWindow(Gtk.Window):
 			background-color: #%(background)s;
 			margin: 5px 0px 0px 0px;
 			padding: 0px 0px 0px 0px;
+		}
+		
+		#osd-gesture-separator {
+			color: #%(menuseparator)s;
+			background-color: #%(menuseparator)s;
+			margin: 5px 5px 5px 5px;
 		}
 		
 		#osd-menu-item-selected {
