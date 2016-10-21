@@ -19,7 +19,7 @@ from scc.profile import Profile
 from scc.actions import Action
 from scc.config import Config
 from scc.mapper import Mapper
-import scc.drivers
+from scc import xinput, drivers
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
 import os, sys, pkgutil, signal, socket, select, time, json, logging
@@ -63,7 +63,7 @@ class SCCDaemon(Daemon):
 		"""
 		log.debug("Initializing drivers...")
 		self._to_start = set()  # del-eted later by start_drivers
-		for importer, modname, ispkg in pkgutil.walk_packages(path=scc.drivers.__path__, onerror=lambda x: None):
+		for importer, modname, ispkg in pkgutil.walk_packages(path=drivers.__path__, onerror=lambda x: None):
 			if not ispkg and modname != "driver":
 				mod = getattr(__import__('scc.drivers.%s' % (modname,)).drivers, modname)
 				if hasattr(mod, "init"):
@@ -313,7 +313,20 @@ class SCCDaemon(Daemon):
 		mapper = Mapper(Profile(TalkingActionParser()))
 		mapper.set_special_actions_handler(self)
 		mapper.set_xdisplay(self.xdisplay)
+		mapper.schedule(1.0, self.fix_xinput)
 		return mapper
+	
+	
+	def fix_xinput(self, mapper):
+		name = mapper.get_gamepad_name()
+		if self.xdisplay and Config()["fix_xinput"] and name:
+			# Three conditions: X has to be available, 'fix_xinput' must
+			# be enabled in config and controller should not be dummy
+			# (should have a name)
+			for d in xinput.get_devices():
+				if d.get_name() == name:
+					if d.is_pointer() and d.is_slave():
+						d.float()
 	
 	
 	def load_default_profile(self, mapper=None):

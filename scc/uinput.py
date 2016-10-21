@@ -184,6 +184,7 @@ class UInput(object):
 	def __init__(self, vendor, product, name, keys, axes, rels, keyboard=False):
 		self._lib = None
 		self._k = keys
+		self.name = name
 		if not axes or len(axes) == 0:
 			self._a, self._amin, self._amax, self._afuzz, self._aflat = [[]] * 5
 		else:

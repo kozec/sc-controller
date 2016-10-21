@@ -84,6 +84,16 @@ class Mapper(object):
 			axes=axes, rels=[])
 	
 	
+	def get_gamepad_name(self):
+		"""
+		Returns name of emulated gamepad (as displayed by jstest & co)
+		or None if Dummy is assigned.
+		"""
+		if isinstance(self.gamepad, Dummy):
+			return None
+		return self.gamepad.name
+	
+	
 	def sync(self):
 		""" Syncs generated events """
 		if len(self.syn_list):
