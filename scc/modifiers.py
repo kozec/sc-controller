@@ -79,8 +79,8 @@ class Modifier(Action):
 		"""
 		argspec = inspect.getargspec(self.__class__._mod_init)
 		required_count = len(argspec.args) - len(argspec.defaults) - 1
-		d = list(argspec.defaults)
 		l = list(self.parameters[0:-1])
+		d = list(argspec.defaults)[0:len(l)]
 		while len(d) and len(l) > required_count and d[-1] == l[-1]:
 			d, l = d[:-1], l[:-1]
 		return l
