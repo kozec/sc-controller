@@ -27,6 +27,8 @@ class Config(object):
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
 		],
+		"fix_xinput" : True,		# If True, attempt is done to deatach emulated controller 
+									# from 'Virtual core pointer' core device.
 		"gui": {
 			# GUI-only settings
 			"enable_status_icon" : False,
