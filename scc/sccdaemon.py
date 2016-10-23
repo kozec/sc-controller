@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.lib import xwrappers as X
+from scc.lib import xinput
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
@@ -19,7 +20,7 @@ from scc.profile import Profile
 from scc.actions import Action
 from scc.config import Config
 from scc.mapper import Mapper
-from scc import xinput, drivers
+from scc import drivers
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
 import os, sys, pkgutil, signal, socket, select, time, json, logging
