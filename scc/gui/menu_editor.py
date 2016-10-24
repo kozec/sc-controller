@@ -365,7 +365,7 @@ class MenuEditor(Editor):
 		"""
 		self.app.current.menus[id] = self._generate_menudata()
 		log.debug("Stored menu ID %s", id)
-		self.app.on_profile_changed()
+		self.app.on_profile_modified()
 		if self.callback:
 			self.callback(id)
 	

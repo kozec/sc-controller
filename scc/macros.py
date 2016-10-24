@@ -275,18 +275,16 @@ class PressAction(Action):
 	COMMAND = "press"
 	PR = _("Press")
 
-	def __init__(self, button):
-		Action.__init__(self, button)
-		self.button = button
+	def __init__(self, action):
+		Action.__init__(self, action)
+		self.action = action
 
 
 	def describe_short(self):
 		""" Used in macro editor """
-		if self.button in ButtonAction.SPECIAL_NAMES:
-			return _(ButtonAction.SPECIAL_NAMES[self.button])
-		elif self.button in MOUSE_BUTTONS:
-			return _("Mouse %s") % (self.button,)
-		return self.button.name.split("_", 1)[-1]
+		if isinstance(self.action, ButtonAction):
+			return self.action.describe_short()
+		return self.action.describe(Action.AC_BUTTON)
 	
 	
 	def describe(self, context):
@@ -295,7 +293,7 @@ class PressAction(Action):
 	
 	
 	def button_press(self, mapper):
-		ButtonAction._button_press(mapper, self.button)
+		self.action.button_press(mapper)
 	
 	
 	def button_release(self, mapper):
@@ -312,7 +310,7 @@ class ReleaseAction(PressAction):
 	PR = _("Release")
 	
 	def button_press(self, mapper):
-		ButtonAction._button_release(mapper, self.button)
+		self.action.button_release(mapper)
 
 
 class TapAction(PressAction):
