@@ -180,8 +180,9 @@ class SCCDaemon(Daemon):
 	def on_sa_gestures(self, mapper, action, x, y, what):
 		""" Called when 'gestures' action is used """
 		with self.lock:
-			# TODO: Take up_direction, vh_preference from action
-			gd = self._start_gesture(mapper, what, 0, 30, None)
+			# TODO: Take up_direction from action
+			up_direction = 0
+			gd = self._start_gesture(mapper, what, up_direction, None)
 		gd.enable()
 		log.debug("Gesture detection started on %s", what)
 		gd.whole(mapper, x, y, what)
@@ -499,7 +500,7 @@ class SCCDaemon(Daemon):
 		log.debug("Created control socket %s", self.socket_file)
 	
 	
-	def _start_gesture(self, mapper, what, up_angle, vh_preference, callback):
+	def _start_gesture(self, mapper, what, up_angle, callback):
 		"""
 		Starts gesture detection on specified pad.
 		Calls callback with gesture string when finished.
@@ -525,7 +526,7 @@ class SCCDaemon(Daemon):
 				gd.original_action = action
 				return gd
 		
-		gd = GestureDetector(up_angle, vh_preference, cb)
+		gd = GestureDetector(up_angle, cb)
 		self._apply(mapper, what, set)
 		return gd	
 	
@@ -665,15 +666,14 @@ class SCCDaemon(Daemon):
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Gesture:"):
 			try:
-				what, up_angle, vh_preference = message[8:].strip().split(" ", 2)
+				what, up_angle = message[8:].strip().split(" ", 2)
 				up_angle = int(up_angle)
-				vh_preference = int(vh_preference)
 			except Exception, e:
 				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
 				client.wfile.write(b"Fail: " + tb + b"\n")
 				return
 			with self.lock:
-				client.request_gesture(self, what, up_angle, vh_preference)
+				client.request_gesture(self, what, up_angle)
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Restart."):
 			self.on_sa_restart()
@@ -855,7 +855,7 @@ class Client(object):
 			pass
 	
 	
-	def request_gesture(self, daemon, what, up_angle, vh_preference):
+	def request_gesture(self, daemon, what, up_angle):
 		"""
 		Handler used when client requested gesture detection with
 		"Gesture:" message.
@@ -869,7 +869,7 @@ class Client(object):
 			except:
 				pass
 		
-		gd = daemon._start_gesture(self.mapper, what, up_angle, vh_preference, cb)
+		gd = daemon._start_gesture(self.mapper, what, up_angle, cb)
 		gd.enable()
 		log.debug("Gesture detection requested on %s", what)
 	

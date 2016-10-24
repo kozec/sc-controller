@@ -31,10 +31,9 @@ class GestureDetector(Action):
 	SHORT = 0.3
 	
 	
-	def __init__(self, up_direction, vh_preference, on_finished):
+	def __init__(self, up_direction, on_finished):
 		Action.__init__(self)
 		self._up_direction = up_direction
-		self.vh_preference = clamp(0, vh_preference, 45)
 		self._on_finished = on_finished
 		self._enabled = False
 		self._old_pos = None
