@@ -414,15 +414,17 @@ class PositionModifier(Modifier):
 		return self.action.describe(context)
 
 
-class GesturesAction(Action, SpecialAction):
+class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	"""
-	Stars gesture detection on pad
+	Stars gesture detection on pad. Recognition is handled by whatever
+	is special_actions_handler and results are then sent back to this action
+	as parameter of gesture() method.
 	"""
 	SA = COMMAND = "gestures"
 	
-	def __init__(self, resolution=3):
+	def __init__(self):
+		OSDEnabledAction.__init__(self)
 		Action.__init__(self)
-		self.resolution = resolution
 	
 	
 	def describe(self, context):
@@ -432,6 +434,10 @@ class GesturesAction(Action, SpecialAction):
 	
 	def to_string(self, multiline=False, pad=0):
 		return (" " * pad) + "%s()" % (self.COMMAND,)
+	
+	
+	def gesture(self, mapper, gesture_string):
+		print "G", GesturesAction, gesture_string
 	
 	
 	def whole(self, mapper, x, y, what):

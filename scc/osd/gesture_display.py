@@ -13,6 +13,7 @@ from scc.constants import LEFT, RIGHT, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.gui.daemon_manager import DaemonManager
 from scc.config import Config
 from scc.osd import OSDWindow
+from scc.gestures import GestureDetector
 from collections import deque
 BOTH = "BOTH"
 
@@ -31,28 +32,30 @@ class GestureDisplay(OSDWindow):
 	
 	SIZE = 128	# times two horizontaly + borders
 	
-	def __init__(self, cls="osd-gesture"):
-		OSDWindow.__init__(self, cls)
+	def __init__(self, config=None):
+		OSDWindow.__init__(self, "osd-gesture")
 		self.daemon = None
-		self.config = None
+		self._left_detector  = GestureDetector(0, self._on_gesture_finished)
+		self._right_detector = GestureDetector(0, self._on_gesture_finished)
 		self._control_with = LEFT
 		self._eh_ids = []
 		
 		self.setup_widgets()
+		self.use_config(config or Config())
 	
 	
 	def setup_widgets(self):
 		self.parent = Gtk.Grid()
 		self.parent.set_name("osd-gesture")
 		
-		self.left = GestureDraw(self.SIZE)
-		self.right = GestureDraw(self.SIZE)
+		self._left_draw  = GestureDraw(self.SIZE)
+		self._right_draw = GestureDraw(self.SIZE)
 		sep = Gtk.VSeparator()
 		sep.set_name("osd-gesture-separator")
 		
-		self.parent.attach(self.left,  0, 0, 1, 1)
-		self.parent.attach(sep,        1, 0, 1, 1)
-		self.parent.attach(self.right, 2, 0, 1, 1)
+		self.parent.attach(self._left_draw,  0, 0, 1, 1)
+		self.parent.attach(sep,              1, 0, 1, 1)
+		self.parent.attach(self._right_draw, 2, 0, 1, 1)
 		
 		self.add(self.parent)
 	
@@ -60,9 +63,10 @@ class GestureDisplay(OSDWindow):
 	def use_daemon(self, d):
 		"""
 		Allows (re)using already existing DaemonManager instance in same process.
-		use_config() should be be called before parse_argumets() if this is used.
+		If this is used, parse_argumets() should be called before.
 		"""
 		self.daemon = d
+		self.on_daemon_connected()
 	
 	
 	def use_config(self, c):
@@ -71,8 +75,8 @@ class GestureDisplay(OSDWindow):
 		Has to be called before parse_argumets()
 		"""
 		self.config = c
-		self.left.set_color( self.config["osd_colors"]["menuitem_hilight_text"])
-		self.right.set_color(self.config["osd_colors"]["menuitem_hilight_text"])
+		self._left_draw.set_color( self.config["osd_colors"]["menuitem_hilight_text"])
+		self._right_draw.set_color(self.config["osd_colors"]["menuitem_hilight_text"])
 	
 	
 	def _add_arguments(self):
@@ -125,6 +129,8 @@ class GestureDisplay(OSDWindow):
 	def on_daemon_connected(self, *a):
 		def success(*a):
 			log.error("Sucessfully locked input")
+			self._left_detector.enable()
+			self._right_detector.enable()
 		
 		if not self.config:
 			self.config = Config()
@@ -148,8 +154,18 @@ class GestureDisplay(OSDWindow):
 	
 	
 	def on_event(self, daemon, what, data):
-		if what == self._control_with:
-			self.left.add(*data)
+		if what == LEFT:
+			x, y = data
+			self._left_draw.add(x, y)
+			self._left_detector.whole(None, x, y, LEFT)
+		elif what == RIGHT:
+			x, y = data
+			self._right_detector.whole(None, x, y, RIGHT)
+	
+	
+	def _on_gesture_finished(self, detector, gesture):
+		log.debug("Recognized gesture: %s", gesture)
+		self.quit(0)
 
 
 class GestureDraw(Gtk.DrawingArea):

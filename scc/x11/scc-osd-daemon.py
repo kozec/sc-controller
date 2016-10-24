@@ -15,11 +15,12 @@ gi.require_version('GdkX11', '3.0')
 
 from gi.repository import Gtk, GLib
 from scc.gui.daemon_manager import DaemonManager
-from scc.osd import OSDWindow
-from scc.osd.grid_menu import GridMenu
+from scc.osd.gesture_display import GestureDisplay
 from scc.osd.radial_menu import RadialMenu
+from scc.osd.grid_menu import GridMenu
 from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
+from scc.osd import OSDWindow
 from scc.osd.menu import Menu
 from scc.osd.area import Area
 from scc.tools import shsplit, shjoin
@@ -147,6 +148,16 @@ class OSDDaemon(object):
 				self._window.parse_argumets(args)
 				self._window.show()
 				self._window.use_daemon(self.daemon)
+		elif message.startswith("OSD: gesture"):
+			if self._window:
+				log.warning("Another OSD is already visible - refusing to show keyboard")
+			else:
+				args = shsplit(message)[1:]
+				self._window = GestureDisplay(self.config)
+				self._window.parse_argumets(args)
+				self._window.use_daemon(self.daemon)
+				self._window.show()
+				self._window.connect('destroy', self.on_keyboard_closed)
 		elif self._is_menu_message(message):
 			args = shsplit(message)[1:]
 			if self._window:

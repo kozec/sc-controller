@@ -179,13 +179,28 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_gestures(self, mapper, action, x, y, what):
 		""" Called when 'gestures' action is used """
-		with self.lock:
-			# TODO: Take up_direction from action
-			up_direction = 0
-			gd = self._start_gesture(mapper, what, up_direction, None)
-		gd.enable()
-		log.debug("Gesture detection started on %s", what)
-		gd.whole(mapper, x, y, what)
+		# TODO: Take up_direction from action
+		if action.osd_enabled:
+			# When OSD is enabled, gesture detection is handled
+			# by scc-osd-daemon.
+			log.debug("Gesture detection sent to scc-osd-daemon")
+			self._osd('gesture',
+				"--controller", mapper.get_controller().get_id(),
+			 	'--control-with', what)
+		else:
+			# Otherwise it is handled internally
+			gd = None
+			with self.lock:
+				up_direction = 0
+				gd = self._start_gesture(
+					mapper,
+					what,
+					up_direction,
+					lambda gesture_string : action.gesture(mapper, gesture_string)
+				)
+			gd.enable()
+			log.debug("Gesture detection started on %s", what)
+			gd.whole(mapper, x, y, what)
 	
 	
 	def _osd(self, *data):
