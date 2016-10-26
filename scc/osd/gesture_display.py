@@ -39,6 +39,7 @@ class GestureDisplay(OSDWindow):
 		self._right_detector = GestureDetector(0, self._on_gesture_finished)
 		self._control_with = LEFT
 		self._eh_ids = []
+		self._gesture = None
 		
 		self.setup_widgets()
 		self.use_config(config or Config())
@@ -163,7 +164,13 @@ class GestureDisplay(OSDWindow):
 			self._right_detector.whole(None, x, y, RIGHT)
 	
 	
+	def get_gesture(self):
+		""" Returns recognized gesture or None if there is not any """
+		return self._gesture
+	
+	
 	def _on_gesture_finished(self, detector, gesture):
+		self._gesture = gesture
 		log.debug("Recognized gesture: %s", gesture)
 		self.quit(0)
 
@@ -281,7 +288,10 @@ def main():
 	if not gd.parse_argumets(sys.argv):
 		sys.exit(1)
 	gd.run()
-	sys.exit(gd.get_exit_code())
+	if gd.get_exit_code() == 0:
+		print gd.get_gesture()
+	else:
+		sys.exit(gd.get_exit_code())
 
 
 if __name__ == "__main__":

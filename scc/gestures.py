@@ -40,6 +40,7 @@ class GestureDetector(Action):
 		self._on_finished = on_finished
 		self._enabled = False
 		self._old_pos = None
+		self._string = ""
 	
 	
 	def enable(self):
