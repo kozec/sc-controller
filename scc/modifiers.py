@@ -265,6 +265,7 @@ class BallModifier(Modifier):
 	
 	def _mod_init(self, friction=DEFAULT_FRICTION, mass=80.0,
 			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
+		self.speed = (1.0, 1.0)
 		self._friction = friction
 		self._xvel = 0.0
 		self._yvel = 0.0
@@ -279,6 +280,14 @@ class BallModifier(Modifier):
 		self._yvel_dq = deque(maxlen=mean_len)
 		self._lastTime = time.time()
 		self._old_pos = None
+	
+	
+	def set_speed(self, x, y, z):
+		self.speed = (x, y)
+	
+	
+	def get_speed(self):
+		return self.speed
 	
 	
 	def _stop(self):
@@ -339,7 +348,7 @@ class BallModifier(Modifier):
 		self._yvel = _yvel
 		
 		if dx or dy:
-			self.action.change(mapper, dx, dy)
+			self.action.change(mapper, dx * self.speed[0], dy * self.speed[1])
 			mapper.schedule(0, self._roll)
 	
 	
