@@ -177,7 +177,7 @@ class GestureDisplay(OSDWindow):
 
 class GestureDraw(Gtk.DrawingArea):
 	GRID_PAD = 10
-	MAX_STEPS = 3
+	MAX_STEPS = 5
 	LINE_ALPHA = 0.3;
 	def __init__(self, size, detector):
 		Gtk.DrawingArea.__init__(self)

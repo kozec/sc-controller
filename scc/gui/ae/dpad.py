@@ -80,7 +80,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	
 	
 	def get_button_title(self):
-		return _("DPAD or Menu")
+		return _("DPAD / Menu")
 	
 	
 	def handles(self, mode, action):

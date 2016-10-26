@@ -251,7 +251,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 	
 	
 	def get_button_title(self):
-		return _("Joystick or Mouse")
+		return _("Joystick / Mouse")
 	
 	
 	def handles(self, mode, action):

@@ -191,7 +191,7 @@ class OSDAction(Action, SpecialAction):
 	
 	def to_string(self, multiline=False, pad=0):
 		if isinstance(self.parameters[0], Action):
-			p0str = self.parameters[0].to_string()
+			p0str = self.parameters[0].to_string(multiline=multiline, pad=pad)
 		else:
 			p0str = "'%s'" % (str(self.parameters[0]).encode('string_escape'),)
 		if len(self.parameters) == 1:
@@ -421,10 +421,23 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	as parameter of gesture() method.
 	"""
 	SA = COMMAND = "gestures"
+	PROFILE_KEYS = ("gestures",)
+	PROFILE_KEY_PRIORITY = 2
 	
-	def __init__(self):
+	def __init__(self, *stuff):
 		OSDEnabledAction.__init__(self)
-		Action.__init__(self)
+		Action.__init__(self, *stuff)
+		self.gestures = {}
+		gstr = None
+		for i in stuff:
+			if gstr is None and type(i) in (str, unicode):
+				gstr = i
+			elif gstr is not None and isinstance(i, Action):
+				self.gestures[gstr] = i
+				gstr = None
+			else:
+				raise ValueError("Invalid parameter for '%s': unexpected %s" % (
+						self.COMMAND, i))
 	
 	
 	def describe(self, context):
@@ -433,7 +446,47 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		return (" " * pad) + "%s()" % (self.COMMAND,)
+		if multiline:
+			rv = [ (" " * pad) + self.COMMAND + "(" ]
+			for gstr in self.gestures:
+				a_str = self.gestures[gstr].to_string(True).split("\n")
+				a_str[0] = (" " * pad) + "  '" + (gstr + "',").ljust(11) + a_str[0]	# Key has to be one of SCButtons
+				for i in xrange(1, len(a_str)):
+					a_str[i] = (" " * pad) + "  " + a_str[i]
+				a_str[-1] = a_str[-1] + ","
+				rv += a_str
+			if rv[-1][-1] == ",":
+				rv[-1] = rv[-1][0:-1]
+			rv += [ (" " * pad) + ")" ]
+			return "\n".join(rv)
+		else:
+			rv = [ ]
+			for gstr in self.gestures:
+				rv += [ "'%s'" % (gstr,), self.gestures[gstr].to_string(False) ]
+			return self.COMMAND + "(" + ", ".join(rv) + ")"	
+	
+	
+	def encode(self):
+		rv = { self.COMMAND : {
+			gstr : self.gestures[gstr].encode()
+			for gstr in self.gestures
+		}}
+		if self.name:
+			rv[NameModifier.COMMAND] = self.name
+		return rv	
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		args = []
+		ga = GesturesAction()
+		ga.gestures = {
+			gstr : parser.from_json_data(data[GesturesAction.PROFILE_KEYS[0]][gstr])
+			for gstr in data[GesturesAction.PROFILE_KEYS[0]]
+		}
+		if "name" in data:
+			ga.name = data["name"]
+		return ga
 	
 	
 	def gesture(self, mapper, gesture_string):
