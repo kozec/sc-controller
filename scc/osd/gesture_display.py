@@ -48,8 +48,8 @@ class GestureDisplay(OSDWindow):
 		self.parent = Gtk.Grid()
 		self.parent.set_name("osd-gesture")
 		
-		self._left_draw  = GestureDraw(self.SIZE)
-		self._right_draw = GestureDraw(self.SIZE)
+		self._left_draw  = GestureDraw(self.SIZE, self._left_detector)
+		self._right_draw = GestureDraw(self.SIZE, self._right_detector)
 		sep = Gtk.VSeparator()
 		sep.set_name("osd-gesture-separator")
 		
@@ -75,8 +75,8 @@ class GestureDisplay(OSDWindow):
 		Has to be called before parse_argumets()
 		"""
 		self.config = c
-		self._left_draw.set_color( self.config["osd_colors"]["menuitem_hilight_text"])
-		self._right_draw.set_color(self.config["osd_colors"]["menuitem_hilight_text"])
+		for x in (self._left_draw, self._right_draw):
+			x.set_colors(**self.config["gesture_colors"])
 	
 	
 	def _add_arguments(self):
@@ -169,32 +169,95 @@ class GestureDisplay(OSDWindow):
 
 
 class GestureDraw(Gtk.DrawingArea):
-	def __init__(self, size):
+	GRID_PAD = 10
+	MAX_STEPS = 3
+	LINE_ALPHA = 0.3;
+	def __init__(self, size, detector):
 		Gtk.DrawingArea.__init__(self)
-		self.size = size
+		self._size = size
+		self._detector = detector
+		self._points = deque([], 256)
 		self.connect('draw', self.draw)
 		self.set_size_request(size, size)
-		self.points = deque([], 256)
-		self.color = Gdk.Color.parse("#FF00FF").color
+		self.set_colors()
 	
 	
-	def set_color(self, color_str):
-		""" Expects color in RRGGBB, as stored in config file """
-		self.color = Gdk.Color.parse("#" + color_str).color
+	@staticmethod
+	def parse_rgba(col):
+		""" Parses color specified by #RRGGBBAA string """
+		# Because GTK can parse everything but theese :(
+		if not col.startswith("#"):
+			col = "#" + col
+		if len(col) > 7:
+			col, alpha = col[0:7], col[7:]
+		rgba = Gdk.RGBA()
+		if not rgba.parse(col):
+			log.warning("Failed to parse RGBA color: %s", col)
+		rgba.alpha = float(int(alpha, 16)) / 255.0
+		return rgba
+	
+	
+	def set_colors(self, background="000000FF", line="FF00FFFF",
+			grid="7A7A7AFF", hilight="0030AAFF", **a):
+		""" Expects colors in RRGGBB, as stored in config file """
+		self.colors = {
+			'background' :	GestureDraw.parse_rgba(background),
+			'line' : 		GestureDraw.parse_rgba(line),
+			'grid' : 		GestureDraw.parse_rgba(grid),
+			'hilight':		GestureDraw.parse_rgba(hilight),
+		}
 	
 	
 	def add(self, x, y):
-		factor = self.size / float(STICK_PAD_MAX - STICK_PAD_MIN)
+		factor = self._size / float(STICK_PAD_MAX - STICK_PAD_MIN)
 		x -= STICK_PAD_MIN
 		y = STICK_PAD_MAX - y
-		self.points.append(( x * factor, y * factor ))
+		self._points.append(( x * factor, y * factor ))
 		self.queue_draw()
 	
 	
 	def draw(self, another_self, cr):
-		Gdk.cairo_set_source_color(cr, self.color)
+		resolution = self._detector.get_resolution()
+		hilights = { x : 0 for x in GestureDetector.CHARS }
+
+		# Background
+		Gdk.cairo_set_source_rgba(cr, self.colors['background'])
+		cr.rectangle(0, 0, self._size, self._size)
+		cr.fill()
+		
+		# Hilighted boxes
+		# Iterates over gesture in progress hilighting apripriate boxes,
+		# so user can see what's he doing.
+		box_width = float(self._size) / float(resolution)
+		col = self.colors['hilight']
+		alpha = col.alpha
+		alpha_fallout = alpha * 0.5 / self.MAX_STEPS
+		step = 0
+		for char in reversed(self._detector.get_string()):
+			if step > self.MAX_STEPS or char == self._detector.SEPARATOR:
+				break
+			x, y = self._detector.char_to_xy(char)
+			col.alpha = alpha - alpha_fallout * step
+			Gdk.cairo_set_source_rgba(cr, col)
+			cr.rectangle(box_width * x, box_width * y, box_width, box_width)
+			cr.fill()
+			step += 1
+		col.alpha = alpha
+		
+		# Grid
+		Gdk.cairo_set_source_rgba(cr, self.colors['grid'])
+		for i in xrange(1, resolution):
+			cr.move_to(i * box_width, self.GRID_PAD)
+			cr.line_to(i * box_width, self._size - self.GRID_PAD)
+			cr.stroke()
+			cr.move_to(self.GRID_PAD, i * box_width)
+			cr.line_to(self._size - self.GRID_PAD, i * box_width)
+			cr.stroke()
+		
+		# Line
+		Gdk.cairo_set_source_rgba(cr, self.colors['line'])
 		drawing = False
-		for x, y in self.points:
+		for x, y in self._points:
 			if drawing:
 				cr.line_to(x, y)
 			else:

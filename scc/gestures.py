@@ -20,19 +20,22 @@ class GestureDetector(Action):
 	"""
 	Derived from Action, but not callable in profile.
 	
-	When daemon decides it's good time to start gesture, be it thanks to
+	When daemon decides it's good time to start gesture, be it because of
 	GestureAction special action or "Gesture:" message from client,
 	it constructs instance of this class and leaves everything to it.
 	"""
-	# Minimal difference in positions over both axes
-	MIN_MOVEMENT_SIZE = 500.0
-	
-	# Constant used in GestureDetector.cleanup
-	SHORT = 0.3
+	# Characters used in xy_to_char and char_to_xy
+	# Number of characters limits resolution to 6x6
+	CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
+	CHARS_LEN = len(CHARS)
+	SEPARATOR = "|"
 	
 	
 	def __init__(self, up_direction, on_finished):
 		Action.__init__(self)
+		# TODO: Configurable resolution
+		self._resolution = 3
+		self._deadzone = 1.0 / self._resolution / self._resolution
 		self._up_direction = up_direction
 		self._on_finished = on_finished
 		self._enabled = False
@@ -42,85 +45,49 @@ class GestureDetector(Action):
 	def enable(self):
 		""" GestureDetector doesn't starts do detect anything until this is called """
 		self._enabled = True
-		self._string = ""
+		self._string = "%s%s" % (self._resolution, self.SEPARATOR)
+	
+	
+	def get_string(self):
+		""" Returns string representation of (probably unfinished) gesture. """
+		return self._string
+	
+	
+	def get_resolution(self):
+		""" Returns gesture resolution """
+		return self._resolution
+	
+	
+	def xy_to_char(self, x, y):
+		i = min(GestureDetector.CHARS_LEN, x * self._resolution + y)
+		return GestureDetector.CHARS[i]
+	
+	
+	def char_to_xy(self, c):
+		i = GestureDetector.CHARS.index(c)
+		return i / 3, i % 3
 	
 	
 	def whole(self, mapper, x, y, what):
 		if self._enabled:
 			if (x, y) == (0, 0):
-				# Released
+				# Pad was released
 				self._enabled = False
-				self._on_finished(self, GestureDetector.cleanup(self._string))
+				self._on_finished(self, self._string)
 				return
 			else:
-				if self._old_pos is None:
+				# Convert positions on pad to position on grid
+				x -= STICK_PAD_MIN
+				y = STICK_PAD_MAX - y
+				x = float(x) / (float(STICK_PAD_MAX - STICK_PAD_MIN) / self._resolution)
+				y = float(y) / (float(STICK_PAD_MAX - STICK_PAD_MIN) / self._resolution)
+				# Check for deadzones around grid lines
+				for i in xrange(1, self._resolution):
+					if x > i - self._deadzone and x < i + self._deadzone: return
+					if y > i - self._deadzone and y < i + self._deadzone: return
+				# Round
+				x = clamp(0, int(x), self._resolution - 1)
+				y = clamp(0, int(y), self._resolution - 1)
+				if (x, y) != self._old_pos:
+					self._string = "%s%s" % (self._string, self.xy_to_char(x, y))
 					self._old_pos = x, y
-				else:
-					dx, dy = self._old_pos[0] - x, self._old_pos[1] - y
-					if sqrt(dx * dx + dy * dy) > GestureDetector.MIN_MOVEMENT_SIZE:
-						angle = atan2(dy, dx) * 180.0 / PI
-						if angle < 0: angle += 360
-						self._string = "%s%s" % (
-							self._string, GestureDetector.angle_to_direction(angle))
-						self._old_pos = x, y
-	
-	
-	@staticmethod
-	def cleanup(dirty):
-		"""
-		This does magic.
-		
-		1st, it breaks gesture into consecutive strings of same characters.
-		2nd, it find longest such string and removes every other string that is
-		     shorter than rougly 1/3 of longest size
-		3rd, it reassemles string back, removing all repeating characters
-		4rd, as special treatement, removes all cases when there is diagonal
-		     motion detected between two straight movements, to make detection
-		     of "L-like" movements better.
-		
-		Doing this had best results in making sure that I can get same gesture
-		string for eveyr time when I attempt to do same gesture.
-		"""
-		cur, split = [], []
-		last, longest = None, 0
-		for ch in dirty:
-			if ch != last:
-				if len(cur) > 0:
-					longest = max(longest, len(cur))
-					split.append("".join(cur))
-					cur = []
-					last = ch
-			cur.append(ch)
-		
-		req_len = max(1, int(longest * GestureDetector.SHORT))
-		split = ( x[0] for x in split if len(x) > req_len )
-		return "".join(( x[0] for x in groupby(split) ))
-	
-	
-	@staticmethod
-	def angle_to_direction(angle):
-		"""
-		Translates direction expressed in degrees (where 0.0 goes left and 90.0 up)
-		to direction expressed using numbers of numpad (because that's as good as
-		anything else for my purposes)
-		"""
-		B = 45
-		# As it is next to impossible to make them on purpose, diagonals
-		# are disabled for now
-		if angle > 360 - B or angle < B:
-			return 4	# Left
-		# elif angle > B and angle < 90 - B:
-		# 	return 1	# Left-Down
-		elif angle > 90 - B and angle < 90 + B:
-			return 2	# Down
-		# elif angle > 90 + B and angle < 180 - B:
-		# 	return 3	# Right-Down
-		elif angle > 180 - B and angle < 180 + B:
-			return 6	# Rigth
-		# elif angle > 180 + B and angle < 270 - B:
-		# 	return 9	# Rigth-Up
-		elif angle > 270 - B and angle < 270 + B:
-			return 8	# Up
-		#else:
-		#	return 7	# Left-Up
-		return 8	# Up

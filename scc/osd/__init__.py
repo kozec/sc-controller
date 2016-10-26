@@ -68,7 +68,7 @@ class OSDWindow(Gtk.Window):
 		#osd-gesture-separator {
 			color: #%(menuseparator)s;
 			background-color: #%(menuseparator)s;
-			margin: 5px 5px 5px 5px;
+			margin: 0px 5px 0px 5px;
 		}
 		
 		#osd-menu-item-selected {
