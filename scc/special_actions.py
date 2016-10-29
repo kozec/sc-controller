@@ -486,6 +486,8 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 		}
 		if "name" in data:
 			ga.name = data["name"]
+		if "osd" in data:
+			ga = OSDAction(ga)
 		return ga
 	
 	
