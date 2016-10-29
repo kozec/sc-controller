@@ -120,6 +120,16 @@ class OSDDaemon(object):
 		self._window = None
 	
 	
+	def on_gesture_recognized(self, gd):
+		""" Called after on-screen keyboard is hidden from the screen """
+		self._window = None
+		if gd.get_exit_code() == 0:
+			self.daemon.request('Gestured: %s' % ( gd.get_gesture(), ),
+				lambda *a : False, lambda *a : False)
+		else:
+			self.daemon.request('Gestured: x', lambda *a : False, lambda *a : False)
+	
+	
 	@staticmethod
 	def _is_menu_message(m):
 		""" Returns True if m starts with 'OSD: [grid|radial]menu' """
@@ -157,7 +167,7 @@ class OSDDaemon(object):
 				self._window.parse_argumets(args)
 				self._window.use_daemon(self.daemon)
 				self._window.show()
-				self._window.connect('destroy', self.on_keyboard_closed)
+				self._window.connect('destroy', self.on_gesture_recognized)
 		elif self._is_menu_message(message):
 			args = shsplit(message)[1:]
 			if self._window:

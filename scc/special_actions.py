@@ -492,7 +492,9 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	
 	
 	def gesture(self, mapper, gesture_string):
-		print "G", GesturesAction, gesture_string
+		if gesture_string in self.gestures:
+			self.gestures[gesture_string].button_press(mapper)
+			mapper.schedule(0, self.gestures[gesture_string].button_release)
 	
 	
 	def whole(self, mapper, x, y, what):

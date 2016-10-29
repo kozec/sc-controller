@@ -180,17 +180,18 @@ class SCCDaemon(Daemon):
 	def on_sa_gestures(self, mapper, action, x, y, what):
 		""" Called when 'gestures' action is used """
 		# TODO: Take up_direction from action
-		if action.osd_enabled:
-			# When OSD is enabled, gesture detection is handled
-			# by scc-osd-daemon.
-			log.debug("Gesture detection sent to scc-osd-daemon")
-			self._osd('gesture',
-				"--controller", mapper.get_controller().get_id(),
-			 	'--control-with', what)
-		else:
-			# Otherwise it is handled internally
-			gd = None
-			with self.lock:
+		gd = None
+		with self.lock:
+			if action.osd_enabled and self.osd_daemon:
+				# When OSD is enabled, gesture detection is handled
+				# by scc-osd-daemon.
+				self.osd_daemon.gesture_action = action
+				self._osd('gesture',
+					"--controller", mapper.get_controller().get_id(),
+				 	'--control-with', what)
+				log.debug("Gesture detection request sent to scc-osd-daemon")
+			else:
+				# Otherwise it is handled internally
 				up_direction = 0
 				gd = self._start_gesture(
 					mapper,
@@ -198,49 +199,56 @@ class SCCDaemon(Daemon):
 					up_direction,
 					lambda gesture_string : action.gesture(mapper, gesture_string)
 				)
+		if gd:
 			gd.enable()
 			log.debug("Gesture detection started on %s", what)
 			gd.whole(mapper, x, y, what)
 	
 	
 	def _osd(self, *data):
-		""" Returns True on success """
+		"""
+		Has to be called with self.lock held.
+		Returns True on success.
+		"""
 		# Pre-format data
 		data = b"OSD: %s\n" % (shjoin(data) ,)
 		
 		# Check if scc-osd-daemon is available
-		with self.lock:
-			if not self.osd_daemon:
-				log.warning("Cannot show OSD; there is no scc-osd-daemon registered")
-				return False
-			# Send request
-			try:
-				self.osd_daemon.wfile.write(data)
-				self.osd_daemon.wfile.flush()
-			except Exception, e:
-				log.error("Failed to display OSD: %s", e)
-				self.osd_daemon = None
-				return False
-			return True
+		if not self.osd_daemon:
+			log.warning("Cannot show OSD; there is no scc-osd-daemon registered")
+			return False
+		# Send request
+		try:
+			self.osd_daemon.wfile.write(data)
+			self.osd_daemon.wfile.flush()
+		except Exception, e:
+			log.error("Failed to display OSD: %s", e)
+			self.osd_daemon = None
+			return False
+		return True
 	
 	
 	def on_sa_osd(self, mapper, action):
 		""" Called when 'osd' action is used """
-		self._osd('message', '-t', action.timeout, action.text)
+		with self.lock:
+			self._osd('message', '-t', action.timeout, action.text)
 	
 	
 	def on_sa_area(self, mapper, action, x1, y1, x2, y2):
 		""" Called when *AreaAction has OSD enabled """
-		self._osd('area', '-x', x1, '-y', y1, '--width', x2-x1, '--height', y2-y1)
+		with self.lock:
+			self._osd('area', '-x', x1, '-y', y1, '--width', x2-x1, '--height', y2-y1)
 	
 	
 	def on_sa_clear_osd(self, *a):
-		self._osd('clear')
+		with self.lock:
+			self._osd('clear')
 	
 	
 	def on_sa_keyboard(self, mapper, action):
 		""" Called when 'keyboard' action is used """
-		self._osd('keyboard')
+		with self.lock:
+			self._osd('keyboard')
 	
 	
 	def on_sa_menu(self, mapper, action, *pars):
@@ -261,7 +269,8 @@ class SCCDaemon(Daemon):
 			p += [ "--from-profile", mapper.profile.get_filename(), action.menu_id ]
 		p += list(pars)
 		
-		self._osd(*p)
+		with self.lock:
+			self._osd(*p)
 	
 	on_sa_gridmenu = on_sa_menu
 	
@@ -528,8 +537,8 @@ class SCCDaemon(Daemon):
 			# This callback is expected to be called with lock held
 			with self.lock:
 				self._apply(mapper, what, lambda a : a.original_action)
-				log.debug("Gesture detected on %s: %s", what, gesture)
-				callback(gesture)
+			log.debug("Gesture detected on %s: %s", what, gesture)
+			callback(gesture)
 		
 		def set(action):
 			# ObservingAction should be above GestureDetector
@@ -604,8 +613,9 @@ class SCCDaemon(Daemon):
 			else:
 				try:
 					text = message[5:].decode("utf-8").strip("\t ")
-					if not self._osd("message", text):
-						raise Exception()
+					with self.lock:
+						if not self._osd("message", text):
+							raise Exception()
 					client.wfile.write(b"OK.\n")
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
@@ -692,6 +702,11 @@ class SCCDaemon(Daemon):
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Restart."):
 			self.on_sa_restart()
+		elif message.startswith("Gestured:"):
+			gstr = message[9:].strip()
+			client.gesture_action.gesture(client.mapper, gstr)
+			with self.lock:
+				client.wfile.write(b"OK.\n")
 		elif message.startswith("Selected:"):
 			menuaction = None
 			def press(mapper):
@@ -858,6 +873,7 @@ class Client(object):
 		self.rfile = rfile
 		self.wfile = wfile
 		self.mapper = mapper
+		self.gesture_action = None
 		self.locked_actions = set()
 		self.observed_actions = set()
 	

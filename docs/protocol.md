@@ -16,7 +16,6 @@ Ready.
 
 Connection is then held until client side closes it.
 
-
 ### Messages sends by daemon:
 
 #### `Controller Count: n`
@@ -72,8 +71,8 @@ Indicates sucess to client that sent request.
 
 ### `OSD: tool param1 param2...`
 Send to scc-osd-daemon when osd-related action is requested.
-*tool* can be *'message'* or *'menu'*, *params* are same as command-line arguments for related
-scc-osd-* script.
+*tool* can be *'message'*, *'menu'*, *'gridmenu'*,*'radialmenu'* or *'gesture'*
+*params* are same as command-line arguments for scc-osd-* script with that name.
 
 #### `PID: xyz`
 Reports PID of *scc-daemon* instance. Automatically sent when connection is accepted.
@@ -91,7 +90,7 @@ Can be either ignored or used to check if remote side really is *scc-daemon*.
 #### `Version: x.y.z`
 Identifies daemon version. Automatically sent when connection is accepted.
 
-## Commands sent from client to daemon
+## Commands sent from client
 
 #### `Controller: controller_id`
 By default, all messages sent from client are related to first connected
@@ -169,6 +168,12 @@ gets called. All clients are disconnected immediately, so there is no response.
 #### `Selected: menu_id item_id`
 Send by scc-osd-daemon when user chooses item from displayed menu.
 If menu_id or item_id contains spaces or quotes, it should be escaped.
+Daemon responds with `OK.`
+
+#### `Gestured: gesture_string`
+Send by scc-osd-daemon, when user draws gesture. Sent only after requested
+by `OSD: gesture`. If user gesture cannot be recognized or user cancels it,
+'3|' (valid gesture string with no meaning) is reported.
 Daemon responds with `OK.`
 
 #### `Turnoff.`
