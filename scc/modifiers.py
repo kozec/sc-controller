@@ -282,7 +282,7 @@ class BallModifier(Modifier):
 		self._old_pos = None
 	
 	
-	def set_speed(self, x, y, z):
+	def set_speed(self, x, y, *a):
 		self.speed = (x, y)
 	
 	

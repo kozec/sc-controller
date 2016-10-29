@@ -169,10 +169,13 @@ class TestModifiers(object):
 		# Basic modifiers, sensitivity should always end applied to mouse() action
 		a = _parse_compressed("sens(2, 3, click(mouse()))")
 		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (2.0, 3.0)
-		a = _parse_compressed("sens(2, 3, ball(mouse()))")
-		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (2.0, 3.0)
 		a = _parse_compressed("sens(2, 3, deadzone(2.0, mouse()))")
 		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (2.0, 3.0)
+		
+		# Special case, sensitivity should be applied to ball(), not mouse()
+		a = _parse_compressed("sens(2, 3, ball(mouse()))")
+		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (1.0, 1.0)
+		assert isinstance(a, BallModifier) and a.get_speed() == (2.0, 3.0)
 		
 		# Double and hold modifiers, sensitivity should always end applied to all actions
 		a = _parse_compressed("sens(2, 3, 4, hold(mouse(), doubleclick(axis(ABS_X), gyro(YAW))))")
