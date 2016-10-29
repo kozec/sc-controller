@@ -225,7 +225,7 @@ class GestureDraw(Gtk.DrawingArea):
 	
 	def draw(self, another_self, cr):
 		resolution = self._detector.get_resolution()
-		hilights = { x : 0 for x in GestureDetector.CHARS }
+		# hilights = [ [0] * resolution for x in xrange(0, resolution) ]
 
 		# Background
 		Gdk.cairo_set_source_rgba(cr, self.colors['background'])
@@ -240,10 +240,9 @@ class GestureDraw(Gtk.DrawingArea):
 		alpha = col.alpha
 		alpha_fallout = alpha * 0.5 / self.MAX_STEPS
 		step = 0
-		for char in reversed(self._detector.get_string()):
-			if step > self.MAX_STEPS or char == self._detector.SEPARATOR:
+		for x, y in reversed(self._detector.get_positions()):
+			if step > self.MAX_STEPS:
 				break
-			x, y = self._detector.char_to_xy(char)
 			col.alpha = alpha - alpha_fallout * step
 			Gdk.cairo_set_source_rgba(cr, col)
 			cr.rectangle(box_width * x, box_width * y, box_width, box_width)

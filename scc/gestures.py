@@ -24,11 +24,11 @@ class GestureDetector(Action):
 	GestureAction special action or "Gesture:" message from client,
 	it constructs instance of this class and leaves everything to it.
 	"""
-	# Characters used in xy_to_char and char_to_xy
-	# Number of characters limits resolution to 6x6
-	CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
-	CHARS_LEN = len(CHARS)
-	SEPARATOR = "|"
+	UP			= "U"
+	DOWN		= "D"
+	LEFT		= "L" 
+	RIGHT		= "R"
+	SEPARATOR	= "|"
 	
 	
 	def __init__(self, up_direction, on_finished):
@@ -39,19 +39,24 @@ class GestureDetector(Action):
 		self._up_direction = up_direction
 		self._on_finished = on_finished
 		self._enabled = False
-		self._old_pos = None
-		self._string = ""
+		self._positions = []
+		self._result = []
 	
 	
 	def enable(self):
 		""" GestureDetector doesn't starts do detect anything until this is called """
 		self._enabled = True
-		self._string = "%s%s" % (self._resolution, self.SEPARATOR)
+		self._result = [ str(self._resolution), self.SEPARATOR ]
 	
 	
 	def get_string(self):
-		""" Returns string representation of (probably unfinished) gesture. """
-		return self._string
+		""" Returns string representation of (probably unfinished) gesture """
+		return "".join(self._result)
+	
+	
+	def get_positions(self):
+		""" Returns list of positions used to generate gesture """
+		return self._positions
 	
 	
 	def get_resolution(self):
@@ -59,22 +64,12 @@ class GestureDetector(Action):
 		return self._resolution
 	
 	
-	def xy_to_char(self, x, y):
-		i = min(GestureDetector.CHARS_LEN, x * self._resolution + y)
-		return GestureDetector.CHARS[i]
-	
-	
-	def char_to_xy(self, c):
-		i = GestureDetector.CHARS.index(c)
-		return i / 3, i % 3
-	
-	
 	def whole(self, mapper, x, y, what):
 		if self._enabled:
 			if (x, y) == (0, 0):
 				# Pad was released
 				self._enabled = False
-				self._on_finished(self, self._string)
+				self._on_finished(self, "".join(self._result))
 				return
 			else:
 				# Convert positions on pad to position on grid
@@ -89,6 +84,22 @@ class GestureDetector(Action):
 				# Round
 				x = clamp(0, int(x), self._resolution - 1)
 				y = clamp(0, int(y), self._resolution - 1)
-				if (x, y) != self._old_pos:
-					self._string = "%s%s" % (self._string, self.xy_to_char(x, y))
-					self._old_pos = x, y
+				if self._positions:
+					ox, oy = self._positions[-1]
+					if (x, y) != (ox, oy):
+						self._positions.append( (x, y) )
+						while (x, y) != (ox, oy):
+							if x < ox:
+								self._result.append(self.LEFT)
+								x += 1
+							elif x > ox:
+								self._result.append(self.RIGHT)
+								x -= 1
+							elif y < oy:
+								self._result.append(self.UP)
+								y += 1
+							elif y > oy:
+								self._result.append(self.DOWN)
+								y -= 1
+				else:
+					self._positions.append( (x, y) )
