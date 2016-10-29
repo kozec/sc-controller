@@ -49,12 +49,20 @@ class AEComponent(ComboSetter):
 	
 	
 	def load(self):
-		if self.loaded : return
+		"""
+		Performs whatever component needs to get loaded.
+		Can be called multiple times without breaking anything, but returns
+		True when called first time and then False every to signalize repeated
+		call.
+		"""
+		if self.loaded:
+			return False
 		self.builder = Gtk.Builder()
 		self.builder.add_from_file(os.path.join(self.app.gladepath, self.GLADE))
 		self.widget = self.builder.get_object(self.NAME)
 		self.builder.connect_signals(self)
 		self.loaded = True
+		return True
 	
 	
 	def is_loaded(self):

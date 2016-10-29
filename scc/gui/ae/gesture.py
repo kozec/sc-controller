@@ -7,11 +7,12 @@ Handles all XYActions
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GLib, GObject
 from scc.actions import Action, NoAction, XYAction
 from scc.special_actions import GesturesAction
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.area_to_action import action_to_area
+from scc.gui.gestures import GestureCellRenderer
 from scc.gui.simple_chooser import SimpleChooser
 from scc.gui.parser import GuiActionParser
 
@@ -32,9 +33,25 @@ class GestureComponent(AEComponent):
 		self.x = self.y = NoAction()
 	
 	
+	def load(self):
+		if AEComponent.load(self):
+			tvGestures = self.builder.get_object("tvGestures")
+			tvGestures.insert_column_with_attributes(0,
+				_("Image"),
+				GestureCellRenderer(),
+				gesture=0
+			)
+	
+	
 	def set_action(self, mode, action):
+		lstGestures = self.builder.get_object("lstGestures")
+		lstGestures.clear()
 		if isinstance(action, GesturesAction):
-			pass
+			for gstr in action.gestures:
+				o = GObject.GObject()
+				o.action = action.gestures[gstr]
+				o.str = gstr
+				lstGestures.append( ( unicode(gstr), o.action.describe(Action.AC_MENU), o) )
 	
 	
 	def get_button_title(self):
@@ -78,4 +95,3 @@ class GestureComponent(AEComponent):
 		area = action_to_area(action)
 		b.display_action(Action.AC_STICK, area)
 		b.show(self.editor.window)
-	
