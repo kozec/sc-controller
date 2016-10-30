@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# coding=utf-8
 """
 SC-Controller - Action Editor - Per-Axis Component
 
@@ -12,7 +13,6 @@ from scc.actions import Action, NoAction, XYAction
 from scc.special_actions import GesturesAction
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.area_to_action import action_to_area
-from scc.gui.gestures import GestureCellRenderer
 from scc.gui.simple_chooser import SimpleChooser
 from scc.gui.parser import GuiActionParser
 
@@ -33,16 +33,6 @@ class GestureComponent(AEComponent):
 		self.x = self.y = NoAction()
 	
 	
-	def load(self):
-		if AEComponent.load(self):
-			tvGestures = self.builder.get_object("tvGestures")
-			tvGestures.insert_column_with_attributes(0,
-				_("Image"),
-				GestureCellRenderer(),
-				gesture=0
-			)
-	
-	
 	def set_action(self, mode, action):
 		lstGestures = self.builder.get_object("lstGestures")
 		lstGestures.clear()
@@ -51,7 +41,26 @@ class GestureComponent(AEComponent):
 				o = GObject.GObject()
 				o.action = action.gestures[gstr]
 				o.str = gstr
-				lstGestures.append( ( unicode(gstr), o.action.describe(Action.AC_MENU), o) )
+				lstGestures.append( (
+					GestureComponent.nice_gstr(gstr),
+					o.action.describe(Action.AC_MENU),
+					o
+				) )
+	
+	
+	ARROWS = {
+		#'U' : '▲', 'D' : '▼', 'L' : '◀', 'R' : '▶',
+		'U' : '↑', 'D' : '↓', 'L' : '←', 'R' : '→',
+	}
+	@staticmethod
+	def nice_gstr(gstr):
+		"""
+		Replaces characters UDLR in gesture string with unicode arrows.
+		▲ ▼ ◀ ▶
+		← → ↑ ↓
+		"""
+		l = lambda x : GestureComponent.ARROWS[x] if x in GestureComponent.ARROWS else ""
+		return "".join(map(l, gstr))
 	
 	
 	def get_button_title(self):
