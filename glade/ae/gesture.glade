@@ -149,7 +149,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="btnStartGestureOver">
-                    <property name="label" translatable="yes">Start _Over</property>
+                    <property name="label" translatable="yes">Start _Over (Y)</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -164,7 +164,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="btnConfirmGesutre">
-                    <property name="label" translatable="yes">_Use</property>
+                    <property name="label" translatable="yes">_Use (A)</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>

@@ -58,15 +58,15 @@ class GestureComponent(AEComponent):
 	
 	
 	ARROWS = {
-		#'U' : '▲', 'D' : '▼', 'L' : '◀', 'R' : '▶',
 		'U' : '↑', 'D' : '↓', 'L' : '←', 'R' : '→',
+		# 'U' : '▲', 'D' : '▼', 'L' : '◀', 'R' : '▶',
 	}
 	@staticmethod
 	def nice_gstr(gstr):
 		"""
 		Replaces characters UDLR in gesture string with unicode arrows.
-		▲ ▼ ◀ ▶
 		← → ↑ ↓
+		# ▲ ▼ ◀ ▶
 		"""
 		l = lambda x : GestureComponent.ARROWS[x] if x in GestureComponent.ARROWS else ""
 		return "".join(map(l, gstr))
@@ -151,6 +151,7 @@ class GestureGrabber(object):
 		self.builder = builder
 		self._callback = None
 		self._gd = None
+		self._signals = None
 		self._gesture = None
 		self._repeats = 0
 		self.gesture_grabber = self.builder.get_object("gesture_grabber")
@@ -163,6 +164,48 @@ class GestureGrabber(object):
 		self.gesture_grabber.connect("destroy", self.close)
 		self.builder.get_object("btnStartGestureOver").connect("clicked", self.start_over)
 		self.builder.get_object("btnConfirmGesutre").connect("clicked", self.use)
+	
+	
+	def fail(self, *a):
+		"""
+		Called when something goes bad, usually because there is
+		no controller connected.
+		"""
+		log.error("Failed to grab gesture: %s", a)
+	
+	
+	def disconnect_signals(self):
+		"""
+		Disconnects redundant signal handlers.
+		Currently only one created in lock_buttons.
+		"""
+		if self._signals:
+			for source, eid in self._signals:
+				source.disconnect(eid)
+			self._signals = []
+	
+	
+	def lock_buttons(self):
+		self.disconnect_signals()
+		try:
+			c = self.editor.app.dm.get_controllers()[0]
+			c.lock(
+				lambda *a: True,	# success_cb
+				self.fail,			# error_cb
+				'A', 'Y'
+			)
+			self._signals = [ (c, c.connect('event', self.on_event)) ]
+		except IndexError, e:
+			# No controllers
+			self.fail()
+	
+	
+	def on_event(self, c, button, data):
+		if self.rvGestureGrab.get_reveal_child():
+			if button == "A" and data[0] == 0:
+				self.use()
+			elif button == "Y" and data[0] == 0:
+				self.start_over()
 	
 	
 	def grab(self, callback):
@@ -205,6 +248,7 @@ class GestureGrabber(object):
 		self._gd.show()
 		self._gd.connect('gesture-updated', self.on_gesture_updated)
 		self._gd.connect('destroy', self.on_gesture_recognized)
+		self.lock_buttons()
 	
 	
 	def on_gesture_updated(self, gd, gstr):
@@ -214,6 +258,7 @@ class GestureGrabber(object):
 	
 	
 	def on_gesture_recognized(self, gd):
+		self.disconnect_signals()
 		if gd.get_exit_code() != 0:
 			# Canceled or cannot grab controller
 			return
