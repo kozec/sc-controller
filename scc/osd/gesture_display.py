@@ -180,10 +180,8 @@ class GestureDisplay(OSDWindow):
 	def get_gesture(self):
 		""" Returns recognized gesture or None if there is not any """
 		if self._gesture:
-			if len(self._gesture.split("|")[-1]) == 0:
-				# TODO: This, some better way
-				return None
 			return self._gesture
+		# self._gesture is None or empty
 		return None
 	
 	

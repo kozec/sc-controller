@@ -28,7 +28,6 @@ class GestureDetector(Action):
 	DOWN		= "D"
 	LEFT		= "L" 
 	RIGHT		= "R"
-	SEPARATOR	= "|"
 	
 	
 	def __init__(self, up_direction, on_finished):
@@ -46,7 +45,7 @@ class GestureDetector(Action):
 	def enable(self):
 		""" GestureDetector doesn't starts do detect anything until this is called """
 		self._enabled = True
-		self._result = [ str(self._resolution), self.SEPARATOR ]
+		self._result = [ ]
 	
 	
 	def get_string(self):
