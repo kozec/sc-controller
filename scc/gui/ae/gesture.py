@@ -33,6 +33,7 @@ class GestureComponent(AEComponent):
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
+		self._edited_gesture = None
 		self._grabber = None
 	
 	
@@ -115,7 +116,8 @@ class GestureComponent(AEComponent):
 		
 		model, iter = tvGestures.get_selection().get_selected()
 		item = model.get_value(iter, 2)
-		txGesture.set_text(model.get_value(iter, 0))
+		self._edited_gesture = item.gstr
+		txGesture.set_text(GestureComponent.nice_gstr(self._edited_gesture))
 		# Setup editor
 		e = ActionEditor(self.app, self.on_action_chosen)
 		e.set_title(_("Edit Gesture Action"))
@@ -123,6 +125,14 @@ class GestureComponent(AEComponent):
 		e.add_widget(_("Gesture"), gesture_editor)
 		# Display editor
 		e.show(self.editor.window)
+	
+	
+	def on_btChangeGesture_clicked(self, *a):
+		txGesture = self.builder.get_object("txGesture")
+		def grabbed(gesture):
+			self._edited_gesture = gesture
+			txGesture.set_text(GestureComponent.nice_gstr(self._edited_gesture))
+		self._grabber.grab(grabbed)
 	
 	
 	def on_btAdd_clicked(self, *a):
@@ -135,7 +145,9 @@ class GestureComponent(AEComponent):
 		tvGestures = self.builder.get_object("tvGestures")
 		model, iter = tvGestures.get_selection().get_selected()
 		item = model.get_value(iter, 2)
+		item.gstr = self._edited_gesture
 		item.action = action
+		model.set_value(iter, 0, GestureComponent.nice_gstr(item.gstr))
 		model.set_value(iter, 1, action.describe(Action.AC_MENU))
 		self.update()
 	
