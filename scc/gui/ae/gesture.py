@@ -79,6 +79,13 @@ class GestureComponent(AEComponent):
 		← → ↑ ↓
 		# ▲ ▼ ◀ ▶
 		"""
+		if "i" in gstr:
+			last, uniq = None, []
+			for x in gstr:
+				if x != last:
+					uniq.append(x)
+				last = x
+			gstr = "".join(uniq)
 		l = lambda x : GestureComponent.ARROWS[x] if x in GestureComponent.ARROWS else ""
 		return "".join(map(l, gstr))
 	
@@ -112,11 +119,13 @@ class GestureComponent(AEComponent):
 		""" Handler for "Edit Action" button """
 		tvGestures = self.builder.get_object("tvGestures")
 		txGesture = self.builder.get_object("txGesture")
+		cbIgnoreStroke = self.builder.get_object("cbIgnoreStroke")
 		gesture_editor = self.builder.get_object("gesture_editor")
 		
 		model, iter = tvGestures.get_selection().get_selected()
 		item = model.get_value(iter, 2)
 		self._edited_gesture = item.gstr
+		cbIgnoreStroke.set_active("i" in self._edited_gesture)
 		txGesture.set_text(GestureComponent.nice_gstr(self._edited_gesture))
 		# Setup editor
 		e = ActionEditor(self.app, self.on_action_chosen)
@@ -133,6 +142,16 @@ class GestureComponent(AEComponent):
 			self._edited_gesture = gesture
 			txGesture.set_text(GestureComponent.nice_gstr(self._edited_gesture))
 		self._grabber.grab(grabbed)
+	
+	
+	def on_cbIgnoreStroke_toggled(self, cb):
+		txGesture = self.builder.get_object("txGesture")
+		if cb.get_active() and "i" not in self._edited_gesture:
+			self._edited_gesture = "i" + self._edited_gesture
+			txGesture.set_text(GestureComponent.nice_gstr(self._edited_gesture))
+		elif not cb.get_active() and "i" in self._edited_gesture:
+			self._edited_gesture = self._edited_gesture.strip("i")
+			txGesture.set_text(GestureComponent.nice_gstr(self._edited_gesture))
 	
 	
 	def on_btAdd_clicked(self, *a):
