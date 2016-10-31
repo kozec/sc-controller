@@ -47,14 +47,24 @@ class GestureComponent(AEComponent):
 		lstGestures.clear()
 		if isinstance(action, GesturesAction):
 			for gstr in action.gestures:
-				o = GObject.GObject()
-				o.action = action.gestures[gstr]
-				o.gstr = gstr
-				lstGestures.append( (
-					GestureComponent.nice_gstr(gstr),
-					o.action.describe(Action.AC_MENU),
-					o
-				) )
+				self._add_gesture(gstr, action.gestures[gstr])
+	
+	
+	def _add_gesture(self, gstr, action, select=False):
+		lstGestures = self.builder.get_object("lstGestures")
+		o = GObject.GObject()
+		o.gstr = gstr
+		o.action = action
+		iter = lstGestures.append( (
+			GestureComponent.nice_gstr(gstr),
+			action.describe(Action.AC_MENU),
+			o
+		) )
+		if select:
+			tvGestures = self.builder.get_object("tvGestures")
+			tvGestures.get_selection().select_iter(iter)
+			self.on_tvGestures_cursor_changed()
+			self.on_btEditAction_clicked()
 	
 	
 	ARROWS = {
@@ -84,18 +94,15 @@ class GestureComponent(AEComponent):
 		self.editor.set_action(XYAction(self.x, self.y))
 	
 	
-	def on_tvGestures_cursor_changed(self, tv, *a):
+	def on_tvGestures_cursor_changed(self, *a):
 		tvGestures = self.builder.get_object("tvGestures")
-		btEditGesture = self.builder.get_object("btEditGesture")
 		btEditAction = self.builder.get_object("btEditAction")
 		btRemove = self.builder.get_object("btRemove")
 		model, iter = tvGestures.get_selection().get_selected()
 		if iter is None:
-			btEditGesture.set_sensitive(False)
 			btEditAction.set_sensitive(False)
 			btRemove.set_sensitive(False)
 		else:
-			btEditGesture.set_sensitive(True)
 			btEditAction.set_sensitive(True)
 			btRemove.set_sensitive(True)
 	
@@ -120,7 +127,7 @@ class GestureComponent(AEComponent):
 	
 	def on_btAdd_clicked(self, *a):
 		def grabbed(gesture):
-			print "GRABBED", gesture
+			self._add_gesture(gesture, NoAction(), True)
 		self._grabber.grab(grabbed)
 	
 	
