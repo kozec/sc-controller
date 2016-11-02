@@ -26,6 +26,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="model">lstGestures</property>
+            <signal name="cursor-changed" handler="on_tvGestures_cursor_changed" swapped="no"/>
+            <signal name="row-activated" handler="on_btEditAction_clicked" swapped="no"/>
             <child internal-child="selection">
               <object class="GtkTreeSelection"/>
             </child>
@@ -65,14 +67,30 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <child>
-          <object class="GtkToolButton" id="btEdit">
+          <object class="GtkToolButton" id="btEditGesture">
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">False</property>
             <property name="is_important">True</property>
-            <property name="label" translatable="yes">(...)</property>
+            <property name="label" translatable="yes">Edit Gesture</property>
             <property name="use_underline">True</property>
             <property name="stock_id">gtk-edit</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="homogeneous">True</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkToolButton" id="btEditAction">
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can_focus">False</property>
+            <property name="is_important">True</property>
+            <property name="label" translatable="yes">Edit Action</property>
+            <property name="use_underline">True</property>
+            <property name="stock_id">gtk-edit</property>
+            <signal name="clicked" handler="on_btEditAction_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -91,7 +109,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkToolButton" id="btRemoveItem">
+          <object class="GtkToolButton" id="btRemove">
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">False</property>
