@@ -8,7 +8,7 @@ that's usually not very much) grid.
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk
+from gi.repository import Gtk, GObject
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.gestures import GestureDraw
 from scc.constants import LEFT, RIGHT
@@ -22,6 +22,14 @@ log = logging.getLogger("osd.gesture")
 
 
 class GestureDisplay(OSDWindow):
+	"""
+	OSD Window that displays gesture as it is being generated.
+	
+	Signals:
+	  gesture-updated(gesture)		Emited repeadedly while gesture is being drawn.
+	  								May be emited multiple times with same gesture.
+	"""
+	
 	EPILOG="""Exit codes:
    0  - clean exit, user created gesture
   -1  - clean exit, user canceled gesture
@@ -29,7 +37,10 @@ class GestureDisplay(OSDWindow):
    2  - error, failed to access sc-daemon, sc-daemon reported error or died while menu is displayed.
    3  - erorr, failed to lock input
 	"""
-	
+	__gsignals__ = {
+		b"gesture-updated"                    : (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+	}
+
 	SIZE = 128	# times two horizontaly + borders
 	
 	def __init__(self, config=None):
@@ -155,13 +166,15 @@ class GestureDisplay(OSDWindow):
 	
 	
 	def on_event(self, daemon, what, data):
-		if what == LEFT:
-			x, y = data
-			self._left_draw.add(x, y)
-			self._left_detector.whole(None, x, y, LEFT)
-		elif what == RIGHT:
-			x, y = data
-			self._right_detector.whole(None, x, y, RIGHT)
+		if what in (LEFT, RIGHT):
+			if what == LEFT:
+				x, y = data
+				self._left_draw.add(x, y)
+				self._left_detector.whole(None, x, y, LEFT)
+			else:	#  what == RIGHT:
+				x, y = data
+				self._right_detector.whole(None, x, y, RIGHT)
+			self.emit('gesture-updated', self._left_detector.get_string())
 	
 	
 	def get_gesture(self):
