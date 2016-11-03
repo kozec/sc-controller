@@ -14,9 +14,9 @@ from scc.gui.area_to_action import action_to_area
 from scc.gui.simple_chooser import SimpleChooser
 from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
+from scc.special_actions import GesturesAction, OSDAction
 from scc.osd.gesture_display import GestureDisplay
 from scc.actions import Action, NoAction, XYAction
-from scc.special_actions import GesturesAction
 from scc.modifiers import NameModifier
 
 import os, logging
@@ -98,10 +98,6 @@ class GestureComponent(AEComponent):
 		return isinstance(action, GesturesAction)
 	
 	
-	def send(self):
-		self.editor.set_action(XYAction(self.x, self.y))
-	
-	
 	def on_tvGestures_cursor_changed(self, *a):
 		tvGestures = self.builder.get_object("tvGestures")
 		btEditAction = self.builder.get_object("btEditAction")
@@ -180,6 +176,7 @@ class GestureComponent(AEComponent):
 			a.gestures[item.gstr] = item.action
 			if item.action.name:
 				a.gestures[item.gstr] = NameModifier(item.action.name, item.action)
+		a = OSDAction(a)
 		self.editor.set_action(a)
 
 
