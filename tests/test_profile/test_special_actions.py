@@ -119,3 +119,29 @@ class TestSpecialActions(object):
 		# With text
 		a = parser.from_json_data({ 'action' : "keyboard" })
 		assert isinstance(a, KeyboardAction)
+	
+	
+	def test_gestures(self):
+		"""
+		Tests if GesturesAction is parsed correctly from json.
+		"""
+		# Simple
+		a = parser.from_json_data({
+			'gestures' : {
+				'UD' : { 'action' : 'turnoff' },
+				'LR' : { 'action' : 'keyboard' }
+			}
+		})
+		assert isinstance(a, GesturesAction)
+		assert isinstance(a.gestures['UD'], TurnOffAction)
+		assert isinstance(a.gestures['LR'], KeyboardAction)
+		# With OSD
+		a = parser.from_json_data({
+			'gestures' : {
+				'UD' : { 'action' : 'turnoff' },
+			},
+			'osd' : True
+		})
+		assert isinstance(a, OSDAction)
+		assert isinstance(a.action, GesturesAction)
+		assert isinstance(a.action.gestures['UD'], TurnOffAction)
