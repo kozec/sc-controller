@@ -41,7 +41,7 @@ class Config(object):
 			'vendor'	: '0x045e',
 			'product'	: '0x028e',
 			'name'		: "Microsoft X-Box 360 pad",
-			'buttons'	: 20,
+			'buttons'	: 11,
 			'axes'	: [
 				(-32768, 32767),	# Axes.ABS_X
 				(-32768, 32767),	# Axes.ABS_Y
