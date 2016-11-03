@@ -202,6 +202,20 @@ defines pad or stick that controls mouse while button A is pressed
 and left virtual stick while button B is pressed.
 
 
+#### `gestures`
+Enables gesture cognition on pad (see [gestures modifier](actions.md#gestures)).
+
+Value is dict with encoded gestures (see [description in actions.md](actions.md#gesture_format)) and actions
+for each gesture as values.
+
+Example:
+
+	"gestures": {
+	  "UD": { "action": "button(Key.R)" }
+	},
+
+enables gesture recognition with single gesture activated when user does short stroke up followed by short stroke down.
+
 #### `doubleclick`
 Defines action that is executed when user double-clicks with button.
 Optional `time` key can be used on same level as `doubleclick` to modify
