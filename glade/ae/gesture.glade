@@ -214,7 +214,7 @@
             <signal name="cursor-changed" handler="on_tvGestures_cursor_changed" swapped="no"/>
             <signal name="row-activated" handler="on_btEditAction_clicked" swapped="no"/>
             <child internal-child="selection">
-              <object class="GtkTreeSelection"/>
+              <object class="GtkTreeSelection" id="tvGesturesSelection"/>
             </child>
             <child>
               <object class="GtkTreeViewColumn" id="tvcGesture">
@@ -268,7 +268,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkSeparatorToolItem">
+          <object class="GtkSeparatorToolItem" id="separator45">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="draw">False</property>
