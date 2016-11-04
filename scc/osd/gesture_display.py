@@ -47,7 +47,7 @@ class GestureDisplay(OSDWindow):
 		OSDWindow.__init__(self, "osd-gesture")
 		self.daemon = None
 		self._left_detector  = GestureDetector(0, self._on_gesture_finished)
-		self._right_detector = GestureDetector(0, self._on_gesture_finished)
+		# self._right_detector = GestureDetector(0, self._on_gesture_finished)
 		self._control_with = LEFT
 		self._eh_ids = []
 		self._gesture = None
@@ -141,9 +141,9 @@ class GestureDisplay(OSDWindow):
 	
 	def on_daemon_connected(self, *a):
 		def success(*a):
-			log.error("Sucessfully locked input")
+			log.error("Sucessfully locked %s pad", self._control_with)
 			self._left_detector.enable()
-			self._right_detector.enable()
+			# self._right_detector.enable()
 		
 		if not self.config:
 			self.config = Config()
@@ -167,14 +167,11 @@ class GestureDisplay(OSDWindow):
 	
 	
 	def on_event(self, daemon, what, data):
-		if what in (LEFT, RIGHT):
-			if what == LEFT:
-				x, y = data
-				self._left_draw.add(x, y)
-				self._left_detector.whole(None, x, y, LEFT)
-			else:	#  what == RIGHT:
-				x, y = data
-				self._right_detector.whole(None, x, y, RIGHT)
+		if what == self._control_with:
+			x, y = data
+			self._left_draw.add(x, y)
+			self._left_detector.whole(None, x, y, LEFT)
+			# TODO: self._right_detector, if there is any use for it later
 			self.emit('gesture-updated', self._left_detector.get_string())
 	
 	

@@ -1,9 +1,9 @@
 #!/usr/bin/env python2
 # coding=utf-8
 """
-SC-Controller - Action Editor - Per-Axis Component
+SC-Controller - Action Editor - Gesture Component
 
-Handles all XYActions
+Handles gesture recognition settings.
 """
 from __future__ import unicode_literals
 from scc.tools import _
@@ -257,7 +257,10 @@ class GestureGrabber(object):
 	
 	
 	def start_over(self, *a):
-		self.lblGestureGrabberTitle.set_text(_("Draw gesture on LEFT pad..."))
+		if self.editor.get_id() == "RPAD":
+			self.lblGestureGrabberTitle.set_text(_("Draw gesture on RIGHT pad..."))
+		else:
+			self.lblGestureGrabberTitle.set_text(_("Draw gesture on LEFT pad..."))
 		self.lblGestureStatus.set_label("")
 		self.txGestureGrab.set_text("")
 		self.rvGestureGrab.set_reveal_child(False)
@@ -270,7 +273,10 @@ class GestureGrabber(object):
 		if self._gd:
 			self._gd.quit()
 		self._gd = GestureDisplay(self.editor.app.config)
-		self._gd.parse_argumets([ "LEFT" ])
+		if self.editor.get_id() == "RPAD":
+			self._gd.parse_argumets([ "GestureDisplay", "--control-with", "RIGHT" ])
+		else:
+			self._gd.parse_argumets([ "GestureDisplay", "--control-with", "LEFT" ])
 		self._gd.use_daemon(self.editor.app.dm)
 		self._gd.show()
 		self._gd.connect('gesture-updated', self.on_gesture_updated)
