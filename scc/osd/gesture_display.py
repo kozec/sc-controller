@@ -61,13 +61,13 @@ class GestureDisplay(OSDWindow):
 		self.parent.set_name("osd-gesture")
 		
 		self._left_draw  = GestureDraw(self.SIZE, self._left_detector)
-		self._right_draw = GestureDraw(self.SIZE, self._right_detector)
+		# self._right_draw = GestureDraw(self.SIZE, self._right_detector)
 		sep = Gtk.VSeparator()
 		sep.set_name("osd-gesture-separator")
 		
 		self.parent.attach(self._left_draw,  0, 0, 1, 1)
-		self.parent.attach(sep,              1, 0, 1, 1)
-		self.parent.attach(self._right_draw, 2, 0, 1, 1)
+		# self.parent.attach(sep,              1, 0, 1, 1)
+		# self.parent.attach(self._right_draw, 2, 0, 1, 1)
 		
 		self.add(self.parent)
 	
@@ -87,7 +87,8 @@ class GestureDisplay(OSDWindow):
 		Has to be called before parse_argumets()
 		"""
 		self.config = c
-		for x in (self._left_draw, self._right_draw):
+		# for x in (self._left_draw, self._right_draw):
+		for x in (self._left_draw, ):
 			x.set_colors(**self.config["gesture_colors"])
 	
 	

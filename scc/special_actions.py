@@ -503,14 +503,10 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	
 	def gesture(self, mapper, gesture_string):
 		action = None
-		print gesture_string, self.gestures
-		print "T1", gesture_string in self.gestures
 		if gesture_string in self.gestures:
 			action = self.gestures[gesture_string]
 		else:
 			sgstr = strip_gesture(gesture_string)
-			print "sgstr", sgstr
-			print "T2", sgstr in self.gestures
 			if sgstr in self.gestures:
 				action = self.gestures[sgstr]
 		if action:
