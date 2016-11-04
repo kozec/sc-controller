@@ -60,6 +60,7 @@ class ActionEditor(Editor):
 	AEC_MENUITEM = -1
 
 	def __init__(self, app, callback):
+		Editor.__init__(self)
 		self.app = app
 		self.id = None
 		self.components = []			# List of available components
@@ -77,7 +78,6 @@ class ActionEditor(Editor):
 		self.click = False				# Click modifier value. None for disabled
 		self.rotation_angle = 0			# RotateInputModifier angle
 		self.osd = False				# 'OSD enabled' value.
-		self.added_widget = None		# See add_widget method
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback	# This is different callback than ButtonChooser uses
@@ -144,31 +144,8 @@ class ActionEditor(Editor):
 					return instance
 	
 	
-	def add_widget(self, label, widget):
-		"""
-		Adds new widget into row before Action Name.
-		
-		Widget is automatically passed to Macro Editor or Modeshift Editor
-		if either one is opened from editor window.
-		
-		When editor window is closed or destroyed, widget is automatically
-		deattached to keep it from destroying.
-		"""
-		lblAddedWidget = self.builder.get_object("lblAddedWidget")
-		vbAddedWidget = self.builder.get_object("vbAddedWidget")
-		lblAddedWidget.set_label(label)
-		lblAddedWidget.set_visible(True)
-		for ch in vbAddedWidget.get_children():
-			vbAddedWidget.remove(ch)
-		self.added_widget = widget
-		vbAddedWidget.pack_start(widget, True, False, 0)
-		vbAddedWidget.set_visible(True)
-	
-	
 	def on_Dialog_destroy(self, *a):
-		vbAddedWidget = self.builder.get_object("vbAddedWidget")
-		for ch in vbAddedWidget.get_children():
-			vbAddedWidget.remove(ch)
+		self.remove_added_widget()
 		if self._selected_component is not None:
 			self._selected_component.hidden()
 	
@@ -442,13 +419,8 @@ class ActionEditor(Editor):
 		e = ModeshiftEditor(self.app, self.ac_callback)
 		action = ModeModifier(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
 		e.set_input(self.id, action, mode=self._mode)
-		if self.added_widget:
-			w = self.added_widget
-			label = self.builder.get_object("lblAddedWidget").get_label()
-			self.close()
-			e.add_widget(label, w)
-		else:
-			self.close()
+		self.send_added_widget(e)
+		self.close()
 		e.show(self.get_transient_for())
 	
 	

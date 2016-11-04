@@ -47,12 +47,12 @@ class ModeshiftEditor(Editor):
 	)
 	
 	def __init__(self, app, callback):
+		Editor.__init__(self)
 		self.app = app
 		self.id = None
 		self.mode = Action.AC_BUTTON
 		self.ac_callback = callback
 		self.current_page = 0
-		self.added_widget = None
 		self.actions = ( [], [], [] )
 		self.nomods = [ NoAction(), NoAction(), NoAction() ]
 		self.setup_widgets()
@@ -79,25 +79,8 @@ class ModeshiftEditor(Editor):
 		headerbar(self.builder.get_object("header"))
 	
 	
-	def add_widget(self, label, widget):
-		"""
-		See ActionEditor.add_widget
-		"""
-		lblAddedWidget = self.builder.get_object("lblAddedWidget")
-		vbAddedWidget = self.builder.get_object("vbAddedWidget")
-		lblAddedWidget.set_label(label)
-		lblAddedWidget.set_visible(True)
-		for ch in vbAddedWidget.get_children():
-			vbAddedWidget.remove(ch)
-		self.added_widget = widget
-		vbAddedWidget.pack_start(widget, True, False, 0)
-		vbAddedWidget.set_visible(True)
-	
-	
 	def on_Dialog_destroy(self, *a):
-		vbAddedWidget = self.builder.get_object("vbAddedWidget")
-		for ch in vbAddedWidget.get_children():
-			vbAddedWidget.remove(ch)
+		self.remove_added_widget()
 	
 	
 	def _fill_button_chooser(self, *a):
@@ -263,13 +246,8 @@ class ModeshiftEditor(Editor):
 		e.hide_advanced_settings()
 		e.set_title(self.window.get_title())
 		e.force_page(e.load_component("custom"), True)
-		if self.added_widget:
-			w = self.added_widget
-			label = self.builder.get_object("lblAddedWidget").get_label()
-			self.close()
-			e.add_widget(label, w)
-		else:
-			self.close()
+		self.send_added_widget(e)
+		self.close()
 		e.show(self.get_transient_for())
 	
 	
