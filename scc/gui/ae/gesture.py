@@ -142,6 +142,13 @@ class GestureComponent(AEComponent):
 			txGesture.set_text(GestureComponent.nice_gstr(self._edited_gesture))
 	
 	
+	def on_btRemove_clicked(self, *a):
+		tvGestures = self.builder.get_object("tvGestures")
+		model, iter = tvGestures.get_selection().get_selected()
+		model.remove(iter)
+		self.on_tvGestures_cursor_changed()
+	
+	
 	def on_btAdd_clicked(self, *a):
 		def grabbed(gesture):
 			self._add_gesture(gesture, NoAction(), True)
