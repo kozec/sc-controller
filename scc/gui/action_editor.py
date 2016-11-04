@@ -183,7 +183,7 @@ class ActionEditor(Editor):
 		return self.id
 	
 	
-	def on_action_type_changed(self, obj):
+	def on_action_type_changed(self, clicked_button):
 		"""
 		Called when user clicks on one of Action Type buttons.
 		"""
@@ -192,15 +192,15 @@ class ActionEditor(Editor):
 		self._recursing = True
 		# Don't allow user to deactivate buttons - I'm using them as
 		# radio button and you can't 'uncheck' radiobutton by clicking on it
-		if not obj.get_active():
-			obj.set_active(True)
+		if not clicked_button.get_active():
+			clicked_button.set_active(True)
 			self._recursing = False
 			return
 		
 		component = None
 		for c in self.c_buttons:
 			b = self.c_buttons[c]
-			if obj == b:
+			if clicked_button == b:
 				component = c
 			else:
 				b.set_active(False)
