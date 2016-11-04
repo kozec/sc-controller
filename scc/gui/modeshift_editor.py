@@ -47,6 +47,7 @@ class ModeshiftEditor(Editor):
 	)
 	
 	def __init__(self, app, callback):
+		Editor.__init__(self)
 		self.app = app
 		self.id = None
 		self.mode = Action.AC_BUTTON
@@ -76,6 +77,10 @@ class ModeshiftEditor(Editor):
 		
 		self._fill_button_chooser()
 		headerbar(self.builder.get_object("header"))
+	
+	
+	def on_Dialog_destroy(self, *a):
+		self.remove_added_widget()
 	
 	
 	def _fill_button_chooser(self, *a):
@@ -241,6 +246,7 @@ class ModeshiftEditor(Editor):
 		e.hide_advanced_settings()
 		e.set_title(self.window.get_title())
 		e.force_page(e.load_component("custom"), True)
+		self.send_added_widget(e)
 		self.close()
 		e.show(self.get_transient_for())
 	

@@ -32,6 +32,7 @@
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <signal name="destroy" handler="on_Dialog_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
       <object class="GtkGrid" id="grid1">
@@ -41,7 +42,6 @@
         <property name="margin_right">10</property>
         <property name="margin_top">10</property>
         <property name="margin_bottom">10</property>
-        <property name="column_homogeneous">True</property>
         <child>
           <object class="GtkLabel" id="lblName">
             <property name="visible">True</property>
@@ -58,7 +58,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
+            <property name="top_attach">1</property>
           </packing>
         </child>
         <child>
@@ -71,7 +71,7 @@
           </object>
           <packing>
             <property name="left_attach">1</property>
-            <property name="top_attach">0</property>
+            <property name="top_attach">1</property>
           </packing>
         </child>
         <child>
@@ -79,6 +79,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="no_show_all">True</property>
+            <property name="margin_right">20</property>
             <property name="margin_bottom">4</property>
             <property name="label" translatable="yes">Macro Type</property>
             <property name="ellipsize">end</property>
@@ -89,7 +90,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
+            <property name="top_attach">2</property>
           </packing>
         </child>
         <child>
@@ -108,7 +109,7 @@
           </object>
           <packing>
             <property name="left_attach">1</property>
-            <property name="top_attach">1</property>
+            <property name="top_attach">2</property>
           </packing>
         </child>
         <child>
@@ -147,7 +148,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">3</property>
+            <property name="top_attach">4</property>
             <property name="width">2</property>
           </packing>
         </child>
@@ -204,7 +205,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">5</property>
+            <property name="top_attach">6</property>
             <property name="width">2</property>
           </packing>
         </child>
@@ -216,7 +217,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">4</property>
+            <property name="top_attach">5</property>
             <property name="width">2</property>
           </packing>
         </child>
@@ -229,8 +230,42 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">2</property>
+            <property name="top_attach">3</property>
             <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblAddedWidget">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_right">20</property>
+            <property name="margin_bottom">5</property>
+            <property name="label" translatable="yes">(Widget)</property>
+            <property name="xalign">0</property>
+            <property name="yalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vbAddedWidget">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_bottom">5</property>
+            <property name="hexpand">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">0</property>
           </packing>
         </child>
       </object>
@@ -250,6 +285,20 @@
           </object>
         </child>
         <child>
+          <object class="GtkButton" id="btClear">
+            <property name="label">gtk-clear</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkButton" id="btOK">
             <property name="label">gtk-ok</property>
             <property name="visible">True</property>
@@ -259,20 +308,6 @@
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
             <signal name="clicked" handler="on_btOK_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="btClear">
-            <property name="label">gtk-clear</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="pack_type">end</property>
