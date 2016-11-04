@@ -263,6 +263,22 @@ def check_access(filename, write_required=True):
 	return os.access(filename, os.R_OK)
 
 
+def strip_gesture(gstr):
+	"""
+	Converts gesture string to version where stroke lenght is ignored.
+	
+	That means removing repeating characters and adding 'i' to front.
+	"""
+	last, uniq = None, []
+	for x in gstr:
+		if x != last:
+			uniq.append(x)
+		last = x
+	if uniq[0] != 'i':
+		uniq = [ 'i' ] + uniq
+	return "".join(uniq)
+
+
 clamp = lambda low, value, high : min(high, max(low, value))
 
 

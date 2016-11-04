@@ -14,7 +14,7 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
-from scc.tools import strip_none, nameof, clamp
+from scc.tools import strip_none, strip_gesture, nameof, clamp
 from scc.modifiers import Modifier, NameModifier
 from scc.constants import STICK_PAD_MAX
 from math import sqrt
@@ -476,6 +476,16 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 		return rv	
 	
 	
+	def compress(self):
+		for gstr in self.gestures:
+			a = self.gestures[gstr].compress()
+			if "i" in gstr:
+				del self.gestures[gstr]
+				gstr = strip_gesture(gstr)
+			self.gestures[gstr] = a
+		return self
+	
+	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		args = []
@@ -492,9 +502,20 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	
 	
 	def gesture(self, mapper, gesture_string):
+		action = None
+		print gesture_string, self.gestures
+		print "T1", gesture_string in self.gestures
 		if gesture_string in self.gestures:
-			self.gestures[gesture_string].button_press(mapper)
-			mapper.schedule(0.2, self.gestures[gesture_string].button_release)
+			action = self.gestures[gesture_string]
+		else:
+			sgstr = strip_gesture(gesture_string)
+			print "sgstr", sgstr
+			print "T2", sgstr in self.gestures
+			if sgstr in self.gestures:
+				action = self.gestures[sgstr]
+		if action:
+			action.button_press(mapper)
+			mapper.schedule(0, action.button_release)
 	
 	
 	def whole(self, mapper, x, y, what):

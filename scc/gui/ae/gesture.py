@@ -18,6 +18,7 @@ from scc.special_actions import GesturesAction, OSDAction
 from scc.osd.gesture_display import GestureDisplay
 from scc.actions import Action, NoAction, XYAction
 from scc.modifiers import NameModifier
+from scc.tools import strip_gesture
 
 import os, logging
 log = logging.getLogger("AE.PerAxis")
@@ -68,24 +69,15 @@ class GestureComponent(AEComponent):
 			self.on_btEditAction_clicked()
 	
 	
-	ARROWS = {
-		'U' : '↑', 'D' : '↓', 'L' : '←', 'R' : '→',
-		# 'U' : '▲', 'D' : '▼', 'L' : '◀', 'R' : '▶',
-	}
+	ARROWS = { 'U' : '↑', 'D' : '↓', 'L' : '←', 'R' : '→', }
 	@staticmethod
 	def nice_gstr(gstr):
 		"""
 		Replaces characters UDLR in gesture string with unicode arrows.
 		← → ↑ ↓
-		# ▲ ▼ ◀ ▶
 		"""
 		if "i" in gstr:
-			last, uniq = None, []
-			for x in gstr:
-				if x != last:
-					uniq.append(x)
-				last = x
-			gstr = "".join(uniq)
+			gstr = strip_gesture(gstr)
 		l = lambda x : GestureComponent.ARROWS[x] if x in GestureComponent.ARROWS else ""
 		return "".join(map(l, gstr))
 	
