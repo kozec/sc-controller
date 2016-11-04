@@ -442,7 +442,13 @@ class ActionEditor(Editor):
 		e = ModeshiftEditor(self.app, self.ac_callback)
 		action = ModeModifier(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
 		e.set_input(self.id, action, mode=self._mode)
-		self.close()
+		if self.added_widget:
+			w = self.added_widget
+			label = self.builder.get_object("lblAddedWidget").get_label()
+			self.close()
+			e.add_widget(label, w)
+		else:
+			self.close()
 		e.show(self.get_transient_for())
 	
 	
