@@ -429,6 +429,7 @@ class ActionEditor(Editor):
 		e = MacroEditor(self.app, self.ac_callback)
 		action = Macro(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
 		e.set_input(self.id, action, mode=self._mode)
+		self.send_added_widget(e)
 		self.close()
 		e.show(self.get_transient_for())
 	

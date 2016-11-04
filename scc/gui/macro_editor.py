@@ -25,10 +25,12 @@ class MacroEditor(Editor):
 	GLADE = "macro_editor.glade"
 	
 	def __init__(self, app, callback):
+		Editor.__init__(self)
 		self.app = app
 		self.id = None
 		self.mode = Action.AC_BUTTON
 		self.ac_callback = callback
+		self.added_widget = None
 		self.setup_widgets()
 		self.actions = []
 	
@@ -303,6 +305,7 @@ class MacroEditor(Editor):
 		e.hide_advanced_settings()
 		e.set_title(self.window.get_title())
 		e.force_page(e.load_component("custom"), True)
+		self.send_added_widget(e)
 		self.close()
 		e.show(self.get_transient_for())
 	
@@ -313,6 +316,27 @@ class MacroEditor(Editor):
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, a)
 		self.close()
+	
+	
+	def add_widget(self, label, widget):
+		"""
+		See ActionEditor.add_widget
+		"""
+		lblAddedWidget = self.builder.get_object("lblAddedWidget")
+		vbAddedWidget = self.builder.get_object("vbAddedWidget")
+		lblAddedWidget.set_label(label)
+		lblAddedWidget.set_visible(True)
+		for ch in vbAddedWidget.get_children():
+			vbAddedWidget.remove(ch)
+		self.added_widget = widget
+		vbAddedWidget.pack_start(widget, True, False, 0)
+		vbAddedWidget.set_visible(True)
+	
+	
+	def on_Dialog_destroy(self, *a):
+		vbAddedWidget = self.builder.get_object("vbAddedWidget")
+		for ch in vbAddedWidget.get_children():
+			vbAddedWidget.remove(ch)	
 	
 	
 	def set_input(self, id, action, mode=Action.AC_BUTTON):
