@@ -8,12 +8,12 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
+from scc.special_actions import OSDAction, GesturesAction, MenuAction
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.modifiers import DeadzoneModifier, RotateInputModifier
 from scc.actions import Action, XYAction, NoAction
 from scc.constants import HapticPos, SCButtons
-from scc.special_actions import OSDAction
 from scc.controller import HapticData
 from scc.profile import Profile
 from scc.macros import Macro
@@ -171,6 +171,16 @@ class ActionEditor(Editor):
 			vbAddedWidget.remove(ch)
 		if self._selected_component is not None:
 			self._selected_component.hidden()
+	
+	
+	def set_osd_enabled(self, value):
+		"""
+		Sets value if OSD modifier checkbox, without firing any more events.
+		"""
+		self._recursing = True
+		self.osd = value
+		self.builder.get_object("cbOSD").set_active(value)
+		self._recursing = False
 	
 	
 	def close(self):
@@ -701,6 +711,12 @@ class ActionEditor(Editor):
 				self.set_feedback_settings_enabled(True)
 			else:
 				self.set_feedback_settings_enabled(False)
+			# Check if action supports deadzone
+			# (currently hardcoded)
+			if isinstance(action.strip(), (GesturesAction, MenuAction)):
+				self.set_deadzone_settings_enabled(False)
+			else:
+				self.set_deadzone_settings_enabled(True)
 		
 		# Send changed action into selected component
 		if self._selected_component is None:
@@ -886,6 +902,16 @@ class ActionEditor(Editor):
 			rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
 		else:
 			rvFeedback.set_reveal_child(False)
+	
+	
+	def set_deadzone_settings_enabled(self, enabled):
+		cbDeadzone = self.builder.get_object("cbDeadzone")
+		rvDeadzone = self.builder.get_object("rvDeadzone")
+		cbDeadzone.set_sensitive(enabled)
+		if enabled:
+			rvDeadzone.set_reveal_child(cbDeadzone.get_active() and cbDeadzone.get_sensitive())
+		else:
+			rvDeadzone.set_reveal_child(False)
 	
 	
 	def set_modifiers_enabled(self, enabled):

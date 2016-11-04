@@ -44,6 +44,10 @@ class GestureComponent(AEComponent):
 			return True
 	
 	
+	def hidden(self):
+		self.editor.set_osd_enabled(False)
+	
+	
 	def set_action(self, mode, action):
 		lstGestures = self.builder.get_object("lstGestures")
 		lstGestures.clear()
