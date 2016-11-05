@@ -29,7 +29,7 @@ from scc.uinput import Axes, Keys
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
 daemon will differ one one expected by UI and daemon will be forcefully restarted.
 """
-DAEMON_VERSION = "0.3.1"
+DAEMON_VERSION = "0.3.2"
 
 HPERIOD  = 0.02
 LPERIOD  = 0.5
