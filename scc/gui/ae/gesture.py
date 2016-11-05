@@ -56,6 +56,14 @@ class GestureComponent(AEComponent):
 				self._add_gesture(gstr, action.gestures[gstr])
 	
 	
+	def shown(self):
+		self.editor.display_osd()
+	
+	
+	def hidden(self):
+		self.editor.hide_osd()
+	
+	
 	def _add_gesture(self, gstr, action, select=False):
 		lstGestures = self.builder.get_object("lstGestures")
 		o = GObject.GObject()
@@ -158,6 +166,11 @@ class GestureComponent(AEComponent):
 	def on_btAdd_clicked(self, *a):
 		def grabbed(gesture):
 			self._add_gesture(gesture, NoAction(), True)
+		tvGestures = self.builder.get_object("tvGestures")
+		if len(tvGestures.get_model()) == 0:
+			# I believe user will not actually find this option, so OSD checkbox
+			# is automatically enabled when first item is added
+			self.editor.set_osd_enabled(True)
 		self._grabber.grab(grabbed)
 	
 	

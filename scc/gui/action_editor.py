@@ -301,7 +301,15 @@ class ActionEditor(Editor):
 		Hides 'Display OSD' checkbox.
 		Used randomly.
 		"""
-		self.builder.get_object("cbOSD").set_visible(False)
+		self.builder.get_object("rvOSD").set_reveal_child(False)
+	
+	
+	def display_osd(self):
+		"""
+		Displays 'Display OSD' checkbox.
+		Used from gesture editor.
+		"""
+		self.builder.get_object("rvOSD").set_reveal_child(True)
 	
 	
 	def hide_hide_enable_deadzones(self):
@@ -833,8 +841,8 @@ class ActionEditor(Editor):
 		elif id in PADS:
 			self._set_mode(action, mode or Action.AC_PAD)
 			self.hide_sensitivity(2) # Z only
-			self.set_action(action)
 			self.hide_osd()
+			self.set_action(action)
 			self.hide_macro()
 			if id == "LPAD":
 				self.set_title(_("Left Pad"))
@@ -871,6 +879,11 @@ class ActionEditor(Editor):
 		self.id = item.id
 		if title_for_name_label:
 			self.builder.get_object("lblName").set_label(title_for_name_label)
+	
+	
+	def set_osd_enabled(self, enabled):
+		self.osd = enabled
+		self.builder.get_object("cbOSD").set_active(enabled)
 	
 	
 	def set_feedback_settings_enabled(self, enabled):
