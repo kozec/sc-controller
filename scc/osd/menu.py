@@ -300,6 +300,7 @@ class Menu(OSDWindow):
 		if c is None or not c.is_connected():
 			# There is no controller connected to daemon
 			self.on_failed_to_lock("Controller not connected")
+			return
 		
 		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
 		c.lock(success, self.on_failed_to_lock, *locks)

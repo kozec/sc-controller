@@ -58,6 +58,7 @@ class Config(object):
 		# (or only some) inputs.
 		# This enables GUI to display which physical button was pressed to user.
 		"enable_sniffing" : False,
+		# Colors used by OSD
 		"osd_colors": {
 			"background": "160c00",
 			"border": "00FF00",
@@ -68,6 +69,7 @@ class Config(object):
 			"menuitem_hilight_border": "00FF00",
 			"menuseparator": "109010",
 		},
+		# Colors used by on-screen keyboard
 		"osk_colors": {
 			'hilight' : '00688D',
 			'pressed' : '1A9485',
@@ -76,7 +78,13 @@ class Config(object):
 			"button2" : "162d44",
 			"button2_border" : "27323e",
 			"text" : "ffffff"
-		}
+		},
+		# Colors used by gesture display. Unlike OSD and OSK, these are RGBA
+		"gesture_colors" : {
+			"background": "160c00ff",
+			"grid": "004000ff",
+			"line": "ffffff1a",
+		},
 	}
 	
 	def __init__(self):

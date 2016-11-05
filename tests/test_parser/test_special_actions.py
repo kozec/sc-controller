@@ -105,3 +105,16 @@ class TestSpecialActions(object):
 		same action.
 		"""
 		assert _parses_as_itself(KeyboardAction())
+	
+	
+	def test_gestures(self):
+		"""
+		Tests if GesturesAction can be converted to string and parsed back to
+		same action.
+		"""
+		assert _parses_as_itself(
+			GesturesAction(
+				'UUDD', KeyboardAction(),
+				'LRLR', TurnOffAction()
+			)
+		)

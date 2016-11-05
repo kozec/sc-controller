@@ -134,7 +134,7 @@
           </object>
           <packing>
             <property name="left_attach">1</property>
-            <property name="top_attach">0</property>
+            <property name="top_attach">1</property>
           </packing>
         </child>
         <child>
@@ -149,7 +149,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">2</property>
+            <property name="top_attach">3</property>
             <property name="width">2</property>
           </packing>
         </child>
@@ -199,7 +199,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">5</property>
+            <property name="top_attach">6</property>
             <property name="width">2</property>
           </packing>
         </child>
@@ -248,7 +248,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">6</property>
+            <property name="top_attach">7</property>
             <property name="width">2</property>
           </packing>
         </child>
@@ -266,7 +266,7 @@
           </object>
           <packing>
             <property name="left_attach">1</property>
-            <property name="top_attach">1</property>
+            <property name="top_attach">2</property>
           </packing>
         </child>
         <child>
@@ -283,7 +283,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
+            <property name="top_attach">2</property>
           </packing>
         </child>
         <child>
@@ -293,7 +293,7 @@
             <property name="no_show_all">True</property>
             <property name="margin_left">20</property>
             <property name="margin_right">50</property>
-            <property name="margin_bottom">4</property>
+            <property name="margin_bottom">2</property>
             <property name="label" translatable="yes">Action Name</property>
             <property name="xalign">0</property>
             <attributes>
@@ -302,7 +302,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
+            <property name="top_attach">1</property>
           </packing>
         </child>
         <child>
@@ -328,7 +328,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">3</property>
+            <property name="top_attach">4</property>
             <property name="width">2</property>
           </packing>
         </child>
@@ -1075,8 +1075,44 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">4</property>
+            <property name="top_attach">5</property>
             <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblAddedWidget">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_left">20</property>
+            <property name="margin_right">50</property>
+            <property name="margin_top">10</property>
+            <property name="margin_bottom">7</property>
+            <property name="label">(Widget)</property>
+            <property name="xalign">0</property>
+            <property name="yalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vbAddedWidget">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="margin_right">20</property>
+            <property name="margin_bottom">7</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">0</property>
           </packing>
         </child>
       </object>
