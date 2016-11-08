@@ -11,7 +11,7 @@ Callback has to return created USBDevice instance or None.
 """
 from scc.lib import usb1
 
-import struct, time, select, traceback, atexit, logging
+import struct, os, time, select, traceback, atexit, logging
 log = logging.getLogger("USB")
 
 class SelectPoller(object):
@@ -139,6 +139,10 @@ class USBDevice(object):
 		
 		while len(self._rmsg):
 			msg, index, size, callback = self._rmsg.pop()
+			if "SCC_DEBUG_USB_REQUESTS" in os.environ:
+				# There are actually only very few messages wrote with controlWrite,
+				# so this shouldn't have any performace penalty
+				log.debug("controlWrite %s", msg)
 			self.handle.controlWrite(*msg)
 			data = self.handle.controlRead(
 				0xA1,	# request_type
