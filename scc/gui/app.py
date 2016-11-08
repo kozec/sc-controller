@@ -855,8 +855,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def load_profile_selection(self):
 		""" Returns name profile from config file or None if there is none saved """
 		try:
-			data = json.loads(open(os.path.join(get_config_path(), self.CONFIG), "r").read())
-			return data['current_profile']
+			return self.config['recent_profiles'][0]
 		except:
 			return None
 	
