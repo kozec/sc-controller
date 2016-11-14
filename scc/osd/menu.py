@@ -190,9 +190,12 @@ class Menu(OSDWindow):
 			self.enable_cursor()
 		
 		# Create buttons that are displayed on screen
-		self.items = self.items.generate(self)
-		for item in self.items:
+		items = self.items.generate(self)
+		self.items = []
+		for item in items:
 			item.widget = self.generate_widget(item)
+			if item.widget:
+				self.items.append(item)
 		self.pack_items(self.parent, self.items)
 		if len(self.items) == 0:
 			print >>sys.stderr, '%s: error: no items in menu' % (sys.argv[0])

@@ -46,6 +46,9 @@ class RadialMenu(Menu):
 	
 	
 	def generate_widget(self, item):
+		if item.id is None:
+			# Labels and separators, radial menu can't show these
+			return None
 		e = self.editor.clone_element("menuitem_template")
 		SVGEditor.set_text(e, item.label)
 		e.attrib['id'] = "menuitem_" + item.id
