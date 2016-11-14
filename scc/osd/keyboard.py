@@ -155,7 +155,9 @@ class Keyboard(OSDWindow, TimerManager):
 				
 				if gdkkey == Gdk.KEY_equal:
 					# Special case, GDK reports nonsense here
-					entries = [ [ e for e in entries if e.level == 0 ][-1] ]
+					tmp = [ e for e in entries if e.level == 0 ]
+					if len(tmp) > 0:
+						entries = [ tmp[-1] ]
 				
 				if not found: continue
 				for k in sorted(entries, key=lambda a : a.level):
