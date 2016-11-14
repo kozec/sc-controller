@@ -184,8 +184,6 @@ class Menu(OSDWindow):
 		self._confirm_with = self.args.confirm_with
 		self._cancel_with = self.args.cancel_with
 		
-		print "_control_with", self._control_with
-		
 		if self.args.use_cursor:
 			self.enable_cursor()
 		

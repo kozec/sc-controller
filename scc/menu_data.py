@@ -30,6 +30,13 @@ class MenuData(object):
 				items.append(i)
 		return MenuData(*items)
 	
+	
+	def compress(self):
+		for i in self.__items:
+			if i.action:
+				i.action = i.action.compress()
+	
+	
 	def __len__(self):
 		return len(self.__items)
 	

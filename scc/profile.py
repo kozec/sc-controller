@@ -145,6 +145,8 @@ class Profile(object):
 				dct[x] = dct[x].compress()
 		self.stick = self.stick.compress()
 		self.gyro = self.gyro.compress()
+		for menu in self.menus.values():
+			menu.compress()
 	
 	
 	def _convert(self, from_version):
