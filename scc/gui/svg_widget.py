@@ -10,6 +10,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GObject, Rsvg
 from xml.etree import ElementTree as ET
+from xml.sax import saxutils
 import os, sys, logging
 
 log = logging.getLogger("Background")
@@ -37,7 +38,7 @@ class SVGWidget(Gtk.EventBox):
 		self.connect("button-press-event", self.on_mouse_click)
 		self.set_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
 		
-		self.current_svg = open(filename, "r").read()
+		self.current_svg = open(filename, "r").read().decode("utf-8")
 		self.image_width = 1
 		self.image = Gtk.Image()
 		self.parse_image()
@@ -54,7 +55,7 @@ class SVGWidget(Gtk.EventBox):
 		This area list is later used to determine over which button is mouse
 		hovering.
 		"""
-		tree = ET.fromstring(self.current_svg)
+		tree = ET.fromstring(self.current_svg.encode("utf-8"))
 		SVGWidget.find_areas(tree, (0, 0), self.areas)
 		self.image_width = float(tree.attrib["width"])
 	
@@ -166,7 +167,7 @@ class SVGWidget(Gtk.EventBox):
 		element can be specified by it's id.
 		"""
 		if type(element) in (str, unicode):
-			tree = ET.fromstring(self.current_svg)
+			tree = ET.fromstring(self.current_svg.encode("utf-8"))
 			element = SVGWidget.get_element(tree, element)
 		width, height = 0, 0
 		if 'x' in element.attrib: x += float(element.attrib['x'])
@@ -189,7 +190,8 @@ class SVGWidget(Gtk.EventBox):
 			# Ok, this is close to madness, but probably better than drawing
 			# 200 images by hand;
 			# 1st, parse source as XML
-			tree = ET.fromstring(self.current_svg)
+			open("/tmp/output.xml", "w").write(self.current_svg.encode("utf-8"))
+			tree = ET.fromstring(self.current_svg.encode("utf-8"))
 			# 2nd, change colors of some elements
 			for button in buttons:
 				el = SVGWidget.find_by_id(tree, button)
@@ -276,7 +278,7 @@ class SVGEditor(object):
 	
 	def __init__(self, svgw):
 		self._svgw = svgw
-		self._tree = ET.fromstring(svgw.current_svg)
+		self._tree = ET.fromstring(svgw.current_svg.encode("utf-8"))
 	
 	
 	def commit(self):
@@ -402,7 +404,7 @@ class SVGEditor(object):
 					if child.attrib['id'].startswith("LABEL_"):
 						id = child.attrib['id'][6:]
 						if id in labels:
-							SVGEditor.set_text(child, labels[id])
+							SVGEditor.set_text(child, saxutils.escape(labels[id]))
 				walk(child)
 		
 		walk(self._tree)
