@@ -167,7 +167,8 @@ class Keyboard(OSDWindow, TimerManager):
 						code = Gdk.keyval_to_unicode(translation.keyval)
 					else:
 						code = Gdk.keyval_to_unicode(translation[1])
-					if code != 0:
+					if code >= 32: # Printable chars
+						print a.name, (unichr(code),), code
 						labels[a.name] = unichr(code)
 						break
 		
