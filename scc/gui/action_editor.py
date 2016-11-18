@@ -501,43 +501,51 @@ class ActionEditor(Editor):
 			# Editing in custom aciton dialog, don't meddle with that
 			return action
 		
-		# Strip 1.0's from sensitivity values
-		sens = [] + self.sens
-		while len(sens) > 0 and sens[-1] == 1.0:
-			sens = sens[0:-1]
+		cm = action.get_compatible_modifiers()
 		
-		# Strip defaults from feedback values
-		feedback = [] + self.feedback
-		while len(feedback) > 0 and feedback[-1] == self.feedback_widgets[len(feedback)-1][-1]:
-			feedback = feedback[0:-1]
-		
-		if len(sens) > 0:
-			# Build arguments
-			sens.append(action)
-			# Create modifier
-			action = SensitivityModifier(*sens)
-		
-		if self.feedback_position != None:
-			cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
-			cbFeedback = self.builder.get_object("cbFeedback")
-			if from_custom or (cbFeedback.get_active() and cbFeedback.get_sensitive()):
-				# Build FeedbackModifier arguments
-				feedback = [ FEEDBACK_SIDES[cbFeedbackSide.get_active()] ] + feedback
-				feedback += [ action ]
+		if (cm & Action.MOD_SENSITIVITY) != 0:
+			# Strip 1.0's from sensitivity values
+			sens = [] + self.sens
+			while len(sens) > 0 and sens[-1] == 1.0:
+				sens = sens[0:-1]
+			
+			if len(sens) > 0:
+				# Build arguments
+				sens.append(action)
 				# Create modifier
-				action = FeedbackModifier(*feedback)
+				action = SensitivityModifier(*sens)
 		
-		if self.deadzone_enabled:
-			action = DeadzoneModifier(self.deadzone[0], self.deadzone[1], action)
+		if (cm & Action.MOD_FEEDBACK) != 0:
+			if self.feedback_position != None:
+				# Strip defaults from feedback values
+				feedback = [] + self.feedback
+				while len(feedback) > 0 and feedback[-1] == self.feedback_widgets[len(feedback)-1][-1]:
+					feedback = feedback[0:-1]
+				
+				cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+				cbFeedback = self.builder.get_object("cbFeedback")
+				if from_custom or (cbFeedback.get_active() and cbFeedback.get_sensitive()):
+					# Build FeedbackModifier arguments
+					feedback = [ FEEDBACK_SIDES[cbFeedbackSide.get_active()] ] + feedback
+					feedback += [ action ]
+					# Create modifier
+					action = FeedbackModifier(*feedback)
 		
-		if self.rotation_angle != 0.0:
-			action = RotateInputModifier(self.rotation_angle, action)
+		if (cm & Action.MOD_DEADZONE) != 0:
+			if self.deadzone_enabled:
+				action = DeadzoneModifier(self.deadzone[0], self.deadzone[1], action)
 		
-		if self.osd:
-			action = OSDAction(action)
+		if (cm & Action.MOD_ROTATE) != 0:
+			if self.rotation_angle != 0.0:
+				action = RotateInputModifier(self.rotation_angle, action)
 		
-		if self.click:
-			action = ClickModifier(action)
+		if (cm & Action.MOD_OSD) != 0:
+			if self.osd:
+				action = OSDAction(action)
+		
+		if (cm & Action.MOD_CLICK) != 0:
+			if self.click:
+				action = ClickModifier(action)
 		
 		return action
 	
