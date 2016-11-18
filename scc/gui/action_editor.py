@@ -152,7 +152,7 @@ class ActionEditor(Editor):
 	
 	def set_osd_enabled(self, value):
 		"""
-		Sets value if OSD modifier checkbox, without firing any more events.
+		Sets value of OSD modifier checkbox, without firing any more events.
 		"""
 		self._recursing = True
 		self.osd = value
@@ -252,28 +252,6 @@ class ActionEditor(Editor):
 			self._action.name = None
 	
 	
-	def hide_sensitivity(self, *indexes):
-		"""
-		Hides sensitivity settings for one or more axes.
-		Used when editing whatever is not a gyro.
-		"""
-		for i in (0, 1, 2):
-			for widget in self.sens_widgets[i]:
-				widget.set_sensitive(i not in indexes)
-				widget.set_visible(i not in indexes)
-		self.sens = self.sens[0:len(indexes)+1]
-		self.builder.get_object("lblSensitivityHeader").set_visible(len(indexes) < 3)
-	
-	
-	def hide_rotation(self):
-		"""
-		Hides input rotation settings.
-		"""
-		for i in ("lblRotationHeader", "lblRotation", "sclRotation", "btClearRotation"):
-			self.builder.get_object(i).set_visible(False)
-		
-	
-	
 	def hide_modifiers(self):
 		""" Hides (and disables) all modifiers """
 		self.set_modifiers_enabled(False)
@@ -296,22 +274,6 @@ class ActionEditor(Editor):
 		self.builder.get_object("cbFeedback").set_visible(False)
 	
 	
-	def hide_osd(self):
-		"""
-		Hides 'Display OSD' checkbox.
-		Used randomly.
-		"""
-		self.builder.get_object("rvOSD").set_reveal_child(False)
-	
-	
-	def display_osd(self):
-		"""
-		Displays 'Display OSD' checkbox.
-		Used from gesture editor.
-		"""
-		self.builder.get_object("rvOSD").set_reveal_child(True)
-	
-	
 	def hide_hide_enable_deadzones(self):
 		"""
 		Hides 'Enable Deadzone' checkbox.
@@ -324,8 +286,8 @@ class ActionEditor(Editor):
 		"""
 		Hides entire 'Advanced Settings' expander.
 		"""
-		self.hide_sensitivity()
-		self.hide_rotation()
+		# self.hide_sensitivity()
+		# self.hide_rotation()
 		self.hide_require_click()
 		self.builder.get_object("exMore").set_visible(False)
 		self.builder.get_object("rvMore").set_visible(False)
@@ -469,7 +431,7 @@ class ActionEditor(Editor):
 	
 	def update_modifiers(self, *a):
 		"""
-		Called when sensitivity, feedback or 'require click' setting changes.
+		Called when sensitivity, feedback or other modifier setting changes.
 		"""
 		if self._recursing : return
 		cbRequireClick = self.builder.get_object("cbRequireClick")
@@ -532,6 +494,9 @@ class ActionEditor(Editor):
 	
 	
 	def generate_modifiers(self, action, from_custom=False):
+		"""
+		Returns Action with all modifiers from UI applied.
+		"""
 		if not self._modifiers_enabled and not from_custom:
 			# Editing in custom aciton dialog, don't meddle with that
 			return action
@@ -577,12 +542,18 @@ class ActionEditor(Editor):
 		return action
 	
 	@staticmethod
-	def is_modifier(a):
-		if isinstance(a, (ClickModifier, SensitivityModifier, DeadzoneModifier,
-				FeedbackModifier, RotateInputModifier)):
+	def is_editable_modifier(action):
+		"""
+		Returns True if provided action is instance of modifier that
+		ActionEditor can display and edit.
+		Returns False for everything else, even if it is instalce of Modifier
+		subclass.
+		"""
+		if isinstance(action, (ClickModifier, SensitivityModifier,
+				DeadzoneModifier, FeedbackModifier, RotateInputModifier)):
 			return True
-		if isinstance(a, OSDAction):
-			if a.action is not None:
+		if isinstance(action, OSDAction):
+			if action.action is not None:
 				return True
 		return False
 	
@@ -601,7 +572,7 @@ class ActionEditor(Editor):
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
 		
-		while ActionEditor.is_modifier(action):
+		while ActionEditor.is_editable_modifier(action):
 			if isinstance(action, RotateInputModifier):
 				self.rotation_angle = action.angle
 				action = action.action
@@ -693,17 +664,7 @@ class ActionEditor(Editor):
 					# Actions generated elsewhere
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
-			# Check if action supports feedback
-			if hasattr(action.strip(), "set_haptic"):
-				self.set_feedback_settings_enabled(True)
-			else:
-				self.set_feedback_settings_enabled(False)
-			# Check if action supports deadzone
-			# (currently hardcoded)
-			if isinstance(action.strip(), (GesturesAction, MenuAction)):
-				self.set_deadzone_settings_enabled(False)
-			else:
-				self.set_deadzone_settings_enabled(True)
+			self.enable_modifiers(action)
 		
 		# Send changed action into selected component
 		if self._selected_component is None:
@@ -725,6 +686,67 @@ class ActionEditor(Editor):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
 			log.warning(action.to_string())
+	
+	
+	def enable_modifiers(self, action):
+		"""
+		Enables or disables and hides modifier settings according to what
+		is applicable for specified action AND what's allowed for current
+		editor mode.
+		
+		Uses value returned by action.get_compatible_modifiers.
+		"""
+		cm = action.get_compatible_modifiers() # TODO: Limit by mode
+		
+		# Feedback
+		cbFeedback		= self.builder.get_object("cbFeedback")
+		rvFeedback		= self.builder.get_object("rvFeedback")
+		rvFeedbackCb	= self.builder.get_object("rvFeedbackCb")
+		if (cm & Action.MOD_FEEDBACK) == 0:
+			# Not allowed
+			cbFeedback.set_sensitive(False)
+			rvFeedback.set_reveal_child(False)
+			rvFeedbackCb.set_reveal_child(False)
+		else:
+			cbFeedback.set_sensitive(True)
+			rvFeedbackCb.set_reveal_child(True)
+			rvFeedback.set_reveal_child(cbFeedback.get_active())
+		
+		# Deadzone
+		cbDeadzone		= self.builder.get_object("cbDeadzone")
+		rvDeadzone		= self.builder.get_object("rvDeadzone")
+		rvDeadzoneCb	= self.builder.get_object("rvDeadzoneCb")
+		if (cm & Action.MOD_DEADZONE) == 0:
+			# Not allowed
+			cbDeadzone.set_sensitive(False)
+			rvDeadzone.set_reveal_child(False)
+			rvDeadzoneCb.set_reveal_child(False)
+		else:
+			cbDeadzone.set_sensitive(True)
+			rvDeadzoneCb.set_reveal_child(True)
+			rvDeadzone.set_reveal_child(cbDeadzone.get_active())
+		
+		# Sensitivity
+		rvSensitivity = self.builder.get_object("rvSensitivity")
+		rvSensitivity.set_reveal_child((cm & Action.MOD_SENSITIVITY) != 0)
+		for w in self.sens_widgets[2]:
+			w.set_visible((cm & Action.MOD_SENS_Z) != 0)
+		
+		# Rotation
+		rvRotation = self.builder.get_object("rvRotation")
+		rvRotation.set_reveal_child((cm & Action.MOD_ROTATE) != 0)
+		
+		# Click
+		cbRequireClick = self.builder.get_object("cbRequireClick")
+		rvRequireClickCb = self.builder.get_object("rvRequireClickCb")
+		cbRequireClick.set_sensitive(cm & Action.MOD_CLICK != 0)
+		rvRequireClickCb.set_reveal_child(cbRequireClick.get_sensitive())
+		
+		# OSD
+		cbOSD = self.builder.get_object("cbOSD")
+		rvOSDcb = self.builder.get_object("rvOSDcb")
+		cbOSD.set_sensitive(cm & Action.MOD_OSD != 0)
+		rvOSDcb.set_reveal_child(cbOSD.get_sensitive())
 	
 	
 	def set_sensitivity(self, x, y=1.0, z=1.0):
@@ -807,8 +829,8 @@ class ActionEditor(Editor):
 			elif id in SCButtons:
 				self.set_title(nameof(id),)
 			self._set_mode(action, mode or Action.AC_BUTTON)
-			self.hide_sensitivity(0, 1, 2)
-			self.hide_rotation()
+			# self.hide_sensitivity(0, 1, 2)
+			# self.hide_rotation()
 			self.hide_hide_enable_deadzones()
 			self.hide_require_click()
 			self.set_action(action)
@@ -821,9 +843,9 @@ class ActionEditor(Editor):
 		elif id in STICKS:
 			self.set_title(_("Stick"))
 			self._set_mode(action, mode or Action.AC_STICK)
-			self.hide_sensitivity(2) # Z only
+			# self.hide_sensitivity(2) # Z only
 			self.hide_require_click()
-			self.hide_osd()
+			# self.hide_osd()
 			self.set_action(action)
 			self.hide_macro()
 			self.id = Profile.STICK
@@ -831,17 +853,17 @@ class ActionEditor(Editor):
 			self.set_title(_("Gyro"))
 			self._set_mode(action, mode or Action.AC_GYRO)
 			self.set_action(action)
-			self.hide_rotation()
+			# self.hide_rotation()
 			self.hide_require_click()
 			self.hide_hide_enable_deadzones()
-			self.hide_osd()
+			# self.hide_osd()
 			self.hide_macro()
 			self.hide_modeshift()
 			self.id = Profile.GYRO
 		elif id in PADS:
 			self._set_mode(action, mode or Action.AC_PAD)
-			self.hide_sensitivity(2) # Z only
-			self.hide_osd()
+			# self.hide_sensitivity(2) # Z only
+			# self.hide_osd()
 			self.set_action(action)
 			self.hide_macro()
 			if id == "LPAD":
@@ -849,11 +871,11 @@ class ActionEditor(Editor):
 			else:
 				self.set_title(_("Right Pad"))
 		if mode == Action.AC_OSK:
-			self.hide_osd()
+			# self.hide_osd()
 			self.hide_name()
 			self.hide_macro()
 			self.hide_modeshift()
-			self.hide_rotation()
+			# self.hide_rotation()
 		elif mode == Action.AC_MENU:
 			self.hide_modeshift()
 			self.hide_macro()
@@ -872,38 +894,13 @@ class ActionEditor(Editor):
 			entName.set_text(item.label)
 		else:
 			entName.set_text("")
-		self.hide_osd()
+		# self.hide_osd()
 		self.hide_action_buttons()
 		self.hide_modifiers()
 		self.set_action(NoAction())
 		self.id = item.id
 		if title_for_name_label:
 			self.builder.get_object("lblName").set_label(title_for_name_label)
-	
-	
-	def set_osd_enabled(self, enabled):
-		self.osd = enabled
-		self.builder.get_object("cbOSD").set_active(enabled)
-	
-	
-	def set_feedback_settings_enabled(self, enabled):
-		cbFeedback = self.builder.get_object("cbFeedback")
-		rvFeedback = self.builder.get_object("rvFeedback")
-		cbFeedback.set_sensitive(enabled)
-		if enabled:
-			rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
-		else:
-			rvFeedback.set_reveal_child(False)
-	
-	
-	def set_deadzone_settings_enabled(self, enabled):
-		cbDeadzone = self.builder.get_object("cbDeadzone")
-		rvDeadzone = self.builder.get_object("rvDeadzone")
-		cbDeadzone.set_sensitive(enabled)
-		if enabled:
-			rvDeadzone.set_reveal_child(cbDeadzone.get_active() and cbDeadzone.get_sensitive())
-		else:
-			rvDeadzone.set_reveal_child(False)
 	
 	
 	def set_modifiers_enabled(self, enabled):
