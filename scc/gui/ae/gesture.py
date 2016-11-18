@@ -121,7 +121,6 @@ class GestureComponent(AEComponent):
 		e.set_input("ID", item.action, mode = Action.AC_BUTTON)
 		e.add_widget(_("Gesture"), gesture_editor)
 		e.hide_modeshift()
-		e.hide_enable_feedback()
 		# Display editor
 		e.show(self.editor.window)
 	

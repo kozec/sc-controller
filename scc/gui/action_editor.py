@@ -58,7 +58,21 @@ class ActionEditor(Editor):
 	ERROR_CSS = " #error {background-color:green; color:red;} "
 	
 	AEC_MENUITEM = -1
-
+	
+	MODE_TO_MODS = {
+		# Specified which modifiers are compatibile with which editor mode.
+		# That way, stuff like Rotation settings is not shown when editor
+		# is used to edit menu actions.
+		Action.AC_BUTTON	: Action.MOD_OSD | Action.MOD_FEEDBACK,
+		Action.AC_TRIGGER	: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
+		Action.AC_STICK		: Action.MOD_OSD | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
+		Action.AC_PAD		: Action.MOD_OSD | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
+		Action.AC_GYRO		: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_FEEDBACK,
+		Action.AC_OSK		: 0,
+		Action.AC_MENU		: Action.MOD_OSD,
+	}
+	
+	
 	def __init__(self, app, callback):
 		Editor.__init__(self)
 		self.app = app
@@ -258,37 +272,10 @@ class ActionEditor(Editor):
 		self.builder.get_object("exMore").set_visible(False)
 	
 	
-	def hide_require_click(self):
-		"""
-		Hides 'Require Click' checkbox.
-		Used when editing everything but pad.
-		"""
-		self.builder.get_object("cbRequireClick").set_visible(False)
-	
-	
-	def hide_enable_feedback(self):
-		"""
-		Hides 'Enable Feedback' checkbox.
-		Used when editing buttons.
-		"""
-		self.builder.get_object("cbFeedback").set_visible(False)
-	
-	
-	def hide_hide_enable_deadzones(self):
-		"""
-		Hides 'Enable Deadzone' checkbox.
-		Used when editing buttons.
-		"""
-		self.builder.get_object("cbDeadzone").set_visible(False)
-	
-	
 	def hide_advanced_settings(self):
 		"""
 		Hides entire 'Advanced Settings' expander.
 		"""
-		# self.hide_sensitivity()
-		# self.hide_rotation()
-		self.hide_require_click()
 		self.builder.get_object("exMore").set_visible(False)
 		self.builder.get_object("rvMore").set_visible(False)
 	
@@ -704,7 +691,16 @@ class ActionEditor(Editor):
 		
 		Uses value returned by action.get_compatible_modifiers.
 		"""
-		cm = action.get_compatible_modifiers() # TODO: Limit by mode
+		cm = action.get_compatible_modifiers() & ActionEditor.MODE_TO_MODS[self._mode]
+		
+		exMore = self.builder.get_object("exMore")
+		exMore.set_sensitive(cm != 0)
+		if cm == 0:
+			# Special case, no modifier setting is visible
+			rvMore = self.builder.get_object("rvMore")
+			exMore.set_expanded(False)
+			rvMore.set_reveal_child(False)
+			
 		
 		# Feedback
 		cbFeedback		= self.builder.get_object("cbFeedback")
@@ -837,10 +833,6 @@ class ActionEditor(Editor):
 			elif id in SCButtons:
 				self.set_title(nameof(id),)
 			self._set_mode(action, mode or Action.AC_BUTTON)
-			# self.hide_sensitivity(0, 1, 2)
-			# self.hide_rotation()
-			self.hide_hide_enable_deadzones()
-			self.hide_require_click()
 			self.set_action(action)
 		elif id in TRIGGERS:
 			self.set_title(_("%s Trigger") % (id,))
@@ -851,9 +843,6 @@ class ActionEditor(Editor):
 		elif id in STICKS:
 			self.set_title(_("Stick"))
 			self._set_mode(action, mode or Action.AC_STICK)
-			# self.hide_sensitivity(2) # Z only
-			self.hide_require_click()
-			# self.hide_osd()
 			self.set_action(action)
 			self.hide_macro()
 			self.id = Profile.STICK
@@ -861,17 +850,11 @@ class ActionEditor(Editor):
 			self.set_title(_("Gyro"))
 			self._set_mode(action, mode or Action.AC_GYRO)
 			self.set_action(action)
-			# self.hide_rotation()
-			self.hide_require_click()
-			self.hide_hide_enable_deadzones()
-			# self.hide_osd()
 			self.hide_macro()
 			self.hide_modeshift()
 			self.id = Profile.GYRO
 		elif id in PADS:
 			self._set_mode(action, mode or Action.AC_PAD)
-			# self.hide_sensitivity(2) # Z only
-			# self.hide_osd()
 			self.set_action(action)
 			self.hide_macro()
 			if id == "LPAD":
@@ -879,7 +862,6 @@ class ActionEditor(Editor):
 			else:
 				self.set_title(_("Right Pad"))
 		if mode == Action.AC_OSK:
-			# self.hide_osd()
 			self.hide_name()
 			self.hide_macro()
 			self.hide_modeshift()
