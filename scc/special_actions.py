@@ -31,6 +31,7 @@ class ChangeProfileAction(Action, SpecialAction):
 		Action.__init__(self, profile)
 		self.profile = profile
 	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		if context == Action.AC_OSD:
@@ -38,6 +39,10 @@ class ChangeProfileAction(Action, SpecialAction):
 		if context == Action.AC_SWITCHER:
 			return _("Switch to %s") % (self.profile,)
 		return _("Profile Change")
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_OSD
 	
 	
 	def to_string(self, multiline=False, pad=0):
@@ -58,9 +63,14 @@ class ShellCommandAction(Action, SpecialAction):
 		Action.__init__(self, command)
 		self.command = command
 	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return _("Execute Command")
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_OSD
 	
 	
 	def to_string(self, multiline=False, pad=0):
@@ -87,6 +97,10 @@ class TurnOffAction(Action, SpecialAction):
 	
 	def to_string(self, multiline=False, pad=0):
 		return (" " * pad) + "%s()" % (self.COMMAND,)
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_OSD
 	
 	
 	def button_release(self, mapper):
@@ -130,6 +144,10 @@ class LedAction(Action, SpecialAction):
 		return _("Set LED brightness")
 	
 	
+	def get_compatible_modifiers(self):
+		return Action.MOD_OSD
+	
+	
 	def button_press(self, mapper):
 		# Execute only when button is pressed
 		self.execute(mapper)
@@ -158,6 +176,12 @@ class OSDAction(Action, SpecialAction):
 			self.text = unicode(parameters[-1])
 		if self.action and isinstance(self.action, OSDEnabledAction):
 			self.action.enable_osd(self.timeout)
+	
+	
+	def get_compatible_modifiers(self):
+		if self.action:
+			return self.action.get_compatible_modifiers()
+		return 0
 	
 	
 	def encode(self):
@@ -367,6 +391,10 @@ class KeyboardAction(Action, SpecialAction):
 		Action.__init__(self)
 	
 	
+	def get_compatible_modifiers(self):
+		return Action.MOD_POSITION
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		if context == Action.AC_OSD:
@@ -438,6 +466,10 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 			else:
 				raise ValueError("Invalid parameter for '%s': unexpected %s" % (
 						self.COMMAND, i))
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_OSD
 	
 	
 	def describe(self, context):

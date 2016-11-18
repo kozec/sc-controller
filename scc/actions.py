@@ -78,6 +78,17 @@ class Action(object):
 	#		bit 	09876543210
 	AC_ALL		= 0b10111111111	# ALL means everything but OSK
 	
+	
+	# See get_compatible_modifiers
+	MOD_CLICK		= 1 << 0
+	MOD_OSD			= 1 << 1
+	MOD_FEEDBACK	= 1 << 2
+	MOD_DEADZONE	= 1 << 3
+	MOD_SENSITIVITY	= 1 << 4
+	MOD_SENS_Z		= 1 << 5	# Sensitivity of 3rd axis
+	MOD_ROTATE		= 1 << 6
+	MOD_POSITION	= 1 << 7
+	
 	def __init__(self, *parameters):
 		self.parameters = parameters
 		self.name = None
@@ -141,6 +152,15 @@ class Action(object):
 		rv = { 'action' : self.to_string() }
 		if self.name: rv['name'] = self.name
 		return rv
+	
+	
+	def get_compatible_modifiers(self):
+		"""
+		Returns bit combination of MOD_* constants to indicate which modifier
+		can be used with this action.
+		Used by GUI.
+		"""
+		return 0
 	
 	
 	def __str__(self):
@@ -316,6 +336,10 @@ class HapticEnabledAction(object):
 		self.haptic = None
 	
 	
+	def get_compatible_modifiers(self):
+		return Action.MOD_FEEDBACK
+	
+	
 	def set_haptic(self, hd):
 		self.haptic = hd
 	
@@ -328,6 +352,10 @@ class OSDEnabledAction(object):
 	""" Action that displays some sort of OSD when executed """
 	def __init__(self):
 		self.osd_enabled = False
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_OSD
 	
 	
 	def enable_osd(self, timeout):
@@ -360,6 +388,10 @@ class SpecialAction(object):
 
 
 class AxisAction(Action):
+	"""
+	Action used to controll one output axis, such as one trigger
+	or one axis of stick.
+	"""
 	COMMAND = "axis"
 	
 	AXIS_NAMES = {
@@ -465,6 +497,7 @@ class AxisAction(Action):
 
 
 class RAxisAction(AxisAction):
+	""" Reversed AxisAction (outputs reversed values) """
 	COMMAND = "raxis"
 	
 	def __init__(self, id, min = None, max = None):
@@ -482,6 +515,10 @@ class RAxisAction(AxisAction):
 
 
 class HatAction(AxisAction):
+	"""
+	Works as AxisAction, but has values preset to emulate emulate movement in
+	either only positive or only negative half of range.
+	"""
 	COMMAND = None
 	def describe(self, context):
 		if self.name: return self.name
@@ -513,6 +550,10 @@ class HatRightAction(HatAction):
 
 
 class MouseAction(HapticEnabledAction, Action):
+	"""
+	Controlls mouse movement in either vertical or horizontal direction
+	or scroll wheel.
+	"""
 	COMMAND = "mouse"
 	ALIASES = ("trackpad", )
 	HAPTIC_FACTOR = 75.0	# Just magic number
@@ -529,8 +570,13 @@ class MouseAction(HapticEnabledAction, Action):
 			self.speed = (1.0, 1.0)
 	
 	
+	def get_compatible_modifiers(self):
+		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_ROTATE
+	
+	
 	def get_axis(self):
 		return self._mouse_axis
+	
 	
 	def set_speed(self, x, y, z):
 		self.speed = (x, y)
@@ -626,6 +672,9 @@ class MouseAction(HapticEnabledAction, Action):
 
 
 class CircularAction(HapticEnabledAction, Action):
+	"""
+	Designed to translate rotating finger over pad to mouse wheel movement.
+	"""
 	COMMAND = "circular"
 	
 	def __init__(self, axis):
@@ -699,6 +748,9 @@ class CircularAction(HapticEnabledAction, Action):
 
 
 class AreaAction(Action, SpecialAction, OSDEnabledAction):
+	"""
+	Translates pad position to position in specified area of screen.
+	"""
 	SA = COMMAND = "area"
 	
 	def __init__(self, x1, y1, x2, y2):
@@ -861,12 +913,17 @@ class RelWinAreaAction(WinAreaAction):
 
 
 class GyroAction(Action):
+	""" Uses *relative* gyroscope position as input for another action(s) """
 	COMMAND = "gyro"
 	
 	def __init__(self, axis1, axis2=None, axis3=None):
 		Action.__init__(self, axis1, *strip_none(axis2, axis3))
 		self.axes = [ axis1, axis2, axis3 ]
 		self.speed = (1.0, 1.0, 1.0)
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z
 	
 	
 	def set_speed(self, x, y, z):
@@ -909,12 +966,18 @@ class GyroAction(Action):
 
 
 class GyroAbsAction(HapticEnabledAction, GyroAction):
+	""" Uses *absolute* gyroscope position as input for another action(s) """
 	COMMAND = "gyroabs"
 	def __init__(self, *blah):
 		GyroAction.__init__(self, *blah)
 		HapticEnabledAction.__init__(self)
 		self.ir = None
 		self._was_oor = False
+	
+	
+	def get_compatible_modifiers(self):
+		return ( HapticEnabledAction.get_compatible_modifiers(self)
+			| GyroAction.get_compatible_modifiers(self) )
 	
 	
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
@@ -958,8 +1021,7 @@ class MultichildAction(Action):
 	""" Mixin with nice looking to_string() method """
 	
 	def compress(self):
-		nw = [ x.compress() for x in self.actions ]
-		self.actions = nw
+		self.actions = [ x.compress() for x in self.actions ]
 		return self
 	
 	
@@ -981,6 +1043,10 @@ class MultichildAction(Action):
 
 
 class TiltAction(MultichildAction):
+	"""
+	Activates one of 6 defined actions based on direction in
+	which controller is tilted or rotated.
+	"""
 	COMMAND = "tilt"
 	MIN = 0.75
 	
@@ -1067,6 +1133,10 @@ class TrackballAction(Action):
 
 
 class ButtonAction(HapticEnabledAction, Action):
+	"""
+	Action that outputs as button press and release.
+	Button can be gamepad button, mouse button or keyboard key.
+	"""
 	COMMAND = "button"
 	SPECIAL_NAMES = {
 		Keys.BTN_LEFT	: "Mouse Left",
@@ -1145,6 +1215,11 @@ class ButtonAction(HapticEnabledAction, Action):
 			# Modifiers are special case here
 			return self.MODIFIERS_NAMES[self.button]
 		return self.describe(Action.AC_BUTTON)
+	
+	
+	def get_compatible_modifiers(self):
+		# Allows feedback and OSD
+		return Action.MOD_OSD | HapticEnabledAction.get_compatible_modifiers(self)
 	
 	
 	@staticmethod
@@ -1262,7 +1337,7 @@ class ButtonAction(HapticEnabledAction, Action):
 			self._released = True
 
 
-class MultiAction(Action):
+class MultiAction(MultichildAction):
 	"""
 	Two or more actions executed at once.
 	Generated when parsing 'and'
@@ -1546,6 +1621,14 @@ class XYAction(HapticEnabledAction, Action):
 			self.change = self._change
 	
 	
+	def get_compatible_modifiers(self):
+		return ( Action.MOD_FEEDBACK | Action.MOD_SENSITIVITY
+			| Action.MOD_ROTATE
+			| self.x.get_compatible_modifiers()
+			| self.y.get_compatible_modifiers()
+		)
+	
+	
 	@staticmethod
 	def decode(data, action, parser, *a):
 		""" Called when decoding profile from json """
@@ -1718,6 +1801,10 @@ class TriggerAction(Action):
 		""" Called when decoding profile from json """
 		press_level, release_level = data[TriggerAction.PROFILE_KEYS[0]]
 		return TriggerAction(press_level, release_level, a)
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_FEEDBACK
 	
 	
 	def set_haptic(self, hapticdata):

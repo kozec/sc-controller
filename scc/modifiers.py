@@ -36,6 +36,10 @@ class Modifier(Action):
 		self._mod_init(*params)
 	
 	
+	def get_compatible_modifiers(self):
+		return self.action.get_compatible_modifiers()
+	
+	
 	def _mod_init(self):
 		"""
 		Initializes modifier with rest of parameters, after action nparameter
@@ -290,6 +294,11 @@ class BallModifier(Modifier):
 		return self.speed
 	
 	
+	def get_compatible_modifiers(self):
+		return ( Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK
+			| Action.MOD_DEADZONE | Modifier.get_compatible_modifiers(self) )
+	
+	
 	def _stop(self):
 		""" Stops rolling of the 'ball' """
 		self._xvel_dq.clear()
@@ -516,12 +525,20 @@ class ModeModifier(Modifier):
 			self.default = NoAction()
 	
 	
+	def get_compatible_modifiers(self):
+		return reduce (
+			lambda x, action: x | action.get_compatible_modifiers(),
+			self.mods.values(),
+			0
+		)
+	
+	
 	def set_speed(self, *speed):
 		for a in list(self.mods.values()) + [ self.default ]:
 			if hasattr(a, "set_speed"):
 				a.set_speed(*speed)
-
-
+	
+	
 	def get_speed(self):
 		rv = (1.0,)
 		for a in list(self.mods.values()) + [ self.default ]:
@@ -712,6 +729,14 @@ class DoubleclickModifier(Modifier):
 		self.waiting = False
 		self.pressed = False
 		self.active = None
+	
+	
+	def get_compatible_modifiers(self):
+		return reduce (
+			lambda x, action: x | action.get_compatible_modifiers(),
+			( self.action, self.normalaction, self.holdaction ),
+			0
+		)
 	
 	
 	def set_speed(self, *speed):
