@@ -65,8 +65,8 @@ class ActionEditor(Editor):
 		# is used to edit menu actions.
 		Action.AC_BUTTON	: Action.MOD_OSD | Action.MOD_FEEDBACK,
 		Action.AC_TRIGGER	: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
-		Action.AC_STICK		: Action.MOD_OSD | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
-		Action.AC_PAD		: Action.MOD_OSD | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
+		Action.AC_STICK		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
+		Action.AC_PAD		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
 		Action.AC_GYRO		: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_FEEDBACK,
 		Action.AC_OSK		: 0,
 		Action.AC_MENU		: Action.MOD_OSD,
@@ -659,7 +659,7 @@ class ActionEditor(Editor):
 					# Actions generated elsewhere
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
-			self.enable_modifiers(action)
+			self.enable_modifiers(self._action)
 		
 		# Send changed action into selected component
 		if self._selected_component is None:
@@ -700,7 +700,6 @@ class ActionEditor(Editor):
 			rvMore = self.builder.get_object("rvMore")
 			exMore.set_expanded(False)
 			rvMore.set_reveal_child(False)
-			
 		
 		# Feedback
 		cbFeedback		= self.builder.get_object("cbFeedback")

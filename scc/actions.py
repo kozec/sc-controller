@@ -1540,6 +1540,10 @@ class DPadAction(MultichildAction):
 		return a
 	
 	
+	def get_compatible_modifiers(self):
+		return Action.MOD_CLICK
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return "DPad"
