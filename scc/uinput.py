@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # The MIT License (MIT)
 #
@@ -22,15 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import os
-import ctypes
-import time
+import os, imp, ctypes, time
 from math import pi, copysign, sqrt
 from scc.lib import IntEnum
 from scc.cheader import defines
-from scc.tools import find_lib
 
 from collections import deque
+
 
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):
@@ -191,7 +189,25 @@ class UInput(object):
 			self._a, self._amin, self._amax, self._afuzz, self._aflat = zip(*axes)
 
 		self._r = rels
-		lib, search_paths = find_lib("libuinput", os.path.dirname(__file__))
+		
+		base_path = os.path.dirname(__file__)
+		# Search for libuinput.so
+		lib, search_paths = None, []
+		libname = "libuinput"
+		so_extensions = [ ext for ext, _, typ in imp.get_suffixes()
+				if typ == imp.C_EXTENSION ]
+		for extension in so_extensions:
+			search_paths += [
+				os.path.abspath(os.path.normpath(
+					os.path.join( base_path, '..', libname + extension ))),
+				os.path.abspath(os.path.normpath(
+					os.path.join( base_path, '../..', libname + extension )))
+				]
+		for path in search_paths:
+			if os.path.exists(path):
+				lib = path
+				break
+		
 		if not lib:
 			raise OSError('Cant find libuinput. searched at:\n {}'.format(
 				'\n'.join(search_paths)

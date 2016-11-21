@@ -10,7 +10,7 @@ from scc.paths import get_controller_icons_path, get_default_controller_icons_pa
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
-import imp, os, sys, shlex, gettext, logging
+import os, sys, shlex, gettext, logging
 
 HAVE_POSIX1E = False
 try:
@@ -155,13 +155,6 @@ def static_vars(**kwargs):
 	return decorate
 
 
-def get_so_extensions():
-	"""Return so file extenstion compatible with python and pypy"""
-	for ext, _, typ in imp.get_suffixes():
-		if typ == imp.C_EXTENSION:
-			yield ext
-
-
 def find_profile(name):
 	"""
 	Returns filename for specified profile name.
@@ -207,21 +200,6 @@ def find_controller_icon(name):
 		if os.path.exists(path):
 			return path
 	return None
-
-
-def find_lib(name, base_path):
-	"""
-	Returns (filename, search_paths) if named library is found
-	or (None, search_paths) if not.
-	"""
-	search_paths = []
-	for extension in get_so_extensions():
-		search_paths.append(os.path.abspath(os.path.normpath(os.path.join( base_path, '..', name + extension ))))
-		search_paths.append(os.path.abspath(os.path.normpath(os.path.join( base_path, '../..', name + extension ))))
-	for path in search_paths:
-		if os.path.exists(path):
-			return path, search_paths
-	return None, search_paths
 
 
 def find_binary(name):
