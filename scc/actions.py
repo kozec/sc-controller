@@ -9,7 +9,7 @@ trigger should be pressed.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.tools import strip_none, ensure_size, quat2euler, anglediff
+from scc.tools import ensure_size, quat2euler, anglediff
 from scc.tools import circle_to_square, clamp, nameof
 from scc.uinput import Keys, Axes, Rels
 from scc.lib import xwrappers as X
@@ -1940,6 +1940,14 @@ class NoAction(Action):
 
 	__repr__ = __str__
 	
+
+
+def strip_none(*lst):
+	""" Returns lst without trailing None's and NoActions """
+	while len(lst) and (lst[-1] is None or isinstance(lst[-1], NoAction)):
+		lst = lst[0:-1]
+	return lst
+
 
 # Register actions from current module
 Action.register_all(sys.modules[__name__])

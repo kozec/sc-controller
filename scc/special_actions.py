@@ -14,7 +14,7 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
-from scc.tools import strip_none, strip_gesture, nameof, clamp
+from scc.tools import strip_gesture, nameof, clamp
 from scc.modifiers import Modifier, NameModifier
 from scc.constants import STICK_PAD_MAX
 from math import sqrt

@@ -12,9 +12,8 @@ syntax.
 from __future__ import unicode_literals
 
 from scc.lib import Enum
-from scc.actions import Action, SpecialAction
 from scc.constants import TRIGGER_HALF, LEFT, RIGHT
-from scc.tools import strip_none
+from scc.actions import Action, SpecialAction
 
 import time, logging
 log = logging.getLogger("OSDKeyActs")
