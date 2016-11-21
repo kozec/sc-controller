@@ -262,6 +262,7 @@ class BallModifier(Modifier):
 
 	"""
 	COMMAND = "ball"
+	PROFILE_KEY_PRIORITY = -5
 	
 	DEFAULT_FRICTION = 10.0
 	DEFAULT_MEAN_LEN = 10
