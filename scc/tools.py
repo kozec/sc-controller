@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from scc.paths import get_controller_icons_path, get_default_controller_icons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
+from scc.uinput import Axes, Rels
 from math import pi as PI, sin, cos, atan2, sqrt
 import os, sys, shlex, gettext, logging
 
@@ -69,7 +70,7 @@ def set_logging_level(verbose, debug):
 
 def strip_none(*lst):
 	""" Returns lst without trailing None's """
-	while len(lst) and not lst[-1]:
+	while len(lst) and not lst[-1] and lst[-1] not in (Axes.ABS_X, Rels.REL_X):
 		lst = lst[0:-1]
 	return lst
 
