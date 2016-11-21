@@ -364,13 +364,20 @@ class BallModifier(Modifier):
 	
 	def encode(self):
 		rv = Modifier.encode(self)
-		rv[BallModifier.COMMAND] = True
+		pars = self.strip_defaults()
+		rv[BallModifier.COMMAND] = pars
 		return rv
 	
 	
 	@staticmethod
 	def decode(data, a, *b):
-		return BallModifier(a)
+		if data is True:
+			# backwards compatibility
+			return BallModifier(a)
+		else:
+			args = list(data[BallModifier.COMMAND])
+			args.append(a)
+			return BallModifier(*args)
 	
 	
 	def describe(self, context):
