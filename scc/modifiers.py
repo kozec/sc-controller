@@ -997,7 +997,7 @@ class FeedbackModifier(Modifier):
 	
 	@staticmethod
 	def decode(data, a, *b):
-		args = list(data["feedback"])
+		args = list(data[FeedbackModifier.COMMAND])
 		if hasattr(HapticPos, args[0]):
 			args[0] = getattr(HapticPos, args[0])
 		args.append(a)
