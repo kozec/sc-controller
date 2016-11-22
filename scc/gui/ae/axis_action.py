@@ -22,7 +22,7 @@ from scc.osd.area import Area
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.ae import AEComponent
 
-import os, logging
+import os, logging, math
 log = logging.getLogger("AE.AxisAction")
 
 __all__ = [ 'AxisActionComponent' ]
@@ -104,6 +104,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 	def load_trackball_action(self, action):
 		cbTrackpadType = self.builder.get_object("cbTrackpadType")
 		cbAxisOutput = self.builder.get_object("cbAxisOutput")
+		sclFriction = self.builder.get_object("sclFriction")
 		self._recursing = True
 		if isinstance(action.action, MouseAction):
 			self.set_cb(cbTrackpadType, "mouse", 1)
@@ -117,6 +118,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 				self.set_cb(cbAxisOutput, "trackball", 2)
 			elif isinstance(action.action.x, MouseAction):
 				self.set_cb(cbAxisOutput, "wheel", 2)
+		sclFriction.set_value(math.log(action.friction * 1000.0, 10))
 		self._recursing = False
 	
 	
@@ -201,9 +203,13 @@ class AxisActionComponent(AEComponent, TimerManager):
 		"""
 		Loads values from UI into trackball-related action
 		"""
+		sclFriction = self.builder.get_object("sclFriction")
+		
 		cbTrackpadType = self.builder.get_object("cbTrackpadType")
-		a = cbTrackpadType.get_model().get_value(cbTrackpadType.get_active_iter(), 2)
-		return self.parser.restart(a).parse()
+		a_str = cbTrackpadType.get_model().get_value(cbTrackpadType.get_active_iter(), 2)
+		a = self.parser.restart(a_str).parse()
+		friction = ((10.0**sclFriction.get_value())/1000.0)
+		return BallModifier(round(friction, 3), a)
 
 	
 	def make_area_action(self):
@@ -317,6 +323,15 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self.on_sbArea_output(button)
 		self.on_area_options_changed(button)
 	
+	
+	def on_btClearFriction_clicked(self, *a):
+		sclFriction = self.builder.get_object("sclFriction")
+		sclFriction.set_value(math.log(10 * 1000.0, 10))
+	
+	
+	def on_sclFriction_format_value(self, scale, value):
+		return "%0.3f" % ((10.0**value)/1000.0)
+		
 	
 	def on_cbAxisOutput_changed(self, *a):
 		cbAxisOutput = self.builder.get_object("cbAxisOutput")

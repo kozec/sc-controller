@@ -271,7 +271,7 @@ class BallModifier(Modifier):
 	def _mod_init(self, friction=DEFAULT_FRICTION, mass=80.0,
 			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
 		self.speed = (1.0, 1.0)
-		self._friction = friction
+		self.friction = friction
 		self._xvel = 0.0
 		self._yvel = 0.0
 		self._ampli  = ampli
@@ -280,7 +280,7 @@ class BallModifier(Modifier):
 		self._mass = mass
 		self._r = r
 		self._I = (2 * self._mass * self._r**2) / 5.0
-		self._a = self._r * self._friction / self._I
+		self._a = self._r * self.friction / self._I
 		self._xvel_dq = deque(maxlen=mean_len)
 		self._yvel_dq = deque(maxlen=mean_len)
 		self._lastTime = time.time()
@@ -371,7 +371,7 @@ class BallModifier(Modifier):
 	
 	@staticmethod
 	def decode(data, a, *b):
-		if data is True:
+		if data[BallModifier.COMMAND] is True:
 			# backwards compatibility
 			return BallModifier(a)
 		else:
@@ -398,6 +398,10 @@ class BallModifier(Modifier):
 					return _("Mouse Wheel")
 			
 		return _("Ball(%s)") % (self.action.describe(context))
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return self._mod_to_string(self.strip_defaults(), multiline, pad)
 	
 	
 	def pad(self, mapper, position, what):

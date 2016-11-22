@@ -22,6 +22,13 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkAdjustment" id="adjFriction">
+    <property name="lower">0.01</property>
+    <property name="upper">6</property>
+    <property name="value">4</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkAdjustment" id="adjSensitivity">
     <property name="lower">0.01</property>
     <property name="upper">10.01</property>
@@ -43,17 +50,17 @@
       <row>
         <col id="0" translatable="yes">Mouse</col>
         <col id="1">mouse</col>
-        <col id="2">ball(mouse())</col>
+        <col id="2">mouse()</col>
       </row>
       <row>
         <col id="0" translatable="yes">Mouse-like Joystick on LEFT Stick</col>
         <col id="1">left</col>
-        <col id="2">ball(XY(axis(Axes.ABS_X),axis(Axes.ABS_Y)))</col>
+        <col id="2">XY(axis(Axes.ABS_X),axis(Axes.ABS_Y))</col>
       </row>
       <row>
         <col id="0" translatable="yes">Mouse-like Joystick on RIGHT Stick</col>
         <col id="1">right</col>
-        <col id="2">ball(XY(axis(Axes.ABS_RX),axis(Axes.ABS_RY)))</col>
+        <col id="2">XY(axis(Axes.ABS_RX),axis(Axes.ABS_RY))</col>
       </row>
     </data>
   </object>
@@ -565,7 +572,73 @@
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkLabel" id="label3">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">10</property>
+                <property name="margin_bottom">5</property>
+                <property name="label" translatable="yes">Friction</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkScale" id="sclFriction">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_left">20</property>
+                    <property name="hexpand">True</property>
+                    <property name="adjustment">adjFriction</property>
+                    <property name="round_digits">0</property>
+                    <property name="digits">3</property>
+                    <property name="value_pos">right</property>
+                    <signal name="format-value" handler="on_sclFriction_format_value" swapped="no"/>
+                    <signal name="value-changed" handler="on_trackball_options_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btClearFriction">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_right">20</property>
+                    <signal name="clicked" handler="on_btClearFriction_clicked" swapped="no"/>
+                    <child>
+                      <object class="GtkImage" id="image8">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="stock">gtk-clear</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
             </child>
           </object>
           <packing>
