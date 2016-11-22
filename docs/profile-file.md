@@ -173,14 +173,15 @@ Example:
 
 
 #### `ball`
-If set to True, enables trackball mode. See [ball modifier](actions.md#ball)
-for more info.
+If set to value, enables trackball mode. Value is list with zero to two values
+specifying friction and mass of virtual 'spinning ball'.
+See [ball modifier](actions.md#ball) for more info.
 
 Example:
 
 	"pad_left": {
 	  "action": "mouse()",
-	  "ball": True
+	  "ball": [ 10.0 ]
 	},
 
 
