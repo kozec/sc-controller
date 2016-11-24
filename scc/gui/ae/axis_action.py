@@ -118,7 +118,10 @@ class AxisActionComponent(AEComponent, TimerManager):
 				self.set_cb(cbAxisOutput, "trackball", 2)
 			elif isinstance(action.action.x, MouseAction):
 				self.set_cb(cbAxisOutput, "wheel", 2)
-		sclFriction.set_value(math.log(action.friction * 1000.0, 10))
+		if action.friction <= 0:
+			sclFriction.set_value(0)
+		else:
+			sclFriction.set_value(math.log(action.friction * 1000.0, 10))
 		self._recursing = False
 	
 	
@@ -208,7 +211,10 @@ class AxisActionComponent(AEComponent, TimerManager):
 		cbTrackpadType = self.builder.get_object("cbTrackpadType")
 		a_str = cbTrackpadType.get_model().get_value(cbTrackpadType.get_active_iter(), 2)
 		a = self.parser.restart(a_str).parse()
-		friction = ((10.0**sclFriction.get_value())/1000.0)
+		if sclFriction.get_value() <= 0:
+			friction = 0
+		else:
+			friction = ((10.0**sclFriction.get_value())/1000.0)
 		return BallModifier(round(friction, 3), a)
 
 	
@@ -330,7 +336,12 @@ class AxisActionComponent(AEComponent, TimerManager):
 	
 	
 	def on_sclFriction_format_value(self, scale, value):
-		return "%0.3f" % ((10.0**value)/1000.0)
+		if value <= 0:
+			return "0.000"
+		elif value >= 6:
+			return "1000.00"
+		else:
+			return "%0.3f" % ((10.0**value)/1000.0)
 		
 	
 	def on_cbAxisOutput_changed(self, *a):
