@@ -1577,7 +1577,7 @@ class DPadAction(MultichildAction):
 			# Transform it to index of quaver
 			index = int(round(angle / (180.0 / 4.0)))
 			# Index goes from -4 to +4, make it zero based
-			index = clamp(0, index + 4, 9)
+			index = clamp(0, index + 4, 8)
 			
 			side = self.SIDES[index]
 		
