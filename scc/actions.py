@@ -1515,11 +1515,29 @@ class DPadAction(MultichildAction):
 	COMMAND = "dpad"
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	
+	MIN_DISTANCE_P2 = 2000000	# Power of 2 from minimal distance that finger
+								# has to be from center
+	
+	SIDES = (
+		# Just list of magic numbers that would have
+		# to be computed on the fly otherwise
+		# 0 - up, 1 - down, 2 - left, 3 - right
+		( None, 1 ),		# Index 0, down
+		( 2, 1 ),			# Index 1, down-left
+		( 2, None),			# Index 2, left
+		( 2, 0 ),			# Index 3, up-left
+		( None, 0 ),		# Index 4, up
+		( 3, 0 ),			# Index 5, up-right
+		( 3, None ),		# Index 6, right
+		( 3, 1 ),			# Index 7, down-right
+		( None, 1 ),		# Index 8, same as 0
+	)
+	
 	def __init__(self, *actions):
 		MultichildAction.__init__(self, *actions)
 		self.actions = ensure_size(4, actions)
 		self.eight = False
-		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
+		self.dpad_state = [ None, None ]	# X, Y
 	
 	
 	def encode(self):
@@ -1550,50 +1568,48 @@ class DPadAction(MultichildAction):
 	
 	
 	def whole(self, mapper, x, y, what):
-		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
-		side = [ None, None ]
-		if x <= STICK_PAD_MIN_HALF:
-			side[0] = 2 # left
-		elif x >= STICK_PAD_MAX_HALF:
-			side[0] = 3 # right
-		if y <= STICK_PAD_MIN_HALF:
-			side[1] = 1 # down
-		elif y >= STICK_PAD_MAX_HALF:
-			side[1] = 0 # up
+		## dpad(up, down, left	, right)
 		
-		if self.eight:
-			if side[0] is None and side[1] is None:
-				side = None
-			elif side[0] is None:
-				side = side[1]
-			elif side[1] is None:
-				side = side[0]
-			else:
-				side = 2 + side[1] * 2 + side[0]
+		side = ( None, None )
+		if x*x + y*y > self.MIN_DISTANCE_P2:
+			# Compute angle from center of pad to finger position
+			angle = (atan2(x, y) * 180.0 / PI)
+			# Transform it to index of quaver
+			index = int(round(angle / (180.0 / 4.0)))
+			# Index goes from -4 to +4, make it zero based
+			index = clamp(0, index + 4, 9)
 			
-			if side != self.dpad_state[2] and self.dpad_state[2] is not None:
-				if self.actions[self.dpad_state[2]] is not None:
-					self.actions[self.dpad_state[2]].button_release(mapper)
-				self.dpad_state[2] = None
-			if side is not None and side != self.dpad_state[2]:
-				if self.actions[side] is not None:
-					rv = self.actions[side].button_press(mapper)
-				self.dpad_state[2] = side
-		else:
-			for i in (0, 1):
-				if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
-					if self.actions[self.dpad_state[i]] is not None:
-						self.actions[self.dpad_state[i]].button_release(mapper)
-					self.dpad_state[i] = None
-				if side[i] is not None and side[i] != self.dpad_state[i]:
-					if self.actions[side[i]] is not None:
-						self.actions[side[i]].button_press(mapper)
-					self.dpad_state[i] = side[i]
+			side = self.SIDES[index]
+		
+		
+		for i in (0, 1):
+			if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
+				if self.actions[self.dpad_state[i]] is not None:
+					self.actions[self.dpad_state[i]].button_release(mapper)
+				self.dpad_state[i] = None
+			if side[i] is not None and side[i] != self.dpad_state[i]:
+				if self.actions[side[i]] is not None:
+					self.actions[side[i]].button_press(mapper)
+				self.dpad_state[i] = side[i]
 
 
 class DPad8Action(DPadAction):
 	COMMAND = "dpad8"
 	PROFILE_KEYS = ()
+
+	SIDES = (
+		# Another list of magic numbers that would have
+		# to be computed on the fly otherwise
+		1,	# index 0 - down
+		6,	# index 1 - down-left
+		3,	# index 2 - left
+		4,	# index 3 - up-left
+		0,	# index 4 - up
+		4,	# index 5 - up-right
+		3,	# index 6 - right
+		7,	# index 7 - downright
+		1,	# index 8 - same as 0
+	)
 
 	def __init__(self, *actions):
 		DPadAction.__init__(self, *actions)
@@ -1603,6 +1619,28 @@ class DPad8Action(DPadAction):
 	def describe(self, context):
 		if self.name: return self.name
 		return "8-Way DPad"
+	
+	
+	def whole(self, mapper, x, y, what):
+		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
+		side = None
+		if x*x + y*y > self.MIN_DISTANCE_P2:
+			# Compute angle from center of pad to finger position
+			angle = (atan2(x, y) * 180.0 / PI)
+			# Transform it to index of quaver
+			index = int(round(angle / (180.0 / 4.0)))
+			# Index goes from -4 to +4, make it zero based
+			index = clamp(0, index + 4, 9)
+			side = self.SIDES[index]
+		
+		# 8-way dpad presses only one button at time, so only one index
+		# in dpad_state is used.
+		if side != self.dpad_state[0]:
+			if self.dpad_state[0] is not None:
+				self.actions[self.dpad_state[0]].button_release(mapper)
+			if side is not None:
+				self.actions[side].button_press(mapper)
+			self.dpad_state[0] = side
 
 
 class XYAction(HapticEnabledAction, Action):
