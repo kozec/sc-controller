@@ -59,10 +59,12 @@ class Keyboard(OSDWindow, TimerManager):
 		self.daemon = None
 		self.mapper = None
 		self.keymap = Gdk.Keymap.get_default()
-		self.keymap.connect('state-changed', self.on_state_changed)
+		self.keymap.connect('state-changed', self.on_keymap_state_changed)
 		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
 		self.profile = Profile(TalkingActionParser())
 		self.config = config or Config()
+		self.dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))
+		self.group = None
 		
 		self.kbimage = os.path.join(get_config_path(), 'keyboard.svg')
 		if not os.path.exists(self.kbimage):
@@ -97,8 +99,6 @@ class Keyboard(OSDWindow, TimerManager):
 		self.f.add(self.cursors[RIGHT])
 		self.c.add(self.f)
 		self.add(self.c)
-		
-		self.timer('labels', 0.1, self.update_labels)
 	
 	
 	def recolor(self):
@@ -134,7 +134,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self.on_daemon_connected(self.daemon)
 	
 	
-	def on_state_changed(self, x11keymap):
+	def on_keymap_state_changed(self, x11keymap):
+		print "on_keymap_state_changed", x11keymap
 		if not self.timer_active('labels'):
 			self.timer('labels', 0.1, self.update_labels)
 	
@@ -143,8 +144,7 @@ class Keyboard(OSDWindow, TimerManager):
 		""" Updates keyboard labels based on active X keymap """
 		labels = {}
 		# Get current layout group
-		dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))		# Still no idea why...
-		group = X.get_xkb_state(dpy).group
+		self.group = X.get_xkb_state(self.dpy).group
 		# Get state of shift/alt/ctrl key
 		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
 		for a in self.background.areas:
@@ -163,7 +163,7 @@ class Keyboard(OSDWindow, TimerManager):
 				if not found: continue
 				for k in sorted(entries, key=lambda a : a.level):
 					# Try to convert keycode to label
-					translation = self.keymap.translate_keyboard_state(k.keycode, mt, group)
+					translation = self.keymap.translate_keyboard_state(k.keycode, mt, self.group)
 					if hasattr(translation, "keyval"):
 						code = Gdk.keyval_to_unicode(translation.keyval)
 					else:
@@ -246,6 +246,7 @@ class Keyboard(OSDWindow, TimerManager):
 		self.mapper.set_special_actions_handler(self)
 		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
 		self.set_cursor_position(0, 0, self.cursors[RIGHT], self.limits[RIGHT])
+		self.timer('labels', 0.1, self.update_labels)
 	
 	
 	def on_event(self, daemon, what, data):
@@ -253,7 +254,11 @@ class Keyboard(OSDWindow, TimerManager):
 		Called when button press, button release or stick / pad update is
 		send by daemon.
 		"""
-		self.mapper.handle_event(daemon, what, data)	
+		group = X.get_xkb_state(self.dpy).group
+		if self.group != group:
+			self.group = group
+			self.timer('labels', 0.1, self.update_labels)
+		self.mapper.handle_event(daemon, what, data)
 	
 	
 	def on_sa_close(self, *a):
