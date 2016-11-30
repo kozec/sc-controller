@@ -10,7 +10,6 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GObject, Rsvg
 from xml.etree import ElementTree as ET
-from xml.sax import saxutils
 import os, sys, logging
 
 log = logging.getLogger("Background")
@@ -404,7 +403,7 @@ class SVGEditor(object):
 					if child.attrib['id'].startswith("LABEL_"):
 						id = child.attrib['id'][6:]
 						if id in labels:
-							SVGEditor.set_text(child, saxutils.escape(labels[id]))
+							SVGEditor.set_text(child, labels[id])
 				walk(child)
 		
 		walk(self._tree)

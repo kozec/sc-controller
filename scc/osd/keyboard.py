@@ -28,6 +28,7 @@ from scc.osd.slave_mapper import SlaveMapper
 from scc.osd import OSDWindow
 import scc.osd.osk_actions
 
+
 import os, sys, json, logging
 log = logging.getLogger("osd.menu")
 
@@ -168,7 +169,6 @@ class Keyboard(OSDWindow, TimerManager):
 					else:
 						code = Gdk.keyval_to_unicode(translation[1])
 					if code >= 32: # Printable chars
-						print a.name, (unichr(code),), code
 						labels[a.name] = unichr(code)
 						break
 		
