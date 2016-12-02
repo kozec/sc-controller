@@ -33,6 +33,7 @@ class Config(object):
 			# GUI-only settings
 			"enable_status_icon" : False,
 			"minimize_to_status_icon" : True,
+			"autokill_daemon" : False,
 		},
 		"controllers": { },
 		# output - modifies emulated controller
@@ -117,7 +118,7 @@ class Config(object):
 				self.values[d] = self.DEFAULTS[d]
 				rv = True
 		# Special check for nested dicts
-		for key in ("osd_colors", "osk_colors"):
+		for key in ("osd_colors", "osk_colors", "gui"):
 			if len(self.DEFAULTS[key]) != len(self.values[key]):
 				src = self.DEFAULTS[key]
 				self.values[key] = { k:src[k] for k in src }

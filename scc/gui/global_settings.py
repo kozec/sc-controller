@@ -76,8 +76,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				.set_active(not IS_UNITY and bool(self.app.config['gui']['minimize_to_status_icon'])))
 		(self.builder.get_object("cbMinimizeToStatusIcon")
 				.set_sensitive(not IS_UNITY and self.app.config['gui']['enable_status_icon']))
+		(self.builder.get_object("cbAutokillDaemon")
+				.set_active(self.app.config['gui']['autokill_daemon']))
 		self._recursing = False
-		
 	
 	
 	def _load_color(self, w, dct, key):
@@ -252,6 +253,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.app.config['enable_sniffing'] = self.builder.get_object("cbInputTestMode").get_active()
 		self.app.config['gui']['enable_status_icon'] = self.builder.get_object("cbEnableStatusIcon").get_active()
 		self.app.config['gui']['minimize_to_status_icon'] = self.builder.get_object("cbMinimizeToStatusIcon").get_active()
+		self.app.config['gui']['autokill_daemon'] = self.builder.get_object("cbAutokillDaemon").get_active()
 		# Save
 		self.app.save_config()
 	

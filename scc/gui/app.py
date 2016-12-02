@@ -247,8 +247,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if not IS_UNITY and self.config['gui']['enable_status_icon'] and self.config['gui']['minimize_to_status_icon']:
 			# Override closing and hide instead
 			self.window.set_visible(False)
-			return True
-		return False # Allow
+		else:
+			self.on_mnuExit_activate()
+		return True
 	
 	
 	def on_mnuClear_activate(self, *a):
@@ -456,8 +457,28 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.background.on_mouse_moved(event.x, event.y)
 	
 	
-	def on_mnuExit_activate(self, *a):
+	def on_exiting_n_daemon_killed(self, *a):
 		self.quit()
+	
+	
+	def on_mnuExit_activate(self, *a):
+		if self.app.config['gui']['autokill_daemon']:
+			log.debug("Terminating scc-daemon")
+			for x in ("content", "mnuEmulationEnabled"):
+				w = self.builder.get_object(x)
+				w.set_sensitive(False)
+			self.set_daemon_status("unknown", False)
+			self.hide_error()
+			if self.dm.is_alive():
+				self.dm.connect("dead", self.on_exiting_n_daemon_killed)
+				self.dm.connect("error", self.on_exiting_n_daemon_killed)
+				self.dm.stop()
+			else:
+				# Daemon appears to be dead, kill it just in case
+				self.dm.stop()
+				self.quit()
+		else:
+			self.quit()
 	
 	
 	def on_mnuAbout_activate(self, *a):

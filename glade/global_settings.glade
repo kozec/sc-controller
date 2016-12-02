@@ -1202,6 +1202,32 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                 <property name="top_attach">3</property>
               </packing>
             </child>
+            <child>
+              <object class="GtkCheckButton" id="cbAutokillDaemon">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_top">15</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label30">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Automatically Disable Emulation When Closing GUI</property>
+                    <property name="use_underline">True</property>
+                    <property name="mnemonic_widget">cbShowOSD</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">4</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="position">3</property>
@@ -1566,6 +1592,9 @@ grips, triggers, finger positions on both pads and stick angle.</property>
           <placeholder/>
         </child>
       </object>
+    </child>
+    <child>
+      <placeholder/>
     </child>
   </object>
 </interface>
