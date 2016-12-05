@@ -86,6 +86,8 @@ class Config(object):
 			"grid": "004000ff",
 			"line": "ffffff1a",
 		},
+		# See drivers/sc_dongle.py, read_serial method
+		"ignore_serials" : False,
 	}
 	
 	def __init__(self):

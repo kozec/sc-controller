@@ -1,11 +1,10 @@
 #!/usr/bin/env python2
-
-
 from scc.lib import usb1
 from scc.lib import IntEnum
 from scc.drivers.usb import USBDevice, register_hotplug_device
 from scc.constants import SCButtons, HapticPos
 from scc.controller import Controller
+from scc.config import Config
 from collections import namedtuple
 import struct, time, logging
 
@@ -190,6 +189,16 @@ class SCController(Controller):
 	
 	
 	def read_serial(self):
+		""" Requests and reads serial number from controller """
+		if Config()["ignore_serials"]:
+			# Special exception for cases when controller drops instead of
+			# sending serial number. See issue #103
+			self._serial = self.get_id()
+			log.debug("Not requesting seria number for SC %s", self._serial)
+			self.set_id(str(self._serial), True)
+			self._driver.daemon.add_controller(self)
+			return
+		
 		def cb(rawserial):
 			size, serial = struct.unpack(">xBx12s49x", rawserial)
 			if size > 1:
