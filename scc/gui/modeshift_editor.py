@@ -8,9 +8,10 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.gui.controller_widget import ControllerButton
+from scc.gui.controller_widget import STICKS, PADS
+from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
 from scc.constants import SCButtons
-from scc.gui.dwsnc import headerbar
 from scc.modifiers import ModeModifier, DoubleclickModifier, HoldModifier
 from scc.actions import Action, NoAction
 from scc.profile import Profile
@@ -307,10 +308,16 @@ class ModeshiftEditor(Editor):
 		actionButton.set_label(self.nomods[index].describe(self.mode))
 	
 	
-	def set_input(self, id, action, mode=Action.AC_BUTTON):
+	def set_input(self, id, action, mode=None):
 		btDefault = self.builder.get_object("btDefault")
 		self.id = id
-		self.mode = mode
+		
+		if id in STICKS:
+			self.mode = mode or Action.AC_STICK
+		elif id in PADS:
+			self.mode = mode or Action.AC_PAD
+		else:
+			self.mode = mode or Action.AC_BUTTON
 		
 		self.set_title("Modeshift for %s" % (id.name if id in SCButtons else str(id),))
 		
