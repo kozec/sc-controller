@@ -21,8 +21,9 @@ from scc.config import Config
 from scc.uinput import Keys
 from scc.lib import xwrappers as X
 from scc.gui.daemon_manager import DaemonManager
-from scc.gui.svg_widget import SVGWidget
+from scc.gui.keycode_to_key import KEY_TO_KEYCODE
 from scc.gui.gdk_to_key import KEY_TO_GDK
+from scc.gui.svg_widget import SVGWidget
 from scc.osd.timermanager import TimerManager
 from scc.osd.slave_mapper import SlaveMapper
 from scc.osd import OSDWindow
@@ -144,42 +145,29 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def on_keymap_state_changed(self, x11keymap):
-		print "on_keymap_state_changed", x11keymap
 		if not self.timer_active('labels'):
 			self.timer('labels', 0.1, self.update_labels)
 	
 	
 	def update_labels(self):
 		""" Updates keyboard labels based on active X keymap """
+		
 		labels = {}
 		# Get current layout group
 		self.group = X.get_xkb_state(self.dpy).group
 		# Get state of shift/alt/ctrl key
 		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
 		for a in self.background.areas:
-			# Iterate over all translatable keys...
-			if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_GDK:
-				# Try to convert GKD key to keycode
-				gdkkey = KEY_TO_GDK[getattr(Keys, a.name)]
-				found, entries = self.keymap.get_entries_for_keyval(gdkkey)
-				
-				if gdkkey == Gdk.KEY_equal:
-					# Special case, GDK reports nonsense here
-					tmp = [ e for e in entries if e.level == 0 ]
-					if len(tmp) > 0:
-						entries = [ tmp[-1] ]
-				
-				if not found: continue
-				for k in sorted(entries, key=lambda a : a.level):
-					# Try to convert keycode to label
-					translation = self.keymap.translate_keyboard_state(k.keycode, mt, self.group)
-					if hasattr(translation, "keyval"):
-						code = Gdk.keyval_to_unicode(translation.keyval)
-					else:
-						code = Gdk.keyval_to_unicode(translation[1])
-					if code >= 32: # Printable chars
-						labels[a.name] = unichr(code)
-						break
+			if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_KEYCODE:
+				keycode = KEY_TO_KEYCODE[getattr(Keys, a.name)]
+				translation = self.keymap.translate_keyboard_state(keycode, mt, self.group)
+				if hasattr(translation, "keyval"):
+					code = Gdk.keyval_to_unicode(translation.keyval)
+				else:
+					code = Gdk.keyval_to_unicode(translation[1])
+				if code >= 32: # Printable chars
+					labels[a.name] = unichr(code)
+		
 		
 		self.background.edit().set_labels(labels).commit()
 	
