@@ -413,7 +413,7 @@ class BallModifier(Modifier):
 			if self._old_pos and mapper.was_touched(what):
 				dx, dy = x - self._old_pos[0], self._old_pos[1] - y
 				self._add(dx, dy)
-				self.action.change(mapper, dx, dy)
+				self.action.change(mapper, dx * self.speed[0], dy * self.speed[1])
 			else:
 				self._stop()
 			self._old_pos = x, y
