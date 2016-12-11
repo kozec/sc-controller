@@ -54,6 +54,11 @@ class Keyboard(OSDWindow, TimerManager):
 	}
 	
 	def __init__(self, config=None):
+		self.kbimage = os.path.join(get_config_path(), 'keyboard.svg')
+		if not os.path.exists(self.kbimage):
+			# Prefer image in ~/.config/scc, but load default one as fallback
+			self.kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
+		
 		OSDWindow.__init__(self, "osd-keyboard")
 		TimerManager.__init__(self)
 		self.daemon = None
@@ -65,17 +70,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self.config = config or Config()
 		self.dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))
 		self.group = None
-		
-		self.kbimage = os.path.join(get_config_path(), 'keyboard.svg')
-		if not os.path.exists(self.kbimage):
-			# Prefer image in ~/.config/scc, but load default one as fallback
-			self.kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
-		self.background = SVGWidget(self, self.kbimage, init_hilighted=False)
-		self.recolor()
-		
 		self.limits = {}
-		self.limits[LEFT]  = self.background.get_rect_area("LIMIT_LEFT")
-		self.limits[RIGHT] = self.background.get_rect_area("LIMIT_RIGHT")
+		self.background = None
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
 		self.cursors = {}
@@ -94,6 +90,19 @@ class Keyboard(OSDWindow, TimerManager):
 		self.c.set_name("osd-keyboard-container")
 		
 		self.f = Gtk.Fixed()
+	
+	
+	def _create_background(self):
+		self.background = SVGWidget(self, self.args.image, init_hilighted=False)
+		self.recolor()
+		
+		self.limits = {}
+		self.limits[LEFT]  = self.background.get_rect_area("LIMIT_LEFT")
+		self.limits[RIGHT] = self.background.get_rect_area("LIMIT_RIGHT")
+		self._pack()
+	
+	
+	def _pack(self):
 		self.f.add(self.background)
 		self.f.add(self.cursors[LEFT])
 		self.f.add(self.cursors[RIGHT])
@@ -175,6 +184,12 @@ class Keyboard(OSDWindow, TimerManager):
 		self.background.edit().set_labels(labels).commit()
 	
 	
+	def _add_arguments(self):
+		OSDWindow._add_arguments(self)
+		self.argparser.add_argument('image', type=str, nargs="?",
+			default = self.kbimage, help="keyboard image to use")
+	
+	
 	def parse_argumets(self, argv):
 		if not OSDWindow.parse_argumets(self, argv):
 			return False
@@ -239,6 +254,8 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def show(self, *a):
+		if self.background is None:
+			self._create_background()
 		OSDWindow.show(self, *a)
 		self.profile.load(find_profile(Keyboard.OSK_PROF_NAME)).compress()
 		self.mapper = SlaveMapper(self.profile,
