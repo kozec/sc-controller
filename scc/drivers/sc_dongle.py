@@ -64,6 +64,7 @@ class Dongle(USBDevice):
 		self.claim_by(klass=3, subclass=0, protocol=0)
 		self._controllers = {}
 		self._no_serial = []
+		self._available_serials = set()		# used only is ignore_serials option is enabled
 		for i in xrange(0, Dongle.MAX_ENDPOINTS):
 			# Steam dongle apparently can do only 4 controllers at once
 			self.set_input_interrupt(FIRST_ENDPOINT + i, 64, self._on_input)
@@ -115,6 +116,7 @@ class Dongle(USBDevice):
 				# Controller disconnected
 				if endpoint in self._controllers:
 					self.daemon.remove_controller(self._controllers[endpoint])
+					self._controllers[endpoint].disconnected()
 					del self._controllers[endpoint]
 		elif tup.status == SCStatus.INPUT:
 			if endpoint not in self._controllers:
@@ -193,7 +195,10 @@ class SCController(Controller):
 		if Config()["ignore_serials"]:
 			# Special exception for cases when controller drops instead of
 			# sending serial number. See issue #103
-			self._serial = self.get_id()
+			if len(self._driver._available_serials) > 0:
+				self._serial = self._driver._available_serials.pop()
+			else:
+				self._serial = self.get_id()
 			log.debug("Not requesting seria number for SC %s", self._serial)
 			self.set_id(str(self._serial), True)
 			self._driver.daemon.add_controller(self)
@@ -218,6 +223,13 @@ class SCController(Controller):
 		log.debug("Got wireless SC with serial %s", self._serial)
 		self.set_id(str(self._serial), True)
 		self._driver.daemon.add_controller(self)
+	
+	
+	def disconnected(self):
+		# If ignore_serials config option is enabled, fake serial used by this
+		# controller is stored away and reused when next controller is connected
+		if Config()["ignore_serials"]:
+			self._driver._available_serials.add(self._serial)
 	
 	
 	def configure(self, idle_timeout=None, enable_gyros=None, led_level=None):
