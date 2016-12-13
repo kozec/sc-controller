@@ -1602,10 +1602,10 @@ class DPad8Action(DPadAction):
 		# to be computed on the fly otherwise
 		1,	# index 0 - down
 		6,	# index 1 - down-left
-		3,	# index 2 - left
+		2,	# index 2 - left
 		4,	# index 3 - up-left
 		0,	# index 4 - up
-		4,	# index 5 - up-right
+		5,	# index 5 - up-right
 		3,	# index 6 - right
 		7,	# index 7 - downright
 		1,	# index 8 - same as 0
@@ -1632,6 +1632,7 @@ class DPad8Action(DPadAction):
 			# Index goes from -4 to +4, make it zero based
 			index = clamp(0, index + 4, 9)
 			side = self.SIDES[index]
+		
 		
 		# 8-way dpad presses only one button at time, so only one index
 		# in dpad_state is used.
