@@ -240,14 +240,12 @@ class ClickModifier(Modifier):
 		if what in (STICK, LEFT) and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
 			return self.action.whole(mapper, x, y, what)
-		if what in (STICK, LEFT) and mapper.was_pressed(SCButtons.LPAD):
+		elif what in (STICK, LEFT) and mapper.was_pressed(SCButtons.LPAD):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
-		# what == RIGHT, there are only three options
-		if mapper.is_pressed(SCButtons.RPAD):
-			# mapper.force_event.add(FE_PAD)
+		elif what == RIGHT and mapper.is_pressed(SCButtons.RPAD):
 			return self.action.whole(mapper, x, y, what)
-		if mapper.was_pressed(SCButtons.RPAD):
+		elif what == RIGHT and mapper.was_pressed(SCButtons.RPAD):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
 
