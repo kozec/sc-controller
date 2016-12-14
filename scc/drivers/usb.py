@@ -210,9 +210,12 @@ class USBDriver(object):
 	
 	def close_all(self):
 		""" Closes all devices and unclaims all interfaces """
-		log.debug("Releasing devices...")
-		for d in self._devices.values():
-			d.close()
+		if len(self._devices):
+			log.debug("Releasing devices...")
+			for d in self._devices.values():
+				d.close()
+			self._devices = {}
+	
 	
 	def __del__(self):
 		self.close_all()
@@ -276,6 +279,10 @@ class USBDriver(object):
 		log.debug("Registered hotplug USB driver for %x:%x", vendor_id, product_id)
 	
 	
+	def on_exit(self, daemon):
+		self.close_all()
+	
+	
 	def mainloop(self):
 		self._poller.poll(timeout=1)
 		for d in self._devices.values():		# TODO: don't use .values() here
@@ -299,7 +306,8 @@ _usb = USBDriver()
 
 def init(daemon):
 	_usb._daemon = daemon
-	daemon.add_to_mainloop(_usb.mainloop)
+	daemon.on_daemon_exit(_usb.on_exit)
+	daemon.add_mainloop(_usb.mainloop)
 
 def start(daemon):
 	_usb.start()

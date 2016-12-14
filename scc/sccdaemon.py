@@ -50,6 +50,7 @@ class SCCDaemon(Daemon):
 		self.autoswitch_daemon = None
 		self.controllers = []
 		self.mainloops = []
+		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
 		self.default_mapper = None
@@ -99,18 +100,22 @@ class SCCDaemon(Daemon):
 		del self._to_start
 	
 	
-	def stop_drivers(self):
-		for s in self.drivers_to_stop:
-			s(self)
-	
-	
-	def add_to_mainloop(self, fn):
+	def add_mainloop(self, fn):
 		"""
 		Adds function that is called in every mainloop iteration.
 		Can be called only durring initialization, in driver 'init' method.
 		"""
 		if fn not in self.mainloops:
 			self.mainloops.append(fn)
+	
+	
+	def on_daemon_exit(self, fn):
+		"""
+		Adds function that is called just before daemon is stopped.
+		Usefull for cleanup.
+		"""
+		if fn not in self.on_exit_cbs:
+			self.on_exit_cbs.append(fn)
 	
 	
 	def _set_profile(self, mapper, filename):
@@ -308,6 +313,8 @@ class SCCDaemon(Daemon):
 	
 	def sigterm(self, *a):
 		self.exiting = True
+		for fn in self.on_exit_cbs:
+			fn(self)
 		for d in (self.osd_daemon, self.autoswitch_daemon):
 			if d: d.wfile.close()
 		self.osd_daemon, self.autoswitch_daemon = None, None
