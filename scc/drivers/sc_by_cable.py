@@ -50,24 +50,28 @@ class SCByCable(USBDevice, SCController):
 	
 	def _wait_input(self, endpoint, data):
 		tup = ControllerInput._make(struct.unpack(TUP_FORMAT, data))
-		with self._lock:
-			if not self._ready:
-				self.daemon.add_controller(self)
-				self.configure()
-				self._ready = True
-			if tup.status == SCStatus.INPUT:
-				self._last_tup = tup
-				self.input(tup)
-			elif tup.status == SCStatus.IDLE:
-				pass
+		if not self._ready:
+			self.daemon.add_controller(self)
+			self.configure()
+			self._ready = True
+		if tup.status == SCStatus.INPUT:
+			self._last_tup = tup
 	
 	
 	def _timer(self):
 		while self._timer:
 			time.sleep(TIMER_INTERVAL)
 			with self._lock:
-				if self.get_mapper():
-					self.get_mapper().run_scheduled(time.time())
+				m = self.get_mapper()
+				if m:
+					if self._last_tup:
+						self.input(self._last_tup)
+						self._last_tup = None
+					else:
+						m.run_scheduled(time.time())
+						m.generate_events()
+						m.generate_feedback()
+					self.flush()
 	
 	
 	def close(self):
@@ -80,4 +84,3 @@ class SCByCable(USBDevice, SCController):
 	
 	def turnoff(self):
 		log.warning("Ignoring request to turn off wired controller.")
-	

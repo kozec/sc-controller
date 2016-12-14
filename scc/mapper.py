@@ -320,6 +320,7 @@ class Mapper(object):
 		
 		self.run_scheduled(now)
 		self.generate_events()
+		self.generate_feedback()
 	
 	
 	def run_scheduled(self, now):
@@ -346,10 +347,12 @@ class Mapper(object):
 			self.mouse.scrollEvent(wx, wy)
 			self.syn_list.add(self.mouse)
 		self.mouse_movements = [ 0, 0, 0, 0 ]
-		# Generate feedback
+		self.sync()
+	
+	
+	def generate_feedback(self):
 		if self.controller:
 			for x in (0, 1):
 				if self.feedbacks[x]:
 					self.controller.feedback(self.feedbacks[x])
 					self.feedbacks[x] = None
-		self.sync()
