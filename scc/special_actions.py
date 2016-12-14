@@ -406,7 +406,7 @@ class KeyboardAction(Action, SpecialAction):
 		return (" " * pad) + "%s()" % (self.COMMAND,)
 	
 	
-	def button_release(self, mapper):
+	def button_press(self, mapper):
 		self.execute(mapper)
 
 

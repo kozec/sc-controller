@@ -227,7 +227,7 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
 		# Lock everything
-		locks = [ LEFT, RIGHT, STICK ] + [ b.name for b in SCButtons ]
+		locks = [ LEFT, RIGHT, STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
 		c.lock(success, self.on_failed_to_lock, *locks)
 	
 	

@@ -55,8 +55,11 @@ class SlaveMapper(Mapper):
 			self.profile.triggers[LEFT].trigger(self, *data)
 		elif what == SCButtons.RT.name:
 			self.profile.triggers[RIGHT].trigger(self, *data)
-		elif hasattr(SCButtons, what):
-			x = getattr(SCButtons, what)
+		elif hasattr(SCButtons, what) or what == "STICKPRESS":
+			if what == "STICKPRESS":
+				x = SCButtons.STICK
+			else:
+				x = getattr(SCButtons, what)
 			self.old_buttons = self.buttons
 			if data[0]:
 				# Pressed

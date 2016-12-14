@@ -10,6 +10,7 @@ from scc.tools import _
 from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.modifiers import DoubleclickModifier, HoldModifier
 from scc.macros import Macro, Type, Repeat, Cycle
+from scc.constants import SCButtons
 from scc.actions import NoAction
 from scc.profile import Profile
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
@@ -49,6 +50,9 @@ class BindingEditor(object):
 			w = self.builder.get_object("bt" + b)
 			if w:
 				self.button_widgets[b] = ControllerStick(self, b, use_icons, enable_press, w)
+		w = self.builder.get_object("btSTICKPRESS")
+		if w:
+			self.button_widgets[SCButtons.STICK] = ControllerButton(self, SCButtons.STICK, use_icons, w)
 		for b in GYROS:
 			w = self.builder.get_object("bt" + b)
 			if w:
@@ -62,6 +66,8 @@ class BindingEditor(object):
 		"""
 		before = NoAction()
 		if id in BUTTONS:
+			before, profile.buttons[id] = profile.buttons[id], action
+		if id == SCButtons.STICK and SCButtons.STICK in self.button_widgets:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[id].update()
 		if id in PRESSABLE:
