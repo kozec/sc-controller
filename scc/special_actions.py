@@ -382,8 +382,12 @@ class RadialMenuAction(MenuAction):
 	COMMAND = "radialmenu"
 	MENU_TYPE = "radialmenu"
 	
-	def __init__(self, *a, **b):
-		MenuAction.__init__(self, *a, **b)
+	def __init__(self, menu_id, control_with=MenuAction.DEFAULT_CONTROL,
+					confirm_with=MenuAction.DEFAULT_CONFIRM,
+					cancel_with=MenuAction.DEFAULT_CANCEL,
+					show_with_release=False):
+		MenuAction.__init__(self, menu_id, control_with, confirm_with,
+						cancel_with, show_with_release)
 		self.rotation = 0
 	
 	
