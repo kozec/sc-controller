@@ -87,7 +87,7 @@ class Config(object):
 			"line": "ffffff1a",
 		},
 		# See drivers/sc_dongle.py, read_serial method
-		"ignore_serials" : False,
+		"ignore_serials" : True,
 	}
 	
 	def __init__(self):
