@@ -309,7 +309,6 @@ class ModeshiftEditor(Editor):
 	
 	
 	def set_input(self, id, action, mode=None):
-		print ">>", id, mode
 		btDefault = self.builder.get_object("btDefault")
 		lblPressAlone = self.builder.get_object("lblPressAlone")
 		self.id = id
