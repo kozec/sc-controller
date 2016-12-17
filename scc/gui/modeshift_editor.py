@@ -309,15 +309,20 @@ class ModeshiftEditor(Editor):
 	
 	
 	def set_input(self, id, action, mode=None):
+		print ">>", id, mode
 		btDefault = self.builder.get_object("btDefault")
+		lblPressAlone = self.builder.get_object("lblPressAlone")
 		self.id = id
 		
 		if id in STICKS:
-			self.mode = mode or Action.AC_STICK
+			lblPressAlone.set_label(_("(no button pressed)"))
+			self.mode = mode = mode or Action.AC_STICK
 		elif id in PADS:
-			self.mode = mode or Action.AC_PAD
+			lblPressAlone.set_label(_("(no button pressed)"))
+			self.mode = mode = mode or Action.AC_PAD
 		else:
-			self.mode = mode or Action.AC_BUTTON
+			lblPressAlone.set_label(_("(pressed alone)"))
+			self.mode = mode = mode or Action.AC_BUTTON
 		
 		self.set_title("Modeshift for %s" % (id.name if id in SCButtons else str(id),))
 		
