@@ -1067,6 +1067,9 @@ class RotateInputModifier(Modifier):
 	
 	
 	def compress(self):
+		if hasattr(self.action, "set_rotation"):
+			self.action.set_rotation(self.angle * PI / -180.0)
+			return self.action
 		self.action = self.action.compress()
 		return self
 	

@@ -29,6 +29,7 @@ class RadialMenu(Menu):
 	def __init__(self,):
 		Menu.__init__(self, "osd-radial-menu")
 		self.angle = 0
+		self.rotation = 0
 	
 	
 	def create_parent(self):
@@ -37,9 +38,16 @@ class RadialMenu(Menu):
 		return self.b
 	
 	
+	def _add_arguments(self):
+		Menu._add_arguments(self)
+		self.argparser.add_argument('--rotation', type=float, default=0,
+			help="rotates input by angle (default: 0)")
+	
+	
 	def parse_argumets(self, argv):
 		self.editor = self.b.edit()
 		rv = Menu.parse_argumets(self, argv)
+		self.rotation = self.args.rotation
 		if rv:
 			self.enable_cursor()
 		return rv
@@ -154,18 +162,22 @@ class RadialMenu(Menu):
 				if self._control_equals_cancel(daemon, x, y):
 					return
 			
+			if self.rotation:
+				rx = x * cos(self.rotation) - y * sin(self.rotation)
+				ry = x * sin(self.rotation) + y * cos(self.rotation)
+				x, y = rx, ry
+			
 			max_w = self.get_allocation().width - (self.cursor.get_allocation().width * 1.0)
 			max_h = self.get_allocation().height - (self.cursor.get_allocation().height * 1.0)
-			x = ((x * 0.75 / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w
-			y = (0.5 - (y * 0.75 / (STICK_PAD_MAX * 2.0))) * max_h
+			cx = ((x * 0.75 / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w
+			cy = (0.5 - (y * 0.75 / (STICK_PAD_MAX * 2.0))) * max_h
 			
-			x -= self.cursor.get_allocation().width * 0.5
-			y -= self.cursor.get_allocation().height * 0.5
+			cx -= self.cursor.get_allocation().width * 0.5
+			cy -= self.cursor.get_allocation().height * 0.5
+			self.f.move(self.cursor, int(cx), int(cy))
 			
-			self.f.move(self.cursor, int(x), int(y))
-			x, y = data
 			if abs(x) + abs(y) > RadialMenu.MIN_DISTANCE:
-				angle = atan2(*data) * 180.0 / PI
+				angle = atan2(x, y) * 180.0 / PI
 				half_width = 180.0 / len(self.items)
 				for i in self.items:
 					if abs(degdiff(i.a, angle)) < half_width:

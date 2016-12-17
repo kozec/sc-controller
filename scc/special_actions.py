@@ -333,7 +333,7 @@ class MenuAction(Action, SpecialAction):
 			)
 	
 	
-	def whole(self, mapper, x, y, what):
+	def whole(self, mapper, x, y, what, *params):
 		if x == 0 and y == 0:
 			# Sent when pad is released - don't display menu then
 			return
@@ -348,7 +348,8 @@ class MenuAction(Action, SpecialAction):
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
 					'--confirm-with', confirm,
-					'--cancel-with', cancel.name
+					'--cancel-with', cancel.name,
+					*params
 				)
 		if what == STICK:
 			# Special case, menu is displayed only if is moved enought
@@ -359,7 +360,8 @@ class MenuAction(Action, SpecialAction):
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
 					'--confirm-with', "STICKPRESS",
-					'--cancel-with', STICK
+					'--cancel-with', STICK,
+					*params
 				)
 			self._stick_distance = distance
 
@@ -379,6 +381,25 @@ class RadialMenuAction(MenuAction):
 	"""
 	COMMAND = "radialmenu"
 	MENU_TYPE = "radialmenu"
+	
+	def __init__(self, *a, **b):
+		MenuAction.__init__(self, *a, **b)
+		self.rotation = 0
+	
+	
+	def whole(self, mapper, x, y, what):
+		if self.rotation:
+			MenuAction.whole(self, mapper, x, y, what, "--rotation", self.rotation)
+		else:
+			MenuAction.whole(self, mapper, x, y, what)
+	
+	
+	def set_rotation(self, angle):
+		self.rotation = angle
+	
+	
+	def get_compatible_modifiers(self):
+		return MenuAction.get_compatible_modifiers(self) or Action.MOD_ROTATE
 
 
 class KeyboardAction(Action, SpecialAction):
