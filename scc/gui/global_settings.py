@@ -70,6 +70,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self._recursing = True
 		(self.builder.get_object("cbInputTestMode")
 				.set_active(bool(self.app.config['enable_sniffing'])))
+		(self.builder.get_object("cbEnableSerials")
+				.set_active(not bool(self.app.config['ignore_serials'])))
 		(self.builder.get_object("cbEnableStatusIcon")
 				.set_active(bool(self.app.config['gui']['enable_status_icon'])))
 		(self.builder.get_object("cbMinimizeToStatusIcon")
@@ -251,6 +253,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.app.config['autoswitch'] = conds
 		self.app.config['autoswitch_osd'] = cbShowOSD.get_active()
 		self.app.config['enable_sniffing'] = self.builder.get_object("cbInputTestMode").get_active()
+		self.app.config['ignore_serials'] = not self.builder.get_object("cbEnableSerials").get_active()
 		self.app.config['gui']['enable_status_icon'] = self.builder.get_object("cbEnableStatusIcon").get_active()
 		self.app.config['gui']['minimize_to_status_icon'] = self.builder.get_object("cbMinimizeToStatusIcon").get_active()
 		self.app.config['gui']['autokill_daemon'] = self.builder.get_object("cbAutokillDaemon").get_active()

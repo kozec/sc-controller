@@ -1153,7 +1153,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbEnableStatusIcon">
+              <object class="GtkCheckButton" id="cbEnableSerials">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
@@ -1161,10 +1161,10 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                 <property name="draw_indicator">True</property>
                 <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
                 <child>
-                  <object class="GtkLabel" id="label29">
+                  <object class="GtkLabel" id="label32">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Enable Status (Systray) Icon</property>
+                    <property name="label" translatable="yes">Use Serial Numbers to Identify Controllers</property>
                     <property name="use_underline">True</property>
                     <property name="mnemonic_widget">cbShowOSD</property>
                     <attributes>
@@ -1176,30 +1176,6 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbMinimizeToStatusIcon">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="margin_left">30</property>
-                <property name="margin_top">5</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
-                <child>
-                  <object class="GtkLabel" id="label31">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Minimize to status icon instead closing</property>
-                    <property name="use_underline">True</property>
-                    <property name="mnemonic_widget">cbShowOSD</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
               </packing>
             </child>
             <child>
@@ -1225,7 +1201,74 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
+                <property name="top_attach">6</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbMinimizeToStatusIcon">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_left">30</property>
+                <property name="margin_top">5</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label31">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Minimize to status icon instead closing</property>
+                    <property name="use_underline">True</property>
+                    <property name="mnemonic_widget">cbShowOSD</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbEnableStatusIcon">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_top">15</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label29">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Enable Status (Systray) Icon</property>
+                    <property name="use_underline">True</property>
+                    <property name="mnemonic_widget">cbShowOSD</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
                 <property name="top_attach">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label33">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">25</property>
+                <property name="margin_right">25</property>
+                <property name="margin_top">5</property>
+                <property name="label" translatable="yes">Try disabling this option your controller stops working randomly.</property>
+                <property name="use_markup">True</property>
+                <property name="wrap">True</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
               </packing>
             </child>
           </object>
