@@ -72,7 +72,7 @@ class TiltComponent(AEComponent, BindingEditor):
 		self.editor.set_action(TiltAction(*self.actions))
 	
 	
-	def on_action_chosen(self, i, action):
+	def on_action_chosen(self, i, action, mark_changed=True):
 		self.actions[i] = action
 		self.set_button_desc(i)
 		self.update()

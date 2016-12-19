@@ -66,7 +66,7 @@ class MenuEditor(Editor):
 			self.builder.get_object("rbInProfile").set_sensitive(True)
 	
 	
-	def on_action_chosen(self, id, a):
+	def on_action_chosen(self, id, a, mark_changed=True):
 		model = self.builder.get_object("tvItems").get_model()
 		for i in model:
 			item = i[0].item

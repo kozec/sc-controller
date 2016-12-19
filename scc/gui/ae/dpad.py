@@ -132,7 +132,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		self.update()
 	
 	
-	def on_action_chosen(self, i, action):
+	def on_action_chosen(self, i, action, mark_changed=True):
 		self.actions[i] = action
 		#if action.name:
 		#	action = NameModifier(action.name, action)

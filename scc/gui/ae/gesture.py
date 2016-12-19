@@ -161,7 +161,7 @@ class GestureComponent(AEComponent):
 		self._grabber.grab(grabbed)
 	
 	
-	def on_action_chosen(self, id, action):
+	def on_action_chosen(self, id, action, mark_changed=True):
 		tvGestures = self.builder.get_object("tvGestures")
 		model, iter = tvGestures.get_selection().get_selected()
 		item = model.get_value(iter, 2)

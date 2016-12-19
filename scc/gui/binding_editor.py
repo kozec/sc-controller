@@ -59,6 +59,10 @@ class BindingEditor(object):
 				self.button_widgets[b] = ControllerGyro(self, b, use_icons, w)
 	
 	
+	def on_action_chosen(self, id, action, mark_changed=True):
+		raise TypeError("Non-overriden on_action_chosen")
+	
+	
 	def set_action(self, profile, id, action):
 		"""
 		Stores action in profile.
