@@ -60,6 +60,10 @@ class BindingEditor(object):
 	
 	
 	def on_action_chosen(self, id, action, mark_changed=True):
+		"""
+		Callback called when action editting is finished in editor.
+		Should return None or action being replaced.
+		"""
 		raise TypeError("Non-overriden on_action_chosen")
 	
 	

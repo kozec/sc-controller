@@ -344,11 +344,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		dlg.hide()
 	
 	
-	def on_profile_modified(self, *a):
+	def on_profile_modified(self, update_ui=True):
 		"""
 		Called when selected profile is modified in memory.
 		"""
-		self.profile_switchers[0].set_profile_modified(True)
+		if update_ui:
+			self.profile_switchers[0].set_profile_modified(True)
 		
 		if not self.current_file.get_path().endswith(".mod"):
 			mod = self.current_file.get_path() + ".mod"
@@ -422,11 +423,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def on_action_chosen(self, id, action, mark_changed=True):
 		before = self.set_action(self.current, id, action)
-		if before.to_string() != action.to_string():
-			# TODO: Maybe better comparison
-			self.undo.append(UndoRedo(id, before, action))
-			self.builder.get_object("btUndo").set_sensitive(True)
-		self.on_profile_modified()
+		if mark_changed:
+			if before.to_string() != action.to_string():
+				# TODO: Maybe better comparison
+				self.undo.append(UndoRedo(id, before, action))
+				self.builder.get_object("btUndo").set_sensitive(True)
+			self.on_profile_modified()
+		else:
+			self.on_profile_modified(update_ui=False)
 		return before
 	
 	

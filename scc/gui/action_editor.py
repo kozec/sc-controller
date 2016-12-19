@@ -94,9 +94,10 @@ class ActionEditor(Editor):
 		self.osd = False				# 'OSD enabled' value.
 		self.setup_widgets()
 		self.load_components()
-		self.ac_callback = callback	# This is different callback than ButtonChooser uses
+		self.ac_callback = callback		# This is different callback than ButtonChooser uses
 		Editor.install_error_css()
 		self._action = NoAction()
+		self._replaced_action = None
 		self._selected_component = None
 		self._modifiers_enabled = True
 		self._multiparams = [ None ] * 8
@@ -159,6 +160,8 @@ class ActionEditor(Editor):
 	
 	
 	def on_Dialog_destroy(self, *a):
+		cbPreview = self.builder.get_object("cbPreview")
+		cbPreview.set_active(False)
 		self.remove_added_widget()
 		if self._selected_component is not None:
 			self._selected_component.hidden()
@@ -359,7 +362,7 @@ class ActionEditor(Editor):
 				scale.set_value(default)
 	
 	
-	def on_btClear_clicked	(self, *a):
+	def on_btClear_clicked(self, *a):
 		""" Handler for clear button """
 		action = NoAction()
 		if self.ac_callback is not None:
@@ -625,6 +628,7 @@ class ActionEditor(Editor):
 		"""
 		entAction = self.builder.get_object("entAction")
 		entActionY = self.builder.get_object("entActionY")
+		cbPreview = self.builder.get_object("cbPreview")
 		btOK = self.builder.get_object("btOK")
 		
 		# Load modifiers and update UI if needed
@@ -660,6 +664,7 @@ class ActionEditor(Editor):
 					entAction.set_text(action.to_string())
 				self._set_y_field_visible(False)
 			self.enable_modifiers(self._action)
+			self.enable_preview(self._action)
 		
 		# Send changed action into selected component
 		if self._selected_component is None:
@@ -681,6 +686,37 @@ class ActionEditor(Editor):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
 			log.warning(action.to_string())
+		
+		
+		if cbPreview.get_sensitive() and cbPreview.get_active():
+			self.apply_preview(action)
+		
+		
+	def apply_preview(self, action):
+		if self._replaced_action is None:
+			self._replaced_action = self.ac_callback(self.id, action, mark_changed=False)
+		else:
+			self.ac_callback(self.id, action, mark_changed=False)
+	
+	
+	def on_cbPreview_toggled(self, cb):
+		if cb.get_active():
+			a = self.generate_modifiers(self._action, self._selected_component.NAME=="custom")
+			self.apply_preview(a)
+		elif self._replaced_action is not None:
+			self.ac_callback(self.id, self._replaced_action, mark_changed=False)
+			self._replaced_action = None
+	
+	
+	def enable_preview(self, action):
+		"""
+		Enables or disables and hides 'preview immediately' option, based on
+		if currently selected action supports it.
+		"""
+		rvPreview = self.builder.get_object("rvPreview")
+		cbPreview = self.builder.get_object("cbPreview")
+		rvPreview.set_reveal_child(action.strip().get_previewable())
+		cbPreview.set_sensitive(action.strip().get_previewable())
 	
 	
 	def enable_modifiers(self, action):

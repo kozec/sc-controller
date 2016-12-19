@@ -163,6 +163,15 @@ class Action(object):
 		return 0
 	
 	
+	def get_previewable(self):
+		"""
+		Returns True if action can be saved immediately to preview user changes.
+		Used by editor.
+		"""
+		# Not for most of actions
+		return False
+	
+	
 	def __str__(self):
 		return "<Action '%s', %s>" % (self.COMMAND, self.parameters)
 	
@@ -572,6 +581,10 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	def get_compatible_modifiers(self):
 		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_ROTATE
+	
+	
+	def get_previewable(self):
+		return True
 	
 	
 	def get_axis(self):
