@@ -134,6 +134,8 @@ class SCCDaemon(Daemon):
 			if mapper.get_controller():
 				log.debug("Turning gyrosensor ON")
 				mapper.get_controller().set_gyro_enabled(True)
+		# Release all buttons
+		mapper.release_virtual_buttons()
 		
 		# This last line kinda depends on GIL...
 		mapper.profile = p
