@@ -309,6 +309,10 @@ class MenuAction(Action, SpecialAction):
 		)
 	
 	
+	def get_previewable(self):
+		return True
+	
+	
 	def button_press(self, mapper):
 		if not self.show_with_release:
 			confirm_with = self.confirm_with

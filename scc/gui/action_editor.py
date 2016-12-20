@@ -715,8 +715,16 @@ class ActionEditor(Editor):
 		"""
 		rvPreview = self.builder.get_object("rvPreview")
 		cbPreview = self.builder.get_object("cbPreview")
-		rvPreview.set_reveal_child(action.strip().get_previewable())
-		cbPreview.set_sensitive(action.strip().get_previewable())
+		exMore = self.builder.get_object("exMore")
+		rvMore = self.builder.get_object("rvMore")
+		
+		enabled = action.strip().get_previewable()
+		rvPreview.set_reveal_child(enabled)
+		cbPreview.set_sensitive(enabled)
+		if enabled and not exMore.get_sensitive():
+			exMore.set_sensitive(True)
+			exMore.set_visible(True)
+			rvMore.set_visible(True)
 	
 	
 	def enable_modifiers(self, action):
