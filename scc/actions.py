@@ -437,6 +437,10 @@ class AxisAction(Action):
 		return (self.speed,)
 	
 	
+	def get_previewable(self):
+		return True
+	
+	
 	def _get_axis_description(self):
 		axis, neg, pos = "%s %s" % (self.id.name, _("Axis")), _("Negative"), _("Positive")
 		if self.id in AxisAction.AXIS_NAMES:
@@ -1740,6 +1744,10 @@ class XYAction(HapticEnabledAction, Action):
 		if hasattr(self.x, "set_speed"): rv[0] = self.x.get_speed()[0]
 		if hasattr(self.y, "set_speed"): rv[1] = self.y.get_speed()[0]
 		return tuple(rv)
+	
+	
+	def get_previewable(self):
+		return self.x.get_previewable() and self.y.get_previewable()
 	
 	
 	def _haptic(self, mapper, x, y):
