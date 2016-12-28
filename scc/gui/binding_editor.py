@@ -75,10 +75,11 @@ class BindingEditor(object):
 		before = NoAction()
 		if id in BUTTONS:
 			before, profile.buttons[id] = profile.buttons[id], action
-		if id == SCButtons.STICK and SCButtons.STICK in self.button_widgets:
+			self.button_widgets[id].update()
+		elif id == SCButtons.STICK and SCButtons.STICK in self.button_widgets:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[id].update()
-		if id in PRESSABLE:
+		elif id in PRESSABLE:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[id.name].update()
 		elif id in TRIGGERS:
@@ -106,7 +107,7 @@ class BindingEditor(object):
 		before = NoAction()
 		if id in BUTTONS:
 			return profile.buttons[id]
-		if id in PRESSABLE:
+		elif id in PRESSABLE:
 			return profile.buttons[id]
 		elif id in TRIGGERS:
 			return profile.triggers[id]
