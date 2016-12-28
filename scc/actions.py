@@ -1576,7 +1576,7 @@ class DPadAction(MultichildAction):
 	
 	
 	def get_compatible_modifiers(self):
-		return Action.MOD_CLICK | Action.MOD_ROTATE
+		return Action.MOD_CLICK | Action.MOD_ROTATE | Action.MOD_DEADZONE
 	
 	
 	def describe(self, context):
