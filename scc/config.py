@@ -96,6 +96,8 @@ class Config(object):
 		"icon":					None,	# Determined by magic by UI
 		"led_level":			80,		# range 0 to 100
 		"osd_alignment":		0,		# not used yet
+		"input_rotation_l":		20,		# range -180 to 180
+		"input_rotation_r":		-20,	# range -180 to 180
 	}
 	
 	
@@ -153,7 +155,11 @@ class Config(object):
 			rv = self.values['controllers'][controller_id]
 			for key in self.CONTROLLER_DEFAULTS:
 				if key not in rv:
-					rv[key] = self.CONTROLLER_DEFAULTS[key]
+					if key in ("input_rotation_l", "input_rotation_r"):
+						# Special case, just to not change behavior for existing users
+						rv[key] = 0
+					else:
+						rv[key] = self.CONTROLLER_DEFAULTS[key]
 			return rv
 		# Create new config
 		rv = self.values['controllers'][controller_id] = {

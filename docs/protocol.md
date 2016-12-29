@@ -149,8 +149,9 @@ If loading fails, daemon responds with `Fail: ....` message where error with ent
 
 #### `Reconfigure.`
 Asks daemon to reload configuration file (`~/.config/scc/config.json`).
-Currently, daemon doesn't really reads this file, but sends `Reconfigured.` message
-to all connected clients, what should cause them to reload configuration file as well. 
+Daemon reloads and reapplies all controller configs and sends `Reconfigured.`
+message to all connected clients, what causes them to reload configuration
+file as well.
 Daemon responds with `OK.`
 
 #### `Register: value`

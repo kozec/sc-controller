@@ -689,14 +689,20 @@ class SCCDaemon(Daemon):
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Reconfigure."):
 			with self.lock:
+				# Load config
+				cfg = Config()
+				# Reconfigure connected controllers
+				for c in self.controllers:
+					c.apply_config(cfg.get_controller_config(c.get_id()))
 				# Start or stop scc-autoswitch-daemon as needed
-				need_autoswitch_daemon = len(Config()["autoswitch"]) > 0
+				need_autoswitch_daemon = len(cfg["autoswitch"]) > 0
 				if need_autoswitch_daemon and self.xdisplay and not self.autoswitch_daemon:
 					self.subprocs.append(Subprocess("scc-autoswitch-daemon", True))
 				elif not need_autoswitch_daemon and self.autoswitch_daemon:
 					self._remove_subproccess("scc-autoswitch-daemon")
 					self.autoswitch_daemon.close()
 					self.autoswitch_daemon = None
+				# Respond
 				try:
 					client.wfile.write(b"OK.\n")
 					self._send_to_all("Reconfigured.\n".encode("utf-8"))

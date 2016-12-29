@@ -6,6 +6,7 @@ from scc.constants import SCButtons, HapticPos
 from scc.controller import Controller
 from scc.config import Config
 from collections import namedtuple
+from math import pi as PI, sin, cos
 import struct, time, logging
 
 VENDOR_ID = 0x28de
@@ -168,6 +169,8 @@ class SCController(Controller):
 		self._endpoint = endpoint
 		self._idle_timeout = 600
 		self._enable_gyros = False
+		self._input_rotation_l = 0
+		self._input_rotation_r = 0
 		self._led_level = 10
 		self._serial = "0000000000"
 		self._old_state = SCI_NULL
@@ -185,8 +188,26 @@ class SCController(Controller):
 	def input(self, idata):
 		old_state, self._old_state = self._old_state, idata
 		if self.mapper:
-			# TODO: Swapping entire input method instead of doing this
-			# may be faster. Need to test that.
+			if self._input_rotation_l:
+				lx, ly = idata.lpad_x, idata.lpad_y
+				rx, ry = idata.rpad_x, idata.rpad_y
+				if idata.buttons & SCButtons.LPADTOUCH:
+					s, c = sin(self._input_rotation_l), cos(self._input_rotation_l)
+					lx = idata.lpad_x * c - idata.lpad_y * s
+					ly = idata.lpad_x * s + idata.lpad_y * c
+				s, c = sin(self._input_rotation_r), cos(self._input_rotation_r)
+				rx = idata.rpad_x * c - idata.rpad_y * s
+				ry = idata.rpad_x * s + idata.rpad_y * c
+				
+				# TODO: This is awfull :(
+				idata = ControllerInput(
+						idata.type, idata.status, idata.seq, idata.buttons,
+						idata.ltrig, idata.rtrig,
+						lx, ly, rx, ry,
+						idata.gpitch, idata.groll, idata.gyaw,
+						idata.q1, idata.q2, idata.q3, idata.q4
+				)
+			
 			self.mapper.input(self, time.time(), old_state, idata)
 	
 	
@@ -227,6 +248,8 @@ class SCController(Controller):
 	
 	def apply_config(self, config):
 		self.set_led_level(float(config['led_level']))
+		self._input_rotation_l = float(config['input_rotation_l']) * PI / -180.0
+		self._input_rotation_r = float(config['input_rotation_r']) * PI / -180.0
 	
 	
 	def disconnected(self):
@@ -292,13 +315,15 @@ class SCController(Controller):
 	
 	
 	def set_led_level(self, level):
-		self._led_level = min(100, int(level)) & 0xFF
-		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBB59x',
-			SCPacketType.CONFIGURE,
-			0x03,
-			SCConfigType.LED,
-			self._led_level
-		))
+		level = min(100, int(level)) & 0xFF
+		if self._led_level != level:
+			self._led_level = level
+			self._driver.overwrite_control(self._ccidx, struct.pack('>BBBB59x',
+				SCPacketType.CONFIGURE,
+				0x03,
+				SCConfigType.LED,
+				self._led_level
+			))
 	
 	
 	def set_gyro_enabled(self, enabled):	

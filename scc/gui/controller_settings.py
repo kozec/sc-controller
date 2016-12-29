@@ -67,16 +67,35 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		self._eh_ids = ()
 	
 	
+	def on_btClearLeftRotation_clicked(self, *a):
+		sclLeftRotation = self.builder.get_object("sclLeftRotation")
+		sclLeftRotation.set_value(20)
+	
+	
+	def on_btClearRightRotation_clicked(self, *a):
+		sclRightRotation = self.builder.get_object("sclRightRotation")
+		sclRightRotation.set_value(-20)
+	
+	
+	def on_rotation_value_changed(self, *a):
+		if self._recursing: return
+		self.save_config()
+	
+	
 	def load_settings(self):
 		txName = self.builder.get_object("txName")
 		sclLED = self.builder.get_object("sclLED")
 		cbAlignOSD = self.builder.get_object("cbAlignOSD")
+		sclLeftRotation = self.builder.get_object("sclLeftRotation")
+		sclRightRotation = self.builder.get_object("sclRightRotation")
 		
 		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		
 		self._recursing = True
 		txName.set_text(cfg["name"])
 		sclLED.set_value(float(cfg["led_level"]))
+		sclLeftRotation.set_value(float(cfg["input_rotation_l"]))
+		sclRightRotation.set_value(float(cfg["input_rotation_r"]))
 		cbAlignOSD.set_active(cfg["osd_alignment"] != 0)
 		self._recursing = False
 	
@@ -90,12 +109,16 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		sclLED = self.builder.get_object("sclLED")
 		cbIcon = self.builder.get_object("cbIcon")
 		cbAlignOSD = self.builder.get_object("cbAlignOSD")
+		sclLeftRotation = self.builder.get_object("sclLeftRotation")
+		sclRightRotation = self.builder.get_object("sclRightRotation")
 		
 		# Store data
 		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		cfg["name"] = txName.get_text()
 		cfg["led_level"] = sclLED.get_value()
 		cfg["osd_alignment"] = 1 if cbAlignOSD.get_active() else 0
+		cfg["input_rotation_l"] = sclLeftRotation.get_value()
+		cfg["input_rotation_r"] = sclRightRotation.get_value()
 		try:
 			cfg["icon"] = cbIcon.get_model().get_value(cbIcon.get_active_iter(), 1)
 			if self.profile_switcher:
@@ -110,7 +133,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 	
 	def schedule_save_config(self):
 		"""
-		Schedules config saving in 3s.
+		Schedules config saving in 1s.
 		Done to prevent literal madness when user moves slider.
 		"""
 		def cb(*a):
@@ -119,7 +142,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 			
 		if self._timer is not None:
 			GLib.source_remove(self._timer)
-		self._timer = GLib.timeout_add_seconds(3, cb)	
+		self._timer = GLib.timeout_add_seconds(1, cb)	
 	
 	
 	def on_sclLED_value_changed(self, scale, *a):
