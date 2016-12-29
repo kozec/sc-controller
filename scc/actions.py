@@ -540,6 +540,11 @@ class HatAction(AxisAction):
 			return "%s %s" % (axis, neg)
 		else:
 			return "%s %s" % (axis, pos)
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s(%s)" % (self.COMMAND, self.id)
+
 
 class HatUpAction(HatAction):
 	COMMAND = "hatup"
