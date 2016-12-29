@@ -212,7 +212,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkGrid">
+          <object class="GtkGrid" id="grid28">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
