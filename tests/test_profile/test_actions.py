@@ -65,10 +65,10 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).min == 0
 		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).min == 0
 		
-		assert parser.from_json_data({ 'action' : 'hatup(ABS_X)' }).max == STICK_PAD_MAX - 1
-		assert parser.from_json_data({ 'action' : 'hatdown(ABS_X)' }).max == STICK_PAD_MIN + 1
-		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).max == STICK_PAD_MAX - 1
-		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).max == STICK_PAD_MIN + 1
+		assert parser.from_json_data({ 'action' : 'hatup(ABS_X)' }).max == STICK_PAD_MIN + 1
+		assert parser.from_json_data({ 'action' : 'hatdown(ABS_X)' }).max == STICK_PAD_MAX - 1
+		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).max == STICK_PAD_MIN + 1
+		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).max == STICK_PAD_MAX - 1
 	
 	
 	def test_mouse(self):
