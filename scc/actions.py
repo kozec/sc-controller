@@ -468,12 +468,12 @@ class AxisAction(Action):
 	
 	
 	def button_press(self, mapper):
-		mapper.gamepad.axisEvent(self.id, self.max)
+		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, self.max))
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
 	def button_release(self, mapper):
-		mapper.gamepad.axisEvent(self.id, self.min)
+		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, self.min))
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
@@ -545,7 +545,7 @@ class HatUpAction(HatAction):
 	COMMAND = "hatup"
 	def __init__(self, id, *a):
 		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
-	
+
 class HatDownAction(HatAction):
 	COMMAND = "hatdown"
 	def __init__(self, id, *a):
