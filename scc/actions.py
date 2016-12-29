@@ -549,22 +549,22 @@ class HatAction(AxisAction):
 class HatUpAction(HatAction):
 	COMMAND = "hatup"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
+		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
 
 class HatDownAction(HatAction):
 	COMMAND = "hatdown"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
+		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
 
 class HatLeftAction(HatAction):
 	COMMAND = "hatleft"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
+		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
 	
 class HatRightAction(HatAction):
 	COMMAND = "hatright"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
+		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
 
 
 class MouseAction(HapticEnabledAction, Action):
