@@ -193,11 +193,11 @@ class SCController(Controller):
 				rx, ry = idata.rpad_x, idata.rpad_y
 				if idata.buttons & SCButtons.LPADTOUCH:
 					s, c = sin(self._input_rotation_l), cos(self._input_rotation_l)
-					lx = idata.lpad_x * c - idata.lpad_y * s
-					ly = idata.lpad_x * s + idata.lpad_y * c
+					lx = int(idata.lpad_x * c - idata.lpad_y * s)
+					ly = int(idata.lpad_x * s + idata.lpad_y * c)
 				s, c = sin(self._input_rotation_r), cos(self._input_rotation_r)
-				rx = idata.rpad_x * c - idata.rpad_y * s
-				ry = idata.rpad_x * s + idata.rpad_y * c
+				rx = int(idata.rpad_x * c - idata.rpad_y * s)
+				ry = int(idata.rpad_x * s + idata.rpad_y * c)
 				
 				# TODO: This is awfull :(
 				idata = ControllerInput(
