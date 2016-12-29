@@ -90,6 +90,15 @@ class Config(object):
 		"ignore_serials" : True,
 	}
 	
+	CONTROLLER_DEFAULTS = {
+		# Defaults for controller config
+		"name":					None,	# Filled with controller ID on runtime
+		"icon":					None,	# Determined by magic by UI
+		"led_level":			80,		# range 0 to 100
+		"osd_alignment":		0,		# not used yet
+	}
+	
+	
 	def __init__(self):
 		self.filename = os.path.join(get_config_path(), "config.json")
 		self.reload()
@@ -131,6 +140,26 @@ class Config(object):
 					a["action"] = ChangeProfileAction(str(a["profile"])).to_string()
 					del a["profile"]
 					rv = True
+		return rv
+	
+	
+	def get_controller_config(self, controller_id):
+		"""
+		Returns self['controllers'][controller_id], creating new node populated
+		with defaults if there is none.
+		"""
+		if controller_id in self.values['controllers']:
+			# Check values in existing config
+			rv = self.values['controllers'][controller_id]
+			for key in self.CONTROLLER_DEFAULTS:
+				if key not in rv:
+					rv[key] = self.CONTROLLER_DEFAULTS[key]
+			return rv
+		# Create new config
+		rv = self.values['controllers'][controller_id] = {
+			key : self.CONTROLLER_DEFAULTS[key] for key in self.CONTROLLER_DEFAULTS
+		}
+		rv["name"] = controller_id
 		return rv
 	
 	

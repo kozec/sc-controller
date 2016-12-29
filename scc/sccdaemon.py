@@ -409,15 +409,7 @@ class SCCDaemon(Daemon):
 			log.debug("Turning gyrosensor ON")
 			c.set_gyro_enabled(True)
 		
-		led_level = 80	# Default
-		try:
-			cfg = Config()['controllers'][c.get_id()]
-			led_level = float(cfg['led_level'])
-		except Exception:
-			# Invalid configuration or no configuration yet
-			pass
-		c.set_led_level(led_level)
-		
+		c.apply_config(Config().get_controller_config(c.get_id()))
 		self.controllers.append(c)
 		log.debug("Controller added: %s", c)
 		with self.lock:

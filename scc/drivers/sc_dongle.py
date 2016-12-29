@@ -225,6 +225,10 @@ class SCController(Controller):
 		self._driver.daemon.add_controller(self)
 	
 	
+	def apply_config(self, config):
+		self.set_led_level(float(config['led_level']))
+	
+	
 	def disconnected(self):
 		# If ignore_serials config option is enabled, fake serial used by this
 		# controller is stored away and reused when next controller is connected

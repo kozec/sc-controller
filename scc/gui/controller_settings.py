@@ -54,7 +54,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 				continue
 			lstIcons.append(( path, filename, name, pb ))
 		
-		cfg = self.app.config["controllers"][self.controller.get_id()]
+		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		
 		if "icon" in cfg:
 			# Should be always
@@ -72,10 +72,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		sclLED = self.builder.get_object("sclLED")
 		cbAlignOSD = self.builder.get_object("cbAlignOSD")
 		
-		cfg = self.app.config["controllers"][self.controller.get_id()]
-		if "name" not in cfg: cfg["name"] = self.controller.get_id()
-		if "led_level" not in cfg: cfg["led_level"] = 80
-		if "osd_alignment" not in cfg: cfg["osd_alignment"] = 0
+		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		
 		self._recursing = True
 		txName.set_text(cfg["name"])
@@ -95,7 +92,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		cbAlignOSD = self.builder.get_object("cbAlignOSD")
 		
 		# Store data
-		cfg = self.app.config["controllers"][self.controller.get_id()]
+		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		cfg["name"] = txName.get_text()
 		cfg["led_level"] = sclLED.get_value()
 		cfg["osd_alignment"] = 1 if cbAlignOSD.get_active() else 0
@@ -127,7 +124,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 	
 	def on_sclLED_value_changed(self, scale, *a):
 		if self._recursing: return
-		cfg = self.app.config["controllers"][self.controller.get_id()]
+		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		cfg["led_level"] = scale.get_value()
 		try:
 			self.controller.set_led_level(scale.get_value())

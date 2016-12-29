@@ -268,12 +268,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			self._signal = None
 		self._controller = c
 		if c:
-			name = c.get_id()
-			try:
-				name = self.config["controllers"][c.get_id()]["name"]
-			except:
-				# Name not defined
-				pass
+			name = self.config.get_controller_config(c.get_id())["name"]
 			self._icon.set_tooltip_text(name)
 			self._signal = c.connect('profile-changed', self.on_profile_changed)
 		else:
@@ -294,8 +289,9 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			return
 		
 		id = self._controller.get_id()
-		if id in self.config['controllers'] and "icon" in self.config['controllers'][id]:
-			icon = find_controller_icon(self.config['controllers'][id]['icon'])
+		cfg = self.config.get_controller_config(id)
+		if cfg["icon"]:
+			icon = find_controller_icon(cfg["icon"])
 			self._icon.set_from_file(icon)
 		else:
 			log.debug("There is no icon for controller %s, auto assinging one", id)
@@ -322,9 +318,8 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 					# All icons are already used, assign anything
 					icon = random.choice(icons)
 				log.debug("Auto-assigned icon %s for controller %s", icon, id)
-				if id not in self.config['controllers']:
-					self.config['controllers'][id] = {}
-				self.config['controllers'][id]["icon"] = icon
+				cfg = self.config.get_controller_config(id)
+				cfg["icon"] = icon
 				self.config.save()
 				GLib.idle_add(self.update_icon)
 			

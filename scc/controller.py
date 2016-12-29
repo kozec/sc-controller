@@ -40,6 +40,7 @@ class Controller(object):
 		self._id_is_persistent = False
 		next_id += 1
 	
+	
 	def get_type(self):
 		"""
 		This method has to return type identifier - short string without spaces
@@ -90,6 +91,16 @@ class Controller(object):
 	def get_mapper(self):
 		""" Returns mapper set for controller """
 		return self.mapper
+	
+	
+	def apply_config(self, config):
+		"""
+		Called from daemon to apply controller configuration stored
+		in config file.
+		
+		Does nothing by default.
+		"""
+		pass
 	
 	
 	def set_led_level(self, level):
