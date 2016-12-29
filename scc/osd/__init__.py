@@ -193,7 +193,7 @@ class OSDWindow(Gtk.Window):
 		active_window = screen.get_active_window()
 		if active_window:
 			monitor = screen.get_monitor_at_window(active_window)
-			if monitor:
+			if monitor is not None:
 				geometry = screen.get_monitor_geometry(monitor)
 				x = x + geometry.x
 				y = y + geometry.y + geometry.height - self.get_window().get_height()
