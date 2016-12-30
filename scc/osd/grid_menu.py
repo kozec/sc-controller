@@ -42,7 +42,6 @@ class GridMenu(Menu):
 	
 	
 	def on_stick_direction(self, trash, x, y):
-		print x, y
 		if x != 0:
 			self.next_item(-x)
 		elif y != 0:

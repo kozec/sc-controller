@@ -224,6 +224,10 @@
         <col id="0" translatable="yes">Radial</col>
         <col id="1">radialmenu</col>
       </row>
+      <row>
+        <col id="0" translatable="yes">Horizontal Menu</col>
+        <col id="1">hmenu</col>
+      </row>
     </data>
   </object>
   <object class="GtkListStore" id="lstProfile">

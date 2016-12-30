@@ -7,7 +7,8 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.special_actions import MenuAction, GridMenuAction, RadialMenuAction
+from scc.special_actions import MenuAction, HorizontalMenuAction
+from scc.special_actions import RadialMenuAction, GridMenuAction
 from scc.special_actions import PositionModifier
 from scc.constants import SCButtons, SAME
 from scc.actions import NoAction
@@ -61,6 +62,8 @@ class MenuActionCofC(UserDataManager):
 		"""
 		if isinstance(action, GridMenuAction):
 			return "gridmenu"
+		elif isinstance(action, HorizontalMenuAction):
+			return "hmenu"
 		elif isinstance(action, RadialMenuAction):
 			return "radialmenu"
 		else:
@@ -220,6 +223,9 @@ class MenuActionCofC(UserDataManager):
 			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "radialmenu":
 				# Circular menu
 				action = RadialMenuAction(*params)
+			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "hmenu":
+				# Horizontal menu
+				action = HorizontalMenuAction(*params)
 			else:
 				# Normal menu
 				action = MenuAction(*params)

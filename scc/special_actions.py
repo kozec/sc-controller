@@ -370,6 +370,14 @@ class MenuAction(Action, SpecialAction):
 			self._stick_distance = distance
 
 
+class HorizontalMenuAction(MenuAction):
+	"""
+	Same as menu, but packed as row
+	"""
+	COMMAND = "hmenu"
+	MENU_TYPE = "hmenu"
+
+
 class GridMenuAction(MenuAction):
 	"""
 	Same as menu, but displayed in grid

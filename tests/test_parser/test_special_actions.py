@@ -4,7 +4,7 @@ from scc.special_actions import *
 from . import _parses_as_itself, parser
 import inspect
 
-MENU_CLASSES = MenuAction, GridMenuAction, RadialMenuAction
+MENU_CLASSES = MenuAction, HorizontalMenuAction, GridMenuAction, RadialMenuAction
 
 class TestSpecialActions(object):
 	

@@ -203,6 +203,10 @@ relative to `~/.config/scc/menus` or `/usr/share/scc/default_menus/`, whichever
 exists, in that order.
 
 
+#### <a name="hmenu"></a> hmenu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
+Same as `menu`, but packed in one row.
+
+
 #### <a name="gridmenu"></a> gridmenu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
 Same as `menu`, but displays items in grid.
 

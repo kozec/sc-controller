@@ -71,7 +71,7 @@ Indicates sucess to client that sent request.
 
 ### `OSD: tool param1 param2...`
 Send to scc-osd-daemon when osd-related action is requested.
-*tool* can be *'message'*, *'menu'*, *'gridmenu'*,*'radialmenu'* or *'gesture'*
+*tool* can be *'message'*, *'menu'*, *'hmenu'*, *'gridmenu'*,*'radialmenu'* or *'gesture'*
 *params* are same as command-line arguments for scc-osd-* script with that name.
 
 #### `PID: xyz`
