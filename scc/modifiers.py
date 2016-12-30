@@ -8,7 +8,8 @@ For example, click() modifier executes action only if pad is pressed.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, MouseAction, XYAction, AxisAction, NoAction
+from scc.actions import Action, MouseAction, XYAction, AxisAction
+from scc.actions import NoAction, HapticEnabledAction
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
@@ -251,7 +252,7 @@ class ClickModifier(Modifier):
 			return self.action.whole(mapper, 0, 0, what)
 
 
-class BallModifier(Modifier):
+class BallModifier(Modifier, HapticEnabledAction):
 	"""
 	Emulates ball-like movement with inertia and friction.
 	
@@ -262,9 +263,14 @@ class BallModifier(Modifier):
 	"""
 	COMMAND = "ball"
 	PROFILE_KEY_PRIORITY = -5
+	HAPTIC_FACTOR = 60.0	# Just magic number
 	
 	DEFAULT_FRICTION = 10.0
 	DEFAULT_MEAN_LEN = 10
+	
+	def __init__(self, *params):
+		Modifier.__init__(self, *params)
+		HapticEnabledAction.__init__(self)
 	
 	
 	def _mod_init(self, friction=DEFAULT_FRICTION, mass=80.0,
@@ -273,6 +279,7 @@ class BallModifier(Modifier):
 		self.friction = friction
 		self._xvel = 0.0
 		self._yvel = 0.0
+		self._travelled = 0
 		self._ampli  = ampli
 		self._degree = degree
 		self._radscale = (degree * PI / 180) / ampli
@@ -287,6 +294,7 @@ class BallModifier(Modifier):
 	
 	
 	def set_speed(self, x, y, *a):
+		print "SASA N SET", x, y
 		self.speed = (x, y)
 	
 	
@@ -358,6 +366,13 @@ class BallModifier(Modifier):
 		
 		if dx or dy:
 			self.action.change(mapper, dx * self.speed[0], dy * self.speed[1])
+			if self.haptic:
+				distance = sqrt(dx * dx + dy * dy)
+				if distance * MouseAction.HAPTIC_FACTOR > self.haptic.frequency:
+					self._travelled += distance
+					if self._travelled > self.haptic.frequency:
+						self._travelled = 0
+						mapper.send_feedback(self.haptic)
 			mapper.schedule(0, self._roll)
 	
 	
@@ -418,6 +433,20 @@ class BallModifier(Modifier):
 			self._old_pos = x, y
 		elif mapper.was_touched(what):
 			self._roll(mapper)
+	
+	
+	def set_haptic(self, hd):
+		if self.action and hasattr(self.action, "set_haptic"):
+			self.action.set_haptic(hd)
+		else:
+			HapticEnabledAction.set_haptic(self, hd)
+	
+	
+	def get_haptic(self):
+		if self.action and hasattr(self.action, "get_haptic"):
+			return self.action.get_haptic()
+		else:
+			return HapticEnabledAction.get_haptic(self)
 
 
 class DeadzoneModifier(Modifier):
@@ -993,8 +1022,11 @@ class FeedbackModifier(Modifier):
 	
 	def _mod_init(self, position, amplitude=512, frequency=4, period=1024, count=1):
 		self.haptic = HapticData(position, amplitude, frequency, period, count)
-		if self.action and hasattr(self.action.strip(), "set_haptic"):
-			self.action.strip().set_haptic(self.haptic)
+		if self.action:
+			if hasattr(self.action, "set_haptic"):
+				self.action.set_haptic(self.haptic)
+			elif hasattr(self.action.strip(), "set_haptic"):
+				self.action.strip().set_haptic(self.haptic)
 	
 	
 	def encode(self):

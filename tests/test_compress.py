@@ -86,7 +86,8 @@ CASES = {
 	},
 	'ball' : {
 		'action' : 'ball(XY(axis(Axes.ABS_RX), axis(Axes.ABS_RY)))',
-		'sensitivity' : (2.0, 3.0)
+		'sensitivity' : (2.0, 3.0),
+		'feedback' : ('BOTH',)
 	}
 }
 
@@ -149,7 +150,11 @@ class TestCompress(object):
 			if 'sensitivity' in CASES[case]:
 				print "Testing 'sensitivity' on %s" % (case,)
 				a = parser.from_json_data(CASES[case]).compress()
-				assert a.get_speed() == CASES[case]['sensitivity']
+				assert (
+					a.get_speed() == CASES[case]['sensitivity']
+					or
+					a.strip().get_speed() == CASES[case]['sensitivity']
+				)
 	
 	
 	def test_feedback(self):
