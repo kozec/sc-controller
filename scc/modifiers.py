@@ -60,6 +60,7 @@ class Modifier(Action):
 					'\n' if '\n' in childstr else ' ',
 					childstr
 				)
+			return "%s%s(%s)" % ( " " * pad, self.COMMAND, childstr.strip() )
 		childstr = self.action.to_string(False, pad)
 		if len(params) > 0:
 			return "%s%s(%s, %s)" % (

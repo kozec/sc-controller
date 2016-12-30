@@ -556,6 +556,19 @@ class ActionEditor(Editor):
 		return False
 	
 	
+	@staticmethod
+	def strip_modifiers(action):
+		"""
+		Returns action stripped of all modifiers that are editable by editor.
+		"""
+		while action:
+			if ActionEditor.is_editable_modifier(action):
+				action = action.action
+			else:
+				return action
+		return action
+	
+	
 	def load_modifiers(self, action, index=-1):
 		"""
 		Parses action for modifiers and updates UI accordingly.
@@ -670,7 +683,7 @@ class ActionEditor(Editor):
 		if self._selected_component is None:
 			for component in reversed(sorted(self.components, key = lambda a : a.PRIORITY)):
 				if (component.CTXS & self._mode) != 0:
-					if component.handles(self._mode, action.strip()):
+					if component.handles(self._mode, ActionEditor.strip_modifiers(action)):
 						self._selected_component = component
 						break
 			if isinstance(action, InvalidAction):
@@ -682,7 +695,7 @@ class ActionEditor(Editor):
 					self.c_buttons[self._selected_component].set_active(True)
 			if isinstance(action, InvalidAction):
 				self._selected_component.set_action(self._mode, action)
-		elif not self._selected_component.handles(self._mode, action.strip()):
+		elif not self._selected_component.handles(self._mode, ActionEditor.strip_modifiers(action)):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
 			log.warning(action.to_string())

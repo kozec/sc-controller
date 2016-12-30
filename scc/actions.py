@@ -287,6 +287,15 @@ class Action(object):
 		log.warn("Action %s can't handle whole stick event", self.__class__.__name__)
 	
 	
+	def change(self, mapper, dx, dy):
+		"""
+		Called from BallModifier while virtual "ball" is rolling.
+		
+		Passed to 'whole' by default.
+		"""
+		self.whole(mapper, dx, dy, None)
+	
+	
 	def strip_defaults(self):
 		"""
 		Returns self.parameters list with all default values stripped from right
@@ -1613,6 +1622,10 @@ class DPadAction(MultichildAction):
 				if self.actions[side[i]] is not None:
 					self.actions[side[i]].button_press(mapper)
 				self.dpad_state[i] = side[i]
+	
+	
+	def change(self, mapper, dx, dy):
+		self.whole(mapper, dx, -dy, None)
 
 
 class DPad8Action(DPadAction):
