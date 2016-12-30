@@ -1557,7 +1557,7 @@ class DPadAction(MultichildAction):
 	
 	def __init__(self, *actions):
 		MultichildAction.__init__(self, *actions)
-		self.actions = ensure_size(4, actions)
+		self.actions = ensure_size(4, actions, NoAction())
 		self.eight = False
 		self.dpad_state = [ None, None ]	# X, Y
 	
@@ -1635,7 +1635,7 @@ class DPad8Action(DPadAction):
 
 	def __init__(self, *actions):
 		DPadAction.__init__(self, *actions)
-		self.actions = ensure_size(8, actions)
+		self.actions = ensure_size(8, actions, NoAction())
 		self.eight = True
 	
 	def describe(self, context):
