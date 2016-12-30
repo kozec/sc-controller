@@ -1,4 +1,11 @@
 #!/usr/bin/env python2
+"""
+SC Controller - Steam Controller Wireless Receiver (aka Dongle) Driver
+
+Called and used when Dongle is detected on USB bus.
+Handles one or multiple controllers connected to dongle.
+"""
+
 from scc.lib import usb1
 from scc.lib import IntEnum
 from scc.drivers.usb import USBDevice, register_hotplug_device
