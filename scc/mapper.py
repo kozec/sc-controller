@@ -80,8 +80,8 @@ class Mapper(object):
 				# Out of axes
 				break
 			i += 1
-		return UInput(vendor=vendor, product=product, name=name, keys=keys,
-			axes=axes, rels=[])
+		return UInput(vendor=vendor, product=product, version=1, name=name,
+			keys=keys, axes=axes, rels=[])
 	
 	
 	def get_gamepad_name(self):

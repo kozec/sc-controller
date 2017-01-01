@@ -45,6 +45,7 @@ int uinput_init(
 	int	 keyboard,
 	__u16   vendor,
 	__u16   product,
+	__u16   version,
 	char *  name)
 {
 	struct uinput_user_dev uidev;
@@ -61,7 +62,7 @@ int uinput_init(
 	uidev.id.bustype = BUS_USB;
 	uidev.id.vendor = vendor;
 	uidev.id.product = product;
-	uidev.id.version = 1;
+	uidev.id.version = version;
 
 	/* Key Event initialisation */
 	if (key_len > 0 && ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0) {
