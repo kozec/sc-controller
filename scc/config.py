@@ -41,6 +41,7 @@ class Config(object):
 		"output": {
 			'vendor'	: '0x045e',
 			'product'	: '0x028e',
+			'version'	: '0x110',
 			'name'		: "Microsoft X-Box 360 pad",
 			'buttons'	: 11,
 			'axes'	: [
@@ -118,6 +119,23 @@ class Config(object):
 			self.save()
 	
 	
+	def _check_dict(self, values, defaults):
+		"""
+		Recursivelly checks if 'config' contains all keys in 'defaults'.
+		Creates keys with default values where missing.
+		
+		Returns True if anything was changed.
+		"""
+		rv = False
+		for d in defaults:
+			if d not in values:
+				values[d] = defaults[d]
+				rv = True
+			if type(values[d]) == dict:
+				rv = self._check_dict(values[d], defaults[d]) or rv
+		return rv
+	
+	
 	def check_values(self):
 		"""
 		Check if all required values are in place and fill by default
@@ -125,16 +143,7 @@ class Config(object):
 		
 		Returns True if anything gets changed.
 		"""
-		rv = False
-		for d in self.DEFAULTS:
-			if d not in self.values:
-				self.values[d] = self.DEFAULTS[d]
-				rv = True
-		# Special check for nested dicts
-		for key in ("osd_colors", "osk_colors", "gui"):
-			if len(self.DEFAULTS[key]) != len(self.values[key]):
-				src = self.DEFAULTS[key]
-				self.values[key] = { k:src[k] for k in src }
+		rv = self._check_dict(self.values, self.DEFAULTS)
 		# Special check for autoswitcher after v0.2.17
 		if "autoswitch" in self.values:
 			for a in self.values["autoswitch"]:

@@ -67,6 +67,7 @@ class Mapper(object):
 		keys = ALL_BUTTONS[0:cfg["output"]["buttons"]]
 		vendor = int(cfg["output"]["vendor"], 16)
 		product = int(cfg["output"]["product"], 16)
+		version = int(cfg["output"]["version"], 16)
 		name = cfg["output"]["name"]
 		axes = []
 		i = 0
@@ -80,8 +81,8 @@ class Mapper(object):
 				# Out of axes
 				break
 			i += 1
-		return UInput(vendor=vendor, product=product, version=1, name=name,
-			keys=keys, axes=axes, rels=[])
+		return UInput(vendor=vendor, product=product, version=version,
+			name=name, keys=keys, axes=axes, rels=[])
 	
 	
 	def get_gamepad_name(self):
