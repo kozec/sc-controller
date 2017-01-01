@@ -216,7 +216,7 @@ class UInput(object):
 		self._lib = ctypes.CDLL(lib)
 		
 		try:
-			if self._lib.uinput_module_version() != 1:
+			if self._lib.uinput_module_version() != 2:
 				raise Exception()
 		except:
 			import sys

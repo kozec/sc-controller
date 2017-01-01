@@ -138,7 +138,7 @@ int uinput_init(
 }
 
 const int uinput_module_version() {
-	return 1;
+	return 2;
 }
 
 
