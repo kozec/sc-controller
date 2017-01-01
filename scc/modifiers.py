@@ -1113,3 +1113,65 @@ class RotateInputModifier(Modifier):
 		rx = x * cos(angle) - y * sin(angle)
 		ry = x * sin(angle) + y * cos(angle)
 		return self.action.whole(mapper, rx, ry, what)
+
+
+class FilterModifier(Modifier):
+	"""
+	Filters-out small movements
+	"""
+	COMMAND = "filter"
+	PROFILE_KEY_PRIORITY = 11	# Before sensitivity
+	
+	def _mod_init(self, level):
+		self.level = level
+		# Level needs to be fairly large number, but
+		# UI loks better with small floats.
+		self._level_m = level * 10000
+		# When distance is larger than 'level' and movement is started,
+		# it keeps going until travel distance is smaller than 1/3 of 'level'
+		self._level_s = self._level_m / 3
+		self._old_pos = None
+		self._moving = False
+	
+	
+	def __str__(self):
+		return "<Filtered %s>" % (self.action,)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return "%s (filtered)" % (self.action.describe(context),)
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[FilterModifier.COMMAND] = self.level
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return FilterModifier(data[FilterModifier.COMMAND], a)
+	
+	
+	def whole(self, mapper, x, y, what):
+		if mapper.is_touched(what):
+			if mapper.was_touched(what):
+				if self._old_pos:
+					dx = x - self._old_pos[0]
+					dy = y - self._old_pos[1]
+					d = dx * dx + dy * dy
+					if self._moving:
+						if d < self._level_s:
+							self._moving = False
+						self.action.whole(mapper, x, y, what)
+					else:
+						if d > self._level_m:
+							self._moving = True
+							self.action.whole(mapper, x, y, what)
+			else:
+				self.action.whole(mapper, x, y, what)
+			self._old_pos = x, y
+		else:
+			self.action.whole(mapper, x, y, what)
+			self._moving = False
