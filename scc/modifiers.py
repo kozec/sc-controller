@@ -1124,13 +1124,8 @@ class FilterModifier(Modifier):
 	
 	def _mod_init(self, level):
 		self.level = level
-		# Level needs to be fairly large number, but
-		# UI loks better with small floats.
-		self._level_m = level * 10000
-		# When distance is larger than 'level' and movement is started,
-		# it keeps going until travel distance is smaller than 1/3 of 'level'
-		self._level_s = self._level_m / 3
-		self._old_pos = None
+		self._deq = deque(maxlen=level)
+		self._last_pos = 0
 		self._moving = False
 	
 	
@@ -1154,24 +1149,22 @@ class FilterModifier(Modifier):
 		return FilterModifier(data[FilterModifier.COMMAND], a)
 	
 	
+	def _get_pos(self):
+		""" Computes average x,y from all accumulated positions """
+		x, y = reduce(lambda (x1, y1), (x2, y2) : (x1+x2, y1+y2), self._deq, (0, 0))
+		return x / len(self._deq), y / len(self._deq)
+	
+	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
-			if mapper.was_touched(what):
-				if self._old_pos:
-					dx = x - self._old_pos[0]
-					dy = y - self._old_pos[1]
-					d = dx * dx + dy * dy
-					if self._moving:
-						if d < self._level_s:
-							self._moving = False
-						self.action.whole(mapper, x, y, what)
-					else:
-						if d > self._level_m:
-							self._moving = True
-							self.action.whole(mapper, x, y, what)
-			else:
+			self._deq.append(( x, y ))
+			x, y = self._get_pos()
+			if abs(x + y - self._last_pos) > self.level * 2:
 				self.action.whole(mapper, x, y, what)
-			self._old_pos = x, y
+			self._last_pos = x + y
 		else:
+			# Pad was just released
+			x, y = self._get_pos()
 			self.action.whole(mapper, x, y, what)
-			self._moving = False
+			self._last_pos = 0
+			self._deq.clear()
