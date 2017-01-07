@@ -7,6 +7,7 @@ from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICK_TILT
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
 from scc.constants import HapticPos, ALL_AXES, ALL_BUTTONS
+from scc.controller import HapticData
 from scc.actions import ButtonAction
 from scc.config import Config
 from scc.profile import Profile
@@ -94,26 +95,12 @@ class Mapper(object):
 		ef = self.gamepad.ff_read()
 		if ef:	# tale of...
 			if not ef.playing and ef.repetitions > 0:
-				
-				# TODO: Scheduler not running anything while controller
-				# is not connected
-				def ef_start(mapper):
-					print "STARTING PLAYBACK OF", ef
-					ef.playing = True
-				
-				def ef_stop(mapper):
-					if not ef.playing: return
-					if ef.repetitions == 0:
-						print "STOPPING PLAYBACK OF", ef
-						ef.playing = False
-					else:
-						ef.repetitions -= 1
-						print "still playing", ef
-						self.schedule(float(ef.duration) / 1000.0, ef_stop)
-				
-				self.schedule(0, ef_start)
-				if not ef.forever:
-					self.schedule(float(ef.duration) / 1000.0, ef_stop)
+				ef.playing = True
+				self.send_feedback(HapticData(
+					HapticPos.BOTH,
+					period = 10240,
+					count = ef.duration * ef.repetitions / 100
+				))	
 	
 	
 	def get_gamepad_name(self):

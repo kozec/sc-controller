@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <linux/uinput.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <unistd.h>
 
@@ -36,13 +37,10 @@
 
 struct feedback_effect {
 	bool in_use;
-	bool forever;
 	bool playing;
 	int32_t duration;
 	int32_t delay;
 	int32_t repetitions;
-	struct timespec start_time;
-	struct timespec end_time;
 };
 
 int uinput_init(
@@ -274,9 +272,9 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 							}
 						}
 						if (rv >= 0) {
-							ff_effects[rv]->forever = (upload.effect.replay.length == 0);
 							ff_effects[rv]->duration = upload.effect.replay.length;
 							ff_effects[rv]->delay = upload.effect.replay.delay;
+							ff_effects[rv]->playing = 0;
 							ff_effects[rv]->repetitions = 0;
 						}
 						ioctl(fd, UI_END_FF_UPLOAD, &upload);
@@ -294,9 +292,18 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 						break;
 				}
 			case EV_FF:
-				if ((event.code >= 0) && (event.code < ff_effects_max) && (ff_effects[event.code]->in_use)) {
-					rv = event.code;
-					ff_effects[rv]->repetitions = event.value;
+				switch (event.code) {
+					case FF_GAIN:
+					case FF_AUTOCENTER:
+						// TODO: Maybe support theese?
+						break;
+					default:
+						if ((event.code >= 0) && (event.code < ff_effects_max)) {
+							if (ff_effects[event.code]->in_use) {
+								rv = event.code;
+								ff_effects[rv]->repetitions = event.value;
+							}
+						}
 				}
 				break;
 			default:

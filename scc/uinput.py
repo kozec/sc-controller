@@ -183,13 +183,10 @@ class InputEvent(ctypes.Structure):
 class FeedbackEvent(ctypes.Structure):
 	_fields_ = [
 		('in_use', c_bool),
-		('forever', c_bool),
 		('playing', c_bool),
 		('duration', c_int32),
 		('delay', c_int32),
 		('repetitions', c_int32),
-		('start_time', timeval),	# TODO: Should be timespec, checks what I'm breaking here
-		('end_time', timeval),		# TODO: Should be timespec, checks what I'm breaking here
 	]
 
 	def __init__(self):

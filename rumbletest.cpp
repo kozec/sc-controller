@@ -28,7 +28,11 @@ int main(){
 					printf( "Warning: Unable to initialize rumble! SDL Error: %s\n", SDL_GetError() );
 				}
 				else{ //Got Rumble and it is initialized
-					 SDL_HapticRumblePlay( haptic, 0.75,500 ); //Play at 75% for 500 ms
+					 SDL_HapticRumblePlay( haptic, 0.75, 500 ); //Play at 75% for 500 ms
+					 SDL_Delay(500);
+					 SDL_HapticRumblePlay( haptic, 0.1, 1500 ); //Play at 75% for 500 ms
+					 SDL_Delay(500);
+					 SDL_HapticRumblePlay( haptic, 1, 500 ); //Play at 75% for 500 ms
 				}
 			}
 			SDL_JoystickClose(js);
