@@ -46,8 +46,19 @@ class TestModifiers(object):
 		a = _parse_compressed("ball(mouse())")
 		assert isinstance(a, BallModifier)
 		assert isinstance(a.action, MouseAction)
-
-
+	
+	
+	def test_filter(self):
+		"""
+		Tests if FilterModifier is parsed
+		"""
+		a = _parse_compressed("filter(5, axis(ABS_X))")
+		assert isinstance(a, FilterModifier)
+		assert isinstance(a.action, AxisAction)
+		assert a.action.id == Axes.ABS_X
+		assert a.level == 5
+	
+	
 	def test_deadzone(self):
 		"""
 		Tests if DeadzoneModifier is parsed

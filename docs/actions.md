@@ -287,6 +287,10 @@ with decreasing speed, based on set mass and friction, until virtual
 Enables deadzone on trigger, pad or stick.
 
 
+#### <a name="filter"></a> filter(level, action)
+Enables input smoothing (filtering).
+
+
 #### <a name="osd"></a> osd([timeout=5], action)
 Enables on screen display for action. In most cases just displays action
 description in OSD and executes it normally.

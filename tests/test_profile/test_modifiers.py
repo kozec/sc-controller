@@ -69,6 +69,20 @@ class TestModifiers(object):
 		assert _is_axis_with_value(a.action)
 	
 	
+	def test_filter(self):
+		"""
+		Tests if FilterModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'action' : "axis(ABS_X)",
+			'filter' : 5
+		})
+		
+		assert isinstance(a, FilterModifier)
+		assert a.level == 5
+		assert _is_axis_with_value(a.action)
+	
+	
 	def test_deadzone(self):
 		"""
 		Tests if DeadzoneModifier is parsed correctly from json.
