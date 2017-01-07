@@ -97,7 +97,7 @@ int uinput_init(
 	/* Absolute Event initialisation */
 	if (abs_len > 0 && ioctl(fd, UI_SET_EVBIT, EV_ABS) < 0) {
 		close(fd);
-		return -4;;
+		return -4;
 	}
 
 	for (i = 0; i < abs_len; i++) {
@@ -142,11 +142,13 @@ int uinput_init(
 	
 	/* rumble initialisation */
 	if (ff_effects_max > 0) {
-		if (ioctl(fd, UI_SET_EVBIT, EV_FF) < 0)
-			return -13;
-		
-		if (ioctl(fd, UI_SET_FFBIT, FF_RUMBLE) < 0)
-			return -14;
+		if (ioctl (fd, UI_SET_EVBIT, EV_FF) < 0) return -13;
+		if (ioctl (fd, UI_SET_FFBIT, FF_RUMBLE) < 0) return -13;
+		if (ioctl (fd, UI_SET_FFBIT, FF_PERIODIC) < 0) return -13;
+		if (ioctl (fd, UI_SET_FFBIT, FF_SQUARE) < 0) return -13;
+		if (ioctl (fd, UI_SET_FFBIT, FF_TRIANGLE) < 0) return -13;
+		if (ioctl (fd, UI_SET_FFBIT, FF_SINE) < 0) return -13;
+		if (ioctl (fd, UI_SET_FFBIT, FF_GAIN) < 0) return -13;
 		
 		uidev.ff_effects_max = ff_effects_max;
 	}

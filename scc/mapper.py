@@ -98,8 +98,9 @@ class Mapper(object):
 				ef.playing = True
 				self.send_feedback(HapticData(
 					HapticPos.BOTH,
-					period = 10240,
-					count = ef.duration * ef.repetitions / 100
+					period = 32760,
+					amplitude = 1024,
+					count = ef.duration * ef.repetitions / 30
 				))	
 	
 	
