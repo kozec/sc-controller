@@ -33,7 +33,8 @@ class Poller(object):
 	
 	
 	def unregister(self, fd):
-		self._fd_dict.pop(fd)
+		if fd in self._events: del self._events[fd]
+		if fd in self._callbacks: del self._callbacks[fd]
 		self._generate_lists()
 	
 	

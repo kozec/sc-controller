@@ -209,12 +209,12 @@ class USBDriver(object):
 		self._changed += 1
 	
 	
-	def _register_fd(self, fd, events):
+	def _register_fd(self, fd, events, *a):
 		self._daemon.get_poller().register(fd, events, self._fd_cb)
 	
 	
-	def _unregister_fd(self, fd):
-		self._daemon.get_poller().unregister(fd, events, self._fd_cb)	
+	def _unregister_fd(self, fd, *a):
+		self._daemon.get_poller().unregister(fd)
 	
 	
 	def on_hotplug_event(self, context, device, event):
