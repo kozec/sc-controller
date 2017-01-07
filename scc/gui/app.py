@@ -222,11 +222,16 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		mnuCopy = self.builder.get_object("mnuCopy")
 		mnuClear = self.builder.get_object("mnuClear")
 		mnuPaste = self.builder.get_object("mnuPaste")
+		mnuEPress = self.builder.get_object("mnuEditPress")
+		mnuEPressS = self.builder.get_object("mnuEditPressSeparator")
 		self.context_menu_for = for_id
 		clp = Gtk.Clipboard.get_default(Gdk.Display.get_default())
 		mnuCopy.set_sensitive(bool(self.get_action(self.current, for_id)))
 		mnuClear.set_sensitive(bool(self.get_action(self.current, for_id)))
 		mnuPaste.set_sensitive(clp.wait_is_text_available())
+		mnuEPress.set_visible(for_id in STICKS + PADS)
+		mnuEPressS.set_visible(mnuEPress.get_visible())
+		
 		mnuPopup.popup(None, None, None, None,
 			3, Gtk.get_current_event_time())
 	
@@ -286,7 +291,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			a = GuiActionParser().restart(text.decode('utf-8')).parse()
 			if not isinstance(a, InvalidAction):
 				self.on_action_chosen(self.context_menu_for, a)
-		
+	
+	
+	def on_mnuEditPress_activate(self, *a):
+		"""
+		Handler for 'Edit Pressed Action' context menu item.
+		"""
+		self.show_editor(getattr(SCButtons, self.context_menu_for))
+	
 	
 	def on_mnuGlobalSettings_activate(self, *a):
 		from scc.gui.global_settings import GlobalSettings

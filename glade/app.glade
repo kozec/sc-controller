@@ -759,5 +759,20 @@
         <signal name="activate" handler="on_mnuPaste_activate" swapped="no"/>
       </object>
     </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="mnuEditPressSeparator">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuEditPress">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Edit Pressed Action</property>
+        <property name="use_underline">True</property>
+		<signal name="activate" handler="on_mnuEditPress_activate" swapped="no"/>
+      </object>
+    </child>
   </object>
 </interface>
