@@ -28,7 +28,6 @@ from math import pi, copysign, sqrt
 from scc.lib.libusb1 import timeval
 from scc.cheader import defines
 from scc.lib import IntEnum
-from collections import deque
 
 
 # Get All defines from linux headers
