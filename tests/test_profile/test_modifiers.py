@@ -123,29 +123,44 @@ class TestModifiers(object):
 		
 		# Hold and doubleclick
 		a = parser.from_json_data({
-			'hold' : { "action" : "mouse(ROLL)" },
-			"doubleclick" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
+			'hold' : {
+				"action" : "mouse(ROLL)",
+				'sensitivity' : [ 3.0, 4.0 ]
+			},
+			"doubleclick" : {
+				"action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)",
+				'sensitivity' : [ 7.0, 8.0, 9.0 ]
+			},
 			"action" : "axis(ABS_Z)",
-			'sensitivity' : [ 2.0, 3.0, 4.0 ]
+			'sensitivity' : [ 10.0, ]
 		}).compress()
-		assert isinstance(a.holdaction, MouseAction) and a.holdaction.get_speed() == ( 2.0, 3.0 )
-		assert isinstance(a.action, GyroAction) and a.action.get_speed() == ( 2.0, 3.0, 4.0 )
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.get_speed() == ( 2.0, )
+		assert isinstance(a.holdaction, MouseAction) and a.holdaction.get_speed() == ( 3.0, 4.0 )
+		assert isinstance(a.action, GyroAction) and a.action.get_speed() == ( 7.0, 8.0, 9.0 )
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.get_speed() == ( 10.0, )
 		
 		# Modeshift
 		a = parser.from_json_data({
 			'modes' : {
-				"A" : { "action" : "mouse(ROLL)" },
-				"B" : { "action" : "axis(ABS_X)" },
-				"X" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
+				"A" : {
+					"action" : "mouse(ROLL)",
+					'sensitivity' : [ 3.0, 4.0 ]
+				},
+				"B" : {
+					"action" : "axis(ABS_X)",
+					'sensitivity' : [ 7.0, ]
+				},
+				"X" : {
+					"action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)",
+					'sensitivity' : [ 8.0, 9.0, 10.0 ]
+				},
 			},
 			"action" : "axis(ABS_Z)",
-			'sensitivity' : [ 2.0, 3.0, 4.0 ]
+			'sensitivity' : [ 12.0, ]
 		}).compress()
-		assert isinstance(a.mods[SCButtons.A], MouseAction) and a.mods[SCButtons.A].get_speed() == ( 2.0, 3.0 )
-		assert isinstance(a.mods[SCButtons.B], AxisAction) and a.mods[SCButtons.B].get_speed() == ( 2.0, )
-		assert isinstance(a.mods[SCButtons.X], GyroAction) and a.mods[SCButtons.X].get_speed() == ( 2.0, 3.0, 4.0 )
-		assert isinstance(a.default, AxisAction) and a.default.get_speed() == ( 2.0, )
+		assert isinstance(a.mods[SCButtons.A], MouseAction) and a.mods[SCButtons.A].get_speed() == ( 3.0, 4.0 )
+		assert isinstance(a.mods[SCButtons.B], AxisAction) and a.mods[SCButtons.B].get_speed() == ( 7.0, )
+		assert isinstance(a.mods[SCButtons.X], GyroAction) and a.mods[SCButtons.X].get_speed() == ( 8.0, 9.0, 10.0 )
+		assert isinstance(a.default, AxisAction) and a.default.get_speed() == ( 12.0, )
 	
 	
 	def test_feedback(self):

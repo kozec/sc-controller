@@ -262,7 +262,7 @@ class BallModifier(Modifier, HapticEnabledAction):
 
 	"""
 	COMMAND = "ball"
-	PROFILE_KEY_PRIORITY = -5
+	PROFILE_KEY_PRIORITY = -6
 	HAPTIC_FACTOR = 60.0	# Just magic number
 	
 	DEFAULT_FRICTION = 10.0
@@ -294,7 +294,6 @@ class BallModifier(Modifier, HapticEnabledAction):
 	
 	
 	def set_speed(self, x, y, *a):
-		print "SASA N SET", x, y
 		self.speed = (x, y)
 	
 	
@@ -565,29 +564,6 @@ class ModeModifier(Modifier):
 			self.default = NoAction()
 	
 	
-	def get_compatible_modifiers(self):
-		return reduce (
-			lambda x, action: x | action.get_compatible_modifiers(),
-			self.mods.values(),
-			0
-		)
-	
-	
-	def set_speed(self, *speed):
-		for a in list(self.mods.values()) + [ self.default ]:
-			if hasattr(a, "set_speed"):
-				a.set_speed(*speed)
-	
-	
-	def get_speed(self):
-		rv = (1.0,)
-		for a in list(self.mods.values()) + [ self.default ]:
-			if hasattr(a, "get_speed"):
-				if len(a.get_speed()) > len(rv):
-					rv = a.get_speed()
-		return rv
-	
-	
 	def encode(self):
 		rv = self.default.encode()
 		modes = {}
@@ -737,8 +713,10 @@ class ModeModifier(Modifier):
 			self.old_gyro = sel
 		return sel.gyro(mapper, pitch, yaw, roll, *q)
 	
+	
 	def pad(self, mapper, position, what):
 		return self.select(mapper).pad(mapper, position, what)
+	
 	
 	def whole(self, mapper, x, y, what):
 		if what == STICK:
@@ -769,29 +747,6 @@ class DoubleclickModifier(Modifier):
 		self.waiting = False
 		self.pressed = False
 		self.active = None
-	
-	
-	def get_compatible_modifiers(self):
-		return reduce (
-			lambda x, action: x | action.get_compatible_modifiers(),
-			( self.action, self.normalaction, self.holdaction ),
-			0
-		)
-	
-	
-	def set_speed(self, *speed):
-		for a in ( self.action, self.normalaction, self.holdaction ):
-			if hasattr(a, "set_speed"):
-				a.set_speed(*speed)
-	
-	
-	def get_speed(self):
-		rv = (1.0,)
-		for a in ( self.action, self.normalaction, self.holdaction ):
-			if hasattr(a, "get_speed"):
-				if len(a.get_speed()) > len(rv):
-					rv = a.get_speed()
-		return rv
 	
 	
 	def encode(self):
@@ -956,7 +911,7 @@ class SensitivityModifier(Modifier):
 	"""
 	COMMAND = "sens"
 	PROFILE_KEYS = ("sensitivity",)
-	PROFILE_KEY_PRIORITY = 10	# As last as possible, definitelly after ModeShift
+	PROFILE_KEY_PRIORITY = -5
 	
 	def _mod_init(self, *speeds):
 		self.speeds = []

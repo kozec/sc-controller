@@ -62,24 +62,6 @@ CASES = {
 		'levels' : [ 10, 80 ],
 		'feedback' : ('BOTH',)
 	},
-	'doubleclick' : {
-		"doubleclick" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
-		'hold' : { "action" : "mouse(ROLL)" },
-		'sensitivity' : (2.0, 3.0, 4.0),
-	},
-	'hold' : {
-		"hold" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
-		'doubleclick' : { "action" : "mouse(ROLL)" },
-		'sensitivity' : (2.0, 3.0, 4.0),
-	},
-	'mode' : {
-		'modes' : {
-			"A" : { "action" : "mouse(ROLL)" },
-			"B" : { "action" : "axis(ABS_X)" },
-			"X" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
-		},
-		'sensitivity' : (2.0, 3.0, 4.0),
-	},
 	'tilt' : {
 		'action' : 'tilt( button(KEY_D), button(KEY_U), button(KEY_L), button(KEY_R) )',
 		'sensitivity' : (2.0, 3.0, 4.0,)

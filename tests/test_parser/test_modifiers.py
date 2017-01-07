@@ -187,27 +187,6 @@ class TestModifiers(object):
 		a = _parse_compressed("sens(2, 3, ball(mouse()))")
 		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (1.0, 1.0)
 		assert isinstance(a, BallModifier) and a.get_speed() == (2.0, 3.0)
-		
-		# Double and hold modifiers, sensitivity should always end applied to all actions
-		a = _parse_compressed("sens(2, 3, 4, hold(mouse(), doubleclick(axis(ABS_X), gyro(YAW))))")
-		assert isinstance(a.holdaction, MouseAction) and a.holdaction.get_speed() == (2.0, 3.0)
-		assert isinstance(a.action, AxisAction) and a.action.get_speed() == (2.0,)
-		assert isinstance(a.normalaction, GyroAction) and a.normalaction.get_speed() == (2.0, 3.0, 4.0)
-		
-		# Modeshift, sensitivity should always end applied to all actions
-		a = _parse_compressed("""sens(2, 3, 4, mode(
-					A, mouse(),
-					B, axis(ABS_Y),
-					X, gyro(YAW),
-					gyro(ROLL)
-				))""")
-		assert isinstance(a.mods[SCButtons.A], MouseAction) 
-		assert a.mods[SCButtons.A].get_speed() == (2.0, 3.0)
-		assert isinstance(a.mods[SCButtons.B], AxisAction)  
-		assert a.mods[SCButtons.B].get_speed() == (2.0,)
-		assert isinstance(a.mods[SCButtons.X], GyroAction)  
-		assert a.mods[SCButtons.X].get_speed() == (2.0, 3.0, 4.0)
-		assert isinstance(a.default, GyroAction)  and a.default.get_speed() == (2.0, 3.0, 4.0)
 	
 	
 	def test_feedback(self):
