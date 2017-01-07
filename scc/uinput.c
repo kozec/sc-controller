@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #pragma GCC diagnostic ignored "-Wunused-result"
+#define UNPUT_MODULE_VERSION 3
 #define MAX_FF_EVENTS 4
 
 struct feedback_effect {
@@ -168,7 +169,7 @@ int uinput_init(
 }
 
 const int uinput_module_version() {
-	return 3;
+	return UNPUT_MODULE_VERSION;
 }
 
 void uinput_key(int fd, __u16 key, __s32 val)

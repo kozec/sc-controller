@@ -29,6 +29,7 @@ from scc.lib.libusb1 import timeval
 from scc.cheader import defines
 from scc.lib import IntEnum
 
+UNPUT_MODULE_VERSION = 3
 
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):
@@ -246,13 +247,13 @@ class UInput(object):
 				self._ff_events[i].contents = FeedbackEvent()
 		
 		try:
-			if self._lib.uinput_module_version() != 3:
+			if self._lib.uinput_module_version() != UNPUT_MODULE_VERSION:
 				raise Exception()
 		except:
 			import sys
 			print >>sys.stderr, "Invalid native module version. Please, recompile 'libuinput.so'"
 			print >>sys.stderr, "If you are running sc-controller from source, you can do this by removing 'build' directory"
-			print >>sys.stderr, "and runinng 'run.sh' script"
+			print >>sys.stderr, "and runinng 'python setup.py build' or 'run.sh' script"
 			raise Exception("Invalid native module version")
 		
 		c_k		= (ctypes.c_uint16 * len(self._k))(*self._k)
