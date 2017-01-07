@@ -246,7 +246,7 @@ class UInput(object):
 				self._ff_events[i].contents = FeedbackEvent()
 		
 		try:
-			if self._lib.uinput_module_version() != 2:
+			if self._lib.uinput_module_version() != 3:
 				raise Exception()
 		except:
 			import sys
