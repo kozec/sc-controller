@@ -30,7 +30,6 @@ class TestModeshift(object):
 			}
 		})
 		
-		print a.to_string()
 		assert a.to_string() == STR
 		assert isinstance(a, ModeModifier)
 		assert isinstance(a.default, RotateInputModifier)
