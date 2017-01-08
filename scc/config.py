@@ -44,6 +44,7 @@ class Config(object):
 			'version'	: '0x110',
 			'name'		: "Microsoft X-Box 360 pad",
 			'buttons'	: 11,
+			'rumble'	: True,
 			'axes'	: [
 				(-32768, 32767),	# Axes.ABS_X
 				(-32768, 32767),	# Axes.ABS_Y

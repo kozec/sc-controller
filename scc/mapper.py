@@ -25,7 +25,8 @@ class Mapper(object):
 		"""
 		If any of keyboard, mouse or gamepad is set to None, that device
 		will not be emulated.
-		If poller is set to instance, emulated gamepad will have rumble enabled.
+		Emulated gamepad will have rumble enabled only if poller is set to
+		instance and configuration allows it.
 		"""
 		self.profile = profile
 		self.controller = None
@@ -71,6 +72,7 @@ class Mapper(object):
 		product = int(cfg["output"]["product"], 16)
 		version = int(cfg["output"]["version"], 16)
 		name = cfg["output"]["name"]
+		rumble = cfg["output"]["rumble"] and poller != None
 		axes = []
 		i = 0
 		for min, max in cfg["output"]["axes"]:
@@ -85,7 +87,7 @@ class Mapper(object):
 			i += 1
 		
 		ui = UInput(vendor=vendor, product=product, version=version,
-			name=name, keys=keys, axes=axes, rels=[], rumble=(poller != None))
+			name=name, keys=keys, axes=axes, rels=[], rumble=rumble)
 		if poller:
 			poller.register(ui.getDescriptor(), poller.POLLIN, self._rumble_ready)
 		return ui
