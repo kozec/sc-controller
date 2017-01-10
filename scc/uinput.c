@@ -28,6 +28,7 @@
 #include <linux/uinput.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
 
@@ -41,6 +42,8 @@ struct feedback_effect {
 	int32_t duration;
 	int32_t delay;
 	int32_t repetitions;
+	uint16_t type;
+	int16_t level;
 };
 
 int uinput_init(
@@ -274,10 +277,42 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 							}
 						}
 						if (rv >= 0) {
+							int32_t avg;
 							ff_effects[rv]->duration = upload.effect.replay.length;
 							ff_effects[rv]->delay = upload.effect.replay.delay;
 							ff_effects[rv]->playing = 0;
 							ff_effects[rv]->repetitions = 0;
+							ff_effects[rv]->type = upload.effect.type;
+							ff_effects[rv]->level = 0x4FFF;
+							// This part converts all possible event types to one that
+							// SCC and controller really supports. Only output level is used.
+							switch (upload.effect.type) {
+								case FF_CONSTANT:
+									ff_effects[rv]->level = upload.effect.u.constant.level;
+									break;
+								case FF_PERIODIC:
+									ff_effects[rv]->duration = upload.effect.u.periodic.waveform / 2;
+									ff_effects[rv]->level = upload.effect.u.periodic.magnitude;
+									break;
+								case FF_RAMP:
+									ff_effects[rv]->level = upload.effect.u.ramp.start_level;
+									break;
+								case FF_RUMBLE:
+									avg = upload.effect.u.rumble.strong_magnitude;
+									avg += upload.effect.u.rumble.weak_magnitude;
+									avg /= 2;
+									if (avg > 0x7FFF)
+										avg = 0x7FFF;
+									ff_effects[rv]->level = (int32_t)avg;
+									break;
+								case FF_FRICTION:
+								case FF_DAMPER:
+								case FF_INERTIA:
+								case FF_SPRING:
+								case FF_CUSTOM:
+									ff_effects[rv]->level = 0x7FFF;
+							}
+							
 						}
 						ioctl(fd, UI_END_FF_UPLOAD, &upload);
 						break;

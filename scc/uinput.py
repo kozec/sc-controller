@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 import os, imp, ctypes, time
-from ctypes import Structure, POINTER, c_bool, c_uint16, c_int32, byref
+from ctypes import Structure, POINTER, c_bool, c_int16, c_uint16, c_int32, byref
 from math import pi, copysign, sqrt
 from scc.lib.libusb1 import timeval
 from scc.cheader import defines
@@ -187,6 +187,8 @@ class FeedbackEvent(ctypes.Structure):
 		('duration', c_int32),
 		('delay', c_int32),
 		('repetitions', c_int32),
+		('type', c_uint16),
+		('level', c_int16),
 	]
 
 	def __init__(self):
