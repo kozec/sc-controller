@@ -297,15 +297,15 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 									RUMBLE_DEBUG("FF_CONSTANT [%i] %i\n", rv, ff_effects[rv]->level);
 									break;
 								case FF_PERIODIC:
-									RUMBLE_DEBUG("FF_PERIODIC [%i] %i %i %i %i %i\n",
+									RUMBLE_DEBUG("FF_PERIODIC [%i] %i %i %i %i %i length %i\n",
 										rv,
 										upload.effect.u.periodic.waveform,
 										upload.effect.u.periodic.period,
 										upload.effect.u.periodic.magnitude,
 										upload.effect.u.periodic.offset,
-										upload.effect.u.periodic.phase
+										upload.effect.u.periodic.phase,
+										ff_effects[rv]->duration
 									);
-									ff_effects[rv]->duration = 10000;
 									ff_effects[rv]->level = upload.effect.u.periodic.magnitude;
 									break;
 								case FF_RAMP:
