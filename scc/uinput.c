@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <fcntl.h>
 #include <linux/uinput.h>
 #include <string.h>
@@ -244,6 +245,8 @@ void uinput_syn(int fd)
 	write(fd, &ev, sizeof(ev));
 }
 
+// #define RUMBLE_DEBUG(...) do { printf(__VA_ARGS__); } while (0)
+#define RUMBLE_DEBUG(...) do { } while (0)
 
 int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effects) {
 	static struct uinput_ff_upload upload = { 0 };
@@ -261,6 +264,7 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 						ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
 						upload.retval = -1;
 						if (upload.old.type != 0) {
+							RUMBLE_DEBUG("Updating effect id %i\n", upload.effect.id);
 							// Updating old effect
 							upload.retval = 0;
 							rv = upload.effect.id = upload.old.id;
@@ -272,6 +276,7 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 									ff_effects[i]->in_use = true;
 									upload.retval = 0;
 									rv = upload.effect.id = i;
+									RUMBLE_DEBUG("Generated new effect id %i\n", upload.effect.id);
 									break;
 								}
 							}
@@ -289,28 +294,54 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 							switch (upload.effect.type) {
 								case FF_CONSTANT:
 									ff_effects[rv]->level = upload.effect.u.constant.level;
+									RUMBLE_DEBUG("FF_CONSTANT [%i] %i\n", rv, ff_effects[rv]->level);
 									break;
 								case FF_PERIODIC:
-									ff_effects[rv]->duration = upload.effect.u.periodic.waveform / 2;
+									RUMBLE_DEBUG("FF_PERIODIC [%i] %i %i %i %i %i\n",
+										rv,
+										upload.effect.u.periodic.waveform,
+										upload.effect.u.periodic.period,
+										upload.effect.u.periodic.magnitude,
+										upload.effect.u.periodic.offset,
+										upload.effect.u.periodic.phase
+									);
+									ff_effects[rv]->duration = 10000;
 									ff_effects[rv]->level = upload.effect.u.periodic.magnitude;
 									break;
 								case FF_RAMP:
 									ff_effects[rv]->level = upload.effect.u.ramp.start_level;
+									RUMBLE_DEBUG("FF_RAMP [%i] %i\n", rv, ff_effects[rv]->level);
 									break;
 								case FF_RUMBLE:
-									avg = upload.effect.u.rumble.strong_magnitude;
-									avg += upload.effect.u.rumble.weak_magnitude;
-									avg /= 2;
-									if (avg > 0x7FFF)
-										avg = 0x7FFF;
-									ff_effects[rv]->level = (int32_t)avg;
+									RUMBLE_DEBUG("FF_RUMBLE [%i] %i %i\n",
+										rv,
+										upload.effect.u.rumble.strong_magnitude,
+										upload.effect.u.rumble.weak_magnitude
+									);
+									avg = upload.effect.u.rumble.strong_magnitude / 3 +
+										upload.effect.u.rumble.weak_magnitude / 6;
+									ff_effects[rv]->level = (int32_t)MIN(avg, 0x7FFF);
 									break;
 								case FF_FRICTION:
-								case FF_DAMPER:
-								case FF_INERTIA:
-								case FF_SPRING:
-								case FF_CUSTOM:
+									RUMBLE_DEBUG("FF_FRICTION [%i] \n", rv);
 									ff_effects[rv]->level = 0x7FFF;
+									break;
+								case FF_DAMPER:
+									RUMBLE_DEBUG("FF_DAMPER [%i] \n", rv);
+									ff_effects[rv]->level = 0x7FFF;
+									break;
+								case FF_INERTIA:
+									RUMBLE_DEBUG("FF_INERTIA [%i] \n", rv);
+									ff_effects[rv]->level = 0x7FFF;
+									break;
+								case FF_SPRING:
+									RUMBLE_DEBUG("FF_SPRING [%i] \n", rv);
+									ff_effects[rv]->level = 0x7FFF;
+									break;
+								case FF_CUSTOM:
+									RUMBLE_DEBUG("FF_CUSTOM [%i] \n", rv);
+									ff_effects[rv]->level = 0x7FFF;
+									break;
 							}
 							
 						}
@@ -323,6 +354,7 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 							ff_effects[erase.effect_id]->in_use = false;
 							rv = erase.effect_id;
 						}
+						RUMBLE_DEBUG("Erased effect id %i\n", upload.effect.id);
 						ioctl(fd, UI_END_FF_ERASE, &erase);
 						break;
 					default:
@@ -331,14 +363,27 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 			case EV_FF:
 				switch (event.code) {
 					case FF_GAIN:
+						RUMBLE_DEBUG("FF_GAIN\n");
+						break;
 					case FF_AUTOCENTER:
 						// TODO: Maybe support theese?
+						RUMBLE_DEBUG("FF_AUTOCENTER\n");
 						break;
 					default:
 						if ((event.code >= 0) && (event.code < ff_effects_max)) {
 							if (ff_effects[event.code]->in_use) {
 								rv = event.code;
 								ff_effects[rv]->repetitions = event.value;
+								RUMBLE_DEBUG("FF_PLAY -> %i (%i)\n", event.code, ff_effects[rv]->level);
+							} else {
+								// SDL uses this to turn rumble off - fake event
+								// is generated here to achieve same effect
+								rv = event.code;
+								ff_effects[rv]->playing = false;
+								ff_effects[rv]->level = 0;
+								ff_effects[rv]->repetitions = 0;
+								ff_effects[rv]->duration = 0;
+								RUMBLE_DEBUG("FF NOT IN USE! %i\n", event.code);
 							}
 						}
 				}

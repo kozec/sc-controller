@@ -96,12 +96,13 @@ class Mapper(object):
 	def _rumble_ready(self, fd, event):
 		ef = self.gamepad.ff_read()
 		if ef:	# tale of...
-			if not ef.playing and ef.repetitions > 0:
-				ef.playing = True
+			if not ef.playing or ef.repetitions == 0:
+				ef.playing = ef.repetitions > 0
+				# print "ef", ef.type, hex(ef.type), ef.level
 				self.send_feedback(HapticData(
 					HapticPos.BOTH,
 					period = 32760,
-					amplitude = 1024,
+					amplitude = ef.level,
 					count = ef.duration * ef.repetitions / 30
 				))	
 	
