@@ -463,11 +463,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Generates name for profile copy.
 		That is 'New Profile X', where X is number that makes name unique.
 		"""
-		new_name = _("Copy of %s") % (name,)
+		new_name = _("%s (copy)") % (name,)
 		filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
 		i = 2
 		while os.path.exists(filename):
-			new_name = _("Copy of %s") % (name,)
+			new_name = _("%s (copy %s)") % (name,)
 			filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
 			i += 1
 		return new_name
