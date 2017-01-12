@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 #pragma GCC diagnostic ignored "-Wunused-result"
-#define UNPUT_MODULE_VERSION 4
+#define UNPUT_MODULE_VERSION 5
 #define MAX_FF_EVENTS 4
 
 struct feedback_effect {
@@ -254,7 +254,7 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 	static struct input_event event;
 	int n = read(fd, &event, sizeof(event));
 	int rv = -1;
-	int i;
+	int eid;
 	if (n == sizeof(struct input_event)) {
 		switch (event.type) {
 			case EV_UINPUT:
@@ -263,89 +263,85 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 						upload.request_id = event.value;
 						upload.retval = -1;
 						if (upload.old.type != 0) {
-							RUMBLE_DEBUG("Updating effect id %i\n", upload.effect.id);
 							// Updating old effect
-							upload.effect.id = upload.old.id;
-							ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
-							ff_effects[upload.effect.id]->in_use = true;
 							upload.retval = 0;
+							eid = upload.effect.id = upload.old.id;
+							RUMBLE_DEBUG("Updating effect id %i\n", upload.effect.id);
+							ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
+							ff_effects[eid]->in_use = true;
 						} else {
 							// Generating new effect
-							for (i=1; i<ff_effects_max; i++) {
-								if (!ff_effects[i]->in_use) {
-									ff_effects[i]->in_use = true;
+							for (eid=0; eid<ff_effects_max; eid++) {
+								if (!ff_effects[eid]->in_use) {
+									ff_effects[eid]->in_use = true;
 									upload.retval = 0;
-									upload.effect.id = i;
-									ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
+									upload.effect.id = eid;
 									RUMBLE_DEBUG("Generated new effect id %i\n", upload.effect.id);
+									ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
 									break;
 								}
 							}
 						}
-						if (upload.effect.id >= 0) {
+						if (eid >= 0) {
 							int32_t avg;
-							ff_effects[upload.effect.id]->duration = upload.effect.replay.length;
-							ff_effects[upload.effect.id]->delay = upload.effect.replay.delay;
-							ff_effects[upload.effect.id]->playing = 0;
-							ff_effects[upload.effect.id]->repetitions = 0;
-							ff_effects[upload.effect.id]->type = upload.effect.type;
-							ff_effects[upload.effect.id]->level = 0x4FFF;
+							ff_effects[eid]->duration = upload.effect.replay.length;
+							ff_effects[eid]->delay = upload.effect.replay.delay;
+							ff_effects[eid]->playing = 0;
+							ff_effects[eid]->repetitions = 0;
+							ff_effects[eid]->type = upload.effect.type;
+							ff_effects[eid]->level = 0x4FFF;
 							// This part converts all possible event types to one that
 							// SCC and controller really supports. Only output level is used.
 							switch (upload.effect.type) {
 								case FF_CONSTANT:
-									ff_effects[upload.effect.id]->level = upload.effect.u.constant.level;
-									RUMBLE_DEBUG("FF_CONSTANT [%i] %i\n", upload.effect.id, ff_effects[upload.effect.id]->level);
+									ff_effects[eid]->level = upload.effect.u.constant.level;
+									RUMBLE_DEBUG("FF_CONSTANT [%i] %i\n", eid, ff_effects[eid]->level);
 									break;
 								case FF_PERIODIC:
 									RUMBLE_DEBUG("FF_PERIODIC [%i] %i %i %i %i %i length %i\n",
-										upload.effect.id,
+										eid,
 										upload.effect.u.periodic.waveform,
 										upload.effect.u.periodic.period,
 										upload.effect.u.periodic.magnitude,
 										upload.effect.u.periodic.offset,
 										upload.effect.u.periodic.phase,
-										ff_effects[upload.effect.id]->duration
+										ff_effects[eid]->duration
 									);
-									ff_effects[upload.effect.id]->level = upload.effect.u.periodic.magnitude;
+									ff_effects[eid]->level = upload.effect.u.periodic.magnitude;
 									break;
 								case FF_RAMP:
-									ff_effects[upload.effect.id]->level = upload.effect.u.ramp.start_level;
-									RUMBLE_DEBUG("FF_RAMP [%i] %i\n", upload.effect.id, ff_effects[upload.effect.id]->level);
+									ff_effects[eid]->level = upload.effect.u.ramp.start_level;
+									RUMBLE_DEBUG("FF_RAMP [%i] %i\n", eid, ff_effects[eid]->level);
 									break;
 								case FF_RUMBLE:
-									RUMBLE_DEBUG("FF_RUMBLE [%i : %i] %i %i\n",
-										upload.effect.id,
-										upload.effect.id,
+									RUMBLE_DEBUG("FF_RUMBLE [%i] %i %i\n",
+										eid,
 										upload.effect.u.rumble.strong_magnitude,
 										upload.effect.u.rumble.weak_magnitude
 									);
 									avg = upload.effect.u.rumble.strong_magnitude / 3 +
 										upload.effect.u.rumble.weak_magnitude / 6;
-									ff_effects[upload.effect.id]->level = (int32_t)MIN(avg, 0x7FFF);
-									if (ff_effects[upload.effect.id]->duration == 0)
-										// Special case, 'infinite' rumble effect
-										ff_effects[upload.effect.id]->duration = 10000;
+									ff_effects[eid]->level = (int32_t)MIN(avg, 0x7FFF);
 									break;
 								case FF_FRICTION:
-									RUMBLE_DEBUG("FF_FRICTION [%i] \n", upload.effect.id);
-									ff_effects[upload.effect.id]->level = 0x7FFF;
+									RUMBLE_DEBUG("FF_FRICTION [%i] \n", eid);
+									ff_effects[eid]->level = 0x7FFF;
 									break;
 								case FF_DAMPER:
-									RUMBLE_DEBUG("FF_DAMPER [%i] \n", upload.effect.id);
-									ff_effects[upload.effect.id]->level = 0x7FFF;
+									RUMBLE_DEBUG("FF_DAMPER [%i] \n", eid);
+									ff_effects[eid]->level = 0x7FFF;
 									break;
 								case FF_INERTIA:
-									RUMBLE_DEBUG("FF_INERTIA [%i] \n", upload.effect.id);
-									ff_effects[upload.effect.id]->level = 0x7FFF;
+									RUMBLE_DEBUG("FF_INERTIA [%i] \n", eid);
+									ff_effects[eid]->level = 0x7FFF;
 									break;
 								case FF_SPRING:
-									RUMBLE_DEBUG("FF_SPRING [%i] \n", upload.effect.id);
-									ff_effects[upload.effect.id]->level = 0x7FFF;
+									RUMBLE_DEBUG("FF_SPRING [%i] \n", eid);
+									ff_effects[eid]->level = 0x7FFF;
 									break;
 								case FF_CUSTOM:
-									RUMBLE_DEBUG("FF_CUSTOM [%i] \n", upload.effect.id);
-									ff_effects[upload.effect.id]->level = 0x7FFF;
+									RUMBLE_DEBUG("FF_CUSTOM [%i] \n", eid);
+									ff_effects[eid]->level = 0x7FFF;
 									break;
 							}
 							
