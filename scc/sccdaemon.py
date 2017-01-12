@@ -722,8 +722,11 @@ class SCCDaemon(Daemon):
 					pass
 		elif message.startswith("Turnoff."):
 			with self.lock:
-				for c in self.controllers:
-					c.turnoff()
+				if client.mapper.get_controller():
+					client.mapper.get_controller().turnoff()
+				else:
+					for c in self.controllers:
+						c.turnoff()
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Gesture:"):
 			try:
