@@ -249,8 +249,8 @@ void uinput_syn(int fd)
 #define RUMBLE_DEBUG(...) do { } while (0)
 
 int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effects) {
-	static struct uinput_ff_upload upload = { 0 };
-	static struct uinput_ff_erase erase = { 0 };
+	static struct uinput_ff_upload upload;
+	static struct uinput_ff_erase erase;
 	static struct input_event event;
 	int n = read(fd, &event, sizeof(event));
 	int rv = -1;
@@ -260,30 +260,31 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 			case EV_UINPUT:
 				switch (event.code) {
 					case UI_FF_UPLOAD:
+						memset(&upload, 0, sizeof(struct uinput_ff_upload));
 						upload.request_id = event.value;
-						upload.retval = -1;
-						if (upload.old.type != 0) {
+						ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
+						
+						upload.effect.id = -1;
+						if ((upload.old.type != 0) && (upload.old.id >= 0) && (upload.old.id < ff_effects_max) && (ff_effects[upload.old.id]->in_use)) {
 							// Updating old effect
-							upload.retval = 0;
 							eid = upload.effect.id = upload.old.id;
-							RUMBLE_DEBUG("Updating effect id %i\n", upload.effect.id);
-							ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
 							ff_effects[eid]->in_use = true;
-						} else {
+							RUMBLE_DEBUG("Updated effect id %i\n", upload.effect.id);
+						} else if (upload.old.type == 0) {
 							// Generating new effect
 							for (eid=0; eid<ff_effects_max; eid++) {
 								if (!ff_effects[eid]->in_use) {
 									ff_effects[eid]->in_use = true;
-									upload.retval = 0;
 									upload.effect.id = eid;
 									RUMBLE_DEBUG("Generated new effect id %i\n", upload.effect.id);
-									ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
 									break;
 								}
 							}
 						}
-						if (eid >= 0) {
+						
+						if (upload.effect.id >= 0) {
 							int32_t avg;
+							eid = upload.effect.id;
 							ff_effects[eid]->duration = upload.effect.replay.length;
 							ff_effects[eid]->delay = upload.effect.replay.delay;
 							ff_effects[eid]->playing = 0;
@@ -322,6 +323,8 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 									avg = upload.effect.u.rumble.strong_magnitude / 3 +
 										upload.effect.u.rumble.weak_magnitude / 6;
 									ff_effects[eid]->level = (int32_t)MIN(avg, 0x7FFF);
+									if (ff_effects[eid]->duration == 0)
+										ff_effects[eid]->duration = 10000;
 									break;
 								case FF_FRICTION:
 									RUMBLE_DEBUG("FF_FRICTION [%i] \n", eid);
@@ -345,10 +348,18 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 									break;
 							}
 							
+							upload.retval = 0;
+						} else {
+							// Upload failed
+							ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
+							RUMBLE_DEBUG("Cannot create more effects!\n");
+							upload.retval = -1;
 						}
+						
 						ioctl(fd, UI_END_FF_UPLOAD, &upload);
 						break;
 					case UI_FF_ERASE:
+						memset(&erase, 0, sizeof(struct uinput_ff_erase));
 						erase.request_id = event.value;
 						ioctl(fd, UI_BEGIN_FF_ERASE, &erase);
 						if ((erase.effect_id >= 0) && (erase.effect_id < ff_effects_max)) {
