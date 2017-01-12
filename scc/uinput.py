@@ -29,7 +29,7 @@ from scc.lib.libusb1 import timeval
 from scc.cheader import defines
 from scc.lib import IntEnum
 
-UNPUT_MODULE_VERSION = 3
+UNPUT_MODULE_VERSION = 4
 
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):

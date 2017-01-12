@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 #pragma GCC diagnostic ignored "-Wunused-result"
-#define UNPUT_MODULE_VERSION 3
+#define UNPUT_MODULE_VERSION 4
 #define MAX_FF_EVENTS 4
 
 struct feedback_effect {
