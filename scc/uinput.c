@@ -261,14 +261,14 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 				switch (event.code) {
 					case UI_FF_UPLOAD:
 						upload.request_id = event.value;
-						ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
 						upload.retval = -1;
 						if (upload.old.type != 0) {
 							RUMBLE_DEBUG("Updating effect id %i\n", upload.effect.id);
 							// Updating old effect
-							upload.retval = 0;
 							upload.effect.id = upload.old.id;
+							ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
 							ff_effects[upload.effect.id]->in_use = true;
+							upload.retval = 0;
 						} else {
 							// Generating new effect
 							for (i=1; i<ff_effects_max; i++) {
@@ -276,6 +276,7 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 									ff_effects[i]->in_use = true;
 									upload.retval = 0;
 									upload.effect.id = i;
+									ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
 									RUMBLE_DEBUG("Generated new effect id %i\n", upload.effect.id);
 									break;
 								}
@@ -322,6 +323,9 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 									avg = upload.effect.u.rumble.strong_magnitude / 3 +
 										upload.effect.u.rumble.weak_magnitude / 6;
 									ff_effects[upload.effect.id]->level = (int32_t)MIN(avg, 0x7FFF);
+									if (ff_effects[upload.effect.id]->duration == 0)
+										// Special case, 'infinite' rumble effect
+										ff_effects[upload.effect.id]->duration = 10000;
 									break;
 								case FF_FRICTION:
 									RUMBLE_DEBUG("FF_FRICTION [%i] \n", upload.effect.id);
