@@ -170,6 +170,11 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		return ( x[1] for x in self._model if x[1] is not None )
 	
 	
+	def get_profile_name(self):
+		""" Returns name of currently selected profile """
+		return self._model.get_value(self._combo.get_active_iter(), 0)
+	
+	
 	def on_combo_changed(self, cb):
 		if self._recursing : return
 		
@@ -188,8 +193,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 					self.set_profile(self._current)
 				self._recursing = False
 				
-				name = self._model.get_value(cb.get_active_iter(), 0)
-				self.emit('new-clicked', name)
+				self.emit('new-clicked', self.get_profile_name())
 			else:
 				self._current = name
 				self.emit('changed', name, giofile)

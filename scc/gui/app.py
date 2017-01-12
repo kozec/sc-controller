@@ -483,7 +483,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_new_clicked(self, ps, name):
 		dlg = self.builder.get_object("dlgNewProfile")
 		txNewProfile = self.builder.get_object("txNewProfile")
+		rbNewProfile = self.builder.get_object("rbNewProfile")
 		self.recursing = True
+		rbNewProfile.set_active(True)
 		txNewProfile.set_text(self.generate_new_name())
 		txNewProfile._name = name
 		txNewProfile._changed = False
@@ -771,10 +773,23 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		cs.show(self.window)
 	
 	
+	def on_mnuProfileNew_activate(self, *a):
+		mnuPS = self.builder.get_object("mnuPS")
+		self.on_new_clicked(mnuPS.ps, mnuPS.ps.get_name())
+	
+	
+	def on_mnuProfileCopy_activate(self, *a):
+		mnuPS = self.builder.get_object("mnuPS")
+		rbCopyProfile = self.builder.get_object("rbCopyProfile")
+		self.on_new_clicked(mnuPS.ps, mnuPS.ps.get_profile_name())
+		rbCopyProfile.set_active(True)
+	
+	
 	def mnuTurnoffController_activate(self, *a):
 		mnuPS = self.builder.get_object("mnuPS")
 		if mnuPS.ps.get_controller():
 			mnuPS.ps.get_controller().turnoff()
+	
 	
 	def show_error(self, message):
 		if self.ribar is None:
