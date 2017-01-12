@@ -745,7 +745,7 @@
       </object>
     </child>
     <child>
-      <object class="GtkSeparatorMenuItem">
+      <object class="GtkSeparatorMenuItem" id="separator48">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
       </object>
