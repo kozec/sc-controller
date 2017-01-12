@@ -8,6 +8,8 @@ from __future__ import unicode_literals
 
 from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
+from scc.special_actions import MenuAction
+from scc.modifiers import HoldModifier
 from scc.lib.jsonencoder import JSONEncoder
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
@@ -34,12 +36,7 @@ class Profile(object):
 	
 	def __init__(self, parser):
 		self.parser = parser
-		self.buttons = { x : NoAction() for x in SCButtons }
-		self.menus = {}
-		self.stick = NoAction()
-		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
-		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
-		self.gyro = NoAction()
+		self.clear()
 		self.filename = None
 	
 	
@@ -128,6 +125,20 @@ class Profile(object):
 		return self
 	
 	
+	def clear(self):
+		""" Clears all actions and adds default menu action on center button """
+		self.buttons = { x : NoAction() for x in SCButtons }
+		self.buttons[SCButtons.C] = HoldModifier(
+			MenuAction("Default.menu"),
+			normalaction = MenuAction("Default.menu")
+		)
+		self.menus = {}
+		self.stick = NoAction()
+		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
+		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
+		self.gyro = NoAction()
+	
+	
 	def get_filename(self):
 		"""
 		Returns filename of last loaded file or None.
@@ -152,8 +163,7 @@ class Profile(object):
 	def _convert(self, from_version):
 		""" Performs conversion from older profile version """
 		if from_version < 1:
-			from scc.modifiers import ModeModifier, HoldModifier
-			from scc.special_actions import MenuAction
+			from scc.modifiers import ModeModifier
 			# Add 'display Default.menu if center button is held' for old profiles
 			c = self.buttons[SCButtons.C]
 			if not c:

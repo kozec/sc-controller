@@ -351,9 +351,35 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_btNewProfile_clicked(self, *a):
 		""" Called when new profile name is set and OK is clicked """
 		txNewProfile = self.builder.get_object("txNewProfile")
+		rbNewProfile = self.builder.get_object("rbNewProfile")
+		
 		dlg = self.builder.get_object("dlgNewProfile")
+		if rbNewProfile.get_active():
+			# Creating blank profile is requested
+			print self.current
+			self.current.clear()
 		self.new_profile(self.current, txNewProfile.get_text())
 		dlg.hide()
+	
+	
+	def on_rbNewProfile_group_changed(self, *a):
+		"""
+		Called when user clicks 'Copy current profile' button.
+		If profile name was not changed by user before clicking it,
+		it's automatically changed.
+		"""
+		txNewProfile = self.builder.get_object("txNewProfile")
+		rbNewProfile = self.builder.get_object("rbNewProfile")
+		
+		if not txNewProfile._changed:
+			self.recursing = True
+			if rbNewProfile.get_active():
+				# Create empty profile
+				txNewProfile.set_text(self.generate_new_name())
+			else:
+				# Copy current profile
+				txNewProfile.set_text(self.generate_copy_name(txNewProfile._name))
+			self.recursing = False
 	
 	
 	def on_profile_modified(self, update_ui=True):
@@ -417,18 +443,51 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.current_file = giofile	
 	
 	
-	def on_new_clicked(self, ps, name):
-		new_name = _("Copy of %s") % (name,)
+	def generate_new_name(self):
+		"""
+		Generates name for new profile.
+		That is 'New Profile X', where X is number that makes name unique.
+		"""
+		i = 1
+		new_name = _("New Profile %s") % (i,)
 		filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
-		i = 0
 		while os.path.exists(filename):
 			i += 1
-			new_name = _("Copy of %s (%s)") % (name, i)
+			new_name = _("New Profile %s") % (i,)
 			filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
-		
+		return new_name
+	
+	
+	def generate_copy_name(self, name):
+		"""
+		Generates name for profile copy.
+		That is 'New Profile X', where X is number that makes name unique.
+		"""
+		new_name = _("Copy of %s") % (name,)
+		filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+		i = 2
+		while os.path.exists(filename):
+			new_name = _("Copy of %s") % (name,)
+			filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+			i += 1
+		return new_name
+	
+	
+	def on_txNewProfile_changed(self, *a):
+		if self.recursing:
+			return
+		txNewProfile = self.builder.get_object("txNewProfile")
+		txNewProfile._changed = True
+	
+	
+	def on_new_clicked(self, ps, name):
 		dlg = self.builder.get_object("dlgNewProfile")
 		txNewProfile = self.builder.get_object("txNewProfile")
-		txNewProfile.set_text(new_name)
+		self.recursing = True
+		txNewProfile.set_text(self.generate_new_name())
+		txNewProfile._name = name
+		txNewProfile._changed = False
+		self.recursing = False
 		dlg.set_transient_for(self.window)
 		dlg.show()
 	
