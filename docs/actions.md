@@ -287,8 +287,9 @@ with decreasing speed, based on set mass and friction, until virtual
 Enables deadzone on trigger, pad or stick.
 
 
-#### <a name="smooth"></a> smooth(level, action)
-Enables input smoothing.
+#### <a name="smooth"></a> smooth([buffer=8, [multiplier=0.7, ]] action)
+Enables input smoothing. Position is computed as weighed average of last X
+input positions with highest weight given to most recent position.
 
 
 #### <a name="osd"></a> osd([timeout=5], action)

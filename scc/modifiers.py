@@ -1077,9 +1077,13 @@ class SmoothModifier(Modifier):
 	COMMAND = "smooth"
 	PROFILE_KEY_PRIORITY = 11	# Before sensitivity
 	
-	def _mod_init(self, level):
+	def _mod_init(self, level=8, multiplier=0.7):
 		self.level = level
-		self._deq = deque(maxlen=level)
+		self.multiplier = multiplier
+		self._deq_x = deque(maxlen=level)
+		self._deq_y = deque(maxlen=level)
+		self._weights = [ multiplier ** x for x in reversed(xrange(level)) ]
+		self._w_sum = sum(self._weights)
 		self._last_pos = 0
 		self._moving = False
 	
@@ -1095,26 +1099,36 @@ class SmoothModifier(Modifier):
 	
 	def encode(self):
 		rv = Modifier.encode(self)
-		rv[SmoothModifier.COMMAND] = self.level
+		rv[SmoothModifier.COMMAND] = [ self.level, self.multiplier ]
 		return rv
 	
 	
 	@staticmethod
 	def decode(data, a, *b):
-		return SmoothModifier(data[SmoothModifier.COMMAND], a)
+		pars = data[SmoothModifier.COMMAND] + [ a ]
+		return SmoothModifier(*pars)
 	
 	
 	def _get_pos(self):
 		""" Computes average x,y from all accumulated positions """
-		x, y = reduce(lambda (x1, y1), (x2, y2) : (x1+x2, y1+y2), self._deq, (0, 0))
-		return x / len(self._deq), y / len(self._deq)
+		x = sum(( self._deq_x[i] * self._weights[i] for i in xrange(self.level) ))
+		y = sum(( self._deq_y[i] * self._weights[i] for i in xrange(self.level) ))
+		return x / self._w_sum, y / self._w_sum
 	
 	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
-			self._deq.append(( x, y ))
-			x, y = self._get_pos()
-			if abs(x + y - self._last_pos) > self.level * 2:
+			if mapper.was_touched(what):
+				# Pressed for longer time
+				self._deq_x.append(x)
+				self._deq_y.append(y)
+				x, y = self._get_pos()
+			else:
+				# Just pressed - fill deque with current position
+				for i in xrange(self.level):
+					self._deq_x.append(x)
+					self._deq_y.append(y)
+			if abs(x + y - self._last_pos) > 2:
 				self.action.whole(mapper, x, y, what)
 			self._last_pos = x + y
 		else:
@@ -1122,4 +1136,3 @@ class SmoothModifier(Modifier):
 			x, y = self._get_pos()
 			self.action.whole(mapper, x, y, what)
 			self._last_pos = 0
-			self._deq.clear()
