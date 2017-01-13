@@ -1070,11 +1070,11 @@ class RotateInputModifier(Modifier):
 		return self.action.whole(mapper, rx, ry, what)
 
 
-class FilterModifier(Modifier):
+class SmoothModifier(Modifier):
 	"""
-	Filters-out small movements
+	Smooths pad movements
 	"""
-	COMMAND = "filter"
+	COMMAND = "smooth"
 	PROFILE_KEY_PRIORITY = 11	# Before sensitivity
 	
 	def _mod_init(self, level):
@@ -1085,23 +1085,23 @@ class FilterModifier(Modifier):
 	
 	
 	def __str__(self):
-		return "<Filtered %s>" % (self.action,)
+		return "<Smooth %s>" % (self.action,)
 	
 	
 	def describe(self, context):
 		if self.name: return self.name
-		return "%s (filtered)" % (self.action.describe(context),)
+		return "%s (smooth)" % (self.action.describe(context),)
 	
 	
 	def encode(self):
 		rv = Modifier.encode(self)
-		rv[FilterModifier.COMMAND] = self.level
+		rv[SmoothModifier.COMMAND] = self.level
 		return rv
 	
 	
 	@staticmethod
 	def decode(data, a, *b):
-		return FilterModifier(data[FilterModifier.COMMAND], a)
+		return SmoothModifier(data[SmoothModifier.COMMAND], a)
 	
 	
 	def _get_pos(self):
