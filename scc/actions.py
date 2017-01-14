@@ -579,7 +579,8 @@ class HatRightAction(HatAction):
 class WholeHapticAction(HapticEnabledAction):
 	"""
 	Helper class for actions that are generating haptic 'rolling clicks' as
-	finger moves over pad. MouseAction and XYAction currently.
+	finger moves over pad.
+	MouseAction, CircularAction, XYAction and BallModifier currently.
 	"""
 	def __init__(self):
 		HapticEnabledAction.__init__(self)
@@ -721,7 +722,7 @@ class MouseAction(WholeHapticAction, Action):
 			mapper.mouse_move(roll * -self.speed[0], pitch * -self.speed[1])
 
 
-class CircularAction(HapticEnabledAction, Action):
+class CircularAction(WholeHapticAction, Action):
 	"""
 	Designed to translate rotating finger over pad to mouse wheel movement.
 	"""
@@ -729,11 +730,10 @@ class CircularAction(HapticEnabledAction, Action):
 	
 	def __init__(self, axis):
 		Action.__init__(self, axis)
-		HapticEnabledAction.__init__(self)
+		WholeHapticAction.__init__(self)
 		self._mouse_axis = axis
 		self.speed = 1.0
 		self.angle = None		# Last known finger position
-		self.travelled = 0
 	
 	
 	def set_speed(self, x, y, z):
@@ -776,12 +776,9 @@ class CircularAction(HapticEnabledAction, Action):
 				elif angle < -PI:
 					# Add a full rotation to counter the wrapping
 					angle += 2 * PI
+				if self.haptic:
+					WholeHapticAction.change(self, mapper, angle * 10000, 0)
 			# Apply bulgarian constant
-			self.travelled += angle * 5000
-			if self.haptic:
-				if abs(self.travelled) > self.haptic.frequency:
-					mapper.send_feedback(self.haptic)
-					self.travelled = 0
 			angle *= 10000.0
 			# Apply movement on axis
 			if self._mouse_axis == Rels.REL_X:
