@@ -48,15 +48,16 @@ class TestModifiers(object):
 		assert isinstance(a.action, MouseAction)
 	
 	
-	def test_filter(self):
+	def test_smooth(self):
 		"""
-		Tests if FilterModifier is parsed
+		Tests if SmoothModifier is parsed
 		"""
-		a = _parse_compressed("filter(5, axis(ABS_X))")
-		assert isinstance(a, FilterModifier)
+		a = _parse_compressed("smooth(5, 0.3, axis(ABS_X))")
+		assert isinstance(a, SmoothModifier)
 		assert isinstance(a.action, AxisAction)
 		assert a.action.id == Axes.ABS_X
 		assert a.level == 5
+		assert a.multiplier == 0.3
 	
 	
 	def test_deadzone(self):

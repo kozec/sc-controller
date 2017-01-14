@@ -69,17 +69,18 @@ class TestModifiers(object):
 		assert _is_axis_with_value(a.action)
 	
 	
-	def test_filter(self):
+	def test_smooth(self):
 		"""
-		Tests if FilterModifier is parsed correctly from json.
+		Tests if SmoothModifier is parsed correctly from json.
 		"""
 		a = parser.from_json_data({
 			'action' : "axis(ABS_X)",
-			'filter' : 5
+			'smooth' : [ 5, 0.3 ]
 		})
 		
-		assert isinstance(a, FilterModifier)
+		assert isinstance(a, SmoothModifier)
 		assert a.level == 5
+		assert a.multiplier == 0.3
 		assert _is_axis_with_value(a.action)
 	
 	
