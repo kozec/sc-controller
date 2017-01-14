@@ -9,7 +9,7 @@ For example, click() modifier executes action only if pad is pressed.
 from __future__ import unicode_literals
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction
-from scc.actions import NoAction, HapticEnabledAction
+from scc.actions import NoAction, WholeHapticAction
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
@@ -252,7 +252,7 @@ class ClickModifier(Modifier):
 			return self.action.whole(mapper, 0, 0, what)
 
 
-class BallModifier(Modifier, HapticEnabledAction):
+class BallModifier(Modifier, WholeHapticAction):
 	"""
 	Emulates ball-like movement with inertia and friction.
 	
@@ -270,7 +270,7 @@ class BallModifier(Modifier, HapticEnabledAction):
 	
 	def __init__(self, *params):
 		Modifier.__init__(self, *params)
-		HapticEnabledAction.__init__(self)
+		WholeHapticAction.__init__(self)
 	
 	
 	def _mod_init(self, friction=DEFAULT_FRICTION, mass=80.0,
@@ -279,7 +279,6 @@ class BallModifier(Modifier, HapticEnabledAction):
 		self.friction = friction
 		self._xvel = 0.0
 		self._yvel = 0.0
-		self._travelled = 0
 		self._ampli  = ampli
 		self._degree = degree
 		self._radscale = (degree * PI / 180) / ampli
@@ -366,12 +365,7 @@ class BallModifier(Modifier, HapticEnabledAction):
 		if dx or dy:
 			self.action.change(mapper, dx * self.speed[0], dy * self.speed[1])
 			if self.haptic:
-				distance = sqrt(dx * dx + dy * dy)
-				if distance * MouseAction.HAPTIC_FACTOR > self.haptic.frequency:
-					self._travelled += distance
-					if self._travelled > self.haptic.frequency:
-						self._travelled = 0
-						mapper.send_feedback(self.haptic)
+				WholeHapticAction.change(self, mapper, dx, dy)
 			mapper.schedule(0, self._roll)
 	
 	
@@ -438,14 +432,14 @@ class BallModifier(Modifier, HapticEnabledAction):
 		if self.action and hasattr(self.action, "set_haptic"):
 			self.action.set_haptic(hd)
 		else:
-			HapticEnabledAction.set_haptic(self, hd)
+			WholeHapticAction.set_haptic(self, hd)
 	
 	
 	def get_haptic(self):
 		if self.action and hasattr(self.action, "get_haptic"):
 			return self.action.get_haptic()
 		else:
-			return HapticEnabledAction.get_haptic(self)
+			return WholeHapticAction.get_haptic(self)
 
 
 class DeadzoneModifier(Modifier):

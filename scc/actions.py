@@ -576,7 +576,31 @@ class HatRightAction(HatAction):
 		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
 
 
-class MouseAction(HapticEnabledAction, Action):
+class WholeHapticAction(HapticEnabledAction):
+	"""
+	Helper class for actions that are generating haptic 'rolling clicks' as
+	finger moves over pad. MouseAction and XYAction currently.
+	"""
+	def __init__(self):
+		HapticEnabledAction.__init__(self)
+		self.reset_wholehaptic()
+	
+	
+	def change(self, mapper, dx, dy):
+		self._ax += dx
+		self._ay += dy
+
+		distance = sqrt(self._ax * self._ax + self._ay * self._ay)
+		if distance > self.haptic.frequency:
+			self._ax = self._ay = 0
+			mapper.send_feedback(self.haptic)	
+	
+	
+	def reset_wholehaptic(self):
+		self._ax = self._ay = 0.0
+
+
+class MouseAction(WholeHapticAction, Action):
 	"""
 	Controlls mouse movement in either vertical or horizontal direction
 	or scroll wheel.
@@ -587,10 +611,9 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	def __init__(self, axis=None, speed=None):
 		Action.__init__(self, *strip_none(axis, speed))
-		HapticEnabledAction.__init__(self)
+		WholeHapticAction.__init__(self)
 		self._mouse_axis = axis or None
 		self._old_pos = None
-		self._travelled = 0
 		if speed:
 			self.speed = (speed, speed)
 		else:
@@ -660,6 +683,9 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	def change(self, mapper, dx, dy):
 		""" Called from BallModifier """
+		if self.haptic:
+			WholeHapticAction.change(self, mapper, dx, dy)
+		
 		dx, dy = dx * self.speed[0], dy * self.speed[1]
 		if self._mouse_axis is None:
 			mapper.mouse.moveEvent(dx, dy)
@@ -671,13 +697,6 @@ class MouseAction(HapticEnabledAction, Action):
 			mapper.mouse_wheel(0, -dx)
 		elif self._mouse_axis == Rels.REL_HWHEEL:
 			mapper.mouse_wheel(dx, 0)
-		if self.haptic:
-			distance = sqrt(dx * dx + dy * dy)
-			if distance * MouseAction.HAPTIC_FACTOR > self.haptic.frequency:
-				self._travelled += distance
-				if self._travelled > self.haptic.frequency:
-					self._travelled = 0
-					mapper.send_feedback(self.haptic)
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -1679,7 +1698,7 @@ class DPad8Action(DPadAction):
 			self.dpad_state[0] = side
 
 
-class XYAction(HapticEnabledAction, Action):
+class XYAction(WholeHapticAction, Action):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
@@ -1689,12 +1708,12 @@ class XYAction(HapticEnabledAction, Action):
 	
 	def __init__(self, x=None, y=None):
 		Action.__init__(self, *strip_none(x, y))
-		HapticEnabledAction.__init__(self)
+		WholeHapticAction.__init__(self)
 		self.x = x or NoAction()
 		self.y = y or NoAction()
 		self.actions = (self.x, self.y)
 		self._old_distance = 0
-		self._travelled = 0
+		self._old_pos = None
 		if hasattr(self.x, "change") or hasattr(self.y, "change"):
 			self.change = self._change
 	
@@ -1768,28 +1787,9 @@ class XYAction(HapticEnabledAction, Action):
 		return self.x.get_previewable() and self.y.get_previewable()
 	
 	
-	def _haptic(self, mapper, x, y):
-		"""
-		Common part of _change and whole - sends haptic output, if enabled
-		"""
-		# Compute travelled distance and send 'small clicks' when user moves
-		# finger around the pad.
-		# Also, if user moves finger over circle around 2/3 area of pad,
-		# send one 'big click'.
-		distance = sqrt(x*x + y*y)
-		self._travelled += abs(self._old_distance - distance)
-		is_close = distance > STICK_PAD_MAX * 2 / 3
-		was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
-		if is_close != was_close:
-			mapper.send_feedback(self.big_click)
-		elif self._travelled > self.haptic.frequency:
-			self._travelled = 0
-			mapper.send_feedback(self.haptic)
-		self._old_distance = distance
-	
-	
 	def _change(self, mapper, x, y):
 		""" Not always available """
+		WholeHapticAction.change(self, x, y)
 		if hasattr(self.x, "change"):
 			self.x.change(mapper, x, 0)
 		if hasattr(self.y, "change"):
@@ -1800,7 +1800,21 @@ class XYAction(HapticEnabledAction, Action):
 	
 	def whole(self, mapper, x, y, what):
 		if self.haptic:
-			self._haptic(mapper, x, y)
+			distance = sqrt(x*x + y*y)
+			is_close = distance > STICK_PAD_MAX * 2 / 3
+			was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
+			if self._old_pos:
+				WholeHapticAction.change(self, mapper,
+					x - self._old_pos[0], y - self._old_pos[1])
+			if is_close != was_close:
+				mapper.send_feedback(self.big_click)
+			
+			self._old_distance = distance
+			if mapper.is_touched(what):
+				self._old_pos = x, y
+			else:
+				self._old_pos = None
+		
 		if what in (LEFT, RIGHT):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
