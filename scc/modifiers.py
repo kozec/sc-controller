@@ -1074,8 +1074,8 @@ class SmoothModifier(Modifier):
 	def _mod_init(self, level=8, multiplier=0.7):
 		self.level = level
 		self.multiplier = multiplier
-		self._deq_x = deque(maxlen=level)
-		self._deq_y = deque(maxlen=level)
+		self._deq_x = deque([ 0.0 ] * level, maxlen=level)
+		self._deq_y = deque([ 0.0 ] * level, maxlen=level)
 		self._weights = [ multiplier ** x for x in reversed(xrange(level)) ]
 		self._w_sum = sum(self._weights)
 		self._last_pos = 0
