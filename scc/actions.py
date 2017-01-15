@@ -1786,7 +1786,8 @@ class XYAction(WholeHapticAction, Action):
 	
 	def _change(self, mapper, x, y):
 		""" Not always available """
-		WholeHapticAction.change(self, x, y)
+		if self.haptic:
+			WholeHapticAction.change(self, mapper, x, y)
 		if hasattr(self.x, "change"):
 			self.x.change(mapper, x, 0)
 		if hasattr(self.y, "change"):
