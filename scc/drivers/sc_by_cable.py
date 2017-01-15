@@ -45,6 +45,15 @@ class SCByCable(USBDevice, SCController):
 		self.read_serial()
 	
 	
+	def generate_serial(self):
+		self._serial = "%s:%s" % (self.device.getBusNumber(), self.device.getPortNumber())
+	
+	
+	def disconnected(self):
+		# Overrided to skip returning serial# to pool.
+		pass
+	
+	
 	def __repr__(self):
 		return "<SCByCable %s>" % (self.get_id(),)
 	

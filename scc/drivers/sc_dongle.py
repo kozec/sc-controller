@@ -64,6 +64,7 @@ def init(daemon):
 
 class Dongle(USBDevice):
 	MAX_ENDPOINTS = 4
+	_available_serials = set()		# used only is ignore_serials option is enabled
 	
 	def __init__(self, device, handle, daemon):
 		self.daemon = daemon
@@ -72,7 +73,6 @@ class Dongle(USBDevice):
 		self.claim_by(klass=3, subclass=0, protocol=0)
 		self._controllers = {}
 		self._no_serial = []
-		self._available_serials = set()		# used only is ignore_serials option is enabled
 		for i in xrange(0, Dongle.MAX_ENDPOINTS):
 			# Steam dongle apparently can do only 4 controllers at once
 			self.set_input_interrupt(FIRST_ENDPOINT + i, 64, self._on_input)
@@ -223,13 +223,8 @@ class SCController(Controller):
 		if Config()["ignore_serials"]:
 			# Special exception for cases when controller drops instead of
 			# sending serial number. See issue #103
-			if len(self._driver._available_serials) > 0:
-				self._serial = self._driver._available_serials.pop()
-			else:
-				self._serial = self.get_id()
-			log.debug("Not requesting seria number for SC %s", self._serial)
-			self.set_id(str(self._serial), True)
-			self._driver.daemon.add_controller(self)
+			self.generate_serial()
+			self.on_serial_got()
 			return
 		
 		def cb(rawserial):
@@ -245,6 +240,15 @@ class SCController(Controller):
 			self._ccidx, cb,
 			struct.pack('>BBB61x',
 				SCPacketType.GET_SERIAL, SCPacketLength.GET_SERIAL, 0x01))
+	
+	
+	def generate_serial(self):
+		""" Called only if ignore_serials is enabled """
+		if len(self._driver._available_serials) > 0:
+			self._serial = self._driver._available_serials.pop()
+		else:
+			self._serial = self.get_id()
+		log.debug("Not requesting serial number for SC %s", self._serial)
 	
 	
 	def on_serial_got(self):
