@@ -269,6 +269,21 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.save_config()
 	
 	
+	def on_btRestartEmulation_clicked(self, *a):
+		rvRestartWarning = self.builder.get_object("rvRestartWarning")
+		self.app.dm.stop()
+		rvRestartWarning.set_reveal_child(False)
+		GLib.timeout_add_seconds(1, self.app.dm.start)
+	
+	
+	def on_restarting_checkbox_toggled(self, *a):
+		if self._recursing: return
+		self.on_random_checkbox_toggled()
+		if self.app.dm.is_alive():
+			rvRestartWarning = self.builder.get_object("rvRestartWarning")
+			rvRestartWarning.set_reveal_child(True)
+	
+	
 	def on_random_checkbox_toggled(self, *a):
 		if self._recursing: return
 		self.save_config()

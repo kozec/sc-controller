@@ -543,6 +543,7 @@
             <property name="label" translatable="yes">OSD Keyboard</property>
           </object>
           <packing>
+            <property name="tab_expand">True</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
@@ -839,6 +840,7 @@
           </object>
           <packing>
             <property name="position">1</property>
+            <property name="tab_expand">True</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
@@ -1095,6 +1097,7 @@
           </object>
           <packing>
             <property name="position">2</property>
+            <property name="tab_expand">True</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
@@ -1129,7 +1132,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">1</property>
               </packing>
             </child>
             <child>
@@ -1149,7 +1152,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">2</property>
               </packing>
             </child>
             <child>
@@ -1159,7 +1162,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                 <property name="receives_default">False</property>
                 <property name="margin_top">15</property>
                 <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
+                <signal name="toggled" handler="on_restarting_checkbox_toggled" swapped="no"/>
                 <child>
                   <object class="GtkLabel" id="label32">
                     <property name="visible">True</property>
@@ -1175,7 +1178,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
+                <property name="top_attach">4</property>
               </packing>
             </child>
             <child>
@@ -1201,7 +1204,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">7</property>
+                <property name="top_attach">8</property>
               </packing>
             </child>
             <child>
@@ -1225,7 +1228,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">6</property>
+                <property name="top_attach">7</property>
               </packing>
             </child>
             <child>
@@ -1251,7 +1254,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">5</property>
+                <property name="top_attach">6</property>
               </packing>
             </child>
             <child>
@@ -1268,7 +1271,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">4</property>
+                <property name="top_attach">5</property>
               </packing>
             </child>
             <child>
@@ -1278,7 +1281,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                 <property name="receives_default">False</property>
                 <property name="margin_top">15</property>
                 <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
+                <signal name="toggled" handler="on_restarting_checkbox_toggled" swapped="no"/>
                 <child>
                   <object class="GtkLabel" id="label34">
                     <property name="visible">True</property>
@@ -1294,7 +1297,103 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
+                <property name="top_attach">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRevealer" id="rvRestartWarning">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+                <child>
+                  <object class="GtkInfoBar" id="infoBarRestartWarning">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="message_type">warning</property>
+                    <child internal-child="action_area">
+                      <object class="GtkButtonBox" id="bbRestartWarning">
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="layout_style">end</property>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="btRestartEmulation">
+                            <property name="label" translatable="yes">Restart Emulation</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <signal name="clicked" handler="on_btRestartEmulation_clicked" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child internal-child="content_area">
+                      <object class="GtkBox" id="vbRestartWarning">
+                        <property name="can_focus">False</property>
+                        <property name="spacing">16</property>
+                        <child>
+                          <object class="GtkImage" id="imgRestartWarning">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="stock">gtk-dialog-warning</property>
+                            <property name="icon_size">6</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblRestartWarning">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Emulation has to be restarted to apply all settings.
+If you have any games running, restarting emulation will "unplug"
+emulated gamepad, what may cause them to ignore future inputs
+or even crash.</property>
+                            <property name="wrap">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
               </packing>
             </child>
           </object>
@@ -1310,6 +1409,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
           </object>
           <packing>
             <property name="position">3</property>
+            <property name="tab_expand">True</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
