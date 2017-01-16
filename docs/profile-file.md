@@ -156,7 +156,7 @@ Example:
 
 	"pad_left": {
 	  "action": "trackball()",
-	  "smooth": [ 8, 0.7 ]
+	  "smooth": [ 8, 0.7, 2.0 ]
 	},
 
 enables smoothing with buffer of 8 and modifier set to 0.7.

@@ -1071,9 +1071,10 @@ class SmoothModifier(Modifier):
 	COMMAND = "smooth"
 	PROFILE_KEY_PRIORITY = 11	# Before sensitivity
 	
-	def _mod_init(self, level=8, multiplier=0.7):
+	def _mod_init(self, level=8, multiplier=0.7, filter=2):
 		self.level = level
 		self.multiplier = multiplier
+		self.filter = filter
 		self._deq_x = deque([ 0.0 ] * level, maxlen=level)
 		self._deq_y = deque([ 0.0 ] * level, maxlen=level)
 		self._weights = [ multiplier ** x for x in reversed(xrange(level)) ]
@@ -1093,7 +1094,7 @@ class SmoothModifier(Modifier):
 	
 	def encode(self):
 		rv = Modifier.encode(self)
-		rv[SmoothModifier.COMMAND] = [ self.level, self.multiplier ]
+		rv[SmoothModifier.COMMAND] = [ self.level, self.multiplier, self.filter ]
 		return rv
 	
 	
@@ -1122,7 +1123,7 @@ class SmoothModifier(Modifier):
 				for i in xrange(self.level):
 					self._deq_x.append(x)
 					self._deq_y.append(y)
-			if abs(x + y - self._last_pos) > 2:
+			if abs(x + y - self._last_pos) > self.filter:
 				self.action.whole(mapper, x, y, what)
 			self._last_pos = x + y
 		else:
