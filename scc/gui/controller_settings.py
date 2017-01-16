@@ -92,7 +92,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		
 		self._recursing = True
-		txName.set_text(cfg["name"])
+		txName.set_text(cfg["name"] or "")
 		sclLED.set_value(float(cfg["led_level"]))
 		sclLeftRotation.set_value(float(cfg["input_rotation_l"]))
 		sclRightRotation.set_value(float(cfg["input_rotation_r"]))
