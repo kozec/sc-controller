@@ -28,7 +28,8 @@
 	
 	"pad_right": {
 		"action": "trackball(1.0)",
-		"feedback": ["RIGHT", 256]
+		"feedback": ["RIGHT", 256],
+		"smooth" : [ 8, 0.78 ]
 	},
 	
 	"stick": { "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))" },
