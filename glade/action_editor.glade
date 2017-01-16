@@ -64,6 +64,26 @@
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">1</property>
   </object>
+  <object class="GtkAdjustment" id="adjSmoothFilter">
+    <property name="upper">100</property>
+    <property name="value">2</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjSmoothLevel">
+    <property name="lower">2</property>
+    <property name="upper">20</property>
+    <property name="value">8</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">3</property>
+  </object>
+  <object class="GtkAdjustment" id="adjSmoothWeight">
+    <property name="lower">0.10000000000000001</property>
+    <property name="upper">1</property>
+    <property name="value">0.75</property>
+    <property name="step_increment">0.10000000000000001</property>
+    <property name="page_increment">0.29999999999999999</property>
+  </object>
   <object class="GtkListStore" id="lstDPADType">
     <columns>
       <!-- column-name text -->
@@ -714,7 +734,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">5</property>
+                    <property name="top_attach">7</property>
                   </packing>
                 </child>
                 <child>
@@ -854,7 +874,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">4</property>
+                    <property name="top_attach">6</property>
                   </packing>
                 </child>
                 <child>
@@ -1045,7 +1065,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">6</property>
+                    <property name="top_attach">8</property>
                   </packing>
                 </child>
                 <child>
@@ -1132,7 +1152,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">7</property>
+                    <property name="top_attach">9</property>
                   </packing>
                 </child>
                 <child>
@@ -1194,7 +1214,237 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">10</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkRevealer" id="rvSmoothingCb">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
+                    <property name="reveal_child">True</property>
+                    <child>
+                      <object class="GtkCheckButton" id="cbSmoothing">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="xalign">0</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="update_modifiers" swapped="no"/>
+                        <child>
+                          <object class="GtkLabel" id="label7">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_left">5</property>
+                            <property name="label" translatable="yes">Enable Smoothing</property>
+                            <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkRevealer" id="rvSmoothing">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
+                    <child>
+                      <object class="GtkGrid" id="grRotation1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="row_spacing">2</property>
+                        <property name="column_spacing">10</property>
+                        <child>
+                          <object class="GtkLabel" id="lblRotationHeader1">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_top">1</property>
+                            <property name="label" translatable="yes">Smoothing Options</property>
+                            <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">0</property>
+                            <property name="width">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblSmoothLevel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_left">20</property>
+                            <property name="label" translatable="yes">Level</property>
+                            <property name="ellipsize">end</property>
+                            <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScale" id="sclSmoothLevel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="hexpand">True</property>
+                            <property name="adjustment">adjSmoothLevel</property>
+                            <property name="round_digits">1</property>
+                            <property name="digits">0</property>
+                            <property name="value_pos">right</property>
+                            <signal name="value-changed" handler="update_modifiers" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="btClearSmoothLevel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="margin_right">20</property>
+                            <signal name="clicked" handler="on_btClearSmoothing_clicked" swapped="no"/>
+                            <child>
+                              <object class="GtkImage" id="image10">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="stock">gtk-clear</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="left_attach">2</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblSmoothWeight">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_left">20</property>
+                            <property name="label" translatable="yes">Weight</property>
+                            <property name="ellipsize">end</property>
+                            <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblSmoothFilter">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_left">20</property>
+                            <property name="label" translatable="yes">Filter</property>
+                            <property name="ellipsize">end</property>
+                            <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScale" id="sclSmoothWeight">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="hexpand">True</property>
+                            <property name="adjustment">adjSmoothWeight</property>
+                            <property name="round_digits">1</property>
+                            <property name="digits">2</property>
+                            <property name="value_pos">right</property>
+                            <signal name="value-changed" handler="update_modifiers" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScale" id="sclSmoothFilter">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="hexpand">True</property>
+                            <property name="adjustment">adjSmoothFilter</property>
+                            <property name="round_digits">1</property>
+                            <property name="digits">0</property>
+                            <property name="value_pos">right</property>
+                            <signal name="value-changed" handler="update_modifiers" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="btClearSmoothWeight">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="margin_right">20</property>
+                            <signal name="clicked" handler="on_btClearSmoothing_clicked" swapped="no"/>
+                            <child>
+                              <object class="GtkImage" id="image11">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="stock">gtk-clear</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="left_attach">2</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="btClearSmoothFilter">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="margin_right">20</property>
+                            <signal name="clicked" handler="on_btClearSmoothing_clicked" swapped="no"/>
+                            <child>
+                              <object class="GtkImage" id="image12">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="stock">gtk-clear</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="left_attach">2</property>
+                            <property name="top_attach">3</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">5</property>
                   </packing>
                 </child>
               </object>

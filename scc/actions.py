@@ -88,6 +88,7 @@ class Action(object):
 	MOD_SENS_Z		= 1 << 5	# Sensitivity of 3rd axis
 	MOD_ROTATE		= 1 << 6
 	MOD_POSITION	= 1 << 7
+	MOD_SMOOTH		= 1 << 8
 	
 	def __init__(self, *parameters):
 		self.parameters = parameters
@@ -622,7 +623,8 @@ class MouseAction(WholeHapticAction, Action):
 	
 	
 	def get_compatible_modifiers(self):
-		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_ROTATE
+		return ( Action.MOD_SENSITIVITY | Action.MOD_SENS_Z
+			| Action.MOD_ROTATE | Action.MOD_SMOOTH )
 	
 	
 	def get_previewable(self):
@@ -1717,7 +1719,7 @@ class XYAction(WholeHapticAction, Action):
 	
 	def get_compatible_modifiers(self):
 		return ( Action.MOD_FEEDBACK | Action.MOD_SENSITIVITY
-			| Action.MOD_ROTATE
+			| Action.MOD_ROTATE | Action.MOD_SMOOTH
 			| self.x.get_compatible_modifiers()
 			| self.y.get_compatible_modifiers()
 		)

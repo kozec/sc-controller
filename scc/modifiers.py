@@ -302,7 +302,8 @@ class BallModifier(Modifier, WholeHapticAction):
 	
 	def get_compatible_modifiers(self):
 		return ( Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK
-			| Action.MOD_DEADZONE | Modifier.get_compatible_modifiers(self) )
+			| Action.MOD_SMOOTH | Action.MOD_DEADZONE
+			| Modifier.get_compatible_modifiers(self) )
 	
 	
 	def _stop(self):
@@ -1071,7 +1072,7 @@ class SmoothModifier(Modifier):
 	COMMAND = "smooth"
 	PROFILE_KEY_PRIORITY = 11	# Before sensitivity
 	
-	def _mod_init(self, level=8, multiplier=0.7, filter=2):
+	def _mod_init(self, level=8, multiplier=0.75, filter=2.0):
 		self.level = level
 		self.multiplier = multiplier
 		self.filter = filter

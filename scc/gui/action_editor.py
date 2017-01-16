@@ -12,6 +12,7 @@ from scc.special_actions import OSDAction, GesturesAction, MenuAction
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.modifiers import DeadzoneModifier, RotateInputModifier
+from scc.modifiers import SmoothModifier
 from scc.actions import Action, XYAction, NoAction
 from scc.constants import HapticPos, SCButtons
 from scc.controller import HapticData
@@ -49,6 +50,7 @@ COMPONENTS = (								# List of known modules (components) in scc.gui.ae package
 )
 XYZ = "XYZ"									# Sensitivity settings keys
 AFP = ("Amplitude", "Frequency", "Period")	# Feedback settings keys
+SMT = ("Level", "Weight", "Filter")			# Smoothing setting keys
 DZN = ("Lower", "Upper")					# Deadzone settings key
 FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
 
@@ -65,8 +67,8 @@ class ActionEditor(Editor):
 		# is used to edit menu actions.
 		Action.AC_BUTTON	: Action.MOD_OSD | Action.MOD_FEEDBACK,
 		Action.AC_TRIGGER	: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
-		Action.AC_STICK		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
-		Action.AC_PAD		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
+		Action.AC_STICK		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK | Action.MOD_SMOOTH,
+		Action.AC_PAD		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK | Action.MOD_SMOOTH,
 		Action.AC_GYRO		: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_FEEDBACK,
 		Action.AC_OSK		: 0,
 		Action.AC_MENU		: Action.MOD_OSD,
@@ -82,6 +84,7 @@ class ActionEditor(Editor):
 		self.c_buttons = {} 			# Component-to-button dict
 		self.sens_widgets = []			# Sensitivity sliders, labels and 'clear' buttons
 		self.feedback_widgets = []		# Feedback settings sliders, labels and 'clear' buttons, plus default value as last item
+		self.smoothing_widgets = []		# Smoothing settings sliders and 'clear' buttons, plus default value as last item
 		self.deadzone_widgets = []		# Deadzone settings sliders and 'clear' buttons, plus default value as last item
 		self.sens = [1.0] * 3			# Sensitivity slider values
 		self.sens_defaults = [1.0] * 3	# Clear button clears to this
@@ -89,6 +92,7 @@ class ActionEditor(Editor):
 		self.deadzone = [0] * 2			# Deadzone slider values, set later
 		self.deadzone_enabled = False
 		self.feedback_position = None	# None for 'disabled'
+		self.smoothing = None			# None for 'disabled'
 		self.click = False				# Click modifier value. None for disabled
 		self.rotation_angle = 0			# RotateInputModifier angle
 		self.osd = False				# 'OSD enabled' value.
@@ -122,6 +126,13 @@ class ActionEditor(Editor):
 				self.builder.get_object("lblF%s" % (key,)),
 				self.builder.get_object("btClearF%s" % (key,)),
 				self.feedback[i]	# default value
+			))
+		for key in SMT:
+			i = SMT.index(key)
+			self.smoothing_widgets.append((
+				self.builder.get_object("sclSmooth%s" % (key,)),
+				self.builder.get_object("btClearSmooth%s" % (key,)),
+				self.builder.get_object("sclSmooth%s" % (key,)).get_value()
 			))
 		for key in DZN:
 			i = DZN.index(key)
@@ -356,6 +367,12 @@ class ActionEditor(Editor):
 				scale.set_value(default)
 	
 	
+	def on_btClearSmoothing_clicked(self, source, *a):
+		for scale, button, default in self.smoothing_widgets:
+			if source == button:
+				scale.set_value(default)
+	
+	
 	def on_btClearDeadzone_clicked(self, source, *a):
 		for scale, button, default in self.deadzone_widgets:
 			if source == button:
@@ -430,6 +447,8 @@ class ActionEditor(Editor):
 		rvFeedback = self.builder.get_object("rvFeedback")
 		cbDeadzone = self.builder.get_object("cbDeadzone")
 		rvDeadzone = self.builder.get_object("rvDeadzone")
+		cbSmoothing = self.builder.get_object("cbSmoothing")
+		rvSmoothing = self.builder.get_object("rvSmoothing")
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
 		
@@ -461,6 +480,18 @@ class ActionEditor(Editor):
 			self.feedback_position = feedback_position
 			set_action = True
 		
+		if cbSmoothing.get_active():
+			smoothing = (
+				int(self.smoothing_widgets[0][0].get_value()),
+				self.smoothing_widgets[1][0].get_value(),
+				int(self.smoothing_widgets[2][0].get_value()),
+			)
+		else:
+			smoothing = None
+		if self.smoothing != smoothing:
+			self.smoothing = smoothing
+			set_action = True
+		
 		if self.click is not None:
 			if cbRequireClick.get_active() != self.click:
 				self.click = cbRequireClick.get_active()
@@ -476,6 +507,7 @@ class ActionEditor(Editor):
 			set_action = True
 		
 		rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
+		rvSmoothing.set_reveal_child(cbSmoothing.get_active() and cbSmoothing.get_sensitive())
 		rvDeadzone.set_reveal_child(cbDeadzone.get_active() and cbDeadzone.get_sensitive())
 		
 		if set_action:
@@ -521,6 +553,11 @@ class ActionEditor(Editor):
 					# Create modifier
 					action = FeedbackModifier(*feedback)
 		
+		if (cm & Action.MOD_SMOOTH) != 0:
+			if self.smoothing != None:
+				action = SmoothModifier(*( list(self.smoothing) + [ action ]))
+		
+		
 		if (cm & Action.MOD_DEADZONE) != 0:
 			if self.deadzone_enabled:
 				action = DeadzoneModifier(self.deadzone[0], self.deadzone[1], action)
@@ -548,7 +585,8 @@ class ActionEditor(Editor):
 		subclass.
 		"""
 		if isinstance(action, (ClickModifier, SensitivityModifier,
-				DeadzoneModifier, FeedbackModifier, RotateInputModifier)):
+				DeadzoneModifier, FeedbackModifier, RotateInputModifier,
+				SmoothModifier)):
 			return True
 		if isinstance(action, OSDAction):
 			if action.action is not None:
@@ -578,6 +616,8 @@ class ActionEditor(Editor):
 		cbFeedback = self.builder.get_object("cbFeedback")
 		rvFeedback = self.builder.get_object("rvFeedback")
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+		cbSmoothing = self.builder.get_object("cbSmoothing")
+		rvSmoothing = self.builder.get_object("rvSmoothing")
 		cbDeadzone = self.builder.get_object("cbDeadzone")
 		rvDeadzone = self.builder.get_object("rvDeadzone")
 		sclRotation = self.builder.get_object("sclRotation")
@@ -598,6 +638,9 @@ class ActionEditor(Editor):
 				self.feedback[0] = action.haptic.get_amplitude()
 				self.feedback[1] = action.haptic.get_frequency()
 				self.feedback[2] = action.haptic.get_period()
+				action = action.action
+			if isinstance(action, SmoothModifier):
+				self.smoothing = ( action.level, action.multiplier, action.filter)
 				action = action.action
 			if isinstance(action, DeadzoneModifier):
 				self.deadzone_enabled = True
@@ -624,6 +667,11 @@ class ActionEditor(Editor):
 			rvFeedback.set_reveal_child(cbFeedback.get_sensitive())
 			for i in xrange(0, len(self.feedback)):
 				self.feedback_widgets[i][0].set_value(self.feedback[i])
+		if self.smoothing:
+			cbSmoothing.set_active(True)
+			rvSmoothing.set_reveal_child(cbSmoothing.get_sensitive())
+			for i in xrange(0, len(self.smoothing_widgets)):
+				self.smoothing_widgets[i][0].set_value(self.smoothing[i])
 		if self.deadzone_enabled:
 			cbDeadzone.set_active(True)
 			rvDeadzone.set_reveal_child(cbDeadzone.get_sensitive())
@@ -771,6 +819,19 @@ class ActionEditor(Editor):
 			cbFeedback.set_sensitive(True)
 			rvFeedbackCb.set_reveal_child(True)
 			rvFeedback.set_reveal_child(cbFeedback.get_active())
+		
+		# Smoothing
+		rvSmoothingCb	= self.builder.get_object("rvSmoothingCb")
+		cbSmoothing		= self.builder.get_object("cbSmoothing")
+		rvSmoothing		= self.builder.get_object("rvSmoothing")
+		if (cm & Action.MOD_SMOOTH) == 0:
+			# Not allowed
+			cbSmoothing.set_sensitive(False)
+			rvSmoothingCb.set_reveal_child(False)
+			rvSmoothingCb.set_reveal_child(False)
+		else:
+			cbSmoothing.set_sensitive(True)
+			rvSmoothingCb.set_reveal_child(True)
 		
 		# Deadzone
 		cbDeadzone		= self.builder.get_object("cbDeadzone")
