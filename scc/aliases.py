@@ -6,7 +6,6 @@ This module generates Keys.BTN_x and Axes.AXIS_x aliases when imported
 """
 
 from scc.uinput import Axes, Keys
-from scc.constants import ALL_BUTTONS, ALL_AXES
 
 ALL_BUTTONS = ( Keys.BTN_START, Keys.BTN_MODE, Keys.BTN_SELECT, Keys.BTN_A,
 	Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
