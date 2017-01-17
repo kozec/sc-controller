@@ -103,8 +103,8 @@ class Mapper(object):
 					HapticPos.BOTH,
 					period = 32760,
 					amplitude = ef.level,
-					count = ef.duration * ef.repetitions / 30
-				))	
+					count = min(0x7FFF, ef.duration * ef.repetitions / 30)
+				))
 	
 	
 	def get_gamepad_name(self):
