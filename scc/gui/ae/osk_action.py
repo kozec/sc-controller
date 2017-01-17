@@ -9,7 +9,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, ButtonAction
-from scc.constants import Keys, LEFT, RIGHT
+from scc.constants import LEFT, RIGHT
+from scc.uinput import Keys
 from scc.gui.ae import AEComponent
 from scc.gui.parser import GuiActionParser
 from scc.osd.osk_actions import OSKAction, CloseOSKAction, OSKCursorAction
