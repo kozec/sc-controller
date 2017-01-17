@@ -75,7 +75,6 @@ class SCCDaemon(Daemon):
 					getattr(mod, "init")(self)
 				if hasattr(mod, "start"):
 					self._to_start.add(getattr(mod, "start"))
-		self.mainloops = tuple(self.mainloops)
 	
 	
 	def init_default_mapper(self):
@@ -119,6 +118,14 @@ class SCCDaemon(Daemon):
 		"""
 		if fn not in self.mainloops:
 			self.mainloops.append(fn)
+	
+	
+	def remove_mainloop(self, fn):
+		"""
+		Removes function added by add_mainloop
+		"""
+		if fn in self.mainloops:
+			self.mainloops.remove(fn)
 	
 	
 	def on_daemon_exit(self, fn):

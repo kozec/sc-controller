@@ -86,20 +86,6 @@ class Dongle(USBDevice):
 		USBDevice.close(self)
 	
 	
-	def overwrite_control(self, index, data):
-		"""
-		Similar to send_control, but this one checks and overwrites
-		already scheduled controll for same device/index.
-		"""
-		for x in self._cmsg:
-			x_index, x_data, x_timeout = x[-3:]
-			# First 3 bytes are for PacketType, size and ConfigType
-			if x_index == index and x_data[0:3] == data[0:3]:
-				self._cmsg.remove(x)
-				break
-		self.send_control(index, data)
-	
-	
 	def _add_controller(self, endpoint):
 		"""
 		Called when new controller is detected either by HOTPLUG message or

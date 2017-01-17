@@ -44,7 +44,7 @@ class Poller(object):
 		self._pool_pri = [ fd for fd, events in self._events.iteritems() if events & Poller.POLLPRI ]
 	
 	
-	def poll(self, timeout=1):
+	def poll(self, timeout=0.01):
 		inn, out, pri = select.select( self._pool_in, self._pool_out, self._pool_pri, timeout )
 		
 		for fd in inn:

@@ -11,7 +11,6 @@ from scc.lib import usb1
 from scc.drivers.usb import USBDevice, register_hotplug_device
 from sc_dongle import ControllerInput, SCI_NULL, TUP_FORMAT
 from sc_dongle import SCStatus, SCPacketType, SCConfigType, SCController
-from threading import Thread, Lock
 import struct, time, logging
 
 VENDOR_ID = 0x28de
@@ -37,9 +36,7 @@ class SCByCable(USBDevice, SCController):
 		self.daemon = daemon
 		self._ready = False
 		self._last_tup = None
-		self._lock = Lock()
-		self._thread = Thread(target = self._timer)
-		self._thread.start()
+		daemon.add_mainloop(self._timer)
 		
 		self.claim_by(klass=3, subclass=0, protocol=0)
 		self.read_serial()
@@ -75,26 +72,23 @@ class SCByCable(USBDevice, SCController):
 	
 	
 	def _timer(self):
-		while self._timer:
-			time.sleep(TIMER_INTERVAL)
-			with self._lock:
-				m = self.get_mapper()
-				if m:
-					if self._last_tup:
-						self.input(self._last_tup)
-						self._last_tup = None
-					else:
-						m.run_scheduled(time.time())
-						m.generate_events()
-						m.generate_feedback()
-					self.flush()
+		m = self.get_mapper()
+		if m:
+			if self._last_tup:
+				self.input(self._last_tup)
+				self._last_tup = None
+			else:
+				m.run_scheduled(time.time())
+				m.generate_events()
+				m.generate_feedback()
+			self.flush()
 	
 	
 	def close(self):
 		if self._ready:
 			self.daemon.remove_controller(self)
 			self._ready = False
-		self._timer = None
+		self.daemon.remove_mainloop(self._timer)
 		USBDevice.close(self)
 	
 	
