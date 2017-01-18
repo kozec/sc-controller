@@ -371,6 +371,7 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 					default:
 						break;
 				}
+				break;
 			case EV_FF:
 				switch (event.code) {
 					case FF_GAIN:
