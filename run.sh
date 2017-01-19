@@ -4,7 +4,7 @@
 cd "$(dirname "$0")"
 
 # Check for libuinput.so version
-UNPUT_MODULE_VERSION=5
+UNPUT_MODULE_VERSION=6
 REPORTED_VERSION=$(PYTHONPATH="." python2 -c 'import os, ctypes; lib=ctypes.CDLL("./libuinput.so"); print lib.uinput_module_version()')
 if [ x"$UNPUT_MODULE_VERSION" != x"$REPORTED_VERSION" ] ; then
 	echo "libuinput.so is outdated or missing, building one"
