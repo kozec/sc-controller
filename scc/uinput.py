@@ -183,7 +183,6 @@ class InputEvent(ctypes.Structure):
 class FeedbackEvent(ctypes.Structure):
 	_fields_ = [
 		('in_use', c_bool),
-		('playing', c_bool),
 		('continuous_rumble', c_bool),
 		('duration', c_int32),
 		('delay', c_int32),
@@ -194,7 +193,6 @@ class FeedbackEvent(ctypes.Structure):
 
 	def __init__(self):
 		self.in_use = False
-		self.playing = False
 
 
 class UInput(object):

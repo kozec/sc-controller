@@ -41,7 +41,6 @@
 
 struct feedback_effect {
 	bool in_use;
-	bool playing;
 	bool continuous_rumble;
 	int32_t duration;
 	int32_t delay;
@@ -290,7 +289,6 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 							eid = upload.effect.id;
 							ff_effects[eid]->duration = upload.effect.replay.length;
 							ff_effects[eid]->delay = upload.effect.replay.delay;
-							ff_effects[eid]->playing = 0;
 							ff_effects[eid]->repetitions = 0;
 							ff_effects[eid]->type = upload.effect.type;
 							ff_effects[eid]->level = 0x4FFF;
@@ -417,7 +415,6 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 								// SDL uses this to turn rumble off - fake event
 								// is generated here to achieve same effect
 								rv = event.code;
-								ff_effects[rv]->playing = false;
 								ff_effects[rv]->level = 0;
 								ff_effects[rv]->repetitions = 0;
 								ff_effects[rv]->duration = 0;
