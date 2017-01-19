@@ -37,9 +37,12 @@
 #define UNPUT_MODULE_VERSION 5
 #define MAX_FF_EVENTS 4
 
+#define INFINITE_RUMBLE		10000		// Not really infinite, but longer than controller can handle
+
 struct feedback_effect {
 	bool in_use;
 	bool playing;
+	bool continuous_rumble;
 	int32_t duration;
 	int32_t delay;
 	int32_t repetitions;
@@ -323,8 +326,13 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 									avg = upload.effect.u.rumble.strong_magnitude / 3 +
 										upload.effect.u.rumble.weak_magnitude / 6;
 									ff_effects[eid]->level = (int32_t)MIN(avg, 0x7FFF);
-									if (ff_effects[eid]->duration == 0)
-										ff_effects[eid]->duration = 10000;
+									if (ff_effects[eid]->continuous_rumble) {
+										// See comment in case EV_FF: block
+										ff_effects[eid]->duration = INFINITE_RUMBLE;
+										ff_effects[eid]->repetitions = 1;
+										rv = eid;
+										RUMBLE_DEBUG("FF_PLAY_RUMBLE -> %i\n", eid);
+									}
 									break;
 								case FF_FRICTION:
 									RUMBLE_DEBUG("FF_FRICTION [%i] \n", eid);
@@ -386,7 +394,25 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 							if (ff_effects[event.code]->in_use) {
 								rv = event.code;
 								ff_effects[rv]->repetitions = event.value;
-								RUMBLE_DEBUG("FF_PLAY -> %i (lvl %i) reps. %i\n", event.code, ff_effects[rv]->level, event.value);
+								if ( (ff_effects[rv]->type == FF_RUMBLE) && (ff_effects[rv]->duration == 0) ) {
+									// With FF_RUMBLE, duration of zero means infinite duration
+									ff_effects[rv]->duration = INFINITE_RUMBLE;
+								}
+								if ( (ff_effects[rv]->type == FF_RUMBLE) && (event.value > 0) && ( (ff_effects[rv]->duration >= INFINITE_RUMBLE) || (event.value > 1) )) {
+									// continuous_rumble is special kind of effect used by some games.
+									// This event is "played" infinitelly, but with zero amplitide and whenever actual rumble is
+									// supposed to play, effect properties are updated on the fly.
+									if (!ff_effects[rv]->continuous_rumble) {
+										ff_effects[rv]->continuous_rumble = true;
+										RUMBLE_DEBUG("CONTINUOUS RUMBLE enabled on %i\n", rv);
+									}
+								} else if (ff_effects[rv]->continuous_rumble) {
+									RUMBLE_DEBUG("CONTINUOUS RUMBLE disabled on %i\n", rv);
+									ff_effects[rv]->continuous_rumble = false;
+								}
+								RUMBLE_DEBUG("FF_PLAY -> %i (type %i, lvl %i, dur. %i, reps. %i)\n", event.code,
+									ff_effects[rv]->type, ff_effects[rv]->level, ff_effects[rv]->duration,
+									ff_effects[rv]->repetitions, event.value);
 							} else {
 								// SDL uses this to turn rumble off - fake event
 								// is generated here to achieve same effect

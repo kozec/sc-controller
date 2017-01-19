@@ -184,6 +184,7 @@ class FeedbackEvent(ctypes.Structure):
 	_fields_ = [
 		('in_use', c_bool),
 		('playing', c_bool),
+		('continuous_rumble', c_bool),
 		('duration', c_int32),
 		('delay', c_int32),
 		('repetitions', c_int32),
