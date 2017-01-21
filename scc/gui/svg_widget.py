@@ -227,8 +227,8 @@ class SVGWidget(Gtk.EventBox):
 		elif element.tag.endswith("g"):
 			# Group, needs to find RECT, CIRCLE or PATH, whatever comes first
 			for child in element:
-				if SVGWidget.recolor(child, color):
-					return True
+				SVGWidget.recolor(child, color)
+			return True
 		return False
 	
 	

@@ -1204,6 +1204,13 @@ class ButtonAction(HapticEnabledAction, Action):
 		Keys.BTN_B		: "B Button",
 		Keys.BTN_X		: "X Button",
 		Keys.BTN_Y		: "Y Button",
+		
+		Keys.KEY_PREVIOUSSONG	: "<< Song",
+		Keys.KEY_STOP			: "Stop",
+		Keys.KEY_PLAYPAUSE		: "Play/Pause",
+		Keys.KEY_NEXTSONG		: "Song >>",
+		Keys.KEY_VOLUMEDOWN		: "+ Volume",
+		Keys.KEY_VOLUMEUP		: "- Volume"
 	}
 	MODIFIERS_NAMES = {
 		Keys.KEY_LEFTSHIFT	: "Shift",

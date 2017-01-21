@@ -1,8 +1,6 @@
 List of (possibly) planned features in no particular order
 
-"Easy" stuff:
-- Selector for media keys
-
+(Everything done. Suggestions welcomed :)
 
 **Done** stuff:
 - Multicontroller support
@@ -27,3 +25,4 @@ List of (possibly) planned features in no particular order
 - Trigger settings
 - DPAD that acts only when clicked
 - 8-way DPAD
+- Selector for media keys

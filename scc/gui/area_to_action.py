@@ -27,6 +27,14 @@ AREA_TO_ACTION = {
 	'X'					: (ButtonAction, Keys.BTN_X),
 	'Y'					: (ButtonAction, Keys.BTN_Y),
 	
+	# Media keys
+	'KEY_PREVIOUSSONG'	: (ButtonAction, Keys.KEY_PREVIOUSSONG),
+	'KEY_STOP'			: (ButtonAction, Keys.KEY_STOP),
+	'KEY_PLAYPAUSE'		: (ButtonAction, Keys.KEY_PLAYPAUSE),
+	'KEY_NEXTSONG'		: (ButtonAction, Keys.KEY_NEXTSONG),
+	'KEY_VOLUMEDOWN'	: (ButtonAction, Keys.KEY_VOLUMEDOWN),
+	'KEY_VOLUMEUP'		: (ButtonAction, Keys.KEY_VOLUMEUP),
+	
 	# Dpad
 	'DPAD_LEFT'			: (HatLeftAction, Axes.ABS_HAT0X),
 	'DPAD_RIGHT'		: (HatRightAction, Axes.ABS_HAT0X),
