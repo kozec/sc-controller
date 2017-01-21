@@ -1795,7 +1795,7 @@ class XYAction(WholeHapticAction, Action):
 		if hasattr(self.y, "change"):
 			self.y.change(mapper, -y, 0)
 		if self.haptic:
-			self._haptic(mapper, x, y)
+			WholeHapticAction.change(self, mapper, x, y)
 	
 	
 	def whole(self, mapper, x, y, what):
