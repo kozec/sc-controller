@@ -6,5 +6,5 @@ Comment[ru]=Настройка контроллера
 Exec=sc-controller
 Type=Application
 Icon=sc-controller
-Categories=GTK;Game
+Categories=GTK;Settings;HardwareSettings;
 MimeType=application/x-steamcontrollerdb-profile;
