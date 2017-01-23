@@ -4,11 +4,11 @@ List of (possibly) planned features in no particular order
 - Injecting emulated xbox controller into wine
 
 Hard stuff:
-- Support for other controllers #145
+- Support for other controllers ( #145 )
 - Injecting emulated xbox controller into PlayOnLinux
 
 Very hard stuff:
-- Visual feedback in binding editor [what this guy says](https://www.reddit.com/r/linux_gaming/comments/5pcdmr/sc_controller_use_steam_controller_without_steam/dcqpvf4/)
+- Visual feedback in binding editor ( [what this guy says](https://www.reddit.com/r/linux_gaming/comments/5pcdmr/sc_controller_use_steam_controller_without_steam/dcqpvf4/) )
 
 **Done** stuff:
 - Multicontroller support
