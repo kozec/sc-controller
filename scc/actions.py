@@ -1778,8 +1778,10 @@ class XYAction(WholeHapticAction, Action):
 	
 	
 	def set_speed(self, x, y, z):
-		self.x.set_speed(x, 1, 1)
-		self.y.set_speed(y, 1, 1)
+		if hasattr(self.x, "set_speed"):
+			self.x.set_speed(x, 1, 1)
+		if hasattr(self.y, "set_speed"):
+			self.y.set_speed(y, 1, 1)
 	
 	
 	def get_speed(self):
