@@ -426,16 +426,6 @@ class ActionEditor(Editor):
 		rvMore.set_reveal_child(not ex.get_expanded())
 	
 	
-	def _set_y_field_visible(self, visible):
-		if visible:
-			self.builder.get_object("rvlXLabel").set_reveal_child(True)
-			self.builder.get_object("rvlYaction").set_reveal_child(True)
-		else:
-			self.builder.get_object("rvlXLabel").set_reveal_child(False)
-			self.builder.get_object("rvlYaction").set_reveal_child(False)
-			self.builder.get_object("entActionY").set_text("")
-	
-	
 	def update_modifiers(self, *a):
 		"""
 		Called when sensitivity, feedback or other modifier setting changes.
@@ -444,9 +434,8 @@ class ActionEditor(Editor):
 		cbRequireClick = self.builder.get_object("cbRequireClick")
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		cbFeedback = self.builder.get_object("cbFeedback")
-		rvFeedback = self.builder.get_object("rvFeedback")
+		grFeedback = self.builder.get_object("grFeedback")
 		cbDeadzone = self.builder.get_object("cbDeadzone")
-		rvDeadzone = self.builder.get_object("rvDeadzone")
 		cbSmoothing = self.builder.get_object("cbSmoothing")
 		rvSmoothing = self.builder.get_object("rvSmoothing")
 		sclRotation = self.builder.get_object("sclRotation")
@@ -506,10 +495,6 @@ class ActionEditor(Editor):
 			self.rotation_angle = sclRotation.get_value()
 			set_action = True
 		
-		rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
-		rvSmoothing.set_reveal_child(cbSmoothing.get_active() and cbSmoothing.get_sensitive())
-		rvDeadzone.set_reveal_child(cbDeadzone.get_active() and cbDeadzone.get_sensitive())
-		
 		if set_action:
 			self.set_action(self._action)
 			self._selected_component.modifier_updated()
@@ -546,7 +531,8 @@ class ActionEditor(Editor):
 				
 				cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 				cbFeedback = self.builder.get_object("cbFeedback")
-				if from_custom or (cbFeedback.get_active() and cbFeedback.get_sensitive()):
+				grFeedback = self.builder.get_object("grFeedback")
+				if from_custom or (cbFeedback.get_active() and grFeedback.get_sensitive()):
 					# Build FeedbackModifier arguments
 					feedback = [ FEEDBACK_SIDES[cbFeedbackSide.get_active()] ] + feedback
 					feedback += [ action ]
@@ -613,13 +599,6 @@ class ActionEditor(Editor):
 		Returns action without parsed modifiers.
 		"""
 		cbRequireClick = self.builder.get_object("cbRequireClick")
-		cbFeedback = self.builder.get_object("cbFeedback")
-		rvFeedback = self.builder.get_object("rvFeedback")
-		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
-		cbSmoothing = self.builder.get_object("cbSmoothing")
-		rvSmoothing = self.builder.get_object("rvSmoothing")
-		cbDeadzone = self.builder.get_object("cbDeadzone")
-		rvDeadzone = self.builder.get_object("rvDeadzone")
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
 		
@@ -662,19 +641,20 @@ class ActionEditor(Editor):
 		for i in xrange(0, len(self.sens)):
 			self.sens_widgets[i][0].set_value(self.sens[i])
 		if self.feedback_position != None:
+			cbFeedback = self.builder.get_object("cbFeedback")
+			cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 			cbFeedbackSide.set_active(FEEDBACK_SIDES.index(self.feedback_position))
 			cbFeedback.set_active(True)
-			rvFeedback.set_reveal_child(cbFeedback.get_sensitive())
 			for i in xrange(0, len(self.feedback)):
 				self.feedback_widgets[i][0].set_value(self.feedback[i])
 		if self.smoothing:
+			cbSmoothing = self.builder.get_object("cbSmoothing")
 			cbSmoothing.set_active(True)
-			rvSmoothing.set_reveal_child(cbSmoothing.get_sensitive())
 			for i in xrange(0, len(self.smoothing_widgets)):
 				self.smoothing_widgets[i][0].set_value(self.smoothing[i])
 		if self.deadzone_enabled:
+			cbDeadzone = self.builder.get_object("cbDeadzone")
 			cbDeadzone.set_active(True)
-			rvDeadzone.set_reveal_child(cbDeadzone.get_sensitive())
 			for i in xrange(0, len(self.deadzone)):
 				self.deadzone_widgets[i][0].set_value(self.deadzone[i])
 		self._recursing = False
@@ -688,7 +668,6 @@ class ActionEditor(Editor):
 		if such area exists.
 		"""
 		entAction = self.builder.get_object("entAction")
-		entActionY = self.builder.get_object("entActionY")
 		cbPreview = self.builder.get_object("cbPreview")
 		btOK = self.builder.get_object("btOK")
 		
@@ -700,30 +679,18 @@ class ActionEditor(Editor):
 			btOK.set_sensitive(False)
 			entAction.set_name("error")
 			entAction.set_text(str(action.error))
-			self._set_y_field_visible(False)
 		else:
 			entAction.set_name("entAction")
 			btOK.set_sensitive(True)
 			self._action = action
-			# Check for XYAction and treat it specialy
-			if isinstance(action, XYAction):
-				entAction.set_text(self.generate_modifiers(action.x, from_custom).to_string())
-				if not action.y:
-					entActionY.set_text("")
-				else:
-					entActionY.set_text(self.generate_modifiers(action.y, from_custom).to_string())
-				self._set_y_field_visible(True)
-				action = self.generate_modifiers(action, from_custom)
+			action = self.generate_modifiers(action, from_custom)
+			
+			if hasattr(action, 'string') and "\n" not in action.string:
+				# Stuff generated by my special parser
+				entAction.set_text(action.string)
 			else:
-				action = self.generate_modifiers(action, from_custom)
-				
-				if hasattr(action, 'string') and "\n" not in action.string:
-					# Stuff generated by my special parser
-					entAction.set_text(action.string)
-				else:
-					# Actions generated elsewhere
-					entAction.set_text(action.to_string())
-				self._set_y_field_visible(False)
+				# Actions generated elsewhere
+				entAction.set_text(action.to_string())
 			self.enable_modifiers(self._action)
 			self.enable_preview(self._action)
 		
@@ -774,18 +741,10 @@ class ActionEditor(Editor):
 		Enables or disables and hides 'preview immediately' option, based on
 		if currently selected action supports it.
 		"""
-		rvPreview = self.builder.get_object("rvPreview")
 		cbPreview = self.builder.get_object("cbPreview")
-		exMore = self.builder.get_object("exMore")
-		rvMore = self.builder.get_object("rvMore")
 		
 		enabled = action.strip().get_previewable()
-		rvPreview.set_reveal_child(enabled)
 		cbPreview.set_sensitive(enabled)
-		if enabled and not exMore.get_sensitive():
-			exMore.set_sensitive(True)
-			exMore.set_visible(True)
-			rvMore.set_visible(True)
 	
 	
 	def enable_modifiers(self, action):
@@ -798,76 +757,39 @@ class ActionEditor(Editor):
 		"""
 		cm = action.get_compatible_modifiers() & ActionEditor.MODE_TO_MODS[self._mode]
 		
-		exMore = self.builder.get_object("exMore")
-		exMore.set_sensitive(cm != 0)
-		if cm == 0:
-			# Special case, no modifier setting is visible
-			rvMore = self.builder.get_object("rvMore")
-			exMore.set_expanded(False)
-			rvMore.set_reveal_child(False)
-		
 		# Feedback
-		cbFeedback		= self.builder.get_object("cbFeedback")
-		rvFeedback		= self.builder.get_object("rvFeedback")
-		rvFeedbackCb	= self.builder.get_object("rvFeedbackCb")
-		if (cm & Action.MOD_FEEDBACK) == 0:
-			# Not allowed
-			cbFeedback.set_sensitive(False)
-			rvFeedback.set_reveal_child(False)
-			rvFeedbackCb.set_reveal_child(False)
-		else:
-			cbFeedback.set_sensitive(True)
-			rvFeedbackCb.set_reveal_child(True)
-			rvFeedback.set_reveal_child(cbFeedback.get_active())
+		grFeedback		= self.builder.get_object("grFeedback")
+		grFeedback.set_sensitive((cm & Action.MOD_FEEDBACK) != 0)
 		
 		# Smoothing
-		rvSmoothingCb	= self.builder.get_object("rvSmoothingCb")
-		cbSmoothing		= self.builder.get_object("cbSmoothing")
-		rvSmoothing		= self.builder.get_object("rvSmoothing")
-		if (cm & Action.MOD_SMOOTH) == 0:
-			# Not allowed
-			cbSmoothing.set_sensitive(False)
-			rvSmoothingCb.set_reveal_child(False)
-			rvSmoothingCb.set_reveal_child(False)
-		else:
-			cbSmoothing.set_sensitive(True)
-			rvSmoothingCb.set_reveal_child(True)
+		grSmoothing		= self.builder.get_object("grSmoothing")
+		grSmoothing.set_sensitive((cm & Action.MOD_SMOOTH) != 0)
 		
 		# Deadzone
-		cbDeadzone		= self.builder.get_object("cbDeadzone")
-		rvDeadzone		= self.builder.get_object("rvDeadzone")
-		rvDeadzoneCb	= self.builder.get_object("rvDeadzoneCb")
-		if (cm & Action.MOD_DEADZONE) == 0:
-			# Not allowed
-			cbDeadzone.set_sensitive(False)
-			rvDeadzone.set_reveal_child(False)
-			rvDeadzoneCb.set_reveal_child(False)
-		else:
-			cbDeadzone.set_sensitive(True)
-			rvDeadzoneCb.set_reveal_child(True)
-			rvDeadzone.set_reveal_child(cbDeadzone.get_active())
+		grDeadzone		= self.builder.get_object("grDeadzone")
+		grDeadzone.set_sensitive((cm & Action.MOD_DEADZONE) != 0)
 		
 		# Sensitivity
-		rvSensitivity = self.builder.get_object("rvSensitivity")
-		rvSensitivity.set_reveal_child((cm & Action.MOD_SENSITIVITY) != 0)
+		grSensitivity	= self.builder.get_object("grSensitivity")
+		grSensitivity.set_sensitive((cm & Action.MOD_SENSITIVITY) != 0)
 		for w in self.sens_widgets[2]:
 			w.set_visible((cm & Action.MOD_SENS_Z) != 0)
 		
 		# Rotation
-		rvRotation = self.builder.get_object("rvRotation")
-		rvRotation.set_reveal_child((cm & Action.MOD_ROTATE) != 0)
+		# (this one is little more complicated than rest)
+		enabled = (cm & Action.MOD_ROTATE) != 0
+		self.builder.get_object("lblRotationHeader").set_sensitive(enabled)
+		self.builder.get_object("lblRotation").set_sensitive(enabled)
+		self.builder.get_object("sclRotation").set_sensitive(enabled)
+		self.builder.get_object("btClearRotation").set_sensitive(enabled)
 		
 		# Click
 		cbRequireClick = self.builder.get_object("cbRequireClick")
-		rvRequireClickCb = self.builder.get_object("rvRequireClickCb")
 		cbRequireClick.set_sensitive(cm & Action.MOD_CLICK != 0)
-		rvRequireClickCb.set_reveal_child(cbRequireClick.get_sensitive())
 		
 		# OSD
 		cbOSD = self.builder.get_object("cbOSD")
-		rvOSDcb = self.builder.get_object("rvOSDcb")
 		cbOSD.set_sensitive(cm & Action.MOD_OSD != 0)
-		rvOSDcb.set_reveal_child(cbOSD.get_sensitive())
 	
 	
 	def set_sensitivity(self, x, y=1.0, z=1.0):
@@ -950,6 +872,7 @@ class ActionEditor(Editor):
 			elif id in SCButtons:
 				self.set_title(nameof(id),)
 			self._set_mode(action, mode or Action.AC_BUTTON)
+			self.hide_modifiers()
 			self.set_action(action)
 		elif id in TRIGGERS:
 			self.set_title(_("%s Trigger") % (id,))
