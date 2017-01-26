@@ -366,6 +366,9 @@
                   <object class="GtkGrid" id="grRotation">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_top">5</property>
                     <child>
                       <object class="GtkCheckButton" id="cbOSD">
                         <property name="visible">True</property>
@@ -397,7 +400,7 @@
                       <object class="GtkLabel" id="lblRotationHeader">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="margin_top">10</property>
+                        <property name="margin_top">5</property>
                         <property name="label" translatable="yes">Input Rotation</property>
                         <property name="xalign">0</property>
                         <attributes>
@@ -414,6 +417,7 @@
                       <object class="GtkLabel" id="lblRotation">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Angle</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -492,6 +496,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_top">10</property>
+                        <property name="margin_bottom">5</property>
                         <property name="label" translatable="yes">Editor Options</property>
                         <property name="xalign">0</property>
                         <attributes>
@@ -509,7 +514,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="margin_top">5</property>
+                        <property name="margin_left">10</property>
                         <property name="xalign">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_cbPreview_toggled" swapped="no"/>
@@ -544,14 +549,16 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkGrid" id="grid3">
+                  <object class="GtkGrid" id="grSensitivity">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_top">5</property>
                     <child>
                       <object class="GtkLabel" id="lblSensitivityHeader">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="margin_top">10</property>
                         <property name="label" translatable="yes">Sensitivity</property>
                         <property name="xalign">0</property>
                         <attributes>
@@ -568,6 +575,7 @@
                       <object class="GtkLabel" id="lblSensX">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">X</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -618,6 +626,7 @@
                       <object class="GtkLabel" id="lblSensY">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Y</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -668,6 +677,7 @@
                       <object class="GtkLabel" id="lblSensZ">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Roll</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -731,15 +741,19 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkGrid" id="grid">
+                  <object class="GtkGrid" id="grFeedback">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_top">5</property>
                     <property name="row_spacing">2</property>
                     <property name="column_spacing">10</property>
                     <child>
                       <object class="GtkLabel" id="lblFPeriod">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Period</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -881,6 +895,7 @@
                       <object class="GtkLabel" id="lblFFrequency">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Frequency</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -897,6 +912,7 @@
                       <object class="GtkLabel" id="lblFAmplitude">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Amplitude</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -913,6 +929,7 @@
                       <object class="GtkLabel" id="lblFeedbackSet1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Side</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -929,7 +946,8 @@
                       <object class="GtkLabel" id="lblSensitivityHeader1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Options</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="label" translatable="yes">Feedback Options</property>
                         <property name="xalign">0</property>
                         <attributes>
                           <attribute name="weight" value="bold"/>
@@ -937,7 +955,7 @@
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
+                        <property name="top_attach">0</property>
                         <property name="width">3</property>
                       </packing>
                     </child>
@@ -946,6 +964,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="margin_left">10</property>
                         <property name="margin_bottom">5</property>
                         <property name="xalign">0</property>
                         <property name="draw_indicator">True</property>
@@ -954,7 +973,7 @@
                           <object class="GtkLabel" id="label3">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Enable Feedback</property>
+                            <property name="label" translatable="yes">Enabled</property>
                             <property name="xalign">0</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
@@ -964,7 +983,7 @@
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
+                        <property name="top_attach">1</property>
                         <property name="width">3</property>
                       </packing>
                     </child>
@@ -974,7 +993,7 @@
                   </packing>
                 </child>
                 <child type="tab">
-                  <object class="GtkLabel" id="label50">
+                  <object class="GtkLabel" id="lblFeedbackOptions">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Feedback</property>
@@ -985,13 +1004,19 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkGrid" id="gridWithoutID1">
+                  <object class="GtkGrid" id="grDeadzone">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_top">5</property>
+                    <property name="row_spacing">2</property>
+                    <property name="column_spacing">10</property>
                     <child>
                       <object class="GtkLabel" id="lblDeadzoneUpper">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Upper</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -1008,6 +1033,7 @@
                       <object class="GtkLabel" id="lblDeadzoneLower">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Lower</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -1091,9 +1117,10 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="lblSensitivityHeader2">
+                      <object class="GtkLabel" id="lblDeadzoneOptions">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_bottom">5</property>
                         <property name="label" translatable="yes">Deadzone Options</property>
                         <property name="xalign">0</property>
                         <attributes>
@@ -1102,7 +1129,7 @@
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
+                        <property name="top_attach">0</property>
                         <property name="width">3</property>
                       </packing>
                     </child>
@@ -1111,15 +1138,15 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="margin_left">10</property>
                         <property name="margin_bottom">5</property>
                         <property name="xalign">0</property>
                         <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="update_modifiers" swapped="no"/>
                         <child>
                           <object class="GtkLabel" id="label6">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Enable Deadzone</property>
+                            <property name="label" translatable="yes">Enabled</property>
                             <property name="xalign">0</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
@@ -1129,7 +1156,7 @@
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
+                        <property name="top_attach">1</property>
                         <property name="width">3</property>
                       </packing>
                     </child>
@@ -1150,15 +1177,19 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkGrid" id="grRotation1">
+                  <object class="GtkGrid" id="grSmoothing">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_top">5</property>
                     <property name="row_spacing">2</property>
                     <property name="column_spacing">10</property>
                     <child>
                       <object class="GtkLabel" id="lblSmoothFilter">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Filter</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -1175,6 +1206,7 @@
                       <object class="GtkLabel" id="lblSmoothWeight">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Weight</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -1191,6 +1223,7 @@
                       <object class="GtkLabel" id="lblSmoothLevel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Level</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -1201,50 +1234,6 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">2</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="lblRotationHeader1">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">1</property>
-                        <property name="label" translatable="yes">Smoothing Options</property>
-                        <property name="xalign">0</property>
-                        <attributes>
-                          <attribute name="weight" value="bold"/>
-                        </attributes>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
-                        <property name="width">3</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="cbSmoothing">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="margin_bottom">5</property>
-                        <property name="xalign">0</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="update_modifiers" swapped="no"/>
-                        <child>
-                          <object class="GtkLabel" id="label7">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Enable Smoothing</property>
-                            <property name="xalign">0</property>
-                            <attributes>
-                              <attribute name="weight" value="bold"/>
-                            </attributes>
-                          </object>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
-                        <property name="width">3</property>
                       </packing>
                     </child>
                     <child>
@@ -1350,6 +1339,51 @@
                       <packing>
                         <property name="left_attach">2</property>
                         <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="lblSmoothingOptions">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="label" translatable="yes">Smoothing Options</property>
+                        <property name="xalign">0</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                        <property name="width">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbSmoothing">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="margin_left">10</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="xalign">0</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="update_modifiers" swapped="no"/>
+                        <child>
+                          <object class="GtkLabel" id="label7">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Enabled</property>
+                            <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                        <property name="width">3</property>
                       </packing>
                     </child>
                   </object>
