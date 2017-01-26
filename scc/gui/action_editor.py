@@ -444,9 +444,7 @@ class ActionEditor(Editor):
 		cbRequireClick = self.builder.get_object("cbRequireClick")
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		cbFeedback = self.builder.get_object("cbFeedback")
-		rvFeedback = self.builder.get_object("rvFeedback")
 		cbDeadzone = self.builder.get_object("cbDeadzone")
-		rvDeadzone = self.builder.get_object("rvDeadzone")
 		cbSmoothing = self.builder.get_object("cbSmoothing")
 		rvSmoothing = self.builder.get_object("rvSmoothing")
 		sclRotation = self.builder.get_object("sclRotation")
@@ -505,10 +503,6 @@ class ActionEditor(Editor):
 		if self.rotation_angle != sclRotation.get_value():
 			self.rotation_angle = sclRotation.get_value()
 			set_action = True
-		
-		rvFeedback.set_reveal_child(cbFeedback.get_active() and cbFeedback.get_sensitive())
-		rvSmoothing.set_reveal_child(cbSmoothing.get_active() and cbSmoothing.get_sensitive())
-		rvDeadzone.set_reveal_child(cbDeadzone.get_active() and cbDeadzone.get_sensitive())
 		
 		if set_action:
 			self.set_action(self._action)
@@ -614,12 +608,10 @@ class ActionEditor(Editor):
 		"""
 		cbRequireClick = self.builder.get_object("cbRequireClick")
 		cbFeedback = self.builder.get_object("cbFeedback")
-		rvFeedback = self.builder.get_object("rvFeedback")
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		cbSmoothing = self.builder.get_object("cbSmoothing")
 		rvSmoothing = self.builder.get_object("rvSmoothing")
 		cbDeadzone = self.builder.get_object("cbDeadzone")
-		rvDeadzone = self.builder.get_object("rvDeadzone")
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
 		
@@ -664,7 +656,6 @@ class ActionEditor(Editor):
 		if self.feedback_position != None:
 			cbFeedbackSide.set_active(FEEDBACK_SIDES.index(self.feedback_position))
 			cbFeedback.set_active(True)
-			rvFeedback.set_reveal_child(cbFeedback.get_sensitive())
 			for i in xrange(0, len(self.feedback)):
 				self.feedback_widgets[i][0].set_value(self.feedback[i])
 		if self.smoothing:
@@ -674,7 +665,6 @@ class ActionEditor(Editor):
 				self.smoothing_widgets[i][0].set_value(self.smoothing[i])
 		if self.deadzone_enabled:
 			cbDeadzone.set_active(True)
-			rvDeadzone.set_reveal_child(cbDeadzone.get_sensitive())
 			for i in xrange(0, len(self.deadzone)):
 				self.deadzone_widgets[i][0].set_value(self.deadzone[i])
 		self._recursing = False
@@ -774,13 +764,11 @@ class ActionEditor(Editor):
 		Enables or disables and hides 'preview immediately' option, based on
 		if currently selected action supports it.
 		"""
-		rvPreview = self.builder.get_object("rvPreview")
 		cbPreview = self.builder.get_object("cbPreview")
 		exMore = self.builder.get_object("exMore")
 		rvMore = self.builder.get_object("rvMore")
 		
 		enabled = action.strip().get_previewable()
-		rvPreview.set_reveal_child(enabled)
 		cbPreview.set_sensitive(enabled)
 		if enabled and not exMore.get_sensitive():
 			exMore.set_sensitive(True)
@@ -808,66 +796,39 @@ class ActionEditor(Editor):
 		
 		# Feedback
 		cbFeedback		= self.builder.get_object("cbFeedback")
-		rvFeedback		= self.builder.get_object("rvFeedback")
-		rvFeedbackCb	= self.builder.get_object("rvFeedbackCb")
 		if (cm & Action.MOD_FEEDBACK) == 0:
 			# Not allowed
 			cbFeedback.set_sensitive(False)
-			rvFeedback.set_reveal_child(False)
-			rvFeedbackCb.set_reveal_child(False)
 		else:
 			cbFeedback.set_sensitive(True)
-			rvFeedbackCb.set_reveal_child(True)
-			rvFeedback.set_reveal_child(cbFeedback.get_active())
 		
 		# Smoothing
-		rvSmoothingCb	= self.builder.get_object("rvSmoothingCb")
 		cbSmoothing		= self.builder.get_object("cbSmoothing")
-		rvSmoothing		= self.builder.get_object("rvSmoothing")
 		if (cm & Action.MOD_SMOOTH) == 0:
 			# Not allowed
 			cbSmoothing.set_sensitive(False)
-			rvSmoothingCb.set_reveal_child(False)
-			rvSmoothingCb.set_reveal_child(False)
 		else:
 			cbSmoothing.set_sensitive(True)
-			rvSmoothingCb.set_reveal_child(True)
 		
 		# Deadzone
 		cbDeadzone		= self.builder.get_object("cbDeadzone")
-		rvDeadzone		= self.builder.get_object("rvDeadzone")
-		rvDeadzoneCb	= self.builder.get_object("rvDeadzoneCb")
 		if (cm & Action.MOD_DEADZONE) == 0:
 			# Not allowed
 			cbDeadzone.set_sensitive(False)
-			rvDeadzone.set_reveal_child(False)
-			rvDeadzoneCb.set_reveal_child(False)
 		else:
 			cbDeadzone.set_sensitive(True)
-			rvDeadzoneCb.set_reveal_child(True)
-			rvDeadzone.set_reveal_child(cbDeadzone.get_active())
 		
 		# Sensitivity
-		rvSensitivity = self.builder.get_object("rvSensitivity")
-		rvSensitivity.set_reveal_child((cm & Action.MOD_SENSITIVITY) != 0)
 		for w in self.sens_widgets[2]:
 			w.set_visible((cm & Action.MOD_SENS_Z) != 0)
 		
-		# Rotation
-		rvRotation = self.builder.get_object("rvRotation")
-		rvRotation.set_reveal_child((cm & Action.MOD_ROTATE) != 0)
-		
 		# Click
 		cbRequireClick = self.builder.get_object("cbRequireClick")
-		rvRequireClickCb = self.builder.get_object("rvRequireClickCb")
 		cbRequireClick.set_sensitive(cm & Action.MOD_CLICK != 0)
-		rvRequireClickCb.set_reveal_child(cbRequireClick.get_sensitive())
 		
 		# OSD
 		cbOSD = self.builder.get_object("cbOSD")
-		rvOSDcb = self.builder.get_object("rvOSDcb")
 		cbOSD.set_sensitive(cm & Action.MOD_OSD != 0)
-		rvOSDcb.set_reveal_child(cbOSD.get_sensitive())
 	
 	
 	def set_sensitivity(self, x, y=1.0, z=1.0):
