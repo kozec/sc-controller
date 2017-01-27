@@ -20,8 +20,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
+from scc.tools import check_access, find_profile, profile_is_override
 from scc.paths import get_config_path, get_profiles_path
-from scc.tools import check_access, find_profile
 from scc.actions import NoAction
 from scc.modifiers import NameModifier
 from scc.profile import Profile
@@ -760,6 +760,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			obj = self.builder.get_object(name)
 			obj.set_sensitive(ps.get_controller() is not None)
 		
+		name = ".".join(self.current_file.get_basename().split(".")[0:-1])
+		is_override = profile_is_override(name)
+		self.builder.get_object("mnuProfileDelete").set_visible(not is_override)
+		self.builder.get_object("mnuProfileRevert").set_visible(is_override)
+		
 		mnuPS = self.builder.get_object("mnuPS")
 		mnuPS.ps = ps
 		mnuPS.popup(None, None, None, None,
@@ -783,6 +788,28 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		rbCopyProfile = self.builder.get_object("rbCopyProfile")
 		self.on_new_clicked(mnuPS.ps, mnuPS.ps.get_profile_name())
 		rbCopyProfile.set_active(True)
+	
+	
+	def on_mnuProfileDelete_activate(self, *a):
+		name = ".".join(self.current_file.get_basename().split(".")[0:-1])
+		is_override = profile_is_override(name)
+		
+		if is_override:
+			text = _("Really revert current profile to default values?")
+		else:
+			text = _("Really delete current profile?")
+		
+		d = Gtk.MessageDialog(parent=self.window,
+			flags = Gtk.DialogFlags.MODAL,
+			type = Gtk.MessageType.WARNING,
+			buttons = Gtk.ButtonsType.OK_CANCEL,
+			message_format = text,
+		)
+		d.format_secondary_text(_("This action is not undoable!"))
+		
+		if d.run() == -5:
+			pass
+		d.destroy()
 	
 	
 	def mnuTurnoffController_activate(self, *a):
