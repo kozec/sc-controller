@@ -222,12 +222,16 @@ class MacroEditor(Editor):
 	
 	
 	def on_buttonaction_type_change(self, cb, i, action_data):
+		action = action_data.action
+		if isinstance(action, (PressAction, ReleaseAction)):
+			action = action.action
 		if cb.get_active() == 0:
-			self.actions[i] = action_data._replace(action = ButtonAction(action_data.action))
+			if isinstance(action, ButtonAction):
+				self.actions[i] = action_data._replace(action = ButtonAction(action.button))
 		elif cb.get_active() == 1:
-			self.actions[i] = action_data._replace(action = PressAction(action_data.action))
+			self.actions[i] = action_data._replace(action = PressAction(action))
 		else:
-			self.actions[i] = action_data._replace(action = ReleaseAction(action_data.action))
+			self.actions[i] = action_data._replace(action = ReleaseAction(action))
 		self.update_action_field()
 		
 	
