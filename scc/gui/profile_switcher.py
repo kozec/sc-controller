@@ -211,11 +211,6 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			prev = row
 	
 	
-	def get_selected_giofile(self):
-		""" Returns giofile for currently selected profile """
-		return self._model.get_value(self._combo.get_active_iter(), 1)
-	
-	
 	def on_combo_changed(self, cb):
 		if self._recursing : return
 		

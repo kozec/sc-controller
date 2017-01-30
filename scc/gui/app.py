@@ -20,7 +20,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
-from scc.tools import check_access, find_profile, profile_is_override
+from scc.tools import get_profile_name, profile_is_override
+from scc.tools import check_access, find_profile
 from scc.paths import get_config_path, get_profiles_path
 from scc.actions import NoAction
 from scc.modifiers import NameModifier
@@ -760,7 +761,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			obj = self.builder.get_object(name)
 			obj.set_sensitive(ps.get_controller() is not None)
 		
-		name = ".".join(self.current_file.get_basename().split(".")[0:-1])
+		name = ps.get_profile_name()
 		is_override = profile_is_override(name)
 		self.builder.get_object("mnuProfileDelete").set_visible(not is_override)
 		self.builder.get_object("mnuProfileRevert").set_visible(is_override)
@@ -791,7 +792,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_mnuProfileDelete_activate(self, *a):
-		name = ".".join(self.current_file.get_basename().split(".")[0:-1])
+		mnuPS = self.builder.get_object("mnuPS")
+		name = mnuPS.ps.get_profile_name()
 		is_override = profile_is_override(name)
 		
 		if is_override:
@@ -811,6 +813,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			fname = os.path.join(get_profiles_path(), name + ".sccprofile")
 			try:
 				os.unlink(fname)
+				try:
+					os.unlink(fname + ".mod")
+				except:
+					# .mod file not existing is expected
+					pass
 				for ps in self.profile_switchers:
 					ps.refresh_profile_path(name)
 			except Exception, e:
