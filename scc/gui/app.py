@@ -807,8 +807,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		)
 		d.format_secondary_text(_("This action is not undoable!"))
 		
-		if d.run() == -5:
-			pass
+		if d.run() == -5: # OK button, no idea where is this defined...
+			fname = os.path.join(get_profiles_path(), name + ".sccprofile")
+			try:
+				os.unlink(fname)
+				for ps in self.profile_switchers:
+					ps.refresh_profile_path(name)
+			except Exception, e:
+				log.error("Failed to remove %s: %s", fname, e)
 		d.destroy()
 	
 	
