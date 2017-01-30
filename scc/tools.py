@@ -160,6 +160,17 @@ def profile_is_override(name):
 	return False
 
 
+def get_profile_name(path):
+	"""
+	Returns profile name for specified path. Basically removes path and
+	.sccprofile and .mod extension.
+	"""
+	parts = op.path.split(path)[-1].split(".")
+	if parts[-1] == "mod": parts = parts[0:-1]
+	if parts[-1] == "sccprofile": parts = parts[0:-1]
+	return ".".join(parts)
+
+
 def find_profile(name):
 	"""
 	Returns filename for specified profile name.
