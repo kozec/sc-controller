@@ -148,6 +148,29 @@ def static_vars(**kwargs):
 	return decorate
 
 
+def profile_is_override(name):
+	"""
+	Returns True if named profile exists both in user config directory and
+	default_profiles directory.
+	"""
+	filename = "%s.sccprofile" % (name,)
+	if os.path.exists(os.path.join(get_profiles_path(), filename)):
+		if os.path.exists(os.path.join(get_default_profiles_path(), filename)):
+			return True
+	return False
+
+
+def get_profile_name(path):
+	"""
+	Returns profile name for specified path. Basically removes path and
+	.sccprofile and .mod extension.
+	"""
+	parts = op.path.split(path)[-1].split(".")
+	if parts[-1] == "mod": parts = parts[0:-1]
+	if parts[-1] == "sccprofile": parts = parts[0:-1]
+	return ".".join(parts)
+
+
 def find_profile(name):
 	"""
 	Returns filename for specified profile name.

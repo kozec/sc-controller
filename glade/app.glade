@@ -779,11 +779,20 @@
     </child>
     <child>
       <object class="GtkMenuItem" id="mnuProfileDelete">
-        <property name="sensitive">False</property>
+        <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="no_show_all">True</property>
         <property name="label" translatable="yes">_Delete Profile</property>
         <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuProfileDelete_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuProfileRevert">
+        <property name="visible">False</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Revert Profile to Defaults</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuProfileDelete_activate" swapped="no"/>
       </object>
     </child>
   </object>

@@ -175,6 +175,42 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		return self._model.get_value(self._combo.get_active_iter(), 0)
 	
 	
+	def refresh_profile_path(self, name):
+		"""
+		Called from main window after profile file is deleted.
+		May either change path to profile in default_profiles directory,
+		or remove entry altogether.
+		"""
+		prev = None
+		new_path = find_profile(name)
+		# Find row with named profile
+		for row in self._model:
+			if row[0] == name:
+				active = self._combo.get_active_iter()
+				if new_path is None:
+					# Profile was completly removed
+					if self._model.get_value(active, 0) == name:
+						# If removed profile happends to be active one (what's
+						# almost always), switch to previous profile in list
+						self._model.remove(row.iter)
+						if prev is None:
+							# ... unless removed profile was 1st in list. Switch
+							# to next in that case
+							self._combo.set_active_iter(self._model[0].iter)
+						else:
+							self._combo.set_active_iter(prev.iter)
+					else:
+						self._model.remove(row.iter)
+				else:
+					giofile = Gio.File.new_for_path(new_path)
+					self._model.set_value(row.iter, 1, giofile)
+					if self._model.get_value(active, 0) == name:
+						# Active profile was changed
+						self.emit('changed', name, giofile)
+				return
+			prev = row
+	
+	
 	def on_combo_changed(self, cb):
 		if self._recursing : return
 		
