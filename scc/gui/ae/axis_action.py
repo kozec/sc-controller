@@ -40,6 +40,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self._recursing = False
 		self.relative_area = False
 		self.osd_area_instance = None
+		self.on_wayland = False
 		self.parser = GuiActionParser()
 	
 	
@@ -48,6 +49,10 @@ class AxisActionComponent(AEComponent, TimerManager):
 		AEComponent.load(self)
 		cbAreaType = self.builder.get_object("cbAreaType")
 		cbAreaType.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) == "-" )
+		self.on_wayland = "WAYLAND_DISPLAY" in os.environ or not isinstance(Gdk.Display.get_default(), GdkX11.X11Display)
+		if self.on_wayland:
+			self.builder.get_object("lblArea").set_text("Note: Mouse Region option is not available with Wayland-based display server")
+			self.builder.get_object("grArea").set_sensitive(False)
 	
 	
 	def hidden(self):
@@ -91,6 +96,9 @@ class AxisActionComponent(AEComponent, TimerManager):
 		""" Updates preview area displayed on screen """
 		if action:
 			if self.osd_area_instance is None:
+				if self.on_wayland:
+					# Cannot display preview with non-X11 backends
+					return
 				self.osd_area_instance = Area()
 				self.osd_area_instance.show()
 			action.update_osd_area(self.osd_area_instance, FakeMapper(self.editor))
