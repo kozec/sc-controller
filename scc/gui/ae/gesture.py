@@ -44,7 +44,7 @@ class GestureComponent(AEComponent):
 			# Unlike mose region, gesutres kinda work with XWayland
 			self.on_wayland = not isinstance(Gdk.Display.get_default(), GdkX11.X11Display)
 			if self.on_wayland:
-				self.builder.get_object("lblGestureMessage").set_text("Note: Gestures are not available with Wayland-based display server")
+				self.builder.get_object("lblGestureMessage").set_text(_("Note: Gestures are not available with Wayland-based display server"))
 				self.builder.get_object("lblGestureMessage").set_visible(True)
 				self.builder.get_object("gesture").set_sensitive(False)
 			else:

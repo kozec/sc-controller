@@ -51,7 +51,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 		cbAreaType.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) == "-" )
 		self.on_wayland = "WAYLAND_DISPLAY" in os.environ or not isinstance(Gdk.Display.get_default(), GdkX11.X11Display)
 		if self.on_wayland:
-			self.builder.get_object("lblArea").set_text("Note: Mouse Region option is not available with Wayland-based display server")
+			self.builder.get_object("lblArea").set_text(_("Note: Mouse Region option is not available with Wayland-based display server"))
 			self.builder.get_object("grArea").set_sensitive(False)
 	
 	
