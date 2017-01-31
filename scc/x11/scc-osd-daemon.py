@@ -13,7 +13,7 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Rsvg', '2.0')
 gi.require_version('GdkX11', '3.0')
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, Gdk, GdkX11, GLib
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd.gesture_display import GestureDisplay
 from scc.osd.radial_menu import RadialMenu
@@ -230,6 +230,11 @@ class OSDDaemon(object):
 	
 	
 	def run(self):
+		on_wayland = "WAYLAND_DISPLAY" in os.environ or not isinstance(Gdk.Display.get_default(), GdkX11.X11Display)
+		if on_wayland:
+			log.error("Cannot run on Wayland")
+			self.exit_code = 8
+			return
 		self.daemon = DaemonManager()
 		self.config = Config()
 		self._check_colorconfig_change()
