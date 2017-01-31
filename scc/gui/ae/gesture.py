@@ -8,7 +8,7 @@ Handles gesture recognition settings.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib, GObject
+from gi.repository import Gtk, Gdk, GLib, GdkX11, GObject
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.area_to_action import action_to_area
 from scc.gui.simple_chooser import SimpleChooser
@@ -34,13 +34,21 @@ class GestureComponent(AEComponent):
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
+		self.on_wayland = False
 		self._edited_gesture = None
 		self._grabber = None
 	
 	
 	def load(self):
 		if AEComponent.load(self):
-			self._grabber = GestureGrabber(self.editor, self.builder)
+			# Unlike mose region, gesutres kinda work with XWayland
+			self.on_wayland = not isinstance(Gdk.Display.get_default(), GdkX11.X11Display)
+			if self.on_wayland:
+				self.builder.get_object("lblGestureMessage").set_text("Note: Gestures are not available with Wayland-based display server")
+				self.builder.get_object("lblGestureMessage").set_visible(True)
+				self.builder.get_object("gesture").set_sensitive(False)
+			else:
+				self._grabber = GestureGrabber(self.editor, self.builder)
 			return True
 	
 	
