@@ -10,3 +10,4 @@ export PYTHONPATH=".":"$PYTHONPATH"
 export SCC_SHARED="$(pwd)"
 
 python2 'scripts/scc-daemon' $@
+# gdb --args python2 'scripts/scc-daemon' $@

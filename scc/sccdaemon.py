@@ -347,6 +347,10 @@ class SCCDaemon(Daemon):
 	
 	def connect_x(self):
 		""" Creates connection to X Server """
+		if "WAYLAND_DISPLAY" in os.environ:
+			log.warning("Wayland detected. Disabling X11 support, some functionality will be unavailable")
+			self.xdisplay = None
+			return
 		if "DISPLAY" not in os.environ:
 			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
 			self.xdisplay = None

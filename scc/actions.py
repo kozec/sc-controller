@@ -866,6 +866,9 @@ class AreaAction(Action, SpecialAction, OSDEnabledAction):
 	
 	
 	def whole(self, mapper, x, y, what):
+		if mapper.get_xdisplay() is None:
+			log.warning("XServer is not available, cannot use 'AreaAction")
+			return
 		if mapper.is_touched(what):
 			# Store mouse position if pad was just touched
 			if self.orig_position is None:
