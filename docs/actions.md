@@ -50,6 +50,13 @@
   single step on scroll wheel.
 
 
+#### <a name="mouseabs"></a> mouseabs(axis)
+
+- For stick, lets cursor or mouse wheel to be controlled by stick tilt.
+- For pad, distance from center of pad controls speed of mouse movement
+- For gyroscope, please, use gyroabs action.
+
+
 #### <a name="trackpad"></a> trackpad(axis)
 Merged with [mouse](#mouse), does same thing.
 
@@ -128,7 +135,8 @@ Can be used to map gyroscope to camera when camera can be controlled only with a
 
 
 #### <a name="gyroabs"></a> gyroabs(axis1 [, axis2 [, axis3]])
-Maps absolute gyroscope pitch, yaw and roll movement into movements of gamepad stick.
+Maps absolute gyroscope pitch, yaw and roll movement into movements of mouse
+or gamepad stick.
 Can be used to map gyroscope to movement stick or to use controller as racing wheel.
 
 

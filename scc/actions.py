@@ -724,6 +724,77 @@ class MouseAction(WholeHapticAction, Action):
 			mapper.mouse_move(roll * -self.speed[0], pitch * -self.speed[1])
 
 
+class MouseAbsAction(Action):
+	"""
+	Maps gyro rotation or position on pad to immediate mouse movement, similary
+	to how GyroAbsAction maps gyro rotation to gamepad stick.
+	
+	Controlls mouse movement in either vertical or horizontal direction
+	or scroll wheel.
+	"""
+	COMMAND = "mouseabs"
+	MOUSE_FACTOR = 0.01	# Just random number to put default sensitivity into sane range
+	
+	def __init__(self, axis = None):
+		Action.__init__(self, *strip_none(axis))
+		self._mouse_axis = axis
+		self._old_pos = None
+		self.speed = 1.0, 1.0
+	
+	
+	def get_compatible_modifiers(self):
+		return ( Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_DEADZONE )
+	
+	
+	def get_previewable(self):
+		return True
+	
+	
+	def get_axis(self):
+		return self._mouse_axis
+	
+	
+	def set_speed(self, x, y, *a):
+		self.speed = x, y
+	
+	
+	def get_speed(self):
+		return self.speed
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		if self._mouse_axis == Rels.REL_WHEEL:
+			return _("Wheel")
+		elif self._mouse_axis == Rels.REL_HWHEEL:
+			return _("Horizontal Wheel")
+		elif self._mouse_axis in (PITCH, YAW, ROLL, None):
+			return _("Mouse")
+		else:
+			return _("Mouse %s") % (self._mouse_axis.name.split("_", 1)[-1],)
+	
+	
+	def axis(self, mapper, position, what):
+		mapper.force_event.add(FE_STICK)
+		
+		p = position * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		if self._mouse_axis == Rels.REL_X:
+			mapper.mouse_move(p, 0)
+		elif self._mouse_axis == Rels.REL_Y:
+			mapper.mouse_move(0, p)
+		elif self._mouse_axis == Rels.REL_WHEEL:
+			mapper.mouse_wheel(0, -p)
+		elif self._mouse_axis == Rels.REL_HWHEEL:
+			mapper.mouse_wheel(p, 0)
+	pad = axis
+	
+	
+	def whole(self, mapper, x, y, what):
+		dx = dx * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		dy = dy * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		mapper.mouse.moveEvent(dx, dy)
+
+
 class CircularAction(WholeHapticAction, Action):
 	"""
 	Designed to translate rotating finger over pad to mouse wheel movement.
@@ -1020,6 +1091,8 @@ class GyroAction(Action):
 class GyroAbsAction(HapticEnabledAction, GyroAction):
 	""" Uses *absolute* gyroscope position as input for another action(s) """
 	COMMAND = "gyroabs"
+	MOUSE_FACTOR = 0.01	# Just random number to put default sensitivity into sane range
+	
 	def __init__(self, *blah):
 		GyroAction.__init__(self, *blah)
 		HapticEnabledAction.__init__(self)
@@ -1067,6 +1140,10 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 			if axis in Axes:
 				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i]))
 				mapper.syn_list.add(mapper.gamepad)
+			elif axis == Rels.REL_X:
+				mapper.mouse_move(AxisAction.clamp_axis(axis, pyr[i] * GyroAbsAction.MOUSE_FACTOR * self.speed[i]), 0)
+			elif axis == Rels.REL_Y:
+				mapper.mouse_move(0, AxisAction.clamp_axis(axis, pyr[i] * GyroAbsAction.MOUSE_FACTOR * self.speed[i]))
 
 
 class MultichildAction(Action):

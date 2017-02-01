@@ -78,6 +78,14 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'mouse()' })._mouse_axis == None
 		assert parser.from_json_data({ 'action' : 'trackpad()' })._mouse_axis == None
 		assert parser.from_json_data({ 'action' : 'mouse(REL_WHEEL)' })._mouse_axis == Rels.REL_WHEEL
+
+
+	def test_mouseabs(self):
+		"""
+		Tests if MouseAction is parsed correctly from json.
+		"""
+		assert parser.from_json_data({ 'action' : 'mouseabs(REL_X)' })._mouse_axis == Rels.REL_X
+		assert parser.from_json_data({ 'action' : 'mouseabs()' })._mouse_axis is None
 	
 	
 	def test_circular(self):

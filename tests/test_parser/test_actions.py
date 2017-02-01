@@ -71,6 +71,17 @@ class TestActions(object):
 		assert _parses_as_itself(MouseAction())
 	
 	
+	def test_mouseabs(self):
+		"""
+		Tests if MouseAbsAction can be converted to string and parsed back to
+		same action.
+		"""
+		# With axis specified
+		assert _parses_as_itself(MouseAbsAction(Rels.REL_X))
+		# Without axis (when used on pad directly)
+		assert _parses_as_itself(MouseAbsAction())
+	
+	
 	def test_circular(self):
 		"""
 		Tests if CircularAction can be converted to string and parsed back to

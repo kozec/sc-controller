@@ -25,6 +25,10 @@ CASES = {
 		'sensitivity' : (2.0, 3.0,),
 		'feedback' : ('BOTH',)
 	},
+	'mouseabs' : {
+		'action' : 'mouseabs(REL_X)',
+		'sensitivity' : (2.0, 3.0,)
+	},
 	'gyro' : {
 		'action' : 'gyro(ABS_X, ABS_Y, ABS_Z)',
 		'sensitivity' : (2.0, 3.0, 4.0,)
