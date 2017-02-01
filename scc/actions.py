@@ -451,6 +451,10 @@ class AxisAction(Action):
 		return True
 	
 	
+	def get_compatible_modifiers(self):	
+		return Action.MOD_DEADZONE
+	
+	
 	def _get_axis_description(self):
 		axis, neg, pos = "%s %s" % (self.id.name, _("Axis")), _("Negative"), _("Positive")
 		if self.id in AxisAction.AXIS_NAMES:
