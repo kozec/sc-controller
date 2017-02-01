@@ -891,6 +891,10 @@ class AreaAction(Action, SpecialAction, OSDEnabledAction):
 		return _("Mouse Region")
 	
 	
+	def get_compatible_modifiers(self):
+		return OSDEnabledAction.get_compatible_modifiers(self)
+	
+	
 	def transform_coords(self, mapper):
 		"""
 		Transform coordinates specified as action arguments in whatever current

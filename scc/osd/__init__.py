@@ -184,10 +184,8 @@ class OSDWindow(Gtk.Window):
 		X.destroy_region (dpy, reg)
 	
 	
-	def show(self):
-		self.get_children()[0].show_all()
-		self.realize()
-		self.get_window().set_override_redirect(True)
+	def compute_position(self):
+		""" Adjusts position for currently active screen (display) """
 		x, y = self.position
 		screen = self.get_window().get_screen()
 		active_window = screen.get_active_window()
@@ -197,6 +195,15 @@ class OSDWindow(Gtk.Window):
 				geometry = screen.get_monitor_geometry(monitor)
 				x = x + geometry.x
 				y = y + geometry.y + geometry.height - self.get_window().get_height()
+		return x, y
+	
+	
+	def show(self):
+		self.get_children()[0].show_all()
+		self.realize()
+		self.get_window().set_override_redirect(True)
+		
+		x, y = self.compute_position()
 		if x < 0:	# Negative X position is counted from right border
 			x = Gdk.Screen.width() - self.get_allocated_width() + x + 1
 		if y < 0:	# Negative Y position is counted from bottom border

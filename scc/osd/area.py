@@ -49,6 +49,12 @@ class Area(OSDWindow, TimerManager):
 		return True
 	
 	
+	def compute_position(self):
+		# Overrides compute_position as Area is requested with exact position
+		# on X screen.
+		return self.position
+	
+	
 	def show(self):
 		OSDWindow.show(self)
 		self.realize()
