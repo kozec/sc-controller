@@ -54,11 +54,21 @@ class AxisActionComponent(AEComponent, TimerManager):
 		if self.on_wayland:
 			self.builder.get_object("lblArea").set_text(_("Note: Mouse Region option is not available with Wayland-based display server"))
 			self.builder.get_object("grArea").set_sensitive(False)
+		
+		# Remove options that are not applicable to currently editted input
 		if self.editor.get_id() in STICKS:
-			# Remove "Trackball" option when editing stick bindings
+			# Remove "Mouse Region", "Trackball", "Trackpad"
+			# and "Mouse (Emulate Stick)" options when editing stick bindings
 			cb = self.builder.get_object("cbAxisOutput")
 			for row in cb.get_model():
-				if row[2] == "trackball":
+				if row[2] in ("area", "trackpad", "trackball"):
+					cb.get_model().remove(row.iter)
+		else:
+			# Remove "Mouse" option when editing pads
+			# (it's effectivelly same as Trackpad)
+			cb = self.builder.get_object("cbAxisOutput")
+			for row in cb.get_model():
+				if row[2] in ("mouse_stick", ):
 					cb.get_model().remove(row.iter)
 	
 	

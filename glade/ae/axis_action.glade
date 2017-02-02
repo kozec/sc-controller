@@ -168,6 +168,11 @@
       </row>
       <row>
         <col id="0">mouse()</col>
+        <col id="1" translatable="yes">Mouse</col>
+        <col id="2">mouse_stick</col>
+      </row>
+      <row>
+        <col id="0">mouse()</col>
         <col id="1" translatable="yes">Trackpad (Mouse)</col>
         <col id="2">trackpad</col>
       </row>
