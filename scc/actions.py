@@ -1054,7 +1054,7 @@ class GyroAction(Action):
 	
 	
 	def get_compatible_modifiers(self):
-		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z
+		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_DEADZONE
 	
 	
 	def set_speed(self, x, y, z):
@@ -1114,6 +1114,10 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 	def get_compatible_modifiers(self):
 		return ( HapticEnabledAction.get_compatible_modifiers(self)
 			| GyroAction.get_compatible_modifiers(self) )
+	
+	
+	def get_previewable(self):
+		return True
 	
 	
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):

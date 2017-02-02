@@ -519,6 +519,12 @@ class DeadzoneModifier(Modifier):
 		if dist < -self.upper or dist > self.upper: x, y = 0, 0
 		if dist > -self.lower and dist < self.lower: x, y = 0, 0
 		return self.action.whole(mapper, x, y, what)
+	
+	
+	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
+		if abs(q2) < self.lower or abs(q2) > self.upper : q2 = 0
+		if abs(q3) < self.lower or abs(q3) > self.upper : q3 = 0
+		return self.action.gyro(mapper, pitch, yaw, roll, q1, q2, q3, q4)
 
 
 class ModeModifier(Modifier):
