@@ -1081,6 +1081,9 @@ class GyroAction(Action):
 		if self.name : return self.name
 		rv = []
 		
+		if self.axes[0] in Rels:
+			return _("Mouse")
+		
 		for x in self.axes:
 			if x:
 				s = _(AxisAction.AXIS_NAMES[x][0])

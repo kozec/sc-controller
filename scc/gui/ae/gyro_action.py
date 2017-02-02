@@ -103,6 +103,8 @@ class GyroActionComponent(AEComponent):
 						self.select_gyro_output("right_abs")
 					else:
 						self.select_gyro_output("right")
+				elif ap[0] == Rels.REL_Y and ap[-1] == Rels.REL_X:
+					self.select_gyro_output("mouse_stick")
 			self.modifier_updated()
 	
 	
@@ -142,7 +144,9 @@ class GyroActionComponent(AEComponent):
 			if (len(ap) == 3 and not ap[1]) or len(ap) == 2:
 				if ap[0] == Axes.ABS_X and ap[-1] == Axes.ABS_Y:
 					return True
-				if ap[0] == Axes.ABS_RX and ap[-1] == Axes.ABS_RY:
+				elif ap[0] == Axes.ABS_RX and ap[-1] == Axes.ABS_RY:
+					return True
+				elif ap[0] == Rels.REL_Y and ap[-1] == Rels.REL_X:
 					return True
 			return False
 		if isinstance(action, (MultiAction, TiltAction)):

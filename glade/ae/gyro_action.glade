@@ -27,32 +27,37 @@
       </row>
       <row>
         <col id="0">mouse([YAW|ROLL])</col>
-        <col id="1" translatable="yes">Mouse (desktop)</col>
+        <col id="1" translatable="yes">Mouse (Desktop)</col>
         <col id="2">mouse</col>
       </row>
       <row>
         <col id="0">mouse([YAW|ROLL])</col>
-        <col id="1" translatable="yes">Mouse (camera)</col>
+        <col id="1" translatable="yes">Mouse (Camera)</col>
         <col id="2">mouse_cam</col>
       </row>
       <row>
+        <col id="0">gyroabs(Rels.REL_Y, [Rels.REL_X|None, Rels.REL_X])</col>
+        <col id="1" translatable="yes">Mouse (Emulate Stick)</col>
+        <col id="2">mouse_stick</col>
+      </row>
+      <row>
         <col id="0">gyro(ABS_RX, [ABS_RY|None, ABS_RY])</col>
-        <col id="1" translatable="yes">Right Stick (camera)</col>
+        <col id="1" translatable="yes">Right Stick (Camera)</col>
         <col id="2">right</col>
       </row>
       <row>
         <col id="0">gyroabs(ABS_RX, [ABS_RY|None, ABS_RY])</col>
-        <col id="1" translatable="yes">Right Stick (absolute)</col>
+        <col id="1" translatable="yes">Right Stick (Absolute)</col>
         <col id="2">right_abs</col>
       </row>
       <row>
         <col id="0">gyro(ABS_X, [ABS_Y|None,ABS_Y])</col>
-        <col id="1" translatable="yes">Left Stick (camera)</col>
+        <col id="1" translatable="yes">Left Stick (Camera)</col>
         <col id="2">left</col>
       </row>
       <row>
         <col id="0">gyroabs(ABS_X, [ABS_Y|None, ABS_Y])</col>
-        <col id="1" translatable="yes">Left Stick (absolute)</col>
+        <col id="1" translatable="yes">Left Stick (Absolute)</col>
         <col id="2">left_abs</col>
       </row>
     </data>
