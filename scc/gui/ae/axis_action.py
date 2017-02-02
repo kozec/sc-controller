@@ -61,14 +61,14 @@ class AxisActionComponent(AEComponent, TimerManager):
 			# and "Mouse (Emulate Stick)" options when editing stick bindings
 			cb = self.builder.get_object("cbAxisOutput")
 			for row in cb.get_model():
-				if row[2] in ("area", "mouse_pad", "trackpad", "trackball"):
+				if row[2] in ("wheel_pad", "area", "mouse_pad", "trackpad", "trackball"):
 					cb.get_model().remove(row.iter)
 		else:
 			# Remove "Mouse" option when editing pads
 			# (it's effectivelly same as Trackpad)
 			cb = self.builder.get_object("cbAxisOutput")
 			for row in cb.get_model():
-				if row[2] in ("mouse_stick", ):
+				if row[2] in ("wheel_stick", "mouse_stick", ):
 					cb.get_model().remove(row.iter)
 	
 	

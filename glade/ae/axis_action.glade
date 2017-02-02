@@ -154,7 +154,12 @@
       <row>
         <col id="0">ball(XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) ))</col>
         <col id="1" translatable="yes">Mouse Wheel</col>
-        <col id="2">wheel</col>
+        <col id="2">wheel_pad</col>
+      </row>
+      <row>
+        <col id="0">XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) )</col>
+        <col id="1" translatable="yes">Mouse Wheel</col>
+        <col id="2">wheel_stick</col>
       </row>
       <row>
         <col id="0">circular(Rels.REL_WHEEL)</col>
