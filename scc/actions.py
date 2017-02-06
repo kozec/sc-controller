@@ -1820,6 +1820,7 @@ class RingAction(MultichildAction):
 			params = params[1:]
 		MultichildAction.__init__(self, *params)
 		self.actions = ensure_size(2, params, NoAction())
+		self.inner, self.outer = self.actions
 		self._radius_m = STICK_PAD_MAX * self.radius	# radius, multiplied
 		self._active = NoAction()
 	
@@ -1828,8 +1829,8 @@ class RingAction(MultichildAction):
 		""" Called from json encoder """
 		rv = { RingAction.COMMAND : {
 			'radius' : self.radius,
-			'inner'  : self.actions[0],
-			'outer'  : self.actions[1],
+			'inner'  : self.inner,
+			'outer'  : self.outer,
 		}}
 		if self.name: rv['name'] = self.name
 		return rv
@@ -1867,10 +1868,10 @@ class RingAction(MultichildAction):
 			distance = sqrt(x*x + y*y)
 			if distance < self._radius_m:
 				# Inner radius
-				action = self.actions[0]
+				action = self.inner,
 				distance /= self.radius
 			else:
-				action = self.actions[1]
+				action = self.outer,
 				distance = (distance - self._radius_m) / (1.0 - self.radius)
 			x = distance * sin(angle)
 			y = distance * cos(angle)

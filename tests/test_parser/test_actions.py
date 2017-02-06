@@ -205,6 +205,25 @@ class TestActions(object):
 		))
 	
 	
+	def test_ring(self):
+		"""
+		Tests if DPadAction can be converted to string and
+		parsed back to same action.
+		"""
+		assert _parses_as_itself(RingAction(0.1,
+			DPadAction(
+				ButtonAction(Keys.BTN_LEFT),
+				ButtonAction(Keys.BTN_RIGHT),
+				ButtonAction(Keys.BTN_MIDDLE),
+				ButtonAction(Keys.KEY_A)
+			),
+			XYAction(
+				AxisAction(Axes.ABS_X),
+				AxisAction(Axes.ABS_Y)
+			)
+		))
+	
+	
 	def test_dpad8(self):
 		"""
 		Tests if DPad8Action can be converted to string and

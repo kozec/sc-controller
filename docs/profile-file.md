@@ -79,6 +79,23 @@ Example:
 	],
 
 
+#### `ring`
+Defines outer and inner ring bindings. Expects keys with 'inner' and 'outer'
+actions and 'radius' as float value, but all keys are optional.
+
+Example:
+
+	"pad_left": {
+	  "ring": {
+	    "inner": { "action": "XY(axis(Axes.ABS_X), raxis(Axes.ABS_Y))" },
+	    "outer": { "action": "XY(axis(Axes.ABS_RX), raxis(Axes.ABS_RY))" }, 
+	    "radius": 0.4
+	  }
+	}, 
+
+defines inner ring binding controlling left stick and outer ring right stick
+of emulated gamepad.
+
 #### `tilt`
 Turns action into `TiltAction`, allowing to assign different action for tilting
 dpad. Works pretty-much as `dpad` on gyro.
