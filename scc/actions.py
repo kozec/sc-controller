@@ -19,7 +19,7 @@ from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
 from scc.constants import PARSER_CONSTANTS
-from math import sqrt, atan2, pi as PI
+from math import sqrt, sin, cos, atan2, pi as PI
 
 import sys, time, logging, inspect
 log = logging.getLogger("Actions")
@@ -1820,7 +1820,7 @@ class RingAction(MultichildAction):
 			params = params[1:]
 		MultichildAction.__init__(self, *params)
 		self.actions = ensure_size(2, params, NoAction())
-		self._radius_p2 = STICK_PAD_MAX * STICK_PAD_MAX * self.radius * self.radius
+		self._radius_m = STICK_PAD_MAX * self.radius	# radius, multiplied
 		self._active = NoAction()
 	
 	
@@ -1863,7 +1863,18 @@ class RingAction(MultichildAction):
 	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
-			action = self.actions[0] if x*x + y*y < self._radius_p2 else self.actions[1]
+			angle = atan2(x, y)
+			distance = sqrt(x*x + y*y)
+			if distance < self._radius_m:
+				# Inner radius
+				action = self.actions[0]
+				distance /= self.radius
+			else:
+				action = self.actions[1]
+				distance = (distance - self._radius_m) / (1.0 - self.radius)
+			x = distance * sin(angle)
+			y = distance * cos(angle)
+			
 			if action == self._active:
 				action.whole(mapper, x, y, what)
 			else:
