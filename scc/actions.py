@@ -1868,10 +1868,10 @@ class RingAction(MultichildAction):
 			distance = sqrt(x*x + y*y)
 			if distance < self._radius_m:
 				# Inner radius
-				action = self.inner,
+				action = self.inner
 				distance /= self.radius
 			else:
-				action = self.outer,
+				action = self.outer
 				distance = (distance - self._radius_m) / (1.0 - self.radius)
 			x = distance * sin(angle)
 			y = distance * cos(angle)
