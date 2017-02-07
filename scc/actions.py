@@ -1434,10 +1434,21 @@ class ButtonAction(HapticEnabledAction, Action):
 		ButtonAction._button_release(mapper, self.button)
 	
 	
+	def whole(self, mapper, x, y, what):
+		# Entire pad used as one big button
+		if mapper.is_touched(what) and not mapper.was_touched(what):
+			# Touched the pad
+			self.button_press(mapper)
+		if mapper.was_touched(what) and not mapper.is_touched(what):
+			# Released the pad
+			self.button_release(mapper)
+	
+	
 	def axis(self, mapper, position, what):
 		# Choses which key or button should be pressed or released based on
 		# current stick position.
 		
+		# TODO: Remove this, convert it to DPAD internally
 		if self._pressed_key == self.button and position > STICK_PAD_MIN_HALF:
 			ButtonAction._button_release(mapper, self.button)
 			self._pressed_key = None
@@ -1884,8 +1895,11 @@ class RingAction(MultichildAction):
 				mapper.set_button(what, False)
 				self._active.whole(mapper, 0, 0, what)
 				# ... and touching it for new active child action
+				was = mapper.was_touched(what)
 				mapper.set_button(what, True)
+				mapper.set_was_pressed(what, False)
 				action.whole(mapper, x, y, what)
+				mapper.set_was_pressed(what, was)
 				self._active = action
 		elif mapper.was_touched(what):
 			# Pad just released
