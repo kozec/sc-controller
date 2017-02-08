@@ -39,10 +39,14 @@ class RingEditor(Editor):
 		b = lambda a : self.builder.get_object(a)
 		self.action_widgets = (
 			# Order goes: Action Button, Clear Button
-			( b('btOuter'),		b('btClearOuter') ),
-			( b('btInner'),		b('btClearInner') )
+			( b('btInner'),		b('btClearInner') ),
+			( b('btOuter'),		b('btClearOuter') )
 		)
 		headerbar(self.builder.get_object("header"))
+	
+	
+	def on_adjRadius_value_changed(self, scale, *a):
+		self.radius = scale.get_value()
 	
 	
 	def on_sclRadius_format_value(self, scale, value):
@@ -89,7 +93,7 @@ class RingEditor(Editor):
 	def on_clearb_clicked(self, clicked_button):
 		for i in xrange(0, len(self.action_widgets)):
 			button, clearb = self.action_widgets[i]
-			if button == clicked_button:
+			if clearb == clicked_button:
 				self.actions[i] = NoAction()
 				self._update()
 				return
@@ -126,13 +130,14 @@ class RingEditor(Editor):
 	
 	def _make_action(self):
 		""" Generates and returns Action instance """
-		return RingAction(*self.actions)
+		return RingAction(self.radius, *self.actions)
 	
 	
 	def _update(self):
 		for i in xrange(0, len(self.action_widgets)):
 			button, clearb = self.action_widgets[i]
 			button.set_label(self.actions[i].describe(Action.AC_BUTTON))
+		self.builder.get_object("sclRadius").set_value(self.radius)
 	
 	
 	def set_input(self, id, action, mode=None):
@@ -142,5 +147,5 @@ class RingEditor(Editor):
 		
 		if isinstance(action, RingAction):
 			self.radius = action.radius
-			self.actions = [ action.outer, action.inner ]
+			self.actions = [ action.inner, action.outer ]
 			self._update()
