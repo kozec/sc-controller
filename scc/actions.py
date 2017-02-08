@@ -423,6 +423,11 @@ class AxisAction(Action):
 		Axes.ABS_Z  : ("Left Trigger", "Press", "Press"),
 		Axes.ABS_RZ : ("Right Trigger", "Press", "Press"),
 	}
+	AXES_PAIRS = [
+		(Axes.ABS_X, Axes.ABS_Y),
+		(Axes.ABS_RX, Axes.ABS_RY),
+		(Axes.ABS_HAT0X, Axes.ABS_HAT0Y)
+	]
 	X = [ Axes.ABS_X, Axes.ABS_RX, Axes.ABS_HAT0X ]
 	Z = [ Axes.ABS_Z, Axes.ABS_RZ ]
 	
@@ -1863,7 +1868,11 @@ class RingAction(MultichildAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		return " / ".join([ x.describe(context) for x in self.actions ])
+		lines = [ x.describe(Action.AC_BUTTON) for x in self.actions ]
+		if any(["\n" in l for l in lines ]):
+			return " / ".join([ l for l in lines ])
+		else:
+			return "\n".join([ l for l in lines ])
 	
 	
 	def to_string(self, multiline=False, pad=0):
@@ -2043,6 +2052,10 @@ class XYAction(WholeHapticAction, Action):
 	def describe(self, context):
 		if self.name: return self.name
 		rv = []
+		if isinstance(self.x, AxisAction) and isinstance(self.y, AxisAction):
+			if (self.x.id, self.y.id) in AxisAction.AXES_PAIRS:
+				# Special cases for default stick bindings
+				return self.x.describe(context)
 		if self.x: rv.append(self.x.describe(context))
 		if self.y: rv.append(self.y.describe(context))
 		if context in (Action.AC_STICK, Action.AC_PAD):
