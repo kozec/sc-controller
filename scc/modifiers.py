@@ -446,9 +446,38 @@ class BallModifier(Modifier, WholeHapticAction):
 class DeadzoneModifier(Modifier):
 	COMMAND = "deadzone"
 	
-	def _mod_init(self, lower, upper=STICK_PAD_MAX):
-		self.lower = lower
-		self.upper = upper
+	def _mod_init(self, *params):
+		if len(params) < 1: raise TypeError("Not enough parameters")
+		if type(params[0]) in (str, unicode):
+			# TODO: Constants here
+			if params[0] == "cut":
+				self._get_value = self.mode_cut
+			elif params[0] == "cut_bellow":
+				self._get_value = self.mode_bellow
+			elif params[0] == "linear":
+				self._get_value = self.mode_linear
+			else:
+				raise ValueError("Invalid deadzone mode")
+			params = params[1:]
+		if len(params) < 1: raise TypeError("Not enough parameters")
+		
+		self.lower = int(params[0])
+		self.upper = int(params[1]) if len(params) == 2 else STICK_PAD_MAX
+	
+	
+	def mode_cut(self, x):
+		return 0 if x < self.lower or x > self.upper else x
+	
+	
+	def mode_bellow(self, x):
+		if x > self.upper:
+			return STICK_PAD_MAX
+		return 0 if x < self.lower else x
+	
+	
+	def mode_linear(self, x):
+		# TODO
+		return 0
 	
 	
 	def encode(self):
