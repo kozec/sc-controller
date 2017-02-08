@@ -13,7 +13,7 @@ from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.modifiers import DeadzoneModifier, RotateInputModifier
 from scc.modifiers import SmoothModifier
-from scc.actions import Action, XYAction, NoAction
+from scc.actions import Action, XYAction, NoAction, RingAction
 from scc.constants import HapticPos, SCButtons
 from scc.controller import HapticData
 from scc.profile import Profile
@@ -23,6 +23,7 @@ from scc.gui.controller_widget import PRESSABLE, TRIGGERS, PADS
 from scc.gui.controller_widget import STICKS, GYROS, BUTTONS
 from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.macro_editor import MacroEditor
+from scc.gui.ring_editor import RingEditor
 from scc.gui.parser import InvalidAction
 from scc.gui.dwsnc import headerbar
 from scc.gui.ae import AEComponent
@@ -305,9 +306,17 @@ class ActionEditor(Editor):
 	def hide_macro(self):
 		"""
 		Hides Macro button.
-		Used when displaying ActionEditor from MacroEditor
+		Used when editing macro of pad/stick bindings.
 		"""
 		self.builder.get_object("btMacro").set_visible(False)
+	
+	
+	def hide_ring(self):
+		"""
+		Hides Ring Bindings button.
+		Used when editing anything but pad.
+		"""
+		self.builder.get_object("btInnerRing").set_visible(False)
 	
 	
 	def hide_action_buttons(self):
@@ -316,6 +325,7 @@ class ActionEditor(Editor):
 			self.builder.get_object(x).set_visible(False)
 		self.hide_modeshift()
 		self.hide_macro()
+		self.hide_ring()
 	
 	
 	def hide_action_str(self):
@@ -331,6 +341,7 @@ class ActionEditor(Editor):
 		self.hide_action_str()
 		self.hide_modeshift()
 		self.hide_macro()
+		self.hide_ring()
 	
 	
 	def hide_name(self):
@@ -415,6 +426,16 @@ class ActionEditor(Editor):
 		""" Convert current action into macro and send it to MacroEditor """
 		e = MacroEditor(self.app, self.ac_callback)
 		action = Macro(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
+		e.set_input(self.id, action, mode=self._mode)
+		self.send_added_widget(e)
+		self.close()
+		e.show(self.get_transient_for())
+	
+	
+	def on_btInnerRing_clicked(self, *a):
+		""" Convert current action into ring bindings and send it to RingEditor """
+		e = RingEditor(self.app, self.ac_callback)
+		action = RingAction(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
 		e.set_input(self.id, action, mode=self._mode)
 		self.send_added_widget(e)
 		self.close()
@@ -880,18 +901,21 @@ class ActionEditor(Editor):
 			self.hide_modifiers()
 			self.set_action(action)
 			self.hide_macro()
+			self.hide_ring()
 		elif id in STICKS:
 			self.set_title(_("Stick"))
 			self._set_mode(action, mode or Action.AC_STICK)
 			self.set_action(action)
 			self.hide_macro()
+			self.hide_ring()
 			self.id = Profile.STICK
 		elif id in GYROS:
 			self.set_title(_("Gyro"))
 			self._set_mode(action, mode or Action.AC_GYRO)
 			self.set_action(action)
-			self.hide_macro()
 			self.hide_modeshift()
+			self.hide_macro()
+			self.hide_ring()
 			self.id = Profile.GYRO
 		elif id in PADS:
 			self._set_mode(action, mode or Action.AC_PAD)
@@ -903,12 +927,14 @@ class ActionEditor(Editor):
 				self.set_title(_("Right Pad"))
 		if mode == Action.AC_OSK:
 			self.hide_name()
-			self.hide_macro()
 			self.hide_modeshift()
+			self.hide_macro()
+			self.hide_ring()
 			# self.hide_rotation()
 		elif mode == Action.AC_MENU:
 			self.hide_modeshift()
 			self.hide_macro()
+			self.hide_ring()
 	
 	
 	def set_menu_item(self, item, title_for_name_label=None):
