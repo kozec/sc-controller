@@ -224,6 +224,39 @@ class TestActions(object):
 			assert isinstance(sub, ButtonAction)
 	
 	
+	def test_ring(self):
+		"""
+		Tests if DPadAction is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'ring' : {
+				'radius' : 0.3,
+				'outer' : {
+					'dpad' : [{
+						'action' : 'button(KEY_A)'
+						} , {
+						'action' : 'button(KEY_B)'
+						} , {
+						'action' : 'button(KEY_C)'
+						} , {
+						'action' : 'button(KEY_D)'
+					}]
+				},
+				'inner' : {
+					'X' : { 'action' : 'axis(ABS_X)' },
+					'Y' : { 'action' : 'axis(ABS_Y)' },
+				}
+			}
+		})
+		
+		assert isinstance(a.outer, DPadAction)
+		for sub in a.outer.actions:
+			assert isinstance(sub, ButtonAction)
+		assert isinstance(a.inner, XYAction)
+		for sub in a.inner.actions:
+			assert isinstance(sub, AxisAction)
+	
+	
 	def test_dpad8(self):
 		"""
 		Tests if DPad8Action is parsed correctly from json.

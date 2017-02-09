@@ -80,6 +80,16 @@ stick position, what probably doesn't yields expected results.
 Same as dpad, with more directions.
 
 
+#### <a name="ring"></a> ring([radius=0.5], inner, outer)
+Defines outer and inner ring bindings. When distance of finger from center of
+pad is smaller than 'radius', 'inner' action is activated, otherwise, 'outer'
+takes place.
+
+Unlike [dpad](#dpad), which executes actions as if they were bound to buttons,
+ring works more like defining two actions on same pad with non-overlapping
+deadzones.
+
+
 #### <a name="circular"></a> circular(axis)
 Controls scroll wheel by scrolling finger around pad.
 Axis should be Rels.REL_WHEEL or Rels.REL_HWHEEL.

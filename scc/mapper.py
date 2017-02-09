@@ -261,6 +261,42 @@ class Mapper(object):
 		return None
 	
 	
+	def set_button(self, button, state):
+		"""
+		Sets button state on input.
+		Set value will stay only for durration of one event loop iteration.
+		
+		Used _temporarely_ by RingAction to emulate finger lifting from pad.
+		"""
+		if button == LEFT:
+			button = SCButtons.LPADTOUCH
+		elif button == RIGHT:
+			button = SCButtons.RPADTOUCH
+		
+		if state:
+			self.buttons |= button
+		else:
+			self.buttons &= ~button
+	
+	
+	def set_was_pressed(self, button, state):
+		"""
+		As set_button, but changes value remembered
+		from loop iteration before current.
+		
+		Used _temporarely_ by RingAction to emulate finger lifting from pad.
+		"""
+		if button == LEFT:
+			button = SCButtons.LPADTOUCH
+		elif button == RIGHT:
+			button = SCButtons.RPADTOUCH
+		
+		if state:
+			self.old_buttons |= button
+		else:
+			self.old_buttons &= ~button
+	
+	
 	def release_virtual_buttons(self):
 		"""
 		Called when daemon is killed or USB dongle is disconnected.

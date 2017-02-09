@@ -19,7 +19,7 @@ from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
 from scc.constants import PARSER_CONSTANTS
-from math import sqrt, atan2, pi as PI
+from math import sqrt, sin, cos, atan2, pi as PI
 
 import sys, time, logging, inspect
 log = logging.getLogger("Actions")
@@ -1169,9 +1169,9 @@ class MultichildAction(Action):
 		return self
 	
 	
-	def to_string(self, multiline=False, pad=0):
+	def to_string(self, multiline=False, pad=0, prefixparams=""):
 		if multiline:
-			rv = [ (" " * pad) + self.COMMAND + "(" ]
+			rv = [ (" " * pad) + self.COMMAND + "(" + prefixparams.strip() ]
 			pad += 2
 			for a in strip_none(*self.actions):
 				rv += [ a.to_string(True, pad) + ","]
@@ -1180,7 +1180,7 @@ class MultichildAction(Action):
 			pad -= 2
 			rv += [ (" " * pad) + ")" ]
 			return "\n".join(rv)
-		return self.COMMAND + "(" + (", ".join([
+		return self.COMMAND + "(" + prefixparams + (", ".join([
 			x.to_string() if x is not None else "None"
 			for x in strip_none(*self.actions)
 		])) + ")"
@@ -1434,10 +1434,21 @@ class ButtonAction(HapticEnabledAction, Action):
 		ButtonAction._button_release(mapper, self.button)
 	
 	
+	def whole(self, mapper, x, y, what):
+		# Entire pad used as one big button
+		if mapper.is_touched(what) and not mapper.was_touched(what):
+			# Touched the pad
+			self.button_press(mapper)
+		if mapper.was_touched(what) and not mapper.is_touched(what):
+			# Released the pad
+			self.button_release(mapper)
+	
+	
 	def axis(self, mapper, position, what):
 		# Choses which key or button should be pressed or released based on
 		# current stick position.
 		
+		# TODO: Remove this, convert it to DPAD internally
 		if self._pressed_key == self.button and position > STICK_PAD_MIN_HALF:
 			ButtonAction._button_release(mapper, self.button)
 			self._pressed_key = None
@@ -1797,6 +1808,103 @@ class DPad8Action(DPadAction):
 			if side is not None:
 				self.actions[side].button_press(mapper)
 			self.dpad_state[0] = side
+
+
+class RingAction(MultichildAction):
+	"""
+	Ring action splits pad into "inner" and "outer" ring and allow binding
+	two different child actions in same way as DPadAction does.
+	
+	Combining RingAction with two DPad8Actions allows to assign
+	up to 16 different bindings to one pad.
+	"""
+	COMMAND = "ring"
+	PROFILE_KEY_PRIORITY = -10	# First possible
+	DEFAULT_RADIUS = 0.5
+	
+	def __init__(self, *params):
+		# 1st parameter may be inner ring radius (0.1 to 0.9), defaults to 50%
+		# of pad diameter.
+		self.radius = RingAction.DEFAULT_RADIUS
+		if len(params) > 1 and type(params[0]) in (int, float):
+			self.radius = float(params[0])
+			params = params[1:]
+		MultichildAction.__init__(self, *params)
+		self.actions = ensure_size(2, params, NoAction())
+		self.inner, self.outer = self.actions
+		self._radius_m = STICK_PAD_MAX * self.radius	# radius, multiplied
+		self._active = NoAction()
+	
+	
+	def encode(self):
+		""" Called from json encoder """
+		rv = { RingAction.COMMAND : {
+			'radius' : self.radius,
+			'inner'  : self.inner,
+			'outer'  : self.outer,
+		}}
+		if self.name: rv['name'] = self.name
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		""" Called when decoding profile from json """
+		args, data = [], data[RingAction.COMMAND]
+		if 'radius' in data: args.append(float(data['radius']))
+		args.append(parser.from_json_data(data['inner']) if 'inner' in data else NoAction())
+		args.append(parser.from_json_data(data['outer']) if 'outer' in data else NoAction())
+		return RingAction(*args)
+	
+	
+	def get_compatible_modifiers(self):
+		return 0
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return " / ".join([ x.describe(context) for x in self.actions ])
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if self.radius != RingAction.DEFAULT_RADIUS:
+			return MultichildAction.to_string(self, multiline, pad, "%s, " % (self.radius,))
+		else:
+			return MultichildAction.to_string(self, multiline, pad)
+	
+	
+	def whole(self, mapper, x, y, what):
+		if mapper.is_touched(what):
+			angle = atan2(x, y)
+			distance = sqrt(x*x + y*y)
+			if distance < self._radius_m:
+				# Inner radius
+				action = self.inner
+				distance /= self.radius
+			else:
+				action = self.outer
+				distance = (distance - self._radius_m) / (1.0 - self.radius)
+			x = distance * sin(angle)
+			y = distance * cos(angle)
+			
+			if action == self._active:
+				action.whole(mapper, x, y, what)
+			else:
+				# Finger crossed radius border, so active action is changing.
+				# Simulate releasing pad for former...
+				mapper.set_button(what, False)
+				self._active.whole(mapper, 0, 0, what)
+				# ... and touching it for new active child action
+				was = mapper.was_touched(what)
+				mapper.set_button(what, True)
+				mapper.set_was_pressed(what, False)
+				action.whole(mapper, x, y, what)
+				mapper.set_was_pressed(what, was)
+				self._active = action
+		elif mapper.was_touched(what):
+			# Pad just released
+			self._active.whole(mapper, x, y, what)
+			self._active = NoAction()
 
 
 class XYAction(WholeHapticAction, Action):
