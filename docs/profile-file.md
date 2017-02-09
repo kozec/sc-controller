@@ -93,15 +93,17 @@ Example:
 	],
 
 #### `deadzone`
-Specifies deadzone. Allows for `lower` and `upper` subkeys,
-defaults to *0* and *32767*
+Specifies deadzone. Allows for `lower` and `upper` subkeys defaulting to
+*0* and *32767* and `mode` subkey defaulting to 'CUT'.
+See see [deadzone modifier](actions.md#deadzone) for list of modes.
 
 Example:
 
 	"trigger_left": {
- 	  "action": "axis(Axes.ABS_Z)", 
+		"mode" : "linear",
+ 	  "action": "axis(Axes.ABS_Z)",
  	  "deadzone": {
-	    "lower": 100, 
+	    "lower": 100,
 	    "upper": 200
   	}},
 
