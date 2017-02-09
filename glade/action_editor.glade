@@ -102,6 +102,28 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="lstDeadzoneMode">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name action -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Cut Down</col>
+        <col id="1">CUT</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Round Up</col>
+        <col id="1">ROUND</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Linear</col>
+        <col id="1">LINEAR</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="lstFeedbackSide">
     <columns>
       <!-- column-name text -->
@@ -1087,6 +1109,52 @@
                         <property name="left_attach">0</property>
                         <property name="top_attach">1</property>
                         <property name="width">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="lblDeadzoneUpper1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Mode</property>
+                        <property name="ellipsize">end</property>
+                        <property name="xalign">0</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="lblDeadzoneMode">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                        <property name="width">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbDeadzoneMode">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">lstDeadzoneMode</property>
+                        <property name="active">0</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="nowthishastohaveidtoo1"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">4</property>
+                        <property name="width">2</property>
                       </packing>
                     </child>
                   </object>
