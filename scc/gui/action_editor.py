@@ -460,8 +460,10 @@ class ActionEditor(Editor):
 				self.deadzone[i] = self.deadzone_widgets[i][0].get_value()
 				set_action = True
 
-		if (self.deadzone_mode is None) != (not cbDeadzone.get_active()):
-			self.deadzone_mode = DEADZONE_MODES[deadzone_mode.get_active()]
+		mode = (DEADZONE_MODES[cbDeadzoneMode.get_active()]
+					if cbDeadzone.get_active() else None)
+		if self.deadzone_mode != mode:
+			self.deadzone_mode = mode
 			set_action = True
 
 		if cbFeedback.get_active():
@@ -657,9 +659,9 @@ class ActionEditor(Editor):
 				self.smoothing_widgets[i][0].set_value(self.smoothing[i])
 		if self.deadzone_mode is not None:
 			cbDeadzone = self.builder.get_object("cbDeadzone")
-			cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+			cbDeadzoneMode = self.builder.get_object("cbDeadzoneMode")
 			cbDeadzone.set_active(True)
-			self.set_cb(cbFeedbackSide, self.deadzone_mode)
+			cbDeadzoneMode.set_active(DEADZONE_MODES.index(self.deadzone_mode))
 			for i in xrange(0, len(self.deadzone)):
 				self.deadzone_widgets[i][0].set_value(self.deadzone[i])
 		self._recursing = False
