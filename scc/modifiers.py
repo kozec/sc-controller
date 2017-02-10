@@ -976,7 +976,7 @@ class FeedbackModifier(Modifier):
 	COMMAND = "feedback"
 	PROFILE_KEY_PRIORITY = -4
 	
-	def _mod_init(self, position, amplitude=512, frequency=4, period=1024, count=1):
+	def _mod_init(self, position, frequency=4, amplitude=512, period=1024, count=1):
 		self.haptic = HapticData(position, amplitude, frequency, period, count)
 		if self.action:
 			if hasattr(self.action, "set_haptic"):
