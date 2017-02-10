@@ -301,8 +301,16 @@ with decreasing speed, based on set mass and friction, until virtual
 'spinning ball' stops moving.
 
 
-#### <a name="deadzone"></a> deadzone(lower, [upper, ] action)
-Enables deadzone on trigger, pad or stick.
+#### <a name="deadzone"></a> deadzone([mode,] lower, [upper, ] action)
+Enables deadzone on trigger, pad or stick. Mode can be one of
+
+ - CUT    - if value is out of deadzone range, output value is zero
+ - ROUND  - for values bellow deadzone range, output value is zero. For values
+above range, output value is maximum allowed.
+ - LINEAR - input value is scaled, so entire output range is covered by
+range of deadzone.
+
+and defaults to 'CUT'
 
 
 #### <a name="smooth"></a> smooth([buffer=8, [multiplier=0.7, [filter=2, ]]] action)

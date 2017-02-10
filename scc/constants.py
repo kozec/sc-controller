@@ -34,11 +34,13 @@ HPERIOD  = 0.02
 LPERIOD  = 0.5
 DURATION = 1.0
 
+# Constants used when forcing gamepad to read some type of event is needed
 FE_STICK	= 1
 FE_TRIGGER	= 2
 FE_PAD		= 3
 FE_GYRO		= 4
 
+# Buttons names, sides, etc. These constants are used on multiple places
 LEFT	= "LEFT"
 RIGHT	= "RIGHT"
 WHOLE	= "WHOLE"
@@ -49,7 +51,13 @@ YAW		= "YAW"
 ROLL	= "ROLL"
 SAME	= "SAME"	# may be used with MenuAction
 
-PARSER_CONSTANTS = ( LEFT, RIGHT, WHOLE, STICK, GYRO, PITCH, YAW, ROLL, SAME )
+# Deadzone modes
+CUT		= "CUT"
+ROUND	= "ROUND"
+LINEAR	= "LINEAR"
+
+PARSER_CONSTANTS = ( LEFT, RIGHT, WHOLE, STICK, GYRO, PITCH,
+	YAW, ROLL, SAME, CUT, ROUND, LINEAR )
 
 
 
