@@ -9,8 +9,8 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, GLib, Gdk, GdkX11
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
+from scc.tools import point_in_gtkrect, find_menu, circle_to_square, clamp
 from scc.menu_data import MenuData, Separator, Submenu
-from scc.tools import point_in_gtkrect, find_menu
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
 from scc.paths import get_share_path
@@ -408,15 +408,16 @@ class Menu(OSDWindow):
 					if self._control_equals_cancel(daemon, x, y):
 						return
 				
-				max_w = self.get_allocation().width - (self.cursor.get_allocation().width * 0.8)
-				max_h = self.get_allocation().height - (self.cursor.get_allocation().height * 1.0)
-				x = ((x / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w
-				y = (0.5 - (y / (STICK_PAD_MAX * 2.0))) * max_h
+				pad_w = self.cursor.get_allocation().width * 0.5
+				pad_h = self.cursor.get_allocation().height * 0.5
+				max_w = self.get_allocation().width - 2 * pad_w
+				max_h = self.get_allocation().height - 2 * pad_h
 				
-				x -= self.cursor.get_allocation().width * 0.5
-				y -= self.cursor.get_allocation().height * 0.5
-				
+				x, y = circle_to_square(x / (STICK_PAD_MAX * 2.0), y / (STICK_PAD_MAX * 2.0))
+				x = clamp(pad_w, (pad_w + max_w) * 0.5 + x * max_w, max_w - pad_w)
+				y = clamp(pad_h, (pad_h + max_h) * 0.5 + y * max_h * -1, max_h - pad_h)
 				self.f.move(self.cursor, int(x), int(y))
+				
 				for i in self.items:
 					if point_in_gtkrect(i.widget.get_allocation(), x, y):
 						self.select(self.items.index(i))
