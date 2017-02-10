@@ -876,7 +876,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="lblFeedbackSet1">
+                      <object class="GtkLabel" id="lblFeedbackSide">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">10</property>
@@ -964,7 +964,7 @@
                     <property name="row_spacing">2</property>
                     <property name="column_spacing">10</property>
                     <child>
-                      <object class="GtkLabel" id="lblDeadzoneUpper">
+                      <object class="GtkLabel" id="lblDZUpper">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">10</property>
@@ -981,7 +981,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="lblDeadzoneLower">
+                      <object class="GtkLabel" id="lblDZLower">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">10</property>
@@ -1113,9 +1113,10 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="lblDeadzoneUpper1">
+                      <object class="GtkLabel" id="lblDeadzoneMode">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="label" translatable="yes">Mode</property>
                         <property name="ellipsize">end</property>
                         <property name="xalign">0</property>
@@ -1129,20 +1130,10 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="lblDeadzoneMode">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">5</property>
-                        <property name="width">3</property>
-                      </packing>
-                    </child>
-                    <child>
                       <object class="GtkComboBox" id="cbDeadzoneMode">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="model">lstDeadzoneMode</property>
                         <property name="active">0</property>
                         <signal name="changed" handler="update_modifiers" swapped="no"/>

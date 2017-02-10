@@ -86,8 +86,8 @@ class ActionEditor(Editor):
 		self.c_buttons = {} 			# Component-to-button dict
 		self.sens_widgets = []			# Sensitivity sliders, labels and 'clear' buttons
 		self.feedback_widgets = []		# Feedback settings sliders, labels and 'clear' buttons, plus default value as last item
-		self.smoothing_widgets = []		# Smoothing settings sliders and 'clear' buttons, plus default value as last item
-		self.deadzone_widgets = []		# Deadzone settings sliders and 'clear' buttons, plus default value as last item
+		self.smoothing_widgets = []		# Smoothing settings sliders, labels and 'clear' buttons, plus default value as last item
+		self.deadzone_widgets = []		# Deadzone settings sliders, labels and 'clear' buttons, plus default value as last item
 		self.sens = [1.0] * 3			# Sensitivity slider values
 		self.sens_defaults = [1.0] * 3	# Clear button clears to this
 		self.feedback = [0.0] * 3		# Feedback slider values, set later
@@ -132,6 +132,7 @@ class ActionEditor(Editor):
 		for key in SMT:
 			i = SMT.index(key)
 			self.smoothing_widgets.append((
+				self.builder.get_object("lblSmooth%s" % (key,)),
 				self.builder.get_object("sclSmooth%s" % (key,)),
 				self.builder.get_object("btClearSmooth%s" % (key,)),
 				self.builder.get_object("sclSmooth%s" % (key,)).get_value()
@@ -140,6 +141,7 @@ class ActionEditor(Editor):
 			i = DZN.index(key)
 			self.deadzone[i] = self.builder.get_object("sclDZ%s" % (key,)).get_value()
 			self.deadzone_widgets.append((
+				self.builder.get_object("lblDZ%s" % (key,)),
 				self.builder.get_object("sclDZ%s" % (key,)),
 				self.builder.get_object("btClearDZ%s" % (key,)),
 				self.deadzone[i]	# default value
@@ -370,13 +372,13 @@ class ActionEditor(Editor):
 
 
 	def on_btClearSmoothing_clicked(self, source, *a):
-		for scale, button, default in self.smoothing_widgets:
+		for label, scale, button, default in self.smoothing_widgets:
 			if source == button:
 				scale.set_value(default)
 
 
 	def on_btClearDeadzone_clicked(self, source, *a):
-		for scale, button, default in self.deadzone_widgets:
+		for label, scale, button, default in self.deadzone_widgets:
 			if source == button:
 				scale.set_value(default)
 
@@ -444,28 +446,15 @@ class ActionEditor(Editor):
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
 
+		# Sensitivity
 		set_action = False
 		for i in xrange(0, len(self.sens)):
 			if self.sens[i] != self.sens_widgets[i][0].get_value():
 				self.sens[i] = self.sens_widgets[i][0].get_value()
 				set_action = True
-
-		for i in xrange(0, len(self.feedback)):
-			if self.feedback[i] != self.feedback_widgets[i][0].get_value():
-				self.feedback[i] = self.feedback_widgets[i][0].get_value()
-				set_action = True
-
-		for i in xrange(0, len(self.deadzone)):
-			if self.deadzone[i] != self.deadzone_widgets[i][0].get_value():
-				self.deadzone[i] = self.deadzone_widgets[i][0].get_value()
-				set_action = True
-
-		mode = (DEADZONE_MODES[cbDeadzoneMode.get_active()]
-					if cbDeadzone.get_active() else None)
-		if self.deadzone_mode != mode:
-			self.deadzone_mode = mode
-			set_action = True
-
+		
+		
+		# Feedback
 		if cbFeedback.get_active():
 			feedback_position = FEEDBACK_SIDES[cbFeedbackSide.get_active()]
 		else:
@@ -473,19 +462,45 @@ class ActionEditor(Editor):
 		if self.feedback_position != feedback_position:
 			self.feedback_position = feedback_position
 			set_action = True
-
+		
+		for i in xrange(0, len(self.feedback)):
+			if self.feedback[i] != self.feedback_widgets[i][0].get_value():
+				self.feedback[i] = self.feedback_widgets[i][0].get_value()
+				set_action = True
+		
+		for i in xrange(0, len(self.feedback)):
+			if self.feedback[i] != self.feedback_widgets[i][0].get_value():
+				self.feedback[i] = self.feedback_widgets[i][0].get_value()
+				set_action = True
+		
+		# Deadzone
+		mode = (DEADZONE_MODES[cbDeadzoneMode.get_active()]
+					if cbDeadzone.get_active() else None)
+		if self.deadzone_mode != mode:
+			self.deadzone_mode = mode
+			set_action = True
+		
+		for i in xrange(0, len(self.deadzone)):
+			if self.deadzone[i] != self.deadzone_widgets[i][1].get_value():
+				self.deadzone[i] = self.deadzone_widgets[i][1].get_value()
+				set_action = True
+		
+		
+		# Smoothing
 		if cbSmoothing.get_active():
 			smoothing = (
-				int(self.smoothing_widgets[0][0].get_value()),
-				self.smoothing_widgets[1][0].get_value(),
-				int(self.smoothing_widgets[2][0].get_value()),
+				int(self.smoothing_widgets[0][1].get_value()),
+				self.smoothing_widgets[1][1].get_value(),
+				int(self.smoothing_widgets[2][1].get_value()),
 			)
 		else:
 			smoothing = None
 		if self.smoothing != smoothing:
 			self.smoothing = smoothing
 			set_action = True
-
+		
+		
+		# Rest
 		if self.click is not None:
 			if cbRequireClick.get_active() != self.click:
 				self.click = cbRequireClick.get_active()
@@ -645,25 +660,48 @@ class ActionEditor(Editor):
 		sclRotation.set_value(self.rotation_angle)
 		for i in xrange(0, len(self.sens)):
 			self.sens_widgets[i][0].set_value(self.sens[i])
+		
+		# Feedback
+		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
+		lblFeedbackSide = self.builder.get_object("lblFeedbackSide")
 		if self.feedback_position != None:
 			cbFeedback = self.builder.get_object("cbFeedback")
-			cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 			cbFeedbackSide.set_active(FEEDBACK_SIDES.index(self.feedback_position))
 			cbFeedback.set_active(True)
 			for i in xrange(0, len(self.feedback)):
 				self.feedback_widgets[i][0].set_value(self.feedback[i])
+		for grp in self.feedback_widgets:
+			for w in grp[0:-1]:
+				w.set_sensitive(self.feedback_position is not None)
+		lblFeedbackSide.set_sensitive(self.feedback_position is not None)
+		cbFeedbackSide.set_sensitive(self.feedback_position is not None)
+		
+		# Smoothing
+		cbSmoothing = self.builder.get_object("cbSmoothing")
 		if self.smoothing:
-			cbSmoothing = self.builder.get_object("cbSmoothing")
 			cbSmoothing.set_active(True)
 			for i in xrange(0, len(self.smoothing_widgets)):
-				self.smoothing_widgets[i][0].set_value(self.smoothing[i])
+				self.smoothing_widgets[i][1].set_value(self.smoothing[i])
+		for grp in self.smoothing_widgets:
+			for w in grp[0:-1]:
+				w.set_sensitive(cbSmoothing.get_active())
+		
+		# Deadzone
+		cbDeadzoneMode = self.builder.get_object("cbDeadzoneMode")
+		lblDeadzoneMode = self.builder.get_object("lblDeadzoneMode")
 		if self.deadzone_mode is not None:
 			cbDeadzone = self.builder.get_object("cbDeadzone")
-			cbDeadzoneMode = self.builder.get_object("cbDeadzoneMode")
 			cbDeadzone.set_active(True)
 			cbDeadzoneMode.set_active(DEADZONE_MODES.index(self.deadzone_mode))
 			for i in xrange(0, len(self.deadzone)):
-				self.deadzone_widgets[i][0].set_value(self.deadzone[i])
+				self.deadzone_widgets[i][1].set_value(self.deadzone[i])
+			
+		for grp in self.deadzone_widgets:
+			for w in grp[0:-1]:
+				w.set_sensitive(self.deadzone_mode is not None)
+		lblDeadzoneMode.set_sensitive(self.deadzone_mode is not None)
+		cbDeadzoneMode.set_sensitive(self.deadzone_mode is not None)
+		
 		self._recursing = False
 
 		return action
