@@ -14,8 +14,8 @@ from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, TRIGGER_MAX
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import CUT, ROUND, LINEAR
+from scc.tools import nameof, clamp, overloadable
 from scc.controller import HapticData
-from scc.tools import nameof, clamp
 from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign, atan2, sin, cos
 from collections import deque
@@ -44,7 +44,7 @@ class Modifier(Action):
 
 	def _mod_init(self):
 		"""
-		Initializes modifier with rest of parameters, after action nparameter
+		Initializes modifier with rest of parameters, after action parameter
 		was taken from it and stored in self.action
 		"""
 		pass # not needed by default
@@ -275,18 +275,12 @@ class BallModifier(Modifier, WholeHapticAction):
 
 
 	def _mod_init(self, friction=DEFAULT_FRICTION, mass=80.0,
-			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
+			mean_len=DEFAULT_MEAN_LEN, r=0.02, amplitude=65536, degree=40.0):
 		self.speed = (1.0, 1.0)
-		self.friction = friction
 		self._xvel = 0.0
 		self._yvel = 0.0
-		self._ampli  = ampli
-		self._degree = degree
-		self._radscale = (degree * PI / 180) / ampli
-		self._mass = mass
-		self._r = r
-		self._I = (2 * self._mass * self._r**2) / 5.0
-		self._a = self._r * self.friction / self._I
+		self._radscale = (degree * PI / 180) / amplitude
+		self._a = r * friction / ((2 * mass * r**2) / 5.0)
 		self._xvel_dq = deque(maxlen=mean_len)
 		self._yvel_dq = deque(maxlen=mean_len)
 		self._lastTime = time.time()
@@ -446,26 +440,22 @@ class BallModifier(Modifier, WholeHapticAction):
 
 class DeadzoneModifier(Modifier):
 	COMMAND = "deadzone"
-
-	def _mod_init(self, *params):
-		if len(params) < 1: raise TypeError("Not enough parameters")
-		if type(params[0]) in (str, unicode):
-			self.mode = params[0]
-			if hasattr(self, "mode_" + self.mode):
-				self._convert = getattr(self, "mode_" + self.mode)
-			else:
-				raise ValueError("Invalid deadzone mode")
-			params = params[1:]
-			if len(params) < 1: raise TypeError("Not enough parameters")
+	
+	@overloadable(object, (str,unicode), (float,int))
+	def _mod_init(self, mode, lower, upper=STICK_PAD_MAX):
+		if hasattr(self, "mode_" + mode):
+			self._convert = getattr(self, "mode_" + mode)
 		else:
-			# 'cut' mode is default
-			self.mode = CUT
-			self._convert = self.mode_CUT
-
-		self.lower = int(params[0])
-		self.upper = int(params[1]) if len(params) == 2 else STICK_PAD_MAX
-
-
+			raise ValueError("Invalid deadzone mode")
+		self.mode = mode
+		self.lower = int(lower)
+		self.upper = int(upper)
+	
+	@_mod_init.overload(object, (float,int))
+	def _mod_init(self, lower, upper=STICK_PAD_MAX):
+		self._mod_init(CUT, lower, upper)
+	
+	
 	def mode_CUT(self, x, y, range):
 		"""
 		If input value is out of deadzone range, output value is zero
@@ -477,8 +467,8 @@ class DeadzoneModifier(Modifier):
 		if distance < self.lower or distance > self.upper:
 			return 0, 0
 		return x, y
-
-
+	
+	
 	def mode_ROUND(self, x, y, range):
 		"""
 		If input value bellow deadzone range, output value is zero
@@ -497,8 +487,8 @@ class DeadzoneModifier(Modifier):
 			angle = atan2(x, y)
 			return range * sin(angle), range * cos(angle)
 		return x, y
-
-
+	
+	
 	def mode_LINEAR(self, x, y, range):
 		"""
 		Input value is scaled, so entire output range is covered by

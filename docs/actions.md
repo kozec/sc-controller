@@ -80,7 +80,7 @@ stick position, what probably doesn't yields expected results.
 Same as dpad, with more directions.
 
 
-#### <a name="ring"></a> ring([radius=0.5], inner, outer)
+#### <a name="ring"></a> ring([radius=0.5], inner [, outer])
 Defines outer and inner ring bindings. When distance of finger from center of
 pad is smaller than 'radius', 'inner' action is activated, otherwise, 'outer'
 takes place.

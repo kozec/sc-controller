@@ -191,9 +191,9 @@ class Cycle(Macro):
 
 	COMMAND = 'cycle'
 	
-	def __init__(self, *parameters):
-		Action.__init__(self, *parameters)
-		self.actions = parameters
+	def __init__(self, *actions):
+		Action.__init__(self, *actions)
+		self.actions = actions
 		self._current = 0
 	
 	

@@ -10,7 +10,7 @@ from scc.paths import get_controller_icons_path, get_default_controller_icons_pa
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from math import pi as PI, sin, cos, atan2, sqrt
-import os, sys, shlex, gettext, logging
+import os, sys, shlex, gettext, logging, functools
 
 HAVE_POSIX1E = False
 try:
@@ -304,3 +304,65 @@ def circle_to_square(x, y):
 		raise ValueError("Invalid angle...?")
 	
 	return squared
+
+
+def overloadable(*types):
+	"""
+	Decorator that uses unholly patterns to make functions and methods
+	overloadable.
+	
+	Use as:
+	@overloadable(int, int)
+	def test(iarg, iarg2): pass
+	
+	test.overload(str, str)
+	def test(strarg, strarg2): pass
+	
+	Only non-keyword arguments are checked.
+	"""
+	fns = { }
+	
+	def decide(*a, **b):
+		for types in fns:
+			if _check_types(types, a):
+				return fns[types](*a, **b)
+		raise TypeError("No overload of %s() takes (%s) as arguments" % (
+					decide.__name__, ", ".join([ v.__class__.__name__ for v in a ])))
+	
+	decide.wrapped = None
+	
+	def overload(*types):
+		def _overload(fn):
+			decide.__name__ = fn.__name__
+			if types in fns:
+				raise TypeError("%s() already has overload for %s defined" % (decide.__name__, types))
+			fns[types] = fn
+			
+			if decide.wrapped is None:
+				decide.wrapped = (functools.wraps(fn))(decide)
+				decide.wrapped.overload = overload
+			
+			return decide.wrapped
+		
+		return _overload
+	
+	return overload(*types)
+
+
+def _check_types(types, values):
+	"""
+	Helper function for @overloadable decorator.
+	
+	Returns True if every value in 'values' matches (in order) type in 'types'.
+	"""
+	l = len(types)
+	if l > len(values): return False
+	for i in xrange(l):
+		t = type(values[i])
+		if t == types[i]:
+			continue
+		elif type(types[i]) == tuple and t in types[i]:
+			continue
+		elif not isinstance(values[i], types[i]):
+			return False
+	return True

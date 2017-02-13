@@ -9,7 +9,7 @@ trigger should be pressed.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.tools import ensure_size, quat2euler, anglediff
+from scc.tools import ensure_size, quat2euler, anglediff, overloadable
 from scc.tools import circle_to_square, clamp, nameof
 from scc.uinput import Keys, Axes, Rels
 from scc.lib import xwrappers as X
@@ -1827,18 +1827,22 @@ class RingAction(MultichildAction):
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	DEFAULT_RADIUS = 0.5
 	
-	def __init__(self, *params):
-		# 1st parameter may be inner ring radius (0.1 to 0.9), defaults to 50%
-		# of pad diameter.
-		self.radius = RingAction.DEFAULT_RADIUS
-		if len(params) > 1 and type(params[0]) in (int, float):
-			self.radius = float(params[0])
-			params = params[1:]
-		MultichildAction.__init__(self, *params)
-		self.actions = ensure_size(2, params, NoAction())
-		self.inner, self.outer = self.actions
+	@overloadable(object, (int,float), Action)
+	def __init__(self, radius, inner, outer=None):
+		# 'radius' is inner ring radius (0.1 to 0.9), 
+		MultichildAction.__init__(self)
+		self.radius = radius
+		self.inner = inner
+		self.outer = outer or NoAction()
+		self.actions = self.inner, self.outer
 		self._radius_m = STICK_PAD_MAX * self.radius	# radius, multiplied
 		self._active = NoAction()
+	
+	
+	@__init__.overload(object, Action)
+	def __init__(self, inner, outer=None):
+		# inner ring radius defaults to 50% of pad diameter.
+		self.__init__(RingAction.DEFAULT_RADIUS, inner, outer)
 	
 	
 	def encode(self):
@@ -2091,22 +2095,21 @@ class TriggerAction(Action):
 	PROFILE_KEYS = "levels",
 	PROFILE_KEY_PRIORITY = -3	# After FeedbackModifier, rest doesn't matter
 	
-	def __init__(self, press_level, *params):
-		Action.__init__(self, press_level, *params)
-		self.press_level = int(press_level)
-		if len(params) == 1:
-			self.release_level = press_level
-			self.action = params[0]
-		elif len(params) == 2:
-			self.release_level = params[0]
-			self.action = params[1]
-		else:
-			raise TypeError("Invalid number of parameters")
+	@overloadable(object, int, int, Action)
+	def __init__(self, press_level, release_level, action):
+		Action.__init__(self, press_level, release_level, action)
+		self.press_level = press_level
+		self.release_level = release_level
+		self.action = action
 		self.pressed = False
 		# Having AxisAction as child of TriggerAction is special case,
 		# child action recieves trigger events instead of button presses
 		# and button_releases.
 		self.child_is_axis = isinstance(self.action.strip(), AxisAction)
+	
+	@__init__.overload(object, int, Action)
+	def __init__(self, press_level, action):
+		self.__init__(press_level, TRIGGER_MAX - 1, action)
 	
 	
 	def encode(self):
