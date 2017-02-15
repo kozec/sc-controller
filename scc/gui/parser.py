@@ -4,7 +4,7 @@ from scc.actions import Action
 from scc.tools import _
 
 import logging
-log = logging.getLogger("gui.parse")
+log = logging.getLogger("gui.parser")
 
 class InvalidAction(Action):
 	def __init__(self, string, error):

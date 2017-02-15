@@ -441,7 +441,7 @@ class BallModifier(Modifier, WholeHapticAction):
 class DeadzoneModifier(Modifier):
 	COMMAND = "deadzone"
 	
-	@overloadable(object, (str,unicode), (float,int))
+	@overloadable(object, unicode, float)
 	def _mod_init(self, mode, lower, upper=STICK_PAD_MAX):
 		if hasattr(self, "mode_" + mode):
 			self._convert = getattr(self, "mode_" + mode)
@@ -451,7 +451,7 @@ class DeadzoneModifier(Modifier):
 		self.lower = int(lower)
 		self.upper = int(upper)
 	
-	@_mod_init.overload(object, (float,int))
+	@_mod_init.overload(object, float)
 	def _mod_init(self, lower, upper=STICK_PAD_MAX):
 		self._mod_init(CUT, lower, upper)
 	

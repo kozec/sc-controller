@@ -354,6 +354,7 @@ def _check_types(types, values):
 	Helper function for @overloadable decorator.
 	
 	Returns True if every value in 'values' matches (in order) type in 'types'.
+	float is handled specially, allowing int as substitute for it.
 	"""
 	l = len(types)
 	if l > len(values): return False
@@ -362,6 +363,8 @@ def _check_types(types, values):
 		if t == types[i]:
 			continue
 		elif type(types[i]) == tuple and t in types[i]:
+			continue
+		elif types[i] == float and type(values[i]) == int:
 			continue
 		elif not isinstance(values[i], types[i]):
 			return False

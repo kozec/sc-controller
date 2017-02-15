@@ -185,13 +185,13 @@ class Action(object):
 		Used in GUI.
 		"""
 		if self.name: return self.name
-		return str(self)
+		return unicode(self)
 	
 	
 	def to_string(self, multiline=False, pad=0):
 		""" Converts action back to string """
 		return (" " * pad) + "%s(%s)" % (self.COMMAND, ", ".join([
-			x.to_string() if isinstance(x, Action) else str(x)
+			x.to_string() if isinstance(x, Action) else unicode(x)
 			for x in self.parameters
 		]))
 	
@@ -322,7 +322,7 @@ class Action(object):
 		"""
 		Returns list with parameters encoded to strings in following way:
 		- x.name for enums
-		- str(x) numbers
+		- unicode(x) numbers
 		- '%s' % (x.encode('string_escape'),) for strings
 		"""
 		return [ Action._encode_parameter(p) for p in parameters ]
@@ -334,7 +334,7 @@ class Action(object):
 		if parameter in PARSER_CONSTANTS:
 			return parameter
 		if type(parameter) in (str, unicode):
-			return "'%s'" % (str(parameter).encode('string_escape'),)
+			return "'%s'" % (unicode(parameter).encode('string_escape'),)
 		return nameof(parameter)
 	
 	
@@ -1673,7 +1673,7 @@ class MultiAction(MultichildAction):
 	
 	
 	def __str__(self):
-		return "<[ %s ]>" % (" and ".join([ str(x) for x in self.actions ]), )
+		return "<[ %s ]>" % (" and ".join([ unicode(x) for x in self.actions ]), )
 	
 	__repr__ = __str__
 
@@ -1827,7 +1827,7 @@ class RingAction(MultichildAction):
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	DEFAULT_RADIUS = 0.5
 	
-	@overloadable(object, (int,float), Action)
+	@overloadable(object, float, Action)
 	def __init__(self, radius, inner, outer=None):
 		# 'radius' is inner ring radius (0.1 to 0.9), 
 		MultichildAction.__init__(self)
@@ -2082,7 +2082,7 @@ class XYAction(WholeHapticAction, Action):
 	
 	
 	def __str__(self):
-		return "<XY %s >" % (", ".join([ str(x) for x in self.actions ]), )
+		return "<XY %s >" % (", ".join([ unicode(x) for x in self.actions ]), )
 
 	__repr__ = __str__
 
@@ -2095,11 +2095,11 @@ class TriggerAction(Action):
 	PROFILE_KEYS = "levels",
 	PROFILE_KEY_PRIORITY = -3	# After FeedbackModifier, rest doesn't matter
 	
-	@overloadable(object, int, int, Action)
+	@overloadable(object, float, float, Action)
 	def __init__(self, press_level, release_level, action):
 		Action.__init__(self, press_level, release_level, action)
-		self.press_level = press_level
-		self.release_level = release_level
+		self.press_level = int(press_level)
+		self.release_level = int(release_level)
 		self.action = action
 		self.pressed = False
 		# Having AxisAction as child of TriggerAction is special case,
