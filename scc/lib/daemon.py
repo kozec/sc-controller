@@ -80,9 +80,8 @@ class Daemon(object):
 		# Check for a pidfile to see if the daemon already runs
 		try:
 			with open(self.pidfile, 'r') as pidf:
-
 				pid = int(pidf.read().strip())
-		except IOError:
+		except Exception:
 			pid = None
 
 		if pid:
@@ -112,7 +111,7 @@ class Daemon(object):
 		try:
 			with open(self.pidfile, 'r') as pidf:
 				pid = int(pidf.read().strip())
-		except IOError:
+		except Exception:
 			pid = None
 
 		if not pid:
