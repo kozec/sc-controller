@@ -282,15 +282,20 @@ class MenuAction(Action, SpecialAction):
 	
 	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
 					confirm_with=DEFAULT_CONFIRM, cancel_with=DEFAULT_CANCEL,
-					show_with_release=False):
+					show_with_release=False, max_size = 0):
 		if control_with == SAME:
 			# Little touch of backwards compatibility
 			control_with, confirm_with = self.DEFAULT_CONTROL, SAME
-		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release)
+		if type(control_with) == int:
+			# Allow short form in case when menu is assigned to pad
+			# eg.: menu("some-id", 3) sets max_size to 3
+			control_with, max_size = self.DEFAULT_CONTROL, control_with
+		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release, max_size)
 		self.menu_id = menu_id
 		self.control_with = control_with
 		self.confirm_with = confirm_with
 		self.cancel_with = cancel_with
+		self.max_size = max_size
 		self.x, self.y = MenuAction.DEFAULT_POSITION
 		self.show_with_release = bool(show_with_release)
 		self._stick_distance = 0
@@ -302,6 +307,15 @@ class MenuAction(Action, SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
+		dflt = (self.control_with, self.confirm_with, self.cancel_with, self.show_with_release)
+		vals = (self.DEFAULT_CONTROL, self.DEFAULT_CONFIRM, self.DEFAULT_CANCEL, False)
+		if dflt == vals:
+			# Special case when menu is assigned to pad 
+			if self.max_size == 0:
+				return "%s%s('%s')" % (" " * pad, self.COMMAND, self.menu_id)
+			else:
+				return "%s%s('%s', %s)" % (" " * pad, self.COMMAND, self.menu_id, self.max_size)
+		
 		return "%s%s(%s)" % (
 			" " * pad,
 			self.COMMAND,
@@ -324,6 +338,7 @@ class MenuAction(Action, SpecialAction):
 			args += [
 				'--control-with', nameof(self.control_with),
 				'-x', str(self.x), '-y', str(self.y),
+				'--max-size', str(self.max_size),
 				'--confirm-with', confirm_with.name,
 				'--cancel-with', self.cancel_with.name
 			]
@@ -351,6 +366,7 @@ class MenuAction(Action, SpecialAction):
 					'--control-with', what,
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
+					'--max-size', str(self.max_size),
 					'--confirm-with', confirm,
 					'--cancel-with', cancel.name,
 					*params
@@ -363,6 +379,7 @@ class MenuAction(Action, SpecialAction):
 					'--control-with', STICK,
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
+					'--max-size', str(self.max_size),
 					'--confirm-with', "STICKPRESS",
 					'--cancel-with', STICK,
 					*params

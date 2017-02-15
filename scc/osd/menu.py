@@ -136,6 +136,8 @@ class Menu(OSDWindow):
 			help="cancel menu with button release instead of button press")
 		self.argparser.add_argument('--use-cursor', '-u', action='store_true',
 			help="display and use cursor")
+		self.argparser.add_argument('--max-size', type=int,
+			help="sets maximal width or height of menu")
 		self.argparser.add_argument('--from-profile', '-p', type=str,
 			metavar="profile_file menu_name",
 			help="load menu items from profile file")
@@ -183,6 +185,7 @@ class Menu(OSDWindow):
 		self._control_with = self.args.control_with
 		self._confirm_with = self.args.confirm_with
 		self._cancel_with = self.args.cancel_with
+		self._max_size = self.args.max_size
 		
 		if self.args.use_cursor:
 			self.enable_cursor()
