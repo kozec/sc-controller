@@ -307,8 +307,8 @@ class MenuAction(Action, SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		dflt = (self.control_with, self.confirm_with, self.cancel_with, self.show_with_release)
-		vals = (self.DEFAULT_CONTROL, self.DEFAULT_CONFIRM, self.DEFAULT_CANCEL, False)
+		dflt = (self.DEFAULT_CONTROL, self.DEFAULT_CONFIRM, self.DEFAULT_CANCEL, False)
+		vals = (self.control_with, self.confirm_with, self.cancel_with, self.show_with_release)
 		if dflt == vals:
 			# Special case when menu is assigned to pad 
 			if self.max_size == 0:
