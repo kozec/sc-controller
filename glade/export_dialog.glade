@@ -2,14 +2,18 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
-  <object class="GtkListStore" id="liststore1">
+  <object class="GtkListStore" id="lstPackage">
     <columns>
       <!-- column-name export -->
       <column type="gboolean"/>
-      <!-- column-name giofile -->
-      <column type="GObject"/>
+      <!-- column-name type -->
+      <column type="gchararray"/>
       <!-- column-name name -->
       <column type="gchararray"/>
+      <!-- column-name filename -->
+      <column type="gchararray"/>
+      <!-- column-name enabled -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkListStore" id="lstProfiles">
@@ -74,7 +78,7 @@
                 <property name="hexpand">True</property>
                 <property name="vexpand">True</property>
                 <property name="model">lstProfiles</property>
-                <property name="search_column">1</property>
+                <property name="search_column">2</property>
                 <property name="show_expanders">False</property>
                 <signal name="cursor-changed" handler="on_tvProfiles_cursor_changed" swapped="no"/>
                 <child internal-child="selection">
@@ -145,22 +149,37 @@ Please, select what should be packaged along with exported profile.</property>
               <object class="GtkTreeView" id="tvPackage">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="model">liststore1</property>
+                <property name="model">lstPackage</property>
+                <property name="search_column">2</property>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection"/>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="clPackage">
+                  <object class="GtkTreeViewColumn" id="clPackageItem">
                     <property name="title" translatable="yes">Item</property>
                     <child>
-                      <object class="GtkCellRendererCombo" id="crPackageCheckbox"/>
+                      <object class="GtkCellRendererToggle" id="crPackageCheckbox"/>
                       <attributes>
-                        <attribute name="model">0</attribute>
+                        <attribute name="sensitive">4</attribute>
+                        <attribute name="active">0</attribute>
                       </attributes>
                     </child>
                     <child>
-                      <object class="GtkCellRendererText" id="crPackageItem"/>
+                      <object class="GtkCellRendererText" id="crPackageItemType"/>
                       <attributes>
+                        <attribute name="sensitive">4</attribute>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="clPackageName">
+                    <property name="title" translatable="yes">Name</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="crPackageItemName"/>
+                      <attributes>
+                        <attribute name="sensitive">4</attribute>
                         <attribute name="text">2</attribute>
                       </attributes>
                     </child>

@@ -139,6 +139,38 @@ class Profile(object):
 		self.gyro = NoAction()
 	
 	
+	def get_actions(self):
+		"""
+		Returns iterable with every action defined in this profile,
+		not including actions in external menus.
+		Recursively walks into macros, dpads and everythin else that can have
+		nested actions, so both parent and all child actions are yielded.
+		
+		May yield NoAction, but shouldn't yield None.
+		
+		Used for checks when profile is exported or imported.
+		"""
+		def walk(a):
+			yield a
+			if hasattr(a, 'actions'):
+				for child in a.actions:
+					for i in walk(child):
+						yield i
+		
+		for dct in (self.buttons, self.triggers, self.pads):
+			for k in dct:
+				for i in walk(dct[k]):
+					yield i
+		for action in (self.stick, self.gyro):
+			for i in walk(action):
+				yield i
+		for id in self.menus:
+			for item in self.menus[id]:
+				if item.action:
+					for i in walk(item.action):
+						yield i
+	
+	
 	def get_filename(self):
 		"""
 		Returns filename of last loaded file or None.
