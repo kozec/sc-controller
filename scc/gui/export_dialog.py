@@ -11,6 +11,7 @@ from gi.repository import Gdk, GObject, GLib
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
 from scc.tools import get_profiles_path, find_profile, find_menu
+from scc.tools import profile_is_default, menu_is_default
 from scc.special_actions import ChangeProfileAction, MenuAction
 from scc.parser import ActionParser
 from scc.profile import Profile
@@ -78,15 +79,17 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		package.clear()
 		used = set()
 		for a in profile.get_actions():
-			# ChangeProfileAction, MenuAction
+			# TODO: Probably recursively scan referenced profiles as well?
 			if isinstance(a, ChangeProfileAction):
 				if a.profile not in used:
 					filename = find_profile(a.profile)
 					used.add(a.profile)
 					if filename:
-						package.append((False, _("Profile"), a.profile, filename, True))
+						package.append((not profile_is_default(a.profile),
+							_("Profile"), a.profile, filename, True))
 					else:
-						package.append((False, _("Profile"), _("%s (not found)") % (a.profile,), "", False))
+						package.append((False, _("Profile"),
+							_("%s (not found)") % (a.profile,), "", False))
 			elif isinstance(a, MenuAction):
 				if "." in a.menu_id:
 					# Dot in id means filename
@@ -94,7 +97,8 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 						filename = find_menu(a.menu_id)
 						used.add(a.menu_id)
 						if filename:
-							package.append((False, _("Menu"), a.menu_id.split(".")[0], filename, True))
+							package.append((not menu_is_default(a.menu_id),
+								_("Menu"), a.menu_id.split(".")[0], filename, True))
 						else:
 							package.append((False, _("Menu"), _("%s (not found)") % (a.menu_id.split(".")[0],), "", False))
 					

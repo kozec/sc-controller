@@ -160,6 +160,15 @@ def profile_is_override(name):
 	return False
 
 
+def profile_is_default(name):
+	"""
+	Returns True if named profile exists in default_profiles directory, even
+	if it is overrided by profile in user config directory.
+	"""
+	filename = "%s.sccprofile" % (name,)
+	return os.path.exists(os.path.join(get_default_profiles_path(), filename))
+
+
 def get_profile_name(path):
 	"""
 	Returns profile name for specified path. Basically removes path and
@@ -186,6 +195,14 @@ def find_profile(name):
 		if os.path.exists(path):
 			return path
 	return None
+
+
+def menu_is_default(name):
+	"""
+	Returns True if named menu exists in default_menus directory, even
+	if it is overrided by menu in user config directory.
+	"""
+	return os.path.exists(os.path.join(get_default_menus_path(), name))
 
 
 def find_menu(name):

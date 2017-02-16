@@ -130,6 +130,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
+
 	
 	
 	def setup_statusicon(self):
