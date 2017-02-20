@@ -75,6 +75,7 @@ class ActionEditor(Editor):
 		Action.AC_GYRO		: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_DEADZONE | Action.MOD_FEEDBACK,
 		Action.AC_OSK		: 0,
 		Action.AC_MENU		: Action.MOD_OSD,
+		AEC_MENUITEM		: 0,
 	}
 
 
