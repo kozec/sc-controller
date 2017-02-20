@@ -152,7 +152,16 @@ class Profile(object):
 		"""
 		def walk(a):
 			yield a
+			if hasattr(a, 'mods'):
+				# Modeshift
+				for mode in a.mods:
+					for i in walk(a.mods[mode]):
+						yield i
+			if hasattr(a, 'action'):
+				# Most of modifiers
+				walk(a.action)
 			if hasattr(a, 'actions'):
+				# Everything else
 				for child in a.actions:
 					for i in walk(child):
 						yield i
