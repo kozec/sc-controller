@@ -130,6 +130,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
+		
+		
+		from scc.gui.export_dialog import ExportDialog
+		gs = ExportDialog(self, "Gestures")
+		gs.show(self.window)
 
 	
 	
