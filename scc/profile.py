@@ -142,7 +142,7 @@ class Profile(object):
 	def get_actions(self):
 		"""
 		Returns iterable with every action defined in this profile,
-		not including actions in external menus.
+		including actions in menus.
 		Recursively walks into macros, dpads and everythin else that can have
 		nested actions, so both parent and all child actions are yielded.
 		

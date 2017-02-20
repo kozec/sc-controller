@@ -74,26 +74,42 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		
 		for action in profile.get_actions():
 			self._parse_action(model, action, used)
+		
+		for menu in profile.menus:
+			for item in profile.menus[menu]:
+				if isinstance(item, Submenu):
+					self._add_refereced_menu(model, os.path.split(item.filename)[-1], used)
+				if hasattr(item, "action"):
+					self._parse_action(model, item.action, used)
 		return True
 	
 	
-	def _add_refereced_menu(self, model, giofile, used):
+	def _add_refereced_menu(self, model, menu_id, used):
 		"""
 		As _add_refereced_profile, but reads and parses menu file.
-		
-		Returns True on success or False if something cannot be parsed.
 		"""
-		# Load & parse selected profile and check every action in it
-		try:
-			data = json.loads(open(giofile.get_path(), "r").read())
-			menu = MenuData.from_json_data(data, ActionParser())
-		except Exception, e:
-			# Menu that cannot be parsed shouldn't be exported
-			log.error(e)
-			return False
-		for item in menu:
-			if hasattr(item, "action"):
-				self._parse_action(model, item.action, used)
+		if "." in menu_id and menu_id not in used:
+			# Dot in id means filename
+			used.add(menu_id)
+			filename = find_menu(menu_id)
+			if filename:
+				model.append((not menu_is_default(menu_id),
+					_("Menu"), menu_id.split(".")[0], filename, True))
+				try:
+					data = json.loads(open(filename, "r").read())
+					menu = MenuData.from_json_data(data, ActionParser())
+				except Exception, e:
+					# Menu that cannot be parsed shouldn't be exported
+					log.error(e)
+					return
+				for item in menu:
+					if isinstance(item, Submenu):
+						self._add_refereced_menu(model, os.path.split(item.filename)[-1], used)
+					if hasattr(item, "action"):
+						self._parse_action(model, item.action, used)
+			else:
+				model.append((False, _("Menu"), _("%s (not found)") % (
+					menu_id.split(".")[0],), "", False))
 	
 	
 	def _parse_action(self, model, action, used):
@@ -113,19 +129,7 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 					model.append((False, _("Profile"),
 						_("%s (not found)") % (action.profile,), "", False))
 		elif isinstance(action, MenuAction):
-			if "." in action.menu_id:
-				# Dot in id means filename
-				if action.menu_id not in used:
-					filename = find_menu(action.menu_id)
-					used.add(action.menu_id)
-					if filename:
-						model.append((not menu_is_default(action.menu_id),
-							_("Menu"), action.menu_id.split(".")[0], filename, True))
-						self._add_refereced_menu(model,
-							Gio.File.new_for_path(filename), used)
-					else:
-						model.append((False, _("Menu"), _("%s (not found)") % (
-							action.menu_id.split(".")[0],), "", False))
+			self._add_refereced_menu(model, action.menu_id, used)
 	
 	
 	def on_tvProfiles_cursor_changed(self, *a):
