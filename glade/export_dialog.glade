@@ -158,7 +158,9 @@ Please, select what should be packaged along with exported profile.</property>
                   <object class="GtkTreeViewColumn" id="clPackageItem">
                     <property name="title" translatable="yes">Item</property>
                     <child>
-                      <object class="GtkCellRendererToggle" id="crPackageCheckbox"/>
+                      <object class="GtkCellRendererToggle" id="crPackageCheckbox">
+                        <signal name="toggled" handler="on_crPackageCheckbox_toggled" swapped="no"/>
+                      </object>
                       <attributes>
                         <attribute name="sensitive">4</attribute>
                         <attribute name="active">0</attribute>
@@ -234,6 +236,9 @@ Please, select what should be packaged along with exported profile.</property>
       <placeholder/>
     </child>
     <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child>
       <placeholder/>
     </child>
     <child internal-child="action_area">

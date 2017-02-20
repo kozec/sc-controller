@@ -148,7 +148,12 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		giofile = model[iter][1]
 		s = self._add_refereced_profile(package, giofile, used)
 		self.window.set_page_complete(page, s)
-		
+	
+	
+	def on_crPackageCheckbox_toggled(self, cr, path):
+		tvPackage = self.builder.get_object("tvPackage")
+		package = tvPackage.get_model()
+		package[path][0] = not package[path][0]
 	
 	
 	def on_cancel(self, *a):
