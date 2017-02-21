@@ -183,6 +183,14 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		self.on_tvProfiles_cursor_changed()	# To update Next/Save As button
 	
 	
+	def on_btSelectAll_clicked(self, *a):
+		tvPackage = self.builder.get_object("tvPackage")
+		package = tvPackage.get_model()
+		for row in package:
+			if row[4]:	# if enabled
+				row[0] = True	# then selected
+	
+	
 	def on_crPackageCheckbox_toggled(self, cr, path):
 		tvPackage = self.builder.get_object("tvPackage")
 		package = tvPackage.get_model()

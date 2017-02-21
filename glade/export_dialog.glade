@@ -219,6 +219,7 @@ Please, select what should be packaged along with exported profile.</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="margin_bottom">10</property>
+                    <signal name="clicked" handler="on_btSelectAll_clicked" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
