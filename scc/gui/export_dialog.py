@@ -23,17 +23,15 @@ log = logging.getLogger("ExportDialog")
 
 class ExportDialog(Editor, UserDataManager, ComboSetter):
 	GLADE = "export_dialog.glade"
+	PAGE_PROFILE = 0
+	PAGE_PACKAGE = 1
 	
 	def __init__(self, app, preselected):
 		self.app = app
-		self.setup_widgets()
 		self._current = preselected
+		self.setup_widgets()
+		self.load_profile_list()
 	
-	
-	def on_prepare(self, trash, child):
-		tvProfiles = self.builder.get_object("tvProfiles")
-		if child == self.builder.get_object("grSelectProfile"):
-			self.load_profile_list()
 	
 	
 	def on_profiles_loaded(self, lst):
@@ -92,9 +90,12 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 			# Dot in id means filename
 			used.add(menu_id)
 			filename = find_menu(menu_id)
+			name = ".".join(menu_id.split(".")[0:-1])
+			if name.startswith(".") and menu_is_default(menu_id):
+				# Default and hidden, don't bother user with it
+				return
 			if filename:
-				model.append((not menu_is_default(menu_id),
-					_("Menu"), menu_id.split(".")[0], filename, True))
+				model.append((not menu_is_default(menu_id), _("Menu"), name, filename, True))
 				try:
 					data = json.loads(open(filename, "r").read())
 					menu = MenuData.from_json_data(data, ActionParser())
@@ -108,8 +109,7 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 					if hasattr(item, "action"):
 						self._parse_action(model, item.action, used)
 			else:
-				model.append((False, _("Menu"), _("%s (not found)") % (
-					menu_id.split(".")[0],), "", False))
+				model.append((False, _("Menu"), _("%s (not found)") % (name,), "", False))
 	
 	
 	def _parse_action(self, model, action, used):
@@ -136,9 +136,11 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		"""
 		Called when user selects profile.
 		"""
-		tvProfiles = self.builder.get_object("tvProfiles")
-		tvPackage = self.builder.get_object("tvPackage")
-		page = self.window.get_nth_page(self.window.get_current_page())
+		tvProfiles	= self.builder.get_object("tvProfiles")
+		tvPackage	= self.builder.get_object("tvPackage")
+		btSaveAs	= self.builder.get_object("btSaveAs")
+		btClose		= self.builder.get_object("btClose")
+		btNext		= self.builder.get_object("btNext")
 		
 		package = tvPackage.get_model()
 		package.clear()
@@ -147,18 +149,41 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		model, iter = tvProfiles.get_selection().get_selected()
 		giofile = model[iter][1]
 		s = self._add_refereced_profile(package, giofile, used)
-		self.window.set_page_complete(page, s)
+		needs_package = any([ row[0] for row in package ])
+		if needs_package:
+			# Profile references other menus or profiles
+			btNext.set_visible(True)
+			btSaveAs.set_visible(False)
+		else:
+			# Profile can be exported directly
+			btNext.set_visible(False)
+			btSaveAs.set_visible(True)
+	
+	
+	def on_btNext_clicked(self, *a):
+		btBack			= self.builder.get_object("btBack")
+		btNext			= self.builder.get_object("btNext")
+		stDialog		= self.builder.get_object("stDialog")
+		btSaveAs		= self.builder.get_object("btSaveAs")
+		grMakePackage	= self.builder.get_object("grMakePackage")
+		stDialog.set_visible_child(grMakePackage)
+		btNext.set_visible(False)
+		btBack.set_visible(True)
+		btSaveAs.set_visible(True)
+	
+	
+	def on_btBack_clicked(self, *a):
+		btBack			= self.builder.get_object("btBack")
+		stDialog		= self.builder.get_object("stDialog")
+		btSaveAs		= self.builder.get_object("btSaveAs")
+		grSelectProfile	= self.builder.get_object("grSelectProfile")
+		stDialog.set_visible_child(grSelectProfile)
+		btBack.set_visible(False)
+		btSaveAs.set_visible(False)
+		self.on_tvProfiles_cursor_changed()	# To update Next/Save As button
 	
 	
 	def on_crPackageCheckbox_toggled(self, cr, path):
 		tvPackage = self.builder.get_object("tvPackage")
 		package = tvPackage.get_model()
 		package[path][0] = not package[path][0]
-	
-	
-	def on_cancel(self, *a):
-		self.window.destroy()
-	
-	
-	def on_apply(self, *a):
-		print "on_apply"

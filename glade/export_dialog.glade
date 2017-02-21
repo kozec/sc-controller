@@ -26,237 +26,277 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkAssistant" id="Dialog">
-    <property name="width_request">550</property>
-    <property name="height_request">700</property>
+  <object class="GtkDialog" id="Dialog">
     <property name="can_focus">False</property>
-    <property name="modal">True</property>
-    <property name="window_position">center-on-parent</property>
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
-    <property name="use_header_bar">1</property>
-    <signal name="apply" handler="on_apply" swapped="no"/>
-    <signal name="cancel" handler="on_cancel" swapped="no"/>
-    <signal name="prepare" handler="on_prepare" swapped="no"/>
-    <child>
-      <object class="GtkGrid" id="grSelectProfile">
-        <property name="visible">True</property>
+    <child internal-child="vbox">
+      <object class="GtkBox">
         <property name="can_focus">False</property>
-        <property name="margin_left">10</property>
-        <property name="margin_right">10</property>
-        <property name="margin_top">5</property>
-        <property name="margin_bottom">10</property>
-        <child>
-          <object class="GtkLabel" id="label1">
-            <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
             <property name="can_focus">False</property>
-            <property name="margin_top">10</property>
-            <property name="margin_bottom">10</property>
-            <property name="label" translatable="yes">Select Profile to Export</property>
-            <property name="xalign">0</property>
-            <attributes>
-              <attribute name="weight" value="bold"/>
-            </attributes>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkScrolledWindow" id="swProfiles">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="hexpand">True</property>
-            <property name="vexpand">True</property>
-            <property name="shadow_type">in</property>
+            <property name="layout_style">end</property>
             <child>
-              <object class="GtkTreeView" id="tvProfiles">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="hexpand">True</property>
-                <property name="vexpand">True</property>
-                <property name="model">lstProfiles</property>
-                <property name="search_column">2</property>
-                <property name="show_expanders">False</property>
-                <signal name="cursor-changed" handler="on_tvProfiles_cursor_changed" swapped="no"/>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="tsProfiles"/>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="tvcProfile">
-                    <property name="resizable">True</property>
-                    <property name="sizing">autosize</property>
-                    <property name="title" translatable="yes">Profile</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="crProfile"/>
-                      <attributes>
-                        <attribute name="text">2</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-              </object>
+              <placeholder/>
             </child>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
           </packing>
         </child>
-      </object>
-      <packing>
-        <property name="page_type">intro</property>
-        <property name="has_padding">False</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkGrid" id="grMakePackage">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="margin_left">20</property>
-        <property name="margin_right">20</property>
         <child>
-          <object class="GtkLabel" id="lblTLDR">
+          <object class="GtkStack" id="stDialog">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="margin_top">10</property>
-            <property name="margin_bottom">10</property>
-            <property name="label" translatable="yes">Selected profile references another profile(s) or menu(s).
+            <property name="transition_type">slide-left-right</property>
+            <child>
+              <object class="GtkGrid" id="grSelectProfile">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
+                <property name="margin_top">5</property>
+                <property name="margin_bottom">10</property>
+                <child>
+                  <object class="GtkLabel" id="label1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">10</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="label" translatable="yes">Select Profile to Export</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="swProfiles">
+                    <property name="height_request">400</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTreeView" id="tvProfiles">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <property name="model">lstProfiles</property>
+                        <property name="search_column">2</property>
+                        <property name="show_expanders">False</property>
+                        <signal name="cursor-changed" handler="on_tvProfiles_cursor_changed" swapped="no"/>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection" id="tsProfiles"/>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="tvcProfile">
+                            <property name="resizable">True</property>
+                            <property name="sizing">autosize</property>
+                            <property name="title" translatable="yes">Profile</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="crProfile"/>
+                              <attributes>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="title" translatable="yes">Export Profile</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="grMakePackage">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <child>
+                  <object class="GtkLabel" id="lblTLDR">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">10</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="label" translatable="yes">Selected profile references another profile(s) or menu(s).
 You may wish to export and package referenced items along with it.
 Otherwise, profile switching or menus may not work when profile is imported.
 
 Please, select what should be packaged along with exported profile.</property>
-            <property name="wrap">True</property>
-            <property name="xalign">0</property>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
-            <property name="width">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkScrolledWindow" id="swPackage">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="margin_top">10</property>
-            <property name="margin_bottom">5</property>
-            <property name="vexpand">True</property>
-            <property name="shadow_type">in</property>
-            <child>
-              <object class="GtkTreeView" id="tvPackage">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="model">lstPackage</property>
-                <property name="search_column">2</property>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
+                    <property name="wrap">True</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">2</property>
+                  </packing>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="clPackageItem">
-                    <property name="title" translatable="yes">Item</property>
+                  <object class="GtkScrolledWindow" id="swPackage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_top">10</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="vexpand">True</property>
+                    <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkCellRendererToggle" id="crPackageCheckbox">
-                        <signal name="toggled" handler="on_crPackageCheckbox_toggled" swapped="no"/>
+                      <object class="GtkTreeView" id="tvPackage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">lstPackage</property>
+                        <property name="search_column">2</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection"/>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="clPackageItem">
+                            <property name="title" translatable="yes">Item</property>
+                            <child>
+                              <object class="GtkCellRendererToggle" id="crPackageCheckbox">
+                                <signal name="toggled" handler="on_crPackageCheckbox_toggled" swapped="no"/>
+                              </object>
+                              <attributes>
+                                <attribute name="sensitive">4</attribute>
+                                <attribute name="active">0</attribute>
+                              </attributes>
+                            </child>
+                            <child>
+                              <object class="GtkCellRendererText" id="crPackageItemType"/>
+                              <attributes>
+                                <attribute name="sensitive">4</attribute>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="clPackageName">
+                            <property name="title" translatable="yes">Name</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="crPackageItemName"/>
+                              <attributes>
+                                <attribute name="sensitive">4</attribute>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
                       </object>
-                      <attributes>
-                        <attribute name="sensitive">4</attribute>
-                        <attribute name="active">0</attribute>
-                      </attributes>
-                    </child>
-                    <child>
-                      <object class="GtkCellRendererText" id="crPackageItemType"/>
-                      <attributes>
-                        <attribute name="sensitive">4</attribute>
-                        <attribute name="text">1</attribute>
-                      </attributes>
                     </child>
                   </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                    <property name="width">2</property>
+                  </packing>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="clPackageName">
-                    <property name="title" translatable="yes">Name</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="crPackageItemName"/>
-                      <attributes>
-                        <attribute name="sensitive">4</attribute>
-                        <attribute name="text">2</attribute>
-                      </attributes>
-                    </child>
+                  <object class="GtkButton" id="btSelectAll">
+                    <property name="label" translatable="yes">Select All</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_bottom">10</property>
                   </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblPlaceholder">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                  </packing>
                 </child>
               </object>
+              <packing>
+                <property name="title" translatable="yes">Export Profile</property>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
-            <property name="width">2</property>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child type="titlebar">
+      <object class="GtkHeaderBar" id="hbDialog">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="title">Export Profile</property>
+        <property name="show_close_button">True</property>
+        <child>
+          <object class="GtkButton" id="btBack">
+            <property name="label" translatable="yes">Back</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="no_show_all">True</property>
+            <signal name="clicked" handler="on_btBack_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="btSelectAll">
-            <property name="label" translatable="yes">Select All</property>
+          <object class="GtkButton" id="btSaveAs">
+            <property name="label">gtk-save-as</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <property name="margin_bottom">10</property>
+            <property name="relief">half</property>
+            <property name="use_stock">True</property>
           </object>
           <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">2</property>
+            <property name="pack_type">end</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="lblPlaceholder">
+          <object class="GtkButton" id="btNext">
+            <property name="label" translatable="yes">Next</property>
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="hexpand">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="relief">half</property>
+            <signal name="clicked" handler="on_btNext_clicked" swapped="no"/>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">2</property>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
           </packing>
         </child>
       </object>
-      <packing>
-        <property name="page_type">confirm</property>
-        <property name="has_padding">False</property>
-      </packing>
-    </child>
-    <child>
-      <placeholder/>
-    </child>
-    <child>
-      <placeholder/>
-    </child>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
-    <child>
-      <placeholder/>
-    </child>
-    <child internal-child="action_area">
-      <object class="GtkBox" id="box1">
-        <property name="can_focus">False</property>
-        <property name="halign">end</property>
-        <property name="margin_left">6</property>
-        <property name="margin_right">6</property>
-        <property name="margin_start">6</property>
-        <property name="margin_end">6</property>
-        <property name="margin_top">6</property>
-        <property name="margin_bottom">6</property>
-        <property name="spacing">6</property>
-      </object>
-      <packing>
-        <property name="has_padding">False</property>
-      </packing>
     </child>
   </object>
-  <object class="GtkTextBuffer" id="textbuffer1"/>
 </interface>
