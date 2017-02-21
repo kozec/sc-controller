@@ -7,7 +7,7 @@ Currently setups only one thing...
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gdk, GObject, GLib, Gio
+from gi.repository import Gtk, Gio
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
 from scc.special_actions import ChangeProfileAction, MenuAction
@@ -149,8 +149,7 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		model, iter = tvProfiles.get_selection().get_selected()
 		giofile = model[iter][1]
 		s = self._add_refereced_profile(package, giofile, used)
-		needs_package = any([ row[0] for row in package ])
-		if needs_package:
+		if self._needs_package():
 			# Profile references other menus or profiles
 			btNext.set_visible(True)
 			btSaveAs.set_visible(False)
@@ -158,6 +157,16 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 			# Profile can be exported directly
 			btNext.set_visible(False)
 			btSaveAs.set_visible(True)
+	
+	
+	def _needs_package(self):
+		"""
+		Returns True if there is any file checked on 2nd page,
+		meaning that profile has to be exported as archive.
+		"""
+		tvPackage = self.builder.get_object("tvPackage")
+		package = tvPackage.get_model()
+		return any([ row[0] for row in package ])
 	
 	
 	def on_btNext_clicked(self, *a):
@@ -195,3 +204,33 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		tvPackage = self.builder.get_object("tvPackage")
 		package = tvPackage.get_model()
 		package[path][0] = not package[path][0]
+	
+	
+	def on_btSaveAs_clicked(self, *a):
+		# Grab stuff
+		tvProfiles	= self.builder.get_object("tvProfiles")
+		model, iter = tvProfiles.get_selection().get_selected()
+		
+		# Determine format
+		f = Gtk.FileFilter()
+		if self._needs_package():
+			f.set_name("SC-Controller Profile Archive")
+			fmt = "sccprofile.tar.gz"
+		else:
+			f.set_name("SC-Controller Profile")
+			fmt = "sccprofile"
+		f.add_pattern("*.%s" % (fmt,))
+		
+		# Create dialog
+		d = Gtk.FileChooserNative.new(_("Export to File..."),
+				self.window, Gtk.FileChooserAction.SAVE)
+		d.add_filter(f)
+		d.set_do_overwrite_confirmation(True)
+		# Set default filename
+		d.set_current_name("%s.%s" % (model[iter][2], fmt))
+		if d.run() == Gtk.ResponseType.ACCEPT:
+			fn = d.get_filename()
+			if len(os.path.split(fn)[-1].split(".")) < 2:
+				# Choosen filename with no extension
+				fn = "%s.%s" % (fn, fmt)
+			self.window.destroy()
