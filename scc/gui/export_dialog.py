@@ -14,17 +14,18 @@ from scc.special_actions import ChangeProfileAction, MenuAction
 from scc.tools import get_profiles_path, find_profile, find_menu
 from scc.tools import profile_is_default, menu_is_default
 from scc.menu_data import MenuData, Submenu
-from scc.parser import ActionParser
+from scc.parser import ActionParser, TalkingActionParser
 from scc.profile import Profile
 
-
-import sys, os, json, logging
+import sys, os, json, tarfile, tempfile, logging
 log = logging.getLogger("ExportDialog")
 
 class ExportDialog(Editor, UserDataManager, ComboSetter):
 	GLADE = "export_dialog.glade"
 	PAGE_PROFILE = 0
 	PAGE_PACKAGE = 1
+	TP_MENU = 0
+	TP_PROFILE = 1
 	
 	def __init__(self, app, preselected):
 		self.app = app
@@ -95,7 +96,8 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 				# Default and hidden, don't bother user with it
 				return
 			if filename:
-				model.append((not menu_is_default(menu_id), _("Menu"), name, filename, True))
+				model.append((not menu_is_default(menu_id), _("Menu"), name,
+						filename, True, self.TP_MENU))
 				try:
 					data = json.loads(open(filename, "r").read())
 					menu = MenuData.from_json_data(data, ActionParser())
@@ -109,7 +111,8 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 					if hasattr(item, "action"):
 						self._parse_action(model, item.action, used)
 			else:
-				model.append((False, _("Menu"), _("%s (not found)") % (name,), "", False))
+				model.append((False, _("Menu"), _("%s (not found)") % (name,),
+						"", False, self.TP_MENU))
 	
 	
 	def _parse_action(self, model, action, used):
@@ -122,12 +125,13 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 				used.add(action.profile)
 				if filename:
 					model.append((not profile_is_default(action.profile),
-						_("Profile"), action.profile, filename, True))
+						_("Profile"), action.profile, filename, True, self.TP_PROFILE))
 					self._add_refereced_profile(model,
 						Gio.File.new_for_path(filename), used)
 				else:
 					model.append((False, _("Profile"),
-						_("%s (not found)") % (action.profile,), "", False))
+						_("%s (not found)") % (action.profile,), "",
+						False, self.TP_PROFILE))
 		elif isinstance(action, MenuAction):
 			self._add_refereced_menu(model, action.menu_id, used)
 	
@@ -231,6 +235,86 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		if d.run() == Gtk.ResponseType.ACCEPT:
 			fn = d.get_filename()
 			if len(os.path.split(fn)[-1].split(".")) < 2:
-				# Choosen filename with no extension
+				# User wrote filename without extension
 				fn = "%s.%s" % (fn, fmt)
-			self.window.destroy()
+			
+			if self._needs_package():
+				if self._export_package(model[iter][1], fn):
+					self.window.destroy()
+			else:
+				if self._export(model[iter][1], fn):
+					self.window.destroy()
+	
+	
+	def _export(self, giofile, target_filename):
+		"""
+		Performs actual exporting.
+		This method is used when only profile with no referenced files
+		is to be exported and works pretty simple - load, parse, save in new file.
+		"""
+		profile = Profile(ActionParser())
+		try:
+			profile.load(giofile.get_path())
+		except Exception, e:
+			# Profile that cannot be parsed shouldn't be exported
+			log.error(e)
+			return False
+		
+		profile.save(target_filename)
+		return True
+	
+	
+	def _export_package(self, giofile, target_filename):
+		"""
+		Performs actual exporting.
+		This method is used when profile is to be exported _with_ some
+		referenced files. It reads not only passed giofile, but all files
+		marked on 2nd page of export dialog.
+		
+		Both profiles and menus are parsed before saving, but menu actions are
+		not parsed, so it is possible (but not very probable) to export
+		invalid menu file with this.
+		"""
+		tvPackage = self.builder.get_object("tvPackage")
+		package = tvPackage.get_model()
+		tar = tarfile.open(target_filename, "w:gz")
+		
+		def export_profile(tar, filename):
+			profile = Profile(TalkingActionParser())
+			try:
+				out = tempfile.NamedTemporaryFile()
+				profile.load(filename)
+				profile.save(out.name)
+				tar.add(out.name, arcname=os.path.split(filename)[-1], recursive=False)
+			except Exception, e:
+				# Profile that cannot be parsed shouldn't be exported
+				log.error(e)
+				return False
+			return True
+		
+		def export_menu(tar, filename):
+			try:
+				menu = MenuData.from_json_data(json.loads(open(filename, "r").read()), ActionParser())
+				tar.add(filename, arcname=os.path.split(filename)[-1], recursive=False)
+			except Exception, e:
+				# Menu that cannot be parsed shouldn't be exported
+				log.error(e)
+				return False
+			return True
+		
+		
+		if not export_profile(tar, giofile.get_path()):
+			return False
+		
+		for row in package:
+			enabled, tp, filename = row[0], row[5], row[3]
+			if enabled:
+				if tp == self.TP_PROFILE:
+					if not export_profile(tar, filename):
+						return False
+				elif tp == self.TP_MENU:
+					if not export_menu(tar, filename):
+						return False
+		
+		tar.close()
+		return True
