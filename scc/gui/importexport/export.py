@@ -1,83 +1,31 @@
 #!/usr/bin/env python2
-"""
-SC-Controller - Global Settings
-
-Currently setups only one thing...
-"""
 from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gio
 from scc.gui.userdata_manager import UserDataManager
-from scc.gui.editor import Editor, ComboSetter
-from scc.special_actions import ChangeProfileAction, MenuAction
 from scc.tools import get_profiles_path, find_profile, find_menu
+from scc.special_actions import ChangeProfileAction, MenuAction
 from scc.tools import profile_is_default, menu_is_default
-from scc.menu_data import MenuData, Submenu
 from scc.parser import ActionParser, TalkingActionParser
+from scc.menu_data import MenuData, Submenu
 from scc.profile import Profile
 
 import sys, os, json, tarfile, tempfile, logging
-log = logging.getLogger("ExportDialog")
+log = logging.getLogger("IE.Export")
 
-class ImportExportDialog(Editor, UserDataManager, ComboSetter):
-	GLADE = "import_export.glade"
-	PAGE_PROFILE = 0
-	PAGE_PACKAGE = 1
+class Export(UserDataManager):
 	TP_MENU = 0
 	TP_PROFILE = 1
-	
-	def __init__(self, app, preselected):
-		self.app = app
+
+	def __init__(self):
 		self._recursing = False
-		self._back = []
 		self._profile_load_started = False
-		self.setup_widgets()
-	
-	
-	def _next_page(self, page):
-		stDialog = self.builder.get_object("stDialog")
-		btBack = self.builder.get_object("btBack")
-		self._back.append(stDialog.get_visible_child())
-		stDialog.set_visible_child(page)
-		btBack.set_visible(True)
-		self._page_selected(page)
-	
-	
-	def _page_selected(self, page):
-		stDialog	= self.builder.get_object("stDialog")
-		hbDialog	= self.builder.get_object("hbDialog")
-		hbDialog.set_title(stDialog.child_get_property(page, "title"))
-		hname = "on_%s_activated" % (page.get_name(),)
-		if hasattr(self, hname):
-			getattr(self, hname)()
-	
-	
-	def on_btBack_clicked(self, *a):
-		btBack			= self.builder.get_object("btBack")
-		stDialog		= self.builder.get_object("stDialog")
-		btSaveAs		= self.builder.get_object("btSaveAs")
-		btNext			= self.builder.get_object("btNext")
-		grSelectProfile	= self.builder.get_object("grSelectProfile")
-		page, self._back = self._back[-1], self._back[:-1]
-		stDialog.set_visible_child(page)
-		btNext.set_visible(False)
-		btSaveAs.set_visible(False)
-		btBack.set_visible(len(self._back) > 0)
-		self._page_selected(page)
 	
 	
 	def on_grSelectProfile_activated(self, *a):
 		# Not event handler, called from _page_selected
 		self.on_tvProfiles_cursor_changed()
-	
-	
-	def on_btExport_clicked(self, *a):
-		grSelectProfile	= self.builder.get_object("grSelectProfile")
-		self._next_page(grSelectProfile)
-		if not self._profile_load_started:
-			self._profile_load_started = True
-			self.load_profile_list()
 	
 	
 	def on_profiles_loaded(self, lst):
@@ -291,7 +239,7 @@ class ImportExportDialog(Editor, UserDataManager, ComboSetter):
 		This method is used when only profile with no referenced files
 		is to be exported and works pretty simple - load, parse, save in new file.
 		"""
-		profile = Profile(ActionParser())
+		profile = Profile(TalkingActionParser())
 		try:
 			profile.load(giofile.get_path())
 		except Exception, e:

@@ -28,6 +28,19 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="lstVdfProfiles">
+    <columns>
+      <!-- column-name index -->
+      <column type="gint"/>
+      <!-- column-name game -->
+      <column type="gchararray"/>
+      <!-- column-name profile_name -->
+      <column type="gchararray"/>
+      <!-- column-name profile_file -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkTextBuffer" id="tbError"/>
   <object class="GtkDialog" id="Dialog">
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
@@ -196,21 +209,22 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="btImportSteam">
+                  <object class="GtkButton" id="btImportVdf">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="margin_top">10</property>
                     <property name="margin_bottom">10</property>
                     <property name="use_underline">True</property>
+                    <signal name="clicked" handler="on_btImportVdf_clicked" swapped="no"/>
                     <child>
-                      <object class="GtkBox" id="vbBtImportSteam">
+                      <object class="GtkBox" id="vbBtImportVdf">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">20</property>
                         <property name="margin_right">20</property>
                         <child>
-                          <object class="GtkImage" id="imgBtImportSteam">
+                          <object class="GtkImage" id="imgBtImportVdf">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_right">10</property>
@@ -226,7 +240,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="lblBtImportSteam">
+                          <object class="GtkLabel" id="lblBtImportVdf">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Import _Steam Profile</property>
@@ -442,6 +456,276 @@ Please, select what should be packaged along with exported profile.</property>
               <packing>
                 <property name="title" translatable="yes">Export Profile</property>
                 <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="grVdfImport">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
+                <property name="margin_top">5</property>
+                <property name="margin_bottom">10</property>
+                <child>
+                  <object class="GtkScrolledWindow" id="swVdfProfiles">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_top">5</property>
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTreeView" id="tvVdfProfiles">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <property name="model">lstVdfProfiles</property>
+                        <property name="search_column">1</property>
+                        <property name="show_expanders">False</property>
+                        <signal name="cursor-changed" handler="on_tvVdfProfiles_cursor_changed" swapped="no"/>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection" id="tsVdfProfiles"/>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="tvcGame">
+                            <property name="resizable">True</property>
+                            <property name="sizing">autosize</property>
+                            <property name="title" translatable="yes">Game</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="crGame"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="tvcProfile1">
+                            <property name="resizable">True</property>
+                            <property name="sizing">autosize</property>
+                            <property name="title" translatable="yes">Profile</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="crProfile1"/>
+                              <attributes>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Select Profile to Import</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkRevealer" id="rvLoading">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="transition_type">none</property>
+                    <property name="reveal_child">True</property>
+                    <child>
+                      <object class="GtkLabel" id="lblSearching">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">10</property>
+                        <property name="margin_bottom">10</property>
+                        <property name="label" translatable="yes">Searching for profiles. This may take som time.</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="grVdfImportFinished">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <child>
+                  <object class="GtkLabel" id="lblImportFinished">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">55</property>
+                    <property name="margin_bottom">50</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">Import results goes here</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblError">
+                    <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
+                    <property name="label" translatable="yes">Error message:</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="swError">
+                    <property name="height_request">300</property>
+                    <property name="can_focus">True</property>
+                    <property name="no_show_all">True</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTextView" id="tvError">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="editable">False</property>
+                        <property name="buffer">tbError</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblName">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Enter name for imported profile and click "Apply"</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">3</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="txName">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_top">5</property>
+                    <signal name="changed" handler="on_txName_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">4</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblASetsNotice">
+                    <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
+                    <property name="margin_top">10</property>
+                    <property name="label" translatable="yes">Note: Imported profile contains actions sets.
+		Each set will be converted into separate, hidden profile with following names:</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">5</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblASetList">
+                    <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="label" translatable="yes">.XYZ.aset_1
+		.XYZ.aset_2
+		.XYZ.aset_3
+		.XYZ.aset_4</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="style" value="italic"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">6</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblPad">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">20</property>
+                    <property name="hexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">8</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btDump">
+                    <property name="label" translatable="yes">Display Profile Dump</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_bottom">20</property>
+                    <signal name="clicked" handler="on_btDump_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">8</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblPad2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="vexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">7</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">4</property>
               </packing>
             </child>
           </object>

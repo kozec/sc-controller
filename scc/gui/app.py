@@ -312,8 +312,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Handler for 'Import Steam Profile' context menu item.
 		Displays apropriate dialog.
 		"""
-		from scc.gui.import_export import ImportExportDialog
-		ied = ImportExportDialog(self, None)	# TODO: Pre-select active
+		from scc.gui.importexport.dialog import Dialog
+		ied = Dialog(self)
 		ied.show(self.window)
 	
 	
