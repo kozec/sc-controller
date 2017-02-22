@@ -31,10 +31,17 @@ class ImportVdf(object):
 		self._s_games    = threading.Semaphore(0)
 		self._s_profiles = threading.Semaphore(0)
 		self._lock = threading.Lock()
+		self.__profile_load_started = False
 		self._on_preload_finished = None
-		threading.Thread(target=self._load_profiles).start()
-		threading.Thread(target=self._load_game_names).start()
-		threading.Thread(target=self._load_profile_names).start()
+	
+	
+	def on_grVdfImport_activated(self, *a):
+		if not self.__profile_load_started:
+			self.__profile_load_started = True
+			threading.Thread(target=self._load_profiles).start()
+			threading.Thread(target=self._load_game_names).start()
+			threading.Thread(target=self._load_profile_names).start()
+		self.on_tvVdfProfiles_cursor_changed()
 	
 	
 	def _load_profiles(self):
@@ -212,6 +219,7 @@ class ImportVdf(object):
 	def _set_game_name(self, index, name):
 		self._lstVdfProfiles[index][1] = name
 	
+	
 	def _set_profile_name(self, index, name, filename):
 		self._lstVdfProfiles[index][2] = name
 		self._lstVdfProfiles[index][3] = filename
@@ -238,10 +246,7 @@ class ImportVdf(object):
 		tvVdfProfiles = self.builder.get_object("tvVdfProfiles")
 		model, iter = tvVdfProfiles.get_selection().get_selected()
 		filename = model.get_value(iter, 3)
-		self.window.set_page_complete(
-			self.window.get_nth_page(self.window.get_current_page()),
-			filename is not None
-		)
+		self.enable_next(filename is not None)
 	
 	
 	@staticmethod
@@ -257,14 +262,12 @@ class ImportVdf(object):
 		Called when text in profile name field is changed.
 		Basically enables 'Save' button if name is not empty string.
 		"""
-		txName = self.builder.get_object("txName")
-		lblASetsNotice = self.builder.get_object("lblASetsNotice")
-		lblASetList = self.builder.get_object("lblASetList")
+		txName			= self.builder.get_object("txName")
+		btSaveVdf		= self.builder.get_object("btSaveVdf")
+		lblASetsNotice	= self.builder.get_object("lblASetsNotice")
+		lblASetList		= self.builder.get_object("lblASetList")
 		
-		self.window.set_page_complete(
-			self.window.get_nth_page(self.window.get_current_page()),
-			len(txName.get_text().strip()) > 0 and "/" not in txName.get_text()
-		)
+		btSaveVdf.set_visible(True)
 		if len(self._profile.action_sets) > 1:
 			lblASetsNotice.set_visible(True)
 			lblASetList.set_visible(True)
@@ -286,7 +289,8 @@ class ImportVdf(object):
 		self._on_preload_finished = (callback, data)
 	
 	
-	def set_file(self, filename):
+	def set_vdf_file(self, filename):
+		# TODO: Jump directly to page
 		tvVdfProfiles = self.builder.get_object("tvVdfProfiles")
 		iter = self._lstVdfProfiles.append(( -1, _("No game"), _("Dropped profile"), filename ))
 		tvVdfProfiles.get_selection().select_iter(iter)
@@ -314,84 +318,83 @@ class ImportVdf(object):
 		btDump.set_sensitive(False)
 	
 	
-	def on_prepare(self, trash, child):
-		if child == self.builder.get_object("grImportFinished"):
-			tvVdfProfiles = self.builder.get_object("tvVdfProfiles")
-			lblImportFinished = self.builder.get_object("lblImportFinished")
-			lblError = self.builder.get_object("lblError")
-			tvError = self.builder.get_object("tvError")
-			swError = self.builder.get_object("swError")
-			lblName = self.builder.get_object("lblName")
-			txName = self.builder.get_object("txName")
-			btDump = self.builder.get_object("btDump")
+	def on_grVdfImport_next(self, *a):
+		# Not an event handler, called from on_btNext_clicked
+		grVdfImportFinished = self.builder.get_object("grVdfImportFinished")
+		self.next_page(grVdfImportFinished)
+		
+		tvVdfProfiles = self.builder.get_object("tvVdfProfiles")
+		lblImportFinished = self.builder.get_object("lblImportFinished")
+		lblError = self.builder.get_object("lblError")
+		tvError = self.builder.get_object("tvError")
+		swError = self.builder.get_object("swError")
+		lblName = self.builder.get_object("lblName")
+		txName = self.builder.get_object("txName")
+		btDump = self.builder.get_object("btDump")
+		
+		model, iter = tvVdfProfiles.get_selection().get_selected()
+		filename = model.get_value(iter, 3)
+		if filename.endswith(".vdffz"):
+			self._profile = VDFFZProfile()
+		else:
+			# Best quess
+			self._profile = VDFProfile()
+		failed = False
+		error_log = StringIO()
+		self._lock.acquire()
+		handler = logging.StreamHandler(error_log)
+		logging.getLogger().addHandler(handler)
+		swError.set_visible(False)
+		lblError.set_visible(False)
+		lblName.set_visible(True)
+		txName.set_visible(True)
+		btDump.set_sensitive(True)
+		
+		try:
+			self._profile.load(filename)
+		except Exception, e:
+			log.exception(e)
+			lblName.set_visible(False)
+			txName.set_visible(False)
+			txName.set_text("")
+			self._profile = None
+			failed = True
+		
+		logging.getLogger().removeHandler(handler)
+		self._lock.release()
+		
+		if failed:
+			swError.set_visible(True)
+			lblError.set_visible(True)
+			btDump.set_sensitive(False)
 			
-			model, iter = tvVdfProfiles.get_selection().get_selected()
-			filename = model.get_value(iter, 3)
-			if filename.endswith(".vdffz"):
-				self._profile = VDFFZProfile()
-			else:
-				# Best quess
-				self._profile = VDFProfile()
-			failed = False
-			error_log = StringIO()
-			self._lock.acquire()
-			handler = logging.StreamHandler(error_log)
-			logging.getLogger().addHandler(handler)
-			swError.set_visible(False)
-			lblError.set_visible(False)
-			lblName.set_visible(True)
-			txName.set_visible(True)
-			btDump.set_sensitive(True)
+			lblImportFinished.set_text(_("Import failed"))
 			
+			error_log.write("\nProfile filename: %s\n" % (filename,))
+			error_log.write("\nProfile dump:\n")
 			try:
-				self._profile.load(filename)
+				error_log.write(open(filename, "r").read())
 			except Exception, e:
-				log.exception(e)
-				lblName.set_visible(False)
-				txName.set_visible(False)
-				txName.set_text("")
-				self._profile = None
-				failed = True
+				error_log.write("(failed to write: %s)" % (e,))
 			
-			logging.getLogger().removeHandler(handler)
-			self._lock.release()
-			
-			if failed:
+			tvError.get_buffer().set_text(error_log.getvalue())
+		else:
+			if len(error_log.getvalue()) > 0:
+				# Some warnings were displayed
 				swError.set_visible(True)
 				lblError.set_visible(True)
-				btDump.set_sensitive(False)
 				
-				lblImportFinished.set_text(_("Import failed"))
-				
-				error_log.write("\nProfile filename: %s\n" % (filename,))
-				error_log.write("\nProfile dump:\n")
-				try:
-					error_log.write(open(filename, "r").read())
-				except Exception, e:
-					error_log.write("(failed to write: %s)" % (e,))
+				lblImportFinished.set_text(_("Profile imported with warnings"))
 				
 				tvError.get_buffer().set_text(error_log.getvalue())
+				txName.set_text(self._profile.name)
 			else:
-				if len(error_log.getvalue()) > 0:
-					# Some warnings were displayed
-					swError.set_visible(True)
-					lblError.set_visible(True)
-					
-					lblImportFinished.set_text(_("Profile imported with warnings"))
-					
-					tvError.get_buffer().set_text(error_log.getvalue())
-					txName.set_text(self._profile.name)
-				else:
-					lblImportFinished.set_text(_("Profile sucessfully imported"))
-					txName.set_text(self._profile.name)
-				self.on_txName_changed()
+				lblImportFinished.set_text(_("Profile sucessfully imported"))
+				txName.set_text(self._profile.name)
+			self.on_txName_changed()
 	
 	
-	def on_cancel(self, *a):
-		self.window.destroy()
-	
-	
-	def on_apply(self, *a):
+	def on_btSaveVdf_clicked(self, *a):
 		name = self.builder.get_object("txName").get_text().strip()
 		
 		if len(self._profile.action_sets) > 1:
@@ -409,5 +412,5 @@ class ImportVdf(object):
 					path = os.path.join(get_profiles_path(), filename)
 					self._profile.action_sets[k].save(path)
 		
-		self.app.new_profile(self._profile._profile, name)
+		self.app.new_profile(self._profile, name)
 		GLib.idle_add(self.window.destroy)

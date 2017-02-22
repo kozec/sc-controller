@@ -19,14 +19,24 @@ class Export(UserDataManager):
 	TP_PROFILE = 1
 
 	def __init__(self):
-		self._recursing = False
-		self._profile_load_started = False
+		self.__profile_load_started = False
 	
 	
 	def on_grSelectProfile_activated(self, *a):
-		# Not event handler, called from _page_selected
+		# Not an event handler, called from page_selected
+		if not self.__profile_load_started:
+			self.__profile_load_started = True
+			self.load_profile_list()
 		self.on_tvProfiles_cursor_changed()
 	
+	
+	def on_grSelectProfile_next(self, *a):
+		# Not an event handler, called from on_btNext_clicked
+		grMakePackage	= self.builder.get_object("grMakePackage")
+		btSaveAs		= self.builder.get_object("btSaveAs")		
+		btSaveAs.set_visible(True)
+		self.next_page(grMakePackage)
+
 	
 	def on_profiles_loaded(self, lst):
 		tvProfiles = self.builder.get_object("tvProfiles")
@@ -138,7 +148,6 @@ class Export(UserDataManager):
 		tvPackage	= self.builder.get_object("tvPackage")
 		btSaveAs	= self.builder.get_object("btSaveAs")
 		btClose		= self.builder.get_object("btClose")
-		btNext		= self.builder.get_object("btNext")
 		
 		package = tvPackage.get_model()
 		package.clear()
@@ -150,15 +159,15 @@ class Export(UserDataManager):
 			s = self._add_refereced_profile(package, giofile, used)
 			if self._needs_package():
 				# Profile references other menus or profiles
-				btNext.set_visible(True)
+				self.enable_next()
 				btSaveAs.set_visible(False)
 			else:
 				# Profile can be exported directly
-				btNext.set_visible(False)
+				self.enable_next(enabled=False)
 				btSaveAs.set_visible(True)
 		else:
 			# Nothing selected
-				btNext.set_visible(False)
+				self.enable_next(enabled=False)
 				btSaveAs.set_visible(False)
 	
 	
@@ -170,17 +179,6 @@ class Export(UserDataManager):
 		tvPackage = self.builder.get_object("tvPackage")
 		package = tvPackage.get_model()
 		return any([ row[0] for row in package ])
-	
-	
-	def on_btNext_clicked(self, *a):
-		grMakePackage	= self.builder.get_object("grMakePackage")
-		btBack			= self.builder.get_object("btBack")
-		btNext			= self.builder.get_object("btNext")
-		stDialog		= self.builder.get_object("stDialog")
-		btSaveAs		= self.builder.get_object("btSaveAs")
-		btNext.set_visible(False)
-		btSaveAs.set_visible(True)
-		self._next_page(grMakePackage)
 	
 	
 	def on_btSelectAll_clicked(self, *a):

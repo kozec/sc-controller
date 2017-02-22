@@ -18,12 +18,13 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf):
 	def __init__(self, app):
 		self.app = app
 		self._back = []
+		self._recursing = False
 		self.setup_widgets()
 		Export.__init__(self)
 		ImportVdf.__init__(self)
 	
 	
-	def _next_page(self, page):
+	def next_page(self, page):
 		stDialog = self.builder.get_object("stDialog")
 		btBack = self.builder.get_object("btBack")
 		self._back.append(stDialog.get_visible_child())
@@ -41,28 +42,39 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf):
 			getattr(self, hname)()
 	
 	
+	def enable_next(self, enabled=True):
+		btNext = self.builder.get_object("btNext")
+		btNext.set_visible(enabled)
+	
+	
+	def on_btNext_clicked(self, *a):
+		stDialog		= self.builder.get_object("stDialog")
+		hname = "on_%s_next" % (stDialog.get_visible_child().get_name(),)
+		if hasattr(self, hname):
+			self.enable_next(enabled=False)
+			getattr(self, hname)()
+	
+	
 	def on_btBack_clicked(self, *a):
 		btBack			= self.builder.get_object("btBack")
 		stDialog		= self.builder.get_object("stDialog")
 		btSaveAs		= self.builder.get_object("btSaveAs")
+		btSaveVdf		= self.builder.get_object("btSaveVdf")
 		btNext			= self.builder.get_object("btNext")
-		grSelectProfile	= self.builder.get_object("grSelectProfile")
 		page, self._back = self._back[-1], self._back[:-1]
 		stDialog.set_visible_child(page)
 		btNext.set_visible(False)
 		btSaveAs.set_visible(False)
+		btSaveVdf.set_visible(False)
 		btBack.set_visible(len(self._back) > 0)
 		self._page_selected(page)
 	
 	
 	def on_btExport_clicked(self, *a):
 		grSelectProfile	= self.builder.get_object("grSelectProfile")
-		self._next_page(grSelectProfile)
-		if not self._profile_load_started:
-			self._profile_load_started = True
-			self.load_profile_list()
+		self.next_page(grSelectProfile)
 	
 	
 	def on_btImportVdf_clicked(self, *a):
 		grVdfImport	= self.builder.get_object("grVdfImport")
-		self._next_page(grVdfImport)
+		self.next_page(grVdfImport)
