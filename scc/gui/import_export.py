@@ -29,7 +29,6 @@ class ImportExportDialog(Editor, UserDataManager, ComboSetter):
 	
 	def __init__(self, app, preselected):
 		self.app = app
-		self._current = preselected
 		self._recursing = False
 		self._back = []
 		self._profile_load_started = False
@@ -84,6 +83,7 @@ class ImportExportDialog(Editor, UserDataManager, ComboSetter):
 	def on_profiles_loaded(self, lst):
 		tvProfiles = self.builder.get_object("tvProfiles")
 		model = tvProfiles.get_model()
+		current = self.app.get_current_profile()
 		i, current_index = 0, -1
 		for f in sorted(lst, key=lambda f: f.get_basename()):
 			name = f.get_basename()
@@ -93,7 +93,7 @@ class ImportExportDialog(Editor, UserDataManager, ComboSetter):
 				continue
 			if name.endswith(".sccprofile"):
 				name = name[0:-11]
-			if name == self._current:
+			if name == current:
 				current_index = i
 			model.append((i, f, name))
 			i += 1

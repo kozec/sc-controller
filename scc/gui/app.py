@@ -946,6 +946,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		model.remove(model[0].iter)
 	
 	
+	def get_current_profile(self):
+		return self.profile_switchers[0].get_profile_name()
+	
+	
 	def set_daemon_status(self, status, daemon_runs):
 		""" Updates image that shows daemon status and menu shown when image is clicked """
 		log.debug("daemon status: %s", status)
