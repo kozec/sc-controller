@@ -14,7 +14,7 @@
       <column type="gchararray"/>
       <!-- column-name enabled -->
       <column type="gboolean"/>
-	  <!-- column-name type_internal -->
+      <!-- column-name type_internal -->
       <column type="gint"/>
     </columns>
   </object>
@@ -49,7 +49,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">0</property>
+            <property name="position">4</property>
           </packing>
         </child>
         <child>
@@ -57,8 +57,206 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="transition_type">slide-left-right</property>
+            <property name="interpolate_size">True</property>
+            <child>
+              <object class="GtkGrid" id="grIntro">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <property name="column_homogeneous">True</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">10</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="label" translatable="yes">Please, select an option</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btExport">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_top">10</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="use_underline">True</property>
+                    <signal name="clicked" handler="on_btExport_clicked" swapped="no"/>
+                    <child>
+                      <object class="GtkBox" id="vbBtExport">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">20</property>
+                        <property name="margin_right">20</property>
+                        <child>
+                          <object class="GtkImage" id="imgBtExport">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_right">10</property>
+                            <property name="stock">gtk-save-as</property>
+                            <property name="icon_size">6</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblBtExport">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">_Export Profile</property>
+                            <property name="use_underline">True</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btImport">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_top">10</property>
+                    <property name="use_underline">True</property>
+                    <child>
+                      <object class="GtkBox" id="vbBtImport">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">20</property>
+                        <property name="margin_right">20</property>
+                        <child>
+                          <object class="GtkImage" id="imgBtImport">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_right">10</property>
+                            <property name="stock">gtk-open</property>
+                            <property name="icon_size">6</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblBtImport">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">_Import SC-Controller Profile</property>
+                            <property name="use_underline">True</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblImportText">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="label" translatable="yes">You can also drag-n-drop profile file on main application window</property>
+                    <property name="xalign">1</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btImportSteam">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_top">10</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="use_underline">True</property>
+                    <child>
+                      <object class="GtkBox" id="vbBtImportSteam">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">20</property>
+                        <property name="margin_right">20</property>
+                        <child>
+                          <object class="GtkImage" id="imgBtImportSteam">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_right">10</property>
+                            <property name="pixel_size">48</property>
+                            <property name="icon_name">steam</property>
+                            <property name="use_fallback">True</property>
+                            <property name="icon_size">6</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblBtImportSteam">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Import _Steam Profile</property>
+                            <property name="use_underline">True</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">4</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="title" translatable="yes">Import / Export</property>
+              </packing>
+            </child>
             <child>
               <object class="GtkGrid" id="grSelectProfile">
+                <property name="name">grSelectProfile</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
@@ -127,6 +325,7 @@
               </object>
               <packing>
                 <property name="title" translatable="yes">Export Profile</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -242,14 +441,14 @@ Please, select what should be packaged along with exported profile.</property>
               </object>
               <packing>
                 <property name="title" translatable="yes">Export Profile</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
+            <property name="position">0</property>
           </packing>
         </child>
       </object>
@@ -258,7 +457,7 @@ Please, select what should be packaged along with exported profile.</property>
       <object class="GtkHeaderBar" id="hbDialog">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="title">Export Profile</property>
+        <property name="title">Import / Export</property>
         <property name="show_close_button">True</property>
         <child>
           <object class="GtkButton" id="btBack">
@@ -273,27 +472,28 @@ Please, select what should be packaged along with exported profile.</property>
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="btSaveAs">
-            <property name="label">gtk-save-as</property>
-            <property name="visible">True</property>
+          <object class="GtkButton" id="btNext">
+            <property name="label" translatable="yes">Next</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="no_show_all">True</property>
             <property name="relief">half</property>
-            <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btSaveAs_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btNext_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="pack_type">end</property>
+            <property name="position">1</property>
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="btNext">
-            <property name="label" translatable="yes">Next</property>
-            <property name="visible">True</property>
+          <object class="GtkButton" id="btSaveAs">
+            <property name="label">gtk-save-as</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="no_show_all">True</property>
             <property name="relief">half</property>
-            <signal name="clicked" handler="on_btNext_clicked" swapped="no"/>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_btSaveAs_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="pack_type">end</property>

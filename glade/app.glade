@@ -170,7 +170,7 @@
       <object class="GtkMenuItem" id="mnuImport">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Import Steam _Profile</property>
+        <property name="label" translatable="yes">Import/Export _Profile...</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_mnuImport_activate" swapped="no"/>
       </object>

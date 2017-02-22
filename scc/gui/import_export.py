@@ -20,8 +20,8 @@ from scc.profile import Profile
 import sys, os, json, tarfile, tempfile, logging
 log = logging.getLogger("ExportDialog")
 
-class ExportDialog(Editor, UserDataManager, ComboSetter):
-	GLADE = "export_dialog.glade"
+class ImportExportDialog(Editor, UserDataManager, ComboSetter):
+	GLADE = "import_export.glade"
 	PAGE_PROFILE = 0
 	PAGE_PACKAGE = 1
 	TP_MENU = 0
@@ -30,9 +30,55 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 	def __init__(self, app, preselected):
 		self.app = app
 		self._current = preselected
+		self._recursing = False
+		self._back = []
+		self._profile_load_started = False
 		self.setup_widgets()
-		self.load_profile_list()
 	
+	
+	def _next_page(self, page):
+		stDialog = self.builder.get_object("stDialog")
+		btBack = self.builder.get_object("btBack")
+		self._back.append(stDialog.get_visible_child())
+		stDialog.set_visible_child(page)
+		btBack.set_visible(True)
+		self._page_selected(page)
+	
+	
+	def _page_selected(self, page):
+		stDialog	= self.builder.get_object("stDialog")
+		hbDialog	= self.builder.get_object("hbDialog")
+		hbDialog.set_title(stDialog.child_get_property(page, "title"))
+		hname = "on_%s_activated" % (page.get_name(),)
+		if hasattr(self, hname):
+			getattr(self, hname)()
+	
+	
+	def on_btBack_clicked(self, *a):
+		btBack			= self.builder.get_object("btBack")
+		stDialog		= self.builder.get_object("stDialog")
+		btSaveAs		= self.builder.get_object("btSaveAs")
+		btNext			= self.builder.get_object("btNext")
+		grSelectProfile	= self.builder.get_object("grSelectProfile")
+		page, self._back = self._back[-1], self._back[:-1]
+		stDialog.set_visible_child(page)
+		btNext.set_visible(False)
+		btSaveAs.set_visible(False)
+		btBack.set_visible(len(self._back) > 0)
+		self._page_selected(page)
+	
+	
+	def on_grSelectProfile_activated(self, *a):
+		# Not event handler, called from _page_selected
+		self.on_tvProfiles_cursor_changed()
+	
+	
+	def on_btExport_clicked(self, *a):
+		grSelectProfile	= self.builder.get_object("grSelectProfile")
+		self._next_page(grSelectProfile)
+		if not self._profile_load_started:
+			self._profile_load_started = True
+			self.load_profile_list()
 	
 	
 	def on_profiles_loaded(self, lst):
@@ -151,16 +197,21 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 		used = set()
 		
 		model, iter = tvProfiles.get_selection().get_selected()
-		giofile = model[iter][1]
-		s = self._add_refereced_profile(package, giofile, used)
-		if self._needs_package():
-			# Profile references other menus or profiles
-			btNext.set_visible(True)
-			btSaveAs.set_visible(False)
+		if iter:
+			giofile = model[iter][1]
+			s = self._add_refereced_profile(package, giofile, used)
+			if self._needs_package():
+				# Profile references other menus or profiles
+				btNext.set_visible(True)
+				btSaveAs.set_visible(False)
+			else:
+				# Profile can be exported directly
+				btNext.set_visible(False)
+				btSaveAs.set_visible(True)
 		else:
-			# Profile can be exported directly
-			btNext.set_visible(False)
-			btSaveAs.set_visible(True)
+			# Nothing selected
+				btNext.set_visible(False)
+				btSaveAs.set_visible(False)
 	
 	
 	def _needs_package(self):
@@ -174,26 +225,14 @@ class ExportDialog(Editor, UserDataManager, ComboSetter):
 	
 	
 	def on_btNext_clicked(self, *a):
+		grMakePackage	= self.builder.get_object("grMakePackage")
 		btBack			= self.builder.get_object("btBack")
 		btNext			= self.builder.get_object("btNext")
 		stDialog		= self.builder.get_object("stDialog")
 		btSaveAs		= self.builder.get_object("btSaveAs")
-		grMakePackage	= self.builder.get_object("grMakePackage")
-		stDialog.set_visible_child(grMakePackage)
 		btNext.set_visible(False)
-		btBack.set_visible(True)
 		btSaveAs.set_visible(True)
-	
-	
-	def on_btBack_clicked(self, *a):
-		btBack			= self.builder.get_object("btBack")
-		stDialog		= self.builder.get_object("stDialog")
-		btSaveAs		= self.builder.get_object("btSaveAs")
-		grSelectProfile	= self.builder.get_object("grSelectProfile")
-		stDialog.set_visible_child(grSelectProfile)
-		btBack.set_visible(False)
-		btSaveAs.set_visible(False)
-		self.on_tvProfiles_cursor_changed()	# To update Next/Save As button
+		self._next_page(grMakePackage)
 	
 	
 	def on_btSelectAll_clicked(self, *a):

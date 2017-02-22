@@ -130,12 +130,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
-		
-		
-		from scc.gui.export_dialog import ExportDialog
-		gs = ExportDialog(self, "Gestures")
-		gs.show(self.window)
-
 	
 	
 	def setup_statusicon(self):
@@ -318,9 +312,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Handler for 'Import Steam Profile' context menu item.
 		Displays apropriate dialog.
 		"""
-		from scc.gui.import_dialog import ImportDialog
-		gs = ImportDialog(self)
-		gs.show(self.window)
+		from scc.gui.import_export import ImportExportDialog
+		ied = ImportExportDialog(self, None)	# TODO: Pre-select active
+		ied.show(self.window)
 	
 	
 	def on_btUndo_clicked(self, *a):
