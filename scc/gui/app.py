@@ -312,9 +312,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Handler for 'Import Steam Profile' context menu item.
 		Displays apropriate dialog.
 		"""
-		from scc.gui.import_dialog import ImportDialog
-		gs = ImportDialog(self)
-		gs.show(self.window)
+		from scc.gui.importexport.dialog import Dialog
+		ied = Dialog(self)
+		ied.show(self.window)
 	
 	
 	def on_btUndo_clicked(self, *a):
@@ -944,6 +944,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Can't remove active item
 			return
 		model.remove(model[0].iter)
+	
+	
+	def get_current_profile(self):
+		return self.profile_switchers[0].get_profile_name()
 	
 	
 	def set_daemon_status(self, status, daemon_runs):

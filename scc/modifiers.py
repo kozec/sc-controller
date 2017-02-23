@@ -814,6 +814,7 @@ class DoubleclickModifier(Modifier):
 		self.action = doubleclickaction
 		self.normalaction = normalaction or NoAction()
 		self.holdaction = NoAction()
+		self.actions = ( self.action, self.normalaction, self.holdaction )
 		self.timeout = time or DoubleclickModifier.DEAFAULT_TIMEOUT
 		self.waiting = False
 		self.pressed = False
