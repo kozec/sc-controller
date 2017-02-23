@@ -47,12 +47,12 @@
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
     <child internal-child="vbox">
-      <object class="GtkBox">
+      <object class="GtkBox" id="vbDialog">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox">
+          <object class="GtkButtonBox" id="vbDialogButtons">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
@@ -79,7 +79,7 @@
                 <property name="margin_right">20</property>
                 <property name="column_homogeneous">True</property>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="label3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_top">10</property>
@@ -383,7 +383,7 @@ Please, select what should be packaged along with exported profile.</property>
                         <property name="model">lstPackage</property>
                         <property name="search_column">2</property>
                         <child internal-child="selection">
-                          <object class="GtkTreeSelection"/>
+                          <object class="GtkTreeSelection" id="tsPackage"/>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="clPackageItem">
@@ -560,6 +560,7 @@ Please, select what should be packaged along with exported profile.</property>
                 </child>
               </object>
               <packing>
+                <property name="title" translatable="yes">Import Steam Profile</property>
                 <property name="position">3</property>
               </packing>
             </child>
@@ -727,6 +728,7 @@ Please, select what should be packaged along with exported profile.</property>
                 </child>
               </object>
               <packing>
+                <property name="title" translatable="yes">Import Steam Profile</property>
                 <property name="position">4</property>
               </packing>
             </child>

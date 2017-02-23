@@ -28,7 +28,7 @@ packages = [
 	# Usefull
 	'scc.x11', 'scc.osd', 'scc.foreign',
 	# GUI
-	'scc.gui', 'scc.gui.ae'
+	'scc.gui', 'scc.gui.ae', 'scc.gui.importexport'
 ]
 
 if __name__ == "__main__":
