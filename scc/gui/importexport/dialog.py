@@ -23,6 +23,7 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 		self.setup_widgets()
 		Export.__init__(self)
 		ImportVdf.__init__(self)
+		ImportSccprofile.__init__(self)
 	
 	
 	def next_page(self, page):
