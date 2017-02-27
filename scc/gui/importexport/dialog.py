@@ -45,8 +45,11 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 	
 	
 	def enable_next(self, enabled=True):
+		""" Returns button object """
 		btNext = self.builder.get_object("btNext")
 		btNext.set_visible(enabled)
+		btNext.set_label(_("Next"))
+		return btNext
 	
 	
 	def on_btNext_clicked(self, *a):

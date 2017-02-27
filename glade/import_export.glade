@@ -28,6 +28,14 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="lstShellCommands">
+    <columns>
+      <!-- column-name checked -->
+      <column type="gboolean"/>
+      <!-- column-name command -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkListStore" id="lstVdfProfiles">
     <columns>
       <!-- column-name index -->
@@ -734,6 +742,114 @@ Please, select what should be packaged along with exported profile.</property>
               </packing>
             </child>
             <child>
+              <object class="GtkGrid" id="grShellCommands">
+                <property name="name">grImportShellCommands</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <child>
+                  <object class="GtkLabel" id="lblShellWarning">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">20</property>
+                    <property name="margin_bottom">20</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Warning:&lt;/b&gt;
+
+Profile You are trying to import contains shell actions.
+Shell action allows to execute any arbitrary shell command
+and may modify, create or &lt;span color="#ff0000"&gt;&lt;b&gt;delete&lt;/b&gt;&lt;/span&gt; any files, download &lt;span color="#ff0000"&gt;&lt;b&gt;viruses&lt;/b&gt;&lt;/span&gt;
+or even &lt;span color="#ff0000"&gt;&lt;b&gt;destroy&lt;/b&gt;&lt;/span&gt; some hardware.
+
+Please, read list of commands used by imported profile
+and mark each checkbox to indicate You fully understand
+what command does before clicking "Continue."</property>
+                    <property name="use_markup">True</property>
+                    <property name="wrap">True</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkImage" id="imgShellWarning">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_right">20</property>
+                    <property name="stock">gtk-dialog-warning</property>
+                    <property name="icon_size">6</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblNeverShown">
+                    <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
+                    <property name="label">(be scared. Be very scared ^^)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="swShellCommands">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTreeView" id="tvShellCommands">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">lstShellCommands</property>
+                        <property name="headers_visible">False</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection" id="tsShellCommands"/>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="clShellCommand">
+                            <property name="title" translatable="yes">column</property>
+                            <child>
+                              <object class="GtkCellRendererToggle" id="crShellCommandChecked">
+                                <signal name="toggled" handler="on_crShellCommandChecked_toggled" swapped="no"/>
+                              </object>
+                              <attributes>
+                                <attribute name="active">0</attribute>
+                              </attributes>
+                            </child>
+                            <child>
+                              <object class="GtkCellRendererText" id="crShellCommandText"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="title" translatable="yes">Import</property>
+                <property name="position">5</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkGrid" id="grImportFailed">
                 <property name="name">grImportFailed</property>
                 <property name="visible">True</property>
@@ -795,7 +911,7 @@ Please, select what should be packaged along with exported profile.</property>
               </object>
               <packing>
                 <property name="title" translatable="yes">Import</property>
-                <property name="position">5</property>
+                <property name="position">6</property>
               </packing>
             </child>
           </object>

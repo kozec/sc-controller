@@ -4,6 +4,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gio
 from scc.tools import get_profiles_path, find_profile, find_menu
+from scc.special_actions import ShellCommandAction
 from scc.profile import Profile
 from scc.gui.parser import GuiActionParser
 
@@ -12,7 +13,7 @@ log = logging.getLogger("IE.ImportSSCC")
 
 class ImportSccprofile(object):
 	def __init__(self):
-		pass
+		self._profile = None
 	
 	
 	def on_btImportSccprofile_clicked(self, *a):
@@ -51,9 +52,10 @@ class ImportSccprofile(object):
 		Imports simple, single-file scc-profile.
 		Just loads it, checks for shell() actions and asks user to enter name.
 		"""
-		profile = Profile(GuiActionParser())
+		# Load profile
+		self._profile = Profile(GuiActionParser())
 		try:
-			profile.load(filename)
+			self._profile.load(filename)
 		except Exception, e:
 			# Profile cannot be parsed. Display error message and let user to quit
 			# Error message reuses page from VDF import, because they are
@@ -62,3 +64,29 @@ class ImportSccprofile(object):
 			self.error(str(e))
 			return False
 		
+		# Check for shell commands
+		grShellCommands =	self.builder.get_object("grShellCommands")
+		tvShellCommands =	self.builder.get_object("tvShellCommands")
+		model = tvShellCommands.get_model()
+		model.clear()
+		for a in self._profile.get_actions():
+			if isinstance(a, ShellCommandAction):
+				model.append((False, a.command))
+		# If there is shell command present, jump to warning page
+		if len(model) > 0:
+			self.next_page(grShellCommands)
+			btNext = self.enable_next(True)
+			btNext.set_label(_("Continue"))
+			btNext.set_sensitive(False)
+	
+	
+	def on_crShellCommandChecked_toggled(self, cr, path):
+		tvShellCommands =	self.builder.get_object("tvShellCommands")
+		btNext =			self.builder.get_object("btNext")
+		model = tvShellCommands.get_model()
+		model[path][0] = not model[path][0]
+		btNext.set_sensitive(True)
+		for row in model:
+			if not row[0]:
+				btNext.set_sensitive(False)
+				return
