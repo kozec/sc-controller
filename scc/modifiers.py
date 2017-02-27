@@ -603,7 +603,7 @@ class ModeModifier(Modifier):
 	MIN_TRIGGER = 2		# When trigger is bellow this position, list of held_triggers is cleared
 	MIN_STICK = 2		# When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared
 	PROFILE_KEY_PRIORITY = 2
-
+	
 	def __init__(self, *stuff):
 		Modifier.__init__(self)
 		self.default = None
@@ -614,7 +614,7 @@ class ModeModifier(Modifier):
 		self.order = []
 		self.old_gyro = None
 		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
-
+		
 		button = None
 		for i in stuff:
 			if self.default is not None:
@@ -633,8 +633,8 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		if self.default is None:
 			self.default = NoAction()
-
-
+	
+	
 	def encode(self):
 		rv = self.default.encode()
 		modes = {}
@@ -644,8 +644,8 @@ class ModeModifier(Modifier):
 		if self.name:
 			rv[NameModifier.COMMAND] = self.name
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		args = []
@@ -658,8 +658,15 @@ class ModeModifier(Modifier):
 		if "name" in data:
 			mm.name = data["name"]
 		return mm
-
-
+	
+	
+	def get_compatible_modifiers(self):
+		rv = 0
+		for key in self.mods:
+			rv |= self.mods[key].get_compatible_modifiers()
+		return rv
+	
+	
 	def strip(self):
 		# Returns default action or action assigned to first modifier
 		if self.default:
@@ -668,16 +675,16 @@ class ModeModifier(Modifier):
 			return self.mods[self.order[0]].strip()
 		# Empty ModeModifier
 		return NoAction()
-
-
+	
+	
 	def compress(self):
 		if self.default:
 			self.default = self.default.compress()
 		for button in self.mods:
 			self.mods[button] = self.mods[button].compress()
 		return self
-
-
+	
+	
 	def __str__(self):
 		rv = [ ]
 		for key in self.mods:
@@ -685,10 +692,10 @@ class ModeModifier(Modifier):
 		if self.default is not None:
 			rv += [ self.default ]
 		return "<Modifier '%s', %s>" % (self.COMMAND, rv)
-
+	
 	__repr__ = __str__
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		l = []
@@ -696,8 +703,8 @@ class ModeModifier(Modifier):
 		for x in self.order:
 			l.append(self.mods[x])
 		return "\n".join([ x.describe(context) for x in l ])
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			rv = [ (" " * pad) + "mode(" ]
@@ -725,8 +732,8 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
-
-
+	
+	
 	def select(self, mapper):
 		"""
 		Selects action by pressed button.
@@ -735,8 +742,8 @@ class ModeModifier(Modifier):
 			if mapper.is_pressed(b):
 				return self.mods[b]
 		return self.default
-
-
+	
+	
 	def select_b(self, mapper):
 		"""
 		Same as select but returns button as well.
@@ -745,21 +752,21 @@ class ModeModifier(Modifier):
 			if mapper.is_pressed(b):
 				return b, self.mods[b]
 		return None, self.default
-
-
+	
+	
 	def button_press(self, mapper):
 		sel = self.select(mapper)
 		self.held_buttons.add(sel)
 		return sel.button_press(mapper)
-
-
+	
+	
 	def button_release(self, mapper):
 		# Releases all held buttons, not just button that matches
 		# currently pressed modifier
 		for b in self.held_buttons:
 			b.button_release(mapper)
-
-
+		
+		
 	def trigger(self, mapper, position, old_position):
 		if position < ModeModifier.MIN_TRIGGER:
 			for b in self.held_triggers:
@@ -770,12 +777,12 @@ class ModeModifier(Modifier):
 			sel = self.select(mapper)
 			self.held_triggers[sel] = position
 			return sel.trigger(mapper, position, old_position)
-
-
+		
+		
 	def axis(self, mapper, position, what):
 		return self.select(mapper).axis(mapper, position, what)
-
-
+	
+	
 	def gyro(self, mapper, pitch, yaw, roll, *q):
 		sel = self.select(mapper)
 		if sel is not self.old_gyro:
@@ -783,12 +790,12 @@ class ModeModifier(Modifier):
 				self.old_gyro.gyro(mapper, 0, 0, 0, *q)
 			self.old_gyro = sel
 		return sel.gyro(mapper, pitch, yaw, roll, *q)
-
-
+	
+	
 	def pad(self, mapper, position, what):
 		return self.select(mapper).pad(mapper, position, what)
-
-
+	
+	
 	def whole(self, mapper, x, y, what):
 		if what == STICK:
 			if abs(x) < ModeModifier.MIN_STICK and abs(y) < ModeModifier.MIN_STICK:
@@ -1007,9 +1014,12 @@ class SensitivityModifier(Modifier):
 
 	@staticmethod
 	def decode(data, a, *b):
-		args = list(data["sensitivity"])
-		args.append(a)
-		return SensitivityModifier(*args)
+		if a:
+			args = list(data["sensitivity"])
+			args.append(a)
+			return SensitivityModifier(*args)
+		# Adding sensitivity to NoAction makes no sense
+		return a
 
 
 	def strip(self):
