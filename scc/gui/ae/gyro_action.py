@@ -81,8 +81,18 @@ class GyroActionComponent(AEComponent):
 				self.select_gyro_button(b)
 			else:
 				self.select_gyro_button(None)
-			if isinstance(action, MouseAction):
+			if isinstance(action, SensitivityModifier) and isinstance(action.action, MouseAction):
+				# Mouse (Desktop)
 				self.select_gyro_output("mouse")
+				if len(action.parameters) > 0 and action.parameters[0] == YAW:
+					self.select_yaw_roll(YAW)
+				else:
+					self.select_yaw_roll(ROLL)
+				self.editor.set_default_sensitivity(3.5, 3.5, 3.5)
+				self.editor.set_sensitivity(*action.speeds)
+			elif isinstance(action, MouseAction):
+				# Mouse (Camera)
+				self.select_gyro_output("mouse_cam")
 				if len(action.parameters) > 0 and action.parameters[0] == YAW:
 					self.select_yaw_roll(YAW)
 				else:
@@ -226,8 +236,10 @@ class GyroActionComponent(AEComponent):
 			action = ModeModifier(getattr(SCButtons, button), action)
 		if key == "mouse":
 			self.editor.set_default_sensitivity(3.5, 3.5, 3.5)
+			self.editor.set_sensitivity(3.5, 3.5, 3.5)
 		else:
 			self.editor.set_default_sensitivity(1, 1, 1)
+			self.editor.set_sensitivity(1, 1, 1)
 		
 		self.editor.set_action(action)
 

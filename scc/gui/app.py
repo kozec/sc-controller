@@ -212,7 +212,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def show_editor(self, id):
 		action = self.get_action(self.current, id)
-		ae = self.choose_editor(action, "")
+		ae = self.choose_editor(action, "", id)
 		ae.set_input(id, action)
 		ae.show(self.window)
 	

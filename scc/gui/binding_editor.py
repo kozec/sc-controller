@@ -124,11 +124,14 @@ class BindingEditor(object):
 		return None
 	
 	
-	def choose_editor(self, action, title):
+	def choose_editor(self, action, title, id=None):
 		""" Chooses apropripate Editor instance for edited action """
 		if isinstance(action, SensitivityModifier):
 			action = action.action
-		if isinstance(action, (ModeModifier, DoubleclickModifier, HoldModifier)) and not is_gyro_enable(action):
+		if id in GYROS:
+			e = ActionEditor(self.app, self.on_action_chosen)
+			e.set_title(title)
+		elif isinstance(action, (ModeModifier, DoubleclickModifier, HoldModifier)) and not is_gyro_enable(action):
 			e = ModeshiftEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))
 		elif isinstance(action, RingAction):
