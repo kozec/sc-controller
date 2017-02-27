@@ -8,11 +8,12 @@ from scc.tools import _
 from scc.gui.editor import Editor, ComboSetter
 from export import Export
 from import_vdf import ImportVdf
+from import_sccprofile import ImportSccprofile
 
 import sys, os, logging
 log = logging.getLogger("IE.Dialog")
 
-class Dialog(Editor, ComboSetter, Export, ImportVdf):
+class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 	GLADE = "import_export.glade"
 	
 	def __init__(self, app):
