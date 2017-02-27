@@ -7,7 +7,6 @@ Called and used when single Steam Controller is connected directly by USB cable.
 Shares a lot of classes with sc_dongle.py
 """
 
-from scc.lib import usb1
 from scc.drivers.usb import USBDevice, register_hotplug_device
 from sc_dongle import ControllerInput, SCI_NULL, TUP_FORMAT
 from sc_dongle import SCStatus, SCPacketType, SCConfigType, SCController
