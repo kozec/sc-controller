@@ -30,8 +30,7 @@ class Export(UserDataManager):
 		self.on_tvProfiles_cursor_changed()
 	
 	
-	def on_grSelectProfile_next(self, *a):
-		# Not an event handler, called from on_btNext_clicked
+	def on_profile_selected(self, *a):
 		grMakePackage	= self.builder.get_object("grMakePackage")
 		btSaveAs		= self.builder.get_object("btSaveAs")		
 		btSaveAs.set_visible(True)
@@ -159,7 +158,7 @@ class Export(UserDataManager):
 			s = self._add_refereced_profile(package, giofile, used)
 			if self._needs_package():
 				# Profile references other menus or profiles
-				self.enable_next()
+				self.enable_next(True, self.on_profile_selected)
 				btSaveAs.set_visible(False)
 			else:
 				# Profile can be exported directly

@@ -13,7 +13,9 @@ log = logging.getLogger("IE.ImportSSCC")
 
 class ImportSccprofile(object):
 	def __init__(self):
-		self._profile = None
+		# _files holds list of (filename, object) generated while
+		# importing and saved only after final confirmation by user
+		self._files = []
 	
 	
 	def on_btImportSccprofile_clicked(self, *a):
@@ -53,9 +55,9 @@ class ImportSccprofile(object):
 		Just loads it, checks for shell() actions and asks user to enter name.
 		"""
 		# Load profile
-		self._profile = Profile(GuiActionParser())
+		profile = Profile(GuiActionParser())
 		try:
-			self._profile.load(filename)
+			profile.load(filename)
 		except Exception, e:
 			# Profile cannot be parsed. Display error message and let user to quit
 			# Error message reuses page from VDF import, because they are
@@ -64,20 +66,26 @@ class ImportSccprofile(object):
 			self.error(str(e))
 			return False
 		
+		self._files = [
+			( ".".join(os.path.split(filename)[-1].split(".")[0:-1]), profile )
+		]
+		
 		# Check for shell commands
 		grShellCommands =	self.builder.get_object("grShellCommands")
 		tvShellCommands =	self.builder.get_object("tvShellCommands")
 		model = tvShellCommands.get_model()
 		model.clear()
-		for a in self._profile.get_actions():
+		for a in profile.get_actions():
 			if isinstance(a, ShellCommandAction):
 				model.append((False, a.command))
 		# If there is shell command present, jump to warning page
 		if len(model) > 0:
 			self.next_page(grShellCommands)
-			btNext = self.enable_next(True)
+			btNext = self.enable_next(True, self.shell_import_confirmed)
 			btNext.set_label(_("Continue"))
 			btNext.set_sensitive(False)
+		else:
+			self.shell_import_confirmed()
 	
 	
 	def on_crShellCommandChecked_toggled(self, cr, path):
@@ -90,3 +98,23 @@ class ImportSccprofile(object):
 			if not row[0]:
 				btNext.set_sensitive(False)
 				return
+	
+	
+	def shell_import_confirmed(self):
+		grSccImportFinished =	self.builder.get_object("grSccImportFinished")
+		lblSccImportFinished =	self.builder.get_object("lblSccImportFinished")
+		txName2 =				self.builder.get_object("txName2")
+		
+		name, obj = self._files[0]	# 1st is always profile that's being imported
+		lblSccImportFinished.set_text(_("Profile sucessfully imported"))
+		txName2.set_text(name)
+		self.next_page(grSccImportFinished)
+		self.on_txName2_changed()
+	
+	
+	def on_txName2_changed(self, *a):
+		txName2 = self.builder.get_object("txName2")
+		btNext = self.enable_next(True, lambda *a : a)
+		btNext.set_label('Apply')
+		btNext.set_use_stock(True)
+		btNext.set_sensitive(self.check_name(txName2.get_text()))

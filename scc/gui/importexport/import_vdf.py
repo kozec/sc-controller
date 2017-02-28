@@ -246,7 +246,7 @@ class ImportVdf(object):
 		tvVdfProfiles = self.builder.get_object("tvVdfProfiles")
 		model, iter = tvVdfProfiles.get_selection().get_selected()
 		filename = model.get_value(iter, 3)
-		self.enable_next(filename is not None)
+		self.enable_next(filename is not None, self.on_vdf_selected)
 	
 	
 	@staticmethod
@@ -263,11 +263,12 @@ class ImportVdf(object):
 		Basically enables 'Save' button if name is not empty string.
 		"""
 		txName			= self.builder.get_object("txName")
-		btSaveVdf		= self.builder.get_object("btSaveVdf")
 		lblASetsNotice	= self.builder.get_object("lblASetsNotice")
 		lblASetList		= self.builder.get_object("lblASetList")
 		
-		btSaveVdf.set_visible(True)
+		btNext = self.enable_next(True, self.vdf_import_confirmed)
+		btNext.set_label('Apply')
+		btNext.set_use_stock(True)
 		if len(self._profile.action_sets) > 1:
 			lblASetsNotice.set_visible(True)
 			lblASetList.set_visible(True)
@@ -280,6 +281,7 @@ class ImportVdf(object):
 		else:
 			lblASetsNotice.set_visible(False)
 			lblASetList.set_visible(False)	
+		btNext.set_sensitive(self.check_name(txName.get_text()))
 	
 	
 	def on_preload_finished(self, callback, *data):
@@ -318,13 +320,12 @@ class ImportVdf(object):
 		btDump.set_sensitive(False)
 	
 	
-	def on_grVdfImport_next(self, *a):
-		# Not an event handler, called from on_btNext_clicked
+	def on_vdf_selected(self, *a):
 		grVdfImportFinished = self.builder.get_object("grVdfImportFinished")
 		self.next_page(grVdfImportFinished)
 		
 		tvVdfProfiles = self.builder.get_object("tvVdfProfiles")
-		lblImportFinished = self.builder.get_object("lblImportFinished")
+		lblVdfImportFinished = self.builder.get_object("lblVdfImportFinished")
 		lblError = self.builder.get_object("lblError")
 		tvError = self.builder.get_object("tvError")
 		swError = self.builder.get_object("swError")
@@ -368,7 +369,7 @@ class ImportVdf(object):
 			lblError.set_visible(True)
 			btDump.set_sensitive(False)
 			
-			lblImportFinished.set_text(_("Import failed"))
+			lblVdfImportFinished.set_text(_("Import failed"))
 			
 			error_log.write("\nProfile filename: %s\n" % (filename,))
 			error_log.write("\nProfile dump:\n")
@@ -384,17 +385,17 @@ class ImportVdf(object):
 				swError.set_visible(True)
 				lblError.set_visible(True)
 				
-				lblImportFinished.set_text(_("Profile imported with warnings"))
+				lblVdfImportFinished.set_text(_("Profile imported with warnings"))
 				
 				tvError.get_buffer().set_text(error_log.getvalue())
 				txName.set_text(self._profile.name)
 			else:
-				lblImportFinished.set_text(_("Profile sucessfully imported"))
+				lblVdfImportFinished.set_text(_("Profile sucessfully imported"))
 				txName.set_text(self._profile.name)
 			self.on_txName_changed()
 	
 	
-	def on_btSaveVdf_clicked(self, *a):
+	def vdf_import_confirmed(self, *a):
 		name = self.builder.get_object("txName").get_text().strip()
 		
 		if len(self._profile.action_sets) > 1:
