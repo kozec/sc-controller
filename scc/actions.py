@@ -460,16 +460,20 @@ class AxisAction(Action):
 		return Action.MOD_DEADZONE
 	
 	
-	def _get_axis_description(self):
-		axis, neg, pos = "%s %s" % (self.id.name, _("Axis")), _("Negative"), _("Positive")
-		if self.id in AxisAction.AXIS_NAMES:
-			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.id] ]
-		return axis, neg, pos
+	@staticmethod
+	def get_axis_description(id):
+		if id in Axes:
+			axis, neg, pos = "%s %s" % (id.name, _("Axis")), _("Negative"), _("Positive")
+			if id in AxisAction.AXIS_NAMES:
+				axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[id] ]
+			return axis, neg, pos
+		else:
+			return _("Axis %s") % (id,), _("Negative"), _("Positive")
 	
 	
 	def describe(self, context):
 		if self.name: return self.name
-		axis, neg, pos = self._get_axis_description()
+		axis, neg, pos = AxisAction.get_axis_description(self.id)
 		if context == Action.AC_BUTTON:
 			for x in self.parameters:
 				if type(x) in (int, float):
@@ -539,7 +543,7 @@ class RAxisAction(AxisAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		axis, neg, pos = self._get_axis_description()
+		axis, neg, pos = AxisAction.get_axis_description(self.id)
 		if context in (Action.AC_STICK, Action.AC_PAD):
 			xy = "X" if self.parameters[0] in AxisAction.X else "Y"
 			return _("%s %s (reversed)") % (axis, xy)
@@ -554,7 +558,7 @@ class HatAction(AxisAction):
 	COMMAND = None
 	def describe(self, context):
 		if self.name: return self.name
-		axis, neg, pos = self._get_axis_description()
+		axis, neg, pos = AxisAction.get_axis_description(self.id)
 		if "up" in self.COMMAND or "left" in self.COMMAND:
 			return "%s %s" % (axis, neg)
 		else:
@@ -1077,7 +1081,7 @@ class GyroAction(Action):
 		for i in (0, 1, 2):
 			axis = self.axes[i]
 			# 'gyro' cannot map to mouse, but 'mouse' does that.
-			if axis in Axes:
+			if axis in Axes or type(axis) == int:
 				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i] * -10))
 				mapper.syn_list.add(mapper.gamepad)
 	
@@ -1090,18 +1094,9 @@ class GyroAction(Action):
 			return _("Mouse")
 		
 		for x in self.axes:
-			if x:
-				s = _(AxisAction.AXIS_NAMES[x][0])
-				if s not in rv:
-					rv.append(s)
+			s, trash, trash = AxisAction.get_axis_description(x)
+			if s not in rv: rv.append(s)
 		return "\n".join(rv)
-	
-	
-	def _get_axis_description(self):
-		axis, neg, pos = "%s %s" % (self.id.name, _("Axis")), _("Negative"), _("Positive")
-		if self.id in AxisAction.AXIS_NAMES:
-			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.id] ]
-		return axis, neg, pos
 
 
 class GyroAbsAction(HapticEnabledAction, GyroAction):
@@ -1157,7 +1152,7 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 		# print "% 12.0f, % 12.0f, % 12.5f" % (p,y,r)
 		for i in (0, 1, 2):
 			axis = self.axes[i]
-			if axis in Axes:
+			if axis in Axes or type(axis) == int:
 				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i]))
 				mapper.syn_list.add(mapper.gamepad)
 			elif axis == Rels.REL_X:
@@ -1359,7 +1354,10 @@ class ButtonAction(HapticEnabledAction, Action):
 			return _("Mouse %s") % (button,)
 		elif button is None: # or isinstance(button, NoAction):
 			return "None"
-		return button.name.split("_", 1)[-1]
+		elif button in Keys:
+			return button.name.split("_", 1)[-1]
+		else:
+			return _("Button %i") % (button,)
 	
 	
 	def describe_short(self):
