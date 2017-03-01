@@ -2053,7 +2053,8 @@ class XYAction(WholeHapticAction, Action):
 		if isinstance(self.x, AxisAction) and isinstance(self.y, AxisAction):
 			if (self.x.id, self.y.id) in AxisAction.AXES_PAIRS:
 				# Special cases for default stick bindings
-				return self.x.describe(context)
+				desc, trash, trash = AxisAction.get_axis_description(self.x.id)
+				return desc
 		if self.x: rv.append(self.x.describe(context))
 		if self.y: rv.append(self.y.describe(context))
 		if context in (Action.AC_STICK, Action.AC_PAD):
