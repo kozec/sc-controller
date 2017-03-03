@@ -8,10 +8,11 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
+from scc.actions import HatUpAction, HatDownAction, HatLeftAction,HatRightAction
 from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
 from scc.special_actions import MenuAction
 from scc.modifiers import NameModifier
-from scc.uinput import Keys
+from scc.uinput import Keys, Axes
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
 from scc.gui.binding_editor import BindingEditor
@@ -113,6 +114,14 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 			self.actions = [ NoAction() ] * 8
 			self.editor.set_action(a)
 			self.update_button_desc(a)
+		elif key == "actual_dpad":
+			# maps to dpad as real gamepad usually has
+			a = DPadAction(HatUpAction(Axes.ABS_HAT0Y),
+				HatDownAction(Axes.ABS_HAT0Y), HatLeftAction(Axes.ABS_HAT0X),
+				HatRightAction(Axes.ABS_HAT0X))
+			self.actions = [ NoAction() ] * 8
+			self.editor.set_action(a)
+			self.update_button_desc(a)
 		else:
 			# Menu
 			self.on_cbMenus_changed()
@@ -123,7 +132,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		cb = self.builder.get_object("cbActionType")
 		stActionData = self.builder.get_object("stActionData")
 		key = cb.get_model().get_value(cb.get_active_iter(), 1)
-		if key in ("dpad", "dpad8", "wsad", "arrows"):
+		if key in ("dpad", "dpad8", "wsad", "arrows", "actual_dpad"):
 			for i in self.DPAD8_WIDGETS:
 				self.builder.get_object(i).set_visible(key == "dpad8")
 			stActionData.set_visible_child(self.builder.get_object("grDPAD"))
@@ -134,6 +143,12 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	
 	def on_action_chosen(self, i, action, mark_changed=True):
 		self.actions[i] = action
+		cb = self.builder.get_object("cbActionType")
+		key = cb.get_model().get_value(cb.get_active_iter(), 1)
+		if key != "dpad8":
+			# When user chooses WSAD, Arrows or DPAD emulation and then changes
+			# one of actions, swap back to 'Simple DPAD' mode.
+			self.set_cb(cb, "dpad", 1)
 		#if action.name:
 		#	action = NameModifier(action.name, action)
 		self.set_button_desc(i)

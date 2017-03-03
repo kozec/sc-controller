@@ -56,9 +56,13 @@
         <col id="0" translatable="yes">WSAD (DPAD)</col>
         <col id="1">wsad</col>
       </row>
-      <row>
+	  <row>
         <col id="0" translatable="yes">Arrows (DPAD)</col>
         <col id="1">arrows</col>
+      </row>
+	  <row>
+        <col id="0" translatable="yes">Emulated DPAD</col>
+        <col id="1">actual_dpad</col>
       </row>
       <row>
         <col id="0" translatable="yes">Menu</col>

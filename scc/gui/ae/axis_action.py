@@ -101,8 +101,6 @@ class AxisActionComponent(AEComponent, TimerManager):
 					self.set_cb(cb, "lstick", 2)
 				elif p[0] == Axes.ABS_RX and p[1] == Axes.ABS_RY:
 					self.set_cb(cb, "rstick", 2)
-				elif p[0] == Axes.ABS_HAT0X and p[1] == Axes.ABS_HAT0Y:
-					self.set_cb(cb, "dpad", 2)
 				elif p[0] == Rels.REL_HWHEEL and p[1] == Rels.REL_WHEEL:
 					self.set_cb(cb, "wheel", 2)
 			else:

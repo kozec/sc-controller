@@ -147,11 +147,6 @@
         <col id="2">rstick</col>
       </row>
       <row>
-        <col id="0">XY( axis(Axes.ABS_HAT0X), raxis(Axes.ABS_HAT0Y) )</col>
-        <col id="1" translatable="yes">DPad</col>
-        <col id="2">dpad</col>
-      </row>
-      <row>
         <col id="0">ball(XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) ))</col>
         <col id="1" translatable="yes">Mouse Wheel</col>
         <col id="2">wheel_pad</col>
