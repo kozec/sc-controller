@@ -1244,7 +1244,7 @@ class CircularModifier(Modifier, WholeHapticAction):
 	
 	def encode(self):
 		rv = Modifier.encode(self)
-		rv[CircularModifier.COMMAND] = {}
+		rv[CircularModifier.COMMAND] = True
 		return rv
 	
 	

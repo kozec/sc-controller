@@ -218,6 +218,18 @@ Example:
 	},
 
 
+#### `circle`
+Designed to controls scroll wheel by scrolling finger around pad, but can
+be used with any axis.
+
+Example:
+
+	"pad_left": {
+	  "action": "mouse()",
+	  "ball": [ 10.0 ]
+	},
+
+
 #### `modes`
 Defines mode shifting (see [mode modifier](actions.md#mode)).
 

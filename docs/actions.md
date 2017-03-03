@@ -90,11 +90,6 @@ ring works more like defining two actions on same pad with non-overlapping
 deadzones.
 
 
-#### <a name="circular"></a> circular(axis)
-Controls scroll wheel by scrolling finger around pad.
-Axis should be Rels.REL_WHEEL or Rels.REL_HWHEEL.
-
-
 #### <a name="area"></a> area(x1, y1, x2, y2), <a name="winarea"></a> winarea(x1, y1, x2, y2)
 Creates 1:1 mapping between finger position on pad and mouse position in
 specified screen area. Coordinates are in pixels with (0,0) on top,left corner.
@@ -299,6 +294,15 @@ should mouse travell between two feedback ticks.
 Enables trackball mode. Moving finger over pad will keep repeating same action
 with decreasing speed, based on set mass and friction, until virtual
 'spinning ball' stops moving.
+
+
+#### <a name="circular"></a> circular(action)
+Designed to controls scroll wheel by scrolling finger around pad.
+Can be used with any axis. For example,
+
+`circular(axis(Axes.ABS_X))`
+
+turns touchpad into small raing wheel.
 
 
 #### <a name="deadzone"></a> deadzone([mode,] lower, [upper, ] action)
