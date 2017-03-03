@@ -218,7 +218,7 @@ Example:
 	},
 
 
-#### `circle`
+#### `circular`
 Designed to controls scroll wheel by scrolling finger around pad, but can
 be used with any axis.
 

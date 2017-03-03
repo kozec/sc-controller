@@ -368,6 +368,7 @@ class HapticEnabledAction(object):
 	
 	
 	def set_haptic(self, hd):
+		print "SH", self, hd
 		self.haptic = hd
 	
 	

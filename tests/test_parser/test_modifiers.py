@@ -35,6 +35,14 @@ class TestModifiers(object):
 		assert isinstance(a, ClickModifier)
 	
 	
+	def test_circular(self):
+		"""
+		Tests if CircularModifier is parsed
+		"""
+		assert isinstance(_parse_compressed("circular(axis(ABS_X))"), CircularModifier)
+		assert isinstance(_parse_compressed("circular(axis(REL_WHEEL))"), CircularModifier)
+	
+	
 	def test_ball(self):
 		"""
 		Tests if BallModifier is parsed

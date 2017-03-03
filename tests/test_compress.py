@@ -51,7 +51,8 @@ CASES = {
 		'feedback' : ('BOTH',)
 	},
 	'circular' : {
-		'action' : 'circular(REL_HWHEEL)',
+		'action' : 'mouse(REL_HWHEEL)',
+		'circular' : True,
 		'sensitivity' : (2.0,),
 		'feedback' : ('BOTH',)
 	},

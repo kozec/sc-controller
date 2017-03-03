@@ -56,6 +56,17 @@ class TestModifiers(object):
 		assert _is_axis_with_value(a.action)
 	
 	
+	def test_circular(self):
+		"""
+		Tests if CircularModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'action' : "axis(ABS_X)",
+			'circular' : True
+		})
+		assert isinstance(a, CircularModifier)
+	
+	
 	def test_ball(self):
 		"""
 		Tests if BallModifier is parsed correctly from json.

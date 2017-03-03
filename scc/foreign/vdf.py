@@ -4,9 +4,9 @@ Imports VDF profile and converts it to Profile object.
 """
 from scc.uinput import Keys, Axes, Rels
 from scc.actions import Action, NoAction, ButtonAction, DPadAction, XYAction
-from scc.actions import HatUpAction, HatDownAction, HatLeftAction, HatRightAction
-from scc.actions import TriggerAction, CircularAction, MouseAction, AxisAction
-from scc.actions import RelAreaAction, MultiAction
+from scc.actions import HatRightAction, TriggerAction, MouseAction
+from scc.actions import HatUpAction, HatDownAction, HatLeftAction
+from scc.actions import AxisAction, RelAreaAction, MultiAction
 from scc.special_actions import ChangeProfileAction, GridMenuAction, MenuAction
 from scc.modifiers import SensitivityModifier, ClickModifier, FeedbackModifier
 from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK, YAW, ROLL

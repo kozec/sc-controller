@@ -88,13 +88,6 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'mouseabs()' })._mouse_axis is None
 	
 	
-	def test_circular(self):
-		"""
-		Tests if CircularAction is parsed correctly from json.
-		"""
-		assert parser.from_json_data({ 'action' : 'circular(REL_WHEEL)' })._mouse_axis == Rels.REL_WHEEL
-	
-	
 	def test_area(self):
 		"""
 		Tests if AreaAction are parsed correctly from json.

@@ -985,13 +985,13 @@ class SensitivityModifier(Modifier):
 	Sets action sensitivity, if action supports it.
 	Action that supports such setting has set_speed(x, y, z)
 	and get_speed() methods defined.
-
+	
 	Does nothing otherwise.
 	"""
 	COMMAND = "sens"
 	PROFILE_KEYS = ("sensitivity",)
 	PROFILE_KEY_PRIORITY = -5
-
+	
 	def _mod_init(self, *speeds):
 		self.speeds = []
 		for s in speeds:
@@ -1000,18 +1000,23 @@ class SensitivityModifier(Modifier):
 		while len(self.speeds) < 3:
 			self.speeds.append(1.0)
 		if self.action:
-			if hasattr(self.action, "set_speed"):
-				self.action.set_speed(*self.speeds)
-			elif hasattr(self.action.strip(), "set_speed"):
-				self.action.strip().set_speed(*self.speeds)
-
-
+			a = self.action
+			while a:
+				if hasattr(a, "set_speed"):
+					a.set_speed(*self.speeds)
+					break
+				if hasattr(a, "action"):
+					a = a.action
+				else:
+					break
+	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
 		rv[SensitivityModifier.PROFILE_KEYS[0]] = self.speeds
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		if a:
@@ -1020,28 +1025,28 @@ class SensitivityModifier(Modifier):
 			return SensitivityModifier(*args)
 		# Adding sensitivity to NoAction makes no sense
 		return a
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		return self.action.compress()
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		speeds = [] + self.speeds
 		while speeds[-1] == 1.0:
 			speeds = speeds[0:-1]
 		return self._mod_to_string(speeds, multiline, pad)
-
-
+	
+	
 	def __str__(self):
 		return "<Sensitivity=%s, %s>" % (self.speeds, self.action)
 
@@ -1060,12 +1065,17 @@ class FeedbackModifier(Modifier):
 	def _mod_init(self, position, amplitude=512, frequency=4, period=1024, count=1):
 		self.haptic = HapticData(position, amplitude, frequency, period, count)
 		if self.action:
-			if hasattr(self.action, "set_haptic"):
-				self.action.set_haptic(self.haptic)
-			elif hasattr(self.action.strip(), "set_haptic"):
-				self.action.strip().set_haptic(self.haptic)
-
-
+			a = self.action
+			while a:
+				if hasattr(a, "set_haptic"):
+					a.set_haptic(self.haptic)
+					break
+				if hasattr(a, "action"):
+					a = a.action
+				else:
+					break
+	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
 		pars = self.strip_defaults()
@@ -1227,7 +1237,7 @@ class CircularModifier(Modifier, WholeHapticAction):
 	Can also be used to translate same thing into movement of Axis.
 	"""
 	COMMAND = "circular"
-	PROFILE_KEY_PRIORITY = -4
+	PROFILE_KEY_PRIORITY = -6
 	
 	def __init__(self, *params):
 		# Piece of backwards compatibility
@@ -1263,7 +1273,7 @@ class CircularModifier(Modifier, WholeHapticAction):
 	
 	
 	def get_speed(self):
-		return self.speed
+		return (self.speed,)
 	
 	
 	def get_compatible_modifiers(self):
