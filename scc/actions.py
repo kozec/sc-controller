@@ -288,13 +288,21 @@ class Action(object):
 		log.warn("Action %s can't handle whole stick event", self.__class__.__name__)
 	
 	
-	def change(self, mapper, dx, dy):
+	def add(self, mapper, dx, dy):
 		"""
 		Called from BallModifier while virtual "ball" is rolling.
 		
 		Passed to 'whole' by default.
 		"""
 		self.whole(mapper, dx, dy, None)
+	
+	
+	def change(self, mapper, dx, dy):
+		"""
+		Called from CircularModifier to indicate incremental (or decremental)
+		change in value.
+		"""
+		log.warn("Action %s can't handle incremental changes", self.__class__.__name__)
 	
 	
 	def strip_defaults(self):
@@ -422,6 +430,8 @@ class AxisAction(Action):
 		Axes.ABS_HAT0Y : ("DPAD", "Up", "Down"),
 		Axes.ABS_Z  : ("Left Trigger", "Press", "Press"),
 		Axes.ABS_RZ : ("Right Trigger", "Press", "Press"),
+		Rels.REL_WHEEL : ("Mouse Wheel", "Up", "Down"),
+		Rels.REL_HWHEEL : ("Horizontal Wheel", "Left", "Right"),
 	}
 	AXES_PAIRS = [
 		(Axes.ABS_X, Axes.ABS_Y),
@@ -461,14 +471,28 @@ class AxisAction(Action):
 	
 	
 	@staticmethod
-	def get_axis_description(id):
-		if id in Axes:
+	def get_axis_description(id, xy=False):
+		"""
+		Returns (axis_description, 'Negative', 'Positive'), where all strings
+		are localized and Negative/Positive may be switched over depending on
+		axis.
+		"""
+		if id in Axes or id in Rels:
 			axis, neg, pos = "%s %s" % (id.name, _("Axis")), _("Negative"), _("Positive")
 			if id in AxisAction.AXIS_NAMES:
 				axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[id] ]
+			if xy:
+				if id.name.endswith("X"): axis = _("%s X") % (axis,)
+				if id.name.endswith("Y"): axis = _("%s Y") % (axis,)
 			return axis, neg, pos
+		elif hasattr(id, "name"):
+			return _("Axis %s") % (id.name,), _("Negative"), _("Positive")
 		else:
 			return _("Axis %s") % (id,), _("Negative"), _("Positive")
+	
+	
+	def get_axis(self):
+		return self.id
 	
 	
 	def describe(self, context):
@@ -521,6 +545,12 @@ class AxisAction(Action):
 	
 	
 	def change(self, mapper, dx, dy):
+		""" Called from CircularModifier """
+		self._old_pos = clamp(-STICK_PAD_MAX, (self._old_pos or 0) + dx, STICK_PAD_MAX)
+		self.axis(mapper, self._old_pos, None)
+	
+	
+	def add(self, mapper, dx, dy):
 		""" Called from BallModifier """
 		self.axis(mapper, clamp(STICK_PAD_MIN, dx, STICK_PAD_MAX), None)
 	
@@ -611,6 +641,10 @@ class WholeHapticAction(HapticEnabledAction):
 			mapper.send_feedback(self.haptic)	
 	
 	
+	def add(self, mapper, dx, dy):
+		self.change(mapper, dx, dy)
+	
+	
 	def reset_wholehaptic(self):
 		self._ax = self._ay = 0.0
 
@@ -698,6 +732,10 @@ class MouseAction(WholeHapticAction, Action):
 	
 	
 	def change(self, mapper, dx, dy):
+		self.add(mapper, dx, dy)
+	
+	
+	def add(self, mapper, dx, dy):
 		""" Called from BallModifier """
 		if self.haptic:
 			WholeHapticAction.change(self, mapper, dx, dy)
@@ -806,78 +844,6 @@ class MouseAbsAction(Action):
 		dx = dx * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
 		dy = dy * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
 		mapper.mouse.moveEvent(dx, dy)
-
-
-class CircularAction(WholeHapticAction, Action):
-	"""
-	Designed to translate rotating finger over pad to mouse wheel movement.
-	"""
-	COMMAND = "circular"
-	
-	def __init__(self, axis):
-		Action.__init__(self, axis)
-		WholeHapticAction.__init__(self)
-		self._mouse_axis = axis
-		self.speed = 1.0
-		self.angle = None		# Last known finger position
-	
-	
-	def set_speed(self, x, y, z):
-		self.speed = x
-	
-	
-	def get_speed(self):
-		return (self.speed,)
-	
-	
-	def describe(self, context):
-		if self.name: return self.name
-		if self._mouse_axis == Rels.REL_WHEEL:
-			return _("Circular Wheel")
-		elif self._mouse_axis == Rels.REL_HWHEEL:
-			return _("Circular Horizontal Wheel")
-		return _("Circular Mouse %s") % (self._mouse_axis.name.split("_", 1)[-1],)
-	
-	
-	def whole(self, mapper, x, y, what):
-		distance = sqrt(x*x + y*y)
-		if distance < STICK_PAD_MAX_HALF:
-			# Finger lifted or too close to middle
-			self.angle = None
-			self.travelled = 0
-		else:
-			# Compute current angle
-			angle = atan2(x, y)
-			# Compute movement
-			if self.angle is None:
-				# Finger just touched the pad
-				self.angle, angle = angle, 0
-			else:
-				self.angle, angle = angle, self.angle - angle
-				# Ensure we don't wrap from pi to -pi creating a large delta
-				if angle > PI:
-					# Subtract a full rotation to counter the wrapping
-					angle -= 2 * PI
-				# And same from -pi to pi
-				elif angle < -PI:
-					# Add a full rotation to counter the wrapping
-					angle += 2 * PI
-				if self.haptic:
-					WholeHapticAction.change(self, mapper, angle * 10000, 0)
-			# Apply bulgarian constant
-			angle *= 10000.0
-			# Apply movement on axis
-			if self._mouse_axis == Rels.REL_X:
-				mapper.mouse.moveEvent(0, angle * self.speed)
-			elif self._mouse_axis == Rels.REL_Y:
-				mapper.mouse.moveEvent(1, angle * self.speed)
-			elif self._mouse_axis == Rels.REL_HWHEEL:
-				mapper.mouse.scrollEvent(0, angle * self.speed)
-			elif self._mouse_axis == Rels.REL_WHEEL:
-				mapper.mouse.scrollEvent(1, angle * self.speed)
-			else:
-				log.warning("Invalid axis for circular: %s", self._mouse_axis)
-			mapper.force_event.add(FE_PAD)
 
 
 class AreaAction(Action, SpecialAction, OSDEnabledAction):
@@ -1930,8 +1896,8 @@ class XYAction(WholeHapticAction, Action):
 		self.actions = (self.x, self.y)
 		self._old_distance = 0
 		self._old_pos = None
-		if hasattr(self.x, "change") or hasattr(self.y, "change"):
-			self.change = self._change
+		if hasattr(self.x, "add") or hasattr(self.y, "add"):
+			self.add = self._add
 	
 	
 	def get_compatible_modifiers(self):
@@ -2005,16 +1971,16 @@ class XYAction(WholeHapticAction, Action):
 		return self.x.get_previewable() and self.y.get_previewable()
 	
 	
-	def _change(self, mapper, x, y):
+	def _add(self, mapper, x, y):
 		""" Not always available """
 		if self.haptic:
-			WholeHapticAction.change(self, mapper, x, y)
-		if hasattr(self.x, "change"):
-			self.x.change(mapper, x, 0)
-		if hasattr(self.y, "change"):
-			self.y.change(mapper, -y, 0)
+			WholeHapticAction.add(self, mapper, x, y)
+		if hasattr(self.x, "add"):
+			self.x.add(mapper, x, 0)
+		if hasattr(self.y, "add"):
+			self.y.add(mapper, -y, 0)
 		if self.haptic:
-			WholeHapticAction.change(self, mapper, x, y)
+			WholeHapticAction.add(self, mapper, x, y)
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -2023,7 +1989,7 @@ class XYAction(WholeHapticAction, Action):
 			is_close = distance > STICK_PAD_MAX * 2 / 3
 			was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
 			if self._old_pos:
-				WholeHapticAction.change(self, mapper,
+				WholeHapticAction.add(self, mapper,
 					x - self._old_pos[0], y - self._old_pos[1])
 			if is_close != was_close:
 				mapper.send_feedback(self.big_click)

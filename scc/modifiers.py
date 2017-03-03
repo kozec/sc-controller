@@ -10,9 +10,9 @@ from __future__ import unicode_literals
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction
 from scc.actions import NoAction, WholeHapticAction
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, TRIGGER_MAX
-from scc.constants import LEFT, RIGHT, STICK, SCButtons, HapticPos
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
+from scc.constants import TRIGGER_MAX, LEFT, RIGHT, STICK, FE_STICK, FE_TRIGGER
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
+from scc.constants import FE_PAD, SCButtons, HapticPos
 from scc.constants import CUT, ROUND, LINEAR
 from scc.controller import HapticData
 from scc.tools import nameof, clamp
@@ -256,24 +256,24 @@ class ClickModifier(Modifier):
 class BallModifier(Modifier, WholeHapticAction):
 	"""
 	Emulates ball-like movement with inertia and friction.
-
+	
 	Reacts only to "whole" or "axis" inputs and sends generated movements as
-	"change" input to child action.
-	Target action has to have change(x, y) method defined.
-
+	"add" input to child action.
+	Target action has to have add(x, y) method defined.
+	
 	"""
 	COMMAND = "ball"
 	PROFILE_KEY_PRIORITY = -6
 	HAPTIC_FACTOR = 60.0	# Just magic number
-
+	
 	DEFAULT_FRICTION = 10.0
 	DEFAULT_MEAN_LEN = 10
-
+	
 	def __init__(self, *params):
 		Modifier.__init__(self, *params)
 		WholeHapticAction.__init__(self)
-
-
+	
+	
 	def _mod_init(self, friction=DEFAULT_FRICTION, mass=80.0,
 			mean_len=DEFAULT_MEAN_LEN, r=0.02, ampli=65536, degree=40.0):
 		self.speed = (1.0, 1.0)
@@ -291,34 +291,34 @@ class BallModifier(Modifier, WholeHapticAction):
 		self._yvel_dq = deque(maxlen=mean_len)
 		self._lastTime = time.time()
 		self._old_pos = None
-
-
+	
+	
 	def set_speed(self, x, y, *a):
 		self.speed = (x, y)
-
-
+	
+	
 	def get_speed(self):
 		return self.speed
-
-
+	
+	
 	def get_compatible_modifiers(self):
 		return ( Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK
 			| Action.MOD_SMOOTH | Action.MOD_DEADZONE
 			| Modifier.get_compatible_modifiers(self) )
-
-
+	
+	
 	def _stop(self):
 		""" Stops rolling of the 'ball' """
 		self._xvel_dq.clear()
 		self._yvel_dq.clear()
-
-
+	
+	
 	def _add(self, dx, dy):
 		# Compute time step
 		_tmp = time.time()
 		dt = _tmp - self._lastTime
 		self._lastTime = _tmp
-
+		
 		# Compute instant velocity
 		try:
 			self._xvel = sum(self._xvel_dq) / len(self._xvel_dq)
@@ -326,21 +326,21 @@ class BallModifier(Modifier, WholeHapticAction):
 		except ZeroDivisionError:
 			self._xvel = 0.0
 			self._yvel = 0.0
-
+		
 		self._xvel_dq.append(dx * self._radscale / dt)
 		self._yvel_dq.append(dy * self._radscale / dt)
-
-
+	
+	
 	def _roll(self, mapper):
 		# Compute time step
 		_tmp = time.time()
 		dt = _tmp - self._lastTime
 		self._lastTime = _tmp
-
+		
 		# Free movement update velocity and compute movement
 		self._xvel_dq.clear()
 		self._yvel_dq.clear()
-
+		
 		_hyp = sqrt((self._xvel**2) + (self._yvel**2))
 		if _hyp != 0.0:
 			_ax = self._a * (abs(self._xvel) / _hyp)
@@ -348,36 +348,36 @@ class BallModifier(Modifier, WholeHapticAction):
 		else:
 			_ax = self._a
 			_ay = self._a
-
+		
 		# Cap friction desceleration
 		_dvx = min(abs(self._xvel), _ax * dt)
 		_dvy = min(abs(self._yvel), _ay * dt)
-
+		
 		# compute new velocity
 		_xvel = self._xvel - copysign(_dvx, self._xvel)
 		_yvel = self._yvel - copysign(_dvy, self._yvel)
-
+		
 		# compute displacement
 		dx = (((_xvel + self._xvel) / 2) * dt) / self._radscale
 		dy = (((_yvel + self._yvel) / 2) * dt) / self._radscale
-
+		
 		self._xvel = _xvel
 		self._yvel = _yvel
-
+		
 		if dx or dy:
-			self.action.change(mapper, dx * self.speed[0], dy * self.speed[1])
+			self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])
 			if self.haptic:
-				WholeHapticAction.change(self, mapper, dx, dy)
+				WholeHapticAction.add(self, mapper, dx, dy)
 			mapper.schedule(0, self._roll)
-
-
+	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
 		pars = self.strip_defaults()
 		rv[BallModifier.COMMAND] = pars
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		if data[BallModifier.COMMAND] is True:
@@ -387,8 +387,8 @@ class BallModifier(Modifier, WholeHapticAction):
 			args = list(data[BallModifier.COMMAND])
 			args.append(a)
 			return BallModifier(*args)
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		# Special cases just to make GUI look pretty
@@ -405,38 +405,38 @@ class BallModifier(Modifier, WholeHapticAction):
 				x, y = self.action.x.parameters[0], self.action.y.parameters[0]
 				if x in (Rels.REL_HWHEEL, Rels.REL_WHEEL) and y in (Rels.REL_HWHEEL, Rels.REL_WHEEL):
 					return _("Mouse Wheel")
-
+		
 		return _("Ball(%s)") % (self.action.describe(context))
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return self._mod_to_string(self.strip_defaults(), multiline, pad)
-
-
+	
+	
 	def pad(self, mapper, position, what):
 		self.whole(mapper, position, 0, what)
-
-
+	
+	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
 				dx, dy = x - self._old_pos[0], self._old_pos[1] - y
 				self._add(dx, dy)
-				self.action.change(mapper, dx * self.speed[0], dy * self.speed[1])
+				self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])
 			else:
 				self._stop()
 			self._old_pos = x, y
 		elif mapper.was_touched(what):
 			self._roll(mapper)
-
-
+	
+	
 	def set_haptic(self, hd):
 		if self.action and hasattr(self.action, "set_haptic"):
 			self.action.set_haptic(hd)
 		else:
 			WholeHapticAction.set_haptic(self, hd)
-
-
+	
+	
 	def get_haptic(self):
 		if self.action and hasattr(self.action, "get_haptic"):
 			return self.action.get_haptic()
@@ -446,7 +446,7 @@ class BallModifier(Modifier, WholeHapticAction):
 
 class DeadzoneModifier(Modifier):
 	COMMAND = "deadzone"
-
+	
 	def _mod_init(self, *params):
 		if len(params) < 1: raise TypeError("Not enough parameters")
 		if type(params[0]) in (str, unicode):
@@ -461,11 +461,11 @@ class DeadzoneModifier(Modifier):
 			# 'cut' mode is default
 			self.mode = CUT
 			self._convert = self.mode_CUT
-
+		
 		self.lower = int(params[0])
 		self.upper = int(params[1]) if len(params) == 2 else STICK_PAD_MAX
-
-
+	
+	
 	def mode_CUT(self, x, y, range):
 		"""
 		If input value is out of deadzone range, output value is zero
@@ -477,8 +477,8 @@ class DeadzoneModifier(Modifier):
 		if distance < self.lower or distance > self.upper:
 			return 0, 0
 		return x, y
-
-
+	
+	
 	def mode_ROUND(self, x, y, range):
 		"""
 		If input value bellow deadzone range, output value is zero
@@ -497,8 +497,8 @@ class DeadzoneModifier(Modifier):
 			angle = atan2(x, y)
 			return range * sin(angle), range * cos(angle)
 		return x, y
-
-
+	
+	
 	def mode_LINEAR(self, x, y, range):
 		"""
 		Input value is scaled, so entire output range is covered by
@@ -515,11 +515,11 @@ class DeadzoneModifier(Modifier):
 			), 0
 		distance = clamp(self.lower, sqrt(x*x + y*y), self.upper)
 		distance = (distance - self.lower) / (self.upper - self.lower) * range
-
+		
 		angle = atan2(x, y)
 		return distance * sin(angle), distance * cos(angle)
-
-
+	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
 		rv[DeadzoneModifier.COMMAND] = dict(
@@ -528,8 +528,8 @@ class DeadzoneModifier(Modifier):
 			mode = self.mode
 		)
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return DeadzoneModifier(
@@ -538,26 +538,26 @@ class DeadzoneModifier(Modifier):
 			data["deadzone"]["upper"] if "upper" in data["deadzone"] else STICK_PAD_MAX,
 			a
 		)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def __str__(self):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
-
+	
 	__repr__ = __str__
-
-
+	
+	
 	def describe(self, context):
 		dsc = self.action.describe(context)
 		if "\n" in dsc:
 			return "%s\n(with deadzone)" % (dsc,)
 		else:
 			return "%s (with deadzone)" % (dsc,)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		params = []
 		if self.mode != CUT:
@@ -566,31 +566,31 @@ class DeadzoneModifier(Modifier):
 		if self.upper != STICK_PAD_MAX:
 			params.append(str(self.upper))
 		params.append(self.action.to_string(multiline))
-
+	
 		return "deadzone(%s)" % ( ", ".join(params), )
-
-
+	
+	
 	def trigger(self, mapper, position, old_position):
 		position = self._convert(position, None, TRIGGER_MAX)
 		return self.action.trigger(mapper, position, old_position)
-
-
+	
+	
 	def axis(self, mapper, position, what):
 		position = self._convert(position, None, STICK_PAD_MAX)
 		return self.action.axis(mapper, position, what)
-
-
+	
+	
 	def pad(self, mapper, position, what):
 		position = self._convert(position, None, STICK_PAD_MAX)
 		return self.action.pad(mapper, position, what)
-
-
+	
+	
 	def whole(self, mapper, x, y, what):
 		ox, oy = x, y
 		x, y = self._convert(x, y, STICK_PAD_MAX)
 		return self.action.whole(mapper, x, y, what)
-
-
+	
+	
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
 		q2 = self._convert(q2, STICK_PAD_MAX)
 		q3 = self._convert(q3, STICK_PAD_MAX)
@@ -1219,3 +1219,85 @@ class SmoothModifier(Modifier):
 			x, y = self._get_pos()
 			self.action.whole(mapper, x, y, what)
 			self._last_pos = 0
+
+
+class CircularModifier(Modifier, WholeHapticAction):
+	"""
+	Designed to translate rotating finger over pad to mouse wheel movement.
+	Can also be used to translate same thing into movement of Axis.
+	"""
+	COMMAND = "circular"
+	PROFILE_KEY_PRIORITY = -4
+	
+	def __init__(self, *params):
+		# Piece of backwards compatibility
+		if len(params) >= 1 and params[0] in Rels:
+			params = [ MouseAction(params[0]) ]
+		Modifier.__init__(self, *params)
+		WholeHapticAction.__init__(self)
+	
+	
+	def _mod_init(self):
+		self.angle = None		# Last known finger position
+		self.speed = 1.0
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[CircularModifier.COMMAND] = {}
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return CircularModifier(a)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Circular %s") % (self.action.describe(context))
+	
+	
+	def set_speed(self, x, *a):
+		self.speed = x
+	
+	
+	def get_speed(self):
+		return self.speed
+	
+	
+	def get_compatible_modifiers(self):
+		return ( Action.MOD_FEEDBACK | Action.MOD_SENSITIVITY
+			| Modifier.get_compatible_modifiers(self) )
+	
+	
+	def whole(self, mapper, x, y, what):
+		distance = sqrt(x*x + y*y)
+		if distance < STICK_PAD_MAX_HALF:
+			# Finger lifted or too close to middle
+			self.angle = None
+			self.travelled = 0
+		else:
+			# Compute current angle
+			angle = atan2(x, y)
+			# Compute movement
+			if self.angle is None:
+				# Finger just touched the pad
+				self.angle, angle = angle, 0
+			else:
+				self.angle, angle = angle, self.angle - angle
+				# Ensure we don't wrap from pi to -pi creating a large delta
+				if angle > PI:
+					# Subtract a full rotation to counter the wrapping
+					angle -= 2 * PI
+				# And same from -pi to pi
+				elif angle < -PI:
+					# Add a full rotation to counter the wrapping
+					angle += 2 * PI
+				if self.haptic:
+					WholeHapticAction.change(self, mapper, angle * 10000, 0)
+			# Apply bulgarian constant
+			angle *= 10000.0
+			# Apply movement to child action
+			self.action.change(mapper, -angle * self.speed, 0)
+			mapper.force_event.add(FE_PAD)

@@ -10,9 +10,9 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GdkX11, GLib
 from ctypes import c_void_p, byref, cast, c_ulong, POINTER
 from scc.actions import Action, NoAction, AxisAction, MouseAction, XYAction
-from scc.actions import AreaAction, WinAreaAction, RelAreaAction, RelWinAreaAction
-from scc.actions import ButtonAction, CircularAction
-from scc.modifiers import BallModifier
+from scc.actions import AreaAction, WinAreaAction, RelAreaAction
+from scc.actions import RelWinAreaAction, ButtonAction
+from scc.modifiers import BallModifier, CircularModifier
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import SCButtons
@@ -20,6 +20,7 @@ from scc.lib import xwrappers as X
 from scc.osd.timermanager import TimerManager
 from scc.osd.area import Area
 from scc.gui.parser import GuiActionParser, InvalidAction
+from scc.gui.simple_chooser import SimpleChooser
 from scc.gui.controller_widget import STICKS
 from scc.gui.ae import AEComponent
 
@@ -42,6 +43,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self.relative_area = False
 		self.osd_area_instance = None
 		self.on_wayland = False
+		self.circular = MouseAction(Rels.REL_WHEEL)
 		self.parser = GuiActionParser()
 	
 	
@@ -89,8 +91,8 @@ class AxisActionComponent(AEComponent, TimerManager):
 				self.set_cb(cb, "trackpad", 2)
 			elif isinstance(action, BallModifier):
 				self.load_trackball_action(action)
-			elif isinstance(action, CircularAction):
-				self.set_cb(cb, "circular", 2)
+			elif isinstance(action, CircularModifier):
+				self.load_circular_action(action)
 			elif isinstance(action, XYAction):
 				p = [ None, None ]
 				for x in (0, 1):
@@ -124,20 +126,28 @@ class AxisActionComponent(AEComponent, TimerManager):
 			self.cancel_timer("area")
 	
 	
+	def load_circular_action(self, action):
+		self.circular = action.action
+		cbAxisOutput = self.builder.get_object("cbAxisOutput")
+		btCircularAxis = self.builder.get_object("btCircularAxis")
+		btCircularAxis.set_label(self.circular.describe(Action.AC_PAD))
+		self.set_cb(cbAxisOutput, "circular", 2)
+	
+	
 	def load_trackball_action(self, action):
-		cbTrackpadType = self.builder.get_object("cbTrackpadType")
+		cbTracballOutput = self.builder.get_object("cbTracballOutput")
 		cbAxisOutput = self.builder.get_object("cbAxisOutput")
 		sclFriction = self.builder.get_object("sclFriction")
 		self._recursing = True
 		if isinstance(action.action, MouseAction):
-			self.set_cb(cbTrackpadType, "mouse", 1)
+			self.set_cb(cbTracballOutput, "mouse", 1)
 			self.set_cb(cbAxisOutput, "trackball", 2)
 		elif isinstance(action.action, XYAction):
 			if isinstance(action.action.x, AxisAction):
 				if action.action.x.parameters[0] == Axes.ABS_X:
-					self.set_cb(cbTrackpadType, "left", 1)
+					self.set_cb(cbTracballOutput, "left", 1)
 				else:
-					self.set_cb(cbTrackpadType, "right", 1)
+					self.set_cb(cbTracballOutput, "right", 1)
 				self.set_cb(cbAxisOutput, "trackball", 2)
 			elif isinstance(action.action.x, MouseAction):
 				self.set_cb(cbAxisOutput, "wheel", 2)
@@ -189,6 +199,19 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self._recursing = False
 	
 	
+	def on_btCircularAxis_clicked(self, *a):
+		def cb(action):
+			self.circular = action
+			btCircularAxis = self.builder.get_object("btCircularAxis")
+			btCircularAxis.set_label(action.describe(Action.AC_PAD))
+			self.editor.set_action(self.make_circular_action())
+		
+		b = SimpleChooser(self.app, "axis", cb)
+		b.set_title(_("Select Axis"))
+		b.display_action(Action.AC_STICK, self.circular)
+		b.show(self.editor.window)
+	
+	
 	def on_cbAreaOSDEnabled_toggled(self, *a):
 		self.editor.builder.get_object("cbOSD").set_active(
 			self.builder.get_object("cbAreaOSDEnabled").get_active())
@@ -231,15 +254,22 @@ class AxisActionComponent(AEComponent, TimerManager):
 		"""
 		sclFriction = self.builder.get_object("sclFriction")
 		
-		cbTrackpadType = self.builder.get_object("cbTrackpadType")
-		a_str = cbTrackpadType.get_model().get_value(cbTrackpadType.get_active_iter(), 2)
+		cbTracballOutput = self.builder.get_object("cbTracballOutput")
+		a_str = cbTracballOutput.get_model().get_value(cbTracballOutput.get_active_iter(), 2)
 		a = self.parser.restart(a_str).parse()
 		if sclFriction.get_value() <= 0:
 			friction = 0
 		else:
 			friction = ((10.0**sclFriction.get_value())/1000.0)
 		return BallModifier(round(friction, 3), a)
-
+	
+	
+	def make_circular_action(self):
+		"""
+		Constructs Circular Modifier
+		"""
+		return CircularModifier(self.circular)
+	
 	
 	def make_area_action(self):
 		"""
@@ -290,7 +320,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 	
 	
 	def handles(self, mode, action):
-		if isinstance(action, (NoAction, MouseAction, CircularAction,
+		if isinstance(action, (NoAction, MouseAction, CircularModifier,
 					InvalidAction, AreaAction)):
 			return True
 		if isinstance(action, BallModifier):
@@ -375,6 +405,9 @@ class AxisActionComponent(AEComponent, TimerManager):
 			stActionData.set_visible_child(self.builder.get_object("grArea"))
 			action = self.make_area_action()
 			self.update_osd_area(action)
+		elif key == "circular":
+			stActionData.set_visible_child(self.builder.get_object("vbCircular"))
+			action = self.make_circular_action()
 		elif key == 'trackball':
 			stActionData.set_visible_child(self.builder.get_object("vbTrackball"))
 			action = self.make_trackball_action()
