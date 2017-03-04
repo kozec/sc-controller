@@ -151,6 +151,7 @@ class SVGWidget(Gtk.EventBox):
 				if child.attrib['transform'].startswith("translate"):
 					# Only transform supported and, luckily, only transform used
 					value = child.attrib['transform'].split("(")[-1].strip(")").split(",")
+					while len(value) < 2: value.append(0)
 					child_translation = (
 						translation[0] + float(value[0]),
 						translation[1] + float(value[1])
@@ -189,7 +190,6 @@ class SVGWidget(Gtk.EventBox):
 			# Ok, this is close to madness, but probably better than drawing
 			# 200 images by hand;
 			# 1st, parse source as XML
-			open("/tmp/output.xml", "w").write(self.current_svg.encode("utf-8"))
 			tree = ET.fromstring(self.current_svg.encode("utf-8"))
 			# 2nd, change colors of some elements
 			for button in buttons:
