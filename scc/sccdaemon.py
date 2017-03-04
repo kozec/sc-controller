@@ -1061,7 +1061,7 @@ class ReportingAction(Action):
 	
 	
 	def button_release(self, mapper):
-		self.button_press(mapper, 0)
+		ReportingAction.button_press(self, mapper, 0)
 	
 	
 	def whole(self, mapper, x, y, what):
