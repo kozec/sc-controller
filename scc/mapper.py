@@ -7,8 +7,8 @@ from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO, HapticPos
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICK_TILT
 from scc.aliases import ALL_AXES, ALL_BUTTONS
+from scc.actions import ButtonAction, GyroAbsAction
 from scc.controller import HapticData
-from scc.actions import ButtonAction
 from scc.config import Config
 from scc.profile import Profile
 
@@ -306,6 +306,12 @@ class Mapper(object):
 		to_release, self.pressed = self.pressed, {}
 		for x in to_release:
 			ButtonAction._button_release(self, x, True)
+	
+	
+	def reset_gyros(self):
+		for a in self.profile.get_actions():
+			if isinstance(a, GyroAbsAction):
+				a.reset()
 	
 	
 	def input(self, controller, now, old_state, state):

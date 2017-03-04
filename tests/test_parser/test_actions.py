@@ -135,6 +135,14 @@ class TestActions(object):
 		assert _parses_as_itself(GyroAbsAction(Axes.ABS_X, Axes.ABS_Y, Axes.ABS_Z))
 	
 	
+	def test_resetgyro(self):
+		"""
+		Tests if ResetGyroAction can be converted to string and
+		parsed back to same action.
+		"""
+		assert _parses_as_itself(ResetGyroAction())
+	
+	
 	def test_tilt(self):
 		"""
 		Tests if TiltAction can be converted to string and

@@ -146,6 +146,13 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y, ABS_Z)' }).axes[2] == Axes.ABS_Z
 	
 	
+	def test_resetgyro(self):
+		"""
+		Tests if ResetGyroAction is parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'resetgyro()' }), ResetGyroAction)
+	
+	
 	def test_tilt(self):
 		"""
 		Tests if TiltAction can be converted to string and

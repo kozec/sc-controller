@@ -1074,8 +1074,12 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 	def __init__(self, *blah):
 		GyroAction.__init__(self, *blah)
 		HapticEnabledAction.__init__(self)
-		self.ir = None
+		self.ir = [ 0, 0, None, 0 ]	# Initial rotation, last has to be determined
 		self._was_oor = False
+	
+	
+	def reset(self):
+		self.ir = [ None, None, None, None ]	# Determine everything
 	
 	
 	def get_compatible_modifiers(self):
@@ -1086,20 +1090,15 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 	def get_previewable(self):
 		return True
 	
-	
+	GYROAXES = (0, 1, 2)
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
 		pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
-		if self.ir is None:
-			# TODO: Move this to controller and allow some way to reset it
-			self.ir = pyr[2]
-		# Covert what quat2euler returns to what controller can use
-		for i in (0, 1):
-			pyr[i] = pyr[i] * (2**15) * self.speed[i] * 2 / PI
-		pyr[2] = anglediff(self.ir, pyr[2]) * (2**15) * self.speed[2] * 2 / PI
-		# Restrict to acceptablle range
+		for i in self.GYROAXES:
+			self.ir[i] = self.ir[i] or pyr[i]
+			pyr[i] = anglediff(self.ir[i], pyr[i]) * (2**15) * self.speed[2] * 2 / PI
 		if self.haptic:
 			oor = False # oor - Out Of Range
-			for i in (0, 1, 2):
+			for i in self.GYROAXES:
 				pyr[i] = int(pyr[i])
 				if pyr[i] > STICK_PAD_MAX:
 					pyr[i] = STICK_PAD_MAX
@@ -1114,10 +1113,10 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 			else:
 				self._was_oor = False
 		else:
-			for i in (0, 1, 2):
+			for i in self.GYROAXES:
 				pyr[i] = int(clamp(STICK_PAD_MIN, pyr[i], STICK_PAD_MAX))
 		# print "% 12.0f, % 12.0f, % 12.5f" % (p,y,r)
-		for i in (0, 1, 2):
+		for i in self.GYROAXES:
 			axis = self.axes[i]
 			if axis in Axes or type(axis) == int:
 				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i]))
@@ -1126,6 +1125,22 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 				mapper.mouse_move(AxisAction.clamp_axis(axis, pyr[i] * GyroAbsAction.MOUSE_FACTOR * self.speed[i]), 0)
 			elif axis == Rels.REL_Y:
 				mapper.mouse_move(0, AxisAction.clamp_axis(axis, pyr[i] * GyroAbsAction.MOUSE_FACTOR * self.speed[i]))
+
+
+class ResetGyroAction(Action):
+	"""
+	Asks mapper to search for all GyroAbsActions in profile and adjust offsets
+	so current pad orientation is treated as neutral.
+	"""
+	COMMAND = "resetgyro"
+	
+	def button_press(self, mapper):
+		mapper.reset_gyros()
+	
+	
+	def describe(self, context):
+		if self.name : return self.name
+		return _("Reset Gyro")
 
 
 class MultichildAction(Action):
