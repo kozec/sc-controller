@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gio, GLib
+from gi.repository import Gtk, Gio, GLib, GObject
 from scc.tools import get_profiles_path, find_profile, find_menu
 from scc.special_actions import ShellCommandAction
 from scc.menu_data import MenuData
@@ -14,11 +14,6 @@ import sys, os, json, tarfile, tempfile, logging
 log = logging.getLogger("IE.ImportSSCC")
 
 class ImportSccprofile(object):
-	def __init__(self):
-		# _files holds list of (filename, object) generated while
-		# importing and saved only after final confirmation by user
-		self._files = []
-	
 	
 	def on_btImportSccprofile_clicked(self, *a):
 		# Create filters
@@ -54,6 +49,7 @@ class ImportSccprofile(object):
 		Imports simple, single-file scc-profile.
 		Just loads it, checks for shell() actions and asks user to enter name.
 		"""
+		files = self.builder.get_object("lstImportPackage")
 		# Load profile
 		profile = Profile(GuiActionParser())
 		try:
@@ -66,9 +62,12 @@ class ImportSccprofile(object):
 			self.error(str(e))
 			return
 		
-		self._files = [
-			( ".".join(os.path.split(filename)[-1].split(".")[0:-1]), profile )
-		]
+		name = ".".join(os.path.split(filename)[-1].split(".")[0:-1])
+		files.clear()
+		o = GObject.GObject()
+		o.obj = profile
+		files.append(( 2, name, name, _("(profile)"), o ))
+		
 		self.check_shell_commands()
 	
 	
@@ -79,26 +78,28 @@ class ImportSccprofile(object):
 		enter main name, check generated ones and optionaly change
 		them as he wish.
 		"""
+		files = self.builder.get_object("lstImportPackage")
 		try:
 			# Open tar
 			tar = tarfile.open(filename, "r:gz")
-			self._files = []
+			files.clear()
 			# Grab 1st profile
 			name = tar.extractfile(Export.PN_NAME).read()
 			main_profile = "%s.sccprofile" % name
 			parser = GuiActionParser()
-			self._files.append(( name, Profile(parser)
-				.load_fileobj(tar.extractfile(main_profile))
-			))
+			o = GObject.GObject()
+			o.obj = Profile(parser).load_fileobj(tar.extractfile(main_profile))
+			files.append(( 2, name, name, _("(profile)"), o ))
 			for x in tar:
+				name = ".".join(x.name.split(".")[0:-1])
 				if x.name.endswith(".sccprofile") and x.name != main_profile:
-					self._files.append(( ".".join(x.name.split(".")[0:-1]),
-						Profile(parser).load_fileobj(tar.extractfile(x))
-					))
+					o = GObject.GObject()
+					o.obj = Profile(parser).load_fileobj(tar.extractfile(x))
+					files.append(( True, name, name, _("(profile)"), o ))
 				elif x.name.endswith(".menu"):
-					self._files.append(( ".".join(x.name.split(".")[0:-1]),
-						MenuData.from_fileobj(tar.extractfile(x), parser)
-					))
+					o = GObject.GObject()
+					o.obj = MenuData.from_fileobj(tar.extractfile(x), parser)
+					files.append(( True, name, name, _("(menu)"), o ))
 		except Exception, e:
 			# Either entire tar or some profile cannot be parsed.
 			# Display error message and let user to quit
@@ -119,12 +120,13 @@ class ImportSccprofile(object):
 		"""
 		grShellCommands =	self.builder.get_object("grShellCommands")
 		tvShellCommands =	self.builder.get_object("tvShellCommands")
+		files =				self.builder.get_object("lstImportPackage")
 		model = tvShellCommands.get_model()
 		model.clear()
 		# Get all shell commands in all profiles
-		for name, obj in self._files:
-			if isinstance(obj, Profile):
-				for a in obj.get_actions():
+		for trash, trash, trash, trash, obj in files:
+			if isinstance(obj.obj, Profile):
+				for a in obj.obj.get_actions():
 					if isinstance(a, ShellCommandAction):
 						model.append((False, a.command))
 		
@@ -155,33 +157,86 @@ class ImportSccprofile(object):
 		grSccImportFinished =	self.builder.get_object("grSccImportFinished")
 		lblSccImportFinished =	self.builder.get_object("lblSccImportFinished")
 		txName2 =				self.builder.get_object("txName2")
+		files =					self.builder.get_object("lstImportPackage")
+		vbImportPackage =		self.builder.get_object("vbImportPackage")
 		
-		name, obj = self._files[0]	# 1st is always profile that's being imported
+		enabled, trash, name, trash, obj = files[0]
 		lblSccImportFinished.set_text(_("Profile sucessfully imported"))
 		txName2.set_text(name)
+		vbImportPackage.set_visible(len(files) > 1)
 		self.next_page(grSccImportFinished)
 		self.on_txName2_changed()
 	
 	
 	def on_txName2_changed(self, *a):
-		txName2 = self.builder.get_object("txName2")
-		btNext = self.enable_next(True, self.on_scc_import_confirmed)
+		txName2 =			self.builder.get_object("txName2")
+		btNext =			self.enable_next(True, self.on_scc_import_confirmed)
+		files =				self.builder.get_object("lstImportPackage")
+		cbImportHidden =	self.builder.get_object("cbImportPackageHidden")
+		cbImportVisible =	self.builder.get_object("cbImportPackageVisible")
+		cbImportNone =		self.builder.get_object("cbImportPackageNone")
+		rvAdvanced =		self.builder.get_object("rvImportPackageAdvanced")
 		btNext.set_label('Apply')
 		btNext.set_use_stock(True)
-		if self.check_name(txName2.get_text()):
+		main_name = txName2.get_text()
+		if self.check_name(main_name):
 			btNext.set_sensitive(True)
-			name, obj = self._files[0]	# 1st is always profile that's being imported
-			name = txName2.get_text()
-			self._files[0] = name, obj
 		else:
 			btNext.set_sensitive(False)
+		
+		cbImportHidden.set_label(_("Import as hidden menus and profiles named \".%s:name\"") % (main_name,))
+		cbImportVisible.set_label(_("Import normaly, with names formated as \"%s:name\"") % (main_name,))
+		
+		for i in xrange(0, len(files)):
+			enabled, name, importas, type, obj = files[i]
+			if enabled == 2:
+				importas = name
+			elif cbImportHidden.get_active():
+				importas = ".%s:%s" % (main_name, name)
+				enabled = 1
+			elif cbImportVisible.get_active():
+				importas = "%s:%s" % (main_name, name)
+				enabled = 1
+			elif cbImportNone.get_active():
+				enabled = 0
+			files[i] = enabled, name, importas, type, obj
+	
+	
+	def on_cbImportPackageAdvanced_toggled(self, *a):
+		rvImportPackageAdvanced =	self.builder.get_object("rvImportPackageAdvanced")
+		cbImportPackageAdvanced =	self.builder.get_object("cbImportPackageAdvanced")
+		rvImportPackageAdvanced.set_reveal_child(cbImportPackageAdvanced.get_active())
+	
+	
+	def on_crIPKGEnabled_toggled(self, renderer, path):
+		files = self.builder.get_object("lstImportPackage")
+		i = int(path)
+		enabled, name, importas, type, obj = files[i]
+		# 1st rown cannot be toggled
+		if enabled != 2:
+			enabled = 1 if enabled == 0 else 0
+			files[i] = enabled, name, importas, type, obj
+	
+	
+	def on_crIPKGImportAs_edited(self, renderer, path, new_name):
+		files =		self.builder.get_object("lstImportPackage")
+		txName2 =	self.builder.get_object("txName2")
+		i = int(path)
+		enabled, name, importas, type, obj = files[i]
+		importas = new_name
+		if enabled == 2:
+			txName2.set_text(importas)
+		files[i] = enabled, name, importas, type, obj
 	
 	
 	def on_scc_import_confirmed(self, *a):
-		for name, obj in self._files:
-			if isinstance(obj, Profile):
-				obj.save(os.path.join(get_profiles_path(), "%s.sccprofile" % (name,)))
+		files =		self.builder.get_object("lstImportPackage")
+		for enabled, trash, importas, trash, obj in files:
+			if enabled != 0:
+				# TODO: export menus, update references
+				if isinstance(obj.obj, Profile):
+					obj.obj.save(os.path.join(get_profiles_path(), "%s.sccprofile" % (importas,)))
 		
-		name, obj = self._files[0]	# 1st is always profile that's being imported
-		self.app.new_profile(obj, name)
+		trash, trash, importas, trash, obj = files[0]	# 1st is always profile that's being imported
+		self.app.new_profile(obj.obj, importas)
 		GLib.idle_add(self.window.destroy)
