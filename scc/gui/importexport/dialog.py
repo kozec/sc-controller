@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.gui.editor import Editor, ComboSetter
+from scc.tools import find_profile, profile_is_default, profile_is_override
 from export import Export
 from import_vdf import ImportVdf
 from import_sccprofile import ImportSccprofile
@@ -29,7 +30,15 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 	
 	@staticmethod
 	def check_name(name):
-		return len(name.strip()) > 0 and "/" not in name
+		if len(name.strip()) <= 0: return False
+		if "/" in name: return False
+		if find_profile(name):
+			# Profile already exists
+			if profile_is_default(name) and not profile_is_override(name):
+				# Existing profile is default and has no override yet
+				return True
+			return False
+		return True
 	
 	
 	def next_page(self, page):

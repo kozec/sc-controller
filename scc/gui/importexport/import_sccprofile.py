@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gio
+from gi.repository import Gtk, Gio, GLib
 from scc.tools import get_profiles_path, find_profile, find_menu
 from scc.special_actions import ShellCommandAction
 from scc.profile import Profile
@@ -114,7 +114,23 @@ class ImportSccprofile(object):
 	
 	def on_txName2_changed(self, *a):
 		txName2 = self.builder.get_object("txName2")
-		btNext = self.enable_next(True, lambda *a : a)
+		btNext = self.enable_next(True, self.on_scc_import_confirmed)
 		btNext.set_label('Apply')
 		btNext.set_use_stock(True)
-		btNext.set_sensitive(self.check_name(txName2.get_text()))
+		if self.check_name(txName2.get_text()):
+			btNext.set_sensitive(True)
+			name, obj = self._files[0]	# 1st is always profile that's being imported
+			name = txName2.get_text()
+			self._files[0] = name, obj
+		else:
+			btNext.set_sensitive(False)
+	
+	
+	def on_scc_import_confirmed(self, *a):
+		for name, obj in self._files:
+			if isinstance(obj, Profile):
+				obj.save(os.path.join(get_profiles_path(), "%s.sccprofile" % (name,)))
+		
+		name, obj = self._files[0]	# 1st is always profile that's being imported
+		self.app.new_profile(obj, name)
+		GLib.idle_add(self.window.destroy)
