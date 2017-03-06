@@ -17,6 +17,7 @@ log = logging.getLogger("IE.Export")
 class Export(UserDataManager):
 	TP_MENU = 0
 	TP_PROFILE = 1
+	PN_NAME = "profile-name"
 
 	def __init__(self):
 		self.__profile_load_started = False
@@ -102,8 +103,7 @@ class Export(UserDataManager):
 				model.append((not menu_is_default(menu_id), _("Menu"), name,
 						filename, True, self.TP_MENU))
 				try:
-					data = json.loads(open(filename, "r").read())
-					menu = MenuData.from_json_data(data, ActionParser())
+					menu = MenuData.from_file(filename, ActionParser())
 				except Exception, e:
 					# Menu that cannot be parsed shouldn't be exported
 					log.error(e)
@@ -300,5 +300,11 @@ class Export(UserDataManager):
 					if not export_menu(tar, filename):
 						return False
 		
+		# Store original profile name so import knows which profile is
+		# "important" and which just tagged along as referenced by some action.
+		out = tempfile.NamedTemporaryFile()
+		out.write(".".join(giofile.get_basename().split(".")[0:-1]))
+		out.flush()
+		tar.add(out.name, arcname=Export.PN_NAME, recursive=False)
 		tar.close()
 		return True

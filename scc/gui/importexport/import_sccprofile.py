@@ -5,8 +5,10 @@ from scc.tools import _
 from gi.repository import Gtk, Gio, GLib
 from scc.tools import get_profiles_path, find_profile, find_menu
 from scc.special_actions import ShellCommandAction
+from scc.menu_data import MenuData
 from scc.profile import Profile
 from scc.gui.parser import GuiActionParser
+from export import Export
 
 import sys, os, json, tarfile, tempfile, logging
 log = logging.getLogger("IE.ImportSSCC")
@@ -31,11 +33,9 @@ class ImportSccprofile(object):
 		d.add_filter(f1)
 		if d.run() == Gtk.ResponseType.ACCEPT:
 			if d.get_filename().endswith(".tar.gz"):
-				if self.import_scc_tar(d.get_filename()):
-					self.window.destroy()
+				self.import_scc_tar(d.get_filename())
 			else:
-				if self.import_scc(d.get_filename()):
-					self.window.destroy()
+				self.import_scc(d.get_filename())
 	
 	
 	def error(self, text):
@@ -64,28 +64,79 @@ class ImportSccprofile(object):
 			# basically the same
 			log.error(e)
 			self.error(str(e))
-			return False
+			return
 		
 		self._files = [
 			( ".".join(os.path.split(filename)[-1].split(".")[0:-1]), profile )
 		]
+		self.check_shell_commands()
+	
+	
+	def import_scc_tar(self, filename):
+		"""
+		Imports packaged profiles.
+		Checks for shell() actions everywhere and ask user to
+		enter main name, check generated ones and optionaly change
+		them as he wish.
+		"""
+		try:
+			# Open tar
+			tar = tarfile.open(filename, "r:gz")
+			self._files = []
+			# Grab 1st profile
+			name = tar.extractfile(Export.PN_NAME).read()
+			main_profile = "%s.sccprofile" % name
+			parser = GuiActionParser()
+			self._files.append(( name, Profile(parser)
+				.load_fileobj(tar.extractfile(main_profile))
+			))
+			for x in tar:
+				if x.name.endswith(".sccprofile") and x.name != main_profile:
+					self._files.append(( ".".join(x.name.split(".")[0:-1]),
+						Profile(parser).load_fileobj(tar.extractfile(x))
+					))
+				elif x.name.endswith(".menu"):
+					self._files.append(( ".".join(x.name.split(".")[0:-1]),
+						MenuData.from_fileobj(tar.extractfile(x), parser)
+					))
+		except Exception, e:
+			# Either entire tar or some profile cannot be parsed.
+			# Display error message and let user to quit
+			# Error message reuses same page as above.
+			log.error(e)
+			self.error(str(e))
+			return
+		self.check_shell_commands()
+	
+	
+	def check_shell_commands(self):
+		"""
+		Check for shell commands in profiles being imported.
+		If there are any shell commands found, displays warning page
+		and lets user to confirm import of them.
 		
-		# Check for shell commands
+		Othewise, goes straight to next page as if user already confirmed them.
+		"""
 		grShellCommands =	self.builder.get_object("grShellCommands")
 		tvShellCommands =	self.builder.get_object("tvShellCommands")
 		model = tvShellCommands.get_model()
 		model.clear()
-		for a in profile.get_actions():
-			if isinstance(a, ShellCommandAction):
-				model.append((False, a.command))
-		# If there is shell command present, jump to warning page
+		# Get all shell commands in all profiles
+		for name, obj in self._files:
+			if isinstance(obj, Profile):
+				for a in obj.get_actions():
+					if isinstance(a, ShellCommandAction):
+						model.append((False, a.command))
+		
 		if len(model) > 0:
+			# If there is shell command present, jump to warning page
 			self.next_page(grShellCommands)
 			btNext = self.enable_next(True, self.shell_import_confirmed)
 			btNext.set_label(_("Continue"))
 			btNext.set_sensitive(False)
 		else:
-			self.shell_import_confirmed()
+			# Otherwise continue to next one
+			self.shell_import_confirmed()	
 	
 	
 	def on_crShellCommandChecked_toggled(self, cr, path):
