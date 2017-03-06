@@ -42,6 +42,13 @@ class Profile(object):
 	
 	def save(self, filename):
 		""" Saves profile into file. Returns self """
+		fileobj = file(filename, "w")
+		self.save_fileobj(fileobj)
+		fileobj.close()
+		return self
+	
+	def save_fileobj(self, fileobj):
+		""" Saves profile into file-like object. Returns self """
 		data = {
 			'buttons'		: {},
 			'stick'			: self.stick,
@@ -60,14 +67,26 @@ class Profile(object):
 		
 		# Generate & save json
 		jstr = Encoder(sort_keys=True, indent=4).encode(data)
-		open(filename, "w").write(jstr)
+		fileobj.write(jstr)
 		return self
 	
 	
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
+		fileobj = open(filename, "r")
+		self.load_fileobj(fileobj)
 		self.filename = filename
-		data = json.loads(open(filename, "r").read())
+		return self
+	
+	
+	def load_fileobj(self, fileobj):
+		"""
+		Loads profile from file-like object.
+		Filename attribute is not set, what may cause some trouble if used in GUI.
+		
+		Returns self.
+		"""
+		data = json.loads(fileobj.read())
 		# Version
 		try:
 			version = int(data["version"])
