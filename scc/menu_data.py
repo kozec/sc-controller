@@ -141,6 +141,25 @@ class MenuData(object):
 	
 	
 	@staticmethod
+	def from_fileobj(fileobj, action_parser=None):
+		"""
+		Loads menu from file-like object.
+		Actions are parsed only if action_parser is set to ActionParser instance.
+		"""
+		data = json.loads(fileobj.read())
+		return MenuData.from_json_data(data, action_parser)
+	
+	
+	@staticmethod
+	def from_file(filename, action_parser=None):
+		"""
+		Loads menu from file.
+		Actions are parsed only if action_parser is set to ActionParser instance.
+		"""
+		return MenuData.from_fileobj(file(filename, "r"), action_parser)
+	
+	
+	@staticmethod
 	def from_profile(filename, menuname, action_parser=None):
 		"""
 		Loads menu from JSON profile file.
