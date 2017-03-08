@@ -158,7 +158,7 @@ class Profile(object):
 		self.gyro = NoAction()
 	
 	
-	def get_actions(self):
+	def get_all_actions(self):
 		"""
 		Returns generator with every action defined in this profile,
 		including actions in menus.

@@ -75,7 +75,7 @@ class Export(UserDataManager):
 			log.error(e)
 			return False
 		
-		for action in profile.get_actions():
+		for action in profile.get_all_actions():
 			self._parse_action(model, action, used)
 		
 		for menu in profile.menus:

@@ -161,7 +161,6 @@ class Action(object):
 		there are none. Child action is, for example, any action that DPadAction
 		can choose from.
 		
-		Unlike Profile.get_actions, this method is not recursive.
 		May returns NoActions as well.
 		"""
 		return []	# Most will return this
