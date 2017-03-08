@@ -285,7 +285,7 @@ class UInput(object):
 										 c_rumble,
 										 c_name)
 		if self._fd < 0:
-			raise Exception("Failed to create uinput device. Error code: %s" % (self._fd,))
+			raise CannotCreateUInputException("Failed to create uinput device. Error code: %s" % (self._fd,))
 
 
 	def getDescriptor(self):
@@ -616,3 +616,8 @@ class Dummy(object):
 	
 	axisManaged = keyManaged
 	relManaged = keyManaged
+
+
+class CannotCreateUInputException(Exception):
+	# Special case when message should be displayed in UI
+	pass

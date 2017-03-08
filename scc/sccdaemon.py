@@ -12,11 +12,11 @@ from scc.lib.usb1 import USBError
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.paths import get_menus_path, get_default_menus_path
+from scc.uinput import Keys, Axes, CannotCreateUInputException
 from scc.tools import set_logging_level, find_binary, clamp
 from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
-from scc.uinput import Keys, Axes
 from scc.profile import Profile
 from scc.actions import Action
 from scc.config import Config
@@ -45,7 +45,7 @@ class SCCDaemon(Daemon):
 		self.poller = Poller()
 		self.xdisplay = None
 		self.sserver = None			# UnixStreamServer instance
-		self.error = None
+		self.errors = []
 		self.alone = False			# Set by launching script from --alone flag
 		self.osd_daemon = None
 		self.default_profile = None
@@ -379,7 +379,16 @@ class SCCDaemon(Daemon):
 		"""
 		Setups new mapper instance.
 		"""
-		mapper = Mapper(Profile(TalkingActionParser()), poller=self.poller)
+		try:
+			mapper = Mapper(Profile(TalkingActionParser()), poller=self.poller)
+		except CannotCreateUInputException, e:
+			# Most likely UInput is not available
+			# Create mapper with all virtual devices set to Dummies.
+			log.error(e)
+			self.add_error("uinput", str(e))
+			mapper = Mapper(Profile(TalkingActionParser()), keyboard=None,
+				mouse=None, gamepad=False)
+		
 		mapper.set_special_actions_handler(self)
 		mapper.set_xdisplay(self.xdisplay)
 		mapper.schedule(1.0, self.fix_xinput)
@@ -470,21 +479,31 @@ class SCCDaemon(Daemon):
 			self.send_controller_list(self._send_to_all)
 	
 	
-	def set_error(self, error):
+	def add_error(self, id, error):
 		"""
-		Sets error to report. Currently used only by driver to report when USB
-		device cannot be accessed.
+		Adds error (string) to report. Used when USB driver reports that device
+		cannot be accessed or when UInput is not available.
 		
-		Error can be None, in which case daemon may report that it is ready to
-		serve to all clients.
+		Every error has id that can be later used to remove it from list to
+		indicate that error has been resolved.
 		"""
 		with self.lock:
-			self.error = error
-			if error is None:
-				self.error = None
+			self.errors.append(( id, error ))
+			self._send_to_all(("Error: %s\n" % (error,)).encode("utf-8"))
+	
+	
+	def remove_error(self, id):
+		"""
+		Removes error added with 'add_error'. If such error cannot be found,
+		does nothing.
+		
+		When last error is removed, this method automatically sends "Ready."
+		message to indicate that daemon is ready to serve clients.
+		"""
+		with self.lock:
+			self.errors = [ (_id, error) for (_id, error) in self.errors if _id != id ]
+			if len(self.errors) == 0:
 				self._send_to_all(b"Ready.\n")
-			elif self.error != error:
-				self._send_to_all(("Error: %s\n" % (self.error,)).encode("utf-8"))
 	
 	
 	def send_controller_list(self, method):
@@ -605,10 +624,11 @@ class SCCDaemon(Daemon):
 			wfile.write(("PID: %s\n" % (os.getpid(),)).encode("utf-8"))
 			self.send_controller_list(wfile.write)
 			self.send_all_profiles(wfile.write)
-			if self.error is None:
+			if len(self.errors) == 0:
 				wfile.write(b"Ready.\n")
 			else:
-				wfile.write(("Error: %s\n" % (self.error,)).encode("utf-8"))
+				for id, error in self.errors:
+					wfile.write(("Error: %s\n" % (error,)).encode("utf-8"))
 		
 		while True:
 			try:

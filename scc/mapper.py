@@ -38,7 +38,7 @@ class Mapper(object):
 		log.debug("Keyboard: %s" % (self.keyboard, ))
 		self.mouse = Mouse(name=mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
-		self.gamepad = self._create_gamepad(gamepad, poller)
+		self.gamepad = self._create_gamepad(gamepad, poller) if gamepad else Dummy()
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		
 		# Set by SCCDaemon instance; Used to handle actions

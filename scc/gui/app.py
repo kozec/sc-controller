@@ -164,6 +164,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg = _('uinput kernel module not loaded')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			self.show_error(msg)
+			return True
 		elif not os.path.exists("/dev/uinput"):
 			# /dev/uinput missing
 			msg = _('/dev/uinput doesn\'t exists')
@@ -171,12 +172,15 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			#msg += "\n\n" + _('Please, consult your distribution manual on what in the world could cause this.')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			self.show_error(msg)
+			return True
 		elif not check_access("/dev/uinput"):
 			# Cannot acces uinput
 			msg = _('You don\'t have required access to /dev/uinput.')
 			msg += "\n" + _('This will most likely prevent emulation from working.')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			self.show_error(msg)
+			return True
+		return False
 	
 	
 	def hilight(self, button):
@@ -702,6 +706,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n" + _("Another application (most likely Steam) is using the controller.")
 		elif "LIBUSB_ERROR_PIPE" in error:
 			msg += "\n" + _("USB dongle was removed.")
+		elif "Failed to create uinput device." in error:
+			# Call check() method and try to determine what went wrong.
+			if self.check():
+				# Check() returns True if error was "handled".
+				return
+			# If check() fails to find error reason, error message is displayed as it is
 		
 		self.show_error(msg)
 		self.set_daemon_status("error", True)
@@ -903,7 +913,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def do_command_line(self, cl):
 		Gtk.Application.do_command_line(self, cl)
-		print cl
 		if len(cl.get_arguments()) > 1:
 			filename = " ".join(cl.get_arguments()[1:]) # 'cos fuck Gtk...
 			print filename

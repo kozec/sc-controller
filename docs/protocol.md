@@ -56,9 +56,11 @@ List of possible events:
 - `Event: LEFT x y` - Sent when finger on left pad is moved. *x* and *y* is new position.
 - `Event: RIGHT x y` - Sent when finger on right pad is moved. *x* and *y* is new position.
 
-#### `Error: description`
-Sent to every client when error is detected. May be sent repeadedly, until error condition is cleared.
-After that, `Ready.` is sent to indicate that emulation works again.
+#### `Error: message`
+Sent to every client when error is detected. May be sent repeatedly to indicate
+multiple errors, until all error condition is cleared.
+
+After all errors are cleared, `Ready.` is sent to indicate that emulation works again.
 
 #### `Fail: text`
 Indicates error client that sent request.
