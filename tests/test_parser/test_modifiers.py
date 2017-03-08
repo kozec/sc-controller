@@ -43,6 +43,14 @@ class TestModifiers(object):
 		assert isinstance(_parse_compressed("circular(axis(REL_WHEEL))"), CircularModifier)
 	
 	
+	def test_circularabs(self):
+		"""
+		Tests if CircularAbsModifier is parsed
+		"""
+		assert isinstance(_parse_compressed("circularabs(axis(ABS_X))"), CircularAbsModifier)
+		assert isinstance(_parse_compressed("circularabs(axis(REL_WHEEL))"), CircularAbsModifier)
+	
+	
 	def test_ball(self):
 		"""
 		Tests if BallModifier is parsed

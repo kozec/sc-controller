@@ -225,8 +225,20 @@ be used with any axis.
 Example:
 
 	"pad_left": {
-	  "action": "mouse()",
-	  "ball": [ 10.0 ]
+	  "action": "mouse(Rels.REL_WHEEL)",
+	  "circular": true
+	},
+
+
+#### `circularabs`
+Works as to `circular`, but instead of counting with finger movements,
+translates exact position on dpad to axis value.
+
+Example:
+
+	"pad_left": {
+	  "action": "circularabs(Rels.REL_WHEEL)",
+	  "circular": true
 	},
 
 

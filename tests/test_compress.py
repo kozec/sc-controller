@@ -56,6 +56,12 @@ CASES = {
 		'sensitivity' : (2.0,),
 		'feedback' : ('BOTH',)
 	},
+	'circularabs' : {
+		'action' : 'mouse(REL_HWHEEL)',
+		'circularabs' : True,
+		'sensitivity' : (2.0,),
+		'feedback' : ('BOTH',)
+	},
 	'XY' : {
 		'X' : { 'action' : 'axis(ABS_X)' },
 		'Y' : { 'action' : 'axis(ABS_Y)' },

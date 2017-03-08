@@ -1323,3 +1323,81 @@ class CircularModifier(Modifier, WholeHapticAction):
 			# Apply movement to child action
 			self.action.change(mapper, -angle * self.speed, 0)
 			mapper.force_event.add(FE_PAD)
+
+
+class CircularAbsModifier(Modifier, WholeHapticAction):
+	"""
+	Works similary to CircularModifier, but instead of counting with finger
+	movements movements, translates exact position on dpad to axis value.
+	"""
+	COMMAND = "circularabs"
+	PROFILE_KEY_PRIORITY = -6
+	
+	def __init__(self, *params):
+		Modifier.__init__(self, *params)
+		WholeHapticAction.__init__(self)
+	
+	
+	def _mod_init(self):
+		self.angle = None		# Last known finger position
+		self.speed = 1.0
+	
+	
+	def encode(self):
+		rv = Modifier.encode(self)
+		rv[CircularAbsModifier.COMMAND] = True
+		return rv
+	
+	
+	@staticmethod
+	def decode(data, a, *b):
+		return CircularAbsModifier(a)
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Absolute Circular %s") % (self.action.describe(context))
+	
+	
+	def set_speed(self, x, *a):
+		self.speed = x
+	
+	
+	def get_speed(self):
+		return (self.speed,)
+	
+	
+	def get_compatible_modifiers(self):
+		return ( Action.MOD_FEEDBACK | Action.MOD_SENSITIVITY | Action.MOD_ROTATE
+			| Modifier.get_compatible_modifiers(self) )
+	
+	
+	def whole(self, mapper, x, y, what):
+		distance = sqrt(x*x + y*y)
+		if distance < STICK_PAD_MAX_HALF:
+			# Finger lifted or too close to middle
+			self.angle = None
+			self.travelled = 0
+		else:
+			# Compute current angle
+			angle = atan2(x, y) + PI / 4
+			# Compute movement
+			if self.haptic:
+				if self.angle is not None:
+					diff = self.angle - angle
+					# Ensure we don't wrap from pi to -pi creating a large delta
+					if angle > PI:
+						# Subtract a full rotation to counter the wrapping
+						angle -= 2 * PI
+					# And same from -pi to pi
+					elif angle < -PI:
+						# Add a full rotation to counter the wrapping
+						angle += 2 * PI
+					if abs(diff) < 6:# Prevents crazy feedback burst when finger cross 360' angle
+						WholeHapticAction.change(self, mapper, diff * 10000, 0)
+				self.angle = angle
+			# Apply actual constant
+			angle *= STICK_PAD_MAX / PI
+			# Set axis on child action
+			self.action.axis(mapper, angle * self.speed, 0)
+			mapper.force_event.add(FE_PAD)

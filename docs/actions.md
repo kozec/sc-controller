@@ -309,6 +309,11 @@ Can be used with any axis. For example,
 turns touchpad into small raing wheel.
 
 
+#### <a name="circularabs"></a> circular(action)
+Works as to `circular`, but instead of counting with finger movements,
+translates exact position on dpad to axis value.
+
+
 #### <a name="deadzone"></a> deadzone([mode,] lower, [upper, ] action)
 Enables deadzone on trigger, pad or stick. Mode can be one of
 
