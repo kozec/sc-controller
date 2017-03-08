@@ -7,4 +7,4 @@ Exec=sc-controller
 Type=Application
 Icon=sc-controller
 Categories=GTK;Settings;HardwareSettings;
-MimeType=application/x-steamcontrollerdb-profile;
+MimeType=application/x-steamcontrollerdb-profile;application/x-scc-profile;application/x-scc-profile-package

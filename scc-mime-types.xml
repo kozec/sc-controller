@@ -6,4 +6,16 @@
 		<generic-icon name="sc-controller"/>
 		<glob priority="75" pattern="*.vdffz"/>
 	</mime-type>
+	<mime-type type="application/x-scc-profile">
+		<comment>SC Controller Profile</comment>
+		<sub-class-of type="application/json"/>
+		<generic-icon name="sc-controller"/>
+		<glob priority="75" pattern="*.sccprofile"/>
+	</mime-type>
+	<mime-type type="application/x-scc-profile-package">
+		<comment>SC Controller Profile Package</comment>
+		<sub-class-of type="application/x-compressed-tar"/>
+		<generic-icon name="sc-controller"/>
+		<glob priority="75" pattern="*.sccprofile.tar.gz"/>
+	</mime-type>
 </mime-info>
