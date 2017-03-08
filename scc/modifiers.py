@@ -640,7 +640,7 @@ class ModeModifier(Modifier):
 	
 	
 	def get_child_actions(self):
-		return [ modes[key.name] for key in self.mods ]
+		return [ self.mods[key] for key in self.mods ]
 	
 	
 	def encode(self):
