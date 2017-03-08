@@ -36,20 +36,24 @@ class Modifier(Action):
 		else:
 			self.action = NoAction()
 		self._mod_init(*params)
-
-
+	
+	
 	def get_compatible_modifiers(self):
 		return self.action.get_compatible_modifiers()
-
-
+	
+	
+	def get_child_actions(self):
+		return (self.action, )
+	
+	
 	def _mod_init(self):
 		"""
 		Initializes modifier with rest of parameters, after action nparameter
 		was taken from it and stored in self.action
 		"""
 		pass # not needed by default
-
-
+	
+	
 	def _mod_to_string(self, params, multiline, pad):
 		""" Adds action at end of params list and generates string """
 		if multiline:
@@ -77,8 +81,8 @@ class Modifier(Action):
 			self.COMMAND,
 			childstr
 		)
-
-
+	
+	
 	def strip_defaults(self):
 		"""
 		Overrides Action.strip_defaults; Uses defaults from _mod_init instead
@@ -91,24 +95,24 @@ class Modifier(Action):
 		while len(d) and len(l) > required_count and d[-1] == l[-1]:
 			d, l = d[:-1], l[:-1]
 		return l
-
-
+	
+	
 	def strip(self):
 		return self.action
-
-
+	
+	
 	def compress(self):
 		if self.action:
 			self.action = self.action.compress()
 		return self
-
-
+	
+	
 	def __str__(self):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
-
+	
 	__repr__ = __str__
-
-
+	
+	
 	def encode(self):
 		rv = self.action.encode()
 		if self.name:
@@ -603,7 +607,7 @@ class ModeModifier(Modifier):
 	MIN_TRIGGER = 2		# When trigger is bellow this position, list of held_triggers is cleared
 	MIN_STICK = 2		# When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared
 	PROFILE_KEY_PRIORITY = 2
-
+	
 	def __init__(self, *stuff):
 		Modifier.__init__(self)
 		self.default = None
@@ -614,7 +618,7 @@ class ModeModifier(Modifier):
 		self.order = []
 		self.old_gyro = None
 		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
-
+		
 		button = None
 		for i in stuff:
 			if self.default is not None:
@@ -633,8 +637,12 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		if self.default is None:
 			self.default = NoAction()
-
-
+	
+	
+	def get_child_actions(self):
+		return [ modes[key.name] for key in self.mods ]
+	
+	
 	def encode(self):
 		rv = self.default.encode()
 		modes = {}
@@ -644,8 +652,8 @@ class ModeModifier(Modifier):
 		if self.name:
 			rv[NameModifier.COMMAND] = self.name
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		args = []
@@ -658,8 +666,8 @@ class ModeModifier(Modifier):
 		if "name" in data:
 			mm.name = data["name"]
 		return mm
-
-
+	
+	
 	def strip(self):
 		# Returns default action or action assigned to first modifier
 		if self.default:
@@ -668,16 +676,16 @@ class ModeModifier(Modifier):
 			return self.mods[self.order[0]].strip()
 		# Empty ModeModifier
 		return NoAction()
-
-
+	
+	
 	def compress(self):
 		if self.default:
 			self.default = self.default.compress()
 		for button in self.mods:
 			self.mods[button] = self.mods[button].compress()
 		return self
-
-
+	
+	
 	def __str__(self):
 		rv = [ ]
 		for key in self.mods:
@@ -685,7 +693,7 @@ class ModeModifier(Modifier):
 		if self.default is not None:
 			rv += [ self.default ]
 		return "<Modifier '%s', %s>" % (self.COMMAND, rv)
-
+	
 	__repr__ = __str__
 
 
@@ -696,8 +704,8 @@ class ModeModifier(Modifier):
 		for x in self.order:
 			l.append(self.mods[x])
 		return "\n".join([ x.describe(context) for x in l ])
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			rv = [ (" " * pad) + "mode(" ]
@@ -725,8 +733,8 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
-
-
+	
+	
 	def select(self, mapper):
 		"""
 		Selects action by pressed button.
@@ -735,8 +743,8 @@ class ModeModifier(Modifier):
 			if mapper.is_pressed(b):
 				return self.mods[b]
 		return self.default
-
-
+	
+	
 	def select_b(self, mapper):
 		"""
 		Same as select but returns button as well.
@@ -745,21 +753,21 @@ class ModeModifier(Modifier):
 			if mapper.is_pressed(b):
 				return b, self.mods[b]
 		return None, self.default
-
-
+	
+	
 	def button_press(self, mapper):
 		sel = self.select(mapper)
 		self.held_buttons.add(sel)
 		return sel.button_press(mapper)
-
-
+	
+	
 	def button_release(self, mapper):
 		# Releases all held buttons, not just button that matches
 		# currently pressed modifier
 		for b in self.held_buttons:
 			b.button_release(mapper)
-
-
+	
+	
 	def trigger(self, mapper, position, old_position):
 		if position < ModeModifier.MIN_TRIGGER:
 			for b in self.held_triggers:
@@ -770,12 +778,12 @@ class ModeModifier(Modifier):
 			sel = self.select(mapper)
 			self.held_triggers[sel] = position
 			return sel.trigger(mapper, position, old_position)
-
-
+	
+	
 	def axis(self, mapper, position, what):
 		return self.select(mapper).axis(mapper, position, what)
-
-
+	
+	
 	def gyro(self, mapper, pitch, yaw, roll, *q):
 		sel = self.select(mapper)
 		if sel is not self.old_gyro:
@@ -783,12 +791,12 @@ class ModeModifier(Modifier):
 				self.old_gyro.gyro(mapper, 0, 0, 0, *q)
 			self.old_gyro = sel
 		return sel.gyro(mapper, pitch, yaw, roll, *q)
-
-
+	
+	
 	def pad(self, mapper, position, what):
 		return self.select(mapper).pad(mapper, position, what)
-
-
+	
+	
 	def whole(self, mapper, x, y, what):
 		if what == STICK:
 			if abs(x) < ModeModifier.MIN_STICK and abs(y) < ModeModifier.MIN_STICK:
@@ -808,7 +816,7 @@ class DoubleclickModifier(Modifier):
 	DEAFAULT_TIMEOUT = 0.2
 	TIMEOUT_KEY = "time"
 	PROFILE_KEY_PRIORITY = 3
-
+	
 	def __init__(self, doubleclickaction, normalaction=None, time=None):
 		Modifier.__init__(self)
 		self.action = doubleclickaction
@@ -819,8 +827,8 @@ class DoubleclickModifier(Modifier):
 		self.waiting = False
 		self.pressed = False
 		self.active = None
-
-
+	
+	
 	def encode(self):
 		if self.normalaction:
 			rv = self.normalaction.encode()
@@ -834,8 +842,12 @@ class DoubleclickModifier(Modifier):
 		if self.name:
 			rv[NameModifier.COMMAND] = self.name
 		return rv
-
-
+	
+	
+	def get_child_actions(self):
+		return self.actions
+	
+	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		args = [ parser.from_json_data(data[DoubleclickModifier.COMMAND]), a ]
@@ -843,40 +855,40 @@ class DoubleclickModifier(Modifier):
 		if DoubleclickModifier.TIMEOUT_KEY in data:
 			a.timeout = data[DoubleclickModifier.TIMEOUT_KEY]
 		return a
-
-
+	
+	
 	def strip(self):
 		if self.holdaction:
 			return self.holdaction.strip()
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		self.action = self.action.compress()
 		self.holdaction = self.holdaction.compress()
 		self.normalaction = self.normalaction.compress()
-
+		
 		for a in (self.holdaction, self.normalaction):
 			if isinstance(a, HoldModifier):
 				self.holdaction = a.holdaction or self.holdaction
 				self.normalaction = a.normalaction or self.normalaction
-
+		
 		if isinstance(self.action, HoldModifier):
 			self.holdaction = self.action.holdaction
 			self.action = self.action.normalaction
 		return self
-
-
+	
+	
 	def __str__(self):
 		l = [ self.action ]
 		if self.normalaction:
 			l += [ self.normalaction ]
 		return "<Modifier %s dbl='%s' hold='%s' normal='%s'>" % (
 			self.COMMAND, self.action, self.holdaction, self.normalaction )
-
+	
 	__repr__ = __str__
-
-
+	
+	
 	def describe(self, context):
 		l = [ ]
 		if self.action:
@@ -886,12 +898,12 @@ class DoubleclickModifier(Modifier):
 		if self.normalaction:
 			l += [ self.normalaction ]
 		return "\n".join([ x.describe(context) for x in l ])
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return self._mod_to_string(Action.strip_defaults(self), multiline, pad)
-
-
+	
+	
 	def button_press(self, mapper):
 		self.pressed = True
 		if self.waiting:
@@ -904,8 +916,8 @@ class DoubleclickModifier(Modifier):
 			# First click, start the timer
 			self.waiting = True
 			mapper.schedule(self.timeout, self.on_timeout)
-
-
+	
+	
 	def button_release(self, mapper):
 		self.pressed = False
 		if self.waiting and self.active is None and not self.action:
@@ -919,8 +931,8 @@ class DoubleclickModifier(Modifier):
 			# Released held button
 			self.active.button_release(mapper)
 			self.active = None
-
-
+	
+	
 	def on_timeout(self, mapper, *a):
 		if self.waiting:
 			self.waiting = False
@@ -1148,7 +1160,7 @@ class SmoothModifier(Modifier):
 	"""
 	COMMAND = "smooth"
 	PROFILE_KEY_PRIORITY = 11	# Before sensitivity
-
+	
 	def _mod_init(self, level=8, multiplier=0.75, filter=2.0):
 		self.level = level
 		self.multiplier = multiplier
@@ -1159,36 +1171,36 @@ class SmoothModifier(Modifier):
 		self._w_sum = sum(self._weights)
 		self._last_pos = 0
 		self._moving = False
-
-
+	
+	
 	def __str__(self):
 		return "<Smooth %s>" % (self.action,)
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return "%s (smooth)" % (self.action.describe(context),)
-
-
+	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
 		rv[SmoothModifier.COMMAND] = [ self.level, self.multiplier, self.filter ]
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		pars = data[SmoothModifier.COMMAND] + [ a ]
 		return SmoothModifier(*pars)
-
-
+	
+	
 	def _get_pos(self):
 		""" Computes average x,y from all accumulated positions """
 		x = sum(( self._deq_x[i] * self._weights[i] for i in xrange(self.level) ))
 		y = sum(( self._deq_y[i] * self._weights[i] for i in xrange(self.level) ))
 		return x / self._w_sum, y / self._w_sum
-
-
+	
+	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
 			if mapper.was_touched(what):
