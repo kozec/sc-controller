@@ -167,9 +167,8 @@ class Menu(OSDWindow):
 				return False
 		elif self.args.from_file:
 			#try:
-			data = json.loads(open(self.args.from_file, "r").read())
 			self._menuid = self.args.from_file
-			self.items = MenuData.from_json_data(data)
+			self.items = MenuData.from_file(self.args.from_file)
 			#except:
 			#	print >>sys.stderr, '%s: error: failed to load menu file' % (sys.argv[0])
 			#	return False

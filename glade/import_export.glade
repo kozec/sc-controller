@@ -2,6 +2,20 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkListStore" id="lstImportPackage">
+    <columns>
+      <!-- column-name enabled -->
+      <column type="gint"/>
+      <!-- column-name original_name -->
+      <column type="gchararray"/>
+      <!-- column-name target_name -->
+      <column type="gchararray"/>
+      <!-- column-name type -->
+      <column type="gchararray"/>
+      <!-- column-name object -->
+      <column type="GObject"/>
+    </columns>
+  </object>
   <object class="GtkListStore" id="lstPackage">
     <columns>
       <!-- column-name export -->
@@ -25,6 +39,14 @@
       <!-- column-name giofile -->
       <column type="GObject"/>
       <!-- column-name profile_name -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="lstShellCommands">
+    <columns>
+      <!-- column-name checked -->
+      <column type="gboolean"/>
+      <!-- column-name command -->
       <column type="gchararray"/>
     </columns>
   </object>
@@ -145,12 +167,13 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="btImport">
+                  <object class="GtkButton" id="btImportSccprofile">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="margin_top">10</property>
                     <property name="use_underline">True</property>
+                    <signal name="clicked" handler="on_btImportSccprofile_clicked" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="vbBtImport">
                         <property name="visible">True</property>
@@ -572,7 +595,7 @@ Please, select what should be packaged along with exported profile.</property>
                 <property name="margin_left">20</property>
                 <property name="margin_right">20</property>
                 <child>
-                  <object class="GtkLabel" id="lblImportFinished">
+                  <object class="GtkLabel" id="lblVdfImportFinished">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_top">55</property>
@@ -732,6 +755,413 @@ Please, select what should be packaged along with exported profile.</property>
                 <property name="position">4</property>
               </packing>
             </child>
+            <child>
+              <object class="GtkGrid" id="grShellCommands">
+                <property name="name">grImportShellCommands</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <child>
+                  <object class="GtkLabel" id="lblShellWarning">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">20</property>
+                    <property name="margin_bottom">20</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Warning:&lt;/b&gt;
+
+Profile You are trying to import contains shell actions.
+Shell action allows to execute any arbitrary shell command
+and may modify, create or &lt;span color="#ff0000"&gt;&lt;b&gt;delete&lt;/b&gt;&lt;/span&gt; any files, download &lt;span color="#ff0000"&gt;&lt;b&gt;viruses&lt;/b&gt;&lt;/span&gt;
+or even &lt;span color="#ff0000"&gt;&lt;b&gt;destroy&lt;/b&gt;&lt;/span&gt; some hardware.
+
+Please, read list of commands used by imported profile
+and mark each checkbox to indicate You fully understand
+what command does before clicking "Continue."</property>
+                    <property name="use_markup">True</property>
+                    <property name="wrap">True</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkImage" id="imgShellWarning">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_right">20</property>
+                    <property name="stock">gtk-dialog-warning</property>
+                    <property name="icon_size">6</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblNeverShown">
+                    <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
+                    <property name="label">(be scared. Be very scared ^^)</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="swShellCommands">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTreeView" id="tvShellCommands">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">lstShellCommands</property>
+                        <property name="headers_visible">False</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection" id="tsShellCommands"/>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="clShellCommand">
+                            <property name="title" translatable="yes">column</property>
+                            <child>
+                              <object class="GtkCellRendererToggle" id="crShellCommandChecked">
+                                <signal name="toggled" handler="on_crShellCommandChecked_toggled" swapped="no"/>
+                              </object>
+                              <attributes>
+                                <attribute name="active">0</attribute>
+                              </attributes>
+                            </child>
+                            <child>
+                              <object class="GtkCellRendererText" id="crShellCommandText"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="title" translatable="yes">Import</property>
+                <property name="position">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="grSccImportFinished">
+                <property name="name">grImportFailed</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <child>
+                  <object class="GtkLabel" id="lblSccImportFinished">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">35</property>
+                    <property name="margin_bottom">30</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">Import results goes here</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblName1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Enter name for imported profile and click "Apply"</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="txName2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_top">5</property>
+                    <signal name="changed" handler="on_txName2_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox" id="vbImportPackage">
+                    <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="lblEmbededInfo">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">20</property>
+                        <property name="label" translatable="yes">There is one or more additional profile file or menu file embeded in profile
+you are importing. Please, choose if those those additionnal files should be
+imported as well and how they should be named.
+
+Please, note that if you choose to not import those files at all, some menus
+and profile switches in imported profile may not work as expected.</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRadioButton" id="cbImportPackageHidden">
+                        <property name="label" translatable="yes">Import as hidden menus and profiles named ".%s:name"</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_txName2_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRadioButton" id="cbImportPackageVisible">
+                        <property name="label" translatable="yes">Import normaly, with names formated as "%s:name"</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                        <property name="group">cbImportPackageHidden</property>
+                        <signal name="toggled" handler="on_txName2_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRadioButton" id="cbImportPackageNone">
+                        <property name="label" translatable="yes">Don't import any additional profiles or menus</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                        <property name="group">cbImportPackageHidden</property>
+                        <signal name="toggled" handler="on_txName2_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRadioButton" id="cbImportPackageAdvanced">
+                        <property name="label" translatable="yes">Display list and let me choose name for each imported profile</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                        <property name="group">cbImportPackageHidden</property>
+                        <signal name="toggled" handler="on_cbImportPackageAdvanced_toggled" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">4</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">3</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkRevealer" id="rvImportPackageAdvanced">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">25</property>
+                    <property name="margin_top">5</property>
+                    <property name="vexpand">True</property>
+                    <child>
+                      <object class="GtkScrolledWindow" id="svImportPackage">
+                        <property name="height_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="shadow_type">in</property>
+                        <child>
+                          <object class="GtkTreeView" id="tvImportPackage">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="model">lstImportPackage</property>
+                            <child internal-child="selection">
+                              <object class="GtkTreeSelection" id="tsImportPackage"/>
+                            </child>
+                            <child>
+                              <object class="GtkTreeViewColumn" id="tvIPKGEnabled">
+                                <property name="title" translatable="yes">En.</property>
+                                <child>
+                                  <object class="GtkCellRendererToggle" id="crIPKGEnabled">
+                                    <signal name="toggled" handler="on_crIPKGEnabled_toggled" swapped="no"/>
+                                  </object>
+                                  <attributes>
+                                    <attribute name="active">0</attribute>
+                                  </attributes>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkTreeViewColumn" id="tvIPKGOriginalName">
+                                <property name="title" translatable="yes">Original name</property>
+                                <child>
+                                  <object class="GtkCellRendererText" id="crIPKGOriginalName"/>
+                                  <attributes>
+                                    <attribute name="sensitive">0</attribute>
+                                    <attribute name="text">1</attribute>
+                                  </attributes>
+                                </child>
+                                <child>
+                                  <object class="GtkCellRendererText" id="crIPKGType"/>
+                                  <attributes>
+                                    <attribute name="sensitive">0</attribute>
+                                    <attribute name="text">3</attribute>
+                                  </attributes>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkTreeViewColumn" id="tvIPKGImportAs">
+                                <property name="title" translatable="yes">Import As</property>
+                                <child>
+                                  <object class="GtkCellRendererText" id="crIPKGImportAs">
+                                    <property name="editable">True</property>
+                                    <signal name="edited" handler="on_crIPKGImportAs_edited" swapped="no"/>
+                                  </object>
+                                  <attributes>
+                                    <attribute name="sensitive">0</attribute>
+                                    <attribute name="text">2</attribute>
+                                  </attributes>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">4</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="title" translatable="yes">Import</property>
+                <property name="position">6</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="grImportFailed">
+                <property name="name">grImportFailed</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <child>
+                  <object class="GtkLabel" id="lblImportFinished1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">20</property>
+                    <property name="margin_bottom">20</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">Import failed</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblError1">
+                    <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
+                    <property name="label" translatable="yes">Error message:</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="swError1">
+                    <property name="height_request">300</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="vexpand">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTextView" id="tvError1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="editable">False</property>
+                        <property name="buffer">tbError</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="title" translatable="yes">Import</property>
+                <property name="position">7</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -786,20 +1216,6 @@ Please, select what should be packaged along with exported profile.</property>
           <packing>
             <property name="pack_type">end</property>
             <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="btSaveVdf">
-            <property name="label">gtk-apply</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="no_show_all">True</property>
-            <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btSaveVdf_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="pack_type">end</property>
-            <property name="position">3</property>
           </packing>
         </child>
       </object>

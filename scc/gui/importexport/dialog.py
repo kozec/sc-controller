@@ -6,22 +6,39 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.gui.editor import Editor, ComboSetter
+from scc.tools import find_profile, profile_is_default, profile_is_override
 from export import Export
 from import_vdf import ImportVdf
+from import_sccprofile import ImportSccprofile
 
 import sys, os, logging
 log = logging.getLogger("IE.Dialog")
 
-class Dialog(Editor, ComboSetter, Export, ImportVdf):
+class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 	GLADE = "import_export.glade"
 	
 	def __init__(self, app):
 		self.app = app
 		self._back = []
 		self._recursing = False
+		self._next_callback = None
 		self.setup_widgets()
 		Export.__init__(self)
 		ImportVdf.__init__(self)
+		ImportSccprofile.__init__(self)
+	
+	
+	@staticmethod
+	def check_name(name):
+		if len(name.strip()) <= 0: return False
+		if "/" in name: return False
+		if find_profile(name):
+			# Profile already exists
+			if profile_is_default(name) and not profile_is_override(name):
+				# Existing profile is default and has no override yet
+				return True
+			return False
+		return True
 	
 	
 	def next_page(self, page):
@@ -42,30 +59,39 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf):
 			getattr(self, hname)()
 	
 	
-	def enable_next(self, enabled=True):
+	def enable_next(self, enabled=True, callback=None):
+		"""
+		Makes 'Next' button visible and assigns callback that will be
+		called when button is clicked. 'Next' button is automatically hidden
+		before callback is called.
+		
+		Returns 'Next' button widget.
+		"""
+		assert not enabled or callback
 		btNext = self.builder.get_object("btNext")
 		btNext.set_visible(enabled)
+		btNext.set_use_stock(False)
+		btNext.set_sensitive(True)
+		btNext.set_label(_("Next"))
+		self._next_callback = callback
+		return btNext
 	
 	
 	def on_btNext_clicked(self, *a):
-		stDialog		= self.builder.get_object("stDialog")
-		hname = "on_%s_next" % (stDialog.get_visible_child().get_name(),)
-		if hasattr(self, hname):
-			self.enable_next(enabled=False)
-			getattr(self, hname)()
+		cb = self._next_callback
+		self.enable_next(enabled=False)
+		cb()
 	
 	
 	def on_btBack_clicked(self, *a):
 		btBack			= self.builder.get_object("btBack")
 		stDialog		= self.builder.get_object("stDialog")
 		btSaveAs		= self.builder.get_object("btSaveAs")
-		btSaveVdf		= self.builder.get_object("btSaveVdf")
 		btNext			= self.builder.get_object("btNext")
 		page, self._back = self._back[-1], self._back[:-1]
 		stDialog.set_visible_child(page)
 		btNext.set_visible(False)
 		btSaveAs.set_visible(False)
-		btSaveVdf.set_visible(False)
 		btBack.set_visible(len(self._back) > 0)
 		self._page_selected(page)
 	

@@ -155,6 +155,28 @@ class Action(object):
 		return rv
 	
 	
+	def get_child_actions(self):
+		"""
+		Returns iterable with all direct child actions or emtpty iterable if
+		there are none. Child action is, for example, any action that DPadAction
+		can choose from.
+		
+		May returns NoActions as well.
+		"""
+		return []	# Most will return this
+	
+	
+	def get_all_actions(self):
+		"""
+		Returns generator with self, actions from get_child_actions and child
+		actions of every child action, recursively including their children.
+		"""
+		yield self
+		for c in self.get_child_actions():
+			for cc in c.get_all_actions():
+				yield cc
+	
+	
 	def get_compatible_modifiers(self):
 		"""
 		Returns bit combination of MOD_* constants to indicate which modifier
@@ -368,7 +390,6 @@ class HapticEnabledAction(object):
 	
 	
 	def set_haptic(self, hd):
-		print "SH", self, hd
 		self.haptic = hd
 	
 	
@@ -1020,7 +1041,7 @@ class RelWinAreaAction(WinAreaAction):
 
 
 class GyroAction(Action):
-	""" Uses *relative* gyroscope position as input for another action(s) """
+	""" Uses *relative* gyroscope position as input for emulated axes """
 	COMMAND = "gyro"
 	
 	def __init__(self, axis1, axis2=None, axis3=None):
@@ -1067,7 +1088,7 @@ class GyroAction(Action):
 
 
 class GyroAbsAction(HapticEnabledAction, GyroAction):
-	""" Uses *absolute* gyroscope position as input for another action(s) """
+	""" Uses *absolute* gyroscope position as input for emulated axes """
 	COMMAND = "gyroabs"
 	MOUSE_FACTOR = 0.01	# Just random number to put default sensitivity into sane range
 	
@@ -1149,6 +1170,10 @@ class MultichildAction(Action):
 	def compress(self):
 		self.actions = [ x.compress() for x in self.actions ]
 		return self
+	
+	
+	def get_child_actions(self):
+		return self.actions
 	
 	
 	def to_string(self, multiline=False, pad=0, prefixparams=""):
@@ -1922,6 +1947,10 @@ class XYAction(WholeHapticAction, Action):
 			| self.x.get_compatible_modifiers()
 			| self.y.get_compatible_modifiers()
 		)
+	
+	
+	def get_child_actions(self):
+		return self.x, self.y
 	
 	
 	@staticmethod

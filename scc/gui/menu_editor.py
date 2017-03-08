@@ -315,8 +315,7 @@ class MenuEditor(Editor):
 		for p in (get_menus_path(), get_default_menus_path()):
 			path = os.path.join(p, "%s.menu" % (id,))
 			if os.path.exists(path):
-				data = json.loads(open(path, "r").read())
-				return MenuData.from_json_data(data, TalkingActionParser())
+				return MenuData.from_file(path, TalkingActionParser())
 		# Menu file not found
 		return None
 	

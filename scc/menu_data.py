@@ -54,6 +54,17 @@ class MenuData(object):
 			+ ("', '".join([ i.id for i in self.__items ])) + "' >")
 	
 	
+	def get_all_actions(self):
+		"""
+		Returns generator with every action defined in this menu, including
+		child actions.
+		"""
+		for item in self:
+			if hasattr(item, "action") and item.action:
+				for i in item.action.get_all_actions():
+					yield i
+	
+	
 	def get_by_id(self, id):
 		"""
 		Returns item with specified ID.
@@ -138,6 +149,25 @@ class MenuData(object):
 			m.__items.append(item)
 		
 		return m
+	
+	
+	@staticmethod
+	def from_fileobj(fileobj, action_parser=None):
+		"""
+		Loads menu from file-like object.
+		Actions are parsed only if action_parser is set to ActionParser instance.
+		"""
+		data = json.loads(fileobj.read())
+		return MenuData.from_json_data(data, action_parser)
+	
+	
+	@staticmethod
+	def from_file(filename, action_parser=None):
+		"""
+		Loads menu from file.
+		Actions are parsed only if action_parser is set to ActionParser instance.
+		"""
+		return MenuData.from_fileobj(file(filename, "r"), action_parser)
 	
 	
 	@staticmethod

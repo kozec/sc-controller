@@ -42,6 +42,13 @@ class Profile(object):
 	
 	def save(self, filename):
 		""" Saves profile into file. Returns self """
+		fileobj = file(filename, "w")
+		self.save_fileobj(fileobj)
+		fileobj.close()
+		return self
+	
+	def save_fileobj(self, fileobj):
+		""" Saves profile into file-like object. Returns self """
 		data = {
 			'buttons'		: {},
 			'stick'			: self.stick,
@@ -60,14 +67,26 @@ class Profile(object):
 		
 		# Generate & save json
 		jstr = Encoder(sort_keys=True, indent=4).encode(data)
-		open(filename, "w").write(jstr)
+		fileobj.write(jstr)
 		return self
 	
 	
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
+		fileobj = open(filename, "r")
+		self.load_fileobj(fileobj)
 		self.filename = filename
-		data = json.loads(open(filename, "r").read())
+		return self
+	
+	
+	def load_fileobj(self, fileobj):
+		"""
+		Loads profile from file-like object.
+		Filename attribute is not set, what may cause some trouble if used in GUI.
+		
+		Returns self.
+		"""
+		data = json.loads(fileobj.read())
 		# Version
 		try:
 			version = int(data["version"])
@@ -139,45 +158,27 @@ class Profile(object):
 		self.gyro = NoAction()
 	
 	
-	def get_actions(self):
+	def get_all_actions(self):
 		"""
-		Returns iterable with every action defined in this profile,
+		Returns generator with every action defined in this profile,
 		including actions in menus.
-		Recursively walks into macros, dpads and everythin else that can have
+		Recursively walks into macros, dpads and everything else that can have
 		nested actions, so both parent and all child actions are yielded.
 		
 		May yield NoAction, but shouldn't yield None.
 		
 		Used for checks when profile is exported or imported.
 		"""
-		def walk(a):
-			yield a
-			if hasattr(a, 'mods'):
-				# Modeshift
-				for mode in a.mods:
-					for i in walk(a.mods[mode]):
-						yield i
-			if hasattr(a, 'action'):
-				# Most of modifiers
-				walk(a.action)
-			if hasattr(a, 'actions'):
-				# Everything else
-				for child in a.actions:
-					for i in walk(child):
-						yield i
-		
 		for dct in (self.buttons, self.triggers, self.pads):
 			for k in dct:
-				for i in walk(dct[k]):
+				for i in dct[k].get_all_actions():
 					yield i
 		for action in (self.stick, self.gyro):
-			for i in walk(action):
+			for i in action.get_all_actions():
 				yield i
 		for id in self.menus:
-			for item in self.menus[id]:
-				if item.action:
-					for i in walk(item.action):
-						yield i
+			for i in self.menus[id].get_all_actions():
+				yield i
 	
 	
 	def get_filename(self):
