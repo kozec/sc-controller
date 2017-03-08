@@ -903,18 +903,19 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def do_command_line(self, cl):
 		Gtk.Application.do_command_line(self, cl)
+		print cl
 		if len(cl.get_arguments()) > 1:
-			filename = cl.get_arguments()[-1]
-			giofile = Gio.File.new_for_path(filename)
-			# Local file, looks like vdf profile
-			from scc.gui.import_dialog import ImportDialog
-			gs = ImportDialog(self)
-			def i_told_you_to_quit(*a):
-				sys.exit(0)
-			gs.window.connect('destroy', i_told_you_to_quit)
-			gs.show(self.window)
-			# Skip first screen and try to import this file
-			gs.on_preload_finished(gs.set_file, giofile.get_path())
+			filename = " ".join(cl.get_arguments()[1:]) # 'cos fuck Gtk...
+			print filename
+			from scc.gui.importexport.dialog import Dialog
+			if Dialog.is_supported(filename):
+				ied = Dialog(self)
+				def i_told_you_to_quit(*a):
+					sys.exit(0)
+				ied.window.connect('destroy', i_told_you_to_quit)
+				ied.show(self.window)
+				# Skip first screen and try to import this file
+				ied.import_file(filename)
 		else:
 			self.activate()
 		return 0
@@ -1025,13 +1026,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				giofile = Gio.File.new_for_uri(uri)
 				if giofile.get_path():
 					path = giofile.get_path()
-					if path.endswith(".vdf") or path.endswith(".vdffz"):
-						# Local file, looks like vdf profile
-						from scc.gui.import_dialog import ImportDialog
-						gs = ImportDialog(self)
-						gs.show(self.window)
+					from scc.gui.importexport.dialog import Dialog
+					if Dialog.is_supported(path):
+						ied = Dialog(self)
+						ied.show(self.window)
 						# Skip first screen and try to import this file
-						gs.on_preload_finished(gs.set_file, giofile.get_path())
+						ied.import_file(giofile.get_path())
 
 
 class UndoRedo(object):

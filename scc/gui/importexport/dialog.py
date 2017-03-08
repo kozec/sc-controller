@@ -29,6 +29,19 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 	
 	
 	@staticmethod
+	def is_supported(filename):
+		"""
+		Returns True if passed file can be imported.
+		"""
+		# Currently decided base on extension
+		return (filename.endswith(".sccprofile")
+			or filename.endswith(".sccprofile.tar.gz")
+			or filename.endswith(".vdf")
+			or filename.endswith(".vdffz")
+		)
+	
+	
+	@staticmethod
 	def check_name(name):
 		if len(name.strip()) <= 0: return False
 		if "/" in name: return False
@@ -39,6 +52,21 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 				return True
 			return False
 		return True
+	
+	
+	def import_file(self, filename):
+		"""
+		Attempts to import passed file.
+		
+		Switches to apropriate page automatically, or, if file cannot be
+		imported, does nothing.
+		"""
+		if filename.endswith(".sccprofile"):
+			self.import_scc(filename=filename)
+		elif filename.endswith(".sccprofile.tar.gz"):
+			self.import_scc_tar(filename=filename)
+		elif filename.endswith(".vdf") or filename.endswith(".vdffz"):
+			self.import_vdf(filename=filename)
 	
 	
 	def next_page(self, page):

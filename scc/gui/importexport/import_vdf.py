@@ -246,7 +246,7 @@ class ImportVdf(object):
 		tvVdfProfiles = self.builder.get_object("tvVdfProfiles")
 		model, iter = tvVdfProfiles.get_selection().get_selected()
 		filename = model.get_value(iter, 3)
-		self.enable_next(filename is not None, self.on_vdf_selected)
+		self.enable_next(filename is not None, self.import_vdf)
 	
 	
 	@staticmethod
@@ -320,7 +320,7 @@ class ImportVdf(object):
 		btDump.set_sensitive(False)
 	
 	
-	def on_vdf_selected(self, *a):
+	def import_vdf(self, filename=None):
 		grVdfImportFinished = self.builder.get_object("grVdfImportFinished")
 		self.next_page(grVdfImportFinished)
 		
@@ -333,13 +333,15 @@ class ImportVdf(object):
 		txName = self.builder.get_object("txName")
 		btDump = self.builder.get_object("btDump")
 		
-		model, iter = tvVdfProfiles.get_selection().get_selected()
-		filename = model.get_value(iter, 3)
+		if filename is None:
+			model, iter = tvVdfProfiles.get_selection().get_selected()
+			filename = model.get_value(iter, 3)
 		if filename.endswith(".vdffz"):
 			self._profile = VDFFZProfile()
 		else:
 			# Best quess
 			self._profile = VDFProfile()
+		
 		failed = False
 		error_log = StringIO()
 		self._lock.acquire()
