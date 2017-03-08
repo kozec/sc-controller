@@ -163,7 +163,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# There is no uinput
 			msg = _('uinput kernel module not loaded')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
-			self.show_error(msg)
+			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
+			ribar = self.show_error(msg)
+			button = Gtk.Button.new_with_label(_("Fix Temporary"))
+			button.connect('clicked', self.apply_temporary_fix,
+				["gksudo", "modprobe", "uinput"],
+				_("This will load missing uinput module.")
+			)
+			ribar.add_button(button, -1)
 			return True
 		elif not os.path.exists("/dev/uinput"):
 			# /dev/uinput missing
@@ -176,11 +183,59 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		elif not check_access("/dev/uinput"):
 			# Cannot acces uinput
 			msg = _('You don\'t have required access to /dev/uinput.')
-			msg += "\n" + _('This will most likely prevent emulation from working.')
+			msg += "\n"   + _('This will most likely prevent emulation from working.')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
-			self.show_error(msg)
+			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
+			ribar = self.show_error(msg)
+			button = Gtk.Button.new_with_label(_("Fix Temporary"))
+			button.connect('clicked', self.apply_temporary_fix,
+				["gksudo", "chmod", "666", "/dev/uinput"],
+				_("This will enable input emulation for <i>every application</i> and <i>all users</i> on this machine.")
+			)
+			ribar.add_button(button, -1)
 			return True
 		return False
+	
+	
+	def apply_temporary_fix(self, trash, shell_command, message):
+		"""
+		Displays MessageBox with confirmation, tries to run passed shell
+		command and restarts daemon.
+		
+		Doing this allows user to teporary fix some uinput-related problems
+		by his vaim belief I'll not format his harddrive.
+		"""
+		d = Gtk.MessageDialog(parent=self.window,
+			flags = Gtk.DialogFlags.MODAL,
+			type = Gtk.MessageType.WARNING,
+			buttons = Gtk.ButtonsType.OK_CANCEL,
+			message_format = _("sudo fix-my-pc")
+		)
+		
+		def on_response(dialog, response_id):
+			if response_id == -5:	# OK button, not defined anywhere
+				sudo = Gio.Subprocess.new(shell_command, 0)
+				sudo.communicate(None, None)
+				if sudo.get_exit_status() == 0:
+					self.dm.restart()
+				else:
+					d2 = Gtk.MessageDialog(parent=d,
+						flags = Gtk.DialogFlags.MODAL,
+						type = Gtk.MessageType.ERROR,
+						buttons = Gtk.ButtonsType.OK,
+						message_format = _("Command Failed")
+					)
+					d2.run()
+					d2.destroy()
+			d.destroy()
+		
+		d.connect("response", on_response)
+		d.format_secondary_markup( _("""Following command is going to be executed:
+
+<b>%s</b>
+
+%s""") % (" ".join(shell_command), message), )
+		d.show()
 	
 	
 	def hilight(self, button):
@@ -853,6 +908,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.ribar.get_label().set_markup(message)
 		self.ribar.show()
 		self.ribar.set_reveal_child(True)
+		return self.ribar
 	
 	
 	def hide_error(self, *a):
