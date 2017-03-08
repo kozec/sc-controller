@@ -177,10 +177,8 @@ class Profile(object):
 			for i in action.get_all_actions():
 				yield i
 		for id in self.menus:
-			for item in self.menus[id]:
-				if item.action:
-					for i in item.action.get_all_actions():
-						yield i
+			for i in self.menus[id].get_all_actions():
+				yield i
 	
 	
 	def get_filename(self):

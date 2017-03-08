@@ -3,10 +3,11 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gio, GLib, GObject
-from scc.tools import get_profiles_path, find_profile, find_menu
+from scc.tools import get_profiles_path, get_menus_path, find_profile, find_menu
+from scc.special_actions import ChangeProfileAction, MenuAction
 from scc.special_actions import ShellCommandAction
+from scc.profile import Profile, Encoder
 from scc.menu_data import MenuData
-from scc.profile import Profile
 from scc.gui.parser import GuiActionParser
 from export import Export
 
@@ -126,7 +127,7 @@ class ImportSccprofile(object):
 		# Get all shell commands in all profiles
 		for trash, trash, trash, trash, obj in files:
 			if isinstance(obj.obj, Profile):
-				for a in obj.obj.get_actions():
+				for a in obj.obj.get_all_actions():
 					if isinstance(a, ShellCommandAction):
 						model.append((False, a.command))
 		
@@ -190,7 +191,7 @@ class ImportSccprofile(object):
 		for i in xrange(0, len(files)):
 			enabled, name, importas, type, obj = files[i]
 			if enabled == 2:
-				importas = name
+				importas = main_name
 			elif cbImportHidden.get_active():
 				importas = ".%s:%s" % (main_name, name)
 				enabled = 1
@@ -231,11 +232,37 @@ class ImportSccprofile(object):
 	
 	def on_scc_import_confirmed(self, *a):
 		files =		self.builder.get_object("lstImportPackage")
+		new_profile_names = {}
+		new_menu_names = {}
+		for enabled, name, importas, trash, obj in files:
+			if enabled != 0:
+				if isinstance(obj.obj, Profile):
+					new_profile_names[name] = importas
+				elif isinstance(obj.obj, MenuData):
+					new_menu_names["%s.menu" % (name,)] = "%s.menu" % (importas,)
+		
+		def apply_replacements(obj):
+			for a in obj.get_all_actions():
+				if isinstance(a, ChangeProfileAction):
+					if a.profile in new_profile_names:
+						a.profile = new_profile_names[a.profile]
+						a.parameters = tuple([ a.profile ] + list(a.parameters[1:]))
+				elif isinstance(a, MenuAction):
+					if a.menu_id in new_menu_names:
+						a.menu_id = new_menu_names[a.menu_id]
+						a.parameters = tuple([ a.menu_id ] + list(a.parameters[1:]))
+		
 		for enabled, trash, importas, trash, obj in files:
 			if enabled != 0:
-				# TODO: export menus, update references
+				# TODO: update references
 				if isinstance(obj.obj, Profile):
+					apply_replacements(obj.obj)
 					obj.obj.save(os.path.join(get_profiles_path(), "%s.sccprofile" % (importas,)))
+				elif isinstance(obj.obj, MenuData):
+					apply_replacements(obj.obj)
+					jstr = Encoder(sort_keys=True, indent=4).encode(obj.obj)
+					filename = os.path.join(get_menus_path(), "%s.menu" % (importas,))
+					open(filename, "w").write(jstr)
 		
 		trash, trash, importas, trash, obj = files[0]	# 1st is always profile that's being imported
 		self.app.new_profile(obj.obj, importas)

@@ -54,6 +54,17 @@ class MenuData(object):
 			+ ("', '".join([ i.id for i in self.__items ])) + "' >")
 	
 	
+	def get_all_actions(self):
+		"""
+		Returns generator with every action defined in this menu, including
+		child actions.
+		"""
+		for item in self:
+			if hasattr(item, "action") and item.action:
+				for i in item.action.get_all_actions():
+					yield i
+	
+	
 	def get_by_id(self, id):
 		"""
 		Returns item with specified ID.
