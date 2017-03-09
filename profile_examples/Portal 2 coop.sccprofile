@@ -36,11 +36,6 @@
             "doubleclick": {}, 
             "hold": {
                 "action": "menu('Default.menu')"
-            }, 
-            "modes": {
-                "RT": {
-                    "action": "shell('sc-controller')"
-                }
             }
         }, 
         "LB": {

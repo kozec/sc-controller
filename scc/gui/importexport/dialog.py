@@ -11,7 +11,7 @@ from export import Export
 from import_vdf import ImportVdf
 from import_sccprofile import ImportSccprofile
 
-import sys, os, logging
+import sys, os, tarfile, logging, json
 log = logging.getLogger("IE.Dialog")
 
 class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
@@ -29,16 +29,48 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 	
 	
 	@staticmethod
-	def is_supported(filename):
+	def determine_type(filename):
 		"""
-		Returns True if passed file can be imported.
+		Detects and returns type of passed file, if it can be imported.
+		Returns one of 'sccprofile', 'sccprofile.tar.gz', 'vdf', 'vdffz'
+		or None if type is not supported.
 		"""
-		# Currently decided base on extension
-		return (filename.endswith(".sccprofile")
-			or filename.endswith(".sccprofile.tar.gz")
-			or filename.endswith(".vdf")
-			or filename.endswith(".vdffz")
-		)
+		f = file(filename, 'rb').read(1024)
+		try:
+			if f.decode("utf-8").strip(" \t\r\n").startswith("{"):
+				# Looks like json
+				data = json.loads(open(filename, "r").read())
+				if "buttons" in data and "gyro" in data:
+					return 'sccprofile'
+				if "GameName" in data and "FileName" in data:
+					return 'vdffz'
+		except:
+			# Definitelly not json
+			pass
+		
+		if f[0:2] == b"\x1f\x8b":
+			# gzip, hopefully tar.gz
+			try:
+				tar = tarfile.open(filename, "r:gz")
+				names = [ x.name for x in tar ]
+				any_profile = any([ x.endswith(".sccprofile") for x in names ])
+				if any_profile and "profile-name" in names:
+					return "sccprofile.tar.gz"
+			except:
+				# Not a tarball
+				pass
+		
+		# Rest is decided by extension
+		if filename.endswith(".sccprofile.tar.gz"):
+			return "sccprofile.tar.gz"
+		if filename.endswith(".vdf"):
+			return "vdf"
+		# Fallbacks if above fails
+		if filename.endswith(".sccprofile"):
+			return "sccprofile"
+		if filename.endswith(".vdffz"):
+			return "vdffz"
+		return None
 	
 	
 	@staticmethod
@@ -54,18 +86,19 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 		return True
 	
 	
-	def import_file(self, filename):
+	def import_file(self, filename, filetype = None):
 		"""
 		Attempts to import passed file.
 		
 		Switches to apropriate page automatically, or, if file cannot be
 		imported, does nothing.
 		"""
-		if filename.endswith(".sccprofile"):
+		filetype = filetype or Dialog.determine_type(filename)
+		if filetype == "sccprofile":
 			self.import_scc(filename=filename)
-		elif filename.endswith(".sccprofile.tar.gz"):
+		elif filetype == "sccprofile.tar.gz":
 			self.import_scc_tar(filename=filename)
-		elif filename.endswith(".vdf") or filename.endswith(".vdffz"):
+		elif filetype in ("vdf", "vdffz"):
 			self.import_vdf(filename=filename)
 	
 	

@@ -29,7 +29,7 @@ from scc.profile import Profile
 from scc.config import Config
 
 import scc.osd.menu_generators
-import os, sys, platform, json, logging
+import os, sys, platform, json, urllib, logging
 log = logging.getLogger("App")
 
 class App(Gtk.Application, UserDataManager, BindingEditor):
@@ -102,7 +102,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		# Drag&drop target
 		self.builder.get_object("content").drag_dest_set(Gtk.DestDefaults.ALL, [
-			Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0)
+			Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0),
+			Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.OTHER_APP, 0)
 			], Gdk.DragAction.COPY
 		)
 		
@@ -1084,19 +1085,56 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def on_drag_data_received(self, widget, context, x, y, data, info, time):
 		""" Drag-n-drop handler """
+		uri = None
 		if str(data.get_data_type()) == "text/uri-list":
 			# Only file can be dropped here
 			if len(data.get_uris()):
 				uri = data.get_uris()[0]
+		elif str(data.get_data_type()) == "text/plain":
+			# This can be anything, so try to extract uri from it
+			lines = str(data.get_data()).split("\n")
+			if len(lines) > 0:
+				first = lines[0]
+				if first.startswith("http://") or first.startswith("https://") or first.startswith("ftp://"):
+					# I don't like other protocols
+					uri = first
+		if uri:
+			from scc.gui.importexport.dialog import Dialog
+			giofile = None
+			if uri.startswith("file://"):
 				giofile = Gio.File.new_for_uri(uri)
-				if giofile.get_path():
-					path = giofile.get_path()
-					from scc.gui.importexport.dialog import Dialog
-					if Dialog.is_supported(path):
-						ied = Dialog(self)
-						ied.show(self.window)
-						# Skip first screen and try to import this file
-						ied.import_file(giofile.get_path())
+			else:
+				# Local file can be used directly, remote has to
+				# be downloaded first
+				if uri.startswith("https://github.com/"):
+					# Convert link to repository display to link to raw file
+					uri = (uri
+						.replace("https://github.com/", "https://raw.githubusercontent.com/")
+						.replace("/blob/", "/")
+					)
+				name = urllib.unquote(".".join(uri.split("/")[-1].split(".")[0:-1]))
+				remote = Gio.File.new_for_uri(uri)
+				tmp, stream = Gio.File.new_tmp("%s.XXXXXX" % (name,))
+				stream.close()
+				if remote.copy(tmp, Gio.FileCopyFlags.OVERWRITE, None, None):
+					# Sucessfully downloaded
+					log.info("Downloaded '%s'" % (uri,))
+					giofile = tmp
+				else:
+					# Failed. Just do nothing
+					return
+			if giofile.get_path():
+				path = giofile.get_path()
+				filetype = Dialog.determine_type(path)
+				if filetype:
+					log.info("Importing '%s'..." % (filetype))
+					log.debug("(type %s)" % (filetype,))
+					ied = Dialog(self)
+					ied.show(self.window)
+					# Skip first screen and try to import this file
+					ied.import_file(path, filetype = filetype)
+				else:
+					log.error("Unknown file type: '%s'..." % (path,))
 
 
 class UndoRedo(object):
