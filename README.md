@@ -26,6 +26,7 @@ Based on [Standalone Steam Controller Driver](https://github.com/ynsta/steamcont
 - Fedora, SUSE (rpm-based distros): in [OpenSUSE Build Service](http://software.opensuse.org/download.html?project=home%3Akozec&package=sc-controller).
 - Arch, Manjaro: in [AUR](https://aur.archlinux.org/packages/sc-controller-git/)
 - Exherbo: in [hardware](https://git.exherbo.org/summer/packages/input/sc-controller)
+- Voidlinux: [template available](https://github.com/Vintodrimmer/void-packages/blob/sc-controller-branch/srcpkgs/sc-controller/template)
 
 ##### To run without package
 - download and extract [latest release](https://github.com/kozec/sc-controller/releases/latest)
