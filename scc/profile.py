@@ -38,6 +38,9 @@ class Profile(object):
 		self.parser = parser
 		self.clear()
 		self.filename = None
+		# UI-only values
+		self.is_template = False
+		self.description = ""
 	
 	
 	def save(self, filename):
@@ -47,9 +50,12 @@ class Profile(object):
 		fileobj.close()
 		return self
 	
+	
 	def save_fileobj(self, fileobj):
 		""" Saves profile into file-like object. Returns self """
 		data = {
+			"_"				: (self.description if "\n" not in self.description
+								else self.description.strip("\n").split("\n")),
 			'buttons'		: {},
 			'stick'			: self.stick,
 			'gyro'			: self.gyro,
@@ -58,7 +64,8 @@ class Profile(object):
 			"pad_left"		: self.pads[Profile.LEFT],
 			"pad_right"		: self.pads[Profile.RIGHT],
 			"menus"			: { id : self.menus[id].encode() for id in self.menus },
-			"version"		: Profile.VERSION
+			"is_template"	: self.is_template,
+			"version"		: Profile.VERSION,
 		}
 		
 		for i in self.buttons:
@@ -92,6 +99,17 @@ class Profile(object):
 			version = int(data["version"])
 		except:
 			version = 0
+		
+		# Settings - Description
+		# (stored in key "_", so it's serialized on top of JSON file)
+		if "_" not in data:
+			self.description = ""
+		elif type(data["_"]) == list:
+			self.description = "\n".join(data["_"])
+		else:
+			self.description = data["_"]
+		# Settings - Template
+		self.is_template = bool(data["is_template"]) if "is_template" in data else False
 		
 		# Buttons
 		self.buttons = {}

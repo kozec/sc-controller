@@ -404,7 +404,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			ps.set_profile_list(profiles)
 	
 	
-	def on_dlgNewProfile_delete_event(self, dlg, *a):
+	def undeletable_dialog(self, dlg, *a):
 		dlg.hide()
 		return True
 	
@@ -460,9 +460,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_profile_loaded(self, profile, giofile):
 		self.current = profile
 		self.current_file = giofile
+		self.recursing = True
 		self.profile_switchers[0].set_profile_modified(False)
+		self.builder.get_object("txProfileFilename").set_text(giofile.get_path())
+		self.builder.get_object("txProfileDescription").get_buffer().set_text(self.current.description)
+		self.builder.get_object("cbProfileIsTemplate").set_active(self.current.is_template)
 		for b in self.button_widgets.values():
 			b.update()
+		self.recursing = False
 	
 	
 	def on_profile_selected(self, ps, name, giofile):
@@ -827,10 +832,21 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			obj = self.builder.get_object(name)
 			obj.set_sensitive(ps.get_controller() is not None)
 		
-		name = ps.get_profile_name()
-		is_override = profile_is_override(name)
-		self.builder.get_object("mnuProfileDelete").set_visible(not is_override)
-		self.builder.get_object("mnuProfileRevert").set_visible(is_override)
+		for name in ("mnuProfileNew", "mnuProfileCopy", "mnuProfileRename",
+					"mnuProfileDetails", "mnuProfileSeparator1",
+					"mnuProfileSeparator2"):
+			# Hide profile-related menu items for all but 1st profile switcher
+			obj = self.builder.get_object(name)
+			obj.set_visible(ps == self.profile_switchers[0])
+		
+		if ps == self.profile_switchers[0]:
+			name = ps.get_profile_name()
+			is_override = profile_is_override(name)
+			self.builder.get_object("mnuProfileDelete").set_visible(not is_override)
+			self.builder.get_object("mnuProfileRevert").set_visible(is_override)
+		else:
+			self.builder.get_object("mnuProfileDelete").set_visible(False)
+			self.builder.get_object("mnuProfileRevert").set_visible(False)
 		
 		mnuPS = self.builder.get_object("mnuPS")
 		mnuPS.ps = ps
@@ -855,6 +871,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		rbCopyProfile = self.builder.get_object("rbCopyProfile")
 		self.on_new_clicked(mnuPS.ps, mnuPS.ps.get_profile_name())
 		rbCopyProfile.set_active(True)
+	
+	
+	def on_mnuProfileDetails_activate(self, *a):
+		self.builder.get_object("dlgProfileDetails").show()
 	
 	
 	def on_mnuProfileDelete_activate(self, *a):
@@ -1041,6 +1061,21 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			btDaemon.set_tooltip_text(_("Checking emulation status..."))
 		mnuEmulationEnabled.set_active(daemon_runs)
 		self.recursing = False
+	
+	
+	def on_btCloseDetails_clicked(self, *a):
+		self.builder.get_object("dlgProfileDetails").hide()
+	
+	
+	def on_buffProfileDescription_changed(self, buffer, *a):
+		if self.recursing: return
+		self.current.description = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+		self.on_profile_modified()
+	
+	def on_cbProfileIsTemplate_toggled(self, widget, *a):
+		if self.recursing: return
+		self.current.is_template = widget.get_active()
+		self.on_profile_modified()
 	
 	
 	def setup_commandline(self):

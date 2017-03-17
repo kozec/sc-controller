@@ -2,6 +2,9 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkTextBuffer" id="buffProfileDescription">
+    <signal name="changed" handler="on_buffProfileDescription_changed" swapped="no"/>
+  </object>
   <object class="GtkDialog" id="dlgNewProfile">
     <property name="width_request">600</property>
     <property name="can_focus">False</property>
@@ -10,7 +13,7 @@
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
-    <signal name="delete-event" handler="on_dlgNewProfile_delete_event" swapped="no"/>
+    <signal name="delete-event" handler="undeletable_dialog" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
         <property name="can_focus">False</property>
@@ -132,6 +135,7 @@
         <property name="can_focus">False</property>
         <property name="title">New Profile</property>
         <property name="show_close_button">True</property>
+        <property name="decoration_layout">:close</property>
       </object>
     </child>
   </object>
@@ -723,6 +727,173 @@
       </object>
     </child>
   </object>
+  <object class="GtkDialog" id="dlgProfileDetails">
+    <property name="can_focus">False</property>
+    <property name="type_hint">dialog</property>
+    <property name="deletable">False</property>
+    <property name="attached_to">window</property>
+    <signal name="delete-event" handler="undeletable_dialog" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dlgProfileDetailsVB">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dlgProfileDetailsBB">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="btCloseDetails">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_btCloseDetails_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="grid77">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">20</property>
+            <property name="margin_right">20</property>
+            <property name="margin_top">10</property>
+            <property name="margin_bottom">10</property>
+            <child>
+              <object class="GtkLabel" id="lblProfileFilename">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_right">20</property>
+                <property name="hexpand">False</property>
+                <property name="label" translatable="yes">Profile _Filename</property>
+                <property name="use_underline">True</property>
+                <property name="mnemonic_widget">txProfileFilename</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="txProfileFilename">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="editable">False</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lblProfileDescription">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">10</property>
+                <property name="margin_bottom">5</property>
+                <property name="hexpand">False</property>
+                <property name="label" translatable="yes">Profile _Description</property>
+                <property name="use_underline">True</property>
+                <property name="mnemonic_widget">txProfileDescription</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbProfileIsTemplate">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_top">10</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbProfileIsTemplate_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="lblProfileIsTemplate">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Profile is _Template</property>
+                    <property name="use_underline">True</property>
+                    <property name="mnemonic_widget">cbProfileIsTemplate</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow" id="swProfileDescription">
+                <property name="width_request">500</property>
+                <property name="height_request">75</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_left">20</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTextView" id="txProfileDescription">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="buffer">buffProfileDescription</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child type="titlebar">
+      <object class="GtkHeaderBar" id="headerbar3">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="title">Profile Details</property>
+        <property name="show_close_button">True</property>
+        <property name="decoration_layout">:close</property>
+        <signal name="delete-event" handler="undeletable_dialog" swapped="no"/>
+      </object>
+    </child>
+  </object>
   <object class="GtkMenu" id="mnuPS">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -745,7 +916,7 @@
       </object>
     </child>
     <child>
-      <object class="GtkSeparatorMenuItem" id="separator48">
+      <object class="GtkSeparatorMenuItem" id="mnuProfileSeparator2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
       </object>
@@ -788,11 +959,25 @@
     </child>
     <child>
       <object class="GtkMenuItem" id="mnuProfileRevert">
-        <property name="visible">False</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">_Revert Profile to Defaults</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_mnuProfileDelete_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="mnuProfileSeparator1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuProfileDetails">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Profile D_etails</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuProfileDetails_activate" swapped="no"/>
       </object>
     </child>
   </object>
