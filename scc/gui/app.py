@@ -418,6 +418,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if rbNewProfile.get_active():
 			# Creating blank profile is requested
 			self.current.clear()
+		else:
+			self.current.is_template = False
 		self.new_profile(self.current, txNewProfile.get_text())
 		dlg.hide()
 	
