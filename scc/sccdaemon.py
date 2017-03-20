@@ -682,8 +682,7 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"Fail: cannot display OSD\n")
 		elif message.startswith("Controller."):
 			with self.lock:
-				c = self.controllers[0]
-				client.mapper = c.get_mapper()
+				client.mapper = self.default_mapper
 				client.wfile.write(b"OK.\n")
 		elif message.startswith("Controller:"):
 			with self.lock:

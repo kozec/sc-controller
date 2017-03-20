@@ -262,8 +262,7 @@ class DaemonManager(GObject.GObject):
 	
 	def set_profile(self, filename):
 		""" Asks daemon to change 1st controller profile """
-		self.request("Controller.")
-		self.request("Profile: %s" % (filename,),
+		self.request("Controller.\nProfile: %s" % (filename,),
 				DaemonManager.nocallback, DaemonManager.nocallback)
 	
 	
