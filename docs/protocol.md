@@ -16,7 +16,7 @@ Ready.
 
 Connection is then held until client side closes it.
 
-### Messages sends by daemon:
+### Messages sendt by daemon:
 
 #### `Controller Count: n`
 Informs about total number of connected controllers.
@@ -101,6 +101,10 @@ for.
 
 If controller with specified controller_id is known, daemon responds with `OK.`
 Otherwise, `Fail: no such controller` error message is sent.
+
+#### `Controller.`
+Restores default state after controller is chosen.
+Daemon responds with `OK.`
 
 #### `Gesture: side up_angle`
 Requests gesture to be detected on one of pads. 'side' can be LEFT or RIGHT.

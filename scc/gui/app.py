@@ -495,16 +495,17 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		Called when selected profile is saved to disk
 		"""
+		c = self.profile_switchers[0].get_controller()
 		if giofile.get_path().endswith(".mod"):
 			# Special case, this one is saved only to be sent to daemon
 			# and user doesn't need to know about it
 			if self.dm.is_alive():
-				self.dm.set_profile(giofile.get_path())
+				c.set_profile(giofile.get_path())
 			return
 		
 		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 		if send and self.dm.is_alive() and not self.daemon_changed_profile:
-			self.dm.set_profile(giofile.get_path())
+			c.set_profile(giofile.get_path())
 		
 		self.current_file = giofile	
 	
