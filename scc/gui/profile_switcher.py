@@ -265,7 +265,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		self._first_time = False
 	
 	
-	def set_profile_modified(self, has_changes):
+	def set_profile_modified(self, has_changes, is_template=False):
 		"""
 		Called to signalize if profile has changes to save in UI
 		by displaying "changed" next to profile name and showing Save button.
@@ -288,13 +288,19 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 				self.show_all()
 			self._revealer.set_reveal_child(True)
 			iter = self._combo.get_active_iter()
-			self._model.set_value(iter, 2, _("(changed)"))
+			if is_template:
+				self._model.set_value(iter, 2, _("(changed template)"))
+			else:
+				self._model.set_value(iter, 2, _("(changed)"))
 		else:
 			if self._revealer:
 				# Nothing to hide if there is no revealer
 				self._revealer.set_reveal_child(False)
 			for i in self._model:
 				i[2] = None
+			if is_template:
+				iter = self._combo.get_active_iter()
+				self._model.set_value(iter, 2, _("(template)"))
 	
 	
 	def get_file(self):

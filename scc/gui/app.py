@@ -448,7 +448,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Called when selected profile is modified in memory.
 		"""
 		if update_ui:
-			self.profile_switchers[0].set_profile_modified(True)
+			self.profile_switchers[0].set_profile_modified(True, self.current.is_template)
 		
 		if not self.current_file.get_path().endswith(".mod"):
 			mod = self.current_file.get_path() + ".mod"
@@ -461,7 +461,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.current = profile
 		self.current_file = giofile
 		self.recursing = True
-		self.profile_switchers[0].set_profile_modified(False)
+		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 		self.builder.get_object("txProfileFilename").set_text(giofile.get_path())
 		self.builder.get_object("txProfileDescription").get_buffer().set_text(self.current.description)
 		self.builder.get_object("cbProfileIsTemplate").set_active(self.current.is_template)
@@ -502,7 +502,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				self.dm.set_profile(giofile.get_path())
 			return
 		
-		self.profile_switchers[0].set_profile_modified(False)
+		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 		if send and self.dm.is_alive() and not self.daemon_changed_profile:
 			self.dm.set_profile(giofile.get_path())
 		
