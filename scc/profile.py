@@ -171,6 +171,7 @@ class Profile(object):
 		)
 		self.menus = {}
 		self.stick = NoAction()
+		self.is_template = False
 		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
 		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
 		self.gyro = NoAction()
