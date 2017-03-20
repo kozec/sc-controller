@@ -59,9 +59,8 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 				self.set_cb(cb, "dpad", 1)
 			self.update_button_desc(action)
 		elif isinstance(action, MenuAction):
-			self._current_menu = action.menu_id
 			self.set_cb(cb, "menu", 1)
-			self.set_cb(cbm, self.menu_class_to_key(action), 1)
+			self.load_menu_data(action)
 		self.on_cbActionType_changed()
 	
 	

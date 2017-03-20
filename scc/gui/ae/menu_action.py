@@ -84,6 +84,13 @@ class MenuActionCofC(UserDataManager):
 		cbm = self.builder.get_object("cbMenuType")
 		self.set_cb(cbm, self.menu_class_to_key(action), 1)
 		
+		if self.builder.get_object("rvMaxSize"):
+			rvMaxSize = self.builder.get_object("rvMaxSize")
+			spMaxSize = self.builder.get_object("spMaxSize")
+			visible = isinstance(action, GridMenuAction)
+			max_size = spMaxSize.get_adjustment().set_value(action.max_size)
+			rvMaxSize.set_reveal_child(visible)
+		
 		cbControlWith = self.builder.get_object("cbControlWith")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
@@ -183,6 +190,7 @@ class MenuActionCofC(UserDataManager):
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
+		
 		if cbMenuAutoConfirm and cbConfirmWith:
 			# Control Options block exists in UI
 			lblConfirmWith = self.builder.get_object("lblConfirmWith")
@@ -214,8 +222,21 @@ class MenuActionCofC(UserDataManager):
 					params[2] = SAME
 			elif self.confirm_with_same_active():
 				params += [ STICK, SAME ]
-			# Grab menu type and choose apropriate action
+			
 			cbm = self.builder.get_object("cbMenuType")
+			# Hide / apply and display 'Items per row' selector if it exists in UI
+			if self.builder.get_object("rvMaxSize"):
+				rvMaxSize = self.builder.get_object("rvMaxSize")
+				spMaxSize = self.builder.get_object("spMaxSize")
+				visible = cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu"
+				rvMaxSize.set_reveal_child(visible)
+				if visible:
+					max_size = int(spMaxSize.get_adjustment().get_value())
+					if max_size > 0:
+						# max_size is 2nd parameter
+						params = [ params[0], max_size ] + params[1:]
+			
+			# Grab menu type and choose apropriate action
 			action = NoAction()
 			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
 				# Grid menu
@@ -242,3 +263,12 @@ class MenuActionCofC(UserDataManager):
 					action = PositionModifier(x, y, action)
 			
 			self.editor.set_action(action)
+	
+	
+	def on_spMaxSize_format_value(self, spinner):
+		val = int(spinner.get_adjustment().get_value())
+		if val < 1:
+			spinner.get_buffer().set_text(_("auto"), -1)
+		else:
+			spinner.get_buffer().set_text(str(val), -1)
+		return True
