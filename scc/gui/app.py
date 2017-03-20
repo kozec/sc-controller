@@ -417,7 +417,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		dlg = self.builder.get_object("dlgNewProfile")
 		if rbNewProfile.get_active():
 			# Creating blank profile is requested
-			print self.current
 			self.current.clear()
 		self.new_profile(self.current, txNewProfile.get_text())
 		dlg.hide()
@@ -487,6 +486,31 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if self.current_file.get_path().endswith(".mod"):
 			orig = self.current_file.get_path()[0:-4]
 			self.current_file = Gio.File.new_for_path(orig)
+		
+		if self.current.is_template:
+			# Ask user if he is OK with overwriting template
+			d = Gtk.MessageDialog(parent=self.window,
+				flags = Gtk.DialogFlags.MODAL,
+				type = Gtk.MessageType.QUESTION,
+				buttons = Gtk.ButtonsType.YES_NO,
+				message_format = _("You are about to save changes over template.\nAre you sure?")
+			)
+			NEW_PROFILE_BUTTON = 7
+			d.add_button(_("Create New Profile"), NEW_PROFILE_BUTTON)
+			
+			
+			r = d.run()
+			d.destroy()
+			if r == NEW_PROFILE_BUTTON:
+				# New profile button clicked
+				ps = self.profile_switchers[0]
+				rbCopyProfile = self.builder.get_object("rbCopyProfile")
+				self.on_new_clicked(ps, ps.get_profile_name())
+				rbCopyProfile.set_active(True)
+				return
+			if r != -8:
+				# Bail out if user answers anything but yes
+				return
 		
 		self.save_profile(self.current_file, self.current)
 	
