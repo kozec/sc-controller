@@ -7,6 +7,104 @@
     <property name="step_increment">1</property>
     <property name="page_increment">2</property>
   </object>
+  <object class="GtkAdjustment" id="adjMenuPosX">
+    <property name="upper">4096</property>
+    <property name="value">10</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjMenuPosY">
+    <property name="upper">4096</property>
+    <property name="value">10</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkListStore" id="lstButton">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name button -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">A</col>
+        <col id="1">A</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">B</col>
+        <col id="1">B</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">X</col>
+        <col id="1">X</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Y</col>
+        <col id="1">Y</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Back (select)</col>
+        <col id="1">BACK</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Center</col>
+        <col id="1">C</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Start</col>
+        <col id="1">START</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Grip</col>
+        <col id="1">LGRIP</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Grip</col>
+        <col id="1">RGRIP</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Bumper</col>
+        <col id="1">LB</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Bumper</col>
+        <col id="1">RB</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Trigger</col>
+        <col id="1">LT</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Trigger</col>
+        <col id="1">RT</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Left Pad Press</col>
+        <col id="1">LPAD</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Right Pad Press</col>
+        <col id="1">RPAD</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="lstMenu">
     <columns>
       <!-- column-name name -->
@@ -14,6 +112,42 @@
       <!-- column-name key -->
       <column type="gchararray"/>
     </columns>
+  </object>
+  <object class="GtkListStore" id="lstMenuPosX">
+    <columns>
+      <!-- column-name id -->
+      <column type="gint"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">From Left</col>
+      </row>
+      <row>
+        <col id="0">-1</col>
+        <col id="1" translatable="yes">From Right</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="lstMenuPosY">
+    <columns>
+      <!-- column-name id -->
+      <column type="gint"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">From Top</col>
+      </row>
+      <row>
+        <col id="0">-1</col>
+        <col id="1" translatable="yes">From Bottom</col>
+      </row>
+    </data>
   </object>
   <object class="GtkListStore" id="lstMenuType">
     <columns>
@@ -491,7 +625,6 @@
               <object class="GtkRevealer" id="rvMaxSize">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="transition_type">crossfade</property>
                 <child>
                   <object class="GtkBox" id="vbMaxSize">
                     <property name="visible">True</property>
@@ -535,6 +668,312 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">4</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkExpander" id="exMenuControl">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_top">10</property>
+                <signal name="activate" handler="on_exMenuControl_activate" swapped="no"/>
+                <child>
+                  <placeholder/>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="label67">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Control Options...</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRevealer" id="rvMenuControl">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkGrid" id="grMenuControl">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">20</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">10</property>
+                    <child>
+                      <object class="GtkLabel" id="lblConfirmWith">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_right">20</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="label" translatable="yes">Confirm Button</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label9">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_right">20</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="label" translatable="yes">Cancel Button</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbConfirmWith">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="hexpand">True</property>
+                        <property name="model">lstButton</property>
+                        <property name="active">0</property>
+                        <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext6"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbCancelWith">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="hexpand">True</property>
+                        <property name="model">lstButton</property>
+                        <property name="active">1</property>
+                        <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext7"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbMenuAutoConfirm">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="margin_top">5</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_cbMenus_changed" swapped="no"/>
+                        <signal name="toggled" handler="prevent_confirm_cancel_nonsense" swapped="no"/>
+                        <child>
+                          <object class="GtkLabel" id="lblMenuAutoConfirm">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Confirm selection when pad is released</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">3</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbMenuAutoCancel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="margin_top">5</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_cbMenus_changed" swapped="no"/>
+                        <signal name="toggled" handler="prevent_confirm_cancel_nonsense" swapped="no"/>
+                        <child>
+                          <object class="GtkLabel" id="lblMenuAutoCancel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Cancel menu when pad is released</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbMenuConfirmWithClick">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="margin_top">5</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_cbMenus_changed" swapped="no"/>
+                        <signal name="toggled" handler="prevent_confirm_cancel_nonsense" swapped="no"/>
+                        <child>
+                          <object class="GtkLabel" id="lblMenuConfirmWithClick">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Confirm selection by clicking the pad</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">2</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">6</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkExpander" id="exMenuPosition">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_top">10</property>
+                <signal name="activate" handler="on_exMenuPosition_activate" swapped="no"/>
+                <child>
+                  <placeholder/>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="label8">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Menu Position...</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">7</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRevealer" id="rvMenuPosition">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkGrid" id="grid7">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">20</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">10</property>
+                    <child>
+                      <object class="GtkSpinButton" id="spMenuPosX">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="adjustment">adjMenuPosX</property>
+                        <signal name="value-changed" handler="on_cbMenus_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="spMenuPosY">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="margin_top">5</property>
+                        <property name="hexpand">True</property>
+                        <property name="adjustment">adjMenuPosY</property>
+                        <signal name="value-changed" handler="on_cbMenus_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbMenuPosX">
+                        <property name="width_request">200</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">20</property>
+                        <property name="model">lstMenuPosX</property>
+                        <property name="active">0</property>
+                        <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="crMenuPosX"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbMenuPosY">
+                        <property name="width_request">200</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">20</property>
+                        <property name="margin_top">5</property>
+                        <property name="model">lstMenuPosY</property>
+                        <property name="active">1</property>
+                        <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="crMenuPosY"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">8</property>
                 <property name="width">2</property>
               </packing>
             </child>

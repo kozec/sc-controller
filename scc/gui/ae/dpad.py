@@ -12,6 +12,7 @@ from scc.actions import HatUpAction, HatDownAction, HatLeftAction,HatRightAction
 from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
 from scc.special_actions import MenuAction
 from scc.modifiers import NameModifier
+from scc.constants import LEFT, RIGHT
 from scc.uinput import Keys, Axes
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
@@ -40,6 +41,15 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		self._recursing = False
 		self._userdata_load_started = False
 		self.actions = [ NoAction() ] * 8
+	
+	
+	def load(self):
+		if self.loaded : return
+		AEComponent.load(self)
+		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		cbCancelWith = self.builder.get_object("cbCancelWith")
+		cbConfirmWith.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) == "-" )
+		cbCancelWith.set_row_separator_func( lambda model, iter : model.get_value(iter, 0)  == "-" )
 	
 	
 	def shown(self):
@@ -166,3 +176,25 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		ae.set_title(_("Select DPAD Action"))
 		ae.set_input(i, action, mode = Action.AC_BUTTON)
 		ae.show(self.app.window)
+	
+	
+	def get_control_with(self):
+		"""
+		DPAD component is used with stick and pad and that's what has to be used
+		to controll menu.
+		"""
+		if self.editor.id == 'LPAD':
+			return LEFT
+		elif self.editor.id == 'RPAD':
+			return RIGHT
+		return self.editor.id
+	
+	
+	def on_exMenuControl_activate(self, ex, *a):
+		rvMenuControl = self.builder.get_object("rvMenuControl")
+		rvMenuControl.set_reveal_child(not ex.get_expanded())
+	
+	
+	def on_exMenuPosition_activate(self, ex, *a):
+		rvMenuPosition = self.builder.get_object("rvMenuPosition")
+		rvMenuPosition.set_reveal_child(not ex.get_expanded())

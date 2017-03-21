@@ -10,7 +10,7 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import MenuAction, HorizontalMenuAction
 from scc.special_actions import RadialMenuAction, GridMenuAction
 from scc.special_actions import PositionModifier
-from scc.constants import SCButtons, SAME
+from scc.constants import SCButtons, SAME, STICK
 from scc.actions import NoAction
 from scc.tools import nameof
 from scc.gui.userdata_manager import UserDataManager
@@ -95,12 +95,31 @@ class MenuActionCofC(UserDataManager):
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
 		if cbControlWith:
 			self.set_cb(cbControlWith, nameof(action.control_with), 1)
 			self.set_cb(cbConfirmWith, nameof(action.confirm_with), 1)
 			self.set_cb(cbCancelWith, nameof(action.cancel_with), 1)
 		if cbMenuAutoConfirm:
 			cbMenuAutoConfirm.set_active(action.confirm_with == SAME)
+		if cbMenuConfirmWithClick:
+			cbMenuAutoConfirm.set_active(action.confirm_with == self.get_default_confirm())
+	
+	
+	def get_default_confirm(self):
+		"""
+		Returns MenuAction.DEFAULT_CONFIRM, but may be overriden when default
+		confirm button is different - specifically when used with pads.
+		"""
+		return MenuAction.DEFAULT_CONFIRM
+	
+	
+	def get_default_cancel(self):
+		"""
+		Returns MenuAction.DEFAULT_CONFIRM, but may be overriden when default
+		confirm button is different - specifically when used with pads.
+		"""
+		return MenuAction.DEFAULT_CANCEL
 	
 	
 	def on_menu_changed(self, new_id):
@@ -184,18 +203,53 @@ class MenuActionCofC(UserDataManager):
 		return False	# there isn't any by default
 	
 	
+	def prevent_confirm_cancel_nonsense(self, widget, *a):
+		"""
+		If 'confirm with click', 'confirm with release' and
+		'cbMenuAutoCancel' are all present, this method prevents them from
+		being checked in nonsensical way.
+		"""
+		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
+		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
+		if widget.get_active():
+			if widget == cbMenuConfirmWithClick:
+				if cbMenuAutoConfirm:
+					cbMenuAutoConfirm.set_active(False)
+			elif widget == cbMenuAutoConfirm:
+				if cbMenuConfirmWithClick:
+					cbMenuConfirmWithClick.set_active(False)
+				if cbMenuAutoCancel:
+					cbMenuAutoCancel.set_active(False)
+			elif widget == cbMenuAutoCancel:
+				if cbMenuAutoConfirm:
+					cbMenuAutoConfirm.set_active(False)
+	
+	
 	def on_cbMenus_changed(self, *a):
 		""" Called when user changes any menu settings """
 		if self._recursing : return
+		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
+		lblConfirmWith = self.builder.get_object("lblConfirmWith")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		
-		if cbMenuAutoConfirm and cbConfirmWith:
-			# Control Options block exists in UI
-			lblConfirmWith = self.builder.get_object("lblConfirmWith")
-			lblConfirmWith.set_sensitive(not cbMenuAutoConfirm.get_active())
-			cbConfirmWith.set_sensitive(not cbMenuAutoConfirm.get_active())
+		if cbConfirmWith:
+			sensitive = True
+			if cbMenuAutoConfirm and cbMenuAutoConfirm.get_active():
+				sensitive = False
+			if cbMenuConfirmWithClick and cbMenuConfirmWithClick.get_active():
+				sensitive = False
+			lblConfirmWith.set_sensitive(sensitive)
+			cbConfirmWith.set_sensitive(sensitive)
+		
+		if cbCancelWith:
+			sensitive = True
+			if cbMenuAutoCancel and cbMenuAutoCancel.get_active():
+				sensitive = False
+			cbCancelWith.set_sensitive(sensitive)
 		
 		name = self.get_selected_menu()
 		if name == "":
@@ -209,17 +263,15 @@ class MenuActionCofC(UserDataManager):
 			return
 		if name:
 			# There is some menu choosen
-			cbControlWith = self.builder.get_object("cbControlWith")
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
-			params = [ name ]
-			if cbControlWith:
-				params += [
-					cbControlWith.get_model().get_value(cbControlWith.get_active_iter(), 1),
-					getattr(SCButtons, cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)),
-					getattr(SCButtons, cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1))
-				]
+			params = [ name, self.get_control_with() ]
+			if cbConfirmWith:
 				if self.confirm_with_same_active():
-					params[2] = SAME
+					params += [ SAME ]
+				else:
+					params += [ getattr(SCButtons, cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)) ]
+			if cbCancelWith:
+				params += [ getattr(SCButtons, cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1)) ]
 			elif self.confirm_with_same_active():
 				params += [ STICK, SAME ]
 			
@@ -263,6 +315,14 @@ class MenuActionCofC(UserDataManager):
 					action = PositionModifier(x, y, action)
 			
 			self.editor.set_action(action)
+	
+	
+	def get_control_with(self):
+		""" Returns value of "Control With" combo or STICK if there is none """
+		cbControlWith = self.builder.get_object("cbControlWith")
+		if cbControlWith:
+			return cbControlWith.get_model().get_value(cbControlWith.get_active_iter(), 1)
+		return STICK
 	
 	
 	def on_spMaxSize_format_value(self, spinner):
