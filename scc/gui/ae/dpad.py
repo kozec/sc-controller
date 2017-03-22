@@ -10,9 +10,9 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction,HatRightAction
 from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
+from scc.constants import LEFT, RIGHT, STICK, SAME, DEFAULT, SCButtons
 from scc.special_actions import MenuAction
 from scc.modifiers import NameModifier
-from scc.constants import LEFT, RIGHT
 from scc.uinput import Keys, Axes
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
@@ -178,16 +178,27 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		ae.show(self.app.window)
 	
 	
+	def get_default_confirm(self):
+		"""
+		Returns default confirm button for pads/stick - LPAD, RPAD or STICK
+		"""
+		return getattr(SCButtons, self.editor.id)
+	
+	
+	def get_default_cancel(self):
+		"""
+		Returns default cancel button for stick/pad - SAME or B
+		"""
+		if self.editor.id == STICK:
+			return SCButtons.B
+		return SAME
+	
+	
 	def get_control_with(self):
 		"""
-		DPAD component is used with stick and pad and that's what has to be used
-		to controll menu.
+		'control_with' argument is ignored when menu is used with stick/pad.
 		"""
-		if self.editor.id == 'LPAD':
-			return LEFT
-		elif self.editor.id == 'RPAD':
-			return RIGHT
-		return self.editor.id
+		return DEFAULT
 	
 	
 	def on_exMenuControl_activate(self, ex, *a):

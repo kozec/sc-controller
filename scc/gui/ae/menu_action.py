@@ -10,7 +10,7 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import MenuAction, HorizontalMenuAction
 from scc.special_actions import RadialMenuAction, GridMenuAction
 from scc.special_actions import PositionModifier
-from scc.constants import SCButtons, SAME, STICK
+from scc.constants import SCButtons, SAME, STICK, DEFAULT
 from scc.actions import NoAction
 from scc.tools import nameof
 from scc.gui.userdata_manager import UserDataManager
@@ -96,14 +96,38 @@ class MenuActionCofC(UserDataManager):
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
 		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
+		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
 		if cbControlWith:
 			self.set_cb(cbControlWith, nameof(action.control_with), 1)
-			self.set_cb(cbConfirmWith, nameof(action.confirm_with), 1)
-			self.set_cb(cbCancelWith, nameof(action.cancel_with), 1)
-		if cbMenuAutoConfirm:
-			cbMenuAutoConfirm.set_active(action.confirm_with == SAME)
-		if cbMenuConfirmWithClick:
-			cbMenuAutoConfirm.set_active(action.confirm_with == self.get_default_confirm())
+		
+		cow = action.confirm_with
+		caw = action.cancel_with
+		if cow == DEFAULT: cow = self.get_default_confirm()
+		if caw == DEFAULT: caw = self.get_default_cancel()
+		
+		if cbConfirmWith:
+			if cow == SAME and cbMenuAutoConfirm:
+				cbMenuAutoConfirm.set_active(True)
+				cbConfirmWith.set_sensitive(False)
+			elif cbMenuConfirmWithClick and cow == self.get_default_confirm():
+				cbMenuConfirmWithClick.set_active(True)
+				cbConfirmWith.set_sensitive(False)
+			else:
+				if cbMenuAutoConfirm:
+					cbMenuAutoConfirm.set_active(False)
+				if cbMenuConfirmWithClick:
+					cbMenuAutoConfirm.set_active(False)
+				cbConfirmWith.set_sensitive(True)
+				self.set_cb(cbConfirmWith, nameof(cow), 1)
+		
+		if cbCancelWith:
+			if caw == SAME and cbMenuAutoCancel:
+				cbMenuAutoCancel.set_active(True)
+				cbCancelWith.set_sensitive(False)
+			else:
+				if cbMenuAutoCancel:
+					cbMenuAutoCancel.set_active(False)
+				self.set_cb(cbCancelWith, nameof(caw), 1)
 	
 	
 	def get_default_confirm(self):
@@ -195,14 +219,6 @@ class MenuActionCofC(UserDataManager):
 		return model.get_value(iter, 1)
 	
 	
-	def confirm_with_same_active(self):
-		"""
-		Returns value of 'Confirm selection by releasing the button' checkbox,
-		if there is any.
-		"""
-		return False	# there isn't any by default
-	
-	
 	def prevent_confirm_cancel_nonsense(self, widget, *a):
 		"""
 		If 'confirm with click', 'confirm with release' and
@@ -264,16 +280,27 @@ class MenuActionCofC(UserDataManager):
 		if name:
 			# There is some menu choosen
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
-			params = [ name, self.get_control_with() ]
-			if cbConfirmWith:
-				if self.confirm_with_same_active():
-					params += [ SAME ]
-				else:
-					params += [ getattr(SCButtons, cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)) ]
-			if cbCancelWith:
-				params += [ getattr(SCButtons, cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1)) ]
-			elif self.confirm_with_same_active():
-				params += [ STICK, SAME ]
+			params = [ name ]
+			
+			cow = SAME
+			if cbMenuAutoConfirm and cbMenuAutoConfirm.get_active():
+				cow = SAME
+			elif cbMenuConfirmWithClick and cbMenuConfirmWithClick.get_active():
+				cow = DEFAULT
+			elif cbConfirmWith:
+				cow = cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)
+				cow = getattr(SCButtons, cow)
+				if cow == self.get_default_confirm(): cow = DEFAULT
+			
+			if cbMenuAutoCancel and cbMenuAutoCancel.get_active():
+				caw = DEFAULT
+			elif cbCancelWith:
+				caw = cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1)
+				caw = getattr(SCButtons, caw)
+				if caw == self.get_default_cancel(): caw = DEFAULT
+			
+			params += [ self.get_control_with(), cow, caw ]
+			
 			
 			cbm = self.builder.get_object("cbMenuType")
 			# Hide / apply and display 'Items per row' selector if it exists in UI
@@ -286,7 +313,7 @@ class MenuActionCofC(UserDataManager):
 					max_size = int(spMaxSize.get_adjustment().get_value())
 					if max_size > 0:
 						# max_size is 2nd parameter
-						params = [ params[0], max_size ] + params[1:]
+						params += [ False, max_size ]
 			
 			# Grab menu type and choose apropriate action
 			action = NoAction()

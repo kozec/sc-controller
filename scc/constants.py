@@ -49,7 +49,11 @@ GYRO	= "GYRO"
 PITCH	= "PITCH"
 YAW		= "YAW"
 ROLL	= "ROLL"
-SAME	= "SAME"	# may be used with MenuAction
+
+# Special constants currently used only by menus
+SAME = "SAME"		# Menu is canceled by releasing same button that intiated it
+DEFAULT = "DEFAULT"	# Default confirm/cancel button. A/B for menus initiated by
+					# button, pad clicking / releasing for menus on pads
 
 # Deadzone modes
 CUT		= "CUT"
@@ -57,7 +61,7 @@ ROUND	= "ROUND"
 LINEAR	= "LINEAR"
 
 PARSER_CONSTANTS = ( LEFT, RIGHT, WHOLE, STICK, GYRO, PITCH,
-	YAW, ROLL, SAME, CUT, ROUND, LINEAR )
+	YAW, ROLL, DEFAULT, SAME, CUT, ROUND, LINEAR )
 
 
 

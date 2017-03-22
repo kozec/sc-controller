@@ -16,7 +16,7 @@ from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
 from scc.tools import strip_gesture, nameof, clamp
 from scc.modifiers import Modifier, NameModifier
-from scc.constants import STICK_PAD_MAX
+from scc.constants import STICK_PAD_MAX, DEFAULT
 from math import sqrt
 
 import time, logging
@@ -281,7 +281,7 @@ class MenuAction(Action, SpecialAction):
 	DEFAULT_POSITION = 10, -10
 	
 	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
-					confirm_with=DEFAULT_CONFIRM, cancel_with=DEFAULT_CANCEL,
+					confirm_with=DEFAULT, cancel_with=DEFAULT,
 					show_with_release=False, max_size = 0):
 		if control_with == SAME:
 			# Little touch of backwards compatibility
@@ -289,7 +289,7 @@ class MenuAction(Action, SpecialAction):
 		if type(control_with) == int:
 			# Allow short form in case when menu is assigned to pad
 			# eg.: menu("some-id", 3) sets max_size to 3
-			control_with, max_size = self.DEFAULT_CONTROL, control_with
+			control_with, max_size = MenuAction.DEFAULT_CONTROL, control_with
 		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release, max_size)
 		self.menu_id = menu_id
 		self.control_with = control_with
@@ -307,14 +307,15 @@ class MenuAction(Action, SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		dflt = (self.DEFAULT_CONTROL, self.DEFAULT_CONFIRM, self.DEFAULT_CANCEL, False)
-		vals = (self.control_with, self.confirm_with, self.cancel_with, self.show_with_release)
-		if dflt == vals:
-			# Special case when menu is assigned to pad 
-			if self.max_size == 0:
-				return "%s%s('%s')" % (" " * pad, self.COMMAND, self.menu_id)
-			else:
-				return "%s%s('%s', %s)" % (" " * pad, self.COMMAND, self.menu_id, self.max_size)
+		if self.control_with in (self.DEFAULT_CONTROL, DEFAULT):
+			dflt = (DEFAULT, DEFAULT, False)
+			vals = (self.confirm_with, self.cancel_with, self.show_with_release)
+			if dflt == vals:
+				# Special case when menu is assigned to pad 
+				if self.max_size == 0:
+					return "%s%s('%s')" % (" " * pad, self.COMMAND, self.menu_id)
+				else:
+					return "%s%s('%s', %s)" % (" " * pad, self.COMMAND, self.menu_id, self.max_size)
 		
 		return "%s%s(%s)" % (
 			" " * pad,
