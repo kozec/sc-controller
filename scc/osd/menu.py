@@ -8,8 +8,9 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, GLib, Gdk, GdkX11
-from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.tools import point_in_gtkrect, find_menu, circle_to_square, clamp
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
+from scc.constants import LEFT, RIGHT, SAME, STICK
 from scc.menu_data import MenuData, Separator, Submenu
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
@@ -188,6 +189,12 @@ class Menu(OSDWindow):
 		
 		if self.args.use_cursor:
 			self.enable_cursor()
+		
+		if self._confirm_with == SAME:
+			if self._control_with == RIGHT:
+				self._confirm_with = SCButtons.RPADTOUCH.name
+			else:
+				self._confirm_with = SCButtons.LPADTOUCH.name
 		
 		# Create buttons that are displayed on screen
 		items = self.items.generate(self)

@@ -11,8 +11,8 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction,HatRightAction
 from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
 from scc.constants import LEFT, RIGHT, STICK, SAME, DEFAULT, SCButtons
-from scc.special_actions import MenuAction
 from scc.modifiers import NameModifier
+from scc.special_actions import MenuAction
 from scc.uinput import Keys, Axes
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC
@@ -68,7 +68,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 			else:
 				self.set_cb(cb, "dpad", 1)
 			self.update_button_desc(action)
-		elif isinstance(action, MenuAction):
+		elif MenuActionCofC.handles(self, None, action):
 			self.set_cb(cb, "menu", 1)
 			self.load_menu_data(action)
 		self.on_cbActionType_changed()

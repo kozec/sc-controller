@@ -12,11 +12,11 @@ from __future__ import unicode_literals
 
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
+from scc.constants import STICK_PAD_MAX, DEFAULT
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
 from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
 from scc.tools import strip_gesture, nameof, clamp
 from scc.modifiers import Modifier, NameModifier
-from scc.constants import STICK_PAD_MAX, DEFAULT
 from math import sqrt
 
 import time, logging
@@ -331,17 +331,22 @@ class MenuAction(Action, SpecialAction):
 	def button_press(self, mapper):
 		if not self.show_with_release:
 			confirm_with = self.confirm_with
+			cancel_with = self.cancel_with
 			args = [ mapper ]
 			if confirm_with == SAME:
 				confirm_with = mapper.get_pressed_button() or self.DEFAULT_CONFIRM
+			elif confirm_with == DEFAULT:
+				confirm_with = MenuAction.DEFAULT_CONFIRM
+			if cancel_with == DEFAULT:
+				cancel_with = MenuAction.DEFAULT_CANCEL
 			if nameof(self.control_with) in (LEFT, RIGHT):
 				args += [ '--use-cursor' ]
 			args += [
 				'--control-with', nameof(self.control_with),
 				'-x', str(self.x), '-y', str(self.y),
 				'--max-size', str(self.max_size),
-				'--confirm-with', confirm_with.name,
-				'--cancel-with', self.cancel_with.name
+				'--confirm-with', nameof(confirm_with),
+				'--cancel-with', nameof(cancel_with)
 			]
 			self.execute(*args)
 	
@@ -358,18 +363,27 @@ class MenuAction(Action, SpecialAction):
 			# Sent when pad is released - don't display menu then
 			return
 		if what in (LEFT, RIGHT):
+			confirm_with = self.confirm_with
+			cancel_with = self.cancel_with
 			if what == LEFT:
-				confirm, cancel = "LPAD", SCButtons.LPADTOUCH
+				if confirm_with == DEFAULT: confirm_with = SCButtons.LPAD
+				if cancel_with == DEFAULT:  cancel_with  = SCButtons.LPADTOUCH
+			elif what == RIGHT:
+				if confirm_with == DEFAULT: confirm_with = SCButtons.RPAD
+				if cancel_with == DEFAULT:  cancel_with  = SCButtons.RPADTOUCH
 			else:
-				confirm, cancel = "RPAD", SCButtons.RPADTOUCH
-			if not mapper.was_pressed(cancel):
+				# Stick
+				if confirm_with == DEFAULT: confirm_with = SCButtons.STICK
+				if cancel_with == DEFAULT:  cancel_with  = SCButtons.B
+			print confirm_with, cancel_with
+			if not mapper.was_pressed(cancel_with):
 				self.execute(mapper,
 					'--control-with', what,
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
 					'--max-size', str(self.max_size),
-					'--confirm-with', confirm,
-					'--cancel-with', cancel.name,
+					'--confirm-with', nameof(confirm_with),
+					'--cancel-with', nameof(cancel_with),
 					*params
 				)
 		if what == STICK:
