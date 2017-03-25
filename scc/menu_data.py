@@ -127,7 +127,10 @@ class MenuData(object):
 			elif "separator" in i:
 				item = Separator(i["name"] if "name" in i else None)
 			elif "submenu" in i:
-				item = Submenu(i["submenu"], i["name"] if "name" in i else None)
+				item = Submenu(i["submenu"],
+					i["name"] if "name" in i else None,
+					icon = i["icon"] if "icon" in i else None,
+				)
 			elif "id" not in i:
 				# Cannot add menu without ID
 				continue
@@ -140,12 +143,15 @@ class MenuData(object):
 				if action_parser:
 					action = action_parser.from_json_data(i)
 				used_ids.add(id)
-				label = id
+				label, icon = id, None
 				if "name" in i:
 					label = i["name"]
 				elif action:
 					label = action.describe(Action.AC_OSD)
-				item = MenuItem(id, label, action)
+				if "icon" in i:
+					icon = i["icon"]
+				item = MenuItem(id, label, action, icon=icon)
+			print item, item.icon
 			m.__items.append(item)
 		
 		return m
@@ -191,10 +197,11 @@ class MenuData(object):
 
 class MenuItem(object):
 	""" Really just dummy container """
-	def __init__(self, id, label, action=None, callback=None):
+	def __init__(self, id, label, action=None, callback=None, icon=None):
 		self.id = id
 		self.label = label
 		self.action = action
+		self.icon = icon
 		self.callback = callback	# If defined, called when user chooses menu instead of using action
 		self.widget = None			# May be set by UI code
 	
@@ -214,6 +221,7 @@ class MenuItem(object):
 			rv = {}
 		rv['id'] = self.id
 		rv['name'] = self.label
+		if self.icon: rv['icon'] = self.icon
 		return rv
 
 
@@ -238,11 +246,11 @@ class Separator(MenuItem):
 
 class Submenu(MenuItem):
 	""" Internally, separator is MenuItem without action and id """
-	def __init__(self, filename, label=None):
+	def __init__(self, filename, label=None, icon=None):
 		if not label:
 			label = ".".join(os.path.split(filename)[-1].split(".")[0:-1])
 		self.filename = filename
-		MenuItem.__init__(self, str(id(self)), label)
+		MenuItem.__init__(self, str(id(self)), label=label, icon=icon)
 	
 	
 	def describe(self):
@@ -250,9 +258,10 @@ class Submenu(MenuItem):
 	
 	
 	def encode(self):
-		if self.label:
-			return { "submenu" : self.filename, "name" : self.label }
-		return { "submenu" : self.filename }
+		rv = { "submenu" : self.filename }
+		if self.label: rv["name"] = self.label
+		if self.icon: rv["icon"] = self.icon
+		return rv
 
 
 class MenuGenerator(object):
