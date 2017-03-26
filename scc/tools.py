@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from scc.paths import get_controller_icons_path, get_default_controller_icons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
+from scc.paths import get_default_menuicons_path
 from math import pi as PI, sin, cos, atan2, sqrt
 import os, sys, shlex, gettext, logging
 
@@ -191,6 +192,26 @@ def find_profile(name):
 	"""
 	filename = "%s.sccprofile" % (name,)
 	for p in (get_profiles_path(), get_default_profiles_path()):
+		path = os.path.join(p, filename)
+		if os.path.exists(path):
+			return path
+	return None
+
+
+def find_icon(name):
+	"""
+	Returns filename for specified icon name.
+	This is done by searching for name + '.png' in user and default menu-icons
+	folders.
+	
+	Returns None if icon cannot be found.
+	"""
+	if name is None:
+		# Special case, so code can pass menuitem.icon directly
+		return None
+	filename = "%s.png" % (name,)
+	# TODO: User menuicons folder
+	for p in (get_default_menuicons_path(), ):
 		path = os.path.join(p, filename)
 		if os.path.exists(path):
 			return path

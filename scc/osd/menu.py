@@ -16,6 +16,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
+from scc.tools import find_icon
 from scc.config import Config
 from math import sqrt
 
@@ -256,6 +257,10 @@ class Menu(OSDWindow):
 				widget.set_name("osd-menu-dummy")
 			else:
 				widget.set_name("osd-menu-item")
+			icon_file = find_icon(item.icon)
+			if icon_file:
+				widget.set_image(Gtk.Image.new_from_file(icon_file))
+				
 			return widget
 	
 	

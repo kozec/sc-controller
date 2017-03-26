@@ -42,6 +42,16 @@ def get_default_profiles_path():
 	return os.path.join(get_share_path(), "default_profiles")
 
 
+def get_default_menuicons_path():
+	"""
+	Returns directory where default menu icons are stored.
+	Probably something like /usr/share/scc/images/menu-icons,
+	or $SCC_SHARED/images/menu-icons if program is being started from
+	script extracted from source tarball
+	"""
+	return os.path.join(get_share_path(), "images/menu-icons")
+
+
 def get_menus_path():
 	"""
 	Returns directory where profiles are stored.
