@@ -151,7 +151,6 @@ class MenuData(object):
 				if "icon" in i:
 					icon = i["icon"]
 				item = MenuItem(id, label, action, icon=icon)
-			print item, item.icon
 			m.__items.append(item)
 		
 		return m
@@ -274,6 +273,7 @@ class MenuGenerator(object):
 		__init__ of generator should ignore all unknown keys.
 		"""
 		self.id = None		# Used only in editor
+		self.icon = None	# same
 	
 	
 	def describe(self):
