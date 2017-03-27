@@ -7,7 +7,7 @@ Display menu that user can navigate through and print chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, GLib, Gdk, GdkX11
+from gi.repository import Gtk, GLib, Gdk, GdkX11, GdkPixbuf
 from scc.tools import point_in_gtkrect, find_menu, circle_to_square, clamp
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
 from scc.constants import LEFT, RIGHT, SAME, STICK
@@ -259,7 +259,14 @@ class Menu(OSDWindow):
 				widget.set_name("osd-menu-item")
 			icon_file = find_icon(item.icon)
 			if icon_file:
-				widget.set_image(Gtk.Image.new_from_file(icon_file))
+				icon = MenuIcon(icon_file)
+				label = widget.get_children()[0]
+				for c in [] + widget.get_children():
+					widget.remove(c)
+				box = Gtk.Box()
+				box.pack_start(icon,  False, True, 0)
+				box.pack_start(label, True, True, 5)
+				widget.add(box)
 				
 			return widget
 	
@@ -448,3 +455,20 @@ class Menu(OSDWindow):
 					self.quit(0)
 				else:
 					self.quit(-1)
+
+
+class MenuIcon(Gtk.Image):
+	""" Auti-sized icon for menus """
+	
+	def __init__(self, filename):
+		Gtk.Image.__init__(self)
+		self.connect('size_allocate', self.on_size_allocate)
+		self.pb = GdkPixbuf.Pixbuf.new_from_file(filename)
+	
+	
+	def on_size_allocate(self, trash, allocation):
+		self.set_from_pixbuf(self.pb.scale_simple(
+			allocation.height, allocation.height,
+			GdkPixbuf.InterpType.BILINEAR
+		))
+		self.set_size_request(allocation.height, -1)
