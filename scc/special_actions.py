@@ -19,7 +19,7 @@ from scc.tools import strip_gesture, nameof, clamp
 from scc.modifiers import Modifier, NameModifier
 from math import sqrt
 
-import time, logging
+import sys, time, logging
 log = logging.getLogger("SActions")
 _ = lambda x : x
 
@@ -46,7 +46,8 @@ class ChangeProfileAction(Action, SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		return (" " * pad) + "%s('%s')" % (self.COMMAND, self.profile.encode('string_escape'))
+		return (" " * pad) + "%s('%s')" % (self.COMMAND,
+				self.profile.encode('utf-8').encode('string_escape'))
 	
 	
 	def button_release(self, mapper):
@@ -619,3 +620,7 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 		if (x, y) != (0, 0):
 			# (0, 0) singlanizes released touchpad
 			self.execute(mapper, x, y, what)
+
+
+# Register actions from current module
+Action.register_all(sys.modules[__name__])

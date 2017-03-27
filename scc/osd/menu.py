@@ -265,7 +265,7 @@ class Menu(OSDWindow):
 					widget.remove(c)
 				box = Gtk.Box()
 				box.pack_start(icon,  False, True, 0)
-				box.pack_start(label, True, True, 5)
+				box.pack_start(label, True, True, 10)
 				widget.add(box)
 				
 			return widget

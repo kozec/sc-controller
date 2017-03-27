@@ -21,7 +21,7 @@ from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
 from scc.gui.parser import GuiActionParser
 from scc.gui.dwsnc import IS_UNITY
-from scc.x11.autoswitcher import Condition
+from scc.x11.autoswitcher import AutoSwitcher, Condition
 from scc.osd.keyboard import Keyboard as OSDKeyboard
 from scc.osd.osk_actions import OSKCursorAction
 import scc.osd.osk_actions
@@ -107,12 +107,13 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		""" Transfers autoswitch settings from config to UI """
 		tvItems = self.builder.get_object("tvItems")
 		cbShowOSD = self.builder.get_object("cbShowOSD")
+		conditions = AutoSwitcher.parse_conditions(self.app.config)
 		model = tvItems.get_model()
 		model.clear()
-		for x in self.app.config['autoswitch']:
+		for cond in conditions.keys():
 			o = GObject.GObject()
-			o.condition = Condition.parse(x['condition'])
-			o.action = GuiActionParser().restart(x["action"]).parse()
+			o.condition = cond
+			o.action = conditions[cond]
 			a_str = o.action.describe(Action.AC_SWITCHER)
 			model.append((o, o.condition.describe(), a_str))
 		self._recursing = True
