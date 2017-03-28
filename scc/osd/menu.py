@@ -8,7 +8,8 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, GLib, Gdk, GdkX11, GdkPixbuf
-from scc.tools import point_in_gtkrect, find_menu, circle_to_square, clamp
+from scc.tools import point_in_gtkrect, find_menu, find_icon
+from scc.tools import circle_to_square, clamp
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
 from scc.constants import LEFT, RIGHT, SAME, STICK
 from scc.menu_data import MenuData, Separator, Submenu
@@ -16,7 +17,6 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
-from scc.tools import find_icon
 from scc.config import Config
 from math import sqrt
 
@@ -257,9 +257,9 @@ class Menu(OSDWindow):
 				widget.set_name("osd-menu-dummy")
 			else:
 				widget.set_name("osd-menu-item")
-			icon_file = find_icon(item.icon)
+			icon_file, has_colors = find_icon(item.icon, False)
 			if icon_file:
-				icon = MenuIcon(icon_file)
+				icon = MenuIcon(icon_file, has_colors)
 				label = widget.get_children()[0]
 				for c in [] + widget.get_children():
 					widget.remove(c)
@@ -457,18 +457,38 @@ class Menu(OSDWindow):
 					self.quit(-1)
 
 
-class MenuIcon(Gtk.Image):
-	""" Auti-sized icon for menus """
+class MenuIcon(Gtk.DrawingArea):
+	""" Auti-sized, auto-recolored icon for menus """
 	
-	def __init__(self, filename):
-		Gtk.Image.__init__(self)
+	def __init__(self, filename, has_colors = False):
+		Gtk.DrawingArea.__init__(self)
 		self.connect('size_allocate', self.on_size_allocate)
+		self.has_colors = has_colors
 		self.pb = GdkPixbuf.Pixbuf.new_from_file(filename)
 	
 	
 	def on_size_allocate(self, trash, allocation):
-		self.set_from_pixbuf(self.pb.scale_simple(
-			allocation.height, allocation.height,
-			GdkPixbuf.InterpType.BILINEAR
-		))
-		self.set_size_request(allocation.height, -1)
+		if allocation.width != allocation.height:
+			self.set_size_request(allocation.height, -1)
+	
+	
+	def do_draw(self, cr):
+		allocation = self.get_allocation()
+		if allocation.width == allocation.height:
+			context = Gtk.Widget.get_style_context(self)
+			Gtk.render_background(context, cr, 0, 0,
+					allocation.width, allocation.height)
+			scaled = self.pb.scale_simple(
+				allocation.height, allocation.height,
+				GdkPixbuf.InterpType.BILINEAR
+			)
+			surf = Gdk.cairo_surface_create_from_pixbuf(scaled, 1)
+			if self.has_colors:
+				cr.set_source_surface(surf, 1.0, 1.0)
+						#allocation.height, allocation.height)
+				cr.rectangle(0, 0, allocation.height, allocation.height)
+			else:
+				Gdk.cairo_set_source_rgba(cr,
+						context.get_color(Gtk.StateFlags.NORMAL))
+				cr.mask_surface(surf, 0, 0)
+			cr.fill()
