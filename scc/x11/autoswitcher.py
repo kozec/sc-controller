@@ -67,17 +67,17 @@ class AutoSwitcher(object):
 	
 	
 	@staticmethod
-	def unassign(conds, title, wm_class, profile):
+	def unassign(conds, title, wm_class, action):
 		"""
 		Removes any condition that matches given title/class/action combination.
 		'action' can be None, in which case, removes removes any condition
 		that matches title or wm class.
 		"""
 		count, cmpwith = 0, None
-		if profile is not None:
-			cmpwith = ChangeProfileAction(profile).to_string()
+		if action is not None:
+			cmpwith = action.to_string()
 		for c in conds.keys():
-			if profile is None or conds[c].to_string() == cmpwith:
+			if action is None or conds[c].to_string() == cmpwith:
 				if c.matches(title, wm_class):
 					del conds[c]
 					count += 1
