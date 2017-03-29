@@ -149,6 +149,7 @@ class USBDevice(object):
 		for number in self._claimed:
 			try:
 				self.handle.releaseInterface(number)
+				self.handle.attachKernelDriver(number)
 			except usb1.USBErrorNoDevice, e:
 				# Safe to ignore, happens when USB is removed
 				pass
@@ -157,12 +158,12 @@ class USBDevice(object):
 	
 	def close(self):
 		""" Called after device is disconnected """
-		self.unclaim()
 		try:
-			self.handle.close()
+			self.unclaim()
 		except: pass
 		try:
-			self.device.close()
+			self.handle.resetDevice()
+			self.handle.close()
 		except: pass
 
 
