@@ -12,12 +12,14 @@ from scc.gui.action_editor import ActionEditor
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
 from scc.osd.menu_generators import ProfileListMenuGenerator, RecentListMenuGenerator
+from scc.osd.menu import MenuIcon
 from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.parser import TalkingActionParser
 from scc.actions import Action, NoAction
+from scc.tools import find_icon
 from scc.profile import Encoder
-import os, logging, json
+import os, traceback, logging, json
 log = logging.getLogger("MenuEditor")
 
 
@@ -44,6 +46,8 @@ class MenuEditor(Editor):
 		self.builder = Gtk.Builder()
 		self.builder.add_from_file(os.path.join(self.app.gladepath, self.GLADE))
 		self.window = self.builder.get_object("Dialog")
+		self.menu_icon = MenuIcon(None, True)
+		self.builder.get_object("btChangeItemIcon").add(self.menu_icon)
 		self.builder.connect_signals(self)
 		headerbar(self.builder.get_object("header"))
 	
@@ -140,10 +144,12 @@ class MenuEditor(Editor):
 				.allow_menus(True, False)
 				.set_selected_menu(item.filename))
 			e.set_menu_item(item, _("Menu Label"))
+			self.setup_menu_icon(item, e)
 		elif isinstance(item, MenuItem):
 			e = ActionEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Edit Menu Action"))
 			e.set_input(item.id, item.action, mode = Action.AC_MENU)
+			self.setup_menu_icon(item, e)
 		elif isinstance(item, RecentListMenuGenerator):
 			e.set_title(_("Edit Recent List"))
 			e.hide_action_str()
@@ -381,3 +387,22 @@ class MenuEditor(Editor):
 		log.debug("Wrote menu file %s", path)
 		if self.callback:
 			self.callback(id)
+	
+	
+	def setup_menu_icon(self, menuitem, editor):
+		menu_icon = self.builder.get_object("menu_icon")
+		lblItemIconName = self.builder.get_object("lblItemIconName")
+		editor.add_widget(_("Icon"), menu_icon)
+		if menuitem.icon is None:
+			lblItemIconName.set_label(_("(no icon)"))
+			self.menu_icon.set_visible(False)
+		else:
+			lblItemIconName.set_label(menuitem.icon)
+			try:
+				filename, trash = find_icon(menuitem.icon)
+				self.menu_icon.set_filename(filename)
+				self.menu_icon.set_visible(True)
+			except Exception, e:
+				log.error(e)
+				log.error(traceback.format_exc())
+				self.menu_icon.set_visible(False)

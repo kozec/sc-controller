@@ -464,7 +464,14 @@ class MenuIcon(Gtk.DrawingArea):
 		Gtk.DrawingArea.__init__(self)
 		self.connect('size_allocate', self.on_size_allocate)
 		self.has_colors = has_colors
-		self.pb = GdkPixbuf.Pixbuf.new_from_file(filename)
+		self.set_filename(filename)
+	
+	
+	def set_filename(self, filename):
+		if filename is None:
+			self.pb = None
+		else:
+			self.pb = GdkPixbuf.Pixbuf.new_from_file(filename)
 	
 	
 	def on_size_allocate(self, trash, allocation):
@@ -478,6 +485,9 @@ class MenuIcon(Gtk.DrawingArea):
 			context = Gtk.Widget.get_style_context(self)
 			Gtk.render_background(context, cr, 0, 0,
 					allocation.width, allocation.height)
+			if self.pb is None:
+				# No icon set
+				return
 			scaled = self.pb.scale_simple(
 				allocation.height, allocation.height,
 				GdkPixbuf.InterpType.BILINEAR
