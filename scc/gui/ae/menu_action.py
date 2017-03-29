@@ -292,6 +292,7 @@ class MenuActionCofC(UserDataManager):
 				cow = getattr(SCButtons, cow)
 				if cow == self.get_default_confirm(): cow = DEFAULT
 			
+			caw = DEFAULT
 			if cbMenuAutoCancel and cbMenuAutoCancel.get_active():
 				caw = DEFAULT
 			elif cbCancelWith:
