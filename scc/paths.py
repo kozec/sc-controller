@@ -42,6 +42,14 @@ def get_default_profiles_path():
 	return os.path.join(get_share_path(), "default_profiles")
 
 
+def get_menuicons_path():
+	"""
+	Returns directory where menu icons are stored.
+	~/.config/scc/menu-icons under normal conditions.
+	"""
+	return os.path.join(get_config_path(), "menu-icons")
+
+
 def get_default_menuicons_path():
 	"""
 	Returns directory where default menu icons are stored.

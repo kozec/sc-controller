@@ -8,17 +8,17 @@
       <column type="gchararray"/>
       <!-- column-name icon -->
       <column type="GdkPixbuf"/>
+      <!-- column-name colors -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkWindow" id="Dialog">
     <property name="width_request">650</property>
     <property name="can_focus">False</property>
     <property name="role">icon-chooser</property>
-    <property name="resizable">False</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
-    <signal name="delete-event" handler="on_Dialog_delete_event" swapped="no"/>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
       <object class="GtkBox" id="iHateUselessIDs">
@@ -57,7 +57,7 @@
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">in</property>
                 <child>
-                  <object class="GtkAlignment">
+                  <object class="GtkAlignment" id="alGlobalIcon">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="left_padding">12</property>
@@ -78,8 +78,10 @@
             <child>
               <object class="GtkScrolledWindow" id="swIcons">
                 <property name="name">sw</property>
+                <property name="height_request">400</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
                 <property name="vexpand">True</property>
                 <property name="shadow_type">in</property>
                 <child>
@@ -91,19 +93,12 @@
                     <property name="reorderable">True</property>
                     <property name="rubber_banding">True</property>
                     <signal name="cursor-changed" handler="on_tvItems_cursor_changed" swapped="no"/>
-                    <signal name="row-activated" handler="btEdit_clicked_cb" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="nonimportatboxthatneedsidjustbecauseofubunt"/>
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="clIcon">
                         <property name="title" translatable="yes">Item</property>
-                        <child>
-                          <object class="GtkCellRendererPixbuf" id="crIcon"/>
-                          <attributes>
-                            <attribute name="pixbuf">1</attribute>
-                          </attributes>
-                        </child>
                         <child>
                           <object class="GtkCellRendererText" id="crIconName"/>
                           <attributes>

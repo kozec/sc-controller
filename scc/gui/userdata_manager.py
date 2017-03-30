@@ -11,6 +11,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, GLib
+from scc.paths import get_menuicons_path, get_default_menuicons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.profile import Profile
@@ -77,6 +78,11 @@ class UserDataManager(object):
 		self.load_user_data(paths, "*.menu", self.on_menus_loaded)
 	
 	
+	def load_menu_icons(self):
+		paths = [ get_default_menuicons_path(), get_menuicons_path() ]
+		self.load_user_data(paths, "*.png", self.on_menuicons_loaded)
+	
+	
 	def load_user_data(self, paths, pattern, callback):
 		""" Loads lists of profiles. Uses GLib to do it on background. """
 		# First list is for default profiles, 2nd for user profiles
@@ -132,11 +138,15 @@ class UserDataManager(object):
 		return files
 	
 	
-	def on_menus_loaded(self, menus): # Overriden in App
+	def on_menus_loaded(self, menus): # Overriden by subclass
 		pass
 	
 	
-	def on_profiles_loaded(self, profiles): # Overriden in App
+	def on_profiles_loaded(self, profiles): # Overriden by subclass
+		pass
+	
+	
+	def on_menuicons_loaded(self, icons): # Overriden by subclass
 		pass
 	
 	
