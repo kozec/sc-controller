@@ -77,7 +77,6 @@ class CellRendererMenuIcon(Gtk.CellRenderer):
 	
 	def do_render(self, cr, treeview, background_area, cell_area, flags):
 		context = Gtk.Widget.get_style_context(treeview)
-		selected = (flags & Gtk.CellRendererState.SELECTED) != 0
 		Gtk.render_background(context, cr,
 				cell_area.x, cell_area.y,
 				cell_area.x + cell_area.width,
@@ -93,7 +92,9 @@ class CellRendererMenuIcon(Gtk.CellRenderer):
 			cr.set_source_surface(surf, cell_area.x, cell_area.y)
 			cr.rectangle(cell_area.x, cell_area.y, self.size, self.size)
 		else:
-			Gdk.cairo_set_source_rgba(cr,
-					context.get_color(Gtk.StateFlags.NORMAL))
+			color_flags = Gtk.StateFlags.NORMAL
+			if (flags & Gtk.CellRendererState.SELECTED) != 0:
+				color_flags = Gtk.StateFlags.SELECTED
+			Gdk.cairo_set_source_rgba(cr, context.get_color(color_flags))
 			cr.mask_surface(surf, cell_area.x, cell_area.y)
 		cr.fill()
