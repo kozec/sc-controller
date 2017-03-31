@@ -53,11 +53,11 @@ class IconChooser(Editor, UserDataManager):
 				log.error(traceback.format_exc())
 				
 			name = os.path.split(f.get_path())[-1].split(".")
-			has_colors = False
+			has_colors = True
 			if name[-1] == "png":
 				name = name[0:-1]
-			if name[-1] == "colors":
-				has_colors = True
+			if name[-1] == "bw":
+				has_colors = False
 				name = name[0:-1]
 			
 			model.append(( ".".join(name), pb, has_colors ))

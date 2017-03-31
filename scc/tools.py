@@ -198,22 +198,22 @@ def find_profile(name):
 	return None
 
 
-def find_icon(name, prefer_grayscale=False):
+def find_icon(name, prefer_bw=False):
 	"""
 	Returns (filename, has_colors) for specified icon name.
-	This is done by searching for name + '.png' and name + ".colors.png"
+	This is done by searching for name + '.png' and name + ".bw.png"
 	in user and default menu-icons folders.
 	
 	If both colored and grayscale version is found, colored is returned, unless
-	prefer_grayscale is set to True.
+	prefer_bw is set to True.
 	
 	Returns (None, False) if icon cannot be found.
 	"""
 	if name is None:
 		# Special case, so code can pass menuitem.icon directly
 		return None, False
-	gray_filename = "%s.png" % (name,)
-	colors_filename = "%s.colors.png" % (name,)
+	gray_filename = "%s.bw.png" % (name,)
+	colors_filename = "%s.png" % (name,)
 	gray, colors = None, None
 	# TODO: User menuicons folder
 	for p in (get_default_menuicons_path(), ):
@@ -221,14 +221,14 @@ def find_icon(name, prefer_grayscale=False):
 		if gray is None:
 			path = os.path.join(p, gray_filename)
 			if os.path.exists(path):
-				if prefer_grayscale:
+				if prefer_bw:
 					return path, False
 				gray = path
 		# Check colors
 		if colors is None:
 			path = os.path.join(p, colors_filename)
 			if os.path.exists(path):
-				if not prefer_grayscale:
+				if not prefer_bw:
 					return path, True
 				colors = path
 	if colors is not None:
