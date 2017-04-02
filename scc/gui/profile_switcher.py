@@ -370,4 +370,4 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 				self.config.save()
 				GLib.idle_add(self.update_icon)
 			
-			self.load_user_data(paths, "*.svg", cb)
+			self.load_user_data(paths, "*.svg", None, cb)

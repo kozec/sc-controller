@@ -5,7 +5,7 @@ SC-Controller - Icon Chooser
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
+from gi.repository import Gtk, Gdk, Gio, GdkPixbuf, GObject
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
@@ -41,26 +41,50 @@ class IconChooser(Editor, UserDataManager):
 	def on_entName_changed(self, *a): pass
 	
 	
+	def on_tvCategories_cursor_changed(self, view):
+		model, iter = view.get_selection().get_selected()
+		category = model.get_value(iter, 0)
+		self.load_menu_icons(category=category)
+	
+	
 	def on_menuicons_loaded(self, icons):
 		tvIcons = self.builder.get_object("tvIcons")
-		model = tvIcons.get_model()
+		tvCategories = self.builder.get_object("tvCategories")
+		tvIcons.get_model().clear()
 		for f in icons:
-			pb = None
-			try:
-				pb = GdkPixbuf.Pixbuf.new_from_file(f.get_path())
-			except Exception, e:
-				log.error(e)
-				log.error(traceback.format_exc())
+			name = f.get_basename()
+			if f.query_info(Gio.FILE_ATTRIBUTE_STANDARD_TYPE, Gio.FileQueryInfoFlags.NONE, None).get_file_type() == Gio.FileType.DIRECTORY:
+				# ^^ woo, Gio is fun...
+				tvCategories.get_model().append(( name, name.title() ))
+			else:
+				has_colors = True
+				name = name.split(".")
+				if name[-1] != "png":
+					# Ignore non-PNG files
+					continue
+				name = name[0:-1]
+				if name[-1] == "bw":
+					has_colors = False
+					name = name[0:-1]
+				name = ".".join(name)
 				
-			name = os.path.split(f.get_path())[-1].split(".")
-			has_colors = True
-			if name[-1] == "png":
-				name = name[0:-1]
-			if name[-1] == "bw":
-				has_colors = False
-				name = name[0:-1]
-			
-			model.append(( ".".join(name), pb, has_colors ))
+				pb = None
+				try:
+					pb = GdkPixbuf.Pixbuf.new_from_file(f.get_path())
+				except Exception, e:
+					log.error(e)
+					log.error(traceback.format_exc())
+					continue
+				
+				tvIcons.get_model().append(( name, pb, has_colors ))
+		
+		trash, selected = tvCategories.get_selection().get_selected()
+		if not selected:
+			try:
+				# Try to select 1st category, but ignore if that fails
+				tvCategories.get_selection().select_path(( 0, ))
+				self.on_tvCategories_cursor_changed(tvCategories)
+			except: pass
 
 
 class CellRendererMenuIcon(Gtk.CellRenderer):

@@ -68,23 +68,26 @@ class UserDataManager(object):
 		self.save_profile(giofile, profile)
 	
 	
-	def load_profile_list(self):
+	def load_profile_list(self, category=None):
 		paths = [ get_default_profiles_path(), get_profiles_path() ]
-		self.load_user_data(paths, "*.sccprofile", self.on_profiles_loaded)
+		self.load_user_data(paths, "*.sccprofile", category, self.on_profiles_loaded)
 	
 	
-	def load_menu_list(self):
+	def load_menu_list(self, category=None):
 		paths = [ get_default_menus_path(), get_menus_path() ]
-		self.load_user_data(paths, "*.menu", self.on_menus_loaded)
+		self.load_user_data(paths, "*.menu", category, self.on_menus_loaded)
 	
 	
-	def load_menu_icons(self):
+	def load_menu_icons(self, category=None):
 		paths = [ get_default_menuicons_path(), get_menuicons_path() ]
-		self.load_user_data(paths, "*.png", self.on_menuicons_loaded)
+		self.load_user_data(paths, "*.png", category, self.on_menuicons_loaded)
 	
 	
-	def load_user_data(self, paths, pattern, callback):
+	def load_user_data(self, paths, pattern, category, callback):
 		""" Loads lists of profiles. Uses GLib to do it on background. """
+		if category:
+			paths = [ os.path.join(p, category) for p in paths ]
+		
 		# First list is for default profiles, 2nd for user profiles
 		# Number is increased when list is loaded until it reaches 2
 		data = [ None ] * len(paths)

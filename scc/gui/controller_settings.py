@@ -34,7 +34,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 	
 	def load_icons(self):
 		paths = [ get_default_controller_icons_path(), get_controller_icons_path() ]
-		self.load_user_data(paths, "*.svg", self.on_icons_loaded)
+		self.load_user_data(paths, "*.svg", None, self.on_icons_loaded)
 	
 	
 	def on_icons_loaded(self, icons):
