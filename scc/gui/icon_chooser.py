@@ -18,6 +18,7 @@ class IconChooser(Editor, UserDataManager):
 	def __init__(self, app, callback):
 		UserDataManager.__init__(self)
 		self.app = app
+		self.callback = callback
 		self.setup_widgets()
 	
 	
@@ -36,9 +37,39 @@ class IconChooser(Editor, UserDataManager):
 		self.load_menu_icons()
 	
 	
-	def on_btSave_clicked(self, *a): pass
-	def on_tvItems_cursor_changed(self, *a): pass
+	def on_btOk_clicked(self, *a):
+		icon = self.get_selected()
+		self.window.destroy()
+		if icon:
+			self.callback(icon)
+	
+	
+	def get_selected(self):
+		"""
+		Returns 'category/name' of currently selected icon.
+		Returns None if nothing is selected.
+		"""
+		tsCategories = self.builder.get_object("tsCategories")
+		tsIcons = self.builder.get_object("tsIcons")
+		try:
+			model, iter = tsCategories.get_selected()
+			category = model.get_value(iter, 0)
+			model, iter = tsIcons.get_selected()
+			icon_name = model.get_value(iter, 0)
+			return "%s/%s" % (category, icon_name)
+		except TypeError:
+			# This part may throw TypeError if either list has nothing selected.
+			return None
+	
+	
 	def on_entName_changed(self, *a): pass
+	
+	
+	def on_tvItems_cursor_changed(self, view):
+		entName = self.builder.get_object("entName")
+		icon = self.get_selected()
+		if icon:
+			entName.set_text(icon)
 	
 	
 	def on_tvCategories_cursor_changed(self, view):

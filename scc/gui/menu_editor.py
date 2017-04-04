@@ -9,6 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib, GObject
 from scc.gui.action_editor import ActionEditor
+from scc.gui.icon_chooser import IconChooser
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
 from scc.osd.menu_generators import ProfileListMenuGenerator, RecentListMenuGenerator
@@ -36,6 +37,7 @@ class MenuEditor(Editor):
 		self.app = app
 		self.next_auto_id = 1
 		self.callback = callback
+		self.selected_icon = None
 		self.original_id = None
 		self.original_type = MenuEditor.TYPE_INTERNAL
 		Editor.install_error_css()
@@ -45,9 +47,13 @@ class MenuEditor(Editor):
 	def setup_widgets(self):
 		self.builder = Gtk.Builder()
 		self.builder.add_from_file(os.path.join(self.app.gladepath, self.GLADE))
+		lblItemIconName  = self.builder.get_object("lblItemIconName")
+		vbChangeItemIcon = self.builder.get_object("vbChangeItemIcon")
 		self.window = self.builder.get_object("Dialog")
 		self.menu_icon = MenuIcon(None, True)
-		self.builder.get_object("btChangeItemIcon").add(self.menu_icon)
+		vbChangeItemIcon.remove(lblItemIconName)
+		vbChangeItemIcon.pack_start(self.menu_icon, False, True, 0)
+		vbChangeItemIcon.pack_start(lblItemIconName, True, True, 0)
 		self.builder.connect_signals(self)
 		headerbar(self.builder.get_object("header"))
 	
@@ -81,12 +87,14 @@ class MenuEditor(Editor):
 					i[0].item = item = Submenu(
 						a.get_current_page().get_selected_menu(),
 						a.get_name())
+					item.icon = self.selected_icon
 				elif isinstance(item, RecentListMenuGenerator):
 					i[0].item = item = RecentListMenuGenerator(
 						rows = a.get_current_page().get_row_count())
 				elif isinstance(item, MenuItem):
 					item.action = a
 					item.label = item.action.describe(Action.AC_OSD)
+					item.icon = self.selected_icon
 				else:
 					raise TypeError("Edited %s" % (item.__class__.__name__))
 				i[1] = item.describe()
@@ -130,6 +138,7 @@ class MenuEditor(Editor):
 		tvItems = self.builder.get_object("tvItems")
 		model, iter = tvItems.get_selection().get_selected()
 		item = model.get_value(iter, 0).item
+		self.selected_icon = None
 		# Setup editor
 		e = ActionEditor(self.app, self.on_action_chosen)
 		if isinstance(item, Separator):
@@ -144,12 +153,16 @@ class MenuEditor(Editor):
 				.allow_menus(True, False)
 				.set_selected_menu(item.filename))
 			e.set_menu_item(item, _("Menu Label"))
-			self.setup_menu_icon(item, e)
+			self.selected_icon = item.icon
+			self.setup_menu_icon(e)
+			self.update_menu_icon()
 		elif isinstance(item, MenuItem):
 			e = ActionEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Edit Menu Action"))
 			e.set_input(item.id, item.action, mode = Action.AC_MENU)
-			self.setup_menu_icon(item, e)
+			self.selected_icon = item.icon
+			self.setup_menu_icon(e)
+			self.update_menu_icon()
 		elif isinstance(item, RecentListMenuGenerator):
 			e.set_title(_("Edit Recent List"))
 			e.hide_action_str()
@@ -302,6 +315,7 @@ class MenuEditor(Editor):
 			for i in items:
 				self._add_menuitem(i)
 	
+	
 	def on_Dialog_delete_event(self, *a):
 		try:
 			if self.original_type == MenuEditor.TYPE_GLOBAL:
@@ -389,20 +403,33 @@ class MenuEditor(Editor):
 			self.callback(id)
 	
 	
-	def setup_menu_icon(self, menuitem, editor):
-		menu_icon = self.builder.get_object("menu_icon")
+	def setup_menu_icon(self, editor):
+		container = self.builder.get_object("menu_icon")
+		editor.add_widget(_("Icon"), container)
+	
+	
+	def update_menu_icon(self):
 		lblItemIconName = self.builder.get_object("lblItemIconName")
-		editor.add_widget(_("Icon"), menu_icon)
-		if menuitem.icon is None:
+		if self.selected_icon is None:
 			lblItemIconName.set_label(_("(no icon)"))
 			self.menu_icon.set_visible(False)
 		else:
-			lblItemIconName.set_label(menuitem.icon)
+			lblItemIconName.set_label(self.selected_icon)
 			try:
-				filename, trash = find_icon(menuitem.icon)
+				filename, trash = find_icon(self.selected_icon)
 				self.menu_icon.set_filename(filename)
 				self.menu_icon.set_visible(True)
 			except Exception, e:
 				log.error(e)
 				log.error(traceback.format_exc())
 				self.menu_icon.set_visible(False)
+	
+	
+	def on_icon_choosen(self, name):
+		self.selected_icon = name
+		self.update_menu_icon()
+	
+	
+	def on_btChangeItemIcon_clicked(self, *a):
+		c = IconChooser(self.app, self.on_icon_choosen)
+		c.show(self.window)

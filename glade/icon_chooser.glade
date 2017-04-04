@@ -47,41 +47,16 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="no_show_all">True</property>
-                <property name="margin_left">5</property>
                 <property name="margin_bottom">2</property>
                 <property name="hexpand">True</property>
+                <property name="editable">False</property>
                 <property name="activates_default">True</property>
                 <signal name="changed" handler="on_entName_changed" swapped="no"/>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkFrame" id="frGlobalIcon">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">in</property>
-                <child>
-                  <object class="GtkAlignment" id="alGlobalIcon">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="left_padding">12</property>
-                    <child>
-                      <placeholder/>
-                    </child>
-                  </object>
-                </child>
-                <child type="label_item">
-                  <placeholder/>
-                </child>
-              </object>
-              <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
+                <property name="width">3</property>
               </packing>
             </child>
             <child>
@@ -100,11 +75,11 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="model">lstIcons</property>
-                    <property name="reorderable">True</property>
                     <property name="rubber_banding">True</property>
                     <signal name="cursor-changed" handler="on_tvItems_cursor_changed" swapped="no"/>
+                    <signal name="row-activated" handler="on_btOk_clicked" swapped="no"/>
                     <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="tsIcon"/>
+                      <object class="GtkTreeSelection" id="tsIcons"/>
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="clIcon">
@@ -138,6 +113,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="model">lstDirs</property>
+                    <property name="rubber_banding">True</property>
                     <signal name="cursor-changed" handler="on_tvCategories_cursor_changed" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="tsCategories"/>
@@ -186,7 +162,7 @@
             <property name="has_default">True</property>
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btSave_clicked" swapped="no"/>
+            <signal name="clicked" handler="on_btOk_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="pack_type">end</property>
