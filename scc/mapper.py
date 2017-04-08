@@ -96,7 +96,6 @@ class Mapper(object):
 	def _rumble_ready(self, fd, event):
 		ef = self.gamepad.ff_read()
 		if ef:	# tale of...
-			# print "ef", ef.type, hex(ef.type), ef.level
 			self.send_feedback(HapticData(
 				HapticPos.BOTH,
 				period = 32760,

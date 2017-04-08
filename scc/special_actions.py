@@ -376,7 +376,6 @@ class MenuAction(Action, SpecialAction):
 				# Stick
 				if confirm_with == DEFAULT: confirm_with = SCButtons.STICK
 				if cancel_with == DEFAULT:  cancel_with  = SCButtons.B
-			print confirm_with, cancel_with
 			if not mapper.was_pressed(cancel_with):
 				self.execute(mapper,
 					'--control-with', what,

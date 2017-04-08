@@ -168,12 +168,12 @@ class Menu(OSDWindow):
 				print >>sys.stderr, '%s: error: menu not found' % (sys.argv[0])
 				return False
 		elif self.args.from_file:
-			#try:
-			self._menuid = self.args.from_file
-			self.items = MenuData.from_file(self.args.from_file)
-			#except:
-			#	print >>sys.stderr, '%s: error: failed to load menu file' % (sys.argv[0])
-			#	return False
+			try:
+				self._menuid = self.args.from_file
+				self.items = MenuData.from_file(self.args.from_file)
+			except:
+				print >>sys.stderr, '%s: error: failed to load menu file' % (sys.argv[0])
+				return False
 		else:
 			try:
 				self.items = MenuData.from_args(self.args.items)

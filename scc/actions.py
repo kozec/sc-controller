@@ -1063,9 +1063,6 @@ class GyroAction(Action):
 	
 	
 	def gyro(self, mapper, *pyr):
-		# p,y,r = quat2euler(sci.q1 / 32768.0, sci.q2 / 32768.0, sci.q3 / 32768.0, sci.q4 / 32768.0)
-		# print "% 7.2f, % 7.2f, % 7.2f" % (p,y,r)
-		# print sci.q1, sci.q2, sci.q3, sci.q4
 		for i in (0, 1, 2):
 			axis = self.axes[i]
 			# 'gyro' cannot map to mouse, but 'mouse' does that.
@@ -1136,7 +1133,6 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 		else:
 			for i in self.GYROAXES:
 				pyr[i] = int(clamp(STICK_PAD_MIN, pyr[i], STICK_PAD_MAX))
-		# print "% 12.0f, % 12.0f, % 12.5f" % (p,y,r)
 		for i in self.GYROAXES:
 			axis = self.axes[i]
 			if axis in Axes or type(axis) == int:
@@ -2180,8 +2176,6 @@ class TriggerAction(Action):
 				self._release(mapper, old_position)
 			elif self.pressed and position < self.press_level and old_position >= self.press_level:
 				self._release(mapper, old_position)
-			#else:
-			#	print position
 		if self.release_level == self.press_level:
 			# Mode 2, there is only press_level and action is 'pressed'
 			# while current level is above it.
@@ -2189,8 +2183,6 @@ class TriggerAction(Action):
 				self._press(mapper)
 			elif self.pressed and position < self.press_level and old_position >= self.press_level:
 				self._release(mapper, old_position)
-			#else:
-			#	print position
 		if self.release_level < self.press_level:
 			# Mode 3, action is 'pressed' if current level is above 'press_level'
 			# and then released when it returns beyond 'release_level'.
@@ -2198,8 +2190,6 @@ class TriggerAction(Action):
 				self._press(mapper)
 			elif self.pressed and position < self.release_level and old_position >= self.release_level:
 				self._release(mapper, old_position)
-			#else:
-			#	print position
 		if self.child_is_axis and self.pressed:
 			self.action.trigger(mapper, position, old_position)
 	

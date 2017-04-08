@@ -297,8 +297,6 @@ class Profile(object):
 							TriggerAction(numbers[1], TRIGGER_MAX, ButtonAction(buttons[1]))
 						)
 					
-					print buttons
-					print numbers
 					if n:
 						log.info("Converted %s to %s",
 							self.triggers[p].to_string(), n.to_string())
