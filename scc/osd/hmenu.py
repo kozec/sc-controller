@@ -12,15 +12,15 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk
 from scc.constants import STICK_PAD_MIN
-from scc.osd.menu import Menu
+from scc.osd.grid_menu import GridMenu
 
 import logging
 log = logging.getLogger("osd.hmenu")
 
 
-class HorizontalMenu(Menu):
+class HorizontalMenu(GridMenu):
 	def __init__(self, cls="osd-menu"):
-		Menu.__init__(self, cls)
+		GridMenu.__init__(self, cls)
 	
 	
 	def create_parent(self):
@@ -48,4 +48,4 @@ class HorizontalMenu(Menu):
 			return self._submenu.on_event(daemon, what, data)
 		if what == self._control_with and self._use_cursor:
 			data = data[0], STICK_PAD_MIN
-		Menu.on_event(self, daemon, what, data)
+		GridMenu.on_event(self, daemon, what, data)
