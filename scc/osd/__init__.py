@@ -43,7 +43,8 @@ class OSDWindow(Gtk.Window):
 			padding: 6px 6px 6px 6px;
 		}
 		
-		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy {
+		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy,
+		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected {
 			color: #%(text)s;
 			border-radius: 0;
 			font-size: x-large;
@@ -52,7 +53,12 @@ class OSDWindow(Gtk.Window):
 			margin: 0px 0px 2px 0px;
 		}
 		
-		#osd-menu-item {
+		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected {
+			min-width: 48pt;
+			min-height: 48pt;
+		}
+		
+		#osd-menu-item, #osd-menu-item-big-icon {
 			border: 1px #%(menuitem_border)s solid;
 		}
 		
@@ -71,7 +77,7 @@ class OSDWindow(Gtk.Window):
 			margin: 0px 5px 0px 5px;
 		}
 		
-		#osd-menu-item-selected {
+		#osd-menu-item-selected, #osd-menu-item-big-icon-selected {
 			color: #%(menuitem_hilight_text)s;
 			background-color: #%(menuitem_hilight)s;
 			border: 1px #%(menuitem_hilight_border)s solid;

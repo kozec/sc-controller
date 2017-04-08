@@ -9,8 +9,10 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk
-from scc.osd.menu import Menu
+from scc.menu_data import Separator, Submenu
+from scc.osd.menu import Menu, MenuIcon
 from scc.osd import OSDWindow
+from scc.tools import find_icon
 
 import math, logging
 log = logging.getLogger("osd.gridmenu")
@@ -50,3 +52,26 @@ class GridMenu(Menu):
 		elif y != 0:
 			for i in xrange(0, self.ipr):
 				self.next_item(y)
+	
+	
+	def generate_widget(self, item):
+		if isinstance(item, Separator):
+			# Ignored here
+			return None
+		elif item.id is None:
+			# Dummies are ignored as well
+			return None
+		else:
+			icon_file, has_colors = find_icon(item.icon, False)
+			if icon_file:
+				# Gridmenu hides label when icon is displayed
+				widget = Gtk.Button()
+				widget.set_relief(Gtk.ReliefStyle.NONE)
+				widget.set_name("osd-menu-item-big-icon")
+				if isinstance(item, Submenu):
+					item.callback = self.show_submenu
+				icon = MenuIcon(icon_file, has_colors)
+				widget.add(icon)
+				return widget
+			else:
+				return Menu.generate_widget(self, item)

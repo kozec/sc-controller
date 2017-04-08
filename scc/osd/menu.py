@@ -273,10 +273,12 @@ class Menu(OSDWindow):
 	
 	def select(self, index):
 		if self._selected:
-			self._selected.widget.set_name("osd-menu-item")
+			self._selected.widget.set_name(self._selected.widget.get_name()
+				.replace("-selected", ""))
 		if self.items[index].id:
 			self._selected = self.items[index]
-			self._selected.widget.set_name("osd-menu-item-selected")
+			self._selected.widget.set_name(
+					self._selected.widget.get_name() + "-selected")
 			return True
 		return False
 	
