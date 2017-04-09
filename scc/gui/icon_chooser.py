@@ -78,6 +78,9 @@ class IconChooser(Editor, UserDataManager):
 			if full_path:
 				path, name = os.path.split(full_path)
 				license = IconChooser.find_license(path, name)
+				if license and "Kozec" in license:
+					# I'm soo special
+					license = None
 			else:
 				license = None
 			if license:
@@ -86,7 +89,7 @@ class IconChooser(Editor, UserDataManager):
 					license = "%s<a href='%s'>%s</a>%s" % (
 						m.group(1), m.group(2), m.group(2), m.group(3))
 				lblLicense.set_markup(_("Free-use icon created by %s" % (license,)))
-				rvLicense.set_reveal_child(True)
+			rvLicense.set_reveal_child(bool(license))
 	
 	
 	def on_tvCategories_cursor_changed(self, view):

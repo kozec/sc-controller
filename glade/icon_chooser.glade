@@ -75,6 +75,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="model">lstIcons</property>
+                    <property name="headers_clickable">False</property>
                     <property name="rubber_banding">True</property>
                     <signal name="cursor-changed" handler="on_tvItems_cursor_changed" swapped="no"/>
                     <signal name="row-activated" handler="on_btOk_clicked" swapped="no"/>
@@ -113,6 +114,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="model">lstDirs</property>
+                    <property name="headers_clickable">False</property>
                     <property name="rubber_banding">True</property>
                     <signal name="cursor-changed" handler="on_tvCategories_cursor_changed" swapped="no"/>
                     <child internal-child="selection">
