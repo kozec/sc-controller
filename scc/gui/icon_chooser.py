@@ -9,8 +9,10 @@ from gi.repository import Gtk, Gdk, Gio, GdkPixbuf, GObject
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
-import os, traceback, logging
+from scc.tools import find_icon
+import os, traceback, logging, re
 log = logging.getLogger("IconChooser")
+RE_URL = re.compile(r"(.*)(https?://[^ ]+)(.*)")
 
 class IconChooser(Editor, UserDataManager):
 	GLADE = "icon_chooser.glade"
@@ -67,9 +69,24 @@ class IconChooser(Editor, UserDataManager):
 	
 	def on_tvItems_cursor_changed(self, view):
 		entName = self.builder.get_object("entName")
+		lblLicense = self.builder.get_object("lblLicense")
+		rvLicense = self.builder.get_object("rvLicense")
 		icon = self.get_selected()
 		if icon:
 			entName.set_text(icon)
+			full_path, trash = find_icon(icon)
+			if full_path:
+				path, name = os.path.split(full_path)
+				license = IconChooser.find_license(path, name)
+			else:
+				license = None
+			if license:
+				m = RE_URL.match(license)
+				if m:
+					license = "%s<a href='%s'>%s</a>%s" % (
+						m.group(1), m.group(2), m.group(2), m.group(3))
+				lblLicense.set_markup(_("Free-use icon created by %s" % (license,)))
+				rvLicense.set_reveal_child(True)
 	
 	
 	def on_tvCategories_cursor_changed(self, view):
@@ -116,6 +133,19 @@ class IconChooser(Editor, UserDataManager):
 				tvCategories.get_selection().select_path(( 0, ))
 				self.on_tvCategories_cursor_changed(tvCategories)
 			except: pass
+	
+	
+	@staticmethod
+	def find_license(path, name):
+		""" Parses LICENSE file, if any, and returns license for give file """
+		licensefile = os.path.join(path, "LICENCES")
+		if not os.path.exists(licensefile):
+			return None
+		for line in file(licensefile, "r").readlines():
+			if line.startswith(name):
+				if "-" in line:
+					return line.split("-")[-1].strip("\t\r\n ")
+		return None
 
 
 class CellRendererMenuIcon(Gtk.CellRenderer):
