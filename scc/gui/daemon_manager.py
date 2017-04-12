@@ -411,6 +411,13 @@ class ControllerManager(GObject.GObject):
 				DaemonManager.nocallback, DaemonManager.nocallback)
 	
 	
+	def feedback(self, position, amplitude):
+		""" Generates feedback effect on controller """
+		self._send_id()
+		self._dm.request("Feedback: %s %s" % (position, amplitude),
+				DaemonManager.nocallback, DaemonManager.nocallback)
+	
+	
 	def observe(self, success_cb, error_cb, *what_to_lock):
 		"""
 		Enables observing on physical button, axis or pad.
