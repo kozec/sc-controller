@@ -310,6 +310,14 @@ class Action(object):
 		log.warn("Action %s can't handle whole stick event", self.__class__.__name__)
 	
 	
+	def whole_blocked(self, mapper, x, y, what):
+		"""
+		Special case called when ClickModifier is used and prevents 'whole'
+		to be called because finger moves over non-pressed pad.
+		"""
+		pass
+	
+	
 	def add(self, mapper, dx, dy):
 		"""
 		Called from BallModifier while virtual "ball" is rolling.
@@ -1679,7 +1687,7 @@ class MultiAction(MultichildAction):
 	__repr__ = __str__
 
 
-class DPadAction(MultichildAction):
+class DPadAction(MultichildAction, HapticEnabledAction):
 	COMMAND = "dpad"
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	
@@ -1703,9 +1711,11 @@ class DPadAction(MultichildAction):
 	
 	def __init__(self, *actions):
 		MultichildAction.__init__(self, *actions)
+		HapticEnabledAction.__init__(self)
 		self.actions = ensure_size(4, actions, NoAction())
 		self.eight = False
 		self.dpad_state = [ None, None ]	# X, Y
+		self.side_before = None
 	
 	
 	def encode(self):
@@ -1735,9 +1745,9 @@ class DPadAction(MultichildAction):
 		return "DPad"
 	
 	
-	def whole(self, mapper, x, y, what):
-		## dpad(up, down, left	, right)
-		
+	def compute_side(self, x, y):
+		""" Computes which sides of dpad are supposed to be active """
+		## dpad(up, down, left, right)
 		side = ( None, None )
 		if x*x + y*y > self.MIN_DISTANCE_P2:
 			# Compute angle from center of pad to finger position
@@ -1748,7 +1758,11 @@ class DPadAction(MultichildAction):
 			index = clamp(0, index + 4, 8)
 			
 			side = self.SIDES[index]
-		
+		return side
+	
+	
+	def whole(self, mapper, x, y, what):
+		side = self.compute_side(x, y)
 		
 		for i in (0, 1):
 			if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
@@ -1759,6 +1773,14 @@ class DPadAction(MultichildAction):
 				if self.actions[side[i]] is not None:
 					self.actions[side[i]].button_press(mapper)
 				self.dpad_state[i] = side[i]
+	
+	
+	def whole_blocked(self, mapper, x, y, what):
+		if self.haptic:
+			side = self.compute_side(x, y)
+			if self.side_before != side:
+				self.side_before = side
+				mapper.send_feedback(self.haptic)
 	
 	
 	def change(self, mapper, dx, dy):
@@ -1792,8 +1814,9 @@ class DPad8Action(DPadAction):
 		if self.name: return self.name
 		return "8-Way DPad"
 	
-	
-	def whole(self, mapper, x, y, what):
+    
+	def compute_side(self, x, y):
+		""" Computes which sides of dpad are supposed to be active """
 		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
 		side = None
 		if x*x + y*y > self.MIN_DISTANCE_P2:
@@ -1804,7 +1827,11 @@ class DPad8Action(DPadAction):
 			# Index goes from -4 to +4, make it zero based
 			index = clamp(0, index + 4, 9)
 			side = self.SIDES[index]
-		
+		return side
+	
+	
+	def whole(self, mapper, x, y, what):
+		side = self.compute_side(x, y)
 		
 		# 8-way dpad presses only one button at time, so only one index
 		# in dpad_state is used.

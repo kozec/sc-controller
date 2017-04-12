@@ -255,6 +255,9 @@ class ClickModifier(Modifier):
 		elif what == RIGHT and mapper.was_pressed(SCButtons.RPAD):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
+		else:
+			# Nothing is pressed, but finger moves over pad
+			self.action.whole_blocked(mapper, 0, 0, what)
 
 
 class BallModifier(Modifier, WholeHapticAction):
