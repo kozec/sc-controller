@@ -43,6 +43,8 @@ class Menu(OSDWindow):
 		OSDWindow.__init__(self, cls)
 		self.daemon = None
 		self.config = None
+		self.feedback = None
+		self.controller = None
 		self.xdisplay = X.Display(hash(GdkX11.x11_get_default_xdisplay()))	# Magic
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
@@ -140,6 +142,8 @@ class Menu(OSDWindow):
 			help="display and use cursor")
 		self.argparser.add_argument('--max-size', type=int,
 			help="sets maximal width or height of menu")
+		self.argparser.add_argument('--feedback-amplitude', type=int,
+			help="enables and sets power of feedback effect generated when active menu option is changed")
 		self.argparser.add_argument('--from-profile', '-p', type=str,
 			metavar="profile_file menu_name",
 			help="load menu items from profile file")
@@ -190,6 +194,14 @@ class Menu(OSDWindow):
 		
 		if self.args.use_cursor:
 			self.enable_cursor()
+		
+		if self.feedback_amplitude:
+			side = "LEFT"
+			if self._control_with == "RIGHT":
+				side = "RIGHT"
+			elif self._control_with == "STICK":
+				side = "BOTH"
+			self.feedback = side, int(self.feedback_amplitude)
 		
 		if self._confirm_with == SAME:
 			if self._control_with == RIGHT:
@@ -279,6 +291,8 @@ class Menu(OSDWindow):
 			self._selected = self.items[index]
 			self._selected.widget.set_name(
 					self._selected.widget.get_name() + "-selected")
+			if self.feedback:
+				self.controller.feedback(*self.feedback)
 			return True
 		return False
 	
@@ -320,14 +334,14 @@ class Menu(OSDWindow):
 		if not self.config:
 			self.config = Config()
 		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
-		c = self.choose_controller(self.daemon)
-		if c is None or not c.is_connected():
+		self.controller = self.choose_controller(self.daemon)
+		if self.controller is None or not self.controller.is_connected():
 			# There is no controller connected to daemon
 			self.on_failed_to_lock("Controller not connected")
 			return
 		
-		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
-		c.lock(success, self.on_failed_to_lock, *locks)
+		self._eh_ids += [ (self.controller, self.controller.connect('event', self.on_event)) ]
+		self.controller.lock(success, self.on_failed_to_lock, *locks)
 	
 	
 	def quit(self, code=-2):

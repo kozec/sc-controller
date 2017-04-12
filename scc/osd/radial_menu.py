@@ -149,6 +149,8 @@ class RadialMenu(Menu):
 	
 	
 	def select(self, index):
+		if self.feedback:
+			self.controller.feedback(*self.feedback)
 		self._selected = self.items[index]
 	
 	
