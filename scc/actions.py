@@ -1737,7 +1737,8 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	
 	
 	def get_compatible_modifiers(self):
-		return Action.MOD_CLICK | Action.MOD_ROTATE | Action.MOD_DEADZONE
+		return (Action.MOD_CLICK | Action.MOD_ROTATE
+			| Action.MOD_DEADZONE | Action.MOD_FEEDBACK )
 	
 	
 	def describe(self, context):
@@ -2116,7 +2117,7 @@ class XYAction(WholeHapticAction, Action):
 	__repr__ = __str__
 
 
-class TriggerAction(Action):
+class TriggerAction(Action, HapticEnabledAction):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
@@ -2126,6 +2127,7 @@ class TriggerAction(Action):
 	
 	def __init__(self, press_level, *params):
 		Action.__init__(self, press_level, *params)
+		HapticEnabledAction.__init__(self)
 		self.press_level = int(press_level)
 		if len(params) == 1:
 			self.release_level = press_level
@@ -2161,18 +2163,6 @@ class TriggerAction(Action):
 		return Action.MOD_FEEDBACK
 	
 	
-	def set_haptic(self, hapticdata):
-		# Pass haptic settings to child action, if possible
-		if hasattr(self.action, "set_haptic"):
-			self.action.set_haptic(hapticdata)
-	
-	
-	def get_haptic(self):
-		if hasattr(self.action, "get_haptic"):
-			return self.action.get_haptic()
-		return None
-	
-	
 	def compress(self):
 		self.action = self.action.compress()
 		return self
@@ -2181,16 +2171,22 @@ class TriggerAction(Action):
 	def _press(self, mapper):
 		""" Called when trigger level enters active zone """
 		self.pressed = True
+		if self.haptic:
+			mapper.send_feedback(self.haptic)
 		if not self.child_is_axis:
 			self.action.button_press(mapper)
+	
 	
 	def _release(self, mapper, old_position):
 		""" Called when trigger level leaves active zone """
 		self.pressed = False
+		if self.haptic:
+			mapper.send_feedback(self.haptic)
 		if self.child_is_axis:
 			self.action.trigger(mapper, 0, old_position)
 		else:
 			self.action.button_release(mapper)
+	
 	
 	def trigger(self, mapper, position, old_position):
 		# There are 3 modes that TriggerAction can work in
