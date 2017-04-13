@@ -9,7 +9,7 @@ For example, click() modifier executes action only if pad is pressed.
 from __future__ import unicode_literals
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction
-from scc.actions import NoAction, WholeHapticAction
+from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
 from scc.constants import TRIGGER_MAX, LEFT, RIGHT, STICK, FE_STICK, FE_TRIGGER
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
 from scc.constants import FE_PAD, SCButtons, HapticPos
@@ -834,6 +834,7 @@ class DoubleclickModifier(Modifier):
 		self.holdaction = NoAction()
 		self.actions = ( self.action, self.normalaction, self.holdaction )
 		self.timeout = time or DoubleclickModifier.DEAFAULT_TIMEOUT
+		self.haptic = None    # Set only with HoldModifier subclass
 		self.waiting = False
 		self.pressed = False
 		self.active = None
@@ -949,6 +950,8 @@ class DoubleclickModifier(Modifier):
 			if self.pressed:
 				# Timeouted while button is still pressed
 				self.active = self.holdaction if self.holdaction else self.normalaction
+				if self.haptic:
+					mapper.send_feedback(self.haptic)
 				self.active.button_press(mapper)
 			elif self.normalaction:
 				# User did short click and nothing else
@@ -956,7 +959,7 @@ class DoubleclickModifier(Modifier):
 				self.normalaction.button_release(mapper)
 
 
-class HoldModifier(DoubleclickModifier):
+class HoldModifier(DoubleclickModifier, HapticEnabledAction):
 	# Hold modifier is implemented as part of DoubleclickModifier, because
 	# situation when both are assigned to same button needs to be treated
 	# specially.
@@ -965,6 +968,7 @@ class HoldModifier(DoubleclickModifier):
 
 	def __init__(self, holdaction, normalaction=None, time=None):
 		DoubleclickModifier.__init__(self, NoAction(), normalaction, time)
+		HapticEnabledAction.__init__(self)
 		self.holdaction = holdaction
 
 	@staticmethod

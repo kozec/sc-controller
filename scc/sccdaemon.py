@@ -9,7 +9,7 @@ from scc.lib import xwrappers as X
 from scc.lib import xinput
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
-from scc.constants import SCButtons, LEFT, RIGHT, BOTH, STICK, DAEMON_VERSION
+from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.uinput import Keys, Axes, CannotCreateUInputException
