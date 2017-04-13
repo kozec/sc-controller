@@ -195,7 +195,7 @@ class Menu(OSDWindow):
 		if self.args.use_cursor:
 			self.enable_cursor()
 		
-		if self.feedback_amplitude:
+		if self.args.feedback_amplitude:
 			side = "LEFT"
 			if self._control_with == "RIGHT":
 				side = "RIGHT"
