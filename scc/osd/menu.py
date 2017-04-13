@@ -201,7 +201,7 @@ class Menu(OSDWindow):
 				side = "RIGHT"
 			elif self._control_with == "STICK":
 				side = "BOTH"
-			self.feedback = side, int(self.feedback_amplitude)
+			self.feedback = side, int(self.args.feedback_amplitude)
 		
 		if self._confirm_with == SAME:
 			if self._control_with == RIGHT:
@@ -288,11 +288,12 @@ class Menu(OSDWindow):
 			self._selected.widget.set_name(self._selected.widget.get_name()
 				.replace("-selected", ""))
 		if self.items[index].id:
+			if self._selected != self.items[index]:
+				if self.feedback and self.controller:
+					self.controller.feedback(*self.feedback)
 			self._selected = self.items[index]
 			self._selected.widget.set_name(
 					self._selected.widget.get_name() + "-selected")
-			if self.feedback:
-				self.controller.feedback(*self.feedback)
 			return True
 		return False
 	
