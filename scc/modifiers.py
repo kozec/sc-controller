@@ -989,7 +989,6 @@ class HoldModifier(DoubleclickModifier):
 			mod.action = a
 			mod.action.set_haptic(mod.haptic)
 			a = mod
-			print a
 		return a
 	
 	
