@@ -2123,7 +2123,7 @@ class TriggerAction(Action, HapticEnabledAction):
 	"""
 	COMMAND = "trigger"
 	PROFILE_KEYS = "levels",
-	PROFILE_KEY_PRIORITY = -3	# After FeedbackModifier, rest doesn't matter
+	PROFILE_KEY_PRIORITY = -5
 	
 	def __init__(self, press_level, *params):
 		Action.__init__(self, press_level, *params)
@@ -2180,8 +2180,6 @@ class TriggerAction(Action, HapticEnabledAction):
 	def _release(self, mapper, old_position):
 		""" Called when trigger level leaves active zone """
 		self.pressed = False
-		if self.haptic:
-			mapper.send_feedback(self.haptic)
 		if self.child_is_axis:
 			self.action.trigger(mapper, 0, old_position)
 		else:
