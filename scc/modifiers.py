@@ -821,7 +821,7 @@ class ModeModifier(Modifier):
 			return self.select(mapper).whole(mapper, x, y, what)
 
 
-class DoubleclickModifier(Modifier):
+class DoubleclickModifier(Modifier, HapticEnabledAction):
 	COMMAND = "doubleclick"
 	DEAFAULT_TIMEOUT = 0.2
 	TIMEOUT_KEY = "time"
@@ -829,12 +829,12 @@ class DoubleclickModifier(Modifier):
 	
 	def __init__(self, doubleclickaction, normalaction=None, time=None):
 		Modifier.__init__(self)
+		HapticEnabledAction.__init__(self)
 		self.action = doubleclickaction
 		self.normalaction = normalaction or NoAction()
 		self.holdaction = NoAction()
 		self.actions = ( self.action, self.normalaction, self.holdaction )
 		self.timeout = time or DoubleclickModifier.DEAFAULT_TIMEOUT
-		self.haptic = None    # Set only with HoldModifier subclass
 		self.waiting = False
 		self.pressed = False
 		self.active = None
@@ -959,7 +959,7 @@ class DoubleclickModifier(Modifier):
 				self.normalaction.button_release(mapper)
 
 
-class HoldModifier(DoubleclickModifier, HapticEnabledAction):
+class HoldModifier(DoubleclickModifier):
 	# Hold modifier is implemented as part of DoubleclickModifier, because
 	# situation when both are assigned to same button needs to be treated
 	# specially.
@@ -968,9 +968,9 @@ class HoldModifier(DoubleclickModifier, HapticEnabledAction):
 
 	def __init__(self, holdaction, normalaction=None, time=None):
 		DoubleclickModifier.__init__(self, NoAction(), normalaction, time)
-		HapticEnabledAction.__init__(self)
 		self.holdaction = holdaction
-
+	
+	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		if isinstance(a, DoubleclickModifier):
@@ -980,19 +980,29 @@ class HoldModifier(DoubleclickModifier, HapticEnabledAction):
 			a = HoldModifier(*args)
 		if DoubleclickModifier.TIMEOUT_KEY in data:
 			a.timeout = data[DoubleclickModifier.TIMEOUT_KEY]
+		if isinstance(a.normalaction, FeedbackModifier):
+			# Ugly hack until profile file is redone
+			mod = a.normalaction
+			a.normalaction = mod.action
+			if hasattr(a.normalaction, "set_haptic"):
+				a.normalaction.set_haptic(None)
+			mod.action = a
+			mod.action.set_haptic(mod.haptic)
+			a = mod
+			print a
 		return a
-
-
+	
+	
 	def compress(self):
 		self.action = self.action.compress()
 		self.holdaction = self.holdaction.compress()
 		self.normalaction = self.normalaction.compress()
-
+		
 		for a in (self.action, self.normalaction):
 			if isinstance(a, DoubleclickModifier):
 				self.action = a.action or self.action
 				self.normalaction = a.normalaction or self.normalaction
-
+		
 		if isinstance(self.holdaction, DoubleclickModifier):
 			self.action = self.holdaction.action
 			self.holdaction = self.holdaction.normalaction
