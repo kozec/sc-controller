@@ -257,7 +257,7 @@ class ClickModifier(Modifier):
 			return self.action.whole(mapper, 0, 0, what)
 		else:
 			# Nothing is pressed, but finger moves over pad
-			self.action.whole_blocked(mapper, 0, 0, what)
+			self.action.whole_blocked(mapper, x, y, what)
 
 
 class BallModifier(Modifier, WholeHapticAction):

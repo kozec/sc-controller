@@ -1763,7 +1763,11 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	
 	
 	def whole(self, mapper, x, y, what):
-		side = self.compute_side(x, y)
+		if self.haptic:
+			# Called like this just so there is not same code on two places
+			side = self.whole_blocked(mapper, x, y, what)
+		else:
+			side = self.compute_side(x, y)
 		
 		for i in (0, 1):
 			if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
@@ -1782,6 +1786,7 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 			if self.side_before != side:
 				self.side_before = side
 				mapper.send_feedback(self.haptic)
+		return side
 	
 	
 	def change(self, mapper, dx, dy):
