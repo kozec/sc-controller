@@ -9,10 +9,12 @@ from gi.repository import Gtk, Gdk, Gio, GdkPixbuf, GObject
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
+from scc.paths import get_menuicons_path
 from scc.tools import find_icon
 import os, traceback, logging, re
 log = logging.getLogger("IconChooser")
 RE_URL = re.compile(r"(.*)(https?://[^ ]+)(.*)")
+DEFAULT_ICON_CATEGORIES = ( "items", "media", "weapons", "system" )
 
 class IconChooser(Editor, UserDataManager):
 	GLADE = "icon_chooser.glade"
@@ -28,15 +30,27 @@ class IconChooser(Editor, UserDataManager):
 		Editor.setup_widgets(self)
 		clIcon = self.builder.get_object("clIcon")
 		crIconName = self.builder.get_object("crIconName")
+		btUserFolder = self.builder.get_object("btUserFolder")
 		cr = CellRendererMenuIcon(32)
 		clIcon.clear()
 		clIcon.pack_start(cr, False)
 		clIcon.pack_start(crIconName, True)
 		clIcon.set_attributes(cr, icon=1, has_colors=2)
 		clIcon.set_attributes(crIconName, text=0)
+		btUserFolder.set_label("Add icons...")
+		btUserFolder.set_uri("file://%s" % (get_menuicons_path(),))
 		
 		headerbar(self.builder.get_object("header"))
 		self.load_menu_icons()
+	
+	
+	def on_btUserFolder_activate_link(self, *a):
+		for c in DEFAULT_ICON_CATEGORIES:
+			try:
+				os.makedirs(os.path.join(get_menuicons_path(), c))
+			except:
+				# Dir. exists
+				pass
 	
 	
 	def on_btOk_clicked(self, *a):
