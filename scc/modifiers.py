@@ -912,7 +912,24 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		return self._mod_to_string(Action.strip_defaults(self), multiline, pad)
+		if self.action and self.normalaction and self.holdaction:
+			return "doubleclick(%s, hold(%s, %s))" % (
+				self.action.to_string(multiline, pad),
+				self.holdaction.to_string(multiline, pad),
+				self.normalaction.to_string(multiline, pad),
+			)
+		elif self.action and self.normalaction and not self.holdaction:
+			return "doubleclick(%s, %s)" % (
+				self.action.to_string(multiline, pad),
+				self.normalaction.to_string(multiline, pad),
+			)
+		elif not self.action and self.normalaction and self.holdaction:
+			return "hold(%s, %s)" % (
+				self.holdaction.to_string(multiline, pad),
+				self.normalaction.to_string(multiline, pad),
+			)
+		return ((self.action or self.normalaction or self.holdaction)
+			.to_string(multiline, pad))
 	
 	
 	def button_press(self, mapper):
