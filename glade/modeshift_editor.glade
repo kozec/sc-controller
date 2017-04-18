@@ -2,6 +2,12 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkAdjustment" id="adjHoldFeedback">
+    <property name="lower">15</property>
+    <property name="upper">32768</property>
+    <property name="step_increment">32</property>
+    <property name="page_increment">128</property>
+  </object>
   <object class="GtkAdjustment" id="adjTime">
     <property name="lower">0.01</property>
     <property name="upper">10</property>
@@ -303,13 +309,12 @@
                   <object class="GtkBox" id="vbHoldTime">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_left">10</property>
-                    <property name="margin_right">10</property>
                     <child>
                       <object class="GtkLabel" id="lblHoldTime">
                         <property name="width_request">150</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_left">10</property>
                         <property name="margin_right">10</property>
                         <property name="label" translatable="yes">Hold Time</property>
                         <property name="xalign">0</property>
@@ -327,12 +332,14 @@
                       <object class="GtkScale" id="sclHoldTime">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="margin_right">5</property>
+                        <property name="hexpand">True</property>
                         <property name="adjustment">adjTime</property>
                         <property name="round_digits">1</property>
                         <property name="value_pos">right</property>
                       </object>
                       <packing>
-                        <property name="expand">True</property>
+                        <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="position">1</property>
                       </packing>
@@ -342,6 +349,84 @@
                     <property name="expand">False</property>
                     <property name="fill">True</property>
                     <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbHoldFeedback">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="draw_indicator">True</property>
+                    <child>
+                      <object class="GtkLabel" id="lblHoldFeedback">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Enable Feedback</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkRevealer" id="rvHoldFeedbackAmplitude">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="reveal_child">True</property>
+                    <child>
+                      <object class="GtkBox" id="vbHoldFeedbackAmplitude">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">25</property>
+                        <child>
+                          <object class="GtkLabel" id="lblHoldFeedbackAmplitude">
+                            <property name="width_request">150</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_left">10</property>
+                            <property name="margin_right">10</property>
+                            <property name="label" translatable="yes">Amplitude</property>
+                            <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScale" id="sclHoldFeedback">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="margin_right">10</property>
+                            <property name="hexpand">True</property>
+                            <property name="adjustment">adjHoldFeedback</property>
+                            <property name="round_digits">1</property>
+                            <property name="value_pos">right</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">4</property>
                   </packing>
                 </child>
               </object>
@@ -566,20 +651,6 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="btClear">
-            <property name="label">gtk-clear</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="use_stock">True</property>
-            <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkButton" id="btOK">
             <property name="label">gtk-ok</property>
             <property name="visible">True</property>
@@ -589,6 +660,20 @@
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
             <signal name="clicked" handler="on_btOK_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btClear">
+            <property name="label">gtk-clear</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_btClear_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="pack_type">end</property>
