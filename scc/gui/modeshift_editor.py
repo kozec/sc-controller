@@ -12,7 +12,8 @@ from scc.gui.controller_widget import STICKS, PADS
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
 from scc.constants import SCButtons
-from scc.modifiers import ModeModifier, DoubleclickModifier, HoldModifier
+from scc.modifiers import ModeModifier, DoubleclickModifier
+from scc.modifiers import FeedbackModifier, HoldModifier
 from scc.actions import Action, NoAction
 from scc.profile import Profile
 from scc.macros import Macro
@@ -324,6 +325,10 @@ class ModeshiftEditor(Editor):
 			self.mode = mode = mode or Action.AC_BUTTON
 		
 		self.set_title("Modeshift for %s" % (id.name if id in SCButtons else str(id),))
+		
+		if isinstance(action, FeedbackModifier):
+			# TODO: Load data
+			action = action.action
 		
 		if isinstance(action, ModeModifier):
 			self._load_modemod(0, action)
