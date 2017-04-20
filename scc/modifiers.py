@@ -9,7 +9,7 @@ For example, click() modifier executes action only if pad is pressed.
 from __future__ import unicode_literals
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction
-from scc.actions import NoAction, WholeHapticAction
+from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
 from scc.constants import TRIGGER_MAX, LEFT, RIGHT, STICK, FE_STICK, FE_TRIGGER
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
 from scc.constants import FE_PAD, SCButtons, HapticPos
@@ -255,6 +255,9 @@ class ClickModifier(Modifier):
 		elif what == RIGHT and mapper.was_pressed(SCButtons.RPAD):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
+		else:
+			# Nothing is pressed, but finger moves over pad
+			self.action.whole_blocked(mapper, x, y, what)
 
 
 class BallModifier(Modifier, WholeHapticAction):
@@ -818,7 +821,7 @@ class ModeModifier(Modifier):
 			return self.select(mapper).whole(mapper, x, y, what)
 
 
-class DoubleclickModifier(Modifier):
+class DoubleclickModifier(Modifier, HapticEnabledAction):
 	COMMAND = "doubleclick"
 	DEAFAULT_TIMEOUT = 0.2
 	TIMEOUT_KEY = "time"
@@ -826,6 +829,7 @@ class DoubleclickModifier(Modifier):
 	
 	def __init__(self, doubleclickaction, normalaction=None, time=None):
 		Modifier.__init__(self)
+		HapticEnabledAction.__init__(self)
 		self.action = doubleclickaction
 		self.normalaction = normalaction or NoAction()
 		self.holdaction = NoAction()
@@ -908,7 +912,24 @@ class DoubleclickModifier(Modifier):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		return self._mod_to_string(Action.strip_defaults(self), multiline, pad)
+		if self.action and self.normalaction and self.holdaction:
+			return "doubleclick(%s, hold(%s, %s))" % (
+				self.action.to_string(multiline, pad),
+				self.holdaction.to_string(multiline, pad),
+				self.normalaction.to_string(multiline, pad),
+			)
+		elif self.action and self.normalaction and not self.holdaction:
+			return "doubleclick(%s, %s)" % (
+				self.action.to_string(multiline, pad),
+				self.normalaction.to_string(multiline, pad),
+			)
+		elif not self.action and self.normalaction and self.holdaction:
+			return "hold(%s, %s)" % (
+				self.holdaction.to_string(multiline, pad),
+				self.normalaction.to_string(multiline, pad),
+			)
+		return ((self.action or self.normalaction or self.holdaction)
+			.to_string(multiline, pad))
 	
 	
 	def button_press(self, mapper):
@@ -946,6 +967,8 @@ class DoubleclickModifier(Modifier):
 			if self.pressed:
 				# Timeouted while button is still pressed
 				self.active = self.holdaction if self.holdaction else self.normalaction
+				if self.haptic:
+					mapper.send_feedback(self.haptic)
 				self.active.button_press(mapper)
 			elif self.normalaction:
 				# User did short click and nothing else
@@ -963,7 +986,8 @@ class HoldModifier(DoubleclickModifier):
 	def __init__(self, holdaction, normalaction=None, time=None):
 		DoubleclickModifier.__init__(self, NoAction(), normalaction, time)
 		self.holdaction = holdaction
-
+	
+	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		if isinstance(a, DoubleclickModifier):
@@ -973,19 +997,28 @@ class HoldModifier(DoubleclickModifier):
 			a = HoldModifier(*args)
 		if DoubleclickModifier.TIMEOUT_KEY in data:
 			a.timeout = data[DoubleclickModifier.TIMEOUT_KEY]
+		if isinstance(a.normalaction, FeedbackModifier):
+			# Ugly hack until profile file is redone
+			mod = a.normalaction
+			a.normalaction = mod.action
+			if hasattr(a.normalaction, "set_haptic"):
+				a.normalaction.set_haptic(None)
+			mod.action = a
+			mod.action.set_haptic(mod.haptic)
+			a = mod
 		return a
-
-
+	
+	
 	def compress(self):
 		self.action = self.action.compress()
 		self.holdaction = self.holdaction.compress()
 		self.normalaction = self.normalaction.compress()
-
+		
 		for a in (self.action, self.normalaction):
 			if isinstance(a, DoubleclickModifier):
 				self.action = a.action or self.action
 				self.normalaction = a.normalaction or self.normalaction
-
+		
 		if isinstance(self.holdaction, DoubleclickModifier):
 			self.action = self.holdaction.action
 			self.holdaction = self.holdaction.normalaction

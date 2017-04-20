@@ -14,7 +14,8 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
 from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
 from scc.constants import STICK_PAD_MAX, DEFAULT
 from scc.actions import Action, NoAction, SpecialAction, ButtonAction
-from scc.actions import OSDEnabledAction, MOUSE_BUTTONS
+from scc.actions import HapticEnabledAction, OSDEnabledAction
+from scc.actions import MOUSE_BUTTONS
 from scc.tools import strip_gesture, nameof, clamp
 from scc.modifiers import Modifier, NameModifier
 from math import sqrt
@@ -269,7 +270,7 @@ class OSDAction(Action, SpecialAction):
 			return self.action.whole(mapper, x, y, what)
 
 
-class MenuAction(Action, SpecialAction):
+class MenuAction(Action, SpecialAction, HapticEnabledAction):
 	"""
 	Displays menu defined in profile or globally.
 	"""
@@ -292,6 +293,7 @@ class MenuAction(Action, SpecialAction):
 			# eg.: menu("some-id", 3) sets max_size to 3
 			control_with, max_size = MenuAction.DEFAULT_CONTROL, control_with
 		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release, max_size)
+		HapticEnabledAction.__init__(self)
 		self.menu_id = menu_id
 		self.control_with = control_with
 		self.confirm_with = confirm_with
@@ -305,6 +307,10 @@ class MenuAction(Action, SpecialAction):
 	def describe(self, context):
 		if self.name: return self.name
 		return _("Menu")
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_FEEDBACK
 	
 	
 	def to_string(self, multiline=False, pad=0):
@@ -363,6 +369,11 @@ class MenuAction(Action, SpecialAction):
 		if x == 0 and y == 0:
 			# Sent when pad is released - don't display menu then
 			return
+		if self.haptic:
+			params = list(params) + [
+				"--feedback-amplitude",
+				str(self.haptic.get_amplitude())
+			]
 		if what in (LEFT, RIGHT):
 			confirm_with = self.confirm_with
 			cancel_with = self.cancel_with

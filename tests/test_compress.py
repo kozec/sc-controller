@@ -3,6 +3,7 @@ from scc.constants import SCButtons, HapticPos
 from scc.modifiers import DoubleclickModifier
 from scc.actions import Action, AxisAction
 from scc.macros import Macro
+from scc.special_actions import MenuAction
 from scc.parser import ActionParser
 
 parser = ActionParser()
@@ -81,6 +82,39 @@ CASES = {
 		'action' : 'ball(XY(axis(Axes.ABS_RX), axis(Axes.ABS_RY)))',
 		'sensitivity' : (2.0, 3.0),
 		'feedback' : ('BOTH',)
+	},
+	"dpad" : {
+		"dpad": [
+			{ "action": "button(Keys.KEY_W)" },
+			{ "action": "button(Keys.KEY_S)" },
+			{ "action": "button(Keys.KEY_A)" },
+			{ "action": "button(Keys.KEY_D)" }
+		],
+		"feedback": ["LEFT", 32640]
+	},
+	"dpad8" : {
+		"dpad": [
+			{ "action": "button(Keys.KEY_1)" },
+			{ "action": "button(Keys.KEY_2)" },
+			{ "action": "button(Keys.KEY_3)" },
+			{ "action": "button(Keys.KEY_4)" },
+			{ "action": "button(Keys.KEY_5)" },
+			{ "action": "button(Keys.KEY_6)" },
+			{ "action": "button(Keys.KEY_7)" },
+			{ "action": "button(Keys.KEY_8)" }
+		],
+		"feedback": ["LEFT", 32640]
+	},
+	"menu" : {
+		"action": "menu('Default.menu')", 
+		"feedback": ["LEFT", 32640]
+	},
+	"hold": {
+		"action": "button(Keys.KEY_W)",
+		"hold": {
+			"action": "menu('Default.menu')"
+		},
+		"feedback": ["LEFT", 32640]
 	}
 }
 
@@ -96,6 +130,12 @@ class TestCompress(object):
 		for cls in Action.ALL.values():
 			if Macro in cls.__bases__:
 				# Skip macros, they are handled separately
+				continue
+			if MenuAction in cls.__bases__ and cls != MenuAction:
+				# Skip alternate menu types, they all behave in same way
+				continue
+			if cls == DoubleclickModifier:
+				# Tested along with hold
 				continue
 			if hasattr(cls, "set_speed"):
 				assert cls.COMMAND in CASES, (

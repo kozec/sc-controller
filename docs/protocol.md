@@ -138,6 +138,12 @@ While source is observed, daemon keeps sending `Event: ...` messages every time 
 
 Unlocking is done automatically when client is disconnected, or using `Unlock.` message.
 
+#### `Feedback: position amplitude`
+Asks daemon to generate feedback effect. Position can be one of 'LEFT', 'RIGHT' or 'BOTH' and
+amplitude is integer in range 0 to 32768 and controls power of generated effect.
+
+Daemon responds with `OK.`
+
 #### `OSD: text to display`
 Asks daemon to display OSD message. No escaping or quoting is needed, everything after colon is displayed
 as text.

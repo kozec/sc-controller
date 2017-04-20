@@ -9,13 +9,14 @@ from scc.lib import xwrappers as X
 from scc.lib import xinput
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
-from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION
+from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION, HapticPos
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.uinput import Keys, Axes, CannotCreateUInputException
 from scc.tools import set_logging_level, find_binary, clamp
 from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
+from scc.controller import HapticData
 from scc.menu_data import MenuData
 from scc.profile import Profile
 from scc.actions import Action
@@ -680,6 +681,19 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"OK.\n")
 				except Exception:
 					client.wfile.write(b"Fail: cannot display OSD\n")
+		elif message.startswith("Feedback:"):
+			try:
+				position, amplitude = message[9:].strip().split(" ", 2)
+				data = HapticData(
+					getattr(HapticPos, position.strip(" \t\r")),
+					int(amplitude)
+				)
+				if client.mapper.get_controller():
+					client.mapper.get_controller().feedback(data)
+				client.wfile.write(b"OK.\n")
+			except Exception, e:
+				log.error(e)
+				client.wfile.write(b"Fail: %s\n" % (e,))
 		elif message.startswith("Controller."):
 			with self.lock:
 				client.mapper = self.default_mapper

@@ -952,7 +952,6 @@ class ActionEditor(Editor):
 		elif id in TRIGGERS:
 			self.set_title(_("%s Trigger") % (id,))
 			self._set_mode(action, mode or Action.AC_TRIGGER)
-			self.hide_modifiers()
 			self.set_action(action)
 			self.hide_macro()
 			self.hide_ring()

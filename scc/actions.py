@@ -310,6 +310,14 @@ class Action(object):
 		log.warn("Action %s can't handle whole stick event", self.__class__.__name__)
 	
 	
+	def whole_blocked(self, mapper, x, y, what):
+		"""
+		Special case called when ClickModifier is used and prevents 'whole'
+		to be called because finger moves over non-pressed pad.
+		"""
+		pass
+	
+	
 	def add(self, mapper, dx, dy):
 		"""
 		Called from BallModifier while virtual "ball" is rolling.
@@ -1679,7 +1687,7 @@ class MultiAction(MultichildAction):
 	__repr__ = __str__
 
 
-class DPadAction(MultichildAction):
+class DPadAction(MultichildAction, HapticEnabledAction):
 	COMMAND = "dpad"
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	
@@ -1703,9 +1711,11 @@ class DPadAction(MultichildAction):
 	
 	def __init__(self, *actions):
 		MultichildAction.__init__(self, *actions)
+		HapticEnabledAction.__init__(self)
 		self.actions = ensure_size(4, actions, NoAction())
 		self.eight = False
 		self.dpad_state = [ None, None ]	# X, Y
+		self.side_before = None
 	
 	
 	def encode(self):
@@ -1727,7 +1737,8 @@ class DPadAction(MultichildAction):
 	
 	
 	def get_compatible_modifiers(self):
-		return Action.MOD_CLICK | Action.MOD_ROTATE | Action.MOD_DEADZONE
+		return (Action.MOD_CLICK | Action.MOD_ROTATE
+			| Action.MOD_DEADZONE | Action.MOD_FEEDBACK )
 	
 	
 	def describe(self, context):
@@ -1735,9 +1746,9 @@ class DPadAction(MultichildAction):
 		return "DPad"
 	
 	
-	def whole(self, mapper, x, y, what):
-		## dpad(up, down, left	, right)
-		
+	def compute_side(self, x, y):
+		""" Computes which sides of dpad are supposed to be active """
+		## dpad(up, down, left, right)
 		side = ( None, None )
 		if x*x + y*y > self.MIN_DISTANCE_P2:
 			# Compute angle from center of pad to finger position
@@ -1748,7 +1759,15 @@ class DPadAction(MultichildAction):
 			index = clamp(0, index + 4, 8)
 			
 			side = self.SIDES[index]
-		
+		return side
+	
+	
+	def whole(self, mapper, x, y, what):
+		if self.haptic:
+			# Called like this just so there is not same code on two places
+			side = self.whole_blocked(mapper, x, y, what)
+		else:
+			side = self.compute_side(x, y)
 		
 		for i in (0, 1):
 			if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
@@ -1759,6 +1778,15 @@ class DPadAction(MultichildAction):
 				if self.actions[side[i]] is not None:
 					self.actions[side[i]].button_press(mapper)
 				self.dpad_state[i] = side[i]
+	
+	
+	def whole_blocked(self, mapper, x, y, what):
+		if self.haptic:
+			side = self.compute_side(x, y)
+			if self.side_before != side:
+				self.side_before = side
+				mapper.send_feedback(self.haptic)
+		return side
 	
 	
 	def change(self, mapper, dx, dy):
@@ -1792,8 +1820,9 @@ class DPad8Action(DPadAction):
 		if self.name: return self.name
 		return "8-Way DPad"
 	
-	
-	def whole(self, mapper, x, y, what):
+    
+	def compute_side(self, x, y):
+		""" Computes which sides of dpad are supposed to be active """
 		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
 		side = None
 		if x*x + y*y > self.MIN_DISTANCE_P2:
@@ -1804,7 +1833,11 @@ class DPad8Action(DPadAction):
 			# Index goes from -4 to +4, make it zero based
 			index = clamp(0, index + 4, 9)
 			side = self.SIDES[index]
-		
+		return side
+	
+	
+	def whole(self, mapper, x, y, what):
+		side = self.compute_side(x, y)
 		
 		# 8-way dpad presses only one button at time, so only one index
 		# in dpad_state is used.
@@ -2089,16 +2122,17 @@ class XYAction(WholeHapticAction, Action):
 	__repr__ = __str__
 
 
-class TriggerAction(Action):
+class TriggerAction(Action, HapticEnabledAction):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "trigger"
 	PROFILE_KEYS = "levels",
-	PROFILE_KEY_PRIORITY = -3	# After FeedbackModifier, rest doesn't matter
+	PROFILE_KEY_PRIORITY = -5
 	
 	def __init__(self, press_level, *params):
 		Action.__init__(self, press_level, *params)
+		HapticEnabledAction.__init__(self)
 		self.press_level = int(press_level)
 		if len(params) == 1:
 			self.release_level = press_level
@@ -2134,18 +2168,6 @@ class TriggerAction(Action):
 		return Action.MOD_FEEDBACK
 	
 	
-	def set_haptic(self, hapticdata):
-		# Pass haptic settings to child action, if possible
-		if hasattr(self.action, "set_haptic"):
-			self.action.set_haptic(hapticdata)
-	
-	
-	def get_haptic(self):
-		if hasattr(self.action, "get_haptic"):
-			return self.action.get_haptic()
-		return None
-	
-	
 	def compress(self):
 		self.action = self.action.compress()
 		return self
@@ -2154,8 +2176,11 @@ class TriggerAction(Action):
 	def _press(self, mapper):
 		""" Called when trigger level enters active zone """
 		self.pressed = True
+		if self.haptic:
+			mapper.send_feedback(self.haptic)
 		if not self.child_is_axis:
 			self.action.button_press(mapper)
+	
 	
 	def _release(self, mapper, old_position):
 		""" Called when trigger level leaves active zone """
@@ -2164,6 +2189,7 @@ class TriggerAction(Action):
 			self.action.trigger(mapper, 0, old_position)
 		else:
 			self.action.button_release(mapper)
+	
 	
 	def trigger(self, mapper, position, old_position):
 		# There are 3 modes that TriggerAction can work in

@@ -182,6 +182,8 @@ class RadialMenu(Menu):
 				for i in self.items:
 					if abs(degdiff(i.a, angle)) < half_width:
 						if self._selected != i:
+							if self.feedback and self.controller:
+								self.controller.feedback(*self.feedback)
 							self._selected = i
 							self.b.hilight({
 								"menuitem_" + i.id : "#" + self.config["osd_colors"]["menuitem_hilight"],
