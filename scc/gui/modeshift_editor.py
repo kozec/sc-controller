@@ -11,9 +11,9 @@ from scc.gui.controller_widget import ControllerButton
 from scc.gui.controller_widget import STICKS, PADS
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
-from scc.constants import SCButtons
 from scc.modifiers import ModeModifier, DoubleclickModifier
 from scc.modifiers import FeedbackModifier, HoldModifier
+from scc.constants import SCButtons, HapticPos
 from scc.actions import Action, NoAction
 from scc.profile import Profile
 from scc.macros import Macro
@@ -253,6 +253,11 @@ class ModeshiftEditor(Editor):
 		e.show(self.get_transient_for())
 	
 	
+	def on_cbHoldFeedback_toggled(self, cb, *a):
+		rvHoldFeedbackAmplitude = self.builder.get_object("rvHoldFeedbackAmplitude")
+		rvHoldFeedbackAmplitude.set_reveal_child(cb.get_active())
+	
+	
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
 		if self.ac_callback is not None:
@@ -262,6 +267,8 @@ class ModeshiftEditor(Editor):
 	
 	def _make_action(self):
 		""" Generates and returns Action instance """
+		cbHoldFeedback = self.builder.get_object("cbHoldFeedback")
+		sclHoldFeedback = self.builder.get_object("sclHoldFeedback")
 		normalaction = self._save_modemod(0)
 		holdaction = self._save_modemod(1)
 		dblaction = self._save_modemod(2)
@@ -273,6 +280,11 @@ class ModeshiftEditor(Editor):
 		else:
 			action = normalaction
 		action.timeout = self.builder.get_object("adjTime").get_value()
+		
+		if cbHoldFeedback.get_active():
+			action = FeedbackModifier(HapticPos.BOTH,
+						sclHoldFeedback.get_value(), action)
+		
 		return action
 	
 	
@@ -312,6 +324,9 @@ class ModeshiftEditor(Editor):
 	def set_input(self, id, action, mode=None):
 		btDefault = self.builder.get_object("btDefault")
 		lblPressAlone = self.builder.get_object("lblPressAlone")
+		cbHoldFeedback = self.builder.get_object("cbHoldFeedback")
+		sclHoldFeedback = self.builder.get_object("sclHoldFeedback")
+		
 		self.id = id
 		
 		if id in STICKS:
@@ -327,8 +342,12 @@ class ModeshiftEditor(Editor):
 		self.set_title("Modeshift for %s" % (id.name if id in SCButtons else str(id),))
 		
 		if isinstance(action, FeedbackModifier):
-			# TODO: Load data
+			cbHoldFeedback.set_active(True)
+			sclHoldFeedback.set_value(action.haptic.get_amplitude())
 			action = action.action
+		else:
+			cbHoldFeedback.set_active(False)
+			sclHoldFeedback.set_value(512)
 		
 		if isinstance(action, ModeModifier):
 			self._load_modemod(0, action)
@@ -348,6 +367,3 @@ class ModeshiftEditor(Editor):
 		if mode != Action.AC_BUTTON:
 			for w in ("vbHold", "vbDoubleClick", "lblHold", "lblDoubleClick"):
 				self.builder.get_object(w).set_sensitive(False)
-		
-
-

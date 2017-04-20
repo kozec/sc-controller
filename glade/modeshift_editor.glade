@@ -296,7 +296,7 @@
                   <object class="GtkLabel" id="lblPad2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_bottom">10</property>
+                    <property name="margin_bottom">5</property>
                     <property name="vexpand">True</property>
                   </object>
                   <packing>
@@ -357,12 +357,14 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="margin_left">5</property>
+                    <property name="margin_top">5</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbHoldFeedback_toggled" swapped="no"/>
                     <child>
                       <object class="GtkLabel" id="lblHoldFeedback">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Enable Feedback</property>
+                        <property name="label" translatable="yes">Play haptic feedback effect when Hold action is executed</property>
                         <attributes>
                           <attribute name="weight" value="bold"/>
                         </attributes>
@@ -379,7 +381,7 @@
                   <object class="GtkRevealer" id="rvHoldFeedbackAmplitude">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="reveal_child">True</property>
+                    <property name="margin_bottom">5</property>
                     <child>
                       <object class="GtkBox" id="vbHoldFeedbackAmplitude">
                         <property name="visible">True</property>
@@ -392,7 +394,7 @@
                             <property name="can_focus">False</property>
                             <property name="margin_left">10</property>
                             <property name="margin_right">10</property>
-                            <property name="label" translatable="yes">Amplitude</property>
+                            <property name="label" translatable="yes">Effect Amplitude</property>
                             <property name="xalign">0</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
@@ -411,7 +413,8 @@
                             <property name="margin_right">10</property>
                             <property name="hexpand">True</property>
                             <property name="adjustment">adjHoldFeedback</property>
-                            <property name="round_digits">1</property>
+                            <property name="round_digits">0</property>
+                            <property name="digits">0</property>
                             <property name="value_pos">right</property>
                           </object>
                           <packing>
