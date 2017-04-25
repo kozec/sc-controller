@@ -1786,7 +1786,8 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 			if self.side_before != side:
 				self.side_before = side
 				mapper.send_feedback(self.haptic)
-		return side
+			return side
+		return None
 	
 	
 	def change(self, mapper, dx, dy):
