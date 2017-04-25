@@ -402,10 +402,14 @@ class SCCDaemon(Daemon):
 			# Three conditions: X has to be available, 'fix_xinput' must
 			# be enabled in config and controller should not be dummy
 			# (should have a name)
-			for d in xinput.get_devices():
-				if d.get_name() == name:
-					if d.is_pointer() and d.is_slave():
-						d.float()
+			try:
+				for d in xinput.get_devices():
+					if d.get_name() == name:
+						if d.is_pointer() and d.is_slave():
+							d.float()
+			except OSError, e:
+				# Most likely 'xinput' executable not found
+				log.warn("Failed to deatach gamepad from xinput master: %s", e)
 	
 	
 	def load_default_profile(self, mapper=None):
