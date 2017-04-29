@@ -492,13 +492,13 @@ class MenuIcon(Gtk.DrawingArea):
 	
 	
 	def on_size_allocate(self, trash, allocation):
-		if allocation.width != allocation.height:
+		if allocation.width < allocation.height:
 			self.set_size_request(allocation.height, -1)
 	
 	
 	def do_draw(self, cr):
 		allocation = self.get_allocation()
-		if allocation.width == allocation.height:
+		if allocation.width >= allocation.height:
 			context = Gtk.Widget.get_style_context(self)
 			Gtk.render_background(context, cr, 0, 0,
 					allocation.width, allocation.height)
