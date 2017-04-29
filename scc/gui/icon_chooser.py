@@ -92,9 +92,9 @@ class IconChooser(Editor, UserDataManager):
 			if full_path:
 				path, name = os.path.split(full_path)
 				license = IconChooser.find_license(path, name)
-				if license and "Kozec" in license:
-					# I'm soo special
-					license = None
+				if license and "(CC 0)" in license:
+					# My own icons
+					license = license.replace("(CC 0)", "").strip(" ,")
 			else:
 				license = None
 			if license:
@@ -112,10 +112,19 @@ class IconChooser(Editor, UserDataManager):
 		self.load_menu_icons(category=category)
 	
 	
+	@staticmethod
+	def color_icon_exists(model, search_name):
+		for name, pb, has_colors in model:
+			if has_colors and search_name == name:
+				return True
+		return False
+	
+	
 	def on_menuicons_loaded(self, icons):
 		tvIcons = self.builder.get_object("tvIcons")
 		tvCategories = self.builder.get_object("tvCategories")
-		tvIcons.get_model().clear()
+		model = tvIcons.get_model()
+		model.clear()
 		for f in icons:
 			name = f.get_basename()
 			if f.query_info(Gio.FILE_ATTRIBUTE_STANDARD_TYPE, Gio.FileQueryInfoFlags.NONE, None).get_file_type() == Gio.FileType.DIRECTORY:
@@ -133,6 +142,9 @@ class IconChooser(Editor, UserDataManager):
 					name = name[0:-1]
 				name = ".".join(name)
 				
+				if IconChooser.color_icon_exists(model, name):
+					continue
+				
 				pb = None
 				try:
 					pb = GdkPixbuf.Pixbuf.new_from_file(f.get_path())
@@ -141,7 +153,7 @@ class IconChooser(Editor, UserDataManager):
 					log.error(traceback.format_exc())
 					continue
 				
-				tvIcons.get_model().append(( name, pb, has_colors ))
+				model.append(( name, pb, has_colors ))
 		
 		trash, selected = tvCategories.get_selection().get_selected()
 		if not selected:
