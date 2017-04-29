@@ -294,6 +294,20 @@ def find_binary(name):
 	return name
 
 
+def find_gksudo():
+	"""
+	Searchs for gksudo or other known graphical sudoing tool.
+	Returns list of arguments.
+	"""
+	SUDOS = ["gksudo", "gksu", "kdesudo", "pkexec", "xdg-su"]
+	for name in SUDOS:
+		args = name.split(" ")
+		bin = find_binary(args[0])
+		if bin != args[0]:
+			return args
+	return None
+
+
 def check_access(filename, write_required=True):
 	"""
 	Checks if user has read and optionaly write access to specified file.

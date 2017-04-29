@@ -20,8 +20,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
+from scc.tools import check_access, find_profile, find_gksudo
 from scc.tools import get_profile_name, profile_is_override
-from scc.tools import check_access, find_profile
 from scc.paths import get_config_path, get_profiles_path
 from scc.actions import NoAction
 from scc.modifiers import NameModifier
@@ -166,11 +166,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
 			ribar = self.show_error(msg)
-			if not hasattr(ribar, "_fix_tmp"):
+			gksudo = find_gksudo()
+			if gksudo and not hasattr(ribar, "_fix_tmp"):
 				button = Gtk.Button.new_with_label(_("Fix Temporary"))
 				ribar._fix_tmp = button
 				button.connect('clicked', self.apply_temporary_fix,
-					["gksudo", "modprobe", "uinput"],
+					gksudo + ["modprobe", "uinput"],
 					_("This will load missing uinput module.")
 				)
 				ribar.add_button(button, -1)
@@ -190,11 +191,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
 			ribar = self.show_error(msg)
-			if not hasattr(ribar, "_fix_tmp"):
+			gksudo = find_gksudo()
+			if gksudo and not hasattr(ribar, "_fix_tmp"):
 				button = Gtk.Button.new_with_label(_("Fix Temporary"))
 				ribar._fix_tmp = button
 				button.connect('clicked', self.apply_temporary_fix,
-					["gksudo", "chmod", "666", "/dev/uinput"],
+					gksudo + ["chmod", "666", "/dev/uinput"],
 					_("This will enable input emulation for <i>every application</i> and <i>all users</i> on this machine.")
 				)
 				ribar.add_button(button, -1)
