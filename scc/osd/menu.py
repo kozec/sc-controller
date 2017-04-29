@@ -38,6 +38,7 @@ class Menu(OSDWindow):
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	SUBMENU_OFFSET = 50
+	PREFER_BW_ICONS = True
 	
 	def __init__(self, cls="osd-menu"):
 		OSDWindow.__init__(self, cls)
@@ -269,7 +270,7 @@ class Menu(OSDWindow):
 				widget.set_name("osd-menu-dummy")
 			else:
 				widget.set_name("osd-menu-item")
-			icon_file, has_colors = find_icon(item.icon, False)
+			icon_file, has_colors = find_icon(item.icon, self.PREFER_BW_ICONS)
 			if icon_file:
 				icon = MenuIcon(icon_file, has_colors)
 				label = widget.get_children()[0]

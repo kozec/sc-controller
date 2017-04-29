@@ -19,6 +19,8 @@ log = logging.getLogger("osd.gridmenu")
 
 
 class GridMenu(Menu):
+	PREFER_BW_ICONS = True
+	
 	def __init__(self, cls="osd-menu"):
 		Menu.__init__(self, cls)
 		self.ipr = 1	# items per row
