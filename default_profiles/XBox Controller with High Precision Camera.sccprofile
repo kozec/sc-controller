@@ -25,7 +25,8 @@
 	
 	"stick" : {
 		"X"	: { "action" : "axis(Axes.ABS_X)" },
-		"Y"	: { "action" : "raxis(Axes.ABS_Y)" }
+		"Y"	: { "action" : "raxis(Axes.ABS_Y)" },
+		"sensitivity": [1.2, 1.2, 1.0]
 	},
 	
 	"pad_left" : {
