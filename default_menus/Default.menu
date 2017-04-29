@@ -6,20 +6,24 @@
     "rows": 3
 }, {
     "submenu": "Profiles.menu",
+    "icon": "system/profiles",
     "name": "All Profiles"
 }, {
     "separator": true,
     "name": "Options"
 }, {
     "submenu": ".autoswitch.menu",
+    "icon": "system/autoswitch",
     "name": "Autoswitch Options"
 }, {
     "action": "turnoff()", 
     "id": "item4", 
+    "icon": "system/turn-off",
     "name": "Turn Controller OFF", 
     "osd": true
 }, {
     "action": "keyboard()", 
     "id": "item5", 
+    "icon": "system/keyboard",
     "name": "Display Keyboard"
 }]
