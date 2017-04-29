@@ -166,12 +166,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
 			ribar = self.show_error(msg)
-			button = Gtk.Button.new_with_label(_("Fix Temporary"))
-			button.connect('clicked', self.apply_temporary_fix,
-				["gksudo", "modprobe", "uinput"],
-				_("This will load missing uinput module.")
-			)
-			ribar.add_button(button, -1)
+			if not hasattr(ribar, "_fix_tmp"):
+				button = Gtk.Button.new_with_label(_("Fix Temporary"))
+				ribar._fix_tmp = button
+				button.connect('clicked', self.apply_temporary_fix,
+					["gksudo", "modprobe", "uinput"],
+					_("This will load missing uinput module.")
+				)
+				ribar.add_button(button, -1)
 			return True
 		elif not os.path.exists("/dev/uinput"):
 			# /dev/uinput missing
@@ -188,12 +190,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
 			ribar = self.show_error(msg)
-			button = Gtk.Button.new_with_label(_("Fix Temporary"))
-			button.connect('clicked', self.apply_temporary_fix,
-				["gksudo", "chmod", "666", "/dev/uinput"],
-				_("This will enable input emulation for <i>every application</i> and <i>all users</i> on this machine.")
-			)
-			ribar.add_button(button, -1)
+			if not hasattr(ribar, "_fix_tmp"):
+				button = Gtk.Button.new_with_label(_("Fix Temporary"))
+				ribar._fix_tmp = button
+				button.connect('clicked', self.apply_temporary_fix,
+					["gksudo", "chmod", "666", "/dev/uinput"],
+					_("This will enable input emulation for <i>every application</i> and <i>all users</i> on this machine.")
+				)
+				ribar.add_button(button, -1)
 			return True
 		return False
 	
