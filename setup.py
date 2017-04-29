@@ -20,7 +20,13 @@ data_files = [
 				('share/applications', ['sc-controller.desktop' ]),
 				('lib/udev/rules.d', glob.glob('scripts/*.rules')),
 				
+] + [ # menu icons subfolders
+	(
+		'share/scc/images/menu-icons/' + x.split("/")[-1],
+		[ x + "/LICENCES" ] + glob.glob(x + "/*.png")
+	) for x in glob.glob("images/menu-icons/*")
 ]
+
 
 packages = [
 	# Required
