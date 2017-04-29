@@ -48,6 +48,7 @@ class VDFProfile(Profile):
 		'PAGE_UP' : Keys.KEY_PAGEUP,
 		'PAGE_DOWN' : Keys.KEY_PAGEDOWN,
 		'SINGLE_QUOTE' : Keys.KEY_APOSTROPHE,
+		'DASH' : Keys.KEY_MINUS,
 		'RETURN' : Keys.KEY_ENTER,
 		'ESCAPE' : Keys.KEY_ESC,
 		'PERIOD' : Keys.KEY_DOT,
