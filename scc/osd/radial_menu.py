@@ -11,11 +11,11 @@ from gi.repository import Gtk, Gdk, GLib, GdkX11
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.menu_data import MenuData, Separator, Submenu
 from scc.gui.svg_widget import SVGWidget, SVGEditor
+from scc.osd.menu import Menu, MenuIcon
+from scc.osd import OSDWindow
+from scc.tools import degdiff, find_icon
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
-from scc.tools import degdiff
-from scc.osd.menu import Menu
-from scc.osd import OSDWindow
 from scc.config import Config
 from math import pi as PI, sqrt, atan2, sin, cos
 
@@ -25,17 +25,31 @@ log = logging.getLogger("osd.menu")
 
 class RadialMenu(Menu):
 	MIN_DISTANCE = 3000		# Minimal cursor distance from center (in px^2)
+	ICON_SIZE = 96
 	
 	def __init__(self,):
 		Menu.__init__(self, "osd-radial-menu")
 		self.angle = 0
 		self.rotation = 0
+		self.items_with_icon = []
 	
 	
 	def create_parent(self):
 		background = os.path.join(get_share_path(), "images", 'radial-menu.svg')
 		self.b = SVGWidget(self, background)
+		self.b.connect('size-allocate', self.on_size_allocate)
 		return self.b
+	
+	
+	def on_size_allocate(self, trash, allocation):
+		""" (Re)centers all icons when menu is displayed or size is changed """
+		cx, cy = allocation.width / 2, allocation.height / 2
+		radius = min(cx, cy) * 2 / 3
+		for i in self.items_with_icon:
+			angle, icon = float(i.a) * PI / 180.0, i.icon_widget
+			x, y = cx + sin(angle) * radius, cy - cos(angle) * radius
+			x, y = x - self.ICON_SIZE / 2, y - self.ICON_SIZE / 2
+			i.icon_widget.get_parent().move(i.icon_widget, x, y)
 	
 	
 	def _add_arguments(self):
@@ -69,6 +83,9 @@ class RadialMenu(Menu):
 		image_width = pb.get_width()
 		item_width = 360.0 / len(self.items)
 		a1, a2 = (-90.0 - item_width * 0.5) * PI / 180.0, (-90.0 + item_width * 0.5) * PI / 180.0
+		for i in self.items_with_icon:
+			i.icon_widget.get_parent().remove_child(i.icon_widget)
+		self.items_with_icon = []
 		for i in items:
 			# Set size of each arc
 			if SVGWidget.get_element(i.widget, "arc") is not None:
@@ -84,26 +101,39 @@ class RadialMenu(Menu):
 			i.a = (360.0 / float(len(self.items))) * float(index)
 			i.widget.attrib['transform'] = "%s rotate(%s, %s, %s)" % (
 				i.widget.attrib['transform'], i.a, image_width / 2, image_width / 2)
-			# Rotate text in arc to other direction to keep it horisontal
-			if SVGWidget.get_element(i.widget, "menuitem_text") is not None:
-				l = SVGWidget.get_element(i.widget, "menuitem_text")
-				l.attrib['id'] = "text_" + i.id
-				l.attrib['transform'] = "%s rotate(%s)" % (l.attrib['transform'], -i.a)
-			# Place up to 3 lines of item label
-			label = i.label.split("\n")
-			first_line = 0
-			if len(label) == 1:
+			# Check if there is any icon
+			icon_file, has_colors = find_icon(i.icon, False) if hasattr(i, "icon") else (None, False)
+			if icon_file:
+				# Icon - hide all text and place MenuIcon widget on top of image
+				self.editor.remove_element(SVGWidget.get_element(i.widget, "menuitem_text"))
 				self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
 				self.editor.remove_element(SVGWidget.get_element(i.widget, "line2"))
-				first_line = 1
-			elif len(label) == 2:
-				self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
-				first_line = 1
-			for line in xrange(0, len(label)):
-				l = SVGWidget.get_element(i.widget, "line%s" % (first_line + line,))
-				if l is None:
-					break
-				SVGEditor.set_text(l, label[line])
+				i.icon_widget = MenuIcon(icon_file, has_colors)
+				i.icon_widget.set_name("osd-radial-menu-icon")
+				i.icon_widget.set_size_request(self.ICON_SIZE, self.ICON_SIZE)
+				self.b.get_parent().put(i.icon_widget, 200, 200)
+				self.items_with_icon.append(i)
+			else:
+				# No icon - rotate text in arc to other direction to keep it horisontal
+				if SVGWidget.get_element(i.widget, "menuitem_text") is not None:
+					l = SVGWidget.get_element(i.widget, "menuitem_text")
+					l.attrib['id'] = "text_" + i.id
+					l.attrib['transform'] = "%s rotate(%s)" % (l.attrib['transform'], -i.a)
+				# Place up to 3 lines of item label
+				label = i.label.split("\n")
+				first_line = 0
+				if len(label) == 1:
+					self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
+					self.editor.remove_element(SVGWidget.get_element(i.widget, "line2"))
+					first_line = 1
+				elif len(label) == 2:
+					self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
+					first_line = 1
+				for line in xrange(0, len(label)):
+					l = SVGWidget.get_element(i.widget, "line%s" % (first_line + line,))
+					if l is None:
+						break
+					SVGEditor.set_text(l, label[line])
 			# Continue with next menu item
 			i.index = index
 			
@@ -148,8 +178,19 @@ class RadialMenu(Menu):
 		X.flush(self.xdisplay)
 	
 	
-	def select(self, index):
-		self._selected = self.items[index]
+	def select(self, i):
+		if type(i) == int:
+			i = self.items[i]
+		if self._selected and hasattr(self._selected, "icon_widget"):
+			if self._selected.icon_widget:
+				self._selected.icon_widget.set_name("osd-radial-menu-icon")
+		self._selected = i
+		if hasattr(self._selected, "icon_widget") and self._selected.icon_widget:
+			self._selected.icon_widget.set_name("osd-radial-menu-icon-selected")
+		self.b.hilight({
+			"menuitem_" + i.id : "#" + self.config["osd_colors"]["menuitem_hilight"],
+			"text_" + i.id :  "#" + self.config["osd_colors"]["menuitem_hilight_text"],
+		})
 	
 	
 	def on_event(self, daemon, what, data):
@@ -184,10 +225,6 @@ class RadialMenu(Menu):
 						if self._selected != i:
 							if self.feedback and self.controller:
 								self.controller.feedback(*self.feedback)
-							self._selected = i
-							self.b.hilight({
-								"menuitem_" + i.id : "#" + self.config["osd_colors"]["menuitem_hilight"],
-								"text_" + i.id :  "#" + self.config["osd_colors"]["menuitem_hilight_text"],
-							})
+							self.select(i)
 		else:
 			return Menu.on_event(self, daemon, what, data)

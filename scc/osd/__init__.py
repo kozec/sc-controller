@@ -53,6 +53,14 @@ class OSDWindow(Gtk.Window):
 			margin: 0px 0px 2px 0px;
 		}
 		
+		#osd-radial-menu-icon {
+			color: #%(text)s;
+		}
+		
+		#osd-radial-menu-icon-selected {
+			color: #%(menuitem_hilight_text)s;
+		}
+		
 		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected {
 			min-width: 48pt;
 			min-height: 48pt;

@@ -214,7 +214,7 @@ class Menu(OSDWindow):
 		self.items = []
 		for item in items:
 			item.widget = self.generate_widget(item)
-			if item.widget:
+			if item.widget is not None:
 				self.items.append(item)
 		self.pack_items(self.parent, self.items)
 		if len(self.items) == 0:
