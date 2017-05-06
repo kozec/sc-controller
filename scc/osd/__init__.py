@@ -266,33 +266,41 @@ class StickController(GObject.GObject, TimerManager):
 			b"direction"			: (GObject.SIGNAL_RUN_FIRST, None, (int, int)),
 	}
 	REPEAT_DELAY = 0.3
+	DIRECTION_TO_XY = {
+		0 : (0, 0),
+		4 : (1, 0),
+		6 : (-1, 0),
+		2 : (0, 1),
+		8 : (0, -1),
+	}
 	
 	def __init__(self):
 		GObject.GObject.__init__(self)
 		TimerManager.__init__(self)
-		self._d = [ 0, 0 ]
+		self._direction = 0
 	
 	
 	def _move(self, *a):
-		self.emit("direction", *self._d)
-		if any(self._d):
+		self.emit("direction", *self.DIRECTION_TO_XY[self._direction])
+		if self._direction != 0:
 			self.timer("move", self.REPEAT_DELAY, self._move)
 		else:
 			self.cancel_timer("move")
 	
 	
 	def set_stick(self, *data):
-		changed = False
-		for i in (0, 1):
-			if data[i] < STICK_PAD_MIN / 3 and self._d[i] != 1:
-				self._d[i] = 1
-				changed = True
-			elif data[i] > STICK_PAD_MAX / 3 and self._d[i] != -1:
-				self._d[i] = -1
-				changed = True
-			elif data[i] < STICK_PAD_MAX / 3 and data[i] > STICK_PAD_MIN / 3 and self._d[i] != 0:
-				self._d[i] = 0
-				changed = True
+		direction = 0
+		# Y
+		if data[1] < STICK_PAD_MIN / 3:
+			direction = 2
+		elif data[1] > STICK_PAD_MAX / 3:
+			direction = 8
+		# X
+		elif data[0] < STICK_PAD_MIN / 3:
+			direction = 4
+		elif data[0] > STICK_PAD_MAX / 3:
+			direction = 6
 		
-		if changed:
+		if direction != self._direction:
+			self._direction = direction
 			self._move()
