@@ -93,6 +93,22 @@ class OSDWindow(Gtk.Window):
 		
 		#osd-menu-cursor, #osd-keyboard-cursor {
 		}
+		
+		#osd-dialog-buttons {
+			margin: 10px 20px 10px 20px;
+		}
+		
+		#osd-dialog-text {
+			color: #%(text)s;
+			font-size: large;
+			margin: 10px 20px 0px 20px;
+		}
+		
+		#osd-dialog-buttons #osd-menu-item,
+		#osd-dialog-buttons #osd-menu-item-selected {
+			min-width: 100px;
+			margin: 0px 5px 0px 5px;
+		}
 	"""
 	EPILOG = ""
 	css_provider = None			# Used by staticmethods
