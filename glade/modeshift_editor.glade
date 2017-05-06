@@ -650,7 +650,7 @@
             <signal name="clicked" handler="on_btCustomActionEditor_clicked" swapped="no"/>
           </object>
           <packing>
-            <property name="position">2</property>
+            <property name="position">10</property>
           </packing>
         </child>
         <child>
@@ -666,7 +666,6 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
-            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -680,7 +679,7 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
-            <property name="position">1</property>
+            <property name="position">5</property>
           </packing>
         </child>
       </object>
