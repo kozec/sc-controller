@@ -200,6 +200,9 @@
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
             <signal name="clicked" handler="on_btOk_clicked" swapped="no"/>
+            <style>
+              <class name="suggested-action"/>
+            </style>
           </object>
           <packing>
             <property name="pack_type">end</property>

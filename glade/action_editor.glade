@@ -1458,7 +1458,7 @@
             <property name="position">2</property>
           </packing>
         </child>
-		<child>
+        <child>
           <object class="GtkButton" id="btMacro">
             <property name="label" translatable="yes">Macro</property>
             <property name="visible">True</property>
@@ -1470,7 +1470,7 @@
             <property name="position">3</property>
           </packing>
         </child>
-		<child>
+        <child>
           <object class="GtkButton" id="btInnerRing">
             <property name="label" translatable="yes">Ring Bindings</property>
             <property name="visible">True</property>
@@ -1492,6 +1492,9 @@
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
             <signal name="clicked" handler="on_btOK_clicked" swapped="no"/>
+            <style>
+              <class name="suggested-action"/>
+            </style>
           </object>
           <packing>
             <property name="pack_type">end</property>

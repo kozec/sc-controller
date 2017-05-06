@@ -1726,6 +1726,9 @@ or even crash.</property>
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
             <signal name="clicked" handler="on_btSave_clicked" swapped="no"/>
+            <style>
+              <class name="suggested-action"/>
+            </style>
           </object>
         </child>
       </object>
