@@ -1,31 +1,23 @@
 #!/usr/bin/env python2
 """
-SC-Controller - OSD Menu
+SC-Controller - OSD Dialog
 
-Display menu that user can navigate through and print chosen item id to stdout
+Display dialog with text and set of items that user can navigate through and
+prints chosen item id to stdout
 """
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, GLib, Gdk, GdkX11, GdkPixbuf
-from scc.tools import point_in_gtkrect, find_menu, find_icon
-from scc.tools import circle_to_square, clamp
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
-from scc.constants import LEFT, RIGHT, SAME, STICK
-from scc.menu_data import MenuData, Separator, Submenu
+from gi.repository import Gtk, GLib, Gdk, GdkX11
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
-from scc.paths import get_share_path
 from scc.lib import xwrappers as X
+from scc.menu_data import MenuData
+from scc.constants import STICK
 from scc.config import Config
-from math import sqrt
 
-import os, sys, json, logging
-log = logging.getLogger("osd.menu")
-
-# Fill MENU_GENERATORS dict
-import scc.osd.menu_generators
-import scc.x11.autoswitcher
+import os, sys, logging
+log = logging.getLogger("osd.dialog")
 
 
 class Dialog(OSDWindow):
@@ -36,8 +28,6 @@ class Dialog(OSDWindow):
    2  - error, failed to access sc-daemon, sc-daemon reported error or died while dialog is displayed.
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
-	SUBMENU_OFFSET = 50
-	PREFER_BW_ICONS = True
 	
 	def __init__(self, cls="osd-menu"):
 		self._buttons = None
@@ -50,33 +40,18 @@ class Dialog(OSDWindow):
 		self.controller = None
 		self.xdisplay = X.Display(hash(GdkX11.x11_get_default_xdisplay()))	# Magic
 		
-		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
-		self.cursor = Gtk.Image.new_from_file(cursor)
-		self.cursor.set_name("osd-menu-cursor")
-		
 		self.parent = self.create_parent()
 		self.f = Gtk.Fixed()
 		self.f.add(self.parent)
 		self.add(self.f)
 		
-		self._submenu = None
 		self._scon = StickController()
 		self._scon.connect("direction", self.on_stick_direction)
-		self._is_submenu = False
 		self._selected = None
-		self._menuid = None
 		self._eh_ids = []
 		self._control_with = STICK
 		self._confirm_with = 'A'
 		self._cancel_with = 'B'
-	
-	
-	def set_is_submenu(self):
-		"""
-		Marks menu as submenu. This changes behaviour of some methods,
-		especially disables (un)locking of input stick and buttons.
-		"""
-		self._is_submenu = True
 	
 	
 	def create_parent(self):
@@ -105,9 +80,8 @@ class Dialog(OSDWindow):
 		use_config() should be be called before parse_argumets() if this is used.
 		"""
 		self.daemon = d
-		if not self._is_submenu:
-			self._connect_handlers()
-			self.on_daemon_connected(self.daemon)
+		self._connect_handlers()
+		self.on_daemon_connected(self.daemon)
 	
 	
 	def use_config(self, c):
@@ -119,10 +93,8 @@ class Dialog(OSDWindow):
 	
 	
 	def get_menuid(self):
-		"""
-		Returns ID of used menu.
-		"""
-		return self._menuid
+		# Just to be compatibile with menus when called from scc-osd-daemon
+		return None
 	
 	
 	def get_selected_item_id(self):
@@ -190,39 +162,15 @@ class Dialog(OSDWindow):
 	
 	def generate_widget(self, item):
 		""" Generates gtk widget for specified menutitem """
-		if isinstance(item, Separator) and item.label:
-			widget = Gtk.Button.new_with_label(item.label)
-			widget.set_relief(Gtk.ReliefStyle.NONE)
-			widget.set_name("osd-menu-separator")
-			return widget
-		elif isinstance(item, Separator):
-			widget = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-			widget.set_name("osd-menu-separator")
-			return widget
+		widget = Gtk.Button.new_with_label(item.label)
+		widget.set_relief(Gtk.ReliefStyle.NONE)
+		if hasattr(widget.get_children()[0], "set_xalign"):
+			widget.get_children()[0].set_xalign(0)
 		else:
-			widget = Gtk.Button.new_with_label(item.label)
-			widget.set_relief(Gtk.ReliefStyle.NONE)
-			if hasattr(widget.get_children()[0], "set_xalign"):
-				widget.get_children()[0].set_xalign(0)
-			else:
-				widget.get_children()[0].set_halign(Gtk.Align.START)
-			if isinstance(item, Submenu):
-				item.callback = self.show_submenu
-				label1 = widget.get_children()[0]
-				label2 = Gtk.Label(_(">>"))
-				label2.set_property("margin-left", 30)
-				box = Gtk.Box(Gtk.Orientation.HORIZONTAL)
-				widget.remove(label1)
-				box.pack_start(label1, True, True, 1)
-				box.pack_start(label2, False, True, 1)
-				widget.add(box)
-				widget.set_name("osd-menu-item")
-			elif item.id is None:
-				widget.set_name("osd-menu-dummy")
-			else:
-				widget.set_name("osd-menu-item")
-				
-			return widget
+			widget.get_children()[0].set_halign(Gtk.Align.START)
+		widget.set_name("osd-menu-item")
+		
+		return widget
 	
 	
 	def select(self, index):
@@ -288,12 +236,11 @@ class Dialog(OSDWindow):
 	
 	
 	def quit(self, code=-2):
-		if not self._is_submenu:
-			if self.get_controller():
-				self.get_controller().unlock_all()
-			for source, eid in self._eh_ids:
-				source.disconnect(eid)
-			self._eh_ids = []
+		if self.get_controller():
+			self.get_controller().unlock_all()
+		for source, eid in self._eh_ids:
+			source.disconnect(eid)
+		self._eh_ids = []
 		OSDWindow.quit(self, code)
 	
 	
@@ -315,9 +262,7 @@ class Dialog(OSDWindow):
 			if i < 0:
 				i = len(self.items) - 1
 				continue
-			if self.select(i):
-				# Not a separator
-				break
+			if self.select(i): break
 			i += direction
 			if start < 0: start = 0
 	
@@ -328,8 +273,6 @@ class Dialog(OSDWindow):
 	
 	
 	def on_event(self, daemon, what, data):
-		if self._submenu:
-			return self._submenu.on_event(daemon, what, data)
 		if what == self._control_with:
 			self._scon.set_stick(*data)
 		elif what == self._cancel_with:

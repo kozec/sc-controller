@@ -2,7 +2,7 @@
 """
 SC-Controller - OSD Menu
 
-Display menu that user can navigate through and print chosen item id to stdout
+Display menu that user can navigate through and prints chosen item id to stdout
 """
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
