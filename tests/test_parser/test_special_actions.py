@@ -91,6 +91,21 @@ class TestSpecialActions(object):
 				SCButtons.Y, True))
 	
 	
+	def test_dialog(self):
+		"""
+		Tests if all Menu*Actions can be converted to string and parsed
+		back to same action.
+		"""
+		assert _parses_as_itself(DialogAction("Some Text",
+			NameModifier('Option', OSDAction('display this'))))
+		assert _parses_as_itself(DialogAction(SCButtons.X, "Some Text",
+			NameModifier('Option', OSDAction('display this'))))
+		assert _parses_as_itself(DialogAction(SCButtons.X, SCButtons.Y,
+			"Some Text", NameModifier('Option', OSDAction('display this'))))
+		assert _parses_as_itself(DialogAction(SCButtons.X, SCButtons.Y,
+			"Some Text", NameModifier('Option', OSDAction('display this'))))
+	
+	
 	def test_position(self):
 		"""
 		Tests if PositionModifier can be converted to string and parsed

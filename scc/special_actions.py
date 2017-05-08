@@ -460,6 +460,85 @@ class RadialMenuAction(MenuAction):
 		return MenuAction.get_compatible_modifiers(self) or Action.MOD_ROTATE
 
 
+class DialogAction(Action, SpecialAction):
+	"""
+	Dialog is actually kind of menu, but options for it are different.
+	"""
+	SA = COMMAND = "dialog"
+	DEFAULT_CONFIRM = SCButtons.A
+	DEFAULT_CANCEL = SCButtons.B
+	DEFAULT_POSITION = 10, -10
+	
+	def __init__(self, *pars):
+		Action.__init__(self, pars)
+		
+		self.options = []
+		self.confirm_with = DialogAction.DEFAULT_CONFIRM
+		self.cancel_with  = DialogAction.DEFAULT_CANCEL
+		self.text = _("Dialog")
+		self.x, self.y = MenuAction.DEFAULT_POSITION
+		# First and 2nd parameter may be confirm and cancel button
+		if len(pars) > 0 and pars[0] in SCButtons:
+			self.confirm_with, pars = pars[0], pars[1:]
+			if len(pars) > 0 and pars[0] in SCButtons:
+				self.cancel_with, pars = pars[0], pars[1:]
+		# 1st always present argument is title
+		if len(pars) > 0:
+			self.text, pars = pars[0], pars[1:]
+		# ... everything else are actions
+		self.options = pars
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Dialog")
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		rv = "%s%s(" % (" " * pad, self.COMMAND)
+		if self.confirm_with not in (DialogAction.DEFAULT_CONFIRM, DEFAULT):
+			rv += "%s, " % (nameof(self.confirm_with),)
+			if self.cancel_with not in (DialogAction.DEFAULT_CANCEL, DEFAULT):
+				rv += "%s, " % (nameof(self.cancel_with),)
+		rv += "'%s', " % (self.text.encode('string_escape'),)
+		if multiline:
+			rv += "\n%s" % (" " * (pad + 2))
+		for option in self.options:
+			rv += "%s, " % (option.to_string(False),)
+			if multiline:
+				rv += "\n%s" % (" " * (pad + 2))
+		
+		rv = rv.strip("\n ,")
+		if multiline:
+			rv += "\n)"
+		else:
+			rv += ")"
+		return rv
+	
+	
+	def get_previewable(self):
+		return False
+	
+	
+	def button_release(self, mapper):
+		confirm_with = self.confirm_with
+		cancel_with = self.cancel_with
+		args = [ mapper ]
+		if confirm_with == DEFAULT:
+			confirm_with = MenuAction.DEFAULT_CONFIRM
+		if cancel_with == DEFAULT:
+			cancel_with = MenuAction.DEFAULT_CANCEL
+		args += [
+			'-x', str(self.x), '-y', str(self.y),
+			'--confirm-with', nameof(confirm_with),
+			'--cancel-with', nameof(cancel_with),
+			'--text', self.text,
+		]
+		for x in self.options:
+			args.append(x)
+		self.execute(*args)
+
+
 class KeyboardAction(Action, SpecialAction):
 	"""
 	Shows OSD keyboard.

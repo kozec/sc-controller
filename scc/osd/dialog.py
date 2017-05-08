@@ -136,9 +136,6 @@ class Dialog(OSDWindow):
 	
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
-		self.argparser.add_argument('--control-with', '-c', type=str,
-			metavar="option", default=STICK, choices=(LEFT, RIGHT, STICK),
-			help="which pad or stick should be used to navigate menu (default: %s)" % (STICK,))
 		self.argparser.add_argument('--confirm-with', type=str,
 			metavar="button", default='A',
 			help="button used to confirm choice (default: A)")
@@ -169,23 +166,12 @@ class Dialog(OSDWindow):
 		self._text.set_label(self.args.text)
 		
 		# Parse simpler arguments
-		self._control_with = self.args.control_with
 		self._confirm_with = self.args.confirm_with
 		self._cancel_with = self.args.cancel_with
 		
 		if self.args.feedback_amplitude:
 			side = "LEFT"
-			if self._control_with == "RIGHT":
-				side = "RIGHT"
-			elif self._control_with == "STICK":
-				side = "BOTH"
 			self.feedback = side, int(self.args.feedback_amplitude)
-		
-		if self._confirm_with == SAME:
-			if self._control_with == RIGHT:
-				self._confirm_with = SCButtons.RPADTOUCH.name
-			else:
-				self._confirm_with = SCButtons.LPADTOUCH.name
 		
 		# Create buttons that are displayed on screen
 		items = self.items.generate(self)

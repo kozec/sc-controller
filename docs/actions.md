@@ -232,6 +232,11 @@ Same as `menu`, but displays items in grid.
 Same as `menu`, but displays items in radial menu.
 
 
+#### <a name="dialog"></a> dialog([ confirm_button=A [, cancel_button=B ], ] text, action1, [action2... actionN])
+Displays OSD dialog. Dialog works similary to horizontal menu and displays
+text message above list of options.
+
+
 #### <a name="keyboard"></a> keyboard()
 Displays on-screen keyboard
 

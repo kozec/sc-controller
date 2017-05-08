@@ -26,7 +26,7 @@ from scc.mapper import Mapper
 from scc import drivers
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
-import os, sys, pkgutil, signal, socket, select, time, json, logging
+import os, sys, pkgutil, signal, socket, select, weakref, time, json, logging
 import threading, traceback, subprocess
 log = logging.getLogger("SCCDaemon")
 tlog = logging.getLogger("Socket Thread")
@@ -51,6 +51,8 @@ class SCCDaemon(Daemon):
 		self.osd_daemon = None
 		self.default_profile = None
 		self.autoswitch_daemon = None
+		# TODO: Use menu_ids for all menus
+		self.osd_ids = weakref.WeakValueDictionary()
 		self.controllers = []
 		self.mainloops = [ self.poller.poll ]
 		self.on_exit_cbs = []
@@ -281,10 +283,7 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_menu(self, mapper, action, *pars):
 		""" Called when 'menu' action is used """
-		p = [ action.MENU_TYPE,
-			"--confirm-with", nameof(action.confirm_with),
-			"--cancel-with", nameof(action.cancel_with)
-		]
+		p = [ action.MENU_TYPE ]
 		if mapper.get_controller():
 			p += [ "--controller", mapper.get_controller().get_id() ]
 		if "." in action.menu_id:
@@ -301,6 +300,21 @@ class SCCDaemon(Daemon):
 			self._osd(*p)
 	
 	on_sa_gridmenu = on_sa_menu
+	
+	
+	def on_sa_dialog(self, mapper, action, *pars):
+		# Replace actions with id, title pairs
+		data = []
+		for x in pars:
+			if isinstance(x, Action):
+				id = str(hash(x))
+				self.osd_ids[id] = x.strip()
+				data += [ id, x.describe(Action.AC_MENU) ]
+			else:
+				data.append(x)
+		
+		with self.lock:
+			self._osd("dialog", *data)
 	
 	
 	def on_sa_profile(self, mapper, action):
@@ -819,7 +833,9 @@ class SCCDaemon(Daemon):
 				try:
 					menu_id, item_id = shsplit(message)[1:]
 					menuaction = None
-					if "." in menu_id:
+					if menu_id in (None, "None"):
+						menuaction = self.osd_ids[item_id]
+					elif "." in menu_id:
 						# TODO: Move this common place
 						data = json.loads(open(menu_id, "r").read())
 						menudata = MenuData.from_json_data(data, TalkingActionParser())

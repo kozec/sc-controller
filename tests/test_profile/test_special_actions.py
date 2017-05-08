@@ -84,6 +84,30 @@ class TestSpecialActions(object):
 		assert isinstance(a.action, ButtonAction)
 	
 	
+	def test_dialog(self):
+		"""
+		Tests if all Menu*Actions are parsed correctly from json.
+		"""
+		# Simple
+		a = parser.from_json_data({ 'action' : "dialog('title', osd('something'))" })
+		assert isinstance(a, DialogAction)
+		assert a.text == "title"
+		assert len(a.options) == 1
+		assert isinstance(a.options[0], OSDAction)
+		assert a.options[0].text == "something"
+
+		# Complete
+		a = parser.from_json_data({ 'action' : "dialog(X, Y, 'title', "
+			"name('button', osd('something')), name('item', osd('something else')))" })
+		assert a.confirm_with == SCButtons.X
+		assert a.cancel_with == SCButtons.Y
+		assert isinstance(a, DialogAction)
+		assert a.text == "title"
+		assert len(a.options) == 2
+		assert a.options[0].describe(Action.AC_MENU) == "button"
+		assert a.options[0].strip().text == "something"
+	
+	
 	def test_menus(self):
 		"""
 		Tests if all Menu*Actions are parsed correctly from json.

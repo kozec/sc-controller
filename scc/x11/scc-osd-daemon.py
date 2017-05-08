@@ -21,6 +21,7 @@ from scc.osd.hmenu import HorizontalMenu
 from scc.osd.grid_menu import GridMenu
 from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
+from scc.osd.dialog import Dialog
 from scc.osd import OSDWindow
 from scc.osd.menu import Menu
 from scc.osd.area import Area
@@ -133,12 +134,16 @@ class OSDDaemon(object):
 	
 	@staticmethod
 	def _is_menu_message(m):
-		""" Returns True if m starts with 'OSD: [grid|radial]menu' """
+		"""
+		Returns True if m starts with 'OSD: [grid|radial]menu'
+		or "OSD: dialog"
+		"""
 		return (
 			m.startswith("OSD: menu")
 			or m.startswith("OSD: gridmenu")
 			or m.startswith("OSD: hmenu")
 			or m.startswith("OSD: radialmenu")
+			or m.startswith("OSD: dialog")
 		)
 	
 	
@@ -181,6 +186,8 @@ class OSDDaemon(object):
 					self._window = GridMenu()
 				elif message.startswith("OSD: radialmenu"):
 					self._window = RadialMenu()
+				elif message.startswith("OSD: dialog"):
+					self._window = Dialog()
 				else:
 					self._window = Menu()
 				self._window.connect('destroy', self.on_menu_closed)
