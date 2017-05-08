@@ -44,7 +44,9 @@ class OSDWindow(Gtk.Window):
 		}
 		
 		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy,
-		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected {
+		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected,
+		#osd-hidden-item, #osd-key-buton, #osd-key-buton-hilight,
+		#osd-key-buton-selected {
 			color: #%(text)s;
 			border-radius: 0;
 			font-size: x-large;
@@ -109,6 +111,31 @@ class OSDWindow(Gtk.Window):
 			min-width: 100px;
 			margin: 0px 5px 0px 5px;
 		}
+		
+		#osd-application-list {
+			margin: 15px 15px 0px 15px;
+		}
+		
+		#osd-application-list #osd-hidden-item {
+			border-color: #%(background)s;
+			color: #%(background)s;
+		}
+		
+		#osd-key-buton, #osd-key-buton-selected {
+			background-color: #%(osk_button1)s;
+			border: 1px #%(osk_button1_border)s solid;
+			color: #%(osk_text)s;
+		}
+		
+		#osd-key-buton-hilight {
+			color: #%(osk_text)s;
+			background-color: #%(osk_hilight)s;
+		}
+		
+		#osd-key-buton-selected {
+			background-color: #%(osk_pressed)s;
+		}
+		
 	"""
 	EPILOG = ""
 	css_provider = None			# Used by staticmethods
@@ -142,8 +169,11 @@ class OSDWindow(Gtk.Window):
 				Gdk.Screen.get_default(), OSDWindow.css_provider)
 		
 		try:
+			colors = {}
+			for x in config['osk_colors'] : colors["osk_%s" % (x,)] = config['osk_colors'][x]
+			for x in config['osd_colors'] : colors[x] = config['osd_colors'][x]
 			OSDWindow.css_provider = Gtk.CssProvider()
-			OSDWindow.css_provider.load_from_data(str(OSDWindow.CSS % config['osd_colors']))
+			OSDWindow.css_provider.load_from_data(str(OSDWindow.CSS % colors))
 			Gtk.StyleContext.add_provider_for_screen(
 					Gdk.Screen.get_default(),
 					OSDWindow.css_provider,
