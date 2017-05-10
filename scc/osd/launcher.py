@@ -10,7 +10,7 @@ Reuses styles from OSD Menu and OSD Dialog
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gio, Gdk, GdkX11, GdkPixbuf
+from gi.repository import Gtk, Gio, Gdk, GdkX11, GdkPixbuf, Pango
 from scc.tools import point_in_gtkrect, find_menu, find_icon
 from scc.tools import circle_to_square, clamp
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
@@ -51,7 +51,6 @@ class Launcher(OSDWindow):
 	_app_db = None	# Static list of all know applications
 	
 	def __init__(self, cls="osd-menu"):
-		self._applist = None
 		self._buttons = None
 		self._string = ""
 		
@@ -128,6 +127,8 @@ class Launcher(OSDWindow):
 		lst.set_name("osd-application-list")
 		self.items = [ self.generate_widget("") for x in xrange(self.MAX_ROWS) ]
 		for a in self.items:
+			label = a.get_children()[0]
+			label.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
 			lst.pack_start(a, False, True, 0)
 		self.parent.pack_start(lst, True, True, 0)
 		self._set_items([  ])
@@ -188,16 +189,18 @@ class Launcher(OSDWindow):
 		"""
 		Returns ID of used menu.
 		"""
-		return self._menuid
+		return None
 	
 	
 	def get_selected_item_id(self):
 		"""
 		Returns ID of selected item or None if nothing is selected.
 		"""
-		if self._selected:
-			return self._selected.id
 		return None
+	
+	
+	def _launch(self):
+		self._selected.item.launch()
 	
 	
 	def _add_arguments(self):
@@ -237,13 +240,14 @@ class Launcher(OSDWindow):
 			x.set_name("osd-hidden-item")
 		for i in xrange(0, len(items)):
 			item = items[i]
-			self.items[i].set_name("osd-menu-item")
+			self.items[i].set_name("osd-launcher-item")
 			self.items[i].get_children()[0].set_markup(self._format_label_markup(item))
+			self.items[i].item = item
 	
 	
 	def _format_label_markup(self, label):
 		if hasattr(label, "get_display_name"):
-			label = label.get_display_name()[0:25]
+			label = label.get_display_name()
 		else:
 			label = str(label)
 		
@@ -286,6 +290,9 @@ class Launcher(OSDWindow):
 				items.append(i)
 				if len(items) > self.MAX_ROWS: break
 			self._set_items(items)
+			self.select(0)
+		else:
+			self._set_items([])
 	
 	
 	def generate_widget(self, label):
@@ -303,17 +310,13 @@ class Launcher(OSDWindow):
 	
 	
 	def select(self, index):
-		return True
 		if self._selected:
-			self._selected.widget.set_name(self._selected.widget.get_name()
+			self._selected.set_name(self._selected.get_name()
 				.replace("-selected", ""))
-		if self.items[index].id:
-			if self._selected != self.items[index]:
-				if self.feedback and self.controller:
-					self.controller.feedback(*self.feedback)
+		if index < self.MAX_ROWS:
 			self._selected = self.items[index]
-			self._selected.widget.set_name(
-					self._selected.widget.get_name() + "-selected")
+			self._selected.set_name(
+					self._selected.get_name() + "-selected")
 			return True
 		return False
 	
@@ -401,8 +404,8 @@ class Launcher(OSDWindow):
 	
 	
 	def on_stick_direction(self, trash, x, y):
-		if x != 0:
-			self.next_item(x)
+		if y != 0:
+			self.next_item(y)
 	
 	
 	def _move_cursor(self, cursor, x, y):
@@ -463,9 +466,8 @@ class Launcher(OSDWindow):
 				self.quit(-1)
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
-				if self._selected and self._selected.callback:
-					self._selected.callback(self, self.daemon, self._selected)
-				elif self._selected:
+				if self._selected:
+					self._launch()
 					self.quit(0)
 				else:
 					self.quit(-1)
