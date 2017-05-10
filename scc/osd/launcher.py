@@ -127,11 +127,9 @@ class Launcher(OSDWindow):
 		lst.set_name("osd-application-list")
 		self.items = [ self.generate_widget("") for x in xrange(self.MAX_ROWS) ]
 		for a in self.items:
-			label = a.get_children()[0]
-			label.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
 			lst.pack_start(a, False, True, 0)
 		self.parent.pack_start(lst, True, True, 0)
-		self._set_items([  ])
+		self._set_launchers([  ])
 		lst.show_all()
 	
 	
@@ -200,7 +198,7 @@ class Launcher(OSDWindow):
 	
 	
 	def _launch(self):
-		self._selected.item.launch()
+		self._selected.launcher.launch()
 	
 	
 	def _add_arguments(self):
@@ -233,16 +231,20 @@ class Launcher(OSDWindow):
 		return True
 	
 	
-	def _set_items(self, items):
-		items = items[0:self.MAX_ROWS]
+	def _set_launchers(self, launchers):
+		launchers = launchers[0:self.MAX_ROWS]
 		for x in self.items:
 			x.set_label("")
 			x.set_name("osd-hidden-item")
-		for i in xrange(0, len(items)):
-			item = items[i]
+			x.launcher = None
+		for i in xrange(0, len(launchers)):
 			self.items[i].set_name("osd-launcher-item")
-			self.items[i].get_children()[0].set_markup(self._format_label_markup(item))
-			self.items[i].item = item
+			self.items[i].launcher = launchers[i]
+			label = self.items[i].get_children()[0]
+			label.set_markup(self._format_label_markup(launchers[i]))
+			label.set_max_width_chars(1)
+			label.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
+			label.set_xalign(0)
 	
 	
 	def _format_label_markup(self, label):
@@ -285,14 +287,14 @@ class Launcher(OSDWindow):
 	def _update_items(self):
 		if len(self._string) > 0:
 			gen = ( item for (keys, item) in self._app_db if self._string in keys )
-			items = []
+			launchers = []
 			for i in gen:
-				items.append(i)
-				if len(items) > self.MAX_ROWS: break
-			self._set_items(items)
+				launchers.append(i)
+				if len(launchers) > self.MAX_ROWS: break
+			self._set_launchers(launchers)
 			self.select(0)
 		else:
-			self._set_items([])
+			self._set_launchers([])
 	
 	
 	def generate_widget(self, label):
@@ -313,7 +315,8 @@ class Launcher(OSDWindow):
 		if self._selected:
 			self._selected.set_name(self._selected.get_name()
 				.replace("-selected", ""))
-		if index < self.MAX_ROWS:
+			self._selected = None
+		if self.items[index].launcher is not None:
 			self._selected = self.items[index]
 			self._selected.set_name(
 					self._selected.get_name() + "-selected")

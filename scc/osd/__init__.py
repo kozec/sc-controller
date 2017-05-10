@@ -45,9 +45,9 @@ class OSDWindow(Gtk.Window):
 		
 		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy,
 		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected,
-		#osd-hidden-item, #osd-key-buton, #osd-key-buton-hilight,
-		#osd-launcher-item, #osd-launcher-item-selected,
-		#osd-key-buton-selected {
+		#osd-key-buton, #osd-key-buton-hilight, #osd-launcher-item,
+		#osd-launcher-item-selected, #osd-hidden-item,
+		#osd-hidden-item-selected, #osd-key-buton-selected {
 			color: #%(text)s;
 			border-radius: 0;
 			font-size: x-large;
@@ -55,6 +55,13 @@ class OSDWindow(Gtk.Window):
 			background-color: #%(background)s;
 			margin: 0px 0px 2px 0px;
 		}
+		
+		
+		#osd-hidden-item, #osd-hidden-item-selected {
+			color: #%(background)s;
+			border-color: #%(background)s;
+		}
+		
 		
 		#osd-radial-menu-icon {
 			color: #%(text)s;
@@ -117,11 +124,6 @@ class OSDWindow(Gtk.Window):
 		
 		#osd-application-list {
 			margin: 15px 15px 0px 15px;
-		}
-		
-		#osd-application-list #osd-hidden-item {
-			border-color: #%(background)s;
-			color: #%(background)s;
 		}
 		
 		#osd-key-buton, #osd-key-buton-selected {
