@@ -71,11 +71,6 @@ class OSDWindow(Gtk.Window):
 			color: #%(menuitem_hilight_text)s;
 		}
 		
-		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected {
-			min-width: 48pt;
-			min-height: 48pt;
-		}
-		
 		#osd-menu-item, #osd-menu-item-big-icon,
 		#osd-launcher-item, #osd-launcher-item-selected {
 			border: 1px #%(menuitem_border)s solid;
@@ -116,12 +111,6 @@ class OSDWindow(Gtk.Window):
 			margin: 10px 20px 0px 20px;
 		}
 		
-		#osd-dialog-buttons #osd-menu-item,
-		#osd-dialog-buttons #osd-menu-item-selected {
-			min-width: 100px;
-			margin: 0px 5px 0px 5px;
-		}
-		
 		#osd-application-list {
 			margin: 15px 15px 0px 15px;
 		}
@@ -142,6 +131,20 @@ class OSDWindow(Gtk.Window):
 		}
 		
 	"""
+	CSS_3_20 = """
+		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected {
+			min-width: 48pt;
+			min-height: 48pt;
+		}
+	
+		#osd-dialog-buttons #osd-menu-item,
+		#osd-dialog-buttons #osd-menu-item-selected {
+			min-width: 100px;
+			margin: 0px 5px 0px 5px;
+		}
+	
+	""" # oh fuck me :(
+	
 	EPILOG = ""
 	css_provider = None			# Used by staticmethods
 	
@@ -175,6 +178,9 @@ class OSDWindow(Gtk.Window):
 		
 		try:
 			colors = {}
+			css = OSDWindow.CSS
+			if ((Gtk.get_major_version(), Gtk.get_minor_version()) > (3, 20)):
+				css += OSDWindow.CSS_3_20
 			for x in config['osk_colors'] : colors["osk_%s" % (x,)] = config['osk_colors'][x]
 			for x in config['osd_colors'] : colors[x] = config['osd_colors'][x]
 			OSDWindow.css_provider = Gtk.CssProvider()
