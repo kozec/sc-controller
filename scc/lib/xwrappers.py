@@ -392,3 +392,13 @@ def get_window_class(dpy, window):
 		free(s)
 	
 	return None, None
+
+
+def get_wm_state(dpy, window):
+	"""
+	Returns list of _NET_WM_STATE atoms assotiated with window or empty list
+	if list be obtained.
+	"""
+	count, state = get_window_prop(dpy, window, "_NET_WM_STATE", 1024)
+	if count <= 0: return []
+	return cast(state, POINTER(Atom))[0:count]

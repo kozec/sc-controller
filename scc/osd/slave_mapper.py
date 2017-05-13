@@ -14,7 +14,7 @@ from scc.constants import SCButtons, LEFT, RIGHT, STICK, TRIGGER_MAX
 from scc.mapper import Mapper
 
 
-import traceback, logging, time
+import logging, time
 log = logging.getLogger("SlaveMapper")
 
 class SlaveMapper(Mapper):
