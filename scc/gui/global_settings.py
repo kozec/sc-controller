@@ -10,27 +10,42 @@ from scc.tools import _
 from gi.repository import Gdk, GObject, GLib
 from scc.special_actions import TurnOffAction, RestartDaemonAction
 from scc.special_actions import ChangeProfileAction
+from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
+from scc.paths import get_profiles_path, get_menus_path
+from scc.tools import find_profile, find_menu
 from scc.modifiers import SensitivityModifier
+from scc.profile import Profile, Encoder
 from scc.actions import Action, NoAction
-from scc.paths import get_profiles_path
 from scc.constants import LEFT, RIGHT
-from scc.tools import find_profile
-from scc.profile import Profile
 from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
 from scc.gui.parser import GuiActionParser
 from scc.gui.dwsnc import IS_UNITY
 from scc.x11.autoswitcher import AutoSwitcher, Condition
+from scc.osd.menu_generators import RecentListMenuGenerator
+from scc.osd.menu_generators import WindowListMenuGenerator
 from scc.osd.keyboard import Keyboard as OSDKeyboard
 from scc.osd.osk_actions import OSKCursorAction
 import scc.osd.osk_actions
 
-import re, sys, os, logging
+import re, sys, os, logging, traceback
 log = logging.getLogger("GS")
 
 class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	GLADE = "global_settings.glade"
+	
+	DEFAULT_MENU_OPTIONS = [
+		# label,				order, class, icon, parameter
+		('Recent profiles',		0, RecentListMenuGenerator, None, 3),
+		('Autoswitch Options',	1, Submenu, 'system/autoswitch', '.autoswitch.menu'),
+		('Switch To',			1, Submenu, 'system/profiles', '.windowlist.menu'),
+		('Display Keyboard',	2, MenuItem, 'system/keyboard', 'keyboard()'),
+		('Turn Controller OFF', 2, MenuItem, 'system/turn-off', 'osd(turnoff())'),
+		('Kill Current Window',	1, MenuItem, 'system/autoswitch', 'osd("kill")'),
+		('Launcher',			1, MenuItem, 'system/autoswitch', 'shell("scc-osd-launcher")'),
+		# order: 0 - top, 1 - after 'options', 2 bottom
+	]
 	
 	def __init__(self, app):
 		UserDataManager.__init__(self)
@@ -66,6 +81,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.load_autoswitch()
 		self.load_osk()
 		self.load_colors()
+		self.load_cbMIs()
 		# Load rest
 		self._recursing = True
 		(self.builder.get_object("cbInputTestMode")
@@ -519,3 +535,103 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				btSave.set_sensitive(False)
 				return
 		btSave.set_sensitive(True)
+	
+	
+	@staticmethod
+	def _make_mi_instance(index):
+		""" Helper method used by on_cbMI_toggled and load_cbMIs """
+		# label,				class, icon, *init_parameters
+		label, order, cls, icon, parameter = GlobalSettings.DEFAULT_MENU_OPTIONS[index]
+		if cls == MenuItem:
+			instance = MenuItem("item_i%s" % (index,), label, parameter, icon=icon)
+		elif cls == Submenu:
+			instance = Submenu(parameter, label, icon=icon)
+		else:
+			instance = cls(parameter)
+			instance.icon = icon
+			instance.label = label
+		return instance
+	
+	
+	def on_cbMI_toggled(self, widget):
+		"""
+		Called when one of 'Default Menu Items' checkboxes is toggled.
+		This actually does kind of magic:
+		- 1st, default menu file is loaded
+		- 2nd, based on widget name, option from DEFAULT_MENU_OPTIONS is
+		  selected
+		- 3rd, if this option is not present in loaded menu and checkbox is
+		  toggled on, option is added
+		- (same for option that is present while checkbox was toggled off)
+		- 4rd, default menu is saved
+		"""
+		if self._recursing: return
+		try:
+			data = MenuData.from_fileobj(open(find_menu("Default.menu"), "r"))
+			index = int(widget.get_name().split("_")[-1])
+			instance = GlobalSettings._make_mi_instance(index)
+		except Exception, e:
+			log.error(traceback.format_exc())
+			self._recursing = True
+			widget.set_active(not widget.get_active())
+			self._recursing = False
+			return
+		
+		present = instance.describe().strip(" >") in [ x.describe().strip(" >") for x in data ]
+		if bool(present) == bool(widget.get_active()):
+			# User requested to add menu item that's already there
+			# (or remove one that's not there)
+			return
+		
+		items = [ x for x in data ]
+		if widget.get_active():
+			# Add item to menu
+			order = GlobalSettings.DEFAULT_MENU_OPTIONS[index][1]
+			pos = 0
+			if order == 1:
+				# After last separator
+				separators = [ x for x in items[1:] if isinstance(x, Separator) ]
+				if len(separators) > 0:
+					pos = items.index(separators[-1]) + 1
+			elif order == 2:
+				# At very end
+				pos = len(items)
+			
+			if isinstance(instance, MenuGenerator):
+				items.insert(pos, Separator(instance.label))
+				pos += 1
+			items.insert(pos, instance)
+		else:
+			if isinstance(instance, MenuGenerator):
+				items = [ x for x in items
+					if not (isinstance(x, Separator)
+					and x.label == instance.label) ]
+			items = [ x for x in items
+				if instance.describe().strip(" >") != x.describe().strip(" >") ]
+		
+		path = os.path.join(get_menus_path(), "Default.menu")
+		data = MenuData(*items)
+		jstr = Encoder(sort_keys=True, indent=4).encode(data)
+		open(path, "w").write(jstr)
+		log.debug("Wrote menu file %s", path)
+	
+	
+	def load_cbMIs(self):
+		"""
+		See above. This method just parses Default menu and checks
+		boxes for present menu items.
+		"""
+		try:
+			data = MenuData.from_fileobj(open(find_menu("Default.menu"), "r"))
+		except Exception, e:
+			# Shouldn't really happen
+			log.error(traceback.format_exc())
+			return
+		self._recursing = True
+		
+		for index in xrange(0, len(GlobalSettings.DEFAULT_MENU_OPTIONS)):
+			id = "cbMI_%s" % (index,)
+			instance = GlobalSettings._make_mi_instance(index)
+			present = ( instance.describe().strip(" >")
+				in [ x.describe().strip(" >") for x in data ] )
+			self.builder.get_object(id).set_active(present)

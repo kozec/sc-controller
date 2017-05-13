@@ -15,6 +15,7 @@ class MenuData(object):
 	def __init__(self, *items):
 		self.__items = list(items)
 	
+	
 	def generate(self, menuhandler):
 		"""
 		Converts all generators into MenuItems (by calling .generate() on them)
@@ -47,11 +48,6 @@ class MenuData(object):
 	
 	def __iter__(self):
 		return iter(self.__items)
-	
-	
-	def __str__(self):
-		return ("<Menu with IDs: '" 
-			+ ("', '".join([ i.id for i in self.__items ])) + "' >")
 	
 	
 	def get_all_actions(self):
@@ -214,7 +210,9 @@ class MenuItem(object):
 	
 	def encode(self):
 		""" Returns item data as dict storable in json (profile) file """
-		if self.action:
+		if self.action and type(self.action) in (str, unicode):
+			rv = { 'action' : self.action }
+		elif self.action:
 			rv = self.action.encode()
 		else:
 			rv = {}

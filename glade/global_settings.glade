@@ -838,7 +838,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbMIRecents">
+              <object class="GtkCheckButton" id="cbMI_0">
                 <property name="name">cbMI_0</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -852,7 +852,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">5</property>
-                    <property name="label" translatable="yes">Profile selection and list of recent profiles</property>
+                    <property name="label" translatable="yes">List of recent profiles</property>
                     <property name="xalign">0</property>
                   </object>
                 </child>
@@ -860,11 +860,11 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="width">4</property>
+                <property name="width">2</property>
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbMIAutoSwitcher">
+              <object class="GtkCheckButton" id="cbMI_1">
                 <property name="name">cbMI_1</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -890,8 +890,8 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbMIWindows">
-                <property name="name">cbMI_1</property>
+              <object class="GtkCheckButton" id="cbMI_2">
+                <property name="name">cbMI_2</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
@@ -912,37 +912,12 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">3</property>
-                <property name="width">2</property>
+                <property name="width">4</property>
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbMIXKill">
+              <object class="GtkCheckButton" id="cbMI_3">
                 <property name="name">cbMI_3</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="margin_left">20</property>
-                <property name="margin_bottom">5</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                <child>
-                  <object class="GtkLabel" id="label91">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">5</property>
-                    <property name="label" translatable="yes">Kill Current Window</property>
-                    <property name="xalign">0</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">2</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbMIKeyboard">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
@@ -954,6 +929,7 @@
                   <object class="GtkLabel" id="label7">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
                     <property name="label" translatable="yes">Display Keyboard</property>
                     <property name="xalign">0</property>
                   </object>
@@ -968,9 +944,9 @@
             <child>
               <object class="GtkButton" id="btCustomizeDefaultMenu">
                 <property name="label" translatable="yes">Customize...</property>
-                <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="no_show_all">True</property>
                 <property name="margin_left">20</property>
                 <property name="margin_right">20</property>
                 <property name="margin_top">10</property>
@@ -983,7 +959,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbMITurnOff">
+              <object class="GtkCheckButton" id="cbMI_4">
                 <property name="name">cbMI_4</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1009,8 +985,34 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbMILauncher">
-                <property name="name">cbMI_2</property>
+              <object class="GtkCheckButton" id="cbMI_5">
+                <property name="name">cbMI_5</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_bottom">5</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label91">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="label" translatable="yes">Kill Current Window</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">1</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbMI_6">
+                <property name="name">cbMI_6</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
@@ -1030,7 +1032,7 @@
               </object>
               <packing>
                 <property name="left_attach">2</property>
-                <property name="top_attach">3</property>
+                <property name="top_attach">2</property>
                 <property name="width">2</property>
               </packing>
             </child>

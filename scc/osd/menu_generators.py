@@ -115,7 +115,7 @@ class WindowListMenuGenerator(MenuGenerator):
 		except Exception, e:
 			log.error("Failed to activate window")
 			log.error(traceback.format_exc())
-		menu.quit(-1)
+		menu.quit(-2)
 	
 	
 	def generate(self, menuhandler):
