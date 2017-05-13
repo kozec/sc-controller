@@ -95,6 +95,7 @@ class RecentListMenuGenerator(MenuGenerator):
 class WindowListMenuGenerator(MenuGenerator):
 	""" Generates list of all windows """
 	GENERATOR_NAME = "windowlist"
+	MAX_LENGHT = 50
 	
 	def generate(self, menuhandler):
 		return _("[ Window Lists ]")
@@ -127,7 +128,8 @@ class WindowListMenuGenerator(MenuGenerator):
 		wlist = cast(wlist, POINTER(X.XID))[0:count]
 		for win in wlist:
 			if not skip_taskbar in X.get_wm_state(dpy, win):
-				menuitem = MenuItem(str(win), X.get_window_title(dpy, win))
+				title = X.get_window_title(dpy, win)[0:self.MAX_LENGHT]
+				menuitem = MenuItem(str(win), title)
 				menuitem.callback = WindowListMenuGenerator.callback
 				rv.append(menuitem)
 		return rv
