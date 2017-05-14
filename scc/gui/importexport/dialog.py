@@ -11,7 +11,7 @@ from export import Export
 from import_vdf import ImportVdf
 from import_sccprofile import ImportSccprofile
 
-import sys, os, tarfile, logging, json
+import sys, os, tarfile, logging, json, traceback
 log = logging.getLogger("IE.Dialog")
 
 class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
@@ -35,7 +35,12 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 		Returns one of 'sccprofile', 'sccprofile.tar.gz', 'vdf', 'vdffz'
 		or None if type is not supported.
 		"""
-		f = file(filename, 'rb').read(1024)
+		try:
+			f = file(filename, 'rb').read(1024)
+		except Exception, e:
+			# File not readable
+			log.error(traceback.format_exc())
+			return None
 		try:
 			if f.decode("utf-8").strip(" \t\r\n").startswith("{"):
 				# Looks like json

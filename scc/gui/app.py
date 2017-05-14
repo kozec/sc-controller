@@ -1026,7 +1026,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			filename = " ".join(cl.get_arguments()[1:]) # 'cos fuck Gtk...
 			print filename
 			from scc.gui.importexport.dialog import Dialog
-			if Dialog.is_supported(filename):
+			if Dialog.determine_type(filename) is not None:
 				ied = Dialog(self)
 				def i_told_you_to_quit(*a):
 					sys.exit(0)
@@ -1034,6 +1034,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				ied.show(self.window)
 				# Skip first screen and try to import this file
 				ied.import_file(filename)
+			else:
+				sys.exit(1)
 		else:
 			self.activate()
 		return 0
