@@ -42,8 +42,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		('Switch To',			1, Submenu, 'system/profiles', '.windowlist.menu'),
 		('Display Keyboard',	2, MenuItem, 'system/keyboard', 'keyboard()'),
 		('Turn Controller OFF', 2, MenuItem, 'system/turn-off', 'osd(turnoff())'),
-		('Kill Current Window',	1, MenuItem, 'system/autoswitch', 'osd("kill")'),
-		('Launcher',			1, MenuItem, 'system/autoswitch', 'shell("scc-osd-launcher")'),
+		('Kill Current Window',	1, MenuItem, 'system/autoswitch', 'osd("kill")'),	# TODO
+		('Run Program...',		1, MenuItem, 'system/autoswitch', 'shell("scc-osd-launcher")'),
 		# order: 0 - top, 1 - after 'options', 2 bottom
 	]
 	

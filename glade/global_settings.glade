@@ -979,17 +979,17 @@
                 </child>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">5</property>
+                <property name="left_attach">2</property>
+                <property name="top_attach">2</property>
                 <property name="width">2</property>
               </packing>
             </child>
             <child>
               <object class="GtkCheckButton" id="cbMI_5">
                 <property name="name">cbMI_5</property>
-                <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="no_show_all">True</property>
                 <property name="margin_left">20</property>
                 <property name="margin_bottom">5</property>
                 <property name="draw_indicator">True</property>
@@ -1005,8 +1005,8 @@
                 </child>
               </object>
               <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">1</property>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
                 <property name="width">2</property>
               </packing>
             </child>
@@ -1025,14 +1025,14 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">5</property>
-                    <property name="label" translatable="yes">Launcher</property>
+                    <property name="label" translatable="yes">Run Program...</property>
                     <property name="xalign">0</property>
                   </object>
                 </child>
               </object>
               <packing>
                 <property name="left_attach">2</property>
-                <property name="top_attach">2</property>
+                <property name="top_attach">1</property>
                 <property name="width">2</property>
               </packing>
             </child>
