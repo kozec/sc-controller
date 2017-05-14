@@ -1024,7 +1024,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Gtk.Application.do_command_line(self, cl)
 		if len(cl.get_arguments()) > 1:
 			filename = " ".join(cl.get_arguments()[1:]) # 'cos fuck Gtk...
-			print filename
 			from scc.gui.importexport.dialog import Dialog
 			if Dialog.determine_type(filename) is not None:
 				ied = Dialog(self)
