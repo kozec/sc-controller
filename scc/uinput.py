@@ -22,10 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import os, imp, ctypes, time
+import os, imp, ctypes, time, platform
 from ctypes import Structure, POINTER, c_bool, c_int16, c_uint16, c_int32, byref
 from math import pi, copysign, sqrt
-from scc.lib.libusb1 import timeval
+if platform.system() == "Windows":
+	timeval = c_int32
+else:
+	from scc.lib.libusb1 import timeval
 from scc.cheader import defines
 from scc.lib import IntEnum
 
@@ -34,6 +37,8 @@ UNPUT_MODULE_VERSION = 6
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):
 	CHEAD = defines('/usr/include', 'linux/input-event-codes.h')
+elif platform.system() == "Windows":
+	CHEAD = defines('.', 'input.h')
 else:
 	CHEAD = defines('/usr/include', 'linux/input.h')
 

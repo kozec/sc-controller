@@ -12,7 +12,6 @@ from scc.tools import _
 from scc.tools import ensure_size, quat2euler, anglediff
 from scc.tools import circle_to_square, clamp, nameof
 from scc.uinput import Keys, Axes, Rels
-from scc.lib import xwrappers as X
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
 from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
@@ -20,8 +19,10 @@ from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
 from scc.constants import PARSER_CONSTANTS
 from math import sqrt, sin, cos, atan2, pi as PI
+import sys, time, logging, platform, inspect
+if platform.system() != "Windows":
+	from scc.lib import xwrappers as X
 
-import sys, time, logging, inspect
 log = logging.getLogger("Actions")
 
 # Default delay after action, if used in macro. May be overriden using sleep() action.

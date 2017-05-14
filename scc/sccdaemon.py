@@ -5,10 +5,23 @@ SC-Controller - Daemon class
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.lib import xwrappers as X
-from scc.lib import xinput
-from scc.lib.daemon import Daemon
-from scc.lib.usb1 import USBError
+import platform
+if platform.system() != "Windows":
+	from scc.lib import xwrappers as X
+	from scc.lib import xinput
+	from scc.lib.daemon import Daemon
+	from scc.lib.usb1 import USBError
+	from scc.poller import Poller
+	from scc.mapper import Mapper
+	from SocketServer import UnixStreamServer as StreamServer
+	from SocketServer import ThreadingMixIn, StreamRequestHandler
+	class ThreadingStreamServer(ThreadingMixIn, StreamServer): daemon_threads = True
+else:
+	from scc.windows.windowsmapper import WindowsMapper as Mapper
+	from scc.windows.windowsdaemon import WindowsDaemon as Daemon
+	from scc.windows.windowssocket import StreamServer
+	from SocketServer import StreamRequestHandler
+
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION, HapticPos
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.paths import get_menus_path, get_default_menus_path
@@ -21,18 +34,12 @@ from scc.menu_data import MenuData
 from scc.profile import Profile
 from scc.actions import Action
 from scc.config import Config
-from scc.poller import Poller
-from scc.mapper import Mapper
 from scc import drivers
 
-from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
 import os, sys, pkgutil, signal, socket, select, weakref, time, json, logging
 import threading, traceback, subprocess
 log = logging.getLogger("SCCDaemon")
 tlog = logging.getLogger("Socket Thread")
-
-class ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer): daemon_threads = True
-
 
 class SCCDaemon(Daemon):
 	
@@ -43,9 +50,14 @@ class SCCDaemon(Daemon):
 		self.started = False
 		self.exiting = False
 		self.socket_file = socket_file
-		self.poller = Poller()
+		self.mainloops = [ ]
+		if platform.system() != "Windows":
+			self.poller = Poller()
+			self.mainloops.append(self.poller.poll)
+		else:
+			self.poller = None
 		self.xdisplay = None
-		self.sserver = None			# UnixStreamServer instance
+		self.sserver = None			# StreamServer instance
 		self.errors = []
 		self.alone = False			# Set by launching script from --alone flag
 		self.osd_daemon = None
@@ -54,7 +66,6 @@ class SCCDaemon(Daemon):
 		# TODO: Use menu_ids for all menus
 		self.osd_ids = weakref.WeakValueDictionary()
 		self.controllers = []
-		self.mainloops = [ self.poller.poll ]
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
@@ -595,12 +606,15 @@ class SCCDaemon(Daemon):
 			def handle(self):
 				instance._sshandler(self.connection, self.rfile, self.wfile)
 		
-		self.sserver = ThreadingUnixStreamServer(self.socket_file, SSHandler)
+		self.sserver = StreamServer(self.socket_file, SSHandler)
 		t = threading.Thread(target=self.sserver.serve_forever)
 		t.daemon = True
 		t.start()
-		os.chmod(self.socket_file, 0600)
-		log.debug("Created control socket %s", self.socket_file)
+		if platform.system() != "Windows":
+			os.chmod(self.socket_file, 0600)
+			log.debug("Created control socket %s", self.socket_file)
+		else:
+			log.debug("Listening on :%s", self.sserver.PORT)
 	
 	
 	def _start_gesture(self, mapper, what, up_angle, callback):
