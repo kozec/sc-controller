@@ -7,12 +7,7 @@ Called and used when single Steam Controller is connected directly by USB cable.
 Shares a lot of classes with sc_dongle.py
 """
 
-import platform
-if platform.system() == "Windows":
-	from scc.drivers.pywinusb import USBDevice, register_hotplug_device
-else:
-	from scc.drivers.usb import USBDevice, register_hotplug_device
-
+from scc.drivers.usb import USBDevice, register_hotplug_device
 from sc_dongle import ControllerInput, SCI_NULL, TUP_FORMAT
 from sc_dongle import SCStatus, SCPacketType, SCConfigType, SCController
 import struct, time, logging
@@ -47,7 +42,7 @@ class SCByCable(USBDevice, SCController):
 	
 	
 	def generate_serial(self):
-		self._serial = "%s:%s" % (self.get_bus_number(), self.get_port_number())
+		self._serial = "%s:%s" % (self.device.getBusNumber(), self.device.getPortNumber())
 	
 	
 	def disconnected(self):

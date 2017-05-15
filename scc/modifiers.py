@@ -324,6 +324,7 @@ class BallModifier(Modifier, WholeHapticAction):
 		# Compute time step
 		_tmp = time.time()
 		dt = _tmp - self._lastTime
+		if dt <= 0: return
 		self._lastTime = _tmp
 		
 		# Compute instant velocity

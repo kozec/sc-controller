@@ -6,13 +6,9 @@ Called and used when Dongle is detected on USB bus.
 Handles one or multiple controllers connected to dongle.
 """
 
-import platform
-if platform.system() == "Windows":
-	from scc.drivers.pywinusb import USBDevice, register_hotplug_device
-else:
-	from scc.drivers.usb import USBDevice, register_hotplug_device
-
+from scc.lib import usb1
 from scc.lib import IntEnum
+from scc.drivers.usb import USBDevice, register_hotplug_device
 from scc.constants import SCButtons, HapticPos
 from scc.controller import Controller
 from scc.config import Config
@@ -313,6 +309,8 @@ class SCController(Controller):
 			SCConfigType.LED,
 			self._led_level
 		))
+		
+		self._feedback(1, 0xFF00)
 	
 	
 	def set_led_level(self, level):
