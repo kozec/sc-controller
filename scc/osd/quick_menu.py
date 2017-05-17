@@ -9,38 +9,71 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk
-from scc.menu_data import Separator, Submenu
-from scc.gui.svg_widget import SVGWidget
+from scc.menu_data import MenuItem, Submenu
+from scc.tools import find_icon
+from scc.config import Config
 from scc.osd.menu import Menu, MenuIcon
 from scc.osd import OSDWindow
-from scc.tools import find_icon
 
 import os, sys, logging
 log = logging.getLogger("osd.quickmenu")
 
 
-class QuickMenu(OSDWindow):
-	IMAGE = "quickmenu.svg"
-	
-	def __init__(self, imagepath="/usr/share/scc/images", cls="osd-menu"):
-		OSDWindow.__init__(self, cls)
-		self.imagepath = imagepath
+class QuickMenu(Menu):
+	BUTTONS = [ "A", "B", "X", "Y", "LB", "RB"]
 	
 	
-	def show(self):
-		self.main_area = Gtk.Fixed()
-		self.background = SVGWidget(self, os.path.join(self.imagepath, self.IMAGE))
-		
-		self.main_area.set_property("margin-left", 10)
-		self.main_area.set_property("margin-right", 10)
-		self.main_area.set_property("margin-top", 10)
-		self.main_area.set_property("margin-bottom", 10)
-		
-		self.main_area.put(self.background, 0, 0)
-		
-		self.add(self.main_area)
-		
-		OSDWindow.show(self)
+	def __init__(self, cls="osd-menu"):
+		Menu.__init__(self, cls)
+		self._cancel_with = 'START'
+		self._pressed = []
+	
+	
+	def generate_widget(self, item):
+		"""
+		In QuickMenu, everything but submenus and simple
+		menuitems is ignored.
+		"""
+		if self._button_index >= len(self.BUTTONS):
+			return None
+		if isinstance(item, (MenuItem, Submenu)):
+			widget = Gtk.Button.new_with_label(item.label)
+			widget.set_relief(Gtk.ReliefStyle.NONE)
+			if hasattr(widget.get_children()[0], "set_xalign"):
+				widget.get_children()[0].set_xalign(0)
+			else:
+				widget.get_children()[0].set_halign(Gtk.Align.START)
+			if isinstance(item, Submenu):
+				item.callback = self.show_submenu
+				label1 = widget.get_children()[0]
+				label2 = Gtk.Label(_(">>"))
+				label2.set_property("margin-left", 30)
+				box = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+				widget.remove(label1)
+				box.pack_start(label1, True, True, 1)
+				box.pack_start(label2, False, True, 1)
+				widget.add(box)
+				widget.set_name("osd-menu-item")
+			elif item.id is None:
+				# Ignored as well
+				return None
+			else:
+				widget.set_name("osd-menu-item")
+			
+			item.button = self.BUTTONS[self._button_index]
+			self._button_index += 1
+			
+			icon_file, has_colors = find_icon("buttons/%s" % item.button, False)
+			icon = MenuIcon(icon_file, has_colors)
+			label = widget.get_children()[0]
+			for c in [] + widget.get_children():
+				widget.remove(c)
+			box = Gtk.Box()
+			box.pack_start(icon,  False, True, 0)
+			box.pack_start(label, True, True, 10)
+			widget.add(box)
+			return widget
+		return None
 	
 	
 	def _add_arguments(self):
@@ -62,28 +95,84 @@ class QuickMenu(OSDWindow):
 			help="Menu items")
 	
 	
-	def generate_widget(self, item):
-		if isinstance(item, Separator):
-			# Ignored here
-			return None
-		elif item.id is None:
-			# Dummies are ignored as well
-			return None
-		else:
-			icon_file, has_colors = find_icon(item.icon, False)
-			if icon_file:
-				# Gridmenu hides label when icon is displayed
-				widget = Gtk.Button()
-				widget.set_relief(Gtk.ReliefStyle.NONE)
-				widget.set_name("osd-menu-item-big-icon")
-				if isinstance(item, Submenu):
-					item.callback = self.show_submenu
-				icon = MenuIcon(icon_file, has_colors)
-				widget.add(icon)
-				return widget
+	def lock_inputs(self):
+		def success(*a):
+			log.error("Sucessfully locked input")
+		locks = [ x for x in self.BUTTONS ] + [ self._cancel_with ]
+		self.controller.lock(success, self.on_failed_to_lock, *locks)
+	
+	
+	def parse_argumets(self, argv):
+		if not OSDWindow.parse_argumets(self, argv):
+			return False
+		if not self.config: self.config = Config()
+		
+		self._cancel_with = self.args.cancel_with
+		self.parse_menu()
+		
+		# Create buttons that are displayed on screen
+		items = self.items.generate(self)
+		self.items = []
+		self._button_index = 0
+		for item in items:
+			item.widget = self.generate_widget(item)
+			if item.widget is not None:
+				self.items.append(item)
+		self.pack_items(self.parent, self.items)
+		if len(self.items) == 0:
+			print >>sys.stderr, '%s: error: no items in menu' % (sys.argv[0])
+			return False
+		
+		return True
+	
+	
+	def select(self, index):
+		pass
+	
+	
+	def pressed(self, what):
+		"""
+		Called when button is pressed. If menu with that button assigned
+		exists, it is hilighted.
+		"""
+		for item in self.items:
+			if item.button == what:
+				self._pressed.append(item)
+				item.widget.set_name("osd-menu-item-selected")
+	
+	
+	def released(self, what):
+		"""
+		Called when button is pressed. If menu with that button assigned
+		exists, it is hilighted.
+		"""
+		last = None
+		for item in self.items:
+			if item.button == what:
+				while item in self._pressed:
+					self._pressed.remove(item)
+				item.widget.set_name("osd-menu-item")
+				last = item
+		
+		if len(self._pressed) == 0 and last is not None:
+			if last.callback:
+				last.callback(self, self.daemon, self._pressed)
 			else:
-				return Menu.generate_widget(self, item)
-
+				self._selected = last
+				self.quit(0)
+	
+	
+	def on_event(self, daemon, what, data):
+		if self._submenu:
+			return self._submenu.on_event(daemon, what, data)
+		elif what == self._cancel_with:
+			if data[0] == 0:	# Button released
+				self.quit(-1)
+		elif what in self.BUTTONS:
+			if data[0] == 1:	# Button pressed
+				self.pressed(what)
+			else:				# Released
+				self.released(what)
 
 
 if __name__ == "__main__":
@@ -96,8 +185,10 @@ if __name__ == "__main__":
 	from scc.paths import get_share_path
 	init_logging()
 	
-	m = QuickMenu(imagepath="./images")
+	m = QuickMenu()
 	if not m.parse_argumets(sys.argv):
 		sys.exit(1)
 	m.run()
+	if m.get_exit_code() == 0:
+		print m.get_selected_item_id()
 	sys.exit(m.get_exit_code())
