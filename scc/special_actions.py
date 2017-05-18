@@ -360,9 +360,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 	
 	def button_release(self, mapper):
 		if self.show_with_release:
-			self.execute(mapper, '-x',
-				'-x', str(self.x), '-y', str(self.y)
-			)
+			self.execute(mapper, '-x', str(self.x), '-y', str(self.y))
 	
 	
 	def whole(self, mapper, x, y, what, *params):
@@ -427,6 +425,29 @@ class GridMenuAction(MenuAction):
 	"""
 	COMMAND = "gridmenu"
 	MENU_TYPE = "gridmenu"
+
+
+class QuickMenuAction(MenuAction):
+	"""
+	Quickmenu. Max.6 items, controller by buttons
+	"""
+	COMMAND = "quickmenu"
+	MENU_TYPE = "quickmenu"
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("QuickMenu")
+	
+	
+	def button_press(self, mapper):
+		# QuickMenu is always shown with release
+		pass
+	
+	
+	def button_release(self, mapper):
+		self.execute(mapper, '-x', str(self.x), '-y', str(self.y))
+
 
 
 class RadialMenuAction(MenuAction):

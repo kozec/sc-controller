@@ -18,6 +18,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.osd.gesture_display import GestureDisplay
 from scc.osd.radial_menu import RadialMenu
 from scc.osd.hmenu import HorizontalMenu
+from scc.osd.quick_menu import QuickMenu
 from scc.osd.grid_menu import GridMenu
 from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
@@ -140,10 +141,11 @@ class OSDDaemon(object):
 		"""
 		return (
 			m.startswith("OSD: menu")
-			or m.startswith("OSD: gridmenu")
-			or m.startswith("OSD: hmenu")
 			or m.startswith("OSD: radialmenu")
+			or m.startswith("OSD: quickmenu")
+			or m.startswith("OSD: gridmenu")
 			or m.startswith("OSD: dialog")
+			or m.startswith("OSD: hmenu")
 		)
 	
 	
@@ -182,10 +184,12 @@ class OSDDaemon(object):
 			else:
 				if message.startswith("OSD: hmenu"):
 					self._window = HorizontalMenu()
-				elif message.startswith("OSD: gridmenu"):
-					self._window = GridMenu()
 				elif message.startswith("OSD: radialmenu"):
 					self._window = RadialMenu()
+				elif message.startswith("OSD: quickmenu"):
+					self._window = QuickMenu()
+				elif message.startswith("OSD: gridmenu"):
+					self._window = GridMenu()
 				elif message.startswith("OSD: dialog"):
 					self._window = Dialog()
 				else:
