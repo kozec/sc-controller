@@ -10,7 +10,7 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk
 from scc.menu_data import MenuItem, Submenu
-from scc.tools import find_icon
+from scc.tools import find_icon, find_menu
 from scc.config import Config
 from scc.osd.menu import Menu, MenuIcon
 from scc.osd import OSDWindow
@@ -126,8 +126,33 @@ class QuickMenu(Menu):
 		return True
 	
 	
+	def next_item(self, direction):
+		pass
+	
+	
 	def select(self, index):
 		pass
+	
+	
+	def show_submenu(self, trash, trash2, menuitem):
+		""" Called when user chooses menu item pointing to submenu """
+		filename = find_menu(menuitem.filename)
+		if filename:
+			self._submenu = QuickMenu()
+			sub_pos = list(self.position)
+			for i in (0, 1):
+				sub_pos[i] = (sub_pos[i] - self.SUBMENU_OFFSET
+						if sub_pos[i] < 0 else sub_pos[i] + self.SUBMENU_OFFSET)
+					
+			self._submenu.use_config(self.config)
+			self._submenu.parse_argumets(["menu.py",
+				"-x", str(sub_pos[0]), "-y", str(sub_pos[1]),
+			 	"--from-file", filename
+			])
+			self._submenu.set_is_submenu()
+			self._submenu.use_daemon(self.daemon)
+			self._submenu.connect('destroy', self.on_submenu_closed)
+			self._submenu.show()
 	
 	
 	def pressed(self, what):
@@ -156,7 +181,7 @@ class QuickMenu(Menu):
 		
 		if len(self._pressed) == 0 and last is not None:
 			if last.callback:
-				last.callback(self, self.daemon, self._pressed)
+				last.callback(self, self.daemon, last)
 			else:
 				self._selected = last
 				self.quit(0)
