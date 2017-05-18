@@ -987,9 +987,9 @@
             <child>
               <object class="GtkCheckButton" id="cbMI_5">
                 <property name="name">cbMI_5</property>
+                <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="no_show_all">True</property>
                 <property name="margin_left">20</property>
                 <property name="margin_bottom">5</property>
                 <property name="draw_indicator">True</property>

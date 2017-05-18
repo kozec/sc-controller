@@ -11,8 +11,8 @@ from gi.repository import Gdk, GObject, GLib
 from scc.special_actions import TurnOffAction, RestartDaemonAction
 from scc.special_actions import ChangeProfileAction
 from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
+from scc.tools import find_profile, find_menu, find_binary
 from scc.paths import get_profiles_path, get_menus_path
-from scc.tools import find_profile, find_menu
 from scc.modifiers import SensitivityModifier
 from scc.profile import Profile, Encoder
 from scc.actions import Action, NoAction
@@ -42,7 +42,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		('Switch To',			1, Submenu, 'system/windowlist', '.windowlist.menu'),
 		('Display Keyboard',	2, MenuItem, 'system/keyboard', 'keyboard()'),
 		('Turn Controller OFF', 2, MenuItem, 'system/turn-off', 'osd(turnoff())'),
-		('Kill Current Window',	1, MenuItem, 'system/autoswitch', 'osd("kill")'),	# TODO
+		('Kill Current Window',	1, MenuItem, 'weapons/pistol-gun',
+			'dialog("Really? Non-saved progress or data will be lost", '
+			'name("Back", None), '
+			'name("Kill", shell("kill -9 $(xdotool getwindowfocus getwindowpid)")))'),
 		('Run Program...',		1, MenuItem, 'system/cog', 'shell("scc-osd-launcher")'),
 		# order: 0 - top, 1 - after 'options', 2 bottom
 	]
@@ -635,3 +638,14 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			present = ( instance.describe().strip(" >")
 				in [ x.describe().strip(" >") for x in data ] )
 			self.builder.get_object(id).set_active(present)
+		
+		# cbMI_5, 'Kill Current Window' is special case here. This checkbox
+		# should be available only if xdotool utility is installed.
+		cbMI_5 = self.builder.get_object("cbMI_5")
+		if find_binary("xdotool") == "xdotool":
+			# Not found
+			cbMI_5.set_sensitive(False)
+			cbMI_5.set_tooltip_text(_("Please, install xdotool package to use this feature"))
+		else:
+			cbMI_5.set_sensitive(True)
+			cbMI_5.set_tooltip_text("")

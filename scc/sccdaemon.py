@@ -51,8 +51,8 @@ class SCCDaemon(Daemon):
 		self.osd_daemon = None
 		self.default_profile = None
 		self.autoswitch_daemon = None
-		# TODO: Use menu_ids for all menus
-		self.osd_ids = weakref.WeakValueDictionary()
+		# TODO: Use osd_ids for all menus
+		self.osd_ids = {}
 		self.controllers = []
 		self.mainloops = [ self.poller.poll ]
 		self.on_exit_cbs = []
@@ -305,6 +305,7 @@ class SCCDaemon(Daemon):
 	def on_sa_dialog(self, mapper, action, *pars):
 		# Replace actions with id, title pairs
 		data = []
+		self.osd_ids = {}
 		for x in pars:
 			if isinstance(x, Action):
 				id = str(hash(x))
