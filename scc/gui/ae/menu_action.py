@@ -9,7 +9,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import MenuAction, HorizontalMenuAction
 from scc.special_actions import RadialMenuAction, GridMenuAction
-from scc.special_actions import PositionModifier
+from scc.special_actions import QuickMenuAction, PositionModifier
 from scc.constants import SCButtons, SAME, STICK, DEFAULT
 from scc.actions import NoAction
 from scc.tools import nameof
@@ -62,6 +62,8 @@ class MenuActionCofC(UserDataManager):
 		"""
 		if isinstance(action, GridMenuAction):
 			return "gridmenu"
+		elif isinstance(action, QuickMenuAction):
+			return "quickmenu"
 		elif isinstance(action, HorizontalMenuAction):
 			return "hmenu"
 		elif isinstance(action, RadialMenuAction):
@@ -128,6 +130,8 @@ class MenuActionCofC(UserDataManager):
 				if cbMenuAutoCancel:
 					cbMenuAutoCancel.set_active(False)
 				self.set_cb(cbCancelWith, nameof(caw), 1)
+		
+		self.on_cbMenus_changed()
 	
 	
 	def get_default_confirm(self):
@@ -248,15 +252,30 @@ class MenuActionCofC(UserDataManager):
 		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
 		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
+		lblControlWith = self.builder.get_object("lblControlWith")
+		cbControlWith = self.builder.get_object("cbControlWith")
 		lblConfirmWith = self.builder.get_object("lblConfirmWith")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		lblCancelWith = self.builder.get_object("lblCancelWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
+		
+		cbm = self.builder.get_object("cbMenuType")
+		menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+		
+		if cbControlWith:
+			sensitive = True
+			if menu_type == "quickmenu":
+				sensitive = False
+			lblControlWith.set_sensitive(sensitive)
+			cbControlWith.set_sensitive(sensitive)
 		
 		if cbConfirmWith:
 			sensitive = True
 			if cbMenuAutoConfirm and cbMenuAutoConfirm.get_active():
 				sensitive = False
 			if cbMenuConfirmWithClick and cbMenuConfirmWithClick.get_active():
+				sensitive = False
+			if menu_type == "quickmenu":
 				sensitive = False
 			lblConfirmWith.set_sensitive(sensitive)
 			cbConfirmWith.set_sensitive(sensitive)
@@ -265,7 +284,16 @@ class MenuActionCofC(UserDataManager):
 			sensitive = True
 			if cbMenuAutoCancel and cbMenuAutoCancel.get_active():
 				sensitive = False
+			if menu_type == "quickmenu":
+				sensitive = False
+			lblCancelWith.set_sensitive(sensitive)
 			cbCancelWith.set_sensitive(sensitive)
+		
+		if cbMenuAutoConfirm:
+			sensitive = True
+			if menu_type == "quickmenu":
+				sensitive = False
+			cbMenuAutoConfirm.set_sensitive(sensitive)
 		
 		name = self.get_selected_menu()
 		if name == "":
@@ -303,7 +331,6 @@ class MenuActionCofC(UserDataManager):
 			params += [ self.get_control_with(), cow, caw ]
 			
 			
-			cbm = self.builder.get_object("cbMenuType")
 			# Hide / apply and display 'Items per row' selector if it exists in UI
 			if self.builder.get_object("rvMaxSize"):
 				rvMaxSize = self.builder.get_object("rvMaxSize")
@@ -318,15 +345,18 @@ class MenuActionCofC(UserDataManager):
 			
 			# Grab menu type and choose apropriate action
 			action = NoAction()
-			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
+			if cbm and menu_type == "gridmenu":
 				# Grid menu
 				action = GridMenuAction(*params)
-			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "radialmenu":
+			elif cbm and menu_type == "radialmenu":
 				# Circular menu
 				action = RadialMenuAction(*params)
-			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "hmenu":
+			elif cbm and menu_type == "hmenu":
 				# Horizontal menu
 				action = HorizontalMenuAction(*params)
+			elif cbm and menu_type == "quickmenu":
+				# Horizontal menu
+				action = QuickMenuAction(name)
 			else:
 				# Normal menu
 				action = MenuAction(*params)

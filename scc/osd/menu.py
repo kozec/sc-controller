@@ -157,11 +157,7 @@ class Menu(OSDWindow):
 			help="Menu items")
 	
 	
-	def parse_argumets(self, argv):
-		if not OSDWindow.parse_argumets(self, argv):
-			return False
-		if not self.config:
-			self.config = Config()
+	def parse_menu(self):
 		if self.args.from_profile:
 			try:
 				self._menuid = self.args.items[0]
@@ -186,6 +182,13 @@ class Menu(OSDWindow):
 			except ValueError:
 				print >>sys.stderr, '%s: error: invalid number of arguments' % (sys.argv[0])
 				return False
+	
+	
+	def parse_argumets(self, argv):
+		if not OSDWindow.parse_argumets(self, argv):
+			return False
+		if not self.config: self.config = Config()
+		self.parse_menu()
 		
 		# Parse simpler arguments
 		self._control_with = self.args.control_with
@@ -330,12 +333,8 @@ class Menu(OSDWindow):
 	
 	
 	def on_daemon_connected(self, *a):
-		def success(*a):
-			log.error("Sucessfully locked input")
-		
 		if not self.config:
 			self.config = Config()
-		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
 		self.controller = self.choose_controller(self.daemon)
 		if self.controller is None or not self.controller.is_connected():
 			# There is no controller connected to daemon
@@ -343,6 +342,13 @@ class Menu(OSDWindow):
 			return
 		
 		self._eh_ids += [ (self.controller, self.controller.connect('event', self.on_event)) ]
+		self.lock_inputs()
+	
+	
+	def lock_inputs(self):
+		def success(*a):
+			log.error("Sucessfully locked input")
+		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
 		self.controller.lock(success, self.on_failed_to_lock, *locks)
 	
 	

@@ -232,6 +232,13 @@ Same as `menu`, but displays items in grid.
 Same as `menu`, but displays items in radial menu.
 
 
+#### <a name="quickmenu"></a> quickmenu(menu)
+Special kind of menu controled by buttons instead of stick. Every item has
+assigned button and user selects it by pressing that button.
+
+Fast to use, but is limited to 6 items at most.
+
+
 #### <a name="dialog"></a> dialog([ confirm_button=A [, cancel_button=B ], ] text, action1, [action2... actionN])
 Displays OSD dialog. Dialog works similary to horizontal menu and displays
 text message above list of options.

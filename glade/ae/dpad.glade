@@ -724,7 +724,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label9">
+                      <object class="GtkLabel" id="lblCancelWith">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_right">20</property>

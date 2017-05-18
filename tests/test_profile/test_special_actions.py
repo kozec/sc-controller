@@ -5,7 +5,8 @@ from scc.actions import ButtonAction
 from . import parser
 import inspect
 
-MENU_CLASSES = MenuAction, HorizontalMenuAction, GridMenuAction, RadialMenuAction
+MENU_CLASSES = (MenuAction, HorizontalMenuAction, GridMenuAction,
+	RadialMenuAction, QuickMenuAction)
 
 class TestSpecialActions(object):
 	
