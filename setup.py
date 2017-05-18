@@ -46,7 +46,8 @@ if __name__ == "__main__":
 			data_files = data_files,
 			scripts = ['scripts/sc-controller', 'scripts/scc-daemon',
 				'scripts/scc-osd-message', 'scripts/scc-osd-menu',
-				'scripts/scc-osd-keyboard'],
+				'scripts/scc-osd-keyboard', 'scripts/scc-osd-dialog',
+				'scripts/scc-osd-launcher'],
 			license = 'GPL2',
 			platforms = ['Linux'],
 			ext_modules = [
