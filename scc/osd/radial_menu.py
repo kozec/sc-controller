@@ -99,8 +99,12 @@ class RadialMenu(Menu):
 				)
 			# Rotate arc to correct position
 			i.a = (360.0 / float(len(self.items))) * float(index)
-			i.widget.attrib['transform'] = "%s rotate(%s, %s, %s)" % (
-				i.widget.attrib['transform'], i.a, image_width / 2, image_width / 2)
+			rotation = "rotate(%s, %s, %s)" % (i.a, image_width / 2, image_width / 2)
+			if 'transform' in i.widget.attrib:
+				i.widget.attrib['transform'] += rotation
+			else:
+				i.widget.attrib['transform'] = rotation
+			print i.widget.attrib['transform']
 			# Check if there is any icon
 			icon_file, has_colors = find_icon(i.icon, False) if hasattr(i, "icon") else (None, False)
 			if icon_file:
@@ -228,3 +232,22 @@ class RadialMenu(Menu):
 							self.select(i)
 		else:
 			return Menu.on_event(self, daemon, what, data)
+
+
+if __name__ == "__main__":
+	import gi
+	gi.require_version('Gtk', '3.0')
+	gi.require_version('Rsvg', '2.0')
+	gi.require_version('GdkX11', '3.0')
+	
+	from scc.tools import init_logging
+	from scc.paths import get_share_path
+	init_logging()
+	
+	m = RadialMenu()
+	if not m.parse_argumets(sys.argv):
+		sys.exit(1)
+	m.run()
+	if m.get_exit_code() == 0:
+		print m.get_selected_item_id()
+	sys.exit(m.get_exit_code())
