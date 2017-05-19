@@ -1,8 +1,17 @@
-#!/usr/bin/python2
-from __future__ import unicode_literals
+#!/usr/bin/env python2
+
+"""
+Generic linux daemon base class - reimplemented for Windows.
+
+This is just shim, stub, dummy emulation.
+It can't actually daeamonize, stop and restart throws exception.
+
+But it works for SCC...
+"""
+
 import sys, os, atexit
 
-class WindowsDaemon(object):
+class Daemon(object):
 	
 	def __init__(self, pidfile):
 		self.pidfile = pidfile
@@ -53,7 +62,8 @@ class WindowsDaemon(object):
 	def stop(self):
 		# There is no daemonization, so there is no stopping
 		# Implement sigkill or pray to god
-		pass
+		sys.stderr.write("Stop not supported")
+		sys.exit(1)
 
 	def restart(self):
 		"""Restart the daemon."""

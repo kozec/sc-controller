@@ -62,8 +62,6 @@ class SCByCable(USBDevice, SCController):
 	
 	def _wait_input(self, endpoint, data):
 		tup = ControllerInput._make(struct.unpack(TUP_FORMAT, data))
-		print tup.buttons
-		return
 		if not self._ready:
 			self.daemon.add_controller(self)
 			self.configure()

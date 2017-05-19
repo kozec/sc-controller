@@ -18,13 +18,13 @@ def get_devices():
 	Returns list of devices reported by xinput.
 	"""
 	rv = []
-	#try:
-	lst = (subprocess.Popen([ "xinput" ], stdout=subprocess.PIPE, stdin=None)
-		.communicate()[0]
-		.decode("utf-8"))
-	#except:
-	#	# calling xinput failed, return empty list
-	#	return rv
+	try:
+		lst = (subprocess.Popen([ "xinput" ], stdout=subprocess.PIPE, stdin=None)
+			.communicate()[0]
+			.decode("utf-8"))
+	except:
+		# calling xinput failed, return empty list
+		return rv
 	
 	for line in lst.split("\n"):
 		match = RE_DEVICE.match(line)

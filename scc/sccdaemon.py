@@ -5,23 +5,11 @@ SC-Controller - Daemon class
 from __future__ import unicode_literals
 from scc.tools import _
 
-import platform
-if platform.system() != "Windows":
-	from scc.lib import xwrappers as X
-	from scc.lib import xinput
-	from scc.lib.daemon import Daemon
-	from scc.lib.usb1 import USBError
-	from scc.poller import Poller
-	from scc.mapper import Mapper
-	from SocketServer import UnixStreamServer as StreamServer
-	from SocketServer import ThreadingMixIn, StreamRequestHandler
-	class ThreadingStreamServer(ThreadingMixIn, StreamServer): daemon_threads = True
-else:
-	from scc.windows.windowsmapper import WindowsMapper as Mapper
-	from scc.windows.windowsdaemon import WindowsDaemon as Daemon
-	from scc.windows.windowssocket import StreamServer
-	from SocketServer import StreamRequestHandler
-
+from scc.lib import xwrappers as X
+from scc.lib import xinput
+from scc.lib.daemon import Daemon
+from scc.mapper import Mapper
+from scc.socket import Socket
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION, HapticPos
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.paths import get_menus_path, get_default_menus_path
@@ -36,28 +24,28 @@ from scc.actions import Action
 from scc.config import Config
 from scc import drivers
 
-import os, sys, pkgutil, signal, socket, select, weakref, time, json, logging
+import os, sys, pkgutil, signal, socket, select
+import weakref, time, json, logging
 import threading, traceback, subprocess
 log = logging.getLogger("SCCDaemon")
-tlog = logging.getLogger("Socket Thread")
 
 class SCCDaemon(Daemon):
 	
-	def __init__(self, piddile, socket_file):
+	def __init__(self, piddile):
 		set_logging_level(True, True)
 		Daemon.__init__(self, piddile)
 		Config()					# Generates ~/.config/scc and default config if needed
 		self.started = False
 		self.exiting = False
-		self.socket_file = socket_file
 		self.mainloops = [ ]
-		if platform.system() != "Windows":
+		if os.name == "nt":
+			self.poller = None
+		else:
+			from scc.poller import Poller
 			self.poller = Poller()
 			self.mainloops.append(self.poller.poll)
-		else:
-			self.poller = None
 		self.xdisplay = None
-		self.sserver = None			# StreamServer instance
+		self.sserver = None			# Socket instance
 		self.errors = []
 		self.alone = False			# Set by launching script from --alone flag
 		self.osd_daemon = None
@@ -377,6 +365,10 @@ class SCCDaemon(Daemon):
 			log.warning("Wayland detected. Disabling X11 support, some functionality will be unavailable")
 			self.xdisplay = None
 			return
+		if os.name == "nt":
+			log.warning("Runnning on Windows. Some functionality will be unavailable")
+			self.xdisplay = None
+			return
 		if "DISPLAY" not in os.environ:
 			log.warning("DISPLAY env variable not set. Some functionality will be unavailable")
 			self.xdisplay = None
@@ -598,23 +590,7 @@ class SCCDaemon(Daemon):
 	
 	
 	def start_listening(self):
-		if os.path.exists(self.socket_file):
-			os.unlink(self.socket_file)
-		instance = self
-		
-		class SSHandler(StreamRequestHandler):
-			def handle(self):
-				instance._sshandler(self.connection, self.rfile, self.wfile)
-		
-		self.sserver = StreamServer(self.socket_file, SSHandler)
-		t = threading.Thread(target=self.sserver.serve_forever)
-		t.daemon = True
-		t.start()
-		if platform.system() != "Windows":
-			os.chmod(self.socket_file, 0600)
-			log.debug("Created control socket %s", self.socket_file)
-		else:
-			log.debug("Listening on :%s", self.sserver.PORT)
+		self.sserver = Socket(self._connection_handler).start_listening()
 	
 	
 	def _start_gesture(self, mapper, what, up_angle, callback):
@@ -648,7 +624,7 @@ class SCCDaemon(Daemon):
 		return gd	
 	
 	
-	def _sshandler(self, connection, rfile, wfile):
+	def _connection_handler(self, connection, rfile, wfile):
 		with self.lock:
 			client = Client(connection, self.default_mapper, rfile, wfile)
 			self.clients.add(client)
@@ -973,9 +949,6 @@ class SCCDaemon(Daemon):
 	
 	def _remove_socket(self):
 		self.sserver.shutdown()
-		if os.path.exists(self.socket_file):
-			os.unlink(self.socket_file)
-		log.debug("Control socket removed")
 	
 	
 	def debug(self):

@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from collections import deque
+from scc.lib import xwrappers as X
 from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO, HapticPos
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICK_TILT
@@ -12,12 +13,8 @@ from scc.config import Config
 from scc.profile import Profile
 
 
-import traceback, platform, logging, time, os
+import traceback, logging, time, os
 log = logging.getLogger("Mapper")
-
-if platform.system() != "Windows":
-	from scc.lib import xwrappers as X
-
 
 class Mapper(object):
 	DEBUG = False
@@ -37,9 +34,9 @@ class Mapper(object):
 		
 		# Create virtual devices
 		log.debug("Creating virtual devices")
-		self.keyboard = self._create_device(Keyboard, keyboard)
+		self.keyboard = Keyboard(name=keyboard) if keyboard else Dummy()
 		log.debug("Keyboard: %s" % (self.keyboard, ))
-		self.mouse = self._create_device(Mouse, mouse)
+		self.mouse = Mouse(name=mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
 		self.gamepad = self._create_gamepad(gamepad, poller) if gamepad else Dummy()
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
@@ -61,10 +58,6 @@ class Mapper(object):
 		self.state, self.old_state = None, None
 		self.force_event = set()
 	
-	
-	def _create_device(self, cls, name):
-		if name: return cls(name=name)
-		return Dummy()
 	
 	def _create_gamepad(self, enabled, poller):
 		""" Parses gamepad configuration and creates apropriate unput device """

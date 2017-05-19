@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 from scc.sccdaemon import SCCDaemon
-from scc.paths import get_pid_file, get_daemon_socket
+from scc.paths import get_pid_file
 from scc.tools import init_logging
 
 import os, argparse
@@ -11,7 +11,7 @@ def main():
 	parser.add_argument('profile', type=str, nargs='*')
 	parser.add_argument('command', type=str, choices=['start', 'stop', 'restart', 'debug'])
 	parser.add_argument('--alone', action='store_true', help="prevent scc-daemon from launching osd-daemon and autoswitch-daemon.")
-	daemon = SCCDaemon(get_pid_file(), get_daemon_socket())
+	daemon = SCCDaemon(get_pid_file())
 	args = parser.parse_args()
 	daemon.alone = args.alone
 	
