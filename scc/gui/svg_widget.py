@@ -10,7 +10,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GObject, Rsvg
 from xml.etree import ElementTree as ET
-import os, sys, logging
+from math import sin, cos, pi as PI
+import os, sys, re, logging
 
 log = logging.getLogger("Background")
 
@@ -274,6 +275,7 @@ class SVGEditor(object):
 	Constructed by SVGWidget.edit(), updates original SVGWidget when commit()
 	is called.
 	"""
+	RE_PARSE_TRANSFORM = re.compile(r"([a-z]+)\(([-0-9\.,]+)\)(.*)")
 	
 	def __init__(self, svgw):
 		self._svgw = svgw
@@ -378,6 +380,113 @@ class SVGEditor(object):
 		SVGEditor._recolor(self._tree, s_from, s_to)
 		return self
 	
+	
+	@staticmethod
+	def matrixmul(X, Y, *a):
+		if len(a) > 0:
+			return SVGEditor.matrixmul(SVGEditor.matrixmul(X, Y), a[0], *a[1:])
+		return [[ sum(a*b for a,b in zip(x,y)) for y in zip(*Y) ] for x in X ]
+	
+	
+	@staticmethod
+	def scale(xml, sx, sy=None):
+		"""
+		Changes element scale.
+		Creates or updates 'transform' attribute.
+		"""
+		sy = sy or sx
+		SVGEditor.set_transform(xml, SVGEditor.matrixmul(
+			SVGEditor.parse_transform(xml),
+			[ [ sx, 0.0, 0.0 ], [ 0.0, sy, 0.0 ], [ 0.0, 0.0, 1.0 ] ],
+		))
+	
+	
+	@staticmethod
+	def rotate(xml, a, x, y):
+		"""
+		Changes element rotation.
+		Creates or updates 'transform' attribute.
+		"""
+		a = a * PI / 180.0
+		SVGEditor.set_transform(xml, SVGEditor.matrixmul(
+			SVGEditor.parse_transform(xml),
+			[ [ 1.0, 0.0, x ], [ 0.0, 1.0, y ], [ 0.0, 0.0, 1.0 ] ],
+			[ [ cos(a), -sin(a), 0 ], [ sin(a), cos(a), 0 ], [ 0.0, 0.0, 1.0 ] ],
+			[ [ 1.0, 0.0, -x ], [ 0.0, 1.0, -y ], [ 0.0, 0.0, 1.0 ] ],
+		))
+	
+	
+	@staticmethod
+	def translate(xml, x, y):
+		"""
+		Changes element translation.
+		Creates or updates 'transform' attribute.
+		"""
+		SVGEditor.set_transform(xml, SVGEditor.matrixmul(
+			SVGEditor.parse_transform(xml),
+			[ [ 1.0, 0.0, x ], [ 0.0, 1.0, y ], [ 0.0, 0.0, 1.0 ] ],
+		))
+	
+	
+	@staticmethod
+	def set_transform(xml, matrix):
+		"""
+		Sets element transformation matrix
+		"""
+		xml.attrib['transform'] = "matrix(%s,%s,%s,%s,%s,%s)" % (
+			matrix[0][0], matrix[1][0], matrix[0][1],
+			matrix[1][1], matrix[0][2], matrix[1][2],
+		)
+	
+	
+	@staticmethod
+	def parse_transform(xml):
+		"""
+		Returns element transform data in transformation matrix,
+		"""
+		matrix = [ [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0] ]
+		if 'transform' in xml.attrib:
+			transform = xml.attrib['transform']
+			match = SVGEditor.RE_PARSE_TRANSFORM.match(transform.strip())
+			while match:
+				op, values, transform = match.groups()
+				if op == "translate":
+					translation = [ float(x) for x in values.split(",")[0:2] ]
+					while len(translation) < 2: translation.append(0.0)
+					x, y = translation
+					matrix = SVGEditor.matrixmul(matrix, ((1.0, 0.0, x), (0.0, 1.0, y), (0.0, 0.0, 1.0)))
+				elif op == "rotate":
+					rotation = [ float(x) for x in values.split(",")[0:3] ]
+					while len(rotation) < 3: rotation.append(0.0)
+					a, x, y = rotation
+					a = a * PI / 180.0
+					matrix = SVGEditor.matrixmul(
+						matrix,
+						[ [ 1.0, 0.0, x ], [ 0.0, 1.0, y ], [ 0.0, 0.0, 1.0 ] ],
+						[ [ cos(a), -sin(a), 0 ], [ sin(a), cos(a), 0 ], [ 0.0, 0.0, 1.0 ] ],
+						[ [ 1.0, 0.0, -x ], [ 0.0, 1.0, -y ], [ 0.0, 0.0, 1.0 ] ],
+					)
+				elif op == "scale":
+					scale = tuple([ float(x) for x in values.split(",")[0:2] ])
+					if len(scale) == 1:
+						sx, sy = scale[0], scale[0]
+					else:
+						sx, sy = scale
+					matrix = SVGEditor.matrixmul(matrix, ((sx, 0.0, 0.0), (0.0, sy, 0.0), (0.0, 0.0, 1.0)))
+				elif op == "matrix":
+					try:
+						matrix = [ float(x) for x in values.split(",") ]
+						while len(matrix) < 6: matrix.append(0.0)
+						a,b,c,d,e,f = matrix
+						matrix = SVGEditor.matrixmul(matrix,
+							[ [ a, c, e], [b, d, f], [0, 0, 1] ]
+						)
+					except Exception:
+						pass
+					
+				match = SVGEditor.RE_PARSE_TRANSFORM.match(transform.strip())
+		
+		return matrix
 	
 	@staticmethod
 	def set_text(xml, text):
