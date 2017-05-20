@@ -37,7 +37,7 @@ class SCByCable(USBDevice, SCController):
 		self._last_tup = None
 		daemon.add_mainloop(self._timer)
 		
-		self.claim_by(klass=3, subclass=0, protocol=0)
+		cfgs = self.claim_by(klass=3, subclass=0, protocol=0)
 		self.read_serial()
 	
 	
@@ -48,6 +48,12 @@ class SCByCable(USBDevice, SCController):
 	def disconnected(self):
 		# Overrided to skip returning serial# to pool.
 		pass
+	
+	
+	def release(self):
+		self._driver.send_control(self._ccidx, struct.pack('>BB',
+			SCPacketType.ENABLE_LIZARDS_MODE, 0))
+		self.flush()
 	
 	
 	def __repr__(self):

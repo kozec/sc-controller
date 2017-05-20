@@ -140,6 +140,8 @@ class SCPacketType(IntEnum):
 	FEEDBACK = 0x8f
 	RESET = 0x95
 	GET_SERIAL = 0xAE
+	DISABLE_LIZARDS_MODE = 0x81
+	ENABLE_LIZARDS_MODE = 0x85
 
 
 class SCPacketLength(IntEnum):
@@ -282,6 +284,9 @@ class SCController(Controller):
 		 - uint8	led
 		 - 60b		unused
 		"""
+		
+		self._driver.send_control(self._ccidx, struct.pack('>BB',
+			SCPacketType.DISABLE_LIZARDS_MODE, 0))
 		
 		if idle_timeout is not None : self._idle_timeout = idle_timeout
 		if enable_gyros is not None : self._enable_gyros = enable_gyros

@@ -135,16 +135,17 @@ class USBDevice(object):
 	
 	
 	def claim_by(self, klass, subclass, protocol):
-		""" Claims all interfaces with specified parameters """
+		"""
+		Claims all interfaces with specified parameters.
+		"""
 		for inter in self.device[0]:
 			for setting in inter:
 				number = setting.getNumber()
-				if IS_WINDOWS:
-					pass
-				elif self.handle.kernelDriverActive(number):
-					self.handle.detachKernelDriver(number)
 				ksp = setting.getClass(), setting.getSubClass(), setting.getProtocol()
 				if ksp == (klass, subclass, protocol):
+					if not IS_WINDOWS:
+						if self.handle.kernelDriverActive(number):
+							self.handle.detachKernelDriver(number)
 					self.claim(number)
 	
 	
@@ -158,6 +159,15 @@ class USBDevice(object):
 				# Safe to ignore, happens when USB is removed
 				pass
 		self._claimed = []
+	
+	
+	def release(self):
+		"""
+		Called when daemon is shutting down.
+		Should be overriden with code that undoes any changes made durring
+		initialization.
+		"""
+		pass
 	
 	
 	def close(self):
@@ -187,6 +197,7 @@ class USBDriver(object):
 		if len(self._devices):
 			log.debug("Releasing devices...")
 			for d in self._devices.values():
+				d.release()
 				d.close()
 			self._devices = {}
 	
