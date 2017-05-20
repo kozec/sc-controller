@@ -7,9 +7,9 @@ Various stuff that I don't care to fit anywhere else.
 from __future__ import unicode_literals
 
 from scc.paths import get_controller_icons_path, get_default_controller_icons_path
+from scc.paths import get_menuicons_path, get_default_menuicons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
-from scc.paths import get_default_menuicons_path
 from math import pi as PI, sin, cos, atan2, sqrt
 import os, sys, shlex, gettext, logging
 
@@ -216,7 +216,7 @@ def find_icon(name, prefer_bw=False):
 	colors_filename = "%s.png" % (name,)
 	gray, colors = None, None
 	# TODO: User menuicons folder
-	for p in (get_default_menuicons_path(), ):
+	for p in (get_default_menuicons_path(), get_menuicons_path()):
 		# Check grayscale
 		if gray is None:
 			path = os.path.join(p, gray_filename)
