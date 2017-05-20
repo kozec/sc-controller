@@ -668,6 +668,7 @@
                         <property name="no_show_all">True</property>
                         <property name="adjustment">adjMenuSize</property>
                         <property name="round_digits">1</property>
+                        <property name="value_pos">right</property>
                         <signal name="format-value" handler="on_sclMenuSize_format_value" swapped="no"/>
                       </object>
                       <packing>
