@@ -284,21 +284,21 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 	
 	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
 					confirm_with=DEFAULT, cancel_with=DEFAULT,
-					show_with_release=False, max_size = 0):
+					show_with_release=False, size = 0):
 		if control_with == SAME:
 			# Little touch of backwards compatibility
 			control_with, confirm_with = self.DEFAULT_CONTROL, SAME
 		if type(control_with) == int:
 			# Allow short form in case when menu is assigned to pad
-			# eg.: menu("some-id", 3) sets max_size to 3
-			control_with, max_size = MenuAction.DEFAULT_CONTROL, control_with
-		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release, max_size)
+			# eg.: menu("some-id", 3) sets size to 3
+			control_with, size = MenuAction.DEFAULT_CONTROL, control_with
+		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release, size)
 		HapticEnabledAction.__init__(self)
 		self.menu_id = menu_id
 		self.control_with = control_with
 		self.confirm_with = confirm_with
 		self.cancel_with = cancel_with
-		self.max_size = max_size
+		self.size = size
 		self.x, self.y = MenuAction.DEFAULT_POSITION
 		self.show_with_release = bool(show_with_release)
 		self._stick_distance = 0
@@ -319,10 +319,10 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 			vals = (self.confirm_with, self.cancel_with, self.show_with_release)
 			if dflt == vals:
 				# Special case when menu is assigned to pad 
-				if self.max_size == 0:
+				if self.size == 0:
 					return "%s%s('%s')" % (" " * pad, self.COMMAND, self.menu_id)
 				else:
-					return "%s%s('%s', %s)" % (" " * pad, self.COMMAND, self.menu_id, self.max_size)
+					return "%s%s('%s', %s)" % (" " * pad, self.COMMAND, self.menu_id, self.size)
 		
 		return "%s%s(%s)" % (
 			" " * pad,
@@ -351,7 +351,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 			args += [
 				'--control-with', nameof(self.control_with),
 				'-x', str(self.x), '-y', str(self.y),
-				'--max-size', str(self.max_size),
+				'--size', str(self.size),
 				'--confirm-with', nameof(confirm_with),
 				'--cancel-with', nameof(cancel_with)
 			]
@@ -390,7 +390,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 					'--control-with', what,
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
-					'--max-size', str(self.max_size),
+					'--size', str(self.size),
 					'--confirm-with', nameof(confirm_with),
 					'--cancel-with', nameof(cancel_with),
 					*params
@@ -403,7 +403,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 					'--control-with', STICK,
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
-					'--max-size', str(self.max_size),
+					'--size', str(self.size),
 					'--confirm-with', "STICKPRESS",
 					'--cancel-with', STICK,
 					*params
@@ -457,12 +457,15 @@ class RadialMenuAction(MenuAction):
 	"""
 	COMMAND = "radialmenu"
 	MENU_TYPE = "radialmenu"
+	DEFAULT_CONFIRM = SCButtons.A
+	DEFAULT_CANCEL = SCButtons.B
+	DEFAULT_CONTROL = STICK
 	
-	def __init__(self, menu_id, control_with=MenuAction.DEFAULT_CONTROL,
+	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
 					confirm_with=DEFAULT, cancel_with=DEFAULT,
-					show_with_release=False):
+					show_with_release=False, size = 0):
 		MenuAction.__init__(self, menu_id, control_with, confirm_with,
-						cancel_with, show_with_release)
+						cancel_with, show_with_release, size)
 		self.rotation = 0
 	
 	

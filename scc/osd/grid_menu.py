@@ -33,8 +33,8 @@ class GridMenu(Menu):
 	
 	
 	def pack_items(self, parent, items):
-		if self._max_size > 0:
-			self.ipr = self._max_size
+		if self._size > 0:
+			self.ipr = self._size
 		else:
 			self.ipr = int(math.sqrt(max(1, len(items)-1))+1)
 			if len(items) == 6 : self.ipr = 3	# Special (common) cases

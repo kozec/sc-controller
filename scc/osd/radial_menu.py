@@ -31,6 +31,7 @@ class RadialMenu(Menu):
 		Menu.__init__(self, "osd-radial-menu")
 		self.angle = 0
 		self.rotation = 0
+		self.scale = 1.0
 		self.items_with_icon = []
 	
 	
@@ -43,13 +44,24 @@ class RadialMenu(Menu):
 	
 	def on_size_allocate(self, trash, allocation):
 		""" (Re)centers all icons when menu is displayed or size is changed """
-		cx, cy = allocation.width / 2, allocation.height / 2
+		cx = allocation.width * self.scale * 0.5
+		cy = allocation.height * self.scale * 0.5
 		radius = min(cx, cy) * 2 / 3
 		for i in self.items_with_icon:
 			angle, icon = float(i.a) * PI / 180.0, i.icon_widget
 			x, y = cx + sin(angle) * radius, cy - cos(angle) * radius
-			x, y = x - self.ICON_SIZE / 2, y - self.ICON_SIZE / 2
+			x = x - (self.ICON_SIZE * self.scale * 0.5)
+			y = y - (self.ICON_SIZE * self.scale * 0.5)
 			i.icon_widget.get_parent().move(i.icon_widget, x, y)
+	
+	
+	def get_window_size(self):
+		w, h = Menu.get_window_size(self)
+		if self.scale != 1.0:
+			w = int(w * self.scale)
+			h = int(h * self.scale)
+		return w, h
+		
 	
 	
 	def _add_arguments(self):
@@ -78,11 +90,19 @@ class RadialMenu(Menu):
 	
 	
 	def pack_items(self, trash, items):
-		index = 0
+		if self._size > 0 and self._size < 100:
+			self.scale = self._size / 100.0
+			root = self.editor.get_element("root")
+			SVGEditor.scale(root, self.scale)
 		pb = self.b.get_pixbuf()
+		# Image width is not scaled as everything bellow operates
+		# in 'root' object coordinate space
 		image_width = pb.get_width()
-		item_width = 360.0 / len(self.items)
-		a1, a2 = (-90.0 - item_width * 0.5) * PI / 180.0, (-90.0 + item_width * 0.5) * PI / 180.0
+		
+		index = 0
+		item_offset = 360.0 / len(self.items)
+		a1 = (-90.0 - item_offset * 0.5) * PI / 180.0
+		a2 = (-90.0 + item_offset * 0.5) * PI / 180.0
 		for i in self.items_with_icon:
 			i.icon_widget.get_parent().remove_child(i.icon_widget)
 		self.items_with_icon = []
@@ -99,12 +119,7 @@ class RadialMenu(Menu):
 				)
 			# Rotate arc to correct position
 			i.a = (360.0 / float(len(self.items))) * float(index)
-			rotation = "rotate(%s, %s, %s)" % (i.a, image_width / 2, image_width / 2)
-			if 'transform' in i.widget.attrib:
-				i.widget.attrib['transform'] += rotation
-			else:
-				i.widget.attrib['transform'] = rotation
-			print i.widget.attrib['transform']
+			SVGEditor.rotate(i.widget, i.a, image_width * 0.5, image_width * 0.5)
 			# Check if there is any icon
 			icon_file, has_colors = find_icon(i.icon, False) if hasattr(i, "icon") else (None, False)
 			if icon_file:
@@ -114,7 +129,7 @@ class RadialMenu(Menu):
 				self.editor.remove_element(SVGWidget.get_element(i.widget, "line2"))
 				i.icon_widget = MenuIcon(icon_file, has_colors)
 				i.icon_widget.set_name("osd-radial-menu-icon")
-				i.icon_widget.set_size_request(self.ICON_SIZE, self.ICON_SIZE)
+				i.icon_widget.set_size_request(self.ICON_SIZE * self.scale, self.ICON_SIZE * self.scale)
 				self.b.get_parent().put(i.icon_widget, 200, 200)
 				self.items_with_icon.append(i)
 			else:
@@ -156,20 +171,19 @@ class RadialMenu(Menu):
 		pb = self.b.get_pixbuf()
 		win = X.XID(self.get_window().get_xid())
 		
-		pixmap = X.create_pixmap(self.xdisplay, win,
-			pb.get_width(), pb.get_height(), 1)
-		width = pb.get_width()
-		height = pb.get_height()
+		width = int(pb.get_width() * self.scale)
+		height = int(pb.get_height() * self.scale)
+		pixmap = X.create_pixmap(self.xdisplay, win, width, height, 1)
 		self.f.move(self.cursor, int(width / 2), int(height / 2))
 		
 		gc = X.create_gc(self.xdisplay, pixmap, 0, None)
 		X.set_foreground(self.xdisplay, gc, 0)
-		X.fill_rectangle(self.xdisplay, pixmap, gc, 0, 0, pb.get_width(), pb.get_height())
+		X.fill_rectangle(self.xdisplay, pixmap, gc, 0, 0, width, height)
 		X.set_foreground(self.xdisplay, gc, 1)
 		X.set_background(self.xdisplay, gc, 1)
 		
-		r = int(pb.get_width() * 0.985)
-		x = (pb.get_width() - r) / 2
+		r = int(width * 0.985)
+		x = (width - r) / 2
 		
 		X.fill_arc(self.xdisplay, pixmap, gc,
 			x, x, r, r, 0, 360*64)
@@ -212,13 +226,13 @@ class RadialMenu(Menu):
 				ry = x * sin(self.rotation) + y * cos(self.rotation)
 				x, y = rx, ry
 			
-			max_w = self.get_allocation().width - (self.cursor.get_allocation().width * 1.0)
-			max_h = self.get_allocation().height - (self.cursor.get_allocation().height * 1.0)
+			max_w = self.get_allocation().width * self.scale - (self.cursor.get_allocation().width * 1.0)
+			max_h = self.get_allocation().height * self.scale - (self.cursor.get_allocation().height * 1.0)
 			cx = ((x * 0.75 / (STICK_PAD_MAX * 2.0)) + 0.5) * max_w
 			cy = (0.5 - (y * 0.75 / (STICK_PAD_MAX * 2.0))) * max_h
 			
-			cx -= self.cursor.get_allocation().width * 0.5
-			cy -= self.cursor.get_allocation().height * 0.5
+			cx -= self.cursor.get_allocation().width *  0.5
+			cy -= self.cursor.get_allocation().height *  0.5
 			self.f.move(self.cursor, int(cx), int(cy))
 			
 			if abs(x) + abs(y) > RadialMenu.MIN_DISTANCE:
