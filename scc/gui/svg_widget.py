@@ -14,6 +14,7 @@ from math import sin, cos, pi as PI
 import os, sys, re, logging
 
 log = logging.getLogger("Background")
+ET.register_namespace('', "http://www.w3.org/2000/svg")
 
 class SVGWidget(Gtk.EventBox):
 	FILENAME = "background.svg"
@@ -101,43 +102,6 @@ class SVGWidget(Gtk.EventBox):
 	
 	
 	@staticmethod
-	def get_element(tree, id):
-		"""
-		Recursively searches throught XML until element with specified ID is found.
-		
-		Additionaly, ensures that parent fields of returned
-		elements and all its parents are set.
-		"""
-		tree.parent = None
-		el = SVGWidget.find_by_id(tree, id)
-		if el is not None:
-			def add_parent(parent):
-				for child in parent:
-					child.parent = parent
-					add_parent(child)
-			add_parent(tree)
-			return el
-		return None
-	
-	
-	@staticmethod
-	def find_by_id(tree, id):
-		"""
-		Recursively searches throught XML until element with specified ID is found.
-		
-		Returns element or None, if there is not any.
-		"""
-		for child in tree:
-			if 'id' in child.attrib:
-				if child.attrib['id'] == id:
-					return child
-			r = SVGWidget.find_by_id(child, id)
-			if r is not None:
-				return r
-		return None	
-	
-	
-	@staticmethod
 	def find_areas(xml, translation, areas):
 		"""
 		Recursively searches throught XML for anything with ID of 'AREA_SOMETHING'
@@ -169,7 +133,7 @@ class SVGWidget(Gtk.EventBox):
 		"""
 		if type(element) in (str, unicode):
 			tree = ET.fromstring(self.current_svg.encode("utf-8"))
-			element = SVGWidget.get_element(tree, element)
+			element = SVGEditor.get_element(tree, element)
 		width, height = 0, 0
 		if 'x' in element.attrib: x += float(element.attrib['x'])
 		if 'y' in element.attrib: y += float(element.attrib['y'])
@@ -194,9 +158,9 @@ class SVGWidget(Gtk.EventBox):
 			tree = ET.fromstring(self.current_svg.encode("utf-8"))
 			# 2nd, change colors of some elements
 			for button in buttons:
-				el = SVGWidget.find_by_id(tree, button)
+				el = SVGEditor.find_by_id(tree, button)
 				if el is not None:
-					SVGWidget.recolor(el, buttons[button])
+					SVGEditor.recolor(el, buttons[button])
 				
 			# 3rd, turn it back into XML string......
 			xml = ET.tostring(tree)
@@ -206,31 +170,6 @@ class SVGWidget(Gtk.EventBox):
 			self.cache[cache_id] = svg.get_pixbuf()
 		
 		self.image.set_from_pixbuf(self.cache[cache_id])
-	
-	
-	@staticmethod
-	def recolor(element, color):
-		"""
-		Changes background color of element.
-		If element is group, descends into first element with fill set.
-		
-		Returns True on success, False if element cannot be recolored.
-		"""
-		if element.tag.endswith("path") or element.tag.endswith("rect") or element.tag.endswith("circle") or element.tag.endswith("text"):
-			if 'style' in element.attrib:
-				style = { y[0] : y[1] for y in [ x.split(":", 1) for x in element.attrib['style'].split(";") ] }
-				if 'fill' in style:
-					style['fill'] = color
-					if 'opacity' in style:
-						style['opacity'] = "1"
-					element.attrib['style'] = ";".join([ "%s:%s" % (x, style[x]) for x in style ])
-					return True
-		elif element.tag.endswith("g"):
-			# Group, needs to find RECT, CIRCLE or PATH, whatever comes first
-			for child in element:
-				SVGWidget.recolor(child, color)
-			return True
-		return False
 	
 	
 	def edit(self):
@@ -278,8 +217,15 @@ class SVGEditor(object):
 	RE_PARSE_TRANSFORM = re.compile(r"([a-z]+)\(([-0-9\.,]+)\)(.*)")
 	
 	def __init__(self, svgw):
-		self._svgw = svgw
-		self._tree = ET.fromstring(svgw.current_svg.encode("utf-8"))
+		if type(svgw) == str:
+			self._svgw = None
+			self._tree = ET.fromstring(svgw)
+		elif type(svgw) == unicode:
+			self._svgw = None
+			self._tree = ET.fromstring(svgw.encode("utf-8"))
+		else:
+			self._svgw = svgw
+			self._tree = ET.fromstring(svgw.current_svg.encode("utf-8"))
 	
 	
 	def commit(self):
@@ -293,6 +239,11 @@ class SVGEditor(object):
 		self._svgw.hilight({})
 		
 		return self
+	
+	
+	def to_string(self):
+		""" Returns modivied SVG as string """
+		return ET.tostring(self._tree)
 	
 	
 	@staticmethod
@@ -314,7 +265,7 @@ class SVGEditor(object):
 		
 		Returns None if element cannot be found
 		"""
-		e = SVGWidget.get_element(self._tree, id)
+		e = SVGEditor.get_element(self, id)
 		if e is not None:
 			copy = SVGEditor._deep_copy(e)
 			e.parent.append(copy)
@@ -332,17 +283,77 @@ class SVGEditor(object):
 		"""
 		
 		if type(e) in (str, unicode):
-			e = SVGWidget.get_element(self._tree, e)
+			e = SVGEditor.get_element(self, e)
 		if e is not None:
 			e.parent.remove(e)
 		return self
 	
 	
-	def get_element(self, id):
+	@staticmethod
+	def get_element(tree, id):
 		"""
-		Returns element by ID or None.
+		Recursively searches throught XML until element with specified ID is found.
+		
+		Additionaly, ensures that parent fields of returned
+		elements and all its parents are set.
+		
+		Returns element or None, if there is not any.
 		"""
-		return SVGWidget.get_element(self._tree, id)
+		if isinstance(tree, SVGEditor):
+			tree = tree._tree
+		
+		# tree.parent = None
+		el = SVGEditor.find_by_id(tree, id)
+		if el is not None:
+			def add_parent(parent):
+				for child in parent:
+					child.parent = parent
+					add_parent(child)
+			add_parent(tree)
+			return el
+		return None
+	
+	
+	@staticmethod
+	def find_by_id(tree, id):
+		"""
+		Recursively searches throught XML until element with specified ID is found.
+		
+		Returns element or None, if there is not any.
+		"""
+		for child in tree:
+			if 'id' in child.attrib:
+				if child.attrib['id'] == id:
+					return child
+			r = SVGEditor.find_by_id(child, id)
+			if r is not None:
+				return r
+		return None	
+	
+	
+	@staticmethod
+	def recolor(element, color):
+		"""
+		Changes background color of element.
+		If element is group, descends into first element with fill set.
+		
+		Returns True on success, False if element cannot be recolored.
+		"""
+		if element.tag.endswith("path") or element.tag.endswith("rect") or element.tag.endswith("circle") or element.tag.endswith("text"):
+			if 'style' in element.attrib:
+				style = { y[0] : y[1] for y in [ x.split(":", 1) for x in element.attrib['style'].split(";") ] }
+				if 'fill' in style:
+					style['fill'] = color
+					if 'opacity' in style:
+						style['opacity'] = "1"
+					element.attrib['style'] = ";".join([ "%s:%s" % (x, style[x]) for x in style ])
+					return True
+		elif element.tag.endswith("g"):
+			# Group, needs to find RECT, CIRCLE or PATH, whatever comes first
+			for child in element:
+				SVGEditor.recolor(child, color)
+			return True
+		return False
 	
 	
 	@staticmethod
@@ -488,6 +499,7 @@ class SVGEditor(object):
 		
 		return matrix
 	
+	
 	@staticmethod
 	def set_text(xml, text):
 		has_valid_children = False
@@ -517,3 +529,15 @@ class SVGEditor(object):
 		
 		walk(self._tree)
 		return self
+	
+	
+	@staticmethod
+	def add_element(parent, tagName, **attributes):
+		"""
+		Creates new element as child of specified parent.
+		Returns created element.
+		"""
+		attributes = { k : str(attributes[k]) for k in attributes }
+		e = ET.Element(tagName, attributes)
+		parent.append(e)
+		return e

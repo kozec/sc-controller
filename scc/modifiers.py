@@ -98,7 +98,7 @@ class Modifier(Action):
 	
 	
 	def strip(self):
-		return self.action
+		return self.action.strip()
 	
 	
 	def compress(self):

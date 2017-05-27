@@ -92,7 +92,7 @@ class RadialMenu(Menu):
 	def pack_items(self, trash, items):
 		if self._size > 0 and self._size < 100:
 			self.scale = self._size / 100.0
-			root = self.editor.get_element("root")
+			root = SVGEditor.get_element(self.editor, "root")
 			SVGEditor.scale(root, self.scale)
 		pb = self.b.get_pixbuf()
 		# Image width is not scaled as everything bellow operates
@@ -108,8 +108,8 @@ class RadialMenu(Menu):
 		self.items_with_icon = []
 		for i in items:
 			# Set size of each arc
-			if SVGWidget.get_element(i.widget, "arc") is not None:
-				l = SVGWidget.get_element(i.widget, "arc")
+			if SVGEditor.get_element(i.widget, "arc") is not None:
+				l = SVGEditor.get_element(i.widget, "arc")
 				radius = float(l.attrib["radius"])	# TODO: Find how to get value of 'sodipodi:rx'
 				l.attrib["d"] = l.attrib["d-template"] % (
 					radius * cos(a1) + image_width / 2,
@@ -124,9 +124,9 @@ class RadialMenu(Menu):
 			icon_file, has_colors = find_icon(i.icon, False) if hasattr(i, "icon") else (None, False)
 			if icon_file:
 				# Icon - hide all text and place MenuIcon widget on top of image
-				self.editor.remove_element(SVGWidget.get_element(i.widget, "menuitem_text"))
-				self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
-				self.editor.remove_element(SVGWidget.get_element(i.widget, "line2"))
+				self.editor.remove_element(SVGEditor.get_element(i.widget, "menuitem_text"))
+				self.editor.remove_element(SVGEditor.get_element(i.widget, "line0"))
+				self.editor.remove_element(SVGEditor.get_element(i.widget, "line2"))
 				i.icon_widget = MenuIcon(icon_file, has_colors)
 				i.icon_widget.set_name("osd-radial-menu-icon")
 				i.icon_widget.set_size_request(self.ICON_SIZE * self.scale, self.ICON_SIZE * self.scale)
@@ -134,22 +134,22 @@ class RadialMenu(Menu):
 				self.items_with_icon.append(i)
 			else:
 				# No icon - rotate text in arc to other direction to keep it horisontal
-				if SVGWidget.get_element(i.widget, "menuitem_text") is not None:
-					l = SVGWidget.get_element(i.widget, "menuitem_text")
+				if SVGEditor.get_element(i.widget, "menuitem_text") is not None:
+					l = SVGEditor.get_element(i.widget, "menuitem_text")
 					l.attrib['id'] = "text_" + i.id
 					l.attrib['transform'] = "%s rotate(%s)" % (l.attrib['transform'], -i.a)
 				# Place up to 3 lines of item label
 				label = i.label.split("\n")
 				first_line = 0
 				if len(label) == 1:
-					self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
-					self.editor.remove_element(SVGWidget.get_element(i.widget, "line2"))
+					self.editor.remove_element(SVGEditor.get_element(i.widget, "line0"))
+					self.editor.remove_element(SVGEditor.get_element(i.widget, "line2"))
 					first_line = 1
 				elif len(label) == 2:
-					self.editor.remove_element(SVGWidget.get_element(i.widget, "line0"))
+					self.editor.remove_element(SVGEditor.get_element(i.widget, "line0"))
 					first_line = 1
 				for line in xrange(0, len(label)):
-					l = SVGWidget.get_element(i.widget, "line%s" % (first_line + line,))
+					l = SVGEditor.get_element(i.widget, "line%s" % (first_line + line,))
 					if l is None:
 						break
 					SVGEditor.set_text(l, label[line])
