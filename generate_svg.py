@@ -147,8 +147,9 @@ class Box(object):
 	
 	def place(self, gen, root):
 		e = SVGEditor.add_element(root, "rect",
-			style = "opacity:1;fill-color:#000000;fill-opacity:1.0;" +
-				"fill-rule:evenodd;stroke:#06a400;stroke-width:0.5;",
+			style = "opacity:1;fill-opacity:1.0;stroke-width:2.0;",
+			fill="#000000",
+			stroke="#06a400",
 			id = "box_%s" % (self.name,),
 			width = self.width, height = self.height,
 			x = self.x, y = self.y,
@@ -162,6 +163,7 @@ class Box(object):
 				image = find_image(icon)
 				if image:
 					SVGEditor.add_element(root, "image", x = x, y = y,
+						style = "filter:url(#filterInvert)",
 						width = h, height = h, href = image)
 				x += h + self.SPACING
 			x = self.x + self.PADDING + self.icount * (h + self.SPACING)
@@ -177,11 +179,22 @@ class Box(object):
 		x1, y1 = self.x, self.y
 		x2, y2 = x1 + self.width, y1 + self.height
 		if self.align & (Align.LEFT | Align.RIGHT) == 0:
-			edges = [ [ x1, y1 ], [ x2, y2 ],
-					  [ x1, y2 ], [ x2, y1 ] ]
+			edges = [ [ x2, y2 ], [ x1, y2 ] ]
+		elif self.align & Align.BOTTOM == Align.BOTTOM:
+			if self.align & Align.LEFT != 0:
+				edges = [ [ x2, y2 ], [ x1, y1 ] ]
+			elif self.align & Align.RIGHT != 0:
+				edges = [ [ x2, y1 ], [ x1, y2 ] ]
+		elif self.align & Align.TOP == Align.TOP:
+			if self.align & Align.LEFT != 0:
+				edges = [ [ x2, y1 ], [ x1, y2 ] ]
+			elif self.align & Align.RIGHT != 0:
+				edges = [ [ x1, y1 ], [ x2, y2 ] ]
 		else:
-			edges = [ [ x1, y1 ], [ x2, y1 ],
-					  [ x1, y2 ], [ x2, y2 ] ]
+			if self.align & Align.LEFT != 0:
+				edges = [ [ x1, y1 ], [ x2, y2 ] ]
+			elif self.align & Align.RIGHT != 0:
+				edges = [ [ x1, y1 ], [ x1, y2 ] ]
 		
 		targets = SVGEditor.get_element(root, "markers_%s" % (self.name,))
 		if targets is None:
@@ -189,9 +202,9 @@ class Box(object):
 		i = 0
 		for target in targets:
 			tx, ty = float(target.attrib["cx"]), float(target.attrib["cy"])
-			i += 1
 			try:
 				edges[i] += [ tx, ty ]
+				i += 1
 			except IndexError:
 				break
 		edges = [ i for i in edges if len(i) == 4]
@@ -219,10 +232,6 @@ class Generator(object):
 		
 		profile = Profile(TalkingActionParser()).load("test.sccprofile")
 		boxes = []
-
-		box_stick = box = Box(self.PADDING, self.PADDING, Align.LEFT | Align.BOTTOM, "stick")
-		box.add("STICK", Action.AC_STICK, profile.stick)
-		boxes.append(box)
 		
 		box_lpad = box = Box(self.PADDING, 0, Align.LEFT, "lpad")
 		box.add("LPAD", Action.AC_PAD, profile.pads.get(profile.LEFT))
@@ -255,11 +264,16 @@ class Generator(object):
 		boxes.append(box)
 		
 		
-		box_abxy = box = Box(self.PADDING, self.PADDING, Align.RIGHT | Align.BOTTOM, "abxy")
+		box_abxy = box = Box(4 * self.PADDING, self.PADDING, Align.RIGHT | Align.BOTTOM, "abxy")
 		box.add("A", Action.AC_BUTTON, profile.buttons.get(SCButtons.A))
 		box.add("B", Action.AC_BUTTON, profile.buttons.get(SCButtons.B))
 		box.add("X", Action.AC_BUTTON, profile.buttons.get(SCButtons.X))
 		box.add("Y", Action.AC_BUTTON, profile.buttons.get(SCButtons.Y))
+		boxes.append(box)
+		
+		
+		box_stick = box = Box(4 * self.PADDING, self.PADDING, Align.LEFT | Align.BOTTOM, "stick")
+		box.add("STICK", Action.AC_STICK, profile.stick)
 		boxes.append(box)
 		
 		
@@ -270,12 +284,24 @@ class Generator(object):
 		for b in boxes:
 			b.calculate(self)
 		
-		self.fix_width(box_left, box_lpad, box_stick)
+		# Set ABXY and Stick size & position
+		box_abxy.height = box_stick.height = self.full_height * 0.25
+		box_abxy.width = box_stick.width = self.full_width * 0.3
+		box_abxy.y = self.full_height - self.PADDING - box_abxy.height
+		box_stick.y = self.full_height - self.PADDING - box_stick.height
+		box_abxy.x = self.full_width - self.PADDING - box_abxy.width
+		
+		# Set boxes on left and right to same width and distribute
+		# remaining vertical space among them
+		self.fix_width(box_left, box_lpad)
+		self.fix_width(box_right, box_rpad)
 		self.distribute_height(box_left, box_lpad, box_stick)
+		self.distribute_height(box_right, box_rpad, box_abxy)
 		
 		for b in boxes:
-			b.place(self, root)
 			b.place_marker(self, root)
+		for b in boxes:
+			b.place(self, root)
 		
 		file("out.svg", "w").write(svg.to_string())
 	
@@ -284,7 +310,10 @@ class Generator(object):
 		""" Sets width of all passed boxes to width of widest box """
 		width = 0
 		for b in boxes: width = max(width, b.width)
-		for b in boxes: b.width = width
+		for b in boxes:
+			b.width = width
+			if b.align & Align.RIGHT:
+				b.x = self.full_width - b.width - self.PADDING
 
 
 	def distribute_height(self, *boxes):
@@ -299,11 +328,16 @@ class Generator(object):
 		
 		if rest > 0:
 			for b in boxes:
-				b.height += rest / len(boxes)
 				if b.align & Align.BOTTOM != 0:
-					b.y -= rest / len(boxes)
-				elif b.align & Align.TOP == 0:
+					#b.height += rest / len(boxes)
+					#b.y -= rest / len(boxes)
+					pass
+				elif b.align & Align.TOP != 0:
+					# aligned to top
+					b.height += rest / len(boxes)
+				else:
 					# aligned to center
+					b.height += rest / len(boxes)
 					b.y -= rest / len(boxes) / 2
 
 
