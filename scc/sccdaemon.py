@@ -1195,7 +1195,7 @@ class Subprocess(object):
 		while not self._killed:
 			self.p = subprocess.Popen(self.args, stdin=None)
 			self.p.communicate()
-			if self.p.returncode == 8:
+			if self.p and self.p.returncode == 8:
 				log.warning("%s exited with code 8; not restarting",
 					self.binary_name)
 				self.p = None
