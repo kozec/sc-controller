@@ -3,3 +3,5 @@
 *.so
 build/
 .atomignore
+commit*
+*test.*
