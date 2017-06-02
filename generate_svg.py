@@ -65,13 +65,16 @@ class Box(object):
 	MIN_WIDTH = 100
 	MIN_HEIGHT = 50
 	
-	def __init__(self, anchor_x, anchor_y, align, name):
+	def __init__(self, anchor_x, anchor_y, align, name,
+			min_width = MIN_WIDTH, min_height = MIN_HEIGHT):
 		self.name = name
 		self.lines = []
 		self.anchor = anchor_x, anchor_y
 		self.align = align
+		self.min_height = min_height
 		self.x, self.y = 0, 0
-		self.width, self.height = self.MIN_WIDTH, self.MIN_HEIGHT
+		self.min_width = min_width
+		self.min_height = min_height
 	
 	
 	def to_string(self):
@@ -120,14 +123,14 @@ class Box(object):
 	
 	
 	def calculate(self, gen):
-		self.width, self.height = self.MIN_WIDTH, 2 * self.PADDING
+		self.width, self.height = self.min_width, 2 * self.PADDING
 		self.icount = 0
 		for line in self.lines:
 			lw, lh = line.get_size(gen)
 			self.width, self.height = max(self.width, lw), self.height + lh + self.SPACING
 			self.icount = max(self.icount, len(line.icons))
 		self.width += 2 * self.PADDING + self.icount * (gen.line_height + self.SPACING)
-		self.height = max(self.height, self.MIN_HEIGHT)
+		self.height = max(self.height, self.min_height)
 		
 		anchor_x, anchor_y = self.anchor
 		if (self.align & Align.TOP) != 0:
@@ -187,14 +190,14 @@ class Box(object):
 				edges = [ [ x2, y1 ], [ x1, y2 ] ]
 		elif self.align & Align.TOP == Align.TOP:
 			if self.align & Align.LEFT != 0:
-				edges = [ [ x2, y1 ], [ x1, y2 ] ]
-			elif self.align & Align.RIGHT != 0:
-				edges = [ [ x1, y1 ], [ x2, y2 ] ]
-		else:
-			if self.align & Align.LEFT != 0:
-				edges = [ [ x1, y1 ], [ x2, y2 ] ]
+				edges = [ [ x2, y1 ], [ x2, y2 ] ]
 			elif self.align & Align.RIGHT != 0:
 				edges = [ [ x1, y1 ], [ x1, y2 ] ]
+		else:
+			if self.align & Align.LEFT != 0:
+				edges = [ [ x2, y1 ], [ x2, y2 ] ]
+			elif self.align & Align.RIGHT != 0:
+				edges = [ [ x1, y1 ], [ x2, y2 ] ]
 		
 		targets = SVGEditor.get_element(root, "markers_%s" % (self.name,))
 		if targets is None:
@@ -233,34 +236,28 @@ class Generator(object):
 		profile = Profile(TalkingActionParser()).load("test.sccprofile")
 		boxes = []
 		
-		box_lpad = box = Box(self.PADDING, 0, Align.LEFT, "lpad")
-		box.add("LPAD", Action.AC_PAD, profile.pads.get(profile.LEFT))
-		boxes.append(box)
+		
+		box_bcs = Box(0, self.PADDING, Align.TOP, "bcs")
+		box_bcs.add("BACK", Action.AC_BUTTON, profile.buttons.get(SCButtons.BACK))
+		box_bcs.add("C", Action.AC_BUTTON, profile.buttons.get(SCButtons.C))
+		box_bcs.add("START", Action.AC_BUTTON, profile.buttons.get(SCButtons.START))
+		boxes.append(box_bcs)
 		
 		
-		box_rpad = box = Box(self.PADDING, 0, Align.RIGHT, "rpad")
-		box.add("RPAD", Action.AC_PAD, profile.pads.get(profile.RIGHT))
-		boxes.append(box)
-		
-		
-		box_bcs = box = Box(0, self.PADDING, Align.TOP, "bcs")
-		box.add("BACK", Action.AC_BUTTON, profile.buttons.get(SCButtons.BACK))
-		box.add("C", Action.AC_BUTTON, profile.buttons.get(SCButtons.C))
-		box.add("START", Action.AC_BUTTON, profile.buttons.get(SCButtons.START))
-		boxes.append(box)
-		
-		
-		box_left =box = Box(self.PADDING, self.PADDING, Align.LEFT | Align.TOP, "left")
-		box.add("LTRIGGER", Action.AC_TRIGGER, profile.triggers.get(profile.LEFT))
-		box.add("LB", Action.AC_BUTTON, profile.buttons.get(SCButtons.LB))
-		box.add("LGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.LGRIP))
-		boxes.append(box)
+		box_left = Box(self.PADDING, self.PADDING, Align.LEFT | Align.TOP,
+			"left", min_height = self.full_height * 0.5)
+		box_left.add("LTRIGGER", Action.AC_TRIGGER, profile.triggers.get(profile.LEFT))
+		box_left.add("LB", Action.AC_BUTTON, profile.buttons.get(SCButtons.LB))
+		box_left.add("LGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.LGRIP))
+		box_left.add("LPAD", Action.AC_PAD, profile.pads.get(profile.LEFT))
+		boxes.append(box_left)
 		
 		
 		box_right = box = Box(self.PADDING, self.PADDING, Align.RIGHT | Align.TOP, "right")
 		box.add("RTRIGGER", Action.AC_TRIGGER, profile.triggers.get(profile.RIGHT))
 		box.add("RB", Action.AC_BUTTON, profile.buttons.get(SCButtons.RB))
 		box.add("RGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.RGRIP))
+		box.add("RPAD", Action.AC_PAD, profile.pads.get(profile.RIGHT))
 		boxes.append(box)
 		
 		
@@ -293,10 +290,8 @@ class Generator(object):
 		
 		# Set boxes on left and right to same width and distribute
 		# remaining vertical space among them
-		self.fix_width(box_left, box_lpad)
-		self.fix_width(box_right, box_rpad)
-		self.distribute_height(box_left, box_lpad, box_stick)
-		self.distribute_height(box_right, box_rpad, box_abxy)
+		# self.distribute_height(box_left, box_lpad, box_stick)
+		# self.distribute_height(box_right, box_rpad, box_abxy)
 		
 		for b in boxes:
 			b.place_marker(self, root)
