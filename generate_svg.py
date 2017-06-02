@@ -1,10 +1,14 @@
 #!/usr/bin/env python2
-from scc.actions import Action, DPadAction, XYAction
+from scc.tools import _
+
+from scc.actions import Action, DPadAction, XYAction, MouseAction
 from scc.modifiers import ModeModifier, DoubleclickModifier
+from scc.special_actions import MenuAction
 from scc.parser import TalkingActionParser
 from scc.constants import SCButtons
 from scc.profile import Profile
 from scc.tools import nameof
+from scc.uinput import Rels
 from scc.gui.svg_widget import SVGEditor
 from scc.lib import IntEnum
 import os
@@ -105,7 +109,12 @@ class Box(object):
 			return LineCollection(*lines)
 		
 		action = action.strip()
-		if isinstance(action, DPadAction):
+		if isinstance(action, MenuAction):
+			if self.name == "bcs" and action.menu_id == "Default.menu":
+				# Special case, this action is expected in every profile,
+				# so there is no need to draw it here
+				return LineCollection()
+		elif isinstance(action, DPadAction):
 			return LineCollection(
 				self.add("DPAD_UP",    Action.AC_BUTTON, action.actions[0]),
 				self.add("DPAD_DOWN",  Action.AC_BUTTON, action.actions[1]),
@@ -113,6 +122,12 @@ class Box(object):
 				self.add("DPAD_RIGHT", Action.AC_BUTTON, action.actions[3])
 			)
 		elif isinstance(action, XYAction):
+			if isinstance(action.x, MouseAction) and isinstance(action.y, MouseAction):
+				if action.x.get_axis() in (Rels.REL_HWHEEL, Rels.REL_WHEEL):
+					# Special case, pad bound to wheel
+					line = Line(icon, _("Mouse Wheel"))
+					self.lines.append(line)
+					return line	
 			return LineCollection(
 				self.add("AXISX",  Action.AC_BUTTON, action.x),
 				self.add("AXISY",  Action.AC_BUTTON, action.y)
