@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.92.1 r"
-   sodipodi:docname="DOUBLECLICK.svg">
+   sodipodi:docname="HOLD.svg">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -25,17 +25,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="7.9195959"
-     inkscape:cx="58.901514"
-     inkscape:cy="33.955793"
+     inkscape:zoom="3.959798"
+     inkscape:cx="73.090185"
+     inkscape:cy="-9.3836238"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      units="px"
      inkscape:window-width="1843"
      inkscape:window-height="1039"
-     inkscape:window-x="852"
-     inkscape:window-y="-14"
+     inkscape:window-x="788"
+     inkscape:window-y="0"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -59,36 +59,25 @@
      id="layer1"
      transform="translate(-225.71241,-824.40319)"
      style="opacity:0.95">
-    <path
-       style="opacity:0.95;fill:#000000;fill-opacity:0.34297521;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 271.17687,883.89294 v -15.0751 h -26.92892 v 15.0751 z"
-       id="path4206-7-3"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccc" />
-    <path
-       style="opacity:0.95;fill:#000000;fill-opacity:0.53275111;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 278.95081,868.74474 c 7.14288,-1.69473 6.82717,-8.10585 0,-10.13606 -16.37925,-2.67233 -26.28282,-2.61218 -41.20575,0 -8.53378,2.57628 -8.7939,8.20814 0,10.13606 z"
-       id="path4206-7-3-6"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccc" />
     <g
        id="g4532"
        transform="matrix(0.3025136,0,0,0.3025136,106.45561,680.0945)" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="231.04575"
-       y="849.49652"
-       id="text4544"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:34.82283401px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.87057084px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="258.88254"
+       y="758.22589"
+       id="text4544"
+       transform="scale(0.87057091,1.1486715)"><tspan
          sodipodi:role="line"
          id="tspan4542"
-         x="231.04575"
-         y="849.49652"
-         style="font-size:26.66666603px">hold</tspan><tspan
+         x="258.88254"
+         y="758.22589"
+         style="font-size:37.14435577px;stroke-width:0.87057084px">hold</tspan><tspan
          sodipodi:role="line"
-         x="231.04575"
-         y="903.59906"
+         x="258.88254"
+         y="801.75446"
          id="tspan4546"
-         style="font-size:26.66666603px" /></text>
+         style="font-size:37.14435577px;stroke-width:0.87057084px" /></text>
   </g>
 </svg>

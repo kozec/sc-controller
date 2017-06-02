@@ -40,17 +40,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.1920146"
-     inkscape:cx="617.13112"
-     inkscape:cy="469.70627"
+     inkscape:zoom="1"
+     inkscape:cx="126.40264"
+     inkscape:cy="638.87987"
      inkscape:document-units="px"
      inkscape:current-layer="root"
      showgrid="false"
      units="px"
      inkscape:window-width="1300"
      inkscape:window-height="947"
-     inkscape:window-x="1364"
-     inkscape:window-y="110"
+     inkscape:window-x="1331"
+     inkscape:window-y="96"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -213,14 +213,14 @@
      style="display:inline">
     <text
        id="label_template"
-       style="font-size:22px;font-family:'Ubuntu Mono';fill:#ffffff"
-       width="12"
-       height="14"
-       x="-4.2873745"
-       y="-18.285336">
+       style="font-size:32px;font-family:'Ubuntu Mono';fill:#ffffff"
+       width="16"
+       height="21"
+       x="-14.079506"
+       y="-12.977402">
       <tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:37.33333206px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono'"
-         id="tspan4524">X</tspan>
+         id="tspan4524"
+         style="font-size:32px;font-family:'Ubuntu Mono';fill:#ffffff">X</tspan>
     </text>
     <g
        style="display:inline;opacity:1"

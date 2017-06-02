@@ -107,10 +107,10 @@ class Box(object):
 		action = action.strip()
 		if isinstance(action, DPadAction):
 			return LineCollection(
-				self.add("UP",    Action.AC_BUTTON, action.actions[0]),
-				self.add("DOWN",  Action.AC_BUTTON, action.actions[1]),
-				self.add("LEFT",  Action.AC_BUTTON, action.actions[2]),
-				self.add("RIGHT", Action.AC_BUTTON, action.actions[3])
+				self.add("DPAD_UP",    Action.AC_BUTTON, action.actions[0]),
+				self.add("DPAD_DOWN",  Action.AC_BUTTON, action.actions[1]),
+				self.add("DPAD_LEFT",  Action.AC_BUTTON, action.actions[2]),
+				self.add("DPAD_RIGHT", Action.AC_BUTTON, action.actions[3])
 			)
 		elif isinstance(action, XYAction):
 			return LineCollection(
@@ -246,32 +246,33 @@ class Generator(object):
 		
 		box_left = Box(self.PADDING, self.PADDING, Align.LEFT | Align.TOP,
 			"left", min_height = self.full_height * 0.5)
-		box_left.add("LTRIGGER", Action.AC_TRIGGER, profile.triggers.get(profile.LEFT))
+		box_left.add("LEFT", Action.AC_TRIGGER, profile.triggers.get(profile.LEFT))
 		box_left.add("LB", Action.AC_BUTTON, profile.buttons.get(SCButtons.LB))
 		box_left.add("LGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.LGRIP))
 		box_left.add("LPAD", Action.AC_PAD, profile.pads.get(profile.LEFT))
 		boxes.append(box_left)
 		
 		
-		box_right = box = Box(self.PADDING, self.PADDING, Align.RIGHT | Align.TOP, "right")
-		box.add("RTRIGGER", Action.AC_TRIGGER, profile.triggers.get(profile.RIGHT))
-		box.add("RB", Action.AC_BUTTON, profile.buttons.get(SCButtons.RB))
-		box.add("RGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.RGRIP))
-		box.add("RPAD", Action.AC_PAD, profile.pads.get(profile.RIGHT))
-		boxes.append(box)
+		box_right = Box(self.PADDING, self.PADDING, Align.RIGHT | Align.TOP,
+			"right", min_height = self.full_height * 0.5)
+		box_right.add("RIGHT", Action.AC_TRIGGER, profile.triggers.get(profile.RIGHT))
+		box_right.add("RB", Action.AC_BUTTON, profile.buttons.get(SCButtons.RB))
+		box_right.add("RGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.RGRIP))
+		box_right.add("RPAD", Action.AC_PAD, profile.pads.get(profile.RIGHT))
+		boxes.append(box_right)
 		
 		
-		box_abxy = box = Box(4 * self.PADDING, self.PADDING, Align.RIGHT | Align.BOTTOM, "abxy")
-		box.add("A", Action.AC_BUTTON, profile.buttons.get(SCButtons.A))
-		box.add("B", Action.AC_BUTTON, profile.buttons.get(SCButtons.B))
-		box.add("X", Action.AC_BUTTON, profile.buttons.get(SCButtons.X))
-		box.add("Y", Action.AC_BUTTON, profile.buttons.get(SCButtons.Y))
-		boxes.append(box)
+		box_abxy = Box(4 * self.PADDING, self.PADDING, Align.RIGHT | Align.BOTTOM, "abxy")
+		box_abxy.add("A", Action.AC_BUTTON, profile.buttons.get(SCButtons.A))
+		box_abxy.add("B", Action.AC_BUTTON, profile.buttons.get(SCButtons.B))
+		box_abxy.add("X", Action.AC_BUTTON, profile.buttons.get(SCButtons.X))
+		box_abxy.add("Y", Action.AC_BUTTON, profile.buttons.get(SCButtons.Y))
+		boxes.append(box_abxy)
 		
 		
-		box_stick = box = Box(4 * self.PADDING, self.PADDING, Align.LEFT | Align.BOTTOM, "stick")
-		box.add("STICK", Action.AC_STICK, profile.stick)
-		boxes.append(box)
+		box_stick = Box(4 * self.PADDING, self.PADDING, Align.LEFT | Align.BOTTOM, "stick")
+		box_stick.add("STICK", Action.AC_STICK, profile.stick)
+		boxes.append(box_stick)
 		
 		
 		w = int(float(background.attrib.get("width") or 800))
@@ -288,10 +289,8 @@ class Generator(object):
 		box_stick.y = self.full_height - self.PADDING - box_stick.height
 		box_abxy.x = self.full_width - self.PADDING - box_abxy.width
 		
-		# Set boxes on left and right to same width and distribute
-		# remaining vertical space among them
-		# self.distribute_height(box_left, box_lpad, box_stick)
-		# self.distribute_height(box_right, box_rpad, box_abxy)
+		self.equal_width(box_left, box_right)
+		self.equal_height(box_left, box_right)
 		
 		for b in boxes:
 			b.place_marker(self, root)
@@ -301,7 +300,8 @@ class Generator(object):
 		file("out.svg", "w").write(svg.to_string())
 	
 	
-	def fix_width(self, *boxes):
+	
+	def equal_width(self, *boxes):
 		""" Sets width of all passed boxes to width of widest box """
 		width = 0
 		for b in boxes: width = max(width, b.width)
@@ -309,31 +309,14 @@ class Generator(object):
 			b.width = width
 			if b.align & Align.RIGHT:
 				b.x = self.full_width - b.width - self.PADDING
-
-
-	def distribute_height(self, *boxes):
-		"""
-		Distributes available height between specified boxes, ensuring that
-		box with many lines gets enough space and there is no empty space in
-		between
-		"""
-		height = self.full_height - (2 + len(boxes)) *self.PADDING
-		occupied = sum([ b.height for b in boxes ])
-		rest = height - occupied
-		
-		if rest > 0:
-			for b in boxes:
-				if b.align & Align.BOTTOM != 0:
-					#b.height += rest / len(boxes)
-					#b.y -= rest / len(boxes)
-					pass
-				elif b.align & Align.TOP != 0:
-					# aligned to top
-					b.height += rest / len(boxes)
-				else:
-					# aligned to center
-					b.height += rest / len(boxes)
-					b.y -= rest / len(boxes) / 2
+	
+	
+	def equal_height(self, *boxes):
+		""" Sets height of all passed boxes to height of tallest box """
+		height = 0
+		for b in boxes: height = max(height, b.height)
+		for b in boxes:
+			b.height = height
 
 
 Generator()
