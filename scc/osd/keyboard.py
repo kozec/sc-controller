@@ -31,7 +31,7 @@ import scc.osd.osk_actions
 
 
 import os, sys, json, logging
-log = logging.getLogger("osd.menu")
+log = logging.getLogger("osd.keyboard")
 
 
 class Keyboard(OSDWindow, TimerManager):

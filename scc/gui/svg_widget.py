@@ -133,6 +133,7 @@ class SVGWidget(Gtk.EventBox):
 		"""
 		if type(element) in (str, unicode):
 			tree = ET.fromstring(self.current_svg.encode("utf-8"))
+			SVGEditor.update_parents(tree)
 			element = SVGEditor.get_element(tree, element)
 		width, height = 0, 0
 		if 'x' in element.attrib: x += float(element.attrib['x'])
@@ -290,28 +291,32 @@ class SVGEditor(object):
 	
 	
 	@staticmethod
+	def update_parents(tree):
+		"""
+		Ensures that parent fields of all tree elements are are set.
+		"""
+		if isinstance(tree, SVGEditor):
+			tree = tree._tree
+		def add_parent(parent):
+			for child in parent:
+				child.parent = parent
+				add_parent(child)
+		add_parent(tree)
+		if not hasattr(tree, "parent"):
+			tree.parent = None
+	
+	
+	@staticmethod
 	def get_element(tree, id):
 		"""
 		Recursively searches throught XML until element with specified ID is found.
-		
-		Additionaly, ensures that parent fields of returned
-		elements and all its parents are set.
 		
 		Returns element or None, if there is not any.
 		"""
 		if isinstance(tree, SVGEditor):
 			tree = tree._tree
 		
-		# tree.parent = None
-		el = SVGEditor.find_by_id(tree, id)
-		if el is not None:
-			def add_parent(parent):
-				for child in parent:
-					child.parent = parent
-					add_parent(child)
-			add_parent(tree)
-			return el
-		return None
+		return SVGEditor.find_by_id(tree, id)
 	
 	
 	@staticmethod
