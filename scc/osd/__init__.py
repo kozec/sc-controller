@@ -255,24 +255,35 @@ class OSDWindow(Gtk.Window):
 		X.destroy_region (dpy, reg)
 	
 	
-	def compute_position(self):
-		""" Adjusts position for currently active screen (display) """
-		x, y = self.position
+	def get_active_screen_geometry(self):
+		"""
+		Returns geometry of active screen or None if active screen
+		cannot be determined.
+		"""
 		screen = self.get_window().get_screen()
 		active_window = screen.get_active_window()
-		width, height = self.get_window_size()
 		if active_window:
 			monitor = screen.get_monitor_at_window(active_window)
 			if monitor is not None:
-				geometry = screen.get_monitor_geometry(monitor)
-				if x < 0:
-					x = x + geometry.x + geometry.width - width
-				else:
-					x = x + geometry.x
-				if y < 0:
-					y = y + geometry.y + geometry.height - height
-				else:
-					y = geometry.y + y
+				return screen.get_monitor_geometry(monitor)
+		return None
+	
+	
+	def compute_position(self):
+		""" Adjusts position for currently active screen (display) """
+		x, y = self.position
+		width, height = self.get_window_size()
+		geometry = self.get_active_screen_geometry()
+		if geometry:
+			if x < 0:
+				x = x + geometry.x + geometry.width - width
+			else:
+				x = x + geometry.x
+			if y < 0:
+				y = y + geometry.y + geometry.height - height
+			else:
+				y = geometry.y + y
+		
 		return x, y
 	
 	

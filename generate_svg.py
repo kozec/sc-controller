@@ -165,7 +165,7 @@ class Box(object):
 	
 	def place(self, gen, root):
 		e = SVGEditor.add_element(root, "rect",
-			style = "opacity:1;fill-opacity:1.0;stroke-width:2.0;",
+			style = "opacity:1;fill-opacity:0.0;stroke-width:2.0;",
 			fill="#000000",
 			stroke="#06a400",
 			id = "box_%s" % (self.name,),
@@ -259,8 +259,9 @@ class Generator(object):
 		boxes.append(box_bcs)
 		
 		
-		box_left = Box(self.PADDING, self.PADDING, Align.LEFT | Align.TOP,
-			"left", min_height = self.full_height * 0.5)
+		box_left = Box(self.PADDING, self.PADDING, Align.LEFT | Align.TOP, "left",
+			min_height = self.full_height * 0.5,
+			min_width = self.full_width * 0.2)
 		box_left.add("LEFT", Action.AC_TRIGGER, profile.triggers.get(profile.LEFT))
 		box_left.add("LB", Action.AC_BUTTON, profile.buttons.get(SCButtons.LB))
 		box_left.add("LGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.LGRIP))
@@ -268,8 +269,9 @@ class Generator(object):
 		boxes.append(box_left)
 		
 		
-		box_right = Box(self.PADDING, self.PADDING, Align.RIGHT | Align.TOP,
-			"right", min_height = self.full_height * 0.5)
+		box_right = Box(self.PADDING, self.PADDING, Align.RIGHT | Align.TOP, "right",
+			min_height = self.full_height * 0.5,
+			min_width = self.full_width * 0.2)
 		box_right.add("RIGHT", Action.AC_TRIGGER, profile.triggers.get(profile.RIGHT))
 		box_right.add("RB", Action.AC_BUTTON, profile.buttons.get(SCButtons.RB))
 		box_right.add("RGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.RGRIP))

@@ -41,6 +41,7 @@ class SVGWidget(Gtk.EventBox):
 		
 		self.current_svg = open(filename, "r").read().decode("utf-8")
 		self.image_width = 1
+		self.image_height = 1
 		self.image = Gtk.Image()
 		self.parse_image()
 		if init_hilighted:
@@ -58,7 +59,8 @@ class SVGWidget(Gtk.EventBox):
 		"""
 		tree = ET.fromstring(self.current_svg.encode("utf-8"))
 		SVGWidget.find_areas(tree, (0, 0), self.areas)
-		self.image_width = float(tree.attrib["width"])
+		self.image_width =  float(tree.attrib["width"])
+		self.image_height = float(tree.attrib["height"])
 	
 	
 	def on_mouse_click(self, trash, event):
