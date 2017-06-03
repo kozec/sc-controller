@@ -43,9 +43,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		('Display Keyboard',	2, MenuItem, 'system/keyboard', 'keyboard()'),
 		('Turn Controller OFF', 2, MenuItem, 'system/turn-off', 'osd(turnoff())'),
 		('Kill Current Window',	1, MenuItem, 'weapons/pistol-gun',
-			'dialog("Really? Non-saved progress or data will be lost", '
-			'name("Back", None), '
-			'name("Kill", shell("kill -9 $(xdotool getwindowfocus getwindowpid)")))'),
+			"dialog('Really? Non-saved progress or data will be lost', "
+			"name('Back', None), "
+			"name('Kill', shell('kill -9 $(xdotool getwindowfocus getwindowpid)')))"),
 		('Run Program...',		1, MenuItem, 'system/cog', 'shell("scc-osd-launcher")'),
 		# order: 0 - top, 1 - after 'options', 2 bottom
 	]
@@ -570,7 +570,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		"""
 		if self._recursing: return
 		try:
-			data = MenuData.from_fileobj(open(find_menu("Default.menu"), "r"))
+			data = MenuData.from_fileobj(
+				open(find_menu("Default.menu"), "r"),
+				GuiActionParser())
 			index = int(widget.get_name().split("_")[-1])
 			instance = GlobalSettings._make_mi_instance(index)
 		except Exception, e:
@@ -599,7 +601,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			elif order == 2:
 				# At very end
 				pos = len(items)
-			
 			if isinstance(instance, MenuGenerator):
 				items.insert(pos, Separator(instance.label))
 				pos += 1
