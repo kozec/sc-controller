@@ -49,16 +49,6 @@ class BindingDisplay(OSDWindow, TimerManager):
 		self.c.set_name("osd-keyboard-container")
 	
 	
-	def _create_background(self):
-		self.background = SVGWidget(self, self.args.image, init_hilighted=False)
-		self._pack()
-	
-	
-	def _pack(self):
-		self.c.add(self.background)
-		self.add(self.c)
-	
-	
 	def use_daemon(self, d):
 		"""
 		Allows (re)using already existing DaemonManager instance in same process
@@ -83,24 +73,15 @@ class BindingDisplay(OSDWindow, TimerManager):
 		iw, ih = self.background.image_width, self.background.image_height
 		geometry = self.get_active_screen_geometry()
 		if geometry:
-			width = geometry.width * 0.8
-			height = int(float(ih) / float(iw) * float(width))
-			self.background.set_size_request(width, height)
+			width, height = iw, ih
+			if width > geometry.width * 0.8:
+				width = geometry.width * 0.8
+				height = int(float(ih) / float(iw) * float(width))
+				self.background.resize(width, height)
+				self.background.hilight({})
 			x = geometry.x + ((geometry.width - width) / 2)
 			y = geometry.y + ((geometry.height - height) / 2)
 		return x, y	
-	
-	
-	def recolor(self):
-		#iw, ih = self.background.image_width, self.background.image_height
-		#geometry = self.get_active_screen_geometry()
-		#if geometry:
-		#	scale = (geometry.width * 0.8) / float(iw)
-		#	editor = self.background.edit()
-		#	SVGEditor.scale(SVGEditor.get_element(editor, "image"), scale)
-		#	editor.commit()
-		self.background.edit().commit()	
-		self.move(*self.compute_position())
 	
 	
 	def parse_argumets(self, argv):
@@ -161,9 +142,12 @@ class BindingDisplay(OSDWindow, TimerManager):
 	
 	def show(self, *a):
 		if self.background is None:
-			self._create_background()
+			self.realize()
+			self.background = SVGWidget(self, self.args.image, init_hilighted=True)
+			self.c.add(self.background)
+			self.add(self.c)
 		OSDWindow.show(self, *a)
-		self.timer('recolor', 0.1, self.recolor)
+		self.move(*self.compute_position())
 	
 	
 	def on_event(self, daemon, what, data):

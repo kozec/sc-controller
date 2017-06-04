@@ -8,7 +8,7 @@ Also supports clicking on areas defined in SVG image.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GObject, Rsvg
+from gi.repository import Gtk, Gdk, GObject, Rsvg, GdkPixbuf
 from xml.etree import ElementTree as ET
 from math import sin, cos, pi as PI
 import os, sys, re, logging
@@ -40,6 +40,7 @@ class SVGWidget(Gtk.EventBox):
 		self.set_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
 		
 		self.current_svg = open(filename, "r").read().decode("utf-8")
+		self.size_override = None
 		self.image_width = 1
 		self.image_height = 1
 		self.image = Gtk.Image()
@@ -61,6 +62,16 @@ class SVGWidget(Gtk.EventBox):
 		SVGWidget.find_areas(tree, (0, 0), self.areas)
 		self.image_width =  float(tree.attrib["width"])
 		self.image_height = float(tree.attrib["height"])
+	
+	
+	def resize(self, width, height):
+		"""
+		Overrides image size.
+		Doesn't keep aspect ratio and causes cache to be flushed,
+		so this may be slow and nasty.
+		"""
+		self.size_override = width, height
+		self.cache = {}
 	
 	
 	def on_mouse_click(self, trash, event):
@@ -171,6 +182,10 @@ class SVGWidget(Gtk.EventBox):
 			# ... and now, parse that as XML again......
 			svg = Rsvg.Handle.new_from_data(xml.encode("utf-8"))
 			self.cache[cache_id] = svg.get_pixbuf()
+			if self.size_override:
+				width, height = self.size_override
+				self.cache[cache_id] = (self.cache[cache_id]
+					.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR))
 		
 		self.image.set_from_pixbuf(self.cache[cache_id])
 	
