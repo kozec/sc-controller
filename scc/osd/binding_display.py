@@ -10,23 +10,19 @@ Reuses styles from OSD Menu and OSD Dialog
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gio, Gdk, GdkX11, GdkPixbuf, Pango
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
-from scc.constants import LEFT, RIGHT, SAME, STICK
+from gi.repository import Gtk
 from scc.paths import get_share_path, get_config_path
 from scc.menu_data import MenuData, MenuItem
-from scc.tools import point_in_gtkrect
 from scc.lib import xwrappers as X
 from scc.config import Config
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.daemon_manager import DaemonManager
-from scc.osd.timermanager import TimerManager
 from scc.osd import OSDWindow
 import os, sys, re, logging
 log = logging.getLogger("osd.binds")
 
 
-class BindingDisplay(OSDWindow, TimerManager):
+class BindingDisplay(OSDWindow):
 	
 	def __init__(self, config=None):
 		self.bdisplay = os.path.join(get_config_path(), 'binding-display.svg')
@@ -35,7 +31,6 @@ class BindingDisplay(OSDWindow, TimerManager):
 			self.bdisplay = os.path.join(get_share_path(), "images", 'binding-display.svg')
 		
 		OSDWindow.__init__(self, "osd-keyboard")
-		TimerManager.__init__(self)
 		self.daemon = None
 		self.config = config or Config()
 		self.group = None
@@ -127,7 +122,7 @@ class BindingDisplay(OSDWindow, TimerManager):
 		
 		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
 		# Lock everything
-		locks = [ LEFT, RIGHT, STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
+		locks = [ "RB", "LB" ]
 		c.lock(success, self.on_failed_to_lock, *locks)
 	
 	
