@@ -26,7 +26,7 @@ from scc.uinput import Rels
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow
-import os, sys, re, logging
+import os, sys, re, base64, logging
 log = logging.getLogger("osd.binds")
 
 
@@ -181,8 +181,8 @@ class Box(object):
 	
 	def place(self, gen, root):
 		e = SVGEditor.add_element(root, "rect",
-			style = "opacity:1;fill-opacity:0.0;stroke-width:2.0;",
-			fill="#000000",
+			style = "opacity:1;fill-opacity:0.5;stroke-width:2.0;",
+			fill="#00FF00",
 			stroke="#06a400",
 			id = "box_%s" % (self.name,),
 			width = self.width, height = self.height,
@@ -196,9 +196,18 @@ class Box(object):
 			for icon in line.icons:
 				image = find_image(icon)
 				if image:
+					# Fix: here stuff goes from weird to awfull, as rsvg
+					# (library that gnome uses to render SVGs) can't render
+					# linked images. Embeding is used instead.
+					image = 'data:image/svg+xml;base64,%s' % (
+						base64.b64encode(file(image, "rb").read())
+					)
+					# Another problem: rsvg will NOT draw image unless href
+					# tag uses namespace. No idea why is that, but I spent
+					# 3 hours finding this, so I'm willing to murder.
 					SVGEditor.add_element(root, "image", x = x, y = y,
 						style = "filter:url(#filterInvert)",
-						width = h, height = h, href = image)
+						width = h, height = h, **{"xlink:href" : image} )
 				x += h + self.SPACING
 			x = self.x + self.PADDING + self.icount * (h + self.SPACING)
 			y += h
@@ -330,7 +339,7 @@ class Generator(object):
 			b.place(self, root)
 		
 		editor.commit()
-	
+		file("out.svg", "w").write(editor.to_string())
 	
 	
 	def equal_width(self, *boxes):
@@ -386,6 +395,9 @@ class BindingDisplay(OSDWindow):
 		OSDWindow._add_arguments(self)
 		self.argparser.add_argument('image', type=str, nargs="?",
 			default = self.bdisplay, help="keyboard image to use")
+		self.argparser.add_argument('--cancel-with', type=str,
+			metavar="button", default='B',
+			help="button used to close display (default: B)")
 	
 	
 	def compute_position(self):
@@ -411,6 +423,7 @@ class BindingDisplay(OSDWindow):
 	def parse_argumets(self, argv):
 		if not OSDWindow.parse_argumets(self, argv):
 			return False
+		self._cancel_with = self.args.cancel_with
 		return True
 	
 	
@@ -451,7 +464,7 @@ class BindingDisplay(OSDWindow):
 		
 		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
 		# Lock everything
-		locks = [ "RB", "LB" ]
+		locks = [ "RB", "LB", self.args.cancel_with ]
 		c.lock(success, self.on_failed_to_lock, *locks)
 	
 	
@@ -482,7 +495,9 @@ class BindingDisplay(OSDWindow):
 		Called when button press, button release or stick / pad update is
 		send by daemon.
 		"""
-		pass
+		if what == self._cancel_with:
+			if data[0] == 0:	# Button released
+				self.quit(-1)
 
 
 def main():

@@ -8,7 +8,7 @@ Also supports clicking on areas defined in SVG image.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GObject, Rsvg, GdkPixbuf
+from gi.repository import Gtk, Gdk, GObject, Rsvg
 from xml.etree import ElementTree as ET
 from math import sin, cos, pi as PI
 import os, sys, re, logging
@@ -70,7 +70,7 @@ class SVGWidget(Gtk.EventBox):
 		Doesn't keep aspect ratio and causes cache to be flushed,
 		so this may be slow and nasty.
 		"""
-		self.size_override = width, height
+		self.size_override
 		self.cache = {}
 	
 	
@@ -168,24 +168,24 @@ class SVGWidget(Gtk.EventBox):
 		if not cache_id in self.cache:
 			# Ok, this is close to madness, but probably better than drawing
 			# 200 images by hand;
-			# 1st, parse source as XML
-			tree = ET.fromstring(self.current_svg.encode("utf-8"))
-			# 2nd, change colors of some elements
-			for button in buttons:
-				el = SVGEditor.find_by_id(tree, button)
-				if el is not None:
-					SVGEditor.recolor(el, buttons[button])
+			if len(buttons) == 0:
+				# Quick way out - changes are not needed
+				svg = Rsvg.Handle.new_from_data(self.current_svg.encode("utf-8"))
+			else:
+				# 1st, parse source as XML
+				tree = ET.fromstring(self.current_svg.encode("utf-8"))
+				# 2nd, change colors of some elements
+				for button in buttons:
+					el = SVGEditor.find_by_id(tree, button)
+					if el is not None:
+						SVGEditor.recolor(el, buttons[button])
+					
+				# 3rd, turn it back into XML string......
+				xml = ET.tostring(tree)
 				
-			# 3rd, turn it back into XML string......
-			xml = ET.tostring(tree)
-			
-			# ... and now, parse that as XML again......
-			svg = Rsvg.Handle.new_from_data(xml.encode("utf-8"))
+				# ... and now, parse that as XML again......
+				svg = Rsvg.Handle.new_from_data(xml.encode("utf-8"))
 			self.cache[cache_id] = svg.get_pixbuf()
-			if self.size_override:
-				width, height = self.size_override
-				self.cache[cache_id] = (self.cache[cache_id]
-					.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR))
 		
 		self.image.set_from_pixbuf(self.cache[cache_id])
 	
