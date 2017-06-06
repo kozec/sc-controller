@@ -1218,10 +1218,10 @@ class SmoothModifier(Modifier):
 		self.level = level
 		self.multiplier = multiplier
 		self.filter = filter
-		self._deq_x = deque([ 0.0 ] * level, maxlen=level)
-		self._deq_y = deque([ 0.0 ] * level, maxlen=level)
-		self._weights = [ multiplier ** x for x in reversed(xrange(level)) ]
-		self._w_sum = sum(self._weights)
+		self._range = range(level)
+		self._sum_x = 0
+		self._sum_y = 0
+		self._w_sum = sum([ multiplier ** x for x in reversed(self._range) ])
 		self._last_pos = 0
 		self._moving = False
 	
@@ -1249,23 +1249,21 @@ class SmoothModifier(Modifier):
 	
 	def _get_pos(self):
 		""" Computes average x,y from all accumulated positions """
-		x = sum(( self._deq_x[i] * self._weights[i] for i in xrange(self.level) ))
-		y = sum(( self._deq_y[i] * self._weights[i] for i in xrange(self.level) ))
-		return x / self._w_sum, y / self._w_sum
+		return self._sum_x / self._w_sum, self._sum_y / self._w_sum
 	
 	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
 			if mapper.was_touched(what):
 				# Pressed for longer time
-				self._deq_x.append(x)
-				self._deq_y.append(y)
+				self._sum_x = self._sum_x * self.multiplier + x
+				self._sum_y = self._sum_y * self.multiplier + y
 				x, y = self._get_pos()
 			else:
 				# Just pressed - fill deque with current position
-				for i in xrange(self.level):
-					self._deq_x.append(x)
-					self._deq_y.append(y)
+				for i in self._range:
+					self._sum_x = self._sum_x * self.multiplier + x
+					self._sum_y = self._sum_y * self.multiplier + y
 			if abs(x + y - self._last_pos) > self.filter:
 				self.action.whole(mapper, x, y, what)
 			self._last_pos = x + y
