@@ -46,7 +46,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			"dialog('Really? Non-saved progress or data will be lost', "
 			"name('Back', None), "
 			"name('Kill', shell('kill -9 $(xdotool getwindowfocus getwindowpid)')))"),
-		('Run Program...',		1, MenuItem, 'system/cog', 'shell("scc-osd-launcher")'),
+		('Run Program...',				1, MenuItem, 'system/cog',
+			'shell("scc-osd-launcher")'),
+		('Display Current Bindings...',	1, MenuItem, 'system/binding-display',
+			'shell("scc-osd-show-bindings")'),
 		# order: 0 - top, 1 - after 'options', 2 bottom
 	]
 	
