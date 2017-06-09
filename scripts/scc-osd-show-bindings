@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-import os, sys, signal, argparse
+import os, sys, signal
 
 def sigint(*a):
 	print("\n*break*")
@@ -17,14 +17,12 @@ def main():
 	from scc.paths import get_share_path
 	init_logging()
 	
-	from scc.osd.radial_menu import RadialMenu
-	m = RadialMenu()
-	if not m.parse_argumets(sys.argv):
+	from scc.osd.binding_display import BindingDisplay
+	d = BindingDisplay()
+	if not d.parse_argumets(sys.argv):
 		sys.exit(1)
-	m.run()
-	if m.get_exit_code() == 0:
-		print m.get_selected_item_id()
-	sys.exit(m.get_exit_code())
+	d.run()
+	sys.exit(d.get_exit_code())
 
 
 if __name__ == "__main__":

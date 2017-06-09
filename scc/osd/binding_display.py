@@ -30,6 +30,150 @@ import os, sys, re, base64, logging
 log = logging.getLogger("osd.binds")
 
 
+class BindingDisplay(OSDWindow):
+	
+	def __init__(self, config=None):
+		self.bdisplay = os.path.join(get_config_path(), 'binding-display.svg')
+		if not os.path.exists(self.bdisplay):
+			# Prefer image in ~/.config/scc, but load default one as fallback
+			self.bdisplay = os.path.join(get_share_path(), "images", 'binding-display.svg')
+		
+		OSDWindow.__init__(self, "osd-keyboard")
+		self.daemon = None
+		self.config = config or Config()
+		self.group = None
+		self.limits = {}
+		self.background = None
+		
+		self._eh_ids = []
+		self._stick = 0, 0
+		
+		self.c = Gtk.Box()
+		self.c.set_name("osd-keyboard-container")
+	
+	
+	def on_profile_changed(self, daemon, filename):
+		profile = Profile(TalkingActionParser()).load(filename)
+		Generator(SVGEditor(self.background), profile)
+	
+	
+	def use_daemon(self, d):
+		"""
+		Allows (re)using already existing DaemonManager instance in same process
+		"""
+		self.daemon = d
+		self._cononect_handlers()
+		self.on_daemon_connected(self.daemon)
+	
+	
+	def _add_arguments(self):
+		OSDWindow._add_arguments(self)
+		self.argparser.add_argument('image', type=str, nargs="?",
+			default = self.bdisplay, help="keyboard image to use")
+		self.argparser.add_argument('--cancel-with', type=str,
+			metavar="button", default='B',
+			help="button used to close display (default: B)")
+	
+	
+	def compute_position(self):
+		"""
+		Unlike other OSD windows, this one is scaled to 80% of screen size
+		and centered in on active screen.
+		"""
+		x, y = 10, 10
+		iw, ih = self.background.image_width, self.background.image_height
+		geometry = self.get_active_screen_geometry()
+		if geometry:
+			width, height = iw, ih
+			if width > geometry.width * 0.8:
+				width = geometry.width * 0.8
+				height = int(float(ih) / float(iw) * float(width))
+				self.background.resize(width, height)
+				self.background.hilight({})
+			x = geometry.x + ((geometry.width - width) / 2)
+			y = geometry.y + ((geometry.height - height) / 2)
+		return x, y	
+	
+	
+	def parse_argumets(self, argv):
+		if not OSDWindow.parse_argumets(self, argv):
+			return False
+		self._cancel_with = self.args.cancel_with
+		return True
+	
+	
+	def _cononect_handlers(self):
+		self._eh_ids += [
+			( self.daemon, self.daemon.connect('dead', self.on_daemon_died) ),
+			( self.daemon, self.daemon.connect('error', self.on_daemon_died) ),
+			( self.daemon, self.daemon.connect('profile-changed', self.on_profile_changed) ),
+			( self.daemon, self.daemon.connect('alive', self.on_daemon_connected) ),
+		]
+	
+	
+	def run(self):
+		self.daemon = DaemonManager()
+		self._cononect_handlers()
+		OSDWindow.run(self)
+	
+	
+	def on_daemon_died(self, *a):
+		log.error("Daemon died")
+		self.quit(2)
+	
+	
+	def on_failed_to_lock(self, error):
+		log.error("Failed to lock input: %s", error)
+		self.quit(3)
+	
+	
+	def on_daemon_connected(self, *a):
+		def success(*a):
+			log.info("Sucessfully locked input")
+			pass
+		
+		c = self.choose_controller(self.daemon)
+		if c is None or not c.is_connected():
+			# There is no controller connected to daemon
+			self.on_failed_to_lock("Controller not connected")
+			return
+		
+		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
+		# Lock everything
+		locks = [ "RB", "LB", self.args.cancel_with ]
+		c.lock(success, self.on_failed_to_lock, *locks)
+	
+	
+	def quit(self, code=-1):
+		if self.get_controller():
+			self.get_controller().unlock_all()
+		for source, eid in self._eh_ids:
+			source.disconnect(eid)
+		self._eh_ids = []
+		OSDWindow.quit(self, code)
+	
+	
+	def show(self, *a):
+		if self.background is None:
+			self.realize()
+			self.background = SVGWidget(self, self.args.image, init_hilighted=True)
+			self.c.add(self.background)
+			self.add(self.c)
+		
+		OSDWindow.show(self, *a)
+		self.move(*self.compute_position())
+	
+	
+	def on_event(self, daemon, what, data):
+		"""
+		Called when button press, button release or stick / pad update is
+		send by daemon.
+		"""
+		if what == self._cancel_with:
+			if data[0] == 0:	# Button released
+				self.quit(-1)
+
+
 class Align(IntEnum):
 	TOP  =    1 << 0
 	BOTTOM =  1 << 1
@@ -181,7 +325,7 @@ class Box(object):
 	
 	def place(self, gen, root):
 		e = SVGEditor.add_element(root, "rect",
-			style = "opacity:1;fill-opacity:0.5;stroke-width:2.0;",
+			style = "opacity:1;fill-opacity:0.1;stroke-width:2.0;",
 			fill="#00FF00",
 			stroke="#06a400",
 			id = "box_%s" % (self.name,),
@@ -260,11 +404,10 @@ class Box(object):
 			)
 
 
-
 class Generator(object):
 	PADDING = 10
 	
-	def __init__(self, editor):
+	def __init__(self, editor, profile):
 		background = SVGEditor.get_element(editor, "background")
 		self.label_template = SVGEditor.get_element(editor, "label_template")
 		self.line_height = int(float(self.label_template.attrib.get("height") or 8))
@@ -272,10 +415,7 @@ class Generator(object):
 		self.full_width = int(float(background.attrib.get("width") or 800))
 		self.full_height = int(float(background.attrib.get("height") or 800))
 		
-		profile = Profile(TalkingActionParser()).load("test.sccprofile")
 		boxes = []
-		
-		
 		box_bcs = Box(0, self.PADDING, Align.TOP, "bcs")
 		box_bcs.add("BACK", Action.AC_BUTTON, profile.buttons.get(SCButtons.BACK))
 		box_bcs.add("C", Action.AC_BUTTON, profile.buttons.get(SCButtons.C))
@@ -359,145 +499,6 @@ class Generator(object):
 		for b in boxes:
 			b.height = height
 
-
-class BindingDisplay(OSDWindow):
-	
-	def __init__(self, config=None):
-		self.bdisplay = os.path.join(get_config_path(), 'binding-display.svg')
-		if not os.path.exists(self.bdisplay):
-			# Prefer image in ~/.config/scc, but load default one as fallback
-			self.bdisplay = os.path.join(get_share_path(), "images", 'binding-display.svg')
-		
-		OSDWindow.__init__(self, "osd-keyboard")
-		self.daemon = None
-		self.config = config or Config()
-		self.group = None
-		self.limits = {}
-		self.background = None
-		
-		self._eh_ids = []
-		self._stick = 0, 0
-		
-		self.c = Gtk.Box()
-		self.c.set_name("osd-keyboard-container")
-	
-	
-	def use_daemon(self, d):
-		"""
-		Allows (re)using already existing DaemonManager instance in same process
-		"""
-		self.daemon = d
-		self._cononect_handlers()
-		self.on_daemon_connected(self.daemon)
-	
-	
-	def _add_arguments(self):
-		OSDWindow._add_arguments(self)
-		self.argparser.add_argument('image', type=str, nargs="?",
-			default = self.bdisplay, help="keyboard image to use")
-		self.argparser.add_argument('--cancel-with', type=str,
-			metavar="button", default='B',
-			help="button used to close display (default: B)")
-	
-	
-	def compute_position(self):
-		"""
-		Unlike other OSD windows, this one is scaled to 80% of screen size
-		and centered in on active screen.
-		"""
-		x, y = 10, 10
-		iw, ih = self.background.image_width, self.background.image_height
-		geometry = self.get_active_screen_geometry()
-		if geometry:
-			width, height = iw, ih
-			if width > geometry.width * 0.8:
-				width = geometry.width * 0.8
-				height = int(float(ih) / float(iw) * float(width))
-				self.background.resize(width, height)
-				self.background.hilight({})
-			x = geometry.x + ((geometry.width - width) / 2)
-			y = geometry.y + ((geometry.height - height) / 2)
-		return x, y	
-	
-	
-	def parse_argumets(self, argv):
-		if not OSDWindow.parse_argumets(self, argv):
-			return False
-		self._cancel_with = self.args.cancel_with
-		return True
-	
-	
-	def _cononect_handlers(self):
-		self._eh_ids += [
-			( self.daemon, self.daemon.connect('dead', self.on_daemon_died) ),
-			( self.daemon, self.daemon.connect('error', self.on_daemon_died) ),
-			( self.daemon, self.daemon.connect('alive', self.on_daemon_connected) ),
-		]
-	
-	
-	def run(self):
-		self.daemon = DaemonManager()
-		self._cononect_handlers()
-		OSDWindow.run(self)
-	
-	
-	def on_daemon_died(self, *a):
-		log.error("Daemon died")
-		self.quit(2)
-	
-	
-	def on_failed_to_lock(self, error):
-		log.error("Failed to lock input: %s", error)
-		self.quit(3)
-	
-	
-	def on_daemon_connected(self, *a):
-		def success(*a):
-			log.info("Sucessfully locked input")
-			pass
-		
-		c = self.choose_controller(self.daemon)
-		if c is None or not c.is_connected():
-			# There is no controller connected to daemon
-			self.on_failed_to_lock("Controller not connected")
-			return
-		
-		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
-		# Lock everything
-		locks = [ "RB", "LB", self.args.cancel_with ]
-		c.lock(success, self.on_failed_to_lock, *locks)
-	
-	
-	def quit(self, code=-1):
-		if self.get_controller():
-			self.get_controller().unlock_all()
-		for source, eid in self._eh_ids:
-			source.disconnect(eid)
-		self._eh_ids = []
-		OSDWindow.quit(self, code)
-	
-	
-	def show(self, *a):
-		if self.background is None:
-			self.realize()
-			self.background = SVGWidget(self, self.args.image, init_hilighted=True)
-			self.c.add(self.background)
-			self.add(self.c)
-		
-		Generator(SVGEditor(self.background))
-		
-		OSDWindow.show(self, *a)
-		self.move(*self.compute_position())
-	
-	
-	def on_event(self, daemon, what, data):
-		"""
-		Called when button press, button release or stick / pad update is
-		send by daemon.
-		"""
-		if what == self._cancel_with:
-			if data[0] == 0:	# Button released
-				self.quit(-1)
 
 
 def main():
