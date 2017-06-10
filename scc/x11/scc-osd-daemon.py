@@ -29,7 +29,7 @@ from scc.osd.area import Area
 from scc.tools import shsplit, shjoin
 from scc.config import Config
 
-import os, sys, logging, time
+import os, sys, logging, time, traceback
 log = logging.getLogger("osd.daemon")
 
 class OSDDaemon(object):
@@ -196,10 +196,15 @@ class OSDDaemon(object):
 					self._window = Menu()
 				self._window.connect('destroy', self.on_menu_closed)
 				self._window.use_config(self.config)
-				if self._window.parse_argumets(args):
-					self._window.show()
-					self._window.use_daemon(self.daemon)
-				else:
+				try:
+					if self._window.parse_argumets(args):
+						self._window.show()
+						self._window.use_daemon(self.daemon)
+					else:
+						log.error("Failed to show menu")
+						self._window = None
+				except:
+					log.error(traceback.format_exc())
 					log.error("Failed to show menu")
 					self._window = None
 		elif message.startswith("OSD: area"):
