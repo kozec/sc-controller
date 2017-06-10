@@ -9,18 +9,18 @@ from scc.tools import _
 
 from scc.gui.controller_widget import ControllerButton
 from scc.gui.controller_widget import STICKS, PADS
+from scc.gui.editor import Editor, ComboSetter
 from scc.gui.dwsnc import headerbar
-from scc.gui.editor import Editor
-from scc.constants import SCButtons
 from scc.modifiers import ModeModifier, DoubleclickModifier, HoldModifier
-from scc.actions import Action, RingAction, NoAction
+from scc.actions import Action, RingAction, NoAction, MultiAction
+from scc.constants import SCButtons
 from scc.profile import Profile
 
 from gi.repository import Gtk, Gdk, GLib
 import os, logging
 log = logging.getLogger("RingEditor")
 
-class RingEditor(Editor):
+class RingEditor(Editor, ComboSetter):
 	GLADE = "ring_editor.glade"
 	
 	def __init__(self, app, callback):
@@ -45,6 +45,21 @@ class RingEditor(Editor):
 		headerbar(self.builder.get_object("header"))
 	
 	
+	@staticmethod
+	def is_ring_action(obj):
+		"""
+		Returns True if object is instance of RingAction or object
+		is MultiAction with RingAction as 2nd item
+		"""
+		if isinstance(obj, RingAction):
+			return True
+		if isinstance(obj, MultiAction):
+			if len(obj.actions) >= 2:
+				if isinstance(obj.actions[1], RingAction):
+					return True
+		return False
+	
+	
 	def on_adjRadius_value_changed(self, scale, *a):
 		self.radius = scale.get_value()
 	
@@ -60,6 +75,26 @@ class RingEditor(Editor):
 	def on_btClearRadius_clicked(self, *a):
 		self.radius = 0.5
 		self._update()
+	
+	
+	def on_cbMode_changed(self, cb):
+		lblRadius = self.builder.get_object("lblRadius")
+		lblInner = self.builder.get_object("lblInner")
+		lblOuter = self.builder.get_object("lblOuter")
+		key = cb.get_model().get_value(cb.get_active_iter(), 0)
+		if key == "inner":
+			lblRadius.set_label(_("Inner Ring Radius"))
+			lblInner.set_label(_("Inner Ring"))
+			lblOuter.set_label(_("Entire Pad"))
+		elif key == "outer":
+			lblRadius.set_label(_("Outer Ring Starts at"))
+			lblInner.set_label(_("Entire Pad"))
+			lblOuter.set_label(_("Outer Ring"))
+		elif key == "two":
+			lblRadius.set_label(_("Inner Ring Radius"))
+			lblInner.set_label(_("Inner Ring"))
+			lblOuter.set_label(_("Outer Ring"))
+		print self._make_action()
 	
 	
 	def _choose_editor(self, action, cb):
@@ -130,7 +165,20 @@ class RingEditor(Editor):
 	
 	def _make_action(self):
 		""" Generates and returns Action instance """
-		return RingAction(self.radius, *self.actions)
+		cbMode = self.builder.get_object("cbMode")
+		key = cbMode.get_model().get_value(cbMode.get_active_iter(), 0)
+		if key == "inner":
+			return MultiAction(
+				self.actions[1],
+				RingAction(self.radius, self.actions[0], NoAction())
+			)
+		elif key == "outer":
+			return MultiAction(
+				self.actions[0],
+				RingAction(self.radius, NoAction(), self.actions[1])
+			)
+		else:
+			return RingAction(self.radius, *self.actions)
 	
 	
 	def _update(self):
@@ -143,9 +191,20 @@ class RingEditor(Editor):
 	def set_input(self, id, action, mode=None):
 		btDefault = self.builder.get_object("btDefault")
 		lblPressAlone = self.builder.get_object("lblPressAlone")
+		cbMode = self.builder.get_object("cbMode")
 		self.id = id
 		
 		if isinstance(action, RingAction):
 			self.radius = action.radius
 			self.actions = [ action.inner, action.outer ]
-			self._update()
+			self.set_cb(cbMode, "two")
+		elif RingEditor.is_ring_action(action):
+			# Goes here only if action is MultiAciton with RingAction as 2nd item
+			ring = action.actions[1]
+			if ring.inner:
+				self.actions = [ ring.inner, action.actions[0] ]
+				self.set_cb(cbMode, "inner")
+			else:
+				self.actions = [ action.actions[0], ring.outer ]
+				self.set_cb(cbMode, "outer")
+		self._update()

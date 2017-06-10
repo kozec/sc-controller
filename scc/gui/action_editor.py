@@ -960,7 +960,6 @@ class ActionEditor(Editor):
 			self._set_mode(action, mode or Action.AC_STICK)
 			self.set_action(action)
 			self.hide_macro()
-			self.hide_ring()
 			self.id = Profile.STICK
 		elif id in GYROS:
 			self.set_title(_("Gyro"))

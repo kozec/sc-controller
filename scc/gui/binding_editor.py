@@ -9,8 +9,8 @@ from scc.tools import _
 
 from scc.modifiers import ModeModifier, SensitivityModifier, FeedbackModifier
 from scc.modifiers import DoubleclickModifier, HoldModifier
+from scc.actions import NoAction, RingAction, MultiAction
 from scc.macros import Macro, Type, Repeat, Cycle
-from scc.actions import NoAction, RingAction
 from scc.constants import SCButtons
 from scc.profile import Profile
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
@@ -136,7 +136,7 @@ class BindingEditor(object):
 		elif isinstance(action, (ModeModifier, DoubleclickModifier, HoldModifier)) and not is_gyro_enable(action):
 			e = ModeshiftEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Mode Shift for %s") % (title,))
-		elif isinstance(action, RingAction):
+		elif RingEditor.is_ring_action(action):
 			e = RingEditor(self.app, self.on_action_chosen)
 			e.set_title(title)
 		elif isinstance(action, Type):

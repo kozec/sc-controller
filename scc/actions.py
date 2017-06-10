@@ -1645,6 +1645,9 @@ class MultiAction(MultichildAction):
 				if isinstance(a, ButtonAction,):
 					rv.append(a.describe_short())
 			return "+".join(rv)
+		if len(self.actions) >= 2 and isinstance(self.actions[1], RingAction):
+			# Special case, should be multiline
+			return "\n".join([ x.describe(context) for x in self.actions ])
 		return " and ".join([ x.describe(context) for x in self.actions ])
 	
 	
@@ -1862,6 +1865,7 @@ class RingAction(MultichildAction):
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	DEFAULT_RADIUS = 0.5
 	
+	
 	def __init__(self, *params):
 		# 1st parameter may be inner ring radius (0.1 to 0.9), defaults to 50%
 		# of pad diameter.
@@ -1909,7 +1913,7 @@ class RingAction(MultichildAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		lines = [ x.describe(Action.AC_BUTTON) for x in self.actions ]
+		lines = [ x.describe(Action.AC_BUTTON) for x in self.actions if x ]
 		if any(["\n" in l for l in lines ]):
 			return " / ".join([ l for l in lines ])
 		else:
