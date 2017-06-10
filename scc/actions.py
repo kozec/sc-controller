@@ -1928,7 +1928,7 @@ class RingAction(MultichildAction):
 	
 	
 	def whole(self, mapper, x, y, what):
-		if mapper.is_touched(what):
+		if what == STICK or mapper.is_touched(what):
 			angle = atan2(x, y)
 			distance = sqrt(x*x + y*y)
 			if distance < self._radius_m:
@@ -1943,6 +1943,13 @@ class RingAction(MultichildAction):
 			
 			if action == self._active:
 				action.whole(mapper, x, y, what)
+			elif what == STICK:
+				# Stck crossed radius border, so active action is changing.
+				# Simulate centering stick for former...
+				self._active.whole(mapper, 0, 0, what)
+				# ... and moving it back for new active child action
+				action.whole(mapper, x, y, what)
+				self._active = action
 			else:
 				# Finger crossed radius border, so active action is changing.
 				# Simulate releasing pad for former...
@@ -1957,6 +1964,10 @@ class RingAction(MultichildAction):
 				self._active = action
 		elif mapper.was_touched(what):
 			# Pad just released
+			self._active.whole(mapper, x, y, what)
+			self._active = NoAction()
+		elif self._active and what == STICK and x == 0 and y == 0:
+			# Stick is centered
 			self._active.whole(mapper, x, y, what)
 			self._active = NoAction()
 

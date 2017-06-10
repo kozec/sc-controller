@@ -216,8 +216,10 @@ class Mapper(object):
 		"""
 		if what == LEFT:
 			return self.buttons & SCButtons.LPADTOUCH
-		else: # what == RIGHT
+		elif what == RIGHT:
 			return self.buttons & SCButtons.RPADTOUCH
+		else:
+			return False
 	
 	
 	def was_touched(self, what):
@@ -231,8 +233,10 @@ class Mapper(object):
 		"""
 		if what == LEFT:
 			return self.old_buttons & SCButtons.LPADTOUCH
-		else: # what == RIGHT
+		elif what == RIGHT:
 			return self.old_buttons & SCButtons.RPADTOUCH
+		else:
+			return False
 	
 	
 	def is_pressed(self, button):
