@@ -1876,6 +1876,12 @@ class RingAction(MultichildAction):
 		self._active = NoAction()
 	
 	
+	def compress(self):
+		self.inner = self.inner.compress()
+		self.outer = self.outer.compress()
+		return self
+	
+	
 	def encode(self):
 		""" Called from json encoder """
 		rv = { RingAction.COMMAND : {
