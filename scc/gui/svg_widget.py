@@ -283,6 +283,7 @@ class SVGEditor(object):
 		
 		Returns None if element cannot be found
 		"""
+		SVGEditor.update_parents(self)
 		e = SVGEditor.get_element(self, id)
 		if e is not None:
 			copy = SVGEditor._deep_copy(e)
