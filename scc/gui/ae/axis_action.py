@@ -161,7 +161,10 @@ class AxisActionComponent(AEComponent, TimerManager):
 					self.set_cb(cbTracballOutput, "right", 1)
 				self.set_cb(cbAxisOutput, "trackball", 2)
 			elif isinstance(action.action.x, MouseAction):
-				self.set_cb(cbAxisOutput, "wheel", 2)
+				if self.editor.get_id() in STICKS:
+					self.set_cb(cbAxisOutput, "wheel_stick", 2)
+				else:
+					self.set_cb(cbAxisOutput, "wheel_pad", 2)
 		if action.friction <= 0:
 			sclFriction.set_value(0)
 		else:
