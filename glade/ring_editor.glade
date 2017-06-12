@@ -172,9 +172,9 @@
             </child>
             <child>
               <object class="GtkCheckButton" id="cbPreview">
-                <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="no_show_all">True</property>
                 <property name="margin_top">20</property>
                 <property name="draw_indicator">True</property>
                 <child>
@@ -361,6 +361,7 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
+            <property name="position">1</property>
           </packing>
         </child>
         <child>

@@ -44,6 +44,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self.osd_area_instance = None
 		self.on_wayland = False
 		self.circular = MouseAction(Rels.REL_WHEEL)
+		self.button = None
 		self.parser = GuiActionParser()
 	
 	
@@ -93,6 +94,8 @@ class AxisActionComponent(AEComponent, TimerManager):
 				self.load_trackball_action(action)
 			elif isinstance(action, CircularModifier):
 				self.load_circular_action(action)
+			elif isinstance(action, ButtonAction):
+				self.load_button_action(action)
 			elif isinstance(action, XYAction):
 				p = [ None, None ]
 				for x in (0, 1):
@@ -132,6 +135,14 @@ class AxisActionComponent(AEComponent, TimerManager):
 		btCircularAxis = self.builder.get_object("btCircularAxis")
 		btCircularAxis.set_label(self.circular.describe(Action.AC_PAD))
 		self.set_cb(cbAxisOutput, "circular", 2)
+	
+	
+	def load_button_action(self, action):
+		self.button = action
+		cbAxisOutput = self.builder.get_object("cbAxisOutput")
+		btSingleButton = self.builder.get_object("btSingleButton")
+		btSingleButton.set_label(self.button.describe(Action.AC_PAD))
+		self.set_cb(cbAxisOutput, "button", 2)
 	
 	
 	def load_trackball_action(self, action):
@@ -208,6 +219,19 @@ class AxisActionComponent(AEComponent, TimerManager):
 		
 		b = SimpleChooser(self.app, "axis", cb)
 		b.set_title(_("Select Axis"))
+		b.display_action(Action.AC_STICK, self.circular)
+		b.show(self.editor.window)
+	
+	
+	def on_btSingleButton_clicked(self, *a):
+		def cb(action):
+			self.button = action
+			btSingleButton = self.builder.get_object("btSingleButton")
+			btSingleButton.set_label(self.button.describe(Action.AC_PAD))
+			self.editor.set_action(self.button)
+		
+		b = SimpleChooser(self.app, "buttons", cb)
+		b.set_title(_("Select Button"))
 		b.display_action(Action.AC_STICK, self.circular)
 		b.show(self.editor.window)
 	
@@ -321,7 +345,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 	
 	def handles(self, mode, action):
 		if isinstance(action, (NoAction, MouseAction, CircularModifier,
-					InvalidAction, AreaAction)):
+					InvalidAction, AreaAction, ButtonAction)):
 			return True
 		if isinstance(action, BallModifier):
 			if isinstance(action.action, XYAction):
@@ -405,6 +429,10 @@ class AxisActionComponent(AEComponent, TimerManager):
 			stActionData.set_visible_child(self.builder.get_object("grArea"))
 			action = self.make_area_action()
 			self.update_osd_area(action)
+		elif key == "button":
+			stActionData.set_visible_child(self.builder.get_object("vbButton"))
+			self.button = self.button or ButtonAction(Keys.BTN_GAMEPAD)
+			action = self.button
 		elif key == "circular":
 			stActionData.set_visible_child(self.builder.get_object("vbCircular"))
 			action = self.make_circular_action()
