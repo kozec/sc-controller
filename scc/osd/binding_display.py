@@ -230,7 +230,7 @@ class Box(object):
 	MIN_HEIGHT = 50
 	
 	def __init__(self, anchor_x, anchor_y, align, name,
-			min_width = MIN_WIDTH, min_height = MIN_HEIGHT):
+			min_width = MIN_WIDTH, min_height = MIN_HEIGHT, max_width = 999999):
 		self.name = name
 		self.lines = []
 		self.anchor = anchor_x, anchor_y
@@ -238,6 +238,7 @@ class Box(object):
 		self.min_height = min_height
 		self.x, self.y = 0, 0
 		self.min_width = min_width
+		self.max_width = max_width
 		self.min_height = min_height
 	
 	
@@ -305,6 +306,7 @@ class Box(object):
 			self.width, self.height = max(self.width, lw), self.height + lh + self.SPACING
 			self.icount = max(self.icount, len(line.icons))
 		self.width += 2 * self.PADDING + self.icount * (gen.line_height + self.SPACING)
+		self.width = min(self.width, self.max_width)
 		self.height = max(self.height, self.min_height)
 		
 		anchor_x, anchor_y = self.anchor
@@ -425,7 +427,9 @@ class Generator(object):
 		
 		box_left = Box(self.PADDING, self.PADDING, Align.LEFT | Align.TOP, "left",
 			min_height = self.full_height * 0.5,
-			min_width = self.full_width * 0.2)
+			min_width = self.full_width * 0.2,
+			max_width = self.full_width * 0.275
+			)
 		box_left.add("LEFT", Action.AC_TRIGGER, profile.triggers.get(profile.LEFT))
 		box_left.add("LB", Action.AC_BUTTON, profile.buttons.get(SCButtons.LB))
 		box_left.add("LGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.LGRIP))
@@ -435,7 +439,9 @@ class Generator(object):
 		
 		box_right = Box(self.PADDING, self.PADDING, Align.RIGHT | Align.TOP, "right",
 			min_height = self.full_height * 0.5,
-			min_width = self.full_width * 0.2)
+			min_width = self.full_width * 0.2,
+			max_width = self.full_width * 0.275
+			)
 		box_right.add("RIGHT", Action.AC_TRIGGER, profile.triggers.get(profile.RIGHT))
 		box_right.add("RB", Action.AC_BUTTON, profile.buttons.get(SCButtons.RB))
 		box_right.add("RGRIP", Action.AC_BUTTON, profile.buttons.get(SCButtons.RGRIP))
@@ -443,7 +449,9 @@ class Generator(object):
 		boxes.append(box_right)
 		
 		
-		box_abxy = Box(4 * self.PADDING, self.PADDING, Align.RIGHT | Align.BOTTOM, "abxy")
+		box_abxy = Box(4 * self.PADDING, self.PADDING, Align.RIGHT | Align.BOTTOM, "abxy",
+			max_width = self.full_width * 0.45
+			)
 		box_abxy.add("A", Action.AC_BUTTON, profile.buttons.get(SCButtons.A))
 		box_abxy.add("B", Action.AC_BUTTON, profile.buttons.get(SCButtons.B))
 		box_abxy.add("X", Action.AC_BUTTON, profile.buttons.get(SCButtons.X))
@@ -451,7 +459,9 @@ class Generator(object):
 		boxes.append(box_abxy)
 		
 		
-		box_stick = Box(4 * self.PADDING, self.PADDING, Align.LEFT | Align.BOTTOM, "stick")
+		box_stick = Box(4 * self.PADDING, self.PADDING, Align.LEFT | Align.BOTTOM, "stick",
+			max_width = self.full_width * 0.45
+			)
 		box_stick.add("STICK", Action.AC_STICK, profile.stick)
 		boxes.append(box_stick)
 		
