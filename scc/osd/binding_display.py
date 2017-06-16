@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk
-from scc.actions import Action, DPadAction, XYAction, MouseAction
+from scc.actions import Action, DPadAction, XYAction, AxisAction, MouseAction
 from scc.modifiers import ModeModifier, DoubleclickModifier
 from scc.paths import get_share_path, get_config_path
 from scc.menu_data import MenuData, MenuItem
@@ -289,6 +289,11 @@ class Box(object):
 					line = Line(icon, _("Mouse Wheel"))
 					self.lines.append(line)
 					return line	
+			if isinstance(action.x, AxisAction) and isinstance(action.y, AxisAction):
+				if action.x.axis and action.y.axis:
+					line = Line(icon, action.x.describe(Action.AC_BUTTON))
+					self.lines.append(line)
+					return line
 			return LineCollection(
 				self.add("AXISX",  Action.AC_BUTTON, action.x),
 				self.add("AXISY",  Action.AC_BUTTON, action.y)
