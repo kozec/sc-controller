@@ -231,7 +231,7 @@ class StatusIconGTK3(StatusIcon):
 		
 		# An invisible tray icon will never be embedded but it also should not be replaced
 		# by a fallback icon
-		is_embedded = self._tray.is_embedded() or not self._tray.get_visible() or IS_CINNAMON
+		is_embedded = self._tray.is_embedded() or not self._tray.get_visible()
 		if is_embedded != self.get_property("active"):
 			self.set_property("active", is_embedded)
 	
