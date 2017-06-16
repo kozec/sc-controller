@@ -11,7 +11,8 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk
-from scc.actions import Action, DPadAction, XYAction, AxisAction, MouseAction
+from scc.actions import DPadAction, AxisAction, MouseAction
+from scc.actions import Action, MultiAction, XYAction
 from scc.modifiers import ModeModifier, DoubleclickModifier
 from scc.paths import get_share_path, get_config_path
 from scc.menu_data import MenuData, MenuItem
@@ -251,7 +252,13 @@ class Box(object):
 	
 	def add(self, icon, context, action):
 		if not action: return LineCollection()
-		if isinstance(action, ModeModifier):
+		if isinstance(action, MultiAction):
+			if not action.is_key_combination():
+				return LineCollection([
+					self.add(icon, context, child)
+					for child in action.actions
+				])
+		elif isinstance(action, ModeModifier):
 			lines = [ self.add(icon, context, action.default) ]
 			for x in action.mods:
 				lines.append( self.add(nameof(x), context, action.mods[x])

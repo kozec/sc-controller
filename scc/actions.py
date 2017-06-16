@@ -1636,13 +1636,22 @@ class MultiAction(MultichildAction):
 		return (1.0,)
 	
 	
+	def is_key_combination(self):
+		""" Returns True if all child actions are ButtonActions """
+		if len(self.actions) == 0:
+			return False
+		for x in self.actions:
+			if not isinstance(x, ButtonAction):
+				return False
+		return True
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
-		if isinstance(self.actions[0], ButtonAction):
-			# Special case, key combination
+		if self.is_key_combination():
 			rv = []
 			for a in self.actions:
-				if isinstance(a, ButtonAction,):
+				if isinstance(a, ButtonAction):
 					rv.append(a.describe_short())
 			return "+".join(rv)
 		if len(self.actions) >= 2 and isinstance(self.actions[1], RingAction):
