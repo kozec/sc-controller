@@ -360,6 +360,9 @@ class Box(object):
 			txt = SVGEditor.add_element(root, "text", x = x, y = y,
 				style = gen.label_template.attrib['style']
 			)
+			max_line_width = self.max_width - gen.line_height - self.PADDING
+			while line.text and line.get_size(gen)[0] > max_line_width:
+				line.text = line.text[:-1]
 			SVGEditor.set_text(txt, line.text)
 			y += self.SPACING
 	
