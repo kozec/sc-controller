@@ -120,6 +120,10 @@ class StatusIcon(GObject.GObject):
 		self.__hidden = False
 		self._set_visible(self.__visible)
 	
+	def is_clickable(self):
+		""" Basically, returns False is appindicator is used """
+		return True
+	
 	def _is_forced(self):
 		return self.__force
 	
@@ -274,6 +278,9 @@ class StatusIconAppIndicator(StatusIconDBus):
 		
 		self._tray.set_status(self._status_active if active else self._status_passive)
 	
+	def is_clickable(self):
+		return False
+	
 	def destroy(self):
 		self.hide()
 		self._tray = None
@@ -385,10 +392,10 @@ class StatusIconProxy(StatusIcon):
 
 def get_status_icon(*args, **kwargs):
 	# Try selecting backend based on environment variable
-	if "SYNCTHING_STATUS_BACKEND" in os.environ:
+	if "STATUS_BACKEND" in os.environ:
 		kwargs["force"] = True
 		
-		status_icon_backend_name = "StatusIcon%s" % (os.environ.get("SYNCTHING_STATUS_BACKEND"))
+		status_icon_backend_name = "StatusIcon%s" % (os.environ.get("STATUS_BACKEND"))
 		if status_icon_backend_name in globals():
 			try:
 				status_icon = globals()[status_icon_backend_name](*args, **kwargs)

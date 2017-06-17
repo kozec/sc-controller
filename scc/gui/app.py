@@ -134,9 +134,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def setup_statusicon(self):
-		menu = self.builder.get_object("mnuDaemon")
+		menu = self.builder.get_object("mnuTray")
 		self.statusicon = get_status_icon(self.imagepath, menu)
 		self.statusicon.connect('clicked', self.on_statusicon_clicked)
+		if not self.statusicon.is_clickable():
+			self.builder.get_object("mnuShowWindowTray").set_visible(True)
 		GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
 	
 	
@@ -640,7 +642,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_mnuExit_activate(self, *a):
 		if self.app.config['gui']['autokill_daemon']:
 			log.debug("Terminating scc-daemon")
-			for x in ("content", "mnuEmulationEnabled"):
+			for x in ("content", "mnuEmulationEnabled", "mnuEmulationEnabledTray"):
 				w = self.builder.get_object(x)
 				w.set_sensitive(False)
 			self.set_daemon_status("unknown", False)
@@ -1077,8 +1079,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		imgDaemonStatus = self.builder.get_object("imgDaemonStatus")
 		btDaemon = self.builder.get_object("btDaemon")
 		mnuEmulationEnabled = self.builder.get_object("mnuEmulationEnabled")
+		mnuEmulationEnabledTray = self.builder.get_object("mnuEmulationEnabledTray")
 		imgDaemonStatus.set_from_file(icon)
 		mnuEmulationEnabled.set_sensitive(True)
+		mnuEmulationEnabledTray.set_sensitive(True)
 		self.window.set_icon_from_file(icon)
 		self.status = status
 		if self.statusicon:
@@ -1093,6 +1097,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		else:
 			btDaemon.set_tooltip_text(_("Checking emulation status..."))
 		mnuEmulationEnabled.set_active(daemon_runs)
+		mnuEmulationEnabledTray.set_active(daemon_runs)
 		self.recursing = False
 	
 	

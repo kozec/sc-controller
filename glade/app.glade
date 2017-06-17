@@ -204,6 +204,52 @@
       </object>
     </child>
   </object>
+  <object class="GtkMenu" id="mnuTray">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+	<child>
+      <object class="GtkMenuItem" id="mnuShowWindowTray">
+        <property name="visible">False</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Show/Hide _Window</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_statusicon_clicked" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkCheckMenuItem" id="mnuEmulationEnabledTray">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Emulation Enabled</property>
+        <property name="use_underline">True</property>
+        <signal name="toggled" handler="on_mnuEmulationEnabled_toggled" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="menuitem7">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuAboutTray">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">About</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuAbout_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuExitTray">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Quit</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuExit_activate" swapped="no"/>
+      </object>
+    </child>
+  </object>
   <object class="GtkWindow" id="window">
     <property name="can_focus">False</property>
     <property name="resizable">False</property>
