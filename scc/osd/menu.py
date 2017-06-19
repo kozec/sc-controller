@@ -182,13 +182,16 @@ class Menu(OSDWindow):
 			except ValueError:
 				print >>sys.stderr, '%s: error: invalid number of arguments' % (sys.argv[0])
 				return False
+		return True
 	
 	
 	def parse_argumets(self, argv):
 		if not OSDWindow.parse_argumets(self, argv):
 			return False
-		if not self.config: self.config = Config()
-		self.parse_menu()
+		if not self.parse_menu():
+			return False
+		if not self.config:
+			self.config = Config()
 		
 		# Parse simpler arguments
 		self._control_with = self.args.control_with

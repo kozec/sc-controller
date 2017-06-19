@@ -8,7 +8,7 @@ limited number of items
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib
 from scc.menu_data import MenuItem, Submenu
 from scc.tools import find_icon, find_menu
 from scc.config import Config
@@ -27,6 +27,7 @@ class QuickMenu(Menu):
 		Menu.__init__(self, cls)
 		self._cancel_with = 'START'
 		self._pressed = []
+		self._timer = None
 	
 	
 	def generate_widget(self, item):
@@ -81,6 +82,9 @@ class QuickMenu(Menu):
 		self.argparser.add_argument('--cancel-with', type=str,
 			metavar="button", default='START',
 			help="button used to cancel menu (default: START)")
+		self.argparser.add_argument('--timeout', type=int,
+			default=5,
+			help="how many seconds before menu is automatically canceled")
 		self.argparser.add_argument('--cancel-with-release', action='store_true',
 			help="cancel menu with button release instead of button press")
 		self.argparser.add_argument('--from-profile', '-p', type=str,
@@ -104,11 +108,16 @@ class QuickMenu(Menu):
 	
 	def parse_argumets(self, argv):
 		if not OSDWindow.parse_argumets(self, argv):
+			print "failed to parse args"
 			return False
-		if not self.config: self.config = Config()
+		if not self.parse_menu():
+			print "failed to parse menu"
+			return False
+		if not self.config:
+			self.config = Config()
 		
 		self._cancel_with = self.args.cancel_with
-		self.parse_menu()
+		self._timeout = self.args.timeout
 		
 		# Create buttons that are displayed on screen
 		items = self.items.generate(self)
@@ -147,12 +156,23 @@ class QuickMenu(Menu):
 			self._submenu.use_config(self.config)
 			self._submenu.parse_argumets(["menu.py",
 				"-x", str(sub_pos[0]), "-y", str(sub_pos[1]),
-			 	"--from-file", filename
+				"--timeout", str(self._timeout),
+				"--from-file", filename
 			])
 			self._submenu.set_is_submenu()
 			self._submenu.use_daemon(self.daemon)
 			self._submenu.connect('destroy', self.on_submenu_closed)
 			self._submenu.show()
+			self.cancel_timer()
+	
+	
+	def on_submenu_closed(self, *a):
+		# Quickmenu can have submenus, but everything cancels at once when
+		# last Quickmenu in hierarchy is canceled or timeouts
+		if self._submenu.get_exit_code() in (0, -2):
+			self._menuid = self._submenu._menuid
+		self._selected = self._submenu._selected
+		self.quit(self._submenu.get_exit_code())
 	
 	
 	def pressed(self, what):
@@ -187,6 +207,26 @@ class QuickMenu(Menu):
 				self.quit(0)
 	
 	
+	def on_timeout(self, *a):
+		self.quit(-1)
+	
+	
+	def show(self, *a):
+		Menu.show(self, *a)
+		self.restart_timer()
+	
+	
+	def restart_timer(self):
+		self.cancel_timer()
+		self._timer = GLib.timeout_add_seconds(self._timeout, self.on_timeout)
+	
+	
+	def cancel_timer(self):
+		if self._timer:
+			GLib.source_remove(self._timer)
+			self._timer = None
+	
+	
 	def on_event(self, daemon, what, data):
 		if self._submenu:
 			return self._submenu.on_event(daemon, what, data)
@@ -194,6 +234,7 @@ class QuickMenu(Menu):
 			if data[0] == 0:	# Button released
 				self.quit(-1)
 		elif what in self.BUTTONS:
+			self.restart_timer()
 			if data[0] == 1:	# Button pressed
 				self.pressed(what)
 			else:				# Released

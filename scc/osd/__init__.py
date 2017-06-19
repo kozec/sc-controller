@@ -13,7 +13,7 @@ from scc.osd.timermanager import TimerManager
 from scc.lib import xwrappers as X
 from scc.config import Config
 
-import os, sys, argparse, logging
+import os, sys, argparse, traceback, logging
 log = logging.getLogger("osd")
 
 
@@ -238,6 +238,7 @@ class OSDWindow(Gtk.Window):
 		try:
 			self.args = self.argparser.parse_args(argv[1:])
 		except BaseException, e:	# Includes SystemExit
+			log.error(traceback.format_exc())
 			return False
 		del self.argparser
 		self.position = (self.args.x, self.args.y)
