@@ -8,7 +8,7 @@ Also supports clicking on areas defined in SVG image.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GObject, Rsvg
+from gi.repository import Gtk, Gdk, GObject, GdkPixbuf, Rsvg
 from xml.etree import ElementTree as ET
 from math import sin, cos, pi as PI
 import os, sys, re, logging
@@ -70,7 +70,7 @@ class SVGWidget(Gtk.EventBox):
 		Doesn't keep aspect ratio and causes cache to be flushed,
 		so this may be slow and nasty.
 		"""
-		self.size_override
+		self.size_override = width, height
 		self.cache = {}
 	
 	
@@ -185,7 +185,12 @@ class SVGWidget(Gtk.EventBox):
 				
 				# ... and now, parse that as XML again......
 				svg = Rsvg.Handle.new_from_data(xml.encode("utf-8"))
-			self.cache[cache_id] = svg.get_pixbuf()
+			if self.size_override:
+				w, h = self.size_override
+				self.cache[cache_id] = svg.get_pixbuf().scale_simple(
+						w, h, GdkPixbuf.InterpType.BILINEAR)
+			else:
+				self.cache[cache_id] = svg.get_pixbuf()
 		
 		self.image.set_from_pixbuf(self.cache[cache_id])
 	
