@@ -1087,7 +1087,7 @@ class SensitivityModifier(Modifier):
 	
 	def to_string(self, multiline=False, pad=0):
 		speeds = [] + self.speeds
-		while speeds[-1] == 1.0:
+		while len(speeds) > 1 and speeds[-1] == 1.0:
 			speeds = speeds[0:-1]
 		return self._mod_to_string(speeds, multiline, pad)
 	
