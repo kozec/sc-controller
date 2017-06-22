@@ -9,7 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, MouseAction, MultiAction
-from scc.actions import GyroAction, GyroAbsAction, TiltAction
+from scc.actions import GyroAction, GyroAbsAction, MouseAbsAction
 from scc.modifiers import ModeModifier, SensitivityModifier
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import SCButtons, YAW, ROLL
@@ -159,9 +159,9 @@ class GyroActionComponent(AEComponent):
 				elif ap[0] == Rels.REL_Y and ap[-1] == Rels.REL_X:
 					return True
 			return False
-		if isinstance(action, (MultiAction, TiltAction)):
-			return False
-		return True
+		if isinstance(action, (MouseAction, MouseAbsAction)):
+			return True
+		return False
 	
 	
 	def select_gyro_output(self, key):

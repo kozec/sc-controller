@@ -552,7 +552,7 @@ class ActionEditor(Editor):
 		if isinstance(action, ModeModifier):
 			args = []
 			for k in action.mods:
-				if action.mods[k]:
+				if action.mods[k] is not None:
 					args += [ k, self.generate_modifiers(ActionEditor.strip_modifiers(action.mods[k])) ]
 			if action.default:
 				args += [ self.generate_modifiers(ActionEditor.strip_modifiers(action.default)) ]
