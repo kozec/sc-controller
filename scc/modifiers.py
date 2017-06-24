@@ -438,7 +438,6 @@ class BallModifier(Modifier, WholeHapticAction):
 		elif mapper.was_touched(what):
 			velocity = sqrt(self._xvel * self._xvel + self._yvel * self._yvel)
 			if velocity > BallModifier.MIN_LIFT_VELOCITY:
-				print "roll"
 				self._roll(mapper)
 	
 	
