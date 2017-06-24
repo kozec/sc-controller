@@ -275,6 +275,8 @@ class BallModifier(Modifier, WholeHapticAction):
 	
 	DEFAULT_FRICTION = 10.0
 	DEFAULT_MEAN_LEN = 10
+	MIN_LIFT_VELOCITY = 0.2	# If finger is lifter after movement slower than 
+							# this, roll doesn't happens
 	
 	def __init__(self, *params):
 		Modifier.__init__(self, *params)
@@ -434,7 +436,10 @@ class BallModifier(Modifier, WholeHapticAction):
 				self._stop()
 			self._old_pos = x, y
 		elif mapper.was_touched(what):
-			self._roll(mapper)
+			velocity = sqrt(self._xvel * self._xvel + self._yvel * self._yvel)
+			if velocity > BallModifier.MIN_LIFT_VELOCITY:
+				print "roll"
+				self._roll(mapper)
 	
 	
 	def set_haptic(self, hd):
