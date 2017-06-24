@@ -1328,7 +1328,6 @@ class ButtonAction(HapticEnabledAction, Action):
 		Keys.KEY_RIGHTMETA	: "Meta",
 		Keys.KEY_RIGHTALT	: "Alt"
 	}
-	CIRCULAR_INTERVAL = 1000
 	
 	def __init__(self, button1, button2 = None, minustrigger = None, plustrigger = None):
 		Action.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
@@ -1338,7 +1337,6 @@ class ButtonAction(HapticEnabledAction, Action):
 		# minustrigger and plustrigger are not used anymore, __init__ takes
 		# them only for backwards compatibility.
 		# TODO: Remove backwards compatibility
-		self._change = 0
 		self._pressed_key = None
 		self._released = True
 	
@@ -1513,21 +1511,6 @@ class ButtonAction(HapticEnabledAction, Action):
 		
 		if p <= TRIGGER_MIN:
 			self._released = True
-	
-	
-	def change(self, mapper, dx, dy):
-		""" Makes sense with circular() modifier """
-		self._change += dx
-		if self._change < -ButtonAction.CIRCULAR_INTERVAL:
-			self._change += ButtonAction.CIRCULAR_INTERVAL
-			if self.button:
-				ButtonAction._button_press(mapper, self.button)
-				ButtonAction._button_release(mapper, self.button)
-		elif self._change > ButtonAction.CIRCULAR_INTERVAL:
-			self._change -= ButtonAction.CIRCULAR_INTERVAL
-			if self.button2:
-				ButtonAction._button_press(mapper, self.button2)
-				ButtonAction._button_release(mapper, self.button2)
 
 
 class MultiAction(MultichildAction):
