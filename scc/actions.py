@@ -1695,6 +1695,12 @@ class MultiAction(MultichildAction):
 	def pad(self, *p):
 		for a in self.actions: a.pad(*p)
 	
+	def add(self, *p):
+		for a in self.actions: a.add(*p)
+	
+	def change(self, *p):
+		for a in self.actions: a.change(*p)
+	
 	def gyro(self, *p):
 		for a in self.actions: a.gyro(*p)
 	
