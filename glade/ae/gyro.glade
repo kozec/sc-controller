@@ -16,7 +16,6 @@
     <property name="margin_left">30</property>
     <property name="margin_right">30</property>
     <property name="orientation">vertical</property>
-    <property name="spacing">20</property>
     <child>
       <object class="GtkGrid" id="whatthefuckubuntu">
         <property name="visible">True</property>
@@ -244,9 +243,10 @@
       <object class="GtkBox" id="ihaveid">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_top">20</property>
         <property name="spacing">10</property>
         <child>
-          <object class="GtkLabel" id="label2">
+          <object class="GtkLabel" id="lblGyroEnable">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Gyro Enable Button</property>
@@ -287,6 +287,30 @@
         <property name="expand">False</property>
         <property name="fill">True</property>
         <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkCheckButton" id="cbInvertGyro">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">False</property>
+        <property name="draw_indicator">True</property>
+        <signal name="toggled" handler="on_cbInvertGyro_toggled" swapped="no"/>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Button disables Gyro</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">2</property>
       </packing>
     </child>
   </object>

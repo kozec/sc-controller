@@ -51,8 +51,11 @@ class GyroComponent(AEComponent):
 	def set_action(self, mode, action):
 		if self.handles(mode, action):
 			if isinstance(action, ModeModifier):
+				self._recursing = True
+				self.builder.get_object("cbInvertGyro").set_active(bool(action.default))
+				self._recursing = False
 				b = action.order[0]
-				action = action.mods[b]
+				action = action.mods[b] or action.default
 				self.select_gyro_button(b)
 			else:
 				self.select_gyro_button(None)
@@ -123,6 +126,16 @@ class GyroComponent(AEComponent):
 		self._recursing = False
 	
 	
+	def on_cbInvertGyro_toggled(self, cb, *a):
+		lblGyroEnable = self.builder.get_object("lblGyroEnable")
+		if cb.get_active():
+			lblGyroEnable.set_label(_("Gyro Disable Button"))
+		else:
+			lblGyroEnable.set_label(_("Gyro Enable Button"))
+		if not self._recursing:
+			self.send()
+	
+	
 	def update(self, *a):
 		for i in xrange(0, 3):
 			self.labels[i].set_label(describe_action(Action.AC_STICK, AxisAction, self.axes[i]))
@@ -132,6 +145,7 @@ class GyroComponent(AEComponent):
 		if self._recursing : return
 		
 		cbGyroButton = self.builder.get_object("cbGyroButton")
+		cbInvertGyro = self.builder.get_object("cbInvertGyro")
 		button = cbGyroButton.get_model().get_value(cbGyroButton.get_active_iter(), 0)
 		
 		normal, n_set    = [ None, None, None ], False
@@ -156,6 +170,9 @@ class GyroComponent(AEComponent):
 			action = NoAction()
 		
 		if button and action:
-			action = ModeModifier(getattr(SCButtons, button), action)
+			if cbInvertGyro.get_active():
+				action = ModeModifier(getattr(SCButtons, button), NoAction(), action)
+			else:
+				action = ModeModifier(getattr(SCButtons, button), action)
 		
 		self.editor.set_action(action)
