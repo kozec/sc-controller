@@ -1086,8 +1086,9 @@ class GyroAction(Action):
 			return _("Mouse")
 		
 		for x in self.axes:
-			s, trash, trash = AxisAction.get_axis_description(x)
-			if s not in rv: rv.append(s)
+			if x:
+				s, trash, trash = AxisAction.get_axis_description(x)
+				if s not in rv: rv.append(s)
 		return "\n".join(rv)
 
 
