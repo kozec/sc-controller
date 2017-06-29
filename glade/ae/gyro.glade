@@ -297,14 +297,18 @@
         <property name="draw_indicator">True</property>
         <signal name="toggled" handler="on_cbInvertGyro_toggled" swapped="no"/>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="label9414">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Button disables Gyro</property>
             <attributes>
               <attribute name="weight" value="bold"/>
             </attributes>
-          </object>
+          </
+            
+            
+            
+            >
         </child>
       </object>
       <packing>
