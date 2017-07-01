@@ -1258,9 +1258,6 @@ class SmoothModifier(Modifier):
 		y = sum(( self._deq_y[i] * self._weights[i] for i in self._range ))
 		return x / self._w_sum, y / self._w_sum
 	
-	fucking_shit = 0, 0
-	
-	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
 			if mapper.was_touched(what):
@@ -1268,15 +1265,14 @@ class SmoothModifier(Modifier):
 				self._deq_x.append(x)
 				self._deq_y.append(y)
 				x, y = self._get_pos()
-				if abs(x + y - self._last_pos) > self.filter:
-					self.action.whole(mapper, x, y, what)
 			else:
 				# Just pressed - fill deque with current position
-				SmoothModifier.fucking_shit = x, y
 				for i in self._range:
 					self._deq_x.append(x)
 					self._deq_y.append(y)
 				x, y = self._get_pos()
+			if abs(x + y - self._last_pos) > self.filter:
+				self.action.whole(mapper, x, y, what)
 			self._last_pos = x + y
 		else:
 			# Pad was just released
