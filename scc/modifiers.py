@@ -1336,7 +1336,6 @@ class CircularModifier(Modifier, WholeHapticAction):
 		if distance < STICK_PAD_MAX_HALF:
 			# Finger lifted or too close to middle
 			self.angle = None
-			self.travelled = 0
 		else:
 			# Compute current angle
 			angle = atan2(x, y)
@@ -1344,6 +1343,7 @@ class CircularModifier(Modifier, WholeHapticAction):
 			if self.angle is None:
 				# Finger just touched the pad
 				self.angle, angle = angle, 0
+				self.reset_wholehaptic()
 			else:
 				self.angle, angle = angle, self.angle - angle
 				# Ensure we don't wrap from pi to -pi creating a large delta
@@ -1355,7 +1355,8 @@ class CircularModifier(Modifier, WholeHapticAction):
 					# Add a full rotation to counter the wrapping
 					angle += 2 * PI
 				if self.haptic:
-					WholeHapticAction.change(self, mapper, angle * 10000, 0)
+					WholeHapticAction.change(self, mapper,
+							angle * self.speed * 10000.0 * 2.0, 0)
 			# Apply bulgarian constant
 			angle *= 10000.0
 			# Apply movement to child action
@@ -1415,7 +1416,6 @@ class CircularAbsModifier(Modifier, WholeHapticAction):
 		if distance < STICK_PAD_MAX_HALF:
 			# Finger lifted or too close to middle
 			self.angle = None
-			self.travelled = 0
 		else:
 			# Compute current angle
 			angle = atan2(x, y) + PI / 4
