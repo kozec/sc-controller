@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 """
-SC-Controller - OSD Message
-
-Display message that just sits there
+SC-Controller - Input Display
 """
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
@@ -93,6 +91,11 @@ class InputDisplay(OSDWindow):
 	
 	def on_observe_failed(self, error):
 		log.error("Failed to enable test mode: %s", error)
+		if "Sniffing" in error:
+			log.error("")
+			log.error("=================================================================================")
+			log.error("[!!] Please, enable 'Input Test Mode' on 'Advanced' tab in SC-Controller settings")
+			log.error("=================================================================================")
 		self.quit(3)
 	
 	
