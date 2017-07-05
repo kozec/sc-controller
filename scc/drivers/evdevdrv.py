@@ -17,8 +17,7 @@ log = logging.getLogger("evdev")
 
 
 EvdevControllerInput = namedtuple('EvdevControllerInput',
-	'seq buttons ltrig rtrig '
-	'lpad_x lpad_y lstick_x lstick_y rstick_x rstick_y'
+	'buttons ltrig rtrig lpad_x lpad_y stick_x stick_y rstick_x rstick_y'
 )
 
 
@@ -40,12 +39,20 @@ class EvdevController(Controller):
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
 		
 		self._evdev_to_button = {}
+		self._evdev_to_axis = {}
 		if "buttons" in config:
 			for x, value in config["buttons"].iteritems():
 				try:
 					keycode = int(x)
 					sc = getattr(SCButtons, value)
 					self._evdev_to_button[keycode] = sc
+				except: pass
+		if "axes" in config:
+			for x, value in config["axes"].iteritems():
+				try:
+					code = int(x)
+					if value in EvdevControllerInput._fields:
+						self._evdev_to_axis[code] = value
 				except: pass
 	
 	
@@ -99,6 +106,11 @@ class EvdevController(Controller):
 					else:
 						b = new_state.buttons & ~self._evdev_to_button[event.code]
 						new_state = new_state._replace(buttons=b)
+			elif event.type == evdev.ecodes.EV_ABS:
+				if event.code in self._evdev_to_axis:
+					new_state = new_state._replace(**{
+						self._evdev_to_axis[event.code] : event.value
+					})
 		if new_state is not self._state:
 			# Something got changed
 			old_state, self._state = self._state, new_state
