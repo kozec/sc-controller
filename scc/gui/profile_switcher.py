@@ -331,6 +331,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 	def update_icon(self):
 		""" Changes displayed icon to whatever is currently set in config """
 		# Called internally and from ControllerSettings
+		print "Aaaaah", self._controller, self._controller.get_id_is_persistent() if self._controller else None
 		if not self._controller or not self._controller.get_id_is_persistent():
 			self._icon.set_from_file(os.path.join(self.imagepath, "controller-icon.svg"))
 			return
