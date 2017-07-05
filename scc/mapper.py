@@ -5,7 +5,8 @@ from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO, HapticPos
-from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICK_TILT
+from scc.constants import LEFT, RIGHT, STICK, STICK_TILT
+from scc.constants import SCButtons, ControllerFlags
 from scc.aliases import ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction, GyroAbsAction
 from scc.controller import HapticData
@@ -365,6 +366,9 @@ class Mapper(object):
 			
 			# Check pads
 			# RPAD
+			if controller.flags & ControllerFlags.HAS_RSTICK:
+				if FE_STICK in fe or self.old_state.rpad_x != state.rpad_x or self.old_state.rpad_y != state.rpad_y:
+					self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
 			if FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 				self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
 			

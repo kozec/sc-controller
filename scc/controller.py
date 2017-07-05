@@ -33,9 +33,11 @@ class Controller(object):
 	
 	Derived class should implement every method from here.
 	"""
+	
 	def __init__(self):
 		global next_id
 		self.mapper = None
+		self.flags = 0
 		self._id = next_id
 		self._id_is_persistent = False
 		next_id += 1

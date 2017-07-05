@@ -6,8 +6,9 @@ is a gamepad and which user actually wants to be handled by SCC, list of enabled
 devices is read from config file.
 """
 
+from scc.constants import SCButtons, ControllerFlags
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.controller import Controller
-from scc.constants import SCButtons
 from scc.config import Config
 from scc.poller import Poller
 from collections import namedtuple
@@ -17,7 +18,7 @@ log = logging.getLogger("evdev")
 
 
 EvdevControllerInput = namedtuple('EvdevControllerInput',
-	'buttons ltrig rtrig lpad_x lpad_y stick_x stick_y rstick_x rstick_y'
+	'buttons ltrig rtrig lpad_x lpad_y rpad_x rpad_y'
 )
 
 
@@ -30,6 +31,7 @@ class EvdevController(Controller):
 	
 	def __init__(self, daemon, device, config):
 		Controller.__init__(self)
+		self.flags = ControllerFlags.HAS_RSTICK	# TODO: Maybe configurable
 		self.device = device
 		self.config = config
 		self.poller = daemon.get_poller()
@@ -37,9 +39,15 @@ class EvdevController(Controller):
 		self.device.grab()
 		self._id = self._generate_id()
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
-		
+		self._parse_config(config)
+	
+	
+	def _parse_config(self, config):
 		self._evdev_to_button = {}
 		self._evdev_to_axis = {}
+		self._ranges = {}
+		self._centers = {}
+		
 		if "buttons" in config:
 			for x, value in config["buttons"].iteritems():
 				try:
@@ -47,13 +55,25 @@ class EvdevController(Controller):
 					sc = getattr(SCButtons, value)
 					self._evdev_to_button[keycode] = sc
 				except: pass
-		if "axes" in config:
-			for x, value in config["axes"].iteritems():
-				try:
-					code = int(x)
-					if value in EvdevControllerInput._fields:
-						self._evdev_to_axis[code] = value
-				except: pass
+		if "sticks" in config:
+			for x, value in config["sticks"].iteritems():
+				#try:
+				code = int(x)
+				if value in EvdevControllerInput._fields:
+					self._evdev_to_axis[code] = value
+					if x in config["ranges"]:
+						mn, mx = config["ranges"][x][0], config["ranges"][x][1]
+						if mx > mn:
+							self._ranges[code] = 2.0 / (mx-mn), -1.0
+						else:
+							self._ranges[code] = -2.0 / (mn-mx), 1.0
+					else:
+						self._ranges[code] = 1.0 / STICK_PAD_MAX, -1.0
+					if x in config["centers"]:
+						self._centers[code] = tuple(config["centers"][x][0:2])
+					else:
+						self._centers[code] = ( -1, 1)
+				#except: pass
 	
 	
 	def close(self):
@@ -108,8 +128,14 @@ class EvdevController(Controller):
 						new_state = new_state._replace(buttons=b)
 			elif event.type == evdev.ecodes.EV_ABS:
 				if event.code in self._evdev_to_axis:
+					c0, c1 = self._centers[event.code]
+					scale, middle = self._ranges[event.code]
+					if event.value > c0 and event.value < c1:
+						value = 0
+					else:
+						value = (float(event.value) * scale + middle)
 					new_state = new_state._replace(**{
-						self._evdev_to_axis[event.code] : event.value
+						self._evdev_to_axis[event.code] : int(value * STICK_PAD_MAX)
 					})
 		if new_state is not self._state:
 			# Something got changed
