@@ -7,10 +7,19 @@ devices is read from config file.
 """
 
 from scc.controller import Controller
+from scc.constants import SCButtons
 from scc.config import Config
+from scc.poller import Poller
+from collections import namedtuple
 import evdev
 import struct, os, time, binascii, logging
 log = logging.getLogger("evdev")
+
+
+EvdevControllerInput = namedtuple('EvdevControllerInput',
+	'seq buttons ltrig rtrig '
+	'lpad_x lpad_y lstick_x lstick_y rstick_x rstick_y'
+)
 
 
 class EvdevController(Controller):
@@ -20,12 +29,24 @@ class EvdevController(Controller):
 	as SCController class does.
 	"""
 	
-	def __init__(self, device, config):
+	def __init__(self, daemon, device, config):
 		Controller.__init__(self)
 		self.device = device
 		self.config = config
+		self.poller = daemon.get_poller()
+		self.poller.register(self.device.fd, self.poller.POLLIN, self.input)
 		self.device.grab()
 		self._id = self._generate_id()
+		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
+		
+		self._evdev_to_button = {}
+		if "buttons" in config:
+			for x, value in config["buttons"].iteritems():
+				try:
+					keycode = int(x)
+					sc = getattr(SCButtons, value)
+					self._evdev_to_button[keycode] = sc
+				except: pass
 	
 	
 	def close(self):
@@ -67,8 +88,22 @@ class EvdevController(Controller):
 		return "<Evdev %s>" % (self.device.name,)
 	
 	
-	def input(self, idata):
-		pass
+	def input(self, *a):
+		new_state = self._state
+		for event in self.device.read():
+			if event.type == evdev.ecodes.EV_KEY:
+				if event.code in self._evdev_to_button:
+					if event.value:
+						b = new_state.buttons | self._evdev_to_button[event.code]
+						new_state = new_state._replace(buttons=b)
+					else:
+						b = new_state.buttons & ~self._evdev_to_button[event.code]
+						new_state = new_state._replace(buttons=b)
+		if new_state is not self._state:
+			# Something got changed
+			old_state, self._state = self._state, new_state
+			if self.mapper:
+				self.mapper.input(self, time.time(), old_state, new_state)
 	
 	
 	def apply_config(self, config):
@@ -104,7 +139,7 @@ class EvdevController(Controller):
 	
 	def get_gyro_enabled(self):
 		""" Returns True if gyroscope input is currently enabled """
-		return self._enable_gyros
+		return False
 	
 	
 	def feedback(self, data):
@@ -120,7 +155,7 @@ class EvdevDriver(object):
 	
 	
 	def handle_new_device(self, dev, config):
-		controller = EvdevController(dev, config)
+		controller = EvdevController(self._daemon, dev, config)
 		self._devices[dev] = controller
 		self._daemon.add_controller(controller)
 		log.debug("Evdev device added: %s", dev.name)
@@ -132,7 +167,10 @@ class EvdevDriver(object):
 			dev = evdev.InputDevice(fname)
 			if dev.name in c['evdev_devices']:
 				self.handle_new_device(dev, c['evdev_devices'][dev.name])
-
+	
+	
+	def mainloop(self):
+		pass
 
 # Just like USB driver, EvdevDriver is process-wide singleton
 _evdevdrv = EvdevDriver()
@@ -140,7 +178,7 @@ _evdevdrv = EvdevDriver()
 def init(daemon):
 	_evdevdrv._daemon = daemon
 	# daemon.on_daemon_exit(_evdevdrv.on_exit)
-	# daemon.add_mainloop(_evdevdrv.mainloop)
+	daemon.add_mainloop(_evdevdrv.mainloop)
 
 def start(daemon):
 	_evdevdrv.start()
