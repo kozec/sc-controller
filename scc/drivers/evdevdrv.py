@@ -6,8 +6,8 @@ is a gamepad and which user actually wants to be handled by SCC, list of enabled
 devices is read from config file.
 """
 
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, TRIGGER_MAX
 from scc.constants import SCButtons, ControllerFlags
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.controller import Controller
 from scc.config import Config
 from scc.poller import Poller
@@ -60,22 +60,42 @@ class EvdevController(Controller):
 		if "calibration" not in config: config["calibration"] = {}
 		if "sticks" in config:
 			for x, value in config["sticks"].iteritems():
-				#try:
-				code = int(x)
-				if value in EvdevControllerInput._fields:
-					self._evdev_to_axis[code] = value
-					if x in config["calibration"]:
-						mn, mx, center = config["calibration"][x][0:3]
-						if mx > mn:
-							self._calibrations[code]= AxisCalibrationData(
-								-2.0 / (mn-mx), -1.0, center)
+				try:
+					code = int(x)
+					if value in EvdevControllerInput._fields:
+						self._evdev_to_axis[code] = value
+						if x in config["calibration"]:
+							mn, mx, center = config["calibration"][x][0:3]
+							if mx > mn:
+								self._calibrations[code]= AxisCalibrationData(
+									-2.0 / (mn-mx), -1.0, center)
+							else:
+								self._calibrations[code]= AxisCalibrationData(
+									-2.0 / (mn-mx), 1.0, center)
 						else:
-							self._calibrations[code]= AxisCalibrationData(
-								-2.0 / (mn-mx), 1.0, center)
-					else:
-						self._calibrations[code] = AxisCalibrationData(
-							1.0 / STICK_PAD_MAX, -1.0, 1)
-				#except: pass
+							self._calibrations[code] = AxisCalibrationData(
+								1.0 / STICK_PAD_MAX, -1.0, 1)
+				except Exception, e:
+					log.error(e)
+					if code in self._evdev_to_axis:
+						del self._evdev_to_axis[code]
+		if "triggers" in config:
+			for x, value in config["triggers"].iteritems():
+				try:
+					code = int(x)
+					if value in EvdevControllerInput._fields:
+						self._evdev_to_axis[code] = value
+						if x in config["calibration"]:
+							mn, mx, center = config["calibration"][x][0:3]
+							self._calibrations[code] = AxisCalibrationData(
+								2.0 / (mx-mn) / TRIGGER_MAX, 0, 0)
+						else:
+							self._calibrations[code] = AxisCalibrationData(
+								1.0, 0, 0)
+				except Exception, e:
+					log.error(e)
+					if code in self._evdev_to_axis:
+						del self._evdev_to_axis[code]
 	
 	
 	def close(self):
