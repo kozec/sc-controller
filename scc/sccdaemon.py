@@ -1124,7 +1124,8 @@ class ReportingAction(Action):
 	
 	
 	def whole(self, mapper, x, y, what):
-		if abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE):
+		if (x == 0 or y == 0 or abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE
+							or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE)):
 			self.old_pos = x, y
 			self.client.wfile.write(("Event: %s %s %s %s\n" % (
 				mapper.get_controller().get_id(),
