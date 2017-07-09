@@ -1281,7 +1281,7 @@ class SmoothModifier(Modifier):
 			self._last_pos = 0
 
 
-class CircularModifier(Modifier, WholeHapticAction):
+class CircularModifier(Modifier, HapticEnabledAction):
 	"""
 	Designed to translate rotating finger over pad to mouse wheel movement.
 	Can also be used to translate same thing into movement of Axis.
@@ -1293,8 +1293,9 @@ class CircularModifier(Modifier, WholeHapticAction):
 		# Piece of backwards compatibility
 		if len(params) >= 1 and params[0] in Rels:
 			params = [ MouseAction(params[0]) ]
+		self._haptic_counter = 0
 		Modifier.__init__(self, *params)
-		WholeHapticAction.__init__(self)
+		HapticEnabledAction.__init__(self)
 	
 	
 	def _mod_init(self):
@@ -1343,7 +1344,7 @@ class CircularModifier(Modifier, WholeHapticAction):
 			if self.angle is None:
 				# Finger just touched the pad
 				self.angle, angle = angle, 0
-				self.reset_wholehaptic()
+				self._haptic_counter = 0
 			else:
 				self.angle, angle = angle, self.angle - angle
 				# Ensure we don't wrap from pi to -pi creating a large delta
@@ -1354,11 +1355,17 @@ class CircularModifier(Modifier, WholeHapticAction):
 				elif angle < -PI:
 					# Add a full rotation to counter the wrapping
 					angle += 2 * PI
-				if self.haptic:
-					WholeHapticAction.change(self, mapper,
-							angle * self.speed * 10000.0 * 2.0, 0)
 			# Apply bulgarian constant
 			angle *= 10000.0
+			# Generate feedback, if enabled
+			if self.haptic:
+				self._haptic_counter += angle * self.speed / self.haptic.frequency
+				if abs(self._haptic_counter) > 0.5:
+					if self._haptic_counter > 0.5:
+						self._haptic_counter -= 0.5
+					else:
+						self._haptic_counter += 0.5
+					mapper.send_feedback(self.haptic)
 			# Apply movement to child action
 			self.action.change(mapper, -angle * self.speed, 0)
 			mapper.force_event.add(FE_PAD)
