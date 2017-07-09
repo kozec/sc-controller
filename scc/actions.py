@@ -470,11 +470,18 @@ class AxisAction(Action):
 	X = [ Axes.ABS_X, Axes.ABS_RX, Axes.ABS_HAT0X ]
 	Z = [ Axes.ABS_Z, Axes.ABS_RZ ]
 	
+	# Storage of positions per axis common for all AxisActions
+	# This is important for cases when two different bindigs
+	# are mapped to same axis using change() / CircularModifier
+	# See https://github.com/kozec/sc-controller/issues/213
+	old_positions = {}
+	
 	def __init__(self, id, min = None, max = None):
 		Action.__init__(self, id, *strip_none(min, max))
 		self.id = id
 		self.speed = 1.0
-		self._old_pos = 0
+		if self.id not in AxisAction.old_positions:
+			AxisAction.old_positions[self.id] = 0
 		if self.id in TRIGGERS:
 			self.min = TRIGGER_MIN if min is None else min
 			self.max = TRIGGER_MAX if max is None else max
@@ -575,8 +582,10 @@ class AxisAction(Action):
 	
 	def change(self, mapper, dx, dy):
 		""" Called from CircularModifier """
-		self._old_pos = clamp(-STICK_PAD_MAX, (self._old_pos or 0) + dx, STICK_PAD_MAX)
-		self.axis(mapper, self._old_pos, None)
+		p = AxisAction.old_positions[self.id]
+		p = clamp(-STICK_PAD_MAX, p + dx, STICK_PAD_MAX)
+		AxisAction.old_positions[self.id] = p
+		self.axis(mapper, p, None)
 	
 	
 	def add(self, mapper, dx, dy):
