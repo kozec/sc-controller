@@ -346,6 +346,13 @@ class MenuActionCofC(UserDataManager):
 						# Both 0 and 100 means default here
 						# size is 2nd parameter
 						params += [ False, size ]
+				elif menu_type == "hmenu":
+					self.update_size_display(HorizontalMenuAction("dummy"))
+					size = int(spMenuSize.get_adjustment().get_value())
+					if size > 1:
+						# Size 0 and 1 means default here
+						# size is 2nd parameter
+						params += [ False, size ]
 				else:
 					# , "radialmenu"):
 					self.update_size_display(None)
@@ -397,7 +404,7 @@ class MenuActionCofC(UserDataManager):
 			lblMenuSize.set_text(_("Items per row"))
 			rvMenuSize.set_reveal_child(True)
 			return True
-		elif isinstance(action, RadialMenuAction):
+		elif isinstance(action, (RadialMenuAction, HorizontalMenuAction)):
 			spMenuSize.set_visible(False)
 			sclMenuSize.set_visible(True)
 			lblMenuSize.set_text(_("Size"))
@@ -426,6 +433,14 @@ class MenuActionCofC(UserDataManager):
 	
 	
 	def on_sclMenuSize_format_value(self, scale, val):
-		if val < 1:
-			return _("default")
-		return  "%s%%" % (int(val),)
+		cbm = self.builder.get_object("cbMenuType")
+		menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+		if menu_type == "radialmenu":
+			if val < 1:
+				return _("default")
+			return  "%s%%" % (int(val),)
+		else: # if menu_type == "hmenu"
+			val = int(val)
+			if val < 2:
+				return _("default")
+			return str(int(val))

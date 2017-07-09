@@ -80,7 +80,7 @@ class RadialMenu(Menu):
 	
 	
 	def generate_widget(self, item):
-		if item.id is None:
+		if isinstance(item, (Separator, Submenu)) or item.id is None:
 			# Labels and separators, radial menu can't show these
 			return None
 		e = self.editor.clone_element("menuitem_template")
