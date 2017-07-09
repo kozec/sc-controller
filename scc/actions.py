@@ -576,7 +576,9 @@ class AxisAction(Action):
 	def axis(self, mapper, position, what):
 		p = float(position * self.speed - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, p))
+		p = AxisAction.clamp_axis(self.id, p)
+		AxisAction.old_positions[self.id] = p
+		mapper.gamepad.axisEvent(self.id, p)
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
@@ -596,7 +598,9 @@ class AxisAction(Action):
 	def trigger(self, mapper, position, old_position):
 		p = float(position * self.speed - TRIGGER_MIN) / (TRIGGER_MAX - TRIGGER_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, p))
+		p = AxisAction.clamp_axis(self.id, p)
+		AxisAction.old_positions[self.id] = p
+		mapper.gamepad.axisEvent(self.id, p)
 		mapper.syn_list.add(mapper.gamepad)
 
 
