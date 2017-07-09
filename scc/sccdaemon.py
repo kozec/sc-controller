@@ -158,6 +158,8 @@ class SCCDaemon(Daemon):
 				mapper.get_controller().set_gyro_enabled(True)
 		# Release all buttons
 		mapper.release_virtual_buttons()
+		# Reset mouse (issue #222)
+		mapper.mouse.reset()
 		
 		# This last line kinda depends on GIL...
 		mapper.profile = p
