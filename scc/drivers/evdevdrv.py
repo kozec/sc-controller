@@ -99,6 +99,7 @@ class EvdevController(Controller):
 	
 	
 	def close(self):
+		self.poller.unregister(self.device.fd)
 		try:
 			self.device.ungrab()
 		except: pass
@@ -139,25 +140,31 @@ class EvdevController(Controller):
 	
 	def input(self, *a):
 		new_state = self._state
-		for event in self.device.read():
-			if event.type == evdev.ecodes.EV_KEY:
-				if event.code in self._evdev_to_button:
-					if event.value:
-						b = new_state.buttons | self._evdev_to_button[event.code]
-						new_state = new_state._replace(buttons=b)
-					else:
-						b = new_state.buttons & ~self._evdev_to_button[event.code]
-						new_state = new_state._replace(buttons=b)
-			elif event.type == evdev.ecodes.EV_ABS:
-				if event.code in self._evdev_to_axis:
-					cal = self._calibrations[event.code]
-					value = (float(event.value) * cal.scale + cal.offset)
-					value = int(value * STICK_PAD_MAX)
-					if value > -cal.center and value < cal.center:
-						value = 0
-					new_state = new_state._replace(**{
-						self._evdev_to_axis[event.code] : value
-					})
+		try:
+			for event in self.device.read():
+				if event.type == evdev.ecodes.EV_KEY:
+					if event.code in self._evdev_to_button:
+						if event.value:
+							b = new_state.buttons | self._evdev_to_button[event.code]
+							new_state = new_state._replace(buttons=b)
+						else:
+							b = new_state.buttons & ~self._evdev_to_button[event.code]
+							new_state = new_state._replace(buttons=b)
+				elif event.type == evdev.ecodes.EV_ABS:
+					if event.code in self._evdev_to_axis:
+						cal = self._calibrations[event.code]
+						value = (float(event.value) * cal.scale + cal.offset)
+						value = int(value * STICK_PAD_MAX)
+						if value > -cal.center and value < cal.center:
+							value = 0
+						new_state = new_state._replace(**{
+							self._evdev_to_axis[event.code] : value
+						})
+		except IOError, e:
+			# TODO: Maybe check e.errno to determine exact error
+			# all of them are fatal for now
+			log.error(e)
+			_evdevdrv.device_removed(self.device)
 		if new_state is not self._state:
 			# Something got changed
 			old_state, self._state = self._state, new_state
@@ -222,6 +229,14 @@ class EvdevDriver(object):
 		self._daemon.add_controller(controller)
 		log.debug("Evdev device added: %s", dev.name)
 	
+	
+	def device_removed(self, dev):
+		if dev.fn in self._devices:
+			controller = self._devices[dev.fn]
+			del self._devices[dev.fn]
+			self._daemon.remove_controller(controller)
+			self._used_ids.remove(controller.get_id())
+			controller.close()
 	
 	def scan(self):
 		c = Config()

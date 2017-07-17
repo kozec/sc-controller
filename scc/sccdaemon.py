@@ -1099,24 +1099,26 @@ class ReportingAction(Action):
 	
 	
 	def trigger(self, mapper, position, old_position):
-		self.client.wfile.write(("Event: %s %s %s %s\n" % (
-			mapper.get_controller().get_id(),
-			self.what.name, position, old_position)
-		).encode("utf-8"))
+		if mapper.get_controller():
+			self.client.wfile.write(("Event: %s %s %s %s\n" % (
+				mapper.get_controller().get_id(),
+				self.what.name, position, old_position)
+			).encode("utf-8"))
 	
 	
 	def button_press(self, mapper, number=1):
-		if self.what == SCButtons.STICK:
-			self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
-				mapper.get_controller().get_id(),
-				number
-			)).encode("utf-8"))
-		else:
-			self.client.wfile.write(("Event: %s %s %s\n" % (
-				mapper.get_controller().get_id(),
-				self.what.name,
-				number
-			)).encode("utf-8"))
+		if mapper.get_controller():
+			if self.what == SCButtons.STICK:
+				self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
+					mapper.get_controller().get_id(),
+					number
+				)).encode("utf-8"))
+			else:
+				self.client.wfile.write(("Event: %s %s %s\n" % (
+					mapper.get_controller().get_id(),
+					self.what.name,
+					number
+				)).encode("utf-8"))
 	
 	
 	def button_release(self, mapper):
@@ -1127,10 +1129,11 @@ class ReportingAction(Action):
 		if (x == 0 or y == 0 or abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE
 							or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE)):
 			self.old_pos = x, y
-			self.client.wfile.write(("Event: %s %s %s %s\n" % (
-				mapper.get_controller().get_id(),
-				what, x, y
-			)).encode("utf-8"))
+			if mapper.get_controller():
+				self.client.wfile.write(("Event: %s %s %s %s\n" % (
+					mapper.get_controller().get_id(),
+					what, x, y
+				)).encode("utf-8"))
 
 
 class LockedAction(ReportingAction):
