@@ -207,37 +207,47 @@ class EvdevController(Controller):
 
 
 class EvdevDriver(object):
+	SCAN_INTERVAL = 5
+	
 	def __init__(self):
 		self._daemon = None
 		self._devices = {}
 		self._used_ids = set()
+		self._next_scan = None
 	
 	
 	def handle_new_device(self, dev, config):
 		controller = EvdevController(self._daemon, dev, config)
-		self._devices[dev] = controller
+		self._devices[dev.fn] = controller
 		self._daemon.add_controller(controller)
 		log.debug("Evdev device added: %s", dev.name)
 	
 	
-	def start(self):
+	def scan(self):
 		c = Config()
+		self._next_scan = time.time() + EvdevDriver.SCAN_INTERVAL
 		for fname in evdev.list_devices():
 			dev = evdev.InputDevice(fname)
-			if dev.name in c['evdev_devices']:
-				self.handle_new_device(dev, c['evdev_devices'][dev.name])
+			if dev.fn not in self._devices:
+				if dev.name in c['evdev_devices']:
+					self.handle_new_device(dev, c['evdev_devices'][dev.name])
+	
+	
+	def start(self):
+		self.scan()
 	
 	
 	def mainloop(self):
-		pass
+		if time.time() > self._next_scan:
+			self.scan()
 
 # Just like USB driver, EvdevDriver is process-wide singleton
 _evdevdrv = EvdevDriver()
 
 def init(daemon):
 	_evdevdrv._daemon = daemon
-	# daemon.on_daemon_exit(_evdevdrv.on_exit)
 	daemon.add_mainloop(_evdevdrv.mainloop)
+	# daemon.on_daemon_exit(_evdevdrv.on_exit)
 
 def start(daemon):
 	_evdevdrv.start()
