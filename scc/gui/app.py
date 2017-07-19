@@ -131,6 +131,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
+		
+		GLib.idle_add(self.on_mnuRegisterController_activate)
 	
 	
 	def setup_statusicon(self):
@@ -373,6 +375,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		from scc.gui.global_settings import GlobalSettings
 		gs = GlobalSettings(self)
 		gs.show(self.window)
+	
+	
+	def on_mnuRegisterController_activate(self, *a):
+		from scc.gui.controller_registration import ControllerRegistration
+		cr = ControllerRegistration(self)
+		cr.show(self.window)
 	
 	
 	def on_mnuImport_activate(self, *a):
