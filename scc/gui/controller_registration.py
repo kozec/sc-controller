@@ -10,6 +10,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import GdkPixbuf
+from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
 
 import evdev
@@ -27,6 +28,7 @@ class ControllerRegistration(Editor):
 				os.path.join(self.app.imagepath, "controller-icons", "evdev-0.svg"))
 		self._other_icon = GdkPixbuf.Pixbuf.new_from_file(
 				os.path.join(self.app.imagepath, "controller-icons", "unknown.svg"))
+		self._controller_image = None
 		self.refresh_devices()
 	
 	
@@ -53,12 +55,28 @@ class ControllerRegistration(Editor):
 		return False
 	
 	
+	def load_buttons(self):
+		cbControllerButtons = self.builder.get_object("cbControllerButtons")
+		self._groups = {}
+		model = cbControllerButtons.get_model()
+		groups = json.loads(open(os.path.join(self.app.imagepath,
+			"button-images", "groups.json"), "r").read())
+		for group in groups:
+			images = [ GdkPixbuf.Pixbuf.new_from_file(os.path.join(
+				self.app.imagepath, "button-images", "%s.svg" % (b, )))
+				for b in group['buttons'][0:4] ]
+			model.append( [group['key']] + images )
+			self._groups[group['key']] = group['buttons']
+		cbControllerButtons.set_active(0)
+	
+	
 	def on_btNext_clicked(self, button):
 		stDialog = self.builder.get_object("stDialog")
 		pages = stDialog.get_children()
 		index = pages.index(stDialog.get_visible_child())
 		if index == 0:
 			stDialog.set_visible_child(pages[1])
+			self.load_buttons()
 			self.refresh_controller_image()
 			button.set_sensitive(False)
 	
@@ -79,13 +97,44 @@ class ControllerRegistration(Editor):
 					self._gamepad_icon if is_gamepad else self._other_icon ))
 	
 	
+	def fill_button_images(self, image, buttons):
+		BUTTONS = [ "A", "B", "X", "Y", "BACK", "C", "START" ]
+		e = image.edit()
+		SVGEditor.update_parents(e)
+		target = SVGEditor.get_element(e, "controller")
+		for i in xrange(len(BUTTONS)):
+			b = BUTTONS[i]
+			try:
+				elm = SVGEditor.get_element(e, "AREA_%s" % (b,))
+				x, y = SVGEditor.get_position(elm)
+				path = os.path.join(self.app.imagepath, "button-images",
+					"%s.svg" % (buttons[i], ))
+				img = SVGEditor.get_element(SVGEditor.load_from_file(path), "button")
+				img.attrib["transform"] = "translate(%s, %s)" % (x, y)
+				del img.attrib["id"]
+				SVGEditor.add_element(target, img)
+			except Exception, err:
+				log.warning("Failed to add image for button %s", b)
+				log.exception(err)
+		e.commit()
+	
+	
 	def refresh_controller_image(self, *a):
-		cbControllerType = self.builder.get_object("cbControllerType")
+		cbControllerButtons = self.builder.get_object("cbControllerButtons")
 		imgControllerType = self.builder.get_object("imgControllerType")
+		cbControllerType = self.builder.get_object("cbControllerType")
 		rvControllerType = self.builder.get_object("rvControllerType")
-		image_path = os.path.join(self.app.imagepath,
-			"controller-images/%s.svg" % (
-			cbControllerType.get_model()[cbControllerType.get_active()][0],)
-		)
-		imgControllerType.set_from_file(image_path)
+		
+		group = cbControllerButtons.get_model()[cbControllerButtons.get_active()][0]
+		controller = cbControllerType.get_model()[cbControllerType.get_active()][0]
+		
+		image = os.path.join(self.app.imagepath,
+			"controller-images/%s.svg" % (controller, ))
+		if self._controller_image:
+			self._controller_image.set_image(image)
+			self.fill_button_images(self._controller_image, self._groups[group])
+			self._controller_image.hilight({})
+		else:
+			self._controller_image = SVGWidget(self.app, image)
+			rvControllerType.add(self._controller_image)
 		rvControllerType.set_reveal_child(True)

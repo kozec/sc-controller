@@ -6,27 +6,15 @@
     <columns>
       <!-- column-name key -->
       <column type="gchararray"/>
-      <!-- column-name text -->
-      <column type="gchararray"/>
+      <!-- column-name a -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name b -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name x -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name y -->
+      <column type="GdkPixbuf"/>
     </columns>
-    <data>
-      <row>
-        <col id="0">xo</col>
-        <col id="1" translatable="yes">X O [ ] /\</col>
-      </row>
-      <row>
-        <col id="0">abxy</col>
-        <col id="1" translatable="yes">ABXY</col>
-      </row>
-      <row>
-        <col id="0">1234</col>
-        <col id="1" translatable="yes">1234</col>
-      </row>
-      <row>
-        <col id="0">ABCD</col>
-        <col id="1" translatable="yes">ABCD</col>
-      </row>
-    </data>
   </object>
   <object class="GtkListStore" id="lstControllerType">
     <columns>
@@ -63,28 +51,6 @@
       <!-- column-name icon -->
       <column type="GdkPixbuf"/>
     </columns>
-  </object>
-  <object class="GtkListStore" id="lstTriggers">
-    <columns>
-      <!-- column-name key -->
-      <column type="gchararray"/>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">l1r1</col>
-        <col id="1" translatable="yes">L1 L2 R1 R2</col>
-      </row>
-      <row>
-        <col id="0">ltrt</col>
-        <col id="1" translatable="yes">LB LT RB RT</col>
-      </row>
-      <row>
-        <col id="0">lr</col>
-        <col id="1" translatable="yes">L R</col>
-      </row>
-    </data>
   </object>
   <object class="GtkWindow" id="Dialog">
     <property name="width_request">650</property>
@@ -291,7 +257,7 @@ Please, select options that are best describing controller you are configuring.<
                 <property name="can_focus">False</property>
                 <property name="margin_right">10</property>
                 <property name="margin_top">20</property>
-                <property name="label" translatable="yes">Button Labels</property>
+                <property name="label" translatable="yes">Labels</property>
                 <property name="xalign">0</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
@@ -300,6 +266,7 @@ Please, select options that are best describing controller you are configuring.<
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">3</property>
+                <property name="width">2</property>
               </packing>
             </child>
             <child>
@@ -311,52 +278,45 @@ Please, select options that are best describing controller you are configuring.<
                 <property name="active">0</property>
                 <signal name="changed" handler="refresh_controller_image" swapped="no"/>
                 <child>
-                  <object class="GtkCellRendererText" id="crControllerType1"/>
+                  <object class="GtkCellRendererPixbuf" id="crControllerButtonsA">
+                    <property name="width">30</property>
+                  </object>
                   <attributes>
-                    <attribute name="text">1</attribute>
+                    <attribute name="pixbuf">1</attribute>
                   </attributes>
+                </child>
+                <child>
+                  <object class="GtkCellRendererPixbuf" id="crControllerButtonsB">
+                    <property name="width">30</property>
+                  </object>
+                  <attributes>
+                    <attribute name="pixbuf">2</attribute>
+                  </attributes>
+                </child>
+                <child>
+                  <object class="GtkCellRendererPixbuf" id="crControllerButtonsX">
+                    <property name="width">30</property>
+                  </object>
+                  <attributes>
+                    <attribute name="pixbuf">3</attribute>
+                  </attributes>
+                </child>
+                <child>
+                  <object class="GtkCellRendererPixbuf" id="crControllerButtonsY">
+                    <property name="width">30</property>
+                  </object>
+                  <attributes>
+                    <attribute name="pixbuf">4</attribute>
+                  </attributes>
+                </child>
+                <child>
+                  <object class="GtkCellRendererText"/>
                 </child>
               </object>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label6">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">10</property>
-                <property name="margin_top">20</property>
-                <property name="label" translatable="yes">Trigger Labels</property>
-                <property name="xalign">0</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkComboBox" id="cbControllerTriggers">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">10</property>
-                <property name="model">lstTriggers</property>
-                <property name="active">0</property>
-                <signal name="changed" handler="refresh_controller_image" swapped="no"/>
-                <child>
-                  <object class="GtkCellRendererText" id="crControllerType2"/>
-                  <attributes>
-                    <attribute name="text">1</attribute>
-                  </attributes>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">4</property>
+                <property name="width">2</property>
               </packing>
             </child>
             <child>
@@ -370,13 +330,7 @@ Please, select options that are best describing controller you are configuring.<
                 <property name="hexpand">True</property>
                 <property name="vexpand">True</property>
                 <child>
-                  <object class="GtkImage" id="imgControllerType">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="hexpand">True</property>
-                    <property name="vexpand">True</property>
-                    <property name="stock">gtk-missing-image</property>
-                  </object>
+                  <placeholder/>
                 </child>
               </object>
               <packing>
@@ -414,5 +368,27 @@ Please, select options that are best describing controller you are configuring.<
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkListStore" id="lstTriggers">
+    <columns>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">l1r1</col>
+        <col id="1" translatable="yes">L1 L2 R1 R2</col>
+      </row>
+      <row>
+        <col id="0">ltrt</col>
+        <col id="1" translatable="yes">LB LT RB RT</col>
+      </row>
+      <row>
+        <col id="0">lr</col>
+        <col id="1" translatable="yes">L R</col>
+      </row>
+    </data>
   </object>
 </interface>

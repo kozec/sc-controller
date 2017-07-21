@@ -39,16 +39,22 @@ class SVGWidget(Gtk.EventBox):
 		self.connect("button-press-event", self.on_mouse_click)
 		self.set_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
 		
-		self.current_svg = open(filename, "r").read().decode("utf-8")
 		self.size_override = None
 		self.image_width = 1
 		self.image_height = 1
+		self.set_image(filename)
 		self.image = Gtk.Image()
-		self.parse_image()
 		if init_hilighted:
 			self.hilight({})
 		self.add(self.image)
 		self.show_all()
+	
+	
+	def set_image(self, filename):
+		self.current_svg = open(filename, "r").read().decode("utf-8")
+		self.cache = {}
+		self.areas = []
+		self.parse_image()
 	
 	
 	def parse_image(self):
@@ -360,6 +366,22 @@ class SVGEditor(object):
 	
 	
 	@staticmethod
+	def find_by_tag(tree, tag):
+		"""
+		Recursively searches throught XML until element with specified tag is found.
+		
+		Returns element or None, if there is not any.
+		"""
+		for child in tree:
+			if child.tag.endswith(tag):
+				return child
+			r = SVGEditor.find_by_tag(child, tag)
+			if r is not None:
+				return r
+		return None	
+	
+	
+	@staticmethod
 	def recolor(element, color):
 		"""
 		Changes background color of element.
@@ -479,11 +501,21 @@ class SVGEditor(object):
 	
 	
 	@staticmethod
+	def get_position(xml):
+		matrix = SVGEditor.parse_transform(xml)
+		return matrix[0][2], matrix[1][2]
+	
+	
+	@staticmethod
 	def parse_transform(xml):
 		"""
 		Returns element transform data in transformation matrix,
 		"""
-		matrix = [ [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0] ]
+		matrix = ( (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0) )
+		if 'x' in xml.attrib or 'y' in xml.attrib:
+			x = float(xml.attrib.get('x', 0.0))
+			y = float(xml.attrib.get('y', 0.0))
+			matrix = SVGEditor.matrixmul(matrix, ((1.0, 0.0, x), (0.0, 1.0, y), (0.0, 0.0, 1.0)))
 		if 'transform' in xml.attrib:
 			transform = xml.attrib['transform']
 			match = SVGEditor.RE_PARSE_TRANSFORM.match(transform.strip())
@@ -560,12 +592,21 @@ class SVGEditor(object):
 	
 	
 	@staticmethod
-	def add_element(parent, tagName, **attributes):
+	def add_element(parent, e, **attributes):
 		"""
-		Creates new element as child of specified parent.
-		Returns created element.
+		Creates new element as child of specified parent or, if 1st argument
+		is ET.Element, adds that element.
+		
+		Returns created or passed element.
 		"""
-		attributes = { k : str(attributes[k]) for k in attributes }
-		e = ET.Element(tagName, attributes)
+		if not isinstance(e, ET.Element):
+			attributes = { k : str(attributes[k]) for k in attributes }
+			e = ET.Element(e, attributes)
 		parent.append(e)
 		return e
+	
+	
+	@staticmethod
+	def load_from_file(filename):
+		tree = ET.fromstring(open(filename, "r").read())
+		return SVGEditor.find_by_tag(tree, "g")
