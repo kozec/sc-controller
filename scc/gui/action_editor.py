@@ -411,6 +411,7 @@ class ActionEditor(Editor):
 			else:
 				a = self.generate_modifiers(self._action, self._selected_component.NAME=="custom")
 				self.ac_callback(self.id, a)
+				self.ac_callback = None
 			if self._selected_component:
 				self._selected_component.on_ok(a)
 		self.close()
@@ -807,7 +808,9 @@ class ActionEditor(Editor):
 			a = self.generate_modifiers(self._action, self._selected_component.NAME=="custom")
 			self.apply_preview(a)
 		elif self._replaced_action is not None:
-			self.ac_callback(self.id, self._replaced_action, mark_changed=False)
+			if self.ac_callback:
+				# Is None if OK button handler was executed
+				self.ac_callback(self.id, self._replaced_action, mark_changed=False)
 			self._replaced_action = None
 
 
