@@ -15,7 +15,7 @@ from scc.tools import find_binary
 from gi.repository import GObject, Gio, GLib
 
 import os, sys, logging
-log = logging.getLogger("DaemonCtrlr")
+log = logging.getLogger("DaemonCtrl")
 
 
 class DaemonManager(GObject.GObject):
