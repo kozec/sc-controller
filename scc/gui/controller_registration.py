@@ -28,7 +28,7 @@ class ControllerRegistration(Editor):
 				os.path.join(self.app.imagepath, "controller-icons", "evdev-0.svg"))
 		self._other_icon = GdkPixbuf.Pixbuf.new_from_file(
 				os.path.join(self.app.imagepath, "controller-icons", "unknown.svg"))
-		self._controller_image = None
+		self._controller = None
 		self.refresh_devices()
 	
 	
@@ -70,16 +70,41 @@ class ControllerRegistration(Editor):
 		cbControllerButtons.set_active(0)
 	
 	
-	def on_btNext_clicked(self, button):
+	def on_btNext_clicked(self, *a):
 		stDialog = self.builder.get_object("stDialog")
+		btBack = self.builder.get_object("btBack")
+		btNext = self.builder.get_object("btNext")
 		pages = stDialog.get_children()
 		index = pages.index(stDialog.get_visible_child())
 		if index == 0:
 			stDialog.set_visible_child(pages[1])
 			self.load_buttons()
 			self.refresh_controller_image()
-			button.set_sensitive(False)
+			btBack.set_sensitive(True)
+		elif index == 1:
+			vbController = self.builder.get_object("vbController")
+			self._controller.get_parent().remove(self._controller)
+			vbController.add(self._controller)
+			stDialog.set_visible_child(pages[2])
+			btNext.set_sensitive(False)
 	
+	
+	def on_btBack_clicked(self, *a):
+		stDialog = self.builder.get_object("stDialog")
+		btBack = self.builder.get_object("btBack")
+		btNext = self.builder.get_object("btNext")
+		pages = stDialog.get_children()
+		index = pages.index(stDialog.get_visible_child())
+		if index == 1:
+			stDialog.set_visible_child(pages[0])
+			btBack.set_sensitive(False)
+			btNext.set_sensitive(True)
+		elif index == 2:
+			stDialog.set_visible_child(pages[1])
+			rvController = self.builder.get_object("rvController")
+			self._controller.get_parent().remove(self._controller)
+			rvController.add(self._controller)
+			btNext.set_sensitive(True)
 	
 	def refresh_devices(self, *a):
 		lstDevices = self.builder.get_object("lstDevices")
@@ -106,6 +131,9 @@ class ControllerRegistration(Editor):
 			b = BUTTONS[i]
 			try:
 				elm = SVGEditor.get_element(e, "AREA_%s" % (b,))
+				if elm is None:
+					log.warning("Area for butto %s not found", b)
+					continue
 				x, y = SVGEditor.get_position(elm)
 				path = os.path.join(self.app.imagepath, "button-images",
 					"%s.svg" % (buttons[i], ))
@@ -123,18 +151,18 @@ class ControllerRegistration(Editor):
 		cbControllerButtons = self.builder.get_object("cbControllerButtons")
 		imgControllerType = self.builder.get_object("imgControllerType")
 		cbControllerType = self.builder.get_object("cbControllerType")
-		rvControllerType = self.builder.get_object("rvControllerType")
+		rvController = self.builder.get_object("rvController")
 		
 		group = cbControllerButtons.get_model()[cbControllerButtons.get_active()][0]
 		controller = cbControllerType.get_model()[cbControllerType.get_active()][0]
 		
 		image = os.path.join(self.app.imagepath,
 			"controller-images/%s.svg" % (controller, ))
-		if self._controller_image:
-			self._controller_image.set_image(image)
-			self.fill_button_images(self._controller_image, self._groups[group])
-			self._controller_image.hilight({})
+		if self._controller:
+			self._controller.set_image(image)
+			self.fill_button_images(self._controller, self._groups[group])
+			self._controller.hilight({})
 		else:
-			self._controller_image = SVGWidget(self.app, image)
-			rvControllerType.add(self._controller_image)
-		rvControllerType.set_reveal_child(True)
+			self._controller = SVGWidget(self.app, image)
+			rvController.add(self._controller)
+		rvController.set_reveal_child(True)

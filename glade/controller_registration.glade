@@ -203,7 +203,7 @@ Please, select your controller from list bellow and click Next.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="hexpand">True</property>
-                <property name="label" translatable="yes">&lt;b&gt;How does your controller looks?&lt;/b&gt;
+                <property name="label" translatable="yes">&lt;b&gt;Input Configuration&lt;/b&gt;
 Please, select options that are best describing controller you are configuring.</property>
                 <property name="use_markup">True</property>
                 <property name="xalign">0</property>
@@ -320,7 +320,7 @@ Please, select options that are best describing controller you are configuring.<
               </packing>
             </child>
             <child>
-              <object class="GtkRevealer" id="rvControllerType">
+              <object class="GtkRevealer" id="rvController">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
@@ -346,6 +346,75 @@ Please, select options that are best describing controller you are configuring.<
             <property name="position">1</property>
           </packing>
         </child>
+        <child>
+          <object class="GtkGrid" id="grBindings">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">10</property>
+            <property name="margin_right">10</property>
+            <property name="margin_top">10</property>
+            <property name="margin_bottom">10</property>
+            <child>
+              <object class="GtkLabel" id="label6">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">&lt;b&gt;Input Mappings&lt;/b&gt;
+
+Please, press every button on the controller, push every trigger and move every stick. Make sure that correct buttons, sticks and triggers on image blinks green when you do so.</property>
+                <property name="use_markup">True</property>
+                <property name="wrap">True</property>
+                <property name="max_width_chars">60</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label7">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">If anything is assigned incorrectly, click on correct button on image and press gamepad button, trigger or move stick.
+
+Red colored controls are not assigned to anything. You may continue without assinging everything, but (...yadayadayada)</property>
+                <property name="use_markup">True</property>
+                <property name="wrap">True</property>
+                <property name="max_width_chars">60</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+                <property name="width">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="vbController">
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">3</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="name">page2</property>
+            <property name="title" translatable="yes">page2</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
       </object>
     </child>
     <child type="titlebar">
@@ -354,6 +423,19 @@ Please, select options that are best describing controller you are configuring.<
         <property name="can_focus">False</property>
         <property name="title">Controller Registration</property>
         <property name="show_close_button">True</property>
+        <child>
+          <object class="GtkButton" id="btBack">
+            <property name="label" translatable="yes">Back</property>
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_btBack_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkButton" id="btNext">
             <property name="label" translatable="yes">Next</property>
@@ -364,6 +446,7 @@ Please, select options that are best describing controller you are configuring.<
           </object>
           <packing>
             <property name="pack_type">end</property>
+            <property name="position">1</property>
           </packing>
         </child>
       </object>

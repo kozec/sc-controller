@@ -220,10 +220,10 @@ class Area:
 		self.name = element.attrib['id'].split("_")[1]
 		if self.name in Area.SPECIAL_CASES:
 			self.name = "_".join(element.attrib['id'].split("_")[1:3])
-		self.x = float(element.attrib['x']) + translation[0]
-		self.y = float(element.attrib['y']) + translation[1]
-		self.w = float(element.attrib['width'])
-		self.h = float(element.attrib['height'])
+		self.x = float(element.attrib.get('x', 0)) + translation[0]
+		self.y = float(element.attrib.get('y', 0)) + translation[1]
+		self.w = float(element.attrib.get('width', 0))
+		self.h = float(element.attrib.get('height', 0))
 	
 	
 	def contains(self, x, y):
