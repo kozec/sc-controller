@@ -26,6 +26,7 @@ BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 
 class ControllerRegistration(Editor):
 	GLADE = "controller_registration.glade"
+	UNASSIGNED_COLOR = "#FFFF0000"		# ARGB
 	
 	def __init__(self, app):
 		Editor.__init__(self)
@@ -37,8 +38,10 @@ class ControllerRegistration(Editor):
 				os.path.join(self.app.imagepath, "controller-icons", "unknown.svg"))
 		self._controller = None
 		self._evdevice = None
+		self._waits_for_input = None
 		self._mappings = {}
 		self._hilights = {}
+		self._unassigned = set()
 		self._hilighted_area = None
 		self.refresh_devices()
 	
@@ -66,21 +69,19 @@ class ControllerRegistration(Editor):
 		return False
 	
 	
-	@staticmethod
-	def generate_mappings(dev):
+	def generate_mappings(self, dev):
 		"""
 		Generates initial mappings, just to have some preset to show.
 		"""
 		caps = dev.capabilities(verbose=False)
-		mappings = {}
+		self._mappings = {}
 		buttons, axes, triggers = 0, 0, 0
 		if evdev.ecodes.EV_ABS in caps: # Has axes
 			if evdev.ecodes.EV_KEY in caps: # Has buttons
 				for button in caps[evdev.ecodes.EV_KEY]:
 					if buttons < len(BUTTON_ORDER):
-						mappings[button] = BUTTON_ORDER[buttons]
+						self._mappings[button] = BUTTON_ORDER[buttons]
 						buttons += 1
-		return mappings
 	
 	
 	def load_buttons(self):
@@ -141,7 +142,13 @@ class ControllerRegistration(Editor):
 		model, iter = tvDevices.get_selection().get_selected()
 		self._evdevice = evdev.InputDevice(model[iter][0])
 		if not self._mappings:
-			self._mappings = self.generate_mappings(self._evdevice)
+			self.generate_mappings(self._evdevice)
+			self._unassigned = set([
+				a for a in BUTTON_ORDER
+				if a not in self._mappings.values()
+			])
+			for a in self._unassigned:
+				self.hilight(a.name, self.UNASSIGNED_COLOR)
 		GLib.idle_add(self._evdev_read)
 	
 	
@@ -171,7 +178,9 @@ class ControllerRegistration(Editor):
 	def unhilight(self, what):
 		if what in self._hilights:
 			del self._hilights[what]
-			self._controller.hilight(self._hilights)
+		if what in self._unassigned:
+			self._hilights[what] = self.UNASSIGNED_COLOR
+		self._controller.hilight(self._hilights)
 	
 	
 	def on_area_hover(self, trash, what):
@@ -187,8 +196,14 @@ class ControllerRegistration(Editor):
 	
 	
 	def on_area_click(self, trash, what):
-		print what
+		self._waits_for_input = what
+		dlgPressButton = self.builder.get_object("dlgPressButton")
+		dlgPressButton.show()
 	
+	
+	def on_btCancelInput_clicked(self, *a):
+		dlgPressButton = self.builder.get_object("dlgPressButton")
+		dlgPressButton.hide()
 	
 	
 	def refresh_devices(self, *a):

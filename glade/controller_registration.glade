@@ -453,6 +453,73 @@ Red colored controls are not assigned to anything. You may continue without assi
       </object>
     </child>
   </object>
+  <object class="GtkWindow" id="dlgPressButton">
+    <property name="can_focus">False</property>
+    <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="skip_pager_hint">True</property>
+    <property name="deletable">False</property>
+    <property name="transient_for">Dialog</property>
+    <child>
+      <object class="GtkBox" id="vbJustFuckingBox">
+        <property name="name">vb687i</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">10</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">10</property>
+        <property name="margin_bottom">10</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="lbl42">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">25</property>
+            <property name="margin_bottom">25</property>
+            <property name="label" translatable="yes">Press button...</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btCancelInput">
+            <property name="label">gtk-cancel</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="margin_left">50</property>
+            <property name="margin_right">50</property>
+            <property name="margin_top">10</property>
+            <property name="margin_bottom">10</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_btCancelInput_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child type="titlebar">
+      <object class="GtkHeaderBar" id="hb485">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="title">Button Input</property>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkListStore" id="lstTriggers">
     <columns>
       <!-- column-name key -->
