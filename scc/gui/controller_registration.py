@@ -9,13 +9,20 @@ daemon.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import GdkPixbuf
+from gi.repository import GLib, GdkPixbuf
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
+from scc.constants import SCButtons
 
 import evdev
 import sys, os, logging, json, traceback
 log = logging.getLogger("CR")
+
+BUTTON_ORDER = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
+	SCButtons.C, SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
+	SCButtons.STICK, SCButtons.RPAD, SCButtons.RGRIP, SCButtons.LGRIP )
+BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
+	SCButtons.BACK, SCButtons.C, SCButtons.START )
 
 class ControllerRegistration(Editor):
 	GLADE = "controller_registration.glade"
@@ -29,6 +36,10 @@ class ControllerRegistration(Editor):
 		self._other_icon = GdkPixbuf.Pixbuf.new_from_file(
 				os.path.join(self.app.imagepath, "controller-icons", "unknown.svg"))
 		self._controller = None
+		self._evdevice = None
+		self._mappings = {}
+		self._hilights = {}
+		self._hilighted_area = None
 		self.refresh_devices()
 	
 	
@@ -53,6 +64,23 @@ class ControllerRegistration(Editor):
 					if button >= evdev.ecodes.BTN_0 and button <= evdev.ecodes.BTN_GEAR_UP:
 						return True
 		return False
+	
+	
+	@staticmethod
+	def generate_mappings(dev):
+		"""
+		Generates initial mappings, just to have some preset to show.
+		"""
+		caps = dev.capabilities(verbose=False)
+		mappings = {}
+		buttons, axes, triggers = 0, 0, 0
+		if evdev.ecodes.EV_ABS in caps: # Has axes
+			if evdev.ecodes.EV_KEY in caps: # Has buttons
+				for button in caps[evdev.ecodes.EV_KEY]:
+					if buttons < len(BUTTON_ORDER):
+						mappings[button] = BUTTON_ORDER[buttons]
+						buttons += 1
+		return mappings
 	
 	
 	def load_buttons(self):
@@ -85,6 +113,7 @@ class ControllerRegistration(Editor):
 			vbController = self.builder.get_object("vbController")
 			self._controller.get_parent().remove(self._controller)
 			vbController.add(self._controller)
+			self.start_evdev_read()
 			stDialog.set_visible_child(pages[2])
 			btNext.set_sensitive(False)
 	
@@ -106,6 +135,62 @@ class ControllerRegistration(Editor):
 			rvController.add(self._controller)
 			btNext.set_sensitive(True)
 	
+	
+	def start_evdev_read(self):
+		tvDevices = self.builder.get_object("tvDevices")
+		model, iter = tvDevices.get_selection().get_selected()
+		self._evdevice = evdev.InputDevice(model[iter][0])
+		if not self._mappings:
+			self._mappings = self.generate_mappings(self._evdevice)
+		GLib.idle_add(self._evdev_read)
+	
+	
+	def stop_evdev_read(self, *a):
+		self._evdevice = None
+	
+	
+	def _evdev_read(self):
+		if self._evdevice:
+			event = self._evdevice.read_one()
+			if event:
+				if event.type == evdev.ecodes.EV_KEY:
+					what = self._mappings.get(event.code)
+					if what is not None and event.value:
+						self.hilight(what.name)
+					elif what is not None:
+						self.unhilight(what.name)
+			return True
+		return False
+	
+	
+	def hilight(self, what, color=None):
+		self._hilights[what] = color or self.app.OBSERVE_COLOR
+		self._controller.hilight(self._hilights)
+	
+	
+	def unhilight(self, what):
+		if what in self._hilights:
+			del self._hilights[what]
+			self._controller.hilight(self._hilights)
+	
+	
+	def on_area_hover(self, trash, what):
+		self.on_area_leave()
+		self._hilighted_area = what
+		self.hilight(what, self.app.HILIGHT_COLOR)
+	
+	
+	def on_area_leave(self, *a):
+		if self._hilighted_area:
+			self.unhilight(self._hilighted_area)
+			self._hilighted_area = None
+	
+	
+	def on_area_click(self, trash, what):
+		print what
+	
+	
+	
 	def refresh_devices(self, *a):
 		lstDevices = self.builder.get_object("lstDevices")
 		cbShowAllDevices = self.builder.get_object("cbShowAllDevices")
@@ -123,12 +208,11 @@ class ControllerRegistration(Editor):
 	
 	
 	def fill_button_images(self, image, buttons):
-		BUTTONS = [ "A", "B", "X", "Y", "BACK", "C", "START" ]
 		e = image.edit()
 		SVGEditor.update_parents(e)
 		target = SVGEditor.get_element(e, "controller")
-		for i in xrange(len(BUTTONS)):
-			b = BUTTONS[i]
+		for i in xrange(len(BUTTONS_WITH_IMAGES)):
+			b = BUTTONS_WITH_IMAGES[i].name
 			try:
 				elm = SVGEditor.get_element(e, "AREA_%s" % (b,))
 				if elm is None:
@@ -139,7 +223,7 @@ class ControllerRegistration(Editor):
 					"%s.svg" % (buttons[i], ))
 				img = SVGEditor.get_element(SVGEditor.load_from_file(path), "button")
 				img.attrib["transform"] = "translate(%s, %s)" % (x, y)
-				del img.attrib["id"]
+				img.attrib["id"] = b
 				SVGEditor.add_element(target, img)
 			except Exception, err:
 				log.warning("Failed to add image for button %s", b)
@@ -164,5 +248,8 @@ class ControllerRegistration(Editor):
 			self._controller.hilight({})
 		else:
 			self._controller = SVGWidget(self.app, image)
+			self._controller.connect('hover', self.on_area_hover)
+			self._controller.connect('leave', self.on_area_leave)
+			self._controller.connect('click', self.on_area_click)
 			rvController.add(self._controller)
 		rvController.set_reveal_child(True)

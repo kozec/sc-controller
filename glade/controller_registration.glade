@@ -60,6 +60,7 @@
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <signal name="destroy" handler="stop_evdev_read" swapped="no"/>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
       <object class="GtkStack" id="stDialog">
@@ -361,7 +362,7 @@ Please, select options that are best describing controller you are configuring.<
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">&lt;b&gt;Input Mappings&lt;/b&gt;
 
-Please, press every button on the controller, push every trigger and move every stick. Make sure that correct buttons, sticks and triggers on image blinks green when you do so.</property>
+Please, press every button on the controller, push every trigger and move every stick. Make sure that correct buttons, sticks and triggers on image blinks blue when you do so.</property>
                 <property name="use_markup">True</property>
                 <property name="wrap">True</property>
                 <property name="max_width_chars">60</property>
