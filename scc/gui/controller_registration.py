@@ -144,11 +144,11 @@ class ControllerRegistration(Editor):
 		if not self._mappings:
 			self.generate_mappings(self._evdevice)
 			self._unassigned = set([
-				a for a in BUTTON_ORDER
+				a.name for a in BUTTON_ORDER
 				if a not in self._mappings.values()
 			])
 			for a in self._unassigned:
-				self.hilight(a.name, self.UNASSIGNED_COLOR)
+				self.hilight(a, self.UNASSIGNED_COLOR)
 		GLib.idle_add(self._evdev_read)
 	
 	
@@ -162,7 +162,9 @@ class ControllerRegistration(Editor):
 			if event:
 				if event.type == evdev.ecodes.EV_KEY:
 					what = self._mappings.get(event.code)
-					if what is not None and event.value:
+					if self._waits_for_input:
+						self._input(event.code)
+					elif what is not None and event.value:
 						self.hilight(what.name)
 					elif what is not None:
 						self.unhilight(what.name)
@@ -196,17 +198,44 @@ class ControllerRegistration(Editor):
 	
 	
 	def on_area_click(self, trash, what):
-		self._waits_for_input = what
-		dlgPressButton = self.builder.get_object("dlgPressButton")
-		dlgPressButton.show()
+		stDialog = self.builder.get_object("stDialog")
+		pages = stDialog.get_children()
+		index = pages.index(stDialog.get_visible_child())
+		if index == 2:
+			if hasattr(SCButtons, what):
+				self._waits_for_input = getattr(SCButtons, what)
+				dlgPressButton = self.builder.get_object("dlgPressButton")
+				dlgPressButton.show()
+	
+	
+	def _input(self, keycode):
+		if self._waits_for_input:
+			what, self._waits_for_input = self._waits_for_input, None
+			old = self._mappings.get(keycode)
+			
+			self._mappings[keycode] = what
+			log.debug("Reassigned %s to %s", keycode, what)
+			
+			if what.name in self._unassigned:
+				self._unassigned.remove(what.name)
+				self.unhilight(what.name)
+			
+			if old is not None and old not in self._mappings.values():
+				log.debug("Nothing now maps to %s", old)
+				self._unassigned.add(old.name)
+				self.unhilight(old.name)
+			
+			self.on_btCancelInput_clicked()
 	
 	
 	def on_btCancelInput_clicked(self, *a):
+		self._waits_for_input = None
 		dlgPressButton = self.builder.get_object("dlgPressButton")
 		dlgPressButton.hide()
 	
 	
 	def refresh_devices(self, *a):
+		log.debug("Refreshing device list")
 		lstDevices = self.builder.get_object("lstDevices")
 		cbShowAllDevices = self.builder.get_object("cbShowAllDevices")
 		lstDevices.clear()
@@ -231,9 +260,9 @@ class ControllerRegistration(Editor):
 			try:
 				elm = SVGEditor.get_element(e, "AREA_%s" % (b,))
 				if elm is None:
-					log.warning("Area for butto %s not found", b)
+					log.warning("Area for button %s not found", b)
 					continue
-				x, y = SVGEditor.get_position(elm)
+				x, y = SVGEditor.get_translation(elm)
 				path = os.path.join(self.app.imagepath, "button-images",
 					"%s.svg" % (buttons[i], ))
 				img = SVGEditor.get_element(SVGEditor.load_from_file(path), "button")
