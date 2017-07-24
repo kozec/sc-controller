@@ -26,8 +26,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="138.33725"
-     inkscape:cy="201.2633"
+     inkscape:cx="137.98011"
+     inkscape:cy="186.97759"
      inkscape:document-units="px"
      inkscape:current-layer="controller"
      showgrid="false"
@@ -69,7 +69,8 @@
        inkscape:connector-curvature="0"
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:0.60335197;fill-rule:evenodd;stroke:#000000;stroke-width:1.28339469;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
        d="m 71.30538,117.6886 a 36.948096,36.486249 0 0 1 36.94807,-36.48625 36.948096,36.486249 0 0 1 36.9481,36.48625 36.948096,36.486249 0 0 1 -36.9481,36.48625 36.948096,36.486249 0 0 1 -36.94807,-36.48625 z"
-       id="path4168-1-3-9" />
+       id="LEFT"
+       inkscape:label="#path4168-1-3-9" />
     <path
        style="display:inline;fill:#000000;fill-opacity:0.31372549;fill-rule:evenodd;stroke:#000000;stroke-width:1.16148353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="M 64.17949,64.136083 C 66.416435,56.135809 65.865644,51.255328 89.392422,42.472858 97.768838,38.67822 111.76968,34.89177 131.36838,32.31078 c 5.49582,0.6636 6.01188,3.81846 7.43985,6.95756 -26.90131,4.047551 -52.477159,11.544202 -74.62874,24.867743 z"
@@ -140,7 +141,7 @@
            sodipodi:nodetypes="cccccccccc" />
       </g>
       <circle
-         style="fill:#80b3ff;fill-opacity:0.29411765"
+         style="fill:#ffffff;fill-opacity:0"
          id="LPAD"
          cx="336.3374"
          cy="832.54462"
@@ -214,30 +215,31 @@
        id="THUMBL"
        transform="matrix(0.85646641,0,0,0.85646641,-160.53331,-430.42874)">
       <path
-         id="path4168-1"
+         id="STICK"
          d="m 432.93006,718.94788 a 35.701633,35.255367 0 0 1 -35.70164,35.25536 35.701633,35.255367 0 0 1 -35.70163,-35.25536 35.701633,35.255367 0 0 1 35.70163,-35.25537 35.701633,35.255367 0 0 1 35.70164,35.25537 z"
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:0.16256157;fill-rule:evenodd;stroke:#000000;stroke-width:1.24009871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
-         inkscape:connector-curvature="0" />
-      <ellipse
-         ry="26.130142"
-         rx="26.460899"
+         inkscape:connector-curvature="0"
+         inkscape:label="#path4168-1" />
+      <circle
+         r="26.130142"
          cy="717.87646"
          cx="396.04147"
-         id="STICK"
-         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:0.01477835;fill-rule:evenodd;stroke:#000000;stroke-width:0.91912121;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
+         id="STICKPRESS"
+         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:0.01477835;fill-rule:evenodd;stroke:#000000;stroke-width:0.91912121;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+         inkscape:label="#STICK" />
     </g>
     <g
        style="display:inline"
        id="THUMBR"
        transform="matrix(-0.88747696,0,0,-0.88747696,632.23058,824.00517)">
       <path
-         id="path4168-1-3"
+         id="RIGHT"
          d="m 432.93006,718.94788 a 35.701633,35.255367 0 0 1 -35.70164,35.25536 35.701633,35.255367 0 0 1 -35.70163,-35.25536 35.701633,35.255367 0 0 1 35.70163,-35.25537 35.701633,35.255367 0 0 1 35.70164,35.25537 z"
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:0.182266;fill-rule:evenodd;stroke:#000000;stroke-width:1.24009871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
-         inkscape:connector-curvature="0" />
-      <ellipse
-         ry="26.130142"
-         rx="26.460899"
+         inkscape:connector-curvature="0"
+         inkscape:label="#path4168-1-3" />
+      <circle
+         r="26.130142"
          cy="717.87646"
          cx="396.04147"
          id="RPAD"

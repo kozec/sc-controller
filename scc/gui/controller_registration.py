@@ -9,19 +9,23 @@ daemon.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import GLib, GdkPixbuf
+from gi.repository import Gtk, GLib, GdkPixbuf
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
-from scc.constants import SCButtons
+from scc.constants import SCButtons, STICK_PAD_MAX, STICK, LEFT, RIGHT
+from scc.tools import nameof
 
 import evdev
 import sys, os, logging, json, traceback
 log = logging.getLogger("CR")
 
+# TODO: SCButtons.STICK is missing from BUTTON_ORDER, it conflicts with STICK in
+#       STICK_PAD_ORDER. I really have to rename it...
 BUTTON_ORDER = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.C, SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
-	SCButtons.STICK, SCButtons.RPAD, SCButtons.LPAD, SCButtons.RGRIP,
+	SCButtons.RPAD, SCButtons.LPAD, SCButtons.RGRIP,
 	SCButtons.LGRIP )
+STICK_PAD_ORDER = ( STICK, RIGHT, LEFT )
 TRIGGER_ORDER = ( SCButtons.LT, SCButtons.RT )
 BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.BACK, SCButtons.C, SCButtons.START )
@@ -29,6 +33,8 @@ BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 class ControllerRegistration(Editor):
 	GLADE = "controller_registration.glade"
 	UNASSIGNED_COLOR = "#FFFF0000"		# ARGB
+	X = 0
+	Y = 1
 	
 	def __init__(self, app):
 		Editor.__init__(self)
@@ -46,6 +52,19 @@ class ControllerRegistration(Editor):
 		self._unassigned = set()
 		self._hilighted_area = None
 		self.refresh_devices()
+	
+	
+	def setup_widgets(self):
+		Editor.setup_widgets(self)
+		self._cursor_positions = [ [0, 0] ] * 3
+		self._cursors = [
+			# stick
+			Gtk.Image.new_from_file(os.path.join(self.app.imagepath, "test-cursor.svg")),
+			# rpad
+			Gtk.Image.new_from_file(os.path.join(self.app.imagepath, "test-cursor.svg")),
+			# lpad
+			Gtk.Image.new_from_file(os.path.join(self.app.imagepath, "test-cursor.svg")),
+		]
 	
 	
 	@staticmethod
@@ -77,13 +96,37 @@ class ControllerRegistration(Editor):
 		"""
 		caps = dev.capabilities(verbose=False)
 		self._mappings = {}
-		buttons, axes, triggers = 0, 0, 0
+		buttons = list(BUTTON_ORDER)
+		axes = [ [ (a, ControllerRegistration.X),
+				(a, ControllerRegistration.Y) ] for a in STICK_PAD_ORDER ]
+		axes += [ (t, ControllerRegistration.X) for t in TRIGGER_ORDER ]
+		axes = [ a for lst in axes for a in lst ] # flattens list
 		if evdev.ecodes.EV_ABS in caps: # Has axes
-			if evdev.ecodes.EV_KEY in caps: # Has buttons
-				for button in caps[evdev.ecodes.EV_KEY]:
-					if buttons < len(BUTTON_ORDER):
-						self._mappings[button] = BUTTON_ORDER[buttons]
-						buttons += 1
+			for axis, info in caps[evdev.ecodes.EV_ABS]:
+				self._mappings[axis], axes = axes[0], axes[1:]
+				if len(axes) == 0: break
+		if evdev.ecodes.EV_KEY in caps: # Has buttons
+			for button in caps[evdev.ecodes.EV_KEY]:
+				self._mappings[button], buttons = buttons[0], buttons[1:]
+				if len(buttons) == 0: break
+	
+	
+	def generate_unassigned(self):
+		self._unassigned.clear()
+		for a in BUTTON_ORDER:
+			if a not in self._mappings.values():
+				self._unassigned.add(nameof(a))
+		for a in TRIGGER_ORDER:
+			if a not in self._mappings.values():
+				self._unassigned.add(nameof(a))
+		for a in STICK_PAD_ORDER:
+			if (a, ControllerRegistration.X) not in self._mappings.values():
+				self._unassigned.add(nameof(a))
+			if (a, ControllerRegistration.Y) not in self._mappings.values():
+				self._unassigned.add(nameof(a))
+		
+		for a in self._unassigned:
+			self.hilight(a, self.UNASSIGNED_COLOR)
 	
 	
 	def load_buttons(self):
@@ -113,9 +156,9 @@ class ControllerRegistration(Editor):
 			self.refresh_controller_image()
 			btBack.set_sensitive(True)
 		elif index == 1:
-			vbController = self.builder.get_object("vbController")
+			fxController = self.builder.get_object("fxController")
 			self._controller.get_parent().remove(self._controller)
-			vbController.add(self._controller)
+			fxController.add(self._controller)
 			self.start_evdev_read()
 			stDialog.set_visible_child(pages[2])
 			btNext.set_sensitive(False)
@@ -145,15 +188,7 @@ class ControllerRegistration(Editor):
 		self._evdevice = evdev.InputDevice(model[iter][0])
 		if not self._mappings:
 			self.generate_mappings(self._evdevice)
-			self._unassigned.clear()
-			for a in BUTTON_ORDER:
-				if a not in self._mappings.values():
-					self._unassigned.add(a.name)
-			for a in TRIGGER_ORDER:
-				if a not in self._mappings.values():
-					self._unassigned.add(a.name)
-			for a in self._unassigned:
-				self.hilight(a, self.UNASSIGNED_COLOR)
+			self.generate_unassigned()
 		GLib.idle_add(self._evdev_read)
 	
 	
@@ -166,15 +201,48 @@ class ControllerRegistration(Editor):
 			event = self._evdevice.read_one()
 			if event:
 				if event.type == evdev.ecodes.EV_KEY:
-					what = self._mappings.get(event.code)
-					if self._waits_for_input:
-						self._input(event.code)
-					elif what is not None and event.value:
-						self.hilight(what.name)
-					elif what is not None:
-						self.unhilight(what.name)
+					self.evdev_button(event)
+				if event.type == evdev.ecodes.EV_ABS:
+					self.evdev_abs(event)
 			return True
 		return False
+	
+	
+	def evdev_button(self, event):
+		what = self._mappings.get(event.code)
+		if self._waits_for_input:
+			self._input(event.code)
+		elif what is not None and event.value:
+			self.hilight(nameof(what))
+		elif what is not None:
+			self.unhilight(nameof(what))
+	
+	
+	def evdev_abs(self, event):
+		what = self._mappings.get(event.code)
+		if what:
+			axis, xy = what
+			index = STICK_PAD_ORDER.index(axis)
+			cursor = self._cursors[index]
+			parent = cursor.get_parent()
+			if parent is None:
+				parent = self._controller.get_parent()
+				parent.add(cursor)
+				cursor.show()
+			# Make position
+			self._cursor_positions[index][xy] = event.value
+			px, py = self._cursor_positions[index]
+			# Grab values
+			ax, ay, aw, trash = self._controller.get_area_position(axis)
+			cw = cursor.get_allocation().width
+			# Compute center
+			data = 0, 0
+			x, y = ax + aw * 0.5 - cw * 0.5, ay + 1.0 - cw * 0.5
+			# Add pad position
+			x += px * aw / STICK_PAD_MAX * 0.5
+			y -= py * aw / STICK_PAD_MAX * 0.5
+			# Move circle
+			parent.move(cursor, x, y)
 	
 	
 	def hilight(self, what, color=None):
@@ -221,14 +289,14 @@ class ControllerRegistration(Editor):
 			self._mappings[keycode] = what
 			log.debug("Reassigned %s to %s", keycode, what)
 			
-			if what.name in self._unassigned:
-				self._unassigned.remove(what.name)
-				self.unhilight(what.name)
+			if nameof(what) in self._unassigned:
+				self._unassigned.remove(nameof(what))
+				self.unhilight(nameof(what))
 			
 			if old is not None and old not in self._mappings.values():
 				log.debug("Nothing now maps to %s", old)
-				self._unassigned.add(old.name)
-				self.unhilight(old.name)
+				self._unassigned.add(nameof(old))
+				self.unhilight(nameof(old))
 			
 			self.on_btCancelInput_clicked()
 	
@@ -261,7 +329,7 @@ class ControllerRegistration(Editor):
 		SVGEditor.update_parents(e)
 		target = SVGEditor.get_element(e, "controller")
 		for i in xrange(len(BUTTONS_WITH_IMAGES)):
-			b = BUTTONS_WITH_IMAGES[i].name
+			b = nameof(BUTTONS_WITH_IMAGES[i])
 			try:
 				elm = SVGEditor.get_element(e, "AREA_%s" % (b,))
 				if elm is None:

@@ -394,13 +394,17 @@ Red colored controls are not assigned to anything. You may continue without assi
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="vbController">
-                <property name="height_request">50</property>
+              <object class="GtkAlignment" id="alController">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
+                <property name="xscale">0</property>
                 <child>
-                  <placeholder/>
+                  <object class="GtkFixed" id="fxController">
+                    <property name="width_request">32</property>
+                    <property name="height_request">32</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                  </object>
                 </child>
               </object>
               <packing>

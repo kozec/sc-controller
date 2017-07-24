@@ -122,12 +122,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		
 		# Test markers (those blue circles over PADs and sticks)
-		self.lpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.rpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.stickTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.main_area.put(self.lpadTest, 40, 40)
-		self.main_area.put(self.rpadTest, 290, 90)
-		self.main_area.put(self.stickTest, 150, 40)
+		self.lpad_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.rpad_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.stick_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.main_area.put(self.lpad_test, 40, 40)
+		self.main_area.put(self.rpad_test, 290, 90)
+		self.main_area.put(self.stick_test, 150, 40)
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
@@ -823,9 +823,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_daemon_event_observer(self, daemon, what, data):
 		if what in (LEFT, RIGHT, STICK):
 			widget, area = {
-				LEFT  : (self.lpadTest,  "LPADTEST"),
-				RIGHT : (self.rpadTest,  "RPADTEST"),
-				STICK : (self.stickTest, "STICKTEST"),
+				LEFT  : (self.lpad_test,  "LPADTEST"),
+				RIGHT : (self.rpad_test,  "RPADTEST"),
+				STICK : (self.stick_test, "STICKTEST"),
 			}[what]
 			# Check if stick or pad is released
 			if data[0] == data[1] == 0:
