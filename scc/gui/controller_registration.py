@@ -12,38 +12,41 @@ from scc.tools import _
 from gi.repository import Gtk, GLib, GdkPixbuf
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
-from scc.constants import SCButtons, STICK_PAD_MAX, STICK, LEFT, RIGHT
+from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
+from scc.constants import STICK, LEFT, RIGHT
 from scc.tools import nameof
 
 import evdev
 import sys, os, logging, json, traceback
 log = logging.getLogger("CR")
 
+X = 0
+Y = 1
+
 # TODO: SCButtons.STICK is missing from BUTTON_ORDER, it conflicts with STICK in
-#       STICK_PAD_ORDER. I really have to rename it...
+#       AXIS_ORDER. I really have to rename it...
 BUTTON_ORDER = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.C, SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
 	SCButtons.RPAD, SCButtons.LPAD, SCButtons.RGRIP,
 	SCButtons.LGRIP )
-STICK_PAD_ORDER = ( STICK, RIGHT, LEFT )
-TRIGGER_ORDER = ( SCButtons.LT, SCButtons.RT )
+AXIS_ORDER = ( (STICK, X), (STICK, Y), (RIGHT, X), (RIGHT, Y),
+	(LEFT, X), (LEFT, Y), (SCButtons.LT, X), (SCButtons.RT, X) )
 BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.BACK, SCButtons.C, SCButtons.START )
 
 class ControllerRegistration(Editor):
 	GLADE = "controller_registration.glade"
 	UNASSIGNED_COLOR = "#FFFF0000"		# ARGB
-	X = 0
-	Y = 1
 	
 	def __init__(self, app):
 		Editor.__init__(self)
 		self.app = app
-		self.setup_widgets()
 		self._gamepad_icon = GdkPixbuf.Pixbuf.new_from_file(
 				os.path.join(self.app.imagepath, "controller-icons", "evdev-0.svg"))
 		self._other_icon = GdkPixbuf.Pixbuf.new_from_file(
 				os.path.join(self.app.imagepath, "controller-icons", "unknown.svg"))
+		self._axis_data = [ AxisData(name, xy) for (name, xy) in AXIS_ORDER ]
+		self.setup_widgets()
 		self._controller = None
 		self._evdevice = None
 		self._waits_for_input = None
@@ -56,15 +59,12 @@ class ControllerRegistration(Editor):
 	
 	def setup_widgets(self):
 		Editor.setup_widgets(self)
-		self._cursor_positions = [ [0, 0] ] * 3
-		self._cursors = [
-			# stick
-			Gtk.Image.new_from_file(os.path.join(self.app.imagepath, "test-cursor.svg")),
-			# rpad
-			Gtk.Image.new_from_file(os.path.join(self.app.imagepath, "test-cursor.svg")),
-			# lpad
-			Gtk.Image.new_from_file(os.path.join(self.app.imagepath, "test-cursor.svg")),
-		]
+		cursors = {}
+		for axis in self._axis_data:
+			axis.cursor = cursors[nameof(axis)] = ( cursors.get(nameof(axis)) or
+				Gtk.Image.new_from_file(os.path.join(
+				self.app.imagepath, "test-cursor.svg")) )
+			axis.cursor.position = [ 0, 0 ]
 	
 	
 	@staticmethod
@@ -97,10 +97,7 @@ class ControllerRegistration(Editor):
 		caps = dev.capabilities(verbose=False)
 		self._mappings = {}
 		buttons = list(BUTTON_ORDER)
-		axes = [ [ (a, ControllerRegistration.X),
-				(a, ControllerRegistration.Y) ] for a in STICK_PAD_ORDER ]
-		axes += [ (t, ControllerRegistration.X) for t in TRIGGER_ORDER ]
-		axes = [ a for lst in axes for a in lst ] # flattens list
+		axes = list(self._axis_data)
 		if evdev.ecodes.EV_ABS in caps: # Has axes
 			for axis, info in caps[evdev.ecodes.EV_ABS]:
 				self._mappings[axis], axes = axes[0], axes[1:]
@@ -116,13 +113,8 @@ class ControllerRegistration(Editor):
 		for a in BUTTON_ORDER:
 			if a not in self._mappings.values():
 				self._unassigned.add(nameof(a))
-		for a in TRIGGER_ORDER:
+		for a in self._axis_data:
 			if a not in self._mappings.values():
-				self._unassigned.add(nameof(a))
-		for a in STICK_PAD_ORDER:
-			if (a, ControllerRegistration.X) not in self._mappings.values():
-				self._unassigned.add(nameof(a))
-			if (a, ControllerRegistration.Y) not in self._mappings.values():
 				self._unassigned.add(nameof(a))
 		
 		for a in self._unassigned:
@@ -146,6 +138,7 @@ class ControllerRegistration(Editor):
 	
 	def on_btNext_clicked(self, *a):
 		stDialog = self.builder.get_object("stDialog")
+		cbEmulateC = self.builder.get_object("cbEmulateC")
 		btBack = self.builder.get_object("btBack")
 		btNext = self.builder.get_object("btNext")
 		pages = stDialog.get_children()
@@ -161,6 +154,7 @@ class ControllerRegistration(Editor):
 			fxController.add(self._controller)
 			self.start_evdev_read()
 			stDialog.set_visible_child(pages[2])
+			cbEmulateC.grab_focus()
 			btNext.set_sensitive(False)
 	
 	
@@ -180,6 +174,11 @@ class ControllerRegistration(Editor):
 			self._controller.get_parent().remove(self._controller)
 			rvController.add(self._controller)
 			btNext.set_sensitive(True)
+	
+	
+	def cbInvert_toggled_cb(self, cb, *a):
+		index = int(cb.get_name().split("_")[-1])
+		self._axis_data[index].invert = cb.get_active()
 	
 	
 	def start_evdev_read(self):
@@ -219,25 +218,22 @@ class ControllerRegistration(Editor):
 	
 	
 	def evdev_abs(self, event):
-		what = self._mappings.get(event.code)
-		if what:
-			axis, xy = what
-			index = STICK_PAD_ORDER.index(axis)
-			cursor = self._cursors[index]
+		axis = self._mappings.get(event.code)
+		if axis:
+			cursor = axis.cursor
 			parent = cursor.get_parent()
 			if parent is None:
 				parent = self._controller.get_parent()
 				parent.add(cursor)
 				cursor.show()
 			# Make position
-			self._cursor_positions[index][xy] = event.value
-			px, py = self._cursor_positions[index]
+			cursor.position[axis.xy] = axis.set_position(event.value)
+			px, py = cursor.position
 			# Grab values
-			ax, ay, aw, trash = self._controller.get_area_position(axis)
+			ax, ay, aw, trash = self._controller.get_area_position(nameof(axis))
 			cw = cursor.get_allocation().width
 			# Compute center
-			data = 0, 0
-			x, y = ax + aw * 0.5 - cw * 0.5, ay + 1.0 - cw * 0.5
+			x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
 			# Add pad position
 			x += px * aw / STICK_PAD_MAX * 0.5
 			y -= py * aw / STICK_PAD_MAX * 0.5
@@ -370,3 +366,39 @@ class ControllerRegistration(Editor):
 			self._controller.connect('click', self.on_area_click)
 			rvController.add(self._controller)
 		rvController.set_reveal_child(True)
+
+
+class AxisData:
+	"""
+	(Almost) dumb container.
+	Stores position, center and limits for single axis.
+	"""
+	
+	def __init__(self, name, xy, min=STICK_PAD_MAX, max=-STICK_PAD_MAX):
+		self.name = nameof(name)
+		self.xy = xy
+		self.pos = 0
+		self.center = 0
+		self.min = min
+		self.max = max
+		self.invert = False
+		self.cursor = None
+	
+	
+	def set_position(self, value):
+		"""
+		Returns current position
+		translated to range of (STICK_PAD_MIN, STICK_PAD_MAX)
+		"""
+		self.min = min(self.min, value)
+		self.max = max(self.max, value)
+		self.pos = value
+		try:
+			if self.invert:
+				return ( STICK_PAD_MAX - self.pos
+					* (STICK_PAD_MAX - STICK_PAD_MIN) / (self.max - self.min) )
+			else:
+				return ( STICK_PAD_MIN + self.pos
+					* (STICK_PAD_MAX - STICK_PAD_MIN) / (self.max - self.min) )
+		except ZeroDivisionError:
+			return 0
