@@ -426,11 +426,12 @@ Red colored controls are not assigned to anything. You may continue without assi
         <property name="show_close_button">True</property>
         <child>
           <object class="GtkButton" id="btBack">
-            <property name="label" translatable="yes">Back</property>
+            <property name="label" translatable="yes">_Back</property>
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="use_underline">True</property>
             <signal name="clicked" handler="on_btBack_clicked" swapped="no"/>
           </object>
           <packing>
@@ -439,10 +440,11 @@ Red colored controls are not assigned to anything. You may continue without assi
         </child>
         <child>
           <object class="GtkButton" id="btNext">
-            <property name="label" translatable="yes">Next</property>
+            <property name="label" translatable="yes">_Next</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="use_underline">True</property>
             <signal name="clicked" handler="on_btNext_clicked" swapped="no"/>
           </object>
           <packing>

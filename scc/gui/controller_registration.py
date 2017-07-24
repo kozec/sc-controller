@@ -20,7 +20,9 @@ log = logging.getLogger("CR")
 
 BUTTON_ORDER = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.C, SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
-	SCButtons.STICK, SCButtons.RPAD, SCButtons.RGRIP, SCButtons.LGRIP )
+	SCButtons.STICK, SCButtons.RPAD, SCButtons.LPAD, SCButtons.RGRIP,
+	SCButtons.LGRIP )
+TRIGGER_ORDER = ( SCButtons.LT, SCButtons.RT )
 BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.BACK, SCButtons.C, SCButtons.START )
 
@@ -143,10 +145,13 @@ class ControllerRegistration(Editor):
 		self._evdevice = evdev.InputDevice(model[iter][0])
 		if not self._mappings:
 			self.generate_mappings(self._evdevice)
-			self._unassigned = set([
-				a.name for a in BUTTON_ORDER
-				if a not in self._mappings.values()
-			])
+			self._unassigned.clear()
+			for a in BUTTON_ORDER:
+				if a not in self._mappings.values():
+					self._unassigned.add(a.name)
+			for a in TRIGGER_ORDER:
+				if a not in self._mappings.values():
+					self._unassigned.add(a.name)
 			for a in self._unassigned:
 				self.hilight(a, self.UNASSIGNED_COLOR)
 		GLib.idle_add(self._evdev_read)

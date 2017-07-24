@@ -374,7 +374,7 @@ class SVGEditor(object):
 		
 		Returns True on success, False if element cannot be recolored.
 		"""
-		if element.tag.endswith("path") or element.tag.endswith("rect") or element.tag.endswith("circle") or element.tag.endswith("text"):
+		if element.tag.endswith("path") or element.tag.endswith("rect") or element.tag.endswith("circle") or element.tag.endswith("ellipse") or element.tag.endswith("text"):
 			if 'style' in element.attrib:
 				style = { y[0] : y[1] for y in [ x.split(":", 1) for x in element.attrib['style'].split(";") ] }
 				if 'fill' in style:
