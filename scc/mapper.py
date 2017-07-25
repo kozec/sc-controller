@@ -312,7 +312,7 @@ class Mapper(object):
 	
 	
 	def reset_gyros(self):
-		for a in self.profile.get_actions():
+		for a in self.profile.get_all_actions():
 			if isinstance(a, GyroAbsAction):
 				a.reset()
 	
