@@ -18,8 +18,8 @@ import logging, time
 log = logging.getLogger("SlaveMapper")
 
 class SlaveMapper(Mapper):
-	def __init__(self, profile, keyboard=b"SCController Keyboard", mouse=None):
-		Mapper.__init__(self, profile, keyboard, mouse, None)
+	def __init__(self, profile, scheduler, keyboard=b"SCController Keyboard", mouse=None):
+		Mapper.__init__(self, profile, scheduler, keyboard, mouse, None)
 	
 	def set_controller(self, c):
 		""" Sets controller device, used by some (one so far) actions """

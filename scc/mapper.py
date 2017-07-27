@@ -20,7 +20,7 @@ log = logging.getLogger("Mapper")
 class Mapper(object):
 	DEBUG = False
 	
-	def __init__(self, profile, keyboard=b"SCController Keyboard",
+	def __init__(self, profile, scheduler, keyboard=b"SCController Keyboard",
 				mouse=b"SCController Mouse",
 				gamepad=True, poller=None):
 		"""
@@ -32,6 +32,7 @@ class Mapper(object):
 		self.profile = profile
 		self.controller = None
 		self.xdisplay = None
+		self.scheduler = scheduler
 		
 		# Create virtual devices
 		log.debug("Creating virtual devices")
@@ -53,7 +54,6 @@ class Mapper(object):
 		self.feedbacks = [ None, None ]			# left, right
 		self.pressed = {}						# for ButtonAction, holds number of times virtual button was pressed without releasing it first
 		self.syn_list = set()
-		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
 		self.lpad_touched = False
 		self.state, self.old_state = None, None
@@ -164,16 +164,12 @@ class Mapper(object):
 		Delay is float number in seconds.
 		Callback is called with mapper as only argument.
 		"""
-		when = time.time() + delay
-		self.scheduled_tasks.append( (when, cb) )
-		self.scheduled_tasks.sort(key=lambda a: a[0])
+		return self.scheduler.schedule(delay, cb, self)
 	
 	
-	def remove_scheduled(self, cb):
-		""" Removes scheduled task by callback. """
-		self.scheduled_tasks = [
-			(w, c) for (w, c) in self.scheduled_tasks if cb != c
-		]
+	def cancel_task(self, task):
+		""" Removes scheduled task. """
+		return self.scheduler.cancel_task(task)
 	
 	
 	def mouse_move(self, dx, dy):
@@ -395,16 +391,10 @@ class Mapper(object):
 			log.error("Error while processing controller event")
 			log.error(traceback.format_exc())
 		
-		self.run_scheduled(now)
+		# TODO: Is it important to run scheduled stuff before generate_events?
+		self.scheduler.run()
 		self.generate_events()
 		self.generate_feedback()
-	
-	
-	def run_scheduled(self, now):
-		if len(self.scheduled_tasks) > 0 and self.scheduled_tasks[0][0] <= now:
-			cb = self.scheduled_tasks[0][1]
-			self.scheduled_tasks = self.scheduled_tasks[1:]
-			cb(self)
 	
 	
 	def generate_events(self):

@@ -17,6 +17,7 @@ from scc.tools import set_logging_level, find_binary, clamp
 from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
 from scc.controller import HapticData
+from scc.scheduler import Scheduler
 from scc.menu_data import MenuData
 from scc.profile import Profile
 from scc.actions import Action
@@ -44,6 +45,7 @@ class SCCDaemon(Daemon):
 		self.exiting = False
 		self.socket_file = socket_file
 		self.poller = Poller()
+		self.scheduler = Scheduler()
 		self.xdisplay = None
 		self.sserver = None			# UnixStreamServer instance
 		self.errors = []
@@ -54,7 +56,7 @@ class SCCDaemon(Daemon):
 		# TODO: Use osd_ids for all menus
 		self.osd_ids = {}
 		self.controllers = []
-		self.mainloops = [ self.poller.poll ]
+		self.mainloops = [ self.poller.poll, self.scheduler.run ]
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
@@ -396,14 +398,15 @@ class SCCDaemon(Daemon):
 		Setups new mapper instance.
 		"""
 		try:
-			mapper = Mapper(Profile(TalkingActionParser()), poller=self.poller)
+			mapper = Mapper(Profile(TalkingActionParser()),
+					self.scheduler, poller=self.poller)
 		except CannotCreateUInputException, e:
 			# Most likely UInput is not available
 			# Create mapper with all virtual devices set to Dummies.
 			log.error(e)
 			self.add_error("uinput", str(e))
-			mapper = Mapper(Profile(TalkingActionParser()), keyboard=None,
-				mouse=None, gamepad=False)
+			mapper = Mapper(Profile(TalkingActionParser()),
+				self.scheduler, keyboard=None, mouse=None, gamepad=False)
 		
 		mapper.set_special_actions_handler(self)
 		mapper.set_xdisplay(self.xdisplay)
