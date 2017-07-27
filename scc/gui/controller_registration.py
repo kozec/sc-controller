@@ -14,6 +14,7 @@ from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
 from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
 from scc.constants import STICK, LEFT, RIGHT
+from scc.paths import get_config_path
 from scc.tools import nameof
 
 import evdev
@@ -71,8 +72,8 @@ class ControllerRegistration(Editor):
 	def does_he_looks_like_a_gamepad(dev):
 		"""
 		Examines device capabilities and decides if it passes for gamepad.
-		Device is considered gamepad-like if has at least 'A' button and at
-		least two axes.
+		Device is considered gamepad-like if has at least one button with
+		keycode in gamepad range and at least two axes.
 		"""
 		# ... but some cheating first
 		if "keyboard" in dev.name.lower():
@@ -136,6 +137,35 @@ class ControllerRegistration(Editor):
 		cbControllerButtons.set_active(0)
 	
 	
+	def save_registration(self):
+		config = dict(
+			buttons = {},
+			axes = {},
+		)
+		for code, target in self._mappings.iteritems():
+			if target in SCButtons:
+				config['buttons'][code] = nameof(target)
+			elif isinstance(target, AxisData):
+				index = self._axis_data.index(target)
+				target_axis, xy = AXIS_ORDER[index]
+				config['axes'][code] = dict(
+					axis = target_axis,
+					xy = "X" if xy == X else "Y",
+					center = target.center,
+					min = target.min,
+					max = target.max,
+					invert = target.invert,
+				)
+		try:
+			os.makedirs(os.path.join(get_config_path(), "devices"))
+		except: pass
+		config_file = os.path.join(get_config_path(), "devices",
+			"%s.json" % (self._evdevice.name.strip(),))
+		
+		open(config_file, "w").write(json.dumps(config))
+		log.debug("Evdev controller configuration '%s' written", config_file)
+	
+	
 	def on_btNext_clicked(self, *a):
 		stDialog = self.builder.get_object("stDialog")
 		cbEmulateC = self.builder.get_object("cbEmulateC")
@@ -155,7 +185,9 @@ class ControllerRegistration(Editor):
 			self.start_evdev_read()
 			stDialog.set_visible_child(pages[2])
 			cbEmulateC.grab_focus()
-			btNext.set_sensitive(False)
+			btNext.set_label("_Save")
+		elif index == 2:
+			self.save_registration()
 	
 	
 	def on_btBack_clicked(self, *a):
@@ -173,7 +205,7 @@ class ControllerRegistration(Editor):
 			rvController = self.builder.get_object("rvController")
 			self._controller.get_parent().remove(self._controller)
 			rvController.add(self._controller)
-			btNext.set_sensitive(True)
+			btNext.set_label("_Next")
 	
 	
 	def cbInvert_toggled_cb(self, cb, *a):

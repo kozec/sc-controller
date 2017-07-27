@@ -9,11 +9,12 @@ devices is read from config file.
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, TRIGGER_MAX
 from scc.constants import SCButtons, ControllerFlags
 from scc.controller import Controller
+from scc.paths import get_config_path
 from scc.config import Config
 from scc.poller import Poller
 from collections import namedtuple
 import evdev
-import struct, os, time, binascii, logging
+import struct, os, time, binascii, json, logging
 log = logging.getLogger("evdev")
 
 
@@ -244,8 +245,15 @@ class EvdevDriver(object):
 		for fname in evdev.list_devices():
 			dev = evdev.InputDevice(fname)
 			if dev.fn not in self._devices:
-				if dev.name in c['evdev_devices']:
-					self.handle_new_device(dev, c['evdev_devices'][dev.name])
+				config_file = os.path.join(get_config_path(), "devices",
+					"%s.json" % (dev.name.strip(),))
+				if os.path.exists(config_file):
+					config = None
+					try:
+						config = json.loads(open(config_file, "r").read())
+						self.handle_new_device(dev, config)
+					except Exception, e:
+						log.exception(e)
 	
 	
 	def start(self):
