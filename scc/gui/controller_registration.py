@@ -30,8 +30,13 @@ BUTTON_ORDER = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.C, SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
 	SCButtons.RPAD, SCButtons.LPAD, SCButtons.RGRIP,
 	SCButtons.LGRIP )
-AXIS_ORDER = ( (STICK, X), (STICK, Y), (RIGHT, X), (RIGHT, Y),
-	(LEFT, X), (LEFT, Y), (SCButtons.LT, X), (SCButtons.RT, X) )
+AXIS_ORDER = (
+	("stick_x", X), ("stick_y", Y),
+	("rpad_x", X),  ("rpad_y", Y),
+	("lpad_x", X),  ("lpad_x", Y),
+	("ltrig", X),
+	("rtrig", X)
+)
 BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.BACK, SCButtons.C, SCButtons.START )
 
@@ -62,7 +67,7 @@ class ControllerRegistration(Editor):
 		Editor.setup_widgets(self)
 		cursors = {}
 		for axis in self._axis_data:
-			axis.cursor = cursors[nameof(axis)] = ( cursors.get(nameof(axis)) or
+			axis.cursor = cursors[axis.area] = ( cursors.get(axis.area) or
 				Gtk.Image.new_from_file(os.path.join(
 				self.app.imagepath, "test-cursor.svg")) )
 			axis.cursor.position = [ 0, 0 ]
@@ -262,7 +267,7 @@ class ControllerRegistration(Editor):
 			cursor.position[axis.xy] = axis.set_position(event.value)
 			px, py = cursor.position
 			# Grab values
-			ax, ay, aw, trash = self._controller.get_area_position(nameof(axis))
+			ax, ay, aw, trash = self._controller.get_area_position(axis.area)
 			cw = cursor.get_allocation().width
 			# Compute center
 			x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
@@ -407,7 +412,8 @@ class AxisData:
 	"""
 	
 	def __init__(self, name, xy, min=STICK_PAD_MAX, max=-STICK_PAD_MAX):
-		self.name = nameof(name)
+		self.name = name
+		self.area = name.split("_")[0].upper()
 		self.xy = xy
 		self.pos = 0
 		self.center = 0

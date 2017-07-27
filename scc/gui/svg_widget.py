@@ -111,13 +111,13 @@ class SVGWidget(Gtk.EventBox):
 	def get_area_position(self, area_id):
 		"""
 		Computes and returns area position on image as (x, y, width, height).
-		Returns None if area is not found.
+		Raises ValueError if such area is not found.
 		"""
 		# TODO: Maybe cache this?
 		a = self.get_area(area_id)
 		if a:
 			return a.x, a.y, a.w, a.h
-		return None
+		raise ValueError("Area '%s' not found" % (area_id, ))
 	
 	
 	@staticmethod
