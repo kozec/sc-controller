@@ -14,7 +14,7 @@ from scc.config import Config
 from scc.poller import Poller
 from collections import namedtuple
 import evdev
-import struct, os, time, binascii, json, logging
+import struct, threading, Queue, os, time, binascii, json, logging
 log = logging.getLogger("evdev")
 
 
@@ -220,6 +220,9 @@ class EvdevDriver(object):
 	def __init__(self):
 		self._daemon = None
 		self._devices = {}
+		self._new_devices = Queue.Queue()
+		self._lock = threading.Lock()
+		self._scan_thread = None
 		self._used_ids = set()
 		self._next_scan = None
 	
@@ -239,9 +242,18 @@ class EvdevDriver(object):
 			self._used_ids.remove(controller.get_id())
 			controller.close()
 	
+	
 	def scan(self):
+		# Scanning is slow, so it runs in thread
+		with self._lock:
+			if self._scan_thread is None:
+				self._scan_thread = threading.Thread(
+						target = self._scan_thread_target)
+				self._scan_thread.start()
+	
+	
+	def _scan_thread_target(self):
 		c = Config()
-		self._next_scan = time.time() + EvdevDriver.SCAN_INTERVAL
 		for fname in evdev.list_devices():
 			dev = evdev.InputDevice(fname)
 			if dev.fn not in self._devices:
@@ -251,9 +263,13 @@ class EvdevDriver(object):
 					config = None
 					try:
 						config = json.loads(open(config_file, "r").read())
-						self.handle_new_device(dev, config)
+						with self._lock:
+							self._new_devices.put(( dev, config ))
 					except Exception, e:
 						log.exception(e)
+		with self._lock:
+			self._scan_thread = None
+			self._next_scan = time.time() + EvdevDriver.SCAN_INTERVAL
 	
 	
 	def start(self):
@@ -263,6 +279,11 @@ class EvdevDriver(object):
 	def mainloop(self):
 		if time.time() > self._next_scan:
 			self.scan()
+		with self._lock:
+			while not self._new_devices.empty():
+				dev, config = self._new_devices.get()
+				if dev.fn not in self._devices:
+					self.handle_new_device(dev, config)
 
 # Just like USB driver, EvdevDriver is process-wide singleton
 _evdevdrv = EvdevDriver()
