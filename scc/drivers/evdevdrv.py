@@ -6,7 +6,7 @@ is a gamepad and which user actually wants to be handled by SCC, list of enabled
 devices is read from config file.
 """
 
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, TRIGGER_MAX
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, TRIGGER_MIN, TRIGGER_MAX
 from scc.constants import SCButtons, ControllerFlags
 from scc.controller import Controller
 from scc.paths import get_config_path
@@ -56,8 +56,11 @@ class EvdevController(Controller):
 		for x, value in config.get("buttons", {}).iteritems():
 			try:
 				keycode = int(x)
-				sc = getattr(SCButtons, value)
-				self._evdev_to_button[keycode] = sc
+				if value in ("ltrig", "rtrig"):
+					self._evdev_to_axis[keycode] = value
+				else:
+					sc = getattr(SCButtons, value)
+					self._evdev_to_button[keycode] = sc
 			except: pass
 		for x, value in config.get("axes", {}).iteritems():
 			code, axis = int(x), value.get("axis")
@@ -133,6 +136,12 @@ class EvdevController(Controller):
 					else:
 						b = new_state.buttons & ~self._evdev_to_button[event.code]
 						new_state = new_state._replace(buttons=b)
+				elif event.type == evdev.ecodes.EV_KEY and event.code in self._evdev_to_axis:
+					axis = self._evdev_to_axis[event.code]
+					if event.value:
+						new_state = new_state._replace(**{ axis : TRIGGER_MAX })
+					else:
+						new_state = new_state._replace(**{ axis : TRIGGER_MIN }) 
 				elif event.type == evdev.ecodes.EV_ABS and event.code in self._evdev_to_axis:
 					cal = self._calibrations[event.code]
 					value = (float(event.value) * cal.scale + cal.offset)
