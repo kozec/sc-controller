@@ -411,7 +411,7 @@ class ControllerRegistration(Editor):
 		rvController.set_reveal_child(True)
 
 
-class AxisData:
+class AxisData(object):
 	"""
 	(Almost) dumb container.
 	Stores position, center and limits for single axis.

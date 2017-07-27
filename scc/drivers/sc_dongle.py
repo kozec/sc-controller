@@ -202,7 +202,7 @@ class SCController(Controller):
 						idata.q1, idata.q2, idata.q3, idata.q4
 				)
 			
-			self.mapper.input(self, time.time(), old_state, idata)
+			self.mapper.input(self, old_state, idata)
 	
 	
 	def read_serial(self):

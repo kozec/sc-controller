@@ -314,7 +314,7 @@ class Mapper(object):
 				a.reset()
 	
 	
-	def input(self, controller, now, old_state, state):
+	def input(self, controller, old_state, state):
 		# Store states
 		self.old_state = old_state
 		self.old_buttons = self.buttons

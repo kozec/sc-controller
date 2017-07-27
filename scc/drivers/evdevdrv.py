@@ -150,7 +150,7 @@ class EvdevController(Controller):
 			# Something got changed
 			old_state, self._state = self._state, new_state
 			if self.mapper:
-				self.mapper.input(self, time.time(), old_state, new_state)
+				self.mapper.input(self, old_state, new_state)
 	
 	
 	def apply_config(self, config):
