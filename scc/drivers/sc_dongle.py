@@ -9,7 +9,7 @@ Handles one or multiple controllers connected to dongle.
 from scc.lib import usb1
 from scc.lib import IntEnum
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from scc.constants import SCButtons, HapticPos
+from scc.constants import SCButtons, HapticPos, ControllerFlags
 from scc.controller import Controller
 from scc.config import Config
 from collections import namedtuple
@@ -158,6 +158,7 @@ class SCConfigType(IntEnum):
 class SCController(Controller):
 	def __init__(self, driver, ccidx, endpoint):
 		Controller.__init__(self)
+		self.flags = ControllerFlags.LPAD_HAS_TOUCH
 		self._driver = driver
 		self._endpoint = endpoint
 		self._idle_timeout = 600

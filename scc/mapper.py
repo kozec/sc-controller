@@ -348,9 +348,11 @@ class Mapper(object):
 			
 			
 			# Check stick
-			if not self.buttons & SCButtons.LPADTOUCH:
+			if self.controller.flags & ControllerFlags.SEPARATE_STICK:
+				if FE_STICK in fe or self.old_state.stick_x != state.stick_x or self.old_state.stick_y != state.stick_y:
+					self.profile.stick.whole(self, state.stick_x, state.stick_y, STICK)
+			elif not self.buttons & SCButtons.LPADTOUCH:
 				if FE_STICK in fe or self.old_state.lpad_x != state.lpad_x or self.old_state.lpad_y != state.lpad_y:
-					# print "stick", state.lpad_x, state.lpad_y
 					self.profile.stick.whole(self, state.lpad_x, state.lpad_y, STICK)
 			
 			# Check gyro
@@ -368,22 +370,26 @@ class Mapper(object):
 			# Check pads
 			# RPAD
 			if controller.flags & ControllerFlags.HAS_RSTICK:
-				if FE_STICK in fe or self.old_state.rpad_x != state.rpad_x or self.old_state.rpad_y != state.rpad_y:
+				if FE_PAD in fe or self.old_state.rpad_x != state.rpad_x or self.old_state.rpad_y != state.rpad_y:
 					self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
-			if FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
+			elif FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 				self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
 			
 			# LPAD
-			if self.buttons & SCButtons.LPADTOUCH:
-				# Pad is being touched now
-				if not self.lpad_touched:
-					self.lpad_touched = True
-				self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
-			elif not self.buttons & STICK_TILT:
-				# Pad is not being touched
-				if self.lpad_touched:
-					self.lpad_touched = False
-					self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
+			if controller.flags & ControllerFlags.LPAD_HAS_TOUCH:
+				if self.buttons & SCButtons.LPADTOUCH:
+					# Pad is being touched now
+					if not self.lpad_touched:
+						self.lpad_touched = True
+					self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+				elif not self.buttons & STICK_TILT:
+					# Pad is not being touched
+					if self.lpad_touched:
+						self.lpad_touched = False
+						self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
+			elif FE_PAD in fe or self.old_state.lpad_x != state.lpad_x or self.old_state.lpad_y != state.lpad_y:
+					self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+			
 		except Exception, e:
 			# Log error but don't crash here, it breaks too many things at once
 			log.error("Error while processing controller event")

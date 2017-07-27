@@ -103,7 +103,9 @@ class ControllerFlags(IntEnum):
 	Used by mapper to workaround some physical differences between
 	Steam Controller and other pads.
 	"""
-	HAS_RSTICK = 1 << 0		# Controller has right stick instead of touchpad
+	HAS_RSTICK =		1 << 0	# Controller has right stick instead of touchpad
+	SEPARATE_STICK =	1 << 1	# Left stick and left pad are using separate axes
+	LPAD_HAS_TOUCH =	1 << 2	# Left is touchpad (LPADTOUCH button is supported)
 
 
 STICK_PAD_MIN = -32768

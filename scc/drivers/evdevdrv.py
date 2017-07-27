@@ -19,7 +19,7 @@ log = logging.getLogger("evdev")
 
 
 EvdevControllerInput = namedtuple('EvdevControllerInput',
-	'buttons ltrig rtrig lpad_x lpad_y rpad_x rpad_y'
+	'buttons ltrig rtrig stick_x stick_y lpad_x lpad_y rpad_x rpad_y'
 )
 
 AxisCalibrationData = namedtuple('AxisCalibrationData',
@@ -35,7 +35,7 @@ class EvdevController(Controller):
 	
 	def __init__(self, daemon, device, config):
 		Controller.__init__(self)
-		self.flags = ControllerFlags.HAS_RSTICK	# TODO: Maybe configurable
+		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		self.device = device
 		self.config = config
 		self.poller = daemon.get_poller()
@@ -51,52 +51,32 @@ class EvdevController(Controller):
 		self._evdev_to_axis = {}
 		self._calibrations = {}
 		
-		if "buttons" in config:
-			for x, value in config["buttons"].iteritems():
-				try:
-					keycode = int(x)
-					sc = getattr(SCButtons, value)
-					self._evdev_to_button[keycode] = sc
-				except: pass
-		if "calibration" not in config: config["calibration"] = {}
-		if "sticks" in config:
-			for x, value in config["sticks"].iteritems():
-				try:
-					code = int(x)
-					if value in EvdevControllerInput._fields:
-						self._evdev_to_axis[code] = value
-						if x in config["calibration"]:
-							mn, mx, center = config["calibration"][x][0:3]
-							if mx > mn:
-								self._calibrations[code]= AxisCalibrationData(
-									-2.0 / (mn-mx), -1.0, center)
-							else:
-								self._calibrations[code]= AxisCalibrationData(
-									-2.0 / (mn-mx), 1.0, center)
-						else:
-							self._calibrations[code] = AxisCalibrationData(
-								1.0 / STICK_PAD_MAX, -1.0, 1)
-				except Exception, e:
-					log.error(e)
-					if code in self._evdev_to_axis:
-						del self._evdev_to_axis[code]
-		if "triggers" in config:
-			for x, value in config["triggers"].iteritems():
-				try:
-					code = int(x)
-					if value in EvdevControllerInput._fields:
-						self._evdev_to_axis[code] = value
-						if x in config["calibration"]:
-							mn, mx, center = config["calibration"][x][0:3]
-							self._calibrations[code] = AxisCalibrationData(
-								2.0 / (mx-mn) / TRIGGER_MAX, 0, 0)
-						else:
-							self._calibrations[code] = AxisCalibrationData(
-								1.0, 0, 0)
-				except Exception, e:
-					log.error(e)
-					if code in self._evdev_to_axis:
-						del self._evdev_to_axis[code]
+		for x, value in config.get("buttons", {}).iteritems():
+			try:
+				keycode = int(x)
+				sc = getattr(SCButtons, value)
+				self._evdev_to_button[keycode] = sc
+			except: pass
+		for x, value in config.get("axes", {}).iteritems():
+			code, axis = int(x), value.get("axis")
+			if axis in EvdevControllerInput._fields:
+				min, max, center = (value.get("min", -127),
+						value.get("max", 128), value.get("center", 0))
+				if axis in ("ltrig", "rtrig"):
+					if max > min:
+						self._calibrations[code]= AxisCalibrationData(
+							-2.0 / (min-max), -3.0, min)
+					else:
+						self._calibrations[code]= AxisCalibrationData(
+							-2.0 / (min-max), 1.0, max)
+				else:
+					if max > min:
+						self._calibrations[code]= AxisCalibrationData(
+							-2.0 / (min-max), -1.0, center)
+					else:
+						self._calibrations[code]= AxisCalibrationData(
+							-2.0 / (min-max), 1.0, center)
+				self._evdev_to_axis[code] = axis
 	
 	
 	def close(self):
@@ -156,7 +136,7 @@ class EvdevController(Controller):
 						cal = self._calibrations[event.code]
 						value = (float(event.value) * cal.scale + cal.offset)
 						value = int(value * STICK_PAD_MAX)
-						if value > -cal.center and value < cal.center:
+						if value >= -cal.center and value <= cal.center:
 							value = 0
 						new_state = new_state._replace(**{
 							self._evdev_to_axis[event.code] : value

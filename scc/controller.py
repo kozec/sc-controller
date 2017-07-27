@@ -29,7 +29,7 @@ next_id = 1		# Used with fallback controller id generator
 class Controller(object):
 	"""
 	Base class for all controller drivers. Implementations are in
-	scc.dricvers package.
+	scc.drivers package.
 	
 	Derived class should implement every method from here.
 	"""

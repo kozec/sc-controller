@@ -153,13 +153,19 @@ class ControllerRegistration(Editor):
 			elif isinstance(target, AxisData):
 				index = self._axis_data.index(target)
 				target_axis, xy = AXIS_ORDER[index]
+				min, max = target.min, target.max
+				if target.invert:
+					min, max = max, min
+				# Center is choosen with assumption that all sticks are left
+				# in center position before 'Save' is pressed.
+				center = target.pos
+				if center > 0 : center += 1
+				if center < 0 : center -= 1
 				config['axes'][code] = dict(
 					axis = target_axis,
-					xy = "X" if xy == X else "Y",
-					center = target.center,
-					min = target.min,
-					max = target.max,
-					invert = target.invert,
+					min = min,
+					max = max,
+					center = center,
 				)
 		try:
 			os.makedirs(os.path.join(get_config_path(), "devices"))
