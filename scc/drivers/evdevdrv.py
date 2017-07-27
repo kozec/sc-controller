@@ -32,6 +32,7 @@ class EvdevController(Controller):
 	To keep stuff simple, this class tries to provide and use same methods
 	as SCController class does.
 	"""
+	PADPRESS_EMULATION_TIMEOUT = 0.2
 	
 	def __init__(self, daemon, device, config):
 		Controller.__init__(self)
@@ -43,6 +44,7 @@ class EvdevController(Controller):
 		self.device.grab()
 		self._id = self._generate_id()
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
+		self._padpressemu_task = None
 		self._parse_config(config)
 	
 	
@@ -121,36 +123,90 @@ class EvdevController(Controller):
 	
 	def input(self, *a):
 		new_state = self._state
+		need_cancel_padpressemu = False
 		try:
 			for event in self.device.read():
-				if event.type == evdev.ecodes.EV_KEY:
-					if event.code in self._evdev_to_button:
-						if event.value:
-							b = new_state.buttons | self._evdev_to_button[event.code]
-							new_state = new_state._replace(buttons=b)
-						else:
-							b = new_state.buttons & ~self._evdev_to_button[event.code]
-							new_state = new_state._replace(buttons=b)
-				elif event.type == evdev.ecodes.EV_ABS:
-					if event.code in self._evdev_to_axis:
-						cal = self._calibrations[event.code]
-						value = (float(event.value) * cal.scale + cal.offset)
-						value = int(value * STICK_PAD_MAX)
-						if value >= -cal.center and value <= cal.center:
-							value = 0
-						new_state = new_state._replace(**{
-							self._evdev_to_axis[event.code] : value
-						})
+				if event.type == evdev.ecodes.EV_KEY and event.code in self._evdev_to_button:
+					if event.value:
+						b = new_state.buttons | self._evdev_to_button[event.code]
+						new_state = new_state._replace(buttons=b)
+					else:
+						b = new_state.buttons & ~self._evdev_to_button[event.code]
+						new_state = new_state._replace(buttons=b)
+				elif event.type == evdev.ecodes.EV_ABS and event.code in self._evdev_to_axis:
+					cal = self._calibrations[event.code]
+					value = (float(event.value) * cal.scale + cal.offset)
+					value = int(value * STICK_PAD_MAX)
+					if value >= -cal.center and value <= cal.center:
+						value = 0
+					axis = self._evdev_to_axis[event.code]
+					if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
+						b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH
+						need_cancel_padpressemu = True
+						new_state = new_state._replace(buttons=b, **{ axis : value })
+					elif not new_state.buttons & SCButtons.RPADTOUCH and axis in ("rpad_x", "rpad_y"):
+						b = new_state.buttons | SCButtons.RPADTOUCH
+						need_cancel_padpressemu = True
+						new_state = new_state._replace(buttons=b, **{ axis : value })
+					else:
+						new_state = new_state._replace(**{ axis : value })
 		except IOError, e:
 			# TODO: Maybe check e.errno to determine exact error
 			# all of them are fatal for now
 			log.error(e)
 			_evdevdrv.device_removed(self.device)
+		
 		if new_state is not self._state:
 			# Something got changed
 			old_state, self._state = self._state, new_state
 			if self.mapper:
+				if need_cancel_padpressemu:
+					if self._padpressemu_task:
+						self.mapper.cancel_task(self._padpressemu_task)
+					self._padpressemu_task = self.mapper.schedule(
+						self.PADPRESS_EMULATION_TIMEOUT,
+						self.cancel_padpress_emulation
+					)
 				self.mapper.input(self, old_state, new_state)
+	
+	
+	def cancel_padpress_emulation(self, mapper):
+		"""
+		Since evdev gamepad typically can't generate LPADTOUCH nor RPADTOUCH
+		buttons/events, pushing those buttons is emulated when apropriate stick
+		is moved.
+		
+		Emulated *PADTOUCH button is held until stick is being moved and then
+		for small time set by PADPRESS_EMULATION_TIMEOUT.
+		Then, to release those purely virtual buttons, this method is called.
+		"""
+		 
+		need_reschedule = False
+		new_state = self._state
+		if new_state.buttons & SCButtons.LPADTOUCH:
+			if self._state.lpad_x == 0 and self._state.lpad_y == 0:
+				b = new_state.buttons & ~(SCButtons.LPAD | SCButtons.LPADTOUCH)
+				new_state = new_state._replace(buttons=b)
+			else:
+				need_reschedule = True
+
+		if new_state.buttons & SCButtons.RPADTOUCH:
+			if self._state.rpad_x == 0 and self._state.rpad_y == 0:
+				b = new_state.buttons & ~SCButtons.RPADTOUCH
+				new_state = new_state._replace(buttons=b)
+			else:
+				need_reschedule = True
+		
+		if new_state is not self._state:
+			# Something got changed
+			old_state, self._state = self._state, new_state
+			self.mapper.input(self, old_state, new_state)
+		
+		if need_reschedule:
+			self._padpressemu_task = mapper.schedule(
+				self.PADPRESS_EMULATION_TIMEOUT, self.cancel_padpress_emulation)
+		else:
+			self._padpressemu_task = None
 	
 	
 	def apply_config(self, config):
