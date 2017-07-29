@@ -379,8 +379,11 @@ class SVGEditor(object):
 				style = { y[0] : y[1] for y in [ x.split(":", 1) for x in element.attrib['style'].split(";") ] }
 				if 'fill' in style:
 					style['fill'] = color
-					style['opacity'] = "1"
-					style['fill-opacity'] = "1"
+					if len(color.strip("#")) == 8:
+						alpha = float(int(color.strip("#")[0:2], 16)) / 255.0
+						style['fill-opacity'] = style['opacity'] = str(alpha)
+					else:
+						style['fill-opacity'] = style['opacity'] = "1"
 					element.attrib['style'] = ";".join([ "%s:%s" % (x, style[x]) for x in style ])
 					return True
 		elif element.tag.endswith("g"):

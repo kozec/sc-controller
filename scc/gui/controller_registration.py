@@ -12,14 +12,15 @@ from scc.tools import _
 from gi.repository import Gtk, GLib, GdkPixbuf
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
+from scc.gui.app import App
 from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
 from scc.constants import STICK, LEFT, RIGHT
-from scc.paths import get_config_path
-from scc.tools import nameof
+from scc.paths import get_config_path, get_share_path
+from scc.tools import nameof, clamp
 
 import evdev
 import sys, os, logging, json, traceback
-log = logging.getLogger("CR")
+log = logging.getLogger("CRegistration")
 
 X = 0
 Y = 1
@@ -35,14 +36,32 @@ AXIS_ORDER = (
 	("rpad_x", X),  ("rpad_y", Y),
 	("lpad_x", X),  ("lpad_x", Y),
 	("ltrig", X),
-	("rtrig", X)
+	("rtrig", X),
 )
 BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.BACK, SCButtons.C, SCButtons.START )
+SDL_TO_SC_NAMES = {
+	'guide' : 'C',
+	'leftstick' : 'STICKPRESS',
+	'rightstick' : 'RPAD',
+	'leftshoulder' : 'LB',
+	'rightshoulder': 'RB',
+}
+SDL_AXES = ('leftx', 'lefty', 'rightx', 'righty', # In same order as AXIS_ORDER
+	None, None, 'lefttrigger', 'righttrigger' )
+
 
 class ControllerRegistration(Editor):
 	GLADE = "controller_registration.glade"
 	UNASSIGNED_COLOR = "#FFFF0000"		# ARGB
+	OBSERVE_COLORS = (
+		App.OBSERVE_COLOR,
+		# Following just replaces 'full alpha' in ARGB with various alpha values
+		App.OBSERVE_COLOR.replace("#FF", "#DF"),
+		App.OBSERVE_COLOR.replace("#FF", "#BF"),
+		App.OBSERVE_COLOR.replace("#FF", "#9F"),
+		App.OBSERVE_COLOR.replace("#FF", "#7F"),
+	)
 	
 	def __init__(self, app):
 		Editor.__init__(self)
@@ -67,11 +86,15 @@ class ControllerRegistration(Editor):
 		Editor.setup_widgets(self)
 		cursors = {}
 		for axis in self._axis_data:
+			if "trig" in axis.name:
+				continue
 			axis.cursor = cursors[axis.area] = ( cursors.get(axis.area) or
 				Gtk.Image.new_from_file(os.path.join(
 				self.app.imagepath, "test-cursor.svg")) )
 			axis.cursor.position = [ 0, 0 ]
-	
+		self.builder.get_object("cbInvert_1").set_active(True)
+		self.builder.get_object("cbInvert_3").set_active(True)
+
 	
 	@staticmethod
 	def does_he_looks_like_a_gamepad(dev):
@@ -96,12 +119,74 @@ class ControllerRegistration(Editor):
 		return False
 	
 	
+	def load_mappings(self, dev):
+		"""
+		Attempts to load mappings from gamecontrollerdb.txt.
+		
+		Return True on success.
+		"""
+		# Build list of button and axes
+		caps = dev.capabilities(verbose=False)
+		buttons = caps.get(evdev.ecodes.EV_KEY, [])
+		axes = ([ axis for (axis, trash) in caps[evdev.ecodes.EV_ABS] ]
+			if evdev.ecodes.EV_ABS in caps else [] )
+		
+		# Generate database ID
+		wordswap = lambda i: ((i & 0xFF) << 8) | ((i & 0xFF00) >> 8)
+		# TODO: version?
+		weird_id = "%.4x%.8x%.8x%.8x0000" % (
+				wordswap(dev.info.bustype),
+				wordswap(dev.info.vendor),
+				wordswap(dev.info.product),
+				wordswap(dev.info.version)
+		)
+		
+		# Search in database
+		try:
+			db = open(os.path.join(get_share_path(), "gamecontrollerdb.txt"), "r")
+		except Exception, e:
+			log.error('Failed to load gamecontrollerdb')
+			log.exception(e)
+			return False
+		
+		for line in db.readlines():
+			if line.startswith(weird_id):
+				log.info("Loading mappings for '%s' from gamecontrollerdb", weird_id)
+				log.debug("Buttons: %s", buttons)
+				log.debug("Axes: %s", buttons)
+				for token in line.strip().split(","):
+					if ":" in token:
+						k, v = token.split(":", 1)
+						k = SDL_TO_SC_NAMES.get(k, k)
+						if v.startswith("b") and hasattr(SCButtons, k.upper()):
+							try:
+								keycode = buttons[int(v.strip("b"))]
+							except IndexError:
+								log.warning("Skipping unknown gamecontrollerdb button: %s", v)
+								continue
+							button  = getattr(SCButtons, k.upper())
+							self._mappings[keycode] = button
+						elif k in SDL_AXES: 
+							try:
+								code = axes[int(v.strip("a"))]
+							except IndexError:
+								log.warning("Skipping unknown gamecontrollerdb axis: %s", v)
+								continue
+							self._mappings[code] = self._axis_data[SDL_AXES.index(k)]
+						elif k == "platform":
+							# Not interesting
+							pass
+						else:
+							log.warning("Skipping unknown gamecontrollerdb mapping %s:%s", k, v)
+				return True
+		return False
+	
+	
 	def generate_mappings(self, dev):
 		"""
 		Generates initial mappings, just to have some preset to show.
 		"""
 		caps = dev.capabilities(verbose=False)
-		self._mappings = {}
 		buttons = list(BUTTON_ORDER)
 		axes = list(self._axis_data)
 		if evdev.ecodes.EV_ABS in caps: # Has axes
@@ -229,7 +314,9 @@ class ControllerRegistration(Editor):
 		model, iter = tvDevices.get_selection().get_selected()
 		self._evdevice = evdev.InputDevice(model[iter][0])
 		if not self._mappings:
-			self.generate_mappings(self._evdevice)
+			self._mappings = {}
+			if not self.load_mappings(self._evdevice):
+				self.generate_mappings(self._evdevice)
 			self.generate_unassigned()
 		GLib.idle_add(self._evdev_read)
 	
@@ -264,28 +351,46 @@ class ControllerRegistration(Editor):
 		axis = self._mappings.get(event.code)
 		if axis:
 			cursor = axis.cursor
-			parent = cursor.get_parent()
-			if parent is None:
-				parent = self._controller.get_parent()
-				parent.add(cursor)
-				cursor.show()
-			# Make position
-			cursor.position[axis.xy] = axis.set_position(event.value)
-			px, py = cursor.position
-			# Grab values
-			ax, ay, aw, trash = self._controller.get_area_position(axis.area)
-			cw = cursor.get_allocation().width
-			# Compute center
-			x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
-			# Add pad position
-			x += px * aw / STICK_PAD_MAX * 0.5
-			y -= py * aw / STICK_PAD_MAX * 0.5
-			# Move circle
-			parent.move(cursor, x, y)
+			if cursor is None:
+				value = clamp(STICK_PAD_MIN,
+						axis.set_position(event.value), STICK_PAD_MAX)
+				# In this very specific case, trigger uses same min/max as stick
+				if value > STICK_PAD_MAX * 2 / 3:
+					self.hilight(axis.area, self.OBSERVE_COLORS[0])
+				elif value > STICK_PAD_MAX * 1 / 3:
+					self.hilight(axis.area, self.OBSERVE_COLORS[1])
+				elif value > 0:
+					self.hilight(axis.area, self.OBSERVE_COLORS[2])
+				elif value > STICK_PAD_MIN * 1 / 3:
+					self.hilight(axis.area, self.OBSERVE_COLORS[3])
+				elif value > STICK_PAD_MIN * 2 / 3:
+					self.hilight(axis.area, self.OBSERVE_COLORS[4])
+				else:
+					self.unhilight(axis.area)
+			else:
+				parent = cursor.get_parent()
+				if parent is None:
+					parent = self._controller.get_parent()
+					parent.add(cursor)
+					cursor.show()
+				# Make position
+				cursor.position[axis.xy] = clamp(STICK_PAD_MIN,
+						axis.set_position(event.value), STICK_PAD_MAX)
+				px, py = cursor.position
+				# Grab values
+				ax, ay, aw, trash = self._controller.get_area_position(axis.area)
+				cw = cursor.get_allocation().width
+				# Compute center
+				x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
+				# Add pad position
+				x += px * aw / STICK_PAD_MAX * 0.5
+				y -= py * aw / STICK_PAD_MAX * 0.5
+				# Move circle
+				parent.move(cursor, x, y)
 	
 	
 	def hilight(self, what, color=None):
-		self._hilights[what] = color or self.app.OBSERVE_COLOR
+		self._hilights[what] = color or self.OBSERVE_COLORS[0]
 		self._controller.hilight(self._hilights)
 	
 	
@@ -420,6 +525,7 @@ class AxisData(object):
 	def __init__(self, name, xy, min=STICK_PAD_MAX, max=-STICK_PAD_MAX):
 		self.name = name
 		self.area = name.split("_")[0].upper()
+		if self.area.endswith("TRIG"): self.area = self.area[0:-3]
 		self.xy = xy
 		self.pos = 0
 		self.center = 0

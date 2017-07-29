@@ -141,7 +141,7 @@ class EvdevController(Controller):
 					if event.value:
 						new_state = new_state._replace(**{ axis : TRIGGER_MAX })
 					else:
-						new_state = new_state._replace(**{ axis : TRIGGER_MIN }) 
+						new_state = new_state._replace(**{ axis : TRIGGER_MIN })
 				elif event.type == evdev.ecodes.EV_ABS and event.code in self._evdev_to_axis:
 					cal = self._calibrations[event.code]
 					value = (float(event.value) * cal.scale + cal.offset)
