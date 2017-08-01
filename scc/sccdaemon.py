@@ -895,7 +895,7 @@ class SCCDaemon(Daemon):
 			(isinstance(a, ObservingAction) and isinstance(a.original_action, LockedAction)))
 		
 		if what == STICK:
-			if is_locked(mapper.profile.buttons[SCButtons.STICK]):
+			if is_locked(mapper.profile.buttons[SCButtons.STICKPRESS]):
 				return False
 			if is_locked(mapper.profile.stick):
 				return False
@@ -954,7 +954,7 @@ class SCCDaemon(Daemon):
 			return s
 		if s == "STICKPRESS":
 			# Special case, as that button is actually named STICK :(
-			return SCButtons.STICK
+			return SCButtons.STICKPRESS
 		if hasattr(SCButtons, s):
 			return getattr(SCButtons, s)
 		raise ValueError("Unknown source: %s" % (s,))
@@ -1108,7 +1108,7 @@ class ReportingAction(Action):
 	
 	
 	def button_press(self, mapper, number=1):
-		if self.what == SCButtons.STICK:
+		if self.what == SCButtons.STICKPRESS:
 			self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
 				mapper.get_controller().get_id(),
 				number

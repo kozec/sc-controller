@@ -115,6 +115,11 @@ class Profile(object):
 		self.buttons = {}
 		for x in SCButtons:
 			self.buttons[x] = self.parser.from_json_data(data["buttons"], x.name)
+		# Pressing stick is interpreted as STICKPRESS button,
+		# formely called just STICK
+		if "STICK" in data["buttons"] and "STICKPRESS" not in data["buttons"]:
+			self.buttons[SCButtons.STICKPRESS] = self.parser.from_json_data(
+					data["buttons"], "STICK")
 		
 		# Stick & gyro
 		self.stick = self.parser.from_json_data(data, "stick")

@@ -5,7 +5,7 @@ from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO, HapticPos
-from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICK_TILT
+from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICKTILT
 from scc.aliases import ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction, GyroAbsAction
 from scc.controller import HapticData
@@ -326,7 +326,7 @@ class Mapper(object):
 		self.buttons = state.buttons
 		
 		if self.buttons & SCButtons.LPAD and not self.buttons & SCButtons.LPADTOUCH:
-			self.buttons = (self.buttons & ~SCButtons.LPAD) | SCButtons.STICK
+			self.buttons = (self.buttons & ~SCButtons.LPAD) | SCButtons.STICKPRESS
 		
 		fe = self.force_event
 		self.force_event = set()
@@ -374,7 +374,7 @@ class Mapper(object):
 				if not self.lpad_touched:
 					self.lpad_touched = True
 				self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
-			elif not self.buttons & STICK_TILT:
+			elif not self.buttons & STICKTILT:
 				# Pad is not being touched
 				if self.lpad_touched:
 					self.lpad_touched = False
