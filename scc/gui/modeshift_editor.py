@@ -17,6 +17,7 @@ from scc.constants import SCButtons, HapticPos
 from scc.actions import Action, NoAction
 from scc.profile import Profile
 from scc.macros import Macro
+from scc.tools import nameof
 
 from gi.repository import Gtk, Gdk, GLib
 import os, logging
@@ -42,6 +43,7 @@ class ModeshiftEditor(Editor):
 		(SCButtons.LT,			_('Left Trigger') ),
 		(SCButtons.RT,			_('Right Trigger') ),
 		(None, None),
+		(SCButtons.STICKPRESS,	_('Stick Pressed') ),
 		(SCButtons.LPAD,		_('Left Pad Pressed') ),
 		(SCButtons.RPAD,		_('Right Pad Pressed') ),
 		(SCButtons.LPADTOUCH,	_('Left Pad Touched') ),
@@ -77,7 +79,6 @@ class ModeshiftEditor(Editor):
 			( b('grDoubleClick'),	b('btDoubleClick'),	b('btClearDoubleClick') ),
 		)
 		
-		self._fill_button_chooser()
 		headerbar(self.builder.get_object("header"))
 	
 	
@@ -93,6 +94,10 @@ class ModeshiftEditor(Editor):
 			if any([ True for x in self.actions[self.current_page] if x[0] == button ]):
 				# Skip already added buttons
 				continue
+			if button == SCButtons.STICKPRESS:
+				if self.id == nameof(SCButtons.LPAD):
+					# Controller cannot handle pressing stick and lpad at once
+					continue
 			model.append(( None if button is None else button.name, text ))
 		cbButtonChooser.set_active(0)
 	
@@ -328,6 +333,7 @@ class ModeshiftEditor(Editor):
 		sclHoldFeedback = self.builder.get_object("sclHoldFeedback")
 		
 		self.id = id
+		self._fill_button_chooser()
 		
 		if id in STICKS:
 			lblPressAlone.set_label(_("(no button pressed)"))
