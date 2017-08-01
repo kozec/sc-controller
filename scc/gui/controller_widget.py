@@ -14,6 +14,7 @@ from gi.repository import Gtk, Gdk, Pango
 from scc.constants import SCButtons, STICK, GYRO, LEFT, RIGHT
 from scc.actions import Action, XYAction, MultiAction
 from scc.gui.ae.gyro_action import is_gyro_enable
+from scc.modifiers import DoubleclickModifier
 from scc.profile import Profile
 import os, sys, logging
 
@@ -168,9 +169,23 @@ class ControllerStick(ControllerWidget):
 	def update(self):
 		action = self.app.current.buttons[SCButtons.STICKPRESS]
 		self._set_label(self.app.current.stick)
-		txt = action.describe(self.ACTION_CONTEXT)
-		txt = txt.replace("<", "&lt;").replace(">", "&gt;")
 		if self.pressed:
+			self._update_pressed(action)
+	
+	
+	def _update_pressed(self, action):
+		escape = lambda t : t.replace("<", "&lt;").replace(">", "&gt;")
+		if isinstance(action, DoubleclickModifier):
+			lines = []
+			if action.normalaction:
+				txt = action.normalaction.describe(self.ACTION_CONTEXT)
+				lines.append("Pressed: %s" % (escape(txt),))
+			if action.holdaction:
+				txt = action.holdaction.describe(self.ACTION_CONTEXT)
+				lines.append("Hold: %s" % (escape(txt),))
+			self.pressed.set_markup("<small>%s</small>" % ("\n".join(lines), ))
+		else:
+			txt = escape(action.describe(self.ACTION_CONTEXT))
 			self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
 
 
@@ -194,10 +209,8 @@ class ControllerPad(ControllerStick):
 			pressed = self.app.current.buttons[SCButtons.RPAD]
 		
 		self._set_label(action)
-		txt = pressed.describe(self.ACTION_CONTEXT)
-		txt = txt.replace("<", "&lt;").replace(">", "&gt;")
 		if self.pressed:
-			self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
+			self._update_pressed(pressed)
 
 
 class ControllerGyro(ControllerWidget):
