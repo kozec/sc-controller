@@ -96,6 +96,10 @@
         <col id="1">x</col>
       </row>
       <row>
+        <col id="0" translatable="yes">Stick Press</col>
+        <col id="1">STICKPRESS</col>
+      </row>
+      <row>
         <col id="0" translatable="yes">Left Pad Press</col>
         <col id="1">LPAD</col>
       </row>
