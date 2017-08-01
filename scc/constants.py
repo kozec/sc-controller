@@ -40,7 +40,7 @@ FE_TRIGGER	= 2
 FE_PAD		= 3
 FE_GYRO		= 4
 
-# Buttons names, sides, etc. These constants are used on multiple places
+# Trigger names, pads, etc. These constants are used on multiple places
 LEFT	= "LEFT"
 RIGHT	= "RIGHT"
 WHOLE	= "WHOLE"
@@ -70,7 +70,7 @@ class SCButtons(IntEnum):
 	LPADTOUCH	= 0b00001000000000000000000000000000
 	RPAD		= 0b00000100000000000000000000000000
 	LPAD		= 0b00000010000000000000000000000000 # Same for stick but without LPadTouch
-	STICK		= 0b00000000000000000000000000000001 # generated internally, not sent by controller
+	STICKPRESS	= 0b00000000000000000000000000000001 # generated internally, not sent by controller
 	RGRIP	 	= 0b00000001000000000000000000000000
 	LGRIP	 	= 0b00000000100000000000000000000000
 	START	 	= 0b00000000010000000000000000000000
@@ -88,7 +88,7 @@ class SCButtons(IntEnum):
 # If lpad and stick is used at once, this is sent as
 # button with every other packet to signalize that
 # value of lpad_x and lpad_y belongs to stick
-STICK_TILT		= 0b10000000000000000000000000000000
+STICKTILT		= 0b10000000000000000000000000000000
 
 
 class HapticPos(IntEnum):

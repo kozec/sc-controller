@@ -53,7 +53,7 @@ class BindingEditor(object):
 				self.button_widgets[b] = ControllerStick(self, b, use_icons, enable_press, w)
 		w = self.builder.get_object("btSTICKPRESS")
 		if w:
-			self.button_widgets[SCButtons.STICK] = ControllerButton(self, SCButtons.STICK, use_icons, w)
+			self.button_widgets[SCButtons.STICKPRESS] = ControllerButton(self, SCButtons.STICKPRESS, use_icons, w)
 		for b in GYROS:
 			w = self.builder.get_object("bt" + b)
 			if w:
@@ -74,10 +74,10 @@ class BindingEditor(object):
 		Returns formely stored action.
 		"""
 		before = NoAction()
-		if id in BUTTONS:
+		if id == SCButtons.STICKPRESS and Profile.STICK in self.button_widgets:
 			before, profile.buttons[id] = profile.buttons[id], action
-			self.button_widgets[id].update()
-		elif id == SCButtons.STICK and SCButtons.STICK in self.button_widgets:
+			self.button_widgets[Profile.STICK].update()
+		elif id in BUTTONS:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[id].update()
 		elif id in PRESSABLE:

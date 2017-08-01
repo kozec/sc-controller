@@ -383,7 +383,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 				if cancel_with == DEFAULT:  cancel_with  = SCButtons.RPADTOUCH
 			else:
 				# Stick
-				if confirm_with == DEFAULT: confirm_with = SCButtons.STICK
+				if confirm_with == DEFAULT: confirm_with = SCButtons.STICKPRESS
 				if cancel_with == DEFAULT:  cancel_with  = SCButtons.B
 			if not mapper.was_pressed(cancel_with):
 				self.execute(mapper,
