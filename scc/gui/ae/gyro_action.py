@@ -152,6 +152,8 @@ class GyroActionComponent(AEComponent):
 			return True
 		if is_gyro_enable(action):
 			action = action.mods[action.order[0]] or action.default
+			if isinstance(action, SensitivityModifier):
+				action = action.action
 		if isinstance(action, GyroAction):	# Takes GyroAbsAction as well
 			ap = action.parameters
 			if (len(ap) == 3 and not ap[1]) or len(ap) == 2:
@@ -254,10 +256,8 @@ class GyroActionComponent(AEComponent):
 				action = ModeModifier(getattr(SCButtons, button), action)
 		if key == "mouse":
 			self.editor.set_default_sensitivity(3.5, 3.5, 3.5)
-			self.editor.set_sensitivity(3.5, 3.5, 3.5)
 		else:
 			self.editor.set_default_sensitivity(1, 1, 1)
-			self.editor.set_sensitivity(1, 1, 1)
 		
 		self.editor.set_action(action)
 
