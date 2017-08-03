@@ -87,7 +87,7 @@ class GyroActionComponent(AEComponent):
 			if isinstance(action, SensitivityModifier) and isinstance(action.action, MouseAction):
 				# Mouse (Desktop)
 				self.select_gyro_output("mouse")
-				if len(action.parameters) > 0 and action.parameters[0] == YAW:
+				if len(action.action.parameters) > 0 and action.action.parameters[0] == YAW:
 					self.select_yaw_roll(YAW)
 				else:
 					self.select_yaw_roll(ROLL)
