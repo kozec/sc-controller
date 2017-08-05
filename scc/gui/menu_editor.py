@@ -12,7 +12,9 @@ from scc.gui.action_editor import ActionEditor
 from scc.gui.icon_chooser import IconChooser
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
-from scc.osd.menu_generators import ProfileListMenuGenerator, RecentListMenuGenerator
+from scc.osd.menu_generators import ProfileListMenuGenerator
+from scc.osd.menu_generators import RecentListMenuGenerator
+from scc.osd.menu_generators import GameListMenuGenerator
 from scc.osd.menu import MenuIcon
 from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
 from scc.paths import get_menus_path, get_default_menus_path
@@ -217,6 +219,10 @@ class MenuEditor(Editor):
 	def on_mnuAddRecentList_clicked(self, *a):
 		""" Handler for "Add List of Recent Profiles" menu item """
 		self._add_menuitem(RecentListMenuGenerator())
+	
+	def on_mnuAddGamesList_activate(self, *a):
+		""" Handler for "Add List of Games" menu item """
+		self._add_menuitem(GameListMenuGenerator())
 	
 	
 	def on_btRemoveItem_clicked(self, *a):
