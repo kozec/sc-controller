@@ -1742,6 +1742,7 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	MIN_DISTANCE_P2 = 2000000	# Power of 2 from minimal distance that finger
 								# has to be from center
 	
+	SIDE_NONE = (None, None)
 	SIDES = (
 		# Just list of magic numbers that would have
 		# to be computed on the fly otherwise
@@ -1758,12 +1759,23 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	)
 	
 	def __init__(self, *actions):
+		self.diagonal_rage = 45
+		if len(actions) > 0 and type(actions[0]) in (int, float):
+			self.diagonal_rage = clamp(1, int(actions[0]), 89)
+			actions = actions[1:]
 		MultichildAction.__init__(self, *actions)
 		HapticEnabledAction.__init__(self)
 		self.actions = ensure_size(4, actions, NoAction())
-		self.eight = False
 		self.dpad_state = [ None, None ]	# X, Y
 		self.side_before = None
+		# Generate mapping of angle range -> index
+		self.ranges = []
+		normal_range = 90 - self.diagonal_rage
+		i = 360-normal_range / 2
+		for x in xrange(0, 9):
+			r = normal_range if x % 2 == 0 else self.diagonal_rage
+			i, j = (i + r) % 360, i
+			self.ranges.append(( j, i, x % 8 ))
 	
 	
 	def encode(self):
@@ -1797,15 +1809,17 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	def compute_side(self, x, y):
 		""" Computes which sides of dpad are supposed to be active """
 		## dpad(up, down, left, right)
-		side = ( None, None )
+		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
+		side = self.SIDE_NONE
 		if x*x + y*y > self.MIN_DISTANCE_P2:
 			# Compute angle from center of pad to finger position
-			angle = (atan2(x, y) * 180.0 / PI)
-			# Transform it to index of quaver
-			index = int(round(angle / (180.0 / 4.0)))
-			# Index goes from -4 to +4, make it zero based
-			index = clamp(0, index + 4, 8)
-			
+			angle = (atan2(x, y) * 180.0 / PI) + 180
+			# Translate it to index
+			index = 0
+			for a1, a2, i in self.ranges:
+				if angle >= a1 and angle < a2:
+					index = i
+					break
 			side = self.SIDES[index]
 		return side
 	
@@ -1845,7 +1859,8 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 class DPad8Action(DPadAction):
 	COMMAND = "dpad8"
 	PROFILE_KEYS = ()
-
+	
+	SIDE_NONE = None
 	SIDES = (
 		# Another list of magic numbers that would have
 		# to be computed on the fly otherwise
@@ -1863,26 +1878,10 @@ class DPad8Action(DPadAction):
 	def __init__(self, *actions):
 		DPadAction.__init__(self, *actions)
 		self.actions = ensure_size(8, actions, NoAction())
-		self.eight = True
 	
 	def describe(self, context):
 		if self.name: return self.name
 		return "8-Way DPad"
-	
-    
-	def compute_side(self, x, y):
-		""" Computes which sides of dpad are supposed to be active """
-		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
-		side = None
-		if x*x + y*y > self.MIN_DISTANCE_P2:
-			# Compute angle from center of pad to finger position
-			angle = (atan2(x, y) * 180.0 / PI)
-			# Transform it to index of quaver
-			index = int(round(angle / (180.0 / 4.0)))
-			# Index goes from -4 to +4, make it zero based
-			index = clamp(0, index + 4, 9)
-			side = self.SIDES[index]
-		return side
 	
 	
 	def whole(self, mapper, x, y, what):

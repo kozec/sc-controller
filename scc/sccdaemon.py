@@ -1101,24 +1101,34 @@ class ReportingAction(Action):
 	
 	
 	def trigger(self, mapper, position, old_position):
-		self.client.wfile.write(("Event: %s %s %s %s\n" % (
-			mapper.get_controller().get_id(),
-			self.what.name, position, old_position)
-		).encode("utf-8"))
+		try:
+			self.client.wfile.write(("Event: %s %s %s %s\n" % (
+				mapper.get_controller().get_id(),
+				self.what.name, position, old_position)
+			).encode("utf-8"))
+		except Exception:
+			# May fail when client dies
+			self.client.rfile.close()
+			self.client.wfile.close()
 	
 	
 	def button_press(self, mapper, number=1):
-		if self.what == SCButtons.STICKPRESS:
-			self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
-				mapper.get_controller().get_id(),
-				number
-			)).encode("utf-8"))
-		else:
-			self.client.wfile.write(("Event: %s %s %s\n" % (
-				mapper.get_controller().get_id(),
-				self.what.name,
-				number
-			)).encode("utf-8"))
+		try:
+			if self.what == SCButtons.STICKPRESS:
+				self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
+					mapper.get_controller().get_id(),
+					number
+				)).encode("utf-8"))
+			else:
+				self.client.wfile.write(("Event: %s %s %s\n" % (
+					mapper.get_controller().get_id(),
+					self.what.name,
+					number
+				)).encode("utf-8"))
+		except Exception:
+			# May fail when client dies
+			self.client.rfile.close()
+			self.client.wfile.close()
 	
 	
 	def button_release(self, mapper):
@@ -1129,11 +1139,15 @@ class ReportingAction(Action):
 		if (x == 0 or y == 0 or abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE
 							or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE)):
 			self.old_pos = x, y
-			self.client.wfile.write(("Event: %s %s %s %s\n" % (
-				mapper.get_controller().get_id(),
-				what, x, y
-			)).encode("utf-8"))
-
+			try:
+				self.client.wfile.write(("Event: %s %s %s %s\n" % (
+					mapper.get_controller().get_id(),
+					what, x, y
+				)).encode("utf-8"))
+			except Exception:
+				# May fail when client dies
+				self.client.rfile.close()
+				self.client.wfile.close()
 
 class LockedAction(ReportingAction):
 	""" Temporal action used to send requested inputs to client """
