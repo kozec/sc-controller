@@ -279,7 +279,8 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			if not self._revealer:
 				# Revealer has to be created
 				self._revealer = Gtk.Revealer()
-				self._savebutton = Gtk.Button.new_from_icon_name("gtk-save", Gtk.IconSize.SMALL_TOOLBAR)
+				self._savebutton = Gtk.Button.new_from_icon_name("document-save",
+						Gtk.IconSize.SMALL_TOOLBAR)
 				self._savebutton.set_margin_left(5)
 				self._savebutton.connect('clicked', self.on_savebutton_clicked)
 				self._revealer.set_reveal_child(False)

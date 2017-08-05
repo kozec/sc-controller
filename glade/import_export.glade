@@ -134,7 +134,7 @@
                             <property name="can_focus">False</property>
                             <property name="margin_right">10</property>
                             <property name="pixel_size">32</property>
-                            <property name="icon_name">gtk-save-as</property>
+                            <property name="icon_name">document-save-as</property>
                             <property name="icon_size">6</property>
                           </object>
                           <packing>
@@ -187,7 +187,7 @@
                             <property name="can_focus">False</property>
                             <property name="margin_right">10</property>
                             <property name="pixel_size">32</property>
-                            <property name="icon_name">gtk-open</property>
+                            <property name="icon_name">document-open</property>
                             <property name="icon_size">6</property>
                           </object>
                           <packing>
