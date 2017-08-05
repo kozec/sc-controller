@@ -916,32 +916,6 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="cbMI_3">
-                <property name="name">cbMI_3</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="margin_left">20</property>
-                <property name="margin_bottom">5</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                <child>
-                  <object class="GtkLabel" id="label7">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">5</property>
-                    <property name="label" translatable="yes">Display Keyboard</property>
-                    <property name="xalign">0</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">4</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkButton" id="btCustomizeDefaultMenu">
                 <property name="label" translatable="yes">Customize...</property>
                 <property name="can_focus">True</property>
@@ -953,61 +927,9 @@
               </object>
               <packing>
                 <property name="left_attach">2</property>
-                <property name="top_attach">4</property>
-                <property name="width">2</property>
-                <property name="height">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbMI_4">
-                <property name="name">cbMI_4</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="margin_left">20</property>
-                <property name="margin_bottom">5</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                <child>
-                  <object class="GtkLabel" id="label95">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">5</property>
-                    <property name="label" translatable="yes">Turn Controller OFF</property>
-                    <property name="xalign">0</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">3</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbMI_5">
-                <property name="name">cbMI_5</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="margin_left">20</property>
-                <property name="margin_bottom">5</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                <child>
-                  <object class="GtkLabel" id="label91">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">5</property>
-                    <property name="label" translatable="yes">Kill Current Window</property>
-                    <property name="xalign">0</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
                 <property name="top_attach">5</property>
                 <property name="width">2</property>
+                <property name="height">2</property>
               </packing>
             </child>
             <child>
@@ -1037,6 +959,84 @@
               </packing>
             </child>
             <child>
+              <object class="GtkCheckButton" id="cbMI_3">
+                <property name="name">cbMI_3</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_bottom">5</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label7">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="label" translatable="yes">Display Keyboard</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbMI_8">
+                <property name="name">cbMI_8</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_bottom">5</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label39">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="label" translatable="yes">Games List</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">4</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbMI_4">
+                <property name="name">cbMI_4</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_bottom">5</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label95">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="label" translatable="yes">Turn Controller OFF</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">4</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkCheckButton" id="cbMI_7">
                 <property name="name">cbMI_7</property>
                 <property name="visible">True</property>
@@ -1052,6 +1052,32 @@
                     <property name="can_focus">False</property>
                     <property name="margin_left">5</property>
                     <property name="label" translatable="yes">Show Current Bindings</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">3</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbMI_5">
+                <property name="name">cbMI_5</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_bottom">5</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label91">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="label" translatable="yes">Kill Current Window</property>
                     <property name="xalign">0</property>
                   </object>
                 </child>

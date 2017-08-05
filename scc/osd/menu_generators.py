@@ -137,8 +137,9 @@ class WindowListMenuGenerator(MenuGenerator):
 
 class GameListMenuGenerator(MenuGenerator):
 	"""
-	Generates list of applications known to XDG menu and belonging
-	to 'games' category """
+	Generates list of applications known to XDG menu
+	and belonging to 'Game' category
+	"""
 	GENERATOR_NAME = "games"
 	MAX_LENGHT = 50
 	
