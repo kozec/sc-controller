@@ -1739,6 +1739,7 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	COMMAND = "dpad"
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	
+	DEFAULT_DIAGONAL_RANGE = 45
 	MIN_DISTANCE_P2 = 2000000	# Power of 2 from minimal distance that finger
 								# has to be from center
 	
@@ -1759,7 +1760,7 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	)
 	
 	def __init__(self, *actions):
-		self.diagonal_rage = 45
+		self.diagonal_rage = DPadAction.DEFAULT_DIAGONAL_RANGE
 		if len(actions) > 0 and type(actions[0]) in (int, float):
 			self.diagonal_rage = clamp(1, int(actions[0]), 89)
 			actions = actions[1:]
@@ -1780,6 +1781,11 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	
 	def encode(self):
 		""" Called from json encoder """
+		if self.diagonal_rage != DPadAction.DEFAULT_DIAGONAL_RANGE:
+			# TODO: Since I'm getting rid of 'encode' methods, this one returns
+			# 'action' : self.to_string() if newly added argument is used
+			return MultichildAction.encode(self)
+		
 		rv = { DPadAction.COMMAND : [ x.encode() for x in self.actions ]}
 		if self.name: rv['name'] = self.name
 		return rv
@@ -1794,6 +1800,13 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 		else:
 			a = DPadAction(*args)
 		return a
+	
+	
+	def to_string(self, multiline=False, pad=0, prefixparams=""):
+		if self.diagonal_rage != DPadAction.DEFAULT_DIAGONAL_RANGE:
+			return MultichildAction.to_string(self, multiline, pad,
+					prefixparams = "%s, " % (self.diagonal_rage, ))
+		return MultichildAction.to_string(self, multiline, pad)
 	
 	
 	def get_compatible_modifiers(self):
@@ -1862,7 +1875,7 @@ class DPad8Action(DPadAction):
 	
 	SIDE_NONE = None
 	SIDES = (
-		# Another list of magic numbers that would have
+		# Another list of magic numbers that would have`
 		# to be computed on the fly otherwise
 		1,	# index 0 - down
 		6,	# index 1 - down-left
