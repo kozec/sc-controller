@@ -1760,12 +1760,12 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	)
 	
 	def __init__(self, *actions):
+		MultichildAction.__init__(self, *actions)
+		HapticEnabledAction.__init__(self)
 		self.diagonal_rage = DPadAction.DEFAULT_DIAGONAL_RANGE
 		if len(actions) > 0 and type(actions[0]) in (int, float):
 			self.diagonal_rage = clamp(1, int(actions[0]), 89)
 			actions = actions[1:]
-		MultichildAction.__init__(self, *actions)
-		HapticEnabledAction.__init__(self)
 		self.actions = ensure_size(4, actions, NoAction())
 		self.dpad_state = [ None, None ]	# X, Y
 		self.side_before = None
@@ -1890,7 +1890,7 @@ class DPad8Action(DPadAction):
 
 	def __init__(self, *actions):
 		DPadAction.__init__(self, *actions)
-		self.actions = ensure_size(8, actions, NoAction())
+		self.actions = ensure_size(8, self.actions, NoAction())
 	
 	def describe(self, context):
 		if self.name: return self.name
