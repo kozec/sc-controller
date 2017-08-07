@@ -1766,7 +1766,7 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 		if len(actions) > 0 and type(actions[0]) in (int, float):
 			self.diagonal_rage = clamp(1, int(actions[0]), 89)
 			actions = actions[1:]
-		self.actions = ensure_size(4, actions, NoAction())
+		self.actions = self._ensure_size(actions)
 		self.dpad_state = [ None, None ]	# X, Y
 		self.side_before = None
 		# Generate mapping of angle range -> index
@@ -1777,6 +1777,10 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 			r = normal_range if x % 2 == 0 else self.diagonal_rage
 			i, j = (i + r) % 360, i
 			self.ranges.append(( j, i, x % 8 ))
+	
+	
+	def _ensure_size(self, actions):
+		return ensure_size(4, actions, NoAction())
 	
 	
 	def encode(self):
@@ -1887,10 +1891,11 @@ class DPad8Action(DPadAction):
 		7,	# index 7 - downright
 		1,	# index 8 - same as 0
 	)
-
-	def __init__(self, *actions):
-		DPadAction.__init__(self, *actions)
-		self.actions = ensure_size(8, self.actions, NoAction())
+	
+	
+	def _ensure_size(self, actions):
+		return ensure_size(8, actions, NoAction())
+	
 	
 	def describe(self, context):
 		if self.name: return self.name
