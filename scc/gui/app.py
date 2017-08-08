@@ -20,8 +20,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
+from scc.tools import get_profile_name, profile_is_default, profile_is_override
 from scc.tools import check_access, find_profile, find_gksudo
-from scc.tools import get_profile_name, profile_is_override
 from scc.paths import get_config_path, get_profiles_path
 from scc.actions import NoAction
 from scc.modifiers import NameModifier
@@ -573,11 +573,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		return new_name
 	
 	
-	def on_txNewProfile_changed(self, *a):
+	def on_txNewProfile_changed(self, tx):
 		if self.recursing:
 			return
-		txNewProfile = self.builder.get_object("txNewProfile")
-		txNewProfile._changed = True
+		tx._changed = True
 	
 	
 	def on_new_clicked(self, ps, name):
@@ -876,8 +875,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if ps == self.profile_switchers[0]:
 			name = ps.get_profile_name()
 			is_override = profile_is_override(name)
+			is_default = profile_is_default(name)
 			self.builder.get_object("mnuProfileDelete").set_visible(not is_override)
 			self.builder.get_object("mnuProfileRevert").set_visible(is_override)
+			self.builder.get_object("mnuProfileRename").set_sensitive(is_default)
 		else:
 			self.builder.get_object("mnuProfileDelete").set_visible(False)
 			self.builder.get_object("mnuProfileRevert").set_visible(False)
@@ -911,6 +912,51 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.builder.get_object("dlgProfileDetails").show()
 	
 	
+	def on_mnuProfileRename_activate(self, *a):
+		dlg = self.builder.get_object("dlgRenameProfile")
+		txRename = self.builder.get_object("txRename")
+		mnuPS = self.builder.get_object("mnuPS")
+		name = mnuPS.ps.get_profile_name()
+		txRename.set_text(name)
+		dlg._name = name
+		dlg.set_transient_for(self.window)
+		dlg.show()
+	
+	
+	def on_txRename_changed(self, tx):
+		name = tx.get_text()
+		btRenameProfile = self.builder.get_object("btRenameProfile")
+		btRenameProfile.set_sensitive(find_profile(name) is None)
+	
+	
+	def on_btRenameProfile_clicked(self, *a):
+		dlg = self.builder.get_object("dlgRenameProfile")
+		txRename = self.builder.get_object("txRename")
+		old_name = dlg._name
+		new_name = txRename.get_text()
+		old_fname = os.path.join(get_profiles_path(), old_name + ".sccprofile")
+		new_fname = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+		try:
+			os.rename(old_fname, new_fname)
+			for n in (old_fname, new_fname):
+				try:
+					os.unlink(n + ".mod")
+				except:
+					# non-existing .mod file is expected
+					pass
+		except Exception, e:
+			log.error("Failed to rename %s: %s", old_fname, e)
+		
+		controllers = list(self.dm.get_controllers())
+		for c in controllers:
+			if get_profile_name(c.get_profile()) == old_name:
+				ps = self.profile_switchers[controllers.index(c)]
+				ps.set_profile(new_name, True)
+				c.set_profile(new_name)
+		self.load_profile_list()
+		dlg.hide()
+	
+	
 	def on_mnuProfileDelete_activate(self, *a):
 		mnuPS = self.builder.get_object("mnuPS")
 		name = mnuPS.ps.get_profile_name()
@@ -936,7 +982,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				try:
 					os.unlink(fname + ".mod")
 				except:
-					# .mod file not existing is expected
+					# non-existing .mod file is expected
 					pass
 				for ps in self.profile_switchers:
 					ps.refresh_profile_path(name)

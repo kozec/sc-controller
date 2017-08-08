@@ -180,7 +180,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		"""
 		Called from main window after profile file is deleted.
 		May either change path to profile in default_profiles directory,
-		or remove entry altogether.
+		or remove entry entirely.
 		"""
 		prev = None
 		new_path = find_profile(name)

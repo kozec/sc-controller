@@ -139,6 +139,91 @@
       </object>
     </child>
   </object>
+  <object class="GtkDialog" id="dlgRenameProfile">
+    <property name="width_request">600</property>
+    <property name="can_focus">False</property>
+    <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="skip_pager_hint">True</property>
+    <signal name="delete-event" handler="undeletable_dialog" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog-vbox2">
+        <property name="can_focus">False</property>
+        <property name="margin_left">10</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">10</property>
+        <property name="margin_bottom">10</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area2">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="btRenameProfile">
+                <property name="label">gtk-ok</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_btRenameProfile_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">New name for profile</property>
+            <property name="xalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="txRename">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="margin_top">10</property>
+            <property name="margin_bottom">10</property>
+            <signal name="changed" handler="on_txRename_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child type="titlebar">
+      <object class="GtkHeaderBar" id="headerbar1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="title">Rename Profile</property>
+        <property name="decoration_layout">:close</property>
+      </object>
+    </child>
+  </object>
   <object class="GtkListStore" id="lstProfile">
     <columns>
       <!-- column-name name -->
@@ -196,52 +281,6 @@
     </child>
     <child>
       <object class="GtkMenuItem" id="mnuExit">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Quit</property>
-        <property name="use_underline">True</property>
-        <signal name="activate" handler="on_mnuExit_activate" swapped="no"/>
-      </object>
-    </child>
-  </object>
-  <object class="GtkMenu" id="mnuTray">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-	<child>
-      <object class="GtkMenuItem" id="mnuShowWindowTray">
-        <property name="visible">False</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Show/Hide _Window</property>
-        <property name="use_underline">True</property>
-        <signal name="activate" handler="on_statusicon_clicked" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkCheckMenuItem" id="mnuEmulationEnabledTray">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">_Emulation Enabled</property>
-        <property name="use_underline">True</property>
-        <signal name="toggled" handler="on_mnuEmulationEnabled_toggled" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkSeparatorMenuItem" id="menuitem7">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="mnuAboutTray">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">About</property>
-        <property name="use_underline">True</property>
-        <signal name="activate" handler="on_mnuAbout_activate" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="mnuExitTray">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Quit</property>
@@ -987,11 +1026,11 @@
     </child>
     <child>
       <object class="GtkMenuItem" id="mnuProfileRename">
-        <property name="sensitive">False</property>
+        <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="no_show_all">True</property>
         <property name="label" translatable="yes">_Rename Profile</property>
         <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuProfileRename_activate" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1070,6 +1109,51 @@
         <property name="label" translatable="yes">_Edit Pressed Action</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_mnuEditPress_activate" swapped="no"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="mnuTray">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="mnuShowWindowTray">
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Show/Hide _Window</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_statusicon_clicked" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkCheckMenuItem" id="mnuEmulationEnabledTray">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Emulation Enabled</property>
+        <property name="use_underline">True</property>
+        <signal name="toggled" handler="on_mnuEmulationEnabled_toggled" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="menuitem7">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuAboutTray">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">About</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuAbout_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuExitTray">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Quit</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuExit_activate" swapped="no"/>
       </object>
     </child>
   </object>

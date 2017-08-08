@@ -60,8 +60,8 @@ class Keyboard(OSDWindow, TimerManager):
 			# Prefer image in ~/.config/scc, but load default one as fallback
 			self.kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
 		
-		OSDWindow.__init__(self, "osd-keyboard")
 		TimerManager.__init__(self)
+		OSDWindow.__init__(self, "osd-keyboard")
 		self.daemon = None
 		self.mapper = None
 		self.keymap = Gdk.Keymap.get_default()
