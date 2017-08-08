@@ -5,7 +5,7 @@ SC-Controller - OSD Menu
 Display menu that user can navigate through and prints chosen item id to stdout
 """
 from __future__ import unicode_literals
-from scc.tools import _, set_logging_level
+from scc.tools import _
 
 from gi.repository import Gtk, GLib, Gio, Gdk, GdkX11, GdkPixbuf
 from scc.tools import point_in_gtkrect, find_menu, find_icon
@@ -20,7 +20,7 @@ from scc.lib import xwrappers as X
 from scc.config import Config
 from math import sqrt
 
-import os, sys, json, logging
+import os, sys, logging
 log = logging.getLogger("osd.menu")
 
 # Fill MENU_GENERATORS dict

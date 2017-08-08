@@ -1257,23 +1257,16 @@ class TiltAction(MultichildAction):
 					# Side no longer faces down
 					self.actions[i].button_release(mapper)
 					self.states[i] = False
-			if self.actions[i+1]:
+			if self.actions[i + 1]:
 				if pyr[j] > TiltAction.MIN / self.speed[j]:
 					# Side faces up
-					if not self.states[i+1]:
-						self.actions[i+1].button_press(mapper)
-						self.states[i+1] = True
-				elif self.states[i+1]:
+					if not self.states[i + 1]:
+						self.actions[i + 1].button_press(mapper)
+						self.states[i + 1] = True
+				elif self.states[i + 1]:
 					# Side no longer faces up
-					self.actions[i+1].button_release(mapper)
-					self.states[i+1] = False
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { TiltAction.COMMAND : [ x.encode() for x in self.actions ]}
-		if self.name: rv['name'] = self.name
-		return rv
+					self.actions[i + 1].button_release(mapper)
+					self.states[i + 1] = False
 	
 	
 	@staticmethod
@@ -1558,13 +1551,6 @@ class MultiAction(MultichildAction):
 		self._add_all(actions)
 	
 	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { 'actions' : [ x.encode() for x in self.actions ] }
-		if self.name: rv['name'] = self.name
-		return rv	
-	
-	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		""" Called when decoding profile from json """
@@ -1783,18 +1769,6 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 		return ensure_size(4, actions, NoAction())
 	
 	
-	def encode(self):
-		""" Called from json encoder """
-		if self.diagonal_rage != DPadAction.DEFAULT_DIAGONAL_RANGE:
-			# TODO: Since I'm getting rid of 'encode' methods, this one returns
-			# 'action' : self.to_string() if newly added argument is used
-			return MultichildAction.encode(self)
-		
-		rv = { DPadAction.COMMAND : [ x.encode() for x in self.actions ]}
-		if self.name: rv['name'] = self.name
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		""" Called when decoding profile from json """
@@ -1948,17 +1922,6 @@ class RingAction(MultichildAction):
 		return self
 	
 	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { RingAction.COMMAND : {
-			'radius' : self.radius,
-			'inner'  : self.inner,
-			'outer'  : self.outer,
-		}}
-		if self.name: rv['name'] = self.name
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		""" Called when decoding profile from json """
@@ -2072,15 +2035,6 @@ class XYAction(WholeHapticAction, Action):
 		x = parser.from_json_data(data["X"]) if "X" in data else NoAction()
 		y = parser.from_json_data(data["Y"]) if "Y" in data else NoAction()
 		return XYAction(x, y)
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { }
-		if self.x: rv["X"] = self.x.encode()
-		if self.y: rv["Y"] = self.y.encode()
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def compress(self):
@@ -2233,14 +2187,6 @@ class TriggerAction(Action, HapticEnabledAction):
 		self.child_is_axis = isinstance(self.action.strip(), AxisAction)
 	
 	
-	def encode(self):
-		""" Called from json encoder """
-		rv = self.action.encode()
-		rv[TriggerAction.PROFILE_KEYS[0]] = self.press_level, self.release_level
-		if self.name: rv['name'] = self.name
-		return rv	
-	
-	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		""" Called when decoding profile from json """
@@ -2332,10 +2278,6 @@ class NoAction(Action):
 	
 	def __nonzero__(self):
 		return False
-	
-	
-	def encode(self):
-		return { }
 	
 	
 	def button_press(self, *a):

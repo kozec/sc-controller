@@ -111,13 +111,6 @@ class Modifier(Action):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
 	
 	__repr__ = __str__
-	
-	
-	def encode(self):
-		rv = self.action.encode()
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv
 
 
 class NameModifier(Modifier):
@@ -126,28 +119,28 @@ class NameModifier(Modifier):
 	Used internally.
 	"""
 	COMMAND = "name"
-
+	
 	def _mod_init(self, name):
 		self.name = name
 		if self.action:
 			self.action.name = name
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return a.set_name(data[NameModifier.COMMAND])
-
-
+	
+	
 	def strip(self):
 		rv = self.action.strip()
 		rv.name = self.name
 		return rv
-
-
+	
+	
 	def compress(self):
 		return self.strip()
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return "%s(%s, %s)" % (
 			self.COMMAND,
@@ -158,25 +151,20 @@ class NameModifier(Modifier):
 
 class ClickModifier(Modifier):
 	COMMAND = "click"
-
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[ClickModifier.COMMAND] = True
-		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return ClickModifier(a)
-
-
+	
+	
 	def describe(self, context):
 		if context in (Action.AC_STICK, Action.AC_PAD):
 			return _("(if pressed)") + "\n" + self.action.describe(context)
 		else:
 			return _("(if pressed)") + " " + self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			childstr = self.action.to_string(True, pad + 2)
@@ -191,28 +179,30 @@ class ClickModifier(Modifier):
 			self.COMMAND,
 			self.action.to_string()
 		)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		self.action = self.action.compress()
 		return self
-
-
+	
+	
 	# For button press & co it's safe to assume that they are being pressed...
 	def button_press(self, mapper):
 		return self.action.button_press(mapper)
-
+	
+	
 	def button_release(self, mapper):
 		return self.action.button_release(mapper)
-
+	
+	
 	def trigger(self, mapper, position, old_position):
 		return self.action.trigger(mapper, position, old_position)
-
-
+	
+	
 	def axis(self, mapper, position, what):
 		if what in (STICK, LEFT) and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
@@ -226,8 +216,8 @@ class ClickModifier(Modifier):
 		if mapper.was_pressed(SCButtons.RPAD):
 			# Just released
 			return self.action.axis(mapper, 0, what)
-
-
+	
+	
 	def pad(self, mapper, position, what):
 		if what == LEFT and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
@@ -241,8 +231,8 @@ class ClickModifier(Modifier):
 		if mapper.was_pressed(SCButtons.RPAD):
 			# Just released
 			return self.action.pad(mapper, 0, what)
-
-
+	
+	
 	def whole(self, mapper, x, y, what):
 		if what in (STICK, LEFT) and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
@@ -378,13 +368,6 @@ class BallModifier(Modifier, WholeHapticAction):
 			if self.haptic:
 				WholeHapticAction.add(self, mapper, dx, dy)
 			mapper.schedule(0, self._roll)
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		pars = self.strip_defaults()
-		rv[BallModifier.COMMAND] = pars
-		return rv
 	
 	
 	@staticmethod
@@ -531,16 +514,6 @@ class DeadzoneModifier(Modifier):
 		return distance * sin(angle), distance * cos(angle)
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[DeadzoneModifier.COMMAND] = dict(
-			upper = self.upper,
-			lower = self.lower,
-			mode = self.mode
-		)
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		return DeadzoneModifier(
@@ -648,17 +621,6 @@ class ModeModifier(Modifier):
 	
 	def get_child_actions(self):
 		return [ self.mods[key] for key in self.mods ]
-	
-	
-	def encode(self):
-		rv = self.default.encode()
-		modes = {}
-		for key in self.mods:
-			modes[key.name] = self.mods[key].encode()
-		rv[ModeModifier.PROFILE_KEYS[0]] = modes
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv
 	
 	
 	@staticmethod
@@ -842,21 +804,6 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 		self.waiting = False
 		self.pressed = False
 		self.active = None
-	
-	
-	def encode(self):
-		if self.normalaction:
-			rv = self.normalaction.encode()
-		else:
-			rv = {}
-		rv[DoubleclickModifier.COMMAND] = self.action.encode()
-		if self.holdaction:
-			rv[HoldModifier.COMMAND] = self.holdaction.encode()
-		if self.timeout != DoubleclickModifier.DEAFAULT_TIMEOUT:
-			rv[DoubleclickModifier.TIMEOUT_KEY] = self.timeout
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv
 	
 	
 	def get_child_actions(self):
@@ -1060,12 +1007,6 @@ class SensitivityModifier(Modifier):
 					break
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[SensitivityModifier.PROFILE_KEYS[0]] = self.speeds
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		if a:
@@ -1105,12 +1046,12 @@ class FeedbackModifier(Modifier):
 	Enables feedback for action, action supports it.
 	Action that supports feedback has to have set_haptic(hapticdata)
 	method defined.
-
+	
 	Does nothing otherwise.
 	"""
 	COMMAND = "feedback"
 	PROFILE_KEY_PRIORITY = -4
-
+	
 	def _mod_init(self, position, amplitude=512, frequency=4, period=1024, count=1):
 		self.haptic = HapticData(position, amplitude, frequency, period, count)
 		if self.action:
@@ -1125,14 +1066,6 @@ class FeedbackModifier(Modifier):
 					break
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		pars = self.strip_defaults()
-		pars[0] = nameof(pars[0])
-		rv[FeedbackModifier.COMMAND] = pars
-		return rv
-
-
 	@staticmethod
 	def decode(data, a, *b):
 		args = list(data[FeedbackModifier.COMMAND])
@@ -1140,25 +1073,25 @@ class FeedbackModifier(Modifier):
 			args[0] = getattr(HapticPos, args[0])
 		args.append(a)
 		return FeedbackModifier(*args)
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return self._mod_to_string(self.strip_defaults(), multiline, pad)
-
-
+	
+	
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		return self.action.compress()
 
@@ -1166,43 +1099,37 @@ class FeedbackModifier(Modifier):
 class RotateInputModifier(Modifier):
 	""" Rotates ball or stick input along axis """
 	COMMAND = "rotate"
-
+	
 	def _mod_init(self, angle):
 		self.angle = angle
-
-
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[RotateInputModifier.COMMAND] = self.angle
-		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return RotateInputModifier(float(data['rotate']), a)
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return self._mod_to_string((self.angle,), multiline, pad)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		if hasattr(self.action, "set_rotation"):
 			self.action.set_rotation(self.angle * PI / -180.0)
 			return self.action
 		self.action = self.action.compress()
 		return self
-
-
+	
+	
 	# This doesn't make sense with anything but 'whole' as input.
 	def whole(self, mapper, x, y, what):
 		angle = self.angle * PI / -180.0
@@ -1238,12 +1165,6 @@ class SmoothModifier(Modifier):
 	def describe(self, context):
 		if self.name: return self.name
 		return "%s (smooth)" % (self.action.describe(context),)
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[SmoothModifier.COMMAND] = [ self.level, self.multiplier, self.filter ]
-		return rv
 	
 	
 	@staticmethod
@@ -1301,12 +1222,6 @@ class CircularModifier(Modifier, HapticEnabledAction):
 	def _mod_init(self):
 		self.angle = None		# Last known finger position
 		self.speed = 1.0
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[CircularModifier.COMMAND] = True
-		return rv
 	
 	
 	@staticmethod
@@ -1387,12 +1302,6 @@ class CircularAbsModifier(Modifier, WholeHapticAction):
 	def _mod_init(self):
 		self.angle = None		# Last known finger position
 		self.speed = 1.0
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[CircularAbsModifier.COMMAND] = True
-		return rv
 	
 	
 	@staticmethod
