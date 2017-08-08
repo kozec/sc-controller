@@ -876,9 +876,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			name = ps.get_profile_name()
 			is_override = profile_is_override(name)
 			is_default = profile_is_default(name)
-			self.builder.get_object("mnuProfileDelete").set_visible(not is_override)
+			self.builder.get_object("mnuProfileDelete").set_visible(not is_default)
 			self.builder.get_object("mnuProfileRevert").set_visible(is_override)
-			self.builder.get_object("mnuProfileRename").set_sensitive(is_default)
+			self.builder.get_object("mnuProfileRename").set_visible(not is_default)
 		else:
 			self.builder.get_object("mnuProfileDelete").set_visible(False)
 			self.builder.get_object("mnuProfileRevert").set_visible(False)
