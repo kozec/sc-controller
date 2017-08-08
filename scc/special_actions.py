@@ -10,17 +10,14 @@ action only prints warning to console.
 """
 from __future__ import unicode_literals
 
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, SCButtons
-from scc.constants import LEFT, RIGHT, STICK, SCButtons, SAME
+from scc.constants import SCButtons, LEFT, RIGHT, STICK, SAME
 from scc.constants import STICK_PAD_MAX, DEFAULT
-from scc.actions import Action, NoAction, SpecialAction, ButtonAction
+from scc.actions import Action, SpecialAction
 from scc.actions import HapticEnabledAction, OSDEnabledAction
-from scc.actions import MOUSE_BUTTONS
 from scc.tools import strip_gesture, nameof, clamp
-from scc.modifiers import Modifier, NameModifier
+from scc.modifiers import Modifier
 from math import sqrt
-
-import sys, time, logging
+import sys, logging
 log = logging.getLogger("SActions")
 _ = lambda x : x
 
@@ -162,7 +159,6 @@ class OSDAction(Action, SpecialAction):
 	"""
 	SA = COMMAND = "osd"
 	DEFAULT_TIMEOUT = 5
-	PROFILE_KEY_PRIORITY = -5	# After XYAction, but beforee everything else
 	
 	def __init__(self, *parameters):
 		Action.__init__(self, *parameters)
@@ -184,26 +180,6 @@ class OSDAction(Action, SpecialAction):
 		if self.action:
 			return self.action.get_compatible_modifiers()
 		return 0
-	
-	
-	def encode(self):
-		if self.action:
-			rv = self.action.encode()
-			if self.timeout == self.DEFAULT_TIMEOUT:
-				rv[OSDAction.COMMAND] = True
-			else:
-				rv[OSDAction.COMMAND] = self.timeout
-			return rv
-		else:
-			return Action.encode(self)	
-	
-	
-	@staticmethod
-	def decode(data, a, *b):
-		a = OSDAction(a)
-		if data["osd"] is not True:
-			a.timeout = float(data["osd"])
-		return a
 	
 	
 	def describe(self, context):
@@ -318,7 +294,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 			dflt = (DEFAULT, DEFAULT, False)
 			vals = (self.confirm_with, self.cancel_with, self.show_with_release)
 			if dflt == vals:
-				# Special case when menu is assigned to pad 
+				# Special case when menu is assigned to pad
 				if self.size == 0:
 					return "%s%s('%s')" % (" " * pad, self.COMMAND, self.menu_id)
 				else:
@@ -608,18 +584,6 @@ class PositionModifier(Modifier):
 		return self.action
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[PositionModifier.COMMAND] = self.position
-		return rv
-	
-	
-	@staticmethod
-	def decode(data, a, *b):
-		x, y = data[PositionModifier.COMMAND]
-		return PositionModifier(x, y, a)
-	
-	
 	def describe(self, context):
 		return self.action.describe(context)
 
@@ -631,8 +595,6 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	as parameter of gesture() method.
 	"""
 	SA = COMMAND = "gestures"
-	PROFILE_KEYS = ("gestures",)
-	PROFILE_KEY_PRIORITY = 2
 	
 	def __init__(self, *stuff):
 		OSDEnabledAction.__init__(self)
@@ -664,7 +626,7 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 			rv = [ (" " * pad) + self.COMMAND + "(" ]
 			for gstr in self.gestures:
 				a_str = self.gestures[gstr].to_string(True).split("\n")
-				a_str[0] = (" " * pad) + "  '" + (gstr + "',").ljust(11) + a_str[0]	# Key has to be one of SCButtons
+				a_str[0] = (" " * pad) + "  '" + (gstr + "',").ljust(11) + a_str[0]		# Key has to be one of SCButtons
 				for i in xrange(1, len(a_str)):
 					a_str[i] = (" " * pad) + "  " + a_str[i]
 				a_str[-1] = a_str[-1] + ","
@@ -677,17 +639,7 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 			rv = [ ]
 			for gstr in self.gestures:
 				rv += [ "'%s'" % (gstr,), self.gestures[gstr].to_string(False) ]
-			return self.COMMAND + "(" + ", ".join(rv) + ")"	
-	
-	
-	def encode(self):
-		rv = { self.COMMAND : {
-			gstr : self.gestures[gstr].encode()
-			for gstr in self.gestures
-		}}
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv	
+			return self.COMMAND + "(" + ", ".join(rv) + ")"
 	
 	
 	def compress(self):
@@ -698,21 +650,6 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 				gstr = strip_gesture(gstr)
 			self.gestures[gstr] = a
 		return self
-	
-	
-	@staticmethod
-	def decode(data, a, parser, *b):
-		args = []
-		ga = GesturesAction()
-		ga.gestures = {
-			gstr : parser.from_json_data(data[GesturesAction.PROFILE_KEYS[0]][gstr])
-			for gstr in data[GesturesAction.PROFILE_KEYS[0]]
-		}
-		if "name" in data:
-			ga.name = data["name"]
-		if "osd" in data:
-			ga = OSDAction(ga)
-		return ga
 	
 	
 	def gesture(self, mapper, gesture_string):

@@ -6,13 +6,9 @@ Frontier is my favorite.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, NoAction, ButtonAction, MOUSE_BUTTONS
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
-from scc.constants import LEFT, RIGHT, STICK, SCButtons
+from scc.actions import Action, ButtonAction
 from scc.uinput import Keys
-
-
-import time, logging
+import logging
 log = logging.getLogger("Macros")
 _ = lambda x : x
 
@@ -226,6 +222,7 @@ class Repeat(Macro):
 	This is actually just Macro with 'repeat' set to True
 	"""
 	COMMAND = "repeat"
+	
 	def __new__(cls, action):
 		if not isinstance(action, Macro):
 			action = Macro(action)
@@ -239,6 +236,7 @@ class SleepAction(Action):
 	If used in macro, overrides delay after itself.
 	"""
 	COMMAND = "sleep"
+	
 	def __init__(self, delay):
 		Action.__init__(self, delay)
 		self.delay = float(delay)
@@ -247,7 +245,7 @@ class SleepAction(Action):
 	def describe(self, context):
 		if self.name: return self.name
 		if self.delay < 1.0:
-			return _("Wait %sms") % (int(self.delay*1000),)
+			return _("Wait %sms") % (int(self.delay * 1000),)
 		else:
 			s = ("%0.2f" % (self.delay,)).strip(".0")
 			return _("Wait %ss") % (s,)

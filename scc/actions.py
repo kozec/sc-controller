@@ -38,8 +38,7 @@ class Action(object):
 	"""
 	
 	# Static dict of all available actions, filled later
-	ALL = {}	# used by action parser
-	PKEYS = {}	# used by profile parser
+	ALL = {}  # used by action parser
 	
 	# Used everywhere, but mainly in parser, to convert strings
 	# to Action classes and back
@@ -48,21 +47,6 @@ class Action(object):
 	# Additionaly, action can have aliases that are recognized by parser
 	# ALIASES = ("x", "y", "z")
 	
-	# If action class has static 'decode' method defined, profile parser 
-	# will look for matching key in profile nodes and call this method to
-	# decode action stored in profile.
-	# Normaly, key to look for is same as COMMAND, but this can be overriden
-	# by setting PROFILE_KEYS to tuple. Additionaly, PROFILE_KEY_PRIORITY can
-	# be used to set which modifier should be parsed first.
-	# This is used mainly by modifiers
-	#
-	PROFILE_KEY_PRIORITY = 0	# default one. Loewer is parsed first
-	# PROFILE_KEYS = ("foo", "bar")
-	#
-	# @staticmethod
-	# def decode(jsondatta, action, parser, profile_version):
-	# 	...
-	# 	return action
 	
 	# "Action Context" constants
 	AC_BUTTON	= 1 << 0
@@ -108,7 +92,7 @@ class Action(object):
 		"""
 		dct = Action.ALL
 		if prefix:
-			if not prefix in Action.ALL:
+			if prefix not in Action.ALL:
 				Action.ALL[prefix] = {}
 			dct = Action.ALL[prefix]
 		if action_cls.COMMAND is not None:
@@ -116,13 +100,6 @@ class Action(object):
 			if hasattr(action_cls, "ALIASES"):
 				for a in action_cls.ALIASES:
 					dct[a] = action_cls
-		
-		if hasattr(action_cls, "decode"):
-			keys = (action_cls.COMMAND,)
-			if hasattr(action_cls, "PROFILE_KEYS"):
-				keys = action_cls.PROFILE_KEYS
-			for k in keys:
-				Action.PKEYS[k] = action_cls
 	
 	
 	@staticmethod
@@ -1269,15 +1246,8 @@ class TiltAction(MultichildAction):
 					self.states[i + 1] = False
 	
 	
-	@staticmethod
-	def decode(data, a, parser, *b):
-		""" Called when decoding profile from json """
-		args = [ parser.from_json_data(x) for x in data[TiltAction.COMMAND] ]
-		return TiltAction(*args)
-	
-	
 	def describe(self, context):
-		if self.name : return self.name
+		if self.name: return self.name
 		return _("Tilt")
 
 
@@ -1542,21 +1512,11 @@ class MultiAction(MultichildAction):
 	Generated when parsing 'and'
 	"""
 	COMMAND = None
-	PROFILE_KEYS = "actions",
-	PROFILE_KEY_PRIORITY = -20	# First possible
 	
 	def __init__(self, *actions):
 		self.actions = []
 		self.name = None
 		self._add_all(actions)
-	
-	
-	@staticmethod
-	def decode(data, a, parser, *b):
-		""" Called when decoding profile from json """
-		return MultiAction.make(*[
-			parser.from_json_data(a) for a in data['actions']
-		])
 	
 	
 	@staticmethod
@@ -1568,7 +1528,7 @@ class MultiAction(MultichildAction):
 		Returns NoAction() if there are no parameters,
 		or every parameter is NoAction.
 		"""
-		a = [ a for a in a if a.strip() ]	# 8-)
+		a = [ a for a in a if a.strip() ]  # 8-)
 		# (^^ NoAction is eveluated as False)
 		if len(a) == 0:
 			return NoAction()
@@ -1723,7 +1683,6 @@ class MultiAction(MultichildAction):
 
 class DPadAction(MultichildAction, HapticEnabledAction):
 	COMMAND = "dpad"
-	PROFILE_KEY_PRIORITY = -10	# First possible
 	
 	DEFAULT_DIAGONAL_RANGE = 45
 	MIN_DISTANCE_P2 = 2000000	# Power of 2 from minimal distance that finger
@@ -1767,17 +1726,6 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	
 	def _ensure_size(self, actions):
 		return ensure_size(4, actions, NoAction())
-	
-	
-	@staticmethod
-	def decode(data, a, parser, *b):
-		""" Called when decoding profile from json """
-		args = [ parser.from_json_data(x) for x in data[DPadAction.COMMAND] ]
-		if len(args) > 4:
-			a = DPad8Action(*args)
-		else:
-			a = DPadAction(*args)
-		return a
 	
 	
 	def to_string(self, multiline=False, pad=0, prefixparams=""):
@@ -1898,7 +1846,6 @@ class RingAction(MultichildAction):
 	up to 16 different bindings to one pad.
 	"""
 	COMMAND = "ring"
-	PROFILE_KEY_PRIORITY = -10	# First possible
 	DEFAULT_RADIUS = 0.5
 	
 	
@@ -1920,16 +1867,6 @@ class RingAction(MultichildAction):
 		self.inner = self.inner.compress()
 		self.outer = self.outer.compress()
 		return self
-	
-	
-	@staticmethod
-	def decode(data, a, parser, *b):
-		""" Called when decoding profile from json """
-		args, data = [], data[RingAction.COMMAND]
-		if 'radius' in data: args.append(float(data['radius']))
-		args.append(parser.from_json_data(data['inner']) if 'inner' in data else NoAction())
-		args.append(parser.from_json_data(data['outer']) if 'outer' in data else NoAction())
-		return RingAction(*args)
 	
 	
 	def get_compatible_modifiers(self):
@@ -2002,8 +1939,6 @@ class XYAction(WholeHapticAction, Action):
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "XY"
-	PROFILE_KEYS = ("X", "Y")
-	PROFILE_KEY_PRIORITY = -10	# First possible, but not before MultiAction
 	
 	def __init__(self, x=None, y=None):
 		Action.__init__(self, *strip_none(x, y))
@@ -2027,14 +1962,6 @@ class XYAction(WholeHapticAction, Action):
 	
 	def get_child_actions(self):
 		return self.x, self.y
-	
-	
-	@staticmethod
-	def decode(data, action, parser, *a):
-		""" Called when decoding profile from json """
-		x = parser.from_json_data(data["X"]) if "X" in data else NoAction()
-		y = parser.from_json_data(data["Y"]) if "Y" in data else NoAction()
-		return XYAction(x, y)
 	
 	
 	def compress(self):
@@ -2165,8 +2092,6 @@ class TriggerAction(Action, HapticEnabledAction):
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "trigger"
-	PROFILE_KEYS = "levels",
-	PROFILE_KEY_PRIORITY = -5
 	
 	def __init__(self, press_level, *params):
 		Action.__init__(self, press_level, *params)
@@ -2185,13 +2110,6 @@ class TriggerAction(Action, HapticEnabledAction):
 		# child action recieves trigger events instead of button presses
 		# and button_releases.
 		self.child_is_axis = isinstance(self.action.strip(), AxisAction)
-	
-	
-	@staticmethod
-	def decode(data, a, parser, *b):
-		""" Called when decoding profile from json """
-		press_level, release_level = data[TriggerAction.PROFILE_KEYS[0]]
-		return TriggerAction(press_level, release_level, a)
 	
 	
 	def get_compatible_modifiers(self):
@@ -2308,7 +2226,6 @@ class NoAction(Action):
 		return "NoAction"
 
 	__repr__ = __str__
-	
 
 
 def strip_none(*lst):

@@ -10,16 +10,9 @@ from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
 from scc.constants import SCButtons, HapticPos, PARSER_CONSTANTS
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
-from scc.actions import Action, XYAction, DPadAction, DPad8Action
-from scc.actions import NoAction, MultiAction
-from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
-from scc.modifiers import SensitivityModifier, ModeModifier, BallModifier
-from scc.modifiers import HoldModifier, DoubleclickModifier
-from scc.special_actions import OSDAction
+from scc.actions import Action, NoAction, MultiAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
-import scc.aliases
 
 import token as TokenType
 import sys
@@ -76,28 +69,14 @@ class ActionParser(object):
 		
 		May throw ParseError.
 		"""
-		if key is not None:
-			# Don't fail if called for non-existent key, return NoAction instead.
-			# Using this is sorter than
-			# calling 'if button in data["buttons"]: ...' everywhere
-			if key in data:
-				return self.from_json_data(data[key], None)
-			else:
-				return NoAction()
-		
-		if "action" in data:
-			a = self.restart(data["action"]).parse() or NoAction()
+		if data is None:
+			return NoAction()
+		elif key is not None:
+			return self.from_json_data(data.get(key))
+		elif "action" in data:
+			return self.restart(data["action"]).parse() or NoAction()
 		else:
-			a = NoAction()
-		decoders = set()
-		for key in data:
-			if key in Action.PKEYS:
-				decoders.add(Action.PKEYS[key])
-		
-		if decoders:
-			for cls in sorted(decoders, key=lambda a : a.PROFILE_KEY_PRIORITY ):
-				a = cls.decode(data, a, self, 0)	# Profile version is not yet used anywhere
-		return a
+			return NoAction()
 	
 	
 	def restart(self, string):
@@ -108,8 +87,8 @@ class ActionParser(object):
 		
 		try:
 			self.tokens = [
-				ActionParser.Token(type, string)
-				for (type, string, trash, trash, trash)
+				ActionParser.Token(type, s)
+				for (type, s, trash, trash, trash)
 				in generate_tokens( iter([string]).next )
 				if type != TokenType.ENDMARKER
 			]
@@ -330,7 +309,7 @@ class ActionParser(object):
 		Returns parsed action.
 		Throws ParseError if action cannot be parsed.
 		"""
-		if self.tokens == None:
+		if self.tokens is None:
 			raise ParseError("Syntax error")
 		a = self._parse_action()
 		if self._tokens_left():

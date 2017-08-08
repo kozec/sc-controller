@@ -98,6 +98,14 @@ class Profile(object):
 		except:
 			version = 0
 		
+		if version < Profile.VERSION:
+			# After bigger profile format change around SCC v0.4,
+			# profile files older than 1.3 are imported with
+			# help of separate module
+			from scc.foreign.oldscc import OldSCCParser
+			if not isinstance(self.parser, OldSCCParser):
+				self.parser = OldSCCParser(self.parser)
+		
 		# Settings - Description
 		# (stored in key "_", so it's serialized on top of JSON file)
 		if "_" not in data:
@@ -108,6 +116,7 @@ class Profile(object):
 			self.description = data["_"]
 		# Settings - Template
 		self.is_template = bool(data["is_template"]) if "is_template" in data else False
+		
 		
 		# Buttons
 		self.buttons = {}
@@ -127,7 +136,7 @@ class Profile(object):
 			# Old format
 			# Triggers
 			self.triggers = ({
-				x : self.parser.from_json_data(data["triggers"], x) for x in Profile.TRIGGERS
+				x: self.parser.from_json_data(data["triggers"], x) for x in Profile.TRIGGERS
 			})
 			
 			# Pads
@@ -167,7 +176,7 @@ class Profile(object):
 	
 	def clear(self):
 		""" Clears all actions and adds default menu action on center button """
-		self.buttons = { x : NoAction() for x in SCButtons }
+		self.buttons = { x: NoAction() for x in SCButtons }
 		self.buttons[SCButtons.C] = HoldModifier(
 			MenuAction("Default.menu"),
 			normalaction = MenuAction("Default.menu")
@@ -175,8 +184,8 @@ class Profile(object):
 		self.menus = {}
 		self.stick = NoAction()
 		self.is_template = False
-		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
-		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
+		self.triggers = { Profile.LEFT: NoAction(), Profile.RIGHT: NoAction() }
+		self.pads = { Profile.LEFT: NoAction(), Profile.RIGHT: NoAction() }
 		self.gyro = NoAction()
 	
 	
@@ -308,8 +317,6 @@ class Profile(object):
 
 class Encoder(JSONEncoder):
 	def default(self, obj):
-		#if type(obj) in (list, tuple):
-		#	return basestring("[" + ", ".join(self.encode(x) for x in obj) + " ]")
 		if hasattr(obj, "encode"):
 			return obj.encode()
 		return JSONEncoder.default(self, obj)
