@@ -13,110 +13,106 @@ CASES = {
 	# test_sensitivity and test_feedback
 	# This should contain key for every Action that supports setting feedback
 	# or sensitivity. test_tests method tests whether it realy does.
-	'axis'  : {
-		'action' : 'axis(ABS_RX)',
-		'sensitivity' : (2.0,)
+	'axis': {
+		'action': 'sens(2.0, axis(ABS_RX))',
+		'sensitivity': (2.0,),
 	},
-	'raxis'  : {
-		'action' : 'axis(ABS_RX)',
-		'sensitivity' : (2.0,)
+	'raxis': {
+		'action': 'sens(2.0, axis(ABS_RX))',
+		'sensitivity': (2.0,),
 	},
-	'mouse' : {
-		'action' : 'mouse',
-		'sensitivity' : (2.0, 3.0,),
-		'feedback' : ('BOTH',)
+	'mouse': {
+		'action': 'feedback(BOTH, sens(2.0, 3.0, mouse()))',
+		'feedback': (HapticPos.BOTH, ),
+		'sensitivity': (2.0, 3.0),
 	},
-	'mouseabs' : {
-		'action' : 'mouseabs(REL_X)',
-		'sensitivity' : (2.0, 3.0,)
+	'mouseabs': {
+		'action': 'sens(2.0, 3.0, mouseabs(REL_X))',
+		'sensitivity': (2.0, 3.0),
 	},
-	'gyro' : {
-		'action' : 'gyro(ABS_X, ABS_Y, ABS_Z)',
-		'sensitivity' : (2.0, 3.0, 4.0,)
+	'gyro': {
+		'action': 'sens(2.0, 3.0, 4.0, gyro(ABS_X, ABS_Y, ABS_Z))',
+		'sensitivity': (2.0, 3.0, 4.0),
 	},
-	'tilt' : {
-		'action' : 'tilt( button(KEY_D), button(KEY_U), button(KEY_L), button(KEY_R) )',
-		'sensitivity' : (2.0, 3.0, 4.0,)
+	'tilt': {
+		'action': """sens(2.0, 3.0, 4.0, tilt(
+			button(KEY_D), button(KEY_U), button(KEY_L), button(KEY_R) ))""",
+		'sensitivity': (2.0, 3.0, 4.0),
 	},
-	'gyroabs' : {
-		'action' : 'gyroabs(ABS_X, ABS_Y, ABS_Z)',
-		'sensitivity' : (2.0, 3.0, 4.0),
-		'feedback' : ('BOTH',)
+	'gyroabs': {
+		'action': 'feedback(BOTH, sens(2.0, 3.0, 4.0, gyroabs(ABS_X, ABS_Y, ABS_Z)))',
+		'feedback': (HapticPos.BOTH, ),
+		'sensitivity': (2.0, 3.0, 4.0),
 	},
-	'hatup' :    { 'action' : 'hatup(ABS_X)',    'sensitivity' : (2.0,) },
-	'hatdown' :  { 'action' : 'hatdown(ABS_X)',  'sensitivity' : (2.0,) },
-	'hatleft' :  { 'action' : 'hatleft(ABS_X)',  'sensitivity' : (2.0,) },
-	'hatright' : { 'action' : 'hatright(ABS_X)', 'sensitivity' : (2.0,) },
-	'button' : {
-		'action' : 'button(KEY_X)',
-		'feedback' : ('BOTH',)
+	'hatup':    { 'action': 'sens(2.0, hatup(ABS_X))', 'sensitivity': (2.0,) },
+	'hatdown':  { 'action': 'sens(2.0, hatdown(ABS_X))', 'sensitivity': (2.0,) },
+	'hatleft':  { 'action': 'sens(2.0, hatleft(ABS_X))', 'sensitivity': (2.0,) },
+	'hatright': { 'action': 'sens(2.0, hatright(ABS_X))', 'sensitivity': (2.0,) },
+	'button': {
+		'action': 'feedback(BOTH, button(KEY_X))',
+		'feedback': (HapticPos.BOTH, ),
 	},
-	'circular' : {
-		'action' : 'mouse(REL_HWHEEL)',
-		'circular' : True,
-		'sensitivity' : (2.0,),
-		'feedback' : ('BOTH',)
+	'circular': {
+		'action': 'feedback(BOTH, sens(2.0, circular(mouse(REL_HWHEEL))))',
+		'feedback': (HapticPos.BOTH, ),
+		'sensitivity': (2.0, ),
 	},
-	'circularabs' : {
-		'action' : 'mouse(REL_HWHEEL)',
-		'circularabs' : True,
-		'sensitivity' : (2.0,),
-		'feedback' : ('BOTH',)
+	'circularabs': {
+		'action': 'feedback(BOTH, sens(2.0, circularabs(mouse(REL_HWHEEL))))',
+		'feedback': (HapticPos.BOTH, ),
+		'sensitivity': (2.0, ),
 	},
-	'XY' : {
-		'X' : { 'action' : 'axis(ABS_X)' },
-		'Y' : { 'action' : 'axis(ABS_Y)' },
-		'sensitivity' : (2.0, 3.0,),
-		'feedback' : ('BOTH',)
+	'XY': {
+		'action': """feedback(BOTH, sens(2.0, 3.0, XY(
+			axis(ABS_X),
+			axis(ABS_Y))))""",
+		'feedback': (HapticPos.BOTH, ),
+		'sensitivity': (2.0, 3.0),
 	},
-	'trigger' : {
-		'action' : 'button(KEY_X)',
-		'levels' : [ 10, 80 ],
-		'feedback' : ('BOTH',)
+	'trigger': {
+		'action': 'feedback(BOTH, trigger(10, 80, button(KEY_X)))',
+		'feedback': (HapticPos.BOTH, ),
 	},
-	'tilt' : {
-		'action' : 'tilt( button(KEY_D), button(KEY_U), button(KEY_L), button(KEY_R) )',
-		'sensitivity' : (2.0, 3.0, 4.0,)
+	'ball': {
+		'action': """feedback(BOTH, sens(2.0, 3.0,
+			ball(XY(axis(Axes.ABS_RX), axis(Axes.ABS_RY)))))""",
+		'feedback': (HapticPos.BOTH, ),
+		'sensitivity': (2.0, 3.0),
 	},
-	'ball' : {
-		'action' : 'ball(XY(axis(Axes.ABS_RX), axis(Axes.ABS_RY)))',
-		'sensitivity' : (2.0, 3.0),
-		'feedback' : ('BOTH',)
+	"dpad": {
+		'action': """feedback(LEFT, 32640, dpad(
+			button(Keys.KEY_W),
+			button(Keys.KEY_S),
+			button(Keys.KEY_A),
+			button(Keys.KEY_D)
+		))""",
+		'feedback': (HapticPos.LEFT, 32640, ),
 	},
-	"dpad" : {
-		"dpad": [
-			{ "action": "button(Keys.KEY_W)" },
-			{ "action": "button(Keys.KEY_S)" },
-			{ "action": "button(Keys.KEY_A)" },
-			{ "action": "button(Keys.KEY_D)" }
-		],
-		"feedback": ["LEFT", 32640]
+	"dpad8": {
+		'action': """feedback(LEFT, 32640, dpad(
+			button(Keys.KEY_1),
+			button(Keys.KEY_2),
+			button(Keys.KEY_3),
+			button(Keys.KEY_4),
+			button(Keys.KEY_5),
+			button(Keys.KEY_6),
+			button(Keys.KEY_7),
+			button(Keys.KEY_8)
+		))""",
+		'feedback': (HapticPos.LEFT, 32640, ),
 	},
-	"dpad8" : {
-		"dpad": [
-			{ "action": "button(Keys.KEY_1)" },
-			{ "action": "button(Keys.KEY_2)" },
-			{ "action": "button(Keys.KEY_3)" },
-			{ "action": "button(Keys.KEY_4)" },
-			{ "action": "button(Keys.KEY_5)" },
-			{ "action": "button(Keys.KEY_6)" },
-			{ "action": "button(Keys.KEY_7)" },
-			{ "action": "button(Keys.KEY_8)" }
-		],
-		"feedback": ["LEFT", 32640]
-	},
-	"menu" : {
-		"action": "menu('Default.menu')", 
-		"feedback": ["LEFT", 32640]
+	"menu": {
+		"action": "feedback(LEFT, 32640, menu('Default.menu'))",
+		'feedback': (HapticPos.LEFT, 32640, ),
 	},
 	"hold": {
-		"action": "button(Keys.KEY_W)",
-		"hold": {
-			"action": "menu('Default.menu')"
-		},
-		"feedback": ["LEFT", 32640]
+		"action": """feedback(LEFT, 32640,
+				hold( menu('Default.menu'), button(Keys.KEY_W) )
+			)""",
+		'feedback': (HapticPos.LEFT, 32640, ),
 	}
 }
+
 
 class TestCompress(object):
 	"""
@@ -141,18 +137,10 @@ class TestCompress(object):
 				assert cls.COMMAND in CASES, (
 					"%s supports setting sensitivity, but "
 					"there is no test case it" % (cls.COMMAND,))
-				assert 'sensitivity' in CASES[cls.COMMAND], (
-					"%s supports setting sensitivity, but "
-					"case for it has no 'sensitivity' key it" % (
-					cls.COMMAND,))
 			if hasattr(cls, "set_haptic"):
 				assert cls.COMMAND in CASES, (
 					"%s supports feedback, but there is "
 					"no test case it" % (cls.COMMAND,))
-				assert 'feedback' in CASES[cls.COMMAND], (
-					"%s supports feedback, but case for it has "
-					"no 'feedback' key it" % (
-					cls.COMMAND,))			
 	
 	
 	def test_hold_doubleclick(self):
@@ -160,9 +148,8 @@ class TestCompress(object):
 		Tests parsing of hold & doubleclick combination.
 		"""
 		a = parser.from_json_data({
-			'action' : 'axis(ABS_RX)',
-			'hold' : { 'action' : "axis(ABS_X)" },
-			'doubleclick' : { 'action' : "axis(ABS_Z)" }
+			'action': """doubleclick(
+				axis(ABS_Z), hold(axis(ABS_X), axis(ABS_RX)))"""
 		}).compress()
 		
 		assert isinstance(a, DoubleclickModifier)
@@ -180,9 +167,13 @@ class TestCompress(object):
 		after .compress() is called.
 		"""
 		for case in CASES:
-			if 'sensitivity' in CASES[case]:
+			if hasattr(Action.ALL[case], 'set_speed'):
 				print "Testing 'sensitivity' on %s" % (case,)
-				a = parser.from_json_data(CASES[case]).compress()
+				try:
+					a = parser.from_json_data(CASES[case]).compress()
+				except Exception:
+					print "Failed to parse", CASES[case]['action']
+					raise
 				assert (
 					a.get_speed() == CASES[case]['sensitivity']
 					or
@@ -196,10 +187,15 @@ class TestCompress(object):
 		after .compress() is called.
 		"""
 		for case in CASES:
-			if 'feedback' in CASES[case]:
+			if hasattr(Action.ALL[case], 'set_haptic'):
 				print "Testing 'feedback' on %s" % (case,)
-				a = parser.from_json_data(CASES[case]).compress()
-				assert a.get_haptic().get_position().name == CASES[case]['feedback'][0]
+				try:
+					a = parser.from_json_data(CASES[case]).compress()
+					print case, a
+				except Exception:
+					print "Failed to parse", CASES[case]['action']
+					raise
+				assert a.get_haptic().get_position() == CASES[case]['feedback'][0]
 	
 	
 	def test_multi(self):
@@ -208,9 +204,10 @@ class TestCompress(object):
 		to actions in multiaciton.
 		"""
 		a = parser.from_json_data({
-			'action' : 'circular(REL_HWHEEL) and gyroabs(None, ABS_Y, ABS_Z)',
-			'sensitivity' : (2.0, 3.0, 4.0),
-			'feedback' : ('BOTH',)
+			'action': """feedback(BOTH,
+				sens(2.0, 3.0, 4.0,
+					circular(REL_HWHEEL) and gyroabs(None, ABS_Y, ABS_Z)
+				))"""
 		}).compress()
 		assert a.actions[0].get_haptic().get_position().name == "BOTH"
 		for action in a.actions:
@@ -223,9 +220,10 @@ class TestCompress(object):
 		to actions in basic macro.
 		"""
 		a = parser.from_json_data({
-			'action' : 'circular(REL_HWHEEL) ; gyroabs(None, ABS_Y, ABS_Z)',
-			'sensitivity' : (2.0, 3.0, 4.0),
-			'feedback' : ('BOTH',)
+			'action': """feedback(BOTH,
+				sens(2.0, 3.0, 4.0,
+					circular(REL_HWHEEL) ; gyroabs(None, ABS_Y, ABS_Z)
+				))"""
 		}).compress()
 		for action in a.actions:
 			assert action.get_haptic().get_position().name == "BOTH"

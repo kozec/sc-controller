@@ -1,6 +1,5 @@
 from scc.actions import Action
 
-import os
 
 class TestDocs(object):
 	"""
@@ -16,7 +15,6 @@ class TestDocs(object):
 		"""
 		# Read docs first
 		actions_md = file("docs/actions.md", "r").read()
-		profile_md = file("docs/profile-file.md", "r").read()
 		
 		# Do stupid fulltext search, because currently it's simply fast enough
 		for command in Action.ALL:
@@ -25,7 +23,3 @@ class TestDocs(object):
 				continue
 			anchor = '<a name="%s">' % (command,)
 			assert anchor in actions_md, "Action '%s' is not documented in actions.md" % (command,)
-		
-		for key in Action.PKEYS:
-			anchor = '#### `%s`' % (key,)
-			assert key in profile_md, "Key '%s' is not documented in profile-file.md" % (key,)

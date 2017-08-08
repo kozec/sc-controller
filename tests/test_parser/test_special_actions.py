@@ -1,6 +1,7 @@
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import SCButtons, STICK
 from scc.special_actions import *
+from scc.modifiers import NameModifier
 from . import _parses_as_itself, parser
 import inspect
 

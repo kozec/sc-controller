@@ -1,8 +1,10 @@
+from scc.modifiers import BallModifier, FeedbackModifier
 from scc.uinput import Keys, Axes, Rels
-from scc.actions import *
-from scc.modifiers import BallModifier
 from . import parser
+from scc.actions import *
 import inspect
+
+
 
 class TestActions(object):
 	
@@ -18,7 +20,7 @@ class TestActions(object):
 					continue
 				method_name = "test_%s" % (cls.COMMAND,)
 				assert hasattr(self, method_name), \
-					"There is no test for %s" % (cls.COMMAND)	
+					"There is no test for %s" % (cls.COMMAND)
 	
 	
 	def test_none(self):
@@ -219,6 +221,7 @@ class TestActions(object):
 			}]
 		})
 		
+		print a
 		assert isinstance(a, DPadAction)
 		for sub in a.actions:
 			assert isinstance(sub, ButtonAction)
@@ -315,3 +318,16 @@ class TestActions(object):
 		assert isinstance(a.action, ButtonAction)
 		assert a.press_level == 10
 		assert a.release_level == 80
+	
+	
+	def test_default_scrollwhell(self):
+		a = parser.from_json_data({
+			"X": { "action": "mouse(Rels.REL_HWHEEL, 1.0)" }, 
+			"Y": { "action": "mouse(Rels.REL_WHEEL, 1.0)" },
+			"feedback": ["LEFT", 1052.0]
+		})
+		
+		assert isinstance(a, FeedbackModifier)
+		assert isinstance(a.action, XYAction)
+		assert isinstance(a.action.x, MouseAction)
+		assert isinstance(a.action.y, MouseAction)
