@@ -77,10 +77,10 @@ class ControllerWidget:
 
 class ControllerButton(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_BUTTON
-
+	
 	def __init__(self, app, name, use_icon, widget):
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
-
+		
 		if use_icon:
 			vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
 			separator = Gtk.Separator(orientation = Gtk.Orientation.VERTICAL)
@@ -112,8 +112,10 @@ class ControllerButton(ControllerWidget):
 
 class ControllerStick(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_STICK
+	
 	def __init__(self, app, name, use_icon, enable_press, widget):
 		self.pressed = Gtk.Label() if enable_press else None
+		self.click_button = SCButtons.STICKPRESS
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
 		
 		grid = Gtk.Grid()
@@ -145,7 +147,7 @@ class ControllerStick(ControllerWidget):
 	
 	def on_click(self, *a):
 		if self.over_icon and self.enable_press:
-			self.app.show_editor(SCButtons.STICKPRESS)
+			self.app.show_editor(self.click_button)
 		else:
 			self.app.show_editor(self.id)
 	
@@ -167,7 +169,7 @@ class ControllerStick(ControllerWidget):
 	
 	
 	def update(self):
-		action = self.app.current.buttons[SCButtons.STICKPRESS]
+		action = self.app.current.buttons[self.click_button]
 		self._set_label(self.app.current.stick)
 		if self.pressed:
 			self._update_pressed(action)
@@ -191,6 +193,7 @@ class ControllerStick(ControllerWidget):
 
 class ControllerTrigger(ControllerButton):
 	ACTION_CONTEXT = Action.AC_TRIGGER
+	
 	def update(self):
 		if self.id in TRIGGERS and self.id in self.app.current.triggers:
 			self.label.set_label(self.app.current.triggers[self.id].describe(self.ACTION_CONTEXT))
@@ -200,6 +203,13 @@ class ControllerTrigger(ControllerButton):
 
 class ControllerPad(ControllerStick):
 	ACTION_CONTEXT = Action.AC_PAD
+	
+	
+	def __init__(self, app, name, use_icon, enable_press, widget):
+		ControllerStick.__init__(self, app, name, use_icon, enable_press, widget)
+		self.click_button = getattr(SCButtons, self.id)
+	
+	
 	def update(self):
 		if self.id == "LPAD":
 			action = self.app.current.pads[Profile.LEFT]
@@ -215,6 +225,7 @@ class ControllerPad(ControllerStick):
 
 class ControllerGyro(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_GYRO
+	
 	def __init__(self, app, name, use_icon, widget):
 		self.pressed = Gtk.Label()
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
