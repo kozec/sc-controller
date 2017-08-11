@@ -1428,7 +1428,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                   <object class="GtkLabel" id="label32">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Use Serial Numbers to Identify Controllers</property>
+                    <property name="label" translatable="yes">Use serial numbers to identify controllers</property>
                     <property name="use_underline">True</property>
                     <property name="mnemonic_widget">cbShowOSD</property>
                     <attributes>
@@ -1454,7 +1454,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                   <object class="GtkLabel" id="label30">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Automatically Disable Emulation When Closing GUI</property>
+                    <property name="label" translatable="yes">Automatically disable emulation when closing GUI</property>
                     <property name="use_underline">True</property>
                     <property name="mnemonic_widget">cbShowOSD</property>
                     <attributes>
@@ -1655,6 +1655,32 @@ or even crash.</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbNewRelease">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_top">15</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label40">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Display message about new version after SC-Controller upgrade</property>
+                    <property name="use_underline">True</property>
+                    <property name="mnemonic_widget">cbShowOSD</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">9</property>
               </packing>
             </child>
           </object>
