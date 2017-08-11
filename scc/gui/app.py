@@ -1010,10 +1010,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			content = self.builder.get_object("content")
 			content.pack_start(self.ribar, False, False, 1)
 			content.reorder_child(self.ribar, 0)
-			self.ribar.connect("close", self.hide_error)
-			self.ribar.connect("response", self.hide_error)
-		else:
+		elif message:
 			self.ribar.get_label().set_markup(message)
+		self.ribar.connect("close", self.hide_error)
+		self.ribar.connect("response", self.hide_error)
 		self.ribar.show()
 		self.ribar.set_reveal_child(True)
 		return self.ribar
@@ -1272,8 +1272,15 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		lblNewRelease = self.builder.get_object('lblNewRelease')
 		lblNewRelease.set_markup(msg)
 		ribar = RIBar(None, infobar=infobar)
-		self.show_error(None, ribar=ribar)
+		ribar = self.show_error(None, ribar=ribar)
+		ribar.connect("close", self.on_release_notes_dismissed)
 	
+	
+	def on_release_notes_dismissed(self, *a):
+		self.hide_error()
+		log.debug("Release notes dismissed")
+		self.app.config['gui']['news']['last_version'] = DAEMON_VERSION
+		self.config.save()
 	
 	def on_cbNewRelease_toggled(self, cb):
 		self.app.config['gui']['news']['enabled'] = cb.get_active()

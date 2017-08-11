@@ -1160,6 +1160,8 @@
   <object class="GtkInfoBar" id="riNewRelease">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <signal name="close" handler="on_release_notes_dismissed" swapped="no"/>
+    <signal name="response" handler="on_release_notes_dismissed" swapped="no"/>
     <child internal-child="action_area">
       <object class="GtkButtonBox">
         <property name="can_focus">False</property>
