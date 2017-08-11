@@ -1163,7 +1163,7 @@
     <signal name="close" handler="on_release_notes_dismissed" swapped="no"/>
     <signal name="response" handler="on_release_notes_dismissed" swapped="no"/>
     <child internal-child="action_area">
-      <object class="GtkButtonBox">
+      <object class="GtkButtonBox" id="riNewReleaseBB">
         <property name="can_focus">False</property>
         <property name="spacing">6</property>
         <property name="layout_style">end</property>
@@ -1178,7 +1178,7 @@
       </packing>
     </child>
     <child internal-child="content_area">
-      <object class="GtkBox">
+      <object class="GtkBox" id="riNewReleaseVB">
         <property name="can_focus">False</property>
         <property name="hexpand">True</property>
         <property name="vexpand">False</property>
