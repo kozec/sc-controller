@@ -666,7 +666,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def on_daemon_alive(self, *a):
 		self.set_daemon_status("alive", True)
-		self.hide_error()
+		if not self.release_notes_visible():
+			self.hide_error()
 		self.just_started = False
 		if self.profile_switchers[0].get_file() is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
@@ -1010,10 +1011,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			content = self.builder.get_object("content")
 			content.pack_start(self.ribar, False, False, 1)
 			content.reorder_child(self.ribar, 0)
-		elif message:
+			self.ribar.connect("close", self.hide_error)
+			self.ribar.connect("response", self.hide_error)
+		else:
 			self.ribar.get_label().set_markup(message)
-		self.ribar.connect("close", self.hide_error)
-		self.ribar.connect("response", self.hide_error)
 		self.ribar.show()
 		self.ribar.set_reveal_child(True)
 		return self.ribar
@@ -1209,6 +1210,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			return None
 	
 	
+	def release_notes_visible(self):
+		""" Returns True if release notes infobox is visible """
+		if not self.ribar: return False
+		riNewRelease = self.builder.get_object('riNewRelease')
+		return self.ribar._infobar == riNewRelease
+	
+	
 	def check_release_notes(self, version):
 		"""
 		Silently downloads release notes from github and displays infobar
@@ -1255,7 +1263,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		if self.ribar is not None:
 			# There is already some error displayed, don't bother now...
-			pass
+			return
 		
 		msg = ""
 		extended = re.search(RE_EXTENDED, data, re.IGNORECASE)
@@ -1272,15 +1280,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		lblNewRelease = self.builder.get_object('lblNewRelease')
 		lblNewRelease.set_markup(msg)
 		ribar = RIBar(None, infobar=infobar)
-		ribar = self.show_error(None, ribar=ribar)
-		ribar.connect("close", self.on_release_notes_dismissed)
+		self.show_error(None, ribar=ribar)
 	
-	
-	def on_release_notes_dismissed(self, *a):
-		self.hide_error()
-		log.debug("Release notes dismissed")
-		self.app.config['gui']['news']['last_version'] = DAEMON_VERSION
-		self.config.save()
 	
 	def on_cbNewRelease_toggled(self, cb):
 		self.app.config['gui']['news']['enabled'] = cb.get_active()
