@@ -1280,7 +1280,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		lblNewRelease = self.builder.get_object('lblNewRelease')
 		lblNewRelease.set_markup(msg)
 		ribar = RIBar(None, infobar=infobar)
-		self.show_error(None, ribar=ribar)
+		ribar = self.show_error(None, ribar=ribar)
+		self.ribar.connect("close", self.on_new_release_dismissed)
+		self.ribar.connect("response", self.on_new_release_dismissed)
+		
+		
+	def on_new_release_dismissed(self, *a):
+		self.config['gui']['news']['last_version'] = DAEMON_VERSION
+		self.config.save() 
 	
 	
 	def on_cbNewRelease_toggled(self, cb):
