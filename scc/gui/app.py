@@ -789,8 +789,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# At this point, correct daemon version of daemon is running
 			# and we can check if there is anything new to inform user about
 			if self.app.config['gui']['news']['enabled']:
-				if self.app.config['gui']['news']['last_version'] != DAEMON_VERSION:
-					self.check_release_notes(DAEMON_VERSION)
+				if self.app.config['gui']['news']['last_version'] != App.get_release():
+					self.check_release_notes()
 	
 	
 	def on_daemon_error(self, daemon, error):
@@ -1210,6 +1210,15 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			return None
 	
 	
+	@staticmethod
+	def get_release(n=3):
+		"""
+		Returns current version rounded to max. 'n' numbers.
+		( v0.14.1.3 ; n=3 -> v0.14.1 )
+		"""
+		return ".".join(DAEMON_VERSION.split(".")[0:n])
+	
+	
 	def release_notes_visible(self):
 		""" Returns True if release notes infobox is visible """
 		if not self.ribar: return False
@@ -1217,12 +1226,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		return self.ribar._infobar == riNewRelease
 	
 	
-	def check_release_notes(self, version):
+	def check_release_notes(self):
 		"""
 		Silently downloads release notes from github and displays infobar
 		informing user that they are ready to be displayed.
 		"""
-		url = App.RELEASE_URL % (version,)
+		url = App.RELEASE_URL % (App.get_release(),)
 		log.debug("Loading release notes from '%s'", url)
 		f = Gio.File.new_for_uri(url)
 		buffer = b""
@@ -1271,10 +1280,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += _("<a href='%s'>Click here</a> to check what's new!")
 			msg = msg % (extended.group(1), )
 		else:
-			url = App.RELEASE_URL % (DAEMON_VERSION, )
+			url = App.RELEASE_URL % (App.get_release(), )
 			msg += _("Welcome to the version <b>%s</b>.")
 			msg += " " + _("<a href='%s'>Click here</a> to read release notes.")
-			msg = msg % (DAEMON_VERSION, url)
+			msg = msg % (App.get_release(), url)
 		
 		infobar = self.builder.get_object('riNewRelease')
 		lblNewRelease = self.builder.get_object('lblNewRelease')
@@ -1286,7 +1295,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		
 	def on_new_release_dismissed(self, *a):
-		self.config['gui']['news']['last_version'] = DAEMON_VERSION
+		self.config['gui']['news']['last_version'] = App.get_release()
 		self.config.save() 
 	
 	
