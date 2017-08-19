@@ -22,14 +22,14 @@ import evdev
 import sys, os, logging, json, traceback
 log = logging.getLogger("CRegistration")
 
+
+# Warning: Load of constants follows
 X = 0
 Y = 1
 
-# TODO: SCButtons.STICK is missing from BUTTON_ORDER, it conflicts with STICK in
-#       AXIS_ORDER. I really have to rename it...
 BUTTON_ORDER = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.C, SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
-	SCButtons.RPAD, SCButtons.LPAD, SCButtons.RGRIP,
+	SCButtons.STICKPRESS, SCButtons.RPAD, SCButtons.LPAD, SCButtons.RGRIP,
 	SCButtons.LGRIP )
 AXIS_ORDER = (
 	("stick_x", X), ("stick_y", Y),
@@ -40,12 +40,20 @@ AXIS_ORDER = (
 )
 BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.BACK, SCButtons.C, SCButtons.START )
+TRIGGERS = ("LT", "RT")
+STICKS = ("STICKPRESS", "RPAD")
+STICK_PAD_AREAS = {
+	# Numbers here are indexes to AXIS_ORDER tuple
+	"STICKPRESS" : (STICK, (0, 1)),
+	"RPAD" : (RIGHT, (2, 3)),
+	"LPAD" : (LEFT, (4, 5)),
+}
 SDL_TO_SC_NAMES = {
 	'guide' : 'C',
 	'leftstick' : 'STICKPRESS',
 	'rightstick' : 'RPAD',
 	'leftshoulder' : 'LB',
-	'rightshoulder': 'RB',
+	'rightshoulder' : 'RB',
 }
 SDL_AXES = ('leftx', 'lefty', 'rightx', 'righty', # In same order as AXIS_ORDER
 	None, None, 'lefttrigger', 'righttrigger' )
@@ -74,7 +82,8 @@ class ControllerRegistration(Editor):
 		self.setup_widgets()
 		self._controller = None
 		self._evdevice = None
-		self._waits_for_input = None
+		self._grabber = None
+		self._input_axes = {}
 		self._mappings = {}
 		self._hilights = {}
 		self._unassigned = set()
@@ -208,16 +217,25 @@ class ControllerRegistration(Editor):
 	
 	
 	def generate_unassigned(self):
-		self._unassigned.clear()
+		unassigned = set()
+		unassigned.clear()
 		for a in BUTTON_ORDER:
 			if a not in self._mappings.values():
-				self._unassigned.add(nameof(a))
-		for a in self._axis_data:
-			if a not in self._mappings.values():
-				self._unassigned.add(nameof(a))
+				unassigned.add(nameof(a))
+		for a in STICK_PAD_AREAS:
+			area_name, axes = STICK_PAD_AREAS[a]
+			has_mapping = bool(sum([
+				self._axis_data[index] in self._mappings.values()
+				for index in axes
+			]))
+			if not has_mapping:
+				unassigned.add(area_name)
 		
-		for a in self._unassigned:
-			self.hilight(a, self.UNASSIGNED_COLOR)
+		hilight = unassigned - self._unassigned
+		unhilight = self._unassigned - unassigned
+		self._unassigned = unassigned
+		for a in hilight:   self.hilight(a, self.UNASSIGNED_COLOR)
+		for a in unhilight: self.unhilight(a)
 	
 	
 	def load_buttons(self):
@@ -325,6 +343,7 @@ class ControllerRegistration(Editor):
 			self._mappings = {}
 			if not self.load_mappings(self._evdevice):
 				self.generate_mappings(self._evdevice)
+			self._mappings = {}
 			self.generate_unassigned()
 		GLib.idle_add(self._evdev_read)
 	
@@ -346,10 +365,11 @@ class ControllerRegistration(Editor):
 	
 	
 	def evdev_button(self, event):
+		if self._grabber:
+			return self._grabber.evdev_button(event)
+		
 		what = self._mappings.get(event.code)
-		if self._waits_for_input:
-			self._input(event.code)
-		elif isinstance(what, AxisData):
+		if isinstance(what, AxisData):
 			if event.value:
 				self.hilight_axis(what, STICK_PAD_MAX)
 			else:
@@ -362,6 +382,10 @@ class ControllerRegistration(Editor):
 	
 	
 	def evdev_abs(self, event):
+		self._input_axes[event.code] = event.value
+		if self._grabber:
+			return self._grabber.evdev_abs(event)
+		
 		axis = self._mappings.get(event.code)
 		if axis:
 			self.hilight_axis(axis, event.value)
@@ -420,6 +444,20 @@ class ControllerRegistration(Editor):
 		self._controller.hilight(self._hilights)
 	
 	
+	"""
+	def check_stick_mappings(self):
+		mapped = self._mappings.values()
+		for stick in STICK_PAD_AREAS:
+			has_mapping = bool(sum([
+				self._axis_data[index] in mapped
+				for index in STICK_PAD_AREAS[stick]
+			]))
+			if not has_mapping:
+				print "NO MAPPING", stick
+		pass
+	"""
+	
+	
 	def on_area_hover(self, trash, what):
 		self.on_area_leave()
 		self._hilighted_area = what
@@ -437,36 +475,33 @@ class ControllerRegistration(Editor):
 		pages = stDialog.get_children()
 		index = pages.index(stDialog.get_visible_child())
 		if index == 2:
-			if hasattr(SCButtons, what):
-				self._waits_for_input = getattr(SCButtons, what)
-				dlgPressButton = self.builder.get_object("dlgPressButton")
-				dlgPressButton.show()
+			if what in STICKS:
+				area_name, axes = STICK_PAD_AREAS[what]
+				mnuStick = self.builder.get_object("mnuStick")
+				mnuStick._what = what
+				mnuStick._axes = [ self._axis_data[index] for index in axes ]
+				mnuStick.popup(None, None, None, None, 1, Gtk.get_current_event_time())
+			elif what in TRIGGERS:
+				pass
+				# self.wait_for_input(getattr(SCButtons, what), _("Pull trigger..."))
+			elif hasattr(SCButtons, what):
+				self._grabber = InputGrabber(self, getattr(SCButtons, what))
 	
 	
-	def _input(self, keycode):
-		if self._waits_for_input:
-			what, self._waits_for_input = self._waits_for_input, None
-			old = self._mappings.get(keycode)
-			
-			self._mappings[keycode] = what
-			log.debug("Reassigned %s to %s", keycode, what)
-			
-			if nameof(what) in self._unassigned:
-				self._unassigned.remove(nameof(what))
-				self.unhilight(nameof(what))
-			
-			if old is not None and old not in self._mappings.values():
-				log.debug("Nothing now maps to %s", old)
-				self._unassigned.add(nameof(old))
-				self.unhilight(nameof(old))
-			
-			self.on_btCancelInput_clicked()
+	def on_mnuStickPress_activate(self, *a):
+		mnuStick = self.builder.get_object("mnuStick")
+		self._grabber = InputGrabber(self, getattr(SCButtons, mnuStick._what),
+				text=_("Press stick or button..."))
+	
+	
+	def on_mnuStickmove_activate(self, *a):
+		mnuStick = self.builder.get_object("mnuStick")
+		self._grabber = StickGrabber(self, mnuStick._axes)
 	
 	
 	def on_btCancelInput_clicked(self, *a):
-		self._waits_for_input = None
-		dlgPressButton = self.builder.get_object("dlgPressButton")
-		dlgPressButton.hide()
+		if self._grabber:
+			self._grabber.cancel()
 	
 	
 	def refresh_devices(self, *a):
@@ -553,6 +588,10 @@ class AxisData(object):
 		self.cursor = None
 	
 	
+	def __repr__(self):
+		return "<Axis data '%s'>" % (self.name, )
+	
+	
 	def set_position(self, value):
 		"""
 		Returns current position
@@ -570,3 +609,104 @@ class AxisData(object):
 				return v + STICK_PAD_MIN
 		except ZeroDivisionError:
 			return 0
+
+
+class InputGrabber(object):
+	"""
+	Base class for input grabbing. Waits for physical button being pressed
+	by default.
+	"""
+	
+	def __init__(self, parent, what, text=_("Press button...")):
+		self.parent = parent
+		self.what = what
+		parent.builder.get_object("lblPressButton").set_text(text)
+		self.dlgPressButton = parent.builder.get_object("dlgPressButton")
+		self.dlgPressButton.show()
+	
+	
+	def cancel(self):
+		self.dlgPressButton.hide()
+		self.parent._grabber = None
+
+	
+	def evdev_button(self, event):
+		if event.value != 0:
+			return
+		self.set_mapping(event.code, self.what)
+
+	
+	def set_mapping(self, keycode, what):
+		parent = self.parent
+		old = parent._mappings.get(keycode)
+		
+		parent._mappings[keycode] = what
+		log.debug("Reassigned %s to %s", keycode, what)
+		
+		if nameof(what) in parent._unassigned:
+			parent._unassigned.remove(nameof(what))
+			parent.unhilight(nameof(what))
+		
+		if old is not None and old not in parent._mappings.values():
+			log.debug("Nothing now maps to %s", old)
+			parent._unassigned.add(nameof(old))
+			parent.unhilight(nameof(old))
+		
+		self.cancel()
+	
+	
+	def evdev_abs(self, event):
+		pass
+
+
+class StickGrabber(InputGrabber):
+	"""
+	InputGrabber modified to grab stick or pad bindings, in two phases for
+	both X and Y axis.
+	"""
+	
+	def __init__(self, parent, what):
+		InputGrabber.__init__(self, parent, what,
+				text=_("Move stick left and right..."))
+		self.orig_pos = { k: parent._input_axes[k] for k in parent._input_axes }
+		self.new_pos  = { k: parent._input_axes[k] for k in parent._input_axes }
+		self.xy = X
+		self.grabbed = [ None, None ]
+	
+	
+	def evdev_button(self, event):
+		pass
+	
+	
+	def evdev_abs(self, event):
+		if event.code > 50:
+			# TODO: Remove this condition
+			return
+		self.new_pos[event.code] = event.value
+		if event.code not in self.orig_pos:
+			self.orig_pos[event.code] = 0
+		
+		# Get avgerage absolute change for all axes
+		avg = float(sum([
+				abs( self.orig_pos[k] - self.new_pos[k] )
+				for k in self.new_pos
+			])) / float(len(self.new_pos))
+		
+		# Get absolute change for _this_ axis
+		change = abs( self.orig_pos[event.code] - self.new_pos[event.code] )
+		
+		if change > 2 and change > avg * 0.5:
+			# TODO: change > 2 may be too strict
+			# if there is pad going from -1 to 1 somewhere around
+			if self.xy == X:
+				self.grabbed[X] = event.code
+				self.xy = Y
+				(self.parent.builder.get_object("lblPressButton")
+					.set_text(_("Move stick up and down...")))
+			else:
+				if event.code != self.grabbed[X]:
+					self.grabbed[Y] = event.code
+					for i in xrange(len(self.grabbed)):
+						self.set_mapping(self.grabbed[i], self.what[i])
+					self.parent.generate_unassigned()
+					self.cancel()

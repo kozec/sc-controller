@@ -655,7 +655,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
         <property name="margin_bottom">10</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkLabel" id="lbl42">
+          <object class="GtkLabel" id="lblPressButton">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_top">25</property>
@@ -724,5 +724,27 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
         <col id="1" translatable="yes">L R</col>
       </row>
     </data>
+  </object>
+  <object class="GtkMenu" id="mnuStick">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="mnuStickPress">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Change mapping for _Pressing stick</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuStickPress_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuStickmove">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Change mapping for _Moving stick</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuStickmove_activate" swapped="no"/>
+      </object>
+    </child>
   </object>
 </interface>
