@@ -362,7 +362,7 @@ Please, select options that are best describing controller you are configuring.<
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">&lt;b&gt;Input Mappings&lt;/b&gt;
 
-Please, press every button on the controller, push every trigger and move every stick. Make sure that correct buttons, sticks and triggers on image blinks blue when you do so.
+Please, press every button on the controller, push every trigger at least twice and move every stick. Make sure that correct buttons, sticks and triggers on image blinks blue when you do so.
 
 If anything is assigned incorrectly, click on button on image to (re)assign physical button to it.</property>
                 <property name="use_markup">True</property>

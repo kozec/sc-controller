@@ -166,6 +166,14 @@ class ControllerRegistration(Editor):
 								continue
 							button  = getattr(SCButtons, k.upper())
 							self._mappings[keycode] = button
+						if v.startswith("b") and k in SDL_AXES:
+							try:
+								keycode = buttons[int(v.strip("b"))]
+							except IndexError:
+								log.warning("Skipping unknown gamecontrollerdb button: %s", v)
+								continue
+							log.warning("Adding button -> axis mapping for %s", k)
+							self._mappings[keycode] = self._axis_data[SDL_AXES.index(k)]
 						elif k in SDL_AXES: 
 							try:
 								code = axes[int(v.strip("a"))]
@@ -341,52 +349,62 @@ class ControllerRegistration(Editor):
 		what = self._mappings.get(event.code)
 		if self._waits_for_input:
 			self._input(event.code)
-		elif what is not None and event.value:
-			self.hilight(nameof(what))
+		elif isinstance(what, AxisData):
+			if event.value:
+				self.hilight_axis(what, STICK_PAD_MAX)
+			else:
+				self.hilight_axis(what, STICK_PAD_MIN)
 		elif what is not None:
-			self.unhilight(nameof(what))
+			if event.value:
+				self.hilight(nameof(what))
+			else:
+				self.unhilight(nameof(what))
 	
 	
 	def evdev_abs(self, event):
 		axis = self._mappings.get(event.code)
 		if axis:
-			cursor = axis.cursor
-			if cursor is None:
-				value = clamp(STICK_PAD_MIN,
-						axis.set_position(event.value), STICK_PAD_MAX)
-				# In this very specific case, trigger uses same min/max as stick
-				if value > STICK_PAD_MAX * 2 / 3:
-					self.hilight(axis.area, self.OBSERVE_COLORS[0])
-				elif value > STICK_PAD_MAX * 1 / 3:
-					self.hilight(axis.area, self.OBSERVE_COLORS[1])
-				elif value > 0:
-					self.hilight(axis.area, self.OBSERVE_COLORS[2])
-				elif value > STICK_PAD_MIN * 1 / 3:
-					self.hilight(axis.area, self.OBSERVE_COLORS[3])
-				elif value > STICK_PAD_MIN * 2 / 3:
-					self.hilight(axis.area, self.OBSERVE_COLORS[4])
-				else:
-					self.unhilight(axis.area)
+			self.hilight_axis(axis, event.value)
+	
+	
+	def hilight_axis(self, axis, value):
+		cursor = axis.cursor
+		if cursor is None:
+			value = clamp(STICK_PAD_MIN,
+					axis.set_position(value), STICK_PAD_MAX)
+			# In this very specific case, trigger uses same min/max as stick
+			if value > STICK_PAD_MAX * 2 / 3:
+				self.hilight(axis.area, self.OBSERVE_COLORS[0])
+			elif value > STICK_PAD_MAX * 1 / 3:
+				self.hilight(axis.area, self.OBSERVE_COLORS[1])
+			elif value > 0:
+				self.hilight(axis.area, self.OBSERVE_COLORS[2])
+			elif value > STICK_PAD_MIN * 1 / 3:
+				self.hilight(axis.area, self.OBSERVE_COLORS[3])
+			elif value > STICK_PAD_MIN * 2 / 3:
+				self.hilight(axis.area, self.OBSERVE_COLORS[4])
 			else:
-				parent = cursor.get_parent()
-				if parent is None:
-					parent = self._controller.get_parent()
-					parent.add(cursor)
-					cursor.show()
-				# Make position
-				cursor.position[axis.xy] = clamp(STICK_PAD_MIN,
-						axis.set_position(event.value), STICK_PAD_MAX)
-				px, py = cursor.position
-				# Grab values
-				ax, ay, aw, trash = self._controller.get_area_position(axis.area)
-				cw = cursor.get_allocation().width
-				# Compute center
-				x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
-				# Add pad position
-				x += px * aw / STICK_PAD_MAX * 0.5
-				y -= py * aw / STICK_PAD_MAX * 0.5
-				# Move circle
-				parent.move(cursor, x, y)
+				self.unhilight(axis.area)
+		else:
+			parent = cursor.get_parent()
+			if parent is None:
+				parent = self._controller.get_parent()
+				parent.add(cursor)
+				cursor.show()
+			# Make position
+			cursor.position[axis.xy] = clamp(STICK_PAD_MIN,
+					axis.set_position(value), STICK_PAD_MAX)
+			px, py = cursor.position
+			# Grab values
+			ax, ay, aw, trash = self._controller.get_area_position(axis.area)
+			cw = cursor.get_allocation().width
+			# Compute center
+			x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
+			# Add pad position
+			x += px * aw / STICK_PAD_MAX * 0.5
+			y -= py * aw / STICK_PAD_MAX * 0.5
+			# Move circle
+			parent.move(cursor, x, y)
 	
 	
 	def hilight(self, what, color=None):
@@ -522,7 +540,7 @@ class AxisData(object):
 	Stores position, center and limits for single axis.
 	"""
 	
-	def __init__(self, name, xy, min=STICK_PAD_MAX, max=-STICK_PAD_MAX):
+	def __init__(self, name, xy, min=STICK_PAD_MAX, max=STICK_PAD_MIN):
 		self.name = name
 		self.area = name.split("_")[0].upper()
 		if self.area.endswith("TRIG"): self.area = self.area[0:-3]
@@ -544,11 +562,11 @@ class AxisData(object):
 		self.max = max(self.max, value)
 		self.pos = value
 		try:
+			r = (STICK_PAD_MAX - STICK_PAD_MIN) / (self.max - self.min)
+			v = (self.pos - self.min) * r
 			if self.invert:
-				return ( STICK_PAD_MAX - self.pos
-					* (STICK_PAD_MAX - STICK_PAD_MIN) / (self.max - self.min) )
+				return STICK_PAD_MAX - v
 			else:
-				return ( STICK_PAD_MIN + self.pos
-					* (STICK_PAD_MAX - STICK_PAD_MIN) / (self.max - self.min) )
+				return v + STICK_PAD_MIN
 		except ZeroDivisionError:
 			return 0
