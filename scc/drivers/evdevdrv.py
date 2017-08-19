@@ -35,6 +35,11 @@ class EvdevController(Controller):
 	PADPRESS_EMULATION_TIMEOUT = 0.2
 	
 	def __init__(self, daemon, device, config):
+		try:
+			self._parse_config(config)
+		except Exception, e:
+			log.error("Failed to parse config for evdev device")
+			raise
 		Controller.__init__(self)
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		self.device = device
@@ -45,7 +50,6 @@ class EvdevController(Controller):
 		self._id = self._generate_id()
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
 		self._padpressemu_task = None
-		self._parse_config(config)
 	
 	
 	def _parse_config(self, config):
@@ -70,17 +74,21 @@ class EvdevController(Controller):
 				if axis in ("ltrig", "rtrig"):
 					if max > min:
 						self._calibrations[code]= AxisCalibrationData(
-							-2.0 / (min-max), -3.0, min)
+							(-2.0 / (min-max)) if min != max else 1.0,
+							-3.0, min)
 					else:
 						self._calibrations[code]= AxisCalibrationData(
-							-2.0 / (min-max), 1.0, max)
+							(-2.0 / (min-max)) if min != max else 1.0,
+							1.0, max)
 				else:
 					if max > min:
 						self._calibrations[code]= AxisCalibrationData(
-							-2.0 / (min-max), -1.0, center)
+							(-2.0 / (min-max)) if min != max else 1.0,
+							-1.0, center)
 					else:
 						self._calibrations[code]= AxisCalibrationData(
-							-2.0 / (min-max), 1.0, center)
+							(-2.0 / (min-max)) if min != max else 1.0,
+							1.0, center)
 				self._evdev_to_axis[code] = axis
 	
 	
@@ -273,7 +281,12 @@ class EvdevDriver(object):
 	
 	
 	def handle_new_device(self, dev, config):
-		controller = EvdevController(self._daemon, dev, config)
+		try:
+			controller = EvdevController(self._daemon, dev, config)
+		except Exception, e:
+			log.debug("Failed to add evdev device: %s", e)
+			log.exception(e)
+			return
 		self._devices[dev.fn] = controller
 		self._daemon.add_controller(controller)
 		log.debug("Evdev device added: %s", dev.name)
