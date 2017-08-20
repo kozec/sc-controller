@@ -1,0 +1,80 @@
+#!/usr/bin/env python2
+"""
+SC-Controller - Controller Registration Constants
+
+Just huge chunk of constants put aside to make impotant code more readable
+"""
+from __future__ import unicode_literals
+
+from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
+from scc.constants import STICK, LEFT, RIGHT
+
+X = 0
+Y = 1
+
+BUTTON_ORDER = (
+	SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y, SCButtons.C,
+	SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
+	SCButtons.STICKPRESS, SCButtons.RPAD, SCButtons.LPAD,
+	SCButtons.RGRIP, SCButtons.LGRIP
+)
+
+AXIS_ORDER = (
+	("stick_x", X), ("stick_y", Y),
+	("rpad_x", X),  ("rpad_y", Y),
+	("lpad_x", X),  ("lpad_y", Y),
+	("ltrig", X),	# index 6
+	("rtrig", X),
+)
+
+BUTTONS_WITH_IMAGES = (
+	SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
+	SCButtons.BACK, SCButtons.C, SCButtons.START
+)
+
+STICK_PAD_AREAS = {
+	# Numbers here are indexes to AXIS_ORDER tuple
+	"STICKPRESS":	(STICK, (0, 1)),
+	"RPAD":			(RIGHT, (2, 3)),
+	"LPAD":			(LEFT, (4, 5)),
+}
+
+TRIGGER_AREAS = {
+	# Numbers here are indexes to AXIS_ORDER tuple
+	"LT": 6,
+	"RT": 7
+}
+
+AXIS_TO_BUTTON = {
+	# Maps stick and dpad axes to their respective "pressed" button
+	"stick_x":	SCButtons.STICKPRESS,
+	"stick_y":	SCButtons.STICKPRESS,
+	"rpad_x":	SCButtons.RPAD,
+	"rpad_y":	SCButtons.RPAD,
+	"lpad_x":	SCButtons.LPAD,
+	"lpad_y":	SCButtons.LPAD,
+}
+
+SDL_TO_SCC_NAMES = {
+	'guide':			'C',
+	'leftstick':		'STICKPRESS',
+	'rightstick':		'RPAD',
+	'leftshoulder':		'LB',
+	'rightshoulder':	'RB',
+}
+
+SDL_AXES = (
+	# This tuple has to use same order as AXIS_ORDER
+	'leftx', 'lefty', 'rightx', 'righty',
+	None, None, 'lefttrigger', 'righttrigger'
+)
+
+SDL_DPAD = {
+	# Numbers here are indexes to AXIS_ORDER tuple
+	# Booleans here are True for positive movements (down/right) and
+	# False for negative (up/left)
+	'dpdown':	(5, True),
+	'dpleft':	(4, False),
+	'dpright':	(4, True),
+	'dpup':		(5, False),
+}

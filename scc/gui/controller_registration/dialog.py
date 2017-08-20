@@ -10,6 +10,16 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, GLib, GdkPixbuf
+from scc.gui.controller_registration.constants import X, Y, BUTTONS_WITH_IMAGES
+from scc.gui.controller_registration.constants import BUTTON_ORDER, AXIS_ORDER
+from scc.gui.controller_registration.constants import SDL_AXES, SDL_DPAD
+from scc.gui.controller_registration.constants import SDL_TO_SCC_NAMES
+from scc.gui.controller_registration.constants import STICK_PAD_AREAS
+from scc.gui.controller_registration.constants import TRIGGER_AREAS
+from scc.gui.controller_registration.constants import AXIS_TO_BUTTON
+from scc.gui.controller_registration.grabs import InputGrabber, TriggerGrabber
+from scc.gui.controller_registration.data import AxisData, DPadEmuData
+from scc.gui.controller_registration.grabs import StickGrabber
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
 from scc.gui.app import App
@@ -22,56 +32,6 @@ import evdev
 import sys, os, logging, json, traceback
 log = logging.getLogger("CRegistration")
 
-
-# Warning: Load of constants follows
-X = 0
-Y = 1
-
-BUTTON_ORDER = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
-	SCButtons.C, SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
-	SCButtons.STICKPRESS, SCButtons.RPAD, SCButtons.LPAD, SCButtons.RGRIP,
-	SCButtons.LGRIP )
-AXIS_ORDER = (
-	("stick_x", X), ("stick_y", Y),
-	("rpad_x", X),  ("rpad_y", Y),
-	("lpad_x", X),  ("lpad_y", Y),
-	("ltrig", X),	# index 6
-	("rtrig", X),
-)
-BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
-	SCButtons.BACK, SCButtons.C, SCButtons.START )
-STICK_PAD_AREAS = {
-	# Numbers here are indexes to AXIS_ORDER tuple
-	"STICKPRESS" : (STICK, (0, 1)),
-	"RPAD" : (RIGHT, (2, 3)),
-	"LPAD" : (LEFT, (4, 5)),
-}
-TRIGGER_AREAS = {
-	# Numbers here are indexes to AXIS_ORDER tuple
-	"LT" : 6,
-	"RT" : 7
-}
-SDL_TO_SCC_NAMES = {
-	'guide' : 'C',
-	'leftstick' : 'STICKPRESS',
-	'rightstick' : 'RPAD',
-	'leftshoulder' : 'LB',
-	'rightshoulder' : 'RB',
-}
-SDL_AXES = (
-	# This tuple has to use same order as AXIS_ORDER
-	'leftx', 'lefty', 'rightx', 'righty',
-	None, None, 'lefttrigger', 'righttrigger'
-)
-SDL_DPAD = {
-	# Numbers here are indexes to AXIS_ORDER tuple
-	# Booleans here are True for positive movements (down/right) and
-	# False for negative (up/left)
-	'dpdown' : (5, True),
-	'dpleft' : (4, False),
-	'dpright' : (4, True),
-	'dpup' : (5, False),
-}
 
 class ControllerRegistration(Editor):
 	GLADE = "controller_registration.glade"
