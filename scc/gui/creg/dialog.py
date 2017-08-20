@@ -196,21 +196,25 @@ class ControllerRegistration(Editor):
 	def generate_unassigned(self):
 		unassigned = set()
 		unassigned.clear()
-		for a in BUTTON_ORDER:
-			if a not in self._mappings.values():
-				unassigned.add(nameof(a))
-		assignex_axes = set([ x for x in self._mappings.values()
+		assigned_axes = set([ x for x in self._mappings.values()
 							if isinstance(x, AxisData) ])
-		assignex_axes.update([ x.axis_data for x in self._mappings.values()
+		assigned_axes.update([ x.axis_data for x in self._mappings.values()
 							if isinstance(x, DPadEmuData) ])
+		assigned_buttons = set([ x for x in self._mappings.values()
+							if x in SCButtons.__members__.values() ])
+		assigned_buttons.update([ x.button for x in self._mappings.values()
+							if isinstance(x, DPadEmuData) ])
+		for a in BUTTON_ORDER:
+			if a not in assigned_buttons:
+				unassigned.add(nameof(a))
 		for a in TRIGGER_AREAS:
 			axis = self._axis_data[TRIGGER_AREAS[a]]
-			if not axis in assignex_axes:
+			if not axis in assigned_axes:
 				unassigned.add(a)
 		for a in STICK_PAD_AREAS:
 			area_name, axes = STICK_PAD_AREAS[a]
 			has_mapping = bool(sum([
-				self._axis_data[index] in assignex_axes for index in axes ]))
+				self._axis_data[index] in assigned_axes for index in axes ]))
 			if not has_mapping:
 				unassigned.add(area_name)
 		
@@ -358,11 +362,13 @@ class ControllerRegistration(Editor):
 				self.hilight_axis(what, STICK_PAD_MIN)
 		if isinstance(what, DPadEmuData):
 			if event.value:
+				self.hilight(nameof(what.button))
 				if what.positive:
 					self.hilight_axis(what.axis_data, STICK_PAD_MAX)
 				else:
 					self.hilight_axis(what.axis_data, STICK_PAD_MIN)
 			else:
+				self.unhilight(nameof(what.button))
 				self.hilight_axis(what.axis_data, 0)
 		elif what is not None:
 			if event.value:

@@ -7,6 +7,7 @@ Dummy container classes
 from __future__ import unicode_literals
 
 from scc.constants import STICK_PAD_MAX, STICK_PAD_MIN
+from scc.gui.creg.constants import AXIS_TO_BUTTON
 
 import logging
 log = logging.getLogger("CRegistration.data")
@@ -74,3 +75,4 @@ class DPadEmuData(object):
 	def __init__(self, axis_data, positive):
 		self.axis_data = axis_data
 		self.positive  = positive
+		self.button = AXIS_TO_BUTTON[axis_data.name]
