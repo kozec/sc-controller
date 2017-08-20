@@ -35,18 +35,21 @@ AXIS_ORDER = (
 	("stick_x", X), ("stick_y", Y),
 	("rpad_x", X),  ("rpad_y", Y),
 	("lpad_x", X),  ("lpad_x", Y),
-	("ltrig", X),
+	("ltrig", X),	# index 6
 	("rtrig", X),
 )
 BUTTONS_WITH_IMAGES = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.BACK, SCButtons.C, SCButtons.START )
-TRIGGERS = ("LT", "RT")
-STICKS = ("STICKPRESS", "RPAD")
 STICK_PAD_AREAS = {
 	# Numbers here are indexes to AXIS_ORDER tuple
 	"STICKPRESS" : (STICK, (0, 1)),
 	"RPAD" : (RIGHT, (2, 3)),
 	"LPAD" : (LEFT, (4, 5)),
+}
+TRIGGER_AREAS = {
+	# Numbers here are indexes to AXIS_ORDER tuple
+	"LT" : 6,
+	"RT" : 7
 }
 SDL_TO_SC_NAMES = {
 	'guide' : 'C',
@@ -222,6 +225,10 @@ class ControllerRegistration(Editor):
 		for a in BUTTON_ORDER:
 			if a not in self._mappings.values():
 				unassigned.add(nameof(a))
+		for a in TRIGGER_AREAS:
+			axis = TRIGGER_AREAS[a]
+			if not axis in self._mappings.values():
+				unassigned.add(a)
 		for a in STICK_PAD_AREAS:
 			area_name, axes = STICK_PAD_AREAS[a]
 			has_mapping = bool(sum([
@@ -444,20 +451,6 @@ class ControllerRegistration(Editor):
 		self._controller.hilight(self._hilights)
 	
 	
-	"""
-	def check_stick_mappings(self):
-		mapped = self._mappings.values()
-		for stick in STICK_PAD_AREAS:
-			has_mapping = bool(sum([
-				self._axis_data[index] in mapped
-				for index in STICK_PAD_AREAS[stick]
-			]))
-			if not has_mapping:
-				print "NO MAPPING", stick
-		pass
-	"""
-	
-	
 	def on_area_hover(self, trash, what):
 		self.on_area_leave()
 		self._hilighted_area = what
@@ -475,13 +468,13 @@ class ControllerRegistration(Editor):
 		pages = stDialog.get_children()
 		index = pages.index(stDialog.get_visible_child())
 		if index == 2:
-			if what in STICKS:
+			if what in STICK_PAD_AREAS:
 				area_name, axes = STICK_PAD_AREAS[what]
 				mnuStick = self.builder.get_object("mnuStick")
 				mnuStick._what = what
 				mnuStick._axes = [ self._axis_data[index] for index in axes ]
 				mnuStick.popup(None, None, None, None, 1, Gtk.get_current_event_time())
-			elif what in TRIGGERS:
+			elif what in TRIGGER_AREAS:
 				pass
 				# self.wait_for_input(getattr(SCButtons, what), _("Pull trigger..."))
 			elif hasattr(SCButtons, what):
@@ -647,11 +640,7 @@ class InputGrabber(object):
 			parent._unassigned.remove(nameof(what))
 			parent.unhilight(nameof(what))
 		
-		if old is not None and old not in parent._mappings.values():
-			log.debug("Nothing now maps to %s", old)
-			parent._unassigned.add(nameof(old))
-			parent.unhilight(nameof(old))
-		
+		self.parent.generate_unassigned()
 		self.cancel()
 	
 	
