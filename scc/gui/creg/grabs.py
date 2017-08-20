@@ -55,6 +55,7 @@ class InputGrabber(object):
 			parent.unhilight(nameof(what))
 		
 		self.parent.generate_unassigned()
+		self.parent.generate_raw_data()
 		self.cancel()
 	
 	
@@ -100,6 +101,7 @@ class TriggerGrabber(InputGrabber):
 			self.what.reset()
 			self.set_mapping(event.code, self.what)
 			self.parent.generate_unassigned()
+			self.parent.generate_raw_data()
 			self.cancel()
 
 
@@ -145,6 +147,7 @@ class StickGrabber(TriggerGrabber):
 						w.reset()
 						self.set_mapping(keycode, DPadEmuData(w, negative))
 				self.parent.generate_unassigned()
+				self.parent.generate_raw_data()
 				self.cancel()
 	
 	
@@ -163,4 +166,5 @@ class StickGrabber(TriggerGrabber):
 					self.what[i].reset()
 					self.set_mapping(self.grabbed[i], self.what[i])
 				self.parent.generate_unassigned()
+				self.parent.generate_raw_data()
 				self.cancel()

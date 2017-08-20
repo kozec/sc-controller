@@ -225,22 +225,8 @@ class ControllerRegistration(Editor):
 		for a in unhilight: self.unhilight(a)
 	
 	
-	def load_buttons(self):
-		cbControllerButtons = self.builder.get_object("cbControllerButtons")
-		self._groups = {}
-		model = cbControllerButtons.get_model()
-		groups = json.loads(open(os.path.join(self.app.imagepath,
-			"button-images", "groups.json"), "r").read())
-		for group in groups:
-			images = [ GdkPixbuf.Pixbuf.new_from_file(os.path.join(
-				self.app.imagepath, "button-images", "%s.svg" % (b, )))
-				for b in group['buttons'][0:4] ]
-			model.append( [group['key']] + images )
-			self._groups[group['key']] = group['buttons']
-		cbControllerButtons.set_active(0)
-	
-	
-	def save_registration(self):
+	def generate_raw_data(self):
+		buffRawData = self.builder.get_object("buffRawData")
 		config = dict(
 			buttons = {},
 			axes = {},
@@ -265,14 +251,50 @@ class ControllerRegistration(Editor):
 					max = max,
 					center = center,
 				)
+		buffRawData.set_text(json.dumps(config, sort_keys=True,
+						indent=4, separators=(',', ': ')))
+	
+	
+	def load_buttons(self):
+		cbControllerButtons = self.builder.get_object("cbControllerButtons")
+		self._groups = {}
+		model = cbControllerButtons.get_model()
+		groups = json.loads(open(os.path.join(self.app.imagepath,
+			"button-images", "groups.json"), "r").read())
+		for group in groups:
+			images = [ GdkPixbuf.Pixbuf.new_from_file(os.path.join(
+				self.app.imagepath, "button-images", "%s.svg" % (b, )))
+				for b in group['buttons'][0:4] ]
+			model.append( [group['key']] + images )
+			self._groups[group['key']] = group['buttons']
+		cbControllerButtons.set_active(0)
+	
+	
+	def save_registration(self):
+		buffRawData = self.builder.get_object("buffRawData")
+		jsondata = buffRawData.get_text(buffRawData.get_start_iter(),
+			buffRawData.get_end_iter(), True)
 		try:
 			os.makedirs(os.path.join(get_config_path(), "devices"))
 		except: pass
 		config_file = os.path.join(get_config_path(), "devices",
 			"%s.json" % (self._evdevice.name.strip(),))
 		
-		open(config_file, "w").write(json.dumps(config))
+		open(config_file, "w").write(jsondata)
 		log.debug("Evdev controller configuration '%s' written", config_file)
+	
+	
+	def on_buffRawData_changed(self, buffRawData, *a):
+		btNext = self.builder.get_object("btNext")
+		jsondata = buffRawData.get_text(buffRawData.get_start_iter(),
+			buffRawData.get_end_iter(), True)
+		try:
+			json.loads(jsondata)
+			btNext.set_sensitive(True)
+		except Exception, e:
+			# User can modify generated json code before hitting save,
+			# but if he writes something unparsable, save button is disabled
+			btNext.set_sensitive(False)
 	
 	
 	def on_btNext_clicked(self, *a):
@@ -331,6 +353,7 @@ class ControllerRegistration(Editor):
 			if not self.load_sdl_mappings(self._evdevice):
 				self.generate_mappings(self._evdevice)
 			self.generate_unassigned()
+			self.generate_raw_data()
 		GLib.idle_add(self._evdev_read)
 	
 	
@@ -438,6 +461,19 @@ class ControllerRegistration(Editor):
 		if what in self._unassigned:
 			self._hilights[what] = self.UNASSIGNED_COLOR
 		self._controller.hilight(self._hilights)
+	
+	
+	def on_exAdditionalOptions_activate(self, ex):
+		rv = self.builder.get_object("rvAdditionalOptions")
+		rv.set_reveal_child(not ex.get_expanded())
+	
+	
+	def on_exRawData_activate(self, ex):
+		rv = self.builder.get_object("rvRawData")
+		dialog = self.builder.get_object("Dialog")
+		rv.set_reveal_child(not ex.get_expanded())
+		if not ex.get_expanded():
+			dialog.set_resizable(True)
 	
 	
 	def on_area_hover(self, trash, what):

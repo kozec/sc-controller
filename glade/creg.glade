@@ -2,6 +2,9 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkTextBuffer" id="buffRawData">
+    <signal name="changed" handler="on_buffRawData_changed" swapped="no"/>
+  </object>
   <object class="GtkListStore" id="lstButtons">
     <columns>
       <!-- column-name key -->
@@ -115,8 +118,10 @@ Please, select your controller from list bellow and click Next.</property>
                 <property name="height_request">200</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="margin_bottom">5</property>
                 <property name="hexpand">True</property>
                 <property name="vexpand">True</property>
+                <property name="border_width">1</property>
                 <property name="shadow_type">in</property>
                 <child>
                   <object class="GtkTreeView" id="tvDevices">
@@ -416,30 +421,175 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="lb778">
+              <object class="GtkRevealer" id="rvAdditionalOptions">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_top">20</property>
-                <property name="label" translatable="yes">Additional Options</property>
-                <property name="xalign">0</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbEmulateC">
-                <property name="label" translatable="yes">Emulate center (guide) button by pressing Back + Start at once</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="margin_left">15</property>
-                <property name="draw_indicator">True</property>
+                <child>
+                  <object class="GtkGrid" id="grAdditionalOptions">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">20</property>
+                    <child>
+                      <object class="GtkCheckButton" id="cbEmulateC">
+                        <property name="label" translatable="yes">Emulate center (guide) button by pressing Back + Start at once</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                        <property name="width">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="label" translatable="yes">Invert Axes</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                        <property name="width">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="lblLeftStick">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">40</property>
+                        <property name="label" translatable="yes">Left stick</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="lblRigthStick">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">40</property>
+                        <property name="label" translatable="yes">Right stick (right pad)</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="lblDPAD">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">40</property>
+                        <property name="label" translatable="yes">DPAD (left pad)</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbInvert_0">
+                        <property name="label" translatable="yes">X</property>
+                        <property name="name">cbInvert_0</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbInvert_1">
+                        <property name="label" translatable="yes">Y</property>
+                        <property name="name">cbInvert_1</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbInvert_2">
+                        <property name="label" translatable="yes">X</property>
+                        <property name="name">cbInvert_2</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbInvert_4">
+                        <property name="label" translatable="yes">X</property>
+                        <property name="name">cbInvert_4</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbInvert_3">
+                        <property name="label" translatable="yes">Y</property>
+                        <property name="name">cbInvert_3</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbInvert_5">
+                        <property name="label" translatable="yes">Y</property>
+                        <property name="name">cbInvert_5</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">4</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -448,12 +598,50 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </packing>
             </child>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkExpander" id="exAdditionalOptions">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">20</property>
-                <property name="label" translatable="yes">Invert Axes</property>
-                <property name="xalign">0</property>
+                <property name="can_focus">True</property>
+                <property name="margin_top">20</property>
+                <signal name="activate" handler="on_exAdditionalOptions_activate" swapped="no"/>
+                <child>
+                  <placeholder/>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="lblAdditionalOptions">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Additional Options</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
+                <property name="width">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkExpander" id="exRawData">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_top">5</property>
+                <signal name="activate" handler="on_exRawData_activate" swapped="no"/>
+                <child>
+                  <placeholder/>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="lblRawData">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Display Raw Data</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                </child>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -462,132 +650,32 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="lblLeftStick">
+              <object class="GtkRevealer" id="rvRawData">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_left">40</property>
-                <property name="label" translatable="yes">Left stick</property>
-                <property name="xalign">0</property>
+                <property name="vexpand">True</property>
+                <child>
+                  <object class="GtkScrolledWindow" id="swRawData">
+                    <property name="height_request">100</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="border_width">1</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTextView" id="txtRawData">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="buffer">buffRawData</property>
+                        <property name="monospace">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">6</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="lblRigthStick">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">40</property>
-                <property name="label" translatable="yes">Right stick (right pad)</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">7</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="lblDPAD">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">40</property>
-                <property name="label" translatable="yes">DPAD (left pad)</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">8</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbInvert_0">
-                <property name="label" translatable="yes">X</property>
-                <property name="name">cbInvert_0</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">6</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbInvert_1">
-                <property name="label" translatable="yes">Y</property>
-                <property name="name">cbInvert_1</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">6</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbInvert_2">
-                <property name="label" translatable="yes">X</property>
-                <property name="name">cbInvert_2</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">7</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbInvert_3">
-                <property name="label" translatable="yes">Y</property>
-                <property name="name">cbInvert_3</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">7</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbInvert_4">
-                <property name="label" translatable="yes">X</property>
-                <property name="name">cbInvert_4</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">8</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbInvert_5">
-                <property name="label" translatable="yes">Y</property>
-                <property name="name">cbInvert_5</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">8</property>
+                <property name="width">3</property>
               </packing>
             </child>
           </object>
