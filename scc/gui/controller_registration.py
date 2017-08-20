@@ -350,7 +350,6 @@ class ControllerRegistration(Editor):
 			self._mappings = {}
 			if not self.load_mappings(self._evdevice):
 				self.generate_mappings(self._evdevice)
-			self._mappings = {}
 			self.generate_unassigned()
 		GLib.idle_add(self._evdev_read)
 	
@@ -620,13 +619,13 @@ class InputGrabber(object):
 	def cancel(self):
 		self.dlgPressButton.hide()
 		self.parent._grabber = None
-
+	
 	
 	def evdev_button(self, event):
 		if event.value != 0:
 			return
 		self.set_mapping(event.code, self.what)
-
+	
 	
 	def set_mapping(self, keycode, what):
 		parent = self.parent
@@ -646,23 +645,15 @@ class InputGrabber(object):
 		pass
 
 
-class StickGrabber(InputGrabber):
+class TriggerGrabber(InputGrabber):
 	"""
-	InputGrabber modified to grab stick or pad bindings, in two phases for
-	both X and Y axis.
+	InputGrabber modified to grab trigger bindings.
+	That may be button or axis with at least 0-250 range is accepted.
 	"""
-	
-	def __init__(self, parent, what):
-		InputGrabber.__init__(self, parent, what,
-				text=_("Move stick left and right..."))
+	def __init__(self, parent, what, text=_("Pull a trigger...")):
+		InputGrabber.__init__(self, parent, what, text)
 		self.orig_pos = { k: parent._input_axes[k] for k in parent._input_axes }
 		self.new_pos  = { k: parent._input_axes[k] for k in parent._input_axes }
-		self.xy = X
-		self.grabbed = [ None, None ]
-	
-	
-	def evdev_button(self, event):
-		pass
 	
 	
 	def evdev_abs(self, event):
@@ -681,28 +672,46 @@ class StickGrabber(InputGrabber):
 		
 		# Get absolute change for _this_ axis
 		change = abs( self.orig_pos[event.code] - self.new_pos[event.code] )
-		
 		if change > 2 and change > avg * 0.5:
 			# TODO: change > 2 may be too strict
 			# if there is pad going from -1 to 1 somewhere around
-			if self.xy == X:
-				self.grabbed[X] = event.code
-				self.xy = Y
-				(self.parent.builder.get_object("lblPressButton")
-					.set_text(_("Move stick up and down...")))
-			else:
-				if event.code != self.grabbed[X]:
-					self.grabbed[Y] = event.code
-					for i in xrange(len(self.grabbed)):
-						self.set_mapping(self.grabbed[i], self.what[i])
-					self.parent.generate_unassigned()
-					self.cancel()
+			self.abs_change(event, change)
+	
+	
+	def abs_change(self, event, change):
+		if event.value > 250:
+			self.set_mapping(event.code, self.what)
+			self.parent.generate_unassigned()
+			self.cancel()
 
 
-class TriggerGrabber(InputGrabber):
+class StickGrabber(TriggerGrabber):
 	"""
-	As two above, but grabs triggers.
-	That means both button and axis with at least 0-255 range is accepted.
+	InputGrabber modified to grab stick or pad bindings, in two phases for
+	both X and Y axis.
 	"""
-	def __init__(self, parent, what, text=_("Pull a trigger...")):
-		InputGrabber.__init__(self, parent, what, text)
+	
+	def __init__(self, parent, what):
+		TriggerGrabber.__init__(self, parent, what,
+				text=_("Move stick left and right..."))
+		self.xy = X
+		self.grabbed = [ None, None ]
+	
+	
+	def evdev_button(self, event):
+		pass
+	
+	
+	def abs_change(self, event, change):
+		if self.xy == X:
+			self.grabbed[X] = event.code
+			self.xy = Y
+			(self.parent.builder.get_object("lblPressButton")
+				.set_text(_("Move stick up and down...")))
+		else:
+			if event.code != self.grabbed[X]:
+				self.grabbed[Y] = event.code
+				for i in xrange(len(self.grabbed)):
+					self.set_mapping(self.grabbed[i], self.what[i])
+				self.parent.generate_unassigned()
+				self.cancel()
