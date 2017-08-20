@@ -34,7 +34,7 @@ BUTTON_ORDER = ( SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 AXIS_ORDER = (
 	("stick_x", X), ("stick_y", Y),
 	("rpad_x", X),  ("rpad_y", Y),
-	("lpad_x", X),  ("lpad_x", Y),
+	("lpad_x", X),  ("lpad_y", Y),
 	("ltrig", X),	# index 6
 	("rtrig", X),
 )
@@ -607,6 +607,14 @@ class AxisData(object):
 		self.cursor = None
 	
 	
+	def reset(self):
+		"""
+		Resets min and max value so axis can (has to be) recalibrated again
+		"""
+		self.min = STICK_PAD_MAX
+		self.max = STICK_PAD_MIN
+	
+	
 	def __repr__(self):
 		return "<Axis data '%s'>" % (self.name, )
 	
@@ -653,9 +661,13 @@ class InputGrabber(object):
 	def __init__(self, parent, what, text=_("Press a button...")):
 		self.parent = parent
 		self.what = what
-		parent.builder.get_object("lblPressButton").set_text(text)
+		self.set_message(text)
 		self.dlgPressButton = parent.builder.get_object("dlgPressButton")
 		self.dlgPressButton.show()
+	
+	
+	def set_message(self, text):
+		self.parent.builder.get_object("lblPressButton").set_text(text)
 	
 	
 	def cancel(self):
@@ -722,6 +734,7 @@ class TriggerGrabber(InputGrabber):
 	
 	def abs_change(self, event, change):
 		if event.value > 250:
+			self.what.reset()
 			self.set_mapping(event.code, self.what)
 			self.parent.generate_unassigned()
 			self.cancel()
@@ -741,19 +754,50 @@ class StickGrabber(TriggerGrabber):
 	
 	
 	def evdev_button(self, event):
-		pass
+		#if len(self.grabbed) == 2 and self.grabbed[X] != None:
+		#	# Already grabbed one axis, don't grab buttons
+		#	return
+		if event.code in self.grabbed:
+			# Don't allow same button to be used twice
+			return
+		if event.value == 0:
+			if len(self.grabbed) < 4:
+				self.grabbed = [ None ] * 4
+			if self.grabbed[0] is None:
+				self.grabbed[0] = event.code
+				self.set_message(_("Move DPAD to right"))
+			elif self.grabbed[1] is None:
+				self.grabbed[1] = event.code
+				self.set_message(_("Move DPAD up"))
+			elif self.grabbed[2] is None:
+				self.grabbed[2] = event.code
+				self.set_message(_("Move DPAD down"))
+			elif self.grabbed[3] is None:
+				self.grabbed[3] = event.code
+				self.set_message(str(self.grabbed))
+				grabbed = [] + self.grabbed
+				for w in self.what:
+					for negative in (False, True):
+						keycode, grabbed = grabbed[0], grabbed[1:]
+						w.reset()
+						self.set_mapping(keycode, DPadEmuData(w, negative))
+				self.parent.generate_unassigned()
+				self.cancel()
 	
 	
 	def abs_change(self, event, change):
+		if len(self.grabbed) > 2:
+			# Already started grabbing 4 buttons, don't grab axes now
+			return
 		if self.xy == X:
 			self.grabbed[X] = event.code
 			self.xy = Y
-			(self.parent.builder.get_object("lblPressButton")
-				.set_text(_("Move stick up and down...")))
+			self.set_message(_("Move stick up and down..."))
 		else:
 			if event.code != self.grabbed[X]:
 				self.grabbed[Y] = event.code
 				for i in xrange(len(self.grabbed)):
+					self.what[i].reset()
 					self.set_mapping(self.grabbed[i], self.what[i])
 				self.parent.generate_unassigned()
 				self.cancel()
