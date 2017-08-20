@@ -4,8 +4,9 @@ from __future__ import unicode_literals
 from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO, HapticPos
-from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICKTILT
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
+from scc.constants import SCButtons, LEFT, RIGHT, HapticPos
+from scc.constants import STICK, STICKTILT, ControllerFlags
 from scc.aliases import ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction, GyroAbsAction
 from scc.controller import HapticData
