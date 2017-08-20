@@ -51,16 +51,27 @@ TRIGGER_AREAS = {
 	"LT" : 6,
 	"RT" : 7
 }
-SDL_TO_SC_NAMES = {
+SDL_TO_SCC_NAMES = {
 	'guide' : 'C',
 	'leftstick' : 'STICKPRESS',
 	'rightstick' : 'RPAD',
 	'leftshoulder' : 'LB',
 	'rightshoulder' : 'RB',
 }
-SDL_AXES = ('leftx', 'lefty', 'rightx', 'righty', # In same order as AXIS_ORDER
-	None, None, 'lefttrigger', 'righttrigger' )
-
+SDL_AXES = (
+	# This tuple has to use same order as AXIS_ORDER
+	'leftx', 'lefty', 'rightx', 'righty',
+	None, None, 'lefttrigger', 'righttrigger'
+)
+SDL_DPAD = {
+	# Numbers here are indexes to AXIS_ORDER tuple
+	# Booleans here are True for positive movements (down/right) and
+	# False for negative (up/left)
+	'dpdown' : (5, True),
+	'dpleft' : (4, False),
+	'dpright' : (4, True),
+	'dpup' : (5, False),
+}
 
 class ControllerRegistration(Editor):
 	GLADE = "controller_registration.glade"
@@ -104,9 +115,7 @@ class ControllerRegistration(Editor):
 				Gtk.Image.new_from_file(os.path.join(
 				self.app.imagepath, "test-cursor.svg")) )
 			axis.cursor.position = [ 0, 0 ]
-		self.builder.get_object("cbInvert_1").set_active(True)
-		self.builder.get_object("cbInvert_3").set_active(True)
-
+	
 	
 	@staticmethod
 	def does_he_looks_like_a_gamepad(dev):
@@ -131,7 +140,7 @@ class ControllerRegistration(Editor):
 		return False
 	
 	
-	def load_mappings(self, dev):
+	def load_sdl_mappings(self, dev):
 		"""
 		Attempts to load mappings from gamecontrollerdb.txt.
 		
@@ -169,7 +178,7 @@ class ControllerRegistration(Editor):
 				for token in line.strip().split(","):
 					if ":" in token:
 						k, v = token.split(":", 1)
-						k = SDL_TO_SC_NAMES.get(k, k)
+						k = SDL_TO_SCC_NAMES.get(k, k)
 						if v.startswith("b") and hasattr(SCButtons, k.upper()):
 							try:
 								keycode = buttons[int(v.strip("b"))]
@@ -193,6 +202,15 @@ class ControllerRegistration(Editor):
 								log.warning("Skipping unknown gamecontrollerdb axis: %s", v)
 								continue
 							self._mappings[code] = self._axis_data[SDL_AXES.index(k)]
+						elif k in SDL_DPAD and v.startswith("b"):
+							try:
+								keycode = buttons[int(v.strip("b"))]
+							except IndexError:
+								log.warning("Skipping unknown gamecontrollerdb button: %s", v)
+								continue
+							index, positive = SDL_DPAD[k]
+							data = DPadEmuData(self._axis_data[index], positive)
+							self._mappings[keycode] = data
 						elif k == "platform":
 							# Not interesting
 							pass
@@ -225,16 +243,18 @@ class ControllerRegistration(Editor):
 		for a in BUTTON_ORDER:
 			if a not in self._mappings.values():
 				unassigned.add(nameof(a))
+		assignex_axes = set([ x for x in self._mappings.values()
+							if isinstance(x, AxisData) ])
+		assignex_axes.update([ x.axis_data for x in self._mappings.values()
+							if isinstance(x, DPadEmuData) ])
 		for a in TRIGGER_AREAS:
 			axis = self._axis_data[TRIGGER_AREAS[a]]
-			if not axis in self._mappings.values():
+			if not axis in assignex_axes:
 				unassigned.add(a)
 		for a in STICK_PAD_AREAS:
 			area_name, axes = STICK_PAD_AREAS[a]
 			has_mapping = bool(sum([
-				self._axis_data[index] in self._mappings.values()
-				for index in axes
-			]))
+				self._axis_data[index] in assignex_axes for index in axes ]))
 			if not has_mapping:
 				unassigned.add(area_name)
 		
@@ -348,7 +368,7 @@ class ControllerRegistration(Editor):
 		self._evdevice = evdev.InputDevice(model[iter][0])
 		if not self._mappings:
 			self._mappings = {}
-			if not self.load_mappings(self._evdevice):
+			if not self.load_sdl_mappings(self._evdevice):
 				self.generate_mappings(self._evdevice)
 			self.generate_unassigned()
 		GLib.idle_add(self._evdev_read)
@@ -380,6 +400,14 @@ class ControllerRegistration(Editor):
 				self.hilight_axis(what, STICK_PAD_MAX)
 			else:
 				self.hilight_axis(what, STICK_PAD_MIN)
+		if isinstance(what, DPadEmuData):
+			if event.value:
+				if what.positive:
+					self.hilight_axis(what.axis_data, STICK_PAD_MAX)
+				else:
+					self.hilight_axis(what.axis_data, STICK_PAD_MIN)
+			else:
+				self.hilight_axis(what.axis_data, 0)
 		elif what is not None:
 			if event.value:
 				self.hilight(nameof(what))
@@ -432,7 +460,7 @@ class ControllerRegistration(Editor):
 			x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
 			# Add pad position
 			x += px * aw / STICK_PAD_MAX * 0.5
-			y -= py * aw / STICK_PAD_MAX * 0.5
+			y += py * aw / STICK_PAD_MAX * 0.5
 			# Move circle
 			parent.move(cursor, x, y)
 	
@@ -600,6 +628,20 @@ class AxisData(object):
 				return v + STICK_PAD_MIN
 		except ZeroDivisionError:
 			return 0
+
+
+class DPadEmuData(object):
+	"""
+	Dumb container that stores dpad emulation data.
+	DPAd emulation is used, for example, on PS3 controller, where dpad does not
+	inputs as 2 axes, but as 4 buttons.
+	
+	This class stores mapping of one button to one half of axis.
+	"""
+	
+	def __init__(self, axis_data, positive):
+		self.axis_data = axis_data
+		self.positive  = positive
 
 
 class InputGrabber(object):
