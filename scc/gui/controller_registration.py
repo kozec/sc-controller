@@ -226,7 +226,7 @@ class ControllerRegistration(Editor):
 			if a not in self._mappings.values():
 				unassigned.add(nameof(a))
 		for a in TRIGGER_AREAS:
-			axis = TRIGGER_AREAS[a]
+			axis = self._axis_data[TRIGGER_AREAS[a]]
 			if not axis in self._mappings.values():
 				unassigned.add(a)
 		for a in STICK_PAD_AREAS:
@@ -475,8 +475,7 @@ class ControllerRegistration(Editor):
 				mnuStick._axes = [ self._axis_data[index] for index in axes ]
 				mnuStick.popup(None, None, None, None, 1, Gtk.get_current_event_time())
 			elif what in TRIGGER_AREAS:
-				pass
-				# self.wait_for_input(getattr(SCButtons, what), _("Pull trigger..."))
+				self._grabber = TriggerGrabber(self, self._axis_data[TRIGGER_AREAS[what]])
 			elif hasattr(SCButtons, what):
 				self._grabber = InputGrabber(self, getattr(SCButtons, what))
 	
@@ -610,7 +609,7 @@ class InputGrabber(object):
 	by default.
 	"""
 	
-	def __init__(self, parent, what, text=_("Press button...")):
+	def __init__(self, parent, what, text=_("Press a button...")):
 		self.parent = parent
 		self.what = what
 		parent.builder.get_object("lblPressButton").set_text(text)
@@ -631,7 +630,6 @@ class InputGrabber(object):
 	
 	def set_mapping(self, keycode, what):
 		parent = self.parent
-		old = parent._mappings.get(keycode)
 		
 		parent._mappings[keycode] = what
 		log.debug("Reassigned %s to %s", keycode, what)
@@ -699,3 +697,12 @@ class StickGrabber(InputGrabber):
 						self.set_mapping(self.grabbed[i], self.what[i])
 					self.parent.generate_unassigned()
 					self.cancel()
+
+
+class TriggerGrabber(InputGrabber):
+	"""
+	As two above, but grabs triggers.
+	That means both button and axis with at least 0-255 range is accepted.
+	"""
+	def __init__(self, parent, what, text=_("Pull a trigger...")):
+		InputGrabber.__init__(self, parent, what, text)
