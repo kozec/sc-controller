@@ -8,7 +8,7 @@ Helper classes for grabbing buttons and axes from physical gamepads.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.gui.controller_registration.constants import X, Y
+from scc.gui.creg.constants import X, Y
 from scc.tools import nameof
 
 import logging, traceback

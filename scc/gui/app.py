@@ -378,7 +378,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_mnuRegisterController_activate(self, *a):
-		from scc.gui.controller_registration.dialog import ControllerRegistration
+		from scc.gui.creg.dialog import ControllerRegistration
 		cr = ControllerRegistration(self)
 		cr.show(self.window)
 	
