@@ -34,6 +34,7 @@ class ButtonsComponent(AEComponent, Chooser):
 		AEComponent.__init__(self, app, editor)
 		Chooser.__init__(self, app)
 		self.axes_allowed = True
+		self.keys = set()
 	
 	
 	def load(self):
@@ -80,6 +81,18 @@ class ButtonsComponent(AEComponent, Chooser):
 	
 	def on_key_grabbed(self, keys):
 		""" Handles selecting key using "Grab the Key" dialog """
+		self.keys = set(keys)
+		self.apply_keys()
+	
+	
+	def on_additional_key_grabbed(self, keys):
+		self.keys.update(keys)
+		self.apply_keys()
+	
+	
+	def apply_keys(self):
+		""" Common part of on_*key_grabbed """
+		keys = list(self.keys)
 		action = ButtonAction(keys[0])
 		if len(keys) > 1:
 			actions = [ ButtonAction(k) for k in keys ]
@@ -94,6 +107,15 @@ class ButtonsComponent(AEComponent, Chooser):
 		"""
 		kg = KeyGrabber(self.app)
 		kg.grab(self.editor.window, self.editor._action, self.on_key_grabbed)
+	
+	
+	def on_btnGrabAnother_clicked(self, *a):
+		"""
+		Same as above, but adds another key to action
+		"""
+		kg = KeyGrabber(self.app)
+		kg.grab(self.editor.window, self.editor._action,
+				self.on_additional_key_grabbed)
 	
 	
 	def hide_axes(self):
