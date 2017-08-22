@@ -140,7 +140,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.statusicon.connect('clicked', self.on_statusicon_clicked)
 		if not self.statusicon.is_clickable():
 			self.builder.get_object("mnuShowWindowTray").set_visible(True)
-		GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
+		GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC Controller"))
 	
 	
 	def destroy_statusicon(self):
@@ -1140,7 +1140,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.window.set_icon_from_file(icon)
 		self.status = status
 		if self.statusicon:
-			GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
+			GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC Controller"))
 		self.recursing = True
 		if status == "alive":
 			btDaemon.set_tooltip_text(_("Emulation is active"))
