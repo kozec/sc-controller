@@ -436,6 +436,7 @@ class BallModifier(Modifier, WholeHapticAction):
 				self._stop()
 			self._old_pos = x, y
 		elif mapper.was_touched(what):
+			self._old_pos = None
 			velocity = sqrt(self._xvel * self._xvel + self._yvel * self._yvel)
 			if velocity > BallModifier.MIN_LIFT_VELOCITY:
 				self._roll(mapper)
@@ -1110,7 +1111,7 @@ class FeedbackModifier(Modifier):
 	"""
 	COMMAND = "feedback"
 	PROFILE_KEY_PRIORITY = -4
-
+	
 	def _mod_init(self, position, amplitude=512, frequency=4, period=1024, count=1):
 		self.haptic = HapticData(position, amplitude, frequency, period, count)
 		if self.action:
@@ -1131,8 +1132,8 @@ class FeedbackModifier(Modifier):
 		pars[0] = nameof(pars[0])
 		rv[FeedbackModifier.COMMAND] = pars
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		args = list(data[FeedbackModifier.COMMAND])
@@ -1140,25 +1141,25 @@ class FeedbackModifier(Modifier):
 			args[0] = getattr(HapticPos, args[0])
 		args.append(a)
 		return FeedbackModifier(*args)
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return self._mod_to_string(self.strip_defaults(), multiline, pad)
-
-
+	
+	
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		return self.action.compress()
 
@@ -1166,43 +1167,43 @@ class FeedbackModifier(Modifier):
 class RotateInputModifier(Modifier):
 	""" Rotates ball or stick input along axis """
 	COMMAND = "rotate"
-
+	
 	def _mod_init(self, angle):
 		self.angle = angle
-
-
+	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
 		rv[RotateInputModifier.COMMAND] = self.angle
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return RotateInputModifier(float(data['rotate']), a)
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return self._mod_to_string((self.angle,), multiline, pad)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		if hasattr(self.action, "set_rotation"):
 			self.action.set_rotation(self.angle * PI / -180.0)
 			return self.action
 		self.action = self.action.compress()
 		return self
-
-
+	
+	
 	# This doesn't make sense with anything but 'whole' as input.
 	def whole(self, mapper, x, y, what):
 		angle = self.angle * PI / -180.0
@@ -1227,7 +1228,7 @@ class SmoothModifier(Modifier):
 		self._range = list(xrange(level))
 		self._weights = [ multiplier ** x for x in reversed(self._range) ]
 		self._w_sum = sum(self._weights)
-		self._last_pos = 0
+		self._last_pos = None
 		self._moving = False
 	
 	
@@ -1258,18 +1259,20 @@ class SmoothModifier(Modifier):
 		y = sum(( self._deq_y[i] * self._weights[i] for i in self._range ))
 		return x / self._w_sum, y / self._w_sum
 	
+	
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what):
-			if mapper.was_touched(what):
-				# Pressed for longer time
-				self._deq_x.append(x)
-				self._deq_y.append(y)
-				x, y = self._get_pos()
-			else:
+			if self._last_pos is None:
 				# Just pressed - fill deque with current position
 				for i in self._range:
 					self._deq_x.append(x)
 					self._deq_y.append(y)
+				x, y = self._get_pos()
+				self._last_pos = 0
+			else:
+				# Pressed for longer time
+				self._deq_x.append(x)
+				self._deq_y.append(y)
 				x, y = self._get_pos()
 			if abs(x + y - self._last_pos) > self.filter:
 				self.action.whole(mapper, x, y, what)
@@ -1278,7 +1281,7 @@ class SmoothModifier(Modifier):
 			# Pad was just released
 			x, y = self._get_pos()
 			self.action.whole(mapper, x, y, what)
-			self._last_pos = 0
+			self._last_pos = None
 
 
 class CircularModifier(Modifier, HapticEnabledAction):
