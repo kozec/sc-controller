@@ -71,6 +71,9 @@ class ControllerRegistration(Editor):
 				Gtk.Image.new_from_file(os.path.join(
 				self.app.imagepath, "test-cursor.svg")) )
 			axis.cursor.position = [ 0, 0 ]
+		self.builder.get_object("cbInvert_1").set_active(True)
+		self.builder.get_object("cbInvert_3").set_active(True)
+		self.builder.get_object("cbInvert_5").set_active(True)
 	
 	
 	@staticmethod
@@ -460,7 +463,7 @@ class ControllerRegistration(Editor):
 			x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
 			# Add pad position
 			x += px * aw / STICK_PAD_MAX * 0.5
-			y += py * aw / STICK_PAD_MAX * 0.5
+			y -= py * aw / STICK_PAD_MAX * 0.5
 			# Move circle
 			parent.move(cursor, x, y)
 			# Update raw data if needed

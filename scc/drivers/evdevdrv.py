@@ -55,7 +55,20 @@ class EvdevController(Controller):
 	def _parse_config(self, config):
 		self._evdev_to_button = {}
 		self._evdev_to_axis = {}
+		self._evdev_to_dpad = {}
 		self._calibrations = {}
+		
+		def _parse_axis(axis):
+			min, max, center = (value.get("min", -127),
+					value.get("max", 128), value.get("center", 0))
+			if max > min:
+				return AxisCalibrationData(
+					(-2.0 / (min-max)) if min != max else 1.0,
+					-1.0, center)
+			else:
+				return AxisCalibrationData(
+					(-2.0 / (min-max)) if min != max else 1.0,
+					1.0, center)
 		
 		for x, value in config.get("buttons", {}).iteritems():
 			try:
@@ -69,28 +82,14 @@ class EvdevController(Controller):
 		for x, value in config.get("axes", {}).iteritems():
 			code, axis = int(x), value.get("axis")
 			if axis in EvdevControllerInput._fields:
-				min, max, center = (value.get("min", -127),
-						value.get("max", 128), value.get("center", 0))
-				if axis in ("ltrig", "rtrig"):
-					if max > min:
-						self._calibrations[code]= AxisCalibrationData(
-							(-2.0 / (min-max)) if min != max else 1.0,
-							-3.0, min)
-					else:
-						self._calibrations[code]= AxisCalibrationData(
-							(-2.0 / (min-max)) if min != max else 1.0,
-							1.0, max)
-				else:
-					if max > min:
-						self._calibrations[code]= AxisCalibrationData(
-							(-2.0 / (min-max)) if min != max else 1.0,
-							-1.0, center)
-					else:
-						self._calibrations[code]= AxisCalibrationData(
-							(-2.0 / (min-max)) if min != max else 1.0,
-							1.0, center)
+				self._calibrations[code] = _parse_axis(axis)
 				self._evdev_to_axis[code] = axis
-	
+		for x, value in config.get("dpads", {}).iteritems():
+			code, axis = int(x), value.get("axis")
+			if axis in EvdevControllerInput._fields:
+				self._calibrations[code] = _parse_axis(axis)
+				self._evdev_to_dpad[code] = value.get("positive", False)
+				self._evdev_to_axis[code] = axis
 	
 	def close(self):
 		self.poller.unregister(self.device.fd)
@@ -137,7 +136,28 @@ class EvdevController(Controller):
 		need_cancel_padpressemu = False
 		try:
 			for event in self.device.read():
-				if event.type == evdev.ecodes.EV_KEY and event.code in self._evdev_to_button:
+				if event.type == evdev.ecodes.EV_KEY and event.code in self._evdev_to_dpad:
+					cal = self._calibrations[event.code]
+					if event.value:
+						if self._evdev_to_dpad[event.code]:
+							# Positive
+							value = STICK_PAD_MAX
+						else:
+							value = STICK_PAD_MIN
+					else:
+						value = 0
+					axis = self._evdev_to_axis[event.code]
+					if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
+						b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH
+						need_cancel_padpressemu = True
+						new_state = new_state._replace(buttons=b, **{ axis : value })
+					elif not new_state.buttons & SCButtons.RPADTOUCH and axis in ("rpad_x", "rpad_y"):
+						b = new_state.buttons | SCButtons.RPADTOUCH
+						need_cancel_padpressemu = True
+						new_state = new_state._replace(buttons=b, **{ axis : value })
+					else:
+						new_state = new_state._replace(**{ axis : value })
+				elif event.type == evdev.ecodes.EV_KEY and event.code in self._evdev_to_button:
 					if event.value:
 						b = new_state.buttons | self._evdev_to_button[event.code]
 						new_state = new_state._replace(buttons=b)

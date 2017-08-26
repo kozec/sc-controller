@@ -47,10 +47,8 @@ class Scheduler(object):
 		Note that this is slow as hell and completly thread-unsafe,
 		so it _has_ to be called on main thread.
 		"""
-		print "cancel", task
 		if task == self._next:
 			self._next = None if self._scheduled.empty() else self._scheduled.get()
-			print "canceled", task
 			return True
 		# Fun part: All tasks are removed from PriorityQueue
 		# until correct is found. Then everything is put back
@@ -63,8 +61,6 @@ class Scheduler(object):
 			tasks.append(t)
 		for t in tasks:
 			self._scheduled.put(t)
-		if found:
-			print "canceled", task
 		return found
 	
 	
