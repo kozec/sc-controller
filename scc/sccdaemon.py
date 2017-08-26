@@ -1022,7 +1022,6 @@ class Client(object):
 		self.mapper = mapper
 		self.gesture_action = None
 		self.locked_actions = set()
-		self.observed_actions = set()
 	
 	
 	def close(self):
@@ -1079,35 +1078,9 @@ class Client(object):
 	
 	def unlock_actions(self, daemon):
 		""" Should be called while daemon.lock is acquired """
-		def unlock(a):
-			if isinstance(a, ObservingAction):
-				# Needs to be handled specifically, as it is in lock_action
-				a.original_action = unlock(a.original_action)
-				return a
-			return a.original_action
-		
 		s, self.locked_actions = self.locked_actions, set()
 		for a in s:
-			daemon._apply(self.mapper, a.what, unlock)
-			log.debug("%s unlocked", a.what)
-		
-		def unobserve(a):
-			# I'm really proud of that name
-			if isinstance(a, ObservingAction):
-				if a.client == self:
-					return a.original_action
-				a.original_action = unobserve(a.original_action)
-				return a
-			if isinstance(a, LockedAction):
-				a.original_action = unobserve(a.original_action)
-				return a
-			# Shouldn't be possible to reach here
-			raise TypeError("Un-observing not observed action")
-		
-		s, self.observed_actions = self.observed_actions, set()
-		for a in s:
-			daemon._apply(self.mapper, a.what, unobserve)
-			log.debug("%s no longer observed by %s", a.what, self)
+			a.unlock(self, daemon)
 	
 	
 	def reaply_locks(self, daemon):
@@ -1115,12 +1088,9 @@ class Client(object):
 		Called after profile is changed.
 		Should be called while daemon.lock is acquired
 		"""
-		s, self.observed_actions = self.observed_actions, set()
-		for a in s:
-			self.observe_action(daemon, a.what)
 		s, self.locked_actions = self.locked_actions, set()
 		for a in s:
-			self.lock_action(daemon, a.what)
+			a.reaply(self, daemon)
 
 
 class ReportingAction(Action):
@@ -1190,6 +1160,52 @@ class LockedAction(ReportingAction):
 		self.original_action = original_action
 		self.client.locked_actions.add(self)
 		log.debug("%s locked by %s", self.what, self.client)
+	
+	
+	def reaply(self, client, daemon):
+		client.lock_action(daemon, self.what)
+	
+	
+	def unlock(self, client, daemon):
+		def _unlock(a):
+			if isinstance(a, ObservingAction):
+				# Needs to be handled specifically
+				a.original_action = _unlock(a.original_action)
+				return a
+			if isinstance(a, LockedAction):
+				return a.original_action
+			return a
+		daemon._apply(client.mapper, self.what, _unlock)
+		log.debug("%s unlocked", self.what)
+
+
+class ReplacedAction(LockedAction):
+	def __init__(self, what, client, new_action, original_action):
+		ReportingAction.__init__(self, what, client)
+		self.original_action = original_action
+		self.new_action = new_action.compress()
+		self.client.locked_actions.add(self)
+		log.debug("%s replaced by %s", self.what, self.client)
+	
+	
+	def reaply(self, client, daemon):
+		client.replace_action(daemon, self.what, self.new_action)
+	
+	
+	def trigger(self, mapper, position, old_position):
+		self.new_action.trigger(mapper, position, old_position)
+	
+	
+	def button_press(self, mapper, number=1):
+		self.new_action.button_press(mapper, mapper)
+	
+	
+	def button_release(self, mapper):
+		self.new_action.button_release(mapper, mapper)
+	
+	
+	def whole(self, mapper, x, y, what):
+		self.new_action.whole(mapper, x, y, what)
 
 
 class ObservingAction(ReportingAction):
@@ -1199,8 +1215,28 @@ class ObservingAction(ReportingAction):
 	def __init__(self, what, client, original_action):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
-		self.client.observed_actions.add(self)
-		log.debug("%s observed by %s", self.what, self.client)
+		self.client.locked_actions.add(self)
+		log.debug("%s observed %s", self.what, self.client)
+	
+	
+	def reaply(self, client, daemon):
+		client.observe_action(daemon, self.what)
+	
+	
+	def unlock(self, client, daemon):
+		def _unobserve(a):
+			if isinstance(a, ObservingAction):
+				if a.client == self:
+					return a.original_action
+				a.original_action = _unobserve(a.original_action)
+				return a
+			if isinstance(a, LockedAction):
+				a.original_action = _unobserve(a.original_action)
+				return a
+			return a
+		
+		daemon._apply(client.mapper, self.what, _unobserve)
+		log.debug("%s no longer observed by %s", self.what, client)
 	
 	
 	def trigger(self, mapper, position, old_position):
