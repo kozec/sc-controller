@@ -334,7 +334,7 @@ class SCCDaemon(Daemon):
 					self._set_profile(mapper, path)
 					log.info("Loaded profile '%s'", name)
 				except Exception, e:
-					log.error(e)
+					log.exception(e)
 			return
 		log.error("Cannot load profile: Profile '%s' not found", name)
 	
@@ -402,7 +402,7 @@ class SCCDaemon(Daemon):
 		except CannotCreateUInputException, e:
 			# Most likely UInput is not available
 			# Create mapper with all virtual devices set to Dummies.
-			log.error(e)
+			log.exception(e)
 			self.add_error("uinput", str(e))
 			mapper = Mapper(Profile(TalkingActionParser()), keyboard=None,
 				mouse=None, gamepad=False)
@@ -686,8 +686,7 @@ class SCCDaemon(Daemon):
 					client.wfile.write(b"OK.\n")
 				except Exception, e:
 					exc = traceback.format_exc()
-					log.error(e)
-					log.error(exc)
+					log.exception(e)
 					tb = unicode(exc).encode("utf-8").encode('string_escape')
 					client.wfile.write(b"Fail: " + tb + b"\n")
 		elif message.startswith("OSD:"):
@@ -713,7 +712,7 @@ class SCCDaemon(Daemon):
 					client.mapper.get_controller().feedback(data)
 				client.wfile.write(b"OK.\n")
 			except Exception, e:
-				log.error(e)
+				log.exception(e)
 				client.wfile.write(b"Fail: %s\n" % (e,))
 		elif message.startswith("Controller."):
 			with self.lock:
@@ -731,13 +730,14 @@ class SCCDaemon(Daemon):
 					else:
 						raise Exception("goto fail")
 				except Exception, e:
-					client.wfile.write(b"Fail: Fail: no such controller\n")
+					client.wfile.write(b"Fail: no such controller\n")
 		elif message.startswith("Led:"):
 			try:
 				number = int(message[4:])
 				number = clamp(0, number, 100)
 			except Exception, e:
 				client.wfile.write(b"Fail: %s\n" % (e,))
+				return
 			if client.mapper.get_controller():
 				client.mapper.get_controller().set_led_level(number)
 		elif message.startswith("Observe:"):
@@ -750,6 +750,25 @@ class SCCDaemon(Daemon):
 			else:
 				log.warning("Refused 'Observe' request: Sniffing disabled")
 				client.wfile.write(b"Fail: Sniffing disabled.\n")
+		elif message.startswith("Replace:"):
+			try:
+				l, actionstr = message.split(":", 1)[1].strip(" \t\r").split(" ", 1)
+				action = TalkingActionParser().restart(actionstr).parse()
+			except Exception, e:
+				e = unicode(e).encode("utf-8").encode('string_escape')
+				client.wfile.write(b"Fail: failed to parse: " + e + "\n")
+				return
+			with self.lock:
+				try:
+					if not self._can_lock_action(client.mapper, SCCDaemon.source_to_constant(l)):
+						client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
+						return
+				except ValueError, e:
+					tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+					client.wfile.write(b"Fail: " + tb + b"\n")
+					return
+				client.replace_action(self, SCCDaemon.source_to_constant(l), action)
+				client.wfile.write(b"OK.\n")
 		elif message.startswith("Lock:"):
 			to_lock = [ x for x in message.split(":", 1)[1].strip(" \t\r").split(" ") ]
 			with self.lock:
@@ -824,13 +843,13 @@ class SCCDaemon(Daemon):
 					client.mapper.schedule(0.1, release)
 				except Exception, e:
 					log.error("Error while processing menu action")
-					log.error(traceback.format_exc())
+					log.exception(e)
 			def release(mapper):
 				try:
 					menuaction.button_release(mapper)
 				except Exception, e:
 					log.error("Error while processing menu action")
-					log.error(traceback.format_exc())
+					log.exception(e)
 			
 			with self.lock:
 				try:
@@ -985,7 +1004,9 @@ class Client(object):
 		self.wfile = wfile
 		self.mapper = mapper
 		self.gesture_action = None
+		# TODO: Simplify this:
 		self.locked_actions = set()
+		self.replaced_actions = set()
 		self.observed_actions = set()
 	
 	
@@ -1038,14 +1059,26 @@ class Client(object):
 		
 		Should be called while daemon.lock is acquired.
 		"""
-		daemon._apply(self.mapper, what, lambda a : ObservingAction(what, self, a))
+		daemon._apply(self.mapper, what,
+				lambda a : ObservingAction(what, self, a))
+	
+	
+	def replace_action(self, daemon, what, action):
+		"""
+		Temporally replaces action in way that allows reversing operation when
+		client disconnects.
+		
+		Should be called while daemon.lock is acquired.
+		"""
+		daemon._apply(self.mapper, what,
+				lambda a : ReplacedAction(what, self, action, a))
 	
 	
 	def unlock_actions(self, daemon):
 		""" Should be called while daemon.lock is acquired """
 		def unlock(a):
 			if isinstance(a, ObservingAction):
-				# Needs to be handled specifically, as it is in lock_action
+				# Needs to be handled specifically
 				a.original_action = unlock(a.original_action)
 				return a
 			return a.original_action
@@ -1054,6 +1087,11 @@ class Client(object):
 		for a in s:
 			daemon._apply(self.mapper, a.what, unlock)
 			log.debug("%s unlocked", a.what)
+		
+		s, self.replaced_actions = self.replaced_actions, set()
+		for a in s:
+			daemon._apply(self.mapper, a.what, unlock)
+			log.debug("%s replacement reverted", a.what)
 		
 		def unobserve(a):
 			# I'm really proud of that name
@@ -1085,6 +1123,9 @@ class Client(object):
 		s, self.locked_actions = self.locked_actions, set()
 		for a in s:
 			self.lock_action(daemon, a.what)
+		s, self.replaced_actions = self.replaced_actions, set()
+		for a in s:
+			self.replace_action(daemon, a.what, a.new_action)
 
 
 class ReportingAction(Action):
@@ -1149,6 +1190,7 @@ class ReportingAction(Action):
 				self.client.rfile.close()
 				self.client.wfile.close()
 
+
 class LockedAction(ReportingAction):
 	""" Temporal action used to send requested inputs to client """
 	def __init__(self, what, client, original_action):
@@ -1156,6 +1198,31 @@ class LockedAction(ReportingAction):
 		self.original_action = original_action
 		self.client.locked_actions.add(self)
 		log.debug("%s locked by %s", self.what, self.client)
+
+
+class ReplacedAction(LockedAction):
+	def __init__(self, what, client, new_action, original_action):
+		ReportingAction.__init__(self, what, client)
+		self.original_action = original_action
+		self.new_action = new_action.compress()
+		self.client.replaced_actions.add(self)
+		log.debug("%s replaced by %s", self.what, self.client)
+	
+	
+	def trigger(self, mapper, position, old_position):
+		self.new_action.trigger(mapper, position, old_position)
+	
+	
+	def button_press(self, mapper, number=1):
+		self.new_action.button_press(mapper, mapper)
+	
+	
+	def button_release(self, mapper):
+		self.new_action.button_release(mapper, mapper)
+	
+	
+	def whole(self, mapper, x, y, what):
+		self.new_action.whole(mapper, x, y, what)
 
 
 class ObservingAction(ReportingAction):

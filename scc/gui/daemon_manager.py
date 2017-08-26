@@ -431,6 +431,18 @@ class ControllerManager(GObject.GObject):
 		self._dm.request("Observe: %s" % (what,), success_cb, error_cb)
 	
 	
+	def replace(self, success_cb, error_cb, what, action):
+		"""
+		Temporally replaces action on physical button, axis or pad,
+		until unlock_all() is called.
+		
+		Calls success_cb() on success or error_cb(error) on failure.
+		"""
+		actionstr = action.to_string().replace("\n", " ")
+		self._dm.request("Replace: %s %s" % (what, actionstr),
+				success_cb, error_cb)
+	
+	
 	def unlock_all(self):
 		if self._dm.alive:
 			self._send_id()
