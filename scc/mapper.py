@@ -34,11 +34,11 @@ class Mapper(object):
 		
 		# Create virtual devices
 		log.debug("Creating virtual devices")
-		self.keyboard = Keyboard(name=keyboard) if keyboard else Dummy()
+		self.keyboard = self.create_keyboard(keyboard) if keyboard else Dummy()
 		log.debug("Keyboard: %s" % (self.keyboard, ))
-		self.mouse = Mouse(name=mouse) if mouse else Dummy()
+		self.mouse = self.create_mouse(mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
-		self.gamepad = self._create_gamepad(gamepad, poller) if gamepad else Dummy()
+		self.gamepad = self.create_gamepad(gamepad, poller) if gamepad else Dummy()
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		
 		# Set by SCCDaemon instance; Used to handle actions
@@ -59,7 +59,7 @@ class Mapper(object):
 		self.force_event = set()
 	
 	
-	def _create_gamepad(self, enabled, poller):
+	def create_gamepad(self, enabled, poller):
 		""" Parses gamepad configuration and creates apropriate unput device """
 		if not enabled or "SCC_NOGAMEPAD" in os.environ:
 			# Completly undocumented and for debuging purposes only.
@@ -91,6 +91,14 @@ class Mapper(object):
 		if poller:
 			poller.register(ui.getDescriptor(), poller.POLLIN, self._rumble_ready)
 		return ui
+	
+	
+	def create_keyboard(self, name):
+		return Keyboard(name=name)
+	
+	
+	def create_mouse(self, name):
+		return Mouse(name=name)
 	
 	
 	def _rumble_ready(self, fd, event):

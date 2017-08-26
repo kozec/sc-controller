@@ -709,7 +709,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkSeparator" id="separator1">
+              <object class="GtkSeparator" id="sepMain">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>

@@ -779,6 +779,7 @@ class MouseAction(WholeHapticAction, Action):
 	
 	def add(self, mapper, dx, dy):
 		""" Called from BallModifier """
+		print "MouseAction", self.haptic
 		if self.haptic:
 			WholeHapticAction.change(self, mapper, dx, dy)
 		

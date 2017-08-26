@@ -48,7 +48,7 @@ class Modifier(Action):
 	
 	def _mod_init(self):
 		"""
-		Initializes modifier with rest of parameters, after action nparameter
+		Initializes modifier with rest of parameters, after action parameter
 		was taken from it and stored in self.action
 		"""
 		pass # not needed by default

@@ -753,7 +753,7 @@ class SCCDaemon(Daemon):
 		elif message.startswith("Replace:"):
 			try:
 				l, actionstr = message.split(":", 1)[1].strip(" \t\r").split(" ", 1)
-				action = TalkingActionParser().restart(actionstr).parse()
+				action = TalkingActionParser().restart(actionstr).parse().compress()
 			except Exception, e:
 				e = unicode(e).encode("utf-8").encode('string_escape')
 				client.wfile.write(b"Fail: failed to parse: " + e + "\n")
@@ -1181,7 +1181,7 @@ class ReplacedAction(LockedAction):
 	def __init__(self, what, client, new_action, original_action):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
-		self.new_action = new_action.compress()
+		self.new_action = new_action
 		self.client.locked_actions.add(self)
 		log.debug("%s replaced by %s", self.what, self.client)
 	

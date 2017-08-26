@@ -21,7 +21,7 @@ from scc.gui.ribar import RIBar
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.tools import get_profile_name, profile_is_default, profile_is_override
-from scc.tools import check_access, find_profile, find_gksudo
+from scc.tools import check_access, find_profile, find_gksudo, nameof
 from scc.paths import get_config_path, get_profiles_path
 from scc.actions import NoAction
 from scc.modifiers import NameModifier
@@ -42,6 +42,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	OBSERVE_COLOR = "#00007FFF"		# ARGB
 	CONFIG = "scc.config.json"
 	RELEASE_URL = "https://github.com/kozec/sc-controller/releases/tag/v%s"
+	OSD_MODE_PROF_NAME = ".scc-osd.profile_editor"
 	
 	def __init__(self, gladepath="/usr/share/scc",
 						imagepath="/usr/share/scc/images"):
@@ -70,6 +71,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.status = "unknown"
 		self.context_menu_for = None
 		self.daemon_changed_profile = False
+		self.osd_mode = False	# In OSD mode, only active profile can be editted
+		self.osd_mode_mapper = None
 		self.background = None
 		self.outdated_version = None
 		self.profile_switchers = []
@@ -129,6 +132,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.main_area.put(self.lpadTest, 40, 40)
 		self.main_area.put(self.rpadTest, 290, 90)
 		self.main_area.put(self.stickTest, 150, 40)
+		
+		# OSD mode (if used)
+		if self.osd_mode:
+			self.builder.get_object("btDaemon").set_sensitive(False)
+			self.window.set_title(_("Edit Profile"))
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
@@ -530,6 +538,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		Called when selected profile is saved to disk
 		"""
+		if self.osd_mode:
+			# Special case, profile shouldn't be changed while in osd_mode
+			return
+		
 		if giofile.get_path().endswith(".mod"):
 			# Special case, this one is saved only to be sent to daemon
 			# and user doesn't need to know about it
@@ -669,7 +681,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if not self.release_notes_visible():
 			self.hide_error()
 		self.just_started = False
-		if self.profile_switchers[0].get_file() is not None and not self.just_started:
+		if self.osd_mode:
+			self.enable_osd_mode()
+		elif self.profile_switchers[0].get_file() is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
 		GLib.timeout_add_seconds(1, self.check)
 		self.enable_test_mode()
@@ -733,6 +747,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		vbAllProfiles.reorder_child(ps, 0)
 		vbAllProfiles.show_all()
 		
+		if self.osd_mode:
+			ps.set_allow_switch(False)
+		
 		if len(self.profile_switchers) > 0:
 			ps.set_profile_list(self.profile_switchers[0].get_profile_list())
 		
@@ -756,7 +773,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Disables and re-enables Input Test mode. If sniffing is disabled in
 		daemon configuration, 2nd call fails and logs error.
 		"""
-		if self.dm.is_alive():
+		if self.dm.is_alive() and not self.osd_mode:
 			try:
 				c = self.dm.get_controllers()[0]
 			except IndexError:
@@ -767,6 +784,43 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
 				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
 				'RIGHT', 'STICK', 'STICKPRESS')
+	
+	
+	def enable_osd_mode(self):
+		# TODO: Support for multiple controllers here
+		self.osd_mode_controller = 0
+		osd_mode_profile = Profile(GuiActionParser())
+		osd_mode_profile.load(find_profile(App.OSD_MODE_PROF_NAME))
+		try:
+			c = self.dm.get_controllers()[self.osd_mode_controller]
+		except IndexError:
+			log.error("osd_mode: Controller not connected")
+			self.quit()
+			return
+		
+		def on_lock_failed(*a):
+			log.error("osd_mode: Locking failed")
+			self.quit()
+		
+		def on_lock_success(*a):
+			log.debug("osd_mode: Locked everything")
+			from scc.gui.osd_mode_mapper import OSDModeMapper
+			self.osd_mode_mapper = OSDModeMapper(osd_mode_profile)
+			self.osd_mode_mapper.set_target_window(self.window.get_window())
+			GLib.timeout_add(10, self.osd_mode_mapper.run_scheduled)
+		
+		# Locks everything but pads. Pads are emulating mouse and this is
+		# better left in daemon - involving socket in mouse controls
+		# adds too much lags.
+		c.lock(on_lock_success, on_lock_failed,
+			'A', 'B', 'X', 'Y', 'START', 'BACK', 'LB', 'RB', 'C',
+			'STICK', 'LGRIP', 'RGRIP', 'LT', 'RT', 'STICKPRESS')
+		
+		# Ask daemon to temporaly reconfigure pads for mouse emulation
+		c.replace(DaemonManager.nocallback, on_lock_failed,
+			LEFT, osd_mode_profile.pads[LEFT])
+		c.replace(DaemonManager.nocallback, on_lock_failed,
+			RIGHT, osd_mode_profile.pads[RIGHT])
 	
 	
 	def on_observe_failed(self, error):
@@ -788,9 +842,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		else:
 			# At this point, correct daemon version of daemon is running
 			# and we can check if there is anything new to inform user about
-			if self.app.config['gui']['news']['enabled']:
-				if self.app.config['gui']['news']['last_version'] != App.get_release():
-					self.check_release_notes()
+			if self.app.config['gui']['news']['last_version'] != App.get_release():
+				if self.app.config['gui']['news']['enabled']:
+					if not self.osd_mode:
+						self.check_release_notes()
 	
 	
 	def on_daemon_error(self, daemon, error):
@@ -815,12 +870,17 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				return
 			# If check() fails to find error reason, error message is displayed as it is
 		
+		if self.osd_mode:
+			self.quit()
+		
 		self.show_error(msg)
 		self.set_daemon_status("error", True)
 	
 	
 	def on_daemon_event_observer(self, daemon, what, data):
-		if what in (LEFT, RIGHT, STICK):
+		if self.osd_mode_mapper:
+			self.osd_mode_mapper.handle_event(daemon, what, data)
+		elif what in (LEFT, RIGHT, STICK):
 			widget, area = {
 				LEFT  : (self.lpadTest,  "LPADTEST"),
 				RIGHT : (self.rpadTest,  "RPADTEST"),
@@ -1041,6 +1101,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.set_daemon_status("unknown", True)
 			return
 		
+		if self.osd_mode:
+			self.quit()
+		
 		for ps in self.profile_switchers:
 			ps.set_controller(None)
 			ps.on_daemon_dead()
@@ -1073,6 +1136,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def do_local_options(self, trash, lo):
 		set_logging_level(lo.contains("verbose"), lo.contains("debug") )
+		self.osd_mode = lo.contains("osd")
 		return -1
 	
 	
@@ -1188,6 +1252,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
+		aso("osd",		b"o", "OSD mode (displays only editor only)")
 	
 	
 	def save_profile_selection(self, path):
