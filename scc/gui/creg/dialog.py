@@ -230,27 +230,39 @@ class ControllerRegistration(Editor):
 		config = dict(
 			buttons = {},
 			axes = {},
+			dpads = {},
 		)
+		
+		
+		def axis_to_json(axisdata):
+			index = self._axis_data.index(axisdata)
+			target_axis, xy = AXIS_ORDER[index]
+			min, max = axisdata.min, axisdata.max
+			if axisdata.invert:
+				min, max = max, min
+			# Center is choosen with assumption that all sticks are left
+			# in center position before 'Save' is pressed.
+			center = axisdata.pos
+			if center > 0 : center += 1
+			if center < 0 : center -= 1
+			
+			return dict(
+				axis = target_axis,
+				min = min,
+				max = max,
+				center = center,
+			)
+		
 		for code, target in self._mappings.iteritems():
 			if target in SCButtons:
 				config['buttons'][code] = nameof(target)
+			elif isinstance(target, DPadEmuData):
+				config['dpads'][code] = axis_to_json(target.axis_data)
+				config['dpads'][code]["positive"] = target.positive
+				config['dpads'][code]["button"] = nameof(target.button)
 			elif isinstance(target, AxisData):
-				index = self._axis_data.index(target)
-				target_axis, xy = AXIS_ORDER[index]
-				min, max = target.min, target.max
-				if target.invert:
-					min, max = max, min
-				# Center is choosen with assumption that all sticks are left
-				# in center position before 'Save' is pressed.
-				center = target.pos
-				if center > 0 : center += 1
-				if center < 0 : center -= 1
-				config['axes'][code] = dict(
-					axis = target_axis,
-					min = min,
-					max = max,
-					center = center,
-				)
+				config['axes'][code] = axis_to_json(target)
+		
 		buffRawData.set_text(json.dumps(config, sort_keys=True,
 						indent=4, separators=(',', ': ')))
 	
@@ -413,8 +425,8 @@ class ControllerRegistration(Editor):
 	def hilight_axis(self, axis, value):
 		cursor = axis.cursor
 		if cursor is None:
-			value = clamp(STICK_PAD_MIN,
-					axis.set_position(value), STICK_PAD_MAX)
+			changed, value = axis.set_position(value)
+			value = clamp(STICK_PAD_MIN, value, STICK_PAD_MAX)
 			# In this very specific case, trigger uses same min/max as stick
 			if value > STICK_PAD_MAX * 2 / 3:
 				self.hilight(axis.area, self.OBSERVE_COLORS[0])
@@ -428,6 +440,9 @@ class ControllerRegistration(Editor):
 				self.hilight(axis.area, self.OBSERVE_COLORS[4])
 			else:
 				self.unhilight(axis.area)
+			# Update raw data if needed
+			if changed:
+				self.generate_raw_data()
 		else:
 			parent = cursor.get_parent()
 			if parent is None:
@@ -435,8 +450,8 @@ class ControllerRegistration(Editor):
 				parent.add(cursor)
 				cursor.show()
 			# Make position
-			cursor.position[axis.xy] = clamp(STICK_PAD_MIN,
-					axis.set_position(value), STICK_PAD_MAX)
+			changed, value = axis.set_position(value)
+			cursor.position[axis.xy] = clamp(STICK_PAD_MIN, value, STICK_PAD_MAX)
 			px, py = cursor.position
 			# Grab values
 			ax, ay, aw, trash = self._controller.get_area_position(axis.area)
@@ -448,6 +463,10 @@ class ControllerRegistration(Editor):
 			y += py * aw / STICK_PAD_MAX * 0.5
 			# Move circle
 			parent.move(cursor, x, y)
+			# Update raw data if needed
+			if changed:
+				self.generate_raw_data()
+
 	
 	
 	def hilight(self, what, color=None):
@@ -584,53 +603,3 @@ class ControllerRegistration(Editor):
 			self._controller.connect('click', self.on_area_click)
 			rvController.add(self._controller)
 		rvController.set_reveal_child(True)
-
-
-class AxisData(object):
-	"""
-	(Almost) dumb container.
-	Stores position, center and limits for single axis.
-	"""
-	
-	def __init__(self, name, xy, min=STICK_PAD_MAX, max=STICK_PAD_MIN):
-		self.name = name
-		self.area = name.split("_")[0].upper()
-		if self.area.endswith("TRIG"): self.area = self.area[0:-3]
-		self.xy = xy
-		self.pos = 0
-		self.center = 0
-		self.min = min
-		self.max = max
-		self.invert = False
-		self.cursor = None
-	
-	
-	def reset(self):
-		"""
-		Resets min and max value so axis can (has to be) recalibrated again
-		"""
-		self.min = STICK_PAD_MAX
-		self.max = STICK_PAD_MIN
-	
-	
-	def __repr__(self):
-		return "<Axis data '%s'>" % (self.name, )
-	
-	
-	def set_position(self, value):
-		"""
-		Returns current position
-		translated to range of (STICK_PAD_MIN, STICK_PAD_MAX)
-		"""
-		self.min = min(self.min, value)
-		self.max = max(self.max, value)
-		self.pos = value
-		try:
-			r = (STICK_PAD_MAX - STICK_PAD_MIN) / (self.max - self.min)
-			v = (self.pos - self.min) * r
-			if self.invert:
-				return STICK_PAD_MAX - v
-			else:
-				return v + STICK_PAD_MIN
-		except ZeroDivisionError:
-			return 0

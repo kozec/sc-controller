@@ -46,21 +46,27 @@ class AxisData(object):
 	
 	def set_position(self, value):
 		"""
-		Returns current position
+		Returns (changed, x), value determining if axis limits were changed and
+		current position position.
 		translated to range of (STICK_PAD_MIN, STICK_PAD_MAX)
 		"""
-		self.min = min(self.min, value)
-		self.max = max(self.max, value)
+		changed = False
+		if value < self.min:
+			self.min = value
+			changed = True
+		if value > self.max:
+			self.max = value
+			changed = True
 		self.pos = value
 		try:
 			r = (STICK_PAD_MAX - STICK_PAD_MIN) / (self.max - self.min)
 			v = (self.pos - self.min) * r
 			if self.invert:
-				return STICK_PAD_MAX - v
+				return changed, STICK_PAD_MAX - v
 			else:
-				return v + STICK_PAD_MIN
+				return changed, v + STICK_PAD_MIN
 		except ZeroDivisionError:
-			return 0
+			return changed, 0
 
 
 class DPadEmuData(object):
