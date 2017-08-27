@@ -19,13 +19,14 @@ import evdev
 import struct, threading, Queue, os, time, binascii, json, logging
 log = logging.getLogger("evdev")
 
+TRIGGERS = "ltrig", "rtrig"
 
 EvdevControllerInput = namedtuple('EvdevControllerInput',
 	'buttons ltrig rtrig stick_x stick_y lpad_x lpad_y rpad_x rpad_y'
 )
 
 AxisCalibrationData = namedtuple('AxisCalibrationData',
-	'scale offset center deadzone'
+	'scale offset center clamp_min clamp_max deadzone'
 )
 
 class EvdevController(Controller):
@@ -53,7 +54,6 @@ class EvdevController(Controller):
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
 		self._padpressemu_task = None
 	
-	
 	def _parse_config(self, config):
 		self._evdev_to_button = {}
 		self._evdev_to_axis = {}
@@ -61,23 +61,32 @@ class EvdevController(Controller):
 		self._calibrations = {}
 		
 		def _parse_axis(axis):
-			min      = value.get("min", -127)
-			max      = value.get("max",  128)
-			center   = value.get("center", 0)
-			deadzone = value.get("deadzone", 0)
+			min       = value.get("min", -127)
+			max       = value.get("max",  128)
+			center    = value.get("center", 0)
+			clamp_min = STICK_PAD_MIN
+			clamp_max = STICK_PAD_MAX
+			deadzone  = value.get("deadzone", 0)
 			if max > min:
 				scale = (-2.0 / (min-max)) if min != max else 1.0
 				deadzone = abs(float(deadzone) * scale)
-				return AxisCalibrationData(scale, -1.0, center, deadzone)
+				offset = -1.0
 			else:
 				scale = (-2.0 / (min-max)) if min != max else 1.0
 				deadzone = abs(float(deadzone) * scale)
-				return AxisCalibrationData(scale, 1.0, center, deadzone)
+				offset = 1.0
+			if axis in TRIGGERS:
+				clamp_min = TRIGGER_MIN
+				clamp_max = TRIGGER_MAX
+				offset += 1.0
+				scale *= 0.5
+			
+			return AxisCalibrationData(scale, offset, center, clamp_min, clamp_max, deadzone)
 		
 		for x, value in config.get("buttons", {}).iteritems():
 			try:
 				keycode = int(x)
-				if value in ("ltrig", "rtrig"):
+				if value in TRIGGERS:
 					self._evdev_to_axis[keycode] = value
 				else:
 					sc = getattr(SCButtons, value)
@@ -182,7 +191,8 @@ class EvdevController(Controller):
 					if value >= -cal.deadzone and value <= cal.deadzone:
 						value = 0
 					else:
-						value = clamp(STICK_PAD_MIN, int(value * STICK_PAD_MAX), STICK_PAD_MAX)
+						value = clamp(cal.clamp_min,
+								int(value * cal.clamp_max), cal.clamp_max)
 					axis = self._evdev_to_axis[event.code]
 					if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
 						b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH

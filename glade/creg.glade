@@ -656,7 +656,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
                 <property name="vexpand">True</property>
                 <child>
                   <object class="GtkScrolledWindow" id="swRawData">
-                    <property name="height_request">100</property>
+                    <property name="height_request">300</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="border_width">1</property>
