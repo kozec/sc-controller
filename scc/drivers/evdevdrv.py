@@ -12,6 +12,8 @@ from scc.controller import Controller
 from scc.paths import get_config_path
 from scc.config import Config
 from scc.poller import Poller
+from scc.tools import clamp
+
 from collections import namedtuple
 import evdev
 import struct, threading, Queue, os, time, binascii, json, logging
@@ -23,7 +25,7 @@ EvdevControllerInput = namedtuple('EvdevControllerInput',
 )
 
 AxisCalibrationData = namedtuple('AxisCalibrationData',
-	'scale offset center'
+	'scale offset center deadzone'
 )
 
 class EvdevController(Controller):
@@ -59,16 +61,18 @@ class EvdevController(Controller):
 		self._calibrations = {}
 		
 		def _parse_axis(axis):
-			min, max, center = (value.get("min", -127),
-					value.get("max", 128), value.get("center", 0))
+			min      = value.get("min", -127)
+			max      = value.get("max",  128)
+			center   = value.get("center", 0)
+			deadzone = value.get("deadzone", 0)
 			if max > min:
-				return AxisCalibrationData(
-					(-2.0 / (min-max)) if min != max else 1.0,
-					-1.0, center)
+				scale = (-2.0 / (min-max)) if min != max else 1.0
+				deadzone = abs(float(deadzone) * scale)
+				return AxisCalibrationData(scale, -1.0, center, deadzone)
 			else:
-				return AxisCalibrationData(
-					(-2.0 / (min-max)) if min != max else 1.0,
-					1.0, center)
+				scale = (-2.0 / (min-max)) if min != max else 1.0
+				deadzone = abs(float(deadzone) * scale)
+				return AxisCalibrationData(scale, 1.0, center, deadzone)
 		
 		for x, value in config.get("buttons", {}).iteritems():
 			try:
@@ -144,6 +148,8 @@ class EvdevController(Controller):
 							value = STICK_PAD_MAX
 						else:
 							value = STICK_PAD_MIN
+						cal = self._calibrations[event.code]
+						value = value * cal.scale * STICK_PAD_MAX
 					else:
 						value = 0
 					axis = self._evdev_to_axis[event.code]
@@ -172,10 +178,11 @@ class EvdevController(Controller):
 						new_state = new_state._replace(**{ axis : TRIGGER_MIN })
 				elif event.type == evdev.ecodes.EV_ABS and event.code in self._evdev_to_axis:
 					cal = self._calibrations[event.code]
-					value = (float(event.value) * cal.scale + cal.offset)
-					value = int(value * STICK_PAD_MAX)
-					if value >= -cal.center and value <= cal.center:
+					value = (float(event.value) * cal.scale) + cal.offset
+					if value >= -cal.deadzone and value <= cal.deadzone:
 						value = 0
+					else:
+						value = clamp(STICK_PAD_MIN, int(value * STICK_PAD_MAX), STICK_PAD_MAX)
 					axis = self._evdev_to_axis[event.code]
 					if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
 						b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH

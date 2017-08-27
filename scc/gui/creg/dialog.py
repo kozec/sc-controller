@@ -154,6 +154,8 @@ class ControllerRegistration(Editor):
 								continue
 							log.warning("Adding button -> axis mapping for %s", k)
 							self._mappings[keycode] = self._axis_data[SDL_AXES.index(k)]
+							self._mappings[keycode].min = STICK_PAD_MIN
+							self._mappings[keycode].max = STICK_PAD_MAX
 						elif k in SDL_AXES: 
 							try:
 								code = axes[int(v.strip("a"))]
@@ -243,18 +245,20 @@ class ControllerRegistration(Editor):
 			min, max = axisdata.min, axisdata.max
 			if axisdata.invert:
 				min, max = max, min
-			# Center is choosen with assumption that all sticks are left
-			# in center position before 'Save' is pressed.
-			center = axisdata.pos
-			if center > 0 : center += 1
-			if center < 0 : center -= 1
 			
-			return dict(
+			rv = dict(
 				axis = target_axis,
 				min = min,
-				max = max,
-				center = center,
+				max = max
 			)
+			if target_axis not in ("ltrig", "rtrig"):
+				# Deadzone is generated with assumption that all sticks are left
+				# in center position before 'Save' is pressed.
+				center = axisdata.min + (axisdata.max - axisdata.min) / 2
+				deadzone = abs(axisdata.pos - center) * 2 + 2
+				rv["deadzone"] = deadzone
+			
+			return rv
 		
 		for code, target in self._mappings.iteritems():
 			if target in SCButtons:
@@ -286,6 +290,7 @@ class ControllerRegistration(Editor):
 	
 	
 	def save_registration(self):
+		self.generate_raw_data()
 		buffRawData = self.builder.get_object("buffRawData")
 		jsondata = buffRawData.get_text(buffRawData.get_start_iter(),
 			buffRawData.get_end_iter(), True)
