@@ -47,9 +47,9 @@ INPUT_FORMAT = [
 	('h',   'q4'),
 	('16x', 'ukn_07')]
 FORMATS, NAMES = zip(*INPUT_FORMAT)
+TUP_FORMAT = '<' + ''.join(FORMATS)
 ControllerInput = namedtuple('ControllerInput', ' '.join([ x for x in NAMES if not x.startswith('ukn_') ]))
 SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
-TUP_FORMAT = '<' + ''.join(FORMATS)
 
 
 log = logging.getLogger("SCDongle")

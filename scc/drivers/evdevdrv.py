@@ -39,9 +39,12 @@ class EvdevController(Controller):
 	
 	def __init__(self, daemon, device, config):
 		try:
-			self._parse_config(config)
+			(self._button_map,
+			self._axis_map,
+			self._dpad_map,
+			self._calibrations) = parse_config(config)
 		except Exception, e:
-			log.error("Failed to parse config for evdev device")
+			log.error("Failed to parse config for evdev controller")
 			raise
 		Controller.__init__(self)
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
@@ -54,55 +57,6 @@ class EvdevController(Controller):
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
 		self._padpressemu_task = None
 	
-	def _parse_config(self, config):
-		self._evdev_to_button = {}
-		self._evdev_to_axis = {}
-		self._evdev_to_dpad = {}
-		self._calibrations = {}
-		
-		def _parse_axis(axis):
-			min       = value.get("min", -127)
-			max       = value.get("max",  128)
-			center    = value.get("center", 0)
-			clamp_min = STICK_PAD_MIN
-			clamp_max = STICK_PAD_MAX
-			deadzone  = value.get("deadzone", 0)
-			if max > min:
-				scale = (-2.0 / (min-max)) if min != max else 1.0
-				deadzone = abs(float(deadzone) * scale)
-				offset = -1.0
-			else:
-				scale = (-2.0 / (min-max)) if min != max else 1.0
-				deadzone = abs(float(deadzone) * scale)
-				offset = 1.0
-			if axis in TRIGGERS:
-				clamp_min = TRIGGER_MIN
-				clamp_max = TRIGGER_MAX
-				offset += 1.0
-				scale *= 0.5
-			
-			return AxisCalibrationData(scale, offset, center, clamp_min, clamp_max, deadzone)
-		
-		for x, value in config.get("buttons", {}).iteritems():
-			try:
-				keycode = int(x)
-				if value in TRIGGERS:
-					self._evdev_to_axis[keycode] = value
-				else:
-					sc = getattr(SCButtons, value)
-					self._evdev_to_button[keycode] = sc
-			except: pass
-		for x, value in config.get("axes", {}).iteritems():
-			code, axis = int(x), value.get("axis")
-			if axis in EvdevControllerInput._fields:
-				self._calibrations[code] = _parse_axis(axis)
-				self._evdev_to_axis[code] = axis
-		for x, value in config.get("dpads", {}).iteritems():
-			code, axis = int(x), value.get("axis")
-			if axis in EvdevControllerInput._fields:
-				self._calibrations[code] = _parse_axis(axis)
-				self._evdev_to_dpad[code] = value.get("positive", False)
-				self._evdev_to_axis[code] = axis
 	
 	def close(self):
 		self.poller.unregister(self.device.fd)
@@ -149,10 +103,10 @@ class EvdevController(Controller):
 		need_cancel_padpressemu = False
 		try:
 			for event in self.device.read():
-				if event.type == evdev.ecodes.EV_KEY and event.code in self._evdev_to_dpad:
+				if event.type == evdev.ecodes.EV_KEY and event.code in self._dpad_map:
 					cal = self._calibrations[event.code]
 					if event.value:
-						if self._evdev_to_dpad[event.code]:
+						if self._dpad_map[event.code]:
 							# Positive
 							value = STICK_PAD_MAX
 						else:
@@ -161,7 +115,7 @@ class EvdevController(Controller):
 						value = value * cal.scale * STICK_PAD_MAX
 					else:
 						value = 0
-					axis = self._evdev_to_axis[event.code]
+					axis = self._axis_map[event.code]
 					if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
 						b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH
 						need_cancel_padpressemu = True
@@ -172,20 +126,20 @@ class EvdevController(Controller):
 						new_state = new_state._replace(buttons=b, **{ axis : value })
 					else:
 						new_state = new_state._replace(**{ axis : value })
-				elif event.type == evdev.ecodes.EV_KEY and event.code in self._evdev_to_button:
+				elif event.type == evdev.ecodes.EV_KEY and event.code in self._button_map:
 					if event.value:
-						b = new_state.buttons | self._evdev_to_button[event.code]
+						b = new_state.buttons | self._button_map[event.code]
 						new_state = new_state._replace(buttons=b)
 					else:
-						b = new_state.buttons & ~self._evdev_to_button[event.code]
+						b = new_state.buttons & ~self._button_map[event.code]
 						new_state = new_state._replace(buttons=b)
-				elif event.type == evdev.ecodes.EV_KEY and event.code in self._evdev_to_axis:
-					axis = self._evdev_to_axis[event.code]
+				elif event.type == evdev.ecodes.EV_KEY and event.code in self._axis_map:
+					axis = self._axis_map[event.code]
 					if event.value:
 						new_state = new_state._replace(**{ axis : TRIGGER_MAX })
 					else:
 						new_state = new_state._replace(**{ axis : TRIGGER_MIN })
-				elif event.type == evdev.ecodes.EV_ABS and event.code in self._evdev_to_axis:
+				elif event.type == evdev.ecodes.EV_ABS and event.code in self._axis_map:
 					cal = self._calibrations[event.code]
 					value = (float(event.value) * cal.scale) + cal.offset
 					if value >= -cal.deadzone and value <= cal.deadzone:
@@ -193,7 +147,7 @@ class EvdevController(Controller):
 					else:
 						value = clamp(cal.clamp_min,
 								int(value * cal.clamp_max), cal.clamp_max)
-					axis = self._evdev_to_axis[event.code]
+					axis = self._axis_map[event.code]
 					if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
 						b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH
 						need_cancel_padpressemu = True
@@ -302,6 +256,63 @@ class EvdevController(Controller):
 	def feedback(self, data):
 		""" TODO: It would be nice to have feedback... """
 		pass
+
+
+def parse_config(config):
+	button_map = {}
+	axis_map = {}
+	dpad_map = {}
+	calibrations = {}
+	
+	def _parse_axis(axis):
+		min       = value.get("min", -127)
+		max       = value.get("max",  128)
+		center    = value.get("center", 0)
+		clamp_min = STICK_PAD_MIN
+		clamp_max = STICK_PAD_MAX
+		deadzone  = value.get("deadzone", 0)
+		if max > min:
+			scale = (-2.0 / (min-max)) if min != max else 1.0
+			deadzone = abs(float(deadzone) * scale)
+			offset = -1.0
+		else:
+			scale = (-2.0 / (min-max)) if min != max else 1.0
+			deadzone = abs(float(deadzone) * scale)
+			offset = 1.0
+		if axis in TRIGGERS:
+			clamp_min = TRIGGER_MIN
+			clamp_max = TRIGGER_MAX
+			offset += 1.0
+			scale *= 0.5
+		
+		return AxisCalibrationData(scale, offset, center, clamp_min, clamp_max, deadzone)
+	
+	for x, value in config.get("buttons", {}).iteritems():
+		try:
+			keycode = int(x)
+			if value in TRIGGERS:
+				axis_map[keycode] = value
+			else:
+				sc = getattr(SCButtons, value)
+				button_map[keycode] = sc
+		except: pass
+	for x, value in config.get("axes", {}).iteritems():
+		code, axis = int(x), value.get("axis")
+		if axis in EvdevControllerInput._fields:
+			calibrations[code] = _parse_axis(axis)
+			axis_map[code] = axis
+	for x, value in config.get("dpads", {}).iteritems():
+		code, axis = int(x), value.get("axis")
+		if axis in EvdevControllerInput._fields:
+			calibrations[code] = _parse_axis(axis)
+			dpad_map[code] = value.get("positive", False)
+			axis_map[code] = axis
+	return (
+		button_map,
+		axis_map,
+		dpad_map,
+		calibrations
+	)
 
 
 class EvdevDriver(object):

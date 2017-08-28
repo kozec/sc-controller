@@ -1280,6 +1280,24 @@ class USBDeviceHandle(object):
             return None
         return descriptor_string.value.decode('UTF-16-LE')
 
+    def getRawDescriptor(self, descriptor, desc_index, length):
+        """
+        Fetch description string for given descriptor and in given language.
+        Use getSupportedLanguageList to know which languages are available.
+        Return value is an unicode string.
+        Return None if there is no such descriptor on device.
+        """
+        data = (c_uint8 * length)()
+        try:
+            mayRaiseUSBError(libusb1.libusb_get_descriptor(
+                self.__handle, descriptor, desc_index, data, length
+            ))
+        # pylint: disable=undefined-variable
+        except USBErrorNotFound:
+            # pylint: enable=undefined-variable
+            return None
+        return [ x for x in data ]
+
     def getASCIIStringDescriptor(self, descriptor):
         """
         Fetch description string for given descriptor in first available
