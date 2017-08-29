@@ -1102,27 +1102,36 @@ class ReportingAction(Action):
 		self.old_pos = 0, 0
 	
 	
+	def _report(self, message):
+		try:
+			self.client.wfile.write(message.encode("utf-8"))
+		except Exception, e:
+			# May fail when client dies
+			self.client.rfile.close()
+			self.client.wfile.close()
+	
+	
 	def trigger(self, mapper, position, old_position):
 		if mapper.get_controller():
-			self.client.wfile.write(("Event: %s %s %s %s\n" % (
+			self._report("Event: %s %s %s %s\n" % (
 				mapper.get_controller().get_id(),
-				self.what.name, position, old_position)
-			).encode("utf-8"))
+				self.what.name, position, old_position
+			))
 	
 	
 	def button_press(self, mapper, number=1):
 		if mapper.get_controller():
 			if self.what == SCButtons.STICKPRESS:
-				self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
+				self._report("Event: %s STICKPRESS %s\n" % (
 					mapper.get_controller().get_id(),
 					number
-				)).encode("utf-8"))
+				))
 			else:
-				self.client.wfile.write(("Event: %s %s %s\n" % (
+				self._report("Event: %s %s %s\n" % (
 					mapper.get_controller().get_id(),
 					self.what.name,
 					number
-				)).encode("utf-8"))
+				))
 	
 	
 	def button_release(self, mapper):
@@ -1134,10 +1143,10 @@ class ReportingAction(Action):
 							or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE)):
 			self.old_pos = x, y
 			if mapper.get_controller():
-				self.client.wfile.write(("Event: %s %s %s %s\n" % (
+				self._report("Event: %s %s %s %s\n" % (
 					mapper.get_controller().get_id(),
 					what, x, y
-				)).encode("utf-8"))
+				))
 
 
 class LockedAction(ReportingAction):
@@ -1157,7 +1166,7 @@ class ObservingAction(ReportingAction):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
 		self.client.observed_actions.add(self)
-		log.debug("%s observed %s", self.what, self.client)
+		log.debug("%s observed by %s", self.what, self.client)
 	
 	
 	def trigger(self, mapper, position, old_position):
