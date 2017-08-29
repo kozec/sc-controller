@@ -115,18 +115,17 @@ class HIDController(USBDevice, Controller):
 			if self.values[i] != new_values[i]:
 				p = self._parsers[i]
 				if p.TYPE == HIDPARSE_TYPE_AXIS:
-					print "Axis", p.id, new_values[i]
-					pass
+					print "Axis", p.code, new_values[i]
 				if p.TYPE == HIDPARSE_TYPE_BUTTONS:
 					pressed = new_values[i] & ~self.values[i]
 					released = self.values[i] & ~new_values[i]
 					# Note: This is _slow_. Doesn't matter. It's test
-					for b in xrange(0, p.count):
-						mask = 1 << b
+					for j in xrange(0, p.count):
+						mask = 1 << j
 						if pressed & mask:
-							print "ButtonPress", p.id + b
+							print "ButtonPress", p.code + j
 						if released & mask:
-							print "ButtonRelease", p.id + b
+							print "ButtonRelease", p.code + j
 		
 		self.values = new_values
 	
@@ -140,15 +139,54 @@ class HIDController(USBDevice, Controller):
 		for i in self._range:
 			if self.values[i] != new_values[i]:
 				p = self._parsers[i]
-				if p.TYPE == HIDPARSE_TYPE_AXIS and p.id in self._axis_map:
-					cal = self._calibrations[p.id]
+				# if p.TYPE == HIDPARSE_TYPE_BUTTONS and p.code in self._dpad_map:
+				if p.TYPE == HIDPARSE_TYPE_BUTTONS:
+					pressed = new_values[i] & ~self.values[i]
+					released = self.values[i] & ~new_values[i]
+					# TODO: This is _slow_ and it matters here
+					for j in xrange(0, p.count):
+						mask = 1 << j
+						code = p.code + j + 288
+						if code in self._dpad_map:
+							cal = self._calibrations[code]
+							if pressed & mask:
+								if self._dpad_map[code]:
+									# Positive
+									value = STICK_PAD_MAX
+								else:
+									value = STICK_PAD_MIN
+								cal = self._calibrations[code]
+								value = value * cal.scale * STICK_PAD_MAX
+							else:
+								value = 0
+							axis = self._axis_map[code]
+							if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
+								b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH
+								need_cancel_padpressemu = True
+								new_state = new_state._replace(buttons=b, **{ axis : value })
+							elif not new_state.buttons & SCButtons.RPADTOUCH and axis in ("rpad_x", "rpad_y"):
+								b = new_state.buttons | SCButtons.RPADTOUCH
+								need_cancel_padpressemu = True
+								new_state = new_state._replace(buttons=b, **{ axis : value })
+							else:
+								new_state = new_state._replace(**{ axis : value })
+						elif code in self._button_map:
+							if pressed & mask:
+								b = new_state.buttons | self._button_map[code]
+								new_state = new_state._replace(buttons=b)
+							elif released & mask:
+								b = new_state.buttons & ~self._button_map[code]
+								new_state = new_state._replace(buttons=b)
+					
+				elif p.TYPE == HIDPARSE_TYPE_AXIS and p.code in self._axis_map:
+					cal = self._calibrations[p.code]
 					value = (float(p.value) * cal.scale) + cal.offset
 					if value >= -cal.deadzone and value <= cal.deadzone:
 						value = 0
 					else:
 						value = clamp(cal.clamp_min,
 								int(value * cal.clamp_max), cal.clamp_max)
-					axis = self._axis_map[p.id]
+					axis = self._axis_map[p.code]
 					if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
 						b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH
 						need_cancel_padpressemu = True

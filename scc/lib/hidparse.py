@@ -321,8 +321,8 @@ def get_report_descriptor(devfile, flat_list=False):
 
 class Parser(object):
 	
-	def __init__(self, id, offset, count, size):
-		self.id = id
+	def __init__(self, code, offset, count, size):
+		self.code = code
 		self.value = 0
 		self.offset = offset
 		self.byte_offset = offset / 8
