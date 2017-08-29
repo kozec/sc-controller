@@ -534,6 +534,7 @@ class SCCDaemon(Daemon):
 		Sends controller count and list of controllers using provided method
 		"""
 		for c in self.controllers:
+			print c, c.get_id, c.get_id()
 			method(("Controller: %s %s %s\n" % (
 				c.get_id(), c.get_type(), c.get_id_is_persistent()
 			)).encode("utf-8"))

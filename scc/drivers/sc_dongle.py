@@ -166,6 +166,7 @@ class SCController(Controller):
 		self._input_rotation_r = 0
 		self._led_level = 10
 		self._serial = "0000000000"
+		self._id = "sc%s" % (self._id, )
 		self._old_state = SCI_NULL
 		self._ccidx = ccidx
 	

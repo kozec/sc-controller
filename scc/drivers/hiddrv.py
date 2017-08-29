@@ -60,10 +60,10 @@ class HIDController(USBDevice, Controller):
 		else:
 			data = self.handle.getRawDescriptor(LIBUSB_DT_REPORT, 0, 512)
 		
-		self._id = "HID:%.4x%.4x" % (vid, pid)
 		size, self._parsers = make_parsers(data)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
 		Controller.__init__(self)
+		self._id = "%.4xhid%.4x" % (vid, pid)
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		
 		self.values = [ p.value for p in self._parsers ]
@@ -95,7 +95,16 @@ class HIDController(USBDevice, Controller):
 	
 	def get_id(self):
 		return self._id
-
+	
+	
+	def get_id_is_persistent(self):
+		return True
+	
+	
+	def __repr__(self):
+		vid, pid = self.device.getVendorID(), self.device.getProductID()
+		return "<HID %.4x%.4x>" % (vid, pid)
+	
 	
 	def test_input(self, endpoint, data):
 		for parser in self._parsers:
@@ -193,9 +202,9 @@ class HIDDrv(object):
 	
 	
 	def hotplug_cb(self, device, handle):
-		vendor_id, product_id = device.getVendorID(), device.getProductID()
-		if (vendor_id, product_id) in self.configs:
-			controller = HIDController(device, handle, self.configs[vendor_id, product_id])
+		vid, pid = device.getVendorID(), device.getProductID()
+		if (vid, pid) in self.configs:
+			controller = HIDController(device, handle, self.configs[vid, pid])
 			self.daemon.add_controller(controller)
 			return controller
 		return None
@@ -214,9 +223,9 @@ class HIDDrv(object):
 		known = set()
 		for name in os.listdir(path):
 			if name.startswith("HID:") and name.endswith(".json"):
-				vendor_id, product_id = name.split("-", 1)[0].split(":")[1:]
-				vendor_id = int(vendor_id, 16)
-				product_id = int(product_id, 16)
+				vid, pid = name.split("-", 1)[0].split(":")[1:]
+				vid = int(vid, 16)
+				pid = int(pid, 16)
 				config_file = os.path.join(path, name)
 				try:
 					config = json.loads(open(config_file, "r").read())
@@ -224,20 +233,20 @@ class HIDDrv(object):
 					log.warning("Ignoring file that cannot be parsed: %s", name)
 					continue
 				
-				self.configs[vendor_id, product_id] = config
-				known.add((vendor_id, product_id))
+				self.configs[vid, pid] = config
+				known.add((vid, pid))
 		
 		for new in known - self.registered:
-			vendor_id, product_id = new
-			register_hotplug_device(self.hotplug_cb, vendor_id, product_id)
+			vid, pid = new
+			register_hotplug_device(self.hotplug_cb, vid, pid)
 			self.registered.add(new)
 		
 		for removed in self.registered - known:
-			vendor_id, product_id = removed
-			unregister_hotplug_device(self.hotplug_cb, vendor_id, product_id)
+			vid, pid = removed
+			unregister_hotplug_device(self.hotplug_cb, vid, pid)
 			self.registered.remove(removed)
-			if (vendor_id, product_id) in self.configs:
-				del self.config[vendor_id, product_id]
+			if (vid, pid) in self.configs:
+				del self.config[vid, pid]
 
 
 def hiddrv_test():
@@ -279,7 +288,7 @@ def hiddrv_test():
 	
 	init_logging()
 	set_logging_level(True, True)
-	register_hotplug_device(cb, vendor_id, product_id)
+	register_hotplug_device(cb, vid, pid)
 	_usb._daemon = fake_daemon
 	_usb.start()
 	while True:
