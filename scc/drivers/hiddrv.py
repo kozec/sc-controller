@@ -5,35 +5,136 @@ SC Controller - Universal HID driver. For all three universal HID devices.
 Borrows bit of code and configuration from evdevdrv.
 """
 
-from scc.lib.hid_fixups import HID_FIXUPS
 from scc.lib.hidparse import HIDPARSE_TYPE_AXIS, HIDPARSE_TYPE_BUTTONS
-from scc.lib.hidparse import make_parsers
-from scc.lib import IntEnum, usb1
+from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
+from scc.lib.hidparse import UsagePage, parse_report_descriptor, AXES
+from scc.lib.hid_fixups import HID_FIXUPS
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from scc.drivers.evdevdrv import parse_config, AxisCalibrationData
 from scc.constants import SCButtons, HapticPos, ControllerFlags
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.drivers.evdevdrv import TRIGGERS, parse_axis
+from scc.tools import find_library, clamp
 from scc.controller import Controller
 from scc.paths import get_config_path
+from scc.lib import IntEnum, usb1
 from scc.config import Config
-from scc.tools import clamp
 
 from collections import namedtuple
 from math import pi as PI, sin, cos
-import os, json, logging
+import os, json, ctypes, copy, logging
 log = logging.getLogger("HID")
 
 DEV_CLASS_HID = 3
 TRANSFER_TYPE_INTERRUPT = 3
 LIBUSB_DT_REPORT = 0x22
-
-HIDControllerInput = namedtuple('HIDControllerInput',
-	'buttons ltrig rtrig stick_x stick_y lpad_x lpad_y rpad_x rpad_y'
-)
+AXIS_COUNT = 8		# Must match number of axis fields in HIDControllerInput and values in AxisType
+BUTTON_COUNT = 32	# Must match (or be less than) number of bits in HIDControllerInput.buttons
+ALLOWED_SIZES = [1, 2, 4, 8, 16, 32]
+FIRST_BUTTON = 288	# To match with evdev
 
 
 class HIDError(Exception): pass
 class NotHIDDevice(HIDError): pass
 class UnparsableDescriptor(HIDError): pass
+
+class HIDControllerInput(ctypes.Structure):
+	_fields_ = [
+		('buttons', ctypes.c_uint32),
+		# Note: Axis order is same as in AxisType enum
+		('lpad_x', ctypes.c_int32),
+		('lpad_y', ctypes.c_int32),
+		('rpad_x', ctypes.c_int32),
+		('rpad_y', ctypes.c_int32),
+		('stick_x', ctypes.c_int32),
+		('stick_y', ctypes.c_int32),
+		('ltrig', ctypes.c_int32),
+		('rtrig', ctypes.c_int32),
+	]
+
+
+class AxisType(IntEnum):
+	AXIS_LPAD_X  = 0
+	AXIS_LPAD_Y  = 1
+	AXIS_RPAD_X = 2
+	AXIS_RPAD_Y = 3
+	AXIS_STICK_X = 4
+	AXIS_STICK_Y = 5
+	AXIS_LTRIG   = 6
+	AXIS_RTRIG   = 7
+
+
+class AxisMode(IntEnum):
+	DISABLED      = 0
+	AXIS          = 1
+	AXIS_NO_SCALE = 2
+	DPAD          = 3
+
+
+class AxisModeData(ctypes.Structure):
+	_fields_ = [
+		('scale', ctypes.c_float),
+		('offset', ctypes.c_float),
+		('clamp_min', ctypes.c_int),
+		('clamp_max', ctypes.c_int),
+		('deadzone', ctypes.c_float),
+	]
+
+
+class DPadModeData(ctypes.Structure):
+	_fields_ = [
+		('button1', ctypes.c_uint8),
+		('button2', ctypes.c_uint8),
+		('min', ctypes.c_int),
+		('max', ctypes.c_int),
+	]
+
+
+class AxisDataUnion(ctypes.Union):
+	_fields_ = [
+		('axis', AxisModeData),
+		('dpad', DPadModeData),
+	]
+
+
+class AxisData(ctypes.Structure):
+	_fields_ = [
+		('mode', ctypes.c_int),
+		('byte_offset', ctypes.c_size_t),
+		('bit_offset', ctypes.c_uint8),
+		('size', ctypes.c_uint8),	# TODO: Currently unused
+		
+		('data', AxisDataUnion),
+	]
+
+
+class ButtonData(ctypes.Structure):
+	_fields_ = [
+		('enabled', ctypes.c_bool),
+		('byte_offset', ctypes.c_size_t),
+		('bit_offset', ctypes.c_uint8),
+		('size', ctypes.c_uint8),
+		('button_count', ctypes.c_uint8),
+		('button_map', ctypes.c_uint8 * BUTTON_COUNT),
+	]
+
+
+class HIDDecoder(ctypes.Structure):
+	_fields_ = [
+		('axes', AxisData * AXIS_COUNT),
+		('buttons', ButtonData),
+		('packet_size', ctypes.c_size_t),
+		
+		('old_state', HIDControllerInput),
+		('state', HIDControllerInput),
+	]
+
+
+HIDDecoderPtr = ctypes.POINTER(HIDDecoder)
+
+
+_lib = find_library('libhiddrv')
+_lib.decode.restype = bool
+_lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
 
 
 class HIDController(USBDevice, Controller):
@@ -42,46 +143,164 @@ class HIDController(USBDevice, Controller):
 		USBDevice.__init__(self, device, handle)
 		self._parsers = None
 		
-		id, size = None, 64
+		id = None
+		max_size = 64
 		for inter in self.device[0]:
 			for setting in inter:
 				if setting.getClass() == DEV_CLASS_HID:
 					for endpoint in setting:
 						if endpoint.getAttributes() == TRANSFER_TYPE_INTERRUPT:
-							id = endpoint.getAddress()
-							size = endpoint.getMaxPacketSize()
+							if id is None:
+								id = endpoint.getAddress()
+								max_size = endpoint.getMaxPacketSize()
 		
 		if id is None:
 			raise NotHIDDevice()
 		
 		vid, pid = self.device.getVendorID(), self.device.getProductID()
 		if vid in HID_FIXUPS and pid in HID_FIXUPS[vid]:
-			data = HID_FIXUPS[vid][pid]
+			hid_descriptor = HID_FIXUPS[vid][pid]
 		else:
-			data = self.handle.getRawDescriptor(LIBUSB_DT_REPORT, 0, 512)
+			hid_descriptor = self.handle.getRawDescriptor(
+					LIBUSB_DT_REPORT, 0, 512)
 		
-		size, self._parsers = make_parsers(data)
+		self._build_hid_decoder(hid_descriptor, config, max_size)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
-		Controller.__init__(self)
 		self._id = "%.4xhid%.4x" % (vid, pid)
+		Controller.__init__(self)
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		
-		self.values = [ p.value for p in self._parsers ]
-		self._range = list(xrange(0, len(self.values)))
-		self._state = HIDControllerInput( *[0] * len(HIDControllerInput._fields) )
-		
 		if test_mode:
-			self.set_input_interrupt(id, size, self.test_input)
+			self.set_input_interrupt(id, self._decoder.packet_size, self.test_input)
 		else:
+			self.set_input_interrupt(id, self._decoder.packet_size, self.input)
+	
+	
+	def _build_button_map(self, config):
+		"""
+		Returns button  map readed from configuration, in format situable
+		for HIDDecoder.buttons.button_map field.
+		
+		Generates default if config is not available.
+		"""
+		if config:
+			# Last possible value is default "maps-to-nothing" mapping
+			buttons = [BUTTON_COUNT - 1] * BUTTON_COUNT
+			for keycode, value in config.get('buttons', {}).items():
+				keycode = int(keycode) - FIRST_BUTTON
+				if keycode < 0 or keycode >= BUTTON_COUNT:
+					# Out of range
+					continue
+				if value in TRIGGERS:
+					# Not used here
+					pass
+				else:
+					sc, bit = int(getattr(SCButtons, value)), 0
+					while sc and (sc & 1 == 0):
+						sc >>= 1
+						bit += 1
+					if sc & 1 == 1:
+						buttons[keycode] = bit
+					else:
+						buttons[keycode] = BUTTON_COUNT - 1
+		else:
+			buttons = list(xrange(BUTTON_COUNT))
+		
+		return (ctypes.c_uint8 * BUTTON_COUNT)(*buttons)
+	
+	
+	def _build_axis_maping(self, axis, config):
+		"""
+		Converts configuration mapping for _one_ axis to value situable
+		for self._decoder.axes field.
+		"""
+		axis_config = config.get("axes", {}).get(str(int(axis)))
+		if axis_config:
 			try:
-				(self._button_map,
-				self._axis_map,
-				self._dpad_map,
-				self._calibrations) = parse_config(config)
-			except Exception, e:
-				log.error("Failed to parse config for HID controller")
-				raise
-			self.set_input_interrupt(id, size, self.input)
+				target = ( list([ x for (x, y) in HIDControllerInput._fields_ ])
+					.index(axis_config.get("axis")) - 1 )
+			except Exception:
+				# Maps to unknown axis
+				return None, None
+			cdata = parse_axis(axis_config)
+			axis_data = AxisData(
+				mode = AxisMode.AXIS,
+				data = AxisDataUnion(
+					axis = AxisModeData(**{
+						field : getattr(cdata, field) for field in cdata._fields
+					})
+				)
+			)
+			return target, axis_data
+		return None, None
+	
+	
+	def _build_hid_decoder(self, data, config, max_size):
+		size, count, total, kind = 1, 0, 0, None
+		next_axis = AxisType.AXIS_LPAD_X
+		self._decoder = HIDDecoder()
+		for x in parse_report_descriptor(data, True):
+			if x[0] == GlobalItem.ReportSize:
+				size = x[1]
+			elif x[0] == GlobalItem.ReportCount:
+				count = x[1]
+			elif x[0] == LocalItem.Usage:
+				kind = x[1]
+			elif x[0] == MainItem.Input:
+				if x[1] == ItemType.Constant:
+					total += count * size
+				elif x[1] == ItemType.Data:
+					if kind in AXES:
+						if not size in ALLOWED_SIZES:
+							raise UnparsableDescriptor("Axis with invalid size (%s bits)" % (size, ))
+						for i in xrange(count):
+							if next_axis < AXIS_COUNT:
+								log.debug("Found axis %s at bit %s", next_axis, total)
+								if config:
+									target, axis_data = self._build_axis_maping(next_axis, config)
+									if axis_data:
+										axis_data.byte_offset = total / 8
+										axis_data.bit_offset = total % 8
+										axis_data.size = size
+										self._decoder.axes[target] = axis_data
+								else:
+									self._decoder.axes[next_axis] = AxisData(mode = AxisMode.AXIS_NO_SCALE)
+									self._decoder.axes[next_axis].byte_offset = total / 8
+									self._decoder.axes[next_axis].bit_offset = total % 8
+									self._decoder.axes[next_axis].size = size
+								next_axis = next_axis + 1
+								if next_axis < AXIS_COUNT:
+									next_axis = AxisType(next_axis)
+							total += size
+					elif kind == UsagePage.ButtonPage:
+						if self._decoder.buttons.enabled:
+							raise UnparsableDescriptor("HID descriptor with two sets of buttons")
+						if count * size < 8:
+							buttons_size = 8
+						elif count * size < 32:
+							buttons_size = 32
+						else:
+							raise UnparsableDescriptor("Too many buttons (up to 32 supported)")
+						log.debug("Found %s buttons at bit %s", count, total)
+						self._decoder.buttons = ButtonData(
+							enabled = True,
+							byte_offset = total / 8,
+							bit_offset = total % 8,
+							size = buttons_size,
+							button_count = count,
+							button_map = self._build_button_map(config)
+						)
+						total += count * size
+					else:
+						log.debug("Skipped over %s bits for %s at bit %s", count * size, kind, total)
+						total += count * size
+		
+		self._decoder.packet_size = total / 8
+		if total % 8 > 0:
+			self._decoder.packet_size += 1
+		if self._decoder.packet_size > max_size:
+			self._decoder.packet_size = max_size
+		log.debug("Packet size: %s", self._decoder.packet_size)
 	
 	
 	def close(self):
@@ -107,104 +326,32 @@ class HIDController(USBDevice, Controller):
 	
 	
 	def test_input(self, endpoint, data):
-		for parser in self._parsers:
-			parser.decode(data)
+		if not _lib.decode(ctypes.byref(self._decoder), data):
+			# Returns True if anything changed
+			return
+		# Note: This is quite slow, but good enough for test mode
+		code = 0
+		for attr, trash in self._decoder.state._fields_:
+			if attr == "buttons": continue
+			if getattr(self._decoder.state, attr) != getattr(self._decoder.old_state, attr):
+				print "Axis", code, getattr(self._decoder.state, attr)
+			code += 1
 		
-		new_values = [ p.value for p in self._parsers ]
-		for i in self._range:
-			if self.values[i] != new_values[i]:
-				p = self._parsers[i]
-				if p.TYPE == HIDPARSE_TYPE_AXIS:
-					print "Axis", p.code, new_values[i]
-				if p.TYPE == HIDPARSE_TYPE_BUTTONS:
-					pressed = new_values[i] & ~self.values[i]
-					released = self.values[i] & ~new_values[i]
-					# Note: This is _slow_. Doesn't matter. It's test
-					for j in xrange(0, p.count):
-						mask = 1 << j
-						if pressed & mask:
-							print "ButtonPress", p.code + j
-						if released & mask:
-							print "ButtonRelease", p.code + j
-		
-		self.values = new_values
+		pressed = self._decoder.state.buttons & ~self._decoder.old_state.buttons
+		released = self._decoder.old_state.buttons & ~self._decoder.state.buttons
+		for j in xrange(0, self._decoder.buttons.button_count):
+			mask = 1 << j
+			if pressed & mask:
+				print "ButtonPress", FIRST_BUTTON + j
+			if released & mask:
+				print "ButtonRelease", FIRST_BUTTON + j
 	
 	
 	def input(self, endpoint, data):
-		for parser in self._parsers:
-			parser.decode(data)
-		
-		new_state = self._state
-		new_values = [ p.value for p in self._parsers ]
-		for i in self._range:
-			if self.values[i] != new_values[i]:
-				p = self._parsers[i]
-				# if p.TYPE == HIDPARSE_TYPE_BUTTONS and p.code in self._dpad_map:
-				if p.TYPE == HIDPARSE_TYPE_BUTTONS:
-					pressed = new_values[i] & ~self.values[i]
-					released = self.values[i] & ~new_values[i]
-					# TODO: This is _slow_ and it matters here
-					for j in xrange(0, p.count):
-						mask = 1 << j
-						code = p.code + j + 288
-						if code in self._dpad_map:
-							cal = self._calibrations[code]
-							if pressed & mask:
-								if self._dpad_map[code]:
-									# Positive
-									value = STICK_PAD_MAX
-								else:
-									value = STICK_PAD_MIN
-								cal = self._calibrations[code]
-								value = value * cal.scale * STICK_PAD_MAX
-							else:
-								value = 0
-							axis = self._axis_map[code]
-							if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
-								b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH
-								need_cancel_padpressemu = True
-								new_state = new_state._replace(buttons=b, **{ axis : value })
-							elif not new_state.buttons & SCButtons.RPADTOUCH and axis in ("rpad_x", "rpad_y"):
-								b = new_state.buttons | SCButtons.RPADTOUCH
-								need_cancel_padpressemu = True
-								new_state = new_state._replace(buttons=b, **{ axis : value })
-							else:
-								new_state = new_state._replace(**{ axis : value })
-						elif code in self._button_map:
-							if pressed & mask:
-								b = new_state.buttons | self._button_map[code]
-								new_state = new_state._replace(buttons=b)
-							elif released & mask:
-								b = new_state.buttons & ~self._button_map[code]
-								new_state = new_state._replace(buttons=b)
-					
-				elif p.TYPE == HIDPARSE_TYPE_AXIS and p.code in self._axis_map:
-					cal = self._calibrations[p.code]
-					value = (float(p.value) * cal.scale) + cal.offset
-					if value >= -cal.deadzone and value <= cal.deadzone:
-						value = 0
-					else:
-						value = clamp(cal.clamp_min,
-								int(value * cal.clamp_max), cal.clamp_max)
-					axis = self._axis_map[p.code]
-					if not new_state.buttons & SCButtons.LPADTOUCH and axis in ("lpad_x", "lpad_y"):
-						b = new_state.buttons | SCButtons.LPAD | SCButtons.LPADTOUCH
-						need_cancel_padpressemu = True
-						new_state = new_state._replace(buttons=b, **{ axis : value })
-					elif not new_state.buttons & SCButtons.RPADTOUCH and axis in ("rpad_x", "rpad_y"):
-						b = new_state.buttons | SCButtons.RPADTOUCH
-						need_cancel_padpressemu = True
-						new_state = new_state._replace(buttons=b, **{ axis : value })
-					else:
-						new_state = new_state._replace(**{ axis : value })
-		
-		if new_state is not self._state:
-			old_state, self._state = self._state, new_state
+		if _lib.decode(ctypes.byref(self._decoder), data):
 			if self.mapper:
-				print "MAAAPER", new_state
-				self.mapper.input(self, old_state, new_state)
-		
-		self.values = new_values
+				self.mapper.input(self,
+						self._decoder.old_state, self._decoder.state)
 	
 	
 	def apply_config(self, config):
@@ -300,8 +447,8 @@ def hiddrv_test():
 	try:
 		if ":" in sys.argv[1]:
 			sys.argv[1:2] = sys.argv[1].split(":")
-		vendor_id = int(sys.argv[1], 16)
-		product_id = int(sys.argv[2], 16)
+		vid = int(sys.argv[1], 16)
+		pid = int(sys.argv[2], 16)
 	except Exception, e:
 		print >>sys.stderr, "Usage: %s vendor_id device_id" % (sys.argv[0], )
 		sys.exit(1)
@@ -322,7 +469,7 @@ def hiddrv_test():
 	fake_daemon = FakeDaemon()
 	
 	def cb(device, handle):
-		return HIDController(device, handle, fake_daemon, test_mode=True)
+		return HIDController(device, handle, None, test_mode=True)
 	
 	init_logging()
 	set_logging_level(True, True)

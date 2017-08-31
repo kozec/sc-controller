@@ -57,6 +57,32 @@ class EvdevController(Controller):
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
 		self._padpressemu_task = None
 	
+	def _parse_config(self, config):
+		self._evdev_to_button = {}
+		self._evdev_to_axis = {}
+		self._evdev_to_dpad = {}
+		self._calibrations = {}
+		
+		for x, value in config.get("buttons", {}).iteritems():
+			try:
+				keycode = int(x)
+				if value in TRIGGERS:
+					self._evdev_to_axis[keycode] = value
+				else:
+					sc = getattr(SCButtons, value)
+					self._evdev_to_button[keycode] = sc
+			except: pass
+		for x, value in config.get("axes", {}).iteritems():
+			code, axis = int(x), value.get("axis")
+			if axis in EvdevControllerInput._fields:
+				self._calibrations[code] = parse_axis(axis)
+				self._evdev_to_axis[code] = axis
+		for x, value in config.get("dpads", {}).iteritems():
+			code, axis = int(x), value.get("axis")
+			if axis in EvdevControllerInput._fields:
+				self._calibrations[code] = parse_axis(axis)
+				self._evdev_to_dpad[code] = value.get("positive", False)
+				self._evdev_to_axis[code] = axis
 	
 	def close(self):
 		self.poller.unregister(self.device.fd)
@@ -258,61 +284,28 @@ class EvdevController(Controller):
 		pass
 
 
-def parse_config(config):
-	button_map = {}
-	axis_map = {}
-	dpad_map = {}
-	calibrations = {}
+def parse_axis(axis):
+	min       = axis.get("min", -127)
+	max       = axis.get("max",  128)
+	center    = axis.get("center", 0)
+	clamp_min = STICK_PAD_MIN
+	clamp_max = STICK_PAD_MAX
+	deadzone  = axis.get("deadzone", 0)
+	if max > min:
+		scale = (-2.0 / (min-max)) if min != max else 1.0
+		deadzone = abs(float(deadzone) * scale)
+		offset = -1.0
+	else:
+		scale = (-2.0 / (min-max)) if min != max else 1.0
+		deadzone = abs(float(deadzone) * scale)
+		offset = 1.0
+	if axis in TRIGGERS:
+		clamp_min = TRIGGER_MIN
+		clamp_max = TRIGGER_MAX
+		offset += 1.0
+		scale *= 0.5
 	
-	def _parse_axis(axis):
-		min       = value.get("min", -127)
-		max       = value.get("max",  128)
-		center    = value.get("center", 0)
-		clamp_min = STICK_PAD_MIN
-		clamp_max = STICK_PAD_MAX
-		deadzone  = value.get("deadzone", 0)
-		if max > min:
-			scale = (-2.0 / (min-max)) if min != max else 1.0
-			deadzone = abs(float(deadzone) * scale)
-			offset = -1.0
-		else:
-			scale = (-2.0 / (min-max)) if min != max else 1.0
-			deadzone = abs(float(deadzone) * scale)
-			offset = 1.0
-		if axis in TRIGGERS:
-			clamp_min = TRIGGER_MIN
-			clamp_max = TRIGGER_MAX
-			offset += 1.0
-			scale *= 0.5
-		
-		return AxisCalibrationData(scale, offset, center, clamp_min, clamp_max, deadzone)
-	
-	for x, value in config.get("buttons", {}).iteritems():
-		try:
-			keycode = int(x)
-			if value in TRIGGERS:
-				axis_map[keycode] = value
-			else:
-				sc = getattr(SCButtons, value)
-				button_map[keycode] = sc
-		except: pass
-	for x, value in config.get("axes", {}).iteritems():
-		code, axis = int(x), value.get("axis")
-		if axis in EvdevControllerInput._fields:
-			calibrations[code] = _parse_axis(axis)
-			axis_map[code] = axis
-	for x, value in config.get("dpads", {}).iteritems():
-		code, axis = int(x), value.get("axis")
-		if axis in EvdevControllerInput._fields:
-			calibrations[code] = _parse_axis(axis)
-			dpad_map[code] = value.get("positive", False)
-			axis_map[code] = axis
-	return (
-		button_map,
-		axis_map,
-		dpad_map,
-		calibrations
-	)
+	return AxisCalibrationData(scale, offset, center, clamp_min, clamp_max, deadzone)
 
 
 class EvdevDriver(object):

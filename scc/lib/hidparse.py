@@ -31,8 +31,6 @@ AXES = [
 	GenericDesktopPage.Rx,
 	GenericDesktopPage.Ry,
 	GenericDesktopPage.Rz,
-	GenericDesktopPage.Wheel,
-	GenericDesktopPage.Hatswitch,
 ]
 
 # hidraw.h
@@ -330,7 +328,7 @@ class Parser(object):
 		self.count = count
 		self.len = count * size
 		if self.len > 64:
-			raise ValueError("Too many bytes in value: %i" % (self.byte_len, ))
+			raise ValueError("Too many bytes in value: %i" % (self.len, ))
 		elif self.len > 32:
 			self.byte_len = 8
 			self.fmt = "<Q"
@@ -344,9 +342,6 @@ class Parser(object):
 			self.byte_len = 1
 			self.fmt = "<B"
 		self.additional_bits = offset % 8
-		print "AXIS" if self.TYPE == HIDPARSE_TYPE_AXIS else "BUTTONS", \
-			"offset", offset, "size", size, "bits", self.len, self.fmt, \
-			"add", self.additional_bits
 	
 	
 	def decode(self, data):

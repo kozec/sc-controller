@@ -59,5 +59,6 @@ if __name__ == "__main__":
 			platforms = ['Linux'],
 			ext_modules = [
 				Extension('libuinput', sources = ['scc/uinput.c']),
+				Extension('libhiddrv', sources = ['scc/drivers/hiddrv.c']),
 			]
 	)
