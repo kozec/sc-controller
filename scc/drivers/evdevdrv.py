@@ -39,10 +39,7 @@ class EvdevController(Controller):
 	
 	def __init__(self, daemon, device, config):
 		try:
-			(self._button_map,
-			self._axis_map,
-			self._dpad_map,
-			self._calibrations) = parse_config(config)
+			self._parse_config(config)
 		except Exception, e:
 			log.error("Failed to parse config for evdev controller")
 			raise
@@ -50,39 +47,41 @@ class EvdevController(Controller):
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		self.device = device
 		self.config = config
-		self.poller = daemon.get_poller()
-		self.poller.register(self.device.fd, self.poller.POLLIN, self.input)
-		self.device.grab()
+		if daemon:
+			self.poller = daemon.get_poller()
+			self.poller.register(self.device.fd, self.poller.POLLIN, self.input)
+			self.device.grab()
 		self._id = self._generate_id()
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
 		self._padpressemu_task = None
 	
+	
 	def _parse_config(self, config):
-		self._evdev_to_button = {}
-		self._evdev_to_axis = {}
-		self._evdev_to_dpad = {}
+		self._button_map = {}
+		self._axis_map = {}
+		self._dpad_map = {}
 		self._calibrations = {}
 		
 		for x, value in config.get("buttons", {}).iteritems():
 			try:
 				keycode = int(x)
 				if value in TRIGGERS:
-					self._evdev_to_axis[keycode] = value
+					self._axis_map[keycode] = value
 				else:
 					sc = getattr(SCButtons, value)
-					self._evdev_to_button[keycode] = sc
+					self._button_map[keycode] = sc
 			except: pass
 		for x, value in config.get("axes", {}).iteritems():
 			code, axis = int(x), value.get("axis")
 			if axis in EvdevControllerInput._fields:
 				self._calibrations[code] = parse_axis(axis)
-				self._evdev_to_axis[code] = axis
+				self._axis_map[code] = axis
 		for x, value in config.get("dpads", {}).iteritems():
 			code, axis = int(x), value.get("axis")
 			if axis in EvdevControllerInput._fields:
 				self._calibrations[code] = parse_axis(axis)
-				self._evdev_to_dpad[code] = value.get("positive", False)
-				self._evdev_to_axis[code] = axis
+				self._dpad_map[code] = value.get("positive", False)
+				self._axis_map[code] = axis
 	
 	def close(self):
 		self.poller.unregister(self.device.fd)
@@ -202,6 +201,16 @@ class EvdevController(Controller):
 						self.cancel_padpress_emulation
 					)
 				self.mapper.input(self, old_state, new_state)
+	
+	
+	def test_input(self, event):
+		if event.type == evdev.ecodes.EV_KEY:
+			if event.value:
+				print "ButtonPress", event.code
+			else:
+				print "ButtonRelease", event.code
+		elif event.type == evdev.ecodes.EV_ABS:
+			print "Axis", event.code, event.value
 	
 	
 	def cancel_padpress_emulation(self, mapper):
@@ -387,10 +396,40 @@ class EvdevDriver(object):
 # Just like USB driver, EvdevDriver is process-wide singleton
 _evdevdrv = EvdevDriver()
 
+
+def start(daemon):
+	_evdevdrv.start()
+
+
 def init(daemon):
 	_evdevdrv._daemon = daemon
 	daemon.add_mainloop(_evdevdrv.mainloop)
 	# daemon.on_daemon_exit(_evdevdrv.on_exit)
 
-def start(daemon):
-	_evdevdrv.start()
+
+def evdevdrv_test():
+	"""
+	Small input test used by GUI while setting up the device.
+	Output and usage matches one from hiddrv.
+	"""
+	import sys
+	from scc.poller import Poller
+	from scc.tools import init_logging, set_logging_level
+	
+	try:
+		path = sys.argv[1]
+	except Exception, e:
+		print >>sys.stderr, "Usage: %s edvev_node" % (sys.argv[0], )
+		sys.exit(1)
+	
+	init_logging()
+	dev = evdev.InputDevice(path)
+	set_logging_level(True, True)
+	c = EvdevController(None, dev, {})
+	for event in dev.read_loop():
+		c.test_input(event)
+
+
+if __name__ == "__main__":
+	""" Called when executed as script """
+	evdevdrv_test()

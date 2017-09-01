@@ -439,7 +439,7 @@ class HIDDrv(object):
 
 def hiddrv_test():
 	"""
-	Small driver tester used by GUI while setting up the device.
+	Small input test used by GUI while setting up the device.
 	Basically, if HID device works with this, it will work with daemon as well.
 	"""
 	import sys
@@ -487,6 +487,7 @@ def hiddrv_test():
 def init(daemon):
 	""" Called from scc-daemon """
 	HIDDrv(daemon)
+
 
 if __name__ == "__main__":
 	""" Called when executed as script """
