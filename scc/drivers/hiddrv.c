@@ -90,7 +90,6 @@ struct HIDDecoder {
 	
 	struct HIDControllerInput old_state;
 	struct HIDControllerInput state;
-	float float_axes[AXIS_COUNT];
 };
 
 
@@ -123,35 +122,42 @@ inline int grab_with_size(const uint8_t size, const char* data, const size_t byt
 bool decode(struct HIDDecoder* dec, const char* data) {
 	memcpy(&(dec->old_state), &(dec->state), sizeof(struct HIDControllerInput));
 	// Axes
-	for (size_t x=0; x<AXIS_COUNT; x++) {
+	for (size_t i=0; i<AXIS_COUNT; i++) {
 		union Value value;
-		int ival;
 		int needsdz;
 		float fval;
-		switch (dec->axes[x].mode) {
+		switch (dec->axes[i].mode) {
 			case AXIS:
-				ival = grab_with_size(dec->axes[x].size, data, dec->axes[x].byte_offset, dec->axes[x].bit_offset);
-				fval = (ival * dec->axes[x].data.axis.scale) + dec->axes[x].data.axis.offset;
-				needsdz = !((fval >= -dec->axes[x].data.axis.deadzone) && (fval <= dec->axes[x].data.axis.deadzone));
-				if ((fval >= -dec->axes[x].data.axis.deadzone) && (fval <= dec->axes[x].data.axis.deadzone)) {
-					dec->state.axes[x] = 0;
+				fval = ((grab_with_size(dec->axes[i].size,
+						data, dec->axes[i].byte_offset, dec->axes[i].bit_offset)
+							* dec->axes[i].data.axis.scale)
+							+ dec->axes[i].data.axis.offset
+				);
+				if ((fval >= -dec->axes[i].data.axis.deadzone) && (fval <= dec->axes[i].data.axis.deadzone)) {
+						dec->state.axes[i] = 0;
 				} else {
-					dec->state.axes[x] = CLAMP(dec->axes[x].data.axis.clamp_min,
-						(int)(fval * dec->axes[x].data.axis.clamp_max), dec->axes[x].data.axis.clamp_max);
+					dec->state.axes[i] = CLAMP(
+		 				dec->axes[i].data.axis.clamp_min,
+		 				fval * dec->axes[i].data.axis.clamp_max,
+		 				dec->axes[i].data.axis.clamp_max
+					);
 				}
 				break;
 			case AXIS_NO_SCALE:
-				dec->state.axes[x] = grab_with_size(dec->axes[x].size, data, dec->axes[x].byte_offset, dec->axes[x].bit_offset);
+				dec->state.axes[i] = grab_with_size(dec->axes[i].size,
+					data, dec->axes[i].byte_offset, dec->axes[i].bit_offset);
 				break;
 			case DPAD:
-				value = grab_value(data, dec->axes[x].byte_offset, dec->axes[x].bit_offset);
-				if ((value.u32 >> dec->axes[x].data.dpad.button1) & 1)
-					dec->state.axes[x] = dec->axes[x].data.dpad.min;
-				else if ((value.u32 >> dec->axes[x].data.dpad.button2) & 1)
-					dec->state.axes[x] = dec->axes[x].data.dpad.max;
+				value = grab_value(data, dec->axes[i].byte_offset,
+					dec->axes[i].bit_offset);
+				if ((value.u32 >> dec->axes[i].data.dpad.button1) & 1)
+					dec->state.axes[i] = dec->axes[i].data.dpad.min;
+				else if ((value.u32 >> dec->axes[i].data.dpad.button2) & 1)
+					dec->state.axes[i] = dec->axes[i].data.dpad.max;
 				break;
 		}
 	}
+	
 	// Buttons
 	dec->state.buttons = 0;
 	if (dec->buttons.enabled) {

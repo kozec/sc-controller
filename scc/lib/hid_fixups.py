@@ -9,12 +9,6 @@ Taken mostly from Linux kernel source.
 HID_FIXUPS = {
 	0x0079: {
 		0x0011 : [	# DragonRise Inc. SNES-like Gamepad
-				#0x05, 0x01, 0x09, 0x04, 0xA1, 0x01, 0xA1, 0x02, 0x14, 0x75,
-				#0x08, 0x95, 0x03, 0x81, 0x01, 0x26, 0xFF, 0x00, 0x95, 0x02,
-				#0x09, 0x30, 0x09, 0x31, 0x81, 0x02, 0x75, 0x01, 0x95, 0x04,
-				#0x81, 0x01, 0x25, 0x01, 0x95, 0x0A, 0x05, 0x09, 0x19, 0x01,
-				#0x29, 0x0A, 0x81, 0x02, 0x95, 0x0A, 0x81, 0x01, 0xC0, 0xC0
-				
 				0x05, 0x01,         #  Usage Page (Desktop)
 				0x09, 0x04,         #  Usage (Joystick)
 				0xA1, 0x01,         #  Collection (Application)
@@ -64,27 +58,29 @@ HID_FIXUPS = {
 	0x054c: {
 			0x0268 : [	# Dualshock3. This one is completely imaginary,
 						# generated just so hiddrv parses correct data
+						# Don't use for anything but SCC.
 			0x05, 0x01,         # Usage Page (Desktop),
 			0x09, 0x04,         # Usage (Joystick),
 			0xA1, 0x01,         # Collection (Application),
 			0xA1, 0x02,         #     Collection (Logical),
-			0x14,               #         Logical Minimum (0),
 			0x75, 0x08,         #         Report Size (8),
 			0x95, 0x01,         #         Report Count (1),
 			0x81, 0x01,         #         Input (Constant),
-			0x75, 0x01,         #         Report Size (1),
 			0x14,               #         Logical Minimum (0),
 			0x25, 0x01,         #         Logical Maximum (1),
-			0x95, 24,           #         Report Count (19),
+			0x75, 0x01,         #         Report Size (1),
+			0x95, 25,           #         Report Count (25),
 			0x05, 0x09,         #         Usage Page (Button),
 			0x81, 0x02,         #         Input (Variable),
 			
+			0x95, 7,            #         Report Count (7),
+			0x81, 0x01,         #         Input (Constant),
 			0x75, 0x08,         #         Report Size (8),
-			0x95, 2,            #         Report Count (2),
+			0x95, 1,            #         Report Count (1),
 			0x81, 0x01,         #         Input (Constant),
 			
-			0x14,               #         Logical Minimum (0),
 			0x75, 0x08,         #         Report Size (8),
+			0x14,               #         Logical Minimum (0),
 			0x26, 0xFF, 0x00,   #         Logical Maximum (255),
 			0x95, 0x04,         #         Report Count (4),
 			0x09, 0x30,         #         Usage (X),
@@ -93,19 +89,19 @@ HID_FIXUPS = {
 			0x09, 0x34,         #         Usage (RY),
 			0x81, 0x02,         #         Input (Variable),
 			
-			0x95, 0x09,         #         Report Count (9),
-			0x81, 0x02,         #         Input (Constant),
+			0x95, 8,            #         Report Count (8),
+			0x81, 0x01,         #         Input (Constant),
 			
+			0x75, 0x08,         #         Report Size (8),
 			0x95, 0x02,         #         Report Count (2),
 			0x09, 0x30,         #         Usage (X),
 			0x09, 0x31,         #         Usage (Y),
 			0x81, 0x02,         #         Input (Variable),
 			0x95, 0x02,         #         Report Count (4),
-			0x81, 0x02,         #         Input (Constant),
-			
+			0x81, 0x01,         #         Input (Constant),
 			
 			0x75, 0x08,         #         Report Size (8),
-			0x95, 28,           #         Report Count (30),
+			0x95, 27,           #         Report Count (27),
 			0x81, 0x01,         #         Input (Constant),
 			0xC0,               #     End Collection,
 			0xC0                # End Collection

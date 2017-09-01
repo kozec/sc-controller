@@ -150,12 +150,14 @@ class HIDController(USBDevice, Controller):
 				if setting.getClass() == DEV_CLASS_HID:
 					for endpoint in setting:
 						if endpoint.getAttributes() == TRANSFER_TYPE_INTERRUPT:
-							if id is None:
+							if id is None or endpoint.getAddress() > id:
 								id = endpoint.getAddress()
 								max_size = endpoint.getMaxPacketSize()
 		
 		if id is None:
 			raise NotHIDDevice()
+		
+		log.debug("Endpoint: %s", id)
 		
 		vid, pid = self.device.getVendorID(), self.device.getProductID()
 		if vid in HID_FIXUPS and pid in HID_FIXUPS[vid]:
@@ -249,13 +251,14 @@ class HIDController(USBDevice, Controller):
 			elif x[0] == MainItem.Input:
 				if x[1] == ItemType.Constant:
 					total += count * size
+					log.debug("Found %s bits of nothing", count * size)
 				elif x[1] == ItemType.Data:
 					if kind in AXES:
 						if not size in ALLOWED_SIZES:
 							raise UnparsableDescriptor("Axis with invalid size (%s bits)" % (size, ))
 						for i in xrange(count):
 							if next_axis < AXIS_COUNT:
-								log.debug("Found axis %s at bit %s", next_axis, total)
+								log.debug("Found axis #%s at bit %s", int(next_axis), total)
 								if config:
 									target, axis_data = self._build_axis_maping(next_axis, config)
 									if axis_data:
