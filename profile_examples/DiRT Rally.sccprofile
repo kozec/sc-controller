@@ -1,0 +1,94 @@
+{
+    "_": ["For best results Steering Linearity, Steering Deadzone, Throttle Deadzone and", "Brake Deadzone should be set to 0 in Advanced Gamepad Settings. Steering Sensitivity,", "Steering Saturation, Throttle Saturation and Brake Saturation should be set to 100."], 
+    "buttons": {
+        "A": {
+            "action": "button(Keys.BTN_GAMEPAD)", 
+            "name": "Gear Up"
+        }, 
+        "B": {
+            "action": "button(Keys.BTN_EAST)", 
+            "name": "Handbreak"
+        }, 
+        "BACK": {
+            "action": "resetgyro()",
+            "name": "Reset Gyro"
+        }, 
+        "C": {
+            "action": "menu('Default.menu')", 
+            "doubleclick": {}, 
+            "hold": {
+                "action": "menu('Default.menu')"
+            }
+        }, 
+        "LB": {
+            "action": "button(Keys.BTN_TL)", 
+            "name": "Clutch"
+        }, 
+        "LGRIP": {
+            "action": "button(Keys.BTN_NORTH)", 
+            "name": "Gear Down"
+        }, 
+        "LPAD": {
+            "action": "button(Keys.BTN_EAST)", 
+            "name": "Handbreak"
+        }, 
+        "RB": {
+            "action": "button(Keys.BTN_TR)", 
+            "name": "Camera"
+        }, 
+        "RGRIP": {
+            "action": "button(Keys.BTN_GAMEPAD)", 
+            "name": "Gear Up"
+        }, 
+        "RPAD": {
+            "action": "button(Keys.BTN_THUMBR)", 
+            "name": "Look Back"
+        }, 
+        "START": {
+            "action": "button(Keys.BTN_START)", 
+            "name": "Pause"
+        }, 
+        "X": {
+            "action": "button(Keys.BTN_NORTH)", 
+            "name": "Gear Down"
+        }, 
+        "Y": {
+            "action": "button(Keys.BTN_WEST)", 
+            "name": "Recover Vehicle"
+        }
+    }, 
+    "gyro": {
+        "action": "gyroabs(None, Axes.ABS_X)",
+        "feedback": ["BOTH"],
+        "name": "Steering"
+    }, 
+    "is_template": false, 
+    "menus": {}, 
+    "pad_left": {}, 
+    "pad_right": {}, 
+    "stick": {
+        "dpad": [{
+            "action": "hatup(Axes.ABS_HAT0Y)", 
+            "name": "Navigation Up"
+        }, {
+            "action": "hatdown(Axes.ABS_HAT0Y)", 
+            "name": "Navigation Down"
+        }, {
+            "action": "hatleft(Axes.ABS_HAT0X)", 
+            "name": "Navigation Left"
+        }, {
+            "action": "hatright(Axes.ABS_HAT0X)", 
+            "name": "Navigation Right"
+        }], 
+        "name": "Menu Navigation"
+    }, 
+    "trigger_left": {
+        "action": "axis(Axes.ABS_Z)", 
+        "name": "Break/Reverse"
+    }, 
+    "trigger_right": {
+        "action": "axis(Axes.ABS_RZ)", 
+        "name": "Accelerate"
+    },
+    "version": 1.2
+}
