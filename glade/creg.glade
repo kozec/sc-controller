@@ -5,6 +5,28 @@
   <object class="GtkTextBuffer" id="buffRawData">
     <signal name="changed" handler="on_buffRawData_changed" swapped="no"/>
   </object>
+  <object class="GtkListStore" id="lstAccessMode">
+    <columns>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name enabled -->
+      <column type="gboolean"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">hid</col>
+        <col id="1" translatable="yes">USB HID</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">evdev</col>
+        <col id="1" translatable="yes">evdev</col>
+        <col id="2">True</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="lstButtons">
     <columns>
       <!-- column-name key -->
@@ -356,14 +378,14 @@ Please, select options that are best describing controller you are configuring.<
           <object class="GtkGrid" id="grBindings">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="margin_left">10</property>
-            <property name="margin_right">10</property>
-            <property name="margin_top">10</property>
             <property name="margin_bottom">10</property>
             <child>
               <object class="GtkLabel" id="label6">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
+                <property name="margin_top">10</property>
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">&lt;b&gt;Input Mappings&lt;/b&gt;
 
@@ -377,7 +399,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">1</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -385,6 +407,8 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               <object class="GtkLabel" id="label7">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">Red colored controls are not assigned to anything.</property>
                 <property name="wrap">True</property>
@@ -396,7 +420,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
+                <property name="top_attach">3</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -416,7 +440,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">2</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -424,6 +448,8 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               <object class="GtkRevealer" id="rvAdditionalOptions">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
                 <child>
                   <object class="GtkGrid" id="grAdditionalOptions">
                     <property name="visible">True</property>
@@ -449,6 +475,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_top">5</property>
                         <property name="hexpand">True</property>
                         <property name="label" translatable="yes">Invert Axes</property>
                         <property name="xalign">0</property>
@@ -588,6 +615,68 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
                         <property name="top_attach">4</property>
                       </packing>
                     </child>
+                    <child>
+                      <object class="GtkLabel" id="lblAccessMode">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">10</property>
+                        <property name="label" translatable="yes">Access Mode</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="cbAccessMode">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">lstAccessMode</property>
+                        <property name="active">1</property>
+                        <signal name="changed" handler="on_cbAccessMode_changed" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="crAccessMode1"/>
+                          <attributes>
+                            <attribute name="sensitive">2</attribute>
+                            <attribute name="markup">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">5</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
+                <property name="width">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkExpander" id="exAdditionalOptions">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
+                <property name="margin_top">20</property>
+                <signal name="activate" handler="on_exAdditionalOptions_activate" swapped="no"/>
+                <child>
+                  <placeholder/>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="lblAdditionalOptions">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Advanced Options</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
                   </object>
                 </child>
               </object>
@@ -598,35 +687,11 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </packing>
             </child>
             <child>
-              <object class="GtkExpander" id="exAdditionalOptions">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="margin_top">20</property>
-                <signal name="activate" handler="on_exAdditionalOptions_activate" swapped="no"/>
-                <child>
-                  <placeholder/>
-                </child>
-                <child type="label">
-                  <object class="GtkLabel" id="lblAdditionalOptions">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Additional Options</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkExpander" id="exRawData">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
                 <property name="margin_top">5</property>
                 <signal name="activate" handler="on_exRawData_activate" swapped="no"/>
                 <child>
@@ -645,7 +710,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">5</property>
+                <property name="top_attach">6</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -653,6 +718,8 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               <object class="GtkRevealer" id="rvRawData">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
                 <property name="vexpand">True</property>
                 <child>
                   <object class="GtkScrolledWindow" id="swRawData">
@@ -674,7 +741,94 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">6</property>
+                <property name="top_attach">7</property>
+                <property name="width">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRevealer" id="rvHIDWarning">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkInfoBar" id="ibHIDWarning">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="show_close_button">True</property>
+                    <signal name="response" handler="on_ibHIDWarning_response" swapped="no"/>
+                    <child internal-child="action_area">
+                      <object class="GtkButtonBox" id="box1HIDWarning">
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="layout_style">end</property>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child internal-child="content_area">
+                      <object class="GtkBox" id="box2HIDWarning">
+                        <property name="can_focus">False</property>
+                        <property name="spacing">16</property>
+                        <child>
+                          <object class="GtkImage" id="imgHIDWarning">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="stock">gtk-dialog-warning</property>
+                            <property name="icon_size">6</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblHIDWarning">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Warning: evdev access mode was auto-selected for HID device.
+
+That means your account lacks permissons needed to read controller exclusivelly. You can still use controller in evdev mode, but you may have trouble with some games detecting it twice.
+
+&lt;a href="https://github.com/kozec/sc-controller/wiki/Evdev-and-HID-mode-for-non-steam-controllers"&gt;Click here&lt;/a&gt; for more info.</property>
+                            <property name="use_markup">True</property>
+                            <property name="justify">fill</property>
+                            <property name="wrap">True</property>
+                            <property name="max_width_chars">60</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
                 <property name="width">3</property>
               </packing>
             </child>

@@ -297,11 +297,17 @@ class ControllerRegistration(Editor):
 		try:
 			os.makedirs(os.path.join(get_config_path(), "devices"))
 		except: pass
+		
+		filename = self._evdevice.name.strip()
+		if self._tester.driver == "hid":
+			filename = "%.4x:%.4x-%s" % (self._evdevice.info.vendor,
+				self._evdevice.info.product, filename)
+		
 		config_file = os.path.join(get_config_path(), "devices",
-			"%s.json" % (self._evdevice.name.strip(),))
+				"%s-%s.json" % (self._tester.driver.upper(), filename,))
 		
 		open(config_file, "w").write(jsondata)
-		log.debug("Evdev controller configuration '%s' written", config_file)
+		log.debug("Controller configuration '%s' written", config_file)
 	
 	
 	def on_buffRawData_changed(self, buffRawData, *a):
@@ -315,6 +321,11 @@ class ControllerRegistration(Editor):
 			# User can modify generated json code before hitting save,
 			# but if he writes something unparsable, save button is disabled
 			btNext.set_sensitive(False)
+	
+	
+	def on_ibHIDWarning_response(self, *a):
+		rvHIDWarning = self.builder.get_object("rvHIDWarning")
+		rvHIDWarning.set_reveal_child(False)
 	
 	
 	def on_btNext_clicked(self, *a):
@@ -340,39 +351,49 @@ class ControllerRegistration(Editor):
 	
 	
 	def prepare_registration(self, dev):
+		self._evdevice = dev
+		self.set_hid_enabled(True)
 		
-		def retry_evdev(tester, code):
+		def retry_with_evdev(tester, code):
 			for s in tester.__signals: tester.disconnect(s)
 			tester.stop()
+			self.set_hid_enabled(False)
 			if code != 0:
 				log.error("HID driver test failed (code %s)", code)
+			if code == 2:
+				# Special case, device may be usable, but there is no access
+				rvHIDWarning = self.builder.get_object("rvHIDWarning")
+				rvHIDWarning.set_reveal_child(False)
 			log.debug("Trying to use '%s' with evdev driver...", dev.fn)
 			self._tester = Tester("evdev", dev.fn)
 			self._tester.__signals = [
-				self._tester.connect('ready', self.on_registration_ready)
+				self._tester.connect('ready', self.on_registration_ready),
+				self._tester.connect('error', self.on_device_open_failed)
 			]
-			# TODO: Maybe display message if evdev fails as well
 			self._tester.start()
 		
-		self._evdevice = dev
 		if dev.info.vendor == 0 and dev.info.product == 0:
 			# Not an USB device, skip HID test altogether
-			retry_evdev(None, 0)
+			retry_with_evdev(None, 0)
 		else:
 			log.debug("Trying to use '%s' with HID driver...", dev.fn)
-			self._tester = Tester("hid", "%.4xX%.4x" % (dev.info.vendor, dev.info.product))
+			self._tester = Tester("hid", "%.4x:%.4x" % (dev.info.vendor, dev.info.product))
 			self._tester.__signals = [
 				self._tester.connect('ready', self.on_registration_ready),
-				self._tester.connect('error', retry_evdev),
+				self._tester.connect('error', retry_with_evdev),
 			]
 			self._tester.start()
 	
 	
 	def on_registration_ready(self, tester):
+		cbAccessMode = self.builder.get_object("cbAccessMode")
 		fxController = self.builder.get_object("fxController")
 		cbEmulateC = self.builder.get_object("cbEmulateC")
 		stDialog = self.builder.get_object("stDialog")
 		btNext = self.builder.get_object("btNext")
+		
+		self.set_cb(cbAccessMode, tester.driver)
+		cbAccessMode.set_sensitive(True)
 		
 		if not self._mappings:
 			self._mappings = {}
@@ -396,12 +417,62 @@ class ControllerRegistration(Editor):
 		btNext.set_sensitive(True)
 	
 	
+	def on_device_open_failed(self, *a):
+		"""
+		Called when all (or user-selected) driver fails
+		to communicate with controller.
+		
+		Shoudln't be really possible, but something
+		_has_ to happen in such case.
+		"""
+		d = Gtk.MessageDialog(parent=self.window,
+			flags = Gtk.DialogFlags.MODAL,
+			type = Gtk.MessageType.ERROR,
+			buttons = Gtk.ButtonsType.OK,
+			message_format = _("Failed to open device")
+		)
+		d.run()
+		d.destroy()
+		self.window.destroy()
+	
+	
 	def kill_tester(self, *a):
 		""" Called when window is closed """
 		if self._tester:
 			tester, self._tester = self._tester, None
 			for s in tester.__signals: tester.disconnect(s)
 			tester.stop()
+	
+	
+	def set_hid_enabled(self, enabled):
+		""" Enables or disables option to use HID driver """
+		cbAccessMode = self.builder.get_object("cbAccessMode")
+		for x in cbAccessMode.get_model():
+			if x[0] == "hid":
+				x[1] = _("USB HID (recommended)") if enabled else _("USB HID")
+				x[2] = enabled
+	
+	
+	def on_cbAccessMode_changed(self, cb):
+		if self._tester:
+			btNext = self.builder.get_object("btNext")
+			target = cb.get_model().get_value(cb.get_active_iter(), 0)
+			if self._tester != target:
+				# User changed driver that should be used, a lot of stuff has
+				# to be restarted
+				self.kill_tester()
+				cb.set_sensitive(False)
+				btNext.set_sensitive(False)
+				if target == "hid":
+					self._tester = Tester("hid", "%.4x:%.4x" % (
+						self._evdevice.info.vendor, self._evdevice.info.product))
+				else:
+					self._tester = Tester("evdev", self._evdevice.fn)
+				self._tester.__signals = [
+					self._tester.connect('ready', self.on_registration_ready),
+					self._tester.connect('error', self.on_device_open_failed),
+				]
+				GLib.timeout_add_seconds(1, self._tester.start)
 	
 	
 	def on_btBack_clicked(self, *a):
