@@ -304,7 +304,7 @@ class ControllerRegistration(Editor):
 				self._evdevice.info.product, filename)
 		
 		config_file = os.path.join(get_config_path(), "devices",
-				"%s-%s.json" % (self._tester.driver.upper(), filename,))
+				"%s-%s.json" % (self._tester.driver, filename,))
 		
 		open(config_file, "w").write(jsondata)
 		log.debug("Controller configuration '%s' written", config_file)
@@ -457,9 +457,10 @@ class ControllerRegistration(Editor):
 		if self._tester:
 			btNext = self.builder.get_object("btNext")
 			target = cb.get_model().get_value(cb.get_active_iter(), 0)
-			if self._tester != target:
+			if self._tester.driver != target:
 				# User changed driver that should be used, a lot of stuff has
 				# to be restarted
+				log.debug("User-requested driver change")
 				self.kill_tester()
 				cb.set_sensitive(False)
 				btNext.set_sensitive(False)

@@ -75,14 +75,15 @@ class EvdevController(Controller):
 		for x, value in config.get("axes", {}).iteritems():
 			code, axis = int(x), value.get("axis")
 			if axis in EvdevControllerInput._fields:
-				self._calibrations[code] = parse_axis(axis)
+				self._calibrations[code] = parse_axis(value)
 				self._axis_map[code] = axis
 		for x, value in config.get("dpads", {}).iteritems():
 			code, axis = int(x), value.get("axis")
 			if axis in EvdevControllerInput._fields:
-				self._calibrations[code] = parse_axis(axis)
+				self._calibrations[code] = parse_axis(value)
 				self._dpad_map[code] = value.get("positive", False)
 				self._axis_map[code] = axis
+	
 	
 	def close(self):
 		self.poller.unregister(self.device.fd)
@@ -373,7 +374,7 @@ class EvdevDriver(object):
 				continue
 			if dev.fn not in self._devices:
 				config_file = os.path.join(get_config_path(), "devices",
-					"%s.json" % (dev.name.strip(),))
+					"evdev-%s.json" % (dev.name.strip(),))
 				if os.path.exists(config_file):
 					config = None
 					try:

@@ -336,7 +336,6 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			return
 		
 		id = self._controller.get_id()
-		print "AAA", id, self._controller.get_type()
 		cfg = self.config.get_controller_config(id)
 		if cfg["icon"]:
 			icon = find_controller_icon(cfg["icon"])

@@ -161,12 +161,19 @@ class HIDController(USBDevice, Controller):
 		self._packet_size = 64
 		self._load_hid_descriptor(config, max_size, vid, pid)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
-		self._id = "%.4xhid%.4x" % (vid, pid)
 		Controller.__init__(self)
+		self._id = self._generate_id()
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		
 		if test_mode:
 			self.set_input_interrupt(id, self._packet_size, self.test_input)
+			print "Buttons:", " ".join([ str(x + FIRST_BUTTON)
+					for x in xrange(self._decoder.buttons.button_count) ])
+			print "Axes:", " ".join([ str(x)
+					for x in xrange(len([
+						a for a in self._decoder.axes
+						if a.mode != AxisMode.DISABLED
+					]))])
 		else:
 			self.set_input_interrupt(id, self._packet_size, self.input)
 	
@@ -307,13 +314,6 @@ class HIDController(USBDevice, Controller):
 		if self._decoder.packet_size > max_size:
 			self._decoder.packet_size = max_size
 		log.debug("Packet size: %s", self._decoder.packet_size)
-		print "Buttons:", " ".join([ str(x + FIRST_BUTTON)
-				for x in xrange(self._decoder.buttons.button_count) ])
-		print "Axes:", " ".join([ str(x)
-				for x in xrange(len([
-					a for a in self._decoder.axes
-					if a.mode != AxisMode.DISABLED
-				]))])
 	
 	
 	def close(self):
@@ -324,6 +324,22 @@ class HIDController(USBDevice, Controller):
 	def get_type(self):
 		return "hid"
 	
+	
+	def _generate_id(self):
+		"""
+		ID is generated as 'hid0000:1111' where first number is vendor and
+		2nd product id. If two or more controllers with same vendor/product
+		IDs are added, ':X' is added, where 'X' starts as 0 and increases
+		as controllers with same ids are connected.
+		"""
+		magic_number = 0
+		vid, pid = self.device.getVendorID(), self.device.getProductID()
+		id = "hid%.4x:%.4x" % (vid, pid)
+		while id is None or id in _hiddrv._used_ids:
+			id = "hid%.4x:%.4x:%s" % (vid, pid, magic_number)
+			magic_number += 1
+		_hiddrv._used_ids.add(id)
+		return id	
 	
 	def get_id(self):
 		return self._id
@@ -395,11 +411,15 @@ class HIDController(USBDevice, Controller):
 
 class HIDDrv(object):
 	
-	def __init__(self, daemon):
-		self.daemon = daemon
+	def __init__(self):
 		self.registered = set()
+		self._used_ids = set()
 		self.configs = {}
 		self.scan_files()
+	
+	
+	def set_daemon(self, daemon):
+		self.daemon = daemon
 	
 	
 	def hotplug_cb(self, device, handle):
@@ -423,8 +443,8 @@ class HIDDrv(object):
 		
 		known = set()
 		for name in os.listdir(path):
-			if name.startswith("HID:") and name.endswith(".json"):
-				vid, pid = name.split("-", 1)[0].split(":")[1:]
+			if name.startswith("hid-") and name.endswith(".json"):
+				vid, pid = name.split("-", 2)[1].split(":")[0:2]
 				vid = int(vid, 16)
 				pid = int(pid, 16)
 				config_file = os.path.join(path, name)
@@ -503,11 +523,6 @@ def hiddrv_test(cls, args):
 	_usb._daemon = fake_daemon
 	_usb.start()
 	
-	#print "Buttons:", " ".join([ str(x - FIRST_BUTTON)
-	#		for x in caps.get(evdev.ecodes.EV_KEY, [])])
-	#print "Axes:", " ".join([ str(axis)
-	#		for (axis, trash) in caps.get(evdev.ecodes.EV_ABS, []) ])
-	
 	print "Ready"
 	sys.stdout.flush()
 	while fake_daemon.exitcode < 0:
@@ -517,9 +532,15 @@ def hiddrv_test(cls, args):
 	return fake_daemon.exitcode
 
 
+# Singletons. Singletons everywhere
+# TODO: Option to get list of used IDs from daemon should be added,
+# singleton will be unneeded after that.
+_hiddrv = HIDDrv()
+
+
 def init(daemon):
 	""" Called from scc-daemon """
-	HIDDrv(daemon)
+	_hiddrv.set_daemon(daemon)
 
 
 if __name__ == "__main__":
