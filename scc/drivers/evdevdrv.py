@@ -363,7 +363,10 @@ class EvdevDriver(object):
 	def _scan_thread_target(self):
 		c = Config()
 		for fname in evdev.list_devices():
-			dev = evdev.InputDevice(fname)
+			try:
+				dev = evdev.InputDevice(fname)
+			except Exception:
+				continue
 			if dev.fn not in self._devices:
 				config_file = os.path.join(get_config_path(), "devices",
 					"%s.json" % (dev.name.strip(),))
@@ -404,32 +407,35 @@ def start(daemon):
 def init(daemon):
 	_evdevdrv._daemon = daemon
 	daemon.add_mainloop(_evdevdrv.mainloop)
-	# daemon.on_daemon_exit(_evdevdrv.on_exit)
 
 
-def evdevdrv_test():
+def evdevdrv_test(args):
 	"""
 	Small input test used by GUI while setting up the device.
 	Output and usage matches one from hiddrv.
 	"""
 	import sys
 	from scc.poller import Poller
+	from scc.scripts import InvalidArguments
 	from scc.tools import init_logging, set_logging_level
 	
 	try:
-		path = sys.argv[1]
+		path = args[0]
+		dev = evdev.InputDevice(path)
+	except IndexError:
+		raise InvalidArguments()
 	except Exception, e:
-		print >>sys.stderr, "Usage: %s edvev_node" % (sys.argv[0], )
-		sys.exit(1)
+		print >>sys.stderr, "Failed to open device:", str(e)
+		return 2
 	
-	init_logging()
-	dev = evdev.InputDevice(path)
-	set_logging_level(True, True)
 	c = EvdevController(None, dev, {})
 	for event in dev.read_loop():
 		c.test_input(event)
+	return 0
 
 
 if __name__ == "__main__":
 	""" Called when executed as script """
-	evdevdrv_test()
+	init_logging()
+	set_logging_level(True, True)
+	sys.exit(evdevdrv_test(sys.argv[0], sys.argv[1:]))

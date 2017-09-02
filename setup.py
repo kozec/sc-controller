@@ -47,6 +47,7 @@ if __name__ == "__main__":
 			scripts = [
 				'scripts/scc-daemon',
 				'scripts/sc-controller',
+				'scripts/scc',
 				'scripts/scc-osd-dialog',
 				'scripts/scc-osd-keyboard',
 				'scripts/scc-osd-launcher',

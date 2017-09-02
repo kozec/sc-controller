@@ -33,9 +33,9 @@ ALLOWED_SIZES = [1, 2, 4, 8, 16, 32]
 FIRST_BUTTON = 288	# To match with evdev
 
 
-class HIDError(Exception): pass
-class NotHIDDevice(HIDError): pass
-class UnparsableDescriptor(HIDError): pass
+class HIDDrvError(Exception): pass
+class NotHIDDevice(HIDDrvError): pass
+class UnparsableDescriptor(HIDDrvError): pass
 
 class HIDControllerInput(ctypes.Structure):
 	_fields_ = [
@@ -160,22 +160,27 @@ class HIDController(USBDevice, Controller):
 		log.debug("Endpoint: %s", id)
 		
 		vid, pid = self.device.getVendorID(), self.device.getProductID()
-		if vid in HID_FIXUPS and pid in HID_FIXUPS[vid]:
-			hid_descriptor = HID_FIXUPS[vid][pid]
-		else:
-			hid_descriptor = self.handle.getRawDescriptor(
-					LIBUSB_DT_REPORT, 0, 512)
-		
-		self._build_hid_decoder(hid_descriptor, config, max_size)
+		self._packet_size = 64
+		self._load_hid_descriptor(vid, pid)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
 		self._id = "%.4xhid%.4x" % (vid, pid)
 		Controller.__init__(self)
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		
 		if test_mode:
-			self.set_input_interrupt(id, self._decoder.packet_size, self.test_input)
+			self.set_input_interrupt(id, self._packet_size, self.test_input)
 		else:
-			self.set_input_interrupt(id, self._decoder.packet_size, self.input)
+			self.set_input_interrupt(id, self._packet_size, self.input)
+	
+	
+	def _load_hid_descriptor(self, vid, pid):
+		if vid in HID_FIXUPS and pid in HID_FIXUPS[vid]:
+			hid_descriptor = HID_FIXUPS[vid][pid]
+		else:
+			hid_descriptor = self.handle.getRawDescriptor(
+					LIBUSB_DT_REPORT, 0, 512)
+		self._build_hid_decoder(hid_descriptor, config, max_size)
+		self._packet_size = self._decoder.packet_size
 	
 	
 	def _build_button_map(self, config):
@@ -437,7 +442,7 @@ class HIDDrv(object):
 				del self.config[vid, pid]
 
 
-def hiddrv_test():
+def hiddrv_test(cls, args):
 	"""
 	Small input test used by GUI while setting up the device.
 	Basically, if HID device works with this, it will work with daemon as well.
@@ -445,23 +450,25 @@ def hiddrv_test():
 	import sys
 	from scc.poller import Poller
 	from scc.drivers.usb import _usb
+	from scc.scripts import InvalidArguments
 	from scc.tools import init_logging, set_logging_level
 	
 	try:
-		if ":" in sys.argv[1]:
-			sys.argv[1:2] = sys.argv[1].split(":")
-		vid = int(sys.argv[1], 16)
-		pid = int(sys.argv[2], 16)
+		if ":" in args[0]:
+			args[0:1] = args[0].split(":")
+		vid = int(args[0], 16)
+		pid = int(args[1], 16)
 	except Exception, e:
-		print >>sys.stderr, "Usage: %s vendor_id device_id" % (sys.argv[0], )
-		sys.exit(1)
+		raise InvalidArguments()
 	
 	class FakeDaemon(object):
 		
 		def __init__(self):
 			self.poller = Poller()
+			self.exitcode = -1
 		
 		def add_error(self, id, error):
+			fake_daemon.exitcode = 2
 			log.error(error)
 		
 		def remove_error(*a): pass
@@ -472,16 +479,26 @@ def hiddrv_test():
 	fake_daemon = FakeDaemon()
 	
 	def cb(device, handle):
-		return HIDController(device, handle, None, test_mode=True)
+		try:
+			return cls(device, handle, None, test_mode=True)
+		except NotHIDDevice:
+			print >>sys.stderr, "%.4x:%.4x is not a HID device" % (vid, pid)
+			fake_daemon.exitcode = 3
+		except UnparsableDescriptor, e:
+			print >>sys.stderr, "Invalid or unparsable HID descriptor", str(e)
+			fake_daemon.exitcode = 4
+		except Exception, e:
+			print >>sys.stderr, "Failed to open device:", str(e)
+			fake_daemon.exitcode = 2
 	
-	init_logging()
-	set_logging_level(True, True)
 	register_hotplug_device(cb, vid, pid)
 	_usb._daemon = fake_daemon
 	_usb.start()
-	while True:
+	while fake_daemon.exitcode < 0:
 		fake_daemon.poller.poll()
 		_usb.mainloop()
+	
+	return fake_daemon.exitcode
 
 
 def init(daemon):
@@ -491,4 +508,6 @@ def init(daemon):
 
 if __name__ == "__main__":
 	""" Called when executed as script """
-	hiddrv_test()
+	init_logging()
+	set_logging_level(True, True)
+	sys.exit(hiddrv_test(HIDController, sys.argv[1:]))
