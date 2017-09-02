@@ -39,10 +39,9 @@ class InputGrabber(object):
 		self.parent._grabber = None
 	
 	
-	def evdev_button(self, event):
-		if event.value != 0:
-			return
-		self.set_mapping(event.code, self.what)
+	def on_button(self, keycode, pressed):
+		if not pressed:
+			self.set_mapping(keycode, self.what)
 	
 	
 	def set_mapping(self, keycode, what):
@@ -65,7 +64,7 @@ class InputGrabber(object):
 		self.cancel()
 	
 	
-	def evdev_abs(self, event):
+	def on_axis(self, number, value):
 		pass
 
 
@@ -80,13 +79,13 @@ class TriggerGrabber(InputGrabber):
 		self.new_pos  = { k: parent._input_axes[k] for k in parent._input_axes }
 	
 	
-	def evdev_abs(self, event):
-		if event.code > 50:
+	def on_axis(self, number, value):
+		if number > 50:
 			# TODO: Remove this condition
 			return
-		self.new_pos[event.code] = event.value
-		if event.code not in self.orig_pos:
-			self.orig_pos[event.code] = 0
+		self.new_pos[number] = value
+		if number not in self.orig_pos:
+			self.orig_pos[number] = 0
 		
 		# Get avgerage absolute change for all axes
 		avg = float(sum([
@@ -95,17 +94,17 @@ class TriggerGrabber(InputGrabber):
 			])) / float(len(self.new_pos))
 		
 		# Get absolute change for _this_ axis
-		change = abs( self.orig_pos[event.code] - self.new_pos[event.code] )
+		change = abs( self.orig_pos[number] - self.new_pos[number] )
 		if change > 2 and change > avg * 0.5:
 			# TODO: change > 2 may be too strict
 			# if there is pad going from -1 to 1 somewhere around
-			self.abs_change(event, change)
+			self.axis_change(number, value, change)
 	
 	
-	def abs_change(self, event, change):
-		if event.value > 250:
+	def axis_change(self, number, value, change):
+		if value > 250:
 			self.what.reset()
-			self.set_mapping(event.code, self.what)
+			self.set_mapping(number, self.what)
 			self.parent.generate_unassigned()
 			self.parent.generate_raw_data()
 			self.cancel()
@@ -124,27 +123,27 @@ class StickGrabber(TriggerGrabber):
 		self.grabbed = [ None, None ]
 	
 	
-	def evdev_button(self, event):
+	def on_button(self, keycode, pressed):
 		#if len(self.grabbed) == 2 and self.grabbed[X] != None:
 		#	# Already grabbed one axis, don't grab buttons
 		#	return
-		if event.code in self.grabbed:
+		if keycode in self.grabbed:
 			# Don't allow same button to be used twice
 			return
-		if event.value == 0:
+		if value == 0:
 			if len(self.grabbed) < 4:
 				self.grabbed = [ None ] * 4
 			if self.grabbed[0] is None:
-				self.grabbed[0] = event.code
+				self.grabbed[0] = keycode
 				self.set_message(_("Move DPAD to right"))
 			elif self.grabbed[1] is None:
-				self.grabbed[1] = event.code
+				self.grabbed[1] = keycode
 				self.set_message(_("Move DPAD up"))
 			elif self.grabbed[2] is None:
-				self.grabbed[2] = event.code
+				self.grabbed[2] = keycode
 				self.set_message(_("Move DPAD down"))
 			elif self.grabbed[3] is None:
-				self.grabbed[3] = event.code
+				self.grabbed[3] = keycode
 				self.set_message(str(self.grabbed))
 				grabbed = [] + self.grabbed
 				for w in self.what:
@@ -157,17 +156,17 @@ class StickGrabber(TriggerGrabber):
 				self.cancel()
 	
 	
-	def abs_change(self, event, change):
+	def axis_change(self, number, value, change):
 		if len(self.grabbed) > 2:
 			# Already started grabbing 4 buttons, don't grab axes now
 			return
 		if self.xy == X:
-			self.grabbed[X] = event.code
+			self.grabbed[X] = number
 			self.xy = Y
 			self.set_message(_("Move stick up and down..."))
 		else:
-			if event.code != self.grabbed[X]:
-				self.grabbed[Y] = event.code
+			if number != self.grabbed[X]:
+				self.grabbed[Y] = number
 				for i in xrange(len(self.grabbed)):
 					self.what[i].reset()
 					self.set_mapping(self.grabbed[i], self.what[i])

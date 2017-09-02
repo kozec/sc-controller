@@ -431,7 +431,7 @@ class ControllerRegistration(Editor):
 	
 	def on_tester_button(self, tester, keycode, pressed):
 		if self._grabber:
-			return self._grabber.evdev_button(event)
+			return self._grabber.on_button(keycode, pressed)
 		
 		what = self._mappings.get(keycode)
 		if isinstance(what, AxisData):
@@ -459,7 +459,7 @@ class ControllerRegistration(Editor):
 	def on_tester_axis(self, tester, number, value):
 		self._input_axes[number] = value
 		if self._grabber:
-			return self._grabber.evdev_abs(event)
+			return self._grabber.on_axis(number, value)
 		
 		axis = self._mappings.get(number)
 		if axis:
