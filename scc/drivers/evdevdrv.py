@@ -20,6 +20,7 @@ import struct, threading, Queue, os, sys, time, binascii, json, logging
 log = logging.getLogger("evdev")
 
 TRIGGERS = "ltrig", "rtrig"
+FIRST_BUTTON = 288
 
 EvdevControllerInput = namedtuple('EvdevControllerInput',
 	'buttons ltrig rtrig stick_x stick_y lpad_x lpad_y rpad_x rpad_y'
@@ -205,11 +206,11 @@ class EvdevController(Controller):
 	
 	def test_input(self, event):
 		if event.type == evdev.ecodes.EV_KEY:
-			if event.value:
-				print "ButtonPress", event.code
-				sys.stdout.flush()
-			else:
-				print "ButtonRelease", event.code
+			if event.code >= FIRST_BUTTON:
+				if event.value:
+					print "ButtonPress", event.code
+				else:
+					print "ButtonRelease", event.code
 				sys.stdout.flush()
 		elif event.type == evdev.ecodes.EV_ABS:
 			print "Axis", event.code, event.value
@@ -431,6 +432,11 @@ def evdevdrv_test(args):
 		return 2
 	
 	c = EvdevController(None, dev, {})
+	caps = dev.capabilities(verbose=False)
+	print "Buttons:", " ".join([ str(x)
+			for x in caps.get(evdev.ecodes.EV_KEY, [])])
+	print "Axes:", " ".join([ str(axis)
+			for (axis, trash) in caps.get(evdev.ecodes.EV_ABS, []) ])
 	print "Ready"
 	sys.stdout.flush()
 	for event in dev.read_loop():

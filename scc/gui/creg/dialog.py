@@ -101,26 +101,24 @@ class ControllerRegistration(Editor):
 		return False
 	
 	
-	def load_sdl_mappings(self, dev):
+	def load_sdl_mappings(self):
 		"""
 		Attempts to load mappings from gamecontrollerdb.txt.
 		
 		Return True on success.
 		"""
 		# Build list of button and axes
-		caps = dev.capabilities(verbose=False)
-		buttons = caps.get(evdev.ecodes.EV_KEY, [])
-		axes = ([ axis for (axis, trash) in caps[evdev.ecodes.EV_ABS] ]
-			if evdev.ecodes.EV_ABS in caps else [] )
+		buttons = self._tester.buttons
+		axes = self._tester.axes
 		
 		# Generate database ID
 		wordswap = lambda i: ((i & 0xFF) << 8) | ((i & 0xFF00) >> 8)
 		# TODO: version?
 		weird_id = "%.4x%.8x%.8x%.8x0000" % (
-				wordswap(dev.info.bustype),
-				wordswap(dev.info.vendor),
-				wordswap(dev.info.product),
-				wordswap(dev.info.version)
+				wordswap(self._evdevice.info.bustype),
+				wordswap(self._evdevice.info.vendor),
+				wordswap(self._evdevice.info.product),
+				wordswap(self._evdevice.info.version)
 		)
 		
 		# Search in database
@@ -135,7 +133,7 @@ class ControllerRegistration(Editor):
 			if line.startswith(weird_id):
 				log.info("Loading mappings for '%s' from gamecontrollerdb", weird_id)
 				log.debug("Buttons: %s", buttons)
-				log.debug("Axes: %s", buttons)
+				log.debug("Axes: %s", axes)
 				for token in line.strip().split(","):
 					if ":" in token:
 						k, v = token.split(":", 1)
@@ -144,17 +142,17 @@ class ControllerRegistration(Editor):
 							try:
 								keycode = buttons[int(v.strip("b"))]
 							except IndexError:
-								log.warning("Skipping unknown gamecontrollerdb button: %s", v)
+								log.warning("Skipping unknown gamecontrollerdb button->button mapping: %s", v)
 								continue
 							button  = getattr(SCButtons, k.upper())
 							self._mappings[keycode] = button
-						if v.startswith("b") and k in SDL_AXES:
+						elif v.startswith("b") and k in SDL_AXES:
 							try:
 								keycode = buttons[int(v.strip("b"))]
 							except IndexError:
-								log.warning("Skipping unknown gamecontrollerdb button: %s", v)
+								log.warning("Skipping unknown gamecontrollerdb button->axis mapping: %s", v)
 								continue
-							log.warning("Adding button -> axis mapping for %s", k)
+							log.info("Adding button -> axis mapping for %s", k)
 							self._mappings[keycode] = self._axis_data[SDL_AXES.index(k)]
 							self._mappings[keycode].min = STICK_PAD_MIN
 							self._mappings[keycode].max = STICK_PAD_MAX
@@ -169,7 +167,7 @@ class ControllerRegistration(Editor):
 							try:
 								keycode = buttons[int(v.strip("b"))]
 							except IndexError:
-								log.warning("Skipping unknown gamecontrollerdb button: %s", v)
+								log.warning("Skipping unknown gamecontrollerdb button->dpad mapping: %s", v)
 								continue
 							index, positive = SDL_DPAD[k]
 							data = DPadEmuData(self._axis_data[index], positive)
@@ -183,21 +181,21 @@ class ControllerRegistration(Editor):
 		return False
 	
 	
-	def generate_mappings(self, dev):
+	def generate_mappings(self):
 		"""
 		Generates initial mappings, just to have some preset to show.
 		"""
-		caps = dev.capabilities(verbose=False)
 		buttons = list(BUTTON_ORDER)
 		axes = list(self._axis_data)
-		if evdev.ecodes.EV_ABS in caps: # Has axes
-			for axis, info in caps[evdev.ecodes.EV_ABS]:
-				self._mappings[axis], axes = axes[0], axes[1:]
-				if len(axes) == 0: break
-		if evdev.ecodes.EV_KEY in caps: # Has buttons
-			for button in caps[evdev.ecodes.EV_KEY]:
-				self._mappings[button], buttons = buttons[0], buttons[1:]
-				if len(buttons) == 0: break
+		log.info("Generating default mappings")
+		log.debug("Buttons: %s", self._tester.buttons)
+		log.debug("Axes: %s", self._tester.axes)
+		for axis in self._tester.axes:
+			self._mappings[axis], axes = axes[0], axes[1:]
+			if len(axes) == 0: break
+		for button in self._tester.buttons:
+			self._mappings[button], buttons = buttons[0], buttons[1:]
+			if len(buttons) == 0: break
 	
 	
 	def generate_unassigned(self):
@@ -378,8 +376,8 @@ class ControllerRegistration(Editor):
 		
 		if not self._mappings:
 			self._mappings = {}
-			if not self.load_sdl_mappings(self._evdevice):
-				self.generate_mappings(self._evdevice)
+			if not self.load_sdl_mappings():
+				self.generate_mappings()
 			self.generate_unassigned()
 			self.generate_raw_data()
 		

@@ -38,6 +38,8 @@ class Tester(GObject.GObject):
 	def __init__(self, driver, device_id):
 		GObject.GObject.__init__(self)
 		self.buffer = b""
+		self.buttons = []
+		self.axes = []
 		self.subprocess = None
 		self.driver = driver
 		self.device_id = device_id
@@ -98,9 +100,7 @@ class Tester(GObject.GObject):
 	
 	
 	def _on_line(self, line):
-		if line.startswith("Ready"):
-			self.emit('ready')
-		elif line.startswith("Axis"):
+		if line.startswith("Axis"):
 			trash, number, value = line.split(" ")
 			number, value = int(number), int(value)
 			self.emit('axis', number, value)
@@ -110,4 +110,9 @@ class Tester(GObject.GObject):
 		elif line.startswith("ButtonRelease"):
 			trash, code = line.split(" ")
 			self.emit('button', int(code), False)
-
+		elif line.startswith("Ready"):
+			self.emit('ready')
+		elif line.startswith("Axes:"):
+			self.axes = [ int(x) for x in line.split(" ")[1:] ]
+		elif line.startswith("Buttons:"):
+			self.buttons = [ int(x) for x in line.split(" ")[1:] ]

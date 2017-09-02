@@ -8,6 +8,7 @@ Helper classes for grabbing buttons and axes from physical gamepads.
 from __future__ import unicode_literals
 from scc.tools import _
 
+from scc.constants import STICK_PAD_MAX, STICK_PAD_MIN
 from scc.gui.creg.data import AxisData, DPadEmuData
 from scc.gui.creg.constants import X, Y
 from scc.tools import nameof
@@ -77,6 +78,13 @@ class TriggerGrabber(InputGrabber):
 		InputGrabber.__init__(self, parent, what, text)
 		self.orig_pos = { k: parent._input_axes[k] for k in parent._input_axes }
 		self.new_pos  = { k: parent._input_axes[k] for k in parent._input_axes }
+	
+	
+	def on_button(self, keycode, pressed):
+		if not pressed:
+			self.set_mapping(keycode, self.what)
+			self.what.min = STICK_PAD_MIN
+			self.what.max = STICK_PAD_MAX
 	
 	
 	def on_axis(self, number, value):

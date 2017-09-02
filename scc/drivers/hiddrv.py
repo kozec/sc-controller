@@ -12,7 +12,7 @@ from scc.lib.hid_fixups import HID_FIXUPS
 from scc.drivers.usb import USBDevice, register_hotplug_device
 from scc.constants import SCButtons, HapticPos, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
-from scc.drivers.evdevdrv import TRIGGERS, parse_axis
+from scc.drivers.evdevdrv import FIRST_BUTTON, TRIGGERS, parse_axis
 from scc.tools import find_library, clamp
 from scc.controller import Controller
 from scc.paths import get_config_path
@@ -30,7 +30,6 @@ LIBUSB_DT_REPORT = 0x22
 AXIS_COUNT = 8		# Must match number of axis fields in HIDControllerInput and values in AxisType
 BUTTON_COUNT = 32	# Must match (or be less than) number of bits in HIDControllerInput.buttons
 ALLOWED_SIZES = [1, 2, 4, 8, 16, 32]
-FIRST_BUTTON = 288	# To match with evdev
 
 
 class HIDDrvError(Exception): pass
@@ -141,7 +140,6 @@ class HIDController(USBDevice, Controller):
 	
 	def __init__(self, device, handle, config, test_mode=False):
 		USBDevice.__init__(self, device, handle)
-		self._parsers = None
 		
 		id = None
 		max_size = 64
@@ -161,7 +159,7 @@ class HIDController(USBDevice, Controller):
 		
 		vid, pid = self.device.getVendorID(), self.device.getProductID()
 		self._packet_size = 64
-		self._load_hid_descriptor(vid, pid)
+		self._load_hid_descriptor(config, max_size, vid, pid)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
 		self._id = "%.4xhid%.4x" % (vid, pid)
 		Controller.__init__(self)
@@ -173,7 +171,7 @@ class HIDController(USBDevice, Controller):
 			self.set_input_interrupt(id, self._packet_size, self.input)
 	
 	
-	def _load_hid_descriptor(self, vid, pid):
+	def _load_hid_descriptor(self, config, max_size, vid, pid):
 		if vid in HID_FIXUPS and pid in HID_FIXUPS[vid]:
 			hid_descriptor = HID_FIXUPS[vid][pid]
 		else:
@@ -309,6 +307,13 @@ class HIDController(USBDevice, Controller):
 		if self._decoder.packet_size > max_size:
 			self._decoder.packet_size = max_size
 		log.debug("Packet size: %s", self._decoder.packet_size)
+		print "Buttons:", " ".join([ str(x + FIRST_BUTTON)
+				for x in xrange(self._decoder.buttons.button_count) ])
+		print "Axes:", " ".join([ str(x)
+				for x in xrange(len([
+					a for a in self._decoder.axes
+					if a.mode != AxisMode.DISABLED
+				]))])
 	
 	
 	def close(self):
@@ -481,8 +486,9 @@ def hiddrv_test(cls, args):
 	fake_daemon = FakeDaemon()
 	
 	def cb(device, handle):
+		return cls(device, handle, None, test_mode=True)
 		try:
-			return cls(device, handle, None, test_mode=True)
+			pass
 		except NotHIDDevice:
 			print >>sys.stderr, "%.4x:%.4x is not a HID device" % (vid, pid)
 			fake_daemon.exitcode = 3
@@ -496,6 +502,12 @@ def hiddrv_test(cls, args):
 	register_hotplug_device(cb, vid, pid)
 	_usb._daemon = fake_daemon
 	_usb.start()
+	
+	#print "Buttons:", " ".join([ str(x - FIRST_BUTTON)
+	#		for x in caps.get(evdev.ecodes.EV_KEY, [])])
+	#print "Axes:", " ".join([ str(axis)
+	#		for (axis, trash) in caps.get(evdev.ecodes.EV_ABS, []) ])
+	
 	print "Ready"
 	sys.stdout.flush()
 	while fake_daemon.exitcode < 0:
