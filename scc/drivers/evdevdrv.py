@@ -16,7 +16,7 @@ from scc.tools import clamp
 
 from collections import namedtuple
 import evdev
-import struct, threading, Queue, os, time, binascii, json, logging
+import struct, threading, Queue, os, sys, time, binascii, json, logging
 log = logging.getLogger("evdev")
 
 TRIGGERS = "ltrig", "rtrig"
@@ -207,10 +207,13 @@ class EvdevController(Controller):
 		if event.type == evdev.ecodes.EV_KEY:
 			if event.value:
 				print "ButtonPress", event.code
+				sys.stdout.flush()
 			else:
 				print "ButtonRelease", event.code
+				sys.stdout.flush()
 		elif event.type == evdev.ecodes.EV_ABS:
 			print "Axis", event.code, event.value
+			sys.stdout.flush()
 	
 	
 	def cancel_padpress_emulation(self, mapper):
@@ -414,7 +417,6 @@ def evdevdrv_test(args):
 	Small input test used by GUI while setting up the device.
 	Output and usage matches one from hiddrv.
 	"""
-	import sys
 	from scc.poller import Poller
 	from scc.scripts import InvalidArguments
 	from scc.tools import init_logging, set_logging_level
@@ -429,6 +431,8 @@ def evdevdrv_test(args):
 		return 2
 	
 	c = EvdevController(None, dev, {})
+	print "Ready"
+	sys.stdout.flush()
 	for event in dev.read_loop():
 		c.test_input(event)
 	return 0

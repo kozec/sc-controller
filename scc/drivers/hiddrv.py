@@ -21,7 +21,7 @@ from scc.config import Config
 
 from collections import namedtuple
 from math import pi as PI, sin, cos
-import os, json, ctypes, copy, logging
+import os, json, ctypes, sys, logging
 log = logging.getLogger("HID")
 
 DEV_CLASS_HID = 3
@@ -343,6 +343,7 @@ class HIDController(USBDevice, Controller):
 			if attr == "buttons": continue
 			if getattr(self._decoder.state, attr) != getattr(self._decoder.old_state, attr):
 				print "Axis", code, getattr(self._decoder.state, attr)
+				sys.stdout.flush()
 			code += 1
 		
 		pressed = self._decoder.state.buttons & ~self._decoder.old_state.buttons
@@ -351,8 +352,10 @@ class HIDController(USBDevice, Controller):
 			mask = 1 << j
 			if pressed & mask:
 				print "ButtonPress", FIRST_BUTTON + j
+				sys.stdout.flush()
 			if released & mask:
 				print "ButtonRelease", FIRST_BUTTON + j
+				sys.stdout.flush()
 	
 	
 	def input(self, endpoint, data):
@@ -447,7 +450,6 @@ def hiddrv_test(cls, args):
 	Small input test used by GUI while setting up the device.
 	Basically, if HID device works with this, it will work with daemon as well.
 	"""
-	import sys
 	from scc.poller import Poller
 	from scc.drivers.usb import _usb
 	from scc.scripts import InvalidArguments
@@ -494,6 +496,8 @@ def hiddrv_test(cls, args):
 	register_hotplug_device(cb, vid, pid)
 	_usb._daemon = fake_daemon
 	_usb.start()
+	print "Ready"
+	sys.stdout.flush()
 	while fake_daemon.exitcode < 0:
 		fake_daemon.poller.poll()
 		_usb.mainloop()

@@ -24,11 +24,11 @@ def help_daemon():
 	subprocess.Popen([scc_daemon, "--help"]).communicate()
 
 
-def cmd_evdev_test(argv0, argv):
+def cmd_test_evdev(argv0, argv):
 	"""
 	Evdev driver test. Displays gamepad inputs using evdev driver.
 	
-	Usage: scc evdev_test /dev/input/node
+	Usage: scc test_evdev /dev/input/node
 	Return codes:
 	  0 - normal exit
 	  1 - invalid arguments or other error
@@ -38,11 +38,11 @@ def cmd_evdev_test(argv0, argv):
 	return evdevdrv_test(argv)
 
 
-def cmd_hid_test(argv0, argv):
+def cmd_test_hid(argv0, argv):
 	"""
 	HID driver test. Displays gamepad inputs using hid driver.
 	
-	Usage: scc hid_test vendor_id device_id
+	Usage: scc test_hid vendor_id device_id
 	Return codes:
 	  0 - normal exit
 	  1 - invalid arguments or other error

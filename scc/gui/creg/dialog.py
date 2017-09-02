@@ -16,6 +16,7 @@ from scc.gui.creg.constants import AXIS_ORDER, SDL_AXES, SDL_DPAD
 from scc.gui.creg.constants import TRIGGER_AREAS, AXIS_TO_BUTTON
 from scc.gui.creg.grabs import InputGrabber, TriggerGrabber, StickGrabber
 from scc.gui.creg.data import AxisData, DPadEmuData
+from scc.gui.creg.tester import Tester
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
 from scc.gui.app import App
@@ -52,6 +53,7 @@ class ControllerRegistration(Editor):
 		self.setup_widgets()
 		self._controller = None
 		self._evdevice = None
+		self._tester = None
 		self._grabber = None
 		self._input_axes = {}
 		self._mappings = {}
@@ -318,8 +320,8 @@ class ControllerRegistration(Editor):
 	
 	
 	def on_btNext_clicked(self, *a):
+		tvDevices = self.builder.get_object("tvDevices")
 		stDialog = self.builder.get_object("stDialog")
-		cbEmulateC = self.builder.get_object("cbEmulateC")
 		btBack = self.builder.get_object("btBack")
 		btNext = self.builder.get_object("btNext")
 		pages = stDialog.get_children()
@@ -330,15 +332,78 @@ class ControllerRegistration(Editor):
 			self.refresh_controller_image()
 			btBack.set_sensitive(True)
 		elif index == 1:
-			fxController = self.builder.get_object("fxController")
-			self._controller.get_parent().remove(self._controller)
-			fxController.add(self._controller)
-			self.start_evdev_read()
-			stDialog.set_visible_child(pages[2])
-			cbEmulateC.grab_focus()
-			btNext.set_label("_Save")
+			# Disable Next button and determine which driver should be used
+			btNext.set_sensitive(False)
+			model, iter = tvDevices.get_selection().get_selected()
+			dev = evdev.InputDevice(model[iter][0])
+			self.prepare_registration(dev)
 		elif index == 2:
 			self.save_registration()
+	
+	
+	def prepare_registration(self, dev):
+		
+		def retry_evdev(tester, code):
+			for s in tester.__signals: tester.disconnect(s)
+			tester.stop()
+			if code != 0:
+				log.error("HID driver test failed (code %s)", code)
+			log.debug("Trying to use '%s' with evdev driver...", dev.fn)
+			self._tester = Tester("evdev", dev.fn)
+			self._tester.__signals = [
+				self._tester.connect('ready', self.on_registration_ready)
+			]
+			# TODO: Maybe display message if evdev fails as well
+			self._tester.start()
+		
+		self._evdevice = dev
+		if dev.info.vendor == 0 and dev.info.product == 0:
+			# Not an USB device, skip HID test altogether
+			retry_evdev(None, 0)
+		else:
+			log.debug("Trying to use '%s' with HID driver...", dev.fn)
+			self._tester = Tester("hid", "%.4xX%.4x" % (dev.info.vendor, dev.info.product))
+			self._tester.__signals = [
+				self._tester.connect('ready', self.on_registration_ready),
+				self._tester.connect('error', retry_evdev),
+			]
+			self._tester.start()
+	
+	
+	def on_registration_ready(self, tester):
+		fxController = self.builder.get_object("fxController")
+		cbEmulateC = self.builder.get_object("cbEmulateC")
+		stDialog = self.builder.get_object("stDialog")
+		btNext = self.builder.get_object("btNext")
+		
+		if not self._mappings:
+			self._mappings = {}
+			if not self.load_sdl_mappings(self._evdevice):
+				self.generate_mappings(self._evdevice)
+			self.generate_unassigned()
+			self.generate_raw_data()
+		
+		for s in tester.__signals: tester.disconnect(s)
+		tester.__signals = [
+			tester.connect('axis', self.on_tester_axis),
+			tester.connect('button', self.on_tester_button),
+		]
+		
+		self._controller.get_parent().remove(self._controller)
+		fxController.add(self._controller)
+		pages = stDialog.get_children()
+		stDialog.set_visible_child(pages[2])
+		cbEmulateC.grab_focus()
+		btNext.set_label("_Save")
+		btNext.set_sensitive(True)
+	
+	
+	def kill_tester(self, *a):
+		""" Called when window is closed """
+		if self._tester:
+			tester, self._tester = self._tester, None
+			for s in tester.__signals: tester.disconnect(s)
+			tester.stop()
 	
 	
 	def on_btBack_clicked(self, *a):
@@ -364,47 +429,18 @@ class ControllerRegistration(Editor):
 		self._axis_data[index].invert = cb.get_active()
 	
 	
-	def start_evdev_read(self):
-		tvDevices = self.builder.get_object("tvDevices")
-		model, iter = tvDevices.get_selection().get_selected()
-		self._evdevice = evdev.InputDevice(model[iter][0])
-		if not self._mappings:
-			self._mappings = {}
-			if not self.load_sdl_mappings(self._evdevice):
-				self.generate_mappings(self._evdevice)
-			self.generate_unassigned()
-			self.generate_raw_data()
-		GLib.idle_add(self._evdev_read)
-	
-	
-	def stop_evdev_read(self, *a):
-		self._evdevice = None
-	
-	
-	def _evdev_read(self):
-		if self._evdevice:
-			event = self._evdevice.read_one()
-			if event:
-				if event.type == evdev.ecodes.EV_KEY:
-					self.evdev_button(event)
-				if event.type == evdev.ecodes.EV_ABS:
-					self.evdev_abs(event)
-			return True
-		return False
-	
-	
-	def evdev_button(self, event):
+	def on_tester_button(self, tester, keycode, pressed):
 		if self._grabber:
 			return self._grabber.evdev_button(event)
 		
-		what = self._mappings.get(event.code)
+		what = self._mappings.get(keycode)
 		if isinstance(what, AxisData):
-			if event.value:
+			if pressed:
 				self.hilight_axis(what, STICK_PAD_MAX)
 			else:
 				self.hilight_axis(what, STICK_PAD_MIN)
 		if isinstance(what, DPadEmuData):
-			if event.value:
+			if pressed:
 				self.hilight(nameof(what.button))
 				if what.positive:
 					self.hilight_axis(what.axis_data, STICK_PAD_MAX)
@@ -414,20 +450,20 @@ class ControllerRegistration(Editor):
 				self.unhilight(nameof(what.button))
 				self.hilight_axis(what.axis_data, 0)
 		elif what is not None:
-			if event.value:
+			if pressed:
 				self.hilight(nameof(what))
 			else:
 				self.unhilight(nameof(what))
 	
 	
-	def evdev_abs(self, event):
-		self._input_axes[event.code] = event.value
+	def on_tester_axis(self, tester, number, value):
+		self._input_axes[number] = value
 		if self._grabber:
 			return self._grabber.evdev_abs(event)
 		
-		axis = self._mappings.get(event.code)
+		axis = self._mappings.get(number)
 		if axis:
-			self.hilight_axis(axis, event.value)
+			self.hilight_axis(axis, value)
 	
 	
 	def hilight_axis(self, axis, value):

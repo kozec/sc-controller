@@ -10,7 +10,7 @@ from scc.constants import STICK_PAD_MAX, STICK_PAD_MIN
 from scc.gui.creg.constants import AXIS_TO_BUTTON
 
 import logging
-log = logging.getLogger("CRegistration.data")
+log = logging.getLogger("CReg.data")
 
 
 class AxisData(object):

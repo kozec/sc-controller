@@ -13,7 +13,7 @@ from scc.gui.creg.constants import X, Y
 from scc.tools import nameof
 
 import logging, traceback
-log = logging.getLogger("CRegistration.grabs")
+log = logging.getLogger("CReg.grabs")
 
 
 class InputGrabber(object):
