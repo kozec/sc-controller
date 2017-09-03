@@ -165,8 +165,9 @@ class SCController(Controller):
 		self._input_rotation_l = 0
 		self._input_rotation_r = 0
 		self._led_level = 10
+		# TODO: Is serial really used anywhere?
 		self._serial = "0000000000"
-		self._id = "sc%s" % (self._id, )
+		self._id = self._generate_id()
 		self._old_state = SCI_NULL
 		self._ccidx = ccidx
 	
@@ -203,6 +204,22 @@ class SCController(Controller):
 				)
 			
 			self.mapper.input(self, old_state, idata)
+	
+	
+	def _generate_id(self):
+		"""
+		ID is generated as 'scX' where where 'X' starts as 0 and increases
+		as more controllers are connected.
+		
+		This is used only when reading serial numbers from device is disabled.
+		sc_by_cable generates ids in scBUS:PORT format.
+		"""
+		magic_number = 1
+		id = None
+		while id is None or id in self._driver.daemon.get_active_ids():
+			id = "sc%s" % (magic_number,)
+			magic_number += 1
+		return id
 	
 	
 	def read_serial(self):

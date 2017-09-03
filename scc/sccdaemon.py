@@ -502,6 +502,11 @@ class SCCDaemon(Daemon):
 			self.send_controller_list(self._send_to_all)
 	
 	
+	def get_active_ids(self):
+		""" Returns iterable with IDs of all active controllers """
+		return [ x.get_id() for x in self.controllers ]
+	
+	
 	def add_error(self, id, error):
 		"""
 		Adds error (string) to report. Used when USB driver reports that device

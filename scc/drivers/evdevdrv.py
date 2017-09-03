@@ -109,11 +109,10 @@ class EvdevController(Controller):
 		"""
 		magic_number = 0
 		id = None
-		while id is None or id in _evdevdrv._used_ids:
+		while id is None or id in self.daemon.get_active_ids():
 			crc32 = binascii.crc32("%s%s" % (self.device.name, magic_number))
 			id = "ev%s" % (hex(crc32).upper().strip("-0X"),)
 			magic_number += 1
-		_evdevdrv._used_ids.add(id)
 		return id
 	
 	
@@ -331,7 +330,6 @@ class EvdevDriver(object):
 		self._new_devices = Queue.Queue()
 		self._lock = threading.Lock()
 		self._scan_thread = None
-		self._used_ids = set()
 		self._next_scan = None
 	
 	
@@ -352,7 +350,6 @@ class EvdevDriver(object):
 			controller = self._devices[dev.fn]
 			del self._devices[dev.fn]
 			self._daemon.remove_controller(controller)
-			self._used_ids.remove(controller.get_id())
 			controller.close()
 	
 	
