@@ -281,7 +281,7 @@ class Dialog(OSDWindow):
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
 				if self._selected and self._selected.callback:
-					self._selected.callback(self, self.daemon, self._selected)
+					self._selected.callback(self, self.daemon, self.controller, self._selected)
 				elif self._selected:
 					self.quit(0)
 				else:
