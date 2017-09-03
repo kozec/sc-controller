@@ -298,7 +298,7 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 	""" Generates entire Autoswich Options submenu """
 	GENERATOR_NAME = "autoswitch"
 	
-	def callback(self, menu, daemon, menuitem):
+	def callback(self, menu, daemon, controller, menuitem):
 		def on_response(*a):
 			menu.quit(-2)
 		if menuitem.id in ("as::unassign", "as::assign"):

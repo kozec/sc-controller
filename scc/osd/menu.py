@@ -409,7 +409,7 @@ class Menu(OSDWindow):
 		self._submenu = None
 	
 	
-	def show_submenu(self, trash, trash2, menuitem):
+	def show_submenu(self, trash, trash2, trash3, menuitem):
 		""" Called when user chooses menu item pointing to submenu """
 		filename = find_menu(menuitem.filename)
 		if filename:
@@ -429,6 +429,7 @@ class Menu(OSDWindow):
 			])
 			self._submenu.set_is_submenu()
 			self._submenu.use_daemon(self.daemon)
+			self._submenu.controller = self.controller
 			self._submenu.connect('destroy', self.on_submenu_closed)
 			self._submenu.show()
 	
@@ -488,7 +489,7 @@ class Menu(OSDWindow):
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
 				if self._selected and self._selected.callback:
-					self._selected.callback(self, self.daemon, self._selected)
+					self._selected.callback(self, self.daemon, self.controller, self._selected)
 				elif self._selected:
 					self.quit(0)
 				else:

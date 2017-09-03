@@ -201,7 +201,7 @@ class QuickMenu(Menu):
 		
 		if len(self._pressed) == 0 and last is not None:
 			if last.callback:
-				last.callback(self, self.daemon, last)
+				last.callback(self, self.daemon, self.controller, last)
 			else:
 				self._selected = last
 				self.quit(0)

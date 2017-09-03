@@ -23,8 +23,8 @@ class ProfileListMenuGenerator(MenuGenerator):
 	GENERATOR_NAME = "profiles"
 	
 	@staticmethod
-	def callback(menu, daemon, menuitem):
-		daemon.set_profile(menuitem.filename)
+	def callback(menu, daemon, controller, menuitem):
+		controller.set_profile(menuitem.filename)
 		menu.hide()
 		def on_response(*a):
 			menu.quit(-2)
@@ -63,14 +63,14 @@ class RecentListMenuGenerator(MenuGenerator):
 	
 	def generate(self, menuhandler):
 		return _("[ %s Recent Profiles ]") % (self.rows,)
-
+	
 	
 	def encode(self):
 		return { "generator" : self.GENERATOR_NAME, "rows" : self.rows }
 	
 	
-	def callback(self, menu, daemon, menuitem):
-		daemon.set_profile(menuitem.filename)
+	def callback(self, menu, daemon, controller, menuitem):
+		controller.set_profile(menuitem.filename)
 		menu.hide()
 		def on_response(*a):
 			menu.quit(-2)
@@ -106,7 +106,7 @@ class WindowListMenuGenerator(MenuGenerator):
 	
 	
 	@staticmethod
-	def callback(menu, daemon, menuitem):
+	def callback(menu, daemon, controller, menuitem):
 		try:
 			xid = int(menuitem.id)
 			display = Gdk.Display.get_default()
@@ -154,7 +154,7 @@ class GameListMenuGenerator(MenuGenerator):
 	
 	
 	@staticmethod
-	def callback(menu, daemon, menuitem):
+	def callback(menu, daemon, controller, menuitem):
 		menuitem._desktop_file.launch()
 		menu.quit(-2)
 	
