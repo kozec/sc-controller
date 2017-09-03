@@ -14,6 +14,13 @@ from scc.config import Config
 from scc.poller import Poller
 from scc.tools import clamp
 
+HAVE_INOTIFY = False
+try:
+	import pyinotify
+	HAVE_INOTIFY = True
+except ImportError:
+	pass
+
 from collections import namedtuple
 import evdev
 import struct, threading, Queue, os, sys, time, binascii, json, logging
@@ -48,6 +55,7 @@ class EvdevController(Controller):
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		self.device = device
 		self.config = config
+		self.daemon = daemon
 		if daemon:
 			self.poller = daemon.get_poller()
 			self.poller.register(self.device.fd, self.poller.POLLIN, self.input)
@@ -325,7 +333,7 @@ class EvdevDriver(object):
 	SCAN_INTERVAL = 5
 	
 	def __init__(self):
-		self._daemon = None
+		self.daemon = None
 		self._devices = {}
 		self._new_devices = Queue.Queue()
 		self._lock = threading.Lock()
@@ -333,15 +341,19 @@ class EvdevDriver(object):
 		self._next_scan = None
 	
 	
+	def set_daemon(self, daemon):
+		self.daemon = daemon
+	
+	
 	def handle_new_device(self, dev, config):
 		try:
-			controller = EvdevController(self._daemon, dev, config)
+			controller = EvdevController(self.daemon, dev, config)
 		except Exception, e:
 			log.debug("Failed to add evdev device: %s", e)
 			log.exception(e)
 			return
 		self._devices[dev.fn] = controller
-		self._daemon.add_controller(controller)
+		self.daemon.add_controller(controller)
 		log.debug("Evdev device added: %s", dev.name)
 	
 	
@@ -349,7 +361,7 @@ class EvdevDriver(object):
 		if dev.fn in self._devices:
 			controller = self._devices[dev.fn]
 			del self._devices[dev.fn]
-			self._daemon.remove_controller(controller)
+			self.daemon.remove_controller(controller)
 			controller.close()
 	
 	
@@ -359,6 +371,8 @@ class EvdevDriver(object):
 			if self._scan_thread is None:
 				self._scan_thread = threading.Thread(
 						target = self._scan_thread_target)
+				if HAVE_INOTIFY:
+					log.debug("Rescan started")
 				self._scan_thread.start()
 	
 	
@@ -383,20 +397,44 @@ class EvdevDriver(object):
 		with self._lock:
 			self._scan_thread = None
 			self._next_scan = time.time() + EvdevDriver.SCAN_INTERVAL
+			if HAVE_INOTIFY and not self._new_devices.empty():
+				self.daemon.get_scheduler().schedule(0, self.add_new_devices)
+	
+	
+	def add_new_devices(self):
+		with self._lock:
+			while not self._new_devices.empty():
+				dev, config = self._new_devices.get()
+				if dev.fn not in self._devices:
+					self.handle_new_device(dev, config)
 	
 	
 	def start(self):
 		self.scan()
 	
 	
-	def mainloop(self):
+	def _inotify_cb(self, *a):
+		self._notifier.read_events()
+		self._notifier.process_events() 
+		# I don't really care about events above,
+		# just scheduling rescan is enough here.
+		self.daemon.get_scheduler().schedule(1, self.scan)
+	
+	
+	def enable_inotify(self):
+		self._wm = pyinotify.WatchManager()
+		self._notifier = pyinotify.Notifier(self._wm, lambda *a, **b: False)
+		self._wm.add_watch('/dev/input', pyinotify.IN_CREATE, False)
+		self.daemon.get_poller().register(self._notifier._fd,
+				self.daemon.get_poller().POLLIN, self._inotify_cb)
+	
+	
+	def dumb_mainloop(self):
 		if time.time() > self._next_scan:
 			self.scan()
-		with self._lock:
-			while not self._new_devices.empty():
-				dev, config = self._new_devices.get()
-				if dev.fn not in self._devices:
-					self.handle_new_device(dev, config)
+		if not self._new_devices.empty():
+			self.add_new_devices()
+
 
 # Just like USB driver, EvdevDriver is process-wide singleton
 _evdevdrv = EvdevDriver()
@@ -407,8 +445,14 @@ def start(daemon):
 
 
 def init(daemon):
-	_evdevdrv._daemon = daemon
-	daemon.add_mainloop(_evdevdrv.mainloop)
+	_evdevdrv.set_daemon(daemon)
+	if HAVE_INOTIFY:
+		_evdevdrv.enable_inotify()
+		daemon.on_rescan(_evdevdrv.scan)
+	else:
+		log.warning("Failed to import pyinotify. Evdev driver will scan for new devices every 5 seconds.")
+		log.warning("Consider installing python-pyinotify package.")
+		daemon.add_mainloop(_evdevdrv.dumb_mainloop)
 
 
 def evdevdrv_test(args):

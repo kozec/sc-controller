@@ -177,6 +177,7 @@ class USBDriver(object):
 		self._daemon = None
 		self._known_ids = {}
 		self._devices = {}
+		self._started = False
 		self._retry_devices = []
 		self._retry_devices_timer = 0
 		self._context = None	# Set by start method
@@ -210,6 +211,7 @@ class USBDriver(object):
 		self._context.setPollFDNotifiers(self._register_fd, self._unregister_fd)
 		for fd, events in self._context.getPollFDList():
 			self._register_fd(fd, events)	
+		self._started = True
 	
 	
 	def _fd_cb(self, *a):
@@ -274,10 +276,15 @@ class USBDriver(object):
 	def register_hotplug_device(self, callback, vendor_id, product_id):
 		self._known_ids[vendor_id, product_id] = callback
 		log.debug("Registered hotplug USB driver for %.4x:%.4x", vendor_id, product_id)
+		if self._started:
+			dev = self._context.getByVendorIDAndProductID(vendor_id, product_id,
+				skip_on_access_error=True, skip_on_error=True)
+			if dev:
+				self.handle_new_device(dev)
 	
 	
 	def unregister_hotplug_device(self, callback, vendor_id, product_id):
-		if self._known_ids.get(vendor_id, product_id) == callback:
+		if self._known_ids.get((vendor_id, product_id)) == callback:
 			del self._known_ids[vendor_id, product_id]
 			log.debug("Unregistred hotplug USB driver for %.4x:%.4x", vendor_id, product_id)
 	
@@ -325,3 +332,7 @@ atexit.register(__del__)
 
 def register_hotplug_device(callback, vendor_id, product_id):
 	_usb.register_hotplug_device(callback, vendor_id, product_id)
+
+
+def unregister_hotplug_device(callback, vendor_id, product_id):
+	_usb.unregister_hotplug_device(callback, vendor_id, product_id)

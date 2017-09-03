@@ -174,6 +174,10 @@ scc-osd-daemon sends `Register: osd`
 scc-autoswitch-daemon `Register: autoswitch`
 Daemon responds with `OK.`
 
+#### `Rescan.`
+Asks daemon to rescan for new devices. Drivers may re-read its configuration if needed.
+Daemon responds with `OK.`
+
 #### `Restart.`
 Restarts daemon. This has same effect as calling "scc-daemon None restart", as that's exactly what
 gets called. All clients are disconnected immediately, so there is no response.

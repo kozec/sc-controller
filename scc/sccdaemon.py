@@ -57,6 +57,7 @@ class SCCDaemon(Daemon):
 		self.osd_ids = {}
 		self.controllers = []
 		self.mainloops = [ self.poller.poll, self.scheduler.run ]
+		self.rescan_cbs = []
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
@@ -116,6 +117,11 @@ class SCCDaemon(Daemon):
 		return self.poller
 	
 	
+	def get_scheduler(self):
+		""" Returns scheduler instance """
+		return self.scheduler
+	
+	
 	def add_mainloop(self, fn):
 		"""
 		Adds function that is called in every mainloop iteration.
@@ -140,6 +146,14 @@ class SCCDaemon(Daemon):
 		"""
 		if fn not in self.on_exit_cbs:
 			self.on_exit_cbs.append(fn)
+	
+	
+	def on_rescan(self, fn):
+		"""
+		Adds function that is called when `Rescan.` message is recieved.
+		"""
+		if fn not in self.on_exit_cbs:
+			self.rescan_cbs.append(fn)
 	
 	
 	def _set_profile(self, mapper, filename):
@@ -796,6 +810,22 @@ class SCCDaemon(Daemon):
 					self._send_to_all("Reconfigured.\n".encode("utf-8"))
 				except:
 					pass
+		elif message.startswith("Rescan."):
+			with self.lock:
+				cbs = [] + self.rescan_cbs
+				# Respond first
+				try:
+					client.wfile.write(b"OK.\n")
+				except:
+					pass
+			# Do stuff later
+			# (this cannot be done while self.lock is held, as creating new
+			# controller would create race condition)
+			for cb in self.rescan_cbs:
+				try:
+					cb()
+				except Exception, e:
+					log.exception(e)
 		elif message.startswith("Turnoff."):
 			with self.lock:
 				if client.mapper.get_controller():

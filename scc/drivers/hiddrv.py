@@ -9,7 +9,8 @@ from scc.lib.hidparse import HIDPARSE_TYPE_AXIS, HIDPARSE_TYPE_BUTTONS
 from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
 from scc.lib.hidparse import UsagePage, parse_report_descriptor, AXES
 from scc.lib.hid_fixups import HID_FIXUPS
-from scc.drivers.usb import USBDevice, register_hotplug_device
+from scc.drivers.usb import register_hotplug_device, unregister_hotplug_device
+from scc.drivers.usb import USBDevice
 from scc.constants import SCButtons, HapticPos, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.drivers.evdevdrv import FIRST_BUTTON, TRIGGERS, parse_axis
@@ -469,7 +470,7 @@ class HIDDrv(object):
 			unregister_hotplug_device(self.hotplug_cb, vid, pid)
 			self.registered.remove(removed)
 			if (vid, pid) in self.configs:
-				del self.config[vid, pid]
+				del self.configs[vid, pid]
 
 
 def hiddrv_test(cls, args):
@@ -536,7 +537,8 @@ def hiddrv_test(cls, args):
 
 def init(daemon):
 	""" Called from scc-daemon """
-	HIDDrv(daemon)
+	d = HIDDrv(daemon)
+	daemon.on_rescan(d.scan_files)
 
 
 if __name__ == "__main__":
