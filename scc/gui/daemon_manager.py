@@ -272,6 +272,12 @@ class DaemonManager(GObject.GObject):
 				DaemonManager.nocallback)
 	
 	
+	def rescan(self):
+		""" Asks daemon to rescan for new devices """
+		self.request("Rescan.", DaemonManager.nocallback,
+				DaemonManager.nocallback)
+	
+	
 	def stop(self):
 		""" Stops the daemon """
 		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", "stop" ], Gio.SubprocessFlags.NONE)

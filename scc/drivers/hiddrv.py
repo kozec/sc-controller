@@ -165,7 +165,6 @@ class HIDController(USBDevice, Controller):
 		self._load_hid_descriptor(config, max_size, vid, pid)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
 		Controller.__init__(self)
-		self._id = self._generate_id()
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		
 		if test_mode:
@@ -178,6 +177,7 @@ class HIDController(USBDevice, Controller):
 						if a.mode != AxisMode.DISABLED
 					]))])
 		else:
+			self._id = self._generate_id()
 			self.set_input_interrupt(id, self._packet_size, self.input)
 			self.daemon.add_controller(self)
 			self._ready = True

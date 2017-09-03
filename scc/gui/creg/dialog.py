@@ -308,6 +308,10 @@ class ControllerRegistration(Editor):
 		
 		open(config_file, "w").write(jsondata)
 		log.debug("Controller configuration '%s' written", config_file)
+		
+		self.kill_tester()
+		self.window.destroy()
+		GLib.timeout_add_seconds(1, self.app.dm.rescan)
 	
 	
 	def on_buffRawData_changed(self, buffRawData, *a):

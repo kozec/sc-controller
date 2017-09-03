@@ -131,8 +131,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
-		
-		GLib.idle_add(self.on_mnuRegisterController_activate)
 	
 	
 	def setup_statusicon(self):

@@ -60,7 +60,7 @@ class EvdevController(Controller):
 			self.poller = daemon.get_poller()
 			self.poller.register(self.device.fd, self.poller.POLLIN, self.input)
 			self.device.grab()
-		self._id = self._generate_id()
+			self._id = self._generate_id()
 		self._state = EvdevControllerInput( *[0] * len(EvdevControllerInput._fields) )
 		self._padpressemu_task = None
 	
