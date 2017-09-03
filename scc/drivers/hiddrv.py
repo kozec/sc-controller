@@ -138,8 +138,10 @@ _lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
 
 class HIDController(USBDevice, Controller):
 	
-	def __init__(self, device, handle, config, test_mode=False):
+	def __init__(self, device, daemon, handle, config, test_mode=False):
 		USBDevice.__init__(self, device, handle)
+		self._ready = False
+		self.daemon = daemon
 		
 		id = None
 		max_size = 64
@@ -176,6 +178,8 @@ class HIDController(USBDevice, Controller):
 					]))])
 		else:
 			self.set_input_interrupt(id, self._packet_size, self.input)
+			self.daemon.add_controller(self)
+			self._ready = True
 	
 	
 	def _load_hid_descriptor(self, config, max_size, vid, pid):
@@ -319,6 +323,9 @@ class HIDController(USBDevice, Controller):
 	def close(self):
 		# Called when pad is disconnected
 		USBDevice.close(self)
+		if self._ready:
+			self.daemon.remove_controller(self)
+			self._ready = False
 	
 	
 	def get_type(self):
@@ -425,8 +432,7 @@ class HIDDrv(object):
 	def hotplug_cb(self, device, handle):
 		vid, pid = device.getVendorID(), device.getProductID()
 		if (vid, pid) in self.configs:
-			controller = HIDController(device, handle, self.configs[vid, pid])
-			self.daemon.add_controller(controller)
+			controller = HIDController(device, self.daemon, handle, self.configs[vid, pid])
 			return controller
 		return None
 	
@@ -506,7 +512,7 @@ def hiddrv_test(cls, args):
 	fake_daemon = FakeDaemon()
 	
 	def cb(device, handle):
-		return cls(device, handle, None, test_mode=True)
+		return cls(device, None, handle, None, test_mode=True)
 		try:
 			pass
 		except NotHIDDevice:
