@@ -47,6 +47,7 @@ if __name__ == "__main__":
 			scripts = [
 				'scripts/scc-daemon',
 				'scripts/sc-controller',
+				'scripts/scc',
 				'scripts/scc-osd-dialog',
 				'scripts/scc-osd-keyboard',
 				'scripts/scc-osd-launcher',
@@ -59,5 +60,6 @@ if __name__ == "__main__":
 			platforms = ['Linux'],
 			ext_modules = [
 				Extension('libuinput', sources = ['scc/uinput.c']),
+				Extension('libhiddrv', sources = ['scc/drivers/hiddrv.c']),
 			]
 	)

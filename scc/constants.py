@@ -90,11 +90,22 @@ class SCButtons(IntEnum):
 # value of lpad_x and lpad_y belongs to stick
 STICKTILT		= 0b10000000000000000000000000000000
 
+
 class HapticPos(IntEnum):
 	"""Specify witch pad or trig is used"""
 	RIGHT = 0
 	LEFT = 1
 	BOTH = 2	# emulated
+
+
+class ControllerFlags(IntEnum):
+	"""
+	Used by mapper to workaround some physical differences between
+	Steam Controller and other pads.
+	"""
+	HAS_RSTICK =		1 << 0	# Controller has right stick instead of touchpad
+	SEPARATE_STICK =	1 << 1	# Left stick and left pad are using separate axes
+
 
 STICK_PAD_MIN = -32768
 STICK_PAD_MAX = 32768

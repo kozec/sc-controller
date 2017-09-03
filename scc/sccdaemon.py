@@ -17,6 +17,7 @@ from scc.tools import set_logging_level, find_binary, clamp
 from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
 from scc.controller import HapticData
+from scc.scheduler import Scheduler
 from scc.menu_data import MenuData
 from scc.profile import Profile
 from scc.actions import Action
@@ -44,6 +45,7 @@ class SCCDaemon(Daemon):
 		self.exiting = False
 		self.socket_file = socket_file
 		self.poller = Poller()
+		self.scheduler = Scheduler()
 		self.xdisplay = None
 		self.sserver = None			# UnixStreamServer instance
 		self.errors = []
@@ -54,7 +56,8 @@ class SCCDaemon(Daemon):
 		# TODO: Use osd_ids for all menus
 		self.osd_ids = {}
 		self.controllers = []
-		self.mainloops = [ self.poller.poll ]
+		self.mainloops = [ self.poller.poll, self.scheduler.run ]
+		self.rescan_cbs = []
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
@@ -114,6 +117,11 @@ class SCCDaemon(Daemon):
 		return self.poller
 	
 	
+	def get_scheduler(self):
+		""" Returns scheduler instance """
+		return self.scheduler
+	
+	
 	def add_mainloop(self, fn):
 		"""
 		Adds function that is called in every mainloop iteration.
@@ -138,6 +146,14 @@ class SCCDaemon(Daemon):
 		"""
 		if fn not in self.on_exit_cbs:
 			self.on_exit_cbs.append(fn)
+	
+	
+	def on_rescan(self, fn):
+		"""
+		Adds function that is called when `Rescan.` message is recieved.
+		"""
+		if fn not in self.on_exit_cbs:
+			self.rescan_cbs.append(fn)
 	
 	
 	def _set_profile(self, mapper, filename):
@@ -398,14 +414,15 @@ class SCCDaemon(Daemon):
 		Setups new mapper instance.
 		"""
 		try:
-			mapper = Mapper(Profile(TalkingActionParser()), poller=self.poller)
+			mapper = Mapper(Profile(TalkingActionParser()),
+					self.scheduler, poller=self.poller)
 		except CannotCreateUInputException, e:
 			# Most likely UInput is not available
 			# Create mapper with all virtual devices set to Dummies.
 			log.exception(e)
 			self.add_error("uinput", str(e))
-			mapper = Mapper(Profile(TalkingActionParser()), keyboard=None,
-				mouse=None, gamepad=False)
+			mapper = Mapper(Profile(TalkingActionParser()),
+				self.scheduler, keyboard=None, mouse=None, gamepad=False)
 		
 		mapper.set_special_actions_handler(self)
 		mapper.set_xdisplay(self.xdisplay)
@@ -499,6 +516,11 @@ class SCCDaemon(Daemon):
 					mapper.set_controller(None)
 					self.free_mappers.append(mapper)
 			self.send_controller_list(self._send_to_all)
+	
+	
+	def get_active_ids(self):
+		""" Returns iterable with IDs of all active controllers """
+		return [ x.get_id() for x in self.controllers ]
 	
 	
 	def add_error(self, id, error):
@@ -809,6 +831,22 @@ class SCCDaemon(Daemon):
 					self._send_to_all("Reconfigured.\n".encode("utf-8"))
 				except:
 					pass
+		elif message.startswith("Rescan."):
+			with self.lock:
+				cbs = [] + self.rescan_cbs
+				# Respond first
+				try:
+					client.wfile.write(b"OK.\n")
+				except:
+					pass
+			# Do stuff later
+			# (this cannot be done while self.lock is held, as creating new
+			# controller would create race condition)
+			for cb in self.rescan_cbs:
+				try:
+					cb()
+				except Exception, e:
+					log.exception(e)
 		elif message.startswith("Turnoff."):
 			with self.lock:
 				if client.mapper.get_controller():
@@ -1101,35 +1139,36 @@ class ReportingAction(Action):
 		self.old_pos = 0, 0
 	
 	
-	def trigger(self, mapper, position, old_position):
+	def _report(self, message):
 		try:
-			self.client.wfile.write(("Event: %s %s %s %s\n" % (
-				mapper.get_controller().get_id(),
-				self.what.name, position, old_position)
-			).encode("utf-8"))
-		except Exception:
+			self.client.wfile.write(message.encode("utf-8"))
+		except Exception, e:
 			# May fail when client dies
 			self.client.rfile.close()
 			self.client.wfile.close()
+	
+	
+	def trigger(self, mapper, position, old_position):
+		if mapper.get_controller():
+			self._report("Event: %s %s %s %s\n" % (
+				mapper.get_controller().get_id(),
+				self.what.name, position, old_position
+			))
 	
 	
 	def button_press(self, mapper, number=1):
-		try:
+		if mapper.get_controller():
 			if self.what == SCButtons.STICKPRESS:
-				self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
+				self._report("Event: %s STICKPRESS %s\n" % (
 					mapper.get_controller().get_id(),
 					number
-				)).encode("utf-8"))
+				))
 			else:
-				self.client.wfile.write(("Event: %s %s %s\n" % (
+				self._report("Event: %s %s %s\n" % (
 					mapper.get_controller().get_id(),
 					self.what.name,
 					number
-				)).encode("utf-8"))
-		except Exception:
-			# May fail when client dies
-			self.client.rfile.close()
-			self.client.wfile.close()
+				))
 	
 	
 	def button_release(self, mapper):
@@ -1140,15 +1179,11 @@ class ReportingAction(Action):
 		if (x == 0 or y == 0 or abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE
 							or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE)):
 			self.old_pos = x, y
-			try:
-				self.client.wfile.write(("Event: %s %s %s %s\n" % (
+			if mapper.get_controller():
+				self._report("Event: %s %s %s %s\n" % (
 					mapper.get_controller().get_id(),
 					what, x, y
-				)).encode("utf-8"))
-			except Exception:
-				# May fail when client dies
-				self.client.rfile.close()
-				self.client.wfile.close()
+				))
 
 
 class LockedAction(ReportingAction):
@@ -1214,7 +1249,7 @@ class ObservingAction(ReportingAction):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
 		self.client.locked_actions.add(self)
-		log.debug("%s observed %s", self.what, self.client)
+		log.debug("%s observed by %s", self.what, self.client)
 	
 	
 	def reaply(self, client, daemon):

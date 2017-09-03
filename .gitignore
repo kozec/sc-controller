@@ -1,7 +1,10 @@
 *.pyc
+.*
 *~
 *.so
+*.patch
+*test*
 build/
 .atomignore
 commit*
-*test.*
+profiles

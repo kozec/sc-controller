@@ -1,24 +1,4 @@
 #!/usr/bin/env python2
-# Copyright (c) 2015 Stany MARCEL <stanypub@gmail.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-
 from scc.constants import HapticPos
 import logging
 
@@ -29,13 +9,15 @@ next_id = 1		# Used with fallback controller id generator
 class Controller(object):
 	"""
 	Base class for all controller drivers. Implementations are in
-	scc.dricvers package.
+	scc.drivers package.
 	
 	Derived class should implement every method from here.
 	"""
+	
 	def __init__(self):
 		global next_id
 		self.mapper = None
+		self.flags = 0
 		self._id = next_id
 		self._id_is_persistent = False
 		next_id += 1

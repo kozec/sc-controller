@@ -246,7 +246,7 @@ class Keyboard(OSDWindow, TimerManager):
 			self._create_background()
 		OSDWindow.show(self, *a)
 		self.profile.load(find_profile(Keyboard.OSK_PROF_NAME)).compress()
-		self.mapper = SlaveMapper(self.profile,
+		self.mapper = SlaveMapper(self.profile, None,
 			keyboard=b"SCC OSD Keyboard", mouse=b"SCC OSD Mouse")
 		self.mapper.set_special_actions_handler(self)
 		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])

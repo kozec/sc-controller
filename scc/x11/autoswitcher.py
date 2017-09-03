@@ -28,7 +28,7 @@ class AutoSwitcher(object):
 		self.lock = threading.Lock()
 		self.thread = threading.Thread(target=self.connect_daemon)
 		self.config = Config()
-		self.mapper = Mapper(None, keyboard=None, mouse=None, gamepad=None)
+		self.mapper = Mapper(None, None, keyboard=None, mouse=None, gamepad=None)
 		self.mapper.set_special_actions_handler(self)
 		self.enabled = False
 		self.socket = None

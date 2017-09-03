@@ -95,6 +95,8 @@ class Config(object):
 		},
 		# See drivers/sc_dongle.py, read_serial method
 		"ignore_serials" : True,
+		# List of known/enabled evdev devices (none by default)
+		"evdev_devices" : {}
 	}
 	
 	CONTROLLER_DEFAULTS = {

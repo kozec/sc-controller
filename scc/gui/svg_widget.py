@@ -39,16 +39,22 @@ class SVGWidget(Gtk.EventBox):
 		self.connect("button-press-event", self.on_mouse_click)
 		self.set_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
 		
-		self.current_svg = open(filename, "r").read().decode("utf-8")
 		self.size_override = None
 		self.image_width = 1
 		self.image_height = 1
+		self.set_image(filename)
 		self.image = Gtk.Image()
-		self.parse_image()
 		if init_hilighted:
 			self.hilight({})
 		self.add(self.image)
 		self.show_all()
+	
+	
+	def set_image(self, filename):
+		self.current_svg = open(filename, "r").read().decode("utf-8")
+		self.cache = {}
+		self.areas = []
+		self.parse_image()
 	
 	
 	def parse_image(self):
@@ -59,7 +65,7 @@ class SVGWidget(Gtk.EventBox):
 		hovering.
 		"""
 		tree = ET.fromstring(self.current_svg.encode("utf-8"))
-		SVGWidget.find_areas(tree, (0, 0), self.areas)
+		SVGWidget.find_areas(tree, None, self.areas)
 		self.image_width =  float(tree.attrib["width"])
 		self.image_height = float(tree.attrib["height"])
 	
@@ -105,41 +111,32 @@ class SVGWidget(Gtk.EventBox):
 	def get_area_position(self, area_id):
 		"""
 		Computes and returns area position on image as (x, y, width, height).
-		Returns None if area is not found.
+		Raises ValueError if such area is not found.
 		"""
 		# TODO: Maybe cache this?
 		a = self.get_area(area_id)
 		if a:
 			return a.x, a.y, a.w, a.h
-		return None
+		raise ValueError("Area '%s' not found" % (area_id, ))
 	
 	
 	@staticmethod
-	def find_areas(xml, translation, areas):
+	def find_areas(xml, parent_transform, areas):
 		"""
 		Recursively searches throught XML for anything with ID of 'AREA_SOMETHING'
 		"""
 		for child in xml:
-			if 'id' in child.attrib:
-				if child.attrib['id'].startswith("AREA_"):
-					# log.debug("Found SVG area %s", child.attrib['id'][5:])
-					areas.append(Area(translation, child))
-					continue
-			if 'transform' in child.attrib:
-				if child.attrib['transform'].startswith("translate"):
-					# Only transform supported and, luckily, only transform used
-					value = child.attrib['transform'].split("(")[-1].strip(")").split(",")
-					while len(value) < 2: value.append(0)
-					child_translation = (
-						translation[0] + float(value[0]),
-						translation[1] + float(value[1])
-					)
-					SVGWidget.find_areas(child, child_translation, areas)
-					continue
-			SVGWidget.find_areas(child, translation, areas)
+			child_transform = SVGEditor.matrixmul(
+				parent_transform or SVGEditor.IDENTITY,
+				SVGEditor.parse_transform(child))
+			if 'id' in child.attrib and child.attrib['id'].startswith("AREA_"):
+				# log.debug("Found SVG area %s", child.attrib['id'][5:])
+				areas.append(Area(child, child_transform))
+			else:
+				SVGWidget.find_areas(child, child_transform, areas)
 	
 	
-	def get_rect_area(self, element, x=0, y=0):
+	def get_rect_area(self, element):
 		"""
 		Returns x, y, width and height of rect element relative to document root.
 		element can be specified by it's id.
@@ -149,15 +146,9 @@ class SVGWidget(Gtk.EventBox):
 			SVGEditor.update_parents(tree)
 			element = SVGEditor.get_element(tree, element)
 		width, height = 0, 0
-		if 'x' in element.attrib: x += float(element.attrib['x'])
-		if 'y' in element.attrib: y += float(element.attrib['y'])
+		x, y = SVGEditor.get_translation(element, absolute=True)
 		if 'width' in element.attrib:  width = float(element.attrib['width'])
 		if 'height' in element.attrib: height = float(element.attrib['height'])
-		
-		if element.parent is not None:
-			px, py, trash, trash = self.get_rect_area(element.parent)
-			x += px
-			y += py
 		
 		return x, y, width, height
 	
@@ -210,14 +201,13 @@ class Area:
 		"MINUSHALF", "PLUSHALF", "KEY" )
 	
 	""" Basicaly just rectangle with name """
-	def __init__(self, translation, element):
+	def __init__(self, element, transform):
 		self.name = element.attrib['id'].split("_")[1]
 		if self.name in Area.SPECIAL_CASES:
 			self.name = "_".join(element.attrib['id'].split("_")[1:3])
-		self.x = float(element.attrib['x']) + translation[0]
-		self.y = float(element.attrib['y']) + translation[1]
-		self.w = float(element.attrib['width'])
-		self.h = float(element.attrib['height'])
+		self.x, self.y = SVGEditor.get_translation(transform)
+		self.w = float(element.attrib.get('width', 0))
+		self.h = float(element.attrib.get('height', 0))
 	
 	
 	def contains(self, x, y):
@@ -238,6 +228,7 @@ class SVGEditor(object):
 	is called.
 	"""
 	RE_PARSE_TRANSFORM = re.compile(r"([a-z]+)\(([-0-9\.,]+)\)(.*)")
+	IDENTITY = ( (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0) )
 	
 	def __init__(self, svgw):
 		if type(svgw) == str:
@@ -360,6 +351,22 @@ class SVGEditor(object):
 	
 	
 	@staticmethod
+	def find_by_tag(tree, tag):
+		"""
+		Recursively searches throught XML until element with specified tag is found.
+		
+		Returns element or None, if there is not any.
+		"""
+		for child in tree:
+			if child.tag.endswith(tag):
+				return child
+			r = SVGEditor.find_by_tag(child, tag)
+			if r is not None:
+				return r
+		return None	
+	
+	
+	@staticmethod
 	def recolor(element, color):
 		"""
 		Changes background color of element.
@@ -367,13 +374,16 @@ class SVGEditor(object):
 		
 		Returns True on success, False if element cannot be recolored.
 		"""
-		if element.tag.endswith("path") or element.tag.endswith("rect") or element.tag.endswith("circle") or element.tag.endswith("text"):
+		if element.tag.endswith("path") or element.tag.endswith("rect") or element.tag.endswith("circle") or element.tag.endswith("ellipse") or element.tag.endswith("text"):
 			if 'style' in element.attrib:
 				style = { y[0] : y[1] for y in [ x.split(":", 1) for x in element.attrib['style'].split(";") ] }
 				if 'fill' in style:
 					style['fill'] = color
-					if 'opacity' in style:
-						style['opacity'] = "1"
+					if len(color.strip("#")) == 8:
+						alpha = float(int(color.strip("#")[0:2], 16)) / 255.0
+						style['fill-opacity'] = style['opacity'] = str(alpha)
+					else:
+						style['fill-opacity'] = style['opacity'] = "1"
 					element.attrib['style'] = ";".join([ "%s:%s" % (x, style[x]) for x in style ])
 					return True
 		elif element.tag.endswith("g"):
@@ -479,11 +489,31 @@ class SVGEditor(object):
 	
 	
 	@staticmethod
+	def get_translation(elm_or_matrix, absolute=False):
+		if isinstance(elm_or_matrix, ET.Element):
+			elm = elm_or_matrix
+			matrix = SVGEditor.parse_transform(elm)
+			parent = elm.parent
+			while parent is not None:
+				matrix = SVGEditor.matrixmul(matrix, SVGEditor.parse_transform(parent))
+				parent = parent.parent
+		else:
+			matrix = elm_or_matrix
+		
+		return matrix[0][2], matrix[1][2]
+	
+	
+	@staticmethod
 	def parse_transform(xml):
 		"""
 		Returns element transform data in transformation matrix,
 		"""
-		matrix = [ [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0] ]
+		matrix = SVGEditor.IDENTITY
+		if 'x' in xml.attrib or 'y' in xml.attrib:
+			x = float(xml.attrib.get('x', 0.0))
+			y = float(xml.attrib.get('y', 0.0))
+			# Assuming matrix is identity matrix here
+			matrix = ((1.0, 0.0, x), (0.0, 1.0, y), (0.0, 0.0, 1.0))
 		if 'transform' in xml.attrib:
 			transform = xml.attrib['transform']
 			match = SVGEditor.RE_PARSE_TRANSFORM.match(transform.strip())
@@ -513,16 +543,13 @@ class SVGEditor(object):
 						sx, sy = scale
 					matrix = SVGEditor.matrixmul(matrix, ((sx, 0.0, 0.0), (0.0, sy, 0.0), (0.0, 0.0, 1.0)))
 				elif op == "matrix":
-					try:
-						matrix = [ float(x) for x in values.split(",") ]
-						while len(matrix) < 6: matrix.append(0.0)
-						a,b,c,d,e,f = matrix
-						matrix = SVGEditor.matrixmul(matrix,
-							[ [ a, c, e], [b, d, f], [0, 0, 1] ]
-						)
-					except Exception:
-						pass
-					
+					m = [ float(x) for x in values.split(",") ][0:6]
+					while len(m) < 6: m.append(0.0)
+					a,b,c,d,e,f = m
+					matrix = SVGEditor.matrixmul(matrix,
+						[ [ a, c, e], [b, d, f], [0, 0, 1] ]
+					)
+				
 				match = SVGEditor.RE_PARSE_TRANSFORM.match(transform.strip())
 		
 		return matrix
@@ -560,12 +587,21 @@ class SVGEditor(object):
 	
 	
 	@staticmethod
-	def add_element(parent, tagName, **attributes):
+	def add_element(parent, e, **attributes):
 		"""
-		Creates new element as child of specified parent.
-		Returns created element.
+		Creates new element as child of specified parent or, if 1st argument
+		is ET.Element, adds that element.
+		
+		Returns created or passed element.
 		"""
-		attributes = { k : str(attributes[k]) for k in attributes }
-		e = ET.Element(tagName, attributes)
+		if not isinstance(e, ET.Element):
+			attributes = { k : str(attributes[k]) for k in attributes }
+			e = ET.Element(e, attributes)
 		parent.append(e)
 		return e
+	
+	
+	@staticmethod
+	def load_from_file(filename):
+		tree = ET.fromstring(open(filename, "r").read())
+		return SVGEditor.find_by_tag(tree, "g")

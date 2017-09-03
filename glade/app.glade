@@ -246,6 +246,15 @@
         <signal name="toggled" handler="on_mnuEmulationEnabled_toggled" swapped="no"/>
       </object>
     </child>
+	<child>
+      <object class="GtkMenuItem" id="mnuRegisterController">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Register New Controller</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuRegisterController_activate" swapped="no"/>
+      </object>
+    </child>
     <child>
       <object class="GtkMenuItem" id="mnuGlobalSettings">
         <property name="visible">True</property>

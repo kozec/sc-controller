@@ -39,7 +39,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	IMAGE = "background.svg"
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
-	OBSERVE_COLOR = "#00007FFF"		# ARGB
+	OBSERVE_COLOR = "#FF60A0FF"		# ARGB
 	CONFIG = "scc.config.json"
 	RELEASE_URL = "https://github.com/kozec/sc-controller/releases/tag/v%s"
 	OSD_MODE_PROF_NAME = ".scc-osd.profile_editor"
@@ -126,12 +126,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		
 		# Test markers (those blue circles over PADs and sticks)
-		self.lpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.rpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.stickTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.main_area.put(self.lpadTest, 40, 40)
-		self.main_area.put(self.rpadTest, 290, 90)
-		self.main_area.put(self.stickTest, 150, 40)
+		self.lpad_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.rpad_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.stick_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.main_area.put(self.lpad_test, 40, 40)
+		self.main_area.put(self.rpad_test, 290, 90)
+		self.main_area.put(self.stick_test, 150, 40)
 		
 		# OSD mode (if used)
 		if self.osd_mode:
@@ -382,6 +382,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		from scc.gui.global_settings import GlobalSettings
 		gs = GlobalSettings(self)
 		gs.show(self.window)
+	
+	
+	def on_mnuRegisterController_activate(self, *a):
+		from scc.gui.creg.dialog import ControllerRegistration
+		cr = ControllerRegistration(self)
+		cr.show(self.window)
 	
 	
 	def on_mnuImport_activate(self, *a):
@@ -882,9 +888,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.osd_mode_mapper.handle_event(daemon, what, data)
 		elif what in (LEFT, RIGHT, STICK):
 			widget, area = {
-				LEFT  : (self.lpadTest,  "LPADTEST"),
-				RIGHT : (self.rpadTest,  "RPADTEST"),
-				STICK : (self.stickTest, "STICKTEST"),
+				LEFT  : (self.lpad_test,  "LPADTEST"),
+				RIGHT : (self.rpad_test,  "RPADTEST"),
+				STICK : (self.stick_test, "STICKTEST"),
 			}[what]
 			# Check if stick or pad is released
 			if data[0] == data[1] == 0:

@@ -18,7 +18,26 @@ from scc.gui.area_to_action import AREA_TO_ACTION
 
 import os
 
-class Editor(object):
+
+class ComboSetter(object):
+	
+	def set_cb(self, cb, key, keyindex=0):
+		"""
+		Sets combobox value.
+		Returns True on success or False if key is not found.
+		"""
+		model = cb.get_model()
+		self._recursing = True
+		for row in model:
+			if key == row[keyindex]:
+				cb.set_active_iter(row.iter)
+				self._recursing = False
+				return True
+		self._recursing = False
+		return False
+
+
+class Editor(ComboSetter):
 	""" Common stuff for all editor windows """
 	ERROR_CSS = " #error {background-color:green; color:red;} "
 	_error_css_provider = None
@@ -58,19 +77,6 @@ class Editor(object):
 		"""
 		w.hide()
 		return True
-	
-	
-	def set_cb(self, cb, key, keyindex=0):
-		""" Sets combobox value """
-		model = cb.get_model()
-		self._recursing = True
-		self._transient_for = None
-		for row in model:
-			if key == row[keyindex]:
-				cb.set_active_iter(row.iter)
-				self._recursing = False
-				return
-		self._recursing = False
 	
 	
 	def set_title(self, title):
@@ -138,21 +144,3 @@ class Editor(object):
 			w = self.added_widget
 			self.remove_added_widget()
 			target.add_widget(label, w)
-
-
-class ComboSetter(object):
-	
-	def set_cb(self, cb, key, keyindex=0):
-		"""
-		Sets combobox value.
-		Returns True on success or False if key is not found.
-		"""
-		model = cb.get_model()
-		self._recursing = True
-		for row in model:
-			if key == row[keyindex]:
-				cb.set_active_iter(row.iter)
-				self._recursing = False
-				return True
-		self._recursing = False
-		return False

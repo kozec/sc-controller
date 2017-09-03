@@ -840,7 +840,7 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 		self.holdaction = NoAction()
 		self.actions = ( self.action, self.normalaction, self.holdaction )
 		self.timeout = time or DoubleclickModifier.DEAFAULT_TIMEOUT
-		self.waiting = False
+		self.waiting_task = None
 		self.pressed = False
 		self.active = None
 	
@@ -939,24 +939,23 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 	
 	def button_press(self, mapper):
 		self.pressed = True
-		if self.waiting:
+		if self.waiting_task:
 			# Double-click happened
-			mapper.remove_scheduled(self.on_timeout)
-			self.waiting = False
+			mapper.cancel_task(self.waiting_task)
+			self.waiting_task = None
 			self.active = self.action
 			self.active.button_press(mapper)
 		else:
 			# First click, start the timer
-			self.waiting = True
-			mapper.schedule(self.timeout, self.on_timeout)
+			self.waiting_task = mapper.schedule(self.timeout, self.on_timeout)
 	
 	
 	def button_release(self, mapper):
 		self.pressed = False
-		if self.waiting and self.active is None and not self.action:
+		if self.waiting_task and self.active is None and not self.action:
 			# In HoldModifier, button released before timeout
-			mapper.remove_scheduled(self.on_timeout)
-			self.waiting = False
+			mapper.cancel_task(self.waiting_task)
+			self.waiting_task = None
 			if self.normalaction:
 				self.normalaction.button_press(mapper)
 				self.normalaction.button_release(mapper)
@@ -967,8 +966,8 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 	
 	
 	def on_timeout(self, mapper, *a):
-		if self.waiting:
-			self.waiting = False
+		if self.waiting_task:
+			self.waiting_task = None
 			if self.pressed:
 				# Timeouted while button is still pressed
 				self.active = self.holdaction if self.holdaction else self.normalaction

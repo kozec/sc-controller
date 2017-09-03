@@ -365,14 +365,14 @@ class StickController(GObject.GObject, TimerManager):
 	def set_stick(self, *data):
 		direction = 0
 		# Y
-		if data[1] < STICK_PAD_MIN / 3:
+		if data[1] < STICK_PAD_MIN / 2:
 			direction = 2
-		elif data[1] > STICK_PAD_MAX / 3:
+		elif data[1] > STICK_PAD_MAX / 2:
 			direction = 8
 		# X
-		elif data[0] < STICK_PAD_MIN / 3:
+		elif data[0] < STICK_PAD_MIN / 2:
 			direction = 4
-		elif data[0] > STICK_PAD_MAX / 3:
+		elif data[0] > STICK_PAD_MAX / 2:
 			direction = 6
 		
 		if direction != self._direction:

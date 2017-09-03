@@ -30,9 +30,9 @@ def init(daemon):
 
 class SCByCable(USBDevice, SCController):
 	def __init__(self, device, handle, daemon):
+		self.daemon = daemon
 		USBDevice.__init__(self, device, handle)
 		SCController.__init__(self, self, CONTROLIDX, ENDPOINT)
-		self.daemon = daemon
 		self._ready = False
 		self._last_tup = None
 		daemon.add_mainloop(self._timer)
@@ -77,7 +77,6 @@ class SCByCable(USBDevice, SCController):
 				self.input(self._last_tup)
 				self._last_tup = None
 			else:
-				m.run_scheduled(time.time())
 				m.generate_events()
 				m.generate_feedback()
 			self.flush()
