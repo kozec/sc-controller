@@ -8,7 +8,6 @@ Borrows bit of code and configuration from evdevdrv.
 from scc.lib.hidparse import HIDPARSE_TYPE_AXIS, HIDPARSE_TYPE_BUTTONS
 from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
 from scc.lib.hidparse import UsagePage, parse_report_descriptor, AXES
-from scc.lib.hid_fixups import HID_FIXUPS
 from scc.drivers.usb import register_hotplug_device, unregister_hotplug_device
 from scc.drivers.usb import USBDevice
 from scc.constants import SCButtons, HapticPos, ControllerFlags
@@ -31,6 +30,7 @@ LIBUSB_DT_REPORT = 0x22
 AXIS_COUNT = 8		# Must match number of axis fields in HIDControllerInput and values in AxisType
 BUTTON_COUNT = 32	# Must match (or be less than) number of bits in HIDControllerInput.buttons
 ALLOWED_SIZES = [1, 2, 4, 8, 16, 32]
+SYS_DEVICES = "/sys/devices"
 
 
 class HIDDrvError(Exception): pass
@@ -184,11 +184,11 @@ class HIDController(USBDevice, Controller):
 	
 	
 	def _load_hid_descriptor(self, config, max_size, vid, pid):
-		if vid in HID_FIXUPS and pid in HID_FIXUPS[vid]:
-			hid_descriptor = HID_FIXUPS[vid][pid]
-		else:
+		hid_descriptor = HIDController.find_sys_devices_descriptor(vid, pid)
+		if hid_descriptor is None:
 			hid_descriptor = self.handle.getRawDescriptor(
 					LIBUSB_DT_REPORT, 0, 512)
+		open("report", "wb").write(b"".join([ chr(x) for x in hid_descriptor ]))
 		self._build_hid_decoder(hid_descriptor, config, max_size)
 		self._packet_size = self._decoder.packet_size
 	
@@ -319,6 +319,47 @@ class HIDController(USBDevice, Controller):
 		if self._decoder.packet_size > max_size:
 			self._decoder.packet_size = max_size
 		log.debug("Packet size: %s", self._decoder.packet_size)
+	
+	
+	@staticmethod
+	def find_sys_devices_descriptor(vid, pid):
+		"""
+		Finds, loads and returns HID descriptor available somewhere deep in
+		/sys/devices structure.
+		
+		Done by walking /sys/devices recursivelly, searching for file named
+		'report_descriptor' in subdirectory with name contining vid and pid.
+		
+		This is very much prefered before loading HID descriptor from device,
+		as some controllers are presenting descriptor that are completly
+		broken and kernel already deals with it.
+		"""
+		def recursive_search(pattern, path):
+			for name in os.listdir(path):
+				full_path = os.path.join(path, name)
+				if name == "report_descriptor":
+					if pattern in os.path.split(path)[-1]:
+						return full_path
+				try:
+					if os.path.islink(full_path):
+						# Recursive stuff in /sys ftw...
+						continue
+					if os.path.isdir(full_path):
+						r = recursive_search(pattern, full_path)
+						if r: return r
+				except IOError:
+					pass
+			return None
+		
+		pattern = ":%.4x:%.4x" % (vid, pid)
+		full_path = recursive_search(pattern, SYS_DEVICES)
+		try:
+			if full_path:
+				log.debug("Loading descriptor from '%s'", full_path)
+				return [ ord(x) for x in file(full_path, "rb").read(1024) ]
+		except Exception, e:
+			log.exception(e)
+		return None
 	
 	
 	def close(self):
