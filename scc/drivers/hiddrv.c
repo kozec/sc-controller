@@ -35,12 +35,14 @@ enum AxisMode {
 	AXIS          = 1,
 	AXIS_NO_SCALE = 2,
 	DPAD          = 3,
+	HATSWITCH     = 4,
 	
 	_AxisMode_force_int = INT_MAX
 };
 
 
 struct AxisModeData {
+	uint32_t button;
 	float scale;
 	float offset;
 	int clamp_min;
@@ -50,8 +52,16 @@ struct AxisModeData {
 
 
 struct DPadModeData {
+	uint32_t button;
 	unsigned char button1;
 	unsigned char button2;
+	int min;
+	int max;
+};
+
+
+struct HatswitchModeData {
+	uint32_t button;
 	int min;
 	int max;
 };
@@ -60,6 +70,7 @@ struct DPadModeData {
 union AxisDataUnion {
 	struct AxisModeData axis;
 	struct DPadModeData dpad;
+	struct HatswitchModeData hatswitch;
 };
 
 
@@ -121,6 +132,7 @@ inline int grab_with_size(const uint8_t size, const char* data, const size_t byt
 
 bool decode(struct HIDDecoder* dec, const char* data) {
 	memcpy(&(dec->old_state), &(dec->state), sizeof(struct HIDControllerInput));
+	dec->state.buttons = 0;
 	// Axes
 	for (size_t i=0; i<AXIS_COUNT; i++) {
 		union Value value;
@@ -136,6 +148,7 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 				if ((fval >= -dec->axes[i].data.axis.deadzone) && (fval <= dec->axes[i].data.axis.deadzone)) {
 						dec->state.axes[i] = 0;
 				} else {
+					dec->state.buttons |= dec->axes[i].data.dpad.button;
 					dec->state.axes[i] = CLAMP(
 		 				dec->axes[i].data.axis.clamp_min,
 		 				fval * dec->axes[i].data.axis.clamp_max,
@@ -150,16 +163,79 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 			case DPAD:
 				value = grab_value(data, dec->axes[i].byte_offset,
 					dec->axes[i].bit_offset);
-				if ((value.u32 >> dec->axes[i].data.dpad.button1) & 1)
+				if ((value.u32 >> dec->axes[i].data.dpad.button1) & 1) {
+					dec->state.buttons |= dec->axes[i].data.dpad.button;
 					dec->state.axes[i] = dec->axes[i].data.dpad.min;
-				else if ((value.u32 >> dec->axes[i].data.dpad.button2) & 1)
+				} else if ((value.u32 >> dec->axes[i].data.dpad.button2) & 1) {
+					dec->state.buttons |= dec->axes[i].data.dpad.button;
 					dec->state.axes[i] = dec->axes[i].data.dpad.max;
+				}
+				break;
+			case HATSWITCH:
+				value = grab_value(data, dec->axes[i].byte_offset,
+					dec->axes[i].bit_offset);
+				switch (value.u8 & 0b1111) {
+					case 0:	// up
+						dec->state.axes[i + 0] = 0;
+						dec->state.axes[i + 1] = dec->axes[i].data.hatswitch.max;
+						dec->state.buttons |= dec->axes[i].data.hatswitch.button;
+						break;
+					case 1:	// up-right
+						dec->state.axes[i + 0] = dec->axes[i].data.hatswitch.max;
+						dec->state.axes[i + 1] = dec->axes[i].data.hatswitch.max;
+						dec->state.buttons |= dec->axes[i].data.hatswitch.button;
+						break;
+					case 2:	// right
+						dec->state.axes[i + 0] = dec->axes[i].data.hatswitch.max;
+						dec->state.axes[i + 1] = 0;
+						dec->state.buttons |= dec->axes[i].data.hatswitch.button;
+						break;
+					case 3:	// down-right
+						dec->state.axes[i + 0] = dec->axes[i].data.hatswitch.max;
+						dec->state.axes[i + 1] = dec->axes[i].data.hatswitch.min;
+						dec->state.buttons |= dec->axes[i].data.hatswitch.button;
+						break;
+					case 4:	// down
+						dec->state.axes[i + 0] = 0;
+						dec->state.axes[i + 1] = dec->axes[i].data.hatswitch.min;
+						dec->state.buttons |= dec->axes[i].data.hatswitch.button;
+						break;
+					case 5:	// up-left
+						dec->state.axes[i + 0] = dec->axes[i].data.hatswitch.min;
+						dec->state.axes[i + 1] = dec->axes[i].data.hatswitch.min;
+						dec->state.buttons |= dec->axes[i].data.hatswitch.button;
+						break;
+					case 6:	// left
+						dec->state.axes[i + 0] = dec->axes[i].data.hatswitch.min;
+						dec->state.axes[i + 1] = 0;
+						dec->state.buttons |= dec->axes[i].data.hatswitch.button;
+						break;
+					case 7:	// down-left
+						dec->state.axes[i + 0] = dec->axes[i].data.hatswitch.min;
+						dec->state.axes[i + 1] = dec->axes[i].data.hatswitch.max;
+						dec->state.buttons |= dec->axes[i].data.hatswitch.button;
+						break;
+					default: // centered
+						dec->state.axes[i + 0] = 0;
+						dec->state.axes[i + 1] = 0;
+						break;
+				}
+				
+				/*printf("\n --%i-- [%i,%i] 0 min %i 0 max %i -> %i %i\n",
+					(int)(value.u8 & 0b1111),
+					(int)i,
+					(int)(i+1),
+					(int)dec->axes[i].data.dpad.min,
+					(int)dec->axes[i].data.dpad.max,
+					(int)dec->state.axes[i + 0],
+					(int)dec->state.axes[i + 1]
+				);*/
+				
 				break;
 		}
 	}
 	
 	// Buttons
-	dec->state.buttons = 0;
 	if (dec->buttons.enabled) {
 		union Value value = grab_value(data, dec->buttons.byte_offset, dec->buttons.bit_offset);
 		for (size_t x=0; x<BUTTON_COUNT; x++) {

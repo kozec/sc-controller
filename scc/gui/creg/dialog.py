@@ -380,7 +380,8 @@ class ControllerRegistration(Editor):
 			# Not an USB device, skip HID test altogether
 			retry_with_evdev(None, 0)
 		else:
-			log.debug("Trying to use '%s' with HID driver...", dev.fn)
+			log.debug("Trying to use %.4x:%.4x with HID driver...",
+					dev.info.vendor, dev.info.product)
 			self._tester = Tester("hid", "%.4x:%.4x" % (dev.info.vendor, dev.info.product))
 			self._tester.__signals = [
 				self._tester.connect('ready', self.on_registration_ready),

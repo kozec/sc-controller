@@ -5,9 +5,10 @@ SC Controller - Universal HID driver. For all three universal HID devices.
 Borrows bit of code and configuration from evdevdrv.
 """
 
-from scc.lib.hidparse import HIDPARSE_TYPE_AXIS, HIDPARSE_TYPE_BUTTONS
+from scc.lib.hidparse import HIDPARSE_TYPE_AXIS, HIDPARSE_TYPE_BUTTONS, AXES
 from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
-from scc.lib.hidparse import UsagePage, parse_report_descriptor, AXES
+from scc.lib.hidparse import UsagePage, parse_report_descriptor
+from scc.lib.hidparse import GenericDesktopPage
 from scc.drivers.usb import register_hotplug_device, unregister_hotplug_device
 from scc.drivers.usb import USBDevice
 from scc.constants import SCButtons, HapticPos, ControllerFlags
@@ -68,10 +69,12 @@ class AxisMode(IntEnum):
 	AXIS          = 1
 	AXIS_NO_SCALE = 2
 	DPAD          = 3
+	HATSWITCH     = 4
 
 
 class AxisModeData(ctypes.Structure):
 	_fields_ = [
+		('button', ctypes.c_uint32),
 		('scale', ctypes.c_float),
 		('offset', ctypes.c_float),
 		('clamp_min', ctypes.c_int),
@@ -82,8 +85,17 @@ class AxisModeData(ctypes.Structure):
 
 class DPadModeData(ctypes.Structure):
 	_fields_ = [
+		('button', ctypes.c_uint32),
 		('button1', ctypes.c_uint8),
 		('button2', ctypes.c_uint8),
+		('min', ctypes.c_int),
+		('max', ctypes.c_int),
+	]
+
+
+class HatswitchModeData(ctypes.Structure):
+	_fields_ = [
+		('button', ctypes.c_uint32),
 		('min', ctypes.c_int),
 		('max', ctypes.c_int),
 	]
@@ -93,6 +105,7 @@ class AxisDataUnion(ctypes.Union):
 	_fields_ = [
 		('axis', AxisModeData),
 		('dpad', DPadModeData),
+		('hatswitch', HatswitchModeData),
 	]
 
 
@@ -226,7 +239,7 @@ class HIDController(USBDevice, Controller):
 		return (ctypes.c_uint8 * BUTTON_COUNT)(*buttons)
 	
 	
-	def _build_axis_maping(self, axis, config):
+	def _build_axis_maping(self, axis, config, mode = AxisMode.AXIS):
 		"""
 		Converts configuration mapping for _one_ axis to value situable
 		for self._decoder.axes field.
@@ -240,14 +253,33 @@ class HIDController(USBDevice, Controller):
 				# Maps to unknown axis
 				return None, None
 			cdata = parse_axis(axis_config)
-			axis_data = AxisData(
-				mode = AxisMode.AXIS,
-				data = AxisDataUnion(
-					axis = AxisModeData(**{
-						field : getattr(cdata, field) for field in cdata._fields
-					})
+			button = 0
+			if AxisType(target) in (AxisType.AXIS_LPAD_X, AxisType.AXIS_LPAD_Y):
+				button = (SCButtons.LPADTOUCH | SCButtons.LPAD)
+			elif AxisType(target) in (AxisType.AXIS_RPAD_X, AxisType.AXIS_RPAD_Y):
+				button = SCButtons.RPAD
+			if mode == AxisMode.AXIS:
+				axis_data = AxisData(
+					mode = AxisMode.AXIS,
+					data = AxisDataUnion(
+						axis = AxisModeData(button = button, **{
+							field : getattr(cdata, field) for field in cdata._fields
+						})
+					)
 				)
-			)
+			elif mode == AxisMode.HATSWITCH:
+				axis_data = AxisData(
+					mode = AxisMode.HATSWITCH,
+					data = AxisDataUnion(
+						hatswitch = HatswitchModeData(
+							button = button,
+							max = axis_config['max'],
+							min = axis_config['min']
+						)
+					)
+				)
+			else:
+				axis_data = AxisData(mode = AxisMode.DISABLED)
 			return target, axis_data
 		return None, None
 	
@@ -290,6 +322,28 @@ class HIDController(USBDevice, Controller):
 								if next_axis < AXIS_COUNT:
 									next_axis = AxisType(next_axis)
 							total += size
+					elif kind == GenericDesktopPage.Hatswitch:
+						if count * size != 4:
+							raise UnparsableDescriptor("Invalid size for Hatswitch (%sb)" % (count * size, ))
+						if next_axis + 1 < AXIS_COUNT:
+							log.debug("Found hat #%s at bit %s", int(next_axis), total)
+							if config:
+								target, axis_data = self._build_axis_maping(next_axis, config, AxisMode.HATSWITCH)
+								if axis_data:
+									axis_data.byte_offset = total / 8
+									axis_data.bit_offset = total % 8
+									self._decoder.axes[target] = axis_data
+							else:
+								self._decoder.axes[next_axis] = AxisData(mode = AxisMode.HATSWITCH)
+								self._decoder.axes[next_axis].byte_offset = total / 8
+								self._decoder.axes[next_axis].bit_offset = total % 8
+								self._decoder.axes[next_axis].data.hatswitch.min = STICK_PAD_MIN
+								self._decoder.axes[next_axis].data.hatswitch.max = STICK_PAD_MAX
+							# Hatswitch is little special as it covers 2 axes at once
+							next_axis = next_axis + 2
+							if next_axis < AXIS_COUNT:
+								next_axis = AxisType(next_axis)
+						total += 4
 					elif kind == UsagePage.ButtonPage:
 						if self._decoder.buttons.enabled:
 							raise UnparsableDescriptor("HID descriptor with two sets of buttons")
