@@ -220,17 +220,6 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 						dec->state.axes[i + 1] = 0;
 						break;
 				}
-				
-				/*printf("\n --%i-- [%i,%i] 0 min %i 0 max %i -> %i %i\n",
-					(int)(value.u8 & 0b1111),
-					(int)i,
-					(int)(i+1),
-					(int)dec->axes[i].data.dpad.min,
-					(int)dec->axes[i].data.dpad.max,
-					(int)dec->state.axes[i + 0],
-					(int)dec->state.axes[i + 1]
-				);*/
-				
 				break;
 		}
 	}
@@ -239,8 +228,10 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 	if (dec->buttons.enabled) {
 		union Value value = grab_value(data, dec->buttons.byte_offset, dec->buttons.bit_offset);
 		for (size_t x=0; x<BUTTON_COUNT; x++) {
-			uint32_t bit = (value.u32 >> x) & 1;
-			dec->state.buttons |= bit << dec->buttons.button_map[x];
+			if (dec->buttons.button_map[x] < 33) {
+				uint32_t bit = (value.u32 >> x) & 1;
+				dec->state.buttons |= bit << dec->buttons.button_map[x];
+			}
 		}
 	}
 	return memcmp(&(dec->old_state), &(dec->state), sizeof(struct HIDControllerInput)) != 0;

@@ -175,7 +175,7 @@ class HIDController(USBDevice, Controller):
 		
 		vid, pid = self.device.getVendorID(), self.device.getProductID()
 		self._packet_size = 64
-		self._load_hid_descriptor(config, max_size, vid, pid)
+		self._load_hid_descriptor(config, max_size, vid, pid, test_mode)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
 		Controller.__init__(self)
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
@@ -196,7 +196,7 @@ class HIDController(USBDevice, Controller):
 			self._ready = True
 	
 	
-	def _load_hid_descriptor(self, config, max_size, vid, pid):
+	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
 		hid_descriptor = HIDController.find_sys_devices_descriptor(vid, pid)
 		if hid_descriptor is None:
 			hid_descriptor = self.handle.getRawDescriptor(
@@ -225,18 +225,22 @@ class HIDController(USBDevice, Controller):
 					# Not used here
 					pass
 				else:
-					sc, bit = int(getattr(SCButtons, value)), 0
-					while sc and (sc & 1 == 0):
-						sc >>= 1
-						bit += 1
-					if sc & 1 == 1:
-						buttons[keycode] = bit
-					else:
-						buttons[keycode] = BUTTON_COUNT - 1
+					buttons[keycode] = self.button_to_bit(getattr(SCButtons, value))
 		else:
 			buttons = list(xrange(BUTTON_COUNT))
 		
 		return (ctypes.c_uint8 * BUTTON_COUNT)(*buttons)
+	
+	
+	@staticmethod
+	def button_to_bit(sc):
+		sc, bit = int(sc), 0
+		while sc and (sc & 1 == 0):
+			sc >>= 1
+			bit += 1
+		if sc & 1 == 1:
+			return bit
+		return BUTTON_COUNT - 1
 	
 	
 	def _build_axis_maping(self, axis, config, mode = AxisMode.AXIS):
