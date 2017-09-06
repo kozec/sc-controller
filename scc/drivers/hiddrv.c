@@ -8,7 +8,7 @@
 #define HIDDRV_MODULE_VERSION 1
 PyObject* module;
 
-#define AXIS_COUNT 8
+#define AXIS_COUNT 15
 #define BUTTON_COUNT 32
 
 struct HIDControllerInput {
@@ -20,12 +20,19 @@ struct HIDControllerInput {
 enum AxisType {
 	AXIS_LPAD_X  = 0,
 	AXIS_LPAD_Y  = 1,
-	AXIS_RPAD_X = 2,
-	AXIS_RPAD_Y = 3,
+	AXIS_RPAD_X  = 2,
+	AXIS_RPAD_Y  = 3,
 	AXIS_STICK_X = 4,
 	AXIS_STICK_Y = 5,
 	AXIS_LTRIG   = 6,
 	AXIS_RTRIG   = 7,
+	AXIS_GPITCH  = 8,
+	AXIS_GROLL   = 9,
+	AXIS_GYAW    = 10,
+	AXIS_Q1      = 11,
+	AXIS_Q2      = 12,
+	AXIS_Q3      = 13,
+	AXIS_Q4      = 14,
 	_AxisType_force_int = INT_MAX
 };
 
@@ -121,6 +128,8 @@ inline union Value grab_value(const char* data, const size_t byte_offset, uint8_
 
 inline int grab_with_size(const uint8_t size, const char* data, const size_t byte_offset, uint8_t bit_offset) {
 	union Value val = grab_value(data, byte_offset, bit_offset);
+	// if (size == 16)
+	// 	printf(" => %i\n", (int)val.u16);
 	switch (size) {
 		case 16: return val.u16;
 		case 32: return val.u32;

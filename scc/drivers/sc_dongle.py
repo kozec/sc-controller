@@ -158,6 +158,7 @@ class SCConfigType(IntEnum):
 class SCController(Controller):
 	def __init__(self, driver, ccidx, endpoint):
 		Controller.__init__(self)
+		self.flags = ControllerFlags.HAS_GYROS
 		self._driver = driver
 		self._endpoint = endpoint
 		self._idle_timeout = 600

@@ -7,7 +7,7 @@ Extends HID driver with DS4-specific options.
 
 from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test, _lib
 from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData, AxisMode, AxisDataUnion, AxisModeData, HatswitchModeData
-from scc.constants import SCButtons
+from scc.constants import SCButtons, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.tools import init_logging, set_logging_level
 from scc.drivers.usb import register_hotplug_device
@@ -31,6 +31,7 @@ class DS4Controller(HIDController):
 	# Most of axes are the same
 	AXIS_DATA = AxisModeData(scale = 1.0, offset = -127.5, clamp_max = 257, deadzone = 10)
 	AXIS_DATA_N = AxisModeData(scale = -1.0, offset = 127.5, clamp_max = 257, deadzone = 10)
+	AXIS_DATA_GYRO = AxisModeData(scale = 1.0, offset = -32768, clamp_max = 1)
 	TRIGGER_DATA = AxisModeData(scale = 1.0, clamp_max = 1, deadzone = 10)
 	BUTTON_MAP = (
 		SCButtons.X,
@@ -49,39 +50,73 @@ class DS4Controller(HIDController):
 		SCButtons.CPAD,
 	)
 	
+	
+	def __init__(self, *a, **b):
+		HIDController.__init__(self, *a, **b)
+		self.flags |= ControllerFlags.HAS_GYROS
+
+	
 	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
 		# Overrided and hardcoded
 		self._decoder = HIDDecoder()
 		self._decoder.axes[AxisType.AXIS_LPAD_X] = AxisData(
-			mode = AxisMode.HATSWITCH, byte_offset = 5, bit_offset = 0, size = 8,
+			mode = AxisMode.HATSWITCH, byte_offset = 5, size = 8,
 			data = AxisDataUnion(hatswitch = HatswitchModeData(
 				button = SCButtons.LPAD | SCButtons.LPADTOUCH,
 				min = STICK_PAD_MIN, max = STICK_PAD_MAX
 			))
 		)
 		self._decoder.axes[AxisType.AXIS_STICK_X] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 1, bit_offset = 0, size = 8,
+			mode = AxisMode.AXIS, byte_offset = 1, size = 8,
 			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA)
 		)
 		self._decoder.axes[AxisType.AXIS_STICK_Y] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 2, bit_offset = 0, size = 8,
+			mode = AxisMode.AXIS, byte_offset = 2, size = 8,
 			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_N)
 		)
 		self._decoder.axes[AxisType.AXIS_RPAD_X] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 3, bit_offset = 0, size = 8,
+			mode = AxisMode.AXIS, byte_offset = 3, size = 8,
 			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA)
 		)
 		self._decoder.axes[AxisType.AXIS_RPAD_Y] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 4, bit_offset = 0, size = 8,
+			mode = AxisMode.AXIS, byte_offset = 4, size = 8,
 			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_N)
 		)
 		self._decoder.axes[AxisType.AXIS_LTRIG] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 8, bit_offset = 0, size = 8,
+			mode = AxisMode.AXIS, byte_offset = 8, size = 8,
 			data = AxisDataUnion(axis = DS4Controller.TRIGGER_DATA)
 		)
 		self._decoder.axes[AxisType.AXIS_RTRIG] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 9, bit_offset = 0, size = 8,
+			mode = AxisMode.AXIS, byte_offset = 9, size = 8,
 			data = AxisDataUnion(axis = DS4Controller.TRIGGER_DATA)
+		)
+		self._decoder.axes[AxisType.AXIS_GPITCH] = AxisData(
+			mode = AxisMode.AXIS, byte_offset = 13, size = 16,
+			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
+		)
+		self._decoder.axes[AxisType.AXIS_GROLL] = AxisData(
+			mode = AxisMode.AXIS, byte_offset = 15, size = 16,
+			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
+		)
+		self._decoder.axes[AxisType.AXIS_GYAW] = AxisData(
+			mode = AxisMode.AXIS, byte_offset = 17, size = 16,
+			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
+		)
+		self._decoder.axes[AxisType.AXIS_Q1] = AxisData(
+			mode = AxisMode.AXIS, byte_offset = 19, size = 16,
+			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
+		)
+		self._decoder.axes[AxisType.AXIS_Q2] = AxisData(
+			mode = AxisMode.AXIS, byte_offset = 21, size = 16,
+			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
+		)
+		self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
+			mode = AxisMode.AXIS, byte_offset = 23, size = 16,
+			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
+		)
+		self._decoder.axes[AxisType.AXIS_Q4] = AxisData(
+			mode = AxisMode.AXIS, byte_offset = 24, size = 16,
+			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
 		)
 		self._decoder.buttons = ButtonData(
 			enabled = True, byte_offset=5, bit_offset=4, size=14,
@@ -98,6 +133,12 @@ class DS4Controller(HIDController):
 				self._decoder.buttons.button_map[x] = self.button_to_bit(sc)
 		
 		self._packet_size = 64
+	
+	
+	def test_input(self, endpoint, data):
+		# print " ".join([ "%3s" % ord(x) for x in data[9:] ])
+		_lib.decode(ctypes.byref(self._decoder), data)
+		print self._decoder.state.q4
 	
 	
 	def _generate_id(self):

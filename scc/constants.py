@@ -108,6 +108,7 @@ class ControllerFlags(IntEnum):
 	"""
 	HAS_RSTICK =		1 << 0	# Controller has right stick instead of touchpad
 	SEPARATE_STICK =	1 << 1	# Left stick and left pad are using separate axes
+	HAS_GYROS =			1 << 2	# Gyro sensors are available
 
 
 STICK_PAD_MIN = -32768

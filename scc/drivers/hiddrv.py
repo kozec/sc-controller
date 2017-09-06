@@ -28,7 +28,7 @@ log = logging.getLogger("HID")
 DEV_CLASS_HID = 3
 TRANSFER_TYPE_INTERRUPT = 3
 LIBUSB_DT_REPORT = 0x22
-AXIS_COUNT = 8		# Must match number of axis fields in HIDControllerInput and values in AxisType
+AXIS_COUNT = 15		# Must match number of axis fields in HIDControllerInput and values in AxisType
 BUTTON_COUNT = 32	# Must match (or be less than) number of bits in HIDControllerInput.buttons
 ALLOWED_SIZES = [1, 2, 4, 8, 16, 32]
 SYS_DEVICES = "/sys/devices"
@@ -50,19 +50,32 @@ class HIDControllerInput(ctypes.Structure):
 		('stick_y', ctypes.c_int32),
 		('ltrig', ctypes.c_int32),
 		('rtrig', ctypes.c_int32),
+		('gpitch', ctypes.c_int32),
+		('groll', ctypes.c_int32),
+		('gyaw', ctypes.c_int32),
+		('q1', ctypes.c_int32),
+		('q2', ctypes.c_int32),
+		('q3', ctypes.c_int32),
+		('q4', ctypes.c_int32),
 	]
 
 
 class AxisType(IntEnum):
 	AXIS_LPAD_X  = 0
 	AXIS_LPAD_Y  = 1
-	AXIS_RPAD_X = 2
-	AXIS_RPAD_Y = 3
+	AXIS_RPAD_X  = 2
+	AXIS_RPAD_Y  = 3
 	AXIS_STICK_X = 4
 	AXIS_STICK_Y = 5
 	AXIS_LTRIG   = 6
 	AXIS_RTRIG   = 7
-
+	AXIS_GPITCH  = 8
+	AXIS_GROLL   = 9
+	AXIS_GYAW    = 10
+	AXIS_Q1      = 11
+	AXIS_Q2      = 12
+	AXIS_Q3      = 13
+	AXIS_Q4      = 14
 
 class AxisMode(IntEnum):
 	DISABLED      = 0
