@@ -31,7 +31,6 @@ class DS4Controller(HIDController):
 	# Most of axes are the same
 	AXIS_DATA = AxisModeData(scale = 1.0, offset = -127.5, clamp_max = 257, deadzone = 10)
 	AXIS_DATA_N = AxisModeData(scale = -1.0, offset = 127.5, clamp_max = 257, deadzone = 10)
-	AXIS_DATA_GYRO = AxisModeData(scale = 1.0, offset = -32768, clamp_max = 1)
 	TRIGGER_DATA = AxisModeData(scale = 1.0, clamp_max = 1, deadzone = 10)
 	BUTTON_MAP = (
 		SCButtons.X,
@@ -53,8 +52,8 @@ class DS4Controller(HIDController):
 	
 	def __init__(self, *a, **b):
 		HIDController.__init__(self, *a, **b)
-		self.flags |= ControllerFlags.HAS_GYROS
-
+		self.flags = ControllerFlags.EUREL_GYROS
+	
 	
 	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
 		# Overrided and hardcoded
@@ -91,33 +90,17 @@ class DS4Controller(HIDController):
 			data = AxisDataUnion(axis = DS4Controller.TRIGGER_DATA)
 		)
 		self._decoder.axes[AxisType.AXIS_GPITCH] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 13, size = 16,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
-		)
+			mode = AxisMode.DS4ACCEL, byte_offset = 13)
 		self._decoder.axes[AxisType.AXIS_GROLL] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 15, size = 16,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
-		)
+			mode = AxisMode.DS4ACCEL, byte_offset = 17)
 		self._decoder.axes[AxisType.AXIS_GYAW] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 17, size = 16,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
-		)
+			mode = AxisMode.DS4ACCEL, byte_offset = 15)
 		self._decoder.axes[AxisType.AXIS_Q1] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 19, size = 16,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
-		)
+			mode = AxisMode.DS4GYRO, byte_offset = 23)
 		self._decoder.axes[AxisType.AXIS_Q2] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 21, size = 16,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
-		)
+			mode = AxisMode.DS4GYRO, byte_offset = 19)
 		self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 23, size = 16,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
-		)
-		self._decoder.axes[AxisType.AXIS_Q4] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 24, size = 16,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_GYRO)
-		)
+			mode = AxisMode.DS4GYRO, byte_offset = 21)
 		self._decoder.buttons = ButtonData(
 			enabled = True, byte_offset=5, bit_offset=4, size=14,
 			button_count = 14
@@ -135,10 +118,16 @@ class DS4Controller(HIDController):
 		self._packet_size = 64
 	
 	
+	def get_gyro_enabled(self):
+		# Cannot be actually turned off, so it's always active
+		# TODO: Maybe emulate turning off?
+		return True
+	
+	
 	def test_input(self, endpoint, data):
 		# print " ".join([ "%3s" % ord(x) for x in data[9:] ])
 		_lib.decode(ctypes.byref(self._decoder), data)
-		print self._decoder.state.q4
+		print self._decoder.state.q1, self._decoder.state.q2, self._decoder.state.q3
 	
 	
 	def _generate_id(self):
@@ -152,6 +141,7 @@ class DS4Controller(HIDController):
 			id = "ds4:%s" % (magic_number, )
 			magic_number += 1
 		return id
+
 
 if __name__ == "__main__":
 	""" Called when executed as script """

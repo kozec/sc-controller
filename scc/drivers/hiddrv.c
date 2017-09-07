@@ -43,6 +43,8 @@ enum AxisMode {
 	AXIS_NO_SCALE = 2,
 	DPAD          = 3,
 	HATSWITCH     = 4,
+	DS4ACCEL      = 5,
+	DS4GYRO       = 6,
 	
 	_AxisMode_force_int = INT_MAX
 };
@@ -114,6 +116,7 @@ struct HIDDecoder {
 union Value {
 	uint8_t  u8;
 	uint16_t u16;
+	int16_t  s16;
 	uint32_t u32;
 	uint64_t u64;
 };
@@ -229,6 +232,16 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 						dec->state.axes[i + 1] = 0;
 						break;
 				}
+				break;
+			case DS4ACCEL:
+				value = grab_value(data, dec->axes[i].byte_offset,
+					dec->axes[i].bit_offset);
+				dec->state.axes[i] = value.s16;
+				break;
+			case DS4GYRO:
+				value = grab_value(data, dec->axes[i].byte_offset,
+					dec->axes[i].bit_offset);
+				dec->state.axes[i] = -value.s16;
 				break;
 		}
 	}

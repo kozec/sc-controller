@@ -77,12 +77,15 @@ class AxisType(IntEnum):
 	AXIS_Q3      = 13
 	AXIS_Q4      = 14
 
+
 class AxisMode(IntEnum):
 	DISABLED      = 0
 	AXIS          = 1
 	AXIS_NO_SCALE = 2
 	DPAD          = 3
 	HATSWITCH     = 4
+	DS4ACCEL      = 5	# 16bit, signed, no additional math needed
+	DS4GYRO       = 6	# 16bit, signed, inverted
 
 
 class AxisModeData(ctypes.Structure):
@@ -501,6 +504,7 @@ class HIDController(USBDevice, Controller):
 	
 	def input(self, endpoint, data):
 		if _lib.decode(ctypes.byref(self._decoder), data):
+			s = self._decoder.state
 			if self.mapper:
 				self.mapper.input(self,
 						self._decoder.old_state, self._decoder.state)
