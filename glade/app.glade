@@ -370,7 +370,20 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <child>
-                      <placeholder/>
+                      <object class="GtkButton" id="btLT">
+                        <property name="width_request">170</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
                     </child>
                   </object>
                   <packing>
@@ -457,7 +470,20 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <child>
-                      <placeholder/>
+                      <object class="GtkButton" id="btRT">
+                        <property name="width_request">170</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
                     </child>
                   </object>
                   <packing>
