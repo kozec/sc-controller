@@ -22,16 +22,13 @@ PRODUCT_ID = 0x09cc
 def init(daemon):
 	""" Registers hotplug callback for ds4 device """
 	def cb(device, handle):
-		return DS4Controller(device, daemon, handle, None)
+		return DS4Controller(device, daemon, handle, None, None)
 	
 	register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
 
 
 class DS4Controller(HIDController):
 	# Most of axes are the same
-	AXIS_DATA = AxisModeData(scale = 1.0, offset = -127.5, clamp_max = 257, deadzone = 10)
-	AXIS_DATA_N = AxisModeData(scale = -1.0, offset = 127.5, clamp_max = 257, deadzone = 10)
-	TRIGGER_DATA = AxisModeData(scale = 1.0, clamp_max = 1, deadzone = 10)
 	BUTTON_MAP = (
 		SCButtons.X,
 		SCButtons.A,
@@ -52,7 +49,8 @@ class DS4Controller(HIDController):
 	
 	def __init__(self, *a, **b):
 		HIDController.__init__(self, *a, **b)
-		self.flags = ControllerFlags.EUREL_GYROS
+		self.flags = ( ControllerFlags.EUREL_GYROS | ControllerFlags.HAS_RSTICK
+						| ControllerFlags.SEPARATE_STICK )
 	
 	
 	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
@@ -63,32 +61,39 @@ class DS4Controller(HIDController):
 			data = AxisDataUnion(hatswitch = HatswitchModeData(
 				button = SCButtons.LPAD | SCButtons.LPADTOUCH,
 				min = STICK_PAD_MIN, max = STICK_PAD_MAX
-			))
-		)
+		)))
 		self._decoder.axes[AxisType.AXIS_STICK_X] = AxisData(
 			mode = AxisMode.AXIS, byte_offset = 1, size = 8,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA)
-		)
+			data = AxisDataUnion(axis = AxisModeData(
+				scale = 1.0, offset = -127.5, clamp_max = 257, deadzone = 10
+		)))
 		self._decoder.axes[AxisType.AXIS_STICK_Y] = AxisData(
 			mode = AxisMode.AXIS, byte_offset = 2, size = 8,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_N)
-		)
+			data = AxisDataUnion(axis = AxisModeData(
+				scale = -1.0, offset = 127.5, clamp_max = 257, deadzone = 10
+		)))
 		self._decoder.axes[AxisType.AXIS_RPAD_X] = AxisData(
 			mode = AxisMode.AXIS, byte_offset = 3, size = 8,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA)
-		)
+			data = AxisDataUnion(axis = AxisModeData(
+				button = SCButtons.RPADTOUCH,
+				scale = 1.0, offset = -127.5, clamp_max = 257, deadzone = 10
+		)))
 		self._decoder.axes[AxisType.AXIS_RPAD_Y] = AxisData(
 			mode = AxisMode.AXIS, byte_offset = 4, size = 8,
-			data = AxisDataUnion(axis = DS4Controller.AXIS_DATA_N)
-		)
+			data = AxisDataUnion(axis = AxisModeData(
+				button = SCButtons.RPADTOUCH,
+				scale = -1.0, offset = 127.5, clamp_max = 257, deadzone = 10
+		)))
 		self._decoder.axes[AxisType.AXIS_LTRIG] = AxisData(
 			mode = AxisMode.AXIS, byte_offset = 8, size = 8,
-			data = AxisDataUnion(axis = DS4Controller.TRIGGER_DATA)
-		)
+			data = AxisDataUnion(axis = AxisModeData(
+				scale = 1.0, clamp_max = 1, deadzone = 10
+		)))
 		self._decoder.axes[AxisType.AXIS_RTRIG] = AxisData(
 			mode = AxisMode.AXIS, byte_offset = 9, size = 8,
-			data = AxisDataUnion(axis = DS4Controller.TRIGGER_DATA)
-		)
+			data = AxisDataUnion(axis = AxisModeData(
+				scale = 1.0, clamp_max = 1, deadzone = 10
+		)))
 		self._decoder.axes[AxisType.AXIS_GPITCH] = AxisData(
 			mode = AxisMode.DS4ACCEL, byte_offset = 13)
 		self._decoder.axes[AxisType.AXIS_GROLL] = AxisData(
@@ -124,11 +129,13 @@ class DS4Controller(HIDController):
 		return True
 	
 	
-	def test_input(self, endpoint, data):
-		# print " ".join([ "%3s" % ord(x) for x in data[9:] ])
-		_lib.decode(ctypes.byref(self._decoder), data)
-		print self._decoder.state.q1, self._decoder.state.q2, self._decoder.state.q3
+	def get_type(self):
+		return "ds4"
 	
+	
+	def get_gui_config_file(self):
+		return "ds4-config.json"
+
 	
 	def _generate_id(self):
 		"""

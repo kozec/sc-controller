@@ -168,10 +168,11 @@ _lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
 
 class HIDController(USBDevice, Controller):
 	
-	def __init__(self, device, daemon, handle, config, test_mode=False):
+	def __init__(self, device, daemon, handle, config_file, config, test_mode=False):
 		USBDevice.__init__(self, device, handle)
 		self._ready = False
 		self.daemon = daemon
+		self.config_file = config_file
 		
 		id = None
 		max_size = 64
@@ -468,8 +469,8 @@ class HIDController(USBDevice, Controller):
 		return self._id
 	
 	
-	def get_id_is_persistent(self):
-		return True
+	def get_gui_config_file(self):
+		return self.config_file
 	
 	
 	def __repr__(self):
@@ -537,6 +538,7 @@ class HIDDrv(object):
 	
 	def __init__(self, daemon):
 		self.registered = set()
+		self.config_files = {}
 		self.configs = {}
 		self.scan_files()
 		self.daemon = daemon
@@ -545,7 +547,8 @@ class HIDDrv(object):
 	def hotplug_cb(self, device, handle):
 		vid, pid = device.getVendorID(), device.getProductID()
 		if (vid, pid) in self.configs:
-			controller = HIDController(device, self.daemon, handle, self.configs[vid, pid])
+			controller = HIDController(device, self.daemon, handle,
+				self.config_files[vid, pid], self.configs[vid, pid])
 			return controller
 		return None
 	
@@ -573,6 +576,7 @@ class HIDDrv(object):
 					log.warning("Ignoring file that cannot be parsed: %s", name)
 					continue
 				
+				self.config_files[vid, pid] = config_file
 				self.configs[vid, pid] = config
 				known.add((vid, pid))
 		
@@ -585,9 +589,10 @@ class HIDDrv(object):
 			vid, pid = removed
 			unregister_hotplug_device(self.hotplug_cb, vid, pid)
 			self.registered.remove(removed)
+			if (vid, pid) in self.config_files:
+				del self.config_files[vid, pid]
 			if (vid, pid) in self.configs:
 				del self.configs[vid, pid]
-
 
 def hiddrv_test(cls, args):
 	"""

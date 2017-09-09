@@ -186,11 +186,11 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, type, id_is_persistent = line[11:].strip().split(" ", 2)
+				controller_id, type, config_file = line[11:].strip().split(" ", 2)
 				c = self.get_controller(controller_id)
 				c._connected = True
 				c._type = type
-				c._id_is_persistent = (id_is_persistent == "True")
+				c._config_file = None if config_file in ("", "None") else config_file
 				while c in self._controllers:
 					self._controllers.remove(c)
 				self._controllers.append(c)
@@ -327,7 +327,7 @@ class ControllerManager(GObject.GObject):
 		GObject.GObject.__init__(self)
 		self._dm = daemon_manager
 		self._controller_id = controller_id
-		self._id_is_persistent = False
+		self._config_file = None
 		self._profile = None
 		self._type = None
 		self._connected = False
@@ -368,12 +368,17 @@ class ControllerManager(GObject.GObject):
 		return self._controller_id
 	
 	
-	def get_id_is_persistent(self):
+	def get_gui_config_file(self):
 		"""
-		Returns True if ID was generated in way that
-		always generates same ID for same physical controller.
+		Returns file name of json file that GUI can use to load more data about
+		controller (background image, button images, available buttons and
+		axes, etc...) File name may be absolute path or just name of file in
+		/usr/share/scc
+		
+		Returns None if there is no configuration file (GUI will use
+		defaults in such case)
 		"""
-		return self._id_is_persistent
+		return self._config_file
 	
 	
 	def get_profile(self):

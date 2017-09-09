@@ -45,7 +45,7 @@ class EvdevController(Controller):
 	"""
 	PADPRESS_EMULATION_TIMEOUT = 0.2
 	
-	def __init__(self, daemon, device, config):
+	def __init__(self, daemon, device, config_file, config):
 		try:
 			self._parse_config(config)
 		except Exception, e:
@@ -54,6 +54,7 @@ class EvdevController(Controller):
 		Controller.__init__(self)
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		self.device = device
+		self.config_file = config_file
 		self.config = config
 		self.daemon = daemon
 		if daemon:
@@ -124,8 +125,8 @@ class EvdevController(Controller):
 		return id
 	
 	
-	def get_id_is_persistent(self):
-		return True
+	def get_gui_config_file(self):
+		return self.config_file
 	
 	
 	def __repr__(self):
@@ -345,9 +346,9 @@ class EvdevDriver(object):
 		self.daemon = daemon
 	
 	
-	def handle_new_device(self, dev, config):
+	def handle_new_device(self, dev, config_path, config):
 		try:
-			controller = EvdevController(self.daemon, dev, config)
+			controller = EvdevController(self.daemon, dev, config_path, config)
 		except Exception, e:
 			log.debug("Failed to add evdev device: %s", e)
 			log.exception(e)
@@ -391,7 +392,7 @@ class EvdevDriver(object):
 					try:
 						config = json.loads(open(config_file, "r").read())
 						with self._lock:
-							self._new_devices.put(( dev, config ))
+							self._new_devices.put(( dev, config_file, config ))
 					except Exception, e:
 						log.exception(e)
 		with self._lock:
@@ -404,9 +405,9 @@ class EvdevDriver(object):
 	def add_new_devices(self):
 		with self._lock:
 			while not self._new_devices.empty():
-				dev, config = self._new_devices.get()
+				dev, config_file, config = self._new_devices.get()
 				if dev.fn not in self._devices:
-					self.handle_new_device(dev, config)
+					self.handle_new_device(dev, config_file, config)
 	
 	
 	def start(self):
@@ -473,7 +474,7 @@ def evdevdrv_test(args):
 		print >>sys.stderr, "Failed to open device:", str(e)
 		return 2
 	
-	c = EvdevController(None, dev, {})
+	c = EvdevController(None, dev, None, {})
 	caps = dev.capabilities(verbose=False)
 	print "Buttons:", " ".join([ str(x)
 			for x in caps.get(evdev.ecodes.EV_KEY, [])])
