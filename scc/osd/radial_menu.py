@@ -37,7 +37,7 @@ class RadialMenu(Menu):
 	
 	def create_parent(self):
 		background = os.path.join(get_share_path(), "images", 'radial-menu.svg')
-		self.b = SVGWidget(self, background)
+		self.b = SVGWidget(background)
 		self.b.connect('size-allocate', self.on_size_allocate)
 		return self.b
 	

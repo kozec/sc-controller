@@ -718,7 +718,7 @@ class ControllerRegistration(Editor):
 			self.fill_button_images(self._controller, self._groups[group])
 			self._controller.hilight({})
 		else:
-			self._controller = SVGWidget(self.app, image)
+			self._controller = SVGWidget(image)
 			self._controller.connect('hover', self.on_area_hover)
 			self._controller.connect('leave', self.on_area_leave)
 			self._controller.connect('click', self.on_area_click)

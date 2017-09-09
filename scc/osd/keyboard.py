@@ -94,7 +94,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def _create_background(self):
-		self.background = SVGWidget(self, self.args.image, init_hilighted=False)
+		self.background = SVGWidget(self.args.image, init_hilighted=False)
 		self.recolor()
 		
 		self.limits = {}

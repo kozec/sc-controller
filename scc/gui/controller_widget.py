@@ -15,6 +15,7 @@ from scc.constants import SCButtons, STICK, GYRO, LEFT, RIGHT
 from scc.actions import Action, XYAction, MultiAction
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.profile import Profile
+from scc.tools import nameof
 import os, sys, logging
 
 log = logging.getLogger("ControllerWidget")
@@ -154,7 +155,12 @@ class ControllerStick(ControllerWidget):
 		ix2 = 74
 		# Check if cursor is placed on icon
 		if event.x < ix2:
-			self.app.hilight(self.name + "_press")
+			what = dict(
+				LPAD = LEFT,
+				RPAD = RIGHT,
+				STICK = nameof(SCButtons.STICKPRESS)
+			)[self.name]
+			self.app.hilight(what)
 			self.over_icon = True
 		else:
 			self.app.hilight(self.name)

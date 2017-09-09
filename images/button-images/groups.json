@@ -1,6 +1,6 @@
 [
 {
-	"key" : "abxy",
+	"key" : "sc",
 	"type" : "buttons",
 	"buttons" : [ "A", "B", "X", "Y", "BACK", "C", "START",
 			"LB", "RB", "LT", "RT", "LG", "RG" ]

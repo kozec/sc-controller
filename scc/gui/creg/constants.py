@@ -27,11 +27,6 @@ AXIS_ORDER = (
 	("rtrig", X),
 )
 
-BUTTONS_WITH_IMAGES = (
-	SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
-	SCButtons.BACK, SCButtons.C, SCButtons.START
-)
-
 STICK_PAD_AREAS = {
 	# Numbers here are indexes to AXIS_ORDER tuple
 	"STICKPRESS":	(STICK, (0, 1)),
