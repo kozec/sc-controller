@@ -504,6 +504,16 @@ class SVGEditor(object):
 	
 	
 	@staticmethod
+	def get_size(elm):
+		width, height = 1, 1
+		if 'width' in elm.attrib:
+			width = float(elm.attrib['width'])
+		if 'height' in elm.attrib:
+			height = float(elm.attrib['height'])
+		return width, height
+	
+	
+	@staticmethod
 	def parse_transform(xml):
 		"""
 		Returns element transform data in transformation matrix,

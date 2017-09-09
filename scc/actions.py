@@ -16,9 +16,9 @@ from scc.lib import xwrappers as X
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
 from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
 from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
+from scc.constants import PARSER_CONSTANTS, ControllerFlags
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
-from scc.constants import PARSER_CONSTANTS
 from scc.aliases import ALL_BUTTONS as GAMEPAD_BUTTONS
 from math import sqrt, sin, cos, atan2, pi as PI
 
@@ -1132,7 +1132,10 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 	
 	GYROAXES = (0, 1, 2)
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
-		pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
+		if mapper.get_controller().flags & ControllerFlags.EUREL_GYROS:
+			pyr = [q1 / 10430.37, q2 / 10430.37, q3 / 10430.37]	# 2**15 / PI
+		else:
+			pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
 		for i in self.GYROAXES:
 			self.ir[i] = self.ir[i] or pyr[i]
 			pyr[i] = anglediff(self.ir[i], pyr[i]) * (2**15) * self.speed[2] * 2 / PI

@@ -1,0 +1,7 @@
+{
+	"background": "ds4.svg",
+	"buttons": [
+		"CROSS", "CIRCLE", "SQUARE", "TRIANGLE", "RECTANGLE",
+		"C", "RTRIANGLE", "LB", "RB", "LT", "RT", "LG", "RG"
+	]
+}

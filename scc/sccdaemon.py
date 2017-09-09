@@ -86,9 +86,9 @@ class SCCDaemon(Daemon):
 	def init_default_mapper(self):
 		"""
 		default_mapper is persistent mapper assigned to first Controller instance.
-		Even if all controllers are removed, this mapper stays active. It exists mainly
-		to provide backwards compatibility and to allow GUI and external programs to
-		work even if there is no controller connected.
+		Even if all controllers are removed, this mapper stays active. This is
+		needed so various stuff (mainlg GUI) doesn't need to check if there is
+		any controller connected all the time.
 		"""
 		# But, despite all above, it's just mapper as every other :)
 		return self.init_mapper()
@@ -556,7 +556,7 @@ class SCCDaemon(Daemon):
 		"""
 		for c in self.controllers:
 			method(("Controller: %s %s %s\n" % (
-				c.get_id(), c.get_type(), c.get_id_is_persistent()
+				c.get_id(), c.get_type(), c.get_gui_config_file()
 			)).encode("utf-8"))
 		method(("Controller Count: %s\n" % (len(self.controllers),)).encode("utf-8"))
 	

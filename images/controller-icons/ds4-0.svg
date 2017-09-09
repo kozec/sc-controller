@@ -16,7 +16,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.92.1 r"
-   sodipodi:docname="evdev-0.svg">
+   sodipodi:docname="ds4-0.svg">
   <defs
      id="defs4">
     <filter
@@ -102,9 +102,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="11.313709"
-     inkscape:cx="20.851498"
-     inkscape:cy="-3.7757383"
+     inkscape:zoom="22.627417"
+     inkscape:cx="11.844348"
+     inkscape:cy="15.590534"
      inkscape:document-units="px"
      inkscape:current-layer="layer3"
      showgrid="false"
@@ -401,6 +401,18 @@
        cy="12.14998"
        id="circle4988"
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#002600;fill-opacity:1;fill-rule:evenodd;stroke:#77ff77;stroke-width:0.13;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
+    <path
+       sodipodi:nodetypes="ccccccccc"
+       id="path4730-3"
+       d="M 9.2543974,10.16285 C 9.103498,10.141416 8.9734891,10.088436 8.9569744,9.8654261 V 6.9750277 h 6.0868216 v 2.8903984 c -0.01651,0.2230099 -0.146327,0.2759899 -0.297227,0.2974239 h -5.0434003 -0.01263 z"
+       style="display:inline;fill:#002600;fill-opacity:1;fill-rule:evenodd;stroke:#77ff77;stroke-width:0.13;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       inkscape:connector-curvature="0" />
+    <circle
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#002600;fill-opacity:1;fill-rule:evenodd;stroke:#77ff77;stroke-width:0.08446476;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+       id="path4170-0-8-6"
+       cy="13.442955"
+       cx="12.000385"
+       r="0.70776761" />
   </g>
   <g
      inkscape:groupmode="layer"

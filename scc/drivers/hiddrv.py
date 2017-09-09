@@ -5,9 +5,10 @@ SC Controller - Universal HID driver. For all three universal HID devices.
 Borrows bit of code and configuration from evdevdrv.
 """
 
-from scc.lib.hidparse import HIDPARSE_TYPE_AXIS, HIDPARSE_TYPE_BUTTONS
+from scc.lib.hidparse import HIDPARSE_TYPE_AXIS, HIDPARSE_TYPE_BUTTONS, AXES
 from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
-from scc.lib.hidparse import UsagePage, parse_report_descriptor, AXES
+from scc.lib.hidparse import UsagePage, parse_report_descriptor
+from scc.lib.hidparse import GenericDesktopPage
 from scc.drivers.usb import register_hotplug_device, unregister_hotplug_device
 from scc.drivers.usb import USBDevice
 from scc.constants import SCButtons, HapticPos, ControllerFlags
@@ -27,7 +28,7 @@ log = logging.getLogger("HID")
 DEV_CLASS_HID = 3
 TRANSFER_TYPE_INTERRUPT = 3
 LIBUSB_DT_REPORT = 0x22
-AXIS_COUNT = 8		# Must match number of axis fields in HIDControllerInput and values in AxisType
+AXIS_COUNT = 15		# Must match number of axis fields in HIDControllerInput and values in AxisType
 BUTTON_COUNT = 32	# Must match (or be less than) number of bits in HIDControllerInput.buttons
 ALLOWED_SIZES = [1, 2, 4, 8, 16, 32]
 SYS_DEVICES = "/sys/devices"
@@ -49,18 +50,32 @@ class HIDControllerInput(ctypes.Structure):
 		('stick_y', ctypes.c_int32),
 		('ltrig', ctypes.c_int32),
 		('rtrig', ctypes.c_int32),
+		('gpitch', ctypes.c_int32),
+		('groll', ctypes.c_int32),
+		('gyaw', ctypes.c_int32),
+		('q1', ctypes.c_int32),
+		('q2', ctypes.c_int32),
+		('q3', ctypes.c_int32),
+		('q4', ctypes.c_int32),
 	]
 
 
 class AxisType(IntEnum):
 	AXIS_LPAD_X  = 0
 	AXIS_LPAD_Y  = 1
-	AXIS_RPAD_X = 2
-	AXIS_RPAD_Y = 3
+	AXIS_RPAD_X  = 2
+	AXIS_RPAD_Y  = 3
 	AXIS_STICK_X = 4
 	AXIS_STICK_Y = 5
 	AXIS_LTRIG   = 6
 	AXIS_RTRIG   = 7
+	AXIS_GPITCH  = 8
+	AXIS_GROLL   = 9
+	AXIS_GYAW    = 10
+	AXIS_Q1      = 11
+	AXIS_Q2      = 12
+	AXIS_Q3      = 13
+	AXIS_Q4      = 14
 
 
 class AxisMode(IntEnum):
@@ -68,10 +83,14 @@ class AxisMode(IntEnum):
 	AXIS          = 1
 	AXIS_NO_SCALE = 2
 	DPAD          = 3
+	HATSWITCH     = 4
+	DS4ACCEL      = 5	# 16bit, signed, no additional math needed
+	DS4GYRO       = 6	# 16bit, signed, inverted
 
 
 class AxisModeData(ctypes.Structure):
 	_fields_ = [
+		('button', ctypes.c_uint32),
 		('scale', ctypes.c_float),
 		('offset', ctypes.c_float),
 		('clamp_min', ctypes.c_int),
@@ -82,8 +101,17 @@ class AxisModeData(ctypes.Structure):
 
 class DPadModeData(ctypes.Structure):
 	_fields_ = [
+		('button', ctypes.c_uint32),
 		('button1', ctypes.c_uint8),
 		('button2', ctypes.c_uint8),
+		('min', ctypes.c_int),
+		('max', ctypes.c_int),
+	]
+
+
+class HatswitchModeData(ctypes.Structure):
+	_fields_ = [
+		('button', ctypes.c_uint32),
 		('min', ctypes.c_int),
 		('max', ctypes.c_int),
 	]
@@ -93,6 +121,7 @@ class AxisDataUnion(ctypes.Union):
 	_fields_ = [
 		('axis', AxisModeData),
 		('dpad', DPadModeData),
+		('hatswitch', HatswitchModeData),
 	]
 
 
@@ -139,10 +168,11 @@ _lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
 
 class HIDController(USBDevice, Controller):
 	
-	def __init__(self, device, daemon, handle, config, test_mode=False):
+	def __init__(self, device, daemon, handle, config_file, config, test_mode=False):
 		USBDevice.__init__(self, device, handle)
 		self._ready = False
 		self.daemon = daemon
+		self.config_file = config_file
 		
 		id = None
 		max_size = 64
@@ -162,7 +192,7 @@ class HIDController(USBDevice, Controller):
 		
 		vid, pid = self.device.getVendorID(), self.device.getProductID()
 		self._packet_size = 64
-		self._load_hid_descriptor(config, max_size, vid, pid)
+		self._load_hid_descriptor(config, max_size, vid, pid, test_mode)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
 		Controller.__init__(self)
 		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
@@ -183,7 +213,7 @@ class HIDController(USBDevice, Controller):
 			self._ready = True
 	
 	
-	def _load_hid_descriptor(self, config, max_size, vid, pid):
+	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
 		hid_descriptor = HIDController.find_sys_devices_descriptor(vid, pid)
 		if hid_descriptor is None:
 			hid_descriptor = self.handle.getRawDescriptor(
@@ -212,21 +242,25 @@ class HIDController(USBDevice, Controller):
 					# Not used here
 					pass
 				else:
-					sc, bit = int(getattr(SCButtons, value)), 0
-					while sc and (sc & 1 == 0):
-						sc >>= 1
-						bit += 1
-					if sc & 1 == 1:
-						buttons[keycode] = bit
-					else:
-						buttons[keycode] = BUTTON_COUNT - 1
+					buttons[keycode] = self.button_to_bit(getattr(SCButtons, value))
 		else:
 			buttons = list(xrange(BUTTON_COUNT))
 		
 		return (ctypes.c_uint8 * BUTTON_COUNT)(*buttons)
 	
 	
-	def _build_axis_maping(self, axis, config):
+	@staticmethod
+	def button_to_bit(sc):
+		sc, bit = int(sc), 0
+		while sc and (sc & 1 == 0):
+			sc >>= 1
+			bit += 1
+		if sc & 1 == 1:
+			return bit
+		return BUTTON_COUNT - 1
+	
+	
+	def _build_axis_maping(self, axis, config, mode = AxisMode.AXIS):
 		"""
 		Converts configuration mapping for _one_ axis to value situable
 		for self._decoder.axes field.
@@ -240,14 +274,33 @@ class HIDController(USBDevice, Controller):
 				# Maps to unknown axis
 				return None, None
 			cdata = parse_axis(axis_config)
-			axis_data = AxisData(
-				mode = AxisMode.AXIS,
-				data = AxisDataUnion(
-					axis = AxisModeData(**{
-						field : getattr(cdata, field) for field in cdata._fields
-					})
+			button = 0
+			if AxisType(target) in (AxisType.AXIS_LPAD_X, AxisType.AXIS_LPAD_Y):
+				button = (SCButtons.LPADTOUCH | SCButtons.LPAD)
+			elif AxisType(target) in (AxisType.AXIS_RPAD_X, AxisType.AXIS_RPAD_Y):
+				button = SCButtons.RPAD
+			if mode == AxisMode.AXIS:
+				axis_data = AxisData(
+					mode = AxisMode.AXIS,
+					data = AxisDataUnion(
+						axis = AxisModeData(button = button, **{
+							field : getattr(cdata, field) for field in cdata._fields
+						})
+					)
 				)
-			)
+			elif mode == AxisMode.HATSWITCH:
+				axis_data = AxisData(
+					mode = AxisMode.HATSWITCH,
+					data = AxisDataUnion(
+						hatswitch = HatswitchModeData(
+							button = button,
+							max = axis_config['max'],
+							min = axis_config['min']
+						)
+					)
+				)
+			else:
+				axis_data = AxisData(mode = AxisMode.DISABLED)
 			return target, axis_data
 		return None, None
 	
@@ -290,6 +343,28 @@ class HIDController(USBDevice, Controller):
 								if next_axis < AXIS_COUNT:
 									next_axis = AxisType(next_axis)
 							total += size
+					elif kind == GenericDesktopPage.Hatswitch:
+						if count * size != 4:
+							raise UnparsableDescriptor("Invalid size for Hatswitch (%sb)" % (count * size, ))
+						if next_axis + 1 < AXIS_COUNT:
+							log.debug("Found hat #%s at bit %s", int(next_axis), total)
+							if config:
+								target, axis_data = self._build_axis_maping(next_axis, config, AxisMode.HATSWITCH)
+								if axis_data:
+									axis_data.byte_offset = total / 8
+									axis_data.bit_offset = total % 8
+									self._decoder.axes[target] = axis_data
+							else:
+								self._decoder.axes[next_axis] = AxisData(mode = AxisMode.HATSWITCH)
+								self._decoder.axes[next_axis].byte_offset = total / 8
+								self._decoder.axes[next_axis].bit_offset = total % 8
+								self._decoder.axes[next_axis].data.hatswitch.min = STICK_PAD_MIN
+								self._decoder.axes[next_axis].data.hatswitch.max = STICK_PAD_MAX
+							# Hatswitch is little special as it covers 2 axes at once
+							next_axis = next_axis + 2
+							if next_axis < AXIS_COUNT:
+								next_axis = AxisType(next_axis)
+						total += 4
 					elif kind == UsagePage.ButtonPage:
 						if self._decoder.buttons.enabled:
 							raise UnparsableDescriptor("HID descriptor with two sets of buttons")
@@ -394,8 +469,8 @@ class HIDController(USBDevice, Controller):
 		return self._id
 	
 	
-	def get_id_is_persistent(self):
-		return True
+	def get_gui_config_file(self):
+		return self.config_file
 	
 	
 	def __repr__(self):
@@ -430,6 +505,7 @@ class HIDController(USBDevice, Controller):
 	
 	def input(self, endpoint, data):
 		if _lib.decode(ctypes.byref(self._decoder), data):
+			s = self._decoder.state
 			if self.mapper:
 				self.mapper.input(self,
 						self._decoder.old_state, self._decoder.state)
@@ -462,6 +538,7 @@ class HIDDrv(object):
 	
 	def __init__(self, daemon):
 		self.registered = set()
+		self.config_files = {}
 		self.configs = {}
 		self.scan_files()
 		self.daemon = daemon
@@ -470,7 +547,8 @@ class HIDDrv(object):
 	def hotplug_cb(self, device, handle):
 		vid, pid = device.getVendorID(), device.getProductID()
 		if (vid, pid) in self.configs:
-			controller = HIDController(device, self.daemon, handle, self.configs[vid, pid])
+			controller = HIDController(device, self.daemon, handle,
+				self.config_files[vid, pid], self.configs[vid, pid])
 			return controller
 		return None
 	
@@ -498,6 +576,7 @@ class HIDDrv(object):
 					log.warning("Ignoring file that cannot be parsed: %s", name)
 					continue
 				
+				self.config_files[vid, pid] = config_file
 				self.configs[vid, pid] = config
 				known.add((vid, pid))
 		
@@ -510,9 +589,10 @@ class HIDDrv(object):
 			vid, pid = removed
 			unregister_hotplug_device(self.hotplug_cb, vid, pid)
 			self.registered.remove(removed)
+			if (vid, pid) in self.config_files:
+				del self.config_files[vid, pid]
 			if (vid, pid) in self.configs:
 				del self.configs[vid, pid]
-
 
 def hiddrv_test(cls, args):
 	"""

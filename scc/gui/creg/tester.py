@@ -113,6 +113,6 @@ class Tester(GObject.GObject):
 		elif line.startswith("Ready"):
 			self.emit('ready')
 		elif line.startswith("Axes:"):
-			self.axes = [ int(x) for x in line.split(" ")[1:] ]
+			self.axes = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
 		elif line.startswith("Buttons:"):
-			self.buttons = [ int(x) for x in line.split(" ")[1:] ]
+			self.buttons = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]

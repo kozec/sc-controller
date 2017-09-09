@@ -9,7 +9,7 @@ Handles one or multiple controllers connected to dongle.
 from scc.lib import usb1
 from scc.lib import IntEnum
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from scc.constants import SCButtons, HapticPos, ControllerFlags
+from scc.constants import SCButtons, HapticPos
 from scc.controller import Controller
 from scc.config import Config
 from collections import namedtuple

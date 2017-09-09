@@ -380,7 +380,8 @@ class ControllerRegistration(Editor):
 			# Not an USB device, skip HID test altogether
 			retry_with_evdev(None, 0)
 		else:
-			log.debug("Trying to use '%s' with HID driver...", dev.fn)
+			log.debug("Trying to use %.4x:%.4x with HID driver...",
+					dev.info.vendor, dev.info.product)
 			self._tester = Tester("hid", "%.4x:%.4x" % (dev.info.vendor, dev.info.product))
 			self._tester.__signals = [
 				self._tester.connect('ready', self.on_registration_ready),
@@ -687,10 +688,12 @@ class ControllerRegistration(Editor):
 					log.warning("Area for button %s not found", b)
 					continue
 				x, y = SVGEditor.get_translation(elm)
+				w, trash = SVGEditor.get_size(elm)
 				path = os.path.join(self.app.imagepath, "button-images",
 					"%s.svg" % (buttons[i], ))
 				img = SVGEditor.get_element(SVGEditor.load_from_file(path), "button")
-				img.attrib["transform"] = "translate(%s, %s)" % (x, y)
+				img.attrib["transform"] = "translate(%s, %s) scale(%s)" % (
+					x, y, w / 25.0)
 				img.attrib["id"] = b
 				SVGEditor.add_element(target, img)
 			except Exception, err:

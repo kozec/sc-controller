@@ -36,8 +36,10 @@ def html_to_rgb(html):
 	html = html.strip("#")
 	if len(html) == 6:
 		html = html + "ff"
+	elif html == "none":
+		return 0, 0, 0, 0
 	elif len(html) != 8:
-		raise ValueError("Needs RRGGBB(AA) format")
+		raise ValueError("Needs RRGGBB(AA) format, got '%s'" % (html, ))
 	return tuple(( float(int(html[i:i+2],16)) / 255.0 for i in xrange(0, len(html), 2) ))
 
 
@@ -74,7 +76,7 @@ def recolor(tree, add):
 
 # Generate different colors for controller icons
 ET.register_namespace("","http://www.w3.org/2000/svg")
-for tp in ("sc", "fake",):
+for tp in ("sc", "fake", "ds4", "hid"):
 	# Read svg and parse it
 	data = file("%s/%s-0.svg" % (CICONS, tp), "r").read()
 	# Create recolored images
