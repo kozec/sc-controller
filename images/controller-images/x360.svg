@@ -25,16 +25,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="7.919596"
-     inkscape:cx="333.52893"
-     inkscape:cy="279.66058"
+     inkscape:zoom="3.959798"
+     inkscape:cx="264.27675"
+     inkscape:cy="201.92127"
      inkscape:document-units="px"
-     inkscape:current-layer="controller"
+     inkscape:current-layer="layer2"
      showgrid="false"
      units="px"
-     inkscape:window-width="1855"
-     inkscape:window-height="1232"
-     inkscape:window-x="65"
+     inkscape:window-width="1865"
+     inkscape:window-height="1043"
+     inkscape:window-x="768"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      fit-margin-top="0"
@@ -238,7 +238,7 @@
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Areas"
-     style="display:none">
+     style="display:inline">
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1.06696963;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
        id="AREA_BACK"
@@ -508,33 +508,33 @@
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
        id="AREA_X"
-       width="26.169708"
-       height="24.977468"
+       width="25"
+       height="25"
        x="289.88129"
-       y="99.273102"
+       y="98.510643"
        ry="0" />
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
        id="AREA_Y"
-       width="26.973219"
-       height="25.661142"
+       width="25"
+       height="25"
        x="319.01788"
        y="69.363289"
        ry="0" />
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
        id="AREA_B"
-       width="26.080322"
-       height="24.946873"
+       width="25"
+       height="25"
        x="349.02383"
        y="98.510643"
        ry="0" />
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
        id="AREA_A"
-       width="25.701515"
-       height="24.883764"
-       x="319.91296"
+       width="25"
+       height="25"
+       x="319.01788"
        y="127.7915"
        ry="0" />
     <g

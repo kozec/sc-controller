@@ -688,10 +688,12 @@ class ControllerRegistration(Editor):
 					log.warning("Area for button %s not found", b)
 					continue
 				x, y = SVGEditor.get_translation(elm)
+				w, trash = SVGEditor.get_size(elm)
 				path = os.path.join(self.app.imagepath, "button-images",
 					"%s.svg" % (buttons[i], ))
 				img = SVGEditor.get_element(SVGEditor.load_from_file(path), "button")
-				img.attrib["transform"] = "translate(%s, %s)" % (x, y)
+				img.attrib["transform"] = "translate(%s, %s) scale(%s)" % (
+					x, y, w / 25.0)
 				img.attrib["id"] = b
 				SVGEditor.add_element(target, img)
 			except Exception, err:

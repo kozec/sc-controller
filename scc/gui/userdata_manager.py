@@ -98,7 +98,7 @@ class UserDataManager(object):
 			f = Gio.File.new_for_path(paths[i])
 			f.enumerate_children_async(
 				pattern,
-				Gio.FileQueryInfoFlags.NONE,
+				Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
 				1, None, self._on_user_data_loaded,
 				data, i, callback
 			)
@@ -121,8 +121,6 @@ class UserDataManager(object):
 				for pdir, enumerator in data:
 					if pdir is not None:
 						for finfo in enumerator:
-							if finfo.get_is_symlink():
-								print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 							name = finfo.get_name()
 							if name:
 								files[name] = pdir.get_child(name)
