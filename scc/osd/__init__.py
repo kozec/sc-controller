@@ -237,6 +237,8 @@ class OSDWindow(Gtk.Window):
 		""" Returns True on success """
 		try:
 			self.args = self.argparser.parse_args(argv[1:])
+		except SystemExit:
+			return False
 		except BaseException, e:	# Includes SystemExit
 			log.error(traceback.format_exc())
 			return False
