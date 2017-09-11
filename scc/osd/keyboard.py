@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python2
 """
 SC-Controller - OSD Menu
@@ -42,36 +43,12 @@ class Keyboard(OSDWindow, TimerManager):
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	OSK_PROF_NAME = ".scc-osd.keyboard"
-	RECOLOR_BACKGROUNDS = ( "button1", "button2", "text", "background" )
-	RECOLOR_STROKES = ( "button1_border", "button2_border", "text" )
-	
-	BUTTON_MAP = {
-		SCButtons.A.name : Keys.KEY_ENTER,
-		SCButtons.B.name : Keys.KEY_ESC,
-		SCButtons.LB.name : Keys.KEY_BACKSPACE,
-		SCButtons.RB.name : Keys.KEY_SPACE,
-		SCButtons.LGRIP.name : Keys.KEY_LEFTSHIFT,
-		SCButtons.RGRIP.name : Keys.KEY_RIGHTALT,
-	}
 	
 	def __init__(self, config=None):
 		self.kbimage = os.path.join(get_config_path(), 'keyboard.svg')
 		if not os.path.exists(self.kbimage):
 			# Prefer image in ~/.config/scc, but load default one as fallback
 			self.kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
-		
-		TimerManager.__init__(self)
-		OSDWindow.__init__(self, "osd-keyboard")
-		self.daemon = None
-		self.mapper = None
-		self.keymap = Gdk.Keymap.get_default()
-		self.keymap.connect('state-changed', self.on_keymap_state_changed)
-		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
-		self.profile = Profile(TalkingActionParser())
-		self.config = config or Config()
-		self.dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))
-		self.group = None
-		self.limits = {}
 		self.background = None
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
@@ -81,12 +58,11 @@ class Keyboard(OSDWindow, TimerManager):
 		self.cursors[RIGHT] = Gtk.Image.new_from_file(cursor)
 		self.cursors[RIGHT].set_name("osd-keyboard-cursor")
 		
-		self._eh_ids = []
-		self._stick = 0, 0
-		self._hovers = { self.cursors[LEFT] : None, self.cursors[RIGHT] : None }
-		self._pressed = { self.cursors[LEFT] : None, self.cursors[RIGHT] : None }
-		self._pressed_areas = {}
-		
+		TimerManager.__init__(self)
+		OSDWindow.__init__(self, "osd-keyboard")
+		self.daemon = None
+		self.config = config or Config()
+		self.dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))
 		self.c = Gtk.Box()
 		self.c.set_name("osd-keyboard-container")
 		
@@ -337,17 +313,10 @@ class Keyboard(OSDWindow, TimerManager):
 		self.background.hilight(hilights)
 	
 	
-	def _move_window(self, *a):
-		"""
-		Called by timer while stick is tilted to move window around the screen.
-		"""
-		x, y = self._stick
-		x = x * 50.0 / STICK_PAD_MAX
-		y = y * -50.0 / STICK_PAD_MAX
-		rx, ry = self.get_position()
-		self.move(rx + x, ry + y)
-		if abs(self._stick[0]) > 100 or abs(self._stick[1]) > 100:
-			self.timer("stick", 0.05, self._move_window)
+	def __init__(self, filename):
+		Gtk.DrawingArea.__init__(self)
+		self.filename = filename
+		self.set_size_request(300, 100)
 	
 	
 	def key_from_cursor(self, cursor, pressed):
