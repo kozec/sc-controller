@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.controller_image import ControllerImage
 from scc.gui.profile_switcher import ProfileSwitcher
@@ -18,13 +18,12 @@ from scc.gui.binding_editor import BindingEditor
 from scc.gui.statusicon import get_status_icon
 from scc.gui.dwsnc import headerbar, IS_UNITY
 from scc.gui.ribar import RIBar
+from scc.tools import check_access, find_gksudo, profile_is_override
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
-from scc.tools import check_access, find_profile, find_gksudo
-from scc.tools import get_profile_name, profile_is_override
 from scc.paths import get_config_path, get_profiles_path
-from scc.actions import NoAction
 from scc.modifiers import NameModifier
+from scc.actions import NoAction
 from scc.profile import Profile
 from scc.config import Config
 
@@ -158,12 +157,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if first:
 			b1 = self.background.get_config()['gui']['background']
 			b2 = config['gui']['background']
-			print b1, b2
 			if b1 == b2:
 				# If application has just started and image is
 				# not changing, transition would just look weird
 				do_loading()
 				return
+		if not first:
+			stckEditor.set_transition_type(Gtk.StackTransitionType.SLIDE_DOWN)
 		stckEditor.set_visible_child(lblEmpty)
 		GLib.timeout_add(stckEditor.get_transition_duration(), do_loading)
 	
@@ -566,6 +566,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.save_profile(self.current_file, self.current)
 	
 	
+	def on_switch_to_clicked(self, ps, *a):
+		""" Switches editor to another controller """
+		ps0 = self.profile_switchers[0]
+		if ps == ps0: return
+		
+		c, p = ps.get_controller(), ps.get_profile_name()
+		c0, p0 = ps0.get_controller(), ps0.get_profile_name()
+		
+		ps0.set_controller(c); ps0.set_profile(p)
+		ps.set_controller(c0); ps.set_profile(p0)
+		
+		self.load_gui_config_for_controller(c, False)
+	
+	
 	def on_profile_saved(self, giofile, send=True):
 		"""
 		Called when selected profile is saved to disk
@@ -770,6 +784,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		ps.set_margin_right(margin_right)
 		ps.set_margin_bottom(margin_bottom)
 		ps.connect('right-clicked', self.on_profile_right_clicked)
+		ps.connect('switch-to-clicked', self.on_switch_to_clicked)
 		
 		vbSwitchers.pack_start(ps, False, False, 0)
 		vbSwitchers.reorder_child(ps, 0)
@@ -783,6 +798,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		if len(self.profile_switchers) > 0:
 			ps.set_profile_list(self.profile_switchers[0].get_profile_list())
+			ps.set_switch_to_enabled(True)
 		
 		self.profile_switchers.append(ps)
 		ps.connect('changed', self.on_profile_selected)

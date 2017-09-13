@@ -11,12 +11,12 @@ indicator drawn in combobox.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, Gio, GLib, GObject
+from gi.repository import Gtk, Gio, GLib, GObject
 from scc.gui.userdata_manager import UserDataManager
 from scc.paths import get_controller_icons_path, get_default_controller_icons_path
 from scc.tools import find_profile, find_controller_icon
 
-import sys, os, random, logging
+import os, random, logging
 log = logging.getLogger("PS")
 
 class ProfileSwitcher(Gtk.EventBox, UserDataManager):
@@ -31,17 +31,20 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			Emited whenm user right-clicks anything
 		save-clicked ()
 			Emited when user clicks on save button
+		switch-to-clicked ()
+			Emited when user clicks on "switch to this controller" button
 		unknown-profile (name)
 			Emited when daemon reports unknown profile for controller.
 			'name' is name of reported profile.
 	"""
 	
 	__gsignals__ = {
-			b"changed"					: (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
-			b"new-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"right-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"save-clicked"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"unknown-profile"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"changed"				: (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
+			b"new-clicked"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"right-clicked"		: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"save-clicked"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"switch-to-clicked"	: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"unknown-profile"		: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	
 	SEND_TIMEOUT = 100	# How many ms should switcher wait before sending event
@@ -69,8 +72,8 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		self._model = Gtk.ListStore(str, object, str)
 		self._combo = Gtk.ComboBox.new_with_model(self._model)
 		self._box = Gtk.Box(Gtk.Orientation.HORIZONTAL, 0)
-		self._revealer = None
 		self._savebutton = None
+		self._switch_to_button = None
 		
 		# Setup
 		rend1 = Gtk.CellRendererText()
@@ -249,6 +252,10 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		self.emit('save-clicked')
 	
 	
+	def on_switch_to_clicked(self, *a):
+		self.emit('switch-to-clicked')
+	
+	
 	def on_daemon_dead(self, *a):
 		""" Called from App when connection to daemon is lost """
 		self._first_time = True
@@ -268,7 +275,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 	
 	def set_profile_modified(self, has_changes, is_template=False):
 		"""
-		Called to signalize if profile has changes to save in UI
+		Called to signalize that profile has changes to save in UI
 		by displaying "changed" next to profile name and showing Save button.
 		
 		Returns giofile for currently selected profile. If profile is set as
@@ -276,32 +283,47 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		so application can save changes without overwriting original wile.
 		"""
 		if has_changes:
-			if not self._revealer:
-				# Revealer has to be created
-				self._revealer = Gtk.Revealer()
-				self._savebutton = Gtk.Button.new_from_icon_name("gtk-save", Gtk.IconSize.SMALL_TOOLBAR)
-				self._savebutton.set_margin_left(5)
-				self._savebutton.connect('clicked', self.on_savebutton_clicked)
-				self._revealer.set_reveal_child(False)
-				self._revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_LEFT)
-				self._revealer.add(self._savebutton)
-				self._box.pack_start(self._revealer, False, True, 0)
+			if not self._savebutton:
+				# Save button has to be created
+				self._savebutton = ButtonInRevealer(
+					"gtk-save", _("Save changes"),
+					self.on_savebutton_clicked)
+				self._box.pack_start(self._savebutton, False, True, 0)
 				self.show_all()
-			self._revealer.set_reveal_child(True)
+			self._savebutton.set_reveal_child(True)
 			iter = self._combo.get_active_iter()
 			if is_template:
 				self._model.set_value(iter, 2, _("(changed template)"))
 			else:
 				self._model.set_value(iter, 2, _("(changed)"))
 		else:
-			if self._revealer:
+			if self._savebutton:
 				# Nothing to hide if there is no revealer
-				self._revealer.set_reveal_child(False)
+				self._savebutton.set_reveal_child(False)
 			for i in self._model:
 				i[2] = None
 			if is_template:
 				iter = self._combo.get_active_iter()
 				self._model.set_value(iter, 2, _("(template)"))
+	
+	
+	def set_switch_to_enabled(self, enabled):
+		"""
+		Shows or hides 'switch-to' button
+		"""
+		if enabled:
+			if not self._switch_to_button:
+				# Save button has to be created
+				self._switch_to_button = ButtonInRevealer(
+					"gtk-edit", _("Edit mappings of this controller"),
+					self.on_switch_to_clicked)
+				self._box.pack_start(self._switch_to_button, False, True, 0)
+				self.show_all()
+			self._switch_to_button.set_reveal_child(True)
+		else:
+			if self._switch_to_button:
+				# Nothing to hide if there is no revealer
+				self._switch_to_button.set_reveal_child(False)
 	
 	
 	def get_file(self):
@@ -371,3 +393,16 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 				GLib.idle_add(self.update_icon)
 			
 			self.load_user_data(paths, "*.svg", None, cb)
+
+
+class ButtonInRevealer(Gtk.Revealer):
+	
+	def __init__(self, button_name, tooltip, callback):
+		Gtk.Revealer.__init__(self)
+		self.button = Gtk.Button.new_from_icon_name(button_name, Gtk.IconSize.SMALL_TOOLBAR)
+		self.button.set_margin_left(5)
+		self.button.connect('clicked', callback)
+		self.button.set_tooltip_text(tooltip)
+		self.set_reveal_child(False)
+		self.set_transition_type(Gtk.RevealerTransitionType.SLIDE_LEFT)
+		self.add(self.button)

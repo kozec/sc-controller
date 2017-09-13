@@ -2339,7 +2339,6 @@ class NoAction(Action):
 		return "NoAction"
 
 	__repr__ = __str__
-	
 
 
 def strip_none(*lst):
