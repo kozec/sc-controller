@@ -38,7 +38,7 @@ class Keyboard(OSDWindow, TimerManager):
 	EPILOG="""Exit codes:
    0  - clean exit, user closed keyboard
    1  - error, invalid arguments
-   2  - error, failed to access sc-daemon, sc-daemon reported error or died while menu is displayed.
+   2  - error, failed to access sc-daemon, sc-daemon reported error or died while keyboard is displayed.
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	OSK_PROF_NAME = ".scc-osd.keyboard"
