@@ -6,8 +6,7 @@ Just huge chunk of constants put aside to make impotant code more readable
 """
 from __future__ import unicode_literals
 
-from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
-from scc.constants import STICK, LEFT, RIGHT
+from scc.constants import SCButtons, STICK, LEFT, RIGHT
 
 X = 0
 Y = 1

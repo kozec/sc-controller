@@ -10,10 +10,10 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, GLib, GdkPixbuf
-from scc.gui.creg.constants import X, Y, BUTTONS_WITH_IMAGES, BUTTON_ORDER
+from scc.gui.creg.constants import BUTTONS_WITH_IMAGES, BUTTON_ORDER
 from scc.gui.creg.constants import SDL_TO_SCC_NAMES, STICK_PAD_AREAS
 from scc.gui.creg.constants import AXIS_ORDER, SDL_AXES, SDL_DPAD
-from scc.gui.creg.constants import TRIGGER_AREAS, AXIS_TO_BUTTON
+from scc.gui.creg.constants import TRIGGER_AREAS
 from scc.gui.creg.grabs import InputGrabber, TriggerGrabber, StickGrabber
 from scc.gui.creg.data import AxisData, DPadEmuData
 from scc.gui.creg.tester import Tester
@@ -21,12 +21,11 @@ from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
 from scc.gui.app import App
 from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
-from scc.constants import STICK, LEFT, RIGHT
 from scc.paths import get_config_path, get_share_path
 from scc.tools import nameof, clamp
 
 import evdev
-import sys, os, logging, json, traceback
+import os, logging, json
 log = logging.getLogger("CRegistration")
 
 
