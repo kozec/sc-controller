@@ -13,7 +13,7 @@ from scc.gui.creg.data import AxisData, DPadEmuData
 from scc.gui.creg.constants import X, Y
 from scc.tools import nameof
 
-import logging, traceback
+import logging
 log = logging.getLogger("CReg.grabs")
 
 
@@ -138,7 +138,7 @@ class StickGrabber(TriggerGrabber):
 		if keycode in self.grabbed:
 			# Don't allow same button to be used twice
 			return
-		if value == 0:
+		if not pressed:
 			if len(self.grabbed) < 4:
 				self.grabbed = [ None ] * 4
 			if self.grabbed[0] is None:
@@ -164,7 +164,7 @@ class StickGrabber(TriggerGrabber):
 				self.cancel()
 	
 	
-	def axis_change(self, number, value, change):
+	def on_axis(self, number, value):
 		if len(self.grabbed) > 2:
 			# Already started grabbing 4 buttons, don't grab axes now
 			return

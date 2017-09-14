@@ -647,7 +647,8 @@ def hiddrv_test(cls, args):
 	_usb._daemon = fake_daemon
 	_usb.start()
 	
-	print "Ready"
+	if fake_daemon.exitcode < 0:
+		print "Ready"
 	sys.stdout.flush()
 	while fake_daemon.exitcode < 0:
 		fake_daemon.poller.poll()

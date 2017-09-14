@@ -10,13 +10,13 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, GLib, GdkPixbuf
-from scc.gui.creg.constants import BUTTONS_WITH_IMAGES, BUTTON_ORDER
 from scc.gui.creg.constants import SDL_TO_SCC_NAMES, STICK_PAD_AREAS
 from scc.gui.creg.constants import AXIS_ORDER, SDL_AXES, SDL_DPAD
-from scc.gui.creg.constants import TRIGGER_AREAS
+from scc.gui.creg.constants import BUTTON_ORDER, TRIGGER_AREAS
 from scc.gui.creg.grabs import InputGrabber, TriggerGrabber, StickGrabber
 from scc.gui.creg.data import AxisData, DPadEmuData
 from scc.gui.creg.tester import Tester
+from scc.gui.controller_image import ControllerImage
 from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
 from scc.gui.app import App
@@ -141,7 +141,7 @@ class ControllerRegistration(Editor):
 							try:
 								keycode = buttons[int(v.strip("b"))]
 							except IndexError:
-								log.warning("Skipping unknown gamecontrollerdb button->button mapping: %s", v)
+								log.warning("Skipping unknown gamecontrollerdb button->button mapping: '%s'", v)
 								continue
 							button  = getattr(SCButtons, k.upper())
 							self._mappings[keycode] = button
@@ -149,7 +149,7 @@ class ControllerRegistration(Editor):
 							try:
 								keycode = buttons[int(v.strip("b"))]
 							except IndexError:
-								log.warning("Skipping unknown gamecontrollerdb button->axis mapping: %s", v)
+								log.warning("Skipping unknown gamecontrollerdb button->axis mapping: '%s'", v)
 								continue
 							log.info("Adding button -> axis mapping for %s", k)
 							self._mappings[keycode] = self._axis_data[SDL_AXES.index(k)]
@@ -159,7 +159,7 @@ class ControllerRegistration(Editor):
 							try:
 								code = axes[int(v.strip("a"))]
 							except IndexError:
-								log.warning("Skipping unknown gamecontrollerdb axis: %s", v)
+								log.warning("Skipping unknown gamecontrollerdb axis: '%s'", v)
 								continue
 							self._mappings[code] = self._axis_data[SDL_AXES.index(k)]
 						elif k in SDL_DPAD and v.startswith("b"):
@@ -679,8 +679,8 @@ class ControllerRegistration(Editor):
 		e = image.edit()
 		SVGEditor.update_parents(e)
 		target = SVGEditor.get_element(e, "controller")
-		for i in xrange(len(BUTTONS_WITH_IMAGES)):
-			b = nameof(BUTTONS_WITH_IMAGES[i])
+		for i in xrange(len(ControllerImage.BUTTONS_WITH_IMAGES)):
+			b = nameof(ControllerImage.BUTTONS_WITH_IMAGES[i])
 			try:
 				elm = SVGEditor.get_element(e, "AREA_%s" % (b,))
 				if elm is None:

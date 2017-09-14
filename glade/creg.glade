@@ -410,7 +410,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
                 <property name="margin_left">10</property>
                 <property name="margin_right">10</property>
                 <property name="hexpand">True</property>
-                <property name="label" translatable="yes">Red colored controls are not assigned to anything.</property>
+                <property name="label" translatable="yes">Red colored controls are not assigned.</property>
                 <property name="wrap">True</property>
                 <property name="max_width_chars">60</property>
                 <property name="xalign">1</property>
