@@ -22,11 +22,13 @@ class ControllerImage(SVGWidget):
 		SCButtons.BACK, SCButtons.C, SCButtons.START
 	)
 	
-	def __init__(self, app):
+	def __init__(self, app, config=None):
 		self.app = app
-		self.current = self.load_config(None)
+		self.current = self._ensure_config({})
 		filename = self._make_controller_image_path(ControllerImage.DEFAULT)
 		SVGWidget.__init__(self, filename)
+		if config:
+			self._controller_image.use_config(config)
 	
 	
 	def _make_controller_image_path(self, img):
@@ -39,6 +41,14 @@ class ControllerImage(SVGWidget):
 		Returns last used config
 		"""
 		return self.current
+	
+	
+	def _ensure_config(self, data):
+		""" Ensure that required keys are present in config data """
+		data['gui'] = data.get('gui', {})
+		data['gui']['background'] = data['gui'].get("background", "sc")
+		data['gui']['buttons'] = data['gui'].get("buttons") or self._get_default_images()
+		return data
 	
 	
 	def load_config(self, filename):
@@ -56,16 +66,11 @@ class ControllerImage(SVGWidget):
 				data = {}
 		else:
 			data = {}
-		
-		# Ensure that required keys are present
-		data['gui'] = data.get('gui', {})
-		data['gui']['background'] = data['gui'].get("background", "sc")
-		data['gui']['buttons'] = data['gui'].get("buttons") or self._get_default_images()
-		return data
+		return self._ensure_config(data)
 	
 	
 	def use_config(self, config):
-		self.current = config
+		self.current = self._ensure_config(config)
 		self.set_image(os.path.join(self.app.imagepath,
 			"controller-images/%s.svg" % (config["gui"]["background"], )))
 		self._fill_button_images(config["gui"]["buttons"])

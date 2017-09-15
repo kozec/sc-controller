@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="320.34152"
-     inkscape:cy="204.73495"
+     inkscape:zoom="5.6"
+     inkscape:cx="40.429954"
+     inkscape:cy="218.5963"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="false"
@@ -50,7 +50,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -166,7 +166,7 @@
        style="display:inline;fill:#000000;fill-opacity:0.31372549;fill-rule:evenodd;stroke:#000000;stroke-width:1.16148353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <g
        style="display:inline;fill:#000000;fill-opacity:0.60392157;stroke:#000000;stroke-width:0.04736368;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="LEFT"
+       id="STICKPRESS"
        transform="matrix(21.113223,0,0,21.113223,-14.84598,-76.574287)">
       <path
          sodipodi:nodetypes="ccccccccccc"
@@ -244,15 +244,15 @@
        id="g4321">
       <rect
          ry="0"
-         y="72.54705"
-         x="56.870647"
-         height="65.071426"
-         width="65.071419"
-         id="AREA_LPAD_1"
+         y="58.79705"
+         x="43.120647"
+         height="93.374992"
+         width="93.374985"
+         id="AREA_STICK_1"
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
       <rect
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#00b400;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
-         id="AREA_LPADTEST"
+         id="AREA_STICKTEST"
          width="84.958206"
          height="1"
          x="47.070255"
@@ -260,11 +260,11 @@
          ry="0" />
       <rect
          ry="0"
-         y="106.12214"
-         x="47.070255"
-         height="1"
-         width="84.958206"
-         id="AREA_STICKTEST"
+         y="106.12008"
+         x="39.558929"
+         height="1.0834405"
+         width="99.979279"
+         id="rect36"
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#00b400;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
     </g>
     <g

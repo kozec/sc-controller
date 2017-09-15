@@ -17,7 +17,6 @@ from scc.gui.creg.grabs import InputGrabber, TriggerGrabber, StickGrabber
 from scc.gui.creg.data import AxisData, DPadEmuData
 from scc.gui.creg.tester import Tester
 from scc.gui.controller_image import ControllerImage
-from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.editor import Editor
 from scc.gui.app import App
 from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
@@ -50,7 +49,7 @@ class ControllerRegistration(Editor):
 				os.path.join(self.app.imagepath, "controller-icons", "unknown.svg"))
 		self._axis_data = [ AxisData(name, xy) for (name, xy) in AXIS_ORDER ]
 		self.setup_widgets()
-		self._controller = None
+		self._controller_image = None
 		self._evdevice = None
 		self._tester = None
 		self._grabber = None
@@ -177,6 +176,7 @@ class ControllerRegistration(Editor):
 						else:
 							log.warning("Skipping unknown gamecontrollerdb mapping %s:%s", k, v)
 				return True
+		
 		return False
 	
 	
@@ -210,7 +210,10 @@ class ControllerRegistration(Editor):
 							if isinstance(x, DPadEmuData) ])
 		for a in BUTTON_ORDER:
 			if a not in assigned_buttons:
-				unassigned.add(nameof(a))
+				if a not in (SCButtons.RGRIP, SCButtons.LGRIP):
+					# Grips are not colored red as most of controllers doesn't
+					# have them anyway
+					unassigned.add(nameof(a))
 		for a in TRIGGER_AREAS:
 			axis = self._axis_data[TRIGGER_AREAS[a]]
 			if not axis in assigned_axes:
@@ -332,6 +335,7 @@ class ControllerRegistration(Editor):
 	
 	
 	def on_btNext_clicked(self, *a):
+		rvController = self.builder.get_object("rvController")
 		tvDevices = self.builder.get_object("tvDevices")
 		stDialog = self.builder.get_object("stDialog")
 		btBack = self.builder.get_object("btBack")
@@ -340,6 +344,9 @@ class ControllerRegistration(Editor):
 		index = pages.index(stDialog.get_visible_child())
 		if index == 0:
 			stDialog.set_visible_child(pages[1])
+			self.load_buttons()
+			self.refresh_controller_image()
+			rvController.set_reveal_child(True)
 			self.load_buttons()
 			self.refresh_controller_image()
 			btBack.set_sensitive(True)
@@ -412,8 +419,8 @@ class ControllerRegistration(Editor):
 			tester.connect('button', self.on_tester_button),
 		]
 		
-		self._controller.get_parent().remove(self._controller)
-		fxController.add(self._controller)
+		self._controller_image.get_parent().remove(self._controller_image)
+		fxController.add(self._controller_image)
 		pages = stDialog.get_children()
 		stDialog.set_visible_child(pages[2])
 		cbEmulateC.grab_focus()
@@ -493,8 +500,8 @@ class ControllerRegistration(Editor):
 		elif index == 2:
 			stDialog.set_visible_child(pages[1])
 			rvController = self.builder.get_object("rvController")
-			self._controller.get_parent().remove(self._controller)
-			rvController.add(self._controller)
+			self._controller_image.get_parent().remove(self._controller_image)
+			rvController.add(self._controller_image)
 			btNext.set_label("_Next")
 	
 	
@@ -564,7 +571,7 @@ class ControllerRegistration(Editor):
 		else:
 			parent = cursor.get_parent()
 			if parent is None:
-				parent = self._controller.get_parent()
+				parent = self._controller_image.get_parent()
 				parent.add(cursor)
 				cursor.show()
 			# Make position
@@ -572,7 +579,12 @@ class ControllerRegistration(Editor):
 			cursor.position[axis.xy] = clamp(STICK_PAD_MIN, value, STICK_PAD_MAX)
 			px, py = cursor.position
 			# Grab values
-			ax, ay, aw, trash = self._controller.get_area_position(axis.area)
+			try:
+				ax, ay, aw, trash = self._controller_image.get_area_position(axis.area)
+			except ValueError:
+				# Area not found
+				cursor.set_visible(False)
+				return
 			cw = cursor.get_allocation().width
 			# Compute center
 			x, y = ax + aw * 0.5 - cw * 0.5, ay + aw * 0.5 - cw * 0.5
@@ -589,7 +601,7 @@ class ControllerRegistration(Editor):
 	
 	def hilight(self, what, color=None):
 		self._hilights[what] = color or self.OBSERVE_COLORS[0]
-		self._controller.hilight(self._hilights)
+		self._controller_image.hilight(self._hilights)
 	
 	
 	def unhilight(self, what):
@@ -597,7 +609,7 @@ class ControllerRegistration(Editor):
 			del self._hilights[what]
 		if what in self._unassigned:
 			self._hilights[what] = self.UNASSIGNED_COLOR
-		self._controller.hilight(self._hilights)
+		self._controller_image.hilight(self._hilights)
 	
 	
 	def on_exAdditionalOptions_activate(self, ex):
@@ -675,51 +687,19 @@ class ControllerRegistration(Editor):
 					self._gamepad_icon if is_gamepad else self._other_icon ))
 	
 	
-	def fill_button_images(self, image, buttons):
-		e = image.edit()
-		SVGEditor.update_parents(e)
-		target = SVGEditor.get_element(e, "controller")
-		for i in xrange(len(ControllerImage.BUTTONS_WITH_IMAGES)):
-			b = nameof(ControllerImage.BUTTONS_WITH_IMAGES[i])
-			try:
-				elm = SVGEditor.get_element(e, "AREA_%s" % (b,))
-				if elm is None:
-					log.warning("Area for button %s not found", b)
-					continue
-				x, y = SVGEditor.get_translation(elm)
-				w, trash = SVGEditor.get_size(elm)
-				path = os.path.join(self.app.imagepath, "button-images",
-					"%s.svg" % (buttons[i], ))
-				img = SVGEditor.get_element(SVGEditor.load_from_file(path), "button")
-				img.attrib["transform"] = "translate(%s, %s) scale(%s)" % (
-					x, y, w / 25.0)
-				img.attrib["id"] = b
-				SVGEditor.add_element(target, img)
-			except Exception, err:
-				log.warning("Failed to add image for button %s", b)
-				log.exception(err)
-		e.commit()
-	
-	
 	def refresh_controller_image(self, *a):
 		cbControllerButtons = self.builder.get_object("cbControllerButtons")
-		imgControllerType = self.builder.get_object("imgControllerType")
 		cbControllerType = self.builder.get_object("cbControllerType")
 		rvController = self.builder.get_object("rvController")
-		
 		group = cbControllerButtons.get_model()[cbControllerButtons.get_active()][0]
 		controller = cbControllerType.get_model()[cbControllerType.get_active()][0]
+		config = { 'gui' : { 'background' : controller, 'buttons': self._groups[group] }}
 		
-		image = os.path.join(self.app.imagepath,
-			"controller-images/%s.svg" % (controller, ))
-		if self._controller:
-			self._controller.set_image(image)
-			self.fill_button_images(self._controller, self._groups[group])
-			self._controller.hilight({})
+		if self._controller_image:
+			self._controller_image.use_config(config)
 		else:
-			self._controller = SVGWidget(image)
-			self._controller.connect('hover', self.on_area_hover)
-			self._controller.connect('leave', self.on_area_leave)
-			self._controller.connect('click', self.on_area_click)
-			rvController.add(self._controller)
-		rvController.set_reveal_child(True)
+			self._controller_image = ControllerImage(self.app)
+			self._controller_image.connect('hover', self.on_area_hover)
+			self._controller_image.connect('leave', self.on_area_leave)
+			self._controller_image.connect('click', self.on_area_click)
+			rvController.add(self._controller_image)
