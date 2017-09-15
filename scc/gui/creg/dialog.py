@@ -233,6 +233,8 @@ class ControllerRegistration(Editor):
 	
 	
 	def generate_raw_data(self):
+		cbControllerButtons = self.builder.get_object("cbControllerButtons")
+		cbControllerType = self.builder.get_object("cbControllerType")
 		buffRawData = self.builder.get_object("buffRawData")
 		config = dict(
 			buttons = {},
@@ -258,6 +260,9 @@ class ControllerRegistration(Editor):
 				# in center position before 'Save' is pressed.
 				center = axisdata.min + (axisdata.max - axisdata.min) / 2
 				deadzone = abs(axisdata.pos - center) * 2 + 2
+				if abs(axisdata.max) < 2:
+					# DPADs
+					deadzone = 0
 				rv["deadzone"] = deadzone
 			
 			return rv
@@ -271,6 +276,13 @@ class ControllerRegistration(Editor):
 				config['dpads'][code]["button"] = nameof(target.button)
 			elif isinstance(target, AxisData):
 				config['axes'][code] = axis_to_json(target)
+		
+		group = cbControllerButtons.get_model()[cbControllerButtons.get_active()][0]
+		controller = cbControllerType.get_model()[cbControllerType.get_active()][0]
+		config['gui'] = {
+			'background' : controller,
+			'buttons': self._groups[group]
+		}
 		
 		buffRawData.set_text(json.dumps(config, sort_keys=True,
 						indent=4, separators=(',', ': ')))
@@ -580,7 +592,8 @@ class ControllerRegistration(Editor):
 			px, py = cursor.position
 			# Grab values
 			try:
-				ax, ay, aw, trash = self._controller_image.get_area_position(axis.area)
+				trash, ay, trash, ah = self._controller_image.get_area_position(axis.area)
+				ax, trash, aw, trash = self._controller_image.get_area_position(axis.area + "TEST")
 			except ValueError:
 				# Area not found
 				cursor.set_visible(False)
@@ -593,6 +606,7 @@ class ControllerRegistration(Editor):
 			y -= py * aw / STICK_PAD_MAX * 0.5
 			# Move circle
 			parent.move(cursor, x, y)
+			cursor.set_visible(True)
 			# Update raw data if needed
 			if changed:
 				self.generate_raw_data()

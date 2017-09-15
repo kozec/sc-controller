@@ -5,23 +5,19 @@ SC Controller - Universal HID driver. For all three universal HID devices.
 Borrows bit of code and configuration from evdevdrv.
 """
 
-from scc.lib.hidparse import HIDPARSE_TYPE_AXIS, HIDPARSE_TYPE_BUTTONS, AXES
 from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
 from scc.lib.hidparse import UsagePage, parse_report_descriptor
-from scc.lib.hidparse import GenericDesktopPage
+from scc.lib.hidparse import GenericDesktopPage, AXES
 from scc.drivers.usb import register_hotplug_device, unregister_hotplug_device
 from scc.drivers.usb import USBDevice
-from scc.constants import SCButtons, HapticPos, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.constants import SCButtons, ControllerFlags
 from scc.drivers.evdevdrv import FIRST_BUTTON, TRIGGERS, parse_axis
-from scc.tools import find_library, clamp
 from scc.controller import Controller
 from scc.paths import get_config_path
-from scc.lib import IntEnum, usb1
-from scc.config import Config
+from scc.tools import find_library
+from scc.lib import IntEnum
 
-from collections import namedtuple
-from math import pi as PI, sin, cos
 import os, json, ctypes, sys, logging
 log = logging.getLogger("HID")
 
@@ -199,6 +195,7 @@ class HIDController(USBDevice, Controller):
 		
 		if test_mode:
 			self.set_input_interrupt(id, self._packet_size, self.test_input)
+				
 			print "Buttons:", " ".join([ str(x + FIRST_BUTTON)
 					for x in xrange(self._decoder.buttons.button_count) ])
 			print "Axes:", " ".join([ str(x)
@@ -216,6 +213,7 @@ class HIDController(USBDevice, Controller):
 	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
 		hid_descriptor = HIDController.find_sys_devices_descriptor(vid, pid)
 		if hid_descriptor is None:
+			print "get raw"
 			hid_descriptor = self.handle.getRawDescriptor(
 					LIBUSB_DT_REPORT, 0, 512)
 		open("report", "wb").write(b"".join([ chr(x) for x in hid_descriptor ]))
@@ -413,7 +411,7 @@ class HIDController(USBDevice, Controller):
 			for name in os.listdir(path):
 				full_path = os.path.join(path, name)
 				if name == "report_descriptor":
-					if pattern in os.path.split(path)[-1]:
+					if pattern in os.path.split(path)[-1].lower():
 						return full_path
 				try:
 					if os.path.islink(full_path):
@@ -427,6 +425,7 @@ class HIDController(USBDevice, Controller):
 			return None
 		
 		pattern = ":%.4x:%.4x" % (vid, pid)
+		print "###", pattern
 		full_path = recursive_search(pattern, SYS_DEVICES)
 		try:
 			if full_path:
@@ -505,7 +504,6 @@ class HIDController(USBDevice, Controller):
 	
 	def input(self, endpoint, data):
 		if _lib.decode(ctypes.byref(self._decoder), data):
-			s = self._decoder.state
 			if self.mapper:
 				self.mapper.input(self,
 						self._decoder.old_state, self._decoder.state)
@@ -630,9 +628,8 @@ def hiddrv_test(cls, args):
 	fake_daemon = FakeDaemon()
 	
 	def cb(device, handle):
-		return cls(device, None, handle, None, test_mode=True)
 		try:
-			pass
+			return cls(device, None, handle, None, None, test_mode=True)
 		except NotHIDDevice:
 			print >>sys.stderr, "%.4x:%.4x is not a HID device" % (vid, pid)
 			fake_daemon.exitcode = 3

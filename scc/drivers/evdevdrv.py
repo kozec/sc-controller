@@ -11,7 +11,6 @@ from scc.constants import SCButtons, ControllerFlags
 from scc.controller import Controller
 from scc.paths import get_config_path
 from scc.config import Config
-from scc.poller import Poller
 from scc.tools import clamp
 
 HAVE_INOTIFY = False
@@ -23,7 +22,7 @@ except ImportError:
 
 from collections import namedtuple
 import evdev
-import struct, threading, Queue, os, sys, time, binascii, json, logging
+import threading, Queue, os, sys, time, binascii, json, logging
 log = logging.getLogger("evdev")
 
 TRIGGERS = "ltrig", "rtrig"
@@ -313,14 +312,16 @@ def parse_axis(axis):
 	clamp_min = STICK_PAD_MIN
 	clamp_max = STICK_PAD_MAX
 	deadzone  = axis.get("deadzone", 0)
+	offset = 0
+	if (max >= 0 and min >= 0):
+		offset = 1
 	if max > min:
 		scale = (-2.0 / (min-max)) if min != max else 1.0
 		deadzone = abs(float(deadzone) * scale)
-		offset = -1.0
+		offset *= -1.0
 	else:
 		scale = (-2.0 / (min-max)) if min != max else 1.0
 		deadzone = abs(float(deadzone) * scale)
-		offset = 1.0
 	if axis in TRIGGERS:
 		clamp_min = TRIGGER_MIN
 		clamp_max = TRIGGER_MAX

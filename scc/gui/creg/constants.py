@@ -28,9 +28,9 @@ AXIS_ORDER = (
 
 STICK_PAD_AREAS = {
 	# Numbers here are indexes to AXIS_ORDER tuple
-	"STICKPRESS":	(STICK, (0, 1)),
-	"RPAD":			(RIGHT, (2, 3)),
-	"LPAD":			(LEFT, (4, 5)),
+	"STICK":	(STICK, (0, 1)),
+	"RPAD":		(RIGHT, (2, 3)),
+	"LPAD":		(LEFT, (4, 5)),
 }
 
 TRIGGER_AREAS = {

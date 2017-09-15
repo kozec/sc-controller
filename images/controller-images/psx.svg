@@ -25,17 +25,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.9899495"
-     inkscape:cx="333.30594"
-     inkscape:cy="59.232028"
+     inkscape:zoom="1.979899"
+     inkscape:cx="-89.414686"
+     inkscape:cy="67.275559"
      inkscape:document-units="px"
-     inkscape:current-layer="controller"
+     inkscape:current-layer="layer2"
      showgrid="false"
      units="px"
      inkscape:window-width="1311"
      inkscape:window-height="817"
-     inkscape:window-x="1257"
-     inkscape:window-y="47"
+     inkscape:window-x="1052"
+     inkscape:window-y="4"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -312,27 +312,22 @@
          id="AREA_LB_1"
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
     </g>
-    <g
-       transform="translate(3.03223,31.10227)"
-       style="display:inline;fill:#00000a;fill-opacity:0.04313725"
-       id="g4321">
-      <rect
-         ry="0"
-         y="72.54705"
-         x="56.870647"
-         height="65.071426"
-         width="65.071419"
-         id="AREA_LPAD_1"
-         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
-      <rect
-         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#00b400;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
-         id="AREA_LPADTEST"
-         width="90.008965"
-         height="1"
-         x="42"
-         y="105"
-         ry="0" />
-    </g>
+    <rect
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+       id="AREA_LPAD_1"
+       width="96.133614"
+       height="96.133614"
+       x="44.186657"
+       y="87.978935"
+       ry="0" />
+    <rect
+       ry="0"
+       y="136.04573"
+       x="43.572796"
+       height="9.9999997e-06"
+       width="97.361336"
+       id="AREA_LPADTEST"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#00b400;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
     <g
        style="display:inline;fill:#00000a;fill-opacity:0.04313725"
        id="g67890"
@@ -358,14 +353,6 @@
        transform="translate(-14.29848,31.01788)"
        style="display:inline;fill:#00000a;fill-opacity:0.04313725"
        id="g4464">
-      <rect
-         ry="0"
-         y="144.30809"
-         x="141.97797"
-         height="60"
-         width="60"
-         id="AREA_STICKPRESS"
-         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#00000a;fill-opacity:0.04313725;fill-rule:evenodd;stroke:#ed00b4;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
       <rect
          ry="0"
          y="144.30809"
