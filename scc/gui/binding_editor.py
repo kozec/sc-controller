@@ -11,7 +11,7 @@ from scc.modifiers import ModeModifier, SensitivityModifier, FeedbackModifier
 from scc.modifiers import DoubleclickModifier, HoldModifier
 from scc.actions import NoAction, RingAction, MultiAction
 from scc.macros import Macro, Type, Repeat, Cycle
-from scc.constants import SCButtons
+from scc.constants import SCButtons, LEFT, RIGHT
 from scc.profile import Profile
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE
 from scc.gui.controller_widget import ControllerPad, ControllerStick, ControllerGyro
@@ -40,9 +40,9 @@ class BindingEditor(object):
 			if w:
 				self.button_widgets[b] = ControllerButton(self, b, use_icons, w)
 		for b in TRIGGERS:
-			w = self.builder.get_object("btTrigger" + b)
+			w = self.builder.get_object("bt" + b)
 			if w:
-				self.button_widgets[b] = ControllerTrigger(self, b, use_icons,w)
+				self.button_widgets[b] = ControllerTrigger(self, b, use_icons, w)
 		for b in PADS:
 			w = self.builder.get_object("bt" + b)
 			if w:
@@ -84,7 +84,9 @@ class BindingEditor(object):
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[id.name].update()
 		elif id in TRIGGERS:
-			before, profile.triggers[id] = profile.triggers[id], action
+			# TODO: Use LT and RT in profile as well
+			side = LEFT if id else RIGTH
+			before, profile.triggers[side] = profile.triggers[side], action
 			self.button_widgets[id].update()
 		elif id in GYROS:
 			before, profile.gyro = profile.gyro, action
@@ -111,7 +113,9 @@ class BindingEditor(object):
 		elif id in PRESSABLE:
 			return profile.buttons[id]
 		elif id in TRIGGERS:
-			return profile.triggers[id]
+			# TODO: Use LT and RT in profile as well
+			side = LEFT if id else RIGTH
+			return profile.triggers[side]
 		elif id in GYROS:
 			return profile.gyro
 		elif id in STICKS + PADS:

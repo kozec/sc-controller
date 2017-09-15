@@ -4,10 +4,10 @@ SC-Controller - Controller Registration - Tester
 
 Class that interacts with `scc hid_test` and `scc evdev_test` commands.
 """
-from gi.repository import GObject, GLib, Gio
+from gi.repository import GObject, Gio
 from scc.tools import find_binary
 
-import sys, os, logging
+import logging
 log = logging.getLogger("CReg.Tester")
 
 
@@ -20,7 +20,6 @@ class Tester(GObject.GObject):
 			Emited when driver test subprocess exits with non-zero return code
 		finished ()
 			Emited when driver test subprocess exits with zero return code
-		
 		axis (number, value)
 			Emited when position on axis is changed
 		button (keycode, pressed)
@@ -58,7 +57,6 @@ class Tester(GObject.GObject):
 		self.subprocess.wait_async(None, self._on_finished)
 		self.subprocess.get_stdout_pipe().read_bytes_async(
 			32, 0, None, self._on_read)
-		#self.subprocess = subprocess.POpen( 
 	
 	
 	def stop(self):

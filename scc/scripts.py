@@ -54,6 +54,46 @@ def cmd_test_hid(argv0, argv):
 	return hiddrv_test(HIDController, argv)
 
 
+def sigint(*a):
+	print("\n*break*")
+	sys.exit(0)
+
+
+def import_osd():
+	import gi
+	gi.require_version('Gtk', '3.0')
+	gi.require_version('Rsvg', '2.0')
+	gi.require_version('GdkX11', '3.0')
+
+
+def run_osd_tool(tool, argv0, argv):
+	import signal, argparse
+	signal.signal(signal.SIGINT, sigint)
+	
+	from scc.tools import init_logging
+	from scc.paths import get_share_path
+	init_logging()
+	
+	sys.argv[0] = "scc osd-keyboard"
+	if not tool.parse_argumets([argv0] + argv):
+		sys.exit(1)
+	tool.run()
+	sys.exit(tool.get_exit_code())
+
+
+def help_osd_keyboard():
+	import_osd()
+	from scc.osd.keyboard import Keyboard
+	return run_osd_tool(Keyboard(), "osd-keyboard", ["--help"])
+
+
+def cmd_osd_keyboard(argv0, argv):
+	""" Displays on-screen keyboard """
+	import_osd()
+	from scc.osd.keyboard import Keyboard
+	return run_osd_tool(Keyboard(), argv0, argv)
+
+
 def show_help(command = None, out=sys.stdout):
 	names = [ x[4:] for x in globals() if x.startswith("cmd_") ]
 	max_len = max([ len(x) for x in names ])
@@ -78,7 +118,8 @@ def show_help(command = None, out=sys.stdout):
 		hlp = ((globals()["cmd_" + name].__doc__ or "")
 					.strip("\t \r\n")
 					.split("\n")[0])
-		print >>out, (" - %%-%ss %%s" % (max_len, )) % (name, hlp)
+		print >>out, (" - %%-%ss %%s" % (max_len, )) % (
+			name.replace("_", "-"), hlp)
 	return 0
 
 
@@ -91,7 +132,7 @@ def main():
 			sys.argv.remove("-h")
 		while "--help" in sys.argv:
 			sys.argv.remove("--help")
-		sys.exit(show_help(sys.argv[1] if len(sys.argv) > 1 else None))
+		sys.exit(show_help(sys.argv[1].replace("-", "_") if len(sys.argv) > 1 else None))
 	if "-v" in sys.argv:
 		while "-v" in sys.argv:
 			sys.argv.remove("-v")
@@ -99,7 +140,7 @@ def main():
 	else:
 		set_logging_level(False, False)
 	try:
-		command = globals()["cmd_" + sys.argv[1]]
+		command = globals()["cmd_" + sys.argv[1].replace("-", "_")]
 	except:
 		print >>sys.stderr, "Unknown command: %s" % (sys.argv[1], )
 		sys.exit(show_help(out=sys.stderr))

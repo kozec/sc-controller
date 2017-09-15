@@ -33,7 +33,7 @@ if ENV_VAR in os.environ:
 		def __init__(self, number):
 			Controller.__init__(self)
 			self._number = number
-			self.set_id("fake%s" % (self._number,), True)
+			self._id = "fake%s" % (self._number,)
 		
 		
 		def get_type(self):

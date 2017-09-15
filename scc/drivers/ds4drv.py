@@ -135,7 +135,11 @@ class DS4Controller(HIDController):
 	
 	def get_gui_config_file(self):
 		return "ds4-config.json"
-
+	
+	
+	def __repr__(self):
+		return "<DS4Controller %s>" % (self.get_id(), )
+	
 	
 	def _generate_id(self):
 		"""

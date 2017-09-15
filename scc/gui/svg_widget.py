@@ -16,6 +16,7 @@ import os, sys, re, logging
 log = logging.getLogger("Background")
 ET.register_namespace('', "http://www.w3.org/2000/svg")
 
+
 class SVGWidget(Gtk.EventBox):
 	FILENAME = "background.svg"
 	
@@ -29,9 +30,8 @@ class SVGWidget(Gtk.EventBox):
 	}
 	
 	
-	def __init__(self, app, filename, init_hilighted=True):
+	def __init__(self,  filename, init_hilighted=True):
 		Gtk.EventBox.__init__(self)
-		self.app = app
 		self.cache = {}
 		self.areas = []
 		

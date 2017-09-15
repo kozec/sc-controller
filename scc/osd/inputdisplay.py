@@ -32,7 +32,7 @@ class InputDisplay(OSDWindow):
 	
 	def show(self):
 		self.main_area = Gtk.Fixed()
-		self.background = SVGWidget(self, os.path.join(self.imagepath, self.IMAGE))
+		self.background = SVGWidget(os.path.join(self.imagepath, self.IMAGE))
 		self.lpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "inputdisplay-cursor.svg"))
 		self.rpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "inputdisplay-cursor.svg"))
 		self.stickTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "inputdisplay-cursor.svg"))

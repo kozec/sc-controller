@@ -1,7 +1,9 @@
 {
-	"background": "ds4.svg",
-	"buttons": [
-		"CROSS", "CIRCLE", "SQUARE", "TRIANGLE", "RECTANGLE",
-		"C", "RTRIANGLE", "LB", "RB", "LT", "RT", "LG", "RG"
-	]
+	"gui": {
+		"background": "ds4",
+		"buttons": [
+			"CROSS", "CIRCLE", "SQUARE", "TRIANGLE", "ds4SHARE",
+			"C", "ds4SHARE", "LB", "RB", "LT", "RT", "LG", "RG"
+		]
+	}
 }

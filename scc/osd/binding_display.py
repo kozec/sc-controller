@@ -157,7 +157,7 @@ class BindingDisplay(OSDWindow):
 	def show(self, *a):
 		if self.background is None:
 			self.realize()
-			self.background = SVGWidget(self, self.args.image, init_hilighted=True)
+			self.background = SVGWidget(self.args.image, init_hilighted=True)
 			self.c.add(self.background)
 			self.add(self.c)
 		

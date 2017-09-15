@@ -8,23 +8,24 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS
 from scc.gui.parser import GuiActionParser, InvalidAction
+from scc.gui.controller_image import ControllerImage
+from scc.gui.profile_switcher import ProfileSwitcher
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
 from scc.gui.statusicon import get_status_icon
 from scc.gui.dwsnc import headerbar, IS_UNITY
-from scc.gui.profile_switcher import ProfileSwitcher
-from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
+from scc.tools import check_access, find_gksudo, profile_is_override
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.tools import get_profile_name, profile_is_default, profile_is_override
 from scc.tools import check_access, find_profile, find_gksudo, nameof
 from scc.paths import get_config_path, get_profiles_path
-from scc.actions import NoAction
 from scc.modifiers import NameModifier
+from scc.actions import NoAction
 from scc.profile import Profile
 from scc.config import Config
 
@@ -37,7 +38,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	Main application / window.
 	"""
 	
-	IMAGE = "background.svg"
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
 	OBSERVE_COLOR = "#FF60A0FF"		# ARGB
 	CONFIG = "scc.config.json"
@@ -56,6 +56,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		# Setup DaemonManager
 		self.dm = DaemonManager()
 		self.dm.connect("alive", self.on_daemon_alive)
+		self.dm.connect('event', self.on_daemon_event_observer)
 		self.dm.connect("controller-count-changed", self.on_daemon_ccunt_changed)
 		self.dm.connect("dead", self.on_daemon_dead)
 		self.dm.connect("error", self.on_daemon_error)
@@ -76,6 +77,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.background = None
 		self.outdated_version = None
 		self.profile_switchers = []
+		self.test_mode_controller = None
 		self.current_file = None	# Currently edited file
 		self.controller_count = 0
 		self.current = Profile(GuiActionParser())
@@ -118,7 +120,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		vbc.connect('size-allocate', self.on_vbc_allocated)
 		
 		# Background
-		self.background = SVGWidget(self, os.path.join(self.imagepath, self.IMAGE))
+		self.background = ControllerImage(self)
 		self.background.connect('hover', self.on_background_area_hover)
 		self.background.connect('leave', self.on_background_area_hover, None)
 		self.background.connect('click', self.on_background_area_click)
@@ -140,6 +142,43 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
+	
+	
+	def load_gui_config_for_controller(self, controller, first):
+		"""
+		Loads controller config, changes image and hides, shows or disables
+		buttons around it.
+		
+		To make this look less jumpy, Gtk.Stack is used to make transition to empty page is used
+		Does rather complicated magic to change controller image and buttons
+		around it. To create nice transition, new grid is created as new 
+		page in Stack, everything is set up and Stack is then switched to that
+		new page.
+		"""
+		stckEditor = self.builder.get_object('stckEditor')
+		lblEmpty = self.builder.get_object('lblEmpty')
+		grEditor = self.builder.get_object('grEditor')
+		vbC = self.builder.get_object('vbC')
+		
+		def do_loading():
+			""" Called after transition is finished """
+			self.background.use_config(config)
+			# vbC.set_visible(True)
+			stckEditor.set_visible_child(grEditor)
+		
+		config = self.background.load_config(controller.get_gui_config_file())
+		if first:
+			b1 = self.background.get_config()['gui']['background']
+			b2 = config['gui']['background']
+			if b1 == b2:
+				# If application has just started and image is
+				# not changing, transition would just look weird
+				do_loading()
+				return
+		if not first:
+			stckEditor.set_transition_type(Gtk.StackTransitionType.SLIDE_DOWN)
+		stckEditor.set_visible_child(lblEmpty)
+		GLib.timeout_add(stckEditor.get_transition_duration(), do_loading)
 	
 	
 	def setup_statusicon(self):
@@ -540,6 +579,21 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.save_profile(self.current_file, self.current)
 	
 	
+	def on_switch_to_clicked(self, ps, *a):
+		""" Switches editor to another controller """
+		ps0 = self.profile_switchers[0]
+		if ps == ps0: return
+		
+		c, p = ps.get_controller(), ps.get_profile_name()
+		c0, p0 = ps0.get_controller(), ps0.get_profile_name()
+		
+		ps0.set_controller(c); ps0.set_profile(p)
+		ps.set_controller(c0); ps.set_profile(p0)
+		
+		self.load_gui_config_for_controller(c, False)
+		self.enable_test_mode()
+	
+	
 	def on_profile_saved(self, giofile, send=True):
 		"""
 		Called when selected profile is saved to disk
@@ -696,15 +750,15 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_daemon_ccunt_changed(self, daemon, count):
-		if (self.controller_count, count) == (0, 1):
+		if self.controller_count == 0:
 			# First controller connected
 			# 
 			# 'event' signal should be connected only on first controller,
 			# so this block is executed only when number of connected
 			# controllers changes from 0 to 1
 			c = self.dm.get_controllers()[0]
-			c.connect('event', self.on_daemon_event_observer)
-		elif count > self.controller_count:
+			self.load_gui_config_for_controller(c, first=True)
+		if count > self.controller_count:
 			# Controller added
 			while len(self.profile_switchers) < count:
 				s = self.add_switcher()
@@ -741,23 +795,32 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		Returns generated ProfileSwitcher instance.
 		"""
-		vbAllProfiles = self.builder.get_object("vbAllProfiles")
+		vbSwitchers = self.builder.get_object("vbSwitchers")
+		sepSwitchers = self.builder.get_object("sepSwitchers")
 		
 		ps = ProfileSwitcher(self.imagepath, self.config)
 		ps.set_margin_left(margin_left)
 		ps.set_margin_right(margin_right)
 		ps.set_margin_bottom(margin_bottom)
 		ps.connect('right-clicked', self.on_profile_right_clicked)
+		ps.connect('switch-to-clicked', self.on_switch_to_clicked)
 		
-		vbAllProfiles.pack_start(ps, False, False, 0)
-		vbAllProfiles.reorder_child(ps, 0)
-		vbAllProfiles.show_all()
+		vbSwitchers.pack_start(ps, False, False, 0)
+		vbSwitchers.reorder_child(ps, 0)
+		if len(vbSwitchers.get_children()) == 2:
+			# 1st switcher is bellow separator, rest is stacked on top.
+			# That means separator should be moved and shown when 2nd
+			# switcher is created.
+			vbSwitchers.reorder_child(sepSwitchers, 0)
+			sepSwitchers.set_visible(True)
+		vbSwitchers.show_all()
 		
 		if self.osd_mode:
 			ps.set_allow_switch(False)
 		
 		if len(self.profile_switchers) > 0:
 			ps.set_profile_list(self.profile_switchers[0].get_profile_list())
+			ps.set_switch_to_enabled(True)
 		
 		self.profile_switchers.append(ps)
 		ps.connect('changed', self.on_profile_selected)
@@ -769,9 +832,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		Removes given profile switcher from UI.
 		"""
-		vbAllProfiles = self.builder.get_object("vbAllProfiles")
-		vbAllProfiles.remove(s)
+		vbSwitchers = self.builder.get_object("vbSwitchers")
+		sepSwitchers = self.builder.get_object("sepSwitchers")
+		vbSwitchers.remove(s)
 		s.destroy()
+		if len(vbSwitchers.get_children()) == 2:
+			sepSwitchers.set_visible(False)
 	
 	
 	def enable_test_mode(self):
@@ -779,17 +845,16 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Disables and re-enables Input Test mode. If sniffing is disabled in
 		daemon configuration, 2nd call fails and logs error.
 		"""
-		if self.dm.is_alive() and not self.osd_mode:
-			try:
-				c = self.dm.get_controllers()[0]
-			except IndexError:
-				# Zero controllers
-				return
+		if self.dm.is_alive():
+			if self.test_mode_controller:
+				self.test_mode_controller.unlock_all()
+			c = self.profile_switchers[0].get_controller()
 			c.unlock_all()
 			c.observe(DaemonManager.nocallback, self.on_observe_failed,
 				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
 				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
 				'RIGHT', 'STICK', 'STICKPRESS')
+			self.test_mode_controller = c
 	
 	
 	def enable_osd_mode(self):
@@ -883,10 +948,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.set_daemon_status("error", True)
 	
 	
-	def on_daemon_event_observer(self, daemon, what, data):
-		if self.osd_mode_mapper:
-			self.osd_mode_mapper.handle_event(daemon, what, data)
-		elif what in (LEFT, RIGHT, STICK):
+	def on_daemon_event_observer(self, daemon, c, what, data):
+		if what in (LEFT, RIGHT, STICK):
 			widget, area = {
 				LEFT  : (self.lpad_test,  "LPADTEST"),
 				RIGHT : (self.rpad_test,  "RPADTEST"),
@@ -909,11 +972,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Move circle
 			self.main_area.move(widget, x, y)
 		elif what in ("LT", "RT", "STICKPRESS"):
-			what = {
-				"LT" : "LEFT",
-				"RT" : "RIGHT",
-				"STICKPRESS" : "STICK"
-			}[what]
 			if data[0]:
 				self.hilights[App.OBSERVE_COLOR].add(what)
 			else:

@@ -380,16 +380,20 @@ class Mapper(object):
 				self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
 			
 			# LPAD
-			if self.buttons & SCButtons.LPADTOUCH:
-				# Pad is being touched now
-				if not self.lpad_touched:
-					self.lpad_touched = True
-				self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
-			elif not self.buttons & STICKTILT:
-				# Pad is not being touched
-				if self.lpad_touched:
-					self.lpad_touched = False
-					self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
+			if self.controller.flags & ControllerFlags.SEPARATE_STICK:
+				if FE_PAD in fe or self.old_state.lpad_x != state.lpad_x or self.old_state.lpad_y != state.lpad_y:
+					self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+			else:
+				if self.buttons & SCButtons.LPADTOUCH:
+					# Pad is being touched now
+					if not self.lpad_touched:
+						self.lpad_touched = True
+					self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+				elif not self.buttons & STICKTILT:
+					# Pad is not being touched
+					if self.lpad_touched:
+						self.lpad_touched = False
+						self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
 			
 		except Exception, e:
 			# Log error but don't crash here, it breaks too many things at once

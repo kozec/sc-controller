@@ -257,7 +257,7 @@ class SCController(Controller):
 	
 	def on_serial_got(self):
 		log.debug("Got wireless SC with serial %s", self._serial)
-		self.set_id(str(self._serial), True)
+		self._id = str(self._serial)
 		self._driver.daemon.add_controller(self)
 	
 	
