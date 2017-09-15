@@ -52,6 +52,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		# Setup DaemonManager
 		self.dm = DaemonManager()
 		self.dm.connect("alive", self.on_daemon_alive)
+		self.dm.connect('event', self.on_daemon_event_observer)
 		self.dm.connect("controller-count-changed", self.on_daemon_ccunt_changed)
 		self.dm.connect("dead", self.on_daemon_dead)
 		self.dm.connect("error", self.on_daemon_error)
@@ -70,6 +71,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.background = None
 		self.outdated_version = None
 		self.profile_switchers = []
+		self.test_mode_controller = None
 		self.current_file = None	# Currently edited file
 		self.controller_count = 0
 		self.current = Profile(GuiActionParser())
@@ -578,6 +580,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		ps.set_controller(c0); ps.set_profile(p0)
 		
 		self.load_gui_config_for_controller(c, False)
+		self.enable_test_mode()
 	
 	
 	def on_profile_saved(self, giofile, send=True):
@@ -737,7 +740,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# so this block is executed only when number of connected
 			# controllers changes from 0 to 1
 			c = self.dm.get_controllers()[0]
-			c.connect('event', self.on_daemon_event_observer)
 			self.load_gui_config_for_controller(c, first=True)
 		if count > self.controller_count:
 			# Controller added
@@ -824,16 +826,15 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		daemon configuration, 2nd call fails and logs error.
 		"""
 		if self.dm.is_alive():
-			try:
-				c = self.dm.get_controllers()[0]
-			except IndexError:
-				# Zero controllers
-				return
+			if self.test_mode_controller:
+				self.test_mode_controller.unlock_all()
+			c = self.profile_switchers[0].get_controller()
 			c.unlock_all()
 			c.observe(DaemonManager.nocallback, self.on_observe_failed,
 				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
 				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
 				'RIGHT', 'STICK', 'STICKPRESS')
+			self.test_mode_controller = c
 	
 	
 	def on_observe_failed(self, error):
@@ -880,7 +881,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.set_daemon_status("error", True)
 	
 	
-	def on_daemon_event_observer(self, daemon, what, data):
+	def on_daemon_event_observer(self, daemon, c, what, data):
 		if what in (LEFT, RIGHT, STICK):
 			widget, area = {
 				LEFT  : (self.lpad_test,  "LPADTEST"),

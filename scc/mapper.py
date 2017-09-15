@@ -373,7 +373,8 @@ class Mapper(object):
 			
 			# LPAD
 			if self.controller.flags & ControllerFlags.SEPARATE_STICK:
-				self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+				if FE_PAD in fe or self.old_state.lpad_x != state.lpad_x or self.old_state.lpad_y != state.lpad_y:
+					self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
 			else:
 				if self.buttons & SCButtons.LPADTOUCH:
 					# Pad is being touched now

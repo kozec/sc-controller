@@ -39,6 +39,10 @@ class DaemonManager(GObject.GObject):
 			Emited when daemon reports error, most likely not being able to
 			access to USB dongle.
 		
+		event (controller, pad_stick_or_button, values)
+			As 'event' signal on Controller. Allows for capturing events from
+			all controllers using single signal.
+		
 		profile-changed (profile)
 			Emited after profile set for first controller is changed.
 			Profile is filename of currently active profile
@@ -59,6 +63,7 @@ class DaemonManager(GObject.GObject):
 			b"controller-count-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (int,)),
 			b"dead"						: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"error"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"event"					: (GObject.SIGNAL_RUN_FIRST, None, (object,object,object)),
 			b"profile-changed"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 			b"reconfigured"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"unknown-msg"				: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
@@ -205,7 +210,9 @@ class DaemonManager(GObject.GObject):
 				self.emit('controller-count-changed', count)
 			elif line.startswith("Event:"):
 				data = line[6:].strip().split(" ")
-				self.get_controller(data[0]).emit('event', data[1], [ int(x) for x in data[2:] ])
+				c = self.get_controller(data[0])
+				c.emit('event', data[1], [ int(x) for x in data[2:] ])
+				self.emit('event', c, data[1], [ int(x) for x in data[2:] ])
 			elif line.startswith("Error:"):
 				error = line.split(":", 1)[-1].strip()
 				self.alive = True

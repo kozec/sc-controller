@@ -425,7 +425,6 @@ class HIDController(USBDevice, Controller):
 			return None
 		
 		pattern = ":%.4x:%.4x" % (vid, pid)
-		print "###", pattern
 		full_path = recursive_search(pattern, SYS_DEVICES)
 		try:
 			if full_path:
