@@ -5,8 +5,8 @@ SC-Controller - Scripts
 Contains code for most of what can be done using 'scc' script.
 Created so scc-* stuff doesn't polute /usr/bin.
 """
-from scc.tools import init_logging, set_logging_level
-import sys, os, subprocess
+from scc.tools import init_logging, set_logging_level, find_binary
+import sys, subprocess
 
 
 class InvalidArguments(Exception): pass
@@ -16,11 +16,23 @@ def cmd_daemon(argv0, argv):
 	""" Controls scc-daemon """
 	# Actually just passes parameters to scc-daemon
 	scc_daemon = find_binary("scc-daemon")
-	subprocess.Popen([scc_daemon] + argv0).communicate()
+	subprocess.Popen([scc_daemon] + argv).communicate()
 
 
 def help_daemon():
 	scc_daemon = find_binary("scc-daemon")
+	subprocess.Popen([scc_daemon, "--help"]).communicate()
+
+
+def cmd_gui(argv0, argv):
+	""" Starts GUI """
+	# Passes parameters to sc-controller
+	scc_daemon = find_binary("sc-controller")
+	subprocess.Popen([scc_daemon] + argv).communicate()
+
+
+def help_gui():
+	scc_daemon = find_binary("sc-controller")
 	subprocess.Popen([scc_daemon, "--help"]).communicate()
 
 
@@ -93,6 +105,31 @@ def cmd_osd_keyboard(argv0, argv):
 	from scc.osd.keyboard import Keyboard
 	return run_osd_tool(Keyboard(), argv0, argv)
 
+
+def cmd_dependency_check(argv0, argv):
+	""" Checks if all required libraries are installed on this system """
+	try:
+		import gi
+		gi.require_version('Gtk', '3.0') 
+		gi.require_version('GdkX11', '3.0') 
+		gi.require_version('Rsvg', '2.0') 
+	except ValueError, e1:
+		print >>sys.stderr, e1
+		if "Rsvg" in str(e1):
+			print >>sys.stderr, "Please, install 'gir1.2-rsvg-2.0' package to use this application"
+		else:
+			print >>sys.stderr, "Please, install 'PyGObject' package to use this application"
+	except ImportError, e2:
+		print e2
+		return 1
+	try:
+		import scc.lib.xwrappers as X
+		X.Atom
+	except Exception, e:
+		print >>sys.stderr, e
+		print >>sys.stderr, "Failed to load X11 helpers, please, check your X installation"
+		return 1
+	return 0
 
 def show_help(command = None, out=sys.stdout):
 	names = [ x[4:] for x in globals() if x.startswith("cmd_") ]
