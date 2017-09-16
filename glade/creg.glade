@@ -152,7 +152,7 @@ Please, select your controller from list bellow and click Next.</property>
                     <property name="model">lstDevices</property>
                     <property name="headers_visible">False</property>
                     <child internal-child="selection">
-                      <object class="GtkTreeSelection"/>
+                      <object class="GtkTreeSelection" id="tsDevices"/>
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="tcDevice">
@@ -198,7 +198,7 @@ Please, select your controller from list bellow and click Next.</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="btnRefresh">
                 <property name="label">gtk-refresh</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -338,7 +338,7 @@ Please, select options that are best describing controller you are configuring.<
                   </attributes>
                 </child>
                 <child>
-                  <object class="GtkCellRendererText"/>
+                  <object class="GtkCellRendererText" id="crControllerButtonsText"/>
                 </child>
               </object>
               <packing>
@@ -472,7 +472,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel">
+                      <object class="GtkLabel" id="lblInvertAxes">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_top">5</property>
