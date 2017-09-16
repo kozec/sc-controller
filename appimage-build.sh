@@ -1,29 +1,30 @@
 #!/bin/bash
 
-set -e	# terminate after 1st failure
-DIR=$(pwd)/appimage
+set -ex		# display commands, terminate after 1st failure
+if [ x"$BUILD_APPDIR" == "x" ] ; then
+	BUILD_APPDIR=$(pwd)/appimage
+fi
 
 # Prepare & build
-mkdir -p ${DIR}/usr
+mkdir -p ${BUILD_APPDIR}/usr
 python2 setup.py build
-python2 setup.py install --prefix ${DIR}/usr
+python2 setup.py install --prefix ${BUILD_APPDIR}/usr
 
 # Move udev stuff
-mv ${DIR}/usr/lib/udev/rules.d/90-sc-controller.rules ${DIR}/
-rmdir ${DIR}/usr/lib/udev/rules.d/
-rmdir ${DIR}/usr/lib/udev/
+mv ${BUILD_APPDIR}/usr/lib/udev/rules.d/90-sc-controller.rules ${BUILD_APPDIR}/
+rmdir ${BUILD_APPDIR}/usr/lib/udev/rules.d/
+rmdir ${BUILD_APPDIR}/usr/lib/udev/
 
 # Move & patch desktop file
-mv ${DIR}/usr/share/applications/sc-controller.desktop ${DIR}/
-sed -i "s/Icon=.*/Icon=sc-controller/g" ${DIR}/sc-controller.desktop
-sed -i "s/Exec=.*/Exec=.\/usr\/bin\/scc gui/g" ${DIR}/sc-controller.desktop
+mv ${BUILD_APPDIR}/usr/share/applications/sc-controller.desktop ${BUILD_APPDIR}/
+sed -i "s/Icon=.*/Icon=sc-controller/g" ${BUILD_APPDIR}/sc-controller.desktop
+sed -i "s/Exec=.*/Exec=.\/usr\/bin\/scc gui/g" ${BUILD_APPDIR}/sc-controller.desktop
 
 # Convert icon
-convert -background none ${DIR}/usr/share/pixmaps/sc-controller.svg ${DIR}/sc-controller.png
+convert -background none ${BUILD_APPDIR}/usr/share/pixmaps/sc-controller.svg ${BUILD_APPDIR}/sc-controller.png
 
 # Copy AppRun script
-cp scripts/appimage-AppRun.sh ${DIR}/AppRun
-chmod +x ${DIR}/AppRun
+cp scripts/appimage-AppRun.sh ${BUILD_APPDIR}/AppRun
+chmod +x ${BUILD_APPDIR}/AppRun
 
-# Generate appimage
-appimagetool ${DIR}
+echo "Run appimagetool ${BUILD_APPDIR} to finish prepared appimage"
