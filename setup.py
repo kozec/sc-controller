@@ -7,8 +7,11 @@ data_files = [
 				('share/scc/glade', glob.glob("glade/*.glade")),
 				('share/scc/glade/ae', glob.glob("glade/ae/*.glade")),
 				('share/scc/images', glob.glob("images/*.svg")),
-				('share/scc/images', glob.glob("images/*.svg.json")),
+				('share/scc/images', glob.glob("images/*.json")),
+				('share/scc/images/button-images', glob.glob("images/button-images/*.svg")),
+				('share/scc/images/button-images', glob.glob("images/button-images/*.json")),
 				('share/scc/images/controller-icons', glob.glob("images/controller-icons/*.svg")),
+				('share/scc/images/controller-images', glob.glob("images/controller-images/*.svg")),
 				('share/icons/hicolor/24x24/status', glob.glob("images/24x24/status/*.png")),
 				('share/icons/hicolor/22x22/status', glob.glob("images/22x22/status/*.png")),
 				('share/scc/default_profiles', glob.glob("default_profiles/*.sccprofile")),
@@ -17,7 +20,7 @@ data_files = [
 				('share/scc/default_menus', glob.glob("default_menus/.*.menu")),
 				('share/pixmaps', [ "images/sc-controller.svg" ]),
 				('share/mime/packages', [ "scc-mime-types.xml" ]),
-				('share/applications', ['sc-controller.desktop' ]),
+				('share/applications', ['scripts/sc-controller.desktop' ]),
 				('lib/udev/rules.d', glob.glob('scripts/*.rules')),
 				
 ] + [ # menu icons subfolders
