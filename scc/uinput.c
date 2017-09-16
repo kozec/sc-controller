@@ -174,7 +174,7 @@ int uinput_init(
 	return fd;
 }
 
-const int uinput_module_version() {
+const int uinput_module_version(void) {
 	return UNPUT_MODULE_VERSION;
 }
 

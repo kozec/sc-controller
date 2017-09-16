@@ -184,25 +184,19 @@ class USBDriver(object):
 		self._changed = 0
 	
 	
-	def close_all(self):
+	def on_exit(self, *a):
 		""" Closes all devices and unclaims all interfaces """
 		if len(self._devices):
 			log.debug("Releasing devices...")
-			for d in self._devices.values():
+			to_release, self._devices = self._devices.values(), {}
+			for d in to_release:
 				d.close()
-			self._devices = {}
-	
-	
-	def __del__(self):
-		if self._context:
-			self._context.setPollFDNotifiers(None, None)
-		self.close_all()
 	
 	
 	def start(self):
 		self._context = usb1.USBContext()
 		if not self._context.hasCapability(usb1.CAP_HAS_HOTPLUG):
-			raise NoHotplugSupport('Hotplug support is missing. Please update your libusb version.')
+			raise Exception('Hotplug support is missing. Please update your libusb version.')
 		self._context.open()
 		self._context.hotplugRegisterCallback(
 			self.on_hotplug_event,
@@ -289,10 +283,6 @@ class USBDriver(object):
 			log.debug("Unregistred hotplug USB driver for %.4x:%.4x", vendor_id, product_id)
 	
 	
-	def on_exit(self, daemon):
-		self.close_all()
-	
-	
 	def mainloop(self):
 		if self._changed > 0:
 			self._context.handleEventsTimeout()
@@ -323,11 +313,6 @@ def init(daemon):
 
 def start(daemon):
 	_usb.start()
-
-def __del__():
-	_usb.close_all()
-
-atexit.register(__del__)
 
 
 def register_hotplug_device(callback, vendor_id, product_id):

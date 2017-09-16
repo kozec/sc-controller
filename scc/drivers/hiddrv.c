@@ -143,12 +143,12 @@ inline int grab_with_size(const uint8_t size, const char* data, const size_t byt
 
 
 bool decode(struct HIDDecoder* dec, const char* data) {
+	size_t i;
 	memcpy(&(dec->old_state), &(dec->state), sizeof(struct HIDControllerInput));
 	dec->state.buttons = 0;
 	// Axes
-	for (size_t i=0; i<AXIS_COUNT; i++) {
+	for (i=0; i<AXIS_COUNT; i++) {
 		union Value value;
-		int needsdz;
 		float fval;
 		switch (dec->axes[i].mode) {
 			case AXIS:
@@ -243,16 +243,18 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 					dec->axes[i].bit_offset);
 				dec->state.axes[i] = -value.s16;
 				break;
+			default:
+				break;
 		}
 	}
 	
 	// Buttons
 	if (dec->buttons.enabled) {
 		union Value value = grab_value(data, dec->buttons.byte_offset, dec->buttons.bit_offset);
-		for (size_t x=0; x<BUTTON_COUNT; x++) {
-			if (dec->buttons.button_map[x] < 33) {
-				uint32_t bit = (value.u32 >> x) & 1;
-				dec->state.buttons |= bit << dec->buttons.button_map[x];
+		for (i=0; i<BUTTON_COUNT; i++) {
+			if (dec->buttons.button_map[i] < 33) {
+				uint32_t bit = (value.u32 >> i) & 1;
+				dec->state.buttons |= bit << dec->buttons.button_map[i];
 			}
 		}
 	}
@@ -260,6 +262,6 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 }
 
 
-const int hiddrv_module_version() {
+const int hiddrv_module_version(void) {
 	return HIDDRV_MODULE_VERSION;
 }
