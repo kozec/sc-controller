@@ -104,7 +104,7 @@ class Daemon(object):
 	def on_start(self):
 		pass
 	
-	def stop(self):
+	def stop(self, once=False):
 		"""Stop the daemon."""
 
 		# Get the pid from the pidfile
@@ -124,7 +124,10 @@ class Daemon(object):
 		try:
 			while True:
 				os.kill(pid, signal.SIGTERM)
-				time.sleep(0.1)
+				if once: break
+				for x in xrange(50):
+					os.kill(pid, 0)
+					time.sleep(0.1)
 		except OSError as err:
 			e = str(err.args)
 			if e.find("No such process") > 0:
