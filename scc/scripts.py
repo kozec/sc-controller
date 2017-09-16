@@ -5,7 +5,7 @@ SC-Controller - Scripts
 Contains code for most of what can be done using 'scc' script.
 Created so scc-* stuff doesn't polute /usr/bin.
 """
-from scc.tools import init_logging, set_logging_level
+from scc.tools import init_logging, set_logging_level, find_binary
 import sys, os, subprocess
 
 
@@ -16,11 +16,23 @@ def cmd_daemon(argv0, argv):
 	""" Controls scc-daemon """
 	# Actually just passes parameters to scc-daemon
 	scc_daemon = find_binary("scc-daemon")
-	subprocess.Popen([scc_daemon] + argv0).communicate()
+	subprocess.Popen([scc_daemon] + argv).communicate()
 
 
 def help_daemon():
 	scc_daemon = find_binary("scc-daemon")
+	subprocess.Popen([scc_daemon, "--help"]).communicate()
+
+
+def cmd_gui(argv0, argv):
+	""" Starts GUI """
+	# Passes parameters to sc-controller
+	scc_daemon = find_binary("sc-controller")
+	subprocess.Popen([scc_daemon] + argv).communicate()
+
+
+def help_gui():
+	scc_daemon = find_binary("sc-controller")
 	subprocess.Popen([scc_daemon, "--help"]).communicate()
 
 
