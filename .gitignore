@@ -5,3 +5,5 @@ build/
 .atomignore
 commit*
 *test.*
+.idea/
+out.svg
