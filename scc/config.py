@@ -68,24 +68,24 @@ class Config(object):
 		"enable_sniffing" : False,
 		# Colors used by OSD
 		"osd_colors": {
-			"background": "160c00",
-			"border": "00FF00",
-			"text": "00FF00",
-			"menuitem_border": "004000",
-			"menuitem_hilight": "000070",
-			"menuitem_hilight_text": "FFFFFF",
-			"menuitem_hilight_border": "00FF00",
-			"menuseparator": "109010",
+			"background": "101010",
+			"border": "101010",
+			"text": "16BF24",
+			"menuitem_border": "101010",
+			"menuitem_hilight": "202020",
+			"menuitem_hilight_text": "16FF26",
+			"menuitem_hilight_border": "16FF26",
+			"menuseparator": "2e3436",
 		},
 		# Colors used by on-screen keyboard
 		"osk_colors": {
-			'hilight' : '00688D',
-			'pressed' : '1A9485',
-			"button1" : "162082",
-			"button1_border" : "262b5e",
-			"button2" : "162d44",
-			"button2_border" : "27323e",
-			"text" : "ffffff"
+			'hilight' : '7A7A7A',
+			'pressed' : 'B0B0B0',
+			"button1" : "101010",
+			"button1_border" : "101010",
+			"button2" : "2e3436",
+			"button2_border" : "2e3436",
+			"text" : "16BF24"
 		},
 		# Colors used by gesture display. Unlike OSD and OSK, these are RGBA
 		"gesture_colors" : {
@@ -93,6 +93,8 @@ class Config(object):
 			"grid": "004000ff",
 			"line": "ffffff1a",
 		},
+		# TODO: Config for opacity
+		"windows_opacity": 0.95,
 		# See drivers/sc_dongle.py, read_serial method
 		"ignore_serials" : True,
 	}
