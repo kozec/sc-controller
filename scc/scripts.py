@@ -123,6 +123,11 @@ def cmd_dependency_check(argv0, argv):
 		print e2
 		return 1
 	try:
+		import evdev
+	except Exception, e:
+		print >>sys.stderr, e
+		print >>sys.stderr, "Please, install python-evdev package to enable non-steam controller support"
+	try:
 		import scc.lib.xwrappers as X
 		X.Atom
 	except Exception, e:
