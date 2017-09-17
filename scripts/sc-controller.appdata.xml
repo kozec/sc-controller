@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>sc-controller.desktop</id>
+  <name>SC Controller</name>
+  <summary>Edits controller mappings</summary>
+  <developer_name>kozec</developer_name>
+  <description>
+  <p>
+   User-mode driver and GTK3 based GUI for Steam Controller.
+  </p>
+</description>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0</project_license>
+  <url type="bugtracker">https://github.com/kozec/sc-controller/issues</url>
+  <url type="donation">https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=77DQD3L9K8RPU&amp;lc=SK&amp;item_name=kozec&amp;item_number=scc&amp;currency_code=EUR&amp;bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted</url>
+  <url type="help">https://github.com/kozec/sc-controller/wiki</url>
+  <url type="homepage">https://github.com/kozec/sc-controller/</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main Application Window</caption>
+      <image width="923" height="538">https://raw.githubusercontent.com/kozec/sc-controller/master/docs/screenshot1.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>SC-Controller in action</caption>
+      <image width="887" height="622">https://raw.githubusercontent.com/kozec/sc-controller/master/docs/screenshot2.png</image>
+    </screenshot>
+  </screenshots>
+</component>

@@ -35,6 +35,10 @@ sed -i "s/Exec=.*/Exec=.\/usr\/bin\/scc gui/g" ${BUILD_APPDIR}/sc-controller.des
 # Convert icon
 convert -background none ${BUILD_APPDIR}/usr/share/pixmaps/sc-controller.svg ${BUILD_APPDIR}/sc-controller.png
 
+# Copy appdata.xml
+mkdir -p ${BUILD_APPDIR}/usr/share/metainfo/
+cp scripts/sc-controller.appdata.xml ${BUILD_APPDIR}/usr/share/metainfo/sc-controller.appdata.xml
+
 # Copy AppRun script
 cp scripts/appimage-AppRun.sh ${BUILD_APPDIR}/AppRun
 chmod +x ${BUILD_APPDIR}/AppRun
