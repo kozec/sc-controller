@@ -1,14 +1,26 @@
 #!/bin/bash
+EVDEV_VERSION=0.7.0
 
 set -ex		# display commands, terminate after 1st failure
 if [ x"$BUILD_APPDIR" == "x" ] ; then
 	BUILD_APPDIR=$(pwd)/appimage
 fi
 
+# Download deps
+wget -c "https://github.com/gvalkov/python-evdev/archive/v${EVDEV_VERSION}.tar.gz" -O /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
+
 # Prepare & build
 mkdir -p ${BUILD_APPDIR}/usr
 python2 setup.py build
 python2 setup.py install --prefix ${BUILD_APPDIR}/usr
+
+# Unpack & build deps
+pushd /tmp
+tar xzf python-evdev-${EVDEV_VERSION}.tar.gz
+cd python-evdev-${EVDEV_VERSION}
+python2 setup.py build
+PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages python2 setup.py install --prefix ${BUILD_APPDIR}/usr
+popd
 
 # Move udev stuff
 mv ${BUILD_APPDIR}/usr/lib/udev/rules.d/90-sc-controller.rules ${BUILD_APPDIR}/
