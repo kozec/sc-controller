@@ -1,10 +1,10 @@
 #!/bin/bash
 EVDEV_VERSION=0.7.0
-
-set -ex		# display commands, terminate after 1st failure
 if [ x"$BUILD_APPDIR" == "x" ] ; then
 	BUILD_APPDIR=$(pwd)/appimage
 fi
+
+set -ex		# display commands, terminate after 1st failure
 
 # Download deps
 wget -c "https://github.com/gvalkov/python-evdev/archive/v${EVDEV_VERSION}.tar.gz" -O /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
