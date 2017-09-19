@@ -8,7 +8,7 @@ For example, click() modifier executes action only if pad is pressed.
 """
 from __future__ import unicode_literals
 
-from scc.actions import Action, MouseAction, XYAction, AxisAction
+from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
 from scc.constants import TRIGGER_MAX, LEFT, RIGHT, STICK, FE_STICK, FE_TRIGGER
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
@@ -638,6 +638,8 @@ class ModeModifier(Modifier):
 				self.mods[button] = i
 				self.order.append(button)
 				button = None
+			elif isinstance(i, RangeOP):
+				button = i
 			elif i in SCButtons:
 				button = i
 			else:
@@ -703,7 +705,7 @@ class ModeModifier(Modifier):
 	def __str__(self):
 		rv = [ ]
 		for key in self.mods:
-			rv += [ key.name, self.mods[key] ]
+			rv += [ nameof(key), self.mods[key] ]
 		if self.default is not None:
 			rv += [ self.default ]
 		return "<Modifier '%s', %s>" % (self.COMMAND, rv)

@@ -386,6 +386,23 @@ class Action(object):
 		log.warn("Action %s can't handle trigger event", self.__class__.__name__)
 
 
+class RangeOP(object):
+	"""
+	Allows to specify and store axis range and then use it in modeshift
+	instead of button.
+	"""
+	OPS = ("<", ">", "<=", ">=")
+	
+	def __init__(self, what, op, value):
+		self.what = what
+		self.op = op
+		self.value = value
+	
+	
+	def __str__(self):
+		return "%s %s %s" % (nameof(self.what), self.op, self.value)
+
+
 class HapticEnabledAction(object):
 	""" Action that can generate haptic feedback """
 	def __init__(self):
