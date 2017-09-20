@@ -626,25 +626,32 @@ class ModeModifier(Modifier):
 		self.old_gyro = None
 		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
 		
-		check = None
+		button = None
 		for i in stuff:
 			if self.default is not None:
 				# Default has to be last parameter
 				raise ValueError("Invalid parameters for 'mode'")
-			if isinstance(i, Action) and check is None:
+			if isinstance(i, Action) and button is None:
 				self.default = i
 			elif isinstance(i, Action):
-				print "###", check, i
-				self.mods[check] = i
-				check = None
-			elif isinstance(i, RangeOP):
-				check = i
-			elif i in SCButtons:
-				check = self.make_button_check(i)
+				self.mods[button] = i
+				button = None
+			elif isinstance(i, RangeOP) or i in SCButtons:
+				button = i
 			else:
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
+		self.make_checks()
 		if self.default is None:
 			self.default = NoAction()
+	
+	
+	def make_checks(self):
+		self.checks = []
+		for button, action in self.mods.items():
+			if isinstance(button, RangeOP):
+				self.checks.append(( button, action ))
+			else:
+				self.checks.append(( self.make_button_check(button), action ))
 	
 	
 	def get_child_actions(self):
@@ -693,6 +700,7 @@ class ModeModifier(Modifier):
 			self.default = self.default.compress()
 		for check in self.mods:
 			self.mods[check] = self.mods[check].compress()
+		self.make_checks()
 		return self
 	
 	
@@ -749,7 +757,7 @@ class ModeModifier(Modifier):
 		"""
 		Selects action by pressed button.
 		"""
-		for check, action in self.mods.items():
+		for check, action in self.checks:
 			if check(mapper):
 				return action
 		return self.default
