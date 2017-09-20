@@ -19,6 +19,7 @@ from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
 from scc.constants import PARSER_CONSTANTS
+from scc.constants import SCButtons
 from scc.aliases import ALL_BUTTONS as GAMEPAD_BUTTONS
 from math import sqrt, sin, cos, atan2, pi as PI
 
@@ -394,9 +395,52 @@ class RangeOP(object):
 	OPS = ("<", ">", "<=", ">=")
 	
 	def __init__(self, what, op, value):
+		""" Raises ValueError if 'what' or 'op' is not supported value """
 		self.what = what
 		self.op = op
 		self.value = value
+		
+		if what == SCButtons.LT:
+			# TODO: Somehow unify names here, LT button is related to ltrig axis and so on
+			self.axis_name = "ltrig"
+			self.max = float(TRIGGER_MAX)
+		elif what == SCButtons.RT:
+			self.axis_name = "rtrig"
+			self.max = float(TRIGGER_MAX)
+		else:
+			raise ValueError("'%s' is not trigger nor axis" % (nameof(what), ))
+		
+		if op == "<":
+			self.op_method = self.cmp_lt
+		elif op == ">":
+			self.op_method = self.cmp_gt
+		elif op == "<=":
+			self.op_method = self.cmp_le
+		elif op == ">=":
+			self.op_method = self.cmp_ge
+		else:
+			raise ValueError("Unknown operator: '%s'" % (op, ))
+	
+	
+	def cmp_gt(self, mapper):
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state > self.value
+	
+	def cmp_lt(self, mapper):
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state < self.value
+	
+	def cmp_ge(self, mapper):
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state >= self.value
+	
+	def cmp_le(self, mapper):
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state <= self.value
+	
+	
+	def __call__(self, mapper):
+		return self.op_method(mapper)
 	
 	
 	def __str__(self):
@@ -796,7 +840,6 @@ class MouseAction(WholeHapticAction, Action):
 	
 	def add(self, mapper, dx, dy):
 		""" Called from BallModifier """
-		print "MouseAction", self.haptic
 		if self.haptic:
 			WholeHapticAction.change(self, mapper, dx, dy)
 		

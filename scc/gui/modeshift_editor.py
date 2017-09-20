@@ -98,7 +98,7 @@ class ModeshiftEditor(Editor):
 				if self.id == nameof(SCButtons.LPAD):
 					# Controller cannot handle pressing stick and lpad at once
 					continue
-			model.append(( None if button is None else button.name, text ))
+			model.append(( None if button is None else nameof(button), text ))
 		cbButtonChooser.set_active(0)
 	
 	
@@ -108,7 +108,7 @@ class ModeshiftEditor(Editor):
 		model = cbButtonChooser.get_model()
 		
 		for row in model:
-			if model.get_value(row.iter, 0) == button.name:
+			if model.get_value(row.iter, 0) == nameof(button):
 				model.remove(row.iter)
 				break
 		try:
@@ -119,7 +119,7 @@ class ModeshiftEditor(Editor):
 		
 		i = len(self.actions[index]) + 1
 		l = Gtk.Label()
-		l.set_markup("<b>%s</b>" % (button.name,))
+		l.set_markup("<b>%s</b>" % (nameof(button),))
 		l.set_xalign(0.0)
 		b = Gtk.Button.new_with_label(action.describe(self.mode))
 		b.set_property("hexpand", True)
@@ -168,9 +168,9 @@ class ModeshiftEditor(Editor):
 		model.clear()
 		# Fill it again
 		for button, text in self.BUTTONS:
-			model.append(( None if button is None else button.name, text ))
+			model.append(( None if button is None else nameof(button), text ))
 			if button is not None:
-				if button.name == active:
+				if nameof(button) == active:
 					index = i
 			i += 1
 		# Reselect formely active item
@@ -345,7 +345,7 @@ class ModeshiftEditor(Editor):
 			lblPressAlone.set_label(_("(pressed alone)"))
 			self.mode = mode = mode or Action.AC_BUTTON
 		
-		self.set_title("Modeshift for %s" % (id.name if id in SCButtons else str(id),))
+		self.set_title("Modeshift for %s" % (nameof(id) if id in SCButtons else str(id),))
 		
 		if isinstance(action, FeedbackModifier):
 			cbHoldFeedback.set_active(True)
