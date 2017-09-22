@@ -739,8 +739,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# 'event' signal should be connected only on first controller,
 			# so this block is executed only when number of connected
 			# controllers changes from 0 to 1
-			c = self.dm.get_controllers()[0]
-			self.load_gui_config_for_controller(c, first=True)
+			if len(self.dm.get_controllers()) > 0:
+				c = self.dm.get_controllers()[0]
+				self.load_gui_config_for_controller(c, first=True)
 		if count > self.controller_count:
 			# Controller added
 			while len(self.profile_switchers) < count:
@@ -829,12 +830,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			if self.test_mode_controller:
 				self.test_mode_controller.unlock_all()
 			c = self.profile_switchers[0].get_controller()
-			c.unlock_all()
-			c.observe(DaemonManager.nocallback, self.on_observe_failed,
-				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
-				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
-				'RIGHT', 'STICK', 'STICKPRESS')
-			self.test_mode_controller = c
+			if c:
+				c.unlock_all()
+				c.observe(DaemonManager.nocallback, self.on_observe_failed,
+					'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
+					'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
+					'RIGHT', 'STICK', 'STICKPRESS')
+				self.test_mode_controller = c
 	
 	
 	def on_observe_failed(self, error):
