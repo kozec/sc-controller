@@ -184,7 +184,7 @@ class ControllerTrigger(ControllerButton):
 	ACTION_CONTEXT = Action.AC_TRIGGER
 	def update(self):
 		# TODO: Use LT and RT in profile as well
-		side = LEFT if self.id else RIGTH
+		side = LEFT if self.id == "LT" else RIGHT
 		if self.id in TRIGGERS and side in self.app.current.triggers:
 			self.label.set_label(self.app.current.triggers[side].describe(self.ACTION_CONTEXT))
 		else:

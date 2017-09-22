@@ -85,7 +85,7 @@ class BindingEditor(object):
 			self.button_widgets[id.name].update()
 		elif id in TRIGGERS:
 			# TODO: Use LT and RT in profile as well
-			side = LEFT if id else RIGTH
+			side = LEFT if id == "LT" else RIGHT
 			before, profile.triggers[side] = profile.triggers[side], action
 			self.button_widgets[id].update()
 		elif id in GYROS:
@@ -114,7 +114,7 @@ class BindingEditor(object):
 			return profile.buttons[id]
 		elif id in TRIGGERS:
 			# TODO: Use LT and RT in profile as well
-			side = LEFT if id else RIGTH
+			side = LEFT if id == "LT" else RIGHT
 			return profile.triggers[side]
 		elif id in GYROS:
 			return profile.gyro
