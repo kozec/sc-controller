@@ -11,10 +11,10 @@ from scc.gui.controller_widget import ControllerButton
 from scc.gui.controller_widget import STICKS, PADS
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
+from scc.constants import SCButtons, HapticPos, TRIGGER_MAX
 from scc.modifiers import ModeModifier, DoubleclickModifier
 from scc.modifiers import FeedbackModifier, HoldModifier
-from scc.constants import SCButtons, HapticPos
-from scc.actions import Action, NoAction
+from scc.actions import Action, NoAction, RangeOP
 from scc.profile import Profile
 from scc.macros import Macro
 from scc.tools import nameof
@@ -22,6 +22,7 @@ from scc.tools import nameof
 from gi.repository import Gtk, Gdk, GLib
 import os, logging
 log = logging.getLogger("ModeshiftEditor")
+
 
 class ModeshiftEditor(Editor):
 	GLADE = "modeshift_editor.glade"
@@ -37,11 +38,13 @@ class ModeshiftEditor(Editor):
 		(None, None),
 		(SCButtons.LGRIP,		_('Left Grip') ),
 		(SCButtons.RGRIP,		_('Right Grip') ),
-		(None, None),
 		(SCButtons.LB,			_('Left Bumper') ),
 		(SCButtons.RB,			_('Right Bumper') ),
-		(SCButtons.LT,			_('Left Trigger') ),
-		(SCButtons.RT,			_('Right Trigger') ),
+		(None, None),
+		(SCButtons.LT,			_('Left Trigger (full)') ),
+		(SCButtons.RT,			_('Right Trigger (full)') ),
+		("Soft LT",				_('Left Trigger (soft)') ),
+		("Soft RT",				_('Right Trigger (soft)') ),
 		(None, None),
 		(SCButtons.STICKPRESS,	_('Stick Pressed') ),
 		(SCButtons.LPAD,		_('Left Pad Pressed') ),
@@ -56,6 +59,7 @@ class ModeshiftEditor(Editor):
 		self.id = None
 		self.mode = Action.AC_BUTTON
 		self.ac_callback = callback
+		self.soft_level = -1
 		self.current_page = 0
 		self.actions = ( [], [], [] )
 		self.nomods = [ NoAction(), NoAction(), NoAction() ]
@@ -90,27 +94,43 @@ class ModeshiftEditor(Editor):
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
 		model = cbButtonChooser.get_model()
 		model.clear()
-		for button, text in self.BUTTONS:
-			if any([ True for x in self.actions[self.current_page] if x[0] == button ]):
+		for item, text in self.BUTTONS:
+			if any([ x[0] == item for x in self.actions[self.current_page] ]):
 				# Skip already added buttons
 				continue
-			if button == SCButtons.STICKPRESS:
+			if type(item) in (str, unicode):
+				# Special case for soft pull items
+				button = getattr(SCButtons, item.split(" ")[-1])
+				if any([ (isinstance(x, RangeOP) and x.what == button)
+							for x in self.actions[self.current_page] ]):
+					# Skip already added soft pulls
+					continue
+			
+			if item == SCButtons.STICKPRESS:
 				if self.id == nameof(SCButtons.LPAD):
 					# Controller cannot handle pressing stick and lpad at once
 					continue
-			model.append(( None if button is None else nameof(button), text ))
+			model.append(( None if item is None else nameof(item), text ))
 		cbButtonChooser.set_active(0)
 	
 	
-	def _add_action(self, index, button, action):
-		grActions = self.action_widgets[index][0]
+	def _add_action(self, index, what, action):
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
+		adjSoftLevel = self.builder.get_object("adjSoftLevel")
+		rvSoftLevel = self.builder.get_object("rvSoftLevel")
+		grActions = self.action_widgets[index][0]
 		model = cbButtonChooser.get_model()
 		
 		for row in model:
-			if model.get_value(row.iter, 0) == nameof(button):
-				model.remove(row.iter)
-				break
+			item = model.get_value(row.iter, 0)
+			if item:
+				if item == nameof(what):
+					model.remove(row.iter)
+					break
+				if isinstance(what, RangeOP) and item.startswith("Soft"):
+					if nameof(what.what) == item.split(" ")[-1]:
+						model.remove(row.iter)
+						break
 		try:
 			while model.get_value(model[0].iter, 0) is None:
 				model.remove(model[0].iter)
@@ -119,20 +139,34 @@ class ModeshiftEditor(Editor):
 		
 		i = len(self.actions[index]) + 1
 		l = Gtk.Label()
-		l.set_markup("<b>%s</b>" % (nameof(button),))
+		if isinstance(what, RangeOP) and what.op == ">=":
+			if self.soft_level == -1:
+				# First Range added, load level from it
+				self.soft_level = what.value if what.value > 0.0 else 0.75
+				adjSoftLevel.set_value(self.soft_level)
+				rvSoftLevel.set_reveal_child(True)
+				what.value = -1
+			if what.value == -1:
+				# Range with value taken from "Soft Pull Level" slider
+				l.set_markup("<b>%s (soft pull)</b>" % (nameof(what.what),))
+			else:
+				# Any other range
+				l.set_markup("<b>%s</b>" % (nameof(what),))
+		else:
+			l.set_markup("<b>%s</b>" % (nameof(what),))
 		l.set_xalign(0.0)
 		b = Gtk.Button.new_with_label(action.describe(self.mode))
 		b.set_property("hexpand", True)
-		b.connect('clicked', self.on_actionb_clicked, index, button)
+		b.connect('clicked', self.on_actionb_clicked, index, what)
 		clearb = Gtk.Button()
 		clearb.set_image(Gtk.Image.new_from_stock("gtk-delete", Gtk.IconSize.SMALL_TOOLBAR))
 		clearb.set_relief(Gtk.ReliefStyle.NONE)
-		clearb.connect('clicked', self.on_clearb_clicked, index, button)
+		clearb.connect('clicked', self.on_clearb_clicked, index, what)
 		grActions.attach(l,			0, i, 1, 1)
 		grActions.attach(b,			1, i, 1, 1)
 		grActions.attach(clearb,	2, i, 1, 1)
 		
-		self.actions[index].append([ button, action, l, b, clearb ])
+		self.actions[index].append([ what, action, l, b, clearb ])
 		grActions.show_all()
 	
 	
@@ -232,8 +266,18 @@ class ModeshiftEditor(Editor):
 	
 	def on_btAddAction_clicked(self, *a):
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
-		b = getattr(SCButtons, cbButtonChooser.get_model().get_value(cbButtonChooser.get_active_iter(), 0))
-		self._add_action(self.current_page, b, NoAction())
+		item = cbButtonChooser.get_model().get_value(cbButtonChooser.get_active_iter(), 0)
+		if item.startswith("Soft"):
+			b = getattr(SCButtons, item.split(" ")[-1])
+			rng = RangeOP(b, ">=", -1)
+			self._add_action(self.current_page, rng, NoAction())
+		else:
+			b = getattr(SCButtons, item)
+			self._add_action(self.current_page, b, NoAction())
+	
+	
+	def on_sclSoftLevel_format_value(self, scale, value):
+		return  "%s%%" % (int(value * 100.0),)
 	
 	
 	def on_btClear_clicked(self, *a):
@@ -295,10 +339,13 @@ class ModeshiftEditor(Editor):
 	
 	def _save_modemod(self, index):
 		""" Generates ModeModifier from page in Notebook """
+		adjSoftLevel = self.builder.get_object("adjSoftLevel")
 		pars = []
-		# TODO: Other pages
-		for button, action, l, b, clearb in self.actions[index]:
-			pars += [ button, action ]
+		for item, action, l, b, clearb in self.actions[index]:
+			if isinstance(item, RangeOP) and item.value == -1:
+				# Value taken from slider
+				item.value = adjSoftLevel.get_value()
+			pars += [ item, action ]
 		if self.nomods[index]:
 			pars += [ self.nomods[index] ]
 		action = ModeModifier(*pars)
