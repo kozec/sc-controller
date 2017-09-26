@@ -144,7 +144,7 @@ class Profile(object):
 				Profile.LEFT	: self.parser.from_json_data(data, "trigger_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "trigger_right"),
 			}
-		
+			
 			# Pads
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "pad_left"),

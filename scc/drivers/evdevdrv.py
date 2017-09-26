@@ -20,8 +20,15 @@ try:
 except ImportError:
 	pass
 
+HAVE_EVDEV = False
+try:
+	# Driver disables itself if evdev is not available
+	import evdev
+	HAVE_EVDEV = True
+except ImportError:
+	pass
+
 from collections import namedtuple
-import evdev
 import threading, Queue, os, sys, time, binascii, json, logging
 log = logging.getLogger("evdev")
 
@@ -437,24 +444,26 @@ class EvdevDriver(object):
 		if not self._new_devices.empty():
 			self.add_new_devices()
 
-
-# Just like USB driver, EvdevDriver is process-wide singleton
-_evdevdrv = EvdevDriver()
-
-
-def start(daemon):
-	_evdevdrv.start()
+if HAVE_EVDEV:
+	# Just like USB driver, EvdevDriver is process-wide singleton
+	_evdevdrv = EvdevDriver()
 
 
-def init(daemon):
-	_evdevdrv.set_daemon(daemon)
-	if HAVE_INOTIFY:
-		_evdevdrv.enable_inotify()
-		daemon.on_rescan(_evdevdrv.scan)
-	else:
-		log.warning("Failed to import pyinotify. Evdev driver will scan for new devices every 5 seconds.")
-		log.warning("Consider installing python-pyinotify package.")
-		daemon.add_mainloop(_evdevdrv.dumb_mainloop)
+	def start(daemon):
+		_evdevdrv.start()
+
+
+	def init(daemon):
+		_evdevdrv.set_daemon(daemon)
+		if HAVE_INOTIFY:
+			_evdevdrv.enable_inotify()
+			daemon.on_rescan(_evdevdrv.scan)
+		else:
+			log.warning("Failed to import pyinotify. Evdev driver will scan for new devices every 5 seconds.")
+			log.warning("Consider installing python-pyinotify package.")
+			daemon.add_mainloop(_evdevdrv.dumb_mainloop)
+else:
+	log.warning("'evdev' package is missing. Evdev support is disabled.")
 
 
 def evdevdrv_test(args):
