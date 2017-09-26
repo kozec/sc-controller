@@ -260,7 +260,7 @@ class ControllerGyro(ControllerWidget):
 	
 	def _set_label(self, action):
 		if is_gyro_enable(action):
-			action = action.mods[action.order[0]] or action.default
+			action = action.mods.values()[0] or action.default
 		if isinstance(action, MultiAction):
 			rv = []
 			for a in action.actions:

@@ -18,7 +18,7 @@ from scc.controller import HapticData
 from scc.tools import nameof, clamp
 from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign, atan2, sin, cos
-from collections import deque
+from collections import OrderedDict, deque
 
 import time, logging, inspect
 log = logging.getLogger("Modifiers")
@@ -619,11 +619,10 @@ class ModeModifier(Modifier):
 	def __init__(self, *stuff):
 		Modifier.__init__(self)
 		self.default = None
-		self.mods = {}
+		self.mods = OrderedDict()
 		self.held_buttons = set()
 		self.held_sticks = set()
 		self.held_triggers = {}
-		self.order = []
 		self.old_gyro = None
 		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
 		
@@ -632,36 +631,35 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				# Default has to be last parameter
 				raise ValueError("Invalid parameters for 'mode'")
-			if isinstance(i, Action):
-				if button is None:
-					self.default = i
-					continue
+			if isinstance(i, Action) and button is None:
+				self.default = i
+			elif isinstance(i, Action):
 				self.mods[button] = i
-				self.order.append(button)
 				button = None
-			elif isinstance(i, RangeOP):
-				button = i
-			elif i in SCButtons:
+			elif isinstance(i, RangeOP) or i in SCButtons:
 				button = i
 			else:
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
+		self.make_checks()
 		if self.default is None:
 			self.default = NoAction()
 	
 	
+	def make_checks(self):
+		self.checks = []
+		for button, action in self.mods.items():
+			if isinstance(button, RangeOP):
+				self.checks.append(( button, action ))
+			else:
+				self.checks.append(( self.make_button_check(button), action ))
+	
+	
 	def get_child_actions(self):
-		return [ self.mods[key] for key in self.mods ]
+		return self.mods.values()
 	
 	
 	def encode(self):
-		rv = self.default.encode()
-		modes = {}
-		for key in self.mods:
-			modes[key.name] = self.mods[key].encode()
-		rv[ModeModifier.PROFILE_KEYS[0]] = modes
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv
+		return { 'action' : self.to_string(False) }
 	
 	
 	@staticmethod
@@ -680,8 +678,10 @@ class ModeModifier(Modifier):
 	
 	def get_compatible_modifiers(self):
 		rv = 0
-		for key in self.mods:
-			rv |= self.mods[key].get_compatible_modifiers()
+		for action in self.mods.values():
+			rv |= action.get_compatible_modifiers()
+		if self.default:
+			rv |= self.default.get_compatible_modifiers()
 		return rv
 	
 	
@@ -689,8 +689,8 @@ class ModeModifier(Modifier):
 		# Returns default action or action assigned to first modifier
 		if self.default:
 			return self.default.strip()
-		if len(self.order) > 0:
-			return self.mods[self.order[0]].strip()
+		if len(self.mods):
+			return self.mods.values()[0].strip()
 		# Empty ModeModifier
 		return NoAction()
 	
@@ -698,15 +698,16 @@ class ModeModifier(Modifier):
 	def compress(self):
 		if self.default:
 			self.default = self.default.compress()
-		for button in self.mods:
-			self.mods[button] = self.mods[button].compress()
+		for check in self.mods:
+			self.mods[check] = self.mods[check].compress()
+		self.make_checks()
 		return self
 	
 	
 	def __str__(self):
 		rv = [ ]
-		for key in self.mods:
-			rv += [ nameof(key), self.mods[key] ]
+		for check in self.mods:
+			rv += [ nameof(check), self.mods[check] ]
 		if self.default is not None:
 			rv += [ self.default ]
 		return "<Modifier '%s', %s>" % (self.COMMAND, rv)
@@ -718,17 +719,17 @@ class ModeModifier(Modifier):
 		if self.name: return self.name
 		l = []
 		if self.default : l.append(self.default)
-		for x in self.order:
-			l.append(self.mods[x])
+		for check in self.mods:
+			l.append(self.mods[check])
 		return "\n".join([ x.describe(context) for x in l ])
 	
 	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			rv = [ (" " * pad) + "mode(" ]
-			for key in self.mods:
-				a_str = self.mods[key].to_string(True).split("\n")
-				a_str[0] = (" " * pad) + "  " + (key.name + ",").ljust(11) + a_str[0]	# Key has to be one of SCButtons
+			for check in self.mods:
+				a_str = self.mods[check].to_string(True).split("\n")
+				a_str[0] = (" " * pad) + "  " + (nameof(check) + ",").ljust(11) + a_str[0]	# Key has to be one of SCButtons
 				for i in xrange(1, len(a_str)):
 					a_str[i] = (" " * pad) + "  " + a_str[i]
 				a_str[-1] = a_str[-1] + ","
@@ -745,8 +746,8 @@ class ModeModifier(Modifier):
 			return "\n".join(rv)
 		else:
 			rv = [ ]
-			for key in self.mods:
-				rv += [ key.name, self.mods[key].to_string(False) ]
+			for check in self.mods:
+				rv += [ nameof(check), self.mods[check].to_string(False) ]
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
@@ -756,20 +757,19 @@ class ModeModifier(Modifier):
 		"""
 		Selects action by pressed button.
 		"""
-		for b in self.order:
-			if mapper.is_pressed(b):
-				return self.mods[b]
+		for check, action in self.checks:
+			if check(mapper):
+				return action
 		return self.default
 	
 	
-	def select_b(self, mapper):
-		"""
-		Same as select but returns button as well.
-		"""
-		for b in self.order:
-			if mapper.is_pressed(b):
-				return b, self.mods[b]
-		return None, self.default
+	@staticmethod
+	def make_button_check(button):
+		def cb(mapper):
+			return mapper.is_pressed(button)
+		
+		cb.name = button.name	# So nameof() still works on keys in self.mods
+		return cb
 	
 	
 	def button_press(self, mapper):
