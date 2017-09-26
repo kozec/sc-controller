@@ -7,7 +7,13 @@ fi
 set -ex		# display commands, terminate after 1st failure
 
 # Download deps
-wget -c "https://github.com/gvalkov/python-evdev/archive/v${EVDEV_VERSION}.tar.gz" -O /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
+if [ -e ../../python-evdev-${EVDEV_VERSION}.obstargz ] ; then
+	cp ../../python-evdev-${EVDEV_VERSION}.obstargz /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
+elif [ -e python-evdev-${EVDEV_VERSION}.tar.gz ] ; then
+	cp python-evdev-${EVDEV_VERSION}.tar.gz /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
+else
+	wget -c "https://github.com/gvalkov/python-evdev/archive/v${EVDEV_VERSION}.tar.gz" -O /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
+fi
 
 # Prepare & build
 mkdir -p ${BUILD_APPDIR}/usr
