@@ -154,6 +154,11 @@ class ControllerRegistration(Editor):
 							self._mappings[keycode] = self._axis_data[SDL_AXES.index(k)]
 							self._mappings[keycode].min = STICK_PAD_MIN
 							self._mappings[keycode].max = STICK_PAD_MAX
+						elif v.startswith("h") and 16 in axes and 17 in axes:
+							# Special case for evdev hatswitch
+							if v == "h0.1" and k == "dpup":
+								self._mappings[16] = self._axis_data[SDL_AXES.index("dpadx")]
+								self._mappings[17] = self._axis_data[SDL_AXES.index("dpady")]
 						elif k in SDL_AXES: 
 							try:
 								code = axes[int(v.strip("a"))]
@@ -176,6 +181,8 @@ class ControllerRegistration(Editor):
 						else:
 							log.warning("Skipping unknown gamecontrollerdb mapping %s:%s", k, v)
 				return True
+		else:
+			log.debug("Mappings for '%s' not found in gamecontrollerdb", weird_id)
 		
 		return False
 	

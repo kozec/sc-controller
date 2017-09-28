@@ -59,9 +59,13 @@ SDL_TO_SCC_NAMES = {
 
 SDL_AXES = (
 	# This tuple has to use same order as AXIS_ORDER
-	'leftx', 'lefty', 'rightx', 'righty',
-	None, None, 'lefttrigger', 'righttrigger'
+	'leftx', 'lefty',
+	'rightx', 'righty',
+	"dpadx", "dpady",
+	'lefttrigger',
+	'righttrigger'
 )
+
 
 SDL_DPAD = {
 	# Numbers here are indexes to AXIS_ORDER tuple
