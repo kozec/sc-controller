@@ -24,7 +24,7 @@ def init(daemon):
 	def cb(device, handle):
 		return DS4Controller(device, daemon, handle, None, None)
 	
-	register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
+	# register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
 
 
 class DS4Controller(HIDController):
