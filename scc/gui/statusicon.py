@@ -15,7 +15,7 @@ from gi.repository import GObject
 from gi.repository import GLib
 from gi.repository import Gtk
 
-from scc.gui.dwsnc import IS_UNITY
+from scc.gui.dwsnc import IS_UNITY, IS_GNOME
 from scc.tools import _ # gettext function
 
 log = logging.getLogger("StatusIcon")
@@ -203,6 +203,9 @@ class StatusIconGTK3(StatusIcon):
 			if IS_UNITY:
 				# Unity fakes SysTray support but actually hides all icons...
 				raise NotImplementedError
+			if IS_GNOME:
+				# Gnome got broken as well
+				raise NotImplementedError
 		
 		self._tray = Gtk.StatusIcon()
 		
@@ -265,6 +268,7 @@ class StatusIconAppIndicator(StatusIconDBus):
 			self._status_active  = appindicator.IndicatorStatus.ACTIVE
 			self._status_passive = appindicator.IndicatorStatus.PASSIVE
 		except ImportError:
+			log.warning("Failed to import AppIndicator3")
 			raise NotImplementedError
 		
 		category = appindicator.IndicatorCategory.APPLICATION_STATUS
@@ -339,10 +343,7 @@ class StatusIconProxy(StatusIcon):
 		self.set_property("active", active)
 	
 	def _load_fallback(self):
-		if IS_UNITY:
-			status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
-		else:
-			status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
+		status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
 		
 		if not self._status_fb:
 			for StatusIconBackend in status_icon_backends:
