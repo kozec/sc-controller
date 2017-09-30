@@ -141,7 +141,7 @@ class DS4Controller(HIDController):
 	
 	
 	def get_type(self):
-		return "ds4evdev"
+		return "ds4"
 	
 	
 	def get_gui_config_file(self):
@@ -217,7 +217,7 @@ class DS4EvdevController(EvdevController):
 	
 	
 	def get_type(self):
-		return "ds4"
+		return "ds4evdev"
 	
 	
 	def get_gui_config_file(self):
