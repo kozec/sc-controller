@@ -211,8 +211,8 @@ class DaemonManager(GObject.GObject):
 			elif line.startswith("Event:"):
 				data = line[6:].strip().split(" ")
 				c = self.get_controller(data[0])
-				c.emit('event', data[1], [ int(x) for x in data[2:] ])
-				self.emit('event', c, data[1], [ int(x) for x in data[2:] ])
+				c.emit('event', data[1], [ int(float(x)) for x in data[2:] ])
+				self.emit('event', c, data[1], [ int(float(x)) for x in data[2:] ])
 			elif line.startswith("Error:"):
 				error = line.split(":", 1)[-1].strip()
 				self.alive = True
