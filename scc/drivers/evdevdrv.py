@@ -54,7 +54,7 @@ class EvdevController(Controller):
 	def __init__(self, daemon, device, config_file, config):
 		try:
 			self._parse_config(config)
-		except Exception, e:
+		except Exception:
 			log.error("Failed to parse config for evdev controller")
 			raise
 		Controller.__init__(self)
@@ -366,6 +366,28 @@ class EvdevDriver(object):
 		log.debug("Evdev device added: %s", dev.name)
 	
 	
+	def make_new_device(self, vendor_id, product_id, factory):
+		"""
+		Similar to handle_new_device, but meant for use by other drivers.
+		See global make_new_device method for more info
+		"""
+		devices = []
+		for fname in evdev.list_devices():
+			try:
+				dev = evdev.InputDevice(fname)
+			except Exception:
+				continue
+			if dev.fn not in self._devices:
+				if vendor_id == dev.info.vendor and product_id == dev.info.product:
+					devices.append(dev)
+		controller = factory(self.daemon, devices)
+		if controller:
+			self._devices[controller.device.fn] = controller
+			self.daemon.add_controller(controller)
+			log.debug("Evdev device added: %s", controller.device.name)
+			return controller
+		return None
+	
 	def device_removed(self, dev):
 		if dev.fn in self._devices:
 			controller = self._devices[dev.fn]
@@ -386,7 +408,6 @@ class EvdevDriver(object):
 	
 	
 	def _scan_thread_target(self):
-		c = Config()
 		for fname in evdev.list_devices():
 			try:
 				dev = evdev.InputDevice(fname)
@@ -447,12 +468,12 @@ class EvdevDriver(object):
 if HAVE_EVDEV:
 	# Just like USB driver, EvdevDriver is process-wide singleton
 	_evdevdrv = EvdevDriver()
-
-
+	
+	
 	def start(daemon):
 		_evdevdrv.start()
-
-
+	
+	
 	def init(daemon):
 		_evdevdrv.set_daemon(daemon)
 		if HAVE_INOTIFY:
@@ -465,6 +486,29 @@ if HAVE_EVDEV:
 else:
 	log.warning("'evdev' package is missing. Evdev support is disabled.")
 
+
+def make_new_device(vendor_id, product_id, factory):
+	"""
+	Searchs for device with given USB vendor and product_id and if it's
+	found, calls given factory method to create new EvdevController instance.
+	Everything after is handled as if instance was created by evdev driver.
+	
+	Does scan on main thread, so it may cause small lag.
+	
+	Factory is called as factory(daemon, devices), where devices is list of
+	matching devices. Factory should return None or EvdevController instance.
+	
+	Returns created instance or None if no matching device was found.
+	"""
+	assert HAVE_EVDEV, "evdev driver is not available"
+	return _evdevdrv.make_new_device(vendor_id, product_id, factory)
+
+
+def get_axes(dev):
+	""" Helper function to get list ofa available axes """
+	assert HAVE_EVDEV, "evdev driver is not available"
+	caps = dev.capabilities(verbose=False)
+	return [ axis for (axis, trash) in caps.get(evdev.ecodes.EV_ABS, []) ]
 
 def evdevdrv_test(args):
 	"""

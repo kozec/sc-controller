@@ -5,14 +5,17 @@ SC Controller - Dualshock 4 Driver
 Extends HID driver with DS4-specific options.
 """
 
-from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test, _lib
-from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData, AxisMode, AxisDataUnion, AxisModeData, HatswitchModeData
+from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData
+from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test
+from scc.drivers.hiddrv import AxisMode, AxisDataUnion, AxisModeData
+from scc.drivers.hiddrv import HatswitchModeData
+from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
+from scc.drivers.evdevdrv import make_new_device, get_axes
+from scc.drivers.usb import register_hotplug_device
 from scc.constants import SCButtons, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.tools import init_logging, set_logging_level
-from scc.drivers.usb import register_hotplug_device
-from collections import namedtuple
-import sys, struct, ctypes, logging
+import sys, logging
 log = logging.getLogger("DS4")
 
 VENDOR_ID = 0x054c
@@ -24,7 +27,16 @@ def init(daemon):
 	def cb(device, handle):
 		return DS4Controller(device, daemon, handle, None, None)
 	
-	# register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
+	def fail_cb(vid, pid):
+		if HAVE_EVDEV:
+			log.warning("Failed to acquire USB device, falling back to evdev driver. This is far from optimal.")
+			make_new_device(vid, pid, evdev_make_device_callback)
+		else:
+			log.error("Failed to acquire USB device and evdev is not available. Everything is lost and DS4 support disabled.")
+			# TODO: Maybe add_error here, but error reporting needs little rework so it's not threated as fatal
+			# daemon.add_error("ds4", "No access to DS4 device")
+	
+	register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
 
 
 class DS4Controller(HIDController):
@@ -45,7 +57,6 @@ class DS4Controller(HIDController):
 		SCButtons.C,
 		SCButtons.CPAD,
 	)
-	
 	
 	def __init__(self, *a, **b):
 		HIDController.__init__(self, *a, **b)
@@ -130,7 +141,7 @@ class DS4Controller(HIDController):
 	
 	
 	def get_type(self):
-		return "ds4"
+		return "ds4evdev"
 	
 	
 	def get_gui_config_file(self):
@@ -153,6 +164,109 @@ class DS4Controller(HIDController):
 			magic_number += 1
 		return id
 
+
+class DS4EvdevController(EvdevController):
+	BUTTON_MAP = {
+		304: "A",
+		305: "B",
+		307: "Y",
+		308: "X",
+		310: "LB",
+		311: "RB",
+		314: "BACK",
+		315: "START",
+		316: "C",
+		317: "STICKPRESS",
+		318: "RPAD"
+	}
+	AXIS_MAP = {
+		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
+		1:  { "axis": "stick_y", "deadzone": 4, "max": 0, "min": 255 },
+		3:  { "axis": "rpad_x", "deadzone": 4, "max": 255, "min": 0 },
+		4:  { "axis": "rpad_y", "deadzone": 8, "max": 0, "min": 255 },
+		2:  { "axis": "ltrig", "max": 255, "min": 0 },
+		5:  { "axis": "rtrig", "max": 255, "min": 0 },
+		16: { "axis": "lpad_x", "deadzone": 0, "max": 1, "min": -1 },
+		17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
+	}
+	
+	def __init__(self, daemon, controllerdevice, motion, touchpad):
+		config = {
+			'axes' : DS4EvdevController.AXIS_MAP,
+			'buttons' : DS4EvdevController.BUTTON_MAP,
+			'dpads' : {}
+		}
+		self._motion = motion
+		self._touchpad = touchpad
+		for device in (self._motion, self._touchpad):
+			device.grab()
+		EvdevController.__init__(self, daemon, controllerdevice, None, config)
+	
+	
+	def close(self):
+		EvdevController.close(self)
+		for device in (self._motion, self._touchpad):
+			try:
+				device.ungrab()
+			except: pass
+	
+	
+	def get_gyro_enabled(self):
+		# TODO: Gyro over evdev
+		return False
+	
+	
+	def get_type(self):
+		return "ds4"
+	
+	
+	def get_gui_config_file(self):
+		return "ds4-config.json"
+	
+	
+	def __repr__(self):
+		return "<DS4EvdevController %s>" % (self.get_id(), )
+	
+	
+	def _generate_id(self):
+		"""
+		ID is generated as 'ds4' or 'ds4:X' where 'X' starts as 1 and increases
+		as controllers with same ids are connected.
+		"""
+		magic_number = 1
+		id = "ds4"
+		while id in self.daemon.get_active_ids():
+			id = "ds4:%s" % (magic_number, )
+			magic_number += 1
+		return id
+
+
+def evdev_make_device_callback(daemon, evdevdevices):
+	# With kernel 4.10 or later, PS4 controller pretends to be 3 different devices.
+	# 1st, determining which one is actual controller is needed
+	controllerdevice = None
+	for device in evdevdevices:
+		count = len(get_axes(device))
+		if count == 8:
+			# 8 axes - Controller
+			controllerdevice = device
+	if not controllerdevice:
+		return
+	# 2nd, find motion sensor and touchpad with physical address matching
+	# controllerdevice
+	motion, touchpad = None, None
+	phys = device.phys.split("/")[0]
+	for device in evdevdevices:
+		if device.phys.startswith(phys):
+			count = len(get_axes(device))
+			if count == 6:
+				# 6 axes - Motion sensor
+				motion = device
+			elif count == 4:
+				# 4 axes - Touchpad
+				touchpad = device
+	# 3rd, do a magic
+	return DS4EvdevController(daemon, controllerdevice, motion, touchpad)
 
 if __name__ == "__main__":
 	""" Called when executed as script """
