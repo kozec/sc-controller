@@ -153,7 +153,7 @@ class EvdevController(Controller):
 						else:
 							value = STICK_PAD_MIN
 						cal = self._calibrations[event.code]
-						value = value * cal.scale * STICK_PAD_MAX
+						value = int(value * cal.scale * STICK_PAD_MAX)
 					else:
 						value = 0
 					axis = self._axis_map[event.code]
