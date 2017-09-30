@@ -191,16 +191,16 @@ class DS4EvdevController(EvdevController):
 	}
 	BUTTON_MAP_OLD = {
 		304: "X",
-        305: "A",
-        306: "B",
-        307: "Y",
-        308: "LB",
-        309: "RB",
-        312: "BACK",
-        313: "START",
-        314: "STICKPRESS",
-        315: "RPAD",
-        316: "C"
+		305: "A",
+		306: "B",
+		307: "Y",
+		308: "LB",
+		309: "RB",
+		312: "BACK",
+		313: "START",
+		314: "STICKPRESS",
+		315: "RPAD",
+		316: "C"
 	}
 	AXIS_MAP_OLD = {
 		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
