@@ -22,7 +22,7 @@ VENDOR_ID = 0x054c
 PRODUCT_ID = 0x09cc
 
 
-def init(daemon):
+def init(daemon, config):
 	""" Registers hotplug callback for ds4 device """
 	def cb(device, handle):
 		return DS4Controller(device, daemon, handle, None, None)
@@ -36,7 +36,12 @@ def init(daemon):
 			# TODO: Maybe add_error here, but error reporting needs little rework so it's not threated as fatal
 			# daemon.add_error("ds4", "No access to DS4 device")
 	
-	register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
+	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
+		register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
+		return True
+	else:
+		log.warning("Neither HID nor Evdev driver is enabled, DS4 support cannot be enabled.")
+		return False
 
 
 class DS4Controller(HIDController):

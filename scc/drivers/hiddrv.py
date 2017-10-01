@@ -653,14 +653,16 @@ def hiddrv_test(cls, args):
 	return fake_daemon.exitcode
 
 
-def init(daemon):
+def init(daemon, config):
 	""" Called from scc-daemon """
 	d = HIDDrv(daemon)
 	daemon.on_rescan(d.scan_files)
+	return True
 
 
 if __name__ == "__main__":
 	""" Called when executed as script """
+	from scc.tools import init_logging, set_logging_level
 	init_logging()
 	set_logging_level(True, True)
 	sys.exit(hiddrv_test(HIDController, sys.argv[1:]))

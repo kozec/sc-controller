@@ -320,7 +320,7 @@ class USBDriver(object):
 # USBDriver should be process-wide singleton
 _usb = USBDriver()
 
-def init(daemon):
+def init(daemon, config):
 	_usb._daemon = daemon
 	daemon.on_daemon_exit(_usb.on_exit)
 	daemon.add_mainloop(_usb.mainloop)

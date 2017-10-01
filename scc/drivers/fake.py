@@ -18,8 +18,8 @@ if ENV_VAR in os.environ:
 	log = logging.getLogger("FakeDrv")
 	
 	
-	def init(daemon):
-		pass
+	def init(daemon, config):
+		return True
 	
 	
 	def start(daemon):
@@ -27,8 +27,8 @@ if ENV_VAR in os.environ:
 		log.debug("Creating %s fake controllers", num)
 		for x in xrange(0, num):
 			daemon.add_controller(FakeController(x))
-
-
+	
+	
 	class FakeController(Controller):
 		def __init__(self, number):
 			Controller.__init__(self)

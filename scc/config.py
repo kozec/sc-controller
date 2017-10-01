@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 
 from scc.paths import get_config_path
 from scc.profile import Encoder
-from scc.uinput import Keys, Axes
 from scc.special_actions import ChangeProfileAction
 
 import os, json, logging
@@ -21,12 +20,22 @@ class Config(object):
 		"autoswitch":		[],		# Empty list of conditions
 		"recent_max":		10,		# Number of profiles to keep
 		"recent_profiles":	[		# Hard-coded list of profiles from default_profiles/
-			# This is actually updated by scc-osd-daemon. It may sound random,
-			# but that's only thing actually using this list.
+			# This is actually updated by scc-osd-daemon, as that's
+			# only thing actually knowing what to put here.
 			"Desktop",
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
 		],
+		"drivers" : {				# Map of drivers with values of True, Flase
+									# or additional driver config where needed.
+									# Anything but False means enabled here.
+			"sc_dongle": True,
+			"sc_by_cable": True,
+			"fake": False,			# Used for developement
+			"hiddrv": True,
+			"evdevdrv": True,
+			"ds4drv": True,			# At least one of hiddrv or evdevdrv has to be enabled as well
+		},
 		"fix_xinput" : True,		# If True, attempt is done to deatach emulated controller 
 									# from 'Virtual core pointer' core device.
 		"gui": {
@@ -90,8 +99,6 @@ class Config(object):
 		},
 		# See drivers/sc_dongle.py, read_serial method
 		"ignore_serials" : True,
-		# List of known/enabled evdev devices (none by default)
-		"evdev_devices" : {}
 	}
 	
 	CONTROLLER_DEFAULTS = {

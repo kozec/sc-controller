@@ -474,17 +474,20 @@ if HAVE_EVDEV:
 		_evdevdrv.start()
 	
 	
-	def init(daemon):
-		_evdevdrv.set_daemon(daemon)
-		if HAVE_INOTIFY:
-			_evdevdrv.enable_inotify()
-			daemon.on_rescan(_evdevdrv.scan)
-		else:
-			log.warning("Failed to import pyinotify. Evdev driver will scan for new devices every 5 seconds.")
-			log.warning("Consider installing python-pyinotify package.")
-			daemon.add_mainloop(_evdevdrv.dumb_mainloop)
-else:
-	log.warning("'evdev' package is missing. Evdev support is disabled.")
+def init(daemon, config):
+	if not HAVE_EVDEV:
+		log.warning("'evdev' package is missing. Evdev support is disabled.")
+		return False
+	
+	_evdevdrv.set_daemon(daemon)
+	if HAVE_INOTIFY:
+		_evdevdrv.enable_inotify()
+		daemon.on_rescan(_evdevdrv.scan)
+	else:
+		log.warning("Failed to import pyinotify. Evdev driver will scan for new devices every 5 seconds.")
+		log.warning("Consider installing python-pyinotify package.")
+		daemon.add_mainloop(_evdevdrv.dumb_mainloop)
+	return True
 
 
 def make_new_device(vendor_id, product_id, factory):
@@ -543,6 +546,7 @@ def evdevdrv_test(args):
 
 if __name__ == "__main__":
 	""" Called when executed as script """
+	from scc.tools import init_logging, set_logging_level
 	init_logging()
 	set_logging_level(True, True)
 	sys.exit(evdevdrv_test(sys.argv[0], sys.argv[1:]))

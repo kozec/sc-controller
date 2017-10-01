@@ -54,12 +54,13 @@ SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' *
 
 log = logging.getLogger("SCDongle")
 
-def init(daemon):
+def init(daemon, config):
 	""" Registers hotplug callback for controller dongle """
 	def cb(device, handle):
 		return Dongle(device, handle, daemon)
 	
 	register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
+	return True
 
 
 class Dongle(USBDevice):
