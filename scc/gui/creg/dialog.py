@@ -22,6 +22,7 @@ from scc.gui.app import App
 from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
 from scc.paths import get_config_path, get_share_path
 from scc.tools import nameof, clamp
+from scc.config import Config
 
 import evdev
 import os, logging, json
@@ -85,6 +86,8 @@ class ControllerRegistration(Editor):
 		"""
 		# ... but some cheating first
 		if "keyboard" in dev.name.lower():
+			return False
+		if "touchpad" in dev.name.lower():
 			return False
 		if "mouse" in dev.name.lower():
 			return False
@@ -362,6 +365,19 @@ class ControllerRegistration(Editor):
 		pages = stDialog.get_children()
 		index = pages.index(stDialog.get_visible_child())
 		if index == 0:
+			model, iter = tvDevices.get_selection().get_selected()
+			dev = evdev.InputDevice(model[iter][0])
+			if (dev.info.vendor, dev.info.product) == (0x054c, 0x09cc):
+				# Special case for PS4 controller
+				cbDS4 = self.builder.get_object("cbDS4")
+				imgDS4 = self.builder.get_object("imgDS4")
+				imgDS4.set_from_file(os.path.join(
+						self.app.imagepath, "ds4-small.svg"))
+				cbDS4.set_active(Config()['drivers']['ds4drv'])
+				stDialog.set_visible_child(pages[3])
+				btBack.set_sensitive(True)
+				btNext.set_label("_Restart Emulation")
+				return
 			stDialog.set_visible_child(pages[1])
 			self.load_buttons()
 			self.refresh_controller_image()
@@ -377,6 +393,42 @@ class ControllerRegistration(Editor):
 			self.prepare_registration(dev)
 		elif index == 2:
 			self.save_registration()
+		elif index == 3:
+			# Next pressed on DS4 info page
+			# where it means 'Restart Emulation and close'
+			self.app.dm.stop()
+			GLib.timeout_add_seconds(1, self.app.dm.start)
+			self.kill_tester()
+			self.window.destroy()
+	
+	
+	def on_btBack_clicked(self, *a):
+		stDialog = self.builder.get_object("stDialog")
+		btBack = self.builder.get_object("btBack")
+		btNext = self.builder.get_object("btNext")
+		pages = stDialog.get_children()
+		index = pages.index(stDialog.get_visible_child())
+		if index == 1:
+			stDialog.set_visible_child(pages[0])
+			btBack.set_sensitive(False)
+			btNext.set_sensitive(True)
+		elif index == 2:
+			stDialog.set_visible_child(pages[1])
+			rvController = self.builder.get_object("rvController")
+			self._controller_image.get_parent().remove(self._controller_image)
+			rvController.add(self._controller_image)
+			btNext.set_label("_Next")
+		elif index == 3:
+			stDialog.set_visible_child(pages[0])
+			btNext.set_label("_Next")
+			btBack.set_sensitive(False)
+			btNext.set_sensitive(True)
+	
+	
+	def on_cbDS4_toggled(self, button):
+		config = Config()
+		config['drivers']['ds4drv'] = button.get_active()
+		config.save()
 	
 	
 	def prepare_registration(self, dev):
@@ -504,24 +556,6 @@ class ControllerRegistration(Editor):
 					self._tester.connect('error', self.on_device_open_failed),
 				]
 				GLib.timeout_add_seconds(1, self._tester.start)
-	
-	
-	def on_btBack_clicked(self, *a):
-		stDialog = self.builder.get_object("stDialog")
-		btBack = self.builder.get_object("btBack")
-		btNext = self.builder.get_object("btNext")
-		pages = stDialog.get_children()
-		index = pages.index(stDialog.get_visible_child())
-		if index == 1:
-			stDialog.set_visible_child(pages[0])
-			btBack.set_sensitive(False)
-			btNext.set_sensitive(True)
-		elif index == 2:
-			stDialog.set_visible_child(pages[1])
-			rvController = self.builder.get_object("rvController")
-			self._controller_image.get_parent().remove(self._controller_image)
-			rvController.add(self._controller_image)
-			btNext.set_label("_Next")
 	
 	
 	def cbInvert_toggled_cb(self, cb, *a):
