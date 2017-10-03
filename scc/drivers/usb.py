@@ -324,6 +324,7 @@ def init(daemon, config):
 	_usb._daemon = daemon
 	daemon.on_daemon_exit(_usb.on_exit)
 	daemon.add_mainloop(_usb.mainloop)
+	return True
 
 def start(daemon):
 	_usb.start()
