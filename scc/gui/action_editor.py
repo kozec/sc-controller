@@ -121,6 +121,7 @@ class ActionEditor(Editor):
 				self.builder.get_object("sclSens%s" % (XYZ[i],)),
 				self.builder.get_object("lblSens%s" % (XYZ[i],)),
 				self.builder.get_object("btClearSens%s" % (XYZ[i],)),
+				self.builder.get_object("cbSensInvert%s" % (XYZ[i],)),
 			))
 		for key in AFP:
 			i = AFP.index(key)
@@ -370,7 +371,7 @@ class ActionEditor(Editor):
 
 	def on_btClearSens_clicked(self, source, *a):
 		i = 0
-		for scale, label, button in self.sens_widgets:
+		for scale, label, button, checkbox in self.sens_widgets:
 			if source == button:
 				scale.set_value(self.sens_defaults[i])
 				i += 1
@@ -467,15 +468,17 @@ class ActionEditor(Editor):
 		rvSmoothing = self.builder.get_object("rvSmoothing")
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
-
+		
 		# Sensitivity
 		set_action = False
 		for i in xrange(0, len(self.sens)):
-			if self.sens[i] != self.sens_widgets[i][0].get_value():
-				self.sens[i] = self.sens_widgets[i][0].get_value()
+			target = self.sens_widgets[i][0].get_value()
+			if self.sens_widgets[i][3].get_active():
+				target = -target
+			if self.sens[i] != target:
+				self.sens[i] = target
 				set_action = True
-
-
+		
 		# Feedback
 		if cbFeedback.get_active():
 			feedback_position = FEEDBACK_SIDES[cbFeedbackSide.get_active()]
@@ -684,14 +687,14 @@ class ActionEditor(Editor):
 				else:
 					self.sens[index] = action.speeds[0]
 				action = action.action
-
+		
 		self._recursing = True
 		cbRequireClick.set_active(self.click)
 		cbOSD.set_active(self.osd)
 		sclRotation.set_value(self.rotation_angle)
 		for i in xrange(0, len(self.sens)):
-			self.sens_widgets[i][0].set_value(self.sens[i])
-
+			self.sens_widgets[i][3].set_active(self.sens[i] < 0)
+			self.sens_widgets[i][0].set_value(abs(self.sens[i]))
 		# Feedback
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		lblFeedbackSide = self.builder.get_object("lblFeedbackSide")
@@ -876,7 +879,8 @@ class ActionEditor(Editor):
 		xyz = [ x, y, z ]
 		for i in xrange(0, len(self.sens)):
 			self.sens[i] = xyz[i]
-			self.sens_widgets[i][0].set_value(self.sens[i])
+			self.sens_widgets[i][3].set_active(self.sens[i] < 0)
+			self.sens_widgets[i][0].set_value(abs(self.sens[i]))
 		self._recursing = False
 		self.set_action(self._action)
 		self._selected_component.modifier_updated()
