@@ -423,18 +423,26 @@ class RangeOP(object):
 	
 	
 	def cmp_gt(self, mapper):
+		if mapper.state is None:
+			return False
 		state = float(getattr(mapper.state, self.axis_name)) / self.max
 		return state > self.value
 	
 	def cmp_lt(self, mapper):
+		if mapper.state is None:
+			return False
 		state = float(getattr(mapper.state, self.axis_name)) / self.max
 		return state < self.value
 	
 	def cmp_ge(self, mapper):
+		if mapper.state is None:
+			return False
 		state = float(getattr(mapper.state, self.axis_name)) / self.max
 		return state >= self.value
 	
 	def cmp_le(self, mapper):
+		if mapper.state is None:
+			return False
 		state = float(getattr(mapper.state, self.axis_name)) / self.max
 		return state <= self.value
 	
