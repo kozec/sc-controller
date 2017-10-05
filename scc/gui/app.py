@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, GYROS
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.controller_image import ControllerImage
 from scc.gui.profile_switcher import ProfileSwitcher
@@ -18,7 +18,7 @@ from scc.gui.binding_editor import BindingEditor
 from scc.gui.statusicon import get_status_icon
 from scc.gui.dwsnc import headerbar, IS_UNITY
 from scc.gui.ribar import RIBar
-from scc.tools import check_access, find_gksudo, profile_is_override
+from scc.tools import check_access, find_gksudo, profile_is_override, nameof
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.paths import get_config_path, get_profiles_path
@@ -138,11 +138,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Loads controller config, changes image and hides, shows or disables
 		buttons around it.
 		
-		To make this look less jumpy, Gtk.Stack is used to make transition to empty page is used
-		Does rather complicated magic to change controller image and buttons
-		around it. To create nice transition, new grid is created as new 
-		page in Stack, everything is set up and Stack is then switched to that
-		new page.
+		To make this look less jumpy, Gtk.Stack is used to make transition
+		to empty page and only after that is grid repopulated, everything
+		set up and Stack switched back to original page.
 		"""
 		stckEditor = self.builder.get_object('stckEditor')
 		lblEmpty = self.builder.get_object('lblEmpty')
@@ -152,6 +150,31 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		def do_loading():
 			""" Called after transition is finished """
 			self.background.use_config(config)
+			buttons = config.get('buttons', {}).values()
+			axes = [ a["axis"] for a in config.get('axes', {}).values() ]
+			# Set sensitivity to signalize available inputs
+			# Buttons
+			for b in BUTTONS:
+				w = self.builder.get_object("bt" + nameof(b))
+				if w:
+					w.set_sensitive(nameof(b) in buttons)
+			
+			# Triggers
+			w = self.builder.get_object("btLT")
+			if w: w.set_sensitive("ltrig" in axes)
+			w = self.builder.get_object("btRT")
+			if w: w.set_sensitive("rtrig" in axes)
+			# Sticks & pads
+			for b in PADS + STICKS:
+				w = self.builder.get_object("bt" + nameof(b))
+				if w:
+					w.set_sensitive(b.lower() + "_x" in axes or b.lower() + "_y" in axes)
+			# Gyro
+			for b in GYROS:
+				w = self.builder.get_object("bt" + b)
+				if w:
+					# TODO: Maybe actual detection
+					w.set_sensitive("sc" in controller.get_type() or "ds4" in controller.get_type())
 			# vbC.set_visible(True)
 			stckEditor.set_visible_child(grEditor)
 		
@@ -305,9 +328,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		""" As hilight, but marks GTK Button as well """
 		active = None
 		for b in self.button_widgets.values():
-			b.widget.set_state(Gtk.StateType.NORMAL)
-			if b.name == button:
-				active = b.widget
+			if b.widget.get_sensitive():
+				b.widget.set_state(Gtk.StateType.NORMAL)
+				if b.name == button:
+					active = b.widget
 		
 		if active is not None:
 			active.set_state(Gtk.StateType.ACTIVE)
