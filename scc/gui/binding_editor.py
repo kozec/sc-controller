@@ -20,6 +20,7 @@ from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.action_editor import ActionEditor
 from scc.gui.macro_editor import MacroEditor
+from scc.gui.ae.buttons import is_button_togle
 from scc.gui.ring_editor import RingEditor
 
 
@@ -143,7 +144,7 @@ class BindingEditor(object):
 			# Type is subclass of Macro
 			e = ActionEditor(self.app, self.on_action_chosen)
 			e.set_title(title)
-		elif isinstance(action, Macro):
+		elif isinstance(action, Macro) and not is_button_togle(action):
 			e = MacroEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Macro for %s") % (title,))
 		else:

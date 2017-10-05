@@ -10,6 +10,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, ButtonAction, MouseAction
 from scc.actions import AxisAction, MultiAction, NoAction
+from scc.macros import Cycle, PressAction, ReleaseAction
 from scc.uinput import Rels
 from scc.gui.area_to_action import action_to_area
 from scc.gui.key_grabber import KeyGrabber
@@ -49,7 +50,21 @@ class ButtonsComponent(AEComponent, Chooser):
 	
 	
 	def set_action(self, mode, action):
+		cbToggle = self.builder.get_object("cbToggle")
 		if self.handles(mode, action):
+			self.keys = set()
+			is_togle = False
+			if isinstance(action, MultiAction):
+				for a in action.actions:
+					if isinstance(a, ButtonAction):
+						self.keys.add(a.button)
+			elif isinstance(action, ButtonAction):
+				self.keys.add(action.button)
+			elif isinstance(action, Cycle):
+				# There is only one case when self.handles returns True for Cycle
+				self.keys.add(action.actions[0].action.button)
+				is_togle = True
+			cbToggle.set_active(is_togle)
 			area = action_to_area(action)
 			if area is not None:
 				self.set_active_area(area)
@@ -70,6 +85,8 @@ class ButtonsComponent(AEComponent, Chooser):
 		if isinstance(action, MouseAction):
 			if action.get_axis() == Rels.REL_WHEEL:
 				return True
+		if is_button_togle(action):
+			return True
 		if isinstance(action, MultiAction):
 			if len(action.actions) > 0:
 				for a in action.actions:
@@ -90,13 +107,16 @@ class ButtonsComponent(AEComponent, Chooser):
 		self.apply_keys()
 	
 	
-	def apply_keys(self):
+	def apply_keys(self, *a):
 		""" Common part of on_*key_grabbed """
+		cbToggle = self.builder.get_object("cbToggle")
 		keys = list(self.keys)
 		action = ButtonAction(keys[0])
 		if len(keys) > 1:
 			actions = [ ButtonAction(k) for k in keys ]
 			action = MultiAction(*actions)
+		if cbToggle.get_active():
+			action = Cycle(PressAction(action), ReleaseAction(action))
 		self.editor.set_action(action)
 	
 	
@@ -121,3 +141,16 @@ class ButtonsComponent(AEComponent, Chooser):
 	def hide_axes(self):
 		""" Prevents user from selecting axes """
 		self.axes_allowed = False
+
+
+def is_button_togle(action):
+	if not isinstance(action, Cycle):
+		return False
+	if len(action.actions) != 2:
+		return False
+	if isinstance(action.actions[0], PressAction):
+		if isinstance(action.actions[1], ReleaseAction):
+			if isinstance(action.actions[0].action, ButtonAction):
+				if isinstance(action.actions[1].action, ButtonAction):
+					return action.actions[0].action.button == action.actions[1].action.button
+	return False
