@@ -24,7 +24,7 @@ class Scheduler(object):
 	def schedule(self, delay, callback, *data):
 		"""
 		Schedules one-time task to be executed no sooner than after 'delay' of
-		secounds. Delay may be float number.
+		seconds. Delay may be float number.
 		'callback' is called as callback(*data).
 		
 		Returned Task instance can be used to cancel task once scheduled.

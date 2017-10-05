@@ -22,28 +22,6 @@ VENDOR_ID = 0x054c
 PRODUCT_ID = 0x09cc
 
 
-def init(daemon, config):
-	""" Registers hotplug callback for ds4 device """
-	def cb(device, handle):
-		return DS4Controller(device, daemon, handle, None, None)
-	
-	def fail_cb(vid, pid):
-		if HAVE_EVDEV:
-			log.warning("Failed to acquire USB device, falling back to evdev driver. This is far from optimal.")
-			make_new_device(vid, pid, evdev_make_device_callback)
-		else:
-			log.error("Failed to acquire USB device and evdev is not available. Everything is lost and DS4 support disabled.")
-			# TODO: Maybe add_error here, but error reporting needs little rework so it's not threated as fatal
-			# daemon.add_error("ds4", "No access to DS4 device")
-	
-	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
-		register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
-		return True
-	else:
-		log.warning("Neither HID nor Evdev driver is enabled, DS4 support cannot be enabled.")
-		return False
-
-
 class DS4Controller(HIDController):
 	# Most of axes are the same
 	BUTTON_MAP = (
@@ -276,32 +254,61 @@ class DS4EvdevController(EvdevController):
 		return id
 
 
-def evdev_make_device_callback(daemon, evdevdevices):
-	# With kernel 4.10 or later, PS4 controller pretends to be 3 different devices.
-	# 1st, determining which one is actual controller is needed
-	controllerdevice = None
-	for device in evdevdevices:
-		count = len(get_axes(device))
-		if count == 8:
-			# 8 axes - Controller
-			controllerdevice = device
-	if not controllerdevice:
-		return
-	# 2nd, find motion sensor and touchpad with physical address matching
-	# controllerdevice
-	motion, touchpad = None, None
-	phys = device.phys.split("/")[0]
-	for device in evdevdevices:
-		if device.phys.startswith(phys):
+def init(daemon, config):
+	""" Registers hotplug callback for ds4 device """
+		
+	def hid_callback(device, handle):
+		return DS4Controller(device, daemon, handle, None, None)
+	
+	
+	def evdev_make_device_callback(daemon, evdevdevices):
+		# With kernel 4.10 or later, PS4 controller pretends to be 3 different devices.
+		# 1st, determining which one is actual controller is needed
+		controllerdevice = None
+		print evdevdevices
+		for device in evdevdevices:
 			count = len(get_axes(device))
-			if count == 6:
-				# 6 axes - Motion sensor
-				motion = device
-			elif count == 4:
-				# 4 axes - Touchpad
-				touchpad = device
-	# 3rd, do a magic
-	return DS4EvdevController(daemon, controllerdevice, motion, touchpad)
+			print "device", device, count
+			if count == 8:
+				# 8 axes - Controller
+				controllerdevice = device
+		print ">>>", controllerdevice
+		if not controllerdevice:
+			log.warning("Failed to determine controller device")
+			return
+		# 2nd, find motion sensor and touchpad with physical address matching
+		# controllerdevice
+		motion, touchpad = None, None
+		phys = device.phys.split("/")[0]
+		for device in evdevdevices:
+			if device.phys.startswith(phys):
+				count = len(get_axes(device))
+				if count == 6:
+					# 6 axes - Motion sensor
+					motion = device
+				elif count == 4:
+					# 4 axes - Touchpad
+					touchpad = device
+		# 3rd, do a magic
+		return DS4EvdevController(daemon, controllerdevice, motion, touchpad)
+	
+	
+	def fail_cb(vid, pid):
+		if HAVE_EVDEV:
+			log.warning("Failed to acquire USB device, falling back to evdev driver. This is far from optimal.")
+			make_new_device(vid, pid, evdev_make_device_callback)
+		else:
+			log.error("Failed to acquire USB device and evdev is not available. Everything is lost and DS4 support disabled.")
+			# TODO: Maybe add_error here, but error reporting needs little rework so it's not threated as fatal
+			# daemon.add_error("ds4", "No access to DS4 device")
+	
+	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
+		register_hotplug_device(hid_callback, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
+		return True
+	else:
+		log.warning("Neither HID nor Evdev driver is enabled, DS4 support cannot be enabled.")
+		return False
+
 
 if __name__ == "__main__":
 	""" Called when executed as script """

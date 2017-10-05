@@ -366,7 +366,7 @@ class EvdevDriver(object):
 		log.debug("Evdev device added: %s", dev.name)
 	
 	
-	def make_new_device(self, vendor_id, product_id, factory):
+	def make_new_device(self, vendor_id, product_id, factory, repeat=0):
 		"""
 		Similar to handle_new_device, but meant for use by other drivers.
 		See global make_new_device method for more info
@@ -380,13 +380,17 @@ class EvdevDriver(object):
 			if dev.fn not in self._devices:
 				if vendor_id == dev.info.vendor and product_id == dev.info.product:
 					devices.append(dev)
+		if len(devices) == 0 and repeat < 2:
+			# Sometimes evdev is slow; Give it another try
+			self.daemon.get_scheduler().schedule(1, self.make_new_device, vendor_id, product_id, factory, repeat + 1)
+			return
+		
 		controller = factory(self.daemon, devices)
 		if controller:
 			self._devices[controller.device.fn] = controller
 			self.daemon.add_controller(controller)
 			log.debug("Evdev device added: %s", controller.device.name)
-			return controller
-		return None
+	
 	
 	def device_removed(self, dev):
 		if dev.fn in self._devices:
