@@ -36,7 +36,9 @@ TRIGGERS = "ltrig", "rtrig"
 FIRST_BUTTON = 288
 
 EvdevControllerInput = namedtuple('EvdevControllerInput',
-	'buttons ltrig rtrig stick_x stick_y lpad_x lpad_y rpad_x rpad_y cpad_x cpad_y'
+	'buttons ltrig rtrig stick_x stick_y lpad_x lpad_y rpad_x rpad_y '
+	'gpitch groll gyaw q1 q2 q3 q4 '
+	'cpad_x cpad_y'
 )
 
 AxisCalibrationData = namedtuple('AxisCalibrationData',

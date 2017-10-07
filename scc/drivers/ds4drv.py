@@ -149,6 +149,8 @@ class DS4Controller(HIDController):
 
 
 class DS4EvdevController(EvdevController):
+	TOUCH_FACTOR_X = STICK_PAD_MAX / 940.0
+	TOUCH_FACTOR_Y = STICK_PAD_MAX / 470.0
 	BUTTON_MAP = {
 		304: "A",
 		305: "B",
@@ -195,7 +197,14 @@ class DS4EvdevController(EvdevController):
 		16: { "axis": "lpad_x", "deadzone": 0, "max": 1, "min": -1 },
 		17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
 	}
-	
+	MOTION_MAP = {
+		EvdevController.ECODES.ABS_RX : 'gpitch',
+		EvdevController.ECODES.ABS_RY : 'groll',
+		EvdevController.ECODES.ABS_RZ : 'gyaw',
+		EvdevController.ECODES.ABS_X : 'q1',
+		EvdevController.ECODES.ABS_Y : 'q2',
+		EvdevController.ECODES.ABS_Z : 'q3',
+	}
 	
 	def __init__(self, daemon, controllerdevice, motion, touchpad):
 		config = {
@@ -216,6 +225,21 @@ class DS4EvdevController(EvdevController):
 		EvdevController.__init__(self, daemon, controllerdevice, None, config)
 		if self.poller:
 			self.poller.register(touchpad.fd, self.poller.POLLIN, self._touchpad_input)
+			self.poller.register(motion.fd, self.poller.POLLIN, self._motion_input)
+	
+	
+	def _motion_input(self, *a):
+		new_state = self._state
+		for event in self._motion.read():
+			if event.type == self.ECODES.EV_ABS:
+				new_state = new_state._replace(**{
+					DS4EvdevController.MOTION_MAP[event.code] : event.value
+				})
+		
+		if new_state is not self._state:
+			old_state, self._state = self._state, new_state
+			if self.mapper:
+				self.mapper.input(self, old_state, new_state)
 	
 	
 	def _touchpad_input(self, *a):
@@ -223,11 +247,11 @@ class DS4EvdevController(EvdevController):
 		for event in self._touchpad.read():
 			if event.type == self.ECODES.EV_ABS:
 				if event.code == self.ECODES.ABS_MT_POSITION_X:
-					value = event.value * 2.0 * STICK_PAD_MAX / 1880.0
+					value = event.value * DS4EvdevController.TOUCH_FACTOR_X
 					value = STICK_PAD_MIN + int(value)
 					new_state = new_state._replace(cpad_x = value)
 				elif event.code == self.ECODES.ABS_MT_POSITION_Y:
-					value = event.value * 2.0 * STICK_PAD_MAX / 941.0
+					value = event.value * DS4EvdevController.TOUCH_FACTOR_Y
 					value = STICK_PAD_MIN + int(value)
 					new_state = new_state._replace(cpad_y = value)
 			elif event.type == 0:
@@ -247,8 +271,8 @@ class DS4EvdevController(EvdevController):
 					b = new_state.buttons & ~SCButtons.CPADTOUCH
 					new_state = new_state._replace(buttons = b,
 							cpad_x = 0, cpad_y = 0)
+		
 		if new_state is not self._state:
-			# Something got changed
 			old_state, self._state = self._state, new_state
 			if self.mapper:
 				self.mapper.input(self, old_state, new_state)
