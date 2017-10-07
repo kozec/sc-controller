@@ -36,7 +36,7 @@ TRIGGERS = "ltrig", "rtrig"
 FIRST_BUTTON = 288
 
 EvdevControllerInput = namedtuple('EvdevControllerInput',
-	'buttons ltrig rtrig stick_x stick_y lpad_x lpad_y rpad_x rpad_y'
+	'buttons ltrig rtrig stick_x stick_y lpad_x lpad_y rpad_x rpad_y cpad_x cpad_y'
 )
 
 AxisCalibrationData = namedtuple('AxisCalibrationData',
@@ -50,6 +50,7 @@ class EvdevController(Controller):
 	as SCController class does.
 	"""
 	PADPRESS_EMULATION_TIMEOUT = 0.2
+	ECODES = evdev.ecodes
 	
 	def __init__(self, daemon, device, config_file, config):
 		try:
@@ -63,6 +64,7 @@ class EvdevController(Controller):
 		self.config_file = config_file
 		self.config = config
 		self.daemon = daemon
+		self.poller = None
 		if daemon:
 			self.poller = daemon.get_poller()
 			self.poller.register(self.device.fd, self.poller.POLLIN, self.input)

@@ -214,6 +214,44 @@ class DS4EvdevController(EvdevController):
 			if device:
 				device.grab()
 		EvdevController.__init__(self, daemon, controllerdevice, None, config)
+		if self.poller:
+			self.poller.register(touchpad.fd, self.poller.POLLIN, self._touchpad_input)
+	
+	
+	def _touchpad_input(self, *a):
+		new_state = self._state
+		for event in self._touchpad.read():
+			if event.type == self.ECODES.EV_ABS:
+				if event.code == self.ECODES.ABS_MT_POSITION_X:
+					value = event.value * 2.0 * STICK_PAD_MAX / 1880.0
+					value = STICK_PAD_MIN + int(value)
+					new_state = new_state._replace(cpad_x = value)
+				elif event.code == self.ECODES.ABS_MT_POSITION_Y:
+					value = event.value * 2.0 * STICK_PAD_MAX / 941.0
+					value = STICK_PAD_MIN + int(value)
+					new_state = new_state._replace(cpad_y = value)
+			elif event.type == 0:
+				pass
+			elif event.code == self.ECODES.BTN_LEFT:
+				if event.value == 1:
+					b = new_state.buttons | SCButtons.CPAD
+					new_state = new_state._replace(buttons = b)
+				else:
+					b = new_state.buttons & ~SCButtons.CPAD
+					new_state = new_state._replace(buttons = b)
+			elif event.code == self.ECODES.BTN_TOUCH:
+				if event.value == 1:
+					b = new_state.buttons | SCButtons.CPADTOUCH
+					new_state = new_state._replace(buttons = b)
+				else:
+					b = new_state.buttons & ~SCButtons.CPADTOUCH
+					new_state = new_state._replace(buttons = b,
+							cpad_x = 0, cpad_y = 0)
+		if new_state is not self._state:
+			# Something got changed
+			old_state, self._state = self._state, new_state
+			if self.mapper:
+				self.mapper.input(self, old_state, new_state)
 	
 	
 	def close(self):
@@ -265,14 +303,11 @@ def init(daemon, config):
 		# With kernel 4.10 or later, PS4 controller pretends to be 3 different devices.
 		# 1st, determining which one is actual controller is needed
 		controllerdevice = None
-		print evdevdevices
 		for device in evdevdevices:
 			count = len(get_axes(device))
-			print "device", device, count
 			if count == 8:
 				# 8 axes - Controller
 				controllerdevice = device
-		print ">>>", controllerdevice
 		if not controllerdevice:
 			log.warning("Failed to determine controller device")
 			return
