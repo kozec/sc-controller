@@ -230,11 +230,15 @@ class DS4EvdevController(EvdevController):
 	
 	def _motion_input(self, *a):
 		new_state = self._state
-		for event in self._motion.read():
-			if event.type == self.ECODES.EV_ABS:
-				new_state = new_state._replace(**{
-					DS4EvdevController.MOTION_MAP[event.code] : event.value
-				})
+		try:
+			for event in self._motion.read():
+				if event.type == self.ECODES.EV_ABS:
+					new_state = new_state._replace(**{
+						DS4EvdevController.MOTION_MAP[event.code] : event.value
+					})
+		except IOError, e:
+			# Errors here are not even reported, evdev class handles important ones
+			return
 		
 		if new_state is not self._state:
 			old_state, self._state = self._state, new_state
@@ -244,33 +248,37 @@ class DS4EvdevController(EvdevController):
 	
 	def _touchpad_input(self, *a):
 		new_state = self._state
-		for event in self._touchpad.read():
-			if event.type == self.ECODES.EV_ABS:
-				if event.code == self.ECODES.ABS_MT_POSITION_X:
-					value = event.value * DS4EvdevController.TOUCH_FACTOR_X
-					value = STICK_PAD_MIN + int(value)
-					new_state = new_state._replace(cpad_x = value)
-				elif event.code == self.ECODES.ABS_MT_POSITION_Y:
-					value = event.value * DS4EvdevController.TOUCH_FACTOR_Y
-					value = STICK_PAD_MIN + int(value)
-					new_state = new_state._replace(cpad_y = value)
-			elif event.type == 0:
-				pass
-			elif event.code == self.ECODES.BTN_LEFT:
-				if event.value == 1:
-					b = new_state.buttons | SCButtons.CPAD
-					new_state = new_state._replace(buttons = b)
-				else:
-					b = new_state.buttons & ~SCButtons.CPAD
-					new_state = new_state._replace(buttons = b)
-			elif event.code == self.ECODES.BTN_TOUCH:
-				if event.value == 1:
-					b = new_state.buttons | SCButtons.CPADTOUCH
-					new_state = new_state._replace(buttons = b)
-				else:
-					b = new_state.buttons & ~SCButtons.CPADTOUCH
-					new_state = new_state._replace(buttons = b,
-							cpad_x = 0, cpad_y = 0)
+		try:
+			for event in self._touchpad.read():
+				if event.type == self.ECODES.EV_ABS:
+					if event.code == self.ECODES.ABS_MT_POSITION_X:
+						value = event.value * DS4EvdevController.TOUCH_FACTOR_X
+						value = STICK_PAD_MIN + int(value)
+						new_state = new_state._replace(cpad_x = value)
+					elif event.code == self.ECODES.ABS_MT_POSITION_Y:
+						value = event.value * DS4EvdevController.TOUCH_FACTOR_Y
+						value = STICK_PAD_MIN + int(value)
+						new_state = new_state._replace(cpad_y = value)
+				elif event.type == 0:
+					pass
+				elif event.code == self.ECODES.BTN_LEFT:
+					if event.value == 1:
+						b = new_state.buttons | SCButtons.CPAD
+						new_state = new_state._replace(buttons = b)
+					else:
+						b = new_state.buttons & ~SCButtons.CPAD
+						new_state = new_state._replace(buttons = b)
+				elif event.code == self.ECODES.BTN_TOUCH:
+					if event.value == 1:
+						b = new_state.buttons | SCButtons.CPADTOUCH
+						new_state = new_state._replace(buttons = b)
+					else:
+						b = new_state.buttons & ~SCButtons.CPADTOUCH
+						new_state = new_state._replace(buttons = b,
+								cpad_x = 0, cpad_y = 0)
+		except IOError, e:
+			# Errors here are not even reported, evdev class handles important ones
+			return
 		
 		if new_state is not self._state:
 			old_state, self._state = self._state, new_state
@@ -282,6 +290,7 @@ class DS4EvdevController(EvdevController):
 		EvdevController.close(self)
 		for device in (self._motion, self._touchpad):
 			try:
+				self.poller.unregister(device.fd)
 				device.ungrab()
 			except: pass
 	

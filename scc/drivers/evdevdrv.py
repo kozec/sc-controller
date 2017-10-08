@@ -266,7 +266,8 @@ class EvdevController(Controller):
 		if new_state is not self._state:
 			# Something got changed
 			old_state, self._state = self._state, new_state
-			self.mapper.input(self, old_state, new_state)
+			if self.mapper:
+				self.mapper.input(self, old_state, new_state)
 		
 		if need_reschedule:
 			self._padpressemu_task = mapper.schedule(
