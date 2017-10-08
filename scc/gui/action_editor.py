@@ -244,18 +244,23 @@ class ActionEditor(Editor):
 		"""
 		Forces action editor to display page with specified component.
 		If 'remove_rest' is True, removes all other pages.
-
+		
 		Returns 'component'
 		"""
+		if type(component) == str:
+			component = self.load_component(component)
+			return self.force_page(component, remove_rest)
+		
 		stActionModes = self.builder.get_object("stActionModes")
 		component.load()
-		for c in stActionModes.get_children():
-			if c != component:
-				stActionModes.remove(c)
-
+		if remove_rest:
+			for c in stActionModes.get_children():
+				if c != component:
+					stActionModes.remove(c)
+		
 		if component.get_widget() not in stActionModes.get_children():
 			stActionModes.add(component.get_widget())
-
+		
 		component.set_action(self._mode, self._action)
 		if self._selected_component is not None:
 			if self._selected_component != component:
@@ -264,10 +269,10 @@ class ActionEditor(Editor):
 		self._selected_component.shown()
 		stActionModes.set_visible_child(component.get_widget())
 		stActionModes.show_all()
-
+		
 		return component
-
-
+	
+	
 	def get_name(self):
 		""" Returns action name as set in editor entry """
 		entName = self.builder.get_object("entName")
@@ -741,6 +746,14 @@ class ActionEditor(Editor):
 		return action
 	
 	
+	def reset_active_component(self):
+		"""
+		Forgets what component was selected so next call to set_action
+		selects new one.
+		"""
+		self._selected_component = None
+	
+	
 	def set_action(self, action, from_custom=False):
 		"""
 		Updates Action field(s) on bottom and recolors apropriate image area,
@@ -784,6 +797,13 @@ class ActionEditor(Editor):
 				c = self.load_component("custom")
 				if c in self.components and (self._mode & c.CTXS) != 0:
 					self._selected_component = c
+			elif not action:
+				self._selected_component = self.load_component("first_page")
+				stActionModes = self.builder.get_object("stActionModes")
+				self._selected_component.load()
+				self._selected_component.shown()
+				stActionModes.add(self._selected_component.get_widget())
+				stActionModes.set_visible_child(self._selected_component.get_widget())
 			if self._selected_component:
 				if self._selected_component in self.c_buttons:
 					self.c_buttons[self._selected_component].set_active(True)
@@ -793,7 +813,6 @@ class ActionEditor(Editor):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
 			log.warning(action.to_string())
-		
 		
 		if cbPreview.get_sensitive() and cbPreview.get_active():
 			self.apply_preview(action)
@@ -908,15 +927,18 @@ class ActionEditor(Editor):
 		self._recursing = False
 		if update:
 			self.update_modifiers()
-
-
+	
+	
+	def get_mode(self):
+		return self._mode
+	
+	
 	def _set_mode(self, action, mode):
 		""" Common part of editor setup """
 		self._mode = mode
 		# Clear pages and 'action type' buttons
 		entName = self.builder.get_object("entName")
 		vbActionButtons = self.builder.get_object("vbActionButtons")
-		stActionModes = self.builder.get_object("stActionModes")
 		stActionModes = self.builder.get_object("stActionModes")
 
 		# Go throgh list of components and display buttons that are usable
