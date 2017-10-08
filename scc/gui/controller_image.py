@@ -22,6 +22,19 @@ class ControllerImage(SVGWidget):
 		SCButtons.BACK, SCButtons.C, SCButtons.START
 	)
 	
+	DEFAULT_AXES = (
+		# Shared between DS4 and Steam Controller
+		"stick_x", "stick_y", "lpad_x", "lpad_x",
+		"rpad_y", "rpad_y", "ltrig", "rtrig",
+	)
+	
+	DEFAULT_BUTTONS = [ nameof(x) for x in BUTTONS_WITH_IMAGES ] + [
+		# Used only by Steam Controller
+		nameof(SCButtons.LB), nameof(SCButtons.RB),
+		nameof(SCButtons.LGRIP), nameof(SCButtons.RGRIP),
+	]
+	
+	
 	def __init__(self, app, config=None):
 		self.app = app
 		self.current = self._ensure_config({})
@@ -48,7 +61,24 @@ class ControllerImage(SVGWidget):
 		data['gui'] = data.get('gui', {})
 		data['gui']['background'] = data['gui'].get("background", "sc")
 		data['gui']['buttons'] = data['gui'].get("buttons") or self._get_default_images()
+		data['buttons'] = data.get("buttons") or ControllerImage.DEFAULT_BUTTONS
+		data['axes'] = data.get("axes") or ControllerImage.DEFAULT_AXES
+		data['gyros'] = data.get("gyros", data['gui']["background"] == "sc")
 		return data
+	
+	
+	@staticmethod
+	def get_names(dict_or_tuple):
+		"""
+		There are three different ways how button and axis names are stored
+		in config. This wrapper provides unified way to get list of them.
+		"""
+		if type(dict_or_tuple) in (list, tuple):
+			return dict_or_tuple
+		return [
+			(x["axis"] if type(x) == dict else x)
+			for x in dict_or_tuple.values()
+		]
 	
 	
 	def load_config(self, filename):

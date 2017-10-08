@@ -7,19 +7,10 @@
 		]
 	},
 	
-	"_ " : "Buttons and axes mappings not actually loaded from here, but gui",
+	"_ " : "Buttons defined here are not actually loaded by driver, but gui",
 	"__" : "uses list to determine what buttons and axes are available",
 	
-	"axes": {
-		"0": { "axis": "stick_x" },
-		"1": { "axis": "stick_y" },
-		"2": { "axis": "lpad_x" },
-		"3": { "axis": "lpad_x" },
-		"4": { "axis": "rpad_y" },
-		"5": { "axis": "rpad_y" },
-		"6": { "axis": "ltrig" },
-		"7": { "axis": "rtrig" }
-	},
+	"gyros": true,
 	"buttons": {
 		"288": "Y",
 		"289": "B",

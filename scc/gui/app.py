@@ -146,12 +146,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		lblEmpty = self.builder.get_object('lblEmpty')
 		grEditor = self.builder.get_object('grEditor')
 		vbC = self.builder.get_object('vbC')
+		config = self.background.load_config(controller.get_gui_config_file())
 		
 		def do_loading():
 			""" Called after transition is finished """
 			self.background.use_config(config)
-			buttons = config.get('buttons', {}).values()
-			axes = [ a["axis"] for a in config.get('axes', {}).values() ]
+			buttons = ControllerImage.get_names(config.get('buttons', {}))
+			axes = ControllerImage.get_names(config.get('axes', {}))
+			gyros = config.get('gyros', False)
 			# Set sensitivity to signalize available inputs
 			# Buttons
 			for b in BUTTONS:
@@ -174,11 +176,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				w = self.builder.get_object("bt" + b)
 				if w:
 					# TODO: Maybe actual detection
-					w.set_sensitive("sc" in controller.get_type() or "ds4" in controller.get_type())
+					w.set_sensitive(gyros)
 			# vbC.set_visible(True)
 			stckEditor.set_visible_child(grEditor)
 		
-		config = self.background.load_config(controller.get_gui_config_file())
 		if first:
 			b1 = self.background.get_config()['gui']['background']
 			b2 = config['gui']['background']
