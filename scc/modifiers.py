@@ -874,7 +874,7 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 	
 	
 	def get_child_actions(self):
-		return self.actions
+		return self.action, self.normalaction, self.holdaction
 	
 	
 	@staticmethod
