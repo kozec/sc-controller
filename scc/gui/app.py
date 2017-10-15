@@ -1323,6 +1323,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			except Exception, e:
 				log.warning("Failed to read release notes")
 				log.exception(e)
+				log.warning("(above error is not fatal and can be ignored)")
 				return
 		
 		f.read_async(0, None, http_ready, buffer)
