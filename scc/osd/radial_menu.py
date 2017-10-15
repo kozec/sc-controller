@@ -24,6 +24,8 @@ log = logging.getLogger("osd.menu")
 
 
 class RadialMenu(Menu):
+	RECOLOR_BACKGROUNDS = ( "background" )
+	RECOLOR_STROKES = ( "menuitem_template" )
 	MIN_DISTANCE = 3000		# Minimal cursor distance from center (in px^2)
 	ICON_SIZE = 96
 	
@@ -39,7 +41,33 @@ class RadialMenu(Menu):
 		background = os.path.join(get_share_path(), "images", 'radial-menu.svg')
 		self.b = SVGWidget(self, background)
 		self.b.connect('size-allocate', self.on_size_allocate)
+		self.recolor()
 		return self.b
+	
+	
+	def recolor(self):
+		config = Config()
+		source_colors = {
+			"background": "160c00",
+			"border": "00FF00",
+			"text": "00FF00",
+			"menuitem_border": "004000",
+			"menuitem_hilight": "000070",
+			"menuitem_hilight_text": "FFFFFF",
+			"menuitem_hilight_border": "00FF00",
+		}
+		editor = self.b.edit()
+		
+		for k in RadialMenu.RECOLOR_BACKGROUNDS:
+			if k in config['osk_colors'] and k in source_colors:
+				editor.recolor_background(source_colors[k], config['osk_colors'][k])
+		editor.recolor_background(source_colors["background"], config['osd_colors']["background"])
+		
+		for k in RadialMenu.RECOLOR_STROKES:
+			if k in config['osk_colors'] and k in source_colors:
+				editor.recolor_strokes(source_colors[k], config['osk_colors'][k])
+		
+		editor.commit()
 	
 	
 	def on_size_allocate(self, trash, allocation):
@@ -61,7 +89,6 @@ class RadialMenu(Menu):
 			w = int(w * self.scale)
 			h = int(h * self.scale)
 		return w, h
-		
 	
 	
 	def _add_arguments(self):
