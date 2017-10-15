@@ -296,6 +296,7 @@ class StatusIconAppIndicator(StatusIconDBus):
 
 
 class StatusIconProxy(StatusIcon):
+	
 	def __init__(self, *args, **kwargs):
 		StatusIcon.__init__(self, *args, **kwargs)
 		
@@ -363,6 +364,13 @@ class StatusIconProxy(StatusIcon):
 		
 		# Update fallback icon
 		self.set(self._icon, self._text)
+	
+	def is_clickable(self):
+		if self._status_gtk:
+			return self._status_gtk.is_clickable()
+		if self._status_fb:
+			return self._status_fb.is_clickable()
+		return False
 	
 	def set(self, icon=None, text=None):
 		self._icon = icon
