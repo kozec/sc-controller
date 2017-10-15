@@ -17,15 +17,15 @@ from scc.tools import degdiff, find_icon
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
 from scc.config import Config
-from math import pi as PI, sqrt, atan2, sin, cos
+from math import pi as PI, atan2, sin, cos
 
-import os, sys, logging
+import os, sys, json, logging
 log = logging.getLogger("osd.menu")
 
 
 class RadialMenu(Menu):
-	RECOLOR_BACKGROUNDS = ( "background" )
-	RECOLOR_STROKES = ( "menuitem_template" )
+	RECOLOR_BACKGROUNDS = ( "background", "menuitem_hilight_border", "text" )
+	RECOLOR_STROKES = ( "border", "menuitem_border" )
 	MIN_DISTANCE = 3000		# Minimal cursor distance from center (in px^2)
 	ICON_SIZE = 96
 	
@@ -47,25 +47,26 @@ class RadialMenu(Menu):
 	
 	def recolor(self):
 		config = Config()
-		source_colors = {
-			"background": "160c00",
-			"border": "00FF00",
-			"text": "00FF00",
-			"menuitem_border": "004000",
-			"menuitem_hilight": "000070",
-			"menuitem_hilight_text": "FFFFFF",
-			"menuitem_hilight_border": "00FF00",
-		}
+		source_colors = {}
+		try:
+			# Try to read json file and bail out if it fails
+			desc = os.path.join(get_share_path(), "images", 'radial-menu.svg.json')
+			source_colors = json.loads(open(desc, "r").read())['colors']
+		except Exception, e:
+			log.warning("Failed to load keyboard description")
+			log.warning(e)
+			return
 		editor = self.b.edit()
 		
 		for k in RadialMenu.RECOLOR_BACKGROUNDS:
-			if k in config['osk_colors'] and k in source_colors:
-				editor.recolor_background(source_colors[k], config['osk_colors'][k])
+			if k in config['osd_colors'] and k in source_colors:
+				editor.recolor_background(source_colors[k], config['osd_colors'][k])
 		editor.recolor_background(source_colors["background"], config['osd_colors']["background"])
 		
 		for k in RadialMenu.RECOLOR_STROKES:
-			if k in config['osk_colors'] and k in source_colors:
-				editor.recolor_strokes(source_colors[k], config['osk_colors'][k])
+			if k in config['osd_colors'] and k in source_colors:
+				print "REC", source_colors[k], config['osd_colors'][k]
+				editor.recolor_strokes(source_colors[k], config['osd_colors'][k])
 		
 		editor.commit()
 	

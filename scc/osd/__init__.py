@@ -13,7 +13,7 @@ from scc.osd.timermanager import TimerManager
 from scc.lib import xwrappers as X
 from scc.config import Config
 
-import os, sys, argparse, traceback, logging
+import argparse, traceback, logging
 log = logging.getLogger("osd")
 
 
