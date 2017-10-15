@@ -7,8 +7,8 @@ Main application window
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gdk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, GYROS
+from gi.repository import Gtk, Gdk, Gio, GLib, GObject
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.controller_image import ControllerImage
 from scc.gui.profile_switcher import ProfileSwitcher
@@ -354,6 +354,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def show_editor(self, id):
 		action = self.get_action(self.current, id)
 		ae = self.choose_editor(action, "", id)
+		ae.allow_first_page()
 		ae.set_input(id, action)
 		ae.show(self.window)
 	
@@ -1419,6 +1420,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			except Exception, e:
 				log.warning("Failed to read release notes")
 				log.exception(e)
+				log.warning("(above error is not fatal and can be ignored)")
 				return
 		
 		f.read_async(0, None, http_ready, buffer)
@@ -1507,7 +1509,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 					# Failed. Just do nothing
 					return
 			if giofile.get_path():
-				path = giofile.get_path()
+				path = giofile.get_path().decode("utf-8")
 				filetype = Dialog.determine_type(path)
 				if filetype:
 					log.info("Importing '%s'..." % (filetype))

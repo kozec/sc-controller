@@ -623,7 +623,7 @@ class ModeModifier(Modifier):
 		self.held_buttons = set()
 		self.held_sticks = set()
 		self.held_triggers = {}
-		self.old_gyro = None
+		self.old_action = None
 		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
 		
 		button = None
@@ -803,10 +803,11 @@ class ModeModifier(Modifier):
 	
 	def gyro(self, mapper, pitch, yaw, roll, *q):
 		sel = self.select(mapper)
-		if sel is not self.old_gyro:
-			if self.old_gyro:
-				self.old_gyro.gyro(mapper, 0, 0, 0, *q)
-			self.old_gyro = sel
+		if sel is not self.old_action:
+			if self.old_action:
+				self.old_action.gyro(mapper, 0, 0, 0, *q)
+				sel.shifted_from(mapper, self.old_action)
+			self.old_action = sel
 		return sel.gyro(mapper, pitch, yaw, roll, *q)
 	
 	
@@ -825,7 +826,17 @@ class ModeModifier(Modifier):
 				for b in self.held_sticks:
 					b.whole(mapper, x, y, what)
 		else:
-			return self.select(mapper).whole(mapper, x, y, what)
+			sel = self.select(mapper)
+			if sel is not self.old_action:
+				mapper.set_button(what, False)
+				if self.old_action:
+					self.old_action.whole(mapper, 0, 0, what)
+				self.old_action = sel
+				rv = sel.whole(mapper, x, y, what)
+				mapper.set_button(what, True)
+				return rv
+			else:
+				return sel.whole(mapper, x, y, what)
 
 
 class DoubleclickModifier(Modifier, HapticEnabledAction):
@@ -863,7 +874,7 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 	
 	
 	def get_child_actions(self):
-		return self.actions
+		return self.action, self.normalaction, self.holdaction
 	
 	
 	@staticmethod

@@ -42,6 +42,8 @@ class SimpleChooser(Editor):
 		if self.component is None:
 			raise ValueError("Unknown component '%s'" % (component_name,))
 		self.component.load()
+		if component_name == "buttons":
+			self.component.hide_toggle()
 		self.window.add(self.component.get_widget())
 	
 	
