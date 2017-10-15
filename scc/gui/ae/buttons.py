@@ -122,7 +122,6 @@ class ButtonsComponent(AEComponent, Chooser):
 		""" Common part of on_*key_grabbed """
 		cbToggle = self.builder.get_object("cbToggle")
 		keys = list(sorted(self.keys, key=ButtonsComponent.modifiers_first))
-		print keys
 		action = ButtonAction(keys[0])
 		if len(keys) > 1:
 			actions = [ ButtonAction(k) for k in keys ]
@@ -148,6 +147,20 @@ class ButtonsComponent(AEComponent, Chooser):
 		kg = KeyGrabber(self.app)
 		kg.grab(self.editor.window, self.editor._action,
 				self.on_additional_key_grabbed)
+	
+	
+	def hide_toggle(self):
+		""" Hides 'set as toggle button' option """
+		cbToggle = self.builder.get_object("cbToggle")
+		btnGrabAnother = self.builder.get_object("btnGrabAnother")
+		replacement = Gtk.Label("")
+		replacement.set_size_request(*cbToggle.get_size_request())
+		btnGrabAnother.set_visible(False)
+		parent = cbToggle.get_parent()
+		parent.remove(cbToggle)
+		parent.pack_start(replacement, True, True, 0)
+		parent.reorder_child(replacement, 0)
+		replacement.set_visible(True)
 	
 	
 	def hide_axes(self):

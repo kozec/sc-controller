@@ -373,6 +373,11 @@ class ModeshiftEditor(Editor):
 		actionButton.set_label(self.nomods[index].describe(self.mode))
 	
 	
+	def allow_first_page(self):
+		""" For compatibility with action editor. Does nothing """
+		pass
+	
+	
 	def set_input(self, id, action, mode=None):
 		btDefault = self.builder.get_object("btDefault")
 		lblPressAlone = self.builder.get_object("lblPressAlone")

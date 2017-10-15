@@ -100,6 +100,7 @@ class ActionEditor(Editor):
 		self.click = False				# Click modifier value. None for disabled
 		self.rotation_angle = 0			# RotateInputModifier angle
 		self.osd = False				# 'OSD enabled' value.
+		self.first_page_allowed = False
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback		# This is different callback than ButtonChooser uses
@@ -247,7 +248,7 @@ class ActionEditor(Editor):
 		
 		Returns 'component'
 		"""
-		if type(component) == str:
+		if type(component) in (unicode, str):
 			component = self.load_component(component)
 			return self.force_page(component, remove_rest)
 		
@@ -650,8 +651,8 @@ class ActionEditor(Editor):
 			else:
 				return action
 		return action
-
-
+	
+	
 	def load_modifiers(self, action, index=-1):
 		"""
 		Parses action for modifiers and updates UI accordingly.
@@ -660,7 +661,7 @@ class ActionEditor(Editor):
 		cbRequireClick = self.builder.get_object("cbRequireClick")
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
-
+		
 		while ActionEditor.is_editable_modifier(action):
 			if isinstance(action, RotateInputModifier):
 				self.rotation_angle = action.angle
@@ -714,7 +715,7 @@ class ActionEditor(Editor):
 				w.set_sensitive(self.feedback_position is not None)
 		lblFeedbackSide.set_sensitive(self.feedback_position is not None)
 		cbFeedbackSide.set_sensitive(self.feedback_position is not None)
-
+		
 		# Smoothing
 		cbSmoothing = self.builder.get_object("cbSmoothing")
 		if self.smoothing:
@@ -724,7 +725,7 @@ class ActionEditor(Editor):
 		for grp in self.smoothing_widgets:
 			for w in grp[0:-1]:
 				w.set_sensitive(cbSmoothing.get_active())
-
+		
 		# Deadzone
 		cbDeadzoneMode = self.builder.get_object("cbDeadzoneMode")
 		lblDeadzoneMode = self.builder.get_object("lblDeadzoneMode")
@@ -734,16 +735,23 @@ class ActionEditor(Editor):
 			cbDeadzoneMode.set_active(DEADZONE_MODES.index(self.deadzone_mode))
 			for i in xrange(0, len(self.deadzone)):
 				self.deadzone_widgets[i][1].set_value(self.deadzone[i])
-
+		
 		for grp in self.deadzone_widgets:
 			for w in grp[0:-1]:
 				w.set_sensitive(self.deadzone_mode is not None)
 		lblDeadzoneMode.set_sensitive(self.deadzone_mode is not None)
 		cbDeadzoneMode.set_sensitive(self.deadzone_mode is not None)
-
+		
 		self._recursing = False
-
+		
 		return action
+	
+	
+	def allow_first_page(self):
+		"""
+		Allows first page to be used
+		"""
+		self.first_page_allowed = True
 	
 	
 	def reset_active_component(self):
@@ -797,7 +805,7 @@ class ActionEditor(Editor):
 				c = self.load_component("custom")
 				if c in self.components and (self._mode & c.CTXS) != 0:
 					self._selected_component = c
-			elif not action:
+			elif not action and self.first_page_allowed:
 				self._selected_component = self.load_component("first_page")
 				stActionModes = self.builder.get_object("stActionModes")
 				self._selected_component.load()

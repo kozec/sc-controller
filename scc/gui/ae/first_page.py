@@ -9,8 +9,9 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
+from scc.actions import Action, NoAction, TriggerAction
+from scc.gui.simple_chooser import SimpleChooser
 from scc.gui.parser import GuiActionParser
-from scc.actions import Action, NoAction
 from scc.gui.ae import AEComponent
 from scc.tools import nameof
 
@@ -35,7 +36,7 @@ MARKUP_TRIGGER = """
   
   • Map to <a href='quick://trigger(50, 255, button(Keys.BTN_LEFT))'>Left</a> or <a href='quick://trigger(50, 255, button(Keys.BTN_RIGHT))'>Right</a> mouse button
   
-  • Map to <a href='grab://button'>Button</a>
+  • Map to <a href='grab://trigger_button'>Button</a>
 """
 
 
@@ -127,7 +128,16 @@ class FirstPage(AEComponent):
 			action = self.parser.restart(link[8:]).parse()
 			self.editor.reset_active_component()
 			self.editor.set_action(action, from_custom=True)
-		if link.startswith("page://"):
+		elif link == "grab://trigger_button":
+			def cb(action):
+				action = TriggerAction(254, 255, action)
+				self.editor.set_action(action, from_custom=True)
+				self.editor.force_page("trigger")
+			b = SimpleChooser(self.app, "buttons", cb)
+			b.set_title(_("Select Button"))
+			b.hide_axes()
+			b.show(self.editor.window)
+		elif link.startswith("page://"):
 			def cb():
 				self.editor.force_page(link[7:])
 			GLib.timeout_add(0.1, cb)

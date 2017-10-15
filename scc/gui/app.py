@@ -91,10 +91,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.builder = Gtk.Builder()
 		self.builder.add_from_file(os.path.join(self.gladepath, "app.glade"))
 		self.builder.connect_signals(self)
-		#self.builder.connect_signals_full(
-		#	lambda builder, object, signal, handler, cobj, flags:
-		#			(object.connect_after if flags == GObject.ConnectFlags.AFTER
-		#				else object.connect)(signal, getattr(self, handler)))
 		self.window = self.builder.get_object("window")
 		self.add_window(self.window)
 		self.window.set_title(_("SC Controller"))
@@ -294,6 +290,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def show_editor(self, id):
 		action = self.get_action(self.current, id)
 		ae = self.choose_editor(action, "", id)
+		ae.allow_first_page()
 		ae.set_input(id, action)
 		ae.show(self.window)
 	
