@@ -73,14 +73,19 @@ class SCCDaemon(Daemon):
 		See __init__.py in scc.drivers.
 		"""
 		log.debug("Initializing drivers...")
+		cfg = Config()
 		self._to_start = set()  # del-eted later by start_drivers
 		for importer, modname, ispkg in pkgutil.walk_packages(path=drivers.__path__, onerror=lambda x: None):
 			if not ispkg and modname != "driver":
-				mod = getattr(__import__('scc.drivers.%s' % (modname,)).drivers, modname)
-				if hasattr(mod, "init"):
-					getattr(mod, "init")(self)
-				if hasattr(mod, "start"):
-					self._to_start.add(getattr(mod, "start"))
+				if modname == "usb" or cfg["drivers"].get(modname):
+					# 'usb' driver has to be always active
+					mod = getattr(__import__('scc.drivers.%s' % (modname,)).drivers, modname)
+					if hasattr(mod, "init"):
+						if getattr(mod, "init")(self, cfg):
+							if hasattr(mod, "start"):
+								self._to_start.add(getattr(mod, "start"))
+				else:
+					log.debug("Skipping disabled driver '%s'", modname)
 	
 	
 	def init_default_mapper(self):

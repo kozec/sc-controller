@@ -78,7 +78,6 @@ class DaemonManager(GObject.GObject):
 		self.connection = None
 		self.connecting = False
 		self.buffer = ""
-		self._profile = None
 		self._connect()
 		self._requests = []
 		self._controllers = []			# Ordered as daemon says
@@ -204,6 +203,7 @@ class DaemonManager(GObject.GObject):
 				c = self.get_controller(controller_id)
 				c._profile = profile.strip()
 				c.emit("profile-changed", c._profile)
+				log.debug("Daemon reported profile change for %s: %s", controller_id, c._profile)
 			elif line.startswith("Controller Count:"):
 				count = int(line[17:])
 				self._controllers = self._controllers[-count:]
@@ -211,8 +211,8 @@ class DaemonManager(GObject.GObject):
 			elif line.startswith("Event:"):
 				data = line[6:].strip().split(" ")
 				c = self.get_controller(data[0])
-				c.emit('event', data[1], [ int(x) for x in data[2:] ])
-				self.emit('event', c, data[1], [ int(x) for x in data[2:] ])
+				c.emit('event', data[1], [ int(float(x)) for x in data[2:] ])
+				self.emit('event', c, data[1], [ int(float(x)) for x in data[2:] ])
 			elif line.startswith("Error:"):
 				error = line.split(":", 1)[-1].strip()
 				self.alive = True
@@ -220,7 +220,6 @@ class DaemonManager(GObject.GObject):
 				self.emit('error', error)
 			elif line.startswith("Current profile:"):
 				self._profile = line.split(":", 1)[-1].strip()
-				log.debug("Daemon reported profile change: %s", self._profile)
 				self.emit('profile-changed', self._profile)
 			elif line.startswith("Reconfigured."):
 				self.emit('reconfigured')
@@ -257,20 +256,6 @@ class DaemonManager(GObject.GObject):
 	def nocallback(*a):
 		""" Used when request doesn't needs callback """
 		pass
-	
-	
-	def get_profile(self):
-		"""
-		Returns last used profile reported by daemon.
-		May return None.
-		"""
-		return self._profile
-	
-	
-	def set_profile(self, filename):
-		""" Asks daemon to change 1st controller profile """
-		self.request("Controller.\nProfile: %s" % (filename,),
-				DaemonManager.nocallback, DaemonManager.nocallback)
 	
 	
 	def reconfigure(self):

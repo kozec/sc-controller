@@ -5,26 +5,21 @@ SC Controller - Dualshock 4 Driver
 Extends HID driver with DS4-specific options.
 """
 
-from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test, _lib
-from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData, AxisMode, AxisDataUnion, AxisModeData, HatswitchModeData
+from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData
+from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test
+from scc.drivers.hiddrv import AxisMode, AxisDataUnion, AxisModeData
+from scc.drivers.hiddrv import HatswitchModeData
+from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
+from scc.drivers.evdevdrv import make_new_device, get_axes
+from scc.drivers.usb import register_hotplug_device
 from scc.constants import SCButtons, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.tools import init_logging, set_logging_level
-from scc.drivers.usb import register_hotplug_device
-from collections import namedtuple
-import sys, struct, ctypes, logging
+import sys, logging
 log = logging.getLogger("DS4")
 
 VENDOR_ID = 0x054c
 PRODUCT_ID = 0x09cc
-
-
-def init(daemon):
-	""" Registers hotplug callback for ds4 device """
-	def cb(device, handle):
-		return DS4Controller(device, daemon, handle, None, None)
-	
-	# register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
 
 
 class DS4Controller(HIDController):
@@ -45,7 +40,6 @@ class DS4Controller(HIDController):
 		SCButtons.C,
 		SCButtons.CPAD,
 	)
-	
 	
 	def __init__(self, *a, **b):
 		HIDController.__init__(self, *a, **b)
@@ -152,6 +146,236 @@ class DS4Controller(HIDController):
 			id = "ds4:%s" % (magic_number, )
 			magic_number += 1
 		return id
+
+
+class DS4EvdevController(EvdevController):
+	TOUCH_FACTOR_X = STICK_PAD_MAX / 940.0
+	TOUCH_FACTOR_Y = STICK_PAD_MAX / 470.0
+	BUTTON_MAP = {
+		304: "A",
+		305: "B",
+		307: "Y",
+		308: "X",
+		310: "LB",
+		311: "RB",
+		314: "BACK",
+		315: "START",
+		316: "C",
+		317: "STICKPRESS",
+		318: "RPAD"
+	}
+	AXIS_MAP = {
+		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
+		1:  { "axis": "stick_y", "deadzone": 4, "max": 0, "min": 255 },
+		3:  { "axis": "rpad_x", "deadzone": 4, "max": 255, "min": 0 },
+		4:  { "axis": "rpad_y", "deadzone": 8, "max": 0, "min": 255 },
+		2:  { "axis": "ltrig", "max": 255, "min": 0 },
+		5:  { "axis": "rtrig", "max": 255, "min": 0 },
+		16: { "axis": "lpad_x", "deadzone": 0, "max": 1, "min": -1 },
+		17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
+	}
+	BUTTON_MAP_OLD = {
+		304: "X",
+		305: "A",
+		306: "B",
+		307: "Y",
+		308: "LB",
+		309: "RB",
+		312: "BACK",
+		313: "START",
+		314: "STICKPRESS",
+		315: "RPAD",
+		316: "C"
+	}
+	AXIS_MAP_OLD = {
+		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
+		1:  { "axis": "stick_y", "deadzone": 4, "max": 0, "min": 255 },
+		2:  { "axis": "rpad_x", "deadzone": 4, "max": 255, "min": 0 },
+		5:  { "axis": "rpad_y", "deadzone": 8, "max": 0, "min": 255 },
+		3:  { "axis": "ltrig", "max": 32767, "min": -32767 },
+		4:  { "axis": "rtrig", "max": 32767, "min": -32767 },
+		16: { "axis": "lpad_x", "deadzone": 0, "max": 1, "min": -1 },
+		17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
+	}
+	MOTION_MAP = {
+		EvdevController.ECODES.ABS_RX : 'gpitch',
+		EvdevController.ECODES.ABS_RY : 'groll',
+		EvdevController.ECODES.ABS_RZ : 'gyaw',
+		EvdevController.ECODES.ABS_X : 'q1',
+		EvdevController.ECODES.ABS_Y : 'q2',
+		EvdevController.ECODES.ABS_Z : 'q3',
+	}
+	
+	def __init__(self, daemon, controllerdevice, motion, touchpad):
+		config = {
+			'axes' : DS4EvdevController.AXIS_MAP,
+			'buttons' : DS4EvdevController.BUTTON_MAP,
+			'dpads' : {}
+		}
+		if controllerdevice.info.version & 0x8000 == 0:
+			# Older kernel uses different mappings
+			# see kernel source, drivers/hid/hid-sony.c#L2748
+			config['axes'] = DS4EvdevController.AXIS_MAP_OLD
+			config['buttons'] = DS4EvdevController.BUTTON_MAP_OLD
+		self._motion = motion
+		self._touchpad = touchpad
+		for device in (self._motion, self._touchpad):
+			if device:
+				device.grab()
+		EvdevController.__init__(self, daemon, controllerdevice, None, config)
+		if self.poller:
+			self.poller.register(touchpad.fd, self.poller.POLLIN, self._touchpad_input)
+			self.poller.register(motion.fd, self.poller.POLLIN, self._motion_input)
+	
+	
+	def _motion_input(self, *a):
+		new_state = self._state
+		try:
+			for event in self._motion.read():
+				if event.type == self.ECODES.EV_ABS:
+					new_state = new_state._replace(**{
+						DS4EvdevController.MOTION_MAP[event.code] : event.value
+					})
+		except IOError, e:
+			# Errors here are not even reported, evdev class handles important ones
+			return
+		
+		if new_state is not self._state:
+			old_state, self._state = self._state, new_state
+			if self.mapper:
+				self.mapper.input(self, old_state, new_state)
+	
+	
+	def _touchpad_input(self, *a):
+		new_state = self._state
+		try:
+			for event in self._touchpad.read():
+				if event.type == self.ECODES.EV_ABS:
+					if event.code == self.ECODES.ABS_MT_POSITION_X:
+						value = event.value * DS4EvdevController.TOUCH_FACTOR_X
+						value = STICK_PAD_MIN + int(value)
+						new_state = new_state._replace(cpad_x = value)
+					elif event.code == self.ECODES.ABS_MT_POSITION_Y:
+						value = event.value * DS4EvdevController.TOUCH_FACTOR_Y
+						value = STICK_PAD_MIN + int(value)
+						new_state = new_state._replace(cpad_y = value)
+				elif event.type == 0:
+					pass
+				elif event.code == self.ECODES.BTN_LEFT:
+					if event.value == 1:
+						b = new_state.buttons | SCButtons.CPAD
+						new_state = new_state._replace(buttons = b)
+					else:
+						b = new_state.buttons & ~SCButtons.CPAD
+						new_state = new_state._replace(buttons = b)
+				elif event.code == self.ECODES.BTN_TOUCH:
+					if event.value == 1:
+						b = new_state.buttons | SCButtons.CPADTOUCH
+						new_state = new_state._replace(buttons = b)
+					else:
+						b = new_state.buttons & ~SCButtons.CPADTOUCH
+						new_state = new_state._replace(buttons = b,
+								cpad_x = 0, cpad_y = 0)
+		except IOError, e:
+			# Errors here are not even reported, evdev class handles important ones
+			return
+		
+		if new_state is not self._state:
+			old_state, self._state = self._state, new_state
+			if self.mapper:
+				self.mapper.input(self, old_state, new_state)
+	
+	
+	def close(self):
+		EvdevController.close(self)
+		for device in (self._motion, self._touchpad):
+			try:
+				self.poller.unregister(device.fd)
+				device.ungrab()
+			except: pass
+	
+	
+	def get_gyro_enabled(self):
+		# TODO: Gyro over evdev
+		return False
+	
+	
+	def get_type(self):
+		return "ds4evdev"
+	
+	
+	def get_gui_config_file(self):
+		return "ds4-config.json"
+	
+	
+	def __repr__(self):
+		return "<DS4EvdevController %s>" % (self.get_id(), )
+	
+	
+	def _generate_id(self):
+		"""
+		ID is generated as 'ds4' or 'ds4:X' where 'X' starts as 1 and increases
+		as controllers with same ids are connected.
+		"""
+		magic_number = 1
+		id = "ds4"
+		while id in self.daemon.get_active_ids():
+			id = "ds4:%s" % (magic_number, )
+			magic_number += 1
+		return id
+
+
+def init(daemon, config):
+	""" Registers hotplug callback for ds4 device """
+		
+	def hid_callback(device, handle):
+		return DS4Controller(device, daemon, handle, None, None)
+	
+	
+	def evdev_make_device_callback(daemon, evdevdevices):
+		# With kernel 4.10 or later, PS4 controller pretends to be 3 different devices.
+		# 1st, determining which one is actual controller is needed
+		controllerdevice = None
+		for device in evdevdevices:
+			count = len(get_axes(device))
+			if count == 8:
+				# 8 axes - Controller
+				controllerdevice = device
+		if not controllerdevice:
+			log.warning("Failed to determine controller device")
+			return
+		# 2nd, find motion sensor and touchpad with physical address matching
+		# controllerdevice
+		motion, touchpad = None, None
+		phys = device.phys.split("/")[0]
+		for device in evdevdevices:
+			if device.phys.startswith(phys):
+				count = len(get_axes(device))
+				if count == 6:
+					# 6 axes - Motion sensor
+					motion = device
+				elif count == 4:
+					# 4 axes - Touchpad
+					touchpad = device
+		# 3rd, do a magic
+		return DS4EvdevController(daemon, controllerdevice, motion, touchpad)
+	
+	
+	def fail_cb(vid, pid):
+		if HAVE_EVDEV:
+			log.warning("Failed to acquire USB device, falling back to evdev driver. This is far from optimal.")
+			make_new_device(vid, pid, evdev_make_device_callback)
+		else:
+			log.error("Failed to acquire USB device and evdev is not available. Everything is lost and DS4 support disabled.")
+			# TODO: Maybe add_error here, but error reporting needs little rework so it's not threated as fatal
+			# daemon.add_error("ds4", "No access to DS4 device")
+	
+	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
+		register_hotplug_device(hid_callback, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
+		return True
+	else:
+		log.warning("Neither HID nor Evdev driver is enabled, DS4 support cannot be enabled.")
+		return False
 
 
 if __name__ == "__main__":

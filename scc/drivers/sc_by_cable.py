@@ -20,12 +20,13 @@ TIMER_INTERVAL = 0.01
 
 log = logging.getLogger("SCCable")
 
-def init(daemon):
+def init(daemon, config):
 	""" Registers hotplug callback for controller dongle """
 	def cb(device, handle):
 		return SCByCable(device, handle, daemon)
 	
 	register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
+	return True
 
 
 class SCByCable(USBDevice, SCController):

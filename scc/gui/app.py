@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, GYROS
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.controller_image import ControllerImage
 from scc.gui.profile_switcher import ProfileSwitcher
@@ -18,7 +18,7 @@ from scc.gui.binding_editor import BindingEditor
 from scc.gui.statusicon import get_status_icon
 from scc.gui.dwsnc import headerbar, IS_UNITY
 from scc.gui.ribar import RIBar
-from scc.tools import check_access, find_gksudo, profile_is_override
+from scc.tools import check_access, find_gksudo, profile_is_override, nameof
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.tools import get_profile_name, profile_is_default, profile_is_override
@@ -149,24 +149,48 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Loads controller config, changes image and hides, shows or disables
 		buttons around it.
 		
-		To make this look less jumpy, Gtk.Stack is used to make transition to empty page is used
-		Does rather complicated magic to change controller image and buttons
-		around it. To create nice transition, new grid is created as new 
-		page in Stack, everything is set up and Stack is then switched to that
-		new page.
+		To make this look less jumpy, Gtk.Stack is used to make transition
+		to empty page and only after that is grid repopulated, everything
+		set up and Stack switched back to original page.
 		"""
 		stckEditor = self.builder.get_object('stckEditor')
 		lblEmpty = self.builder.get_object('lblEmpty')
 		grEditor = self.builder.get_object('grEditor')
 		vbC = self.builder.get_object('vbC')
+		config = self.background.load_config(controller.get_gui_config_file())
 		
 		def do_loading():
 			""" Called after transition is finished """
 			self.background.use_config(config)
+			buttons = ControllerImage.get_names(config.get('buttons', {}))
+			axes = ControllerImage.get_names(config.get('axes', {}))
+			gyros = config.get('gyros', False)
+			# Set sensitivity to signalize available inputs
+			# Buttons
+			for b in BUTTONS:
+				w = self.builder.get_object("bt" + nameof(b))
+				if w:
+					w.set_sensitive(nameof(b) in buttons)
+			
+			# Triggers
+			w = self.builder.get_object("btLT")
+			if w: w.set_sensitive("ltrig" in axes)
+			w = self.builder.get_object("btRT")
+			if w: w.set_sensitive("rtrig" in axes)
+			# Sticks & pads
+			for b in PADS + STICKS:
+				w = self.builder.get_object("bt" + nameof(b))
+				if w:
+					w.set_sensitive(b.lower() + "_x" in axes or b.lower() + "_y" in axes)
+			# Gyro
+			for b in GYROS:
+				w = self.builder.get_object("bt" + b)
+				if w:
+					# TODO: Maybe actual detection
+					w.set_sensitive(gyros)
 			# vbC.set_visible(True)
 			stckEditor.set_visible_child(grEditor)
 		
-		config = self.background.load_config(controller.get_gui_config_file())
 		if first:
 			b1 = self.background.get_config()['gui']['background']
 			b2 = config['gui']['background']
@@ -316,9 +340,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		""" As hilight, but marks GTK Button as well """
 		active = None
 		for b in self.button_widgets.values():
-			b.widget.set_state(Gtk.StateType.NORMAL)
-			if b.name == button:
-				active = b.widget
+			if b.widget.get_sensitive():
+				b.widget.set_state(Gtk.StateType.NORMAL)
+				if b.name == button:
+					active = b.widget
 		
 		if active is not None:
 			active.set_state(Gtk.StateType.ACTIVE)
@@ -606,12 +631,18 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Special case, this one is saved only to be sent to daemon
 			# and user doesn't need to know about it
 			if self.dm.is_alive():
-				self.dm.set_profile(giofile.get_path())
+				controller = self.profile_switchers[0].get_controller()
+				controller.set_profile(giofile.get_path())
 			return
 		
 		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 		if send and self.dm.is_alive() and not self.daemon_changed_profile:
-			self.dm.set_profile(giofile.get_path())
+			for ps in self.profile_switchers:
+				controller = ps.get_controller()
+				active = controller.get_profile()
+				if active.endswith(".mod"): active = active[0:-4]
+				if active == giofile.get_path():
+					controller.set_profile(giofile.get_path())
 		
 		self.current_file = giofile	
 	

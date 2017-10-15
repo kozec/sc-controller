@@ -1626,7 +1626,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Emulation has to be restarted to apply all settings.
 If you have any games running, restarting emulation will "unplug"
-emulated gamepad, what may cause them to ignore future inputs
+virtual gamepad, what may cause them to ignore future inputs
 or even crash.</property>
                             <property name="wrap">True</property>
                           </object>
