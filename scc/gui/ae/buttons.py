@@ -11,7 +11,7 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, ButtonAction, MouseAction
 from scc.actions import AxisAction, MultiAction, NoAction
 from scc.macros import Cycle, PressAction, ReleaseAction
-from scc.uinput import Rels
+from scc.uinput import Rels, Keys
 from scc.gui.area_to_action import action_to_area
 from scc.gui.key_grabber import KeyGrabber
 from scc.gui.parser import InvalidAction
@@ -30,6 +30,10 @@ class ButtonsComponent(AEComponent, Chooser):
 	IMAGES = { "buttons" : "buttons.svg" }
 	CTXS = Action.AC_BUTTON | Action.AC_MENU
 	PRIORITY = 1
+	MODIFIER_KEYS = ( Keys.KEY_LEFTSHIFT, Keys.KEY_LEFTMETA, Keys.KEY_LEFTALT,
+		Keys.KEY_LEFTCTRL, Keys.KEY_RIGHTMETA, Keys.KEY_RIGHTSHIFT,
+		Keys.KEY_RIGHTCTRL, Keys.KEY_RIGHTALT,
+	)
 	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
@@ -107,10 +111,18 @@ class ButtonsComponent(AEComponent, Chooser):
 		self.apply_keys()
 	
 	
+	@staticmethod
+	def modifiers_first(key):
+		if key in ButtonsComponent.MODIFIER_KEYS:
+			return 0
+		return 1
+	
+	
 	def apply_keys(self, *a):
 		""" Common part of on_*key_grabbed """
 		cbToggle = self.builder.get_object("cbToggle")
-		keys = list(self.keys)
+		keys = list(sorted(self.keys, key=ButtonsComponent.modifiers_first))
+		print keys
 		action = ButtonAction(keys[0])
 		if len(keys) > 1:
 			actions = [ ButtonAction(k) for k in keys ]
