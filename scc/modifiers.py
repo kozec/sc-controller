@@ -806,7 +806,6 @@ class ModeModifier(Modifier):
 		if sel is not self.old_action:
 			if self.old_action:
 				self.old_action.gyro(mapper, 0, 0, 0, *q)
-				# sel.shifted_from(mapper, self.old_action)
 			self.old_action = sel
 		return sel.gyro(mapper, pitch, yaw, roll, *q)
 	
