@@ -803,6 +803,9 @@ class MouseAction(WholeHapticAction, Action):
 		if what == STICK:
 			mapper.mouse_move(x * self.speed[0] * 0.01, y * self.speed[1] * 0.01)
 			mapper.force_event.add(FE_STICK)
+		elif what == RIGHT and mapper.controller.flags & ControllerFlags.HAS_RSTICK:
+			mapper.mouse_move(x * self.speed[0] * 0.01, y * self.speed[1] * 0.01)
+			mapper.force_event.add(FE_PAD)
 		else:	# left or right pad
 			if mapper.is_touched(what):
 				if self._old_pos and mapper.was_touched(what):
