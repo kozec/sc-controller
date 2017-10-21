@@ -439,12 +439,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		gs.show(self.window)
 	
 	
-	def on_mnuRegisterController_activate(self, *a):
-		from scc.gui.creg.dialog import ControllerRegistration
-		cr = ControllerRegistration(self)
-		cr.show(self.window)
-	
-	
 	def on_mnuImport_activate(self, *a):
 		"""
 		Handler for 'Import Steam Profile' context menu item.
