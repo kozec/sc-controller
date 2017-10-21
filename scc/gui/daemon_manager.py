@@ -258,6 +258,12 @@ class DaemonManager(GObject.GObject):
 		pass
 	
 	
+	def set_profile(self, filename):
+		""" Asks daemon to change 1st controller profile """
+		self.request("Controller.\nProfile: %s" % (filename,),
+				DaemonManager.nocallback, DaemonManager.nocallback)
+	
+	
 	def reconfigure(self):
 		""" Asks daemon reload configuration file """
 		self.request("Reconfigure.", DaemonManager.nocallback,

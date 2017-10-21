@@ -7,12 +7,12 @@ Currently setups only one thing...
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gdk, GObject, GLib
+from gi.repository import Gtk, Gdk, GObject, GLib, GdkPixbuf
+from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
+from scc.paths import get_profiles_path, get_menus_path, get_config_path
 from scc.special_actions import TurnOffAction, RestartDaemonAction
 from scc.special_actions import ChangeProfileAction
-from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
 from scc.tools import find_profile, find_menu, find_binary
-from scc.paths import get_profiles_path, get_menus_path
 from scc.modifiers import SensitivityModifier
 from scc.profile import Profile, Encoder
 from scc.actions import Action, NoAction
@@ -59,6 +59,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.setup_widgets()
 		self._timer = None
 		self._recursing = False
+		self._gamepad_icons = {
+			'unknown': GdkPixbuf.Pixbuf.new_from_file(os.path.join(
+					self.app.imagepath, "controller-icons", "unknown.svg"))
+		}
 		self.app.config.reload()
 		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
 		self.load_settings()
@@ -67,6 +71,19 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self._eh_ids = (
 			self.app.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		)
+	
+	
+	def _get_gamepad_icon(self, drv):
+		if drv in self._gamepad_icons:
+			return self._gamepad_icons[drv]
+		try:
+			p = GdkPixbuf.Pixbuf.new_from_file(os.path.join(
+				self.app.imagepath, "controller-icons", drv + "-4.svg"))
+		except:
+			log.warning("Failed to load gamepad icon for driver '%s'", drv)
+			p = self._gamepad_icons["unknown"]
+		self._gamepad_icons[drv] = p
+		return p
 	
 	
 	def on_daemon_reconfigured(self, *a):
@@ -88,6 +105,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.load_osk()
 		self.load_colors()
 		self.load_cbMIs()
+		self.load_drivers()
+		self.load_controllers()
 		# Load rest
 		self._recursing = True
 		(self.builder.get_object("cbInputTestMode")
@@ -105,6 +124,13 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		(self.builder.get_object("cbAutokillDaemon")
 				.set_active(self.app.config['gui']['autokill_daemon']))
 		self._recursing = False
+	
+	
+	def load_drivers(self):
+		for key, value in self.app.config['drivers'].items():
+			w = self.builder.get_object("cbEnableDriver_%s" % (key, ))
+			if w:
+				w.set_active(value)
 	
 	
 	def _load_color(self, w, dct, key):
@@ -302,9 +328,51 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	def on_restarting_checkbox_toggled(self, *a):
 		if self._recursing: return
 		self.on_random_checkbox_toggled()
+		self._needs_restart()
+	
+	
+	def _needs_restart(self):
 		if self.app.dm.is_alive():
 			rvRestartWarning = self.builder.get_object("rvRestartWarning")
 			rvRestartWarning.set_reveal_child(True)
+	
+	
+	DRIVER_DEPS = {
+		'ds4drv' : ( "evdevdrv", "hiddrv" )
+	}
+	
+	def on_cbEnableDriver_toggled(self, cb):
+		if self._recursing: return
+		drv = cb.get_name()
+		self.app.config["drivers"][drv] = cb.get_active()
+		if cb.get_active() and drv in self.DRIVER_DEPS:
+			# Driver has dependencies, make sure at least one of them is active
+			one_active = any([ self.app.config["drivers"].get(x)
+									for x in self.DRIVER_DEPS[drv] ])
+			if not one_active:
+				# Nothing is, make everything active just to be sure
+				self._recursing = True
+				for x in self.DRIVER_DEPS[drv]:
+					w = self.builder.get_object("cbEnableDriver_%s" % (x, ))
+					if w : w.set_active(True)
+					self.app.config["drivers"][x] = True
+				self._recursing = False
+		
+		if not cb.get_active() and any([ drv in x for x in self.DRIVER_DEPS.values() ]):
+			# Something depends on this driver,
+			# disable anything that has no dependent drivers active
+			self._recursing = True
+			for x, deps in self.DRIVER_DEPS.items():
+				w = self.builder.get_object("cbEnableDriver_%s" % (x, ))
+				one_active = any([ self.app.config["drivers"].get(y)
+										for y in self.DRIVER_DEPS[x] ])
+				if not one_active and w:
+					w.set_active(False)
+					self.app.config["drivers"][x] = False
+			self._recursing = False
+		
+		self.save_config()
+		self._needs_restart()
 	
 	
 	def on_random_checkbox_toggled(self, *a):
@@ -653,3 +721,47 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		else:
 			cbMI_5.set_sensitive(True)
 			cbMI_5.set_tooltip_text("")
+	
+	
+	def on_btAddController_clicked(self, *a):
+		from scc.gui.creg.dialog import ControllerRegistration
+		cr = ControllerRegistration(self.app)
+		cr.window.connect("destroy", self.load_controllers)
+		cr.show(self.window)
+	
+	
+	def on_btRemoveController_clicked(self, *a):
+		tvControllers = self.builder.get_object("tvControllers")
+		d = Gtk.MessageDialog(parent=self.window,
+			flags = Gtk.DialogFlags.MODAL,
+			type = Gtk.MessageType.WARNING,
+			buttons = Gtk.ButtonsType.YES_NO,
+			message_format = _("Unregister controller?"),
+		)
+		d.format_secondary_text(_("You'll lose all settings for it"))
+		if d.run() == -8:
+			# Yes
+			model, iter = tvControllers.get_selection().get_selected()
+			path = model[iter][0]
+			try:
+				os.unlink(path)
+			except Exception, e:
+				log.exception(e)
+			self._needs_restart()
+			self.load_controllers()
+		d.destroy()
+	
+	
+	def load_controllers(self, *a):
+		lstControllers = self.builder.get_object("lstControllers")
+		lstControllers.clear()
+		for filename in os.listdir(os.path.join(get_config_path(), "devices")):
+			if filename.endswith(".json"):
+				if filename.startswith("hid-"):
+					drv, usbid, name = filename.split("-", 2)
+					name = "%s <i>(%s)</i>" % (name[0:-5], usbid.upper())
+				else:
+					drv, name = filename.split("-", 1)
+					name = name[0:-5]
+				path = os.path.join(get_config_path(), "devices", filename)
+				lstControllers.append((path, name, self._get_gamepad_icon(drv)))

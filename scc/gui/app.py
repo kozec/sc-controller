@@ -107,11 +107,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			], Gdk.DragAction.COPY
 		)
 		
-		# 'C' button
-		vbc = self.builder.get_object("vbC")
+		# 'C' and 'CPAD' buttons
 		self.main_area = self.builder.get_object("mainArea")
-		vbc.get_parent().remove(vbc)
-		vbc.connect('size-allocate', self.on_vbc_allocated)
+		for name in ("vbC", "btCPAD"):
+			w = self.builder.get_object(name)
+			w.get_parent().remove(w)
 		
 		# Background
 		self.background = ControllerImage(self)
@@ -119,7 +119,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.background.connect('leave', self.on_background_area_hover, None)
 		self.background.connect('click', self.on_background_area_click)
 		self.main_area.put(self.background, 0, 0)
-		self.main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		
 		# Test markers (those blue circles over PADs and sticks)
 		self.lpad_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
@@ -146,6 +145,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		lblEmpty = self.builder.get_object('lblEmpty')
 		grEditor = self.builder.get_object('grEditor')
 		vbC = self.builder.get_object('vbC')
+		btCPAD = self.builder.get_object('btCPAD')
 		config = self.background.load_config(controller.get_gui_config_file())
 		
 		def do_loading():
@@ -177,8 +177,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				if w:
 					# TODO: Maybe actual detection
 					w.set_sensitive(gyros)
-			# vbC.set_visible(True)
+			for w in (vbC, btCPAD):
+				w.set_visible(w.get_sensitive())
 			stckEditor.set_visible_child(grEditor)
+			GLib.idle_add(self.on_c_size_allocate)
 		
 		if first:
 			b1 = self.background.get_config()['gui']['background']
@@ -617,17 +619,21 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# and user doesn't need to know about it
 			if self.dm.is_alive():
 				controller = self.profile_switchers[0].get_controller()
-				controller.set_profile(giofile.get_path())
+				if controller:
+					controller.set_profile(giofile.get_path())
+				else:
+					self.dm.set_profile(giofile.get_path())
 			return
 		
 		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 		if send and self.dm.is_alive() and not self.daemon_changed_profile:
 			for ps in self.profile_switchers:
 				controller = ps.get_controller()
-				active = controller.get_profile()
-				if active.endswith(".mod"): active = active[0:-4]
-				if active == giofile.get_path():
-					controller.set_profile(giofile.get_path())
+				if controller:
+					active = controller.get_profile()
+					if active.endswith(".mod"): active = active[0:-4]
+					if active == giofile.get_path():
+						controller.set_profile(giofile.get_path())
 		
 		self.current_file = giofile	
 	
@@ -709,15 +715,26 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.show_editor(area)
 	
 	
-	def on_vbc_allocated(self, vbc, allocation):
+	def on_c_size_allocate(self, *a):
 		"""
-		Called when size of 'Button C' is changed. Centers button
-		on background image
+		Called when size of 'Button C' or CPAD is changed.
+		Centers buttons on background image
 		"""
 		main_area = self.builder.get_object("mainArea")
-		x = (main_area.get_allocation().width - allocation.width) / 2
-		y = main_area.get_allocation().height - allocation.height
-		main_area.move(vbc, x, y)
+		y = main_area.get_allocation().height - 5
+		for name in ("btCPAD", "vbC"):
+			w = self.builder.get_object(name)
+			if not w.get_visible():
+				continue
+			allocation = w.get_allocation()
+			x = (main_area.get_allocation().width - allocation.width) / 2
+			y -= allocation.height
+			if w.get_parent():
+				main_area.move(w, x, y)
+			else:
+				main_area.put(w, x, y)
+			y -= 5
+		return False
 	
 	
 	def on_ebImage_motion_notify_event(self, box, event):
