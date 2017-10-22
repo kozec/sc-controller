@@ -373,11 +373,11 @@ class BallModifier(Modifier, WholeHapticAction):
 		self._xvel = _xvel
 		self._yvel = _yvel
 		
+		self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])
 		if dx or dy:
-			self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])
 			if self.haptic:
 				WholeHapticAction.add(self, mapper, dx, dy)
-			mapper.schedule(0, self._roll)
+			mapper.schedule(0.01, self._roll)
 	
 	
 	def encode(self):

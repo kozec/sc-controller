@@ -386,9 +386,11 @@ class Mapper(object):
 					if self.lpad_touched:
 						self.lpad_touched = False
 						self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
-			
+		
 		except Exception, e:
 			# Log error but don't crash here, it breaks too many things at once
+			if hasattr(self, "_testing"):
+				raise
 			log.error("Error while processing controller event")
 			log.error(traceback.format_exc())
 		

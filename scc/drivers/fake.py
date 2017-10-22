@@ -27,22 +27,22 @@ if ENV_VAR in os.environ:
 		log.debug("Creating %s fake controllers", num)
 		for x in xrange(0, num):
 			daemon.add_controller(FakeController(x))
+
+
+class FakeController(Controller):
+	def __init__(self, number):
+		Controller.__init__(self)
+		self._number = number
+		self._id = "fake%s" % (self._number,)
 	
 	
-	class FakeController(Controller):
-		def __init__(self, number):
-			Controller.__init__(self)
-			self._number = number
-			self._id = "fake%s" % (self._number,)
-		
-		
-		def get_type(self):
-			return "fake"
-		
-		
-		def set_led_level(self, level):
-			log.debug("FakeController %s led level set to %s", self.get_id(), level)
-		
-		
-		def __repr__(self):
-			return "<FakeController %s>" % (self.get_id(),)
+	def get_type(self):
+		return "fake"
+	
+	
+	def set_led_level(self, level):
+		log.debug("FakeController %s led level set to %s", self.get_id(), level)
+	
+	
+	def __repr__(self):
+		return "<FakeController %s>" % (self.get_id(),)
