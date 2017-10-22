@@ -108,10 +108,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		)
 		
 		# 'C' and 'CPAD' buttons
+		vbc = self.builder.get_object("vbC")
 		self.main_area = self.builder.get_object("mainArea")
-		for name in ("vbC", "btCPAD"):
-			w = self.builder.get_object(name)
-			w.get_parent().remove(w)
+		vbc.get_parent().remove(vbc)
 		
 		# Background
 		self.background = ControllerImage(self)
@@ -119,6 +118,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.background.connect('leave', self.on_background_area_hover, None)
 		self.background.connect('click', self.on_background_area_click)
 		self.main_area.put(self.background, 0, 0)
+		self.main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		
 		# Test markers (those blue circles over PADs and sticks)
 		self.lpad_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
@@ -716,18 +716,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		main_area = self.builder.get_object("mainArea")
 		y = main_area.get_allocation().height - 5
-		for name in ("btCPAD", "vbC"):
-			w = self.builder.get_object(name)
-			if not w.get_visible():
-				continue
-			allocation = w.get_allocation()
-			x = (main_area.get_allocation().width - allocation.width) / 2
-			y -= allocation.height
-			if w.get_parent():
-				main_area.move(w, x, y)
-			else:
-				main_area.put(w, x, y)
-			y -= 5
+		w = self.builder.get_object("vbC")
+		allocation = w.get_allocation()
+		x = (self.background.get_allocation().width - allocation.width) / 2
+		y -= allocation.height
+		if w.get_parent():
+			main_area.move(w, x, y)
+		else:
+			main_area.put(w, x, y)
 		return False
 	
 	
