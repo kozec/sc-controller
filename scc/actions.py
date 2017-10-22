@@ -2151,7 +2151,10 @@ class XYAction(WholeHapticAction, Action):
 			else:
 				self._old_pos = None
 		
-		if what in (LEFT, RIGHT):
+		if what == RIGHT and mapper.controller.flags & ControllerFlags.HAS_RSTICK:
+			self.x.axis(mapper, x * MouseAbsAction.MOUSE_FACTOR, what)
+			self.y.axis(mapper, y * MouseAbsAction.MOUSE_FACTOR, what)
+		elif what in (LEFT, RIGHT):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
 		else:
