@@ -286,7 +286,12 @@ def find_binary(name):
 	if name.startswith("scc-autoswitch-daemon"):
 		# As above
 		return os.path.join(os.path.split(__file__)[0], "x11", "scc-autoswitch-daemon.py")
-	for i in os.environ['PATH'].split(":"):
+	user_path = os.environ['PATH'].split(":")
+	# Try to add the standard binary paths if not present in PATH
+	for d in ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]:
+		if d not in user_path:
+			user_path.append(d)
+	for i in user_path:
 		path = os.path.join(i, name)
 		if os.path.exists(path):
 			return path
