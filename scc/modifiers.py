@@ -12,7 +12,7 @@ from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
 from scc.constants import TRIGGER_MAX, LEFT, RIGHT, STICK, FE_STICK, FE_TRIGGER
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
-from scc.constants import FE_PAD, SCButtons, HapticPos
+from scc.constants import FE_PAD, SCButtons, HapticPos, ControllerFlags
 from scc.constants import CUT, ROUND, LINEAR
 from scc.controller import HapticData
 from scc.tools import nameof, clamp
@@ -427,6 +427,8 @@ class BallModifier(Modifier, WholeHapticAction):
 	
 	
 	def whole(self, mapper, x, y, what):
+		if mapper.controller.flags & ControllerFlags.HAS_RSTICK and what == RIGHT:
+			return self.action.whole(mapper, x, y, what)
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
 				dx, dy = x - self._old_pos[0], self._old_pos[1] - y
@@ -439,6 +441,8 @@ class BallModifier(Modifier, WholeHapticAction):
 			velocity = sqrt(self._xvel * self._xvel + self._yvel * self._yvel)
 			if velocity > BallModifier.MIN_LIFT_VELOCITY:
 				self._roll(mapper)
+		elif what == STICK:
+			return self.action.whole(mapper, x, y, what)
 	
 	
 	def set_haptic(self, hd):
@@ -1260,6 +1264,8 @@ class SmoothModifier(Modifier):
 		return x / self._w_sum, y / self._w_sum
 	
 	def whole(self, mapper, x, y, what):
+		if mapper.controller.flags & ControllerFlags.HAS_RSTICK and what == RIGHT:
+			return self.action.whole(mapper, x, y, what)
 		if mapper.is_touched(what):
 			if mapper.was_touched(what):
 				# Pressed for longer time
@@ -1275,6 +1281,8 @@ class SmoothModifier(Modifier):
 			if abs(x + y - self._last_pos) > self.filter:
 				self.action.whole(mapper, x, y, what)
 			self._last_pos = x + y
+		elif what == STICK:
+			return self.action.whole(mapper, x, y, what)
 		else:
 			# Pad was just released
 			x, y = self._get_pos()
