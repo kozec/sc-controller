@@ -833,7 +833,7 @@ class MouseAbsAction(Action):
 	or scroll wheel.
 	"""
 	COMMAND = "mouseabs"
-	MOUSE_FACTOR = 0.01	# Just random number to put default sensitivity into sane range
+	MOUSE_FACTOR = 0.005	# Just random number to put default sensitivity into sane range
 	
 	def __init__(self, axis = None):
 		Action.__init__(self, *strip_none(axis))
@@ -890,8 +890,8 @@ class MouseAbsAction(Action):
 	
 	
 	def whole(self, mapper, x, y, what):
-		dx = dx * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
-		dy = dy * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		dx = x * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		dy = y * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
 		mapper.mouse.moveEvent(dx, dy)
 
 
@@ -2034,6 +2034,8 @@ class XYAction(WholeHapticAction, Action):
 	COMMAND = "XY"
 	PROFILE_KEYS = ("X", "Y")
 	PROFILE_KEY_PRIORITY = -10	# First possible, but not before MultiAction
+	STICK_REPEAT_INTERVAL = 0.01
+	STICK_REPEAT_MIN = 10
 	
 	def __init__(self, x=None, y=None):
 		Action.__init__(self, *strip_none(x, y))
@@ -2154,17 +2156,13 @@ class XYAction(WholeHapticAction, Action):
 		if what == RIGHT and mapper.controller.flags & ControllerFlags.HAS_RSTICK:
 			self.x.axis(mapper, x * MouseAbsAction.MOUSE_FACTOR, what)
 			self.y.axis(mapper, y * MouseAbsAction.MOUSE_FACTOR, what)
+			mapper.force_event.add(FE_PAD)
 		elif what in (LEFT, RIGHT):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
 		else:
-			self.x.axis(mapper, x, what)
-			self.y.axis(mapper, y, what)
-	
-	
-	def pad(self, mapper, x, y, what):
-		self.x.pad(mapper, sci.lpad_x, what)
-		self.y.pad(mapper, sci.lpad_y, what)
+			self.x.axis(mapper, x * MouseAbsAction.MOUSE_FACTOR, what)
+			self.y.axis(mapper, y * MouseAbsAction.MOUSE_FACTOR, what)
 	
 	
 	def describe(self, context):
