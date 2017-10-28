@@ -144,7 +144,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		stckEditor = self.builder.get_object('stckEditor')
 		lblEmpty = self.builder.get_object('lblEmpty')
 		grEditor = self.builder.get_object('grEditor')
-		vbC = self.builder.get_object('vbC')
+		btC = self.builder.get_object('btC')
 		btCPAD = self.builder.get_object('btCPAD')
 		config = self.background.load_config(controller.get_gui_config_file())
 		
@@ -170,15 +170,21 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			for b in PADS + STICKS:
 				w = self.builder.get_object("bt" + nameof(b))
 				if w:
-					w.set_sensitive(b.lower() + "_x" in axes or b.lower() + "_y" in axes)
+					w.set_sensitive(
+							b.lower() + "_x" in axes
+							or b.lower() + "_y" in axes
+							or nameof(b) in buttons)
 			# Gyro
 			for b in GYROS:
 				w = self.builder.get_object("bt" + b)
 				if w:
 					# TODO: Maybe actual detection
 					w.set_sensitive(gyros)
-			for w in (vbC, btCPAD):
+			for w in (btC, btCPAD):
 				w.set_visible(w.get_sensitive())
+				if w.get_sensitive():
+					w.show_all()
+					print "#", w, w == btCPAD, w.get_children()
 			stckEditor.set_visible_child(grEditor)
 			GLib.idle_add(self.on_c_size_allocate)
 		

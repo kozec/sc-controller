@@ -43,6 +43,7 @@ FE_GYRO		= 4
 # Trigger names, pads, etc. These constants are used on multiple places
 LEFT	= "LEFT"
 RIGHT	= "RIGHT"
+CPAD	= "CPAD"
 WHOLE	= "WHOLE"
 STICK	= "STICK"
 GYRO	= "GYRO"
@@ -85,7 +86,7 @@ class SCButtons(IntEnum):
 	LT			= 0b00000000000000000000001000000000
 	RT			= 0b00000000000000000000000100000000
 	CPADTOUCH	= 0b00000000000000000000000000000100 # Available on DS4 pad
-	CPAD		= 0b00000000000000000000000000000010 # Available on DS4 pad
+	CPADPRESS	= 0b00000000000000000000000000000010 # Available on DS4 pad
 
 
 # If lpad and stick is used at once, this is sent as

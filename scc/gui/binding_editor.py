@@ -96,8 +96,10 @@ class BindingEditor(object):
 				before, profile.stick = profile.stick, action
 			elif id == "LPAD":
 				before, profile.pads[Profile.LEFT] = profile.pads[Profile.LEFT], action
-			else:
+			elif id == "RPAD":
 				before, profile.pads[Profile.RIGHT] = profile.pads[Profile.RIGHT], action
+			else:
+				before, profile.pads[Profile.CPAD] = profile.pads[Profile.CPAD], action
 			self.button_widgets[id].update()
 		return before
 	
@@ -123,8 +125,10 @@ class BindingEditor(object):
 				return profile.stick
 			elif id == "LPAD":
 				return profile.pads[Profile.LEFT]
-			else:
+			elif id == "RPAD":
 				return profile.pads[Profile.RIGHT]
+			else:
+				return profile.pads[Profile.CPAD]
 		return None
 	
 	

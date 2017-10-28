@@ -6,7 +6,7 @@ Handles mapping profile stored in json file
 """
 from __future__ import unicode_literals
 
-from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
+from scc.constants import LEFT, RIGHT, CPAD, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
 from scc.special_actions import MenuAction
 from scc.modifiers import HoldModifier
@@ -25,6 +25,7 @@ class Profile(object):
 	
 	LEFT  = LEFT
 	RIGHT = RIGHT
+	CPAD = CPAD
 	WHOLE = WHOLE
 	STICK = STICK
 	GYRO  = GYRO
@@ -63,6 +64,7 @@ class Profile(object):
 			'trigger_right'	: self.triggers[Profile.RIGHT],
 			"pad_left"		: self.pads[Profile.LEFT],
 			"pad_right"		: self.pads[Profile.RIGHT],
+			"cpad"			: self.pads[Profile.CPAD],
 			"menus"			: { id : self.menus[id].encode() for id in self.menus },
 			"is_template"	: self.is_template,
 			"version"		: Profile.VERSION,
@@ -136,6 +138,7 @@ class Profile(object):
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "left_pad"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "right_pad"),
+				Profile.CPAD	: NoAction()
 			}
 		else:
 			# New format
@@ -149,6 +152,7 @@ class Profile(object):
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "pad_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "pad_right"),
+				Profile.CPAD	: self.parser.from_json_data(data, "cpad"),
 			}
 		
 		# Menus
@@ -178,7 +182,8 @@ class Profile(object):
 		self.stick = NoAction()
 		self.is_template = False
 		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
-		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
+		self.pads = { Profile.LEFT : NoAction(),
+				Profile.RIGHT : NoAction(), Profile.CPAD : NoAction() }
 		self.gyro = NoAction()
 	
 	

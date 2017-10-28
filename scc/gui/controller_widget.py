@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, Pango
-from scc.constants import SCButtons, STICK, GYRO, LEFT, RIGHT
+from scc.constants import SCButtons, STICK, GYRO, LEFT, RIGHT, CPAD
 from scc.actions import Action, XYAction, MultiAction
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.profile import Profile
@@ -21,7 +21,7 @@ import os, sys, logging
 log = logging.getLogger("ControllerWidget")
 
 TRIGGERS = [ "LT", "RT" ]
-PADS	= [ "LPAD", "RPAD" ]
+PADS	= [ "LPAD", "RPAD", "CPAD" ]
 STICKS	= [ STICK ]
 GYROS	= [ GYRO ]
 PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD, SCButtons.STICKPRESS ]
@@ -158,7 +158,8 @@ class ControllerStick(ControllerWidget):
 			what = dict(
 				LPAD = LEFT,
 				RPAD = RIGHT,
-				STICK = nameof(SCButtons.STICKPRESS)
+				STICK = nameof(SCButtons.STICKPRESS),
+				CPAD = nameof(SCButtons.CPADPRESS)
 			)[self.name]
 			self.app.hilight(what)
 			self.over_icon = True
@@ -194,12 +195,16 @@ class ControllerTrigger(ControllerButton):
 class ControllerPad(ControllerStick):
 	ACTION_CONTEXT = Action.AC_PAD
 	def update(self):
+		print "UPDATE!", self.id
 		if self.id == "LPAD":
 			action = self.app.current.pads[Profile.LEFT]
 			pressed = self.app.current.buttons[SCButtons.LPAD]
-		else:
+		elif self.id == "RPAD":
 			action = self.app.current.pads[Profile.RIGHT]
 			pressed = self.app.current.buttons[SCButtons.RPAD]
+		else:
+			action = self.app.current.pads[CPAD]
+			pressed = self.app.current.buttons[SCButtons.CPADPRESS]
 		
 		self._set_label(action)
 		txt = pressed.describe(self.ACTION_CONTEXT)

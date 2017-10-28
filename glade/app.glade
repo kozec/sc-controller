@@ -531,6 +531,9 @@
                             <property name="receives_default">True</property>
                             <property name="margin_left">20</property>
                             <property name="margin_right">20</property>
+                            <child>
+                              <placeholder/>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>

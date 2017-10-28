@@ -975,8 +975,10 @@ class ActionEditor(Editor):
 			self.hide_macro()
 			if id == "LPAD":
 				self.set_title(_("Left Pad"))
-			else:
+			elif id == "RPAD":
 				self.set_title(_("Right Pad"))
+			else:
+				self.set_title(_("Touch Pad"))
 		if mode == Action.AC_OSK:
 			self.hide_name()
 			self.hide_modeshift()
