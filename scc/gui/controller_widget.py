@@ -195,7 +195,6 @@ class ControllerTrigger(ControllerButton):
 class ControllerPad(ControllerStick):
 	ACTION_CONTEXT = Action.AC_PAD
 	def update(self):
-		print "UPDATE!", self.id
 		if self.id == "LPAD":
 			action = self.app.current.pads[Profile.LEFT]
 			pressed = self.app.current.buttons[SCButtons.LPAD]

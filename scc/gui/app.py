@@ -182,9 +182,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 					w.set_sensitive(gyros)
 			for w in (btC, btCPAD):
 				w.set_visible(w.get_sensitive())
-				if w.get_sensitive():
-					w.show_all()
-					print "#", w, w == btCPAD, w.get_children()
 			stckEditor.set_visible_child(grEditor)
 			GLib.idle_add(self.on_c_size_allocate)
 		

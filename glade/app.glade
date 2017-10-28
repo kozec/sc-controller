@@ -544,9 +544,9 @@
                         <child>
                           <object class="GtkButton" id="btCPAD">
                             <property name="height_request">40</property>
+                            <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="no_show_all">True</property>
                             <property name="margin_top">5</property>
                             <child>
                               <placeholder/>
