@@ -762,7 +762,7 @@ class MouseAction(WholeHapticAction, Action):
 	
 	
 	def axis(self, mapper, position, what):
-		self.change(mapper, position, 0)
+		self.change(mapper, position * MouseAbsAction.MOUSE_FACTOR, 0)
 		mapper.force_event.add(FE_STICK)
 	
 		
@@ -2154,15 +2154,15 @@ class XYAction(WholeHapticAction, Action):
 				self._old_pos = None
 		
 		if mapper.controller.flags & ControllerFlags.HAS_RSTICK and what == RIGHT:
-			self.x.axis(mapper, x * MouseAbsAction.MOUSE_FACTOR, what)
-			self.y.axis(mapper, y * MouseAbsAction.MOUSE_FACTOR, what)
+			self.x.axis(mapper, x, what)
+			self.y.axis(mapper, y, what)
 			mapper.force_event.add(FE_PAD)
 		elif what in (LEFT, RIGHT):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
 		else:
-			self.x.axis(mapper, x * MouseAbsAction.MOUSE_FACTOR, what)
-			self.y.axis(mapper, y * MouseAbsAction.MOUSE_FACTOR, what)
+			self.x.axis(mapper, x, what)
+			self.y.axis(mapper, y, what)
 	
 	
 	def describe(self, context):
