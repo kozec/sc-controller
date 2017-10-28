@@ -38,7 +38,7 @@ class DS4Controller(HIDController):
 		SCButtons.STICKPRESS,
 		SCButtons.RPAD,
 		SCButtons.C,
-		SCButtons.CPAD,
+		SCButtons.CPADPRESS,
 	)
 	
 	flags = ( ControllerFlags.EUREL_GYROS | ControllerFlags.HAS_RSTICK
@@ -264,10 +264,10 @@ class DS4EvdevController(EvdevController):
 					pass
 				elif event.code == self.ECODES.BTN_LEFT:
 					if event.value == 1:
-						b = new_state.buttons | SCButtons.CPAD
+						b = new_state.buttons | SCButtons.CPADPRESS
 						new_state = new_state._replace(buttons = b)
 					else:
-						b = new_state.buttons & ~SCButtons.CPAD
+						b = new_state.buttons & ~SCButtons.CPADPRESS
 						new_state = new_state._replace(buttons = b)
 				elif event.code == self.ECODES.BTN_TOUCH:
 					if event.value == 1:
