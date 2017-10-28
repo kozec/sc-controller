@@ -2157,7 +2157,7 @@ class XYAction(WholeHapticAction, Action):
 			self.x.axis(mapper, x, what)
 			self.y.axis(mapper, y, what)
 			mapper.force_event.add(FE_PAD)
-		elif what in (LEFT, RIGHT):
+		elif what in (LEFT, RIGHT, CPAD):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
 		else:

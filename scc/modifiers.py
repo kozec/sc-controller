@@ -217,14 +217,19 @@ class ClickModifier(Modifier):
 		if what in (STICK, LEFT) and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
 			return self.action.axis(mapper, position, what)
-		if what in (STICK, LEFT) and mapper.was_pressed(SCButtons.LPAD):
+		elif what in (STICK, LEFT) and mapper.was_pressed(SCButtons.LPAD):
 			# Just released
 			return self.action.axis(mapper, 0, what)
-		# what == RIGHT, there are only three options
-		if mapper.is_pressed(SCButtons.RPAD):
+		elif what == CPAD and mapper.is_pressed(SCButtons.CPAD):
 			return self.action.axis(mapper, position, what)
-		if mapper.was_pressed(SCButtons.RPAD):
+		elif what == CPAD and mapper.was_pressed(SCButtons.CPAD):
 			# Just released
+			return self.action.axis(mapper, 0, what)
+		elif mapper.is_pressed(SCButtons.RPAD):
+			# what == RIGHT, last option
+			return self.action.axis(mapper, position, what)
+		elif mapper.was_pressed(SCButtons.RPAD):
+			# what == RIGHT, last option, Just released
 			return self.action.axis(mapper, 0, what)
 
 
@@ -232,14 +237,19 @@ class ClickModifier(Modifier):
 		if what == LEFT and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
 			return self.action.pad(mapper, position, what)
-		if what == LEFT and mapper.was_pressed(SCButtons.LPAD):
+		elif what == LEFT and mapper.was_pressed(SCButtons.LPAD):
 			# Just released
 			return self.action.pad(mapper, 0, what)
-		# what == RIGHT, there are only two options
-		if mapper.is_pressed(SCButtons.RPAD):
+		elif what == CPAD and mapper.is_pressed(SCButtons.CPAD):
 			return self.action.pad(mapper, position, what)
-		if mapper.was_pressed(SCButtons.RPAD):
+		elif what == CPAD and mapper.was_pressed(SCButtons.CPAD):
 			# Just released
+			return self.action.pad(mapper, 0, what)
+		elif mapper.is_pressed(SCButtons.RPAD):
+			# what == RIGHT, there are only two options
+			return self.action.pad(mapper, position, what)
+		elif mapper.was_pressed(SCButtons.RPAD):
+			# what == RIGHT, there are only two options, Just released
 			return self.action.pad(mapper, 0, what)
 
 
@@ -253,6 +263,11 @@ class ClickModifier(Modifier):
 		elif what == RIGHT and mapper.is_pressed(SCButtons.RPAD):
 			return self.action.whole(mapper, x, y, what)
 		elif what == RIGHT and mapper.was_pressed(SCButtons.RPAD):
+			# Just released
+			return self.action.whole(mapper, 0, 0, what)
+		elif what == CPAD and mapper.is_pressed(SCButtons.CPAD):
+			return self.action.whole(mapper, x, y, what)
+		elif what == CPAD and mapper.was_pressed(SCButtons.CPAD):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
 		else:
@@ -377,7 +392,7 @@ class BallModifier(Modifier, WholeHapticAction):
 		if dx or dy:
 			if self.haptic:
 				WholeHapticAction.add(self, mapper, dx, dy)
-			mapper.schedule(0.01, self._roll)
+			mapper.schedule(0.02, self._roll)
 	
 	
 	def encode(self):

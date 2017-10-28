@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
+from scc.constants import SCButtons, LEFT, RIGHT, CPAD, HapticPos
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
-from scc.constants import SCButtons, LEFT, RIGHT, HapticPos
 from scc.constants import STICK, STICKTILT, ControllerFlags
 from scc.aliases import ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction, GyroAbsAction
@@ -215,6 +215,8 @@ class Mapper(object):
 			return self.buttons & SCButtons.LPADTOUCH
 		elif what == RIGHT:
 			return self.buttons & SCButtons.RPADTOUCH
+		elif what == CPAD:
+			return self.buttons & SCButtons.CPADTOUCH
 		else:
 			return False
 	
@@ -232,6 +234,8 @@ class Mapper(object):
 			return self.old_buttons & SCButtons.LPADTOUCH
 		elif what == RIGHT:
 			return self.old_buttons & SCButtons.RPADTOUCH
+		elif what == CPAD:
+			return self.old_buttons & SCButtons.CPADTOUCH
 		else:
 			return False
 	
@@ -318,7 +322,7 @@ class Mapper(object):
 		# Store states
 		self.old_state = old_state
 		self.old_buttons = self.buttons
-
+		
 		self.state = state
 		self.buttons = state.buttons
 		
@@ -386,6 +390,11 @@ class Mapper(object):
 					if self.lpad_touched:
 						self.lpad_touched = False
 						self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
+			
+			# CPAD (touchpad on DS4 controller)
+			if controller.flags & ControllerFlags.HAS_CPAD:
+				if FE_PAD in fe or self.old_state.cpad_x != state.cpad_x or self.old_state.cpad_y != state.cpad_y:
+					self.profile.pads[CPAD].whole(self, state.cpad_x, state.cpad_y, CPAD)
 		
 		except Exception, e:
 			# Log error but don't crash here, it breaks too many things at once

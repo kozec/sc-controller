@@ -112,6 +112,7 @@ class ControllerFlags(IntEnum):
 	EUREL_GYROS =		1 << 2	# Gyro sensor values are provided as pitch, yaw
 								# and roll instead of quaterion. 'q4' is unused
 								# in such case.
+	HAS_CPAD	 =		1 << 3	# Controller has DS4-like touchpad in center
 
 
 STICK_PAD_MIN = -32768

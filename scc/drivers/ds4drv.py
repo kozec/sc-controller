@@ -41,8 +41,11 @@ class DS4Controller(HIDController):
 		SCButtons.CPADPRESS,
 	)
 	
-	flags = ( ControllerFlags.EUREL_GYROS | ControllerFlags.HAS_RSTICK
-					| ControllerFlags.SEPARATE_STICK )
+	flags = ( ControllerFlags.EUREL_GYROS
+			| ControllerFlags.HAS_RSTICK
+			| ControllerFlags.HAS_CPAD
+			| ControllerFlags.SEPARATE_STICK
+	)
 	
 	
 	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
@@ -148,7 +151,7 @@ class DS4Controller(HIDController):
 
 class DS4EvdevController(EvdevController):
 	TOUCH_FACTOR_X = STICK_PAD_MAX / 940.0
-	TOUCH_FACTOR_Y = STICK_PAD_MAX / 470.0
+	TOUCH_FACTOR_Y = STICK_PAD_MAX / -470.0
 	BUTTON_MAP = {
 		304: "A",
 		305: "B",
@@ -203,8 +206,11 @@ class DS4EvdevController(EvdevController):
 		EvdevController.ECODES.ABS_Y : (None, 1),		# 'q3'
 		EvdevController.ECODES.ABS_Z : (None, -1),		# 'q1'
 	}
-	flags = ( ControllerFlags.EUREL_GYROS | ControllerFlags.HAS_RSTICK
-					| ControllerFlags.SEPARATE_STICK )
+	flags = ( ControllerFlags.EUREL_GYROS
+			| ControllerFlags.HAS_RSTICK
+			| ControllerFlags.HAS_CPAD
+			| ControllerFlags.SEPARATE_STICK
+	)
 	
 	def __init__(self, daemon, controllerdevice, gyro, touchpad):
 		config = {
