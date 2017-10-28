@@ -77,12 +77,15 @@ class BindingEditor(object):
 		if id == SCButtons.STICKPRESS and Profile.STICK in self.button_widgets:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[Profile.STICK].update()
-		elif id in BUTTONS:
+		elif id == SCButtons.CPADPRESS and Profile.CPAD in self.button_widgets:
 			before, profile.buttons[id] = profile.buttons[id], action
-			self.button_widgets[id].update()
+			self.button_widgets[Profile.CPAD].update()
 		elif id in PRESSABLE:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[id.name].update()
+		elif id in BUTTONS:
+			before, profile.buttons[id] = profile.buttons[id], action
+			self.button_widgets[id].update()
 		elif id in TRIGGERS:
 			# TODO: Use LT and RT in profile as well
 			side = LEFT if id == "LT" else RIGHT

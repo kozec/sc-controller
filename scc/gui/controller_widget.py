@@ -24,7 +24,8 @@ TRIGGERS = [ "LT", "RT" ]
 PADS	= [ "LPAD", "RPAD", "CPAD" ]
 STICKS	= [ STICK ]
 GYROS	= [ GYRO ]
-PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD, SCButtons.STICKPRESS ]
+PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD,
+				SCButtons.STICKPRESS, SCButtons.CPADPRESS ]
 _NOT_BUTTONS = PADS + STICKS + GYROS + TRIGGERS
 _NOT_BUTTONS += [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
@@ -145,7 +146,13 @@ class ControllerStick(ControllerWidget):
 	
 	def on_click(self, *a):
 		if self.over_icon and self.enable_press:
-			self.app.show_editor(SCButtons.STICKPRESS)
+			what = dict(
+				LPAD = SCButtons.LPAD,
+				RPAD = SCButtons.RPAD,
+				STICK = SCButtons.STICKPRESS,
+				CPAD = SCButtons.CPADPRESS
+			)[self.id]
+			self.app.show_editor(what)
 		else:
 			self.app.show_editor(self.id)
 	
