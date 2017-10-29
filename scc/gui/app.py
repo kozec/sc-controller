@@ -815,7 +815,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		# better left in daemon - involving socket in mouse controls
 		# adds too much lags.
 		c.lock(on_lock_success, on_lock_failed,
-			'A', 'B', 'X', 'Y', 'START', 'BACK', 'LB', 'RB', 'C',
+			'A', 'B', 'X', 'Y', 'START', 'BACK', 'LB', 'RB', 'C', 'LPAD', 'RPAD',
 			'STICK', 'LGRIP', 'RGRIP', 'LT', 'RT', 'STICKPRESS')
 		
 		# Ask daemon to temporaly reconfigure pads for mouse emulation
@@ -1250,11 +1250,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			o.arg = arg
 			self.add_main_option_entries([o])
 		
-		self.connect('handle-local-options', self.do_local_options)
-		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
 		aso("osd",		b"o", "OSD mode (displays only editor only)")
+		self.connect('handle-local-options', self.do_local_options)
 	
 	
 	def save_profile_selection(self, path):

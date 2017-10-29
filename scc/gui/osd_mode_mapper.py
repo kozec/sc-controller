@@ -94,11 +94,29 @@ class OSDModeMouse(object):
 	def keyEvent(self, key, val):
 		tp = Gdk.EventType.BUTTON_PRESS if val else Gdk.EventType.BUTTON_RELEASE
 		event = Gdk.Event.new(tp)
-		event.time = Gtk.get_current_event_time()
 		event.button = int(key) - Keys.BTN_LEFT + 1
-		event.window, wx, wy = Gdk.Window.at_pointer()
+		window, wx, wy = Gdk.Window.at_pointer()
 		screen, x, y, mask = Gdk.Display.get_default().get_pointer()
 		event.x_root, event.y_root = x, y
 		event.x, event.y = x - wx, y - wy
+		gtk_window = None
+		for w in Gtk.Window.list_toplevels():
+			if w.get_window():
+				if window.get_toplevel().get_xid() == w.get_window().get_xid():
+					gtk_window = w
+					break
+		if gtk_window:
+			if gtk_window.get_type_hint() == Gdk.WindowTypeHint.COMBO:
+				# Special case, clicking on combo does nothing, so
+				# pressing "space" is emulated instead.
+				if not val:
+					return
+				event = Gdk.Event.new(Gdk.EventType.KEY_PRESS)
+				event.time = Gtk.get_current_event_time()
+				event.hardware_keycode = 65
+				event.keyval = Gdk.KEY_space
+				event.window = self.mapper.target_window
+		event.time = Gtk.get_current_event_time()
+		event.window = window
 		event.set_device(self.device)
 		Gtk.main_do_event(event)
