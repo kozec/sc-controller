@@ -204,6 +204,14 @@ class Mapper(object):
 			self.feedbacks[hapticdata.get_position()] = hapticdata
 	
 	
+	def controller_flags(self):
+		"""
+		Returns controller flags or, if there is no controller set to
+		this mapper, sc_by_cable driver matching defaults.
+		"""
+		return 0 if self.controller is None else controller.flags
+	
+	
 	def is_touched(self, what):
 		"""
 		Returns True if specified pad is being touched.

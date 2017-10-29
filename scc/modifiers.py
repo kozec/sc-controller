@@ -442,7 +442,7 @@ class BallModifier(Modifier, WholeHapticAction):
 	
 	
 	def whole(self, mapper, x, y, what):
-		if mapper.controller.flags & ControllerFlags.HAS_RSTICK and what == RIGHT:
+		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
 			return self.action.whole(mapper, x, y, what)
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
@@ -1279,7 +1279,7 @@ class SmoothModifier(Modifier):
 		return x / self._w_sum, y / self._w_sum
 	
 	def whole(self, mapper, x, y, what):
-		if mapper.controller.flags & ControllerFlags.HAS_RSTICK and what == RIGHT:
+		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
 			return self.action.whole(mapper, x, y, what)
 		if mapper.is_touched(what):
 			if mapper.was_touched(what):
