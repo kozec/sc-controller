@@ -7,7 +7,7 @@ Display menu that user can navigate through and prints chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, GLib, Gdk, GdkX11, GdkPixbuf
+from gi.repository import Gtk, GLib, Gio, Gdk, GdkX11, GdkPixbuf
 from scc.tools import point_in_gtkrect, find_menu, find_icon
 from scc.tools import circle_to_square, clamp
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
@@ -276,7 +276,18 @@ class Menu(OSDWindow):
 				widget.set_name("osd-menu-dummy")
 			else:
 				widget.set_name("osd-menu-item")
-			icon_file, has_colors = find_icon(item.icon, self.PREFER_BW_ICONS)
+			
+			if isinstance(item.icon, Gio.FileIcon):
+				icon_file = item.icon.get_file().get_path()
+				has_colors = True
+			elif isinstance(item.icon, Gio.ThemedIcon):
+				icon = Gtk.IconTheme.get_default().choose_icon(
+					item.icon.get_names(), 64, 0)
+				icon_file = icon.get_filename() if icon else None
+				has_colors = True
+			else:
+				icon_file, has_colors = find_icon(item.icon, self.PREFER_BW_ICONS)
+			
 			if icon_file:
 				icon = MenuIcon(icon_file, has_colors)
 				label = widget.get_children()[0]

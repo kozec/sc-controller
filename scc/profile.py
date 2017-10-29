@@ -25,6 +25,8 @@ class Profile(object):
 	
 	LEFT  = LEFT
 	RIGHT = RIGHT
+	LPAD = SCButtons.LPAD.name
+	RPAD = SCButtons.RPAD.name
 	CPAD = CPAD
 	WHOLE = WHOLE
 	STICK = STICK

@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 #pragma GCC diagnostic ignored "-Wunused-result"
-#define UNPUT_MODULE_VERSION 6
+#define UNPUT_MODULE_VERSION 8
 #define MAX_FF_EVENTS 4
 
 #define INFINITE_RUMBLE		10000		// Not really infinite, but longer than controller can handle
@@ -357,7 +357,6 @@ int uinput_ff_read(int fd, int ff_effects_max, struct feedback_effect** ff_effec
 							upload.retval = 0;
 						} else {
 							// Upload failed
-							ioctl(fd, UI_BEGIN_FF_UPLOAD, &upload);
 							RUMBLE_DEBUG("Cannot create more effects!\n");
 							upload.retval = -1;
 						}

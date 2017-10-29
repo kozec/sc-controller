@@ -20,6 +20,7 @@ from scc.gui.modeshift_editor import ModeshiftEditor
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.gui.action_editor import ActionEditor
 from scc.gui.macro_editor import MacroEditor
+from scc.gui.ae.buttons import is_button_togle
 from scc.gui.ring_editor import RingEditor
 
 
@@ -97,9 +98,9 @@ class BindingEditor(object):
 		elif id in STICKS + PADS:
 			if id in STICKS:
 				before, profile.stick = profile.stick, action
-			elif id == "LPAD":
+			elif id == Profile.LPAD:
 				before, profile.pads[Profile.LEFT] = profile.pads[Profile.LEFT], action
-			elif id == "RPAD":
+			elif id == Profile.RPAD:
 				before, profile.pads[Profile.RIGHT] = profile.pads[Profile.RIGHT], action
 			else:
 				before, profile.pads[Profile.CPAD] = profile.pads[Profile.CPAD], action
@@ -126,9 +127,9 @@ class BindingEditor(object):
 		elif id in STICKS + PADS:
 			if id in STICKS:
 				return profile.stick
-			elif id == "LPAD":
+			elif id == Profile.LPAD:
 				return profile.pads[Profile.LEFT]
-			elif id == "RPAD":
+			elif id == Profile.RPAD:
 				return profile.pads[Profile.RIGHT]
 			else:
 				return profile.pads[Profile.CPAD]
@@ -154,7 +155,7 @@ class BindingEditor(object):
 			# Type is subclass of Macro
 			e = ActionEditor(self.app, self.on_action_chosen)
 			e.set_title(title)
-		elif isinstance(action, Macro):
+		elif isinstance(action, Macro) and not is_button_togle(action):
 			e = MacroEditor(self.app, self.on_action_chosen)
 			e.set_title(_("Macro for %s") % (title,))
 		else:

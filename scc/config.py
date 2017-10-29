@@ -43,6 +43,11 @@ class Config(object):
 			"enable_status_icon" : False,
 			"minimize_to_status_icon" : True,
 			"autokill_daemon" : False,
+			"news": {
+				# Controls "new in this version" message
+				"enabled": True,			# if disabled, no querying is done
+				"last_version": "0.3.12",	# last version for which message was displayed
+			}
 		},
 		"controllers": { },
 		# output - modifies emulated controller

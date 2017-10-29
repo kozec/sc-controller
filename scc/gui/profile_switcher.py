@@ -142,6 +142,14 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		self._allow_new = allow
 	
 	
+	def set_allow_switch(self, allow):
+		"""
+		Enables or disables profile switching for this ProfileSwitcher.
+		When disabled, only save button is be usable.
+		"""
+		self._combo.set_sensitive(allow)
+	
+	
 	def set_profile_list(self, lst):
 		"""
 		Fills combobox with given list of available profiles.
@@ -183,7 +191,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		"""
 		Called from main window after profile file is deleted.
 		May either change path to profile in default_profiles directory,
-		or remove entry altogether.
+		or remove entry entirely.
 		"""
 		prev = None
 		new_path = find_profile(name)

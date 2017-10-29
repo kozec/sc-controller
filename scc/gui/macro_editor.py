@@ -343,6 +343,11 @@ class MacroEditor(Editor):
 			vbAddedWidget.remove(ch)	
 	
 	
+	def allow_first_page(self):
+		""" For compatibility with action editor. Does nothing """
+		pass
+	
+	
 	def set_input(self, id, action, mode=Action.AC_BUTTON):
 		""" Common part of editor setup """
 		btDefault = self.builder.get_object("btDefault")

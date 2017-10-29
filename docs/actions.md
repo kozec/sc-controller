@@ -69,14 +69,15 @@ eleasing button returns emulated axis back to 'min'.
   trigger position is not in middle, but in minimal possible value.
 
 
-#### <a name="dpad"></a> dpad(up, down, left, right)
-Emulates dpad. Touchpad is divided into 4 triangular parts. When the user touches the
-touchpad, action is executed depending on finger position.
-Available only for pads and sticks; for stick, works by translating
-stick position, what probably doesn't yields expected results.
+#### <a name="dpad"></a> dpad([diagonal_rage,] up, down, left, right)
+Emulates dpad. Touchpad is divided into 8 triangular parts. When the user touches the touchpad, action is executed depending on finger position. 
+
+'diagonal_rage' is specified in degrees (1 to 89). If not set, all parts are sized equally, otherwise, diagonal parts are taking specified portion of pad and rest is assigned to up/left/right/down portions.
+
+Available only for pads and sticks.
 
 
-#### <a name="dpad8"></a> dpad8(up, down, left, right, upleft, upright, downleft, downright)
+#### <a name="dpad8"></a> dpad8([diagonal_rage,] up, down, left, right, upleft, upright, downleft, downright)
 Same as dpad, with more directions.
 
 

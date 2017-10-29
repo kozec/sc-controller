@@ -100,6 +100,7 @@ class ActionEditor(Editor):
 		self.click = False				# Click modifier value. None for disabled
 		self.rotation_angle = 0			# RotateInputModifier angle
 		self.osd = False				# 'OSD enabled' value.
+		self.first_page_allowed = False
 		self.setup_widgets()
 		self.load_components()
 		self.ac_callback = callback		# This is different callback than ButtonChooser uses
@@ -121,6 +122,7 @@ class ActionEditor(Editor):
 				self.builder.get_object("sclSens%s" % (XYZ[i],)),
 				self.builder.get_object("lblSens%s" % (XYZ[i],)),
 				self.builder.get_object("btClearSens%s" % (XYZ[i],)),
+				self.builder.get_object("cbSensInvert%s" % (XYZ[i],)),
 			))
 		for key in AFP:
 			i = AFP.index(key)
@@ -243,18 +245,23 @@ class ActionEditor(Editor):
 		"""
 		Forces action editor to display page with specified component.
 		If 'remove_rest' is True, removes all other pages.
-
+		
 		Returns 'component'
 		"""
+		if type(component) in (unicode, str):
+			component = self.load_component(component)
+			return self.force_page(component, remove_rest)
+		
 		stActionModes = self.builder.get_object("stActionModes")
 		component.load()
-		for c in stActionModes.get_children():
-			if c != component:
-				stActionModes.remove(c)
-
+		if remove_rest:
+			for c in stActionModes.get_children():
+				if c != component:
+					stActionModes.remove(c)
+		
 		if component.get_widget() not in stActionModes.get_children():
 			stActionModes.add(component.get_widget())
-
+		
 		component.set_action(self._mode, self._action)
 		if self._selected_component is not None:
 			if self._selected_component != component:
@@ -263,10 +270,10 @@ class ActionEditor(Editor):
 		self._selected_component.shown()
 		stActionModes.set_visible_child(component.get_widget())
 		stActionModes.show_all()
-
+		
 		return component
-
-
+	
+	
 	def get_name(self):
 		""" Returns action name as set in editor entry """
 		entName = self.builder.get_object("entName")
@@ -370,7 +377,7 @@ class ActionEditor(Editor):
 
 	def on_btClearSens_clicked(self, source, *a):
 		i = 0
-		for scale, label, button in self.sens_widgets:
+		for scale, label, button, checkbox in self.sens_widgets:
 			if source == button:
 				scale.set_value(self.sens_defaults[i])
 				i += 1
@@ -411,6 +418,7 @@ class ActionEditor(Editor):
 			else:
 				a = self.generate_modifiers(self._action, self._selected_component.NAME=="custom")
 				self.ac_callback(self.id, a)
+				self.ac_callback = None
 			if self._selected_component:
 				self._selected_component.on_ok(a)
 		self.close()
@@ -466,15 +474,17 @@ class ActionEditor(Editor):
 		rvSmoothing = self.builder.get_object("rvSmoothing")
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
-
+		
 		# Sensitivity
 		set_action = False
 		for i in xrange(0, len(self.sens)):
-			if self.sens[i] != self.sens_widgets[i][0].get_value():
-				self.sens[i] = self.sens_widgets[i][0].get_value()
+			target = self.sens_widgets[i][0].get_value()
+			if self.sens_widgets[i][3].get_active():
+				target = -target
+			if self.sens[i] != target:
+				self.sens[i] = target
 				set_action = True
-
-
+		
 		# Feedback
 		if cbFeedback.get_active():
 			feedback_position = FEEDBACK_SIDES[cbFeedbackSide.get_active()]
@@ -641,8 +651,8 @@ class ActionEditor(Editor):
 			else:
 				return action
 		return action
-
-
+	
+	
 	def load_modifiers(self, action, index=-1):
 		"""
 		Parses action for modifiers and updates UI accordingly.
@@ -651,7 +661,7 @@ class ActionEditor(Editor):
 		cbRequireClick = self.builder.get_object("cbRequireClick")
 		sclRotation = self.builder.get_object("sclRotation")
 		cbOSD = self.builder.get_object("cbOSD")
-
+		
 		while ActionEditor.is_editable_modifier(action):
 			if isinstance(action, RotateInputModifier):
 				self.rotation_angle = action.angle
@@ -683,14 +693,14 @@ class ActionEditor(Editor):
 				else:
 					self.sens[index] = action.speeds[0]
 				action = action.action
-
+		
 		self._recursing = True
 		cbRequireClick.set_active(self.click)
 		cbOSD.set_active(self.osd)
 		sclRotation.set_value(self.rotation_angle)
 		for i in xrange(0, len(self.sens)):
-			self.sens_widgets[i][0].set_value(self.sens[i])
-
+			self.sens_widgets[i][3].set_active(self.sens[i] < 0)
+			self.sens_widgets[i][0].set_value(abs(self.sens[i]))
 		# Feedback
 		cbFeedbackSide = self.builder.get_object("cbFeedbackSide")
 		lblFeedbackSide = self.builder.get_object("lblFeedbackSide")
@@ -705,7 +715,7 @@ class ActionEditor(Editor):
 				w.set_sensitive(self.feedback_position is not None)
 		lblFeedbackSide.set_sensitive(self.feedback_position is not None)
 		cbFeedbackSide.set_sensitive(self.feedback_position is not None)
-
+		
 		# Smoothing
 		cbSmoothing = self.builder.get_object("cbSmoothing")
 		if self.smoothing:
@@ -715,7 +725,7 @@ class ActionEditor(Editor):
 		for grp in self.smoothing_widgets:
 			for w in grp[0:-1]:
 				w.set_sensitive(cbSmoothing.get_active())
-
+		
 		# Deadzone
 		cbDeadzoneMode = self.builder.get_object("cbDeadzoneMode")
 		lblDeadzoneMode = self.builder.get_object("lblDeadzoneMode")
@@ -725,16 +735,31 @@ class ActionEditor(Editor):
 			cbDeadzoneMode.set_active(DEADZONE_MODES.index(self.deadzone_mode))
 			for i in xrange(0, len(self.deadzone)):
 				self.deadzone_widgets[i][1].set_value(self.deadzone[i])
-
+		
 		for grp in self.deadzone_widgets:
 			for w in grp[0:-1]:
 				w.set_sensitive(self.deadzone_mode is not None)
 		lblDeadzoneMode.set_sensitive(self.deadzone_mode is not None)
 		cbDeadzoneMode.set_sensitive(self.deadzone_mode is not None)
-
+		
 		self._recursing = False
-
+		
 		return action
+	
+	
+	def allow_first_page(self):
+		"""
+		Allows first page to be used
+		"""
+		self.first_page_allowed = True
+	
+	
+	def reset_active_component(self):
+		"""
+		Forgets what component was selected so next call to set_action
+		selects new one.
+		"""
+		self._selected_component = None
 	
 	
 	def set_action(self, action, from_custom=False):
@@ -780,6 +805,13 @@ class ActionEditor(Editor):
 				c = self.load_component("custom")
 				if c in self.components and (self._mode & c.CTXS) != 0:
 					self._selected_component = c
+			elif not action and self.first_page_allowed:
+				self._selected_component = self.load_component("first_page")
+				stActionModes = self.builder.get_object("stActionModes")
+				self._selected_component.load()
+				self._selected_component.shown()
+				stActionModes.add(self._selected_component.get_widget())
+				stActionModes.set_visible_child(self._selected_component.get_widget())
 			if self._selected_component:
 				if self._selected_component in self.c_buttons:
 					self.c_buttons[self._selected_component].set_active(True)
@@ -789,7 +821,6 @@ class ActionEditor(Editor):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
 			log.warning(action.to_string())
-		
 		
 		if cbPreview.get_sensitive() and cbPreview.get_active():
 			self.apply_preview(action)
@@ -807,7 +838,9 @@ class ActionEditor(Editor):
 			a = self.generate_modifiers(self._action, self._selected_component.NAME=="custom")
 			self.apply_preview(a)
 		elif self._replaced_action is not None:
-			self.ac_callback(self.id, self._replaced_action, mark_changed=False)
+			if self.ac_callback:
+				# Is None if OK button handler was executed
+				self.ac_callback(self.id, self._replaced_action, mark_changed=False)
 			self._replaced_action = None
 
 
@@ -873,7 +906,8 @@ class ActionEditor(Editor):
 		xyz = [ x, y, z ]
 		for i in xrange(0, len(self.sens)):
 			self.sens[i] = xyz[i]
-			self.sens_widgets[i][0].set_value(self.sens[i])
+			self.sens_widgets[i][3].set_active(self.sens[i] < 0)
+			self.sens_widgets[i][0].set_value(abs(self.sens[i]))
 		self._recursing = False
 		self.set_action(self._action)
 		self._selected_component.modifier_updated()
@@ -901,15 +935,18 @@ class ActionEditor(Editor):
 		self._recursing = False
 		if update:
 			self.update_modifiers()
-
-
+	
+	
+	def get_mode(self):
+		return self._mode
+	
+	
 	def _set_mode(self, action, mode):
 		""" Common part of editor setup """
 		self._mode = mode
 		# Clear pages and 'action type' buttons
 		entName = self.builder.get_object("entName")
 		vbActionButtons = self.builder.get_object("vbActionButtons")
-		stActionModes = self.builder.get_object("stActionModes")
 		stActionModes = self.builder.get_object("stActionModes")
 
 		# Go throgh list of components and display buttons that are usable
@@ -973,9 +1010,9 @@ class ActionEditor(Editor):
 			self._set_mode(action, mode or Action.AC_PAD)
 			self.set_action(action)
 			self.hide_macro()
-			if id == "LPAD":
+			if id == Profile.LPAD:
 				self.set_title(_("Left Pad"))
-			elif id == "RPAD":
+			elif id == Profile.RPAD:
 				self.set_title(_("Right Pad"))
 			else:
 				self.set_title(_("Touch Pad"))

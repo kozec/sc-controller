@@ -18,7 +18,7 @@ from scc.controller import HapticData
 from scc.tools import nameof, clamp
 from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign, atan2, sin, cos
-from collections import deque
+from collections import OrderedDict, deque
 
 import time, logging, inspect
 log = logging.getLogger("Modifiers")
@@ -48,7 +48,7 @@ class Modifier(Action):
 	
 	def _mod_init(self):
 		"""
-		Initializes modifier with rest of parameters, after action nparameter
+		Initializes modifier with rest of parameters, after action parameter
 		was taken from it and stored in self.action
 		"""
 		pass # not needed by default
@@ -453,6 +453,7 @@ class BallModifier(Modifier, WholeHapticAction):
 				self._stop()
 			self._old_pos = x, y
 		elif mapper.was_touched(what):
+			self._old_pos = None
 			velocity = sqrt(self._xvel * self._xvel + self._yvel * self._yvel)
 			if velocity > BallModifier.MIN_LIFT_VELOCITY:
 				self._roll(mapper)
@@ -637,12 +638,11 @@ class ModeModifier(Modifier):
 	def __init__(self, *stuff):
 		Modifier.__init__(self)
 		self.default = None
-		self.mods = {}
+		self.mods = OrderedDict()
 		self.held_buttons = set()
 		self.held_sticks = set()
 		self.held_triggers = {}
-		self.order = []
-		self.old_gyro = None
+		self.old_action = None
 		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
 		
 		button = None
@@ -650,36 +650,35 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				# Default has to be last parameter
 				raise ValueError("Invalid parameters for 'mode'")
-			if isinstance(i, Action):
-				if button is None:
-					self.default = i
-					continue
+			if isinstance(i, Action) and button is None:
+				self.default = i
+			elif isinstance(i, Action):
 				self.mods[button] = i
-				self.order.append(button)
 				button = None
-			elif isinstance(i, RangeOP):
-				button = i
-			elif i in SCButtons:
+			elif isinstance(i, RangeOP) or i in SCButtons:
 				button = i
 			else:
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
+		self.make_checks()
 		if self.default is None:
 			self.default = NoAction()
 	
 	
+	def make_checks(self):
+		self.checks = []
+		for button, action in self.mods.items():
+			if isinstance(button, RangeOP):
+				self.checks.append(( button, action ))
+			else:
+				self.checks.append(( self.make_button_check(button), action ))
+	
+	
 	def get_child_actions(self):
-		return [ self.mods[key] for key in self.mods ]
+		return self.mods.values()
 	
 	
 	def encode(self):
-		rv = self.default.encode()
-		modes = {}
-		for key in self.mods:
-			modes[key.name] = self.mods[key].encode()
-		rv[ModeModifier.PROFILE_KEYS[0]] = modes
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv
+		return { 'action' : self.to_string(False) }
 	
 	
 	@staticmethod
@@ -698,8 +697,10 @@ class ModeModifier(Modifier):
 	
 	def get_compatible_modifiers(self):
 		rv = 0
-		for key in self.mods:
-			rv |= self.mods[key].get_compatible_modifiers()
+		for action in self.mods.values():
+			rv |= action.get_compatible_modifiers()
+		if self.default:
+			rv |= self.default.get_compatible_modifiers()
 		return rv
 	
 	
@@ -707,8 +708,8 @@ class ModeModifier(Modifier):
 		# Returns default action or action assigned to first modifier
 		if self.default:
 			return self.default.strip()
-		if len(self.order) > 0:
-			return self.mods[self.order[0]].strip()
+		if len(self.mods):
+			return self.mods.values()[0].strip()
 		# Empty ModeModifier
 		return NoAction()
 	
@@ -716,15 +717,16 @@ class ModeModifier(Modifier):
 	def compress(self):
 		if self.default:
 			self.default = self.default.compress()
-		for button in self.mods:
-			self.mods[button] = self.mods[button].compress()
+		for check in self.mods:
+			self.mods[check] = self.mods[check].compress()
+		self.make_checks()
 		return self
 	
 	
 	def __str__(self):
 		rv = [ ]
-		for key in self.mods:
-			rv += [ nameof(key), self.mods[key] ]
+		for check in self.mods:
+			rv += [ nameof(check), self.mods[check] ]
 		if self.default is not None:
 			rv += [ self.default ]
 		return "<Modifier '%s', %s>" % (self.COMMAND, rv)
@@ -736,17 +738,17 @@ class ModeModifier(Modifier):
 		if self.name: return self.name
 		l = []
 		if self.default : l.append(self.default)
-		for x in self.order:
-			l.append(self.mods[x])
+		for check in self.mods:
+			l.append(self.mods[check])
 		return "\n".join([ x.describe(context) for x in l ])
 	
 	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			rv = [ (" " * pad) + "mode(" ]
-			for key in self.mods:
-				a_str = self.mods[key].to_string(True).split("\n")
-				a_str[0] = (" " * pad) + "  " + (key.name + ",").ljust(11) + a_str[0]	# Key has to be one of SCButtons
+			for check in self.mods:
+				a_str = self.mods[check].to_string(True).split("\n")
+				a_str[0] = (" " * pad) + "  " + (nameof(check) + ",").ljust(11) + a_str[0]	# Key has to be one of SCButtons
 				for i in xrange(1, len(a_str)):
 					a_str[i] = (" " * pad) + "  " + a_str[i]
 				a_str[-1] = a_str[-1] + ","
@@ -763,8 +765,8 @@ class ModeModifier(Modifier):
 			return "\n".join(rv)
 		else:
 			rv = [ ]
-			for key in self.mods:
-				rv += [ key.name, self.mods[key].to_string(False) ]
+			for check in self.mods:
+				rv += [ nameof(check), self.mods[check].to_string(False) ]
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
@@ -774,20 +776,19 @@ class ModeModifier(Modifier):
 		"""
 		Selects action by pressed button.
 		"""
-		for b in self.order:
-			if mapper.is_pressed(b):
-				return self.mods[b]
+		for check, action in self.checks:
+			if check(mapper):
+				return action
 		return self.default
 	
 	
-	def select_b(self, mapper):
-		"""
-		Same as select but returns button as well.
-		"""
-		for b in self.order:
-			if mapper.is_pressed(b):
-				return b, self.mods[b]
-		return None, self.default
+	@staticmethod
+	def make_button_check(button):
+		def cb(mapper):
+			return mapper.is_pressed(button)
+		
+		cb.name = button.name	# So nameof() still works on keys in self.mods
+		return cb
 	
 	
 	def button_press(self, mapper):
@@ -821,10 +822,10 @@ class ModeModifier(Modifier):
 	
 	def gyro(self, mapper, pitch, yaw, roll, *q):
 		sel = self.select(mapper)
-		if sel is not self.old_gyro:
-			if self.old_gyro:
-				self.old_gyro.gyro(mapper, 0, 0, 0, *q)
-			self.old_gyro = sel
+		if sel is not self.old_action:
+			if self.old_action:
+				self.old_action.gyro(mapper, 0, 0, 0, *q)
+			self.old_action = sel
 		return sel.gyro(mapper, pitch, yaw, roll, *q)
 	
 	
@@ -843,7 +844,17 @@ class ModeModifier(Modifier):
 				for b in self.held_sticks:
 					b.whole(mapper, x, y, what)
 		else:
-			return self.select(mapper).whole(mapper, x, y, what)
+			sel = self.select(mapper)
+			if sel is not self.old_action:
+				mapper.set_button(what, False)
+				if self.old_action:
+					self.old_action.whole(mapper, 0, 0, what)
+				self.old_action = sel
+				rv = sel.whole(mapper, x, y, what)
+				mapper.set_button(what, True)
+				return rv
+			else:
+				return sel.whole(mapper, x, y, what)
 
 
 class DoubleclickModifier(Modifier, HapticEnabledAction):
@@ -881,7 +892,7 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 	
 	
 	def get_child_actions(self):
-		return self.actions
+		return self.action, self.normalaction, self.holdaction
 	
 	
 	@staticmethod
@@ -1130,7 +1141,7 @@ class FeedbackModifier(Modifier):
 	"""
 	COMMAND = "feedback"
 	PROFILE_KEY_PRIORITY = -4
-
+	
 	def _mod_init(self, position, amplitude=512, frequency=4, period=1024, count=1):
 		self.haptic = HapticData(position, amplitude, frequency, period, count)
 		if self.action:
@@ -1151,8 +1162,8 @@ class FeedbackModifier(Modifier):
 		pars[0] = nameof(pars[0])
 		rv[FeedbackModifier.COMMAND] = pars
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		args = list(data[FeedbackModifier.COMMAND])
@@ -1160,25 +1171,25 @@ class FeedbackModifier(Modifier):
 			args[0] = getattr(HapticPos, args[0])
 		args.append(a)
 		return FeedbackModifier(*args)
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return self._mod_to_string(self.strip_defaults(), multiline, pad)
-
-
+	
+	
 	def __str__(self):
 		return "<with Feedback %s>" % (self.action,)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		return self.action.compress()
 
@@ -1186,43 +1197,43 @@ class FeedbackModifier(Modifier):
 class RotateInputModifier(Modifier):
 	""" Rotates ball or stick input along axis """
 	COMMAND = "rotate"
-
+	
 	def _mod_init(self, angle):
 		self.angle = angle
-
-
+	
+	
 	def encode(self):
 		rv = Modifier.encode(self)
 		rv[RotateInputModifier.COMMAND] = self.angle
 		return rv
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return RotateInputModifier(float(data['rotate']), a)
-
-
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
 		return self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return self._mod_to_string((self.angle,), multiline, pad)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		if hasattr(self.action, "set_rotation"):
 			self.action.set_rotation(self.angle * PI / -180.0)
 			return self.action
 		self.action = self.action.compress()
 		return self
-
-
+	
+	
 	# This doesn't make sense with anything but 'whole' as input.
 	def whole(self, mapper, x, y, what):
 		angle = self.angle * PI / -180.0
@@ -1247,7 +1258,7 @@ class SmoothModifier(Modifier):
 		self._range = list(xrange(level))
 		self._weights = [ multiplier ** x for x in reversed(self._range) ]
 		self._w_sum = sum(self._weights)
-		self._last_pos = 0
+		self._last_pos = None
 		self._moving = False
 	
 	
@@ -1278,20 +1289,22 @@ class SmoothModifier(Modifier):
 		y = sum(( self._deq_y[i] * self._weights[i] for i in self._range ))
 		return x / self._w_sum, y / self._w_sum
 	
+	
 	def whole(self, mapper, x, y, what):
 		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
 			return self.action.whole(mapper, x, y, what)
 		if mapper.is_touched(what):
-			if mapper.was_touched(what):
-				# Pressed for longer time
-				self._deq_x.append(x)
-				self._deq_y.append(y)
-				x, y = self._get_pos()
-			else:
+			if self._last_pos is None:
 				# Just pressed - fill deque with current position
 				for i in self._range:
 					self._deq_x.append(x)
 					self._deq_y.append(y)
+				x, y = self._get_pos()
+				self._last_pos = 0
+			else:
+				# Pressed for longer time
+				self._deq_x.append(x)
+				self._deq_y.append(y)
 				x, y = self._get_pos()
 			if abs(x + y - self._last_pos) > self.filter:
 				self.action.whole(mapper, x, y, what)
@@ -1302,10 +1315,10 @@ class SmoothModifier(Modifier):
 			# Pad was just released
 			x, y = self._get_pos()
 			self.action.whole(mapper, x, y, what)
-			self._last_pos = 0
+			self._last_pos = None
 
 
-class CircularModifier(Modifier, WholeHapticAction):
+class CircularModifier(Modifier, HapticEnabledAction):
 	"""
 	Designed to translate rotating finger over pad to mouse wheel movement.
 	Can also be used to translate same thing into movement of Axis.
@@ -1317,8 +1330,9 @@ class CircularModifier(Modifier, WholeHapticAction):
 		# Piece of backwards compatibility
 		if len(params) >= 1 and params[0] in Rels:
 			params = [ MouseAction(params[0]) ]
+		self._haptic_counter = 0
 		Modifier.__init__(self, *params)
-		WholeHapticAction.__init__(self)
+		HapticEnabledAction.__init__(self)
 	
 	
 	def _mod_init(self):
@@ -1367,7 +1381,7 @@ class CircularModifier(Modifier, WholeHapticAction):
 			if self.angle is None:
 				# Finger just touched the pad
 				self.angle, angle = angle, 0
-				self.reset_wholehaptic()
+				self._haptic_counter = 0
 			else:
 				self.angle, angle = angle, self.angle - angle
 				# Ensure we don't wrap from pi to -pi creating a large delta
@@ -1378,11 +1392,17 @@ class CircularModifier(Modifier, WholeHapticAction):
 				elif angle < -PI:
 					# Add a full rotation to counter the wrapping
 					angle += 2 * PI
-				if self.haptic:
-					WholeHapticAction.change(self, mapper,
-							angle * self.speed * 10000.0 * 2.0, 0)
 			# Apply bulgarian constant
 			angle *= 10000.0
+			# Generate feedback, if enabled
+			if self.haptic:
+				self._haptic_counter += angle * self.speed / self.haptic.frequency
+				if abs(self._haptic_counter) > 0.5:
+					if self._haptic_counter > 0.5:
+						self._haptic_counter -= 0.5
+					else:
+						self._haptic_counter += 0.5
+					mapper.send_feedback(self.haptic)
 			# Apply movement to child action
 			self.action.change(mapper, -angle * self.speed, 0)
 			mapper.force_event.add(FE_PAD)

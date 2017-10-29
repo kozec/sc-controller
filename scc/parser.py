@@ -178,7 +178,6 @@ class ActionParser(object):
 					# TODO: Maybe other axes
 					if parameter not in (SCButtons.LT, SCButtons.RT):
 						raise ParseError("'%s' is not trigger nor axis" % (nameof(parameter), ))
-						print "#", parameter
 					if not self._tokens_left():
 						raise ParseError("Excepted number after '%s'" % (op, ))
 					try:

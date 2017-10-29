@@ -134,10 +134,20 @@ Unlocking is done automatically when client is disconnected, or using `Unlock.` 
 #### `Observe: button1 button2...`
 Enables observing on physical button, axis or pad. Works like Lock, but events from observed sources are processed normally and to client at same time.
 
-Any number of clients can observe same source, so upon this requests, daemon always responds with `OK.`
+Any number of clients can observe same source, so upon this requests, daemon always responds with `OK.`, as long as observing is enabled in configuration.
 While source is observed, daemon keeps sending `Event: ...` messages every time when button is pressed, released, axis moved, etc...
 
 Unlocking is done automatically when client is disconnected, or using `Unlock.` message.
+
+#### `Replace: button actionstring`
+Temporally replaces action set on physical button, axis or pad. This works in
+same way as lock, so action is restored when client requesting change disconnects
+or call `Unlock.`
+
+If requested button (axis, pad) is already locked, daemon will respond with
+`Fail: cannot lock <button>`. If action string (which can contain spaces)
+cannot be parsed, daemon responds with `Fail: failed to parse: <more info>`.
+If everything went well, daemon respnds with `OK.`
 
 #### `Feedback: position amplitude`
 Asks daemon to generate feedback effect. Position can be one of 'LEFT', 'RIGHT' or 'BOTH' and

@@ -19,6 +19,7 @@ from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
 from scc.constants import PARSER_CONSTANTS, ControllerFlags
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
+from scc.constants import SCButtons
 from scc.aliases import ALL_BUTTONS as GAMEPAD_BUTTONS
 from math import sqrt, sin, cos, atan2, pi as PI
 
@@ -394,9 +395,60 @@ class RangeOP(object):
 	OPS = ("<", ">", "<=", ">=")
 	
 	def __init__(self, what, op, value):
+		""" Raises ValueError if 'what' or 'op' is not supported value """
 		self.what = what
 		self.op = op
 		self.value = value
+		
+		if what == SCButtons.LT:
+			# TODO: Somehow unify names here, LT button is related to ltrig axis and so on
+			self.axis_name = "ltrig"
+			self.max = float(TRIGGER_MAX)
+		elif what == SCButtons.RT:
+			self.axis_name = "rtrig"
+			self.max = float(TRIGGER_MAX)
+		else:
+			raise ValueError("'%s' is not trigger nor axis" % (nameof(what), ))
+		
+		if op == "<":
+			self.op_method = self.cmp_lt
+		elif op == ">":
+			self.op_method = self.cmp_gt
+		elif op == "<=":
+			self.op_method = self.cmp_le
+		elif op == ">=":
+			self.op_method = self.cmp_ge
+		else:
+			raise ValueError("Unknown operator: '%s'" % (op, ))
+	
+	
+	def cmp_gt(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state > self.value
+	
+	def cmp_lt(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state < self.value
+	
+	def cmp_ge(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state >= self.value
+	
+	def cmp_le(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state <= self.value
+	
+	
+	def __call__(self, mapper):
+		return self.op_method(mapper)
 	
 	
 	def __str__(self):
@@ -487,11 +539,18 @@ class AxisAction(Action):
 	X = [ Axes.ABS_X, Axes.ABS_RX, Axes.ABS_HAT0X ]
 	Z = [ Axes.ABS_Z, Axes.ABS_RZ ]
 	
+	# Storage of positions per axis common for all AxisActions
+	# This is important for cases when two different bindigs
+	# are mapped to same axis using change() / CircularModifier
+	# See https://github.com/kozec/sc-controller/issues/213
+	old_positions = {}
+	
 	def __init__(self, id, min = None, max = None):
 		Action.__init__(self, id, *strip_none(min, max))
 		self.id = id
 		self.speed = 1.0
-		self._old_pos = 0
+		if self.id not in AxisAction.old_positions:
+			AxisAction.old_positions[self.id] = 0
 		if self.id in TRIGGERS:
 			self.min = TRIGGER_MIN if min is None else min
 			self.max = TRIGGER_MAX if max is None else max
@@ -586,14 +645,18 @@ class AxisAction(Action):
 	def axis(self, mapper, position, what):
 		p = float(position * self.speed - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, p))
+		p = AxisAction.clamp_axis(self.id, p)
+		AxisAction.old_positions[self.id] = p
+		mapper.gamepad.axisEvent(self.id, p)
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
 	def change(self, mapper, dx, dy):
 		""" Called from CircularModifier """
-		self._old_pos = clamp(-STICK_PAD_MAX, (self._old_pos or 0) + dx, STICK_PAD_MAX)
-		self.axis(mapper, self._old_pos, None)
+		p = AxisAction.old_positions[self.id]
+		p = clamp(-STICK_PAD_MAX, p + dx, STICK_PAD_MAX)
+		AxisAction.old_positions[self.id] = p
+		self.axis(mapper, p, None)
 	
 	
 	def add(self, mapper, dx, dy):
@@ -604,7 +667,9 @@ class AxisAction(Action):
 	def trigger(self, mapper, position, old_position):
 		p = float(position * self.speed - TRIGGER_MIN) / (TRIGGER_MAX - TRIGGER_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, p))
+		p = AxisAction.clamp_axis(self.id, p)
+		AxisAction.old_positions[self.id] = p
+		mapper.gamepad.axisEvent(self.id, p)
 		mapper.syn_list.add(mapper.gamepad)
 
 
@@ -1749,9 +1814,11 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	COMMAND = "dpad"
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	
+	DEFAULT_DIAGONAL_RANGE = 45
 	MIN_DISTANCE_P2 = 2000000	# Power of 2 from minimal distance that finger
 								# has to be from center
 	
+	SIDE_NONE = (None, None)
 	SIDES = (
 		# Just list of magic numbers that would have
 		# to be computed on the fly otherwise
@@ -1770,14 +1837,34 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	def __init__(self, *actions):
 		MultichildAction.__init__(self, *actions)
 		HapticEnabledAction.__init__(self)
-		self.actions = ensure_size(4, actions, NoAction())
-		self.eight = False
+		self.diagonal_rage = DPadAction.DEFAULT_DIAGONAL_RANGE
+		if len(actions) > 0 and type(actions[0]) in (int, float):
+			self.diagonal_rage = clamp(1, int(actions[0]), 89)
+			actions = actions[1:]
+		self.actions = self._ensure_size(actions)
 		self.dpad_state = [ None, None ]	# X, Y
 		self.side_before = None
+		# Generate mapping of angle range -> index
+		self.ranges = []
+		normal_range = 90 - self.diagonal_rage
+		i = 360-normal_range / 2
+		for x in xrange(0, 9):
+			r = normal_range if x % 2 == 0 else self.diagonal_rage
+			i, j = (i + r) % 360, i
+			self.ranges.append(( j, i, x % 8 ))
+	
+	
+	def _ensure_size(self, actions):
+		return ensure_size(4, actions, NoAction())
 	
 	
 	def encode(self):
 		""" Called from json encoder """
+		if self.diagonal_rage != DPadAction.DEFAULT_DIAGONAL_RANGE:
+			# TODO: Since I'm getting rid of 'encode' methods, this one returns
+			# 'action' : self.to_string() if newly added argument is used
+			return MultichildAction.encode(self)
+		
 		rv = { DPadAction.COMMAND : [ x.encode() for x in self.actions ]}
 		if self.name: rv['name'] = self.name
 		return rv
@@ -1794,6 +1881,13 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 		return a
 	
 	
+	def to_string(self, multiline=False, pad=0, prefixparams=""):
+		if self.diagonal_rage != DPadAction.DEFAULT_DIAGONAL_RANGE:
+			return MultichildAction.to_string(self, multiline, pad,
+					prefixparams = "%s, " % (self.diagonal_rage, ))
+		return MultichildAction.to_string(self, multiline, pad)
+	
+	
 	def get_compatible_modifiers(self):
 		return (Action.MOD_CLICK | Action.MOD_ROTATE
 			| Action.MOD_DEADZONE | Action.MOD_FEEDBACK )
@@ -1807,15 +1901,17 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	def compute_side(self, x, y):
 		""" Computes which sides of dpad are supposed to be active """
 		## dpad(up, down, left, right)
-		side = ( None, None )
+		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
+		side = self.SIDE_NONE
 		if x*x + y*y > self.MIN_DISTANCE_P2:
 			# Compute angle from center of pad to finger position
-			angle = (atan2(x, y) * 180.0 / PI)
-			# Transform it to index of quaver
-			index = int(round(angle / (180.0 / 4.0)))
-			# Index goes from -4 to +4, make it zero based
-			index = clamp(0, index + 4, 8)
-			
+			angle = (atan2(x, y) * 180.0 / PI) + 180
+			# Translate it to index
+			index = 0
+			for a1, a2, i in self.ranges:
+				if angle >= a1 and angle < a2:
+					index = i
+					break
 			side = self.SIDES[index]
 		return side
 	
@@ -1855,9 +1951,10 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 class DPad8Action(DPadAction):
 	COMMAND = "dpad8"
 	PROFILE_KEYS = ()
-
+	
+	SIDE_NONE = None
 	SIDES = (
-		# Another list of magic numbers that would have
+		# Another list of magic numbers that would have`
 		# to be computed on the fly otherwise
 		1,	# index 0 - down
 		6,	# index 1 - down-left
@@ -1869,30 +1966,15 @@ class DPad8Action(DPadAction):
 		7,	# index 7 - downright
 		1,	# index 8 - same as 0
 	)
-
-	def __init__(self, *actions):
-		DPadAction.__init__(self, *actions)
-		self.actions = ensure_size(8, actions, NoAction())
-		self.eight = True
+	
+	
+	def _ensure_size(self, actions):
+		return ensure_size(8, actions, NoAction())
+	
 	
 	def describe(self, context):
 		if self.name: return self.name
 		return "8-Way DPad"
-	
-    
-	def compute_side(self, x, y):
-		""" Computes which sides of dpad are supposed to be active """
-		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
-		side = None
-		if x*x + y*y > self.MIN_DISTANCE_P2:
-			# Compute angle from center of pad to finger position
-			angle = (atan2(x, y) * 180.0 / PI)
-			# Transform it to index of quaver
-			index = int(round(angle / (180.0 / 4.0)))
-			# Index goes from -4 to +4, make it zero based
-			index = clamp(0, index + 4, 9)
-			side = self.SIDES[index]
-		return side
 	
 	
 	def whole(self, mapper, x, y, what):

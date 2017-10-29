@@ -50,6 +50,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			'shell("scc-osd-launcher")'),
 		('Display Current Bindings...',	1, MenuItem, 'system/binding-display',
 			'shell("scc-osd-show-bindings")'),
+		('Games',				1, Submenu, 'system/controller', '.games.menu'),
 		# order: 0 - top, 1 - after 'options', 2 bottom
 	]
 	
@@ -123,6 +124,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				.set_sensitive(not IS_UNITY and self.app.config['gui']['enable_status_icon']))
 		(self.builder.get_object("cbAutokillDaemon")
 				.set_active(self.app.config['gui']['autokill_daemon']))
+		(self.builder.get_object("cbNewRelease")
+				.set_active(self.app.config['gui']['news']['enabled']))
 		self._recursing = False
 	
 	
@@ -309,6 +312,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.app.config['gui']['enable_status_icon'] = self.builder.get_object("cbEnableStatusIcon").get_active()
 		self.app.config['gui']['minimize_to_status_icon'] = self.builder.get_object("cbMinimizeToStatusIcon").get_active()
 		self.app.config['gui']['autokill_daemon'] = self.builder.get_object("cbAutokillDaemon").get_active()
+		self.app.config['gui']['news']['enabled'] = self.builder.get_object("cbNewRelease").get_active()
+		
 		# Save
 		self.app.save_config()
 	

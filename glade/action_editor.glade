@@ -44,21 +44,18 @@
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjSensitivityX">
-    <property name="lower">-10</property>
     <property name="upper">10</property>
     <property name="value">1</property>
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="adjSensitivityY">
-    <property name="lower">-10</property>
     <property name="upper">10</property>
     <property name="value">1</property>
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="adjSensitivityZ">
-    <property name="lower">-10</property>
     <property name="upper">10</property>
     <property name="value">1</property>
     <property name="step_increment">0.10000000000000001</property>
@@ -671,6 +668,51 @@
                       <packing>
                         <property name="left_attach">2</property>
                         <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbSensInvertX">
+                        <property name="label" translatable="yes">Invert X axis</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="update_modifiers" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                        <property name="width">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbSensInvertY">
+                        <property name="label" translatable="yes">Invert Y axis</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="update_modifiers" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                        <property name="width">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbSensInvertZ">
+                        <property name="label" translatable="yes">Invert Roll</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="no_show_all">True</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="update_modifiers" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">6</property>
+                        <property name="width">3</property>
                       </packing>
                     </child>
                   </object>

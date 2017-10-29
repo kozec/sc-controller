@@ -36,11 +36,11 @@ class Mapper(object):
 		
 		# Create virtual devices
 		log.debug("Creating virtual devices")
-		self.keyboard = Keyboard(name=keyboard) if keyboard else Dummy()
+		self.keyboard = self.create_keyboard(keyboard) if keyboard else Dummy()
 		log.debug("Keyboard: %s" % (self.keyboard, ))
-		self.mouse = Mouse(name=mouse) if mouse else Dummy()
+		self.mouse = self.create_mouse(mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
-		self.gamepad = self._create_gamepad(gamepad, poller) if gamepad else Dummy()
+		self.gamepad = self.create_gamepad(gamepad, poller) if gamepad else Dummy()
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		
 		# Set by SCCDaemon instance; Used to handle actions
@@ -60,7 +60,7 @@ class Mapper(object):
 		self.force_event = set()
 	
 	
-	def _create_gamepad(self, enabled, poller):
+	def create_gamepad(self, enabled, poller):
 		""" Parses gamepad configuration and creates apropriate unput device """
 		if not enabled or "SCC_NOGAMEPAD" in os.environ:
 			# Completly undocumented and for debuging purposes only.
@@ -92,6 +92,14 @@ class Mapper(object):
 		if poller:
 			poller.register(ui.getDescriptor(), poller.POLLIN, self._rumble_ready)
 		return ui
+	
+	
+	def create_keyboard(self, name):
+		return Keyboard(name=name)
+	
+	
+	def create_mouse(self, name):
+		return Mouse(name=name)
 	
 	
 	def _rumble_ready(self, fd, event):
@@ -209,7 +217,7 @@ class Mapper(object):
 		Returns controller flags or, if there is no controller set to
 		this mapper, sc_by_cable driver matching defaults.
 		"""
-		return 0 if self.controller is None else controller.flags
+		return 0 if self.controller is None else self.controller.flags
 	
 	
 	def is_touched(self, what):
@@ -321,7 +329,7 @@ class Mapper(object):
 	
 	
 	def reset_gyros(self):
-		for a in self.profile.get_actions():
+		for a in self.profile.get_all_actions():
 			if isinstance(a, GyroAbsAction):
 				a.reset()
 	
@@ -403,8 +411,7 @@ class Mapper(object):
 			if controller.flags & ControllerFlags.HAS_CPAD:
 				if FE_PAD in fe or self.old_state.cpad_x != state.cpad_x or self.old_state.cpad_y != state.cpad_y:
 					self.profile.pads[CPAD].whole(self, state.cpad_x, state.cpad_y, CPAD)
-		
-		except Exception, e:
+		except Exception:
 			# Log error but don't crash here, it breaks too many things at once
 			if hasattr(self, "_testing"):
 				raise
