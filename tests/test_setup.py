@@ -10,10 +10,13 @@ class TestSetup(object):
 		"""
 		Tests if every known Action is documentated in docs/actions.md
 		"""
-		import gi
-		gi.require_version('Gtk', '3.0') 
-		gi.require_version('GdkX11', '3.0') 
-		gi.require_version('Rsvg', '2.0') 
+		try:
+			import gi
+			gi.require_version('Gtk', '3.0') 
+			gi.require_version('GdkX11', '3.0') 
+			gi.require_version('Rsvg', '2.0') 
+		except ImportError:
+			pass
 		
 		from setup import packages
 		for importer, modname, ispkg in pkgutil.walk_packages(path=scc.__path__, prefix="scc.", onerror=lambda x: None):
