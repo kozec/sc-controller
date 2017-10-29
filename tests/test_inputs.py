@@ -136,7 +136,7 @@ class TestInputs(object):
 		# 'Wait' for 2s
 		for x in xrange(20):
 			mapper.input(mapper.controller, ZERO_STATE, ZERO_STATE)
-		assert int(mapper.mouse.scroll_x) == -21926
+		assert int(mapper.mouse.scroll_x) == -24479
 	
 	
 	@input_test
@@ -193,11 +193,11 @@ class TestInputs(object):
 		# 'Wait' for 1s
 		for x in xrange(100):
 			mapper.input(mapper.controller, ZERO_STATE, ZERO_STATE)
-		assert mapper.gamepad.axes[Axes.ABS_RX] == 1516
+		assert mapper.gamepad.axes[Axes.ABS_RX] == 3510
 		# 'Wait' for another 0.5s
 		for x in xrange(50):
 			mapper.input(mapper.controller, ZERO_STATE, ZERO_STATE)
-		assert mapper.gamepad.axes[Axes.ABS_RX] == 806
+		assert mapper.gamepad.axes[Axes.ABS_RX] == 1570
 		# 'Wait' for long time so stick recenters
 		for x in xrange(100):
 			mapper.input(mapper.controller, ZERO_STATE, ZERO_STATE)
