@@ -1295,26 +1295,6 @@ class ObservingAction(ReportingAction):
 			self.mapper.get_controller(), hash(self.client))
 	
 	
-	def reaply(self, client, daemon):
-		client.observe_action(daemon, self.what)
-	
-	
-	def unlock(self, client, daemon):
-		def _unobserve(a):
-			if isinstance(a, ObservingAction):
-				if a.client == self:
-					return a.original_action
-				a.original_action = _unobserve(a.original_action)
-				return a
-			if isinstance(a, LockedAction):
-				a.original_action = _unobserve(a.original_action)
-				return a
-			return a
-		
-		daemon._apply(client.mapper, self.what, _unobserve)
-		log.debug("%s no longer observed by %s", self.what, client)
-	
-	
 	def trigger(self, mapper, position, old_position):
 		ReportingAction.trigger(self, mapper, position, old_position)
 		self.original_action.trigger(mapper, position, old_position)

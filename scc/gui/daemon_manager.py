@@ -14,7 +14,7 @@ from scc.paths import get_daemon_socket
 from scc.tools import find_binary
 from gi.repository import GObject, Gio, GLib
 
-import os, sys, logging
+import os, sys, json, logging
 log = logging.getLogger("DaemonCtrl")
 
 
@@ -377,6 +377,24 @@ class ControllerManager(GObject.GObject):
 		defaults in such case)
 		"""
 		return self._config_file
+	
+	
+	def load_gui_config(self, default_path):
+		"""
+		As get_gui_config_file, but returns loaded and parsed config.
+		Returns None if config cannot be loaded.
+		"""
+		filename = self.get_gui_config_file()
+		if filename:
+			if "/" not in filename:
+				filename = os.path.join(default_path, filename)
+			try:
+				data = json.loads(open(filename, "r").read()) or None
+				return data
+			except Exception, e:
+				log.exception(e)
+		return None
+		
 	
 	
 	def get_profile(self):

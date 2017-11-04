@@ -156,7 +156,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		grEditor = self.builder.get_object('grEditor')
 		btC = self.builder.get_object('btC')
 		btCPAD = self.builder.get_object('btCPAD')
-		config = self.background.load_config(controller.get_gui_config_file())
+		config = controller.load_gui_config(self.imagepath or {})
+		config = self.background.use_config(config)
 		
 		def do_loading():
 			""" Called after transition is finished """
