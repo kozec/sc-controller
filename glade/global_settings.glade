@@ -1465,7 +1465,7 @@ grips, triggers, finger positions on both pads and stick angle.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">8</property>
+                <property name="top_attach">9</property>
               </packing>
             </child>
             <child>
@@ -1482,7 +1482,6 @@ grips, triggers, finger positions on both pads and stick angle.</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Minimize to status icon instead closing</property>
-                    <property name="use_underline">True</property>
                     <property name="mnemonic_widget">cbShowOSD</property>
                   </object>
                 </child>
@@ -1680,7 +1679,30 @@ or even crash.</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">9</property>
+                <property name="top_attach">10</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="cbMinimizeOnStart">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="margin_left">30</property>
+                <property name="margin_top">5</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_random_checkbox_toggled" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="label41">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Minimize to tray on start</property>
+                    <property name="mnemonic_widget">cbShowOSD</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">8</property>
               </packing>
             </child>
           </object>

@@ -1163,7 +1163,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def do_activate(self, *a):
-		self.builder.get_object("window").show()
+		if (not IS_UNITY and self.app.config['gui']['enable_status_icon']
+							and self.app.config['gui']['minimize_on_start']):
+			log.info("")
+			log.info(_("SC-Controller started and running in notification area"))
+		else:
+			self.builder.get_object("window").show()
 	
 	
 	def remove_dot_profile(self):
