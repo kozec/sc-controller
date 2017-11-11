@@ -101,12 +101,11 @@ class DS4Controller(HIDController):
 			mode = AxisMode.DS4GYRO, byte_offset = 19)
 		self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
 			mode = AxisMode.DS4GYRO, byte_offset = 21)
-			
 		
 		self._decoder.axes[AxisType.AXIS_CPAD_X] = AxisData(
-			mode = AxisMode.DS4TOUCHPADX, byte_offset = 36)
-		#self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
-		#	mode = AxisMode.DS4TOUCHPADY, byte_offset = 37)
+			mode = AxisMode.DS4TOUCHPAD, byte_offset = 36)
+		self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
+			mode = AxisMode.DS4TOUCHPAD, byte_offset = 37, bit_offset=4)
 		self._decoder.buttons = ButtonData(
 			enabled = True, byte_offset=5, bit_offset=4, size=14,
 			button_count = 14

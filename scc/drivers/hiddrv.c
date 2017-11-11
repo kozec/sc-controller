@@ -47,8 +47,7 @@ enum AxisMode {
 	HATSWITCH     = 4,
 	DS4ACCEL      = 5,
 	DS4GYRO       = 6,
-	DS4TOUCHPADX  = 7,
-	DS4TOUCHPADY  = 8,
+	DS4TOUCHPAD   = 7,
 	_AxisMode_force_int = INT_MAX
 };
 
@@ -246,11 +245,11 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 					dec->axes[i].bit_offset);
 				dec->state.axes[i] = -value.s16;
 				break;
-			case DS4TOUCHPADX:
+			case DS4TOUCHPAD:
 				value = grab_value(data, dec->axes[i].byte_offset,
 					dec->axes[i].bit_offset);
-				dec->state.axes[i] = (value.u16 & 0x00FF) | ((value.u16 & 0x0F00) >> 8);
-				// dec->state.axes[i] = (value.u16 & 0xFF00);
+				dec->state.axes[i] = (value.u16 & 0x0FFF);
+				break;
 			default:
 				break;
 		}

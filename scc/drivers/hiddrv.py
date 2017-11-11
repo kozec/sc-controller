@@ -86,8 +86,7 @@ class AxisMode(IntEnum):
 	HATSWITCH     = 4
 	DS4ACCEL      = 5	# 16bit, signed, no additional math needed
 	DS4GYRO       = 6	# 16bit, signed, inverted
-	DS4TOUCHPADX  = 7	# 15bit
-	DS4TOUCHPADY  = 8	# 15bit, pure magic involved
+	DS4TOUCHPAD   = 7	# 12bit
 
 
 class AxisModeData(ctypes.Structure):
@@ -490,9 +489,7 @@ class HIDController(USBDevice, Controller):
 		for attr, trash in self._decoder.state._fields_:
 			if attr == "buttons": continue
 			if getattr(self._decoder.state, attr) != getattr(self._decoder.old_state, attr):
-				# if code not in (8, 9, 10, 11, 12, 13):
-				if code == 15:
-					print "Axis", code, getattr(self._decoder.state, attr)
+				print "Axis", code, getattr(self._decoder.state, attr)
 				sys.stdout.flush()
 			code += 1
 		
