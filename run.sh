@@ -1,7 +1,7 @@
 #!/bin/bash
 C_MODULES=(uinput hiddrv)
 C_VERSION_uinput=8
-C_VERSION_hiddrv=2
+C_VERSION_hiddrv=3
 
 function rebuild_c_modules() {
 	echo "lib$1.so is outdated or missing, building one"
