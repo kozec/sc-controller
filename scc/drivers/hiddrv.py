@@ -168,6 +168,7 @@ _lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
 
 
 class HIDController(USBDevice, Controller):
+	flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 	
 	def __init__(self, device, daemon, handle, config_file, config, test_mode=False):
 		USBDevice.__init__(self, device, handle)
@@ -196,7 +197,6 @@ class HIDController(USBDevice, Controller):
 		self._load_hid_descriptor(config, max_size, vid, pid, test_mode)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
 		Controller.__init__(self)
-		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		
 		if test_mode:
 			self.set_input_interrupt(id, self._packet_size, self.test_input)
@@ -489,7 +489,7 @@ class HIDController(USBDevice, Controller):
 		for attr, trash in self._decoder.state._fields_:
 			if attr == "buttons": continue
 			if getattr(self._decoder.state, attr) != getattr(self._decoder.old_state, attr):
-				print "Axis", code, getattr(self._decoder.state, attr)
+				# print "Axis", code, getattr(self._decoder.state, attr)
 				sys.stdout.flush()
 			code += 1
 		

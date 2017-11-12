@@ -10,10 +10,10 @@ from __future__ import unicode_literals
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
-from scc.constants import TRIGGER_MAX, LEFT, RIGHT, STICK, FE_STICK, FE_TRIGGER
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
 from scc.constants import FE_PAD, SCButtons, HapticPos, ControllerFlags
-from scc.constants import CUT, ROUND, LINEAR
+from scc.constants import CUT, ROUND, LINEAR, FE_STICK, FE_TRIGGER
+from scc.constants import TRIGGER_MAX, LEFT, CPAD, RIGHT, STICK
 from scc.controller import HapticData
 from scc.tools import nameof, clamp
 from scc.uinput import Axes, Rels
