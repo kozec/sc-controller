@@ -8,14 +8,14 @@ Extends HID driver with DS4-specific options.
 from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData
 from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test
 from scc.drivers.hiddrv import AxisMode, AxisDataUnion, AxisModeData
-from scc.drivers.hiddrv import HatswitchModeData
+from scc.drivers.hiddrv import HatswitchModeData, _lib
 from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
 from scc.drivers.evdevdrv import make_new_device, get_axes
 from scc.drivers.usb import register_hotplug_device
 from scc.constants import SCButtons, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.tools import init_logging, set_logging_level
-import sys, logging
+import sys, logging, ctypes
 log = logging.getLogger("DS4")
 
 VENDOR_ID = 0x054c
@@ -123,6 +123,19 @@ class DS4Controller(HIDController):
 		self._packet_size = 64
 	
 	
+	def input(self, endpoint, data):
+		# Special override for CPAD touch button
+		if _lib.decode(ctypes.byref(self._decoder), data):
+			if self.mapper:
+				if ord(data[35]) >> 7:
+					# cpad is not touched
+					self._decoder.state.buttons &= ~SCButtons.CPADTOUCH
+				else:
+					self._decoder.state.buttons |= SCButtons.CPADTOUCH
+				self.mapper.input(self,
+						self._decoder.old_state, self._decoder.state)
+
+	
 	def get_gyro_enabled(self):
 		# Cannot be actually turned off, so it's always active
 		# TODO: Maybe emulate turning off?
@@ -169,6 +182,7 @@ class DS4EvdevController(EvdevController):
 		316: "C",
 		317: "STICKPRESS",
 		318: "RPAD"
+		# 319: "CPAD",
 	}
 	AXIS_MAP = {
 		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
@@ -191,7 +205,8 @@ class DS4EvdevController(EvdevController):
 		313: "START",
 		314: "STICKPRESS",
 		315: "RPAD",
-		316: "C"
+		316: "C",
+		# 317: "CPAD",
 	}
 	AXIS_MAP_OLD = {
 		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
