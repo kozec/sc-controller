@@ -235,7 +235,7 @@ or even crash.</property>
                   <object class="GtkLabel" id="label8">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Bindings</property>
+                    <property name="label" translatable="yes">On-Screen Keyboard Bindings</property>
                     <property name="xalign">0</property>
                     <attributes>
                       <attribute name="weight" value="bold"/>
@@ -243,7 +243,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
+                    <property name="top_attach">7</property>
                     <property name="width">6</property>
                   </packing>
                 </child>
@@ -259,7 +259,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">1</property>
+                    <property name="top_attach">8</property>
                   </packing>
                 </child>
                 <child>
@@ -274,7 +274,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">9</property>
                   </packing>
                 </child>
                 <child>
@@ -291,7 +291,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">3</property>
+                    <property name="top_attach">10</property>
                     <property name="width">6</property>
                   </packing>
                 </child>
@@ -313,7 +313,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">1</property>
+                    <property name="top_attach">8</property>
                     <property name="width">5</property>
                   </packing>
                 </child>
@@ -335,7 +335,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">9</property>
                     <property name="width">5</property>
                   </packing>
                 </child>
@@ -352,7 +352,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">7</property>
+                    <property name="top_attach">11</property>
                     <property name="width">6</property>
                   </packing>
                 </child>
@@ -368,7 +368,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">12</property>
                     <property name="width">2</property>
                   </packing>
                 </child>
@@ -384,7 +384,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">13</property>
                     <property name="width">2</property>
                   </packing>
                 </child>
@@ -401,7 +401,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">12</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -418,7 +418,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">13</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -441,7 +441,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">5</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">12</property>
                   </packing>
                 </child>
                 <child>
@@ -463,15 +463,15 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">5</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">13</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label21">
+                  <object class="GtkLabel" id="label37">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_top">20</property>
-                    <property name="label" translatable="yes">Colors</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="label" translatable="yes">Default Menu Items</property>
                     <property name="xalign">0</property>
                     <attributes>
                       <attribute name="weight" value="bold"/>
@@ -479,160 +479,244 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">4</property>
+                    <property name="top_attach">0</property>
                     <property name="width">6</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="cbosk_button1">
+                  <object class="GtkCheckButton" id="cbMI_0">
+                    <property name="name">cbMI_0</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_left">10</property>
-                    <property name="margin_right">20</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">10</property>
                     <property name="margin_bottom">5</property>
                     <property name="hexpand">True</property>
-                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label98">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">List of recent profiles</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
                   </object>
                   <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">5</property>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                    <property name="width">3</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label22">
+                  <object class="GtkCheckButton" id="cbMI_6">
+                    <property name="name">cbMI_6</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">20</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">20</property>
                     <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Normal Button</property>
-                    <property name="xalign">0</property>
+                    <property name="hexpand">True</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label93">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Run Program...</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">1</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbMI_1">
+                    <property name="name">cbMI_1</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label99">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Autoswitch options</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbMI_5">
+                    <property name="name">cbMI_5</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">20</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label91">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Kill Current Window</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">2</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbMI_2">
+                    <property name="name">cbMI_2</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label97">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Window switcher</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">3</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbMI_7">
+                    <property name="name">cbMI_7</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">20</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label38">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Show Current Bindings</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">3</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbMI_8">
+                    <property name="name">cbMI_8</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label39">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Games List</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">4</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbMI_4">
+                    <property name="name">cbMI_4</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">20</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label95">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Turn Controller OFF</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">4</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbMI_3">
+                    <property name="name">cbMI_3</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="label7">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Display Keyboard</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">5</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label23">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Special Button</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">5</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkColorButton" id="cbosk_button2">
-                    <property name="name">20</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_left">10</property>
-                    <property name="margin_right">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="hexpand">True</property>
-                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">3</property>
-                    <property name="top_attach">5</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label25">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Pressed Button</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">6</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkColorButton" id="cbosk_pressed">
-                    <property name="name">20</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_left">10</property>
-                    <property name="margin_right">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="hexpand">True</property>
-                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">6</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label26">
-                    <property name="name">20</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Text</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">4</property>
-                    <property name="top_attach">5</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label24">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Higlight</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">6</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkColorButton" id="cbosk_text">
-                    <property name="name">20</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_left">10</property>
-                    <property name="margin_right">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="hexpand">True</property>
-                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">5</property>
-                    <property name="top_attach">5</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkColorButton" id="cbosk_hilight">
-                    <property name="name">20</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="margin_left">10</property>
-                    <property name="margin_right">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="hexpand">True</property>
-                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">3</property>
-                    <property name="top_attach">6</property>
+                    <property name="width">3</property>
                   </packing>
                 </child>
                 <child>
@@ -641,9 +725,26 @@ or even crash.</property>
                     <property name="can_focus">False</property>
                   </object>
                   <packing>
-                    <property name="left_attach">4</property>
+                    <property name="left_attach">0</property>
                     <property name="top_attach">6</property>
-                    <property name="width">2</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btCustomizeDefaultMenu">
+                    <property name="label" translatable="yes">Customize...</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="no_show_all">True</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">20</property>
+                    <property name="margin_top">10</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">5</property>
+                    <property name="width">3</property>
+                    <property name="height">2</property>
                   </packing>
                 </child>
               </object>
@@ -652,7 +753,7 @@ or even crash.</property>
               <object class="GtkLabel" id="label18">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">OSD Keyboard</property>
+                <property name="label" translatable="yes">Menus &amp; Keyboard</property>
               </object>
               <packing>
                 <property name="tab_expand">True</property>
@@ -668,55 +769,6 @@ or even crash.</property>
                 <property name="margin_top">10</property>
                 <property name="margin_bottom">10</property>
                 <child>
-                  <object class="GtkLabel" id="label37">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Default Menu Items</property>
-                    <property name="xalign">0</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                    <property name="width">4</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label15">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_top">10</property>
-                    <property name="label" translatable="yes">Colors</property>
-                    <property name="xalign">0</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">6</property>
-                    <property name="width">4</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label12">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_right">5</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Text</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">7</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkColorButton" id="cbtext">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -729,7 +781,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">7</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
                 <child>
@@ -745,37 +797,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">10</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label20">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_right">5</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Item Border</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">10</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label63">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_right">5</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Background</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">4</property>
                   </packing>
                 </child>
                 <child>
@@ -791,22 +813,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">8</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label11">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_right">5</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="label" translatable="yes">Border</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -822,7 +829,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">3</property>
                   </packing>
                 </child>
                 <child>
@@ -837,7 +844,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">7</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
                 <child>
@@ -852,7 +859,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -867,7 +874,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">3</property>
                   </packing>
                 </child>
                 <child>
@@ -882,7 +889,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">10</property>
+                    <property name="top_attach">4</property>
                   </packing>
                 </child>
                 <child>
@@ -898,7 +905,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">3</property>
-                    <property name="top_attach">7</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
                 <child>
@@ -914,7 +921,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">3</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -930,7 +937,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">3</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">3</property>
                   </packing>
                 </child>
                 <child>
@@ -946,257 +953,271 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">3</property>
-                    <property name="top_attach">10</property>
+                    <property name="top_attach">4</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="cbMI_0">
-                    <property name="name">cbMI_0</property>
+                  <object class="GtkLabel" id="label2985">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">OSD Menu Colors</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label12">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
                     <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label98">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">List of recent profiles</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
+                    <property name="label" translatable="yes">Text</property>
+                    <property name="xalign">0</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">1</property>
-                    <property name="width">2</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="cbMI_1">
-                    <property name="name">cbMI_1</property>
+                  <object class="GtkLabel" id="label20">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
+                    <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
                     <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label99">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">Autoswitch options</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
+                    <property name="label" translatable="yes">Item Border</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label63">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="label" translatable="yes">Background</property>
+                    <property name="xalign">0</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">2</property>
-                    <property name="width">2</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="cbMI_2">
-                    <property name="name">cbMI_2</property>
+                  <object class="GtkLabel" id="label11">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
+                    <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
                     <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label97">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">Window switcher</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
+                    <property name="label" translatable="yes">Border</property>
+                    <property name="xalign">0</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">3</property>
-                    <property name="width">2</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="btCustomizeDefaultMenu">
-                    <property name="label" translatable="yes">Customize...</property>
+                  <object class="GtkLabel" id="label21">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">10</property>
+                    <property name="label" translatable="yes">On-Screen Keyboard Colors</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">5</property>
+                    <property name="width">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label22">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="label" translatable="yes">Normal Button</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">6</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkColorButton" id="cbosk_button1">
+                    <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="no_show_all">True</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">10</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="hexpand">True</property>
+                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">6</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label25">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="label" translatable="yes">Pressed Button</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">7</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkColorButton" id="cbosk_pressed">
+                    <property name="name">20</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">10</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="hexpand">True</property>
+                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">7</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label23">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="label" translatable="yes">Special Button</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">8</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkColorButton" id="cbosk_button2">
+                    <property name="name">20</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">10</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="hexpand">True</property>
+                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">8</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label26">
+                    <property name="name">20</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="label" translatable="yes">Text</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">6</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkColorButton" id="cbosk_text">
+                    <property name="name">20</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
                     <property name="margin_left">20</property>
                     <property name="margin_right">20</property>
-                    <property name="margin_top">10</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="hexpand">True</property>
+                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">6</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label24">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">20</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="label" translatable="yes">Higlight</property>
+                    <property name="xalign">0</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">5</property>
-                    <property name="width">2</property>
-                    <property name="height">2</property>
+                    <property name="top_attach">7</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="cbMI_6">
-                    <property name="name">cbMI_6</property>
+                  <object class="GtkColorButton" id="cbosk_hilight">
+                    <property name="name">20</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
+                    <property name="receives_default">True</property>
                     <property name="margin_left">20</property>
+                    <property name="margin_right">20</property>
                     <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label93">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">Run Program...</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
+                    <property name="hexpand">True</property>
+                    <signal name="color-set" handler="on_osd_color_set" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">7</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label269">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes"> </property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">1</property>
-                    <property name="width">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="cbMI_3">
-                    <property name="name">cbMI_3</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label7">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">Display Keyboard</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">5</property>
-                    <property name="width">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="cbMI_8">
-                    <property name="name">cbMI_8</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label39">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">Games List</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">4</property>
-                    <property name="width">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="cbMI_4">
-                    <property name="name">cbMI_4</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label95">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">Turn Controller OFF</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">4</property>
-                    <property name="width">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="cbMI_7">
-                    <property name="name">cbMI_7</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label38">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">Show Current Bindings</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">3</property>
-                    <property name="width">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="cbMI_5">
-                    <property name="name">cbMI_5</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbMI_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="label91">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="label" translatable="yes">Kill Current Window</property>
-                        <property name="xalign">0</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">8</property>
                     <property name="width">2</property>
                   </packing>
                 </child>
@@ -1209,7 +1230,7 @@ or even crash.</property>
               <object class="GtkLabel" id="label19">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">OSD &amp; Menus</property>
+                <property name="label" translatable="yes">OSD Colors</property>
               </object>
               <packing>
                 <property name="position">1</property>
@@ -1332,6 +1353,7 @@ or even crash.</property>
                     <property name="can_focus">True</property>
                     <property name="margin_left">20</property>
                     <property name="margin_right">20</property>
+                    <property name="vexpand">True</property>
                     <property name="shadow_type">in</property>
                     <child>
                       <object class="GtkTreeView" id="tvControllers">
