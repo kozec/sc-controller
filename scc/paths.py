@@ -108,9 +108,11 @@ def get_share_path():
 	"""
 	if "SCC_SHARED" in os.environ:
 		return os.environ["SCC_SHARED"]
-	local = os.path.expanduser("~/.local/share/scc")
-	if os.path.isdir(local):
-		return local
+	if os.path.exists("/usr/local/share/scc/"):
+		return "/usr/local/share/scc/"
+	user = os.path.expanduser("~/.local/share/scc")
+	if os.path.exists(user):
+		return user
 	return os.path.join(sys.prefix, "share/scc")
 
 
