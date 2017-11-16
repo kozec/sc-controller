@@ -407,8 +407,10 @@ class Menu(OSDWindow):
 			self._selected = self._submenu._selected
 			self.quit(self._submenu.get_exit_code())
 		self._submenu = None
-	
-	
+
+		log.info("opacity set to 0.95")
+		self.set_opacity(0.95)
+
 	def show_submenu(self, trash, trash2, trash3, menuitem):
 		""" Called when user chooses menu item pointing to submenu """
 		filename = find_menu(menuitem.filename)
@@ -432,7 +434,10 @@ class Menu(OSDWindow):
 			self._submenu.controller = self.controller
 			self._submenu.connect('destroy', self.on_submenu_closed)
 			self._submenu.show()
-	
+
+			log.info("opacity set to 0.35")
+			self.set_opacity(0.35)
+
 	
 	def _control_equals_cancel(self, daemon, x, y):
 		"""

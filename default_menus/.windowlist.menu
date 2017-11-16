@@ -1,3 +1,6 @@
 [{
+    "separator": true,
+    "name": "Switch to"
+}, {
     "generator" : "windowlist"
 }]
