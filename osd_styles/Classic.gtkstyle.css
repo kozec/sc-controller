@@ -1,0 +1,111 @@
+
+#osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
+	background-color: #%(background)s;
+	border: 6px #%(border)s double;
+}
+
+#osd-area {
+	background-color: #%(border)s;
+}
+
+#osd-label {
+	color: #%(text)s;
+	border: none;
+	font-size: xx-large;
+	margin: 15px 15px 15px 15px;
+}
+
+#osd-menu, #osd-gesture {
+	padding: 7px 7px 7px 7px;
+}
+
+#osd-keyboard-container {
+	padding: 6px 6px 6px 6px;
+}
+
+#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy,
+#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected,
+#osd-key-buton, #osd-key-buton-hilight, #osd-launcher-item,
+#osd-launcher-item-selected, #osd-hidden-item,
+#osd-hidden-item-selected, #osd-key-buton-selected {
+	color: #%(text)s;
+	border-radius: 0;
+	font-size: x-large;
+	background-image: none;
+	background-color: #%(background)s;
+	margin: 0px 0px 2px 0px;
+}
+
+
+#osd-hidden-item, #osd-hidden-item-selected {
+	color: #%(background)s;
+	border-color: #%(background)s;
+}
+
+
+#osd-radial-menu-icon {
+	color: #%(text)s;
+}
+
+#osd-radial-menu-icon-selected {
+	color: #%(menuitem_hilight_text)s;
+}
+
+#osd-menu-item, #osd-menu-item-big-icon,
+#osd-launcher-item, #osd-launcher-item-selected {
+	border: 1px #%(menuitem_border)s solid;
+}
+
+#osd-menu-separator {
+	color: #%(menuseparator)s;
+	font-size: large;
+	background-image: none;
+	background-color: #%(background)s;
+	margin: 5px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+}
+
+#osd-gesture-separator {
+	color: #%(menuseparator)s;
+	background-color: #%(menuseparator)s;
+	margin: 0px 5px 0px 5px;
+}
+
+#osd-menu-item-selected, #osd-menu-item-big-icon-selected,
+#osd-launcher-item-selected {
+	color: #%(menuitem_hilight_text)s;
+	background-color: #%(menuitem_hilight)s;
+	border: 1px #%(menuitem_hilight_border)s solid;
+}
+
+#osd-menu-cursor, #osd-keyboard-cursor {
+}
+
+#osd-dialog-buttons {
+	margin: 10px 20px 10px 20px;
+}
+
+#osd-dialog-text {
+	color: #%(text)s;
+	font-size: large;
+	margin: 10px 20px 0px 20px;
+}
+
+#osd-application-list {
+	margin: 15px 15px 0px 15px;
+}
+
+#osd-key-buton, #osd-key-buton-selected {
+	background-color: #%(osk_button1)s;
+	border: 1px #%(osk_button1_border)s solid;
+	color: #%(osk_text)s;
+}
+
+#osd-key-buton-hilight {
+	color: #%(osk_text)s;
+	background-color: #%(osk_hilight)s;
+}
+
+#osd-key-buton-selected {
+	background-color: #%(osk_pressed)s;
+}

@@ -43,7 +43,7 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="lstOSDTheme">
+  <object class="GtkListStore" id="lstOSDColorPreset">
     <columns>
       <!-- column-name key -->
       <column type="gchararray"/>
@@ -52,11 +52,29 @@
     </columns>
     <data>
       <row>
-        <col id="0">original</col>
-        <col id="1" translatable="yes">Original (Green)</col>
+        <col id="0">Green.colors.json</col>
+        <col id="1" translatable="yes">Green</col>
       </row>
       <row>
-        <col id="0">reloaded</col>
+        <col id="0">Green (dark).colors.json</col>
+        <col id="1" translatable="yes">Green (dark)</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="lstOSDStyle">
+    <columns>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">Classic.gtkstyle.css</col>
+        <col id="1" translatable="yes">Classic</col>
+      </row>
+      <row>
+        <col id="0">Reloaded.gtkstyle.css</col>
         <col id="1" translatable="yes">Reloaded</col>
       </row>
     </data>
@@ -1243,7 +1261,7 @@ or even crash.</property>
                   <object class="GtkLabel" id="label2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Theme</property>
+                    <property name="label" translatable="yes">OSD Style</property>
                     <property name="xalign">0</property>
                     <attributes>
                       <attribute name="weight" value="bold"/>
@@ -1252,20 +1270,21 @@ or even crash.</property>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">0</property>
-                    <property name="width">4</property>
+                    <property name="width">2</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkComboBox" id="cbOSDTheme">
+                  <object class="GtkComboBox" id="cbOSDStyle">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">50</property>
-                    <property name="margin_right">50</property>
+                    <property name="margin_right">10</property>
                     <property name="margin_top">5</property>
                     <property name="margin_bottom">10</property>
                     <property name="hexpand">True</property>
-                    <property name="model">lstOSDTheme</property>
+                    <property name="model">lstOSDStyle</property>
                     <property name="active">0</property>
+                    <signal name="changed" handler="on_cbOSDStyle_changed" swapped="no"/>
                     <child>
                       <object class="GtkCellRendererText" id="crt3"/>
                       <attributes>
@@ -1276,7 +1295,47 @@ or even crash.</property>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">1</property>
-                    <property name="width">4</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label119">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Color Preset</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkComboBox" id="cbOSDColorPreset">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_right">50</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="hexpand">True</property>
+                    <property name="model">lstOSDColorPreset</property>
+                    <property name="active">0</property>
+                    <signal name="changed" handler="on_cbOSDColorPreset_changed" swapped="no"/>
+                    <child>
+                      <object class="GtkCellRendererText" id="crt4"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">1</property>
+                    <property name="width">2</property>
                   </packing>
                 </child>
               </object>

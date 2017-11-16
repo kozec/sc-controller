@@ -17,6 +17,7 @@ from scc.modifiers import SensitivityModifier
 from scc.profile import Profile, Encoder
 from scc.actions import Action, NoAction
 from scc.constants import LEFT, RIGHT
+from scc.paths import get_share_path
 from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
@@ -29,7 +30,7 @@ from scc.osd.keyboard import Keyboard as OSDKeyboard
 from scc.osd.osk_actions import OSKCursorAction
 import scc.osd.osk_actions
 
-import re, sys, os, logging, traceback
+import re, sys, os, json, logging, traceback
 log = logging.getLogger("GS")
 
 class GlobalSettings(Editor, UserDataManager, ComboSetter):
@@ -619,6 +620,27 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				btSave.set_sensitive(False)
 				return
 		btSave.set_sensitive(True)
+	
+	
+	def on_cbOSDColorPreset_changed(self, cb):
+		filename = os.path.join(get_share_path(), "osd_styles",
+				cb.get_model().get_value(cb.get_active_iter(), 0))
+		data = json.loads(file(filename, "r").read())
+		
+		# Transfer values from json to config
+		for grp in ("osd_colors", "osk_colors"):
+			if grp in data:
+				for subkey in self.app.config[grp]:
+					if subkey in data[grp]:
+						self.app.config[grp][subkey] = data[grp][subkey]
+		
+		# Save
+		self.app.save_config()
+	
+	
+	def on_cbOSDStyle_changed(self, cb):
+		self.app.config["osd_style"] = cb.get_model().get_value(cb.get_active_iter(), 0)
+		self.app.save_config()
 	
 	
 	@staticmethod

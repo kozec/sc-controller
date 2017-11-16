@@ -76,7 +76,8 @@ class Config(object):
 		# (or only some) inputs.
 		# This enables GUI to display which physical button was pressed to user.
 		"enable_sniffing" : False,
-		# Colors used by OSD
+		# Style and colors used by OSD
+		"osd_style": "Classic.gtkstyle.css",
 		"osd_colors": {
 			"background": "101010",
 			"border": "101010",

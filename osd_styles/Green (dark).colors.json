@@ -1,0 +1,26 @@
+{
+	"####" : "This is default color scheme",
+	
+	"###" : "Colors used by OSD",
+	"osd_colors": {
+		"background": "101010",
+		"border": "101010",
+		"text": "16BF24",
+		"menuitem_border": "101010",
+		"menuitem_hilight": "202020",
+		"menuitem_hilight_text": "16FF26",
+		"menuitem_hilight_border": "16FF26",
+		"menuseparator": "2e3436"
+	},
+	
+	"###" : "Colors used by on-screen keyboard",
+	"osk_colors": {
+		"hilight" : "7A7A7A",
+		"pressed" : "B0B0B0",
+		"button1" : "101010",
+		"button1_border" : "101010",
+		"button2" : "2e3436",
+		"button2_border" : "2e3436",
+		"text" : "16BF24"
+	}
+}
