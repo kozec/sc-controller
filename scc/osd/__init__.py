@@ -21,7 +21,12 @@ class OSDWindow(Gtk.Window):
 	CSS = """
 		#osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
 			background-color: #%(background)s;
-			border: 6px #%(border)s double;
+			border: 6px #%(border)s solid;
+			opacity: 0.95;
+		}
+		
+		#osd-message {
+			border-left: 5px #%(menuitem_hilight_text)s solid;
 		}
 		
 		#osd-area {
@@ -32,7 +37,7 @@ class OSDWindow(Gtk.Window):
 			color: #%(text)s;
 			border: none;
 			font-size: xx-large;
-			margin: 15px 15px 15px 15px;
+			padding: 15px 15px 15px 15px;
 		}
 		
 		#osd-menu, #osd-gesture {

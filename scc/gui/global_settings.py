@@ -122,6 +122,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				.set_active(not IS_UNITY and bool(self.app.config['gui']['minimize_to_status_icon'])))
 		(self.builder.get_object("cbMinimizeToStatusIcon")
 				.set_sensitive(not IS_UNITY and self.app.config['gui']['enable_status_icon']))
+		(self.builder.get_object("cbMinimizeOnStart")
+				.set_active(not IS_UNITY and bool(self.app.config['gui']['minimize_on_start'])))
+		(self.builder.get_object("cbMinimizeOnStart")
+				.set_sensitive(not IS_UNITY and self.app.config['gui']['enable_status_icon']))
 		(self.builder.get_object("cbAutokillDaemon")
 				.set_active(self.app.config['gui']['autokill_daemon']))
 		(self.builder.get_object("cbNewRelease")
@@ -311,6 +315,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.app.config['output']['rumble'] = self.builder.get_object("cbEnableRumble").get_active()
 		self.app.config['gui']['enable_status_icon'] = self.builder.get_object("cbEnableStatusIcon").get_active()
 		self.app.config['gui']['minimize_to_status_icon'] = self.builder.get_object("cbMinimizeToStatusIcon").get_active()
+		self.app.config['gui']['minimize_on_start'] = self.builder.get_object("cbMinimizeOnStart").get_active()
 		self.app.config['gui']['autokill_daemon'] = self.builder.get_object("cbAutokillDaemon").get_active()
 		self.app.config['gui']['news']['enabled'] = self.builder.get_object("cbNewRelease").get_active()
 		

@@ -9,3 +9,5 @@ build/
 .atomignore
 commit*
 profiles
+.idea/
+out.svg
