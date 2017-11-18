@@ -108,13 +108,10 @@ def get_share_path():
 	"""
 	if "SCC_SHARED" in os.environ:
 		return os.environ["SCC_SHARED"]
-	if os.path.exists("/usr/local/share/scc/"):
-		return "/usr/local/share/scc/"
-	user = os.path.expanduser("~/.local/share/scc")
-	if os.path.exists(user):
-		return user
-	return os.path.join(sys.prefix, "share/scc")
 
+	installation = os.path.join(sys.argv[0], '../../share/scc')
+	installation = os.path.realpath(installation)
+	return installation
 
 def get_pid_file():
 	"""
