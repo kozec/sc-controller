@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.1 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjLED">
@@ -869,7 +869,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label13">
+                  <object class="GtkLabel" id="lblmenuseparator">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -884,7 +884,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label14">
+                  <object class="GtkLabel" id="lblmenuitem_hilight_text">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -899,7 +899,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label16">
+                  <object class="GtkLabel" id="lblmenuitem_hilight">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -914,7 +914,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label17">
+                  <object class="GtkLabel" id="lblmenuitem_hilight_border">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -1009,7 +1009,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label12">
+                  <object class="GtkLabel" id="lbltext">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -1024,7 +1024,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label20">
+                  <object class="GtkLabel" id="lblmenuitem_border">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -1039,7 +1039,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label63">
+                  <object class="GtkLabel" id="lblbackground">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -1054,7 +1054,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label11">
+                  <object class="GtkLabel" id="lblborder">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -1086,7 +1086,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label22">
+                  <object class="GtkLabel" id="lblosk_button1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -1117,7 +1117,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label25">
+                  <object class="GtkLabel" id="lblosk_pressed">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -1149,7 +1149,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label23">
+                  <object class="GtkLabel" id="lblosk_button2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
@@ -1181,7 +1181,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label26">
+                  <object class="GtkLabel" id="lblosk_text">
                     <property name="name">20</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -1214,7 +1214,7 @@ or even crash.</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label24">
+                  <object class="GtkLabel" id="lblosk_hilight">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
