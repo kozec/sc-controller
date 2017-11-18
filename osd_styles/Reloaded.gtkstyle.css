@@ -3,7 +3,7 @@
 
 #osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
 	background-color: #%(background)s;
-	border: 6px #%(background+10)s solid;
+	border: 6px #%(background+1)s solid;
 	opacity: 0.95;
 }
 
@@ -60,11 +60,11 @@
 
 #osd-menu-item, #osd-menu-item-big-icon,
 #osd-launcher-item, #osd-launcher-item-selected {
-	border: 1px #%(menuitem_border)s solid;
+	border: 1px #%(background+1)s solid;
 }
 
 #osd-menu-separator {
-	color: #%(menuseparator)s;
+	color: #%(background+50)s;
 	font-size: large;
 	background-image: none;
 	background-color: #%(background)s;
@@ -80,8 +80,8 @@
 
 #osd-menu-item-selected, #osd-menu-item-big-icon-selected,
 #osd-launcher-item-selected {
-	color: #%(menuitem_hilight_text)s;
-	background-color: #%(menuitem_hilight)s;
+	color: #%(text)s;
+	background-color: #%(background+15)s;
 	border: 1px #%(menuitem_hilight_border)s solid;
 }
 

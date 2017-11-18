@@ -74,7 +74,6 @@ class OSDWindow(Gtk.Window):
 			if ((Gtk.get_major_version(), Gtk.get_minor_version()) > (3, 20)):
 				css += OSDWindow.CSS_3_20
 			OSDWindow.css_provider = Gtk.CssProvider()
-			print css % colors
 			OSDWindow.css_provider.load_from_data((css % colors).encode("utf-8"))
 			Gtk.StyleContext.add_provider_for_screen(
 					Gdk.Screen.get_default(),
@@ -243,8 +242,25 @@ class OSDCssMagic(dict):
 		if "+" in a:
 			key, number = a.rsplit("+", 1)
 			rgba = parse_rgba(self[key])
-			print rgba
-			return "#ff0000"
+			number = float(number) / 255.0
+			rgba.red = min(1.0, rgba.red + number)
+			rgba.green = min(1.0, rgba.green + number)
+			rgba.blue = min(1.0, rgba.blue + number)
+			return "%s%s%s" % (
+				hex(int(rgba.red * 255)).split("x")[-1].zfill(2),
+				hex(int(rgba.green * 255)).split("x")[-1].zfill(2),
+				hex(int(rgba.blue * 255)).split("x")[-1].zfill(2))
+		elif "-" in a:
+			key, number = a.rsplit("-", 1)
+			rgba = parse_rgba(self[key])
+			number = float(number) / 255.0
+			rgba.red = max(0.0, rgba.red - number)
+			rgba.green = max(0.0, rgba.green - number)
+			rgba.blue = max(0.0, rgba.blue - number)
+			return "%s%s%s" % (
+				hex(int(rgba.red * 255)).split("x")[-1].zfill(2),
+				hex(int(rgba.green * 255)).split("x")[-1].zfill(2),
+				hex(int(rgba.blue * 255)).split("x")[-1].zfill(2))
 		return self._dict[a]
 
 
