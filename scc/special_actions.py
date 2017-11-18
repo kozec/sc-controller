@@ -56,6 +56,10 @@ class ChangeProfileAction(Action, SpecialAction):
 		# is pressed would send following button_release event to another
 		# action from loaded profile)
 		self.execute(mapper)
+	
+	
+	def whole(self, mapper, *a):
+		self.execute(mapper)
 
 
 class ShellCommandAction(Action, SpecialAction):
@@ -109,6 +113,10 @@ class TurnOffAction(Action, SpecialAction):
 		# Execute only when button is released (executing this when button
 		# is pressed would hold stuck any other action bound to same button,
 		# as button_release is not sent after controller turns off)
+		self.execute(mapper)
+	
+	
+	def whole(self, mapper, *a):
 		self.execute(mapper)
 
 
