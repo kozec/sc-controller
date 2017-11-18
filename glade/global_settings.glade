@@ -56,8 +56,20 @@
         <col id="1" translatable="yes">Green</col>
       </row>
       <row>
-        <col id="0">Green (dark).colors.json</col>
-        <col id="1" translatable="yes">Green (dark)</col>
+        <col id="0">Blue.colors.json</col>
+        <col id="1" translatable="yes">Blue</col>
+      </row>
+      <row>
+        <col id="0">Cyan.colors.json</col>
+        <col id="1" translatable="yes">Cyan</col>
+      </row>
+      <row>
+        <col id="0">Yellow.colors.json</col>
+        <col id="1" translatable="yes">Yellow</col>
+      </row>
+      <row>
+        <col id="0">Red.colors.json</col>
+        <col id="1" translatable="yes">Red</col>
       </row>
     </data>
   </object>
