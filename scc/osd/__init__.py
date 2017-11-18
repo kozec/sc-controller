@@ -64,16 +64,18 @@ class OSDWindow(Gtk.Window):
 			Gtk.StyleContext.remove_provider_for_screen(
 				Gdk.Screen.get_default(), OSDWindow.css_provider)
 		
+		colors = {}
+		for x in config['osk_colors'] : colors["osk_%s" % (x,)] = config['osk_colors'][x]
+		for x in config['osd_colors'] : colors[x] = config['osd_colors'][x]
+		colors = OSDCssMagic(colors)
 		try:
-			colors = {}
 			css_file = os.path.join(get_share_path(), "osd_styles", config["osd_style"])
 			css = file(css_file, "r").read()
 			if ((Gtk.get_major_version(), Gtk.get_minor_version()) > (3, 20)):
 				css += OSDWindow.CSS_3_20
-			for x in config['osk_colors'] : colors["osk_%s" % (x,)] = config['osk_colors'][x]
-			for x in config['osd_colors'] : colors[x] = config['osd_colors'][x]
 			OSDWindow.css_provider = Gtk.CssProvider()
-			OSDWindow.css_provider.load_from_data(str(css % colors))
+			print css % colors
+			OSDWindow.css_provider.load_from_data((css % colors).encode("utf-8"))
 			Gtk.StyleContext.add_provider_for_screen(
 					Gdk.Screen.get_default(),
 					OSDWindow.css_provider,
@@ -88,7 +90,7 @@ class OSDWindow(Gtk.Window):
 			css = file(css_file, "r").read()
 			if ((Gtk.get_major_version(), Gtk.get_minor_version()) > (3, 20)):
 				css += OSDWindow.CSS_3_20
-			OSDWindow.css_provider.load_from_data(str(css % Config.DEFAULTS['osd_colors']))
+			OSDWindow.css_provider.load_from_data((css % colors).encode("utf-8"))
 			Gtk.StyleContext.add_provider_for_screen(
 					Gdk.Screen.get_default(),
 					OSDWindow.css_provider,
@@ -221,6 +223,31 @@ class OSDWindow(Gtk.Window):
 			self.destroy()
 
 
+class OSDCssMagic(dict):
+	"""
+	Basically, I reinvented templating.
+	This is passed to string.format, allowing to use some simple expressions in
+	addition to normal %(placeholder)s.
+	
+	Supported magic:
+		%(background)s			- just color
+		%(background+10)s		- color, 10 values brighter
+		%(background-10)s		- color, 10 values darker
+	"""
+	
+	def __init__(self, dict_to_wrap):
+		self._dict = dict_to_wrap
+	
+	
+	def __getitem__(self, a):
+		if "+" in a:
+			key, number = a.rsplit("+", 1)
+			rgba = parse_rgba(self[key])
+			print rgba
+			return "#ff0000"
+		return self._dict[a]
+
+
 class StickController(GObject.GObject, TimerManager):
 	"""
 	Simple utility class that gets fed by with position and emits
@@ -273,3 +300,21 @@ class StickController(GObject.GObject, TimerManager):
 		if direction != self._direction:
 			self._direction = direction
 			self._move()
+
+
+def parse_rgba(col):
+	"""
+	Parses color specified by #RRGGBBAA string.
+	'#' and 'AA' is optional.
+	"""
+	# Because GTK can parse everything but theese :(
+	alpha = "FF"
+	if not col.startswith("#"):
+		col = "#" + col
+	if len(col) > 7:
+		col, alpha = col[0:7], col[7:]
+	rgba = Gdk.RGBA()
+	if not rgba.parse(col):
+		log.warning("Failed to parse RGBA color: %s", col)
+	rgba.alpha = float(int(alpha, 16)) / 255.0
+	return rgba

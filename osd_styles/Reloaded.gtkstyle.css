@@ -1,6 +1,9 @@
+/* Used colors: background, */
+
+
 #osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
 	background-color: #%(background)s;
-	border: 6px #%(border)s solid;
+	border: 6px #%(background+10)s solid;
 	opacity: 0.95;
 }
 

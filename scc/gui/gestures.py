@@ -7,6 +7,7 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, GLib, GObject
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.osd import parse_rgba
 from collections import deque
 
 import math, logging
@@ -27,29 +28,14 @@ class GestureDraw(Gtk.DrawingArea):
 		self.set_colors()
 	
 	
-	@staticmethod
-	def parse_rgba(col):
-		""" Parses color specified by #RRGGBBAA string """
-		# Because GTK can parse everything but theese :(
-		if not col.startswith("#"):
-			col = "#" + col
-		if len(col) > 7:
-			col, alpha = col[0:7], col[7:]
-		rgba = Gdk.RGBA()
-		if not rgba.parse(col):
-			log.warning("Failed to parse RGBA color: %s", col)
-		rgba.alpha = float(int(alpha, 16)) / 255.0
-		return rgba
-	
-	
 	def set_colors(self, background="000000FF", line="FF00FFFF",
 			grid="7A7A7AFF", hilight="0030AAFF", **a):
 		""" Expects colors in RRGGBB, as stored in config file """
 		self.colors = {
-			'background' :	GestureDraw.parse_rgba(background),
-			'line' : 		GestureDraw.parse_rgba(line),
-			'grid' : 		GestureDraw.parse_rgba(grid),
-			'hilight':		GestureDraw.parse_rgba(hilight),
+			'background' :	parse_rgba(background),
+			'line' : 		parse_rgba(line),
+			'grid' : 		parse_rgba(grid),
+			'hilight':		parse_rgba(hilight),
 		}
 	
 	
