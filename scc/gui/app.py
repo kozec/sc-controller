@@ -926,7 +926,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			from scc.gui.osd_mode_mapper import OSDModeMapper
 			self.osd_mode_mapper = OSDModeMapper(osd_mode_profile)
 			self.osd_mode_mapper.set_target_window(self.window.get_window())
-			GLib.timeout_add(10, self.osd_mode_mapper.run_scheduled)
 		
 		# Locks everything but pads. Pads are emulating mouse and this is
 		# better left in daemon - involving socket in mouse controls
