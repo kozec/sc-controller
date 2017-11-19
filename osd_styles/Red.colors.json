@@ -7,7 +7,7 @@
 		"menuitem_border": "400000",
 		"menuitem_hilight": "600000",
 		"menuitem_hilight_text": "FFFFFF",
-		"menuitem_hilight_border": "FFFFFF",
+		"menuitem_hilight_border": "FF0000",
 		"menuseparator": "905050"
 	},
 	

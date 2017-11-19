@@ -236,6 +236,7 @@ class OSDDaemon(object):
 		"""
 		h = sum([ hash(self.config['osd_colors'][x]) for x in self.config['osd_colors'] ])
 		h += sum([ hash(self.config['osk_colors'][x]) for x in self.config['osk_colors'] ])
+		h += hash(self.config['osd_style'])
 		if self._hash_of_colors != h:
 			self._hash_of_colors = h
 			OSDWindow._apply_css(self.config)

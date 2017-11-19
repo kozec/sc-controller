@@ -1,4 +1,4 @@
-/* Used colors: background menuitem_hilight_text text menuseparator osk_text osk_button1 osk_button1_border osk_hilight osk_pressed */
+/* Used colors: background text menuseparator osk_text osk_button1 osk_button1_border osk_hilight osk_pressed */
 
 #osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
 	background-color: #%(background)s;

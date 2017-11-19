@@ -51,6 +51,10 @@
       <column type="gchararray"/>
     </columns>
     <data>
+        <row>
+          <col id="0">None</col>
+          <col id="1" translatable="yes">None / Custom</col>
+        </row>
       <row>
         <col id="0">Green.colors.json</col>
         <col id="1" translatable="yes">Green</col>

@@ -224,8 +224,8 @@ class Config(object):
 		for k in self.values:
 			yield k
 	
-	def get(self, key):
-		return self.values[key]
+	def get(self, key, default=None):
+		return self.values.get(key, default)
 	
 	def set(self, key, value):
 		self.values[key] = value

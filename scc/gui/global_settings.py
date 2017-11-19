@@ -151,12 +151,17 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	
 	def load_colors(self):
+		cbOSDStyle = self.builder.get_object("cbOSDStyle")
+		cbOSDColorPreset = self.builder.get_object("cbOSDColorPreset")
 		for k in self.app.config["osd_colors"]:
 			w = self.builder.get_object("cb%s" % (k,))
 			self._load_color(w, "osd_colors", k)
 		for k in self.app.config["osk_colors"]:
 			w = self.builder.get_object("cbosk_%s" % (k,))
 			self._load_color(w, "osk_colors", k)
+		theme = self.app.config.get("osd_color_theme", "None")
+		self.set_cb(cbOSDColorPreset, theme)
+		self.set_cb(cbOSDStyle, self.app.config.get("osd_style"))
 	
 	
 	def load_autoswitch(self):
@@ -260,6 +265,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		# Following lambdas converts Gdk.Color into #rrggbb notation.
 		# Gdk.Color can do similar, except it uses #rrrrggggbbbb notation that
 		# is not understood by Gdk css parser....
+		cbOSDColorPreset = self.builder.get_object("cbOSDColorPreset")
 		striphex = lambda a: hex(a).strip("0x").zfill(2)
 		tohex = lambda a: "".join([ striphex(int(x * 0xFF)) for x in a.to_floats() ])
 		for k in self.app.config["osd_colors"]:
@@ -270,6 +276,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			w = self.builder.get_object("cbosk_%s" % (k,))
 			if w:
 				self.app.config["osk_colors"][k] = tohex(w.get_color())
+		self.app.config["osd_color_theme"] = None
+		self.set_cb(cbOSDColorPreset, "None")
 		self.app.save_config()
 	
 	
@@ -623,8 +631,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	
 	def on_cbOSDColorPreset_changed(self, cb):
-		filename = os.path.join(get_share_path(), "osd_styles",
-				cb.get_model().get_value(cb.get_active_iter(), 0))
+		theme = cb.get_model().get_value(cb.get_active_iter(), 0)
+		if theme in (None, "None"): return
+		filename = os.path.join(get_share_path(), "osd_styles", theme)
 		data = json.loads(file(filename, "r").read())
 		
 		# Transfer values from json to config
@@ -635,6 +644,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 						self.app.config[grp][subkey] = data[grp][subkey]
 		
 		# Save
+		self.app.config["osd_color_theme"] = theme
 		self.app.save_config()
 	
 	
