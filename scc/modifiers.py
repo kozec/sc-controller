@@ -157,6 +157,7 @@ class NameModifier(Modifier):
 
 
 class ClickModifier(Modifier):
+	# TODO: Rename to 'clicked'
 	COMMAND = "click"
 
 	def encode(self):
@@ -258,6 +259,63 @@ class ClickModifier(Modifier):
 		else:
 			# Nothing is pressed, but finger moves over pad
 			self.action.whole_blocked(mapper, x, y, what)
+
+
+class PressedModifier(Modifier):
+	COMMAND = "pressed"
+	
+	
+	def encode(self):
+		# Skipping over Macro.encode to match v0.4 profile style
+		return Action.encode(self)
+	
+	
+	def describe(self, context):
+		if context in (Action.AC_STICK, Action.AC_PAD):
+			return _("(when pressed)") + "\n" + self.action.describe(context)
+		else:
+			return _("(when pressed)") + " " + self.action.describe(context)
+	
+	
+	def strip(self):
+		return self.action.strip()
+	
+	
+	def compress(self):
+		self.action = self.action.compress()
+		return self
+	
+	
+	def button_press(self, mapper):
+		self.action.button_press(mapper)
+		mapper.schedule(0, self._release)
+	
+	
+	def _release(self, mapper):
+		return self.action.button_release(mapper)
+	
+	
+	def button_release(self, mapper):
+		pass
+
+
+class ReleasedModifier(PressedModifier):
+	COMMAND = "released"
+	
+	def describe(self, context):
+		if context in (Action.AC_STICK, Action.AC_PAD):
+			return _("(when released)") + "\n" + self.action.describe(context)
+		else:
+			return _("(when released)") + " " + self.action.describe(context)
+	
+	
+	def button_press(self, mapper):
+		pass
+	
+	
+	def button_release(self, mapper):
+		self.action.button_press(mapper)
+		mapper.schedule(0, self._release)
 
 
 class BallModifier(Modifier, WholeHapticAction):
@@ -806,7 +864,6 @@ class ModeModifier(Modifier):
 		if sel is not self.old_action:
 			if self.old_action:
 				self.old_action.gyro(mapper, 0, 0, 0, *q)
-				sel.shifted_from(mapper, self.old_action)
 			self.old_action = sel
 		return sel.gyro(mapper, pitch, yaw, roll, *q)
 	

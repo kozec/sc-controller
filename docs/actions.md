@@ -251,10 +251,17 @@ Displays on-screen keyboard
 # Modifiers:
 
 #### <a name="click"></a> click(action)
-Used to create action that occurs only if pad or stick is pressed.
+Creates action action that occurs only if pad or stick is pressed.
 For example, `click(dpad(...))` set to pad will create dpad that activates
 buttons only when pressed.
 
+#### <a name="pressed"></a> pressed(action)
+Creates action that occurs for brief moment when button is pressed.
+For example, `pressed(button(A))` will press and instantly release virtual
+A button whenever physical button is pressed.
+
+#### <a name="released"></a> released(action)
+Creates action that occurs for brief moment when button is released.
 
 #### <a name="mode"></a> mode(button1, action1, [button2, action2... buttonN, actionN] [, default] )
 Defines mode shifting. If physical buttonX is pressed, actionX is executed.

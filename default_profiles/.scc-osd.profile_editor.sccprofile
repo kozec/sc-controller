@@ -1,0 +1,22 @@
+{
+	"buttons": {
+		"A":	{ "action": "button(Keys.KEY_SPACE)" },
+		"B":	{ "action": "button(Keys.KEY_ESC)" },
+		"LB":	{ "action": "button(Keys.KEY_BACKSPACE)" },
+		"RB":	{ "action": "button(Keys.KEY_SPACE)" },
+		"LPAD":	{ "action": "button(Keys.BTN_RIGHT)" },
+		"RPAD":	{ "action": "button(Keys.BTN_LEFT)" }
+	},
+	
+	"pad_left":			{ "action": "feedback(LEFT, 4090, 16, ball(XY(mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL))))" },
+	"pad_right":		{ "action": "smooth(8, 0.78, 2.0, feedback(RIGHT, 256, ball(mouse())))" },
+	"trigger_left":		{ "action": "trigger(50, 50, button(Keys.BTN_RIGHT))" }, 
+	"trigger_right":	{ "action": "trigger(50, 255, button(Keys.BTN_LEFT))" },
+	
+	"stick": {
+		"action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))"
+	},
+	"gyro": {},
+	"menus": {},
+	"version": 1.2
+}

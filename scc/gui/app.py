@@ -22,7 +22,7 @@ from scc.tools import check_access, find_gksudo, profile_is_override, nameof
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.tools import get_profile_name, profile_is_default, profile_is_override
-from scc.tools import check_access, find_profile, find_gksudo, nameof
+from scc.tools import check_access, find_profile, find_binary, find_gksudo, nameof
 from scc.paths import get_config_path, get_profiles_path
 from scc.modifiers import NameModifier
 from scc.actions import NoAction
@@ -241,11 +241,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
 			ribar = self.show_error(msg)
 			gksudo = find_gksudo()
+			modprobe = find_binary("modprobe")
 			if gksudo and not hasattr(ribar, "_fix_tmp"):
 				button = Gtk.Button.new_with_label(_("Fix Temporary"))
 				ribar._fix_tmp = button
 				button.connect('clicked', self.apply_temporary_fix,
-					gksudo + ["modprobe", "uinput"],
+					gksudo + [modprobe, "uinput"],
 					_("This will load missing uinput module.")
 				)
 				ribar.add_button(button, -1)
@@ -918,7 +919,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		# better left in daemon - involving socket in mouse controls
 		# adds too much lags.
 		c.lock(on_lock_success, on_lock_failed,
-			'A', 'B', 'X', 'Y', 'START', 'BACK', 'LB', 'RB', 'C',
+			'A', 'B', 'X', 'Y', 'START', 'BACK', 'LB', 'RB', 'C', 'LPAD', 'RPAD',
 			'STICK', 'LGRIP', 'RGRIP', 'LT', 'RT', 'STICKPRESS')
 		
 		# Ask daemon to temporaly reconfigure pads for mouse emulation
@@ -1259,7 +1260,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def do_activate(self, *a):
-		self.builder.get_object("window").show()
+		if (not IS_UNITY and self.app.config['gui']['enable_status_icon']
+							and self.app.config['gui']['minimize_on_start']):
+			log.info("")
+			log.info(_("SC-Controller started and running in notification area"))
+		else:
+			self.builder.get_object("window").show()
 	
 	
 	def remove_dot_profile(self):
@@ -1346,11 +1352,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			o.arg = arg
 			self.add_main_option_entries([o])
 		
-		self.connect('handle-local-options', self.do_local_options)
-		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
 		aso("osd",		b"o", "OSD mode (displays only editor only)")
+		self.connect('handle-local-options', self.do_local_options)
 	
 	
 	def save_profile_selection(self, path):

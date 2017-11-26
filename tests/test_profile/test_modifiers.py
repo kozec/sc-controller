@@ -56,6 +56,24 @@ class TestModifiers(object):
 		assert _is_axis_with_value(a.action)
 	
 	
+	def test_pressed(self):
+		"""
+		Tests if PressedModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "pressed(axis(ABS_X))" })
+		assert isinstance(a, PressedModifier)
+		assert _is_axis_with_value(a.action)
+	
+	
+	def test_released(self):
+		"""
+		Tests if ReleasedModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "released(axis(ABS_X))" })
+		assert isinstance(a, ReleasedModifier)
+		assert _is_axis_with_value(a.action)
+	
+	
 	def test_circular(self):
 		"""
 		Tests if CircularModifier is parsed correctly from json.

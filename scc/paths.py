@@ -10,7 +10,7 @@ python can't handle.
 All this is needed since I want to have entire thing installable, runnable
 from source tarball *and* debugable in working folder.
 """
-import os, __main__
+import os, sys, __main__
 
 
 def get_config_path():
@@ -110,7 +110,10 @@ def get_share_path():
 		return os.environ["SCC_SHARED"]
 	if os.path.exists("/usr/local/share/scc/"):
 		return "/usr/local/share/scc/"
-	return "/usr/share/scc/"
+	user = os.path.expanduser("~/.local/share/scc")
+	if os.path.exists(user):
+		return user
+	return os.path.join(sys.prefix, "share/scc")
 
 
 def get_pid_file():
