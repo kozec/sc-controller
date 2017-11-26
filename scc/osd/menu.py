@@ -40,6 +40,7 @@ class Menu(OSDWindow):
 	SUBMENU_OFFSET = 50
 	PREFER_BW_ICONS = True
 	
+	
 	def __init__(self, cls="osd-menu"):
 		OSDWindow.__init__(self, cls)
 		self.daemon = None
@@ -155,6 +156,20 @@ class Menu(OSDWindow):
 			help="prints menu items to stdout")
 		self.argparser.add_argument('items', type=str, nargs='*', metavar='id title',
 			help="Menu items")
+	
+	
+	@staticmethod
+	def _get_on_screen_position(w):
+		a = w.get_allocation()
+		parent = w.get_parent()
+		if parent:
+			if isinstance(parent, Menu) and parent.get_window() is not None:
+				x, y = parent.get_window().get_position()
+			else:
+				x, y = Menu._get_on_screen_position(parent)
+			return a.x + x, a.y + y
+		else:
+			return a.x, a.y
 	
 	
 	def parse_menu(self):
@@ -312,8 +327,24 @@ class Menu(OSDWindow):
 			self._selected = self.items[index]
 			self._selected.widget.set_name(
 					self._selected.widget.get_name() + "-selected")
+			GLib.timeout_add(2, self._check_on_screen_position)
 			return True
 		return False
+	
+	
+	def _check_on_screen_position(self):
+		x, y = Menu._get_on_screen_position(self._selected.widget)
+		screen_height = self.get_window().get_screen().get_height()
+		if y < 50:
+			wx, wy = self.get_window().get_position()
+			wy += 5
+			self.get_window().move(wx, wy)
+			GLib.timeout_add(2, self._check_on_screen_position)
+		if y > screen_height - 100:
+			wx, wy = self.get_window().get_position()
+			wy -= 5
+			self.get_window().move(wx, wy)
+			GLib.timeout_add(2, self._check_on_screen_position)
 	
 	
 	def _connect_handlers(self):
@@ -410,7 +441,8 @@ class Menu(OSDWindow):
 
 		log.info("opacity set to 0.95")
 		self.set_opacity(0.95)
-
+	
+	
 	def show_submenu(self, trash, trash2, trash3, menuitem):
 		""" Called when user chooses menu item pointing to submenu """
 		filename = find_menu(menuitem.filename)
@@ -437,7 +469,7 @@ class Menu(OSDWindow):
 
 			log.info("opacity set to 0.35")
 			self.set_opacity(0.35)
-
+	
 	
 	def _control_equals_cancel(self, daemon, x, y):
 		"""
@@ -499,8 +531,8 @@ class Menu(OSDWindow):
 					self.quit(0)
 				else:
 					self.quit(-1)
-
-
+	
+	
 class MenuIcon(Gtk.DrawingArea):
 	""" Auti-sized, auto-recolored icon for menus """
 	
