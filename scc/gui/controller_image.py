@@ -86,7 +86,7 @@ class ControllerImage(SVGWidget):
 		Loads controller settings from provided config, adding default values
 		when needed. Returns same config.
 		"""
-		self.current = self._ensure_config(config)
+		self.current = self._ensure_config(config or {})
 		self.set_image(os.path.join(self.app.imagepath,
 			"controller-images/%s.svg" % (self.current["gui"]["background"], )))
 		self._fill_button_images(self.current["gui"]["buttons"])
