@@ -14,6 +14,7 @@ data_files = [
 				('share/scc/images/controller-images', glob.glob("images/controller-images/*.svg")),
 				('share/icons/hicolor/24x24/status', glob.glob("images/24x24/status/*.png")),
 				('share/icons/hicolor/22x22/status', glob.glob("images/22x22/status/*.png")),
+				('share/scc/osd_styles', glob.glob("osd_styles/*")),
 				('share/scc/default_profiles', glob.glob("default_profiles/*.sccprofile")),
 				('share/scc/default_profiles', glob.glob("default_profiles/.*.sccprofile")),
 				('share/scc/default_menus', glob.glob("default_menus/*.menu")),
