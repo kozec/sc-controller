@@ -308,6 +308,7 @@ class BallModifier(Modifier, WholeHapticAction):
 		self._degree = degree
 		self._radscale = (degree * PI / 180) / ampli
 		self._mass = mass
+		self._roll_task = None
 		self._r = r
 		self._I = (2 * self._mass * self._r**2) / 5.0
 		self._a = self._r * self.friction / self._I
@@ -335,14 +336,12 @@ class BallModifier(Modifier, WholeHapticAction):
 		""" Stops rolling of the 'ball' """
 		self._xvel_dq.clear()
 		self._yvel_dq.clear()
+		if self._roll_task:
+			self._roll_task.cancel()
+			self._roll_task = None
 	
 	
 	def _add(self, dx, dy):
-		# Compute time step
-		_tmp = time.time()
-		dt = _tmp - self._lastTime
-		self._lastTime = _tmp
-		
 		# Compute instant velocity
 		try:
 			self._xvel = sum(self._xvel_dq) / len(self._xvel_dq)
@@ -351,15 +350,14 @@ class BallModifier(Modifier, WholeHapticAction):
 			self._xvel = 0.0
 			self._yvel = 0.0
 		
-		self._xvel_dq.append(dx * self._radscale / dt)
-		self._yvel_dq.append(dy * self._radscale / dt)
+		self._xvel_dq.append(dx * self._radscale)
+		self._yvel_dq.append(dy * self._radscale)
 	
 	
 	def _roll(self, mapper):
 		# Compute time step
-		_tmp = time.time()
-		dt = _tmp - self._lastTime
-		self._lastTime = _tmp
+		t = time.time()
+		dt, self._lastTime = t - self._lastTime, t
 		
 		# Free movement update velocity and compute movement
 		self._xvel_dq.clear()
@@ -392,7 +390,7 @@ class BallModifier(Modifier, WholeHapticAction):
 		if dx or dy:
 			if self.haptic:
 				WholeHapticAction.add(self, mapper, dx, dy)
-			mapper.schedule(0.02, self._roll)
+			self._roll_task = mapper.schedule(0.02, self._roll)
 	
 	
 	def encode(self):
@@ -446,8 +444,10 @@ class BallModifier(Modifier, WholeHapticAction):
 			return self.action.whole(mapper, x, y, what)
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
+				t = time.time()
+				dt, self._lastTime = t - self._lastTime, t
 				dx, dy = x - self._old_pos[0], self._old_pos[1] - y
-				self._add(dx, dy)
+				self._add(dx / dt, dy / dt)
 				self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])
 			else:
 				self._stop()

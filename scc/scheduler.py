@@ -78,3 +78,10 @@ class Task(object):
 		self.time = time
 		self.callback = callback
 		self.data = data
+	
+	
+	def cancel(self):
+		""" Marks task as canceled, without actually removing it from scheduler """
+		self.callback = lambda *a, **b: False
+		self.data = ()
+
