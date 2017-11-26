@@ -4,8 +4,10 @@
 *.so
 *.patch
 !scc/*tester*
-*test*
+test*.py
 build/
 .atomignore
 commit*
 profiles
+.idea/
+out.svg

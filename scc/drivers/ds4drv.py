@@ -8,14 +8,14 @@ Extends HID driver with DS4-specific options.
 from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData
 from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test
 from scc.drivers.hiddrv import AxisMode, AxisDataUnion, AxisModeData
-from scc.drivers.hiddrv import HatswitchModeData
+from scc.drivers.hiddrv import HatswitchModeData, _lib
 from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
 from scc.drivers.evdevdrv import make_new_device, get_axes
 from scc.drivers.usb import register_hotplug_device
 from scc.constants import SCButtons, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.tools import init_logging, set_logging_level
-import sys, logging
+import sys, logging, ctypes
 log = logging.getLogger("DS4")
 
 VENDOR_ID = 0x054c
@@ -38,13 +38,14 @@ class DS4Controller(HIDController):
 		SCButtons.STICKPRESS,
 		SCButtons.RPAD,
 		SCButtons.C,
-		SCButtons.CPAD,
+		SCButtons.CPADPRESS,
 	)
 	
-	def __init__(self, *a, **b):
-		HIDController.__init__(self, *a, **b)
-		self.flags = ( ControllerFlags.EUREL_GYROS | ControllerFlags.HAS_RSTICK
-						| ControllerFlags.SEPARATE_STICK )
+	flags = ( ControllerFlags.EUREL_GYROS
+			| ControllerFlags.HAS_RSTICK
+			| ControllerFlags.HAS_CPAD
+			| ControllerFlags.SEPARATE_STICK
+	)
 	
 	
 	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
@@ -100,6 +101,11 @@ class DS4Controller(HIDController):
 			mode = AxisMode.DS4GYRO, byte_offset = 19)
 		self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
 			mode = AxisMode.DS4GYRO, byte_offset = 21)
+		
+		self._decoder.axes[AxisType.AXIS_CPAD_X] = AxisData(
+			mode = AxisMode.DS4TOUCHPAD, byte_offset = 36)
+		self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
+			mode = AxisMode.DS4TOUCHPAD, byte_offset = 37, bit_offset=4)
 		self._decoder.buttons = ButtonData(
 			enabled = True, byte_offset=5, bit_offset=4, size=14,
 			button_count = 14
@@ -116,6 +122,19 @@ class DS4Controller(HIDController):
 		
 		self._packet_size = 64
 	
+	
+	def input(self, endpoint, data):
+		# Special override for CPAD touch button
+		if _lib.decode(ctypes.byref(self._decoder), data):
+			if self.mapper:
+				if ord(data[35]) >> 7:
+					# cpad is not touched
+					self._decoder.state.buttons &= ~SCButtons.CPADTOUCH
+				else:
+					self._decoder.state.buttons |= SCButtons.CPADTOUCH
+				self.mapper.input(self,
+						self._decoder.old_state, self._decoder.state)
+
 	
 	def get_gyro_enabled(self):
 		# Cannot be actually turned off, so it's always active
@@ -150,7 +169,7 @@ class DS4Controller(HIDController):
 
 class DS4EvdevController(EvdevController):
 	TOUCH_FACTOR_X = STICK_PAD_MAX / 940.0
-	TOUCH_FACTOR_Y = STICK_PAD_MAX / 470.0
+	TOUCH_FACTOR_Y = STICK_PAD_MAX / -470.0
 	BUTTON_MAP = {
 		304: "A",
 		305: "B",
@@ -163,6 +182,7 @@ class DS4EvdevController(EvdevController):
 		316: "C",
 		317: "STICKPRESS",
 		318: "RPAD"
+		# 319: "CPAD",
 	}
 	AXIS_MAP = {
 		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
@@ -185,7 +205,8 @@ class DS4EvdevController(EvdevController):
 		313: "START",
 		314: "STICKPRESS",
 		315: "RPAD",
-		316: "C"
+		316: "C",
+		# 317: "CPAD",
 	}
 	AXIS_MAP_OLD = {
 		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
@@ -197,16 +218,21 @@ class DS4EvdevController(EvdevController):
 		16: { "axis": "lpad_x", "deadzone": 0, "max": 1, "min": -1 },
 		17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
 	}
-	MOTION_MAP = {
-		EvdevController.ECODES.ABS_RX : 'gpitch',
-		EvdevController.ECODES.ABS_RY : 'groll',
-		EvdevController.ECODES.ABS_RZ : 'gyaw',
-		EvdevController.ECODES.ABS_X : 'q1',
-		EvdevController.ECODES.ABS_Y : 'q2',
-		EvdevController.ECODES.ABS_Z : 'q3',
+	GYRO_MAP = {
+		EvdevController.ECODES.ABS_RX : ('gpitch', 0.01),
+		EvdevController.ECODES.ABS_RY : ('gyaw', 0.01),
+		EvdevController.ECODES.ABS_RZ : ('groll', 0.01),
+		EvdevController.ECODES.ABS_X : (None, 1),		# 'q2'
+		EvdevController.ECODES.ABS_Y : (None, 1),		# 'q3'
+		EvdevController.ECODES.ABS_Z : (None, -1),		# 'q1'
 	}
+	flags = ( ControllerFlags.EUREL_GYROS
+			| ControllerFlags.HAS_RSTICK
+			| ControllerFlags.HAS_CPAD
+			| ControllerFlags.SEPARATE_STICK
+	)
 	
-	def __init__(self, daemon, controllerdevice, motion, touchpad):
+	def __init__(self, daemon, controllerdevice, gyro, touchpad):
 		config = {
 			'axes' : DS4EvdevController.AXIS_MAP,
 			'buttons' : DS4EvdevController.BUTTON_MAP,
@@ -217,26 +243,27 @@ class DS4EvdevController(EvdevController):
 			# see kernel source, drivers/hid/hid-sony.c#L2748
 			config['axes'] = DS4EvdevController.AXIS_MAP_OLD
 			config['buttons'] = DS4EvdevController.BUTTON_MAP_OLD
-		self._motion = motion
+		self._gyro = gyro
 		self._touchpad = touchpad
-		for device in (self._motion, self._touchpad):
+		for device in (self._gyro, self._touchpad):
 			if device:
 				device.grab()
 		EvdevController.__init__(self, daemon, controllerdevice, None, config)
 		if self.poller:
 			self.poller.register(touchpad.fd, self.poller.POLLIN, self._touchpad_input)
-			self.poller.register(motion.fd, self.poller.POLLIN, self._motion_input)
+			self.poller.register(gyro.fd, self.poller.POLLIN, self._gyro_input)
 	
 	
-	def _motion_input(self, *a):
+	def _gyro_input(self, *a):
 		new_state = self._state
 		try:
-			for event in self._motion.read():
+			for event in self._gyro.read():
 				if event.type == self.ECODES.EV_ABS:
-					new_state = new_state._replace(**{
-						DS4EvdevController.MOTION_MAP[event.code] : event.value
-					})
-		except IOError, e:
+					axis, factor = DS4EvdevController.GYRO_MAP[event.code]
+					if axis:
+						new_state = new_state._replace(
+								**{ axis : int(event.value * factor) })
+		except IOError:
 			# Errors here are not even reported, evdev class handles important ones
 			return
 		
@@ -263,10 +290,10 @@ class DS4EvdevController(EvdevController):
 					pass
 				elif event.code == self.ECODES.BTN_LEFT:
 					if event.value == 1:
-						b = new_state.buttons | SCButtons.CPAD
+						b = new_state.buttons | SCButtons.CPADPRESS
 						new_state = new_state._replace(buttons = b)
 					else:
-						b = new_state.buttons & ~SCButtons.CPAD
+						b = new_state.buttons & ~SCButtons.CPADPRESS
 						new_state = new_state._replace(buttons = b)
 				elif event.code == self.ECODES.BTN_TOUCH:
 					if event.value == 1:
@@ -276,7 +303,7 @@ class DS4EvdevController(EvdevController):
 						b = new_state.buttons & ~SCButtons.CPADTOUCH
 						new_state = new_state._replace(buttons = b,
 								cpad_x = 0, cpad_y = 0)
-		except IOError, e:
+		except IOError:
 			# Errors here are not even reported, evdev class handles important ones
 			return
 		
@@ -288,7 +315,7 @@ class DS4EvdevController(EvdevController):
 	
 	def close(self):
 		EvdevController.close(self)
-		for device in (self._motion, self._touchpad):
+		for device in (self._gyro, self._touchpad):
 			try:
 				self.poller.unregister(device.fd)
 				device.ungrab()
@@ -296,8 +323,9 @@ class DS4EvdevController(EvdevController):
 	
 	
 	def get_gyro_enabled(self):
-		# TODO: Gyro over evdev
-		return False
+		# Cannot be actually turned off, so it's always active
+		# TODO: Maybe emulate turning off?
+		return True
 	
 	
 	def get_type(self):
@@ -346,19 +374,19 @@ def init(daemon, config):
 			return
 		# 2nd, find motion sensor and touchpad with physical address matching
 		# controllerdevice
-		motion, touchpad = None, None
+		gyro, touchpad = None, None
 		phys = device.phys.split("/")[0]
 		for device in evdevdevices:
 			if device.phys.startswith(phys):
 				count = len(get_axes(device))
 				if count == 6:
-					# 6 axes - Motion sensor
-					motion = device
+					# 6 axes - gyro sensor
+					gyro = device
 				elif count == 4:
 					# 4 axes - Touchpad
 					touchpad = device
 		# 3rd, do a magic
-		return DS4EvdevController(daemon, controllerdevice, motion, touchpad)
+		return DS4EvdevController(daemon, controllerdevice, gyro, touchpad)
 	
 	
 	def fail_cb(vid, pid):

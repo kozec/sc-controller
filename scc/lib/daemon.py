@@ -124,14 +124,13 @@ class Daemon(object):
 		try:
 			for x in xrange(0, 10): # Waits max 1s
 				os.kill(pid, signal.SIGTERM)
-				time.sleep(0.1)
 				if once: break
 				for x in xrange(50):
 					# This loop waits 5s
 					os.kill(pid, 0)
 					time.sleep(0.1)
-			if not once:
-				os.kill(pid, signal.SIGKILL)
+				time.sleep(0.1)
+			os.kill(pid, signal.SIGKILL)
 		except OSError as err:
 			e = str(err.args)
 			if e.find("No such process") > 0:

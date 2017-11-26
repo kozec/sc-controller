@@ -11,6 +11,7 @@ from scc.tools import _, set_logging_level
 from gi.repository import Gtk, GLib
 from scc.menu_data import MenuItem, Submenu
 from scc.tools import find_icon, find_menu
+from scc.paths import get_share_path
 from scc.config import Config
 from scc.osd.menu import Menu, MenuIcon
 from scc.osd import OSDWindow
@@ -21,12 +22,15 @@ log = logging.getLogger("osd.quickmenu")
 
 class QuickMenu(Menu):
 	BUTTONS = [ "A", "B", "X", "Y", "LB", "RB"]
+	BUTTON_INDEXES = [ 0, 1, 2, 3, 7, 8]	# indexes to gui->buttons list
+											# in controller gui config
 	
 	
 	def __init__(self, cls="osd-menu"):
 		Menu.__init__(self, cls)
 		self._cancel_with = 'START'
 		self._pressed = []
+		self._icons = []
 		self._timer = None
 	
 	
@@ -69,6 +73,7 @@ class QuickMenu(Menu):
 			label = widget.get_children()[0]
 			for c in [] + widget.get_children():
 				widget.remove(c)
+			self._icons.append(icon)
 			box = Gtk.Box()
 			box.pack_start(icon,  False, True, 0)
 			box.pack_start(label, True, True, 10)
@@ -102,6 +107,19 @@ class QuickMenu(Menu):
 	def lock_inputs(self):
 		def success(*a):
 			log.error("Sucessfully locked input")
+			config = self.controller.load_gui_config(os.path.join(
+					get_share_path(), "images"))
+			if config and config["gui"] and config["gui"]["buttons"]:
+				buttons = config["gui"]["buttons"]
+				try:
+					for i in xrange(len(self._icons)):
+						icon = self._icons[i]
+						name = buttons[self.BUTTON_INDEXES[i]]
+						filename, trash = find_icon("buttons/%s" % name)
+						icon.set_filename(filename)
+						icon.queue_draw()
+				except IndexError:
+					pass
 		locks = [ x for x in self.BUTTONS ] + [ self._cancel_with ]
 		self.controller.lock(success, self.on_failed_to_lock, *locks)
 	

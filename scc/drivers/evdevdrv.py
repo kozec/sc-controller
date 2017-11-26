@@ -53,6 +53,7 @@ class EvdevController(Controller):
 	"""
 	PADPRESS_EMULATION_TIMEOUT = 0.2
 	ECODES = evdev.ecodes
+	flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 	
 	def __init__(self, daemon, device, config_file, config):
 		try:
@@ -61,7 +62,6 @@ class EvdevController(Controller):
 			log.error("Failed to parse config for evdev controller")
 			raise
 		Controller.__init__(self)
-		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		self.device = device
 		self.config_file = config_file
 		self.config = config
@@ -390,7 +390,11 @@ class EvdevDriver(object):
 			self.daemon.get_scheduler().schedule(1, self.make_new_device, vendor_id, product_id, factory, repeat + 1)
 			return
 		
-		controller = factory(self.daemon, devices)
+		try:
+			controller = factory(self.daemon, devices)
+		except IOError, e:
+			print >>sys.stderr, "Failed to open device:", str(e)
+			return
 		if controller:
 			self._devices[controller.device.fn] = controller
 			self.daemon.add_controller(controller)
@@ -473,6 +477,7 @@ class EvdevDriver(object):
 			self.scan()
 		if not self._new_devices.empty():
 			self.add_new_devices()
+
 
 if HAVE_EVDEV:
 	# Just like USB driver, EvdevDriver is process-wide singleton

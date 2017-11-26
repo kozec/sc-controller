@@ -24,7 +24,7 @@ log = logging.getLogger("HID")
 DEV_CLASS_HID = 3
 TRANSFER_TYPE_INTERRUPT = 3
 LIBUSB_DT_REPORT = 0x22
-AXIS_COUNT = 15		# Must match number of axis fields in HIDControllerInput and values in AxisType
+AXIS_COUNT = 17		# Must match number of axis fields in HIDControllerInput and values in AxisType
 BUTTON_COUNT = 32	# Must match (or be less than) number of bits in HIDControllerInput.buttons
 ALLOWED_SIZES = [1, 2, 4, 8, 16, 32]
 SYS_DEVICES = "/sys/devices"
@@ -53,6 +53,8 @@ class HIDControllerInput(ctypes.Structure):
 		('q2', ctypes.c_int32),
 		('q3', ctypes.c_int32),
 		('q4', ctypes.c_int32),
+		('cpad_x', ctypes.c_int32),
+		('cpad_y', ctypes.c_int32),
 	]
 
 
@@ -72,6 +74,8 @@ class AxisType(IntEnum):
 	AXIS_Q2      = 12
 	AXIS_Q3      = 13
 	AXIS_Q4      = 14
+	AXIS_CPAD_X  = 15
+	AXIS_CPAD_Y  = 16
 
 
 class AxisMode(IntEnum):
@@ -82,6 +86,7 @@ class AxisMode(IntEnum):
 	HATSWITCH     = 4
 	DS4ACCEL      = 5	# 16bit, signed, no additional math needed
 	DS4GYRO       = 6	# 16bit, signed, inverted
+	DS4TOUCHPAD   = 7	# 12bit
 
 
 class AxisModeData(ctypes.Structure):
@@ -163,6 +168,7 @@ _lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
 
 
 class HIDController(USBDevice, Controller):
+	flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 	
 	def __init__(self, device, daemon, handle, config_file, config, test_mode=False):
 		USBDevice.__init__(self, device, handle)
@@ -191,7 +197,6 @@ class HIDController(USBDevice, Controller):
 		self._load_hid_descriptor(config, max_size, vid, pid, test_mode)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
 		Controller.__init__(self)
-		self.flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 		
 		if test_mode:
 			self.set_input_interrupt(id, self._packet_size, self.test_input)
@@ -213,7 +218,6 @@ class HIDController(USBDevice, Controller):
 	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
 		hid_descriptor = HIDController.find_sys_devices_descriptor(vid, pid)
 		if hid_descriptor is None:
-			print "get raw"
 			hid_descriptor = self.handle.getRawDescriptor(
 					LIBUSB_DT_REPORT, 0, 512)
 		open("report", "wb").write(b"".join([ chr(x) for x in hid_descriptor ]))
@@ -485,7 +489,7 @@ class HIDController(USBDevice, Controller):
 		for attr, trash in self._decoder.state._fields_:
 			if attr == "buttons": continue
 			if getattr(self._decoder.state, attr) != getattr(self._decoder.old_state, attr):
-				print "Axis", code, getattr(self._decoder.state, attr)
+				# print "Axis", code, getattr(self._decoder.state, attr)
 				sys.stdout.flush()
 			code += 1
 		

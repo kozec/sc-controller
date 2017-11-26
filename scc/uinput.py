@@ -30,7 +30,7 @@ from scc.tools import find_library
 from scc.cheader import defines
 from scc.lib import IntEnum
 
-UNPUT_MODULE_VERSION = 7
+UNPUT_MODULE_VERSION = 8
 
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):

@@ -13,11 +13,11 @@ class Controller(object):
 	
 	Derived class should implement every method from here.
 	"""
+	flags = 0
 	
 	def __init__(self):
 		global next_id
 		self.mapper = None
-		self.flags = 0
 		self._id = next_id
 		next_id += 1
 	

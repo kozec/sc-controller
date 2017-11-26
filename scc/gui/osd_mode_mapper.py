@@ -21,10 +21,8 @@ log = logging.getLogger("OSDModMapper")
 
 
 class OSDModeMapper(SlaveMapper):
-	def __init__(self, profile, keyboard="osd", mouse="osd"):
-		# 'keyboard' and 'mouse' strings are _not_ passed to UInput
-		# nor visible anywhere else when this class is used
-		SlaveMapper.__init__(self, profile, keyboard, mouse)
+	def __init__(self, profile):
+		SlaveMapper.__init__(self, profile, None, keyboard="osd", mouse="osd")
 		self.target_window = None
 	
 	

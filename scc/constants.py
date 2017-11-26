@@ -28,7 +28,7 @@ from scc.lib import IntEnum
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
 daemon will differ one one expected by UI and daemon will be forcefully restarted.
 """
-DAEMON_VERSION = "0.3.99.4"
+DAEMON_VERSION = "0.3.99.5"
 
 HPERIOD  = 0.02
 LPERIOD  = 0.5
@@ -43,6 +43,7 @@ FE_GYRO		= 4
 # Trigger names, pads, etc. These constants are used on multiple places
 LEFT	= "LEFT"
 RIGHT	= "RIGHT"
+CPAD	= "CPAD"
 WHOLE	= "WHOLE"
 STICK	= "STICK"
 GYRO	= "GYRO"
@@ -85,7 +86,7 @@ class SCButtons(IntEnum):
 	LT			= 0b00000000000000000000001000000000
 	RT			= 0b00000000000000000000000100000000
 	CPADTOUCH	= 0b00000000000000000000000000000100 # Available on DS4 pad
-	CPAD		= 0b00000000000000000000000000000010 # Available on DS4 pad
+	CPADPRESS	= 0b00000000000000000000000000000010 # Available on DS4 pad
 
 
 # If lpad and stick is used at once, this is sent as
@@ -111,6 +112,7 @@ class ControllerFlags(IntEnum):
 	EUREL_GYROS =		1 << 2	# Gyro sensor values are provided as pitch, yaw
 								# and roll instead of quaterion. 'q4' is unused
 								# in such case.
+	HAS_CPAD	 =		1 << 3	# Controller has DS4-like touchpad in center
 
 
 STICK_PAD_MIN = -32768

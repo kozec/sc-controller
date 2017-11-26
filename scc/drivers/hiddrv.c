@@ -8,7 +8,7 @@
 #define HIDDRV_MODULE_VERSION 2
 PyObject* module;
 
-#define AXIS_COUNT 15
+#define AXIS_COUNT 17
 #define BUTTON_COUNT 32
 
 struct HIDControllerInput {
@@ -33,6 +33,8 @@ enum AxisType {
 	AXIS_Q2      = 12,
 	AXIS_Q3      = 13,
 	AXIS_Q4      = 14,
+	AXIS_CPAD_X  = 15,
+	AXIS_CPAD_Y  = 16,
 	_AxisType_force_int = INT_MAX
 };
 
@@ -45,7 +47,7 @@ enum AxisMode {
 	HATSWITCH     = 4,
 	DS4ACCEL      = 5,
 	DS4GYRO       = 6,
-	
+	DS4TOUCHPAD   = 7,
 	_AxisMode_force_int = INT_MAX
 };
 
@@ -242,6 +244,11 @@ bool decode(struct HIDDecoder* dec, const char* data) {
 				value = grab_value(data, dec->axes[i].byte_offset,
 					dec->axes[i].bit_offset);
 				dec->state.axes[i] = -value.s16;
+				break;
+			case DS4TOUCHPAD:
+				value = grab_value(data, dec->axes[i].byte_offset,
+					dec->axes[i].bit_offset);
+				dec->state.axes[i] = (value.u16 & 0x0FFF);
 				break;
 			default:
 				break;

@@ -10,10 +10,10 @@ from __future__ import unicode_literals
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
-from scc.constants import TRIGGER_MAX, LEFT, RIGHT, STICK, FE_STICK, FE_TRIGGER
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
-from scc.constants import FE_PAD, SCButtons, HapticPos
-from scc.constants import CUT, ROUND, LINEAR
+from scc.constants import FE_PAD, SCButtons, HapticPos, ControllerFlags
+from scc.constants import CUT, ROUND, LINEAR, FE_STICK, FE_TRIGGER
+from scc.constants import TRIGGER_MAX, LEFT, CPAD, RIGHT, STICK
 from scc.controller import HapticData
 from scc.tools import nameof, clamp
 from scc.uinput import Axes, Rels
@@ -218,14 +218,19 @@ class ClickModifier(Modifier):
 		if what in (STICK, LEFT) and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
 			return self.action.axis(mapper, position, what)
-		if what in (STICK, LEFT) and mapper.was_pressed(SCButtons.LPAD):
+		elif what in (STICK, LEFT) and mapper.was_pressed(SCButtons.LPAD):
 			# Just released
 			return self.action.axis(mapper, 0, what)
-		# what == RIGHT, there are only three options
-		if mapper.is_pressed(SCButtons.RPAD):
+		elif what == CPAD and mapper.is_pressed(SCButtons.CPAD):
 			return self.action.axis(mapper, position, what)
-		if mapper.was_pressed(SCButtons.RPAD):
+		elif what == CPAD and mapper.was_pressed(SCButtons.CPAD):
 			# Just released
+			return self.action.axis(mapper, 0, what)
+		elif mapper.is_pressed(SCButtons.RPAD):
+			# what == RIGHT, last option
+			return self.action.axis(mapper, position, what)
+		elif mapper.was_pressed(SCButtons.RPAD):
+			# what == RIGHT, last option, Just released
 			return self.action.axis(mapper, 0, what)
 
 
@@ -233,14 +238,19 @@ class ClickModifier(Modifier):
 		if what == LEFT and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
 			return self.action.pad(mapper, position, what)
-		if what == LEFT and mapper.was_pressed(SCButtons.LPAD):
+		elif what == LEFT and mapper.was_pressed(SCButtons.LPAD):
 			# Just released
 			return self.action.pad(mapper, 0, what)
-		# what == RIGHT, there are only two options
-		if mapper.is_pressed(SCButtons.RPAD):
+		elif what == CPAD and mapper.is_pressed(SCButtons.CPAD):
 			return self.action.pad(mapper, position, what)
-		if mapper.was_pressed(SCButtons.RPAD):
+		elif what == CPAD and mapper.was_pressed(SCButtons.CPAD):
 			# Just released
+			return self.action.pad(mapper, 0, what)
+		elif mapper.is_pressed(SCButtons.RPAD):
+			# what == RIGHT, there are only two options
+			return self.action.pad(mapper, position, what)
+		elif mapper.was_pressed(SCButtons.RPAD):
+			# what == RIGHT, there are only two options, Just released
 			return self.action.pad(mapper, 0, what)
 
 
@@ -254,6 +264,11 @@ class ClickModifier(Modifier):
 		elif what == RIGHT and mapper.is_pressed(SCButtons.RPAD):
 			return self.action.whole(mapper, x, y, what)
 		elif what == RIGHT and mapper.was_pressed(SCButtons.RPAD):
+			# Just released
+			return self.action.whole(mapper, 0, 0, what)
+		elif what == CPAD and mapper.is_pressed(SCButtons.CPAD):
+			return self.action.whole(mapper, x, y, what)
+		elif what == CPAD and mapper.was_pressed(SCButtons.CPAD):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
 		else:
@@ -351,6 +366,7 @@ class BallModifier(Modifier, WholeHapticAction):
 		self._degree = degree
 		self._radscale = (degree * PI / 180) / ampli
 		self._mass = mass
+		self._roll_task = None
 		self._r = r
 		self._I = (2 * self._mass * self._r**2) / 5.0
 		self._a = self._r * self.friction / self._I
@@ -378,14 +394,12 @@ class BallModifier(Modifier, WholeHapticAction):
 		""" Stops rolling of the 'ball' """
 		self._xvel_dq.clear()
 		self._yvel_dq.clear()
+		if self._roll_task:
+			self._roll_task.cancel()
+			self._roll_task = None
 	
 	
 	def _add(self, dx, dy):
-		# Compute time step
-		_tmp = time.time()
-		dt = _tmp - self._lastTime
-		self._lastTime = _tmp
-		
 		# Compute instant velocity
 		try:
 			self._xvel = sum(self._xvel_dq) / len(self._xvel_dq)
@@ -394,15 +408,14 @@ class BallModifier(Modifier, WholeHapticAction):
 			self._xvel = 0.0
 			self._yvel = 0.0
 		
-		self._xvel_dq.append(dx * self._radscale / dt)
-		self._yvel_dq.append(dy * self._radscale / dt)
+		self._xvel_dq.append(dx * self._radscale)
+		self._yvel_dq.append(dy * self._radscale)
 	
 	
 	def _roll(self, mapper):
 		# Compute time step
-		_tmp = time.time()
-		dt = _tmp - self._lastTime
-		self._lastTime = _tmp
+		t = time.time()
+		dt, self._lastTime = t - self._lastTime, t
 		
 		# Free movement update velocity and compute movement
 		self._xvel_dq.clear()
@@ -431,11 +444,11 @@ class BallModifier(Modifier, WholeHapticAction):
 		self._xvel = _xvel
 		self._yvel = _yvel
 		
+		self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])
 		if dx or dy:
-			self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])
 			if self.haptic:
 				WholeHapticAction.add(self, mapper, dx, dy)
-			mapper.schedule(0, self._roll)
+			self._roll_task = mapper.schedule(0.02, self._roll)
 	
 	
 	def encode(self):
@@ -485,10 +498,14 @@ class BallModifier(Modifier, WholeHapticAction):
 	
 	
 	def whole(self, mapper, x, y, what):
+		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
+			return self.action.whole(mapper, x, y, what)
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
+				t = time.time()
+				dt, self._lastTime = t - self._lastTime, t
 				dx, dy = x - self._old_pos[0], self._old_pos[1] - y
-				self._add(dx, dy)
+				self._add(dx / dt, dy / dt)
 				self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])
 			else:
 				self._stop()
@@ -498,6 +515,8 @@ class BallModifier(Modifier, WholeHapticAction):
 			velocity = sqrt(self._xvel * self._xvel + self._yvel * self._yvel)
 			if velocity > BallModifier.MIN_LIFT_VELOCITY:
 				self._roll(mapper)
+		elif what == STICK:
+			return self.action.whole(mapper, x, y, what)
 	
 	
 	def set_haptic(self, hd):
@@ -1330,6 +1349,8 @@ class SmoothModifier(Modifier):
 	
 	
 	def whole(self, mapper, x, y, what):
+		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
+			return self.action.whole(mapper, x, y, what)
 		if mapper.is_touched(what):
 			if self._last_pos is None:
 				# Just pressed - fill deque with current position
@@ -1346,6 +1367,8 @@ class SmoothModifier(Modifier):
 			if abs(x + y - self._last_pos) > self.filter:
 				self.action.whole(mapper, x, y, what)
 			self._last_pos = x + y
+		elif what == STICK:
+			return self.action.whole(mapper, x, y, what)
 		else:
 			# Pad was just released
 			x, y = self._get_pos()

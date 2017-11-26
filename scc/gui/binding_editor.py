@@ -78,12 +78,15 @@ class BindingEditor(object):
 		if id == SCButtons.STICKPRESS and Profile.STICK in self.button_widgets:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[Profile.STICK].update()
-		elif id in BUTTONS:
+		elif id == SCButtons.CPADPRESS and Profile.CPAD in self.button_widgets:
 			before, profile.buttons[id] = profile.buttons[id], action
-			self.button_widgets[id].update()
+			self.button_widgets[Profile.CPAD].update()
 		elif id in PRESSABLE:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[id.name].update()
+		elif id in BUTTONS:
+			before, profile.buttons[id] = profile.buttons[id], action
+			self.button_widgets[id].update()
 		elif id in TRIGGERS:
 			# TODO: Use LT and RT in profile as well
 			side = LEFT if id == "LT" else RIGHT
@@ -95,10 +98,12 @@ class BindingEditor(object):
 		elif id in STICKS + PADS:
 			if id in STICKS:
 				before, profile.stick = profile.stick, action
-			elif id == "LPAD":
+			elif id == Profile.LPAD:
 				before, profile.pads[Profile.LEFT] = profile.pads[Profile.LEFT], action
-			else:
+			elif id == Profile.RPAD:
 				before, profile.pads[Profile.RIGHT] = profile.pads[Profile.RIGHT], action
+			else:
+				before, profile.pads[Profile.CPAD] = profile.pads[Profile.CPAD], action
 			self.button_widgets[id].update()
 		return before
 	
@@ -122,10 +127,12 @@ class BindingEditor(object):
 		elif id in STICKS + PADS:
 			if id in STICKS:
 				return profile.stick
-			elif id == "LPAD":
+			elif id == Profile.LPAD:
 				return profile.pads[Profile.LEFT]
-			else:
+			elif id == Profile.RPAD:
 				return profile.pads[Profile.RIGHT]
+			else:
+				return profile.pads[Profile.CPAD]
 		return None
 	
 	

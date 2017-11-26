@@ -81,30 +81,17 @@ class ControllerImage(SVGWidget):
 		]
 	
 	
-	def load_config(self, filename):
-		"""
-		Loads controller settings from config file sent by daemon.
-		May be None or invalid, in which case, defaults are loaded.
-		"""
-		if filename:
-			if "/" not in filename:
-				filename = os.path.join(self.app.imagepath, filename)
-			try:
-				data = json.loads(open(filename, "r").read()) or {}
-			except Exception, e:
-				log.exception(e)
-				data = {}
-		else:
-			data = {}
-		return self._ensure_config(data)
-	
-	
 	def use_config(self, config):
-		self.current = self._ensure_config(config)
+		"""
+		Loads controller settings from provided config, adding default values
+		when needed. Returns same config.
+		"""
+		self.current = self._ensure_config(config or {})
 		self.set_image(os.path.join(self.app.imagepath,
-			"controller-images/%s.svg" % (config["gui"]["background"], )))
-		self._fill_button_images(config["gui"]["buttons"])
+			"controller-images/%s.svg" % (self.current["gui"]["background"], )))
+		self._fill_button_images(self.current["gui"]["buttons"])
 		self.hilight({})
+		return self.current
 	
 	
 	def get_button_groups(self):

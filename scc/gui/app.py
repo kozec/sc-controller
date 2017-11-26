@@ -7,8 +7,8 @@ Main application window
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gdk, Gio, GLib, GObject
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
+from gi.repository import Gtk, Gdk, Gio, GLib
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, GYROS
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.controller_image import ControllerImage
 from scc.gui.profile_switcher import ProfileSwitcher
@@ -19,6 +19,7 @@ from scc.gui.statusicon import get_status_icon
 from scc.gui.dwsnc import headerbar, IS_UNITY
 from scc.gui.ribar import RIBar
 from scc.tools import check_access, find_gksudo, profile_is_override, nameof
+from scc.tools import get_profile_name, profile_is_default, find_profile
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.tools import get_profile_name, profile_is_default, profile_is_override
@@ -113,11 +114,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			], Gdk.DragAction.COPY
 		)
 		
-		# 'C' button
+		# 'C' and 'CPAD' buttons
 		vbc = self.builder.get_object("vbC")
 		self.main_area = self.builder.get_object("mainArea")
 		vbc.get_parent().remove(vbc)
-		vbc.connect('size-allocate', self.on_vbc_allocated)
 		
 		# Background
 		self.background = ControllerImage(self)
@@ -156,8 +156,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		stckEditor = self.builder.get_object('stckEditor')
 		lblEmpty = self.builder.get_object('lblEmpty')
 		grEditor = self.builder.get_object('grEditor')
-		vbC = self.builder.get_object('vbC')
-		config = self.background.load_config(controller.get_gui_config_file())
+		btC = self.builder.get_object('btC')
+		btCPAD = self.builder.get_object('btCPAD')
+		config = controller.load_gui_config(self.imagepath or {})
+		config = self.background.use_config(config)
 		
 		def do_loading():
 			""" Called after transition is finished """
@@ -181,15 +183,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			for b in PADS + STICKS:
 				w = self.builder.get_object("bt" + nameof(b))
 				if w:
-					w.set_sensitive(b.lower() + "_x" in axes or b.lower() + "_y" in axes)
+					w.set_sensitive(
+							b.lower() + "_x" in axes
+							or b.lower() + "_y" in axes
+							or nameof(b) in buttons)
 			# Gyro
 			for b in GYROS:
 				w = self.builder.get_object("bt" + b)
 				if w:
 					# TODO: Maybe actual detection
 					w.set_sensitive(gyros)
-			# vbC.set_visible(True)
+			for w in (btC, btCPAD):
+				w.set_visible(w.get_sensitive())
 			stckEditor.set_visible_child(grEditor)
+			GLib.idle_add(self.on_c_size_allocate)
 		
 		if first:
 			b1 = self.background.get_config()['gui']['background']
@@ -241,12 +248,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
 			ribar = self.show_error(msg)
 			gksudo = find_gksudo()
-			modprobe = find_binary("modprobe")
 			if gksudo and not hasattr(ribar, "_fix_tmp"):
 				button = Gtk.Button.new_with_label(_("Fix Temporary"))
 				ribar._fix_tmp = button
 				button.connect('clicked', self.apply_temporary_fix,
-					gksudo + [modprobe, "uinput"],
+					gksudo + ["modprobe", "uinput"],
 					_("This will load missing uinput module.")
 				)
 				ribar.add_button(button, -1)
@@ -450,12 +456,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		gs.show(self.window)
 	
 	
-	def on_mnuRegisterController_activate(self, *a):
-		from scc.gui.creg.dialog import ControllerRegistration
-		cr = ControllerRegistration(self)
-		cr.show(self.window)
-	
-	
 	def on_mnuImport_activate(self, *a):
 		"""
 		Handler for 'Import Steam Profile' context menu item.
@@ -634,17 +634,21 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# and user doesn't need to know about it
 			if self.dm.is_alive():
 				controller = self.profile_switchers[0].get_controller()
-				controller.set_profile(giofile.get_path())
+				if controller:
+					controller.set_profile(giofile.get_path())
+				else:
+					self.dm.set_profile(giofile.get_path())
 			return
 		
 		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 		if send and self.dm.is_alive() and not self.daemon_changed_profile:
 			for ps in self.profile_switchers:
 				controller = ps.get_controller()
-				active = controller.get_profile()
-				if active.endswith(".mod"): active = active[0:-4]
-				if active == giofile.get_path():
-					controller.set_profile(giofile.get_path())
+				if controller:
+					active = controller.get_profile()
+					if active.endswith(".mod"): active = active[0:-4]
+					if active == giofile.get_path():
+						controller.set_profile(giofile.get_path())
 		
 		self.current_file = giofile	
 	
@@ -725,15 +729,22 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.show_editor(area)
 	
 	
-	def on_vbc_allocated(self, vbc, allocation):
+	def on_c_size_allocate(self, *a):
 		"""
-		Called when size of 'Button C' is changed. Centers button
-		on background image
+		Called when size of 'Button C' or CPAD is changed.
+		Centers buttons on background image
 		"""
 		main_area = self.builder.get_object("mainArea")
-		x = (main_area.get_allocation().width - allocation.width) / 2
-		y = main_area.get_allocation().height - allocation.height
-		main_area.move(vbc, x, y)
+		y = main_area.get_allocation().height - 5
+		w = self.builder.get_object("vbC")
+		allocation = w.get_allocation()
+		x = (self.background.get_allocation().width - allocation.width) / 2
+		y -= allocation.height
+		if w.get_parent():
+			main_area.move(w, x, y)
+		else:
+			main_area.put(w, x, y)
+		return False
 	
 	
 	def on_ebImage_motion_notify_event(self, box, event):
@@ -879,10 +890,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Disables and re-enables Input Test mode. If sniffing is disabled in
 		daemon configuration, 2nd call fails and logs error.
 		"""
-		if self.dm.is_alive():
+		if self.dm.is_alive() and not self.osd_mode:
 			if self.test_mode_controller:
 				self.test_mode_controller.unlock_all()
-			c = self.profile_switchers[0].get_controller()
+			try:
+				c = self.dm.get_controllers()[0]
+			except IndexError:
+				# Zero controllers
+				return
 			if c:
 				c.unlock_all()
 				c.observe(DaemonManager.nocallback, self.on_observe_failed,
@@ -913,13 +928,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			from scc.gui.osd_mode_mapper import OSDModeMapper
 			self.osd_mode_mapper = OSDModeMapper(osd_mode_profile)
 			self.osd_mode_mapper.set_target_window(self.window.get_window())
-			GLib.timeout_add(10, self.osd_mode_mapper.run_scheduled)
 		
 		# Locks everything but pads. Pads are emulating mouse and this is
 		# better left in daemon - involving socket in mouse controls
 		# adds too much lags.
 		c.lock(on_lock_success, on_lock_failed,
-			'A', 'B', 'X', 'Y', 'START', 'BACK', 'LB', 'RB', 'C', 'LPAD', 'RPAD',
+			'A', 'B', 'X', 'Y', 'START', 'BACK', 'LB', 'RB', 'C',
 			'STICK', 'LGRIP', 'RGRIP', 'LT', 'RT', 'STICKPRESS')
 		
 		# Ask daemon to temporaly reconfigure pads for mouse emulation
@@ -984,7 +998,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_daemon_event_observer(self, daemon, c, what, data):
-		if what in (LEFT, RIGHT, STICK):
+		if self.osd_mode_mapper:
+			self.osd_mode_mapper.handle_event(daemon, what, data)
+		elif what in (LEFT, RIGHT, STICK):
 			widget, area = {
 				LEFT  : (self.lpad_test,  "LPADTEST"),
 				RIGHT : (self.rpad_test,  "RPADTEST"),
@@ -1260,12 +1276,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def do_activate(self, *a):
-		if (not IS_UNITY and self.app.config['gui']['enable_status_icon']
-							and self.app.config['gui']['minimize_on_start']):
-			log.info("")
-			log.info(_("SC-Controller started and running in notification area"))
-		else:
-			self.builder.get_object("window").show()
+		self.builder.get_object("window").show()
 	
 	
 	def remove_dot_profile(self):
@@ -1352,10 +1363,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			o.arg = arg
 			self.add_main_option_entries([o])
 		
+		self.connect('handle-local-options', self.do_local_options)
+		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
 		aso("osd",		b"o", "OSD mode (displays only editor only)")
-		self.connect('handle-local-options', self.do_local_options)
 	
 	
 	def save_profile_selection(self, path):
