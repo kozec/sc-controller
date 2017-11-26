@@ -433,14 +433,12 @@ class Menu(OSDWindow):
 	
 	
 	def on_submenu_closed(self, *a):
+		self.set_name("osd-menu")
 		if self._submenu.get_exit_code() in (0, -2):
 			self._menuid = self._submenu._menuid
 			self._selected = self._submenu._selected
 			self.quit(self._submenu.get_exit_code())
 		self._submenu = None
-
-		log.info("opacity set to 0.95")
-		self.set_opacity(0.95)
 	
 	
 	def show_submenu(self, trash, trash2, trash3, menuitem):
@@ -466,9 +464,7 @@ class Menu(OSDWindow):
 			self._submenu.controller = self.controller
 			self._submenu.connect('destroy', self.on_submenu_closed)
 			self._submenu.show()
-
-			log.info("opacity set to 0.35")
-			self.set_opacity(0.35)
+			self.set_name("osd-menu-inactive")
 	
 	
 	def _control_equals_cancel(self, daemon, x, y):

@@ -1,8 +1,13 @@
 /* Used colors: all */
 
-#osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
+#osd-message, #osd-menu, #osd-menu-inactive, #osd-gesture, #osd-keyboard {
 	background-color: #%(background)s;
 	border: 6px #%(border)s double;
+	opacity: 1;
+}
+
+#osd-menu-inactive {
+	opacity: 0.90;
 }
 
 #osd-area {

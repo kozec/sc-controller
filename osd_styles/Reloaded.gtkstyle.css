@@ -1,9 +1,13 @@
 /* Used colors: background text menuseparator osk_text osk_button1 osk_button1_border osk_hilight osk_pressed */
 
-#osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
+#osd-message, #osd-menu, #osd-menu-inactive, #osd-gesture, #osd-keyboard {
 	background-color: #%(background)s;
 	border: 6px #%(background+1)s solid;
 	opacity: 0.95;
+}
+
+#osd-menu-inactive {
+	opacity: 0.50;
 }
 
 #osd-message {
