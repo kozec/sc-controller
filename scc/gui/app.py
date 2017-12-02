@@ -923,9 +923,16 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		def on_lock_success(*a):
 			log.debug("osd_mode: Locked everything")
-			from scc.gui.osd_mode_mapper import OSDModeMapper
+			from scc.gui.osd_mode import OSDModeMapper, OSDModeMappings
 			self.osd_mode_mapper = OSDModeMapper(osd_mode_profile)
 			self.osd_mode_mapper.set_target_window(self.window.get_window())
+			self.builder.get_object("btUndo").set_visible(False)
+			self.builder.get_object("btRedo").set_visible(False)
+			m = OSDModeMappings(self, self.osd_mode_mapper,
+				self.builder.get_object("OsdmodeMappings"))
+			m.set_controller(self.profile_switchers[0].get_controller())
+			
+			m.show()
 		
 		# Locks everything but pads. Pads are emulating mouse and this is
 		# better left in daemon - involving socket in mouse controls

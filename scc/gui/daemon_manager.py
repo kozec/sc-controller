@@ -11,7 +11,9 @@ probably too crazy even for me.
 from __future__ import unicode_literals
 
 from scc.paths import get_daemon_socket
+from scc.constants import SCButtons
 from scc.tools import find_binary
+from scc.gui import BUTTON_ORDER
 from gi.repository import GObject, Gio, GLib
 
 import os, sys, json, logging
@@ -300,7 +302,6 @@ class DaemonManager(GObject.GObject):
 		self.start(mode="restart")
 
 
-
 class ControllerManager(GObject.GObject):
 	"""
 	Represents controller connected to daemon.
@@ -320,6 +321,10 @@ class ControllerManager(GObject.GObject):
 			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
 			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
+	
+	DEFAULT_ICONS = [ "A", "B", "X", "Y", "BACK", "C", "START",
+		"LB", "RB", "LT", "RT", "LG", "RG" ]
+	# ^^ those are icon names
 	
 	def __init__(self, daemon_manager, controller_id):
 		GObject.GObject.__init__(self)
@@ -394,7 +399,20 @@ class ControllerManager(GObject.GObject):
 			except Exception, e:
 				log.exception(e)
 		return None
-		
+	
+	
+	@staticmethod
+	def get_button_icon(config, button):
+		"""
+		For config returned by load_gui_config() and SCButton constant,
+		returns icon name assigned to that button in controller config or
+		default if config is invalid or button unassigned.
+		"""
+		index = BUTTON_ORDER.index(button)
+		try:
+			return config['gui']['buttons'][index]
+		except:
+			return ControllerManager.DEFAULT_ICONS[index]
 	
 	
 	def get_profile(self):

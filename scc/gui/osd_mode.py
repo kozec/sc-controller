@@ -9,14 +9,15 @@ keyboard. This mapper emulates input events on it using GTK methods.
 Mouse movement (but not buttons) are passed to uinput as usuall.
 """
 from __future__ import unicode_literals
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
 
 from scc.gui.gdk_to_key import KEY_TO_GDK, KEY_TO_KEYCODE
+from scc.gui.daemon_manager import ControllerManager
 from scc.osd.slave_mapper import SlaveMapper
+from scc.constants import SCButtons
 from scc.uinput import Keys, Scans
 
-
-import logging, time
+import os, logging
 log = logging.getLogger("OSDModMapper")
 
 
@@ -118,3 +119,71 @@ class OSDModeMouse(object):
 		event.window = window
 		event.set_device(self.device)
 		Gtk.main_do_event(event)
+
+
+class OSDModeMappings(object):
+	
+	ICONS = {
+		'imgOsdmodeOK'    : SCButtons.A,
+		'imgOsdmodeClose' : SCButtons.B,
+		'imgOsdmodeExit'  : SCButtons.C,
+		'imgOsdmodeSave'  : SCButtons.Y,
+	}
+	
+	
+	def __init__(self, app, mapper, window):
+		self.app = app
+		self.mapper = mapper
+		self.window = window
+		self.parent = app.window
+		self.first_window = None
+		GLib.timeout_add(10, self.move_around)
+	
+	
+	def set_controller(self, c):
+		config = c.load_gui_config(self.app.imagepath or {})
+		for name in OSDModeMappings.ICONS:
+			w = self.app.builder.get_object(name)
+			icon_name = ControllerManager.get_button_icon(config, OSDModeMappings.ICONS[name])
+			icon = "%s/button-images/%s.svg" % (self.app.imagepath, icon_name)
+			w.set_from_file(icon)
+	
+	
+	def get_target_position(self):
+		active = self.window.get_window().get_screen().get_active_window()
+		pos, size = active.get_position(), active.get_geometry()
+		my_size = self.window.get_window().get_geometry()
+		tx = (pos.x + 0.5 * (size.width - my_size.width))
+		ty = pos.y + size.height
+		return tx, ty
+	
+	
+	def show(self):
+		self.window.show()
+		self.window.get_window().set_override_redirect(True)
+		tx, ty = self.get_target_position()
+		self.window.get_window().move(tx, ty)
+	
+	
+	def move_around(self, *a):
+		active = self.window.get_window().get_screen().get_active_window()
+		if active is not None:
+			tx, ty = self.get_target_position()
+			if self.first_window is None or active == self.first_window:
+				self.first_window = active
+				tx, ty = self.get_target_position()
+				self.window.get_window().move(tx, ty)
+			else:
+				my_pos = self.window.get_window().get_position()
+				stepx = my_pos.x + direction(tx - my_pos.x)
+				stepy = my_pos.y + direction(ty - my_pos.y)
+				self.window.get_window().move(stepx, stepy)
+		return True
+
+
+def direction(x):
+	if x >= 1:
+		return 1
+	elif x <= -1:
+		return -1
+	return 0

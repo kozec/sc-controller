@@ -7,16 +7,10 @@ Just huge chunk of constants put aside to make impotant code more readable
 from __future__ import unicode_literals
 
 from scc.constants import SCButtons, STICK, LEFT, RIGHT
+from scc.gui import BUTTON_ORDER
 
 X = 0
 Y = 1
-
-BUTTON_ORDER = (
-	SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y, SCButtons.C,
-	SCButtons.LB, SCButtons.RB, SCButtons.BACK, SCButtons.START,
-	SCButtons.STICKPRESS, SCButtons.RPAD, SCButtons.LPAD,
-	SCButtons.RGRIP, SCButtons.LGRIP
-)
 
 AXIS_ORDER = (
 	("stick_x", X), ("stick_y", Y),

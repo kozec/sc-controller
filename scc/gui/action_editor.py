@@ -194,8 +194,12 @@ class ActionEditor(Editor):
 		self.osd = value
 		self.builder.get_object("cbOSD").set_active(value)
 		self._recursing = False
-
-
+	
+	
+	def show(self, transient_for):
+		Editor.show(self, transient_for)
+	
+	
 	def close(self):
 		self.on_Dialog_destroy()
 		Editor.close(self)
