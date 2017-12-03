@@ -166,11 +166,20 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			axes = ControllerImage.get_names(config.get('axes', {}))
 			gyros = config.get('gyros', False)
 			# Set sensitivity to signalize available inputs
-			# Buttons
+			# Buttons (as on image)
 			for b in BUTTONS:
 				w = self.builder.get_object("bt" + nameof(b))
 				if w:
 					w.set_sensitive(nameof(b) in buttons)
+			# Buttons (as GTK Widgets)
+			for b in self.button_widgets:
+				try:
+					w = self.button_widgets[b]
+					icon_name = controller.get_button_icon(config, b)
+					icon = "%s/button-images/%s.svg" % (self.app.imagepath, icon_name)
+					w.icon.set_from_file(icon)
+				except Exception, e:
+					print "------", e
 			
 			# Triggers
 			w = self.builder.get_object("btLT")
