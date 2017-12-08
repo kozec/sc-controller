@@ -104,6 +104,7 @@ class OSDModeMouse(object):
 				if window.get_toplevel().get_xid() == w.get_window().get_xid():
 					gtk_window = w
 					break
+		
 		if gtk_window:
 			if gtk_window.get_type_hint() == Gdk.WindowTypeHint.COMBO:
 				# Special case, clicking on combo does nothing, so
@@ -116,9 +117,19 @@ class OSDModeMouse(object):
 				event.keyval = Gdk.KEY_space
 				event.window = self.mapper.target_window
 		event.time = Gtk.get_current_event_time()
+		event.state = 0
 		event.window = window
 		event.set_device(self.device)
 		Gtk.main_do_event(event)
+		
+		if isinstance(Gtk.grab_get_current(), Gtk.Scale):
+			def ungrab():
+				print "AAA"
+				event.type = Gdk.EventType.BUTTON_RELEASE
+				event.time = Gdk.CURRENT_TIME
+				Gtk.main_do_event(event)
+				
+			GLib.timeout_add(1000, ungrab)
 
 
 class OSDModeMappings(object):
@@ -144,40 +155,34 @@ class OSDModeMappings(object):
 		config = c.load_gui_config(self.app.imagepath or {})
 		for name in OSDModeMappings.ICONS:
 			w = self.app.builder.get_object(name)
-			icon_name = ControllerManager.get_button_icon(config, OSDModeMappings.ICONS[name])
-			icon = "%s/button-images/%s.svg" % (self.app.imagepath, icon_name)
+			icon, trash = c.get_button_icon(config, OSDModeMappings.ICONS[name])
 			w.set_from_file(icon)
 	
 	
 	def get_target_position(self):
-		active = self.window.get_window().get_screen().get_active_window()
-		pos, size = active.get_position(), active.get_geometry()
+		pos = self.first_window.get_position()
+		size = self.first_window.get_geometry()
 		my_size = self.window.get_window().get_geometry()
 		tx = (pos.x + 0.5 * (size.width - my_size.width))
-		ty = pos.y + size.height
+		ty = pos.y + size.height + 100
 		return tx, ty
 	
 	
 	def show(self):
 		self.window.show()
 		self.window.get_window().set_override_redirect(True)
-		tx, ty = self.get_target_position()
-		self.window.get_window().move(tx, ty)
 	
 	
 	def move_around(self, *a):
-		active = self.window.get_window().get_screen().get_active_window()
-		if active is not None:
-			tx, ty = self.get_target_position()
-			if self.first_window is None or active == self.first_window:
-				self.first_window = active
-				tx, ty = self.get_target_position()
-				self.window.get_window().move(tx, ty)
+		if self.first_window is None:
+			active = self.window.get_window().get_screen().get_active_window()
+			if active is None:
+				return
 			else:
-				my_pos = self.window.get_window().get_position()
-				stepx = my_pos.x + direction(tx - my_pos.x)
-				stepy = my_pos.y + direction(ty - my_pos.y)
-				self.window.get_window().move(stepx, stepy)
+				self.first_window = active
+		
+		tx, ty = self.get_target_position()
+		self.window.get_window().move(tx, ty)
 		return True
 
 

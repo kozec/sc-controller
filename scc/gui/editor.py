@@ -42,7 +42,8 @@ class Editor(ComboSetter):
 	ERROR_CSS = " #error {background-color:green; color:red;} "
 	_error_css_provider = None
 	
-	def __init__(self):
+	def __init__(self, app):
+		self.app = app
 		self.added_widget = None		# See add_widget method
 	
 	
@@ -101,6 +102,13 @@ class Editor(ComboSetter):
 			self.window.set_transient_for(transient_for)
 			self.window.set_modal(True)
 		self.window.show()
+	
+	
+	def osdmode_scale_prevent_grab(self, *a):
+		# Used as button-pressed handler on scales to prevent
+		# them for grabbing mouse and then never releasing it
+		print ".>>> ", "on_sclDiagonalRange_button_press_event", a
+		return True
 	
 	
 	def add_widget(self, label, widget):

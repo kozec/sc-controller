@@ -25,6 +25,10 @@ class AEComponent(ComboSetter):
 		self.loaded = False
 	
 	
+	def osdmode_scale_prevent_grab(self, *a):
+		return self.editor.osdmode_scale_prevent_grab(*a)
+	
+	
 	def get_button_title(self):
 		raise Exception("Implement me!")
 	

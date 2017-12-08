@@ -199,7 +199,7 @@ def find_profile(name):
 	return None
 
 
-def find_icon(name, prefer_bw=False, paths=None):
+def find_icon(name, prefer_bw=False, paths=None, extension="png"):
 	"""
 	Returns (filename, has_colors) for specified icon name.
 	This is done by searching for name + '.png' and name + ".bw.png"
@@ -215,8 +215,8 @@ def find_icon(name, prefer_bw=False, paths=None):
 	if name is None:
 		# Special case, so code can pass menuitem.icon directly
 		return None, False
-	gray_filename = "%s.bw.png" % (name,)
-	colors_filename = "%s.png" % (name,)
+	gray_filename = "%s.bw.%s" % (name, extension)
+	colors_filename = "%s.%s" % (name, extension)
 	gray, colors = None, None
 	if paths is None:
 		paths = get_default_menuicons_path(), get_menuicons_path()
@@ -240,9 +240,10 @@ def find_icon(name, prefer_bw=False, paths=None):
 	return gray, False
 
 
-def find_button_image(controller, name, prefer_bw=False):
+def find_button_image(name, prefer_bw=False):
 	""" Similar to find_icon, but searches for button image """
-	return find_icon(name, prefer_bw, paths=[get_button_images_path()])
+	return find_icon(nameof(name), prefer_bw,
+			paths=[get_button_images_path()], extension="svg")
 
 
 def menu_is_default(name):

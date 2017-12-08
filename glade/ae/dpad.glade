@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.1 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjDiagonalRange">
@@ -554,6 +554,7 @@
                     <property name="round_digits">1</property>
                     <property name="digits">0</property>
                     <property name="value_pos">right</property>
+                    <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                     <signal name="format-value" handler="on_sclDiagonalRange_format_value" swapped="no"/>
                     <signal name="value-changed" handler="on_sclDiagonalRange_value_changed" swapped="no"/>
                   </object>

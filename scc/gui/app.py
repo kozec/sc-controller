@@ -175,7 +175,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			for b in self.button_widgets:
 				try:
 					w = self.button_widgets[b]
-					icon = controller.get_button_icon(config, b)
+					icon, trash = controller.get_button_icon(config, b)
 					w.icon.set_from_file(icon)
 				except Exception, e:
 					pass
