@@ -10,9 +10,9 @@ probably too crazy even for me.
 """
 from __future__ import unicode_literals
 
+from scc.tools import find_binary, find_button_image
 from scc.paths import get_daemon_socket
 from scc.constants import SCButtons
-from scc.tools import find_binary
 from scc.gui import BUTTON_ORDER
 from gi.repository import GObject, Gio, GLib
 
@@ -409,10 +409,11 @@ class ControllerManager(GObject.GObject):
 		default if config is invalid or button unassigned.
 		"""
 		index = BUTTON_ORDER.index(button)
+		name = ControllerManager.DEFAULT_ICONS[index]
 		try:
-			return config['gui']['buttons'][index]
-		except:
-			return ControllerManager.DEFAULT_ICONS[index]
+			name = config['gui']['buttons'][index]
+		except: pass
+		return find_button_image(name)
 	
 	
 	def get_profile(self):

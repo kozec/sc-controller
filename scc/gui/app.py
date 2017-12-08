@@ -175,12 +175,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			for b in self.button_widgets:
 				try:
 					w = self.button_widgets[b]
-					icon_name = controller.get_button_icon(config, b)
-					icon = "%s/button-images/%s.svg" % (self.app.imagepath, icon_name)
+					icon = controller.get_button_icon(config, b)
 					w.icon.set_from_file(icon)
 				except Exception, e:
-					print "------", e
-			
+					pass
 			# Triggers
 			w = self.builder.get_object("btLT")
 			if w: w.set_sensitive("ltrig" in axes)

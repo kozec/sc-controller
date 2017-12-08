@@ -10,6 +10,7 @@ from scc.paths import get_controller_icons_path, get_default_controller_icons_pa
 from scc.paths import get_menuicons_path, get_default_menuicons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
+from scc.paths import get_button_images_path
 from math import pi as PI, sin, cos, atan2, sqrt
 import os, sys, ctypes, imp, shlex, gettext, logging
 
@@ -198,7 +199,7 @@ def find_profile(name):
 	return None
 
 
-def find_icon(name, prefer_bw=False):
+def find_icon(name, prefer_bw=False, paths=None):
 	"""
 	Returns (filename, has_colors) for specified icon name.
 	This is done by searching for name + '.png' and name + ".bw.png"
@@ -206,6 +207,8 @@ def find_icon(name, prefer_bw=False):
 	
 	If both colored and grayscale version is found, colored is returned, unless
 	prefer_bw is set to True.
+	
+	paths defaults to icons for menuicons
 	
 	Returns (None, False) if icon cannot be found.
 	"""
@@ -215,8 +218,9 @@ def find_icon(name, prefer_bw=False):
 	gray_filename = "%s.bw.png" % (name,)
 	colors_filename = "%s.png" % (name,)
 	gray, colors = None, None
-	# TODO: User menuicons folder
-	for p in (get_default_menuicons_path(), get_menuicons_path()):
+	if paths is None:
+		paths = get_default_menuicons_path(), get_menuicons_path()
+	for p in paths:
 		# Check grayscale
 		if gray is None:
 			path = os.path.join(p, gray_filename)
@@ -234,6 +238,11 @@ def find_icon(name, prefer_bw=False):
 	if colors is not None:
 		return colors, True
 	return gray, False
+
+
+def find_button_image(controller, name, prefer_bw=False):
+	""" Similar to find_icon, but searches for button image """
+	return find_icon(name, prefer_bw, paths=[get_button_images_path()])
 
 
 def menu_is_default(name):
