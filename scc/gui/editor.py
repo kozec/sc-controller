@@ -45,6 +45,7 @@ class Editor(ComboSetter):
 	def __init__(self, app):
 		self.app = app
 		self.added_widget = None		# See add_widget method
+		self._osd_mode_button_press = False
 	
 	
 	def on_window_key_press_event(self, trash, event):
@@ -107,8 +108,15 @@ class Editor(ComboSetter):
 	def osdmode_scale_prevent_grab(self, scale, event, *a):
 		# Used as button-pressed handler on scales to prevent
 		# them for grabbing mouse and then never releasing it
-		v = min(1.0, float(event.x) / scale.get_window().get_width() * 1.4)
-		scale.set_value(v * scale.get_adjustment().get_upper())
+		if event.type == Gdk.EventType.BUTTON_PRESS:
+			self._osd_mode_button_press = True
+		elif event.type == Gdk.EventType.BUTTON_RELEASE:
+			self._osd_mode_button_press = False
+			return True
+		
+		if self._osd_mode_button_press:
+			v = min(1.0, float(event.x) / scale.get_window().get_width() * 1.4)
+			scale.set_value(v * scale.get_adjustment().get_upper())
 		return True
 	
 	

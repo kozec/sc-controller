@@ -37,6 +37,7 @@
     <property name="column_spacing">2</property>
     <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
     <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+    <signal name="button-release-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
     <child>
       <object class="GtkButton" id="btPartPressed">
         <property name="visible">True</property>
@@ -332,6 +333,7 @@
         <property name="value_pos">right</property>
         <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
         <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+        <signal name="button-release-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
         <signal name="value-changed" handler="on_ui_value_changed" swapped="no"/>
       </object>
       <packing>
@@ -352,6 +354,7 @@
         <property name="value_pos">right</property>
         <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
         <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+        <signal name="button-release-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
         <signal name="value-changed" handler="on_ui_value_changed" swapped="no"/>
       </object>
       <packing>
@@ -428,6 +431,7 @@
         <property name="value_pos">right</property>
         <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
         <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+        <signal name="button-release-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
         <signal name="value-changed" handler="on_ui_value_changed" swapped="no"/>
       </object>
       <packing>
@@ -464,6 +468,7 @@
         <property name="value_pos">right</property>
         <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
         <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+        <signal name="button-release-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
         <signal name="value-changed" handler="on_ui_value_changed" swapped="no"/>
       </object>
       <packing>

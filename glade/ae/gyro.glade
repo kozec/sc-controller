@@ -329,8 +329,9 @@
                 <property name="round_digits">2</property>
                 <property name="value_pos">right</property>
                 <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
-                <signal name="format-value" handler="on_sclSoftLevel_format_value" swapped="no"/>
                 <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                <signal name="button-release-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                <signal name="format-value" handler="on_sclSoftLevel_format_value" swapped="no"/>
                 <signal name="value-changed" handler="send" swapped="no"/>
               </object>
               <packing>
