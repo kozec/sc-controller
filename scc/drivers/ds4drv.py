@@ -9,6 +9,7 @@ from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData
 from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test
 from scc.drivers.hiddrv import AxisMode, AxisDataUnion, AxisModeData
 from scc.drivers.hiddrv import HatswitchModeData, _lib
+from scc.drivers.evdevdrv import register_hotplug_device as register_evdev
 from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
 from scc.drivers.evdevdrv import make_new_device, get_axes
 from scc.drivers.usb import register_hotplug_device
@@ -360,6 +361,10 @@ def init(daemon, config):
 		return DS4Controller(device, daemon, handle, None, None)
 	
 	
+	def bt_callback(device, handle):
+		print "bt_callback", device, handle
+	
+	
 	def evdev_make_device_callback(daemon, evdevdevices):
 		# With kernel 4.10 or later, PS4 controller pretends to be 3 different devices.
 		# 1st, determining which one is actual controller is needed
@@ -398,8 +403,11 @@ def init(daemon, config):
 			# TODO: Maybe add_error here, but error reporting needs little rework so it's not threated as fatal
 			# daemon.add_error("ds4", "No access to DS4 device")
 	
-	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
+	if config["drivers"].get("hiddrv"):
 		register_hotplug_device(hid_callback, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
+	elif HAVE_EVDEV and config["drivers"].get("evdevdrv"):
+		register_hotplug_device(hid_callback, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
+		register_bluetooth_device(bt_callback, VENDOR_ID, PRODUCT_ID)
 		return True
 	else:
 		log.warning("Neither HID nor Evdev driver is enabled, DS4 support cannot be enabled.")

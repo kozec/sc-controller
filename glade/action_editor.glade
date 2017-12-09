@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.1 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjDeadzoneLower">
@@ -383,6 +383,8 @@
                         <property name="adjustment">adjRotation</property>
                         <property name="round_digits">1</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -542,6 +544,8 @@
                         <property name="adjustment">adjSensitivityX</property>
                         <property name="round_digits">1</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -593,6 +597,8 @@
                         <property name="adjustment">adjSensitivityY</property>
                         <property name="round_digits">1</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -644,6 +650,8 @@
                         <property name="adjustment">adjSensitivityZ</property>
                         <property name="round_digits">1</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -825,6 +833,8 @@
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -860,6 +870,8 @@
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -876,6 +888,8 @@
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -1048,6 +1062,8 @@
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -1064,6 +1080,8 @@
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -1278,6 +1296,8 @@
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -1294,6 +1314,8 @@
                         <property name="round_digits">2</property>
                         <property name="digits">2</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
@@ -1310,6 +1332,8 @@
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
+                        <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                         <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>

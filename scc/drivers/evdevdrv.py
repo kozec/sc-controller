@@ -426,6 +426,8 @@ class EvdevDriver(object):
 				dev = evdev.InputDevice(fname)
 			except Exception:
 				continue
+			if dev.info.bustype == 5: # Bluetooth
+				print dev.info.vendor, dev.info.product
 			if dev.fn not in self._devices:
 				config_file = os.path.join(get_config_path(), "devices",
 					"evdev-%s.json" % (dev.name.strip(),))
@@ -521,11 +523,16 @@ def make_new_device(vendor_id, product_id, factory):
 	return _evdevdrv.make_new_device(vendor_id, product_id, factory)
 
 
+def register_hotplug_device(*a):
+	pass
+
+
 def get_axes(dev):
 	""" Helper function to get list ofa available axes """
 	assert HAVE_EVDEV, "evdev driver is not available"
 	caps = dev.capabilities(verbose=False)
 	return [ axis for (axis, trash) in caps.get(evdev.ecodes.EV_ABS, []) ]
+
 
 def evdevdrv_test(args):
 	"""

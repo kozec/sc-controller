@@ -104,10 +104,11 @@ class Editor(ComboSetter):
 		self.window.show()
 	
 	
-	def osdmode_scale_prevent_grab(self, *a):
+	def osdmode_scale_prevent_grab(self, scale, event, *a):
 		# Used as button-pressed handler on scales to prevent
 		# them for grabbing mouse and then never releasing it
-		print ".>>> ", "on_sclDiagonalRange_button_press_event", a
+		v = min(1.0, float(event.x) / scale.get_window().get_width() * 1.4)
+		scale.set_value(v * scale.get_adjustment().get_upper())
 		return True
 	
 	

@@ -556,6 +556,7 @@
                     <property name="value_pos">right</property>
                     <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                     <signal name="format-value" handler="on_sclDiagonalRange_format_value" swapped="no"/>
+                    <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                     <signal name="value-changed" handler="on_sclDiagonalRange_value_changed" swapped="no"/>
                   </object>
                   <packing>
