@@ -94,10 +94,10 @@ class OSDModeMouse(object):
 		tp = Gdk.EventType.BUTTON_PRESS if val else Gdk.EventType.BUTTON_RELEASE
 		event = Gdk.Event.new(tp)
 		event.button = int(key) - Keys.BTN_LEFT + 1
-		window, wx, wy = Gdk.Window.at_pointer()
+		window, event.x, event.y = Gdk.Window.at_pointer()
 		screen, x, y, mask = Gdk.Display.get_default().get_pointer()
 		event.x_root, event.y_root = x, y
-		event.x, event.y = x - wx, y - wy
+		
 		gtk_window = None
 		for w in Gtk.Window.list_toplevels():
 			if w.get_window():
@@ -121,15 +121,6 @@ class OSDModeMouse(object):
 		event.window = window
 		event.set_device(self.device)
 		Gtk.main_do_event(event)
-		
-		if isinstance(Gtk.grab_get_current(), Gtk.Scale):
-			def ungrab():
-				print "AAA"
-				event.type = Gdk.EventType.BUTTON_RELEASE
-				event.time = Gdk.CURRENT_TIME
-				Gtk.main_do_event(event)
-				
-			GLib.timeout_add(1000, ungrab)
 
 
 class OSDModeMappings(object):
