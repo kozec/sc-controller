@@ -42,7 +42,8 @@ class ControllerRegistration(Editor):
 	)
 	
 	def __init__(self, app):
-		Editor.__init__(self, app)
+		Editor.__init__(self)
+		self.app = app
 		self._gamepad_icon = GdkPixbuf.Pixbuf.new_from_file(
 				os.path.join(self.app.imagepath, "controller-icons", "evdev-0.svg"))
 		self._other_icon = GdkPixbuf.Pixbuf.new_from_file(

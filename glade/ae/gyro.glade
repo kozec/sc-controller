@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.1 -->
+<!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjSoftLevel">
@@ -328,9 +328,6 @@
                 <property name="adjustment">adjSoftLevel</property>
                 <property name="round_digits">2</property>
                 <property name="value_pos">right</property>
-                <signal name="button-press-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
-                <signal name="motion-notify-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
-                <signal name="button-release-event" handler="osdmode_scale_prevent_grab" swapped="no"/>
                 <signal name="format-value" handler="on_sclSoftLevel_format_value" swapped="no"/>
                 <signal name="value-changed" handler="send" swapped="no"/>
               </object>

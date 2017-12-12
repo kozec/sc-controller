@@ -25,7 +25,8 @@ class MacroEditor(Editor):
 	GLADE = "macro_editor.glade"
 	
 	def __init__(self, app, callback):
-		Editor.__init__(self, app)
+		Editor.__init__(self)
+		self.app = app
 		self.id = None
 		self.mode = Action.AC_BUTTON
 		self.ac_callback = callback

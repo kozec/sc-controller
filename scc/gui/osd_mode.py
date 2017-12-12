@@ -104,7 +104,6 @@ class OSDModeMouse(object):
 				if window.get_toplevel().get_xid() == w.get_window().get_xid():
 					gtk_window = w
 					break
-		
 		if gtk_window:
 			if gtk_window.get_type_hint() == Gdk.WindowTypeHint.COMBO:
 				# Special case, clicking on combo does nothing, so
@@ -117,7 +116,6 @@ class OSDModeMouse(object):
 				event.keyval = Gdk.KEY_space
 				event.window = self.mapper.target_window
 		event.time = Gtk.get_current_event_time()
-		event.state = 0
 		event.window = window
 		event.set_device(self.device)
 		Gtk.main_do_event(event)

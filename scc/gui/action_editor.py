@@ -80,7 +80,7 @@ class ActionEditor(Editor):
 
 
 	def __init__(self, app, callback):
-		Editor.__init__(self, app)
+		Editor.__init__(self)
 		self.app = app
 		self.id = None
 		self.components = []			# List of available components
