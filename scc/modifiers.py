@@ -263,6 +263,46 @@ class ClickModifier(Modifier):
 			self.action.whole_blocked(mapper, x, y, what)
 
 
+class TouchedModifier(Modifier):
+	COMMAND = "touched"
+	
+	
+	def describe(self, context):
+		if context in (Action.AC_STICK, Action.AC_PAD):
+			return _("(when %s)" % (self.COMMAND,)) + "\n" + self.action.describe(context)
+		else:
+			return _("(when %s)" % (self.COMMAND,)) + " " + self.action.describe(context)
+	
+	
+	def strip(self):
+		return self.action.strip()
+	
+	
+	def compress(self):
+		self.action = self.action.compress()
+		return self
+	
+	
+	def _release(self, mapper):
+		return self.action.button_release(mapper)
+	
+	
+	def whole(self, mapper, x, y, what):
+		if mapper.is_touched(what) and not mapper.was_touched(what):
+			self.action.button_press(mapper)
+			mapper.schedule(0, self._release)
+
+
+class UntouchedModifier(TouchedModifier):
+	COMMAND = "untouched"
+	
+	
+	def whole(self, mapper, x, y, what):
+		if not mapper.is_touched(what) and mapper.was_touched(what):
+			self.action.button_press(mapper)
+			mapper.schedule(0, self._release)
+
+
 class PressedModifier(Modifier):
 	COMMAND = "pressed"
 	

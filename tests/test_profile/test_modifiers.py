@@ -74,6 +74,22 @@ class TestModifiers(object):
 		assert _is_axis_with_value(a.action)
 	
 	
+	def test_touched(self):
+		"""
+		Tests if TouchedModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "touched(button(KEY_A))" })
+		assert isinstance(a, TouchedModifier)
+	
+	
+	def test_untouched(self):
+		"""
+		Tests if UntouchedModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "untouched(button(KEY_A))" })
+		assert isinstance(a, UntouchedModifier)
+	
+	
 	def test_circular(self):
 		"""
 		Tests if CircularModifier is parsed correctly from json.

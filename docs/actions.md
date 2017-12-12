@@ -263,6 +263,12 @@ A button whenever physical button is pressed.
 #### <a name="released"></a> released(action)
 Creates action that occurs for brief moment when button is released.
 
+#### <a name="touched"></a> pressed(action)
+Creates action that occurs for brief moment when finger touches pad.
+
+#### <a name="untouched"></a> released(action)
+Creates action that occurs for brief moment when pad is released.
+
 #### <a name="mode"></a> mode(button1, action1, [button2, action2... buttonN, actionN] [, default] )
 Defines mode shifting. If physical buttonX is pressed, actionX is executed.
 Optional default action is executed if none from specified buttons is pressed.
