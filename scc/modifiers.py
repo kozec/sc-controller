@@ -111,13 +111,6 @@ class Modifier(Action):
 		return "<Modifier '%s', %s>" % (self.COMMAND, self.action)
 	
 	__repr__ = __str__
-	
-	
-	def encode(self):
-		rv = self.action.encode()
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv
 
 
 class NameModifier(Modifier):
@@ -159,12 +152,6 @@ class NameModifier(Modifier):
 class ClickModifier(Modifier):
 	# TODO: Rename to 'clicked'
 	COMMAND = "click"
-
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[ClickModifier.COMMAND] = True
-		return rv
-
 
 	@staticmethod
 	def decode(data, a, *b):
@@ -278,11 +265,6 @@ class ClickModifier(Modifier):
 
 class PressedModifier(Modifier):
 	COMMAND = "pressed"
-	
-	
-	def encode(self):
-		# Skipping over Macro.encode to match v0.4 profile style
-		return Action.encode(self)
 	
 	
 	def describe(self, context):
@@ -451,13 +433,6 @@ class BallModifier(Modifier, WholeHapticAction):
 			self._roll_task = mapper.schedule(0.02, self._roll)
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		pars = self.strip_defaults()
-		rv[BallModifier.COMMAND] = pars
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		if data[BallModifier.COMMAND] is True:
@@ -609,16 +584,6 @@ class DeadzoneModifier(Modifier):
 		return distance * sin(angle), distance * cos(angle)
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[DeadzoneModifier.COMMAND] = dict(
-			upper = self.upper,
-			lower = self.lower,
-			mode = self.mode
-		)
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		return DeadzoneModifier(
@@ -733,10 +698,6 @@ class ModeModifier(Modifier):
 	
 	def get_child_actions(self):
 		return self.mods.values()
-	
-	
-	def encode(self):
-		return { 'action' : self.to_string(False) }
 	
 	
 	@staticmethod
@@ -932,21 +893,6 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 		self.waiting_task = None
 		self.pressed = False
 		self.active = None
-	
-	
-	def encode(self):
-		if self.normalaction:
-			rv = self.normalaction.encode()
-		else:
-			rv = {}
-		rv[DoubleclickModifier.COMMAND] = self.action.encode()
-		if self.holdaction:
-			rv[HoldModifier.COMMAND] = self.holdaction.encode()
-		if self.timeout != DoubleclickModifier.DEAFAULT_TIMEOUT:
-			rv[DoubleclickModifier.TIMEOUT_KEY] = self.timeout
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv
 	
 	
 	def get_child_actions(self):
@@ -1149,12 +1095,6 @@ class SensitivityModifier(Modifier):
 					break
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[SensitivityModifier.PROFILE_KEYS[0]] = self.speeds
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		if a:
@@ -1214,14 +1154,6 @@ class FeedbackModifier(Modifier):
 					break
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		pars = self.strip_defaults()
-		pars[0] = nameof(pars[0])
-		rv[FeedbackModifier.COMMAND] = pars
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		args = list(data[FeedbackModifier.COMMAND])
@@ -1258,12 +1190,6 @@ class RotateInputModifier(Modifier):
 	
 	def _mod_init(self, angle):
 		self.angle = angle
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[RotateInputModifier.COMMAND] = self.angle
-		return rv
 	
 	
 	@staticmethod
@@ -1329,12 +1255,6 @@ class SmoothModifier(Modifier):
 		return "%s (smooth)" % (self.action.describe(context),)
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[SmoothModifier.COMMAND] = [ self.level, self.multiplier, self.filter ]
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		pars = data[SmoothModifier.COMMAND] + [ a ]
@@ -1396,12 +1316,6 @@ class CircularModifier(Modifier, HapticEnabledAction):
 	def _mod_init(self):
 		self.angle = None		# Last known finger position
 		self.speed = 1.0
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[CircularModifier.COMMAND] = True
-		return rv
 	
 	
 	@staticmethod
@@ -1482,12 +1396,6 @@ class CircularAbsModifier(Modifier, WholeHapticAction):
 	def _mod_init(self):
 		self.angle = None		# Last known finger position
 		self.speed = 1.0
-	
-	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[CircularAbsModifier.COMMAND] = True
-		return rv
 	
 	
 	@staticmethod

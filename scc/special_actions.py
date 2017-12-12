@@ -196,18 +196,6 @@ class OSDAction(Action, SpecialAction):
 		return 0
 	
 	
-	def encode(self):
-		if self.action:
-			rv = self.action.encode()
-			if self.timeout == self.DEFAULT_TIMEOUT:
-				rv[OSDAction.COMMAND] = True
-			else:
-				rv[OSDAction.COMMAND] = self.timeout
-			return rv
-		else:
-			return Action.encode(self)	
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		a = OSDAction(a)
@@ -618,12 +606,6 @@ class PositionModifier(Modifier):
 		return self.action
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[PositionModifier.COMMAND] = self.position
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		x, y = data[PositionModifier.COMMAND]
@@ -688,16 +670,6 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 			for gstr in self.gestures:
 				rv += [ "'%s'" % (gstr,), self.gestures[gstr].to_string(False) ]
 			return self.COMMAND + "(" + ", ".join(rv) + ")"	
-	
-	
-	def encode(self):
-		rv = { self.COMMAND : {
-			gstr : self.gestures[gstr].encode()
-			for gstr in self.gestures
-		}}
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv	
 	
 	
 	def compress(self):
