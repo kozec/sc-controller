@@ -931,7 +931,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		def on_lock_success(*a):
 			log.debug("osd_mode: Locked everything")
 			from scc.gui.osd_mode import OSDModeMapper, OSDModeMappings
-			self.osd_mode_mapper = OSDModeMapper(osd_mode_profile)
+			self.osd_mode_mapper = OSDModeMapper(self, osd_mode_profile)
 			self.osd_mode_mapper.set_target_window(self.window.get_window())
 			self.builder.get_object("btUndo").set_visible(False)
 			self.builder.get_object("btRedo").set_visible(False)

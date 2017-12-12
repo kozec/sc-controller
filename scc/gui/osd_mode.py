@@ -22,9 +22,15 @@ log = logging.getLogger("OSDModMapper")
 
 
 class OSDModeMapper(SlaveMapper):
-	def __init__(self, profile):
+	def __init__(self, app, profile):
 		SlaveMapper.__init__(self, profile, None, keyboard="osd", mouse="osd")
+		self.app = app
+		self.set_special_actions_handler(self)
 		self.target_window = None
+	
+	def on_sa_restart(self, *a):
+		""" restart / exit handler """
+		self.app.quit()
 	
 	
 	def set_target_window(self, w):

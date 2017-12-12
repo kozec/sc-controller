@@ -52,6 +52,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		('Display Current Bindings...',	1, MenuItem, 'system/binding-display',
 			'shell("scc-osd-show-bindings")'),
 		('Games',				1, Submenu, 'system/controller', '.games.menu'),
+		('Edit Bindings',		2, MenuItem, 'system/edit',
+			'shell("sc-controller --osd")'),
 		# order: 0 - top, 1 - after 'options', 2 bottom
 	]
 	
