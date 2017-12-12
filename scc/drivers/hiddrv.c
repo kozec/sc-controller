@@ -5,7 +5,7 @@
 #include <limits.h>
 #define CLAMP(min, x, max) x
 
-#define HIDDRV_MODULE_VERSION 3
+#define HIDDRV_MODULE_VERSION 4
 PyObject* module;
 
 #define AXIS_COUNT 17

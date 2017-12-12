@@ -20,7 +20,7 @@ log = logging.getLogger("profile")
 
 
 class Profile(object):
-	VERSION = 1.2	# Current profile version. When loading profile file
+	VERSION = 1.3	# Current profile version. When loading profile file
 					# with version lower than this, auto-conversion may happen
 	
 	LEFT  = LEFT
@@ -313,7 +313,9 @@ class Profile(object):
 						log.info("Converted %s to %s",
 							self.triggers[p].to_string(), n.to_string())
 						self.triggers[p] = n
-
+		if from_version < 1.3:
+			# Action format completly changed in v0.4, but profile foramt is same.
+			pass
 
 class Encoder(JSONEncoder):
 	def default(self, obj):
