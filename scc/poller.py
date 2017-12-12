@@ -11,6 +11,9 @@ Callback is called as callback(fd, event) where event is one of select.POLL*
 import select, logging
 log = logging.getLogger("Poller")
 
+
+DO_NOTHING = lambda *a: False
+
 class Poller(object):
 	POLLIN = select.POLLIN
 	POLLOUT = select.POLLOUT
@@ -48,8 +51,8 @@ class Poller(object):
 		inn, out, pri = select.select( self._pool_in, self._pool_out, self._pool_pri, timeout )
 		
 		for fd in inn:
-			self._callbacks[fd](fd, Poller.POLLIN)
+			self._callbacks.get(fd, DO_NOTHING)(fd, Poller.POLLIN)
 		for fd in out:
-			self._callbacks[fd](fd, Poller.POLLOUT)
+			self._callbacks.get(fd, DO_NOTHING)(fd, Poller.POLLOUT)
 		for fd in pri:
-			self._callbacks[fd](fd, Poller.POLLPRI)
+			self._callbacks.get(fd, DO_NOTHING)(fd, Poller.POLLPRI)

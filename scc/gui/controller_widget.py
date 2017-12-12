@@ -16,16 +16,18 @@ from scc.actions import Action, XYAction, MultiAction
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.modifiers import DoubleclickModifier
 from scc.profile import Profile
+from scc.tools import nameof
 import os, sys, logging
 
 log = logging.getLogger("ControllerWidget")
 
-TRIGGERS = [ Profile.LEFT, Profile.RIGHT ]
-PADS	= [ "LPAD", "RPAD" ]
+TRIGGERS = [ "LT", "RT" ]
+PADS	= [ Profile.LPAD, Profile.RPAD, Profile.CPAD ]
 STICKS	= [ STICK ]
 GYROS	= [ GYRO ]
-PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD, SCButtons.STICKPRESS ]
-_NOT_BUTTONS = PADS + STICKS + GYROS + [ "LT", "RT" ] 
+PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD,
+				SCButtons.STICKPRESS, SCButtons.CPADPRESS ]
+_NOT_BUTTONS = PADS + STICKS + GYROS + TRIGGERS
 _NOT_BUTTONS += [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
 LONG_TEXT = 12
@@ -157,7 +159,13 @@ class ControllerStick(ControllerWidget):
 		ix2 = 74
 		# Check if cursor is placed on icon
 		if event.x < ix2:
-			self.app.hilight(self.name + "_press")
+			what = {
+				Profile.LPAD : LEFT,
+				Profile.RPAD : RIGHT,
+				Profile.CPAD : nameof(SCButtons.CPADPRESS),
+				Profile.STICK : nameof(SCButtons.STICKPRESS),
+			}[self.name]
+			self.app.hilight(what)
 			self.over_icon = True
 		else:
 			self.app.hilight(self.name)
@@ -195,8 +203,10 @@ class ControllerTrigger(ControllerButton):
 	ACTION_CONTEXT = Action.AC_TRIGGER
 	
 	def update(self):
-		if self.id in TRIGGERS and self.id in self.app.current.triggers:
-			self.label.set_label(self.app.current.triggers[self.id].describe(self.ACTION_CONTEXT))
+		# TODO: Use LT and RT in profile as well
+		side = LEFT if self.id == "LT" else RIGHT
+		if self.id in TRIGGERS and side in self.app.current.triggers:
+			self.label.set_label(self.app.current.triggers[side].describe(self.ACTION_CONTEXT))
 		else:
 			self.label.set_label(_("(no action)"))
 
@@ -207,16 +217,22 @@ class ControllerPad(ControllerStick):
 	
 	def __init__(self, app, name, use_icon, enable_press, widget):
 		ControllerStick.__init__(self, app, name, use_icon, enable_press, widget)
-		self.click_button = getattr(SCButtons, self.id)
+		if name in (Profile.LPAD, Profile.RPAD):
+			self.click_button = getattr(SCButtons, name)
+		elif name == Profile.CPAD:
+			self.click_button = SCButtons.CPADPRESS
 	
 	
 	def update(self):
-		if self.id == "LPAD":
+		if self.id == Profile.LPAD:
 			action = self.app.current.pads[Profile.LEFT]
 			pressed = self.app.current.buttons[SCButtons.LPAD]
-		else:
+		elif self.id == Profile.RPAD:
 			action = self.app.current.pads[Profile.RIGHT]
 			pressed = self.app.current.buttons[SCButtons.RPAD]
+		else:
+			action = self.app.current.pads[Profile.CPAD]
+			pressed = self.app.current.buttons[SCButtons.CPADPRESS]
 		
 		self._set_label(action)
 		if self.pressed:

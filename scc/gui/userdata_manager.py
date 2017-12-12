@@ -84,11 +84,13 @@ class UserDataManager(object):
 	
 	
 	def load_user_data(self, paths, pattern, category, callback):
-		""" Loads lists of profiles. Uses GLib to do it on background. """
+		"""
+		Loads data such as of profiles. Uses GLib to do it on background.
+		"""
 		if category:
 			paths = [ os.path.join(p, category) for p in paths ]
 		
-		# First list is for default profiles, 2nd for user profiles
+		# First list is for default stuff, then for user-defined
 		# Number is increased when list is loaded until it reaches 2
 		data = [ None ] * len(paths)
 		
@@ -96,7 +98,7 @@ class UserDataManager(object):
 			f = Gio.File.new_for_path(paths[i])
 			f.enumerate_children_async(
 				pattern,
-				Gio.FileQueryInfoFlags.NONE,
+				Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
 				1, None, self._on_user_data_loaded,
 				data, i, callback
 			)
@@ -104,7 +106,7 @@ class UserDataManager(object):
 	
 	def _on_user_data_loaded(self, pdir, res, data, i, callback):
 		"""
-		Called when enumerate_children_async gets lists of profiles.
+		Called when enumerate_children_async gets lists of files.
 		Usually called twice for default (system) and user directory.
 		"""
 		try:
@@ -117,10 +119,11 @@ class UserDataManager(object):
 			files = {}
 			try:
 				for pdir, enumerator in data:
-					if pdir:
+					if pdir is not None:
 						for finfo in enumerator:
 							name = finfo.get_name()
-							files[name] = pdir.get_child(name)
+							if name:
+								files[name] = pdir.get_child(name)
 			except Exception, e:
 				# https://github.com/kozec/sc-controller/issues/50
 				log.warning("enumerate_children_finish failed: %s", e)

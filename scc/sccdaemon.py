@@ -17,6 +17,7 @@ from scc.tools import set_logging_level, find_binary, clamp
 from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
 from scc.controller import HapticData
+from scc.scheduler import Scheduler
 from scc.menu_data import MenuData
 from scc.profile import Profile
 from scc.actions import Action
@@ -44,6 +45,7 @@ class SCCDaemon(Daemon):
 		self.exiting = False
 		self.socket_file = socket_file
 		self.poller = Poller()
+		self.scheduler = Scheduler()
 		self.xdisplay = None
 		self.sserver = None			# UnixStreamServer instance
 		self.errors = []
@@ -54,7 +56,8 @@ class SCCDaemon(Daemon):
 		# TODO: Use osd_ids for all menus
 		self.osd_ids = {}
 		self.controllers = []
-		self.mainloops = [ self.poller.poll ]
+		self.mainloops = [ self.poller.poll, self.scheduler.run ]
+		self.rescan_cbs = []
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
@@ -70,22 +73,27 @@ class SCCDaemon(Daemon):
 		See __init__.py in scc.drivers.
 		"""
 		log.debug("Initializing drivers...")
+		cfg = Config()
 		self._to_start = set()  # del-eted later by start_drivers
 		for importer, modname, ispkg in pkgutil.walk_packages(path=drivers.__path__, onerror=lambda x: None):
 			if not ispkg and modname != "driver":
-				mod = getattr(__import__('scc.drivers.%s' % (modname,)).drivers, modname)
-				if hasattr(mod, "init"):
-					getattr(mod, "init")(self)
-				if hasattr(mod, "start"):
-					self._to_start.add(getattr(mod, "start"))
+				if modname == "usb" or cfg["drivers"].get(modname):
+					# 'usb' driver has to be always active
+					mod = getattr(__import__('scc.drivers.%s' % (modname,)).drivers, modname)
+					if hasattr(mod, "init"):
+						if getattr(mod, "init")(self, cfg):
+							if hasattr(mod, "start"):
+								self._to_start.add(getattr(mod, "start"))
+				else:
+					log.debug("Skipping disabled driver '%s'", modname)
 	
 	
 	def init_default_mapper(self):
 		"""
 		default_mapper is persistent mapper assigned to first Controller instance.
-		Even if all controllers are removed, this mapper stays active. It exists mainly
-		to provide backwards compatibility and to allow GUI and external programs to
-		work even if there is no controller connected.
+		Even if all controllers are removed, this mapper stays active. This is
+		needed so various stuff (mainlg GUI) doesn't need to check if there is
+		any controller connected all the time.
 		"""
 		# But, despite all above, it's just mapper as every other :)
 		return self.init_mapper()
@@ -114,6 +122,11 @@ class SCCDaemon(Daemon):
 		return self.poller
 	
 	
+	def get_scheduler(self):
+		""" Returns scheduler instance """
+		return self.scheduler
+	
+	
 	def add_mainloop(self, fn):
 		"""
 		Adds function that is called in every mainloop iteration.
@@ -138,6 +151,14 @@ class SCCDaemon(Daemon):
 		"""
 		if fn not in self.on_exit_cbs:
 			self.on_exit_cbs.append(fn)
+	
+	
+	def on_rescan(self, fn):
+		"""
+		Adds function that is called when `Rescan.` message is recieved.
+		"""
+		if fn not in self.on_exit_cbs:
+			self.rescan_cbs.append(fn)
 	
 	
 	def _set_profile(self, mapper, filename):
@@ -165,7 +186,7 @@ class SCCDaemon(Daemon):
 		mapper.profile = p
 		# Re-apply all locks
 		for c in self.clients:
-			c.reaply_locks(self)
+			c.reaply_locks(self, mapper)
 		if mapper.get_controller():
 			self.send_profile_info(mapper.get_controller(), self._send_to_all)
 		else:
@@ -398,14 +419,15 @@ class SCCDaemon(Daemon):
 		Setups new mapper instance.
 		"""
 		try:
-			mapper = Mapper(Profile(TalkingActionParser()), poller=self.poller)
+			mapper = Mapper(Profile(TalkingActionParser()),
+					self.scheduler, poller=self.poller)
 		except CannotCreateUInputException, e:
 			# Most likely UInput is not available
 			# Create mapper with all virtual devices set to Dummies.
 			log.exception(e)
 			self.add_error("uinput", str(e))
-			mapper = Mapper(Profile(TalkingActionParser()), keyboard=None,
-				mouse=None, gamepad=False)
+			mapper = Mapper(Profile(TalkingActionParser()),
+				self.scheduler, keyboard=None, mouse=None, gamepad=False)
 		
 		mapper.set_special_actions_handler(self)
 		mapper.set_xdisplay(self.xdisplay)
@@ -501,6 +523,11 @@ class SCCDaemon(Daemon):
 			self.send_controller_list(self._send_to_all)
 	
 	
+	def get_active_ids(self):
+		""" Returns iterable with IDs of all active controllers """
+		return [ x.get_id() for x in self.controllers ]
+	
+	
 	def add_error(self, id, error):
 		"""
 		Adds error (string) to report. Used when USB driver reports that device
@@ -534,7 +561,7 @@ class SCCDaemon(Daemon):
 		"""
 		for c in self.controllers:
 			method(("Controller: %s %s %s\n" % (
-				c.get_id(), c.get_type(), c.get_id_is_persistent()
+				c.get_id(), c.get_type(), c.get_gui_config_file()
 			)).encode("utf-8"))
 		method(("Controller Count: %s\n" % (len(self.controllers),)).encode("utf-8"))
 	
@@ -809,6 +836,22 @@ class SCCDaemon(Daemon):
 					self._send_to_all("Reconfigured.\n".encode("utf-8"))
 				except:
 					pass
+		elif message.startswith("Rescan."):
+			with self.lock:
+				cbs = [] + self.rescan_cbs
+				# Respond first
+				try:
+					client.wfile.write(b"OK.\n")
+				except:
+					pass
+			# Do stuff later
+			# (this cannot be done while self.lock is held, as creating new
+			# controller would create race condition)
+			for cb in self.rescan_cbs:
+				try:
+					cb()
+				except Exception, e:
+					log.exception(e)
 		elif message.startswith("Turnoff."):
 			with self.lock:
 				if client.mapper.get_controller():
@@ -945,7 +988,8 @@ class SCCDaemon(Daemon):
 		elif what == SCButtons.RT:
 			mapper.profile.triggers[RIGHT] = callback(mapper.profile.triggers[RIGHT], *args)
 		elif what in SCButtons:
-			mapper.profile.buttons[what] = callback(mapper.profile.buttons[what], *args)
+			r = callback(mapper.profile.buttons[what], *args)
+			mapper.profile.buttons[what] = r
 		elif what in (LEFT, RIGHT):
 			if what == LEFT:
 				mapper.buttons &= ~SCButtons.LPADTOUCH
@@ -1004,7 +1048,7 @@ class Client(object):
 		self.wfile = wfile
 		self.mapper = mapper
 		self.gesture_action = None
-		self.locked_actions = set()
+		self.locked_actions = {}
 	
 	
 	def close(self):
@@ -1073,19 +1117,22 @@ class Client(object):
 	
 	def unlock_actions(self, daemon):
 		""" Should be called while daemon.lock is acquired """
-		s, self.locked_actions = self.locked_actions, set()
-		for a in s:
-			a.unlock(self, daemon)
+		locked, self.locked_actions = self.locked_actions, {}
+		for mapper in locked:
+			s = locked[mapper]
+			for a in s:
+				a.unlock(daemon)
 	
 	
-	def reaply_locks(self, daemon):
+	def reaply_locks(self, daemon, mapper):
 		"""
 		Called after profile is changed.
 		Should be called while daemon.lock is acquired
 		"""
-		s, self.locked_actions = self.locked_actions, set()
-		for a in s:
-			a.reaply(self, daemon)
+		if mapper in self.locked_actions:
+			s, self.locked_actions[mapper] = self.locked_actions[mapper], set()
+			for a in s:
+				a.reaply(self, daemon)
 
 
 class ReportingAction(Action):
@@ -1098,38 +1145,51 @@ class ReportingAction(Action):
 	def __init__(self, what, client):
 		self.what = what
 		self.client = client
+		self.mapper = client.mapper
 		self.old_pos = 0, 0
 	
 	
-	def trigger(self, mapper, position, old_position):
+	def _store_lock(self):
+		if self.mapper not in self.client.locked_actions:
+			self.client.locked_actions[self.mapper] = set()
+		self.client.locked_actions[self.mapper].add(self)
+	
+	
+	def __repr__(self):
+		return "<%s of %x>" % (self.__class__.__name__, hash(self.client))
+	__str__ = __repr__
+	
+	
+	def _report(self, message):
 		try:
-			self.client.wfile.write(("Event: %s %s %s %s\n" % (
-				mapper.get_controller().get_id(),
-				self.what.name, position, old_position)
-			).encode("utf-8"))
-		except Exception:
+			self.client.wfile.write(message.encode("utf-8"))
+		except Exception, e:
 			# May fail when client dies
 			self.client.rfile.close()
 			self.client.wfile.close()
+	
+	
+	def trigger(self, mapper, position, old_position):
+		if mapper.get_controller():
+			self._report("Event: %s %s %s %s\n" % (
+				mapper.get_controller().get_id(),
+				self.what.name, position, old_position
+			))
 	
 	
 	def button_press(self, mapper, number=1):
-		try:
+		if mapper.get_controller():
 			if self.what == SCButtons.STICKPRESS:
-				self.client.wfile.write(("Event: %s STICKPRESS %s\n" % (
+				self._report("Event: %s STICKPRESS %s\n" % (
 					mapper.get_controller().get_id(),
 					number
-				)).encode("utf-8"))
+				))
 			else:
-				self.client.wfile.write(("Event: %s %s %s\n" % (
+				self._report("Event: %s %s %s\n" % (
 					mapper.get_controller().get_id(),
 					self.what.name,
 					number
-				)).encode("utf-8"))
-		except Exception:
-			# May fail when client dies
-			self.client.rfile.close()
-			self.client.wfile.close()
+				))
 	
 	
 	def button_release(self, mapper):
@@ -1140,15 +1200,11 @@ class ReportingAction(Action):
 		if (x == 0 or y == 0 or abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE
 							or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE)):
 			self.old_pos = x, y
-			try:
-				self.client.wfile.write(("Event: %s %s %s %s\n" % (
+			if mapper.get_controller():
+				self._report("Event: %s %s %s %s\n" % (
 					mapper.get_controller().get_id(),
 					what, x, y
-				)).encode("utf-8"))
-			except Exception:
-				# May fail when client dies
-				self.client.rfile.close()
-				self.client.wfile.close()
+				))
 
 
 class LockedAction(ReportingAction):
@@ -1156,7 +1212,7 @@ class LockedAction(ReportingAction):
 	def __init__(self, what, client, original_action):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
-		self.client.locked_actions.add(self)
+		self._store_lock()
 		log.debug("%s locked by %s", self.what, self.client)
 	
 	
@@ -1164,7 +1220,7 @@ class LockedAction(ReportingAction):
 		client.lock_action(daemon, self.what)
 	
 	
-	def unlock(self, client, daemon):
+	def unlock(self, daemon):
 		def _unlock(a):
 			if isinstance(a, ObservingAction):
 				# Needs to be handled specifically
@@ -1173,7 +1229,7 @@ class LockedAction(ReportingAction):
 			if isinstance(a, LockedAction):
 				return a.original_action
 			return a
-		daemon._apply(client.mapper, self.what, _unlock)
+		daemon._apply(self.mapper, self.what, _unlock)
 		log.debug("%s unlocked", self.what)
 
 
@@ -1181,8 +1237,8 @@ class ReplacedAction(LockedAction):
 	def __init__(self, what, client, new_action, original_action):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
-		self.new_action = new_action
-		self.client.locked_actions.add(self)
+		self.new_action = new_action.compress()
+		self._store_lock()
 		log.debug("%s replaced by %s", self.what, self.client)
 	
 	
@@ -1213,18 +1269,19 @@ class ObservingAction(ReportingAction):
 	def __init__(self, what, client, original_action):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
-		self.client.locked_actions.add(self)
-		log.debug("%s observed %s", self.what, self.client)
+		self._store_lock()
+		log.debug("%s on %s observed by %x", self.what,
+			client.mapper.get_controller(), hash(self.client))
 	
 	
 	def reaply(self, client, daemon):
 		client.observe_action(daemon, self.what)
 	
 	
-	def unlock(self, client, daemon):
+	def unlock(self, daemon):
 		def _unobserve(a):
 			if isinstance(a, ObservingAction):
-				if a.client == self:
+				if a.client == self.client:
 					return a.original_action
 				a.original_action = _unobserve(a.original_action)
 				return a
@@ -1233,8 +1290,9 @@ class ObservingAction(ReportingAction):
 				return a
 			return a
 		
-		daemon._apply(client.mapper, self.what, _unobserve)
-		log.debug("%s no longer observed by %s", self.what, client)
+		daemon._apply(self.mapper, self.what, _unobserve)
+		log.debug("%s on %s no longer observed by %x", self.what,
+			self.mapper.get_controller(), hash(self.client))
 	
 	
 	def trigger(self, mapper, position, old_position):

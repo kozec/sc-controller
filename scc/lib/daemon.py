@@ -103,8 +103,8 @@ class Daemon(object):
 
 	def on_start(self):
 		pass
-
-	def stop(self):
+	
+	def stop(self, once=False):
 		"""Stop the daemon."""
 
 		# Get the pid from the pidfile
@@ -124,6 +124,10 @@ class Daemon(object):
 		try:
 			for x in xrange(0, 10): # Waits max 1s
 				os.kill(pid, signal.SIGTERM)
+				if once: break
+				for x in xrange(50):
+					os.kill(pid, 0)
+					time.sleep(0.1)
 				time.sleep(0.1)
 			os.kill(pid, signal.SIGKILL)
 		except OSError as err:

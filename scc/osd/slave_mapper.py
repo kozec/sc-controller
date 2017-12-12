@@ -17,10 +17,9 @@ import logging, time
 log = logging.getLogger("SlaveMapper")
 
 class SlaveMapper(Mapper):
-	def __init__(self, profile, keyboard=b"SCC OSD Keyboard", mouse=None):
-		Mapper.__init__(self, profile, keyboard, mouse, None)
+	def __init__(self, profile, scheduler, keyboard=b"SCController Keyboard", mouse=None):
+		Mapper.__init__(self, profile, scheduler, keyboard, mouse, None)
 		self._feedback_cb = None
-	
 	
 	def set_controller(self, c):
 		""" Sets controller device, used by some (one so far) actions """
@@ -51,17 +50,6 @@ class SlaveMapper(Mapper):
 		"""
 		if self._feedback_cb:
 			self._feedback_cb(hapticdata)
-	
-	
-	def run_scheduled(self):
-		"""
-		Should be called periodically to keep timers going.
-		Since SlaveMapper doesn't communicate with controller device, it is not
-		possible to drive this automatically
-		"""
-		now = time.time()
-		Mapper.run_scheduled(self, now)
-		return True
 	
 	
 	def handle_event(self, daemon, what, data):

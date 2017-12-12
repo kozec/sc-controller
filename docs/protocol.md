@@ -22,13 +22,14 @@ Connection is then held until client side closes it.
 Informs about total number of connected controllers.
 Always sent after with `Controller:` messages
 
-#### `Controller: controller_id type id_is_persistent`
+#### `Controller: controller_id type config_file`
 Provides info about controller 'n'.
 - `controller_id` is unique string identifier of controller (should stay same at
 least until daemon exits) and doesn't contains spaces.
 - `type` is string identifier (without spaces) of driver.
-- `id_is_persistent` is True if controller ID is always same for same controller
-and can be used to store settings.
+- `config_file` is None or file name of json-encoded file that can GUI use
+to get additional data about controller (background image, button images, etc)
+File name may be absolute path or just name of file in /usr/share/scc
 
 This message is repeated for every connected controller and followed by
 `Controller Count:` message. It is automatically sent to every client when
@@ -182,6 +183,10 @@ When sent with same value with two or more clients, daemon will automatically cl
 before registering new one.
 scc-osd-daemon sends `Register: osd`
 scc-autoswitch-daemon `Register: autoswitch`
+Daemon responds with `OK.`
+
+#### `Rescan.`
+Asks daemon to rescan for new devices. Drivers may re-read its configuration if needed.
 Daemon responds with `OK.`
 
 #### `Restart.`

@@ -22,14 +22,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import os, imp, ctypes, time
+import os, ctypes, time
 from ctypes import Structure, POINTER, c_bool, c_int16, c_uint16, c_int32, byref
 from math import pi, copysign, sqrt
 from scc.lib.libusb1 import timeval
+from scc.tools import find_library
 from scc.cheader import defines
 from scc.lib import IntEnum
 
-UNPUT_MODULE_VERSION = 7
+UNPUT_MODULE_VERSION = 8
 
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):
@@ -214,30 +215,7 @@ class UInput(object):
 
 		self._r = rels
 		
-		base_path = os.path.dirname(__file__)
-		# Search for libuinput.so
-		lib, search_paths = None, []
-		libname = "libuinput"
-		so_extensions = [ ext for ext, _, typ in imp.get_suffixes()
-				if typ == imp.C_EXTENSION ]
-		for extension in so_extensions:
-			search_paths += [
-				os.path.abspath(os.path.normpath(
-					os.path.join( base_path, '..', libname + extension ))),
-				os.path.abspath(os.path.normpath(
-					os.path.join( base_path, '../..', libname + extension )))
-				]
-		for path in search_paths:
-			if os.path.exists(path):
-				lib = path
-				break
-		
-		if not lib:
-			raise OSError('Cant find libuinput. searched at:\n {}'.format(
-				'\n'.join(search_paths)
-			)
-		)
-		self._lib = ctypes.CDLL(lib)
+		self._lib = find_library("libuinput")
 		self._ff_events = None
 		if rumble:
 			self._ff_events = (POINTER(FeedbackEvent) * MAX_FEEDBACK_EFFECTS)()

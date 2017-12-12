@@ -7,16 +7,17 @@ Currently setups only one thing...
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gdk, GObject, GLib
+from gi.repository import Gtk, Gdk, GObject, GLib, GdkPixbuf
+from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
+from scc.paths import get_profiles_path, get_menus_path, get_config_path
 from scc.special_actions import TurnOffAction, RestartDaemonAction
 from scc.special_actions import ChangeProfileAction
-from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
 from scc.tools import find_profile, find_menu, find_binary
-from scc.paths import get_profiles_path, get_menus_path
 from scc.modifiers import SensitivityModifier
 from scc.profile import Profile, Encoder
 from scc.actions import Action, NoAction
 from scc.constants import LEFT, RIGHT
+from scc.paths import get_share_path
 from scc.gui.osk_binding_editor import OSKBindingEditor
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
@@ -29,7 +30,7 @@ from scc.osd.keyboard import Keyboard as OSDKeyboard
 from scc.osd.osk_actions import OSKCursorAction
 import scc.osd.osk_actions
 
-import re, sys, os, logging, traceback
+import re, sys, os, json, logging, traceback
 log = logging.getLogger("GS")
 
 class GlobalSettings(Editor, UserDataManager, ComboSetter):
@@ -51,6 +52,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		('Display Current Bindings...',	1, MenuItem, 'system/binding-display',
 			'shell("scc-osd-show-bindings")'),
 		('Games',				1, Submenu, 'system/controller', '.games.menu'),
+		('Edit Bindings',		2, MenuItem, 'system/edit',
+			'shell("sc-controller --osd")'),
 		# order: 0 - top, 1 - after 'options', 2 bottom
 	]
 	
@@ -60,6 +63,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.setup_widgets()
 		self._timer = None
 		self._recursing = False
+		self._gamepad_icons = {
+			'unknown': GdkPixbuf.Pixbuf.new_from_file(os.path.join(
+					self.app.imagepath, "controller-icons", "unknown.svg"))
+		}
 		self.app.config.reload()
 		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
 		self.load_settings()
@@ -68,6 +75,19 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self._eh_ids = (
 			self.app.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		)
+	
+	
+	def _get_gamepad_icon(self, drv):
+		if drv in self._gamepad_icons:
+			return self._gamepad_icons[drv]
+		try:
+			p = GdkPixbuf.Pixbuf.new_from_file(os.path.join(
+				self.app.imagepath, "controller-icons", drv + "-4.svg"))
+		except:
+			log.warning("Failed to load gamepad icon for driver '%s'", drv)
+			p = self._gamepad_icons["unknown"]
+		self._gamepad_icons[drv] = p
+		return p
 	
 	
 	def on_daemon_reconfigured(self, *a):
@@ -89,6 +109,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.load_osk()
 		self.load_colors()
 		self.load_cbMIs()
+		self.load_drivers()
+		self.load_controllers()
 		# Load rest
 		self._recursing = True
 		(self.builder.get_object("cbInputTestMode")
@@ -114,6 +136,13 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self._recursing = False
 	
 	
+	def load_drivers(self):
+		for key, value in self.app.config['drivers'].items():
+			w = self.builder.get_object("cbEnableDriver_%s" % (key, ))
+			if w:
+				w.set_active(value)
+	
+	
 	def _load_color(self, w, dct, key):
 		""" Common part of load_colors """
 		if w:
@@ -124,12 +153,17 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	
 	def load_colors(self):
+		cbOSDStyle = self.builder.get_object("cbOSDStyle")
+		cbOSDColorPreset = self.builder.get_object("cbOSDColorPreset")
 		for k in self.app.config["osd_colors"]:
 			w = self.builder.get_object("cb%s" % (k,))
 			self._load_color(w, "osd_colors", k)
 		for k in self.app.config["osk_colors"]:
 			w = self.builder.get_object("cbosk_%s" % (k,))
 			self._load_color(w, "osk_colors", k)
+		theme = self.app.config.get("osd_color_theme", "None")
+		self.set_cb(cbOSDColorPreset, theme)
+		self.set_cb(cbOSDStyle, self.app.config.get("osd_style"))
 	
 	
 	def load_autoswitch(self):
@@ -233,6 +267,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		# Following lambdas converts Gdk.Color into #rrggbb notation.
 		# Gdk.Color can do similar, except it uses #rrrrggggbbbb notation that
 		# is not understood by Gdk css parser....
+		cbOSDColorPreset = self.builder.get_object("cbOSDColorPreset")
 		striphex = lambda a: hex(a).strip("0x").zfill(2)
 		tohex = lambda a: "".join([ striphex(int(x * 0xFF)) for x in a.to_floats() ])
 		for k in self.app.config["osd_colors"]:
@@ -243,6 +278,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			w = self.builder.get_object("cbosk_%s" % (k,))
 			if w:
 				self.app.config["osk_colors"][k] = tohex(w.get_color())
+		self.app.config["osd_color_theme"] = None
+		self.set_cb(cbOSDColorPreset, "None")
 		self.app.save_config()
 	
 	
@@ -312,9 +349,51 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	def on_restarting_checkbox_toggled(self, *a):
 		if self._recursing: return
 		self.on_random_checkbox_toggled()
+		self._needs_restart()
+	
+	
+	def _needs_restart(self):
 		if self.app.dm.is_alive():
 			rvRestartWarning = self.builder.get_object("rvRestartWarning")
 			rvRestartWarning.set_reveal_child(True)
+	
+	
+	DRIVER_DEPS = {
+		'ds4drv' : ( "evdevdrv", "hiddrv" )
+	}
+	
+	def on_cbEnableDriver_toggled(self, cb):
+		if self._recursing: return
+		drv = cb.get_name()
+		self.app.config["drivers"][drv] = cb.get_active()
+		if cb.get_active() and drv in self.DRIVER_DEPS:
+			# Driver has dependencies, make sure at least one of them is active
+			one_active = any([ self.app.config["drivers"].get(x)
+									for x in self.DRIVER_DEPS[drv] ])
+			if not one_active:
+				# Nothing is, make everything active just to be sure
+				self._recursing = True
+				for x in self.DRIVER_DEPS[drv]:
+					w = self.builder.get_object("cbEnableDriver_%s" % (x, ))
+					if w : w.set_active(True)
+					self.app.config["drivers"][x] = True
+				self._recursing = False
+		
+		if not cb.get_active() and any([ drv in x for x in self.DRIVER_DEPS.values() ]):
+			# Something depends on this driver,
+			# disable anything that has no dependent drivers active
+			self._recursing = True
+			for x, deps in self.DRIVER_DEPS.items():
+				w = self.builder.get_object("cbEnableDriver_%s" % (x, ))
+				one_active = any([ self.app.config["drivers"].get(y)
+										for y in self.DRIVER_DEPS[x] ])
+				if not one_active and w:
+					w.set_active(False)
+					self.app.config["drivers"][x] = False
+			self._recursing = False
+		
+		self.save_config()
+		self._needs_restart()
 	
 	
 	def on_random_checkbox_toggled(self, *a):
@@ -553,6 +632,44 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		btSave.set_sensitive(True)
 	
 	
+	def on_cbOSDColorPreset_changed(self, cb):
+		theme = cb.get_model().get_value(cb.get_active_iter(), 0)
+		if theme in (None, "None"): return
+		filename = os.path.join(get_share_path(), "osd_styles", theme)
+		data = json.loads(file(filename, "r").read())
+		
+		# Transfer values from json to config
+		for grp in ("osd_colors", "osk_colors"):
+			if grp in data:
+				for subkey in self.app.config[grp]:
+					if subkey in data[grp]:
+						self.app.config[grp][subkey] = data[grp][subkey]
+		
+		# Save
+		self.app.config["osd_color_theme"] = theme
+		self.app.save_config()
+	
+	
+	def on_cbOSDStyle_changed(self, cb):
+		color_keys = self.app.config['osk_colors'].keys() + self.app.config['osd_colors'].keys()
+		osd_style = cb.get_model().get_value(cb.get_active_iter(), 0)
+		css_file = os.path.join(get_share_path(), "osd_styles", osd_style)
+		first_line = file(css_file, "r").read().split("\n")[0]
+		used_colors = None				# None means "all"
+		if "Used colors:" in first_line:
+			used_colors = set(first_line.split(":", 1)[1].strip(" */").split(" "))
+			if "all" in used_colors:
+				used_colors = None		# None means "all"
+		
+		for key in color_keys:
+			cb = self.builder.get_object("cb%s" % (key, ))
+			lbl = self.builder.get_object("lbl%s" % (key, ))
+			if cb:  cb.set_sensitive ((used_colors is None) or (key in used_colors))
+			if lbl: lbl.set_sensitive((used_colors is None) or (key in used_colors))
+		self.app.config["osd_style"] = osd_style
+		self.app.save_config()
+	
+	
 	@staticmethod
 	def _make_mi_instance(index):
 		""" Helper method used by on_cbMI_toggled and load_cbMIs """
@@ -663,3 +780,47 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		else:
 			cbMI_5.set_sensitive(True)
 			cbMI_5.set_tooltip_text("")
+	
+	
+	def on_btAddController_clicked(self, *a):
+		from scc.gui.creg.dialog import ControllerRegistration
+		cr = ControllerRegistration(self.app)
+		cr.window.connect("destroy", self.load_controllers)
+		cr.show(self.window)
+	
+	
+	def on_btRemoveController_clicked(self, *a):
+		tvControllers = self.builder.get_object("tvControllers")
+		d = Gtk.MessageDialog(parent=self.window,
+			flags = Gtk.DialogFlags.MODAL,
+			type = Gtk.MessageType.WARNING,
+			buttons = Gtk.ButtonsType.YES_NO,
+			message_format = _("Unregister controller?"),
+		)
+		d.format_secondary_text(_("You'll lose all settings for it"))
+		if d.run() == -8:
+			# Yes
+			model, iter = tvControllers.get_selection().get_selected()
+			path = model[iter][0]
+			try:
+				os.unlink(path)
+			except Exception, e:
+				log.exception(e)
+			self._needs_restart()
+			self.load_controllers()
+		d.destroy()
+	
+	
+	def load_controllers(self, *a):
+		lstControllers = self.builder.get_object("lstControllers")
+		lstControllers.clear()
+		for filename in os.listdir(os.path.join(get_config_path(), "devices")):
+			if filename.endswith(".json"):
+				if filename.startswith("hid-"):
+					drv, usbid, name = filename.split("-", 2)
+					name = "%s <i>(%s)</i>" % (name[0:-5], usbid.upper())
+				else:
+					drv, name = filename.split("-", 1)
+					name = name[0:-5]
+				path = os.path.join(get_config_path(), "devices", filename)
+				lstControllers.append((path, name, self._get_gamepad_icon(drv)))

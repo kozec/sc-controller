@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 #pragma GCC diagnostic ignored "-Wunused-result"
-#define UNPUT_MODULE_VERSION 7
+#define UNPUT_MODULE_VERSION 8
 #define MAX_FF_EVENTS 4
 
 #define INFINITE_RUMBLE		10000		// Not really infinite, but longer than controller can handle
@@ -174,7 +174,7 @@ int uinput_init(
 	return fd;
 }
 
-const int uinput_module_version() {
+const int uinput_module_version(void) {
 	return UNPUT_MODULE_VERSION;
 }
 

@@ -60,6 +60,14 @@ def get_default_menuicons_path():
 	return os.path.join(get_share_path(), "images/menu-icons")
 
 
+def get_button_images_path():
+	"""
+	Returns directory where button images are stored.
+	/usr/share/scc/images/button-images by default.
+	"""
+	return os.path.join(get_share_path(), "images/button-images")
+
+
 def get_menus_path():
 	"""
 	Returns directory where profiles are stored.

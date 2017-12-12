@@ -10,127 +10,16 @@ from scc.tools import _, set_logging_level
 from gi.repository import Gtk, Gdk, GLib, GObject, GdkX11
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.osd.timermanager import TimerManager
+from scc.paths import get_share_path
 from scc.lib import xwrappers as X
 from scc.config import Config
 
-import argparse, traceback, logging
+import os, argparse, traceback, logging
 log = logging.getLogger("osd")
 
 
 class OSDWindow(Gtk.Window):
-	CSS = """
-		#osd-message, #osd-menu, #osd-gesture, #osd-keyboard {
-			background-color: #%(background)s;
-			border: 6px #%(border)s double;
-		}
-		
-		#osd-area {
-			background-color: #%(border)s;
-		}
-		
-		#osd-label {
-			color: #%(text)s;
-			border: none;
-			font-size: xx-large;
-			margin: 15px 15px 15px 15px;
-		}
-		
-		#osd-menu, #osd-gesture {
-			padding: 7px 7px 7px 7px;
-		}
-		
-		#osd-keyboard-container {
-			padding: 6px 6px 6px 6px;
-		}
-		
-		#osd-menu-item, #osd-menu-item-selected, #osd-menu-dummy,
-		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected,
-		#osd-key-buton, #osd-key-buton-hilight, #osd-launcher-item,
-		#osd-launcher-item-selected, #osd-hidden-item,
-		#osd-hidden-item-selected, #osd-key-buton-selected {
-			color: #%(text)s;
-			border-radius: 0;
-			font-size: x-large;
-			background-image: none;
-			background-color: #%(background)s;
-			margin: 0px 0px 2px 0px;
-		}
-		
-		
-		#osd-hidden-item, #osd-hidden-item-selected {
-			color: #%(background)s;
-			border-color: #%(background)s;
-		}
-		
-		
-		#osd-radial-menu-icon {
-			color: #%(text)s;
-		}
-		
-		#osd-radial-menu-icon-selected {
-			color: #%(menuitem_hilight_text)s;
-		}
-		
-		#osd-menu-item, #osd-menu-item-big-icon,
-		#osd-launcher-item, #osd-launcher-item-selected {
-			border: 1px #%(menuitem_border)s solid;
-		}
-		
-		#osd-menu-separator {
-			color: #%(menuseparator)s;
-			font-size: large;
-			background-image: none;
-			background-color: #%(background)s;
-			margin: 5px 0px 0px 0px;
-			padding: 0px 0px 0px 0px;
-		}
-		
-		#osd-gesture-separator {
-			color: #%(menuseparator)s;
-			background-color: #%(menuseparator)s;
-			margin: 0px 5px 0px 5px;
-		}
-		
-		#osd-menu-item-selected, #osd-menu-item-big-icon-selected,
-		#osd-launcher-item-selected {
-			color: #%(menuitem_hilight_text)s;
-			background-color: #%(menuitem_hilight)s;
-			border: 1px #%(menuitem_hilight_border)s solid;
-		}
-		
-		#osd-menu-cursor, #osd-keyboard-cursor {
-		}
-		
-		#osd-dialog-buttons {
-			margin: 10px 20px 10px 20px;
-		}
-		
-		#osd-dialog-text {
-			color: #%(text)s;
-			font-size: large;
-			margin: 10px 20px 0px 20px;
-		}
-		
-		#osd-application-list {
-			margin: 15px 15px 0px 15px;
-		}
-		
-		#osd-key-buton, #osd-key-buton-selected {
-			background-color: #%(osk_button1)s;
-			border: 1px #%(osk_button1_border)s solid;
-			color: #%(osk_text)s;
-		}
-		
-		#osd-key-buton-hilight {
-			color: #%(osk_text)s;
-			background-color: #%(osk_hilight)s;
-		}
-		
-		#osd-key-buton-selected {
-			background-color: #%(osk_pressed)s;
-		}
-		
-	"""
+	# TODO: Get rid of CSS_3_20, maybe just by dropping support
 	CSS_3_20 = """
 		#osd-menu-item-big-icon, #osd-menu-item-big-icon-selected {
 			min-width: 48pt;
@@ -142,8 +31,7 @@ class OSDWindow(Gtk.Window):
 			min-width: 100px;
 			margin: 0px 5px 0px 5px;
 		}
-	
-	""" # oh fuck me :(
+	"""
 	
 	EPILOG = ""
 	css_provider = None			# Used by staticmethods
@@ -176,15 +64,17 @@ class OSDWindow(Gtk.Window):
 			Gtk.StyleContext.remove_provider_for_screen(
 				Gdk.Screen.get_default(), OSDWindow.css_provider)
 		
+		colors = {}
+		for x in config['osk_colors'] : colors["osk_%s" % (x,)] = config['osk_colors'][x]
+		for x in config['osd_colors'] : colors[x] = config['osd_colors'][x]
+		colors = OSDCssMagic(colors)
 		try:
-			colors = {}
-			css = OSDWindow.CSS
+			css_file = os.path.join(get_share_path(), "osd_styles", config["osd_style"])
+			css = file(css_file, "r").read()
 			if ((Gtk.get_major_version(), Gtk.get_minor_version()) > (3, 20)):
 				css += OSDWindow.CSS_3_20
-			for x in config['osk_colors'] : colors["osk_%s" % (x,)] = config['osk_colors'][x]
-			for x in config['osd_colors'] : colors[x] = config['osd_colors'][x]
 			OSDWindow.css_provider = Gtk.CssProvider()
-			OSDWindow.css_provider.load_from_data(str(OSDWindow.CSS % colors))
+			OSDWindow.css_provider.load_from_data((css % colors).encode("utf-8"))
 			Gtk.StyleContext.add_provider_for_screen(
 					Gdk.Screen.get_default(),
 					OSDWindow.css_provider,
@@ -195,7 +85,11 @@ class OSDWindow(Gtk.Window):
 			log.error("Retrying with default values")
 			
 			OSDWindow.css_provider = Gtk.CssProvider()
-			OSDWindow.css_provider.load_from_data(str(OSDWindow.CSS % Config.DEFAULTS['osd_colors']))
+			css_file = os.path.join(get_share_path(), "osd_styles", "Classic.gtkstyle.css")
+			css = file(css_file, "r").read()
+			if ((Gtk.get_major_version(), Gtk.get_minor_version()) > (3, 20)):
+				css += OSDWindow.CSS_3_20
+			OSDWindow.css_provider.load_from_data((css % colors).encode("utf-8"))
 			Gtk.StyleContext.add_provider_for_screen(
 					Gdk.Screen.get_default(),
 					OSDWindow.css_provider,
@@ -237,6 +131,8 @@ class OSDWindow(Gtk.Window):
 		""" Returns True on success """
 		try:
 			self.args = self.argparser.parse_args(argv[1:])
+		except SystemExit:
+			return False
 		except BaseException, e:	# Includes SystemExit
 			log.error(traceback.format_exc())
 			return False
@@ -326,6 +222,48 @@ class OSDWindow(Gtk.Window):
 			self.destroy()
 
 
+class OSDCssMagic(dict):
+	"""
+	Basically, I reinvented templating.
+	This is passed to string.format, allowing to use some simple expressions in
+	addition to normal %(placeholder)s.
+	
+	Supported magic:
+		%(background)s			- just color
+		%(background+10)s		- color, 10 values brighter
+		%(background-10)s		- color, 10 values darker
+	"""
+	
+	def __init__(self, dict_to_wrap):
+		self._dict = dict_to_wrap
+	
+	
+	def __getitem__(self, a):
+		if "+" in a:
+			key, number = a.rsplit("+", 1)
+			rgba = parse_rgba(self[key])
+			number = float(number) / 255.0
+			rgba.red = min(1.0, rgba.red + number)
+			rgba.green = min(1.0, rgba.green + number)
+			rgba.blue = min(1.0, rgba.blue + number)
+			return "%s%s%s" % (
+				hex(int(rgba.red * 255)).split("x")[-1].zfill(2),
+				hex(int(rgba.green * 255)).split("x")[-1].zfill(2),
+				hex(int(rgba.blue * 255)).split("x")[-1].zfill(2))
+		elif "-" in a:
+			key, number = a.rsplit("-", 1)
+			rgba = parse_rgba(self[key])
+			number = float(number) / 255.0
+			rgba.red = max(0.0, rgba.red - number)
+			rgba.green = max(0.0, rgba.green - number)
+			rgba.blue = max(0.0, rgba.blue - number)
+			return "%s%s%s" % (
+				hex(int(rgba.red * 255)).split("x")[-1].zfill(2),
+				hex(int(rgba.green * 255)).split("x")[-1].zfill(2),
+				hex(int(rgba.blue * 255)).split("x")[-1].zfill(2))
+		return self._dict[a]
+
+
 class StickController(GObject.GObject, TimerManager):
 	"""
 	Simple utility class that gets fed by with position and emits
@@ -365,16 +303,34 @@ class StickController(GObject.GObject, TimerManager):
 	def set_stick(self, *data):
 		direction = 0
 		# Y
-		if data[1] < STICK_PAD_MIN / 3:
+		if data[1] < STICK_PAD_MIN / 2:
 			direction = 2
-		elif data[1] > STICK_PAD_MAX / 3:
+		elif data[1] > STICK_PAD_MAX / 2:
 			direction = 8
 		# X
-		elif data[0] < STICK_PAD_MIN / 3:
+		elif data[0] < STICK_PAD_MIN / 2:
 			direction = 4
-		elif data[0] > STICK_PAD_MAX / 3:
+		elif data[0] > STICK_PAD_MAX / 2:
 			direction = 6
 		
 		if direction != self._direction:
 			self._direction = direction
 			self._move()
+
+
+def parse_rgba(col):
+	"""
+	Parses color specified by #RRGGBBAA string.
+	'#' and 'AA' is optional.
+	"""
+	# Because GTK can parse everything but theese :(
+	alpha = "FF"
+	if not col.startswith("#"):
+		col = "#" + col
+	if len(col) > 7:
+		col, alpha = col[0:7], col[7:]
+	rgba = Gdk.RGBA()
+	if not rgba.parse(col):
+		log.warning("Failed to parse RGBA color: %s", col)
+	rgba.alpha = float(int(alpha, 16)) / 255.0
+	return rgba

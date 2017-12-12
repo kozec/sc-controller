@@ -122,9 +122,11 @@ class TurnOffAction(Action, SpecialAction):
 
 class RestartDaemonAction(Action, SpecialAction):
 	SA = COMMAND = "restart"
+	ALIASES = ("exit", )
 	
 	def __init__(self):
 		Action.__init__(self)
+	
 	
 	def describe(self, context):
 		if self.name: return self.name

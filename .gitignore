@@ -1,7 +1,13 @@
 *.pyc
+.*
 *~
 *.so
+*.patch
+!scc/*tester*
+test*.py
 build/
 .atomignore
 commit*
-*test.*
+profiles
+.idea/
+out.svg

@@ -5,7 +5,8 @@
 		"LB":	{ "action": "button(Keys.KEY_BACKSPACE)" },
 		"RB":	{ "action": "button(Keys.KEY_SPACE)" },
 		"LPAD":	{ "action": "button(Keys.BTN_RIGHT)" },
-		"RPAD":	{ "action": "button(Keys.BTN_LEFT)" }
+		"RPAD":	{ "action": "button(Keys.BTN_LEFT)" },
+		"C":	{ "action": "exit()" }
 	},
 	
 	"pad_left":			{ "action": "feedback(LEFT, 4090, 16, ball(XY(mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL))))" },

@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 
 from scc.paths import get_config_path
 from scc.profile import Encoder
-from scc.uinput import Keys, Axes
 from scc.special_actions import ChangeProfileAction
 
 import os, json, logging
@@ -21,12 +20,22 @@ class Config(object):
 		"autoswitch":		[],		# Empty list of conditions
 		"recent_max":		10,		# Number of profiles to keep
 		"recent_profiles":	[		# Hard-coded list of profiles from default_profiles/
-			# This is actually updated by scc-osd-daemon. It may sound random,
-			# but that's only thing actually using this list.
+			# This is actually updated by scc-osd-daemon, as that's
+			# only thing actually knowing what to put here.
 			"Desktop",
 			"XBox Controller with High Precision Camera",
 			"XBox Controller"
 		],
+		"drivers" : {				# Map of drivers with values of True, Flase
+									# or additional driver config where needed.
+									# Anything but False means enabled here.
+			"sc_dongle": True,
+			"sc_by_cable": True,
+			"fake": False,			# Used for developement
+			"hiddrv": True,
+			"evdevdrv": True,
+			"ds4drv": True,			# At least one of hiddrv or evdevdrv has to be enabled as well
+		},
 		"fix_xinput" : True,		# If True, attempt is done to deatach emulated controller 
 									# from 'Virtual core pointer' core device.
 		"gui": {
@@ -67,26 +76,27 @@ class Config(object):
 		# (or only some) inputs.
 		# This enables GUI to display which physical button was pressed to user.
 		"enable_sniffing" : False,
-		# Colors used by OSD
+		# Style and colors used by OSD
+		"osd_style": "Classic.gtkstyle.css",
 		"osd_colors": {
-			"background": "160c00",
-			"border": "00FF00",
-			"text": "00FF00",
-			"menuitem_border": "004000",
-			"menuitem_hilight": "000070",
-			"menuitem_hilight_text": "FFFFFF",
-			"menuitem_hilight_border": "00FF00",
-			"menuseparator": "109010",
+			"background": "101010",
+			"border": "101010",
+			"text": "16BF24",
+			"menuitem_border": "101010",
+			"menuitem_hilight": "202020",
+			"menuitem_hilight_text": "16FF26",
+			"menuitem_hilight_border": "16FF26",
+			"menuseparator": "2e3436",
 		},
 		# Colors used by on-screen keyboard
 		"osk_colors": {
-			'hilight' : '00688D',
-			'pressed' : '1A9485',
-			"button1" : "162082",
-			"button1_border" : "262b5e",
-			"button2" : "162d44",
-			"button2_border" : "27323e",
-			"text" : "ffffff"
+			'hilight' : '7A7A7A',
+			'pressed' : 'B0B0B0',
+			"button1" : "101010",
+			"button1_border" : "101010",
+			"button2" : "2e3436",
+			"button2_border" : "2e3436",
+			"text" : "16BF24"
 		},
 		# Colors used by gesture display. Unlike OSD and OSK, these are RGBA
 		"gesture_colors" : {
@@ -94,6 +104,8 @@ class Config(object):
 			"grid": "004000ff",
 			"line": "ffffff1a",
 		},
+		# TODO: Config for opacity
+		"windows_opacity": 0.95,
 		# See drivers/sc_dongle.py, read_serial method
 		"ignore_serials" : True,
 	}
@@ -212,8 +224,8 @@ class Config(object):
 		for k in self.values:
 			yield k
 	
-	def get(self, key):
-		return self.values[key]
+	def get(self, key, default=None):
+		return self.values.get(key, default)
 	
 	def set(self, key, value):
 		self.values[key] = value

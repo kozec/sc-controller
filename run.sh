@@ -1,13 +1,10 @@
 #!/bin/bash
+C_MODULES=(uinput hiddrv)
+C_VERSION_uinput=8
+C_VERSION_hiddrv=3
 
-# Ensure correct cwd
-cd "$(dirname "$0")"
-
-# Check for libuinput.so version
-UNPUT_MODULE_VERSION=7
-REPORTED_VERSION=$(PYTHONPATH="." python2 -c 'import os, ctypes; lib=ctypes.CDLL("./libuinput.so"); print lib.uinput_module_version()')
-if [ x"$UNPUT_MODULE_VERSION" != x"$REPORTED_VERSION" ] ; then
-	echo "libuinput.so is outdated or missing, building one"
+function rebuild_c_modules() {
+	echo "lib$1.so is outdated or missing, building one"
 	echo "Please wait, this should be done only once."
 	echo ""
 	
@@ -21,12 +18,27 @@ if [ x"$UNPUT_MODULE_VERSION" != x"$REPORTED_VERSION" ] ; then
 	python2 setup.py build || exit 1
 	echo ""
 	
-	if [ ! -e libuinput.so ] ; then
-		ln -s build/$LIB/libuinput.so libuinput.so || exit 1
-		echo Symlinked libuinput.so '->' build/$LIB/libuinput.so
-	fi
+	for cmod in ${C_MODULES[@]}; do
+		if [ ! -e lib${cmod}.so ] ; then
+			ln -s build/$LIB/lib${cmod}.so ./lib${cmod}.so || exit 1
+			echo Symlinked ./lib${cmod}.so '->' build/$LIB/lib${cmod}.so
+		fi
+	done
 	echo ""
-fi
+}
+
+
+# Ensure correct cwd
+cd "$(dirname "$0")"
+
+# Check if c modules are compiled and actual
+for cmod in ${C_MODULES[@]}; do
+	eval expected_version=\$C_VERSION_${cmod}
+	reported_version=$(PYTHONPATH="." python2 -c 'import os, ctypes; lib=ctypes.CDLL("./'lib${cmod}'.so"); print lib.'${cmod}'_module_version()')
+	if [ x"$reported_version" != x"$expected_version" ] ; then
+		rebuild_c_modules ${cmod}
+	fi
+done
 
 # Set PATH
 SCRIPTS="$(pwd)/scripts"

@@ -15,10 +15,10 @@ from scc.uinput import Keys, Axes, Rels
 from scc.lib import xwrappers as X
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
 from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
-from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
+from scc.constants import LEFT, RIGHT, CPAD, STICK, PITCH, YAW, ROLL
+from scc.constants import PARSER_CONSTANTS, ControllerFlags
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
-from scc.constants import PARSER_CONSTANTS
 from scc.constants import SCButtons
 from scc.aliases import ALL_BUTTONS as GAMEPAD_BUTTONS
 from math import sqrt, sin, cos, atan2, pi as PI
@@ -827,7 +827,7 @@ class MouseAction(WholeHapticAction, Action):
 	
 	
 	def axis(self, mapper, position, what):
-		self.change(mapper, position, 0)
+		self.change(mapper, position * MouseAbsAction.MOUSE_FACTOR, 0)
 		mapper.force_event.add(FE_STICK)
 	
 		
@@ -868,6 +868,9 @@ class MouseAction(WholeHapticAction, Action):
 		if what == STICK:
 			mapper.mouse_move(x * self.speed[0] * 0.01, y * self.speed[1] * 0.01)
 			mapper.force_event.add(FE_STICK)
+		elif what == RIGHT and mapper.controller_flags() & ControllerFlags.HAS_RSTICK:
+			mapper.mouse_move(x * self.speed[0] * 0.01, y * self.speed[1] * 0.01)
+			mapper.force_event.add(FE_PAD)
 		else:	# left or right pad
 			if mapper.is_touched(what):
 				if self._old_pos and mapper.was_touched(what):
@@ -895,7 +898,7 @@ class MouseAbsAction(Action):
 	or scroll wheel.
 	"""
 	COMMAND = "mouseabs"
-	MOUSE_FACTOR = 0.01	# Just random number to put default sensitivity into sane range
+	MOUSE_FACTOR = 0.005	# Just random number to put default sensitivity into sane range
 	
 	def __init__(self, axis = None):
 		Action.__init__(self, *strip_none(axis))
@@ -952,8 +955,8 @@ class MouseAbsAction(Action):
 	
 	
 	def whole(self, mapper, x, y, what):
-		dx = dx * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
-		dy = dy * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		dx = x * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		dy = y * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
 		mapper.mouse.moveEvent(dx, dy)
 
 
@@ -1200,7 +1203,10 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 	
 	GYROAXES = (0, 1, 2)
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
-		pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
+		if mapper.get_controller().flags & ControllerFlags.EUREL_GYROS:
+			pyr = [q1 / 10430.37, q2 / 10430.37, q3 / 10430.37]	# 2**15 / PI
+		else:
+			pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
 		for i in self.GYROAXES:
 			self.ir[i] = self.ir[i] or pyr[i]
 			pyr[i] = anglediff(self.ir[i], pyr[i]) * (2**15) * self.speed[2] * 2 / PI
@@ -2110,6 +2116,8 @@ class XYAction(WholeHapticAction, Action):
 	COMMAND = "XY"
 	PROFILE_KEYS = ("X", "Y")
 	PROFILE_KEY_PRIORITY = -10	# First possible, but not before MultiAction
+	STICK_REPEAT_INTERVAL = 0.01
+	STICK_REPEAT_MIN = 10
 	
 	def __init__(self, x=None, y=None):
 		Action.__init__(self, *strip_none(x, y))
@@ -2227,17 +2235,16 @@ class XYAction(WholeHapticAction, Action):
 			else:
 				self._old_pos = None
 		
-		if what in (LEFT, RIGHT):
+		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
+			self.x.axis(mapper, x, what)
+			self.y.axis(mapper, y, what)
+			mapper.force_event.add(FE_PAD)
+		elif what in (LEFT, RIGHT, CPAD):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
 		else:
 			self.x.axis(mapper, x, what)
 			self.y.axis(mapper, y, what)
-	
-	
-	def pad(self, mapper, x, y, what):
-		self.x.pad(mapper, sci.lpad_x, what)
-		self.y.pad(mapper, sci.lpad_y, what)
 	
 	
 	def describe(self, context):
@@ -2435,7 +2442,6 @@ class NoAction(Action):
 		return "NoAction"
 
 	__repr__ = __str__
-	
 
 
 def strip_none(*lst):

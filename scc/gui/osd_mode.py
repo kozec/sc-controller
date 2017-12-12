@@ -9,23 +9,28 @@ keyboard. This mapper emulates input events on it using GTK methods.
 Mouse movement (but not buttons) are passed to uinput as usuall.
 """
 from __future__ import unicode_literals
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
 
 from scc.gui.gdk_to_key import KEY_TO_GDK, KEY_TO_KEYCODE
+from scc.gui.daemon_manager import ControllerManager
 from scc.osd.slave_mapper import SlaveMapper
+from scc.constants import SCButtons
 from scc.uinput import Keys, Scans
 
-
-import logging, time
+import os, logging
 log = logging.getLogger("OSDModMapper")
 
 
 class OSDModeMapper(SlaveMapper):
-	def __init__(self, profile, keyboard="osd", mouse="osd"):
-		# 'keyboard' and 'mouse' strings are _not_ passed to UInput
-		# nor visible anywhere else when this class is used
-		SlaveMapper.__init__(self, profile, keyboard, mouse)
+	def __init__(self, app, profile):
+		SlaveMapper.__init__(self, profile, None, keyboard="osd", mouse="osd")
+		self.app = app
+		self.set_special_actions_handler(self)
 		self.target_window = None
+	
+	def on_sa_restart(self, *a):
+		""" restart / exit handler """
+		self.app.quit()
 	
 	
 	def set_target_window(self, w):
@@ -95,10 +100,10 @@ class OSDModeMouse(object):
 		tp = Gdk.EventType.BUTTON_PRESS if val else Gdk.EventType.BUTTON_RELEASE
 		event = Gdk.Event.new(tp)
 		event.button = int(key) - Keys.BTN_LEFT + 1
-		window, wx, wy = Gdk.Window.at_pointer()
+		window, event.x, event.y = Gdk.Window.at_pointer()
 		screen, x, y, mask = Gdk.Display.get_default().get_pointer()
 		event.x_root, event.y_root = x, y
-		event.x, event.y = x - wx, y - wy
+		
 		gtk_window = None
 		for w in Gtk.Window.list_toplevels():
 			if w.get_window():
@@ -120,3 +125,65 @@ class OSDModeMouse(object):
 		event.window = window
 		event.set_device(self.device)
 		Gtk.main_do_event(event)
+
+
+class OSDModeMappings(object):
+	
+	ICONS = {
+		'imgOsdmodeOK'    : SCButtons.A,
+		'imgOsdmodeClose' : SCButtons.B,
+		'imgOsdmodeExit'  : SCButtons.C,
+		'imgOsdmodeSave'  : SCButtons.Y,
+	}
+	
+	
+	def __init__(self, app, mapper, window):
+		self.app = app
+		self.mapper = mapper
+		self.window = window
+		self.parent = app.window
+		self.first_window = None
+		GLib.timeout_add(10, self.move_around)
+	
+	
+	def set_controller(self, c):
+		config = c.load_gui_config(self.app.imagepath or {})
+		for name in OSDModeMappings.ICONS:
+			w = self.app.builder.get_object(name)
+			icon, trash = c.get_button_icon(config, OSDModeMappings.ICONS[name])
+			w.set_from_file(icon)
+	
+	
+	def get_target_position(self):
+		pos = self.first_window.get_position()
+		size = self.first_window.get_geometry()
+		my_size = self.window.get_window().get_geometry()
+		tx = (pos.x + 0.5 * (size.width - my_size.width))
+		ty = pos.y + size.height + 100
+		return tx, ty
+	
+	
+	def show(self):
+		self.window.show()
+		self.window.get_window().set_override_redirect(True)
+	
+	
+	def move_around(self, *a):
+		if self.first_window is None:
+			active = self.window.get_window().get_screen().get_active_window()
+			if active is None:
+				return
+			else:
+				self.first_window = active
+		
+		tx, ty = self.get_target_position()
+		self.window.get_window().move(tx, ty)
+		return True
+
+
+def direction(x):
+	if x >= 1:
+		return 1
+	elif x <= -1:
+		return -1
+	return 0

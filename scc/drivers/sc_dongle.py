@@ -47,19 +47,20 @@ INPUT_FORMAT = [
 	('h',   'q4'),
 	('16x', 'ukn_07')]
 FORMATS, NAMES = zip(*INPUT_FORMAT)
+TUP_FORMAT = '<' + ''.join(FORMATS)
 ControllerInput = namedtuple('ControllerInput', ' '.join([ x for x in NAMES if not x.startswith('ukn_') ]))
 SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
-TUP_FORMAT = '<' + ''.join(FORMATS)
 
 
 log = logging.getLogger("SCDongle")
 
-def init(daemon):
+def init(daemon, config):
 	""" Registers hotplug callback for controller dongle """
 	def cb(device, handle):
 		return Dongle(device, handle, daemon)
 	
 	register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
+	return True
 
 
 class Dongle(USBDevice):
@@ -165,7 +166,9 @@ class SCController(Controller):
 		self._input_rotation_l = 0
 		self._input_rotation_r = 0
 		self._led_level = 10
+		# TODO: Is serial really used anywhere?
 		self._serial = "0000000000"
+		self._id = self._generate_id()
 		self._old_state = SCI_NULL
 		self._ccidx = ccidx
 	
@@ -201,7 +204,23 @@ class SCController(Controller):
 						idata.q1, idata.q2, idata.q3, idata.q4
 				)
 			
-			self.mapper.input(self, time.time(), old_state, idata)
+			self.mapper.input(self, old_state, idata)
+	
+	
+	def _generate_id(self):
+		"""
+		ID is generated as 'scX' where where 'X' starts as 0 and increases
+		as more controllers are connected.
+		
+		This is used only when reading serial numbers from device is disabled.
+		sc_by_cable generates ids in scBUS:PORT format.
+		"""
+		magic_number = 1
+		id = None
+		while id is None or id in self._driver.daemon.get_active_ids():
+			id = "sc%s" % (magic_number,)
+			magic_number += 1
+		return id
 	
 	
 	def read_serial(self):
@@ -239,7 +258,7 @@ class SCController(Controller):
 	
 	def on_serial_got(self):
 		log.debug("Got wireless SC with serial %s", self._serial)
-		self.set_id(str(self._serial), True)
+		self._id = str(self._serial)
 		self._driver.daemon.add_controller(self)
 	
 	
