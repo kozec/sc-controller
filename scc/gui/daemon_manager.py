@@ -402,7 +402,7 @@ class ControllerManager(GObject.GObject):
 	
 	
 	@staticmethod
-	def get_button_icon(config, button):
+	def get_button_icon(config, button, prefer_bw=False):
 		"""
 		For config returned by load_gui_config() and SCButton constant,
 		returns icon name assigned to that button in controller config or
@@ -413,7 +413,7 @@ class ControllerManager(GObject.GObject):
 		try:
 			name = config['gui']['buttons'][index]
 		except: pass
-		return find_button_image(name)
+		return find_button_image(name, prefer_bw=prefer_bw)
 	
 	
 	def get_profile(self):
