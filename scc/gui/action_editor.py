@@ -977,8 +977,8 @@ class ActionEditor(Editor):
 	def on_sclFFrequency_format_value(self, scale, value):
 		if value == 1:
 			# Special case
-			return "%0.2f HZ" % (1.0/value,)
-		return "%0.2fmHZ" % (100.0/value,)
+			return " %0.2fHz" % (1.0/value,)
+		return "%0.2fmHz" % (100.0/value,)
 	
 	
 	def set_input(self, id, action, mode=None):
