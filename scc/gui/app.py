@@ -156,7 +156,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		grEditor = self.builder.get_object('grEditor')
 		btC = self.builder.get_object('btC')
 		btCPAD = self.builder.get_object('btCPAD')
-		config = controller.load_gui_config(self.imagepath or {})
+		if controller:
+			config = controller.load_gui_config(self.imagepath or {})
+		else:
+			config = {}
 		config = self.background.use_config(config)
 		
 		def do_loading():
@@ -828,6 +831,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Special case, no controllers are connected, but one widget
 			# has to stay on screen
 			self.profile_switchers[0].set_controller(None)
+			self.load_gui_config_for_controller(None, first=True)
 		
 		self.controller_count = count
 	
