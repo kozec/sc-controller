@@ -840,6 +840,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		filename = os.path.join(get_profiles_path(), name + ".sccprofile")
 		self.current_file = Gio.File.new_for_path(filename)
 		self.save_profile(self.current_file, profile)
+		controller = self.profile_switchers[0].get_controller()
+		if controller:
+			controller.set_profile(filename)
+		else:
+			self.dm.set_profile(filename)
+		self.profile_switchers[0].set_profile(name, create=True)
 	
 	
 	def add_switcher(self, margin_left=30, margin_right=40, margin_bottom=2):
