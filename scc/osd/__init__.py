@@ -69,7 +69,7 @@ class OSDWindow(Gtk.Window):
 		for x in config['osd_colors'] : colors[x] = config['osd_colors'][x]
 		colors = OSDCssMagic(colors)
 		try:
-			css_file = os.path.join(get_share_path(), "osd_styles", config["osd_style"])
+			css_file = os.path.join(get_share_path(), "osd-styles", config["osd_style"])
 			css = file(css_file, "r").read()
 			if ((Gtk.get_major_version(), Gtk.get_minor_version()) > (3, 20)):
 				css += OSDWindow.CSS_3_20
@@ -85,7 +85,7 @@ class OSDWindow(Gtk.Window):
 			log.error("Retrying with default values")
 			
 			OSDWindow.css_provider = Gtk.CssProvider()
-			css_file = os.path.join(get_share_path(), "osd_styles", "Classic.gtkstyle.css")
+			css_file = os.path.join(get_share_path(), "osd-styles", "Classic.gtkstyle.css")
 			css = file(css_file, "r").read()
 			if ((Gtk.get_major_version(), Gtk.get_minor_version()) > (3, 20)):
 				css += OSDWindow.CSS_3_20
