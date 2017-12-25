@@ -94,11 +94,11 @@ class FeedbackEvent(ctypes.Structure):
 class UInput(object):
 	"""
 	UInput class permits to create a uinput device.
-
+	
 	See Gamepad, Mouse, Keyboard for examples
 	"""
-
-
+	
+	
 	def __init__(self, vendor, product, version, name, keys, axes, rels, keyboard=False, rumble=False):
 		self._k = keys
 		self.name = name
@@ -113,6 +113,11 @@ class UInput(object):
 			self._ff_events = (POINTER(FeedbackEvent) * MAX_FEEDBACK_EFFECTS)()
 			for i in xrange(MAX_FEEDBACK_EFFECTS):
 				self._ff_events[i].contents = FeedbackEvent()
+	
+	
+	def register_poll(self, poller, cb):
+		""" Not available on Windows """
+		pass
 	
 	
 	def keyEvent(self, key, val):
@@ -130,8 +135,8 @@ class UInput(object):
 		))
 		user32.SendInput(1, byref(x), sizeof(x))
 		print "SENT KEY", key
-
-
+	
+	
 	def axisEvent(self, axis, val):
 		"""
 		Generate a abs event (joystick/pad axes)

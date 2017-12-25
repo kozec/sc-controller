@@ -495,7 +495,7 @@ if HAVE_EVDEV:
 	
 def init(daemon, config):
 	if not HAVE_EVDEV:
-		log.warning("'evdev' package is missing. Evdev support is disabled.")
+		log.warning("Failed to enable Evdev driver: 'python-evdev' package is missing.")
 		return False
 	
 	_evdevdrv.set_daemon(daemon)

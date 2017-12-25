@@ -23,6 +23,7 @@ from scc.menu_data import MenuData
 from scc.profile import Profile
 from scc.actions import Action
 from scc.config import Config
+from scc.poller import Poller
 from scc import drivers
 
 import os, sys, pkgutil, signal, socket, select
@@ -40,13 +41,8 @@ class SCCDaemon(Daemon):
 		self.exiting = False
 		self.socket_file = socket_file
 		self.scheduler = Scheduler()
-		if os.name == "nt":
-			self.poller = None
-			self.mainloops = [ self.scheduler.run ]
-		else:
-			from scc.poller import Poller
-			self.poller = Poller()
-			self.mainloops = [ self.poller.poll, self.scheduler.run ]
+		self.poller = Poller()
+		self.mainloops = [ self.poller.poll, self.scheduler.run ]
 		self.xdisplay = None
 		self.sserver = None			# Socket instance
 		self.errors = []

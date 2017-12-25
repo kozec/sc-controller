@@ -181,6 +181,7 @@ class InputEvent(ctypes.Structure):
 		('value', c_int32)
 	]
 
+
 class FeedbackEvent(ctypes.Structure):
 	_fields_ = [
 		('in_use', c_bool),
@@ -264,6 +265,10 @@ class UInput(object):
 										 c_name)
 		if self._fd < 0:
 			raise CannotCreateUInputException("Failed to create uinput device. Error code: %s" % (self._fd,))
+
+
+	def register_poll(self, poller, cb):
+		poller.register(self.getDescriptor(), poller.POLLIN, cb)
 
 
 	def getDescriptor(self):

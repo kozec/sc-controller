@@ -8,16 +8,16 @@ register callbacks to be called when data is available in them.
 
 Callback is called as callback(fd, event) where event is one of select.POLL*
 """
-import select, logging
+import select, os, time, logging
 log = logging.getLogger("Poller")
 
 
 DO_NOTHING = lambda *a: False
 
 class Poller(object):
-	POLLIN = select.POLLIN
-	POLLOUT = select.POLLOUT
-	POLLPRI = select.POLLPRI
+	POLLIN  = 1 # select.POLLIN
+	POLLOUT = 4 # select.POLLOUT
+	POLLPRI = 2 # select.POLLPRI
 	
 	def __init__(self):
 		self._events = {}
@@ -25,6 +25,9 @@ class Poller(object):
 		self._pool_in = ()
 		self._pool_out = ()
 		self._pool_pri = ()
+		if os.name == "nt":
+			self._poll = self.poll
+			self.poll = self._poll_windows
 	
 	
 	def register(self, fd, events, callback):
@@ -56,3 +59,11 @@ class Poller(object):
 			self._callbacks.get(fd, DO_NOTHING)(fd, Poller.POLLOUT)
 		for fd in pri:
 			self._callbacks.get(fd, DO_NOTHING)(fd, Poller.POLLPRI)
+	
+	
+	def _poll_windows(self, timeout=0.01):
+		# Because windows can't handle polling for nothing
+		if len(self._pool_in + self._pool_out + self._pool_pri) == 0:
+			time.sleep(timeout)
+		else:
+			return self._poll(timeout)

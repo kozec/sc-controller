@@ -90,7 +90,7 @@ class Mapper(object):
 		ui = UInput(vendor=vendor, product=product, version=version,
 			name=name, keys=keys, axes=axes, rels=[], rumble=rumble)
 		if poller:
-			poller.register(ui.getDescriptor(), poller.POLLIN, self._rumble_ready)
+			ui.register_poll(poller, self._rumble_ready)
 		return ui
 	
 	
