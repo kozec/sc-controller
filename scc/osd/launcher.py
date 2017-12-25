@@ -11,11 +11,9 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gio, Gdk, GdkX11, GdkPixbuf, Pango
-from scc.tools import point_in_gtkrect, find_menu, find_icon
-from scc.tools import circle_to_square, clamp
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
 from scc.constants import LEFT, RIGHT, SAME, STICK
-from scc.menu_data import MenuData, MenuItem
+from scc.tools import point_in_gtkrect, circle_to_square, clamp
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
 from scc.paths import get_share_path

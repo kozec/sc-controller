@@ -20,19 +20,20 @@ TIMER_INTERVAL = 0.01
 
 log = logging.getLogger("SCCable")
 
-def init(daemon):
+def init(daemon, config):
 	""" Registers hotplug callback for controller dongle """
 	def cb(device, handle):
 		return SCByCable(device, handle, daemon)
 	
 	register_hotplug_device(cb, VENDOR_ID, PRODUCT_ID)
+	return True
 
 
 class SCByCable(USBDevice, SCController):
 	def __init__(self, device, handle, daemon):
+		self.daemon = daemon
 		USBDevice.__init__(self, device, handle)
 		SCController.__init__(self, self, CONTROLIDX, ENDPOINT)
-		self.daemon = daemon
 		self._ready = False
 		self._last_tup = None
 		daemon.add_mainloop(self._timer)
@@ -62,7 +63,7 @@ class SCByCable(USBDevice, SCController):
 	
 	def on_serial_got(self):	
 		log.debug("Got wired SC with serial %s", self._serial)
-		self.set_id("sc%s" % (self._serial,), True)
+		self._id = "sc%s" % (self._serial,)
 		self.set_input_interrupt(ENDPOINT, 64, self._wait_input)	
 	
 	
@@ -83,7 +84,6 @@ class SCByCable(USBDevice, SCController):
 				self.input(self._last_tup)
 				self._last_tup = None
 			else:
-				m.run_scheduled(time.time())
 				m.generate_events()
 				m.generate_feedback()
 			self.flush()

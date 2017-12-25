@@ -225,6 +225,7 @@ for x in xrange(ord('a'), ord('z')+1):
 	GDK_TO_KEY[getattr(Gdk, "KEY_" + chr(x))] = names["KEY_" + chr(x).upper()]
 
 KEY_TO_GDK = { GDK_TO_KEY[a] : a for a in GDK_TO_KEY }
+KEY_TO_KEYCODE = { KEYCODE_TO_KEY[a] : a for a in KEYCODE_TO_KEY }
 
 def keyevent_to_key(event):
 	if event.hardware_keycode in KEYCODE_TO_KEY:

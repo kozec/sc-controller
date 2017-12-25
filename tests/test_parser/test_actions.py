@@ -197,11 +197,19 @@ class TestActions(object):
 		Tests if DPadAction can be converted to string and
 		parsed back to same action.
 		"""
+		# Default diagonal rage
 		assert _parses_as_itself(DPadAction(
 			ButtonAction(Keys.BTN_LEFT),
 			ButtonAction(Keys.BTN_RIGHT),
 			ButtonAction(Keys.BTN_MIDDLE),
 			ButtonAction(Keys.KEY_A)
+		))
+		# Modified diagonal rage
+		assert _parses_as_itself(DPadAction(33,
+			ButtonAction(Keys.BTN_RIGHT),
+			ButtonAction(Keys.KEY_A),
+			ButtonAction(Keys.BTN_LEFT),
+			ButtonAction(Keys.BTN_MIDDLE),
 		))
 	
 	
@@ -229,6 +237,7 @@ class TestActions(object):
 		Tests if DPad8Action can be converted to string and
 		parsed back to same action.
 		"""
+		# Default diagonal rage
 		assert _parses_as_itself(DPad8Action(
 			ButtonAction(Keys.BTN_LEFT),
 			ButtonAction(Keys.BTN_RIGHT),
@@ -238,6 +247,17 @@ class TestActions(object):
 			ButtonAction(Keys.KEY_C),
 			ButtonAction(Keys.KEY_D),
 			ButtonAction(Keys.KEY_E)
+		))
+		# Modified diagonal rage
+		assert _parses_as_itself(DPad8Action(61,
+			ButtonAction(Keys.BTN_RIGHT),
+			ButtonAction(Keys.KEY_C),
+			ButtonAction(Keys.KEY_A),
+			ButtonAction(Keys.BTN_LEFT),
+			ButtonAction(Keys.KEY_E),
+			ButtonAction(Keys.KEY_B),
+			ButtonAction(Keys.KEY_D),
+			ButtonAction(Keys.BTN_MIDDLE),
 		))
 	
 	

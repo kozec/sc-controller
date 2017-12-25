@@ -9,7 +9,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import MenuAction, HorizontalMenuAction
 from scc.special_actions import RadialMenuAction, GridMenuAction
-from scc.special_actions import PositionModifier
+from scc.special_actions import QuickMenuAction, PositionModifier
 from scc.constants import SCButtons, SAME, STICK, DEFAULT
 from scc.actions import NoAction
 from scc.tools import nameof
@@ -62,6 +62,8 @@ class MenuActionCofC(UserDataManager):
 		"""
 		if isinstance(action, GridMenuAction):
 			return "gridmenu"
+		elif isinstance(action, QuickMenuAction):
+			return "quickmenu"
 		elif isinstance(action, HorizontalMenuAction):
 			return "hmenu"
 		elif isinstance(action, RadialMenuAction):
@@ -84,12 +86,10 @@ class MenuActionCofC(UserDataManager):
 		cbm = self.builder.get_object("cbMenuType")
 		self.set_cb(cbm, self.menu_class_to_key(action), 1)
 		
-		if self.builder.get_object("rvMaxSize"):
-			rvMaxSize = self.builder.get_object("rvMaxSize")
-			spMaxSize = self.builder.get_object("spMaxSize")
-			visible = isinstance(action, GridMenuAction)
-			max_size = spMaxSize.get_adjustment().set_value(action.max_size)
-			rvMaxSize.set_reveal_child(visible)
+		if self.builder.get_object("rvMenuSize"):
+			spMenuSize = self.builder.get_object("spMenuSize")
+			if self.update_size_display(action):
+				size = spMenuSize.get_adjustment().set_value(action.size)
 		
 		cbControlWith = self.builder.get_object("cbControlWith")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
@@ -128,6 +128,8 @@ class MenuActionCofC(UserDataManager):
 				if cbMenuAutoCancel:
 					cbMenuAutoCancel.set_active(False)
 				self.set_cb(cbCancelWith, nameof(caw), 1)
+		
+		self.on_cbMenus_changed()
 	
 	
 	def get_default_confirm(self):
@@ -248,15 +250,30 @@ class MenuActionCofC(UserDataManager):
 		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
 		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
+		lblControlWith = self.builder.get_object("lblControlWith")
+		cbControlWith = self.builder.get_object("cbControlWith")
 		lblConfirmWith = self.builder.get_object("lblConfirmWith")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		lblCancelWith = self.builder.get_object("lblCancelWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
+		
+		cbm = self.builder.get_object("cbMenuType")
+		menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+		
+		if cbControlWith:
+			sensitive = True
+			if menu_type == "quickmenu":
+				sensitive = False
+			lblControlWith.set_sensitive(sensitive)
+			cbControlWith.set_sensitive(sensitive)
 		
 		if cbConfirmWith:
 			sensitive = True
 			if cbMenuAutoConfirm and cbMenuAutoConfirm.get_active():
 				sensitive = False
 			if cbMenuConfirmWithClick and cbMenuConfirmWithClick.get_active():
+				sensitive = False
+			if menu_type == "quickmenu":
 				sensitive = False
 			lblConfirmWith.set_sensitive(sensitive)
 			cbConfirmWith.set_sensitive(sensitive)
@@ -265,7 +282,16 @@ class MenuActionCofC(UserDataManager):
 			sensitive = True
 			if cbMenuAutoCancel and cbMenuAutoCancel.get_active():
 				sensitive = False
+			if menu_type == "quickmenu":
+				sensitive = False
+			lblCancelWith.set_sensitive(sensitive)
 			cbCancelWith.set_sensitive(sensitive)
+		
+		if cbMenuAutoConfirm:
+			sensitive = True
+			if menu_type == "quickmenu":
+				sensitive = False
+			cbMenuAutoConfirm.set_sensitive(sensitive)
 		
 		name = self.get_selected_menu()
 		if name == "":
@@ -303,30 +329,48 @@ class MenuActionCofC(UserDataManager):
 			params += [ self.get_control_with(), cow, caw ]
 			
 			
-			cbm = self.builder.get_object("cbMenuType")
 			# Hide / apply and display 'Items per row' selector if it exists in UI
-			if self.builder.get_object("rvMaxSize"):
-				rvMaxSize = self.builder.get_object("rvMaxSize")
-				spMaxSize = self.builder.get_object("spMaxSize")
-				visible = cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu"
-				rvMaxSize.set_reveal_child(visible)
-				if visible:
-					max_size = int(spMaxSize.get_adjustment().get_value())
-					if max_size > 0:
-						# max_size is 2nd parameter
-						params += [ False, max_size ]
+			if self.builder.get_object("rvMenuSize"):
+				spMenuSize = self.builder.get_object("spMenuSize")
+				menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+				if menu_type == "gridmenu":
+					self.update_size_display(GridMenuAction("dummy"))
+					size = int(spMenuSize.get_adjustment().get_value())
+					if size > 0:
+						# size is 2nd parameter
+						params += [ False, size ]
+				elif menu_type == "radialmenu":
+					self.update_size_display(RadialMenuAction("dummy"))
+					size = int(spMenuSize.get_adjustment().get_value())
+					if size > 0 and size < 100:
+						# Both 0 and 100 means default here
+						# size is 2nd parameter
+						params += [ False, size ]
+				elif menu_type == "hmenu":
+					self.update_size_display(HorizontalMenuAction("dummy"))
+					size = int(spMenuSize.get_adjustment().get_value())
+					if size > 1:
+						# Size 0 and 1 means default here
+						# size is 2nd parameter
+						params += [ False, size ]
+				else:
+					# , "radialmenu"):
+					self.update_size_display(None)
 			
 			# Grab menu type and choose apropriate action
 			action = NoAction()
-			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
+			if cbm and menu_type == "gridmenu":
 				# Grid menu
 				action = GridMenuAction(*params)
-			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "radialmenu":
+			elif cbm and menu_type == "radialmenu":
 				# Circular menu
 				action = RadialMenuAction(*params)
-			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "hmenu":
+			elif cbm and menu_type == "hmenu":
 				# Horizontal menu
 				action = HorizontalMenuAction(*params)
+			elif cbm and menu_type == "quickmenu":
+				# Horizontal menu
+				action = QuickMenuAction(name)
 			else:
 				# Normal menu
 				action = MenuAction(*params)
@@ -345,6 +389,32 @@ class MenuActionCofC(UserDataManager):
 			self.editor.set_action(action)
 	
 	
+	def update_size_display(self, action):
+		"""
+		Displays or hides menu size area and upadates text displayed in it.
+		Returns True if action is menuaction where changing size makes sense
+		"""
+		rvMenuSize = self.builder.get_object("rvMenuSize")
+		lblMenuSize = self.builder.get_object("lblMenuSize")
+		spMenuSize = self.builder.get_object("spMenuSize")
+		sclMenuSize = self.builder.get_object("sclMenuSize")
+		if isinstance(action, GridMenuAction):
+			spMenuSize.set_visible(True)
+			sclMenuSize.set_visible(False)
+			lblMenuSize.set_text(_("Items per row"))
+			rvMenuSize.set_reveal_child(True)
+			return True
+		elif isinstance(action, (RadialMenuAction, HorizontalMenuAction)):
+			spMenuSize.set_visible(False)
+			sclMenuSize.set_visible(True)
+			lblMenuSize.set_text(_("Size"))
+			rvMenuSize.set_reveal_child(True)
+			return True
+		else:
+			rvMenuSize.set_reveal_child(False)
+			return False	
+	
+	
 	def get_control_with(self):
 		""" Returns value of "Control With" combo or STICK if there is none """
 		cbControlWith = self.builder.get_object("cbControlWith")
@@ -353,10 +423,24 @@ class MenuActionCofC(UserDataManager):
 		return STICK
 	
 	
-	def on_spMaxSize_format_value(self, spinner):
+	def on_spMenuSize_format_value(self, spinner):
 		val = int(spinner.get_adjustment().get_value())
 		if val < 1:
 			spinner.get_buffer().set_text(_("auto"), -1)
 		else:
 			spinner.get_buffer().set_text(str(val), -1)
 		return True
+	
+	
+	def on_sclMenuSize_format_value(self, scale, val):
+		cbm = self.builder.get_object("cbMenuType")
+		menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+		if menu_type == "radialmenu":
+			if val < 1:
+				return _("default")
+			return  "%s%%" % (int(val),)
+		else: # if menu_type == "hmenu"
+			val = int(val)
+			if val < 2:
+				return _("default")
+			return str(int(val))

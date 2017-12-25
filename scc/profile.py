@@ -6,7 +6,7 @@ Handles mapping profile stored in json file
 """
 from __future__ import unicode_literals
 
-from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
+from scc.constants import LEFT, RIGHT, CPAD, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
 from scc.special_actions import MenuAction
 from scc.modifiers import HoldModifier
@@ -20,11 +20,14 @@ log = logging.getLogger("profile")
 
 
 class Profile(object):
-	VERSION = 1.2	# Current profile version. When loading profile file
+	VERSION = 1.3	# Current profile version. When loading profile file
 					# with version lower than this, auto-conversion may happen
 	
 	LEFT  = LEFT
 	RIGHT = RIGHT
+	LPAD = SCButtons.LPAD.name
+	RPAD = SCButtons.RPAD.name
+	CPAD = CPAD
 	WHOLE = WHOLE
 	STICK = STICK
 	GYRO  = GYRO
@@ -63,6 +66,7 @@ class Profile(object):
 			'trigger_right'	: self.triggers[Profile.RIGHT],
 			"pad_left"		: self.pads[Profile.LEFT],
 			"pad_right"		: self.pads[Profile.RIGHT],
+			"cpad"			: self.pads[Profile.CPAD],
 			"menus"			: { id : self.menus[id].encode() for id in self.menus },
 			"is_template"	: self.is_template,
 			"version"		: Profile.VERSION,
@@ -115,6 +119,11 @@ class Profile(object):
 		self.buttons = {}
 		for x in SCButtons:
 			self.buttons[x] = self.parser.from_json_data(data["buttons"], x.name)
+		# Pressing stick is interpreted as STICKPRESS button,
+		# formely called just STICK
+		if "STICK" in data["buttons"] and "STICKPRESS" not in data["buttons"]:
+			self.buttons[SCButtons.STICKPRESS] = self.parser.from_json_data(
+					data["buttons"], "STICK")
 		
 		# Stick & gyro
 		self.stick = self.parser.from_json_data(data, "stick")
@@ -131,6 +140,7 @@ class Profile(object):
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "left_pad"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "right_pad"),
+				Profile.CPAD	: NoAction()
 			}
 		else:
 			# New format
@@ -139,11 +149,12 @@ class Profile(object):
 				Profile.LEFT	: self.parser.from_json_data(data, "trigger_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "trigger_right"),
 			}
-		
+			
 			# Pads
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "pad_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "pad_right"),
+				Profile.CPAD	: self.parser.from_json_data(data, "cpad"),
 			}
 		
 		# Menus
@@ -173,7 +184,8 @@ class Profile(object):
 		self.stick = NoAction()
 		self.is_template = False
 		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
-		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
+		self.pads = { Profile.LEFT : NoAction(),
+				Profile.RIGHT : NoAction(), Profile.CPAD : NoAction() }
 		self.gyro = NoAction()
 	
 	
@@ -301,7 +313,9 @@ class Profile(object):
 						log.info("Converted %s to %s",
 							self.triggers[p].to_string(), n.to_string())
 						self.triggers[p] = n
-
+		if from_version < 1.3:
+			# Action format completly changed in v0.4, but profile foramt is same.
+			pass
 
 class Encoder(JSONEncoder):
 	def default(self, obj):

@@ -7,7 +7,7 @@ Display menu that user can navigate through and prints chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, GLib, Gdk, GdkX11, GdkPixbuf
+from gi.repository import Gtk, GLib, Gio, Gdk, GdkX11, GdkPixbuf
 from scc.tools import point_in_gtkrect, find_menu, find_icon
 from scc.tools import circle_to_square, clamp
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
@@ -39,6 +39,7 @@ class Menu(OSDWindow):
 	"""
 	SUBMENU_OFFSET = 50
 	PREFER_BW_ICONS = True
+	
 	
 	def __init__(self, cls="osd-menu"):
 		OSDWindow.__init__(self, cls)
@@ -141,8 +142,8 @@ class Menu(OSDWindow):
 			help="cancel menu with button release instead of button press")
 		self.argparser.add_argument('--use-cursor', '-u', action='store_true',
 			help="display and use cursor")
-		self.argparser.add_argument('--max-size', type=int,
-			help="sets maximal width or height of menu")
+		self.argparser.add_argument('--size', type=int,
+			help="sets prefered width or height")
 		self.argparser.add_argument('--feedback-amplitude', type=int,
 			help="enables and sets power of feedback effect generated when active menu option is changed")
 		self.argparser.add_argument('--from-profile', '-p', type=str,
@@ -157,11 +158,21 @@ class Menu(OSDWindow):
 			help="Menu items")
 	
 	
-	def parse_argumets(self, argv):
-		if not OSDWindow.parse_argumets(self, argv):
-			return False
-		if not self.config:
-			self.config = Config()
+	@staticmethod
+	def _get_on_screen_position(w):
+		a = w.get_allocation()
+		parent = w.get_parent()
+		if parent:
+			if isinstance(parent, Menu) and parent.get_window() is not None:
+				x, y = parent.get_window().get_position()
+			else:
+				x, y = Menu._get_on_screen_position(parent)
+			return a.x + x, a.y + y
+		else:
+			return a.x, a.y
+	
+	
+	def parse_menu(self):
 		if self.args.from_profile:
 			try:
 				self._menuid = self.args.items[0]
@@ -186,12 +197,22 @@ class Menu(OSDWindow):
 			except ValueError:
 				print >>sys.stderr, '%s: error: invalid number of arguments' % (sys.argv[0])
 				return False
+		return True
+	
+	
+	def parse_argumets(self, argv):
+		if not OSDWindow.parse_argumets(self, argv):
+			return False
+		if not self.parse_menu():
+			return False
+		if not self.config:
+			self.config = Config()
 		
 		# Parse simpler arguments
 		self._control_with = self.args.control_with
 		self._confirm_with = self.args.confirm_with
 		self._cancel_with = self.args.cancel_with
-		self._max_size = self.args.max_size
+		self._size = self.args.size
 		
 		if self.args.use_cursor:
 			self.enable_cursor()
@@ -270,7 +291,18 @@ class Menu(OSDWindow):
 				widget.set_name("osd-menu-dummy")
 			else:
 				widget.set_name("osd-menu-item")
-			icon_file, has_colors = find_icon(item.icon, self.PREFER_BW_ICONS)
+			
+			if isinstance(item.icon, Gio.FileIcon):
+				icon_file = item.icon.get_file().get_path()
+				has_colors = True
+			elif isinstance(item.icon, Gio.ThemedIcon):
+				icon = Gtk.IconTheme.get_default().choose_icon(
+					item.icon.get_names(), 64, 0)
+				icon_file = icon.get_filename() if icon else None
+				has_colors = True
+			else:
+				icon_file, has_colors = find_icon(item.icon, self.PREFER_BW_ICONS)
+			
 			if icon_file:
 				icon = MenuIcon(icon_file, has_colors)
 				label = widget.get_children()[0]
@@ -295,8 +327,24 @@ class Menu(OSDWindow):
 			self._selected = self.items[index]
 			self._selected.widget.set_name(
 					self._selected.widget.get_name() + "-selected")
+			GLib.timeout_add(2, self._check_on_screen_position)
 			return True
 		return False
+	
+	
+	def _check_on_screen_position(self):
+		x, y = Menu._get_on_screen_position(self._selected.widget)
+		screen_height = self.get_window().get_screen().get_height()
+		if y < 50:
+			wx, wy = self.get_window().get_position()
+			wy += 5
+			self.get_window().move(wx, wy)
+			GLib.timeout_add(2, self._check_on_screen_position)
+		if y > screen_height - 100:
+			wx, wy = self.get_window().get_position()
+			wy -= 5
+			self.get_window().move(wx, wy)
+			GLib.timeout_add(2, self._check_on_screen_position)
 	
 	
 	def _connect_handlers(self):
@@ -330,12 +378,8 @@ class Menu(OSDWindow):
 	
 	
 	def on_daemon_connected(self, *a):
-		def success(*a):
-			log.error("Sucessfully locked input")
-		
 		if not self.config:
 			self.config = Config()
-		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
 		self.controller = self.choose_controller(self.daemon)
 		if self.controller is None or not self.controller.is_connected():
 			# There is no controller connected to daemon
@@ -343,6 +387,13 @@ class Menu(OSDWindow):
 			return
 		
 		self._eh_ids += [ (self.controller, self.controller.connect('event', self.on_event)) ]
+		self.lock_inputs()
+	
+	
+	def lock_inputs(self):
+		def success(*a):
+			log.error("Sucessfully locked input")
+		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
 		self.controller.lock(success, self.on_failed_to_lock, *locks)
 	
 	
@@ -382,6 +433,7 @@ class Menu(OSDWindow):
 	
 	
 	def on_submenu_closed(self, *a):
+		self.set_name("osd-menu")
 		if self._submenu.get_exit_code() in (0, -2):
 			self._menuid = self._submenu._menuid
 			self._selected = self._submenu._selected
@@ -389,7 +441,7 @@ class Menu(OSDWindow):
 		self._submenu = None
 	
 	
-	def show_submenu(self, trash, trash2, menuitem):
+	def show_submenu(self, trash, trash2, trash3, menuitem):
 		""" Called when user chooses menu item pointing to submenu """
 		filename = find_menu(menuitem.filename)
 		if filename:
@@ -409,8 +461,10 @@ class Menu(OSDWindow):
 			])
 			self._submenu.set_is_submenu()
 			self._submenu.use_daemon(self.daemon)
+			self._submenu.controller = self.controller
 			self._submenu.connect('destroy', self.on_submenu_closed)
 			self._submenu.show()
+			self.set_name("osd-menu-inactive")
 	
 	
 	def _control_equals_cancel(self, daemon, x, y):
@@ -468,13 +522,13 @@ class Menu(OSDWindow):
 		elif what == self._confirm_with:
 			if data[0] == 0:	# Button released
 				if self._selected and self._selected.callback:
-					self._selected.callback(self, self.daemon, self._selected)
+					self._selected.callback(self, self.daemon, self.controller, self._selected)
 				elif self._selected:
 					self.quit(0)
 				else:
 					self.quit(-1)
-
-
+	
+	
 class MenuIcon(Gtk.DrawingArea):
 	""" Auti-sized, auto-recolored icon for menus """
 	

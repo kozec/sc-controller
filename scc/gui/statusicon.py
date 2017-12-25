@@ -15,7 +15,7 @@ from gi.repository import GObject
 from gi.repository import GLib
 from gi.repository import Gtk
 
-from scc.gui.dwsnc import IS_UNITY
+from scc.gui.dwsnc import IS_UNITY, IS_GNOME
 from scc.tools import _ # gettext function
 
 log = logging.getLogger("StatusIcon")
@@ -120,6 +120,10 @@ class StatusIcon(GObject.GObject):
 		self.__hidden = False
 		self._set_visible(self.__visible)
 	
+	def is_clickable(self):
+		""" Basically, returns False is appindicator is used """
+		return True
+	
 	def _is_forced(self):
 		return self.__force
 	
@@ -199,6 +203,9 @@ class StatusIconGTK3(StatusIcon):
 			if IS_UNITY:
 				# Unity fakes SysTray support but actually hides all icons...
 				raise NotImplementedError
+			if IS_GNOME:
+				# Gnome got broken as well
+				raise NotImplementedError
 		
 		self._tray = Gtk.StatusIcon()
 		
@@ -231,7 +238,7 @@ class StatusIconGTK3(StatusIcon):
 		
 		# An invisible tray icon will never be embedded but it also should not be replaced
 		# by a fallback icon
-		is_embedded = self._tray.is_embedded() or not self._tray.get_visible() or IS_CINNAMON
+		is_embedded = self._tray.is_embedded() or not self._tray.get_visible()
 		if is_embedded != self.get_property("active"):
 			self.set_property("active", is_embedded)
 	
@@ -261,6 +268,7 @@ class StatusIconAppIndicator(StatusIconDBus):
 			self._status_active  = appindicator.IndicatorStatus.ACTIVE
 			self._status_passive = appindicator.IndicatorStatus.PASSIVE
 		except ImportError:
+			log.warning("Failed to import AppIndicator3")
 			raise NotImplementedError
 		
 		category = appindicator.IndicatorCategory.APPLICATION_STATUS
@@ -274,6 +282,9 @@ class StatusIconAppIndicator(StatusIconDBus):
 		
 		self._tray.set_status(self._status_active if active else self._status_passive)
 	
+	def is_clickable(self):
+		return False
+	
 	def destroy(self):
 		self.hide()
 		self._tray = None
@@ -285,6 +296,7 @@ class StatusIconAppIndicator(StatusIconDBus):
 
 
 class StatusIconProxy(StatusIcon):
+	
 	def __init__(self, *args, **kwargs):
 		StatusIcon.__init__(self, *args, **kwargs)
 		
@@ -332,10 +344,7 @@ class StatusIconProxy(StatusIcon):
 		self.set_property("active", active)
 	
 	def _load_fallback(self):
-		if IS_UNITY:
-			status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
-		else:
-			status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
+		status_icon_backends = [StatusIconAppIndicator, StatusIconDummy]
 		
 		if not self._status_fb:
 			for StatusIconBackend in status_icon_backends:
@@ -355,6 +364,13 @@ class StatusIconProxy(StatusIcon):
 		
 		# Update fallback icon
 		self.set(self._icon, self._text)
+	
+	def is_clickable(self):
+		if self._status_gtk:
+			return self._status_gtk.is_clickable()
+		if self._status_fb:
+			return self._status_fb.is_clickable()
+		return False
 	
 	def set(self, icon=None, text=None):
 		self._icon = icon
@@ -385,10 +401,10 @@ class StatusIconProxy(StatusIcon):
 
 def get_status_icon(*args, **kwargs):
 	# Try selecting backend based on environment variable
-	if "SYNCTHING_STATUS_BACKEND" in os.environ:
+	if "STATUS_BACKEND" in os.environ:
 		kwargs["force"] = True
 		
-		status_icon_backend_name = "StatusIcon%s" % (os.environ.get("SYNCTHING_STATUS_BACKEND"))
+		status_icon_backend_name = "StatusIcon%s" % (os.environ.get("STATUS_BACKEND"))
 		if status_icon_backend_name in globals():
 			try:
 				status_icon = globals()[status_icon_backend_name](*args, **kwargs)

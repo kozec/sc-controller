@@ -22,14 +22,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import os, imp, ctypes, time
+import os, ctypes, time
 from ctypes import Structure, POINTER, c_bool, c_int16, c_uint16, c_int32, byref
 from math import pi, copysign, sqrt
 from scc.lib.libusb1 import timeval
+from scc.tools import find_library
 from scc.cheader import defines
 from scc.lib import IntEnum
 
-UNPUT_MODULE_VERSION = 6
+UNPUT_MODULE_VERSION = 9
 
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):
@@ -214,30 +215,7 @@ class UInput(object):
 
 		self._r = rels
 		
-		base_path = os.path.dirname(__file__)
-		# Search for libuinput.so
-		lib, search_paths = None, []
-		libname = "libuinput"
-		so_extensions = [ ext for ext, _, typ in imp.get_suffixes()
-				if typ == imp.C_EXTENSION ]
-		for extension in so_extensions:
-			search_paths += [
-				os.path.abspath(os.path.normpath(
-					os.path.join( base_path, '..', libname + extension ))),
-				os.path.abspath(os.path.normpath(
-					os.path.join( base_path, '../..', libname + extension )))
-				]
-		for path in search_paths:
-			if os.path.exists(path):
-				lib = path
-				break
-		
-		if not lib:
-			raise OSError('Cant find libuinput. searched at:\n {}'.format(
-				'\n'.join(search_paths)
-			)
-		)
-		self._lib = ctypes.CDLL(lib)
+		self._lib = find_library("libuinput")
 		self._ff_events = None
 		if rumble:
 			self._ff_events = (POINTER(FeedbackEvent) * MAX_FEEDBACK_EFFECTS)()
@@ -439,13 +417,20 @@ class Mouse(UInput):
 										  Rels.REL_Y,
 										  Rels.REL_WHEEL,
 										  Rels.REL_HWHEEL])
-		self._dx = 0.0
-		self._dy = 0.0
 		self.updateParams()
+		self.updateScrollParams()
+		self.reset()
 
+	def reset(self):
+		"""
+		Resets internal counters, especially one used for wheel.
+		Fixes scroll wheel feedback desynchronisation, as reported
+		in https://github.com/kozec/sc-controller/issues/222
+		"""
 		self._scr_dx = 0.0
 		self._scr_dy = 0.0
-		self.updateScrollParams()
+		self._dx = 0.0
+		self._dy = 0.0
 
 	def updateParams(self,
 					 xscale=DEFAULT_XSCALE,
@@ -480,7 +465,6 @@ class Mouse(UInput):
 		self._scr_xscale = xscale
 		self._scr_yscale = yscale
 
-
 	def moveEvent(self, dx=0, dy=0):
 		"""
 		Generate move events from parametters and displacement
@@ -509,7 +493,6 @@ class Mouse(UInput):
 
 		@param int dx		   delta movement from last call on x axis
 		@param int dy		   delta movement from last call on y axis
-		@param bool free		set to true for free ball move
 
 		@return float		   absolute distance moved this tick
 
@@ -610,6 +593,7 @@ class Dummy(object):
 	scrollEvent = keyEvent
 	pressEvent = keyEvent
 	releaseEvent = keyEvent
+	reset = keyEvent
 	
 	def keyManaged(self, ev):
 		return False

@@ -7,7 +7,7 @@ Auto-generated menus with stuff like list of all available profiles...
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gdk, GdkX11
+from gi.repository import Gdk, Gio, GdkX11
 from scc.menu_data import MenuGenerator, MenuItem, MENU_GENERATORS
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.tools import find_profile
@@ -23,8 +23,8 @@ class ProfileListMenuGenerator(MenuGenerator):
 	GENERATOR_NAME = "profiles"
 	
 	@staticmethod
-	def callback(menu, daemon, menuitem):
-		daemon.set_profile(menuitem.filename)
+	def callback(menu, daemon, controller, menuitem):
+		controller.set_profile(menuitem.filename)
 		menu.hide()
 		def on_response(*a):
 			menu.quit(-2)
@@ -63,14 +63,14 @@ class RecentListMenuGenerator(MenuGenerator):
 	
 	def generate(self, menuhandler):
 		return _("[ %s Recent Profiles ]") % (self.rows,)
-
+	
 	
 	def encode(self):
 		return { "generator" : self.GENERATOR_NAME, "rows" : self.rows }
 	
 	
-	def callback(self, menu, daemon, menuitem):
-		daemon.set_profile(menuitem.filename)
+	def callback(self, menu, daemon, controller, menuitem):
+		controller.set_profile(menuitem.filename)
 		menu.hide()
 		def on_response(*a):
 			menu.quit(-2)
@@ -106,7 +106,7 @@ class WindowListMenuGenerator(MenuGenerator):
 	
 	
 	@staticmethod
-	def callback(menu, daemon, menuitem):
+	def callback(menu, daemon, controller, menuitem):
 		try:
 			xid = int(menuitem.id)
 			display = Gdk.Display.get_default()
@@ -133,6 +133,45 @@ class WindowListMenuGenerator(MenuGenerator):
 				menuitem.callback = WindowListMenuGenerator.callback
 				rv.append(menuitem)
 		return rv
+
+
+class GameListMenuGenerator(MenuGenerator):
+	"""
+	Generates list of applications known to XDG menu
+	and belonging to 'Game' category
+	"""
+	GENERATOR_NAME = "games"
+	MAX_LENGHT = 50
+	
+	_games = None		# Static list of know games
+	
+	def generate(self, menuhandler):
+		return _("[ Games ]")
+
+	
+	def encode(self):
+		return { "generator" : self.GENERATOR_NAME }
+	
+	
+	@staticmethod
+	def callback(menu, daemon, controller, menuitem):
+		menuitem._desktop_file.launch()
+		menu.quit(-2)
+	
+	
+	def generate(self, menuhandler):
+		if GameListMenuGenerator._games is None:
+			GameListMenuGenerator._games = []
+			id = 0
+			for x in Gio.AppInfo.get_all():
+				if x.get_categories():
+					if "Game" in x.get_categories().split(";"):
+						menuitem = MenuItem(str(id), x.get_display_name(),
+							icon = x.get_icon())
+						menuitem.callback = GameListMenuGenerator.callback
+						menuitem._desktop_file = x
+						GameListMenuGenerator._games.append(menuitem)
+		return GameListMenuGenerator._games
 
 
 # Add classes to MENU_GENERATORS dict

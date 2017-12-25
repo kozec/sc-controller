@@ -256,7 +256,7 @@
                           <object class="GtkMenuItem" id="mnuAddItem">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add Action</property>
+                            <property name="label" translatable="yes">Add _Action</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_btAddItem_clicked" swapped="no"/>
                           </object>
@@ -265,7 +265,7 @@
                           <object class="GtkMenuItem" id="mnuAddSeparator">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add Separator</property>
+                            <property name="label" translatable="yes">Add SSeparator</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_mnuAddSeparator_clicked" swapped="no"/>
                           </object>
@@ -274,7 +274,7 @@
                           <object class="GtkMenuItem" id="mnuAddSubmenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add Submenu</property>
+                            <property name="label" translatable="yes">Add Su_bmenu</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_mnuAddSubmenu_clicked" swapped="no"/>
                           </object>
@@ -289,7 +289,7 @@
                           <object class="GtkMenuItem" id="mnuAddProfList">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add List of All Profiles</property>
+                            <property name="label" translatable="yes">Add List of All _Profiles</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_mnuAddProfList_clicked" swapped="no"/>
                           </object>
@@ -298,9 +298,18 @@
                           <object class="GtkMenuItem" id="mnuAddRecentList">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add List of Recent Profiles</property>
+                            <property name="label" translatable="yes">Add List of _Recent Profiles</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_mnuAddRecentList_clicked" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="mnuAddGamesList">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Add List of _Games</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="on_mnuAddGamesList_activate" swapped="no"/>
                           </object>
                         </child>
                       </object>

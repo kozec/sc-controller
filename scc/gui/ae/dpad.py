@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 """
 SC-Controller - Action Editor - "DPAD or Menu"
 
@@ -61,8 +62,10 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	def set_action(self, mode, action):
 		cbm = self.builder.get_object("cbMenuType")
 		cb = self.builder.get_object("cbActionType")
+		scl = self.builder.get_object("sclDiagonalRange")
 		if isinstance(action, DPadAction):
 			self.set_cb(cbm, "menu", 1)
+			scl.set_value(action.diagonal_rage)
 			if isinstance(action, DPad8Action):
 				self.set_cb(cb, "dpad8", 1)
 			else:
@@ -101,33 +104,36 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	
 	def update(self):
 		cb = self.builder.get_object("cbActionType")
+		scl = self.builder.get_object("sclDiagonalRange")
 		key = cb.get_model().get_value(cb.get_active_iter(), 1)
 		if key == "dpad8":
 			# 8-way dpad
-			self.editor.set_action(DPad8Action(*self.actions))
+			self.editor.set_action(DPad8Action(scl.get_value(), *self.actions))
 		elif key == "dpad":
 			# 4-way dpad
-			self.editor.set_action(DPadAction(*self.actions[0:4]))
+			self.editor.set_action(DPadAction(scl.get_value(),
+				*self.actions[0:4]))
 		elif key == "wsad":
 			# special case of 4-way dpad
-			a = DPadAction(ButtonAction(Keys.KEY_W), ButtonAction(Keys.KEY_S),
+			a = DPadAction(scl.get_value(),
+				ButtonAction(Keys.KEY_W), ButtonAction(Keys.KEY_S),
 				ButtonAction(Keys.KEY_A), ButtonAction(Keys.KEY_D))
 			self.actions = [ NoAction() ] * 8
 			self.editor.set_action(a)
 			self.update_button_desc(a)
 		elif key == "arrows":
 			# special case of 4-way dpad
-			a = DPadAction(ButtonAction(Keys.KEY_UP),
-				ButtonAction(Keys.KEY_DOWN), ButtonAction(Keys.KEY_LEFT),
-				ButtonAction(Keys.KEY_RIGHT))
+			a = DPadAction(scl.get_value(),
+				ButtonAction(Keys.KEY_UP), ButtonAction(Keys.KEY_DOWN),
+				ButtonAction(Keys.KEY_LEFT), ButtonAction(Keys.KEY_RIGHT))
 			self.actions = [ NoAction() ] * 8
 			self.editor.set_action(a)
 			self.update_button_desc(a)
 		elif key == "actual_dpad":
 			# maps to dpad as real gamepad usually has
-			a = DPadAction(HatUpAction(Axes.ABS_HAT0Y),
-				HatDownAction(Axes.ABS_HAT0Y), HatLeftAction(Axes.ABS_HAT0X),
-				HatRightAction(Axes.ABS_HAT0X))
+			a = DPadAction(scl.get_value(),
+				HatUpAction(Axes.ABS_HAT0Y), HatDownAction(Axes.ABS_HAT0Y),
+				HatLeftAction(Axes.ABS_HAT0X), HatRightAction(Axes.ABS_HAT0X))
 			self.actions = [ NoAction() ] * 8
 			self.editor.set_action(a)
 			self.update_button_desc(a)
@@ -164,6 +170,19 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		self.update()
 	
 	
+	def on_sclDiagonalRange_format_value(self, scale, value):
+		return _("%s°") % (value,)
+	
+	
+	def on_btClearDiagonalRange_clicked(self, *a):
+		scl = self.builder.get_object("sclDiagonalRange")
+		scl.set_value(DPadAction.DEFAULT_DIAGONAL_RANGE)
+	
+	
+	def on_sclDiagonalRange_value_changed(self, *a):
+		self.update()
+	
+	
 	def on_btDPAD_clicked(self, b):
 		""" 'Select DPAD Left Action' handler """
 		i = int(b.get_name())
@@ -180,8 +199,10 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	
 	def get_default_confirm(self):
 		"""
-		Returns default confirm button for pads/stick - LPAD, RPAD or STICK
+		Returns default confirm button for pads/stick - LPAD, RPAD or STICKPRESS
 		"""
+		if self.editor.id == STICK:
+			return SCButtons.STICKPRESS
 		return getattr(SCButtons, self.editor.id)
 	
 	

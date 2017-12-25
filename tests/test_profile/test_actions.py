@@ -281,6 +281,8 @@ class TestActions(object):
 			}]
 		})
 		
+		print a
+		print a.actions
 		assert isinstance(a, DPadAction)
 		for sub in a.actions:
 			assert isinstance(sub, ButtonAction)

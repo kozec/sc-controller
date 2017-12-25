@@ -69,14 +69,15 @@ eleasing button returns emulated axis back to 'min'.
   trigger position is not in middle, but in minimal possible value.
 
 
-#### <a name="dpad"></a> dpad(up, down, left, right)
-Emulates dpad. Touchpad is divided into 4 triangular parts. When the user touches the
-touchpad, action is executed depending on finger position.
-Available only for pads and sticks; for stick, works by translating
-stick position, what probably doesn't yields expected results.
+#### <a name="dpad"></a> dpad([diagonal_rage,] up, down, left, right)
+Emulates dpad. Touchpad is divided into 8 triangular parts. When the user touches the touchpad, action is executed depending on finger position. 
+
+'diagonal_rage' is specified in degrees (1 to 89). If not set, all parts are sized equally, otherwise, diagonal parts are taking specified portion of pad and rest is assigned to up/left/right/down portions.
+
+Available only for pads and sticks.
 
 
-#### <a name="dpad8"></a> dpad8(up, down, left, right, upleft, upright, downleft, downright)
+#### <a name="dpad8"></a> dpad8([diagonal_rage,] up, down, left, right, upleft, upright, downleft, downright)
 Same as dpad, with more directions.
 
 
@@ -232,6 +233,13 @@ Same as `menu`, but displays items in grid.
 Same as `menu`, but displays items in radial menu.
 
 
+#### <a name="quickmenu"></a> quickmenu(menu)
+Special kind of menu controled by buttons instead of stick. Every item has
+assigned button and user selects it by pressing that button.
+
+Fast to use, but is limited to 6 items at most.
+
+
 #### <a name="dialog"></a> dialog([ confirm_button=A [, cancel_button=B ], ] text, action1, [action2... actionN])
 Displays OSD dialog. Dialog works similary to horizontal menu and displays
 text message above list of options.
@@ -243,10 +251,23 @@ Displays on-screen keyboard
 # Modifiers:
 
 #### <a name="click"></a> click(action)
-Used to create action that occurs only if pad or stick is pressed.
+Creates action action that occurs only if pad or stick is pressed.
 For example, `click(dpad(...))` set to pad will create dpad that activates
 buttons only when pressed.
 
+#### <a name="pressed"></a> pressed(action)
+Creates action that occurs for brief moment when button is pressed.
+For example, `pressed(button(A))` will press and instantly release virtual
+A button whenever physical button is pressed.
+
+#### <a name="released"></a> released(action)
+Creates action that occurs for brief moment when button is released.
+
+#### <a name="touched"></a> pressed(action)
+Creates action that occurs for brief moment when finger touches pad.
+
+#### <a name="untouched"></a> released(action)
+Creates action that occurs for brief moment when pad is released.
 
 #### <a name="mode"></a> mode(button1, action1, [button2, action2... buttonN, actionN] [, default] )
 Defines mode shifting. If physical buttonX is pressed, actionX is executed.

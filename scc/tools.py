@@ -7,11 +7,12 @@ Various stuff that I don't care to fit anywhere else.
 from __future__ import unicode_literals
 
 from scc.paths import get_controller_icons_path, get_default_controller_icons_path
+from scc.paths import get_menuicons_path, get_default_menuicons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
-from scc.paths import get_default_menuicons_path
+from scc.paths import get_button_images_path
 from math import pi as PI, sin, cos, atan2, sqrt
-import os, sys, shlex, gettext, logging
+import os, sys, ctypes, imp, shlex, gettext, logging
 
 HAVE_POSIX1E = False
 try:
@@ -175,7 +176,7 @@ def get_profile_name(path):
 	Returns profile name for specified path. Basically removes path and
 	.sccprofile and .mod extension.
 	"""
-	parts = op.path.split(path)[-1].split(".")
+	parts = os.path.split(path)[-1].split(".")
 	if parts[-1] == "mod": parts = parts[0:-1]
 	if parts[-1] == "sccprofile": parts = parts[0:-1]
 	return ".".join(parts)
@@ -198,7 +199,7 @@ def find_profile(name):
 	return None
 
 
-def find_icon(name, prefer_bw=False):
+def find_icon(name, prefer_bw=False, paths=None, extension="png"):
 	"""
 	Returns (filename, has_colors) for specified icon name.
 	This is done by searching for name + '.png' and name + ".bw.png"
@@ -207,16 +208,19 @@ def find_icon(name, prefer_bw=False):
 	If both colored and grayscale version is found, colored is returned, unless
 	prefer_bw is set to True.
 	
+	paths defaults to icons for menuicons
+	
 	Returns (None, False) if icon cannot be found.
 	"""
 	if name is None:
 		# Special case, so code can pass menuitem.icon directly
 		return None, False
-	gray_filename = "%s.bw.png" % (name,)
-	colors_filename = "%s.png" % (name,)
+	gray_filename = "%s.bw.%s" % (name, extension)
+	colors_filename = "%s.%s" % (name, extension)
 	gray, colors = None, None
-	# TODO: User menuicons folder
-	for p in (get_default_menuicons_path(), ):
+	if paths is None:
+		paths = get_default_menuicons_path(), get_menuicons_path()
+	for p in paths:
 		# Check grayscale
 		if gray is None:
 			path = os.path.join(p, gray_filename)
@@ -234,6 +238,12 @@ def find_icon(name, prefer_bw=False):
 	if colors is not None:
 		return colors, True
 	return gray, False
+
+
+def find_button_image(name, prefer_bw=False):
+	""" Similar to find_icon, but searches for button image """
+	return find_icon(nameof(name), prefer_bw,
+			paths=[get_button_images_path()], extension="svg")
 
 
 def menu_is_default(name):
@@ -286,12 +296,46 @@ def find_binary(name):
 	if name.startswith("scc-autoswitch-daemon"):
 		# As above
 		return os.path.join(os.path.split(__file__)[0], "x11", "scc-autoswitch-daemon.py")
-	for i in os.environ['PATH'].split(":"):
+	user_path = os.environ['PATH'].split(":")
+	# Try to add the standard binary paths if not present in PATH
+	for d in ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]:
+		if d not in user_path:
+			user_path.append(d)
+	for i in user_path:
 		path = os.path.join(i, name)
 		if os.path.exists(path):
 			return path
 	# Not found, return name back and hope for miracle
 	return name
+
+
+def find_library(libname):
+	"""
+	Search for 'libname.so'.
+	Returns library loaded with ctypes.CDLL
+	Raises OSError if library is not found
+	"""
+	base_path = os.path.dirname(__file__)
+	lib, search_paths = None, []
+	so_extensions = [ ext for ext, _, typ in imp.get_suffixes()
+			if typ == imp.C_EXTENSION ]
+	for extension in so_extensions:
+		search_paths += [
+			os.path.abspath(os.path.normpath(
+				os.path.join( base_path, '..', libname + extension ))),
+			os.path.abspath(os.path.normpath(
+				os.path.join( base_path, '../..', libname + extension )))
+			]
+	
+	for path in search_paths:
+		if os.path.exists(path):
+			lib = path
+			break
+	
+	if not lib:
+		raise OSError('Cant find %s.so. searched at:\n %s' % (
+			libname, '\n'.join(search_paths)))
+	return ctypes.CDLL(lib)
 
 
 def find_gksudo():

@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 """
-SC-Controller - OSD Message
-
-Display message that just sits there
+SC-Controller - Input Display
 """
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
@@ -34,7 +32,7 @@ class InputDisplay(OSDWindow):
 	
 	def show(self):
 		self.main_area = Gtk.Fixed()
-		self.background = SVGWidget(self, os.path.join(self.imagepath, self.IMAGE))
+		self.background = SVGWidget(os.path.join(self.imagepath, self.IMAGE))
 		self.lpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "inputdisplay-cursor.svg"))
 		self.rpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "inputdisplay-cursor.svg"))
 		self.stickTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "inputdisplay-cursor.svg"))
@@ -93,6 +91,11 @@ class InputDisplay(OSDWindow):
 	
 	def on_observe_failed(self, error):
 		log.error("Failed to enable test mode: %s", error)
+		if "Sniffing" in error:
+			log.error("")
+			log.error("=================================================================================")
+			log.error("[!!] Please, enable 'Input Test Mode' on 'Advanced' tab in SC-Controller settings")
+			log.error("=================================================================================")
 		self.quit(3)
 	
 	

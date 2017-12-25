@@ -4,8 +4,9 @@ from __future__ import unicode_literals
 from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO, HapticPos
-from scc.constants import SCButtons, LEFT, RIGHT, STICK, STICK_TILT
+from scc.constants import SCButtons, LEFT, RIGHT, CPAD, HapticPos
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
+from scc.constants import STICK, STICKTILT, ControllerFlags
 from scc.aliases import ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction, GyroAbsAction
 from scc.controller import HapticData
@@ -19,7 +20,7 @@ log = logging.getLogger("Mapper")
 class Mapper(object):
 	DEBUG = False
 	
-	def __init__(self, profile, keyboard=b"SCController Keyboard",
+	def __init__(self, profile, scheduler, keyboard=b"SCController Keyboard",
 				mouse=b"SCController Mouse",
 				gamepad=True, poller=None):
 		"""
@@ -31,14 +32,15 @@ class Mapper(object):
 		self.profile = profile
 		self.controller = None
 		self.xdisplay = None
+		self.scheduler = scheduler
 		
 		# Create virtual devices
 		log.debug("Creating virtual devices")
-		self.keyboard = Keyboard(name=keyboard) if keyboard else Dummy()
+		self.keyboard = self.create_keyboard(keyboard) if keyboard else Dummy()
 		log.debug("Keyboard: %s" % (self.keyboard, ))
-		self.mouse = Mouse(name=mouse) if mouse else Dummy()
+		self.mouse = self.create_mouse(mouse) if mouse else Dummy()
 		log.debug("Mouse:    %s" % (self.mouse, ))
-		self.gamepad = self._create_gamepad(gamepad, poller) if gamepad else Dummy()
+		self.gamepad = self.create_gamepad(gamepad, poller) if gamepad else Dummy()
 		log.debug("Gamepad:  %s" % (self.gamepad, ))
 		
 		# Set by SCCDaemon instance; Used to handle actions
@@ -52,14 +54,13 @@ class Mapper(object):
 		self.feedbacks = [ None, None ]			# left, right
 		self.pressed = {}						# for ButtonAction, holds number of times virtual button was pressed without releasing it first
 		self.syn_list = set()
-		self.scheduled_tasks = []
 		self.buttons, self.old_buttons = 0, 0
 		self.lpad_touched = False
 		self.state, self.old_state = None, None
 		self.force_event = set()
 	
 	
-	def _create_gamepad(self, enabled, poller):
+	def create_gamepad(self, enabled, poller):
 		""" Parses gamepad configuration and creates apropriate unput device """
 		if not enabled or "SCC_NOGAMEPAD" in os.environ:
 			# Completly undocumented and for debuging purposes only.
@@ -91,6 +92,14 @@ class Mapper(object):
 		if poller:
 			poller.register(ui.getDescriptor(), poller.POLLIN, self._rumble_ready)
 		return ui
+	
+	
+	def create_keyboard(self, name):
+		return Keyboard(name=name)
+	
+	
+	def create_mouse(self, name):
+		return Mouse(name=name)
 	
 	
 	def _rumble_ready(self, fd, event):
@@ -163,16 +172,12 @@ class Mapper(object):
 		Delay is float number in seconds.
 		Callback is called with mapper as only argument.
 		"""
-		when = time.time() + delay
-		self.scheduled_tasks.append( (when, cb) )
-		self.scheduled_tasks.sort(key=lambda a: a[0])
+		return self.scheduler.schedule(delay, cb, self)
 	
 	
-	def remove_scheduled(self, cb):
-		""" Removes scheduled task by callback. """
-		self.scheduled_tasks = [
-			(w, c) for (w, c) in self.scheduled_tasks if cb != c
-		]
+	def cancel_task(self, task):
+		""" Removes scheduled task. """
+		return self.scheduler.cancel_task(task)
 	
 	
 	def mouse_move(self, dx, dy):
@@ -207,6 +212,14 @@ class Mapper(object):
 			self.feedbacks[hapticdata.get_position()] = hapticdata
 	
 	
+	def controller_flags(self):
+		"""
+		Returns controller flags or, if there is no controller set to
+		this mapper, sc_by_cable driver matching defaults.
+		"""
+		return 0 if self.controller is None else self.controller.flags
+	
+	
 	def is_touched(self, what):
 		"""
 		Returns True if specified pad is being touched.
@@ -216,8 +229,12 @@ class Mapper(object):
 		"""
 		if what == LEFT:
 			return self.buttons & SCButtons.LPADTOUCH
-		else: # what == RIGHT
+		elif what == RIGHT:
 			return self.buttons & SCButtons.RPADTOUCH
+		elif what == CPAD:
+			return self.buttons & SCButtons.CPADTOUCH
+		else:
+			return False
 	
 	
 	def was_touched(self, what):
@@ -231,8 +248,12 @@ class Mapper(object):
 		"""
 		if what == LEFT:
 			return self.old_buttons & SCButtons.LPADTOUCH
-		else: # what == RIGHT
+		elif what == RIGHT:
 			return self.old_buttons & SCButtons.RPADTOUCH
+		elif what == CPAD:
+			return self.old_buttons & SCButtons.CPADTOUCH
+		else:
+			return False
 	
 	
 	def is_pressed(self, button):
@@ -308,21 +329,21 @@ class Mapper(object):
 	
 	
 	def reset_gyros(self):
-		for a in self.profile.get_actions():
+		for a in self.profile.get_all_actions():
 			if isinstance(a, GyroAbsAction):
 				a.reset()
 	
 	
-	def input(self, controller, now, old_state, state):
+	def input(self, controller, old_state, state):
 		# Store states
 		self.old_state = old_state
 		self.old_buttons = self.buttons
-
+		
 		self.state = state
 		self.buttons = state.buttons
 		
 		if self.buttons & SCButtons.LPAD and not self.buttons & SCButtons.LPADTOUCH:
-			self.buttons = (self.buttons & ~SCButtons.LPAD) | SCButtons.STICK
+			self.buttons = (self.buttons & ~SCButtons.LPAD) | SCButtons.STICKPRESS
 		
 		fe = self.force_event
 		self.force_event = set()
@@ -343,7 +364,10 @@ class Mapper(object):
 			
 			
 			# Check stick
-			if not self.buttons & SCButtons.LPADTOUCH:
+			if self.controller.flags & ControllerFlags.SEPARATE_STICK:
+				if FE_STICK in fe or self.old_state.stick_x != state.stick_x or self.old_state.stick_y != state.stick_y:
+					self.profile.stick.whole(self, state.stick_x, state.stick_y, STICK)
+			elif not self.buttons & SCButtons.LPADTOUCH:
 				if FE_STICK in fe or self.old_state.lpad_x != state.lpad_x or self.old_state.lpad_y != state.lpad_y:
 					self.profile.stick.whole(self, state.lpad_x, state.lpad_y, STICK)
 			
@@ -361,35 +385,43 @@ class Mapper(object):
 			
 			# Check pads
 			# RPAD
-			if FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
+			if controller.flags & ControllerFlags.HAS_RSTICK:
+				if FE_PAD in fe or self.old_state.rpad_x != state.rpad_x or self.old_state.rpad_y != state.rpad_y:
+					self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
+			elif FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 				self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
 			
 			# LPAD
-			if self.buttons & SCButtons.LPADTOUCH:
-				# Pad is being touched now
-				if not self.lpad_touched:
-					self.lpad_touched = True
-				self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
-			elif not self.buttons & STICK_TILT:
-				# Pad is not being touched
-				if self.lpad_touched:
-					self.lpad_touched = False
-					self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
-		except Exception, e:
+			if self.controller.flags & ControllerFlags.SEPARATE_STICK:
+				if FE_PAD in fe or self.old_state.lpad_x != state.lpad_x or self.old_state.lpad_y != state.lpad_y:
+					self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+			else:
+				if self.buttons & SCButtons.LPADTOUCH:
+					# Pad is being touched now
+					if not self.lpad_touched:
+						self.lpad_touched = True
+					self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+				elif not self.buttons & STICKTILT:
+					# Pad is not being touched
+					if self.lpad_touched:
+						self.lpad_touched = False
+						self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
+			
+			# CPAD (touchpad on DS4 controller)
+			if controller.flags & ControllerFlags.HAS_CPAD:
+				if FE_PAD in fe or self.old_state.cpad_x != state.cpad_x or self.old_state.cpad_y != state.cpad_y:
+					self.profile.pads[CPAD].whole(self, state.cpad_x, state.cpad_y, CPAD)
+		except Exception:
 			# Log error but don't crash here, it breaks too many things at once
+			if hasattr(self, "_testing"):
+				raise
 			log.error("Error while processing controller event")
 			log.error(traceback.format_exc())
 		
-		self.run_scheduled(now)
+		# TODO: Is it important to run scheduled stuff before generate_events?
+		self.scheduler.run()
 		self.generate_events()
 		self.generate_feedback()
-	
-	
-	def run_scheduled(self, now):
-		if len(self.scheduled_tasks) > 0 and self.scheduled_tasks[0][0] <= now:
-			cb = self.scheduled_tasks[0][1]
-			self.scheduled_tasks = self.scheduled_tasks[1:]
-			cb(self)
 	
 	
 	def generate_events(self):

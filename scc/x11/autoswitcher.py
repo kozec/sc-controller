@@ -28,7 +28,7 @@ class AutoSwitcher(object):
 		self.lock = threading.Lock()
 		self.thread = threading.Thread(target=self.connect_daemon)
 		self.config = Config()
-		self.mapper = Mapper(None, keyboard=None, mouse=None, gamepad=None)
+		self.mapper = Mapper(None, None, keyboard=None, mouse=None, gamepad=None)
 		self.mapper.set_special_actions_handler(self)
 		self.enabled = False
 		self.socket = None
@@ -298,7 +298,7 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 	""" Generates entire Autoswich Options submenu """
 	GENERATOR_NAME = "autoswitch"
 	
-	def callback(self, menu, daemon, menuitem):
+	def callback(self, menu, daemon, controller, menuitem):
 		def on_response(*a):
 			menu.quit(-2)
 		if menuitem.id in ("as::unassign", "as::assign"):

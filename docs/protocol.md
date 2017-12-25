@@ -22,13 +22,14 @@ Connection is then held until client side closes it.
 Informs about total number of connected controllers.
 Always sent after with `Controller:` messages
 
-#### `Controller: controller_id type id_is_persistent`
+#### `Controller: controller_id type config_file`
 Provides info about controller 'n'.
 - `controller_id` is unique string identifier of controller (should stay same at
 least until daemon exits) and doesn't contains spaces.
 - `type` is string identifier (without spaces) of driver.
-- `id_is_persistent` is True if controller ID is always same for same controller
-and can be used to store settings.
+- `config_file` is None or file name of json-encoded file that can GUI use
+to get additional data about controller (background image, button images, etc)
+File name may be absolute path or just name of file in /usr/share/scc
 
 This message is repeated for every connected controller and followed by
 `Controller Count:` message. It is automatically sent to every client when
@@ -133,10 +134,20 @@ Unlocking is done automatically when client is disconnected, or using `Unlock.` 
 #### `Observe: button1 button2...`
 Enables observing on physical button, axis or pad. Works like Lock, but events from observed sources are processed normally and to client at same time.
 
-Any number of clients can observe same source, so upon this requests, daemon always responds with `OK.`
+Any number of clients can observe same source, so upon this requests, daemon always responds with `OK.`, as long as observing is enabled in configuration.
 While source is observed, daemon keeps sending `Event: ...` messages every time when button is pressed, released, axis moved, etc...
 
 Unlocking is done automatically when client is disconnected, or using `Unlock.` message.
+
+#### `Replace: button actionstring`
+Temporally replaces action set on physical button, axis or pad. This works in
+same way as lock, so action is restored when client requesting change disconnects
+or call `Unlock.`
+
+If requested button (axis, pad) is already locked, daemon will respond with
+`Fail: cannot lock <button>`. If action string (which can contain spaces)
+cannot be parsed, daemon responds with `Fail: failed to parse: <more info>`.
+If everything went well, daemon respnds with `OK.`
 
 #### `Feedback: position amplitude`
 Asks daemon to generate feedback effect. Position can be one of 'LEFT', 'RIGHT' or 'BOTH' and
@@ -172,6 +183,10 @@ When sent with same value with two or more clients, daemon will automatically cl
 before registering new one.
 scc-osd-daemon sends `Register: osd`
 scc-autoswitch-daemon `Register: autoswitch`
+Daemon responds with `OK.`
+
+#### `Rescan.`
+Asks daemon to rescan for new devices. Drivers may re-read its configuration if needed.
 Daemon responds with `OK.`
 
 #### `Restart.`

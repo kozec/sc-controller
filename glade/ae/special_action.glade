@@ -129,6 +129,10 @@
         <col id="1">x</col>
       </row>
       <row>
+        <col id="0" translatable="yes">Stick Press</col>
+        <col id="1">STICKPRESS</col>
+      </row>
+      <row>
         <col id="0" translatable="yes">Left Pad Press</col>
         <col id="1">LPAD</col>
       </row>
@@ -227,6 +231,10 @@
       <row>
         <col id="0" translatable="yes">Horizontal Menu</col>
         <col id="1">hmenu</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Quick Menu</col>
+        <col id="1">quickmenu</col>
       </row>
     </data>
   </object>
@@ -577,7 +585,7 @@
                     <property name="margin_top">5</property>
                     <property name="margin_bottom">10</property>
                     <child>
-                      <object class="GtkLabel" id="label7">
+                      <object class="GtkLabel" id="lblControlWith">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_right">20</property>
@@ -605,7 +613,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label9">
+                      <object class="GtkLabel" id="lblCancelWith">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_right">20</property>

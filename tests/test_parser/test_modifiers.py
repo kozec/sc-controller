@@ -35,6 +35,38 @@ class TestModifiers(object):
 		assert isinstance(a, ClickModifier)
 	
 	
+	def test_pressed(self):
+		"""
+		Tests if ReleasedModifier is parsed
+		"""
+		a = _parse_compressed("released(button(KEY_A))")
+		assert isinstance(a, ReleasedModifier)
+	
+	
+	def test_released(self):
+		"""
+		Tests if PressedModifier is parsed
+		"""
+		a = _parse_compressed("pressed(axis(KEY_A))")
+		assert isinstance(a, PressedModifier)	
+	
+	
+	def test_touched(self):
+		"""
+		Tests if TouchedModifier is parsed
+		"""
+		a = _parse_compressed("touched(button(KEY_A))")
+		assert isinstance(a, TouchedModifier)
+	
+	
+	def test_untouched(self):
+		"""
+		Tests if UntouchedModifier is parsed
+		"""
+		a = _parse_compressed("untouched(button(KEY_A))")
+		assert isinstance(a, UntouchedModifier)
+	
+	
 	def test_circular(self):
 		"""
 		Tests if CircularModifier is parsed

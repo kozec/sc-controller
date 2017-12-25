@@ -28,7 +28,7 @@ from scc.lib import IntEnum
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
 daemon will differ one one expected by UI and daemon will be forcefully restarted.
 """
-DAEMON_VERSION = "0.3.9"
+DAEMON_VERSION = "0.4.0.1"
 
 HPERIOD  = 0.02
 LPERIOD  = 0.5
@@ -40,9 +40,10 @@ FE_TRIGGER	= 2
 FE_PAD		= 3
 FE_GYRO		= 4
 
-# Buttons names, sides, etc. These constants are used on multiple places
+# Trigger names, pads, etc. These constants are used on multiple places
 LEFT	= "LEFT"
 RIGHT	= "RIGHT"
+CPAD	= "CPAD"
 WHOLE	= "WHOLE"
 STICK	= "STICK"
 GYRO	= "GYRO"
@@ -70,7 +71,7 @@ class SCButtons(IntEnum):
 	LPADTOUCH	= 0b00001000000000000000000000000000
 	RPAD		= 0b00000100000000000000000000000000
 	LPAD		= 0b00000010000000000000000000000000 # Same for stick but without LPadTouch
-	STICK		= 0b00000000000000000000000000000001 # generated internally, not sent by controller
+	STICKPRESS	= 0b00000000000000000000000000000001 # generated internally, not sent by controller
 	RGRIP	 	= 0b00000001000000000000000000000000
 	LGRIP	 	= 0b00000000100000000000000000000000
 	START	 	= 0b00000000010000000000000000000000
@@ -84,17 +85,35 @@ class SCButtons(IntEnum):
 	RB			= 0b00000000000000000000010000000000
 	LT			= 0b00000000000000000000001000000000
 	RT			= 0b00000000000000000000000100000000
+	CPADTOUCH	= 0b00000000000000000000000000000100 # Available on DS4 pad
+	CPADPRESS	= 0b00000000000000000000000000000010 # Available on DS4 pad
+
 
 # If lpad and stick is used at once, this is sent as
 # button with every other packet to signalize that
 # value of lpad_x and lpad_y belongs to stick
-STICK_TILT		= 0b10000000000000000000000000000000
+STICKTILT		= 0b10000000000000000000000000000000
+
 
 class HapticPos(IntEnum):
 	"""Specify witch pad or trig is used"""
 	RIGHT = 0
 	LEFT = 1
 	BOTH = 2	# emulated
+
+
+class ControllerFlags(IntEnum):
+	"""
+	Used by mapper to workaround some physical differences between
+	Steam Controller and other pads.
+	"""
+	HAS_RSTICK =		1 << 0	# Controller has right stick instead of touchpad
+	SEPARATE_STICK =	1 << 1	# Left stick and left pad are using separate axes
+	EUREL_GYROS =		1 << 2	# Gyro sensor values are provided as pitch, yaw
+								# and roll instead of quaterion. 'q4' is unused
+								# in such case.
+	HAS_CPAD	 =		1 << 3	# Controller has DS4-like touchpad in center
+
 
 STICK_PAD_MIN = -32768
 STICK_PAD_MAX = 32768

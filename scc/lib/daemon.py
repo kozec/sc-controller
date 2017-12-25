@@ -61,7 +61,7 @@ class Daemon(object):
 
 		# write pidfile
 		self.write_pid()
-	
+
 	def write_pid(self):
 		"""Write pid file"""
 		atexit.register(self.delpid)
@@ -100,11 +100,11 @@ class Daemon(object):
 			except Exception as e: # pylint: disable=W0703
 				syslog.syslog(syslog.LOG_ERR, '{}: {!s}'.format(os.path.basename(sys.argv[0]), e))
 			time.sleep(2)
-	
+
 	def on_start(self):
 		pass
 	
-	def stop(self):
+	def stop(self, once=False):
 		"""Stop the daemon."""
 
 		# Get the pid from the pidfile
@@ -122,9 +122,14 @@ class Daemon(object):
 
 		# Try killing the daemon process
 		try:
-			while True:
+			for x in xrange(0, 10): # Waits max 1s
 				os.kill(pid, signal.SIGTERM)
+				if once: break
+				for x in xrange(50):
+					os.kill(pid, 0)
+					time.sleep(0.1)
 				time.sleep(0.1)
+			os.kill(pid, signal.SIGKILL)
 		except OSError as err:
 			e = str(err.args)
 			if e.find("No such process") > 0:

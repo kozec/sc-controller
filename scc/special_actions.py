@@ -56,6 +56,10 @@ class ChangeProfileAction(Action, SpecialAction):
 		# is pressed would send following button_release event to another
 		# action from loaded profile)
 		self.execute(mapper)
+	
+	
+	def whole(self, mapper, *a):
+		self.execute(mapper)
 
 
 class ShellCommandAction(Action, SpecialAction):
@@ -110,13 +114,19 @@ class TurnOffAction(Action, SpecialAction):
 		# is pressed would hold stuck any other action bound to same button,
 		# as button_release is not sent after controller turns off)
 		self.execute(mapper)
+	
+	
+	def whole(self, mapper, *a):
+		self.execute(mapper)
 
 
 class RestartDaemonAction(Action, SpecialAction):
 	SA = COMMAND = "restart"
+	ALIASES = ("exit", )
 	
 	def __init__(self):
 		Action.__init__(self)
+	
 	
 	def describe(self, context):
 		if self.name: return self.name
@@ -184,18 +194,6 @@ class OSDAction(Action, SpecialAction):
 		if self.action:
 			return self.action.get_compatible_modifiers()
 		return 0
-	
-	
-	def encode(self):
-		if self.action:
-			rv = self.action.encode()
-			if self.timeout == self.DEFAULT_TIMEOUT:
-				rv[OSDAction.COMMAND] = True
-			else:
-				rv[OSDAction.COMMAND] = self.timeout
-			return rv
-		else:
-			return Action.encode(self)	
 	
 	
 	@staticmethod
@@ -284,21 +282,21 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 	
 	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
 					confirm_with=DEFAULT, cancel_with=DEFAULT,
-					show_with_release=False, max_size = 0):
+					show_with_release=False, size = 0):
 		if control_with == SAME:
 			# Little touch of backwards compatibility
 			control_with, confirm_with = self.DEFAULT_CONTROL, SAME
 		if type(control_with) == int:
 			# Allow short form in case when menu is assigned to pad
-			# eg.: menu("some-id", 3) sets max_size to 3
-			control_with, max_size = MenuAction.DEFAULT_CONTROL, control_with
-		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release, max_size)
+			# eg.: menu("some-id", 3) sets size to 3
+			control_with, size = MenuAction.DEFAULT_CONTROL, control_with
+		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release, size)
 		HapticEnabledAction.__init__(self)
 		self.menu_id = menu_id
 		self.control_with = control_with
 		self.confirm_with = confirm_with
 		self.cancel_with = cancel_with
-		self.max_size = max_size
+		self.size = size
 		self.x, self.y = MenuAction.DEFAULT_POSITION
 		self.show_with_release = bool(show_with_release)
 		self._stick_distance = 0
@@ -319,10 +317,10 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 			vals = (self.confirm_with, self.cancel_with, self.show_with_release)
 			if dflt == vals:
 				# Special case when menu is assigned to pad 
-				if self.max_size == 0:
+				if self.size == 0:
 					return "%s%s('%s')" % (" " * pad, self.COMMAND, self.menu_id)
 				else:
-					return "%s%s('%s', %s)" % (" " * pad, self.COMMAND, self.menu_id, self.max_size)
+					return "%s%s('%s', %s)" % (" " * pad, self.COMMAND, self.menu_id, self.size)
 		
 		return "%s%s(%s)" % (
 			" " * pad,
@@ -351,7 +349,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 			args += [
 				'--control-with', nameof(self.control_with),
 				'-x', str(self.x), '-y', str(self.y),
-				'--max-size', str(self.max_size),
+				'--size', str(self.size),
 				'--confirm-with', nameof(confirm_with),
 				'--cancel-with', nameof(cancel_with)
 			]
@@ -360,9 +358,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 	
 	def button_release(self, mapper):
 		if self.show_with_release:
-			self.execute(mapper, '-x',
-				'-x', str(self.x), '-y', str(self.y)
-			)
+			self.execute(mapper, '-x', str(self.x), '-y', str(self.y))
 	
 	
 	def whole(self, mapper, x, y, what, *params):
@@ -385,14 +381,14 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 				if cancel_with == DEFAULT:  cancel_with  = SCButtons.RPADTOUCH
 			else:
 				# Stick
-				if confirm_with == DEFAULT: confirm_with = SCButtons.STICK
+				if confirm_with == DEFAULT: confirm_with = SCButtons.STICKPRESS
 				if cancel_with == DEFAULT:  cancel_with  = SCButtons.B
 			if not mapper.was_pressed(cancel_with):
 				self.execute(mapper,
 					'--control-with', what,
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
-					'--max-size', str(self.max_size),
+					'--size', str(self.size),
 					'--confirm-with', nameof(confirm_with),
 					'--cancel-with', nameof(cancel_with),
 					*params
@@ -405,7 +401,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 					'--control-with', STICK,
 					'-x', str(self.x), '-y', str(self.y),
 					'--use-cursor',
-					'--max-size', str(self.max_size),
+					'--size', str(self.size),
 					'--confirm-with', "STICKPRESS",
 					'--cancel-with', STICK,
 					*params
@@ -429,6 +425,29 @@ class GridMenuAction(MenuAction):
 	MENU_TYPE = "gridmenu"
 
 
+class QuickMenuAction(MenuAction):
+	"""
+	Quickmenu. Max.6 items, controller by buttons
+	"""
+	COMMAND = "quickmenu"
+	MENU_TYPE = "quickmenu"
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("QuickMenu")
+	
+	
+	def button_press(self, mapper):
+		# QuickMenu is always shown with release
+		pass
+	
+	
+	def button_release(self, mapper):
+		self.execute(mapper, '-x', str(self.x), '-y', str(self.y))
+
+
+
 class RadialMenuAction(MenuAction):
 	"""
 	Same as grid menu, which is same as menu but displayed in grid,
@@ -436,12 +455,15 @@ class RadialMenuAction(MenuAction):
 	"""
 	COMMAND = "radialmenu"
 	MENU_TYPE = "radialmenu"
+	DEFAULT_CONFIRM = SCButtons.A
+	DEFAULT_CANCEL = SCButtons.B
+	DEFAULT_CONTROL = STICK
 	
-	def __init__(self, menu_id, control_with=MenuAction.DEFAULT_CONTROL,
+	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
 					confirm_with=DEFAULT, cancel_with=DEFAULT,
-					show_with_release=False):
+					show_with_release=False, size = 0):
 		MenuAction.__init__(self, menu_id, control_with, confirm_with,
-						cancel_with, show_with_release)
+						cancel_with, show_with_release, size)
 		self.rotation = 0
 	
 	
@@ -584,12 +606,6 @@ class PositionModifier(Modifier):
 		return self.action
 	
 	
-	def encode(self):
-		rv = Modifier.encode(self)
-		rv[PositionModifier.COMMAND] = self.position
-		return rv
-	
-	
 	@staticmethod
 	def decode(data, a, *b):
 		x, y = data[PositionModifier.COMMAND]
@@ -654,16 +670,6 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 			for gstr in self.gestures:
 				rv += [ "'%s'" % (gstr,), self.gestures[gstr].to_string(False) ]
 			return self.COMMAND + "(" + ", ".join(rv) + ")"	
-	
-	
-	def encode(self):
-		rv = { self.COMMAND : {
-			gstr : self.gestures[gstr].encode()
-			for gstr in self.gestures
-		}}
-		if self.name:
-			rv[NameModifier.COMMAND] = self.name
-		return rv	
 	
 	
 	def compress(self):

@@ -18,6 +18,7 @@ from scc.gui.daemon_manager import DaemonManager
 from scc.osd.gesture_display import GestureDisplay
 from scc.osd.radial_menu import RadialMenu
 from scc.osd.hmenu import HorizontalMenu
+from scc.osd.quick_menu import QuickMenu
 from scc.osd.grid_menu import GridMenu
 from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
@@ -28,7 +29,7 @@ from scc.osd.area import Area
 from scc.tools import shsplit, shjoin
 from scc.config import Config
 
-import os, sys, logging, time
+import os, sys, logging, time, traceback
 log = logging.getLogger("osd.daemon")
 
 class OSDDaemon(object):
@@ -112,7 +113,7 @@ class OSDDaemon(object):
 			# 0 means that user selected item and confirmed selection
 			self.daemon.request(
 				'Selected: %s' % ( shjoin([
-					m.get_menuid(), m.get_selected_item_id() 
+					m.get_menuid(), m.get_selected_item_id()
 				])),
 				lambda *a : False, lambda *a : False)
 	
@@ -140,10 +141,11 @@ class OSDDaemon(object):
 		"""
 		return (
 			m.startswith("OSD: menu")
-			or m.startswith("OSD: gridmenu")
-			or m.startswith("OSD: hmenu")
 			or m.startswith("OSD: radialmenu")
+			or m.startswith("OSD: quickmenu")
+			or m.startswith("OSD: gridmenu")
 			or m.startswith("OSD: dialog")
+			or m.startswith("OSD: hmenu")
 		)
 	
 	
@@ -182,20 +184,27 @@ class OSDDaemon(object):
 			else:
 				if message.startswith("OSD: hmenu"):
 					self._window = HorizontalMenu()
-				elif message.startswith("OSD: gridmenu"):
-					self._window = GridMenu()
 				elif message.startswith("OSD: radialmenu"):
 					self._window = RadialMenu()
+				elif message.startswith("OSD: quickmenu"):
+					self._window = QuickMenu()
+				elif message.startswith("OSD: gridmenu"):
+					self._window = GridMenu()
 				elif message.startswith("OSD: dialog"):
 					self._window = Dialog()
 				else:
 					self._window = Menu()
 				self._window.connect('destroy', self.on_menu_closed)
 				self._window.use_config(self.config)
-				if self._window.parse_argumets(args):
-					self._window.show()
-					self._window.use_daemon(self.daemon)
-				else:
+				try:
+					if self._window.parse_argumets(args):
+						self._window.show()
+						self._window.use_daemon(self.daemon)
+					else:
+						log.error("Failed to show menu")
+						self._window = None
+				except:
+					log.error(traceback.format_exc())
 					log.error("Failed to show menu")
 					self._window = None
 		elif message.startswith("OSD: area"):
@@ -227,6 +236,7 @@ class OSDDaemon(object):
 		"""
 		h = sum([ hash(self.config['osd_colors'][x]) for x in self.config['osd_colors'] ])
 		h += sum([ hash(self.config['osk_colors'][x]) for x in self.config['osk_colors'] ])
+		h += hash(self.config['osd_style'])
 		if self._hash_of_colors != h:
 			self._hash_of_colors = h
 			OSDWindow._apply_css(self.config)

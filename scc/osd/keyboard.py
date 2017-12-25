@@ -31,14 +31,14 @@ import scc.osd.osk_actions
 
 
 import os, sys, json, logging
-log = logging.getLogger("osd.menu")
+log = logging.getLogger("osd.keyboard")
 
 
 class Keyboard(OSDWindow, TimerManager):
 	EPILOG="""Exit codes:
    0  - clean exit, user closed keyboard
    1  - error, invalid arguments
-   2  - error, failed to access sc-daemon, sc-daemon reported error or died while menu is displayed.
+   2  - error, failed to access sc-daemon, sc-daemon reported error or died while keyboard is displayed.
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	OSK_PROF_NAME = ".scc-osd.keyboard"
@@ -60,8 +60,8 @@ class Keyboard(OSDWindow, TimerManager):
 			# Prefer image in ~/.config/scc, but load default one as fallback
 			self.kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
 		
-		OSDWindow.__init__(self, "osd-keyboard")
 		TimerManager.__init__(self)
+		OSDWindow.__init__(self, "osd-keyboard")
 		self.daemon = None
 		self.mapper = None
 		self.keymap = Gdk.Keymap.get_default()
@@ -94,7 +94,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def _create_background(self):
-		self.background = SVGWidget(self, self.args.image, init_hilighted=False)
+		self.background = SVGWidget(self.args.image, init_hilighted=False)
 		self.recolor()
 		
 		self.limits = {}
@@ -246,7 +246,7 @@ class Keyboard(OSDWindow, TimerManager):
 			self._create_background()
 		OSDWindow.show(self, *a)
 		self.profile.load(find_profile(Keyboard.OSK_PROF_NAME)).compress()
-		self.mapper = SlaveMapper(self.profile,
+		self.mapper = SlaveMapper(self.profile, None,
 			keyboard=b"SCC OSD Keyboard", mouse=b"SCC OSD Mouse")
 		self.mapper.set_special_actions_handler(self)
 		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
