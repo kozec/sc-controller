@@ -19,7 +19,7 @@ from scc.lib.hidparse_data import SensorEvent, SensorDataField
 from scc.lib.hidparse_data import Collection, Unit, UnitType
 from scc.lib import ioctl_opt
 from scc.lib import IntEnum
-import ctypes, fcntl, collections, struct
+import ctypes, collections, fnctl, struct, os
 
 # hid.h
 _HID_MAX_DESCRIPTOR_SIZE = 4096

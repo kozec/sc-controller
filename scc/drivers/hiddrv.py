@@ -5,9 +5,6 @@ SC Controller - Universal HID driver. For all three universal HID devices.
 Borrows bit of code and configuration from evdevdrv.
 """
 
-from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
-from scc.lib.hidparse import UsagePage, parse_report_descriptor
-from scc.lib.hidparse import GenericDesktopPage, AXES
 from scc.drivers.usb import register_hotplug_device, unregister_hotplug_device
 from scc.drivers.usb import USBDevice
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
@@ -160,11 +157,7 @@ class HIDDecoder(ctypes.Structure):
 
 
 HIDDecoderPtr = ctypes.POINTER(HIDDecoder)
-
-
-_lib = find_library('libhiddrv')
-_lib.decode.restype = bool
-_lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
+_lib = None	# Loaded in init()
 
 
 class HIDController(USBDevice, Controller):
@@ -308,6 +301,11 @@ class HIDController(USBDevice, Controller):
 	
 	
 	def _build_hid_decoder(self, data, config, max_size):
+		# Cannot be imported on top because Windows...
+		from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
+		from scc.lib.hidparse import UsagePage, parse_report_descriptor
+		from scc.lib.hidparse import GenericDesktopPage, AXES
+		
 		size, count, total, kind = 1, 0, 0, None
 		next_axis = AxisType.AXIS_LPAD_X
 		self._decoder = HIDDecoder()
@@ -595,6 +593,7 @@ class HIDDrv(object):
 			if (vid, pid) in self.configs:
 				del self.configs[vid, pid]
 
+
 def hiddrv_test(cls, args):
 	"""
 	Small input test used by GUI while setting up the device.
@@ -659,6 +658,16 @@ def hiddrv_test(cls, args):
 
 def init(daemon, config):
 	""" Called from scc-daemon """
+	try:
+		if os.name == "nt":
+			raise OSError("Running on Windows")
+		_lib = find_library('libhiddrv')
+		_lib.decode.restype = bool
+		_lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
+	except Exception, e:
+		log.warning("Failed to enable HID driver: %s.", e)
+		return False
+
 	d = HIDDrv(daemon)
 	daemon.on_rescan(d.scan_files)
 	return True

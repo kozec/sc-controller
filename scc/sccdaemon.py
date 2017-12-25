@@ -32,25 +32,21 @@ log = logging.getLogger("SCCDaemon")
 
 class SCCDaemon(Daemon):
 	
-	def __init__(self, piddile):
+	def __init__(self, piddile, socket_file):
 		set_logging_level(True, True)
 		Daemon.__init__(self, piddile)
 		Config()					# Generates ~/.config/scc and default config if needed
 		self.started = False
 		self.exiting = False
-<<<<<<< HEAD
-		self.mainloops = [ ]
+		self.socket_file = socket_file
+		self.scheduler = Scheduler()
 		if os.name == "nt":
 			self.poller = None
+			self.mainloops = [ self.scheduler.run ]
 		else:
 			from scc.poller import Poller
 			self.poller = Poller()
-			self.mainloops.append(self.poller.poll)
-=======
-		self.socket_file = socket_file
-		self.poller = Poller()
-		self.scheduler = Scheduler()
->>>>>>> master
+			self.mainloops = [ self.poller.poll, self.scheduler.run ]
 		self.xdisplay = None
 		self.sserver = None			# Socket instance
 		self.errors = []
@@ -61,11 +57,7 @@ class SCCDaemon(Daemon):
 		# TODO: Use osd_ids for all menus
 		self.osd_ids = {}
 		self.controllers = []
-<<<<<<< HEAD
-=======
-		self.mainloops = [ self.poller.poll, self.scheduler.run ]
 		self.rescan_cbs = []
->>>>>>> master
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
