@@ -814,6 +814,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	def load_controllers(self, *a):
 		lstControllers = self.builder.get_object("lstControllers")
 		lstControllers.clear()
+		devices_path = os.path.join(get_config_path(), "devices")
+		if not os.path.exists(devices_path):
+			os.makedirs(os.path.join(get_config_path(), "devices"))
 		for filename in os.listdir(os.path.join(get_config_path(), "devices")):
 			if filename.endswith(".json"):
 				if filename.startswith("hid-"):
