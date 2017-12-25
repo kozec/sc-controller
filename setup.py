@@ -20,6 +20,7 @@ data_files = [
 				('share/scc/default_menus', glob.glob("default_menus/.*.menu")),
 				('share/scc/osd-styles', glob.glob("osd-styles/*.json")),
 				('share/scc/osd-styles', glob.glob("osd-styles/*.css")),
+				('share/scc/', ["gamecontrollerdb.txt"]),
 				('share/pixmaps', [ "images/sc-controller.svg" ]),
 				('share/mime/packages', [ "scc-mime-types.xml" ]),
 				('share/applications', ['scripts/sc-controller.desktop' ]),
