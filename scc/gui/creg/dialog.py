@@ -226,7 +226,9 @@ class ControllerRegistration(Editor):
 					unassigned.add(nameof(a))
 		for a in TRIGGER_AREAS:
 			axis = self._axis_data[TRIGGER_AREAS[a]]
-			if not axis in assigned_axes:
+			if axis in assigned_axes and a in unassigned:
+				unassigned.remove(a)
+			elif axis not in assigned_axes:
 				unassigned.add(a)
 		for a in STICK_PAD_AREAS:
 			area_name, axes = STICK_PAD_AREAS[a]
