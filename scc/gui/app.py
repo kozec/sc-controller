@@ -1418,7 +1418,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Returns current version rounded to max. 'n' numbers.
 		( v0.14.1.3 ; n=3 -> v0.14.1 )
 		"""
-		return ".".join(DAEMON_VERSION.split(".")[0:n])
+		split = DAEMON_VERSION.split(".")[0:n]
+		while split[-1] == "0": split = split[0:len(split) - 1]
+		return ".".join(split)
 	
 	
 	def release_notes_visible(self):
