@@ -9,7 +9,7 @@ Emulation is incomplete and provides only functions needed for SC-Controller.
 """
 
 
-import os, imp, ctypes, time
+import os, sys, imp, ctypes, time
 from ctypes import Structure, POINTER, c_bool, c_int16, c_uint16, c_int32
 from ctypes import byref, sizeof, wintypes
 from math import copysign
@@ -29,8 +29,6 @@ KEYEVENTF_UNICODE     = 0x0004
 KEYEVENTF_SCANCODE    = 0x0008
 
 MAPVK_VK_TO_VSC = 0
-VK_TAB  = 0x09
-VK_MENU = 0x12
 wintypes.ULONG_PTR = wintypes.WPARAM
 
 
@@ -127,14 +125,15 @@ class UInput(object):
 		@param int axis		 key or btn event (KEY_* or BTN_*)
 		@param int val		  event value
 		"""
-		# TODO: This
-		x = INPUT(type=INPUT_KEYBOARD,
-			ki = KEYBDINPUT(
-				wScan = key.value,
-				dwFlags = KEYEVENTF_SCANCODE | (0 if val else KEYEVENTF_KEYUP)
-		))
+		if key.value in SCAN_TO_VK:
+			ki = KEYBDINPUT(wVk = SCAN_TO_VK[key.value])
+		else:
+			ki = KEYBDINPUT(wScan = key.value, dwFlags = KEYEVENTF_SCANCODE)
+		if not val:
+			ki.dwFlags |= KEYEVENTF_KEYUP
+		
+		x = INPUT(type=INPUT_KEYBOARD, ki=ki)
 		user32.SendInput(1, byref(x), sizeof(x))
-		print "SENT KEY", key
 	
 	
 	def axisEvent(self, axis, val):

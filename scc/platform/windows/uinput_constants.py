@@ -146,3 +146,10 @@ Scans = {
 	Keys.KEY_BACK: 0xc00f2,
 	Keys.KEY_FORWARD: 0xc00f3,
 }
+
+SCAN_TO_VK = {
+	Keys.KEY_LEFT.value:	0x25,	# VK_LEFT
+	Keys.KEY_UP.value:		0x26,	# VK_UP
+	Keys.KEY_RIGHT.value:	0x27,	# VK_RIGHT
+	Keys.KEY_DOWN.value:	0x28,	# VK_DOWN
+}

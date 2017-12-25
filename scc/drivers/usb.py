@@ -20,6 +20,7 @@ class USBDevice(object):
 	def __init__(self, device, handle):
 		self.device = device
 		self.handle = handle
+		self._hotplug = None
 		self._claimed = []
 		self._cmsg = []		# controll messages
 		self._rmsg = []		# requests (excepts response)
@@ -209,6 +210,7 @@ class USBDriver(object):
 	def start(self):
 		self._context = usb1.USBContext()
 		if self._context.hasCapability(usb1.CAP_HAS_HOTPLUG):
+			self._hotplug = True
 			self._context.open()
 			self._context.hotplugRegisterCallback(
 				self.on_hotplug_event,
@@ -218,6 +220,8 @@ class USBDriver(object):
 			for fd, events in self._context.getPollFDList():
 				self._register_fd(fd, events)	
 		else:
+			log.warning("Hotplug is not available, scanning will be done in horrible way...")
+			self._hotplug = False
 			self._check_devices()
 		self._started = True
 	
@@ -303,7 +307,7 @@ class USBDriver(object):
 		log.debug("Registered hotplug USB driver for %.4x:%.4x", vendor_id, product_id)
 		if self._started:
 			if not self._context.hasCapability(usb1.CAP_HAS_HOTPLUG):
-					self._check_devices()
+				self._check_devices()
 			else:
 				dev = self._context.getByVendorIDAndProductID(vendor_id, product_id,
 					skip_on_access_error=True, skip_on_error=True)
@@ -320,7 +324,7 @@ class USBDriver(object):
 	
 	
 	def mainloop(self):
-		if self._changed > 0 or IS_WINDOWS:
+		if self._changed > 0 or not self._hotplug:
 			self._context.handleEventsTimeout()
 			self._changed = 0
 		
