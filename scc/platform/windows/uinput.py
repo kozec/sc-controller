@@ -27,6 +27,20 @@ KEYEVENTF_EXTENDEDKEY = 0x0001
 KEYEVENTF_KEYUP       = 0x0002
 KEYEVENTF_UNICODE     = 0x0004
 KEYEVENTF_SCANCODE    = 0x0008
+MOUSEEVENTF_ABSOLUTE  = 0x8000
+MOUSEEVENTF_MOVE      = 0x0001
+MOUSEEVENTF_WHEEL     = 0x0800
+MOUSEEVENTF_HWHEEL    = 0x1000
+MOUSEEVENTF_ABSOLUTE    = 0x8000
+MOUSEEVENTF_MOVE        = 0x0001
+MOUSEEVENTF_WHEEL       = 0x0800
+MOUSEEVENTF_HWHEEL      = 0x1000
+MOUSEEVENTF_LEFTDOWN    = 0x0002
+MOUSEEVENTF_LEFTUP      = 0x0004
+MOUSEEVENTF_RIGHTDOWN   = 0x0008
+MOUSEEVENTF_RIGHTUP     = 0x0010
+MOUSEEVENTF_MIDDLEDOWN  = 0x0020
+MOUSEEVENTF_MIDDLEUP    = 0x0040
 
 MAPVK_VK_TO_VSC = 0
 wintypes.ULONG_PTR = wintypes.WPARAM
@@ -134,7 +148,8 @@ class UInput(object):
 		
 		x = INPUT(type=INPUT_KEYBOARD, ki=ki)
 		user32.SendInput(1, byref(x), sizeof(x))
-	
+	# TODO: This
+		pass
 	
 	def axisEvent(self, axis, val):
 		"""
@@ -154,8 +169,19 @@ class UInput(object):
 		@param int rel		  rel event (REL_*)
 		@param int val		  event value
 		"""
-		# TODO: This
-		pass
+		if rel == Rels.REL_X:
+			mi = MOUSEINPUT(dx = val, dwFlags=MOUSEEVENTF_MOVE)
+		elif rel == Rels.REL_Y:
+			mi = MOUSEINPUT(dy = val, dwFlags=MOUSEEVENTF_MOVE)
+		elif rel == Rels.REL_WHEEL:
+			mi = MOUSEINPUT(mouseData = val, dwFlags=MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_WHEEL)
+		elif rel == Rels.REL_HWHEEL:
+			mi = MOUSEINPUT(mouseData = val, dwFlags=MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_HWHEEL)
+		else:
+			# Unknown axis, ignore
+			return
+		x = INPUT(type=INPUT_MOUSE, mi=mi)
+		user32.SendInput(1, byref(x), sizeof(x))
 	
 	
 	def scanEvent(self, val):
@@ -189,13 +215,16 @@ class UInput(object):
 	
 	def keyManaged(self, ev):
 		return ev in self._k
-
+	
+	
 	def axisManaged(self, ev):
 		return ev in self._a
-
+	
+	
 	def relManaged(self, ev):
 		return ev in self._r
-
+	
+	
 	def ff_read(self):
 		"""
 		Returns effect that should be played or None if there were no such request.
@@ -251,7 +280,7 @@ class Mouse(UInput):
 
 	DEFAULT_SCR_XSCALE = 0.0005
 	DEFAULT_SCR_YSCALE = 0.0005
-
+	
 	def __init__(self, name):
 		super(Mouse, self).__init__(vendor=0x28de,
 									product=0x1142,
@@ -274,7 +303,8 @@ class Mouse(UInput):
 		self._scr_dx = 0.0
 		self._scr_dy = 0.0
 		self.updateScrollParams()
-
+	
+	
 	def updateParams(self,
 					 xscale=DEFAULT_XSCALE,
 					 yscale=DEFAULT_YSCALE):
@@ -290,7 +320,8 @@ class Mouse(UInput):
 		"""
 		self._xscale = xscale
 		self._yscale = yscale
-
+	
+	
 	def updateScrollParams(self,
 						   xscale=DEFAULT_SCR_XSCALE,
 						   yscale=DEFAULT_SCR_YSCALE):
@@ -307,8 +338,39 @@ class Mouse(UInput):
 		"""
 		self._scr_xscale = xscale
 		self._scr_yscale = yscale
+	
+	
+	def keyEvent(self, key, val):
+		"""
+		Generate a rel event (move move)
 
-
+		@param int rel		  rel event (REL_*)
+		@param int val		  event value
+		"""
+		if val:
+			if key == Keys.BTN_LEFT:
+				mi = MOUSEINPUT(dwFlags=MOUSEEVENTF_LEFTDOWN)
+			elif key == Keys.Keys.BTN_MIDDLE:
+				mi = MOUSEINPUT(dwFlags=MOUSEEVENTF_MIDDLEDOWN)
+			elif key == Keys.BTN_RIGHT:
+				mi = MOUSEINPUT(dwFlags=MOUSEEVENTF_RIGHTDOWN)
+			else:
+				# unknown button, ignored
+				return
+		else:
+			if key == Keys.BTN_LEFT:
+				mi = MOUSEINPUT(dwFlags=MOUSEEVENTF_LEFTUP)
+			elif key == Keys.Keys.BTN_MIDDLE:
+				mi = MOUSEINPUT(dwFlags=MOUSEEVENTF_MIDDLEUP)
+			elif key == Keys.BTN_RIGHT:
+				mi = MOUSEINPUT(dwFlags=MOUSEEVENTF_RIGHTUP)
+			else:
+				# unknown button, ignored
+				return
+		x = INPUT(type=INPUT_MOUSE, mi=mi)
+		user32.SendInput(1, byref(x), sizeof(x))
+	
+	
 	def moveEvent(self, dx=0, dy=0):
 		"""
 		Generate move events from parametters and displacement
@@ -330,7 +392,8 @@ class Mouse(UInput):
 			_syn = True
 		if _syn:
 			self.synEvent()
-
+	
+	
 	def scrollEvent(self, dx=0, dy=0):
 		"""
 		Generate scroll events from parametters and displacement
