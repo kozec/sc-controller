@@ -94,7 +94,6 @@ class RingEditor(Editor, ComboSetter):
 			lblRadius.set_label(_("Inner Ring Radius"))
 			lblInner.set_label(_("Inner Ring"))
 			lblOuter.set_label(_("Outer Ring"))
-		print self._make_action()
 	
 	
 	def _choose_editor(self, action, cb):
@@ -206,6 +205,7 @@ class RingEditor(Editor, ComboSetter):
 		elif RingEditor.is_ring_action(action):
 			# Goes here only if action is MultiAciton with RingAction as 2nd item
 			ring = action.actions[1]
+			self.radius = ring.radius
 			if ring.inner:
 				self.actions = [ ring.inner, action.actions[0] ]
 				self.set_cb(cbMode, "inner")
