@@ -138,4 +138,7 @@ def get_daemon_socket():
 	
 	~/.config/scc/daemon.socket under normal conditions.
 	"""
+	if os.name == "nt":
+		from scc.constants import TCP_PORT
+		return ("localhost", TCP_PORT)
 	return os.path.join(get_config_path(), "daemon.socket")

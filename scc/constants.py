@@ -29,6 +29,7 @@ If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
 daemon will differ one one expected by UI and daemon will be forcefully restarted.
 """
 DAEMON_VERSION = "0.4.0.1"
+TCP_PORT = 19555		# Currently used only on Windows
 
 HPERIOD  = 0.02
 LPERIOD  = 0.5

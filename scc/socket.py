@@ -7,12 +7,12 @@ other clients.
 
 Uses Unix socket on Linux, so this module exists mainly so Windows can override it.
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
 from scc.paths import get_daemon_socket
 
-import os, sys, threading, logging
+import os, threading, socket, logging
 log = logging.getLogger("SCCDaemon")	# Same as sccdaemon.py, intentionally
 
 
@@ -53,3 +53,7 @@ class Socket(object):
 		if os.path.exists(socket_file):
 			os.unlink(socket_file)
 		log.debug("Control socket removed")
+
+
+def ClientSocket():
+	return socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
