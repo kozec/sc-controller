@@ -1410,6 +1410,7 @@ class ButtonAction(HapticEnabledAction, Action):
 		Keys.KEY_RIGHTALT	: "Alt"
 	}
 	CIRCULAR_INTERVAL = 1000
+	STICK_DEADZONE = 100
 	
 	def __init__(self, button1, button2 = None, minustrigger = None, plustrigger = None):
 		Action.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
@@ -1532,13 +1533,23 @@ class ButtonAction(HapticEnabledAction, Action):
 	
 	
 	def whole(self, mapper, x, y, what):
-		# Entire pad used as one big button
-		if mapper.is_touched(what) and not mapper.was_touched(what):
-			# Touched the pad
-			self.button_press(mapper)
-		if mapper.was_touched(what) and not mapper.is_touched(what):
-			# Released the pad
-			self.button_release(mapper)
+		if what == STICK:
+			# Stick used used as one big button (probably as part of ring bindings)
+			if abs(x) < ButtonAction.STICK_DEADZONE and abs(y) < ButtonAction.STICK_DEADZONE:
+				if self._pressed_key == self.button:
+					self.button_release(mapper)
+					self._pressed_key = None
+			elif self._pressed_key != self.button:
+				self.button_press(mapper)
+				self._pressed_key = self.button
+		else:
+			# Entire pad used as one big button
+			if mapper.is_touched(what) and not mapper.was_touched(what):
+				# Touched the pad
+				self.button_press(mapper)
+			if mapper.was_touched(what) and not mapper.is_touched(what):
+				# Released the pad
+				self.button_release(mapper)
 	
 	
 	def axis(self, mapper, position, what):
