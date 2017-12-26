@@ -24,9 +24,13 @@ HAVE_EVDEV = False
 try:
 	# Driver disables itself if evdev is not available
 	import evdev
+	from evdev import ecodes
 	HAVE_EVDEV = True
 except ImportError:
-	pass
+	class FakeECodes:
+		def __getattr__(self, key):
+			return key
+	ecodes = FakeECodes()
 
 from collections import namedtuple
 import threading, Queue, os, sys, time, binascii, json, logging
@@ -52,7 +56,7 @@ class EvdevController(Controller):
 	as SCController class does.
 	"""
 	PADPRESS_EMULATION_TIMEOUT = 0.2
-	ECODES = evdev.ecodes
+	ECODES = ecodes
 	flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
 	
 	def __init__(self, daemon, device, config_file, config):
@@ -148,7 +152,7 @@ class EvdevController(Controller):
 		need_cancel_padpressemu = False
 		try:
 			for event in self.device.read():
-				if event.type == evdev.ecodes.EV_KEY and event.code in self._dpad_map:
+				if event.type == ecodes.EV_KEY and event.code in self._dpad_map:
 					cal = self._calibrations[event.code]
 					if event.value:
 						if self._dpad_map[event.code]:
@@ -171,20 +175,20 @@ class EvdevController(Controller):
 						new_state = new_state._replace(buttons=b, **{ axis : value })
 					else:
 						new_state = new_state._replace(**{ axis : value })
-				elif event.type == evdev.ecodes.EV_KEY and event.code in self._button_map:
+				elif event.type == ecodes.EV_KEY and event.code in self._button_map:
 					if event.value:
 						b = new_state.buttons | self._button_map[event.code]
 						new_state = new_state._replace(buttons=b)
 					else:
 						b = new_state.buttons & ~self._button_map[event.code]
 						new_state = new_state._replace(buttons=b)
-				elif event.type == evdev.ecodes.EV_KEY and event.code in self._axis_map:
+				elif event.type == ecodes.EV_KEY and event.code in self._axis_map:
 					axis = self._axis_map[event.code]
 					if event.value:
 						new_state = new_state._replace(**{ axis : TRIGGER_MAX })
 					else:
 						new_state = new_state._replace(**{ axis : TRIGGER_MIN })
-				elif event.type == evdev.ecodes.EV_ABS and event.code in self._axis_map:
+				elif event.type == ecodes.EV_ABS and event.code in self._axis_map:
 					cal = self._calibrations[event.code]
 					value = (float(event.value) * cal.scale) + cal.offset
 					if value >= -cal.deadzone and value <= cal.deadzone:
@@ -224,14 +228,14 @@ class EvdevController(Controller):
 	
 	
 	def test_input(self, event):
-		if event.type == evdev.ecodes.EV_KEY:
+		if event.type == ecodes.EV_KEY:
 			if event.code >= FIRST_BUTTON:
 				if event.value:
 					print "ButtonPress", event.code
 				else:
 					print "ButtonRelease", event.code
 				sys.stdout.flush()
-		elif event.type == evdev.ecodes.EV_ABS:
+		elif event.type == ecodes.EV_ABS:
 			print "Axis", event.code, event.value
 			sys.stdout.flush()
 	
@@ -490,7 +494,7 @@ if HAVE_EVDEV:
 	
 def init(daemon, config):
 	if not HAVE_EVDEV:
-		log.warning("'evdev' package is missing. Evdev support is disabled.")
+		log.warning("Failed to enable Evdev driver: 'python-evdev' package is missing.")
 		return False
 	
 	_evdevdrv.set_daemon(daemon)
@@ -525,7 +529,7 @@ def get_axes(dev):
 	""" Helper function to get list ofa available axes """
 	assert HAVE_EVDEV, "evdev driver is not available"
 	caps = dev.capabilities(verbose=False)
-	return [ axis for (axis, trash) in caps.get(evdev.ecodes.EV_ABS, []) ]
+	return [ axis for (axis, trash) in caps.get(ecodes.EV_ABS, []) ]
 
 def evdevdrv_test(args):
 	"""
@@ -548,9 +552,9 @@ def evdevdrv_test(args):
 	c = EvdevController(None, dev, None, {})
 	caps = dev.capabilities(verbose=False)
 	print "Buttons:", " ".join([ str(x)
-			for x in caps.get(evdev.ecodes.EV_KEY, [])])
+			for x in caps.get(ecodes.EV_KEY, [])])
 	print "Axes:", " ".join([ str(axis)
-			for (axis, trash) in caps.get(evdev.ecodes.EV_ABS, []) ])
+			for (axis, trash) in caps.get(ecodes.EV_ABS, []) ])
 	print "Ready"
 	sys.stdout.flush()
 	for event in dev.read_loop():
