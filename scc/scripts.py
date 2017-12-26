@@ -6,7 +6,7 @@ Contains code for most of what can be done using 'scc' script.
 Created so scc-* stuff doesn't polute /usr/bin.
 """
 from scc.tools import init_logging, set_logging_level, find_binary
-import sys, subprocess
+import os, sys, subprocess
 
 
 class InvalidArguments(Exception): pass
@@ -40,7 +40,7 @@ def cmd_test_evdev(argv0, argv):
 	"""
 	Evdev driver test. Displays gamepad inputs using evdev driver.
 	
-	Usage: scc test_evdev /dev/input/node
+	Usage: scc test-evdev /dev/input/node
 	Return codes:
 	  0 - normal exit
 	  1 - invalid arguments or other error
@@ -54,7 +54,7 @@ def cmd_test_hid(argv0, argv):
 	"""
 	HID driver test. Displays gamepad inputs using hid driver.
 	
-	Usage: scc test_hid vendor_id device_id
+	Usage: scc test-hid vendor_id device_id
 	Return codes:
 	  0 - normal exit
 	  1 - invalid arguments or other error
@@ -64,33 +64,6 @@ def cmd_test_hid(argv0, argv):
 	"""
 	from scc.drivers.hiddrv import hiddrv_test, HIDController
 	return hiddrv_test(HIDController, argv)
-
-
-def sigint(*a):
-	print("\n*break*")
-	sys.exit(0)
-
-
-def import_osd():
-	import gi
-	gi.require_version('Gtk', '3.0')
-	gi.require_version('Rsvg', '2.0')
-	gi.require_version('GdkX11', '3.0')
-
-
-def run_osd_tool(tool, argv0, argv):
-	import signal, argparse
-	signal.signal(signal.SIGINT, sigint)
-	
-	from scc.tools import init_logging
-	from scc.paths import get_share_path
-	init_logging()
-	
-	sys.argv[0] = "scc osd-keyboard"
-	if not tool.parse_argumets([argv0] + argv):
-		sys.exit(1)
-	tool.run()
-	sys.exit(tool.get_exit_code())
 
 
 def help_osd_keyboard():
@@ -104,6 +77,97 @@ def cmd_osd_keyboard(argv0, argv):
 	import_osd()
 	from scc.osd.keyboard import Keyboard
 	return run_osd_tool(Keyboard(), argv0, argv)
+
+
+def cmd_list_profiles(argv0, argv):
+	"""
+	Lists available profiles
+	
+	Usage: scc list-profiles [-a]
+	
+	Arguments:
+	  -a   Include names begining with dot
+	"""
+	from scc.paths import get_profiles_path, get_default_profiles_path
+	paths = [ get_default_profiles_path(), get_profiles_path() ]
+	include_hidden = "-a" in argv
+	lst = set()
+	for path in paths:
+		try:
+			for x in os.listdir(path):
+				if x.endswith(".sccprofile"):
+					if not include_hidden and x.startswith("."):
+						continue
+					lst.add(x[0:-len(".sccprofile")])
+		except OSError:
+			pass
+	for x in sorted(lst):
+		print x
+	return 0
+
+
+def cmd_set_profile(argv0, argv):
+	"""
+	Sets controller profile
+
+	Usage: scc set-profile [controller_id] "profile name"
+	"""
+	from scc.tools import find_profile
+	
+	if len(argv) < 1:
+		show_help(command = "set_profile", out=sys.stderr)
+		return 1
+	s = connect_to_daemon()
+	if s is None: return -1
+	if len(argv) >= 2:
+		profile = find_profile(argv[1])
+		if profile is None:
+			print >>sys.stderr, "Unknown profile:", argv[1]
+			return 1
+		print >>s, "Controller: %s" % (argv[0],)
+		if not check_error(s): return 1
+		print >>s, "Profile: %s" % (profile,)
+		if not check_error(s): return 1
+	else:
+		profile = find_profile(argv[0])
+		if profile is None:
+			print >>sys.stderr, "Unknown profile:", argv[0]
+			return 1
+		print >>s, "Profile: %s" % (profile,)
+		if not check_error(s): return 1
+	return 0
+
+
+def cmd_info(argv0, argv):
+	""" Displays basic information about running driver """
+	s = connect_to_daemon()
+	if s is None: return -1
+	# Daemon already sends situable info, so this is mostly reading
+	# until "Ready." message is recieved.
+	global_profile = None
+	any_controller = False
+	while True:
+		line = s.readline()
+		if len(line) == 0:
+			break
+		line = line.strip("\r\n\t ")
+		if line == "Ready.":
+			break
+		elif line.startswith("Current profile:"):
+			global_profile = line
+			continue
+		elif line.startswith("Controller:"):
+			continue
+		elif line.startswith("Controller profile:"):
+			any_controller = True
+		elif line.startswith("Error:"):
+			print line
+			break
+		if ":" in line:
+			print line
+	if not any_controller and global_profile:
+		print global_profile
+	return 0
 
 
 def cmd_dependency_check(argv0, argv):
@@ -136,6 +200,72 @@ def cmd_dependency_check(argv0, argv):
 		return 1
 	return 0
 
+
+def connect_to_daemon():
+	"""
+	Returns socket connected to daemon or None if connection failed.
+	Outputs error message in later case.
+	"""
+	import socket
+	from scc.paths import get_daemon_socket
+	try:
+		s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+		s.connect(get_daemon_socket())
+	except Exception, e:
+		print >>sys.stderr, "Connection to scc-daemon failed: %s" % (e, )
+		return None
+	return s.makefile()
+
+
+def check_error(s):
+	"""
+	Reads line(s) from socket until "OK." or "Fail:" is read.
+	Then return True if message is "OK." or prints message to stderr
+	and return False if message is "Fail:"
+	"""
+	s.flush()
+	while True:
+		line = s.readline()
+		if len(line) == 0:
+			print >>sys.stderr, "Connection closed"
+			return False
+		line = line.strip("\n\r\t ")
+		if line == "OK.":
+			return True
+		if line.startswith("Fail:"):
+			if "\\n" in line:
+				line = line.replace("\\n", "\n")
+			print >>sys.stderr, line
+			return False
+
+
+def sigint(*a):
+	print("\n*break*")
+	sys.exit(0)
+
+
+def import_osd():
+	import gi
+	gi.require_version('Gtk', '3.0')
+	gi.require_version('Rsvg', '2.0')
+	gi.require_version('GdkX11', '3.0')
+
+
+def run_osd_tool(tool, argv0, argv):
+	import signal, argparse
+	signal.signal(signal.SIGINT, sigint)
+	
+	from scc.tools import init_logging
+	from scc.paths import get_share_path
+	init_logging()
+	
+	sys.argv[0] = "scc osd-keyboard"
+	if not tool.parse_argumets([argv0] + argv):
+		sys.exit(1)
+	tool.run()
+	sys.exit(tool.get_exit_code())
+
+
 def show_help(command = None, out=sys.stdout):
 	names = [ x[4:] for x in globals() if x.startswith("cmd_") ]
 	max_len = max([ len(x) for x in names ])
@@ -156,7 +286,7 @@ def show_help(command = None, out=sys.stdout):
 	print >>out, "Usage: %s <command> [ arguments ]" % (sys.argv[0], )
 	print >>out, ""
 	print >>out, "List of commands:"
-	for name in names:
+	for name in sorted(names):
 		hlp = ((globals()["cmd_" + name].__doc__ or "")
 					.strip("\t \r\n")
 					.split("\n")[0])
