@@ -70,9 +70,12 @@ eleasing button returns emulated axis back to 'min'.
 
 
 #### <a name="dpad"></a> dpad([diagonal_rage,] up, down, left, right)
-Emulates dpad. Touchpad is divided into 8 triangular parts. When the user touches the touchpad, action is executed depending on finger position. 
+Emulates dpad. Touchpad is divided into 8 triangular parts. When the user
+touches the touchpad, action is executed depending on finger position.
 
-'diagonal_rage' is specified in degrees (1 to 89). If not set, all parts are sized equally, otherwise, diagonal parts are taking specified portion of pad and rest is assigned to up/left/right/down portions.
+'diagonal_rage' is specified in degrees (1 to 89). If not set, all parts are
+sized equally, otherwise, diagonal parts are taking specified portion of pad
+and rest is assigned to up/left/right/down portions.
 
 Available only for pads and sticks.
 
