@@ -82,8 +82,8 @@ class MacroEditor(Editor):
 		else:
 			# Macro
 			action = Macro(*pars)
-		if entName.get_text().strip() != "":
-			action.name = entName.get_text().strip()
+		if entName.get_text().decode("utf-8").strip() != "":
+			action.name = entName.get_text().decode("utf-8").strip()
 		return action
 	
 	

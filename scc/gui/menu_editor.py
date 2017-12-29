@@ -107,9 +107,9 @@ class MenuEditor(Editor):
 		""" Handler for Save button """
 		self._remove_original()
 		if self.builder.get_object("rbInProfile").get_active():
-			self._save_to_profile(self.builder.get_object("entName").get_text())
+			self._save_to_profile(self.builder.get_object("entName").get_text().decode("utf-8"))
 		else:
-			self._save_to_file(self.builder.get_object("entName").get_text())
+			self._save_to_file(self.builder.get_object("entName").get_text().decode("utf-8"))
 		self.close()
 	
 	
@@ -235,7 +235,7 @@ class MenuEditor(Editor):
 		
 	
 	def on_entName_changed(self, *a):
-		id = self.builder.get_object("entName").get_text()
+		id = self.builder.get_object("entName").get_text().decode("utf-8")
 		if len(id.strip()) == 0:
 			self._bad_id_no_id()
 			return

@@ -274,14 +274,14 @@ class ImportVdf(object):
 			lblASetList.set_visible(True)
 			log.info("Imported profile contains action sets")
 			lblASetList.set_text("\n".join([
-				self.gen_aset_name(txName.get_text().strip(), x)
+				self.gen_aset_name(txName.get_text().decode("utf-8").strip(), x)
 				for x in self._profile.action_sets
 				if x != 'default'
 			]))
 		else:
 			lblASetsNotice.set_visible(False)
 			lblASetList.set_visible(False)	
-		btNext.set_sensitive(self.check_name(txName.get_text()))
+		btNext.set_sensitive(self.check_name(txName.get_text().decode("utf-8")))
 	
 	
 	def on_preload_finished(self, callback, *data):
@@ -398,7 +398,7 @@ class ImportVdf(object):
 	
 	
 	def vdf_import_confirmed(self, *a):
-		name = self.builder.get_object("txName").get_text().strip()
+		name = self.builder.get_object("txName").get_text().decode("utf-8").strip()
 		
 		if len(self._profile.action_sets) > 1:
 			# Update ChangeProfileActions with correct profile names

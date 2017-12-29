@@ -480,15 +480,15 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		
 		# Build condition
 		data = {}
-		if cbMatchTitle.get_active() and entTitle.get_text():
+		if cbMatchTitle.get_active() and entTitle.get_text().decode("utf-8"):
 			if cbExactTitle.get_active():
-				data['exact_title'] = entTitle.get_text()
+				data['exact_title'] = entTitle.get_text().decode("utf-8")
 			elif cbRegExp.get_active():
-				data['regexp'] = entTitle.get_text()
+				data['regexp'] = entTitle.get_text().decode("utf-8")
 			else:
-				data['title'] = entTitle.get_text()
-		if cbMatchClass.get_active() and entClass.get_text():
-			data['wm_class'] = entClass.get_text()
+				data['title'] = entTitle.get_text().decode("utf-8")
+		if cbMatchClass.get_active() and entClass.get_text().decode("utf-8"):
+			data['wm_class'] = entClass.get_text().decode("utf-8")
 		condition = Condition(**data)
 		
 		# Grab selected action
@@ -618,13 +618,13 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		btSave = self.builder.get_object("btSave")
 		cbMatchTitle = self.builder.get_object("cbMatchTitle")
 		# Ensure that 'Match Title' checkbox is checked if its entry gets text
-		if ent.get_text():
+		if ent.get_text().decode("utf-8"):
 			cbMatchTitle.set_active(True)
 		if cbRegExp.get_active():
 			# If regexp combobox is active, try to compile expression typed
 			# in field and don't allow user to save unless expression is valid
 			try:
-				re.compile(ent.get_text())
+				re.compile(ent.get_text().decode("utf-8"))
 			except Exception, e:
 				log.error(e)
 				btSave.set_sensitive(False)

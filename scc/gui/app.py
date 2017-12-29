@@ -517,7 +517,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.current.clear()
 		else:
 			self.current.is_template = False
-		self.new_profile(self.current, txNewProfile.get_text())
+		self.new_profile(self.current, txNewProfile.get_text().decode("utf-8"))
 		dlg.hide()
 	
 	
@@ -1129,7 +1129,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_txRename_changed(self, tx):
-		name = tx.get_text()
+		name = tx.get_text().decode("utf-8")
 		btRenameProfile = self.builder.get_object("btRenameProfile")
 		btRenameProfile.set_sensitive(find_profile(name) is None)
 	
@@ -1138,7 +1138,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		dlg = self.builder.get_object("dlgRenameProfile")
 		txRename = self.builder.get_object("txRename")
 		old_name = dlg._name
-		new_name = txRename.get_text()
+		new_name = txRename.get_text().decode("utf-8")
 		old_fname = os.path.join(get_profiles_path(), old_name + ".sccprofile")
 		new_fname = os.path.join(get_profiles_path(), new_name + ".sccprofile")
 		try:
