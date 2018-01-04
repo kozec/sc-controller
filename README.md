@@ -27,7 +27,7 @@ Based on [Standalone Steam Controller Driver](https://github.com/ynsta/steamcont
 - Arch, Manjaro: in [AUR](https://aur.archlinux.org/packages/sc-controller-git/)
 - Solus: search for `sc-controller` in Software Center
 - Exherbo: in [hardware](https://git.exherbo.org/summer/packages/input/sc-controller)
-- Voidlinux: [template available](https://github.com/Vintodrimmer/void-packages/blob/sc-controller-branch/srcpkgs/sc-controller/template)
+- Void Linux: `xbps-install -S sc-controller`
 
 ##### To run without package
 - download and extract [latest release](https://github.com/kozec/sc-controller/releases/latest)
