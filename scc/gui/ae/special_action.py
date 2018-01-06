@@ -170,13 +170,13 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 	def on_enCommand_changed(self, *a):
 		if self._recursing : return
 		enCommand = self.builder.get_object("enCommand")
-		self.editor.set_action(ShellCommandAction(enCommand.get_text().decode("utf-8"))
+		self.editor.set_action(ShellCommandAction(enCommand.get_text().decode("utf-8")))
 	
 	
 	def on_enOSDText_changed(self, *a):
 		if self._recursing : return
 		enOSDText = self.builder.get_object("enOSDText")
-		self.editor.set_action(OSDAction(enOSDText.get_text().decode("utf-8"))
+		self.editor.set_action(OSDAction(enOSDText.get_text().decode("utf-8")))
 	
 	
 	def on_exMenuControl_activate(self, ex, *a):
