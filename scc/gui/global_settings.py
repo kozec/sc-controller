@@ -134,6 +134,14 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		(self.builder.get_object("cbNewRelease")
 				.set_active(self.app.config['gui']['news']['enabled']))
 		self._recursing = False
+		
+		try:
+			import evdev
+		except ImportError:
+			# This block runs if evdev module is missing
+			for w in ("cbEnableDriver_evdevdrv", "btAddController"):
+				self.builder.get_object(w).set_sensitive(False)
+			self.builder.get_object("txEvdevMissing").set_visible(True)
 	
 	
 	def load_drivers(self):
