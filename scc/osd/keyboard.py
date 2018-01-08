@@ -204,16 +204,6 @@ class Keyboard(OSDWindow, TimerManager):
 		log.debug("Reloaded profile")
 	
 	
-	def on_daemon_died(self, *a):
-		log.error("Daemon died")
-		self.quit(2)
-	
-	
-	def on_failed_to_lock(self, error):
-		log.error("Failed to lock input: %s", error)
-		self.quit(3)
-	
-	
 	def on_daemon_connected(self, *a):
 		def success(*a):
 			log.info("Sucessfully locked input")
@@ -225,7 +215,11 @@ class Keyboard(OSDWindow, TimerManager):
 			self.on_failed_to_lock("Controller not connected")
 			return
 		
-		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
+		self._eh_ids += [
+			(c, c.connect('event', self.on_event)),
+			(c, c.connect('lost', self.on_controller_lost)),
+		]
+		
 		# Lock everything
 		locks = [ LEFT, RIGHT, STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
 		c.lock(success, self.on_failed_to_lock, *locks)

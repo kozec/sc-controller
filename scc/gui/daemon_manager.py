@@ -208,8 +208,11 @@ class DaemonManager(GObject.GObject):
 				log.debug("Daemon reported profile change for %s: %s", controller_id, c._profile)
 			elif line.startswith("Controller Count:"):
 				count = int(line[17:])
-				self._controllers = self._controllers[-count:]
+				old, self._controllers = self._controllers, self._controllers[-count:]
 				self.emit('controller-count-changed', count)
+				for c in old:
+					if c not in self._controllers:
+						c.emit('lost')
 			elif line.startswith("Event:"):
 				data = line[6:].strip().split(" ")
 				c = self.get_controller(data[0])
@@ -312,6 +315,9 @@ class ControllerManager(GObject.GObject):
 			Emited when pad, stick or button is locked using lock() method
 			and position or pressed state of that button is changed
 		
+		lost()
+			Emited when controller is disconnected or turned off
+		
 		profile-changed (profile)
 			Emited after profile for controller is changed.
 			Profile is filename of currently active profile
@@ -319,6 +325,7 @@ class ControllerManager(GObject.GObject):
 	
 	__gsignals__ = {
 			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
+			b"lost"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
 			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
 	}
 	

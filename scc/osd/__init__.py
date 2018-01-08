@@ -204,6 +204,21 @@ class OSDWindow(Gtk.Window):
 		self.make_window_clicktrough()
 	
 	
+	def on_controller_lost(self, *a):
+		log.error("Controller lost")
+		self.quit(2)
+	
+	
+	def on_daemon_died(self, *a):
+		log.error("Daemon died")
+		self.quit(2)
+	
+	
+	def on_failed_to_lock(self, error):
+		log.error("Failed to lock input: %s", error)
+		self.quit(3)
+	
+	
 	def get_exit_code(self):
 		return self.exit_code
 	

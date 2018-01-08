@@ -87,6 +87,7 @@ class InputDisplay(OSDWindow):
 			'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
 			'RIGHT', 'STICK', 'STICKPRESS')	
 		c.connect('event', self.on_daemon_event_observer)
+		c.connect('lost', self.on_controller_lost)
 	
 	
 	def on_observe_failed(self, error):
@@ -97,11 +98,6 @@ class InputDisplay(OSDWindow):
 			log.error("[!!] Please, enable 'Input Test Mode' on 'Advanced' tab in SC-Controller settings")
 			log.error("=================================================================================")
 		self.quit(3)
-	
-	
-	def on_daemon_died(self, *a):
-		log.error("Daemon died")
-		self.quit(2)
 	
 	
 	def on_daemon_event_observer(self, daemon, what, data):

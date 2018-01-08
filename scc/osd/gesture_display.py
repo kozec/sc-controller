@@ -129,16 +129,6 @@ class GestureDisplay(OSDWindow):
 		OSDWindow.show(self, *a)
 	
 	
-	def on_daemon_died(self, *a):
-		log.error("Daemon died")
-		self.quit(2)
-	
-	
-	def on_failed_to_lock(self, error):
-		log.error("Failed to lock input: %s", error)
-		self.quit(3)
-	
-	
 	def on_daemon_connected(self, *a):
 		def success(*a):
 			log.error("Sucessfully locked %s pad", self._control_with)
@@ -153,7 +143,11 @@ class GestureDisplay(OSDWindow):
 			# There is no controller connected to daemon
 			self.on_failed_to_lock("Controller not connected")
 			return
-		self._eh_ids += [ (c, c.connect('event', self.on_event)) ]
+		
+		self._eh_ids += [
+			(c, c.connect('event', self.on_event)),
+			(c, c.connect('lost', self.on_controller_lost)),
+		]
 		c.lock(success, self.on_failed_to_lock, *locks)
 	
 	
