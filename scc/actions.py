@@ -399,14 +399,20 @@ class RangeOP(object):
 		self.what = what
 		self.op = op
 		self.value = value
+		self.min = float(TRIGGER_MIN)
+		self.max = float(TRIGGER_MAX)
 		
 		if what == SCButtons.LT:
 			# TODO: Somehow unify names here, LT button is related to ltrig axis and so on
 			self.axis_name = "ltrig"
-			self.max = float(TRIGGER_MAX)
 		elif what == SCButtons.RT:
 			self.axis_name = "rtrig"
-			self.max = float(TRIGGER_MAX)
+		elif what == SCButtons.X:
+			self.axis_name = "lpad_x"
+			self.min, self.max = float(STICK_PAD_MIN), float(STICK_PAD_MAX)
+		elif what == SCButtons.Y:
+			self.axis_name = "lpad_y"
+			self.min, self.max = float(STICK_PAD_MIN), float(STICK_PAD_MAX)
 		else:
 			raise ValueError("'%s' is not trigger nor axis" % (nameof(what), ))
 		

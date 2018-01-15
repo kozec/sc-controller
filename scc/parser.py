@@ -176,7 +176,7 @@ class ActionParser(object):
 				if self._peek_token().value in RangeOP.OPS:
 					op = self._next_token().value
 					# TODO: Maybe other axes
-					if parameter not in (SCButtons.LT, SCButtons.RT):
+					if parameter not in (SCButtons.LT, SCButtons.RT,SCButtons.X,SCButtons.Y):
 						raise ParseError("'%s' is not trigger nor axis" % (nameof(parameter), ))
 					if not self._tokens_left():
 						raise ParseError("Excepted number after '%s'" % (op, ))
