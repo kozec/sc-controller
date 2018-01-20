@@ -85,10 +85,22 @@ class Daemon(object):
 			pid = None
 
 		if pid:
-			message = "pidfile {0} already exist. " + \
-					"Daemon already running?\n"
-			sys.stderr.write(message.format(self.pidfile))
-			sys.exit(1)
+			# Check if PID coresponds to running daemon process and fail if yes
+			try:
+				assert os.path.exists("/proc")	# Just in case of BSD...
+				cmdline = file("/proc/%s/cmdline" % (pid,), "r").read().replace("\x00", " ").strip()
+				if sys.argv[0] in cmdline:
+					raise Exception("already running")
+			except IOError:
+				# No such process
+				pass
+			except:
+				message = "pidfile {0} already exist. " + \
+						"Daemon already running?\n"
+				sys.stderr.write(message.format(self.pidfile))
+				sys.exit(1)
+
+			sys.stderr.write("Overwriting stale pidfile\n")
 
 		# Start the daemon
 		self.daemonize()
