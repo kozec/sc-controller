@@ -1008,6 +1008,14 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 				self.holdaction.to_string(multiline, pad),
 				self.normalaction.to_string(multiline, pad),
 			)
+		elif not self.action and not self.normalaction and self.holdaction:
+			return "hold(None, %s)" % (
+				self.holdaction.to_string(multiline, pad),
+			)
+		elif self.action and not self.normalaction and not self.holdaction:
+			return "doubleclick(None, %s)" % (
+				self.action.to_string(multiline, pad),
+			)
 		return ((self.action or self.normalaction or self.holdaction)
 			.to_string(multiline, pad))
 	

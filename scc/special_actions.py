@@ -447,7 +447,6 @@ class QuickMenuAction(MenuAction):
 		self.execute(mapper, '-x', str(self.x), '-y', str(self.y))
 
 
-
 class RadialMenuAction(MenuAction):
 	"""
 	Same as grid menu, which is same as menu but displayed in grid,
