@@ -12,7 +12,7 @@ from scc.special_actions import OSDAction, GesturesAction, MenuAction
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.modifiers import DeadzoneModifier, RotateInputModifier
-from scc.modifiers import SmoothModifier
+from scc.modifiers import SmoothModifier, NameModifier
 from scc.actions import Action, XYAction, NoAction, RingAction
 from scc.constants import HapticPos, SCButtons
 from scc.constants import CUT, ROUND, LINEAR
@@ -292,9 +292,14 @@ class ActionEditor(Editor):
 	def _set_title(self):
 		""" Copies title from text entry into action instance """
 		entName = self.builder.get_object("entName")
-		self._action.name = entName.get_text().decode("utf-8").strip(" \t\r\n")
-		if len(self._action.name) < 1:
+		name = entName.get_text().decode("utf-8").strip(" \t\r\n")
+		if len(name) < 1:
 			self._action.name = None
+		elif not self._action:
+			self._action = NameModifier(name, self._action)
+		else:
+			#print ">>>", "_set_title", self._action, entName
+			self._action.name = name
 
 
 	def hide_modifiers(self):

@@ -119,28 +119,32 @@ class NameModifier(Modifier):
 	Used internally.
 	"""
 	COMMAND = "name"
-
+	
 	def _mod_init(self, name):
 		self.name = name
 		if self.action:
 			self.action.name = name
-
-
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return a.set_name(data[NameModifier.COMMAND])
-
-
+	
+	
 	def strip(self):
 		rv = self.action.strip()
 		rv.name = self.name
 		return rv
-
-
+	
+	
 	def compress(self):
 		return self.strip()
-
-
+	
+	
+	def describe(self, context):
+		return self.name or self.to_string()
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		return "%s(%s, %s)" % (
 			self.COMMAND,
