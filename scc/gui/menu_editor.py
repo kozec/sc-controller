@@ -439,3 +439,8 @@ class MenuEditor(Editor):
 	def on_btChangeItemIcon_clicked(self, *a):
 		c = IconChooser(self.app, self.on_icon_choosen)
 		c.show(self.window)
+	
+	
+	def on_btClearItemIcon_clicked(self, *a):
+		self.selected_icon = None
+		self.update_menu_icon()
