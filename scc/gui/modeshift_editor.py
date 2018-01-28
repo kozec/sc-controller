@@ -11,10 +11,10 @@ from scc.gui.controller_widget import ControllerButton
 from scc.gui.controller_widget import STICKS, PADS
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
+from scc.actions import Action, NoAction, RangeOP, RingAction
 from scc.constants import SCButtons, HapticPos, TRIGGER_MAX
 from scc.modifiers import ModeModifier, DoubleclickModifier
 from scc.modifiers import FeedbackModifier, HoldModifier
-from scc.actions import Action, NoAction, RangeOP
 from scc.profile import Profile
 from scc.macros import Macro
 from scc.tools import nameof
@@ -213,10 +213,13 @@ class ModeshiftEditor(Editor):
 	
 	
 	def _choose_editor(self, action, cb):
+		from scc.gui.ring_editor import RingEditor	# Cannot be imported @ top
 		if isinstance(action, Macro):
 			from scc.gui.macro_editor import MacroEditor	# Cannot be imported @ top
 			e = MacroEditor(self.app, cb)
 			e.set_title(_("Edit Macro"))
+		elif RingEditor.is_ring_action(action):
+			e = RingEditor(self.app, cb)
 		else:
 			from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 			e = ActionEditor(self.app, cb)
