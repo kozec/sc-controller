@@ -20,7 +20,7 @@ Connection is then held until client side closes it.
 
 #### `Controller Count: n`
 Informs about total number of connected controllers.
-Always sent after with `Controller:` messages
+Always sent after `Controller:` messages
 
 #### `Controller: controller_id type config_file`
 Provides info about controller 'n'.
@@ -42,7 +42,7 @@ Also sent automatically to every new client.
 
 #### `Current profile: filename.sccprofile`
 Similar to `Controller profile:`, sent to every client when profile file for
-first profile is loaded and used. Also sent automatically to every new client.
+first controller is loaded and used. Also sent automatically to every new client.
 
 Unlike `Controller profile:`, this message is sent even if there is no
 controller connected.
