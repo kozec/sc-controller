@@ -11,9 +11,10 @@ from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
 from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION, HapticPos
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
-from scc.paths import get_menus_path, get_default_menus_path
 from scc.uinput import Keys, Axes, CannotCreateUInputException
+from scc.paths import get_menus_path, get_default_menus_path
 from scc.tools import set_logging_level, find_binary, clamp
+from scc.custom import load_custom_module
 from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
 from scc.controller import HapticData
@@ -50,6 +51,7 @@ class SCCDaemon(Daemon):
 		self.sserver = None			# UnixStreamServer instance
 		self.errors = []
 		self.alone = False			# Set by launching script from --alone flag
+		self.custom_py_loaded = False
 		self.osd_daemon = None
 		self.default_profile = None
 		self.autoswitch_daemon = None
@@ -602,6 +604,7 @@ class SCCDaemon(Daemon):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)
 		self.init_drivers()
+		load_custom_module(log)
 		self.default_mapper = self.init_default_mapper()
 		self.free_mappers.append(self.default_mapper)
 		self.load_default_profile()

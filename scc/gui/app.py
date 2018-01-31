@@ -23,6 +23,7 @@ from scc.tools import get_profile_name, profile_is_default, find_profile
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.paths import get_config_path, get_profiles_path
+from scc.custom import load_custom_module
 from scc.modifiers import NameModifier
 from scc.actions import NoAction
 from scc.profile import Profile
@@ -61,6 +62,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.dm.connect("error", self.on_daemon_error)
 		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		self.dm.connect("version", self.on_daemon_version)
+		# Load custom stuff
+		load_custom_module(log, "gui")
 		# Set variables
 		self.config = Config()
 		self.gladepath = gladepath
