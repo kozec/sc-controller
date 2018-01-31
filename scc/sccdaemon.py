@@ -758,6 +758,12 @@ class SCCDaemon(Daemon):
 						raise Exception("goto fail")
 				except Exception, e:
 					client.wfile.write(b"Fail: no such controller\n")
+		elif message.startswith("State."):
+			if Config()["enable_sniffing"]:
+				client.wfile.write(b"State: %s\n" % (str(client.mapper.state), ))
+			else:
+				log.warning("Refused 'State' request: Sniffing disabled")
+				client.wfile.write(b"Fail: Sniffing disabled.\n")
 		elif message.startswith("Led:"):
 			try:
 				number = int(message[4:])
