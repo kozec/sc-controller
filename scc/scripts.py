@@ -203,7 +203,7 @@ def cmd_dependency_check(argv0, argv):
 
 def cmd_lock_inputs(argv0, argv, lock="Lock: "):
 	"""
-	Prints pressed buttons, pads and sticks
+	Locks and prints pressed buttons, pads and sticks
 	
 	Locks controller inputs and prints buttons, pads and stick as they are
 	pressed or moved on controller.
@@ -241,6 +241,26 @@ def cmd_lock_inputs(argv0, argv, lock="Lock: "):
 	finally:
 		s.close()
 
+
+def cmd_print_inputs(argv0, argv, lock="Lock: "):
+	"""
+	Prints pressed buttons, pads and sticks
+	
+	Prints controller inputs and prints buttons, pads and stick as they are
+	pressed or moved on controller, without locking them exclusivelly.
+	
+	Usage: scc lock-inputs [button1] [stick1] [button2] ... [buttonN]
+	
+	Available button, sticks and pads:
+		A X B Y START C BACK RGRIP LGRIP   LB RB LT RT STICK LPAD RPAD
+	
+	Return codes:
+		-1  - failed to connect to daemon
+		-2  - failed to lock inputs
+		-3  - connection terminated
+		-4  - daemon reported error
+	"""
+	return cmd_lock_inputs(argv0, argv, lock="Observe: ")
 
 
 def connect_to_daemon():
