@@ -242,7 +242,7 @@ def cmd_lock_inputs(argv0, argv, lock="Lock: "):
 					sys.stdout.flush()
 				except IOError:
 					# Output closed, bail out
-					sys.exit(0)
+					return 0
 	finally:
 		s.close()
 
