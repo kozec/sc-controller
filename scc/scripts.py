@@ -237,7 +237,12 @@ def cmd_lock_inputs(argv0, argv, lock="Lock: "):
 				return -2
 			elif line.startswith("Event:"):
 				data = line.strip().split(" ")
-				print " ".join(data[2:])
+				try:
+					print >>sys.stdout, " ".join(data[2:])
+					sys.stdout.flush()
+				except IOError:
+					# Output closed, bail out
+					sys.exit(0)
 	finally:
 		s.close()
 
