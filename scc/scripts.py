@@ -201,6 +201,48 @@ def cmd_dependency_check(argv0, argv):
 	return 0
 
 
+def cmd_lock_inputs(argv0, argv, lock="Lock: "):
+	"""
+	Prints pressed buttons, pads and sticks
+	
+	Locks controller inputs and prints buttons, pads and stick as they are
+	pressed or moved on controller.
+	
+	Usage: scc lock-inputs [button1] [stick1] [button2] ... [buttonN]
+	
+	Available button, sticks and pads:
+		A X B Y START C BACK RGRIP LGRIP   LB RB LT RT STICK LPAD RPAD
+	
+	Return codes:
+		-1  - failed to connect to daemon
+		-2  - failed to lock inputs
+		-3  - connection terminated
+		-4  - daemon reported error
+	"""
+	s = connect_to_daemon()
+	if s is None: return -1
+	try:
+		while True:
+			line = s.readline()
+			if line == "":
+				return -3
+			elif line.startswith("Ready."):
+				print >>s, lock + " ".join([ x.upper() for x in argv ])
+				s.flush()
+			elif line.startswith("Error:"):
+				print >>sys.stderr, line.strip()
+				return -4
+			elif line.startswith("Fail:"):
+				print >>sys.stderr, line.strip()
+				return -2
+			elif line.startswith("Event:"):
+				data = line.strip().split(" ")
+				print " ".join(data[2:])
+	finally:
+		s.close()
+
+
+
 def connect_to_daemon():
 	"""
 	Returns socket connected to daemon or None if connection failed.
