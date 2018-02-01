@@ -16,7 +16,7 @@ Ready.
 
 Connection is then held until client side closes it.
 
-### Messages sendt by daemon:
+### Messages sent by daemon:
 
 #### `Controller Count: n`
 Informs about total number of connected controllers.
@@ -89,6 +89,11 @@ Sent to all clients when daemon receives `Reconfigure.` message.
 #### `SCCDaemon`
 Just identification message, automatically sent when connection is accepted.
 Can be either ignored or used to check if remote side really is *scc-daemon*.
+
+#### `State: ....`
+Sent to client as response to `State.` message. String after colon describes
+current state of controller (such as pressed buttons and stick position...)
+and is device-specific.
 
 #### `Version: x.y.z`
 Identifies daemon version. Automatically sent when connection is accepted.
@@ -197,6 +202,14 @@ gets called. All clients are disconnected immediately, so there is no response.
 Send by scc-osd-daemon when user chooses item from displayed menu.
 If menu_id or item_id contains spaces or quotes, it should be escaped.
 Daemon responds with `OK.`
+
+#### `State.`
+Asks daemon to sent current state of controller. Format of response is device-specific,
+but should be useful enough for single-purpose script or debugging.
+
+If observing is not enabled in configuration, daemon responds with `Fail: Sniffing disabled.`
+If there is no active controller, daemon responds with `Fail: no controller connected`. 
+Otherwise, daemon responds with `State: ...` message.
 
 #### `Gestured: gesture_string`
 Send by scc-osd-daemon, when user draws gesture. Sent only after requested
