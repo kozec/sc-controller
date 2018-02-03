@@ -82,6 +82,11 @@ class Macro(Action):
 				self._release = None
 	
 	
+	def cancel(self, mapper):
+		for a in self.actions:
+			a.cancel(mapper)
+	
+	
 	def set_haptic(self, hapticdata):
 		for a in self.actions:
 			if a and hasattr(a, "set_haptic"):

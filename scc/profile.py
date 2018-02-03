@@ -200,16 +200,24 @@ class Profile(object):
 		
 		Used for checks when profile is exported or imported.
 		"""
-		for dct in (self.buttons, self.triggers, self.pads):
-			for k in dct:
-				for i in dct[k].get_all_actions():
-					yield i
-		for action in (self.stick, self.gyro):
+		for action in self.get_actions():
 			for i in action.get_all_actions():
 				yield i
 		for id in self.menus:
 			for i in self.menus[id].get_all_actions():
 				yield i
+	
+	
+	def get_actions(self):
+		"""
+		As get_all_actions, but returns only root actions, without children,
+		and ignores menus.
+		"""
+		for dct in (self.buttons, self.triggers, self.pads):
+			for k in dct:
+				yield dct[k]
+		for action in (self.stick, self.gyro):
+			yield action
 	
 	
 	def get_filename(self):

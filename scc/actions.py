@@ -335,6 +335,14 @@ class Action(object):
 		log.warn("Action %s can't handle incremental changes", self.__class__.__name__)
 	
 	
+	def cancel(self, mapper):
+		"""
+		Called when profile is changed to give action chance to cancel
+		long-running effects it may have created.
+		"""
+		pass
+	
+	
 	def strip_defaults(self):
 		"""
 		Returns self.parameters list with all default values stripped from right
@@ -1272,6 +1280,12 @@ class MultichildAction(Action):
 	
 	def get_child_actions(self):
 		return self.actions
+	
+	
+	def cancel(self, mapper):
+		for a in self.actions:
+			print "> CANCEL", a
+			a.cancel(mapper)
 	
 	
 	def to_string(self, multiline=False, pad=0, prefixparams=""):

@@ -179,6 +179,8 @@ class SCCDaemon(Daemon):
 			if mapper.get_controller():
 				log.debug("Turning gyrosensor ON")
 				mapper.get_controller().set_gyro_enabled(True)
+		# Cancel everything
+		mapper.cancel_all()
 		# Release all buttons
 		mapper.release_virtual_buttons()
 		# Reset mouse (issue #222)
@@ -1221,6 +1223,7 @@ class LockedAction(ReportingAction):
 	def __init__(self, what, client, original_action):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
+		original_action.cancel(self.mapper)
 		self._store_lock()
 		log.debug("%s locked by %s", self.what, self.client)
 	
@@ -1247,6 +1250,7 @@ class ReplacedAction(LockedAction):
 		ReportingAction.__init__(self, what, client)
 		self.original_action = original_action
 		self.new_action = new_action.compress()
+		original_action.cancel(self.mapper)
 		self._store_lock()
 		log.debug("%s replaced by %s", self.what, self.client)
 	
@@ -1285,6 +1289,10 @@ class ObservingAction(ReportingAction):
 	
 	def reaply(self, client, daemon):
 		client.observe_action(daemon, self.what)
+	
+	
+	def cancel(self, mapper):
+		self.original_action.cancel(mapper)
 	
 	
 	def unlock(self, daemon):

@@ -42,6 +42,10 @@ class Modifier(Action):
 		return self.action.get_compatible_modifiers()
 	
 	
+	def cancel(self, mapper):
+		self.action.cancel(mapper)
+	
+	
 	def get_child_actions(self):
 		return (self.action, )
 	
@@ -512,6 +516,11 @@ class BallModifier(Modifier, WholeHapticAction):
 		return self._mod_to_string(self.strip_defaults(), multiline, pad)
 	
 	
+	def cancel(self, mapper):
+		Modifier.cancel(self, mapper)
+		self._stop()
+	
+	
 	def pad(self, mapper, position, what):
 		self.whole(mapper, position, 0, what)
 	
@@ -833,6 +842,12 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				rv += [ self.default.to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
+	
+	
+	def cancel(self, mapper):
+		for action in self.mods.values():
+			action.cancel(mapper)
+		self.default.cancel(mapper)
 	
 	
 	def select(self, mapper):

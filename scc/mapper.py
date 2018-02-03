@@ -328,6 +328,15 @@ class Mapper(object):
 			ButtonAction._button_release(self, x, True)
 	
 	
+	def cancel_all(self):
+		"""
+		Called when profile is changed to let all actions to cancel
+		long-running effects they may have created
+		"""
+		for a in self.profile.get_actions():
+			a.cancel(self)
+	
+	
 	def reset_gyros(self):
 		for a in self.profile.get_all_actions():
 			if isinstance(a, GyroAbsAction):
