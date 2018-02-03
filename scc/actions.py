@@ -1284,7 +1284,6 @@ class MultichildAction(Action):
 	
 	def cancel(self, mapper):
 		for a in self.actions:
-			print "> CANCEL", a
 			a.cancel(mapper)
 	
 	
