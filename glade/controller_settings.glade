@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.20.2 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
-  <object class="GtkAdjustment" id="adjAutoShutdown">
+  <object class="GtkAdjustment" id="adjIdleTimeout">
     <property name="lower">60</property>
     <property name="upper">7200</property>
     <property name="step_increment">1</property>
@@ -346,17 +346,17 @@
           </packing>
         </child>
         <child>
-          <object class="GtkScale" id="sclAutoShutdown">
+          <object class="GtkScale" id="sclIdleTimeout">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="margin_top">5</property>
             <property name="hexpand">True</property>
-            <property name="adjustment">adjAutoShutdown</property>
+            <property name="adjustment">adjIdleTimeout</property>
             <property name="round_digits">0</property>
             <property name="digits">0</property>
             <property name="value_pos">right</property>
-            <signal name="format-value" handler="on_sclAutoShutdown_format_value" swapped="no"/>
-            <signal name="value-changed" handler="on_sclAutoShutdown_value_changed" swapped="no"/>
+            <signal name="format-value" handler="on_sclIdleTimeout_format_value" swapped="no"/>
+            <signal name="value-changed" handler="on_sclIdleTimeout_value_changed" swapped="no"/>
           </object>
           <packing>
             <property name="left_attach">0</property>

@@ -86,7 +86,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		txName = self.builder.get_object("txName")
 		sclLED = self.builder.get_object("sclLED")
 		cbAlignOSD = self.builder.get_object("cbAlignOSD")
-		sclAutoShutdown = self.builder.get_object("sclAutoShutdown")
+		sclIdleTimeout = self.builder.get_object("sclIdleTimeout")
 		sclLeftRotation = self.builder.get_object("sclLeftRotation")
 		sclRightRotation = self.builder.get_object("sclRightRotation")
 		
@@ -95,7 +95,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		self._recursing = True
 		txName.set_text(cfg["name"] or "")
 		sclLED.set_value(float(cfg["led_level"]))
-		sclAutoShutdown.set_value(float(cfg["auto_shutdown"]))
+		sclIdleTimeout.set_value(float(cfg["idle_timeout"]))
 		sclLeftRotation.set_value(float(cfg["input_rotation_l"]))
 		sclRightRotation.set_value(float(cfg["input_rotation_r"]))
 		cbAlignOSD.set_active(cfg["osd_alignment"] != 0)
@@ -111,7 +111,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		sclLED = self.builder.get_object("sclLED")
 		cbIcon = self.builder.get_object("cbIcon")
 		cbAlignOSD = self.builder.get_object("cbAlignOSD")
-		sclAutoShutdown = self.builder.get_object("sclAutoShutdown")
+		sclIdleTimeout = self.builder.get_object("sclIdleTimeout")
 		sclLeftRotation = self.builder.get_object("sclLeftRotation")
 		sclRightRotation = self.builder.get_object("sclRightRotation")
 		
@@ -148,7 +148,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		self._timer = GLib.timeout_add_seconds(1, cb)	
 	
 	
-	def on_sclAutoShutdown_format_value(self, scale, value):
+	def on_sclIdleTimeout_format_value(self, scale, value):
 		if value <= 180:	# 2 minutes
 			return _("%s seconds") % int(value)
 		if value % 60 == 0:
@@ -168,8 +168,8 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		self.schedule_save_config()
 	
 	
-	def on_sclAutoShutdown_value_changed(self, scale, *a):
+	def on_sclIdleTimeout_value_changed(self, scale, *a):
 		if self._recursing: return
 		cfg = self.app.config.get_controller_config(self.controller.get_id())
-		cfg["auto_shutdown"] = scale.get_value()
+		cfg["idle_timeout"] = scale.get_value()
 		self.schedule_save_config()

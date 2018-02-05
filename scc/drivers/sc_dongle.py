@@ -263,7 +263,8 @@ class SCController(Controller):
 	
 	
 	def apply_config(self, config):
-		self.set_led_level(float(config['led_level']))
+		self.configure(idle_timeout=int(config['idle_timeout']),
+				led_level=float(config['led_level']))
 		self._input_rotation_l = float(config['input_rotation_l']) * PI / -180.0
 		self._input_rotation_r = float(config['input_rotation_r']) * PI / -180.0
 	

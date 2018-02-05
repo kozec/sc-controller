@@ -115,7 +115,7 @@ class Config(object):
 		"name":					None,	# Filled with controller ID on runtime
 		"icon":					None,	# Determined by magic by UI
 		"led_level":			80,		# range 0 to 100
-		"auto_shutdown":		600,	# in seconds, range from 1 to 32767
+		"idle_timeout":			600,	# in seconds, range from 1 to 32767
 		"osd_alignment":		0,		# not used yet
 		"input_rotation_l":		20,		# range -180 to 180
 		"input_rotation_r":		-20,	# range -180 to 180
