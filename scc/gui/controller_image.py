@@ -141,5 +141,4 @@ class ControllerImage(SVGWidget):
 			except Exception, err:
 				log.warning("Failed to add image for button %s", b)
 				log.exception(err)
-		file("/tmp/a.svg", "w").write(e.to_string())
 		e.commit()
