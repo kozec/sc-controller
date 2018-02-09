@@ -1011,29 +1011,37 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
+		timeout = ""
+		if DoubleclickModifier.DEAFAULT_TIMEOUT != self.timeout:
+			timeout = ", %s" % (self.timeout)
 		if self.action and self.normalaction and self.holdaction:
-			return "doubleclick(%s, hold(%s, %s))" % (
+			return "doubleclick(%s, hold(%s, %s)%s)" % (
 				self.action.to_string(multiline, pad),
 				self.holdaction.to_string(multiline, pad),
 				self.normalaction.to_string(multiline, pad),
+				timeout
 			)
 		elif self.action and self.normalaction and not self.holdaction:
-			return "doubleclick(%s, %s)" % (
+			return "doubleclick(%s, %s%s)" % (
 				self.action.to_string(multiline, pad),
 				self.normalaction.to_string(multiline, pad),
+				timeout
 			)
 		elif not self.action and self.normalaction and self.holdaction:
-			return "hold(%s, %s)" % (
+			return "hold(%s, %s%s)" % (
 				self.holdaction.to_string(multiline, pad),
 				self.normalaction.to_string(multiline, pad),
+				timeout
 			)
 		elif not self.action and not self.normalaction and self.holdaction:
-			return "hold(None, %s)" % (
+			return "hold(None, %s%s)" % (
 				self.holdaction.to_string(multiline, pad),
+				timeout
 			)
 		elif self.action and not self.normalaction and not self.holdaction:
-			return "doubleclick(None, %s)" % (
+			return "doubleclick(None, %s%s)" % (
 				self.action.to_string(multiline, pad),
+				timeout
 			)
 		return ((self.action or self.normalaction or self.holdaction)
 			.to_string(multiline, pad))
