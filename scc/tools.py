@@ -326,6 +326,11 @@ def find_library(libname):
 			os.path.abspath(os.path.normpath(
 				os.path.join( base_path, '../..', libname + extension )))
 			]
+		if sys.platform == "win32":
+			search_paths += [
+				os.path.abspath(os.path.normpath(os.path.join(
+					"./build/lib.win32-2.7/", libname + extension )))
+			]
 	
 	for path in search_paths:
 		if os.path.exists(path):
@@ -333,9 +338,9 @@ def find_library(libname):
 			break
 	
 	if not lib:
-		raise OSError('Cant find %s.so. searched at:\n %s' % (
-			libname, '\n'.join(search_paths)))
-	return ctypes.CDLL(lib)
+		raise OSError('Cant find %s%s. searched at:\n %s' % (
+			libname, so_extensions[0], '\n'.join(search_paths)))
+	return ctypes.CDLL(str(lib))
 
 
 def find_gksudo():

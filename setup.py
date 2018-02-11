@@ -47,7 +47,7 @@ packages = [
 if sys.platform == "win32":
 	# You are using WHAT?
 	ext_modules = [
-		Extension('libvigemclient',
+		Extension('vigemclient',
 			sources = ['scc/platform/windows/vigemclient.cpp'],
 			extra_compile_args = ['-std=c++11', '-lpthread'],
 			extra_link_args = ['-lsetupapi'],
