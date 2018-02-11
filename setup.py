@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 from distutils.core import setup, Extension
 from scc.constants import DAEMON_VERSION
-import glob
+import glob, sys
 
 data_files = [
 				('share/scc/glade', glob.glob("glade/*.glade")),
@@ -43,6 +43,23 @@ packages = [
 	'scc.gui', 'scc.gui.ae', 'scc.gui.importexport', "scc.gui.creg"
 ]
 
+
+if sys.platform == "win32":
+	# You are using WHAT?
+	ext_modules = [
+		Extension('libvigemclient',
+			sources = ['scc/platform/windows/vigemclient.cpp'],
+			extra_compile_args = ['-std=c++11', '-lpthread'],
+			extra_link_args = ['-lsetupapi'],
+		),
+	]
+else:
+	ext_modules = [
+		Extension('libuinput', sources = ['scc/uinput.c']),
+		Extension('libhiddrv', sources = ['scc/drivers/hiddrv.c']),
+	]
+
+
 if __name__ == "__main__":
 	setup(name = 'sccontroller',
 			version = DAEMON_VERSION,
@@ -64,8 +81,5 @@ if __name__ == "__main__":
 			],
 			license = 'GPL2',
 			platforms = ['Linux'],
-			ext_modules = [
-				Extension('libuinput', sources = ['scc/uinput.c']),
-				Extension('libhiddrv', sources = ['scc/drivers/hiddrv.c']),
-			]
+			ext_modules = ext_modules
 	)
