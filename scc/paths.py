@@ -116,12 +116,16 @@ def get_share_path():
 	"""
 	if "SCC_SHARED" in os.environ:
 		return os.environ["SCC_SHARED"]
-	if os.path.exists("/usr/local/share/scc/"):
-		return "/usr/local/share/scc/"
-	user = os.path.expanduser("~/.local/share/scc")
-	if os.path.exists(user):
-		return user
-	return os.path.join(sys.prefix, "share/scc")
+	paths = (
+		"/usr/local/share/scc/",
+		os.path.expanduser("~/.local/share/scc"),
+		os.path.join(sys.prefix, "share/scc")
+	)
+	for path in paths:
+		if os.path.exists(path):
+			return path
+	# No path found, assume default and hope for best
+	return "/usr/share/scc"
 
 
 def get_pid_file():
