@@ -67,7 +67,7 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 			elif isinstance(action, ShellCommandAction):
 				self.set_cb(cb, "shell")
 				enCommand = self.builder.get_object("enCommand")
-				enCommand.set_text(action.command)
+				enCommand.set_text(action.command.encode("utf-8"))
 			elif isinstance(action, ChangeProfileAction):
 				self._current_profile = action.profile
 				self.set_cb(cb, "profile")

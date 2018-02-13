@@ -231,7 +231,7 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_shell(self, mapper, action):
 		""" Called when 'shell' action is used """
-		os.system(action.command.encode('string_escape') + " &")
+		os.system((action.command + " &").encode('utf-8'))
 	
 	
 	def on_sa_gestures(self, mapper, action, x, y, what):
