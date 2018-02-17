@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python2
 """
 SC-Controller - OSD Menu
@@ -8,7 +7,7 @@ Display menu that user can navigate through and print chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gdk, GdkX11, GLib
+from gi.repository import Gtk, Gdk, GdkX11, GObject, GLib
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
 from scc.constants import SCButtons
@@ -35,6 +34,57 @@ import os, sys, json, logging
 log = logging.getLogger("osd.keyboard")
 
 
+class KeyboardImage(Gtk.DrawingArea):
+	LINE_WIDTH = 2
+	
+	__gsignals__ = {
+			# Raised when mouse is over defined area
+			b"hover"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			# Raised when mouse leaves all defined areas
+			b"leave"	: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			# Raised user clicks on defined area
+			b"click"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+	}
+	
+	
+	def __init__(self):
+		Gtk.DrawingArea.__init__(self)
+		self.set_size_request(400, 200)
+		self.connect('size-allocate', self.on_size_allocate)
+		self.connect('draw', self.on_draw)
+		self.buttons = [
+			("A", 10, 10, 30, 30),
+			("C", 45, 10, 30, 30),
+			("X", 10, 45, 65, 30),
+		]
+	
+	
+	def on_draw(self, self2, ctx):
+		ctx.set_line_width(self.LINE_WIDTH)
+		for (label, x, y, w, h) in self.buttons:
+			ctx.set_source_rgba(0.3, 0.3, 0.3, 1)
+			ctx.move_to(x, y)
+			ctx.line_to(x + w, y)
+			ctx.line_to(x + w, y + h)
+			ctx.line_to(x, y + h)
+			ctx.line_to(x, y)
+			ctx.fill()
+			
+			ctx.move_to(x, y)
+			ctx.line_to(x + w, y)
+			ctx.line_to(x + w, y + h)
+			ctx.line_to(x, y + h)
+			ctx.line_to(x, y)
+			ctx.set_source_rgba(1, 0, 0, 1)
+			ctx.stroke()
+		print ctx
+	
+	
+	def on_size_allocate(self, *a):
+		# print a
+		pass
+
+
 class Keyboard(OSDWindow, TimerManager):
 	EPILOG="""Exit codes:
    0  - clean exit, user closed keyboard
@@ -43,12 +93,36 @@ class Keyboard(OSDWindow, TimerManager):
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	OSK_PROF_NAME = ".scc-osd.keyboard"
+	RECOLOR_BACKGROUNDS = ( "button1", "button2", "text", "background" )
+	RECOLOR_STROKES = ( "button1_border", "button2_border", "text" )
+	
+	BUTTON_MAP = {
+		SCButtons.A.name : Keys.KEY_ENTER,
+		SCButtons.B.name : Keys.KEY_ESC,
+		SCButtons.LB.name : Keys.KEY_BACKSPACE,
+		SCButtons.RB.name : Keys.KEY_SPACE,
+		SCButtons.LGRIP.name : Keys.KEY_LEFTSHIFT,
+		SCButtons.RGRIP.name : Keys.KEY_RIGHTALT,
+	}
 	
 	def __init__(self, config=None):
 		self.kbimage = os.path.join(get_config_path(), 'keyboard.svg')
 		if not os.path.exists(self.kbimage):
 			# Prefer image in ~/.config/scc, but load default one as fallback
 			self.kbimage = os.path.join(get_share_path(), "images", 'keyboard.svg')
+		
+		TimerManager.__init__(self)
+		OSDWindow.__init__(self, "osd-keyboard")
+		self.daemon = None
+		self.mapper = None
+		self.keymap = Gdk.Keymap.get_default()
+		self.keymap.connect('state-changed', self.on_keymap_state_changed)
+		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
+		self.profile = Profile(TalkingActionParser())
+		self.config = config or Config()
+		self.dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))
+		self.group = None
+		self.limits = {}
 		self.background = None
 		
 		cursor = os.path.join(get_share_path(), "images", 'menu-cursor.svg')
@@ -58,11 +132,12 @@ class Keyboard(OSDWindow, TimerManager):
 		self.cursors[RIGHT] = Gtk.Image.new_from_file(cursor)
 		self.cursors[RIGHT].set_name("osd-keyboard-cursor")
 		
-		TimerManager.__init__(self)
-		OSDWindow.__init__(self, "osd-keyboard")
-		self.daemon = None
-		self.config = config or Config()
-		self.dpy = X.Display(hash(GdkX11.x11_get_default_xdisplay()))
+		self._eh_ids = []
+		self._stick = 0, 0
+		self._hovers = { self.cursors[LEFT] : None, self.cursors[RIGHT] : None }
+		self._pressed = { self.cursors[LEFT] : None, self.cursors[RIGHT] : None }
+		self._pressed_areas = {}
+		
 		self.c = Gtk.Box()
 		self.c.set_name("osd-keyboard-container")
 		
@@ -70,12 +145,12 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def _create_background(self):
-		self.background = SVGWidget(self.args.image, init_hilighted=False)
+		self.background = KeyboardImage()
 		self.recolor()
 		
 		self.limits = {}
-		self.limits[LEFT]  = self.background.get_rect_area("LIMIT_LEFT")
-		self.limits[RIGHT] = self.background.get_rect_area("LIMIT_RIGHT")
+		# self.limits[LEFT]  = self.background.get_rect_area("LIMIT_LEFT")
+		# self.limits[RIGHT] = self.background.get_rect_area("LIMIT_RIGHT")
 		self._pack()
 	
 	
@@ -97,18 +172,18 @@ class Keyboard(OSDWindow, TimerManager):
 			log.warning(e)
 			return
 		
-		editor = self.background.edit()
-		
-		for k in Keyboard.RECOLOR_BACKGROUNDS:
-			if k in self.config['osk_colors'] and k in source_colors:
-				editor.recolor_background(source_colors[k], self.config['osk_colors'][k])
-		editor.recolor_background(source_colors["background"], self.config['osd_colors']["background"])
-		
-		for k in Keyboard.RECOLOR_STROKES:
-			if k in self.config['osk_colors'] and k in source_colors:
-				editor.recolor_strokes(source_colors[k], self.config['osk_colors'][k])
-		
-		editor.commit()
+		# editor = self.background.edit()
+		# 
+		# for k in Keyboard.RECOLOR_BACKGROUNDS:
+		# 	if k in self.config['osk_colors'] and k in source_colors:
+		# 		editor.recolor_background(source_colors[k], self.config['osk_colors'][k])
+		# editor.recolor_background(source_colors["background"], self.config['osd_colors']["background"])
+		# 
+		# for k in Keyboard.RECOLOR_STROKES:
+		# 	if k in self.config['osk_colors'] and k in source_colors:
+		# 		editor.recolor_strokes(source_colors[k], self.config['osk_colors'][k])
+		# 
+		# editor.commit()
 	
 	
 	def use_daemon(self, d):
@@ -133,19 +208,19 @@ class Keyboard(OSDWindow, TimerManager):
 		self.group = X.get_xkb_state(self.dpy).group
 		# Get state of shift/alt/ctrl key
 		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
-		for a in self.background.areas:
-			if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_KEYCODE:
-				keycode = KEY_TO_KEYCODE[getattr(Keys, a.name)]
-				translation = self.keymap.translate_keyboard_state(keycode, mt, self.group)
-				if hasattr(translation, "keyval"):
-					code = Gdk.keyval_to_unicode(translation.keyval)
-				else:
-					code = Gdk.keyval_to_unicode(translation[1])
-				if code >= 32: # Printable chars
-					labels[a.name] = unichr(code)
-		
-		
-		self.background.edit().set_labels(labels).commit()
+		# for a in self.background.areas:
+		# 	if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_KEYCODE:
+		# 		keycode = KEY_TO_KEYCODE[getattr(Keys, a.name)]
+		# 		translation = self.keymap.translate_keyboard_state(keycode, mt, self.group)
+		# 		if hasattr(translation, "keyval"):
+		# 			code = Gdk.keyval_to_unicode(translation.keyval)
+		# 		else:
+		# 			code = Gdk.keyval_to_unicode(translation[1])
+		# 		if code >= 32: # Printable chars
+		# 			labels[a.name] = unichr(code)
+		# 
+		# 
+		# self.background.edit().set_labels(labels).commit()
 	
 	
 	def _add_arguments(self):
@@ -219,8 +294,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self.mapper = SlaveMapper(self.profile, None,
 			keyboard=b"SCC OSD Keyboard", mouse=b"SCC OSD Mouse")
 		self.mapper.set_special_actions_handler(self)
-		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
-		self.set_cursor_position(0, 0, self.cursors[RIGHT], self.limits[RIGHT])
+		# self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
+		# self.set_cursor_position(0, 0, self.cursors[RIGHT], self.limits[RIGHT])
 		self.timer('labels', 0.1, self.update_labels)
 	
 	
@@ -242,10 +317,11 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def on_sa_cursor(self, mapper, action, x, y):
-		self.set_cursor_position(
-			x * action.speed[0],
-			y * action.speed[1],
-			self.cursors[action.side], self.limits[action.side])
+		pass
+		# self.set_cursor_position(
+		# 	x * action.speed[0],
+		# 	y * action.speed[1],
+		# 	self.cursors[action.side], self.limits[action.side])
 	
 	
 	def on_sa_move(self, mapper, action, x, y):
@@ -285,16 +361,16 @@ class Keyboard(OSDWindow, TimerManager):
 		self.f.move(cursor,
 			x - cursor.get_allocation().width * 0.5,
 			y - cursor.get_allocation().height * 0.5)
-		for a in self.background.areas:
-			if a.contains(x, y):
-				if a != self._hovers[cursor]:
-					self._hovers[cursor] = a
-					if self._pressed[cursor] is not None:
-						self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
-						self.key_from_cursor(cursor, True)
-					if not self.timer_active('redraw'):
-						self.timer('redraw', 0.01, self.redraw_background)
-					break
+		# for a in self.background.areas:
+		# 	if a.contains(x, y):
+		# 		if a != self._hovers[cursor]:
+		# 			self._hovers[cursor] = a
+		# 			if self._pressed[cursor] is not None:
+		# 				self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
+		# 				self.key_from_cursor(cursor, True)
+		# 			if not self.timer_active('redraw'):
+		# 				self.timer('redraw', 0.01, self.redraw_background)
+		# 			break
 	
 	
 	def redraw_background(self, *a):
@@ -310,13 +386,20 @@ class Keyboard(OSDWindow, TimerManager):
 			for a in self._pressed_areas.values()
 		})
 		
-		self.background.hilight(hilights)
+		# self.background.hilight(hilights)
 	
 	
-	def __init__(self, filename):
-		Gtk.DrawingArea.__init__(self)
-		self.filename = filename
-		self.set_size_request(300, 100)
+	def _move_window(self, *a):
+		"""
+		Called by timer while stick is tilted to move window around the screen.
+		"""
+		x, y = self._stick
+		x = x * 50.0 / STICK_PAD_MAX
+		y = y * -50.0 / STICK_PAD_MAX
+		rx, ry = self.get_position()
+		self.move(rx + x, ry + y)
+		if abs(self._stick[0]) > 100 or abs(self._stick[1]) > 100:
+			self.timer("stick", 0.05, self._move_window)
 	
 	
 	def key_from_cursor(self, cursor, pressed):
