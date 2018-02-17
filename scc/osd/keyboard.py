@@ -375,3 +375,29 @@ class Keyboard(OSDWindow, TimerManager):
 		if not self.timer_active('redraw'):
 			self.timer('redraw', 0.01, self.redraw_background)
 
+
+def main():
+	import gi
+	gi.require_version('Gtk', '3.0')
+	gi.require_version('Rsvg', '2.0')
+	gi.require_version('GdkX11', '3.0')
+	
+	from scc.tools import init_logging
+	from scc.paths import get_share_path
+	init_logging()
+	
+	k = Keyboard()
+	if not k.parse_argumets(sys.argv):
+		sys.exit(1)
+	k.run()
+
+
+if __name__ == "__main__":
+	import os, sys, signal
+	
+	def sigint(*a):
+		print("\n*break*")
+		sys.exit(-1)
+	
+	signal.signal(signal.SIGINT, sigint)
+	main()
