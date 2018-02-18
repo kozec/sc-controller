@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, GdkX11, GObject, GLib
+from xml.etree import ElementTree as ET
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
 from scc.constants import SCButtons
@@ -20,10 +21,10 @@ from scc.profile import Profile
 from scc.config import Config
 from scc.uinput import Keys
 from scc.lib import xwrappers as X
-from scc.gui.daemon_manager import DaemonManager
+from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.gui.keycode_to_key import KEY_TO_KEYCODE
+from scc.gui.daemon_manager import DaemonManager
 from scc.gui.gdk_to_key import KEY_TO_GDK
-from scc.gui.svg_widget import SVGWidget
 from scc.osd.timermanager import TimerManager
 from scc.osd.slave_mapper import SlaveMapper
 from scc.osd import OSDWindow
@@ -47,16 +48,20 @@ class KeyboardImage(Gtk.DrawingArea):
 	}
 	
 	
-	def __init__(self):
+	def __init__(self, image):
 		Gtk.DrawingArea.__init__(self)
-		self.set_size_request(400, 200)
 		self.connect('size-allocate', self.on_size_allocate)
 		self.connect('draw', self.on_draw)
-		self.buttons = [
-			("A", 10, 10, 30, 30),
-			("C", 45, 10, 30, 30),
-			("X", 10, 45, 65, 30),
-		]
+		
+		areas = []
+		tree = ET.fromstring(open(image, "rb").read())
+		SVGWidget.find_areas(tree, None, areas)
+		
+		self.buttons = [ (area, area.x, area.y, area.w, area.h)
+			for area in areas ]
+		
+		background = SVGEditor.find_by_id(tree, "BACKGROUND")
+		self.set_size_request(*SVGEditor.get_size(background))
 	
 	
 	def on_draw(self, self2, ctx):
@@ -145,7 +150,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def _create_background(self):
-		self.background = KeyboardImage()
+		self.background = KeyboardImage(self.args.image)
 		self.recolor()
 		
 		self.limits = {}
