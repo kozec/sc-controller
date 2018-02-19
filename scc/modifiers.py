@@ -141,6 +141,17 @@ class NameModifier(Modifier):
 		return rv
 	
 	
+	@staticmethod
+	def unstrip(action):
+		# Inversion of strip.
+		# For action that has name, returns NameModifier wrapping around that
+		# action. For everything else returns original action.
+		if not isinstance(action, NameModifier):
+			if action and action.name:
+				return NameModifier(action.name, action)
+		return action
+	
+	
 	def compress(self):
 		return self.strip()
 	
@@ -819,7 +830,7 @@ class ModeModifier(Modifier):
 		if multiline:
 			rv = [ (" " * pad) + "mode(" ]
 			for check in self.mods:
-				a_str = self.mods[check].to_string(True).split("\n")
+				a_str = NameModifier.unstrip(self.mods[check]).to_string(True).split("\n")
 				a_str[0] = (" " * pad) + "  " + (nameof(check) + ",").ljust(11) + a_str[0]	# Key has to be one of SCButtons
 				for i in xrange(1, len(a_str)):
 					a_str[i] = (" " * pad) + "  " + a_str[i]
@@ -828,7 +839,7 @@ class ModeModifier(Modifier):
 			if self.default is not None:
 				a_str = [
 					(" " * pad) + "  " + x
-					for x in  self.default.to_string(True).split("\n")
+					for x in NameModifier.unstrip(self.default).to_string(True).split("\n")
 				]
 				rv += a_str
 			if rv[-1][-1] == ",":
@@ -838,9 +849,9 @@ class ModeModifier(Modifier):
 		else:
 			rv = [ ]
 			for check in self.mods:
-				rv += [ nameof(check), self.mods[check].to_string(False) ]
+				rv += [ nameof(check), NameModifier.unstrip(self.mods[check]).to_string(False) ]
 			if self.default is not None:
-				rv += [ self.default.to_string(False) ]
+				rv += [ NameModifier.unstrip(self.default).to_string(False) ]
 			return "mode(" + ", ".join(rv) + ")"
 	
 	
@@ -1016,35 +1027,36 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 			timeout = ", %s" % (self.timeout)
 		if self.action and self.normalaction and self.holdaction:
 			return "doubleclick(%s, hold(%s, %s)%s)" % (
-				self.action.to_string(multiline, pad),
-				self.holdaction.to_string(multiline, pad),
-				self.normalaction.to_string(multiline, pad),
+				NameModifier.unstrip(self.action).to_string(multiline, pad),
+				NameModifier.unstrip(self.holdaction).to_string(multiline, pad),
+				NameModifier.unstrip(self.normalaction).to_string(multiline, pad),
 				timeout
 			)
 		elif self.action and self.normalaction and not self.holdaction:
 			return "doubleclick(%s, %s%s)" % (
-				self.action.to_string(multiline, pad),
-				self.normalaction.to_string(multiline, pad),
+				NameModifier.unstrip(self.action).to_string(multiline, pad),
+				NameModifier.unstrip(self.normalaction).to_string(multiline, pad),
 				timeout
 			)
 		elif not self.action and self.normalaction and self.holdaction:
 			return "hold(%s, %s%s)" % (
-				self.holdaction.to_string(multiline, pad),
-				self.normalaction.to_string(multiline, pad),
+				NameModifier.unstrip(self.holdaction).to_string(multiline, pad),
+				NameModifier.unstrip(self.normalaction).to_string(multiline, pad),
 				timeout
 			)
 		elif not self.action and not self.normalaction and self.holdaction:
 			return "hold(None, %s%s)" % (
-				self.holdaction.to_string(multiline, pad),
+				NameModifier.unstrip(self.holdaction).to_string(multiline, pad),
 				timeout
 			)
 		elif self.action and not self.normalaction and not self.holdaction:
 			return "doubleclick(None, %s%s)" % (
-				self.action.to_string(multiline, pad),
+				NameModifier.unstrip(self.action).to_string(multiline, pad),
 				timeout
 			)
-		return ((self.action or self.normalaction or self.holdaction)
-			.to_string(multiline, pad))
+		return NameModifier.unstrip(
+				self.action or self.normalaction or self.holdaction
+			).to_string(multiline, pad)
 	
 	
 	def button_press(self, mapper):
