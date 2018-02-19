@@ -458,7 +458,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		Handler for 'Edit Pressed Action' context menu item.
 		"""
-		self.show_editor(getattr(SCButtons, self.context_menu_for))
+		id = self.context_menu_for
+		if id == STICK:
+			id = nameof(SCButtons.STICKPRESS)
+		self.show_editor(getattr(SCButtons, id))
 	
 	
 	def on_mnuGlobalSettings_activate(self, *a):
