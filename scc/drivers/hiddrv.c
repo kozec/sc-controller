@@ -5,7 +5,7 @@
 #include <limits.h>
 #define CLAMP(min, x, max) x
 
-#define HIDDRV_MODULE_VERSION 4
+#define HIDDRV_MODULE_VERSION 5
 PyObject* module;
 
 #define AXIS_COUNT 17
@@ -124,14 +124,14 @@ union Value {
 };
 
 
-inline union Value grab_value(const char* data, const size_t byte_offset, uint8_t bit_offset) {
+static union Value grab_value(const char* data, const size_t byte_offset, uint8_t bit_offset) {
 	union Value val = *((union Value*)(data + byte_offset));
 	val.u64 = val.u64 >> bit_offset;
 	return val;
 }
 
 
-inline int grab_with_size(const uint8_t size, const char* data, const size_t byte_offset, uint8_t bit_offset) {
+static int grab_with_size(const uint8_t size, const char* data, const size_t byte_offset, uint8_t bit_offset) {
 	union Value val = grab_value(data, byte_offset, bit_offset);
 	// if (size == 16)
 	// 	printf(" => %i\n", (int)val.u16);
