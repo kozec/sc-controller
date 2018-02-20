@@ -1,49 +1,60 @@
 #!/bin/bash
+APP="sc-controller"
+EXEC="scc"
+
 EVDEV_VERSION=0.7.0
-if [ x"$BUILD_APPDIR" == "x" ] ; then
-	BUILD_APPDIR=$(pwd)/appimage
-fi
+[ x"$BUILD_APPDIR" == "x" ] && BUILD_APPDIR=$(pwd)/appimage
+
+function download_dep() {
+	NAME=$1
+	URL=$2
+	if [ -e ../../${NAME}.obstargz ] ; then
+		# Special case for OBS
+		cp ../../${NAME}.obstargz /tmp/${NAME}.tar.gz
+	elif [ -e ${NAME}.tar.gz ] ; then
+		cp ${NAME}.tar.gz /tmp/${NAME}.tar.gz
+	else
+		wget -c "${URL}" -O /tmp/${NAME}.tar.gz
+	fi
+}
+
+function build_dep() {
+	NAME="$1"
+	mkdir -p /tmp/${NAME}
+	pushd /tmp/${NAME}
+	tar --extract --strip-components=1 -f /tmp/${NAME}.tar.gz
+	python2 setup.py build
+	PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages python2 setup.py install --prefix ${BUILD_APPDIR}/usr
+	popd
+}
 
 set -ex		# display commands, terminate after 1st failure
 
 # Download deps
-if [ -e ../../python-evdev-${EVDEV_VERSION}.obstargz ] ; then
-	cp ../../python-evdev-${EVDEV_VERSION}.obstargz /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
-elif [ -e python-evdev-${EVDEV_VERSION}.tar.gz ] ; then
-	cp python-evdev-${EVDEV_VERSION}.tar.gz /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
-else
-	wget -c "https://github.com/gvalkov/python-evdev/archive/v${EVDEV_VERSION}.tar.gz" -O /tmp/python-evdev-${EVDEV_VERSION}.tar.gz
-fi
+download_dep "python-evdev-0.7.0" "https://github.com/gvalkov/python-evdev/archive/v0.7.0.tar.gz"
 
 # Prepare & build
-mkdir -p ${BUILD_APPDIR}/usr
+mkdir -p ${BUILD_APPDIR}/usr/lib/python2.7/site-packages/
+build_dep "python-evdev-0.7.0"
 python2 setup.py build
 python2 setup.py install --prefix ${BUILD_APPDIR}/usr
 
-# Unpack & build deps
-pushd /tmp
-tar xzf python-evdev-${EVDEV_VERSION}.tar.gz
-cd python-evdev-${EVDEV_VERSION}
-python2 setup.py build
-PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages python2 setup.py install --prefix ${BUILD_APPDIR}/usr
-popd
-
 # Move udev stuff
-mv ${BUILD_APPDIR}/usr/lib/udev/rules.d/90-sc-controller.rules ${BUILD_APPDIR}/
+mv ${BUILD_APPDIR}/usr/lib/udev/rules.d/90-${APP}.rules ${BUILD_APPDIR}/
 rmdir ${BUILD_APPDIR}/usr/lib/udev/rules.d/
 rmdir ${BUILD_APPDIR}/usr/lib/udev/
 
 # Move & patch desktop file
-mv ${BUILD_APPDIR}/usr/share/applications/sc-controller.desktop ${BUILD_APPDIR}/
-sed -i "s/Icon=.*/Icon=sc-controller/g" ${BUILD_APPDIR}/sc-controller.desktop
-sed -i "s/Exec=.*/Exec=.\/usr\/bin\/scc gui/g" ${BUILD_APPDIR}/sc-controller.desktop
+mv ${BUILD_APPDIR}/usr/share/applications/${APP}.desktop ${BUILD_APPDIR}/
+sed -i "s/Icon=.*/Icon=${APP}/g" ${BUILD_APPDIR}/${APP}.desktop
+sed -i "s/Exec=.*/Exec=.\/usr\/bin\/scc gui/g" ${BUILD_APPDIR}/${APP}.desktop
 
 # Convert icon
-convert -background none ${BUILD_APPDIR}/usr/share/pixmaps/sc-controller.svg ${BUILD_APPDIR}/sc-controller.png
+convert -background none ${BUILD_APPDIR}/usr/share/pixmaps/${APP}.svg ${BUILD_APPDIR}/${APP}.png
 
 # Copy appdata.xml
 mkdir -p ${BUILD_APPDIR}/usr/share/metainfo/
-cp scripts/sc-controller.appdata.xml ${BUILD_APPDIR}/usr/share/metainfo/sc-controller.appdata.xml
+cp scripts/${APP}.appdata.xml ${BUILD_APPDIR}/usr/share/metainfo/${APP}.appdata.xml
 
 # Copy AppRun script
 cp scripts/appimage-AppRun.sh ${BUILD_APPDIR}/AppRun

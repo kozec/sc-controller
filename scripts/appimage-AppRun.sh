@@ -11,10 +11,15 @@ function dependency_check_failed() {
 	# throwing it to screen directly
 	>&2 cat /tmp/scc.depcheck.$$.txt
 	
-	zenity --error --text "$(cat /tmp/scc.depcheck.$$.txt)" || \
-		yad --error --text "$(cat /tmp/scc.depcheck.$$.txt)" || \
-		Xdialog --textbox /tmp/scc.depcheck.$$.txt 10 100 || \
-		xdg-open /tmp/scc.depcheck.$$.txt
+	[ -e /usr/bin/zenity ] && run_and_die /usr/bin/zenity --error --text "$(cat /tmp/scc.depcheck.$$.txt)"
+	[ -e /usr/bin/yad ] && run_and_die /usr/bin/yad --error --text "$(cat /tmp/scc.depcheck.$$.txt)"
+	[ -e /usr/bin/Xdialog ] && run_and_die /usr/bin/Xdialog --textbox /tmp/scc.depcheck.$$.txt 10 100
+	[ -e /usr/bin/xdg ] && run_and_die /usr/bin/xdg-open /tmp/scc.depcheck.$$.txt
+	exit 1
+}
+
+function run_and_die() {
+	"$@"
 	exit 1
 }
 
