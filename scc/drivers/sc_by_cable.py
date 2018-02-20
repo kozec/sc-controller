@@ -7,6 +7,7 @@ Called and used when single Steam Controller is connected directly by USB cable.
 Shares a lot of classes with sc_dongle.py
 """
 
+from scc.lib.usb1 import USBError
 from scc.drivers.usb import USBDevice, register_hotplug_device
 from sc_dongle import ControllerInput, SCI_NULL, TUP_FORMAT
 from sc_dongle import SCStatus, SCPacketType, SCConfigType, SCController
@@ -80,7 +81,12 @@ class SCByCable(USBDevice, SCController):
 			else:
 				m.generate_events()
 				m.generate_feedback()
-			self.flush()
+			try:
+				self.flush()
+			except USBError, e:
+				log.exception(e)
+				log.error("Error while communicating with device, baling out...")
+				self.force_restart()
 	
 	
 	def close(self):

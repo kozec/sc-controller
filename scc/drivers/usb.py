@@ -121,6 +121,16 @@ class USBDevice(object):
 			callback(data)
 	
 	
+	def force_restart(self):
+		"""
+		Restarts device, closes handle and tries to re-grab it again.
+		Don't use unless absolutelly necessary.
+		"""
+		tp = self.device.getVendorID(), self.device.getProductID()
+		self.close()
+		_usb._retry_devices.append(tp)
+	
+	
 	def claim(self, number):
 		"""
 		Helper method; Remembers list of claimed interfaces and allows to
