@@ -32,10 +32,12 @@ set -ex		# display commands, terminate after 1st failure
 
 # Download deps
 download_dep "python-evdev-0.7.0" "https://github.com/gvalkov/python-evdev/archive/v0.7.0.tar.gz"
+download_dep "pylibacl-0.5.3" "https://github.com/iustin/pylibacl/releases/download/pylibacl-v0.5.3/pylibacl-0.5.3.tar.gz"
 
 # Prepare & build
 mkdir -p ${BUILD_APPDIR}/usr/lib/python2.7/site-packages/
 build_dep "python-evdev-0.7.0"
+build_dep "pylibacl-0.5.3"
 python2 setup.py build
 python2 setup.py install --prefix ${BUILD_APPDIR}/usr
 
