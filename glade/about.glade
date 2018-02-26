@@ -143,7 +143,7 @@ and
                 <property name="can_focus">True</property>
                 <property name="margin_top">10</property>
                 <property name="label" translatable="yes">&lt;small&gt;This program comes with absolutely no warranty.
-See the &lt;a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html"&gt;GNU General Public License, version 2 or later&lt;/a&gt; for details.&lt;/small&gt;</property>
+See the &lt;a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html"&gt;GNU General Public License, version 2&lt;/a&gt; for details.&lt;/small&gt;</property>
                 <property name="use_markup">True</property>
                 <property name="justify">center</property>
                 <property name="yalign">1</property>

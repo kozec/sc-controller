@@ -1,7 +1,21 @@
 #!/usr/bin/env python2
-
 """
 Python wrapper for some X-related stuff.
+
+Copyright (C) 2017 Kozec
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 2 as published by
+the Free Software Foundation
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
 
 from ctypes import CDLL, POINTER, c_void_p, Structure, byref, cast
