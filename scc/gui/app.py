@@ -1009,6 +1009,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# TODO: Write howto somewhere instead of linking to ArchWiki
 		elif "LIBUSB_ERROR_BUSY" in error:
 			msg += "\n" + _("Another application (most likely Steam) is using the controller.")
+		elif "CANT_SUMMON_THE_DAEMON" in error:
+			msg += "\n" + _("Background process responsible for emulation is not starting.\n\nTry executing \"scc-daemon debug\" in terminal window to check for any errors"
+				"\nor <a href='https://github.com/kozec/sc-controller/issues'>open issue on GitHub</a> and copy output there.")
 		elif "LIBUSB_ERROR_PIPE" in error:
 			msg += "\n" + _("USB dongle was removed.")
 		elif "Failed to create uinput device." in error:

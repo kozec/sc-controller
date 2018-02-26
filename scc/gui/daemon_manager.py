@@ -12,11 +12,10 @@ from __future__ import unicode_literals
 
 from scc.tools import find_binary, find_button_image
 from scc.paths import get_daemon_socket
-from scc.constants import SCButtons
 from scc.gui import BUTTON_ORDER
 from gi.repository import GObject, Gio, GLib
 
-import os, sys, json, logging
+import os, json, logging
 log = logging.getLogger("DaemonCtrl")
 
 
@@ -284,6 +283,7 @@ class DaemonManager(GObject.GObject):
 	def stop(self):
 		""" Stops the daemon """
 		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", "stop" ], Gio.SubprocessFlags.NONE)
+		self.connecting = False
 	
 	
 	def start(self, mode="start"):
@@ -296,6 +296,7 @@ class DaemonManager(GObject.GObject):
 			self._on_daemon_died()
 		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", mode ], Gio.SubprocessFlags.NONE)
 		self._connect()
+		GLib.timeout_add_seconds(5, self._check_connected)
 	
 	
 	def restart(self):
@@ -303,6 +304,13 @@ class DaemonManager(GObject.GObject):
 		Restarts the daemon and forces connection to be created immediately.
 		"""
 		self.start(mode="restart")
+	
+	
+	def _check_connected(self):
+		if not self.alive:
+			log.debug("Started daemon but connection is not ready")
+			self.emit('error', "CANT_SUMMON_THE_DAEMON")
+		return False
 
 
 class ControllerManager(GObject.GObject):
