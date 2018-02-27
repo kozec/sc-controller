@@ -296,7 +296,7 @@ class DaemonManager(GObject.GObject):
 			self._on_daemon_died()
 		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", mode ], Gio.SubprocessFlags.NONE)
 		self._connect()
-		GLib.timeout_add_seconds(5, self._check_connected)
+		GLib.timeout_add_seconds(10, self._check_connected)
 	
 	
 	def restart(self):

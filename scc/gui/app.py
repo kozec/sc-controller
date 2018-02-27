@@ -1212,7 +1212,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def show_error(self, message, ribar=None):
-		if self.ribar is None:
+		if self.ribar is None or self.ribar.get_label() is None:
 			self.ribar = ribar or RIBar(message, Gtk.MessageType.ERROR)
 			content = self.builder.get_object("content")
 			content.pack_start(self.ribar, False, False, 1)

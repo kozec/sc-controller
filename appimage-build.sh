@@ -5,6 +5,7 @@ EXEC="scc"
 EVDEV_VERSION=0.7.0
 [ x"$BUILD_APPDIR" == "x" ] && BUILD_APPDIR=$(pwd)/appimage
 
+
 function download_dep() {
 	NAME=$1
 	URL=$2
@@ -24,7 +25,7 @@ function build_dep() {
 	pushd /tmp/${NAME}
 	tar --extract --strip-components=1 -f /tmp/${NAME}.tar.gz
 	python2 setup.py build
-	PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages python2 setup.py install --prefix ${BUILD_APPDIR}/usr
+	python2 setup.py install --prefix ${BUILD_APPDIR}/usr
 	popd
 }
 
@@ -35,7 +36,14 @@ download_dep "python-evdev-0.7.0" "https://github.com/gvalkov/python-evdev/archi
 download_dep "pylibacl-0.5.3" "https://github.com/iustin/pylibacl/releases/download/pylibacl-v0.5.3/pylibacl-0.5.3.tar.gz"
 
 # Prepare & build
-mkdir -p ${BUILD_APPDIR}/usr/lib/python2.7/site-packages/
+export PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages/
+mkdir -p "$PYTHONPATH"/site-packages/
+if [[ $(grep ID_LIKE /etc/os-release) == *"suse"* ]] ; then
+	# Special handling for OBS
+	ln -s lib64 ${BUILD_APPDIR}/usr/lib
+	export PYTHONPATH="$PYTHONPATH":${BUILD_APPDIR}/usr/lib64/python2.7/site-packages/
+fi
+
 build_dep "python-evdev-0.7.0"
 build_dep "pylibacl-0.5.3"
 python2 setup.py build
@@ -62,4 +70,4 @@ cp scripts/${APP}.appdata.xml ${BUILD_APPDIR}/usr/share/metainfo/${APP}.appdata.
 cp scripts/appimage-AppRun.sh ${BUILD_APPDIR}/AppRun
 chmod +x ${BUILD_APPDIR}/AppRun
 
-echo "Run appimagetool ${BUILD_APPDIR} to finish prepared appimage"
+echo "Run appimagetool -n ${BUILD_APPDIR} to finish prepared appimage"
