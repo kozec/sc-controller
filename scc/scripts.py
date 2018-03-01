@@ -184,7 +184,9 @@ def cmd_dependency_check(argv0, argv):
 		else:
 			print >>sys.stderr, "Please, install 'PyGObject' package to use this application"
 	except ImportError, e2:
-		print e2
+		print >>sys.stderr, e2
+		if "gi" in str(e2):
+			print >>sys.stderr, "Please, install 'PyGObject' package to use this application"
 		return 1
 	try:
 		import evdev
