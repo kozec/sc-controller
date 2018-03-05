@@ -38,14 +38,7 @@ log = logging.getLogger("osd.keyboard")
 class KeyboardImage(Gtk.DrawingArea):
 	LINE_WIDTH = 2
 	
-	__gsignals__ = {
-			# Raised when mouse is over defined area
-			b"hover"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			# Raised when mouse leaves all defined areas
-			b"leave"	: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			# Raised user clicks on defined area
-			b"click"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-	}
+	__gsignals__ = {}
 	
 	
 	def __init__(self, image):
@@ -54,20 +47,55 @@ class KeyboardImage(Gtk.DrawingArea):
 		self.connect('draw', self.on_draw)
 		
 		areas = []
-		tree = ET.fromstring(open(image, "rb").read())
-		SVGWidget.find_areas(tree, None, areas)
+		self.color_button1 = 0.8, 0, 0, 1			# Just random mess,
+		self.color_button1_border = 1, 0, 0, 1		# config overrides it anyway
+		self.color_button2 = 0.8, 0.8, 0, 1
+		self.color_button2_border = 1, 1, 0, 1
+		self.color_hilight = 0, 1, 1, 1
+		self.color_pressed = 1, 1, 1, 1
+		self.color_text = 1, 1, 1, 1
+		
+		self._hilight = ()
+		self._pressed = ()
+		self.tree = ET.fromstring(open(image, "rb").read())
+		SVGWidget.find_areas(self.tree, None, areas)
 		
 		self.buttons = [ (area, area.x, area.y, area.w, area.h)
 			for area in areas ]
 		
-		background = SVGEditor.find_by_id(tree, "BACKGROUND")
+		background = SVGEditor.find_by_id(self.tree, "BACKGROUND")
 		self.set_size_request(*SVGEditor.get_size(background))
+	
+	
+	def hilight(self, hilight, pressed):
+		self._hilight = hilight
+		self._pressed = pressed
+		self.queue_draw()
+	
+	
+	def get_limit(self, id):
+		a = SVGEditor.find_by_id(self.tree, id)
+		width, height = 0, 0
+		if not hasattr(a, "parent"): a.parent = None
+		x, y = SVGEditor.get_translation(a, absolute=True)
+		if 'width' in a.attrib:  width = float(a.attrib['width'])
+		if 'height' in a.attrib: height = float(a.attrib['height'])
+		return x, y, width, height
 	
 	
 	def on_draw(self, self2, ctx):
 		ctx.set_line_width(self.LINE_WIDTH)
-		for (label, x, y, w, h) in self.buttons:
-			ctx.set_source_rgba(0.3, 0.3, 0.3, 1)
+		for (area, x, y, w, h) in self.buttons:
+			if area in self._pressed:
+				ctx.set_source_rgba(*self.color_pressed)
+			elif area in self._hilight:
+				ctx.set_source_rgba(*self.color_hilight)
+			else:
+				ctx.set_source_rgba(*self.color_button1)
+			# if area in self._hilights:
+			# 	b, color = Gdk.Color.parse(self._hilights[area])
+			# 	if b:
+			# 		ctx.set_source_rgba(color.red_float, color.green_float, color.blue_float, 1)
 			ctx.move_to(x, y)
 			ctx.line_to(x + w, y)
 			ctx.line_to(x + w, y + h)
@@ -75,18 +103,16 @@ class KeyboardImage(Gtk.DrawingArea):
 			ctx.line_to(x, y)
 			ctx.fill()
 			
+			ctx.set_source_rgba(*self.color_button1_border)
 			ctx.move_to(x, y)
 			ctx.line_to(x + w, y)
 			ctx.line_to(x + w, y + h)
 			ctx.line_to(x, y + h)
 			ctx.line_to(x, y)
-			ctx.set_source_rgba(1, 0, 0, 1)
 			ctx.stroke()
-		print ctx
 	
 	
 	def on_size_allocate(self, *a):
-		# print a
 		pass
 
 
@@ -98,8 +124,6 @@ class Keyboard(OSDWindow, TimerManager):
    3  - erorr, failed to lock input stick, pad or button(s)
 	"""
 	OSK_PROF_NAME = ".scc-osd.keyboard"
-	RECOLOR_BACKGROUNDS = ( "button1", "button2", "text", "background" )
-	RECOLOR_STROKES = ( "button1_border", "button2_border", "text" )
 	
 	BUTTON_MAP = {
 		SCButtons.A.name : Keys.KEY_ENTER,
@@ -154,8 +178,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self.recolor()
 		
 		self.limits = {}
-		# self.limits[LEFT]  = self.background.get_rect_area("LIMIT_LEFT")
-		# self.limits[RIGHT] = self.background.get_rect_area("LIMIT_RIGHT")
+		self.limits[LEFT]  = self.background.get_limit("LIMIT_LEFT")
+		self.limits[RIGHT] = self.background.get_limit("LIMIT_RIGHT")
 		self._pack()
 	
 	
@@ -167,28 +191,37 @@ class Keyboard(OSDWindow, TimerManager):
 		self.add(self.c)
 	
 	
+	@staticmethod
+	def color_to_float(colorstr):
+		"""
+		Parses color expressed as RRGGBB (as in config) and returns
+		three floats of r, g, b, a (range 0 to 1)
+		"""
+		b, color = Gdk.Color.parse("#" + colorstr)
+		if b:
+			return color.red_float, color.green_float, color.blue_float, 1
+		return 1, 0, 1, 1	# uggly purple
+	
+	
 	def recolor(self):
-		source_colors = {}
-		try:
-			# Try to read json file and bail out if it fails
-			source_colors = json.loads(open(self.kbimage + ".json", "r").read())['colors']
-		except Exception, e:
-			log.warning("Failed to load keyboard description")
-			log.warning(e)
-			return
+		# TODO: keyboard description is probably not needed anymore
+		# source_colors = {}
+		# try:
+		# 	# Try to read json file and bail out if it fails
+		# 	source_colors = json.loads(open(self.kbimage + ".json", "r").read())['colors']
+		# except Exception, e:
+		# 	log.warning("Failed to load keyboard description")
+		# 	log.warning(e)
+		# 	return
 		
-		# editor = self.background.edit()
-		# 
-		# for k in Keyboard.RECOLOR_BACKGROUNDS:
-		# 	if k in self.config['osk_colors'] and k in source_colors:
-		# 		editor.recolor_background(source_colors[k], self.config['osk_colors'][k])
-		# editor.recolor_background(source_colors["background"], self.config['osd_colors']["background"])
-		# 
-		# for k in Keyboard.RECOLOR_STROKES:
-		# 	if k in self.config['osk_colors'] and k in source_colors:
-		# 		editor.recolor_strokes(source_colors[k], self.config['osk_colors'][k])
-		# 
-		# editor.commit()
+		_get = lambda a: Keyboard.color_to_float(self.config['osk_colors'].get(a, ""))
+		self.background.color_button1 = _get("button1")
+		self.background.color_button1_border = _get("button1_border")
+		self.background.color_button2 = _get("button2")
+		self.background.color_button2_border = _get("button2_border")
+		self.background.color_hilight = _get("hilight")
+		self.background.color_pressed = _get("pressed")
+		self.background.color_text = _get("text")
 	
 	
 	def use_daemon(self, d):
@@ -299,8 +332,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self.mapper = SlaveMapper(self.profile, None,
 			keyboard=b"SCC OSD Keyboard", mouse=b"SCC OSD Mouse")
 		self.mapper.set_special_actions_handler(self)
-		# self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
-		# self.set_cursor_position(0, 0, self.cursors[RIGHT], self.limits[RIGHT])
+		self.set_cursor_position(0, 0, self.cursors[LEFT], self.limits[LEFT])
+		self.set_cursor_position(0, 0, self.cursors[RIGHT], self.limits[RIGHT])
 		self.timer('labels', 0.1, self.update_labels)
 	
 	
@@ -322,11 +355,10 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def on_sa_cursor(self, mapper, action, x, y):
-		pass
-		# self.set_cursor_position(
-		# 	x * action.speed[0],
-		# 	y * action.speed[1],
-		# 	self.cursors[action.side], self.limits[action.side])
+		self.set_cursor_position(
+			x * action.speed[0],
+			y * action.speed[1],
+			self.cursors[action.side], self.limits[action.side])
 	
 	
 	def on_sa_move(self, mapper, action, x, y):
@@ -366,32 +398,27 @@ class Keyboard(OSDWindow, TimerManager):
 		self.f.move(cursor,
 			x - cursor.get_allocation().width * 0.5,
 			y - cursor.get_allocation().height * 0.5)
-		# for a in self.background.areas:
-		# 	if a.contains(x, y):
-		# 		if a != self._hovers[cursor]:
-		# 			self._hovers[cursor] = a
-		# 			if self._pressed[cursor] is not None:
-		# 				self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
-		# 				self.key_from_cursor(cursor, True)
-		# 			if not self.timer_active('redraw'):
-		# 				self.timer('redraw', 0.01, self.redraw_background)
-		# 			break
+		for a in self.background.buttons:
+			a = a[0]
+			if a.contains(x, y):
+				if a != self._hovers[cursor]:
+					self._hovers[cursor] = a
+					if self._pressed[cursor] is not None:
+						self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
+						self.key_from_cursor(cursor, True)
+					if not self.timer_active('redraw'):
+						self.timer('redraw', 0.01, self.redraw_background)
+					break
 	
 	
 	def redraw_background(self, *a):
 		"""
 		Updates hilighted keys on bacgkround image.
 		"""
-		hilights = {
-			"AREA_" + a.name : "#" + self.config['osk_colors']['hilight']
-			for a in [ a for a in self._hovers.values() if a ]
-		}
-		hilights.update({
-			"AREA_" + a.name : "#" + self.config['osk_colors']['pressed']
-			for a in self._pressed_areas.values()
-		})
-		
-		# self.background.hilight(hilights)
+		self.background.hilight(
+			set([ a for a in self._hovers.values() if a ]),
+			set([ a for a in self._pressed_areas.values() if a ])
+		)
 	
 	
 	def _move_window(self, *a):
@@ -415,7 +442,8 @@ class Keyboard(OSDWindow, TimerManager):
 		x, y = cursor.position
 		
 		if pressed:
-			for a in self.background.areas:
+			for a in self.background.buttons:
+				a = a[0]
 				if a.contains(x, y):
 					if a.name.startswith("KEY_") and hasattr(Keys, a.name):
 						key = getattr(Keys, a.name)
@@ -440,7 +468,6 @@ def main():
 	gi.require_version('GdkX11', '3.0')
 	
 	from scc.tools import init_logging
-	from scc.paths import get_share_path
 	init_logging()
 	
 	k = Keyboard()
@@ -450,7 +477,7 @@ def main():
 
 
 if __name__ == "__main__":
-	import os, sys, signal
+	import signal
 	
 	def sigint(*a):
 		print("\n*break*")
