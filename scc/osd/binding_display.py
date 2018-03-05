@@ -498,7 +498,6 @@ class Generator(object):
 			b.place(self, root)
 		
 		editor.commit()
-		file("out.svg", "w").write(editor.to_string())
 	
 	
 	def equal_width(self, *boxes):
