@@ -11,6 +11,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GObject, GdkPixbuf, Rsvg
 from xml.etree import ElementTree as ET
 from math import sin, cos, pi as PI
+from collections import OrderedDict
 import os, sys, re, logging
 
 log = logging.getLogger("Background")
@@ -19,6 +20,7 @@ ET.register_namespace('', "http://www.w3.org/2000/svg")
 
 class SVGWidget(Gtk.EventBox):
 	FILENAME = "background.svg"
+	CACHE_SIZE = 50
 	
 	__gsignals__ = {
 			# Raised when mouse is over defined area
@@ -32,7 +34,7 @@ class SVGWidget(Gtk.EventBox):
 	
 	def __init__(self,  filename, init_hilighted=True):
 		Gtk.EventBox.__init__(self)
-		self.cache = {}
+		self.cache = OrderedDict()
 		self.areas = []
 		
 		self.connect("motion-notify-event", self.on_mouse_moved)
@@ -52,7 +54,7 @@ class SVGWidget(Gtk.EventBox):
 	
 	def set_image(self, filename):
 		self.current_svg = open(filename, "r").read().decode("utf-8")
-		self.cache = {}
+		self.cache = OrderedDict()
 		self.areas = []
 		self.parse_image()
 	
@@ -77,7 +79,7 @@ class SVGWidget(Gtk.EventBox):
 		so this may be slow and nasty.
 		"""
 		self.size_override = width, height
-		self.cache = {}
+		self.cache = OrderedDict()
 	
 	
 	def on_mouse_click(self, trash, event):
@@ -176,6 +178,8 @@ class SVGWidget(Gtk.EventBox):
 				
 				# ... and now, parse that as XML again......
 				svg = Rsvg.Handle.new_from_data(xml.encode("utf-8"))
+			while len(self.cache) >= self.CACHE_SIZE:
+				self.cache.popitem(False)
 			if self.size_override:
 				w, h = self.size_override
 				self.cache[cache_id] = svg.get_pixbuf().scale_simple(
@@ -249,7 +253,7 @@ class SVGEditor(object):
 		Return self.
 		"""
 		self._svgw.current_svg = ET.tostring(self._tree)
-		self._svgw.cache = {}
+		self._svgw.cache = OrderedDict()
 		self._svgw.hilight({})
 		
 		return self
