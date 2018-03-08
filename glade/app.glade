@@ -542,22 +542,18 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
-        <property name="spacing">1</property>
         <signal name="drag-data-received" handler="on_drag_data_received" swapped="no"/>
         <child>
           <object class="GtkBox" id="vbSwitchers">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="margin_top">5</property>
             <property name="orientation">vertical</property>
+            <property name="margin">12</property>
+            <property name="spacing">6</property>
             <child>
               <object class="GtkSeparator" id="sepSwitchers">
                 <property name="can_focus">False</property>
                 <property name="no_show_all">True</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
-                <property name="margin_top">5</property>
-                <property name="margin_bottom">5</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -579,20 +575,21 @@
             <property name="transition_duration">500</property>
             <property name="transition_type">crossfade</property>
             <property name="interpolate_size">True</property>
+            <property name="margin_left">12</property>
+            <property name="margin_right">12</property>
+            <property name="margin_bottom">12</property>
             <child>
               <object class="GtkGrid" id="grEditor">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_left">5</property>
-                <property name="margin_right">5</property>
-                <property name="margin_bottom">5</property>
+                <property name="column_spacing">12</property>
+                <property name="row_spacing">12</property>
                 <child>
                   <object class="GtkBox" id="vbLeft">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_right">20</property>
                     <property name="orientation">vertical</property>
-                    <property name="spacing">1</property>
+                    <property name="spacing">6</property>
                     <child>
                       <object class="GtkButton" id="btLT">
                         <property name="width_request">170</property>
@@ -667,9 +664,8 @@
                   <object class="GtkBox" id="vbRight">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_left">20</property>
                     <property name="orientation">vertical</property>
-                    <property name="spacing">1</property>
+                    <property name="spacing">6</property>
                     <child>
                       <object class="GtkButton" id="btRT">
                         <property name="width_request">170</property>
@@ -744,19 +740,8 @@
                   <object class="GtkBox" id="vbPads">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_top">10</property>
                     <property name="baseline_position">bottom</property>
-                    <child>
-                      <object class="GtkLabel" id="label1">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
+                    <property name="spacing">12</property>
                     <child>
                       <object class="GtkButton" id="btLPAD">
                         <property name="width_request">220</property>
@@ -779,8 +764,6 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="margin_left">10</property>
-                        <property name="margin_right">10</property>
                         <child>
                           <placeholder/>
                         </child>
@@ -810,7 +793,6 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="margin_left">10</property>
                         <child>
                           <placeholder/>
                         </child>
@@ -819,17 +801,6 @@
                         <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="position">4</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label2">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">5</property>
                       </packing>
                     </child>
                   </object>
@@ -843,22 +814,23 @@
                   <object class="GtkFixed" id="mainArea">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="halign">center</property>
                     <signal name="size-allocate" handler="on_c_size_allocate" swapped="no"/>
                     <child>
                       <object class="GtkBox" id="vbC">
-                        <property name="width_request">100</property>
-                        <property name="height_request">80</property>
+                        <property name="width_request">150</property>
+                        <property name="height_request">90</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="orientation">vertical</property>
+                        <property name="valign">end</property>
                         <child>
                           <object class="GtkButton" id="btC">
-                            <property name="width_request">150</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="margin_left">20</property>
-                            <property name="margin_right">20</property>
+                            <property name="margin_left">6</property>
+                            <property name="margin_right">6</property>
                             <child>
                               <placeholder/>
                             </child>
@@ -875,7 +847,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="margin_top">5</property>
+                            <property name="margin_top">6</property>
                             <child>
                               <placeholder/>
                             </child>
@@ -899,9 +871,8 @@
                   <object class="GtkBox" id="vbXY">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_right">30</property>
                     <property name="orientation">vertical</property>
-                    <property name="spacing">1</property>
+                    <property name="spacing">6</property>
                     <child>
                       <object class="GtkButton" id="btY">
                         <property name="width_request">170</property>
@@ -944,9 +915,8 @@
                   <object class="GtkBox" id="vbAB">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_left">30</property>
                     <property name="orientation">vertical</property>
-                    <property name="spacing">1</property>
+                    <property name="spacing">6</property>
                     <child>
                       <object class="GtkButton" id="btB">
                         <property name="width_request">170</property>
