@@ -22,11 +22,11 @@ class SVGWidget(Gtk.EventBox):
 	
 	__gsignals__ = {
 			# Raised when mouse is over defined area
-			b"hover"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"hover"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 			# Raised when mouse leaves all defined areas
-			b"leave"	: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"leave"	: (GObject.SignalFlags.RUN_FIRST, None, ()),
 			# Raised user clicks on defined area
-			b"click"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"click"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 	}
 	
 	

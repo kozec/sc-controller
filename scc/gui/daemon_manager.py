@@ -61,15 +61,15 @@ class DaemonManager(GObject.GObject):
 	"""
 	
 	__gsignals__ = {
-			b"alive"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"controller-count-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (int,)),
-			b"dead"						: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"error"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"event"					: (GObject.SIGNAL_RUN_FIRST, None, (object,object,object)),
-			b"profile-changed"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"reconfigured"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"unknown-msg"				: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"version"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"alive"					: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"controller-count-changed"	: (GObject.SignalFlags.RUN_FIRST, None, (int,)),
+			b"dead"						: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"error"					: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			b"event"					: (GObject.SignalFlags.RUN_FIRST, None, (object,object,object)),
+			b"profile-changed"			: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			b"reconfigured"				: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"unknown-msg"				: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			b"version"					: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 	}
 	
 	RECONNECT_INTERVAL = 5
@@ -324,9 +324,9 @@ class ControllerManager(GObject.GObject):
 	"""
 	
 	__gsignals__ = {
-			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
-			b"lost"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"event"			: (GObject.SignalFlags.RUN_FIRST, None, (object,object)),
+			b"lost"				: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"profile-changed"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 	}
 	
 	DEFAULT_ICONS = [ "A", "B", "X", "Y", "BACK", "C", "START",

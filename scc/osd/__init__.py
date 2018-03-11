@@ -290,7 +290,7 @@ class StickController(GObject.GObject, TimerManager):
 	  Both values are one of -1, 0, 1 for left/none/right.
 	"""
 	__gsignals__ = {
-			b"direction"			: (GObject.SIGNAL_RUN_FIRST, None, (int, int)),
+			b"direction"			: (GObject.SignalFlags.RUN_FIRST, None, (int, int)),
 	}
 	REPEAT_DELAY = 0.3
 	DIRECTION_TO_XY = {
