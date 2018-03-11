@@ -382,11 +382,12 @@ class SVGEditor(object):
 			if 'style' in element.attrib:
 				style = { y[0] : y[1] for y in [ x.split(":", 1) for x in element.attrib['style'].split(";") ] }
 				if 'fill' in style:
-					style['fill'] = color
 					if len(color.strip("#")) == 8:
+						style['fill'] = "#%s" % (color[-6:],)
 						alpha = float(int(color.strip("#")[0:2], 16)) / 255.0
 						style['fill-opacity'] = style['opacity'] = str(alpha)
 					else:
+						style['fill'] = color
 						style['fill-opacity'] = style['opacity'] = "1"
 					element.attrib['style'] = ";".join([ "%s:%s" % (x, style[x]) for x in style ])
 					return True
