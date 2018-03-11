@@ -7,7 +7,7 @@ Display menu that user can navigate through and print chosen item id to stdout
 from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, Gdk, GdkX11, GObject, GLib
+from gi.repository import Gtk, Gdk, GdkX11, GObject, GLib, cairo
 from xml.etree import ElementTree as ET
 from scc.constants import LEFT, RIGHT, STICK, STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import STICK_PAD_MIN_HALF, STICK_PAD_MAX_HALF
@@ -57,6 +57,7 @@ class KeyboardImage(Gtk.DrawingArea):
 		
 		self._hilight = ()
 		self._pressed = ()
+		self._labels = {}
 		self.tree = ET.fromstring(open(image, "rb").read())
 		SVGWidget.find_areas(self.tree, None, areas)
 		
@@ -70,6 +71,11 @@ class KeyboardImage(Gtk.DrawingArea):
 	def hilight(self, hilight, pressed):
 		self._hilight = hilight
 		self._pressed = pressed
+		self.queue_draw()
+	
+	
+	def set_labels(self, labels):
+		self._labels = labels
 		self.queue_draw()
 	
 	
@@ -110,6 +116,14 @@ class KeyboardImage(Gtk.DrawingArea):
 			ctx.line_to(x, y + h)
 			ctx.line_to(x, y)
 			ctx.stroke()
+			
+			size = 30, 48
+			ctx.set_source_rgba(*self.color_text)
+			ctx.select_font_face("Ubuntu", 0, 0)
+			ctx.set_font_size(48)
+			ctx.move_to(x + (w/2) - (size[0] / 2), y + size[1])
+			ctx.show_text(self._labels.get(area, ""))
+
 	
 	
 	def on_size_allocate(self, *a):
@@ -205,15 +219,6 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def recolor(self):
 		# TODO: keyboard description is probably not needed anymore
-		# source_colors = {}
-		# try:
-		# 	# Try to read json file and bail out if it fails
-		# 	source_colors = json.loads(open(self.kbimage + ".json", "r").read())['colors']
-		# except Exception, e:
-		# 	log.warning("Failed to load keyboard description")
-		# 	log.warning(e)
-		# 	return
-		
 		_get = lambda a: Keyboard.color_to_float(self.config['osk_colors'].get(a, ""))
 		self.background.color_button1 = _get("button1")
 		self.background.color_button1_border = _get("button1_border")
@@ -246,19 +251,18 @@ class Keyboard(OSDWindow, TimerManager):
 		self.group = X.get_xkb_state(self.dpy).group
 		# Get state of shift/alt/ctrl key
 		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
-		# for a in self.background.areas:
-		# 	if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_KEYCODE:
-		# 		keycode = KEY_TO_KEYCODE[getattr(Keys, a.name)]
-		# 		translation = self.keymap.translate_keyboard_state(keycode, mt, self.group)
-		# 		if hasattr(translation, "keyval"):
-		# 			code = Gdk.keyval_to_unicode(translation.keyval)
-		# 		else:
-		# 			code = Gdk.keyval_to_unicode(translation[1])
-		# 		if code >= 32: # Printable chars
-		# 			labels[a.name] = unichr(code)
-		# 
-		# 
-		# self.background.edit().set_labels(labels).commit()
+		for a in self.background.buttons:
+			a = a[0]
+			if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_KEYCODE:
+				keycode = KEY_TO_KEYCODE[getattr(Keys, a.name)]
+				translation = self.keymap.translate_keyboard_state(keycode, mt, self.group)
+				if hasattr(translation, "keyval"):
+					code = Gdk.keyval_to_unicode(translation.keyval)
+				else:
+					code = Gdk.keyval_to_unicode(translation[1])
+				if code >= 32: # Printable chars
+					labels[a] = unichr(code)
+		self.background.set_labels(labels)
 	
 	
 	def _add_arguments(self):
@@ -406,12 +410,12 @@ class Keyboard(OSDWindow, TimerManager):
 					if self._pressed[cursor] is not None:
 						self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
 						self.key_from_cursor(cursor, True)
-					if not self.timer_active('redraw'):
-						self.timer('redraw', 0.01, self.redraw_background)
+					if not self.timer_active('update'):
+						self.timer('update', 0.01, self.update_background)
 					break
 	
 	
-	def redraw_background(self, *a):
+	def update_background(self, *whatever):
 		"""
 		Updates hilighted keys on bacgkround image.
 		"""
@@ -457,8 +461,8 @@ class Keyboard(OSDWindow, TimerManager):
 			self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
 			self._pressed[cursor] = None
 			del self._pressed_areas[cursor]
-		if not self.timer_active('redraw'):
-			self.timer('redraw', 0.01, self.redraw_background)
+		if not self.timer_active('update'):
+			self.timer('update', 0.01, self.update_background)
 
 
 def main():
