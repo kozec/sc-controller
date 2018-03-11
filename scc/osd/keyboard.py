@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 """
 SC-Controller - OSD Menu
 
@@ -60,6 +61,7 @@ class KeyboardImage(Gtk.DrawingArea):
 		self._labels = {}
 		self.tree = ET.fromstring(open(image, "rb").read())
 		SVGWidget.find_areas(self.tree, None, areas)
+		self.font_face = Gtk.Label(label="X").get_style().font_desc.get_family()
 		
 		self.buttons = [ (area, area.x, area.y, area.w, area.h)
 			for area in areas ]
@@ -90,6 +92,8 @@ class KeyboardImage(Gtk.DrawingArea):
 	
 	
 	def on_draw(self, self2, ctx):
+		ctx.select_font_face(self.font_face, 0, 0)
+		
 		ctx.set_line_width(self.LINE_WIDTH)
 		for (area, x, y, w, h) in self.buttons:
 			if area in self._pressed:
@@ -117,13 +121,12 @@ class KeyboardImage(Gtk.DrawingArea):
 			ctx.line_to(x, y)
 			ctx.stroke()
 			
-			size = 30, 48
+			label = self._labels.get(area, "")
+			extents = ctx.text_extents(label)
 			ctx.set_source_rgba(*self.color_text)
-			ctx.select_font_face("Ubuntu", 0, 0)
 			ctx.set_font_size(48)
-			ctx.move_to(x + (w/2) - (size[0] / 2), y + size[1])
-			ctx.show_text(self._labels.get(area, ""))
-
+			ctx.move_to(x + (w/2) - (extents[2] / 2) - extents[0], y + (h/2) - (extents[3]/2) - extents[1])
+			ctx.show_text(label)
 	
 	
 	def on_size_allocate(self, *a):
@@ -262,6 +265,8 @@ class Keyboard(OSDWindow, TimerManager):
 					code = Gdk.keyval_to_unicode(translation[1])
 				if code >= 32: # Printable chars
 					labels[a] = unichr(code)
+				elif code == 13: # Return
+					labels[a] = "↵"
 		self.background.set_labels(labels)
 	
 	
