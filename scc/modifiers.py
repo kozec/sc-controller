@@ -871,6 +871,16 @@ class ModeModifier(Modifier):
 		return self.default
 	
 	
+	def select_w_check(self, mapper):
+		"""
+		As select, but returns matched check as well.
+		"""
+		for check, action in self.checks:
+			if check(mapper):
+				return check, action
+		return lambda *a:True, self.default
+	
+	
 	@staticmethod
 	def make_button_check(button):
 		def cb(mapper):
@@ -925,13 +935,19 @@ class ModeModifier(Modifier):
 	def whole(self, mapper, x, y, what):
 		if what == STICK:
 			if abs(x) < ModeModifier.MIN_STICK and abs(y) < ModeModifier.MIN_STICK:
-				for b in self.held_sticks:
-					b.whole(mapper, 0, 0, what)
+				for check, action in self.held_sticks:
+					action.whole(mapper, 0, 0, what)
 				self.held_sticks.clear()
 			else:
-				self.held_sticks.add(self.select(mapper))
-				for b in self.held_sticks:
-					b.whole(mapper, x, y, what)
+				ac, active = self.select_w_check(mapper)
+				self.held_sticks.add(( ac, active ))
+				for check, action in list(self.held_sticks):
+					if check == ac or check(mapper):
+						action.whole(mapper, x, y, what)
+					else:
+						action.whole(mapper, 0, 0, what)
+						self.held_sticks.remove(( check, action ))
+			mapper.force_event.add(FE_STICK)
 		else:
 			sel = self.select(mapper)
 			if sel is not self.old_action:

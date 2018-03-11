@@ -179,10 +179,15 @@ Presses button and leaves it pressed.
 Releases pressed button.
 
 
-#### <a name="tap"></a> tap(button)
-Presses button for a short while.
-If button is already pressed, releases it, taps it and presses it
-again in quick sequence.
+#### <a name="tap"></a> tap(button, number=1)
+Presses button for a short while, 'number' times.
+
+If 'number' is greater than 1 (when double-tap is performed), tapped button
+is kept press as long as physical button that started tap is pressed. For single
+tap, virtual button is released right away.
+
+If virtual button is already pressed before tapping, it is released first and
+restored after tap, resulting in sequence of "release - press - release - press"
 
 
 #### <a name="profile"></a> profile(name)
