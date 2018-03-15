@@ -512,10 +512,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		return True
 	
 	
-	def on_btnCancelProfile_clicked(self, btn):
-		dlg = self.builder.get_object("dlgNewProfile").hide()
-	
-	
 	def on_btNewProfile_clicked(self, *a):
 		""" Called when new profile name is set and OK is clicked """
 		txNewProfile = self.builder.get_object("txNewProfile")
@@ -1146,10 +1142,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		btRenameProfile.set_sensitive(find_profile(name) is None)
 	
 	
-	def on_btRenameProfileCancel_clicked(self, *a):
-		self.builder.get_object("dlgRenameProfile").hide()
-		
-		
 	def on_btRenameProfile_clicked(self, *a):
 		dlg = self.builder.get_object("dlgRenameProfile")
 		txRename = self.builder.get_object("txRename")
