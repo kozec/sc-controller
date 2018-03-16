@@ -95,6 +95,9 @@ class KeyboardImage(Gtk.DrawingArea):
 		ctx.select_font_face(self.font_face, 0, 0)
 		
 		ctx.set_line_width(self.LINE_WIDTH)
+		ctx.set_font_size(48)
+		ascent, descent, height, max_x_advance, max_y_advance = ctx.font_extents()
+
 		for (area, x, y, w, h) in self.buttons:
 			if area in self._pressed:
 				ctx.set_source_rgba(*self.color_pressed)
@@ -122,11 +125,13 @@ class KeyboardImage(Gtk.DrawingArea):
 			ctx.stroke()
 			
 			label = self._labels.get(area, "")
-			extents = ctx.text_extents(label)
-			ctx.set_source_rgba(*self.color_text)
-			ctx.set_font_size(48)
-			ctx.move_to(x + (w/2) - (extents[2] / 2) - extents[0], y + (h/2) - (extents[3]/2) - extents[1])
-			ctx.show_text(label)
+			if label:
+				ctx.set_source_rgba(*self.color_text)
+				extents = ctx.text_extents(label)
+				x_bearing, y_bearing, width, trash, x_advance, y_advance = extents
+				ctx.move_to(x + w * 0.5 - width * 0.5 - x_bearing, y + h * 0.5 + height * 0.3)
+				ctx.show_text(label)
+				ctx.stroke()
 	
 	
 	def on_size_allocate(self, *a):
@@ -263,10 +268,10 @@ class Keyboard(OSDWindow, TimerManager):
 					code = Gdk.keyval_to_unicode(translation.keyval)
 				else:
 					code = Gdk.keyval_to_unicode(translation[1])
-				if code >= 32: # Printable chars
-					labels[a] = unichr(code)
-				elif code == 13: # Return
-					labels[a] = "↵"
+				if code >= 33: # Printable chars, w/out space
+					labels[a] = unichr(code).strip()
+				else:
+					labels[a] = None
 		self.background.set_labels(labels)
 	
 	
