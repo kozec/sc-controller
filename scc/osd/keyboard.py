@@ -60,11 +60,12 @@ class KeyboardImage(Gtk.DrawingArea):
 		self._pressed = ()
 		self._labels = {}
 		self.tree = ET.fromstring(open(image, "rb").read())
-		SVGWidget.find_areas(self.tree, None, areas)
+		SVGWidget.find_areas(self.tree, None, areas, get_colors=True)
 		self.font_face = Gtk.Label(label="X").get_style().font_desc.get_family()
 		
-		self.buttons = [ (area, area.x, area.y, area.w, area.h)
-			for area in areas ]
+		self.buttons = [ Button(self.tree, area) for area in areas ]
+		for b in self.buttons[0:6]:
+			b.dark = True
 		
 		background = SVGEditor.find_by_id(self.tree, "BACKGROUND")
 		self.set_size_request(*SVGEditor.get_size(background))
@@ -98,17 +99,20 @@ class KeyboardImage(Gtk.DrawingArea):
 		ctx.set_font_size(48)
 		ascent, descent, height, max_x_advance, max_y_advance = ctx.font_extents()
 
-		for (area, x, y, w, h) in self.buttons:
-			if area in self._pressed:
+		for button in self.buttons:
+			if button in self._pressed:
 				ctx.set_source_rgba(*self.color_pressed)
-			elif area in self._hilight:
+			elif button in self._hilight:
 				ctx.set_source_rgba(*self.color_hilight)
+			elif button.dark:
+				ctx.set_source_rgba(*self.color_button2)
 			else:
 				ctx.set_source_rgba(*self.color_button1)
 			# if area in self._hilights:
 			# 	b, color = Gdk.Color.parse(self._hilights[area])
 			# 	if b:
 			# 		ctx.set_source_rgba(color.red_float, color.green_float, color.blue_float, 1)
+			x, y, w, h = button
 			ctx.move_to(x, y)
 			ctx.line_to(x + w, y)
 			ctx.line_to(x + w, y + h)
@@ -124,7 +128,7 @@ class KeyboardImage(Gtk.DrawingArea):
 			ctx.line_to(x, y)
 			ctx.stroke()
 			
-			label = self._labels.get(area, "")
+			label = self._labels.get(button, "")
 			if label:
 				ctx.set_source_rgba(*self.color_text)
 				extents = ctx.text_extents(label)
@@ -136,6 +140,20 @@ class KeyboardImage(Gtk.DrawingArea):
 	
 	def on_size_allocate(self, *a):
 		pass
+
+
+class Button:
+	
+	def __init__(self, tree, area):
+		self.contains = area.contains
+		self.name = area.name
+		self.x, self.y = area.x, area.y
+		self.w, self.h = area.w, area.h
+		self.dark = area.color[2] < 0.5		# Dark button is less than 50% blue
+	
+	
+	def __iter__(self):
+		return iter(( self.x, self.y, self.w, self.h ))
 
 
 class Keyboard(OSDWindow, TimerManager):
@@ -213,21 +231,9 @@ class Keyboard(OSDWindow, TimerManager):
 		self.add(self.c)
 	
 	
-	@staticmethod
-	def color_to_float(colorstr):
-		"""
-		Parses color expressed as RRGGBB (as in config) and returns
-		three floats of r, g, b, a (range 0 to 1)
-		"""
-		b, color = Gdk.Color.parse("#" + colorstr)
-		if b:
-			return color.red_float, color.green_float, color.blue_float, 1
-		return 1, 0, 1, 1	# uggly purple
-	
-	
 	def recolor(self):
 		# TODO: keyboard description is probably not needed anymore
-		_get = lambda a: Keyboard.color_to_float(self.config['osk_colors'].get(a, ""))
+		_get = lambda a: SVGWidget.color_to_float(self.config['osk_colors'].get(a, ""))
 		self.background.color_button1 = _get("button1")
 		self.background.color_button1_border = _get("button1_border")
 		self.background.color_button2 = _get("button2")
@@ -259,19 +265,18 @@ class Keyboard(OSDWindow, TimerManager):
 		self.group = X.get_xkb_state(self.dpy).group
 		# Get state of shift/alt/ctrl key
 		mt = Gdk.ModifierType(self.keymap.get_modifier_state())
-		for a in self.background.buttons:
-			a = a[0]
-			if hasattr(Keys, a.name) and getattr(Keys, a.name) in KEY_TO_KEYCODE:
-				keycode = KEY_TO_KEYCODE[getattr(Keys, a.name)]
+		for button in self.background.buttons:
+			if hasattr(Keys, button.name) and getattr(Keys, button.name) in KEY_TO_KEYCODE:
+				keycode = KEY_TO_KEYCODE[getattr(Keys, button.name)]
 				translation = self.keymap.translate_keyboard_state(keycode, mt, self.group)
 				if hasattr(translation, "keyval"):
 					code = Gdk.keyval_to_unicode(translation.keyval)
 				else:
 					code = Gdk.keyval_to_unicode(translation[1])
 				if code >= 33: # Printable chars, w/out space
-					labels[a] = unichr(code).strip()
+					labels[button] = unichr(code).strip()
 				else:
-					labels[a] = None
+					labels[button] = None
 		self.background.set_labels(labels)
 	
 	
@@ -412,11 +417,10 @@ class Keyboard(OSDWindow, TimerManager):
 		self.f.move(cursor,
 			x - cursor.get_allocation().width * 0.5,
 			y - cursor.get_allocation().height * 0.5)
-		for a in self.background.buttons:
-			a = a[0]
-			if a.contains(x, y):
-				if a != self._hovers[cursor]:
-					self._hovers[cursor] = a
+		for button in self.background.buttons:
+			if button.contains(x, y):
+				if button != self._hovers[cursor]:
+					self._hovers[cursor] = button
 					if self._pressed[cursor] is not None:
 						self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
 						self.key_from_cursor(cursor, True)
@@ -456,16 +460,15 @@ class Keyboard(OSDWindow, TimerManager):
 		x, y = cursor.position
 		
 		if pressed:
-			for a in self.background.buttons:
-				a = a[0]
-				if a.contains(x, y):
-					if a.name.startswith("KEY_") and hasattr(Keys, a.name):
-						key = getattr(Keys, a.name)
+			for button in self.background.buttons:
+				if button.contains(x, y):
+					if a.name.startswith("KEY_") and hasattr(Keys, button.name):
+						key = getattr(Keys, button.name)
 						if self._pressed[cursor] is not None:
 							self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])
 						self.mapper.keyboard.pressEvent([ key ])
 						self._pressed[cursor] = key
-						self._pressed_areas[cursor] = a
+						self._pressed_areas[cursor] = button
 					break
 		elif self._pressed[cursor] is not None:
 			self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])

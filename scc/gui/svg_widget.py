@@ -121,7 +121,7 @@ class SVGWidget(Gtk.EventBox):
 	
 	
 	@staticmethod
-	def find_areas(xml, parent_transform, areas):
+	def find_areas(xml, parent_transform, areas, get_colors=False):
 		"""
 		Recursively searches throught XML for anything with ID of 'AREA_SOMETHING'
 		"""
@@ -131,9 +131,16 @@ class SVGWidget(Gtk.EventBox):
 				SVGEditor.parse_transform(child))
 			if 'id' in child.attrib and child.attrib['id'].startswith("AREA_"):
 				# log.debug("Found SVG area %s", child.attrib['id'][5:])
-				areas.append(Area(child, child_transform))
+				a = Area(child, child_transform)
+				if get_colors:
+					a.color = None
+					if 'style' in child.attrib:
+						style = { y[0] : y[1] for y in [ x.split(":", 1) for x in child.attrib['style'].split(";") ] }
+						if 'fill' in style:
+							a.color = SVGWidget.color_to_float(style['fill'])
+				areas.append(a)
 			else:
-				SVGWidget.find_areas(child, child_transform, areas)
+				SVGWidget.find_areas(child, child_transform, areas, get_colors)
 	
 	
 	def get_rect_area(self, element):
@@ -151,6 +158,18 @@ class SVGWidget(Gtk.EventBox):
 		if 'height' in element.attrib: height = float(element.attrib['height'])
 		
 		return x, y, width, height
+	
+	
+	@staticmethod
+	def color_to_float(colorstr):
+		"""
+		Parses color expressed as RRGGBB (as in config) and returns
+		three floats of r, g, b, a (range 0 to 1)
+		"""
+		b, color = Gdk.Color.parse("#" + colorstr.strip("#"))
+		if b:
+			return color.red_float, color.green_float, color.blue_float, 1
+		return 1, 0, 1, 1	# uggly purple
 	
 	
 	def hilight(self, buttons):
