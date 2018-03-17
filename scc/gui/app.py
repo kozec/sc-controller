@@ -102,7 +102,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.ribar = None
 		self.create_binding_buttons()
 		
-		ps = self.add_switcher(10, 10)
+		ps = self.add_switcher(12, 12)
 		ps.set_allow_new(True)
 		ps.set_profile(self.load_profile_selection())
 		ps.connect('new-clicked', self.on_new_clicked)
@@ -854,7 +854,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.profile_switchers[0].set_profile(name, create=True)
 	
 	
-	def add_switcher(self, margin_left=30, margin_right=40, margin_bottom=2):
+	def add_switcher(self, margin_left=24, margin_right=24):
 		"""
 		Adds new profile switcher widgets on top of window. Called
 		when new controller is connected to daemon.
@@ -867,7 +867,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		ps = ProfileSwitcher(self.imagepath, self.config)
 		ps.set_margin_left(margin_left)
 		ps.set_margin_right(margin_right)
-		ps.set_margin_bottom(margin_bottom)
 		ps.connect('right-clicked', self.on_profile_right_clicked)
 		ps.connect('switch-to-clicked', self.on_switch_to_clicked)
 		
@@ -1215,7 +1214,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if self.ribar is None or self.ribar.get_label() is None:
 			self.ribar = ribar or RIBar(message, Gtk.MessageType.ERROR)
 			content = self.builder.get_object("content")
-			content.pack_start(self.ribar, False, False, 1)
+			content.pack_start(self.ribar, False, False, 0)
 			content.reorder_child(self.ribar, 0)
 			self.ribar.connect("close", self.hide_error)
 			self.ribar.connect("response", self.hide_error)

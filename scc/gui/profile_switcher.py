@@ -78,7 +78,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		# Setup
 		rend1 = Gtk.CellRendererText()
 		rend2 = Gtk.CellRendererText()
-		self._icon.set_margin_right(10)
+		self._box.set_spacing(12)
 		self._combo.pack_start(rend1, True)
 		self._combo.pack_start(rend2, False)
 		self._combo.add_attribute(rend1, "text", 0)
@@ -409,7 +409,6 @@ class ButtonInRevealer(Gtk.Revealer):
 	def __init__(self, button_name, tooltip, callback):
 		Gtk.Revealer.__init__(self)
 		self.button = Gtk.Button.new_from_icon_name(button_name, Gtk.IconSize.SMALL_TOOLBAR)
-		self.button.set_margin_left(5)
 		self.button.connect('clicked', callback)
 		self.button.set_tooltip_text(tooltip)
 		self.set_reveal_child(False)

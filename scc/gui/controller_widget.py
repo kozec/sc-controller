@@ -30,7 +30,7 @@ PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD,
 _NOT_BUTTONS = PADS + STICKS + GYROS + TRIGGERS
 _NOT_BUTTONS += [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
-LONG_TEXT = 12
+LONG_TEXT = 16
 
 class ControllerWidget:
 	ACTION_CONTEXT = None
@@ -85,6 +85,7 @@ class ControllerButton(ControllerWidget):
 		
 		if use_icon:
 			vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+			vbox.set_spacing(6)
 			separator = Gtk.Separator(orientation = Gtk.Orientation.VERTICAL)
 			vbox.pack_start(self.icon, False, False, 1)
 			vbox.pack_start(separator, False, False, 1)
@@ -93,7 +94,7 @@ class ControllerButton(ControllerWidget):
 		else:
 			self.widget.add(self.label)
 		self.widget.show_all()
-		self.label.set_max_width_chars(12)
+		self.label.set_max_width_chars(LONG_TEXT)
 		if name == "C":
 			self.label.set_max_width_chars(10)
 	
@@ -121,20 +122,22 @@ class ControllerStick(ControllerWidget):
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
 		
 		grid = Gtk.Grid()
+		grid.set_column_spacing(6)
 		self.widget.set_events(Gdk.EventMask.POINTER_MOTION_MASK)
 		self.widget.connect('motion-notify-event', self.on_cursor_motion)
-		self.label.set_property("vexpand", True)
-		self.label.set_property("hexpand", True)
+		self.label.set_max_width_chars(LONG_TEXT)
 		if self.pressed:
-			self.label.set_xalign(0.0); self.label.set_yalign(0.5)
-			self.pressed.set_property("hexpand", True)
-			self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
+			self.label.set_halign(Gtk.Align.START)
+			self.pressed.set_halign(Gtk.Align.START)
+			self.pressed.set_valign(Gtk.Align.END)
+			self.pressed.set_ellipsize(Pango.EllipsizeMode.END)
+			self.pressed.set_max_width_chars(LONG_TEXT)
 			grid.attach(self.pressed, 2, 2, 1, 1)
 		else:
-			self.label.set_xalign(0.5); self.label.set_yalign(0.5)
+			self.label.set_halign(Gtk.Align.CENTER)
+			self.label.set_valign(Gtk.Align.CENTER)
 			self.pressed = None
 		if self.icon:
-			self.icon.set_margin_right(5)
 			grid.attach(self.icon, 1, 1, 1, 2)
 		grid.attach(self.label, 2, 1, 1, 1)
 		self.over_icon = False
@@ -247,13 +250,12 @@ class ControllerGyro(ControllerWidget):
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
 		
 		grid = Gtk.Grid()
-		self.label.set_property("vexpand", True)
-		self.label.set_property("hexpand", True)
-		self.label.set_xalign(0.0); self.label.set_yalign(0.5)
-		self.pressed.set_property("hexpand", True)
-		self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
-		if self.icon:
-			self.icon.set_margin_right(5)
+		grid.set_column_spacing(6)
+		self.label.set_max_width_chars(LONG_TEXT)
+		self.label.set_halign(Gtk.Align.START)
+		self.pressed.set_max_width_chars(LONG_TEXT)
+		self.pressed.set_halign(Gtk.Align.START)
+		self.pressed.set_valign(Gtk.Align.END)
 		grid.attach(self.icon, 1, 1, 1, 2)
 		grid.attach(self.label, 2, 1, 1, 1)
 		grid.attach(self.pressed, 2, 2, 1, 1)
