@@ -1336,6 +1336,10 @@ class TiltAction(MultichildAction):
 		return self.speed
 	
 	
+	def get_compatible_modifiers(self):
+		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z
+	
+	
 	def gyro(self, mapper, *pyr):
 		q1, q2, q3, q4 = pyr[-4:]
 		pyr = quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0)
