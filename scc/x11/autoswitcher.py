@@ -131,6 +131,13 @@ class AutoSwitcher(object):
 		self.current_window = w
 		log.debug("Window switched: %s", w)
 		pars = X.get_window_title(self.dpy, w), X.get_window_class(self.dpy, w)
+
+                if pars[0] is None:
+                        pars = ("",pars[1])
+
+                if pars[1] is None:
+                        pars = (pars[0], ("",""))
+
 		for c in self.conds:
 			if c.matches(*pars):
 				action = self.conds[c]
