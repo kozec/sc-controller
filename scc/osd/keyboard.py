@@ -72,8 +72,6 @@ class KeyboardImage(Gtk.DrawingArea):
 		self.set_size_request(*SVGEditor.get_size(background))
 		self.overlay.edit().keep("overlay").commit()
 		self.overlay.hilight({})
-		
-		open("/tmp/a.svg", "w").write(self.overlay.current_svg.encode("utf-8"))
 	
 	
 	def hilight(self, hilight, pressed):
@@ -103,7 +101,7 @@ class KeyboardImage(Gtk.DrawingArea):
 		ctx.set_line_width(self.LINE_WIDTH)
 		ctx.set_font_size(48)
 		ascent, descent, height, max_x_advance, max_y_advance = ctx.font_extents()
-
+		
 		for button in self.buttons:
 			if button in self._pressed:
 				ctx.set_source_rgba(*self.color_pressed)
@@ -141,6 +139,9 @@ class KeyboardImage(Gtk.DrawingArea):
 				ctx.move_to(x + w * 0.5 - width * 0.5 - x_bearing, y + h * 0.5 + height * 0.3)
 				ctx.show_text(label)
 				ctx.stroke()
+		
+		Gdk.cairo_set_source_pixbuf(ctx, self.overlay.get_pixbuf(), 0, 0)
+		ctx.paint()
 	
 	
 	def on_size_allocate(self, *a):
@@ -229,8 +230,7 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def _pack(self):
-		# self.f.add(self.background)
-		self.f.add(self.background.overlay)
+		self.f.add(self.background)
 		self.f.add(self.cursors[LEFT])
 		self.f.add(self.cursors[RIGHT])
 		self.c.add(self.f)
@@ -468,7 +468,7 @@ class Keyboard(OSDWindow, TimerManager):
 		if pressed:
 			for button in self.background.buttons:
 				if button.contains(x, y):
-					if a.name.startswith("KEY_") and hasattr(Keys, button.name):
+					if button.name.startswith("KEY_") and hasattr(Keys, button.name):
 						key = getattr(Keys, button.name)
 						if self._pressed[cursor] is not None:
 							self.mapper.keyboard.releaseEvent([ self._pressed[cursor] ])

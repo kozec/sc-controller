@@ -205,6 +205,11 @@ class SVGWidget(Gtk.EventBox):
 		self.image.set_from_pixbuf(self.cache[cache_id])
 	
 	
+	def get_pixbuf(self):
+		""" Returns pixbuf of current image """
+		return self.image.get_pixbuf()
+	
+	
 	def edit(self):
 		""" Returns new Editor instance bound to this widget """
 		return SVGEditor(self)
