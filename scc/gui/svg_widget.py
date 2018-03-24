@@ -30,7 +30,7 @@ class SVGWidget(Gtk.EventBox):
 	}
 	
 	
-	def __init__(self,  filename, init_hilighted=True):
+	def __init__(self, filename, init_hilighted=True):
 		Gtk.EventBox.__init__(self)
 		self.cache = {}
 		self.areas = []
@@ -320,6 +320,29 @@ class SVGEditor(object):
 			e = SVGEditor.get_element(self, e)
 		if e is not None:
 			e.parent.remove(e)
+		return self
+	
+	
+	def keep(self, *ids):
+		"""
+		Removes all elements but ones with ID specified.
+		Keeps child elements as well.
+		
+		Returns self.
+		"""
+		
+		def recursive(element):
+			for child in list(element):
+				if child.tag.endswith("g") or child.tag.endswith("rect"):
+					if child.attrib.get('id') not in ids:
+						element.remove(child)
+					else:
+						recursive(child)
+				else:
+					recursive(child)
+		
+		
+		recursive(self._tree)
 		return self
 	
 	

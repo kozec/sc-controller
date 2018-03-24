@@ -59,7 +59,8 @@ class KeyboardImage(Gtk.DrawingArea):
 		self._hilight = ()
 		self._pressed = ()
 		self._labels = {}
-		self.tree = ET.fromstring(open(image, "rb").read())
+		self.overlay = SVGWidget(image, False)
+		self.tree = ET.fromstring(self.overlay.current_svg.encode("utf-8"))
 		SVGWidget.find_areas(self.tree, None, areas, get_colors=True)
 		self.font_face = Gtk.Label(label="X").get_style().font_desc.get_family()
 		
@@ -69,6 +70,10 @@ class KeyboardImage(Gtk.DrawingArea):
 		
 		background = SVGEditor.find_by_id(self.tree, "BACKGROUND")
 		self.set_size_request(*SVGEditor.get_size(background))
+		self.overlay.edit().keep("overlay").commit()
+		self.overlay.hilight({})
+		
+		open("/tmp/a.svg", "w").write(self.overlay.current_svg.encode("utf-8"))
 	
 	
 	def hilight(self, hilight, pressed):
@@ -224,7 +229,8 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	
 	def _pack(self):
-		self.f.add(self.background)
+		# self.f.add(self.background)
+		self.f.add(self.background.overlay)
 		self.f.add(self.cursors[LEFT])
 		self.f.add(self.cursors[RIGHT])
 		self.c.add(self.f)
@@ -294,8 +300,8 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def _cononect_handlers(self):
 		self._eh_ids += [
-			( self.daemon, self.daemon.connect('dead', self.on_daemon_died) ),
-			( self.daemon, self.daemon.connect('error', self.on_daemon_died) ),
+			#( self.daemon, self.daemon.connect('dead', self.on_daemon_died) ),
+			#( self.daemon, self.daemon.connect('error', self.on_daemon_died) ),
 			( self.daemon, self.daemon.connect('reconfigured', self.on_reconfigured) ),
 			( self.daemon, self.daemon.connect('alive', self.on_daemon_connected) ),
 		]
