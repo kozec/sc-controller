@@ -107,6 +107,7 @@ class ControllerFlags(IntEnum):
 	Used by mapper to workaround some physical differences between
 	Steam Controller and other pads.
 	"""
+	NONE =				0		# No flags, default SC.
 	HAS_RSTICK =		1 << 0	# Controller has right stick instead of touchpad
 	SEPARATE_STICK =	1 << 1	# Left stick and left pad are using separate axes
 	EUREL_GYROS =		1 << 2	# Gyro sensor values are provided as pitch, yaw

@@ -192,10 +192,11 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, type, config_file = line[11:].strip().split(" ", 2)
+				controller_id, type, flags, config_file = line[11:].strip().split(" ", 3)
 				c = self.get_controller(controller_id)
 				c._connected = True
 				c._type = type
+				c._flags = long(flags)
 				c._config_file = None if config_file in ("", "None") else config_file
 				while c in self._controllers:
 					self._controllers.remove(c)
@@ -340,6 +341,7 @@ class ControllerManager(GObject.GObject):
 		self._config_file = None
 		self._profile = None
 		self._type = None
+		self._flags = 0
 		self._connected = False
 	
 	
@@ -371,6 +373,15 @@ class ControllerManager(GObject.GObject):
 		Value is cached locally, but may be None before controller is connected.
 		"""
 		return self._type
+	
+	
+	def get_flags(self):
+		"""
+		Returns flags for this controller. See ControllerFlags enum for more info.
+		
+		Value is cached locally and returns 0 until controller is connected.
+		"""
+		return self._flags
 	
 	
 	def get_id(self):
