@@ -1456,16 +1456,22 @@ class ButtonAction(HapticEnabledAction, Action):
 			rv = [ ]
 			for x in (self.button, self.button2):
 				if x:
-					rv.append(ButtonAction.describe_button(x))
+					rv.append(ButtonAction.describe_button(x, context=context))
 			return ", ".join(rv)
 	
 	
 	@staticmethod
-	def describe_button(button):
+	def describe_button(button, context=Action.AC_BUTTON):
 		if button in ButtonAction.SPECIAL_NAMES:
 			return _(ButtonAction.SPECIAL_NAMES[button])
 		elif button in MOUSE_BUTTONS:
 			return _("Mouse %s") % (button,)
+		elif context == Action.AC_OSK:
+			if button in ButtonAction.MODIFIERS_NAMES:
+				return _(ButtonAction.MODIFIERS_NAMES[button])
+			elif button in Keys:
+				return button.name.split("_", 1)[-1].title()
+			return ""
 		elif button is None: # or isinstance(button, NoAction):
 			return "None"
 		elif button in Keys:
@@ -1899,6 +1905,13 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
+		# Two special, most used cases of dpad
+		wsad = [ a.button for a in self.actions if isinstance(a, ButtonAction) ]
+		if len(wsad) == 4:
+			if wsad == [Keys.KEY_UP, Keys.KEY_DOWN, Keys.KEY_LEFT, Keys.KEY_RIGHT]:
+				return _("Arrows")
+			if wsad == [Keys.KEY_W, Keys.KEY_S, Keys.KEY_A, Keys.KEY_D]:
+				return _("WSAD")
 		return "DPad"
 	
 	

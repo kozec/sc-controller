@@ -9,7 +9,8 @@ from scc.lib import xwrappers as X
 from scc.lib import xinput
 from scc.lib.daemon import Daemon
 from scc.lib.usb1 import USBError
-from scc.constants import SCButtons, LEFT, RIGHT, STICK, DAEMON_VERSION, HapticPos
+from scc.constants import SCButtons, DAEMON_VERSION, HapticPos
+from scc.constants import LEFT, RIGHT, STICK, CPAD
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.uinput import Keys, Axes, CannotCreateUInputException
 from scc.paths import get_menus_path, get_default_menus_path
@@ -979,7 +980,7 @@ class SCCDaemon(Daemon):
 			return not is_locked(mapper.profile.triggers[RIGHT])
 		if what in SCButtons:
 			return not is_locked(mapper.profile.buttons[what])
-		if what in (LEFT, RIGHT):
+		if what in (LEFT, RIGHT, CPAD):
 			return not is_locked(mapper.profile.pads[what])
 		return False
 	
@@ -1009,6 +1010,10 @@ class SCCDaemon(Daemon):
 			a = callback(mapper.profile.pads[what], *args)
 			a.whole(mapper, 0, 0, what)
 			mapper.profile.pads[what] = a
+		elif what == CPAD:
+			a = callback(mapper.profile.pads[what], *args)
+			a.whole(mapper, 0, 0, what)
+			mapper.profile.pads[what] = a
 		else:
 			raise ValueError("Unknown source: %s" % (what,))
 	
@@ -1024,7 +1029,7 @@ class SCCDaemon(Daemon):
 		Used when parsing `Lock: ...` message
 		"""
 		s = s.strip(" \t\r\n")
-		if s in (STICK, LEFT, RIGHT):
+		if s in (STICK, LEFT, RIGHT, CPAD):
 			return s
 		if s == "STICKPRESS":
 			# Special case, as that button is actually named STICK :(

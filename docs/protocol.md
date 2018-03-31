@@ -22,11 +22,13 @@ Connection is then held until client side closes it.
 Informs about total number of connected controllers.
 Always sent after `Controller:` messages
 
-#### `Controller: controller_id type config_file`
+#### `Controller: controller_id type flags config_file`
 Provides info about controller 'n'.
 - `controller_id` is unique string identifier of controller (should stay same at
 least until daemon exits) and doesn't contains spaces.
 - `type` is string identifier (without spaces) of driver.
+- `flags` describes controller features, such as having central touchpad.
+See ControllerFlags definition in scc/constants.py for more info.
 - `config_file` is None or file name of json-encoded file that can GUI use
 to get additional data about controller (background image, button images, etc)
 File name may be absolute path or just name of file in /usr/share/scc

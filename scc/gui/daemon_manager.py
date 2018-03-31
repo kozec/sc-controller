@@ -10,7 +10,7 @@ probably too crazy even for me.
 """
 from __future__ import unicode_literals
 
-from scc.tools import find_binary, find_button_image
+from scc.tools import find_binary, find_button_image, nameof
 from scc.paths import get_daemon_socket
 from scc.constants import SCButtons
 from scc.gui import BUTTON_ORDER
@@ -423,15 +423,27 @@ class ControllerManager(GObject.GObject):
 	def get_button_icon(config, button, prefer_bw=False):
 		"""
 		For config returned by load_gui_config() and SCButton constant,
-		returns icon name assigned to that button in controller config or
+		returns icon filename assigned to that button in controller config or
 		default if config is invalid or button unassigned.
 		"""
-		index = BUTTON_ORDER.index(button)
-		name = ControllerManager.DEFAULT_ICONS[index]
+		return find_button_image(
+			ControllerManager.get_button_name(config, button),
+			prefer_bw=prefer_bw
+		)
+	
+	
+	@staticmethod
+	def get_button_name(config, button):
+		"""
+		As get_button_icon, but returns icon name instead of filename.
+		"""
+		name = nameof(button)
 		try:
+			index = BUTTON_ORDER.index(button)
+			name = ControllerManager.DEFAULT_ICONS[index]
 			name = config['gui']['buttons'][index]
 		except: pass
-		return find_button_image(name, prefer_bw=prefer_bw)
+		return name
 	
 	
 	def get_profile(self):

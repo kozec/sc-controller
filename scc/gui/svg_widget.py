@@ -108,6 +108,21 @@ class SVGWidget(Gtk.EventBox):
 		return None
 	
 	
+	def get_all_by_prefix(self, prefix):
+		"""
+		Searchs for areas using specific prefix.
+		For prefix "AREA_", returns self.areas arrray. For anything else,
+		re-parses current image and searchs recursivelly for anything that matches, so it
+		may be good idea to not call this too often.
+		"""
+		if prefix == "AREA_":
+			return self.areas
+		lst = []
+		tree = ET.fromstring(self.current_svg.encode("utf-8"))
+		SVGWidget.find_areas(tree, None, lst, prefix=prefix)
+		return lst
+	
+	
 	def get_area_position(self, area_id):
 		"""
 		Computes and returns area position on image as (x, y, width, height).
@@ -121,7 +136,7 @@ class SVGWidget(Gtk.EventBox):
 	
 	
 	@staticmethod
-	def find_areas(xml, parent_transform, areas, get_colors=False):
+	def find_areas(xml, parent_transform, areas, get_colors=False, prefix="AREA_"):
 		"""
 		Recursively searches throught XML for anything with ID of 'AREA_SOMETHING'
 		"""
@@ -129,7 +144,7 @@ class SVGWidget(Gtk.EventBox):
 			child_transform = SVGEditor.matrixmul(
 				parent_transform or SVGEditor.IDENTITY,
 				SVGEditor.parse_transform(child))
-			if 'id' in child.attrib and child.attrib['id'].startswith("AREA_"):
+			if str(child.attrib.get('id')).startswith(prefix):
 				# log.debug("Found SVG area %s", child.attrib['id'][5:])
 				a = Area(child, child_transform)
 				if get_colors:
@@ -140,7 +155,7 @@ class SVGWidget(Gtk.EventBox):
 							a.color = SVGWidget.color_to_float(style['fill'])
 				areas.append(a)
 			else:
-				SVGWidget.find_areas(child, child_transform, areas, get_colors)
+				SVGWidget.find_areas(child, child_transform, areas, get_colors=get_colors, prefix=prefix)
 	
 	
 	def get_rect_area(self, element):
@@ -213,11 +228,6 @@ class SVGWidget(Gtk.EventBox):
 	def edit(self):
 		""" Returns new Editor instance bound to this widget """
 		return SVGEditor(self)
-	
-	
-	def get_pixbuf(self):
-		""" Returns currently displayed pixbuf """
-		return self.image.get_pixbuf()
 
 
 class Area:
@@ -338,13 +348,14 @@ class SVGEditor(object):
 		
 		def recursive(element):
 			for child in list(element):
-				if child.tag.endswith("g") or child.tag.endswith("rect"):
-					if child.attrib.get('id') not in ids:
-						element.remove(child)
-					else:
-						recursive(child)
-				else:
+				if (child.tag.endswith("metadata") 
+						or child.tag.endswith("defs")
+						or child.tag.endswith("defs")
+						or child.tag.endswith("namedview")
+					):
 					recursive(child)
+				elif child.attrib.get('id') not in ids:
+					element.remove(child)
 		
 		
 		recursive(self._tree)
