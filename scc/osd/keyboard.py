@@ -332,10 +332,8 @@ class Keyboard(OSDWindow, TimerManager):
 		self._eh_ids = []
 		self._controller = None
 		self._stick = 0, 0
-		self._hovers = { self.cursors[LEFT] : None,
-			self.cursors[RIGHT] : None, self.cursors[CPAD] : None }
-		self._pressed = { self.cursors[LEFT] : None,
-			self.cursors[RIGHT] : None, self.cursors[CPAD] : None }
+		self._hovers = { self.cursors[LEFT]: None, self.cursors[RIGHT]: None }
+		self._pressed = { self.cursors[LEFT]: None, self.cursors[RIGHT]: None }
 		self._pressed_areas = {}
 		
 		self.c = Gtk.Box()
@@ -513,7 +511,7 @@ class Keyboard(OSDWindow, TimerManager):
 			(c, c.connect('lost', self.on_controller_lost)),
 		]
 		
-		if (c.get_flags() | ControllerFlags.HAS_CPAD) == 0:
+		if (c.get_flags() & ControllerFlags.HAS_CPAD) == 0:
 			# Two pads, two hands
 			locks = [ LEFT, RIGHT, STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
 			self.cursors[CPAD].hide()
@@ -521,6 +519,8 @@ class Keyboard(OSDWindow, TimerManager):
 			# Single-handed mode
 			locks = [ CPAD, "CPADPRESS", STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
 			self._hovers[self.cursors[RIGHT]] = None
+			self._hovers = { self.cursors[CPAD] : None }
+			self._pressed = { self.cursors[CPAD] : None }
 			self.cursors[LEFT].hide()
 			self.cursors[RIGHT].hide()
 		self._controller = c
@@ -590,6 +590,7 @@ class Keyboard(OSDWindow, TimerManager):
 		"""
 		Moves cursor image.
 		"""
+		if cursor not in self._hovers: return
 		w = limit[2] - (cursor.get_allocation().width * 0.5)
 		h = limit[3] - (cursor.get_allocation().height * 0.5)
 		x = x / float(STICK_PAD_MAX)
