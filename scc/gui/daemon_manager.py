@@ -208,8 +208,10 @@ class DaemonManager(GObject.GObject):
 				log.debug("Daemon reported profile change for %s: %s", controller_id, c._profile)
 			elif line.startswith("Controller Count:"):
 				count = int(line[17:])
-				old, self._controllers = self._controllers, self._controllers[-count:]
-				self.emit('controller-count-changed', count)
+				if count == 0:
+					old, self._controllers = self._controllers, []
+				else:
+					old, self._controllers = self._controllers, self._controllers[-count:]
 				for c in old:
 					if c not in self._controllers:
 						c.emit('lost')
