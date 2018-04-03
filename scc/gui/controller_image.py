@@ -31,6 +31,9 @@ class ControllerImage(SVGWidget):
 	DEFAULT_BUTTONS = [ nameof(x) for x in BUTTONS_WITH_IMAGES ] + [
 		# Used only by Steam Controller
 		nameof(SCButtons.LB), nameof(SCButtons.RB),
+		nameof(SCButtons.LT), nameof(SCButtons.RT),
+		nameof(SCButtons.STICKPRESS),
+		nameof(SCButtons.RPAD), nameof(SCButtons.LPAD),
 		nameof(SCButtons.LGRIP), nameof(SCButtons.RGRIP),
 	]
 	
