@@ -212,6 +212,7 @@ class DaemonManager(GObject.GObject):
 					old, self._controllers = self._controllers, []
 				else:
 					old, self._controllers = self._controllers, self._controllers[-count:]
+				self.emit('controller-count-changed', count)
 				for c in old:
 					if c not in self._controllers:
 						c.emit('lost')
