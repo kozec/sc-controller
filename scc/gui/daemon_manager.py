@@ -10,7 +10,7 @@ probably too crazy even for me.
 """
 from __future__ import unicode_literals
 
-from scc.tools import find_binary, find_button_image
+from scc.tools import find_binary, find_button_image, nameof
 from scc.paths import get_daemon_socket
 from scc.gui import BUTTON_ORDER
 from gi.repository import GObject, Gio, GLib
@@ -60,15 +60,15 @@ class DaemonManager(GObject.GObject):
 	"""
 	
 	__gsignals__ = {
-			b"alive"					: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"controller-count-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (int,)),
-			b"dead"						: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"error"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"event"					: (GObject.SIGNAL_RUN_FIRST, None, (object,object,object)),
-			b"profile-changed"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"reconfigured"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"unknown-msg"				: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"version"					: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"alive"					: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"controller-count-changed"	: (GObject.SignalFlags.RUN_FIRST, None, (int,)),
+			b"dead"						: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"error"					: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			b"event"					: (GObject.SignalFlags.RUN_FIRST, None, (object,object,object)),
+			b"profile-changed"			: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			b"reconfigured"				: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"unknown-msg"				: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			b"version"					: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 	}
 	
 	RECONNECT_INTERVAL = 5
@@ -191,10 +191,11 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, type, config_file = line[11:].strip().split(" ", 2)
+				controller_id, type, flags, config_file = line[11:].strip().split(" ", 3)
 				c = self.get_controller(controller_id)
 				c._connected = True
 				c._type = type
+				c._flags = long(flags)
 				c._config_file = None if config_file in ("", "None") else config_file
 				while c in self._controllers:
 					self._controllers.remove(c)
@@ -332,9 +333,9 @@ class ControllerManager(GObject.GObject):
 	"""
 	
 	__gsignals__ = {
-			b"event"			: (GObject.SIGNAL_RUN_FIRST, None, (object,object)),
-			b"lost"				: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"profile-changed"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"event"			: (GObject.SignalFlags.RUN_FIRST, None, (object,object)),
+			b"lost"				: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"profile-changed"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 	}
 	
 	DEFAULT_ICONS = [ "A", "B", "X", "Y", "BACK", "C", "START",
@@ -348,6 +349,7 @@ class ControllerManager(GObject.GObject):
 		self._config_file = None
 		self._profile = None
 		self._type = None
+		self._flags = 0
 		self._connected = False
 	
 	
@@ -379,6 +381,15 @@ class ControllerManager(GObject.GObject):
 		Value is cached locally, but may be None before controller is connected.
 		"""
 		return self._type
+	
+	
+	def get_flags(self):
+		"""
+		Returns flags for this controller. See ControllerFlags enum for more info.
+		
+		Value is cached locally and returns 0 until controller is connected.
+		"""
+		return self._flags
 	
 	
 	def get_id(self):
@@ -420,15 +431,27 @@ class ControllerManager(GObject.GObject):
 	def get_button_icon(config, button, prefer_bw=False):
 		"""
 		For config returned by load_gui_config() and SCButton constant,
-		returns icon name assigned to that button in controller config or
+		returns icon filename assigned to that button in controller config or
 		default if config is invalid or button unassigned.
 		"""
-		index = BUTTON_ORDER.index(button)
-		name = ControllerManager.DEFAULT_ICONS[index]
+		return find_button_image(
+			ControllerManager.get_button_name(config, button),
+			prefer_bw=prefer_bw
+		)
+	
+	
+	@staticmethod
+	def get_button_name(config, button):
+		"""
+		As get_button_icon, but returns icon name instead of filename.
+		"""
+		name = nameof(button)
 		try:
+			index = BUTTON_ORDER.index(button)
+			name = ControllerManager.DEFAULT_ICONS[index]
 			name = config['gui']['buttons'][index]
 		except: pass
-		return find_button_image(name, prefer_bw=prefer_bw)
+		return name
 	
 	
 	def get_profile(self):

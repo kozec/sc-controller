@@ -3,7 +3,8 @@
 		"background": "ds4",
 		"buttons": [
 			"CROSS", "CIRCLE", "SQUARE", "TRIANGLE", "ds4SHARE",
-			"C", "ds4SHARE", "LB", "RB", "LT", "RT", "LG", "RG"
+			"C", "ds4SHARE", "LB", "RB", "LT", "RT",
+			"STICK", "LPAD", "RPAD", "LG", "RG"
 		]
 	},
 	

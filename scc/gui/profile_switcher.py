@@ -39,12 +39,12 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 	"""
 	
 	__gsignals__ = {
-			b"changed"				: (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
-			b"new-clicked"			: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
-			b"right-clicked"		: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"save-clicked"			: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"switch-to-clicked"	: (GObject.SIGNAL_RUN_FIRST, None, ()),
-			b"unknown-profile"		: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"changed"				: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
+			b"new-clicked"			: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			b"right-clicked"		: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"save-clicked"			: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"switch-to-clicked"	: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			b"unknown-profile"		: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 	}
 	
 	SEND_TIMEOUT = 100	# How many ms should switcher wait before sending event

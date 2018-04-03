@@ -761,7 +761,10 @@ class ModeModifier(Modifier):
 	
 	
 	def get_child_actions(self):
-		return self.mods.values()
+		if self.default is None:
+			return self.mods.values()
+		else:
+			return [ self.default ] + self.mods.values()
 	
 	
 	@staticmethod

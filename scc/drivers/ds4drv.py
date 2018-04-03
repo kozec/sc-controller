@@ -45,6 +45,7 @@ class DS4Controller(HIDController):
 			| ControllerFlags.HAS_RSTICK
 			| ControllerFlags.HAS_CPAD
 			| ControllerFlags.SEPARATE_STICK
+			| ControllerFlags.NO_GRIPS
 	)
 	
 	
@@ -230,6 +231,7 @@ class DS4EvdevController(EvdevController):
 			| ControllerFlags.HAS_RSTICK
 			| ControllerFlags.HAS_CPAD
 			| ControllerFlags.SEPARATE_STICK
+			| ControllerFlags.NO_GRIPS
 	)
 	
 	def __init__(self, daemon, controllerdevice, gyro, touchpad):

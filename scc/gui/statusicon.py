@@ -42,7 +42,7 @@ class StatusIcon(GObject.GObject):
 	TRAY_TITLE     = _("Syncthing")
 	
 	__gsignals__ = {
-		b"clicked": (GObject.SIGNAL_RUN_FIRST, None, ()),
+		b"clicked": (GObject.SignalFlags.RUN_FIRST, None, ()),
 	}
 	
 	__gproperties__ = {
@@ -51,7 +51,7 @@ class StatusIcon(GObject.GObject):
 			"is the icon user-visible?",
 			"does the icon back-end think that anything is might be shown to the user?",
 			True,
-			GObject.PARAM_READWRITE
+			GObject.ParamFlags.READWRITE
 		)		
 	}
 	

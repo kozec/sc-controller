@@ -24,15 +24,15 @@ class SVGWidget(Gtk.EventBox):
 	
 	__gsignals__ = {
 			# Raised when mouse is over defined area
-			b"hover"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"hover"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 			# Raised when mouse leaves all defined areas
-			b"leave"	: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"leave"	: (GObject.SignalFlags.RUN_FIRST, None, ()),
 			# Raised user clicks on defined area
-			b"click"	: (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+			b"click"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 	}
 	
 	
-	def __init__(self,  filename, init_hilighted=True):
+	def __init__(self, filename, init_hilighted=True):
 		Gtk.EventBox.__init__(self)
 		self.cache = OrderedDict()
 		self.areas = []
@@ -110,6 +110,21 @@ class SVGWidget(Gtk.EventBox):
 		return None
 	
 	
+	def get_all_by_prefix(self, prefix):
+		"""
+		Searchs for areas using specific prefix.
+		For prefix "AREA_", returns self.areas arrray. For anything else,
+		re-parses current image and searchs recursivelly for anything that matches, so it
+		may be good idea to not call this too often.
+		"""
+		if prefix == "AREA_":
+			return self.areas
+		lst = []
+		tree = ET.fromstring(self.current_svg.encode("utf-8"))
+		SVGWidget.find_areas(tree, None, lst, prefix=prefix)
+		return lst
+	
+	
 	def get_area_position(self, area_id):
 		"""
 		Computes and returns area position on image as (x, y, width, height).
@@ -123,7 +138,7 @@ class SVGWidget(Gtk.EventBox):
 	
 	
 	@staticmethod
-	def find_areas(xml, parent_transform, areas):
+	def find_areas(xml, parent_transform, areas, get_colors=False, prefix="AREA_"):
 		"""
 		Recursively searches throught XML for anything with ID of 'AREA_SOMETHING'
 		"""
@@ -131,11 +146,18 @@ class SVGWidget(Gtk.EventBox):
 			child_transform = SVGEditor.matrixmul(
 				parent_transform or SVGEditor.IDENTITY,
 				SVGEditor.parse_transform(child))
-			if 'id' in child.attrib and child.attrib['id'].startswith("AREA_"):
+			if str(child.attrib.get('id')).startswith(prefix):
 				# log.debug("Found SVG area %s", child.attrib['id'][5:])
-				areas.append(Area(child, child_transform))
+				a = Area(child, child_transform)
+				if get_colors:
+					a.color = None
+					if 'style' in child.attrib:
+						style = { y[0] : y[1] for y in [ x.split(":", 1) for x in child.attrib['style'].split(";") ] }
+						if 'fill' in style:
+							a.color = SVGWidget.color_to_float(style['fill'])
+				areas.append(a)
 			else:
-				SVGWidget.find_areas(child, child_transform, areas)
+				SVGWidget.find_areas(child, child_transform, areas, get_colors=get_colors, prefix=prefix)
 	
 	
 	def get_rect_area(self, element):
@@ -153,6 +175,18 @@ class SVGWidget(Gtk.EventBox):
 		if 'height' in element.attrib: height = float(element.attrib['height'])
 		
 		return x, y, width, height
+	
+	
+	@staticmethod
+	def color_to_float(colorstr):
+		"""
+		Parses color expressed as RRGGBB (as in config) and returns
+		three floats of r, g, b, a (range 0 to 1)
+		"""
+		b, color = Gdk.Color.parse("#" + colorstr.strip("#"))
+		if b:
+			return color.red_float, color.green_float, color.blue_float, 1
+		return 1, 0, 1, 1	# uggly purple
 	
 	
 	def hilight(self, buttons):
@@ -190,14 +224,14 @@ class SVGWidget(Gtk.EventBox):
 		self.image.set_from_pixbuf(self.cache[cache_id])
 	
 	
+	def get_pixbuf(self):
+		""" Returns pixbuf of current image """
+		return self.image.get_pixbuf()
+	
+	
 	def edit(self):
 		""" Returns new Editor instance bound to this widget """
 		return SVGEditor(self)
-	
-	
-	def get_pixbuf(self):
-		""" Returns currently displayed pixbuf """
-		return self.image.get_pixbuf()
 
 
 class Area:
@@ -305,6 +339,30 @@ class SVGEditor(object):
 			e = SVGEditor.get_element(self, e)
 		if e is not None:
 			e.parent.remove(e)
+		return self
+	
+	
+	def keep(self, *ids):
+		"""
+		Removes all elements but ones with ID specified.
+		Keeps child elements as well.
+		
+		Returns self.
+		"""
+		
+		def recursive(element):
+			for child in list(element):
+				if (child.tag.endswith("metadata") 
+						or child.tag.endswith("defs")
+						or child.tag.endswith("defs")
+						or child.tag.endswith("namedview")
+					):
+					recursive(child)
+				elif child.attrib.get('id') not in ids:
+					element.remove(child)
+		
+		
+		recursive(self._tree)
 		return self
 	
 	

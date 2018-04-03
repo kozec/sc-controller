@@ -168,7 +168,9 @@ _lib.decode.argtypes = [ HIDDecoderPtr, ctypes.c_char_p ]
 
 
 class HIDController(USBDevice, Controller):
-	flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
+	flags = ( ControllerFlags.HAS_RSTICK
+			| ControllerFlags.SEPARATE_STICK
+			| ControllerFlags.NO_GRIPS )
 	
 	def __init__(self, device, daemon, handle, config_file, config, test_mode=False):
 		USBDevice.__init__(self, device, handle)

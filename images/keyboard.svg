@@ -13,7 +13,7 @@
    viewBox="0 0 799.99997 404.99999"
    width="800"
    sodipodi:docname="keyboard.svg"
-   inkscape:version="0.91 r13725">
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -28,18 +28,18 @@
      showgrid="false"
      showguides="true"
      units="px"
-     inkscape:current-layer="layer3"
-     inkscape:cx="804.10871"
-     inkscape:cy="11.426046"
+     inkscape:current-layer="labels_visible"
+     inkscape:cx="257.16043"
+     inkscape:cy="61.228508"
      inkscape:document-units="px"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:window-height="951"
+     inkscape:window-height="792"
      inkscape:window-maximized="0"
-     inkscape:window-width="1778"
-     inkscape:window-x="35"
-     inkscape:window-y="70"
-     inkscape:zoom="2.8284273" />
+     inkscape:window-width="1918"
+     inkscape:window-x="768"
+     inkscape:window-y="291"
+     inkscape:zoom="2.56" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -53,443 +53,43 @@
     </rdf:RDF>
   </metadata>
   <g
-     id="layer3"
+     id="background"
      style="display:inline"
      inkscape:groupmode="layer"
-     inkscape:label="Background"
-     transform="translate(-3.0517578e-5,0)">
+     inkscape:label="Background">
     <rect
        height="405"
-       id="rect8773"
+       id="BACKGROUND"
        style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#160c00;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        width="800"
        x="0"
        y="0" />
+    <rect
+       height="95.287231"
+       id="BACKGROUND-3"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#160c00;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       width="691.10559"
+       x="54.708229"
+       y="-112.709" />
   </g>
   <g
      inkscape:groupmode="layer"
-     id="layer6"
-     inkscape:label="labels"
-     style="display:inline">
-    <g
-       style="display:inline"
-       id="layer1-7"
-       inkscape:label="Layer 1"
-       transform="matrix(0.66426324,0,0,0.66426324,-146.19717,-238.99191)">
-      <path
-         sodipodi:nodetypes="cccccccccc"
-         inkscape:connector-curvature="0"
-         id="path4221"
-         d="m 263.11767,861.03322 c -2.66638,-1.01488 -19.37998,-3.57281 -23.09932,-3.87727 -4.04983,1.93779 -6.34919,5.10742 -6.74564,9.61612 l 0.14355,10.76432 c -0.12635,3.30155 1.05711,9.11044 5.38217,10.11845 l 26.26492,-3.01401 c 2.74238,-1.24439 2.29434,-2.0161 1.43525,-2.72694 -2.44583,-2.00205 -5.38037,-6.49052 -5.23864,-8.89852 0.11365,-3.26406 0.35614,-5.68028 4.45435,-8.72675 0.90901,-0.52038 -0.25571,-2.24739 -2.59664,-3.2554 z"
-         style="fill:#000000;fill-opacity:0;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.60747123px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-      <path
-         inkscape:connector-curvature="0"
-         id="path4182"
-         d="m 241.99068,867.04561 0,9.87012 5.81537,0"
-         style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69010401px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-      <path
-         sodipodi:nodetypes="cccc"
-         inkscape:connector-curvature="0"
-         id="path4182-9"
-         d="m 255.60204,867.98468 c -10.02782,-2.49581 -9.16034,12.50135 -0.52224,8.08122 l -0.004,-3.16429 -2.92807,-0.0393"
-         style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69010401px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-    </g>
-    <g
-       style="display:inline"
-       transform="matrix(0.66426324,0,0,0.66426324,-146.19717,-213.74991)"
-       id="layer1-4"
-       inkscape:label="Layer 1">
-      <path
-         sodipodi:nodetypes="ccccccc"
-         inkscape:connector-curvature="0"
-         id="path4219"
-         d="m 232.78625,887.10734 35.36326,0 5.26293,-17.26613 c 1.32157,-6.30555 -6.93262,-11.39761 -12.55717,-11.91086 -6.74026,-0.37971 -13.48052,-0.22751 -20.22078,0 -8.5195,-0.0226 -13.63735,5.06161 -13.75752,8.67923 z"
-         style="fill:none;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-      <g
-         transform="translate(3.9391908,0.87680929)"
-         id="g4169">
-        <path
-           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69010401px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-           d="m 239.7782,866.16967 0,9.87012 5.81537,0"
-           id="path4182-1"
-           inkscape:connector-curvature="0" />
-        <g
-           id="g4290"
-           style="opacity:1;stroke:#000000;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           transform="matrix(0.5,0,0,0.5,-52.959735,511.56271)">
-          <path
-             sodipodi:nodetypes="cc"
-             inkscape:connector-curvature="0"
-             id="path4254"
-             d="m 601.48271,709.21174 0,21.42678"
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-          <path
-             sodipodi:nodetypes="cccc"
-             inkscape:connector-curvature="0"
-             id="path4258"
-             d="m 602.11049,710.90041 4.696,0 c 5.99925,0 6.43432,8.41876 -0.11049,8.41876 l -4.696,0"
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-        </g>
-        <path
-           sodipodi:nodetypes="cccc"
-           inkscape:connector-curvature="0"
-           id="path4258-3"
-           d="m 248.09548,871.23384 2.34799,0 c 2.99963,0 3.21716,4.79337 -0.0552,4.79337 l -2.34801,0"
-           style="opacity:1;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69000006;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-      </g>
-    </g>
-    <g
-       style="display:inline"
-       transform="matrix(0.66426324,0,0,0.66426324,612.39519,-237.86626)"
-       id="layer1-1"
-       inkscape:label="Layer 1">
-      <path
-         sodipodi:nodetypes="cccccccccc"
-         inkscape:connector-curvature="0"
-         id="path4221-6"
-         d="m 237.30715,861.03322 c 2.66638,-1.01488 19.37998,-3.57281 23.09932,-3.87727 4.04983,1.93779 6.34919,5.10742 6.74564,9.61612 l -0.14355,10.76432 c 0.12635,3.30155 -1.05711,9.11044 -5.38217,10.11845 l -26.26492,-3.01401 c -2.74238,-1.24439 -2.29434,-2.0161 -1.43525,-2.72694 2.44583,-2.00205 5.38037,-6.49052 5.23864,-8.89852 -0.11365,-3.26406 -0.35614,-5.68028 -4.45435,-8.72675 -0.90901,-0.52038 0.25571,-2.24739 2.59664,-3.2554 z"
-         style="fill:#000000;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.60747123px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-      <path
-         sodipodi:nodetypes="cccc"
-         inkscape:connector-curvature="0"
-         id="path4182-9-4"
-         d="m 259.98082,867.98468 c -10.02782,-2.49581 -9.16034,12.50135 -0.52224,8.08122 l -0.004,-3.16429 -2.92807,-0.0393"
-         style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69010401px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-      <g
-         transform="translate(1.795487,0.85277695)"
-         id="g4152"
-         style="opacity:1">
-        <g
-           id="g4290-1"
-           style="opacity:1;stroke:#ffffff;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           transform="matrix(0.5,0,0,0.5,-56.755566,511.55469)">
-          <path
-             sodipodi:nodetypes="cc"
-             inkscape:connector-curvature="0"
-             id="path4254-7"
-             d="m 601.48271,709.21174 0,21.42678"
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-          <path
-             sodipodi:nodetypes="cccc"
-             inkscape:connector-curvature="0"
-             id="path4258-9"
-             d="m 602.11049,710.90041 4.696,0 c 5.99925,0 6.43432,9.58675 -0.11049,9.58675 l -4.696,0"
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-        </g>
-        <path
-           sodipodi:nodetypes="cc"
-           style="opacity:1;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69000006;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           d="m 245.71426,871.79581 c 1.84759,1.44013 3.08854,3.64966 3.07532,5.08367"
-           id="path4182-4"
-           inkscape:connector-curvature="0" />
-      </g>
-    </g>
-    <text
-       id="text4822-9-6"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.57052994px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       sodipodi:linespacing="125%"
-       xml:space="preserve"
-       x="755.91907"
-       y="282.13449"><tspan
-         y="347.2323"
-         x="755.89771"
-         id="tspan4824-3-4"
-         sodipodi:role="line"
-         style="font-size:16.60658073px;text-align:end;text-anchor:end"><tspan
-           id="tspan4826-2-3"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.60658073px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:end;text-anchor:end;fill:#ffffff;fill-opacity:1"
-           x="755.89771"
-           y="347.2323">Alt</tspan></tspan></text>
-    <g
-       style="display:inline"
-       transform="matrix(0.84772305,0,0,0.84772305,-194.74643,-348.31599)"
-       id="layer1-2"
-       inkscape:label="Layer 1">
-      <circle
-         r="10.069116"
-         cx="253.33293"
-         cy="870.63165"
-         id="path4170-0-8"
-         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.66388923;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
-      <g
-         transform="matrix(0.5,0,0,0.5,-50.492721,509.32262)"
-         style="stroke:#ffffff;stroke-opacity:1"
-         id="g4290-3">
-        <path
-           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           d="m 601.48271,709.21174 0,26.11428"
-           id="path4254-8"
-           inkscape:connector-curvature="0"
-           sodipodi:nodetypes="cc" />
-        <path
-           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           d="m 602,710.71037 4.696,0 c 13.49925,0 11.9466,11.51786 0,11.51786 l -4.696,0"
-           id="path4258-1"
-           inkscape:connector-curvature="0"
-           sodipodi:nodetypes="cccc" />
-        <path
-           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           d="m 602,722.30861 4.696,0 c 13.49925,0 11.9466,11.51786 0,11.51786 l -4.696,0"
-           id="path4258-6"
-           inkscape:connector-curvature="0"
-           sodipodi:nodetypes="cccc" />
-      </g>
-    </g>
-    <text
-       id="text4822-9-6-1"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.57052994px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       sodipodi:linespacing="125%"
-       xml:space="preserve"
-       x="73.94519"
-       y="330.33844"><tspan
-         y="395.43622"
-         x="70.226196"
-         id="tspan4824-3-4-2"
-         sodipodi:role="line"
-         style="font-size:16.60658073px;text-align:end;text-anchor:end"><tspan
-           id="tspan4826-2-3-2"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.60658073px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:end;text-anchor:end;fill:#ffffff;fill-opacity:1"
-           x="70.226196"
-           y="395.43622">Esc</tspan></tspan></text>
-    <text
-       id="text4822-9-6-14"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.57052994px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       sodipodi:linespacing="125%"
-       xml:space="preserve"
-       x="20.60199"
-       y="282.25577"><tspan
-         y="347.35358"
-         x="42.522713"
-         id="tspan4824-3-4-6"
-         sodipodi:role="line"
-         style="font-size:16.60658073px;text-align:start;text-anchor:start"><tspan
-           id="tspan4826-2-3-3"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.60658073px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;text-anchor:start;fill:#ffffff;fill-opacity:1"
-           x="42.522713"
-           y="347.35358">Shift</tspan></tspan></text>
-    <text
-       id="text4822-9-6-14-4"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.57052994px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       sodipodi:linespacing="125%"
-       xml:space="preserve"
-       x="19.976992"
-       y="307.19504"><tspan
-         y="372.29285"
-         x="41.897713"
-         id="tspan4824-3-4-6-3"
-         sodipodi:role="line"
-         style="font-size:16.60658073px;text-align:start;text-anchor:start"><tspan
-           id="tspan4826-2-3-3-8"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.60658073px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;text-anchor:start;fill:#ffffff;fill-opacity:1"
-           x="41.897713"
-           y="372.29285">Bcksp</tspan></tspan></text>
-    <text
-       id="text4822-9-6-1-2"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.57052994px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       sodipodi:linespacing="125%"
-       xml:space="preserve"
-       x="737.86792"
-       y="329.75262"><tspan
-         y="394.8504"
-         x="755.86395"
-         id="tspan4824-3-4-2-5"
-         sodipodi:role="line"
-         style="font-size:16.60658073px;text-align:end;text-anchor:end"><tspan
-           id="tspan4826-2-3-2-6"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.60658073px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:end;text-anchor:end;fill:#ffffff;fill-opacity:1"
-           x="755.86395"
-           y="394.8504">Close</tspan></tspan></text>
-    <g
-       transform="matrix(0.84076143,0,0,0.84076143,565.60954,-342.18232)"
-       id="layer1-5"
-       inkscape:label="Layer 1"
-       style="fill:none;stroke:#ffffff;stroke-opacity:1">
-      <circle
-         r="10.069116"
-         cx="253.33293"
-         cy="870.63165"
-         id="path4170-0-8-1"
-         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.66388923;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
-      <g
-         transform="matrix(0.5,0,0,0.5,-1.1090335,509.22736)"
-         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         id="g4202">
-        <path
-           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           d="m 500.0893,709.5943 18.30357,26.42857"
-           id="path4178"
-           inkscape:connector-curvature="0" />
-        <path
-           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           d="m 517.67855,709.5943 -18.30357,26.42857"
-           id="path4178-2"
-           inkscape:connector-curvature="0" />
-      </g>
-    </g>
-    <g
-       style="display:inline"
-       transform="matrix(0.66426324,0,0,0.66426324,612.39519,-213.74991)"
-       id="layer1-4-2"
-       inkscape:label="Layer 1">
-      <path
-         sodipodi:nodetypes="ccccccc"
-         inkscape:connector-curvature="0"
-         id="path4219-7"
-         d="m 232.78625,887.10734 35.36326,0 5.26293,-17.26613 c 1.32157,-6.30555 -6.93262,-11.39761 -12.55717,-11.91086 -6.74026,-0.37971 -13.48052,-0.22751 -20.22078,0 -8.5195,-0.0226 -13.63735,5.06161 -13.75752,8.67923 z"
-         style="fill:none;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-      <g
-         transform="translate(3.9391908,0.87680929)"
-         id="g4169-5">
-        <g
-           id="g4290-0"
-           style="opacity:1;stroke:#000000;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           transform="matrix(0.5,0,0,0.5,-52.959735,511.56271)">
-          <path
-             sodipodi:nodetypes="cc"
-             inkscape:connector-curvature="0"
-             id="path4254-68"
-             d="m 601.48271,709.21174 0,21.42678"
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-          <path
-             sodipodi:nodetypes="cccc"
-             inkscape:connector-curvature="0"
-             id="path4258-2"
-             d="m 602.11049,710.90041 4.696,0 c 5.99925,0 6.43432,8.41876 -0.11049,8.41876 l -4.696,0"
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-        </g>
-        <path
-           sodipodi:nodetypes="cccc"
-           inkscape:connector-curvature="0"
-           id="path4258-3-4"
-           d="m 248.09548,871.23384 2.34799,0 c 2.99963,0 3.21716,4.79337 -0.0552,4.79337 l -2.34801,0"
-           style="opacity:1;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69000006;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-      </g>
-    </g>
-    <text
-       id="text4822-9-6-14-4-9"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.57052994px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       sodipodi:linespacing="125%"
-       xml:space="preserve"
-       x="808.20416"
-       y="307.19504"><tspan
-         y="372.29285"
-         x="756.198"
-         id="tspan4824-3-4-6-3-6"
-         sodipodi:role="line"
-         style="font-size:16.60658073px;text-align:end;text-anchor:end"><tspan
-           id="tspan4826-2-3-3-8-0"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.60658073px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:end;text-anchor:end;fill:#ffffff;fill-opacity:1"
-           x="756.198"
-           y="372.29285">Ctrl</tspan></tspan></text>
-    <path
-       sodipodi:nodetypes="cc"
-       inkscape:connector-curvature="0"
-       id="path4254-7-9"
-       d="m 774.46873,362.12504 0,7.11651"
-       style="display:inline;opacity:1;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.12260497;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <path
-       sodipodi:nodetypes="cccc"
-       inkscape:connector-curvature="0"
-       id="path4258-9-0"
-       d="m 774.67723,362.6859 1.55969,0 c 1.99255,0 2.13705,3.18406 -0.0367,3.18406 l -1.55969,0"
-       style="display:inline;opacity:1;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.12260497;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <path
-       sodipodi:nodetypes="cc"
-       style="display:inline;opacity:1;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.12260497;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 775.61689,365.86834 c 1.22729,0.95662 2.05161,2.42433 2.04282,3.37689"
-       id="path4182-4-0"
-       inkscape:connector-curvature="0" />
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="layer4"
+     id="row5"
      inkscape:label="row5"
      style="display:inline"
-     transform="translate(-3.0517578e-5,0)">
-    <g
-       style="display:inline"
-       id="g10117-6-65-0"
-       transform="translate(189.3334,263.82304)">
-      <rect
-         height="67"
-         id="AREA_KEY_SPACE"
-         style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#162d44;fill-opacity:1;fill-rule:nonzero;stroke:#27323e;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-         width="205.15733"
-         x="112.25"
-         y="67.602768"
-         inkscape:label="#rect4152" />
-      <path
-         style="display:inline;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         d="m 195.87629,116.72827 -0.1875,9.98607 32.25,0 0,-9.64232"
-         id="path4866-5"
-         inkscape:connector-curvature="0"
-         sodipodi:nodetypes="cccc" />
-      <g
-         transform="translate(38,-770)"
-         id="layer1-4-1"
-         inkscape:label="Layer 1">
-        <g
-           id="g4290-1-4"
-           style="display:inline;opacity:1;stroke:#ffffff;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           transform="matrix(0.5,0,0,0.5,-57.4593,512.41479)">
-          <path
-             sodipodi:nodetypes="cc"
-             inkscape:connector-curvature="0"
-             id="path4254-7-8"
-             d="m 601.48271,709.21174 0,21.42678"
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-          <path
-             sodipodi:nodetypes="cccc"
-             inkscape:connector-curvature="0"
-             id="path4258-9-4"
-             d="m 602.11049,710.90041 4.696,0 c 5.99925,0 6.43432,9.58675 -0.11049,9.58675 l -4.696,0"
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-        </g>
-        <path
-           sodipodi:nodetypes="ccccccc"
-           inkscape:connector-curvature="0"
-           id="path4219-6"
-           d="m 232.78625,887.10734 35.36326,0 5.26293,-17.26613 c 1.32157,-6.30555 -6.93262,-11.39761 -12.55717,-11.91086 -6.74026,-0.37971 -13.48052,-0.22751 -20.22078,0 -8.5195,-0.0226 -13.63735,5.06161 -13.75752,8.67923 z"
-           style="fill:none;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-        <g
-           transform="translate(3.9391908,0.87680929)"
-           id="g4169-8">
-          <path
-             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69010401px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-             d="m 240.97144,871.86344 c 1.70241,1.41425 2.97446,3.56073 2.97446,4.98571"
-             id="path4182-1-7"
-             inkscape:connector-curvature="0"
-             sodipodi:nodetypes="cc" />
-          <g
-             id="g4290-5"
-             style="opacity:1;stroke:#000000;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-             transform="matrix(0.5,0,0,0.5,-52.959735,511.56271)">
-            <path
-               sodipodi:nodetypes="cc"
-               inkscape:connector-curvature="0"
-               id="path4254-6"
-               d="m 601.48271,709.21174 0,21.42678"
-               style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-            <path
-               sodipodi:nodetypes="cccc"
-               inkscape:connector-curvature="0"
-               id="path4258-4"
-               d="m 602.11049,710.90041 4.696,0 c 5.99925,0 6.43432,8.41876 -0.11049,8.41876 l -4.696,0"
-               style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-          </g>
-          <path
-             sodipodi:nodetypes="cccc"
-             inkscape:connector-curvature="0"
-             id="path4258-3-6"
-             d="m 248.09548,871.23384 2.34799,0 c 2.99963,0 3.21716,4.79337 -0.0552,4.79337 l -2.34801,0"
-             style="opacity:1;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69000006;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-        </g>
-      </g>
-    </g>
+     transform="translate(-3.0517578e-5)">
+    <rect
+       inkscape:label="#rect4152"
+       y="331.42581"
+       x="488.61639"
+       width="152.12434"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#162d44;fill-opacity:1;fill-rule:nonzero;stroke:#27323e;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       id="AREA_KEY_SPACE"
+       height="67" />
     <g
        id="g9995-5"
        style="display:inline"
-       transform="translate(157.625,263.82322)">
+       transform="translate(7.625,263.82322)">
       <rect
          height="67"
          id="AREA_KEY_LEFTBRACE"
@@ -500,14 +100,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_LEFTBRACE"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4888"><tspan
            id="tspan4890-6"
            sodipodi:role="line"
            x="34"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4892-7"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -516,7 +116,7 @@
     <g
        id="g10007-2"
        style="display:inline"
-       transform="translate(229.625,263.82322)">
+       transform="translate(79.625,263.82322)">
       <rect
          height="67"
          id="AREA_KEY_RIGHTBRACE"
@@ -527,14 +127,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_RIGHTBRACE"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4894"><tspan
            id="tspan4896-6"
            sodipodi:role="line"
            x="34"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4898-0"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -543,7 +143,7 @@
     <g
        id="g10055-5"
        style="display:inline"
-       transform="translate(511.625,263.82322)">
+       transform="translate(649.3125,263.82322)">
       <rect
          height="67"
          id="AREA_KEY_APOSTROPHE"
@@ -554,14 +154,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_APOSTROPHE"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4912"><tspan
            id="tspan4914-6"
            sodipodi:role="line"
            x="35"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4916-8"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="35"
@@ -570,7 +170,7 @@
     <g
        id="g10067-5"
        style="display:inline"
-       transform="translate(585.625,263.82322)">
+       transform="translate(723.3125,263.82322)">
       <rect
          height="67"
          id="AREA_KEY_EQUAL"
@@ -581,26 +181,52 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_EQUAL"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4918"><tspan
            id="tspan4920-6"
            sodipodi:role="line"
            x="34"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4922-5"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
              y="115">=</tspan></tspan></text>
     </g>
+    <rect
+       inkscape:label="#rect4152"
+       y="331.42581"
+       x="153.57657"
+       width="100.66419"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#162d44;fill-opacity:1;fill-rule:nonzero;stroke:#27323e;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       id="AREA_KEY_SPACE_2"
+       height="67" />
+    <g
+       inkscape:label="Layer 1"
+       id="layer1-4-1-6"
+       transform="translate(15.3334,-506.17696)">
+      <g
+         transform="matrix(0.5,0,0,0.5,-57.4593,512.41479)"
+         style="display:inline;opacity:1;stroke:#ffffff;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="g4290-1-4-2" />
+      <g
+         id="g4169-8-7"
+         transform="translate(3.9391908,0.87680929)">
+        <g
+           transform="matrix(0.5,0,0,0.5,-52.959735,511.56271)"
+           style="opacity:1;stroke:#000000;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="g4290-5-2" />
+      </g>
+    </g>
   </g>
   <g
-     id="g9981"
+     id="row4"
      style="display:inline"
      transform="translate(-3.0517578e-5,1)"
      inkscape:groupmode="layer"
-     inkscape:label="row4">
+     inkscape:label="row4"
+     sodipodi:insensitive="true">
     <g
        id="g8534"
        style="display:inline"
@@ -615,13 +241,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_GRAVE"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;display:inline;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;display:inline;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4692"
            sodipodi:role="line"
            x="29"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4694"
              x="29"
              y="120">~</tspan></tspan></text>
@@ -639,14 +265,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_Z"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4882"><tspan
            id="tspan4884"
            sodipodi:role="line"
            x="34"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4886"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -666,14 +292,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_X"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4888"><tspan
            id="tspan4890"
            sodipodi:role="line"
            x="34"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4892"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -693,14 +319,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_C"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4894"><tspan
            id="tspan4896"
            sodipodi:role="line"
            x="34"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4898"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -720,14 +346,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_V"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4900"><tspan
            id="tspan4902"
            sodipodi:role="line"
            x="35"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4904"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="35"
@@ -747,14 +373,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_B"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4906"><tspan
            id="tspan4908"
            sodipodi:role="line"
            x="40"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4910"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="40"
@@ -774,14 +400,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_N"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4912"><tspan
            id="tspan4914"
            sodipodi:role="line"
            x="35"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4916"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="35"
@@ -801,14 +427,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_M"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4918"><tspan
            id="tspan4920"
            sodipodi:role="line"
            x="34"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4922"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -828,14 +454,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_COMMA"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4924"><tspan
            id="tspan4926"
            sodipodi:role="line"
            x="32.299999"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4928"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="32.299999"
@@ -855,14 +481,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_DOT"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4930"><tspan
            id="tspan4932"
            sodipodi:role="line"
            x="32.299999"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4934"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="32.299999"
@@ -882,14 +508,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_SLASH"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4936"><tspan
            id="tspan4938"
            sodipodi:role="line"
            x="32.299999"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4940"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="32.299999"
@@ -897,7 +523,7 @@
     </g>
   </g>
   <g
-     id="g10115"
+     id="row3"
      style="display:inline"
      transform="translate(-3.0517578e-5,1)"
      inkscape:groupmode="layer"
@@ -916,14 +542,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_MINUS"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4744"><tspan
            id="tspan4746"
            sodipodi:role="line"
            x="22"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4748"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="22"
@@ -942,14 +568,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_A"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4822"><tspan
            id="tspan4824"
            sodipodi:role="line"
            x="37"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4826"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="37"
@@ -969,14 +595,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_S"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4828"><tspan
            id="tspan4830"
            sodipodi:role="line"
            x="34"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4832"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -996,14 +622,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_D"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4834"><tspan
            id="tspan4836"
            sodipodi:role="line"
            x="31"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4838"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
@@ -1023,14 +649,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_F"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4840"><tspan
            id="tspan4842"
            sodipodi:role="line"
            x="31"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4844"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
@@ -1050,14 +676,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_G"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4846"><tspan
            id="tspan4848"
            sodipodi:role="line"
            x="30.25"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4850"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="30.25"
@@ -1077,14 +703,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_H"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4852"><tspan
            id="tspan4854"
            sodipodi:role="line"
            x="30.25"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4856"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="30.25"
@@ -1104,14 +730,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_J"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4858"><tspan
            id="tspan4860"
            sodipodi:role="line"
            x="31"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4862"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
@@ -1131,14 +757,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_K"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4864"><tspan
            id="tspan4866"
            sodipodi:role="line"
            x="34"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4868"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -1158,86 +784,27 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_L"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4870"><tspan
            id="tspan4872"
            sodipodi:role="line"
            x="34"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4874"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
              y="115">I</tspan></tspan></text>
     </g>
-    <g
-       id="g10225"
-       style="display:inline"
-       transform="translate(677.625,97.823223)">
-      <rect
-         height="67"
-         id="AREA_KEY_ENTER"
-         style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#162d44;fill-opacity:1;fill-rule:nonzero;stroke:#27323e;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-         width="60.558613"
-         x="53.441387"
-         y="67.602768"
-         inkscape:label="#rect4152" />
-      <g
-         transform="matrix(1.2884322,0,0,1.2884322,-229.42794,-1020.364)"
-         id="layer1-73"
-         inkscape:label="Layer 1">
-        <circle
-           r="10.069116"
-           cx="253.33293"
-           cy="870.63165"
-           id="path4170-0-8-3"
-           style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.66388923;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
-        <g
-           transform="matrix(0.5,0,0,0.5,-26.952836,482.60473)"
-           style="fill:none;fill-opacity:0.56862745;stroke:#ffffff;stroke-opacity:1"
-           id="g4239">
-          <g
-             id="g4232"
-             style="fill:none;fill-opacity:0.56862745;stroke:#ffffff;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
-            <path
-               inkscape:connector-curvature="0"
-               id="path4207"
-               d="m 550.47,788.39667 10.2278,-25.69575"
-               style="fill:none;fill-opacity:0.56862745;fill-rule:evenodd;stroke:#ffffff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-            <path
-               inkscape:connector-curvature="0"
-               id="path4207-1"
-               d="m 570.67306,788.39667 -10.2278,-25.69575"
-               style="fill:none;fill-opacity:0.56862745;fill-rule:evenodd;stroke:#ffffff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-            <path
-               inkscape:connector-curvature="0"
-               id="path4230"
-               d="m 553.91084,780.47329 13.73176,0"
-               style="fill:none;fill-opacity:0.56862745;fill-rule:evenodd;stroke:#ffffff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-          </g>
-          <path
-             style="fill:none;fill-opacity:0.56862745;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.45000005;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-             d="m 560.56768,761.96294 0,2.26563"
-             id="path4237"
-             inkscape:connector-curvature="0" />
-        </g>
-      </g>
-      <text
-         id="text4948"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
-         xml:space="preserve"
-         x="12"><tspan
-           id="tspan4950"
-           sodipodi:role="line"
-           x="69"
-           y="115"><tspan
-             id="tspan4952"
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
-             x="69"
-             y="115">↵</tspan></tspan></text>
-    </g>
+    <rect
+       inkscape:label="#rect4152"
+       y="165.42599"
+       x="731.06641"
+       width="60.558613"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#162d44;fill-opacity:1;fill-rule:nonzero;stroke:#27323e;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       id="AREA_KEY_ENTER"
+       height="67" />
     <g
        id="g10213-3"
        style="display:inline"
@@ -1252,14 +819,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_SEMICOLON"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4870"><tspan
            id="tspan4872-7"
            sodipodi:role="line"
            x="26"
-           y="115"><tspan
+           y="115"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4874-7"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="26"
@@ -1267,11 +834,12 @@
     </g>
   </g>
   <g
-     id="g9048"
+     id="row2"
      style="display:inline"
      transform="translate(-3.0517578e-5,1)"
      inkscape:groupmode="layer"
-     inkscape:label="row2">
+     inkscape:label="row2"
+     sodipodi:insensitive="true">
     <g
        id="g9050"
        transform="translate(6.625,8.8232233)">
@@ -1285,14 +853,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_Q"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4756"><tspan
            id="tspan4758"
            sodipodi:role="line"
            x="37"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4760"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="37"
@@ -1312,14 +880,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_W"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4762"><tspan
            id="tspan4764"
            sodipodi:role="line"
            x="36"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4766"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="36"
@@ -1339,14 +907,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_E"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4768"><tspan
            id="tspan4770"
            sodipodi:role="line"
            x="31"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4772"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
@@ -1366,14 +934,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_R"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4774"><tspan
            id="tspan4776"
            sodipodi:role="line"
            x="31"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4778"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
@@ -1393,14 +961,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_T"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4780"><tspan
            id="tspan4782"
            sodipodi:role="line"
            x="31"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4784"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
@@ -1420,14 +988,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_Y"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4786"><tspan
            id="tspan4788"
            sodipodi:role="line"
            x="40"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4790"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="40"
@@ -1447,14 +1015,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_U"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4792"><tspan
            id="tspan4794"
            sodipodi:role="line"
            x="31"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4796"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
@@ -1474,14 +1042,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_I"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4798"><tspan
            id="tspan4800"
            sodipodi:role="line"
            x="31"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4802"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="31"
@@ -1502,14 +1070,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_O"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4804"><tspan
            id="tspan4806"
            sodipodi:role="line"
            x="36"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4808"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="36"
@@ -1530,14 +1098,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_P"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4810"><tspan
            id="tspan4812"
            sodipodi:role="line"
            x="37"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4814"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="37"
@@ -1557,14 +1125,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_BACKSLASH"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          inkscape:label="#text4816"><tspan
            id="tspan4818"
            sodipodi:role="line"
            x="30"
-           y="120"><tspan
+           y="120"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4820"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="30"
@@ -1572,11 +1140,12 @@
     </g>
   </g>
   <g
-     id="layer2"
+     id="row1"
      style="display:inline"
      transform="translate(-3.0517578e-5,1)"
      inkscape:groupmode="layer"
-     inkscape:label="row1">
+     inkscape:label="row1"
+     sodipodi:insensitive="true">
     <g
        id="g8503"
        transform="translate(6.625,-62.176777)">
@@ -1590,13 +1159,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_1"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4686"
            sodipodi:role="line"
            x="34"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4688"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -1616,13 +1185,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_2"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4698"
            sodipodi:role="line"
            x="34"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4700"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -1642,13 +1211,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_3"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4944"
            sodipodi:role="line"
            x="34"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4946"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -1668,13 +1237,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_4"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4704"
            sodipodi:role="line"
            x="34"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4706"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -1694,13 +1263,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_5"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4710"
            sodipodi:role="line"
            y="113"
-           x="55"><tspan
+           x="55"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4712"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="55"
@@ -1720,14 +1289,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_6"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          x="2"><tspan
            id="tspan4716"
            sodipodi:role="line"
            x="52"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4718"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="52"
@@ -1747,14 +1316,14 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_7"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"
          x="2"><tspan
            id="tspan4722"
            sodipodi:role="line"
            x="36"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4724"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="36"
@@ -1774,13 +1343,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_8"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4728"
            sodipodi:role="line"
            x="34"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4730"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -1800,13 +1369,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_9"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4734"
            sodipodi:role="line"
            x="34"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4736"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -1826,13 +1395,13 @@
          inkscape:label="#rect4152" />
       <text
          id="LABEL_KEY_0"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         sodipodi:linespacing="125%"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan4740"
            sodipodi:role="line"
            x="34"
-           y="113"><tspan
+           y="113"
+           style="font-size:40px;line-height:1.25"><tspan
              id="tspan4742"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1"
              x="34"
@@ -1840,26 +1409,201 @@
     </g>
   </g>
   <g
+     inkscape:groupmode="layer"
+     id="labels_visible"
+     inkscape:label="labels"
+     style="display:inline">
+    <g
+       style="display:inline"
+       inkscape:label="Layer 1"
+       id="layer1-4-1"
+       transform="translate(361.33337,-506.17696)">
+      <g
+         transform="matrix(0.5,0,0,0.5,-57.4593,512.41479)"
+         style="display:inline;opacity:1;stroke:#ffffff;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="g4290-1-4">
+        <path
+           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 601.48271,709.21174 v 21.42678"
+           id="path4254-7-8"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="cc" />
+        <path
+           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 602.11049,710.90041 h 4.696 c 5.99925,0 6.43432,9.58675 -0.11049,9.58675 H 602"
+           id="path4258-9-4"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="cccc" />
+      </g>
+      <path
+         style="fill:none;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 232.78625,887.10734 h 35.36326 l 5.26293,-17.26613 c 1.32157,-6.30555 -6.93262,-11.39761 -12.55717,-11.91086 -6.74026,-0.37971 -13.48052,-0.22751 -20.22078,0 -8.5195,-0.0226 -13.63735,5.06161 -13.75752,8.67923 z"
+         id="path4219-6"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="ccccccc" />
+      <g
+         id="g4169-8"
+         transform="translate(3.9391908,0.87680929)">
+        <path
+           sodipodi:nodetypes="cc"
+           inkscape:connector-curvature="0"
+           id="path4182-1-7"
+           d="m 240.97144,871.86344 c 1.70241,1.41425 2.97446,3.56073 2.97446,4.98571"
+           style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69010401px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+        <g
+           transform="matrix(0.5,0,0,0.5,-52.959735,511.56271)"
+           style="opacity:1;stroke:#000000;stroke-width:3.38000011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="g4290-5">
+          <path
+             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             d="m 601.48271,709.21174 v 21.42678"
+             id="path4254-6"
+             inkscape:connector-curvature="0"
+             sodipodi:nodetypes="cc" />
+          <path
+             style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.38000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             d="m 602.11049,710.90041 h 4.696 c 5.99925,0 6.43432,8.41876 -0.11049,8.41876 H 602"
+             id="path4258-4"
+             inkscape:connector-curvature="0"
+             sodipodi:nodetypes="cccc" />
+        </g>
+        <path
+           style="opacity:1;fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.69000006;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 248.09548,871.23384 h 2.34799 c 2.99963,0 3.21716,4.79337 -0.0552,4.79337 h -2.34801"
+           id="path4258-3-6"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="cccc" />
+      </g>
+    </g>
+    <g
+       style="display:inline"
+       inkscape:label="Layer 1"
+       id="layer1-73"
+       transform="matrix(1.2884322,0,0,1.2884322,448.19703,-921.54078)">
+      <circle
+         style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:1;fill:none;fill-opacity:0.1372549;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.66388923;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+         id="path4170-0-8-3"
+         cy="870.63165"
+         cx="253.33293"
+         r="10.069116" />
+      <g
+         id="g4239"
+         style="fill:none;fill-opacity:0.56862745;stroke:#ffffff;stroke-opacity:1"
+         transform="matrix(0.5,0,0,0.5,-26.952836,482.60473)">
+        <g
+           style="fill:none;fill-opacity:0.56862745;stroke:#ffffff;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="g4232">
+          <path
+             style="fill:none;fill-opacity:0.56862745;fill-rule:evenodd;stroke:#ffffff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             d="m 550.47,788.39667 10.2278,-25.69575"
+             id="path4207"
+             inkscape:connector-curvature="0" />
+          <path
+             style="fill:none;fill-opacity:0.56862745;fill-rule:evenodd;stroke:#ffffff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             d="m 570.67306,788.39667 -10.2278,-25.69575"
+             id="path4207-1"
+             inkscape:connector-curvature="0" />
+          <path
+             style="fill:none;fill-opacity:0.56862745;fill-rule:evenodd;stroke:#ffffff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             d="M 553.91084,780.47329 H 567.6426"
+             id="path4230"
+             inkscape:connector-curvature="0" />
+        </g>
+        <path
+           inkscape:connector-curvature="0"
+           id="path4237"
+           d="m 560.56768,761.96294 v 2.26563"
+           style="fill:none;fill-opacity:0.56862745;fill-rule:evenodd;stroke:#ffffff;stroke-width:3.45000005;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+    </g>
+    <rect
+       height="77.907387"
+       id="HELP_LEFT"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#1cff13;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       width="103.37088"
+       x="263.08984"
+       y="324.05826" />
+    <rect
+       y="324.05826"
+       x="374.50092"
+       width="105.58063"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#1cff13;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       id="HELP_RIGHT"
+       height="77.941742" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="overlay"
+     inkscape:label="overlay"
+     style="display:inline;opacity:0.95">
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot1158"
+       style="fill:black;stroke:none;stroke-opacity:1;stroke-width:1px;stroke-linejoin:miter;stroke-linecap:butt;fill-opacity:1;font-family:sans-serif;font-style:normal;font-weight:normal;font-size:40px;line-height:125%;letter-spacing:0px;word-spacing:0px"><flowRegion
+         id="flowRegion1160"><rect
+           id="rect1162"
+           width="98.330536"
+           height="72.370468"
+           x="259.08984"
+           y="328.21011" /></flowRegion><flowPara
+         id="flowPara1164" /></flowRoot>  </g>
+  <g
+     inkscape:groupmode="layer"
      id="layer1"
-     style="display:inline;opacity:0"
+     inkscape:label="Fonts"
+     style="display:inline">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;display:inline;opacity:0.95;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="57.564362"
+       y="-86.814392"
+       id="FONT_HELP"><tspan
+         sodipodi:role="line"
+         id="tspan1166"
+         x="57.564362"
+         y="-86.814392"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.33333397px;line-height:2.53999996ex;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';fill:#ff0000">Help font &amp; size</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;display:inline;opacity:0.95;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="53.855103"
+       y="-52.318954"
+       id="FONT_HELP-3"><tspan
+         sodipodi:role="line"
+         id="tspan1166-8"
+         x="53.855103"
+         y="-52.318954"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.66666794px;line-height:2.53999996ex;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';fill:#ff0000">Key label font &amp; size</tspan></text>
+  </g>
+  <g
+     id="limits"
+     style="display:none;opacity:1"
      inkscape:groupmode="layer"
      inkscape:label="limits"
-     transform="translate(-3.0517578e-5,0)">
+     sodipodi:insensitive="true">
     <rect
-       height="313.56494"
+       height="329.81494"
        id="LIMIT_LEFT"
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#ff2b2b;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-       width="377.20761"
-       x="32.300259"
-       y="48.591991"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#d041f1;fill-opacity:0.64049587;fill-rule:nonzero;stroke:#ff2b2b;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       width="425.33261"
+       x="13.05026"
+       y="32.341991"
        inkscape:label="#rect4152" />
     <rect
-       height="313.67902"
+       height="323.54922"
        id="LIMIT_RIGHT"
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#3dff45;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-       width="371.95367"
-       x="400.94647"
-       y="48.60862"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#c51266;fill-opacity:0.73553718;fill-rule:nonzero;stroke:#3dff45;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       width="388.67133"
+       x="384.22882"
+       y="38.738438"
+       inkscape:label="#rect4152" />
+    <rect
+       height="344.7616"
+       id="LIMIT_CPAD"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#d8f141;fill-opacity:0.64049587;fill-rule:nonzero;stroke:#ff2b2b;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       width="746.83374"
+       x="19.690886"
+       y="23.748241"
        inkscape:label="#rect4152" />
   </g>
 </svg>

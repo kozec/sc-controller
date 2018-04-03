@@ -57,7 +57,9 @@ class EvdevController(Controller):
 	"""
 	PADPRESS_EMULATION_TIMEOUT = 0.2
 	ECODES = ecodes
-	flags = ControllerFlags.HAS_RSTICK | ControllerFlags.SEPARATE_STICK
+	flags = ( ControllerFlags.HAS_RSTICK
+			| ControllerFlags.SEPARATE_STICK
+			| ControllerFlags.NO_GRIPS )
 	
 	def __init__(self, daemon, device, config_file, config):
 		try:
