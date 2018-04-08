@@ -347,10 +347,11 @@ class UInput(object):
 		"""
 		Returns effect that should be played or None if there were no such request.
 		"""
-		id = self._lib.uinput_ff_read(self._fd, MAX_FEEDBACK_EFFECTS, byref(self._ff_events))
-		if id < 0:
-			return None
-		return self._ff_events[id].contents
+		if self._ff_events:
+			id = self._lib.uinput_ff_read(self._fd, MAX_FEEDBACK_EFFECTS, byref(self._ff_events))
+			if id >= 0:
+				return self._ff_events[id].contents
+		return None
 
 	def __del__(self):
 		if self._lib:
