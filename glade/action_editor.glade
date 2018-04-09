@@ -115,9 +115,13 @@
         <col id="0" translatable="yes">Round Up</col>
         <col id="1">ROUND</col>
       </row>
-      <row>
+	  <row>
         <col id="0" translatable="yes">Linear</col>
         <col id="1">LINEAR</col>
+      </row>
+	  <row>
+        <col id="0" translatable="yes">Jump</col>
+        <col id="1">JUMP</col>
       </row>
     </data>
   </object>

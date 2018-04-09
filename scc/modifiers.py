@@ -12,7 +12,7 @@ from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
 from scc.constants import FE_PAD, SCButtons, HapticPos, ControllerFlags
-from scc.constants import CUT, ROUND, LINEAR, FE_STICK, FE_TRIGGER
+from scc.constants import CUT, ROUND, LINEAR, JUMP, FE_STICK, FE_TRIGGER
 from scc.constants import TRIGGER_MAX, LEFT, CPAD, RIGHT, STICK
 from scc.controller import HapticData
 from scc.tools import nameof, clamp
@@ -574,6 +574,7 @@ class BallModifier(Modifier, WholeHapticAction):
 
 class DeadzoneModifier(Modifier):
 	COMMAND = "deadzone"
+	JUMP_HARDCODED_LIMIT = 5
 	
 	def _mod_init(self, *params):
 		if len(params) < 1: raise TypeError("Not enough parameters")
@@ -647,6 +648,27 @@ class DeadzoneModifier(Modifier):
 		angle = atan2(x, y)
 		return distance * sin(angle), distance * cos(angle)
 	
+	
+	def mode_JUMP(self, x, y, range):
+		"""
+		https://github.com/kozec/sc-controller/issues/356
+		Inversion of LINEAR; input value is scaled so entire input range is
+		mapped to range of deadzone.
+		"""
+		if y == 0:
+			# Small optimalization for 1D input, for example trigger
+			if abs(x) < DeadzoneModifier.JUMP_HARDCODED_LIMIT:
+				return 0, 0
+			return (copysign(
+						(float(abs(x)) / range * (self.upper - self.lower))
+						+ self.lower, x), 0)
+		distance = sqrt(x*x + y*y)
+		if distance < DeadzoneModifier.JUMP_HARDCODED_LIMIT:
+			return 0, 0
+		distance = (distance / range * (self.upper - self.lower)) + self.lower
+		
+		angle = atan2(x, y)
+		return distance * sin(angle), distance * cos(angle)
 	
 	@staticmethod
 	def decode(data, a, *b):

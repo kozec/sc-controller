@@ -15,7 +15,7 @@ from scc.modifiers import DeadzoneModifier, RotateInputModifier
 from scc.modifiers import SmoothModifier, NameModifier
 from scc.actions import Action, XYAction, NoAction, RingAction
 from scc.constants import HapticPos, SCButtons
-from scc.constants import CUT, ROUND, LINEAR
+from scc.constants import CUT, ROUND, LINEAR, JUMP
 from scc.controller import HapticData
 from scc.profile import Profile
 from scc.macros import Macro
@@ -55,7 +55,7 @@ AFP = ("Amplitude", "Frequency", "Period")	# Feedback settings keys
 SMT = ("Level", "Weight", "Filter")			# Smoothing setting keys
 DZN = ("Lower", "Upper")					# Deadzone settings key
 FEEDBACK_SIDES = [ HapticPos.LEFT, HapticPos.RIGHT, HapticPos.BOTH ]
-DEADZONE_MODES = [ CUT, ROUND, LINEAR ]
+DEADZONE_MODES = [ CUT, ROUND, LINEAR, JUMP ]
 
 
 class ActionEditor(Editor):
