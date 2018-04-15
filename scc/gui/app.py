@@ -164,7 +164,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		else:
 			config = {}
 		config = self.background.use_config(config)
-		print config['buttons']
 		
 		def do_loading():
 			""" Called after transition is finished """
@@ -183,7 +182,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				try:
 					w = self.button_widgets[b]
 					icon, trash = controller.get_button_icon(config, b, True)
-					print b, icon
 					w.icon.set_from_file(icon)
 				except Exception:
 					pass

@@ -165,7 +165,6 @@ class KeyboardImage(Gtk.DrawingArea):
 		if x not in self._button_images:
 			path, bw = find_button_image(x, prefer_bw=True)
 			if path is None:
-				print "NOT FOUND", x
 				self._button_images[x] = None
 				return None
 			buf = GdkPixbuf.Pixbuf.new_from_file_at_size(path, size, size)
@@ -404,7 +403,6 @@ class Keyboard(OSDWindow, TimerManager):
 			if a and not isinstance(a, scc.osd.osk_actions.OSKCursorAction):
 				if isinstance(a, ModeModifier):
 					for x in a.get_child_actions():
-						print x
 						add_action(side, button, x)
 					return
 				desc = a.describe(Action.AC_OSK)
