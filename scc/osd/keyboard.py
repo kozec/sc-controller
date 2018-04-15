@@ -511,6 +511,10 @@ class Keyboard(OSDWindow, TimerManager):
 			(c, c.connect('lost', self.on_controller_lost)),
 		]
 		
+		# TODO: Single-handed mode for PS4 posponed
+		locks = [ LEFT, RIGHT, STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
+		self.cursors[CPAD].hide()
+		"""
 		if (c.get_flags() & ControllerFlags.HAS_CPAD) == 0:
 			# Two pads, two hands
 			locks = [ LEFT, RIGHT, STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
@@ -523,6 +527,7 @@ class Keyboard(OSDWindow, TimerManager):
 			self._pressed = { self.cursors[CPAD] : None }
 			self.cursors[LEFT].hide()
 			self.cursors[RIGHT].hide()
+		"""
 		self._controller = c
 		c.lock(success, self.on_failed_to_lock, *locks)
 		self.set_help()
