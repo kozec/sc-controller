@@ -12,7 +12,7 @@ from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
 from scc.constants import FE_PAD, SCButtons, HapticPos, ControllerFlags
-from scc.constants import CUT, ROUND, LINEAR, JUMP, FE_STICK, FE_TRIGGER
+from scc.constants import CUT, ROUND, LINEAR, MINIMUM, FE_STICK, FE_TRIGGER
 from scc.constants import TRIGGER_MAX, LEFT, CPAD, RIGHT, STICK
 from scc.controller import HapticData
 from scc.tools import nameof, clamp
@@ -649,7 +649,7 @@ class DeadzoneModifier(Modifier):
 		return distance * sin(angle), distance * cos(angle)
 	
 	
-	def mode_JUMP(self, x, y, range):
+	def mode_MINIMUM(self, x, y, range):
 		"""
 		https://github.com/kozec/sc-controller/issues/356
 		Inversion of LINEAR; input value is scaled so entire input range is
@@ -670,6 +670,7 @@ class DeadzoneModifier(Modifier):
 		angle = atan2(x, y)
 		return distance * sin(angle), distance * cos(angle)
 	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return DeadzoneModifier(
@@ -678,6 +679,17 @@ class DeadzoneModifier(Modifier):
 			data["deadzone"]["upper"] if "upper" in data["deadzone"] else STICK_PAD_MAX,
 			a
 		)
+	
+	
+	def compress(self):
+		self.action = self.action.compress()
+		if isinstance(self.action, BallModifier) and self.mode == MINIMUM:
+			# Special case where BallModifier has to be applied before
+			# deadzone is computed
+			ballmod = self.action
+			self.action, ballmod.action = ballmod.action, self
+			return ballmod
+		return self
 	
 	
 	def strip(self):
@@ -726,7 +738,6 @@ class DeadzoneModifier(Modifier):
 	
 	
 	def whole(self, mapper, x, y, what):
-		ox, oy = x, y
 		x, y = self._convert(x, y, STICK_PAD_MAX)
 		return self.action.whole(mapper, x, y, what)
 	

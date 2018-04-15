@@ -349,15 +349,17 @@ translates exact position on dpad to axis value.
 
 
 #### <a name="deadzone"></a> deadzone([mode,] lower, [upper, ] action)
-Enables deadzone on trigger, pad or stick. Mode can be one of
+Enables deadzone on trigger, pad or stick.
+Mode defaults to 'CUT' and can be one of:
 
- - CUT    - if value is out of deadzone range, output value is zero
- - ROUND  - for values bellow deadzone range, output value is zero. For values
+ - CUT     - if value is out of deadzone range, output value is zero
+ - ROUND   - for values bellow deadzone range, output value is zero. For values
 above range, output value is maximum allowed.
- - LINEAR - input value is scaled, so entire output range is covered by
+ - LINEAR  - input value is scaled, so entire output range is covered by
 range of deadzone.
-
-and defaults to 'CUT'
+ - MINIMUM - any non-zero input value is scaled so entire input range is mapped
+to range of deadzone. Zero on input is mapped to zero on output, so there is
+area over which output "jumps" when stick is tilted.
 
 
 #### <a name="smooth"></a> smooth([buffer=8, [multiplier=0.7, [filter=2, ]]] action)

@@ -120,8 +120,8 @@
         <col id="1">LINEAR</col>
       </row>
 	  <row>
-        <col id="0" translatable="yes">Jump</col>
-        <col id="1">JUMP</col>
+        <col id="0" translatable="yes">Minimum Output Value</col>
+        <col id="1">MINIMUM</col>
       </row>
     </data>
   </object>
