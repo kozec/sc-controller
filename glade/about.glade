@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.2 -->
+<!-- Generated with glade 3.20.4 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkDialog" id="Dialog">
@@ -120,6 +120,7 @@ for all my &lt;b&gt;&lt;a href="https://www.patreon.com/kozec"&gt;Patreon&lt;/a&
 &lt;b&gt;Deryn L.&lt;/b&gt;
 &lt;b&gt;Eric Duhamel&lt;/b&gt;
 &lt;b&gt;Enric Morales&lt;/b&gt;
+&lt;b&gt;Orivej Desh&lt;/b&gt;
 &lt;b&gt;G. Wilson&lt;/b&gt;
 &lt;b&gt;Joshua M&lt;/b&gt;
 &lt;b&gt;Lutris&lt;/b&gt;
