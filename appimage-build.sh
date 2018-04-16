@@ -26,7 +26,10 @@ function build_dep() {
 	mkdir -p /tmp/${NAME}
 	pushd /tmp/${NAME}
 	tar --extract --strip-components=1 -f /tmp/${NAME}.tar.gz
-	python2 setup.py build
+	PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages python2 \
+		setup.py install --optimize=1 \
+		--prefix="/usr/" \
+		--root="${BUILD_APPDIR}"
 	mkdir -p "${BUILD_APPDIR}/usr/lib/python2.7/site-packages/"
 	python2 setup.py install --prefix ${BUILD_APPDIR}/usr
 	popd
@@ -45,7 +48,7 @@ set -ex		# display commands, terminate after 1st failure
 # Download deps
 download_dep "python-evdev-0.7.0" "https://github.com/gvalkov/python-evdev/archive/v0.7.0.tar.gz"
 download_dep "pylibacl-0.5.3" "https://github.com/iustin/pylibacl/releases/download/pylibacl-v0.5.3/pylibacl-0.5.3.tar.gz"
-download_dep "PyGObject-3.26.1" "https://github.com/GNOME/pygobject/archive/3.26.1.tar.gz"
+download_dep "python-gobject-3.26.1" "https://archive.archlinux.org/packages/p/python2-gobject/python2-gobject-3.26.1-1-x86_64.pkg.tar.xz"
 download_dep "libpng-1.6.9" "https://archive.archlinux.org/packages/l/libpng/libpng-1.6.9-1-x86_64.pkg.tar.xz"
 download_dep "gdk-pixbuf-2.36.9" "https://archive.archlinux.org/packages/g/gdk-pixbuf2/gdk-pixbuf2-2.36.9-1-x86_64.pkg.tar.xz"
 download_dep "libcroco-0.6.9" "https://archive.archlinux.org/packages/l/libcroco/libcroco-0.6.9-1-x86_64.pkg.tar.xz"
@@ -64,8 +67,8 @@ fi
 
 build_dep "python-evdev-0.7.0"
 build_dep "pylibacl-0.5.3"
-build_dep "PyGObject-3.26.1"
 unpack_dep "libpng-1.6.9"
+unpack_dep "python-gobject-3.26.1"
 unpack_dep "gdk-pixbuf-2.36.9"
 unpack_dep "libcroco-0.6.9"
 unpack_dep "libxml2-2.9.7"
