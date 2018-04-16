@@ -28,10 +28,9 @@ function build_dep() {
 	tar --extract --strip-components=1 -f /tmp/${NAME}.tar.gz
 	PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages python2 \
 		setup.py install --optimize=1 \
-		--prefix="/usr/" \
-		--root="${BUILD_APPDIR}"
+		--prefix="/usr/" --root="${BUILD_APPDIR}"
 	mkdir -p "${BUILD_APPDIR}/usr/lib/python2.7/site-packages/"
-	python2 setup.py install --prefix ${BUILD_APPDIR}/usr
+	python2 setup.py install --prefix="/usr/" --root="${BUILD_APPDIR}"
 	popd
 }
 
