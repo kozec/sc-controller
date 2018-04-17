@@ -1,6 +1,7 @@
 #!/bin/bash
 APP="sc-controller"
 EXEC="scc"
+LIB="lib"
 
 EVDEV_VERSION=0.7.0
 [ x"$BUILD_APPDIR" == "x" ] && BUILD_APPDIR=$(pwd)/appimage
@@ -62,6 +63,7 @@ if [[ $(grep ID_LIKE /etc/os-release) == *"suse"* ]] ; then
 	# Special handling for OBS
 	ln -s lib64 ${BUILD_APPDIR}/usr/lib
 	export PYTHONPATH="$PYTHONPATH":${BUILD_APPDIR}/usr/lib64/python2.7/site-packages/
+	LIB=lib64
 fi
 
 build_dep "python-evdev-0.7.0"
@@ -75,16 +77,16 @@ unpack_dep "librsvg-2.42.2"
 unpack_dep "icu-60.2"
 
 # Remove uneeded files
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-ani.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-bmp.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-gif.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-icns.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-ico.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-jasper.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-jpeg.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-qtif.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-tga.so"
-rm "${BUILD_APPDIR}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-tiff.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-ani.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-bmp.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-gif.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-icns.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-ico.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-jasper.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-jpeg.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-qtif.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-tga.so"
+rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-tiff.so"
 rm -R "${BUILD_APPDIR}/usr/lib/cmake"
 rm -R "${BUILD_APPDIR}/usr/share/doc"
 rm -R "${BUILD_APPDIR}/usr/share/gtk-doc"
@@ -102,7 +104,7 @@ python2 setup.py install --prefix ${BUILD_APPDIR}/usr
 mv ${BUILD_APPDIR}/usr/lib/udev/rules.d/90-${APP}.rules ${BUILD_APPDIR}/
 rmdir ${BUILD_APPDIR}/usr/lib/udev/rules.d/
 rmdir ${BUILD_APPDIR}/usr/lib/udev/
-cp "/usr/include/linux/input-event-codes.h" ${BUILD_APPDIR}/usr/lib/python2.7/site-packages/scc/
+cp "/usr/include/linux/input-event-codes.h" ${BUILD_APPDIR}/usr/${LIB}/python2.7/site-packages/scc/
 
 # Move & patch desktop file
 mv ${BUILD_APPDIR}/usr/share/applications/${APP}.desktop ${BUILD_APPDIR}/
