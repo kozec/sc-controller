@@ -440,14 +440,12 @@ class EvdevDriver(object):
 				self._scan_thread.start()
 	
 	
-	def register_evdev_device(self, callback, bus_id, vendor_id, product_id, on_failure):
+	def register_evdev_device(self, callback, bus_id, vendor_id, product_id):
 		with self._lock:
 			self._known_ids[bus_id, vendor_id, product_id] = callback
-			if on_failure:
-				self._fail_cbs[bus_id, vendor_id, product_id] = on_failure
 			bus = "bluetooth" if bus_id == 5 else "bus 0x%x" % (bus_id,)
 			log.debug("Registered evdev driver for %.4x:%.4x on %s",
-						vendor_id, product_id, bus)
+							vendor_id, product_id, bus)
 	
 	
 	def _scan_thread_target(self):
@@ -563,7 +561,7 @@ def make_new_device(vendor_id, product_id, factory):
 	return _evdevdrv.make_new_device(vendor_id, product_id, factory)
 
 
-def register_evdev_device(callback, bus_id, vendor_id, product_id):
+def register_evdev_device(cb, bus_id, vendor_id, product_id):
 	"""
 	Similar to register_hotplug_device in usb driver, this method registers
 	callback that allows other drivers to be notified when
@@ -575,8 +573,7 @@ def register_evdev_device(callback, bus_id, vendor_id, product_id):
 	as other option is already covered by USB driver.
 	"""
 	assert HAVE_EVDEV, "evdev driver is not available"
-	return _evdevdrv.register_evdev_device(callback,
-				bus_id, vendor_id, product_id, None)
+	return _evdevdrv.register_evdev_device(cb, bus_id, vendor_id, product_id)
 
 
 def get_axes(dev):
