@@ -11,6 +11,7 @@ from scc.drivers.hiddrv import AxisMode, AxisDataUnion, AxisModeData
 from scc.drivers.hiddrv import HatswitchModeData, _lib
 from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
 from scc.drivers.evdevdrv import make_new_device, get_axes
+from scc.drivers.evdevdrv import register_evdev_device
 from scc.drivers.usb import register_hotplug_device
 from scc.constants import SCButtons, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
@@ -361,6 +362,8 @@ def init(daemon, config):
 	def hid_callback(device, handle):
 		return DS4Controller(device, daemon, handle, None, None)
 	
+	def evdev_callback(evdevdevices):
+		return evdev_make_device_callback(daemon, evdevdevices)
 	
 	def evdev_make_device_callback(daemon, evdevdevices):
 		# With kernel 4.10 or later, PS4 controller pretends to be 3 different devices.
@@ -373,7 +376,7 @@ def init(daemon, config):
 				controllerdevice = device
 		if not controllerdevice:
 			log.warning("Failed to determine controller device")
-			return
+			return None
 		# 2nd, find motion sensor and touchpad with physical address matching
 		# controllerdevice
 		gyro, touchpad = None, None
@@ -402,6 +405,8 @@ def init(daemon, config):
 	
 	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
 		register_hotplug_device(hid_callback, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
+		if HAVE_EVDEV and config["drivers"].get("evdevdrv"):
+			register_evdev_device(evdev_callback, 0x5, VENDOR_ID, PRODUCT_ID)
 		return True
 	else:
 		log.warning("Neither HID nor Evdev driver is enabled, DS4 support cannot be enabled.")

@@ -356,7 +356,9 @@ class EvdevDriver(object):
 		self.daemon = None
 		self._devices = {}
 		self._new_devices = Queue.Queue()
+		self._callbacks_to_call = {}
 		self._lock = threading.Lock()
+		self._known_ids = {}
 		self._scan_thread = None
 		self._next_scan = None
 	
@@ -376,6 +378,18 @@ class EvdevDriver(object):
 		self.daemon.add_controller(controller)
 		log.debug("Evdev device added: %s", dev.name)
 	
+	
+	def handle_callback(self, callback, devices):
+		try:
+			controller = callback(devices)
+		except Exception, e:
+			log.debug("Failed to add evdev device: %s", e)
+			log.exception(e)
+			return
+		if controller is not None:
+			self._devices[controller.device.fn] = controller
+			self.daemon.add_controller(controller)
+			log.debug("Evdev device added: %s", controller.device.name)
 	
 	def make_new_device(self, vendor_id, product_id, factory, repeat=0):
 		"""
@@ -426,6 +440,16 @@ class EvdevDriver(object):
 				self._scan_thread.start()
 	
 	
+	def register_evdev_device(self, callback, bus_id, vendor_id, product_id, on_failure):
+		with self._lock:
+			self._known_ids[bus_id, vendor_id, product_id] = callback
+			if on_failure:
+				self._fail_cbs[bus_id, vendor_id, product_id] = on_failure
+			bus = "bluetooth" if bus_id == 5 else "bus 0x%x" % (bus_id,)
+			log.debug("Registered evdev driver for %.4x:%.4x on %s",
+						vendor_id, product_id, bus)
+	
+	
 	def _scan_thread_target(self):
 		for fname in evdev.list_devices():
 			try:
@@ -433,9 +457,16 @@ class EvdevDriver(object):
 			except Exception:
 				continue
 			if dev.fn not in self._devices:
+				key = (dev.info.bustype, dev.info.vendor, dev.info.product)
 				config_file = os.path.join(get_config_path(), "devices",
 					"evdev-%s.json" % (dev.name.strip(),))
-				if os.path.exists(config_file):
+				if key in self._known_ids:
+					with self._lock:
+						callback = self._known_ids[key]
+						if callback not in self._callbacks_to_call:
+							self._callbacks_to_call[callback] = []
+						self._callbacks_to_call[callback].append(dev)
+				elif os.path.exists(config_file):
 					config = None
 					try:
 						config = json.loads(open(config_file, "r").read())
@@ -446,8 +477,9 @@ class EvdevDriver(object):
 		with self._lock:
 			self._scan_thread = None
 			self._next_scan = time.time() + EvdevDriver.SCAN_INTERVAL
-			if HAVE_INOTIFY and not self._new_devices.empty():
-				self.daemon.get_scheduler().schedule(0, self.add_new_devices)
+			if HAVE_INOTIFY:
+				if not self._new_devices.empty() or len(self._callbacks_to_call) > 0:
+					self.daemon.get_scheduler().schedule(0, self.add_new_devices)
 	
 	
 	def add_new_devices(self):
@@ -456,6 +488,10 @@ class EvdevDriver(object):
 				dev, config_file, config = self._new_devices.get()
 				if dev.fn not in self._devices:
 					self.handle_new_device(dev, config_file, config)
+			if len(self._callbacks_to_call) > 0:
+				items, self._callbacks_to_call = self._callbacks_to_call.items(), {}
+				for callback, devices in items:
+					self.handle_callback(callback, devices)
 	
 	
 	def start(self):
@@ -481,7 +517,7 @@ class EvdevDriver(object):
 	def dumb_mainloop(self):
 		if time.time() > self._next_scan:
 			self.scan()
-		if not self._new_devices.empty():
+		if not self._new_devices.empty() or len(self._callbacks_to_call) > 0:
 			self.add_new_devices()
 
 
@@ -527,6 +563,22 @@ def make_new_device(vendor_id, product_id, factory):
 	return _evdevdrv.make_new_device(vendor_id, product_id, factory)
 
 
+def register_evdev_device(callback, bus_id, vendor_id, product_id):
+	"""
+	Similar to register_hotplug_device in usb driver, this method registers
+	callback that allows other drivers to be notified when
+	new device is connected. Unlike register_hotplug_device, callback method
+	recieves list of all matching devices at once instead of being called
+	repeadedly.
+	
+	Using this method makes sense mostly for bus_id 0x5, bluetooth,
+	as other option is already covered by USB driver.
+	"""
+	assert HAVE_EVDEV, "evdev driver is not available"
+	return _evdevdrv.register_evdev_device(callback,
+				bus_id, vendor_id, product_id, None)
+
+
 def get_axes(dev):
 	""" Helper function to get list ofa available axes """
 	assert HAVE_EVDEV, "evdev driver is not available"
@@ -569,4 +621,4 @@ if __name__ == "__main__":
 	from scc.tools import init_logging, set_logging_level
 	init_logging()
 	set_logging_level(True, True)
-	sys.exit(evdevdrv_test(sys.argv[0], sys.argv[1:]))
+	sys.exit(evdevdrv_test(sys.argv[1:]))
