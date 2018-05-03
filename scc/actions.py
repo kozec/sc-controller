@@ -1571,14 +1571,20 @@ class ButtonAction(HapticEnabledAction, Action):
 			elif self._pressed_key != self.button:
 				self.button_press(mapper)
 				self._pressed_key = self.button
-		else:
-			# Entire pad used as one big button
-			if mapper.is_touched(what) and not mapper.was_touched(what):
-				# Touched the pad
-				self.button_press(mapper)
-			if mapper.was_touched(what) and not mapper.is_touched(what):
-				# Released the pad
-				self.button_release(mapper)
+			return
+		elif what in (LEFT, RIGHT):
+			# Possibly special case, pressing with click() on entire pad
+			if mapper.is_pressed(what) and not mapper.was_pressed(what):
+				return self.button_press(mapper)
+			elif not mapper.is_pressed(what) and mapper.was_pressed(what):
+				return self.button_release(mapper)
+		# Entire pad used as one big button
+		if mapper.is_touched(what) and not mapper.was_touched(what):
+			# Touched the pad
+			self.button_press(mapper)
+		if mapper.was_touched(what) and not mapper.is_touched(what):
+			# Released the pad
+			self.button_release(mapper)
 	
 	
 	def axis(self, mapper, position, what):

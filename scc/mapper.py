@@ -260,6 +260,10 @@ class Mapper(object):
 		"""
 		Returns True if button is pressed
 		"""
+		if button == LEFT:
+			button = SCButtons.LPAD
+		elif button == RIGHT:
+			button = SCButtons.RPAD
 		return self.buttons & button
 	
 	
@@ -267,6 +271,10 @@ class Mapper(object):
 		"""
 		Returns True if button was pressed in previous known state
 		"""
+		if button == LEFT:
+			button = SCButtons.LPAD
+		elif button == RIGHT:
+			button = SCButtons.RPAD
 		return self.old_buttons & button
 	
 	
