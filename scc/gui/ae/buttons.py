@@ -10,7 +10,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, ButtonAction, MouseAction
 from scc.actions import AxisAction, MultiAction, NoAction
-from scc.macros import Cycle, PressAction, ReleaseAction
+from scc.macros import Macro, Cycle, PressAction, ReleaseAction
 from scc.uinput import Rels, Keys
 from scc.gui.area_to_action import action_to_area
 from scc.gui.key_grabber import KeyGrabber
@@ -58,20 +58,26 @@ class ButtonsComponent(AEComponent, Chooser):
 	
 	def set_action(self, mode, action):
 		cbToggle = self.builder.get_object("cbToggle")
+		cbRepeat = self.builder.get_object("cbRepeat")
 		if self.handles(mode, action):
 			self.keys = set()
-			is_togle = False
+			is_togle, is_repeat = False, False
 			if isinstance(action, MultiAction):
 				for a in action.actions:
 					if isinstance(a, ButtonAction):
 						self.keys.add(a.button)
 			elif isinstance(action, ButtonAction):
 				self.keys.add(action.button)
+			elif isinstance(action, Macro):
+				# Macro goes here only if it is button repeat
+				self.keys.add(action.actions[0].button)
+				is_repeat = True
 			elif isinstance(action, Cycle):
 				# There is only one case when self.handles returns True for Cycle
 				self.keys.add(action.actions[0].action.button)
 				is_togle = True
 			cbToggle.set_active(is_togle)
+			cbRepeat.set_active(is_repeat)
 			area = action_to_area(action)
 			if area is not None:
 				self.set_active_area(area)
@@ -93,6 +99,8 @@ class ButtonsComponent(AEComponent, Chooser):
 			if action.get_axis() == Rels.REL_WHEEL:
 				return True
 		if is_button_togle(action):
+			return True
+		if is_button_repeat(action):
 			return True
 		if isinstance(action, MultiAction):
 			if len(action.actions) > 0:
@@ -124,12 +132,16 @@ class ButtonsComponent(AEComponent, Chooser):
 	def apply_keys(self, *a):
 		""" Common part of on_*key_grabbed """
 		cbToggle = self.builder.get_object("cbToggle")
+		cbRepeat = self.builder.get_object("cbRepeat")
 		keys = list(sorted(self.keys, key=ButtonsComponent.modifiers_first))
 		action = ButtonAction(keys[0])
 		if len(keys) > 1:
 			actions = [ ButtonAction(k) for k in keys ]
 			action = MultiAction(*actions)
-		if cbToggle.get_active():
+		if cbRepeat.get_active():
+			action = Macro(action)
+			action.repeat = True
+		elif cbToggle.get_active():
 			action = Cycle(PressAction(action), ReleaseAction(action))
 		self.editor.set_action(action)
 	
@@ -150,6 +162,20 @@ class ButtonsComponent(AEComponent, Chooser):
 		kg = KeyGrabber(self.app)
 		kg.grab(self.editor.window, self.editor._action,
 				self.on_additional_key_grabbed)
+	
+	
+	def on_cbToggle_toggled(self, cbToggle):
+		cbRepeat = self.builder.get_object("cbRepeat")
+		if cbToggle.get_active() and cbRepeat.get_active():
+			cbRepeat.set_active(False)
+		self.apply_keys()
+	
+	
+	def on_cbRepeat_toggled(self, cbRepeat):
+		cbToggle = self.builder.get_object("cbToggle")
+		if cbToggle.get_active() and cbRepeat.get_active():
+			cbToggle.set_active(False)
+		self.apply_keys()
 	
 	
 	def hide_toggle(self):
@@ -181,4 +207,11 @@ def is_button_togle(action):
 			if isinstance(action.actions[0].action, ButtonAction):
 				if isinstance(action.actions[1].action, ButtonAction):
 					return action.actions[0].action.button == action.actions[1].action.button
+	return False
+
+
+def is_button_repeat(action):
+	if isinstance(action, Macro) and action.repeat:
+		if len(action.actions) == 1:
+			return isinstance(action.actions[0], ButtonAction)
 	return False
