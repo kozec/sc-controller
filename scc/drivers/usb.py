@@ -81,7 +81,7 @@ class USBDevice(object):
 			if x_index == index and x_data[0:3] == data[0:3]:
 				self._cmsg.remove(x)
 				break
-		self.send_control(index, data)	
+		self.send_control(index, data)
 	
 	
 	def make_request(self, index, callback, data, size=64):
@@ -100,17 +100,13 @@ class USBDevice(object):
 	
 	
 	def flush(self):
-		""" Flushes all prepared control messages to device """
+		""" Flushes all prepared control messages to the device """
 		while len(self._cmsg):
 			msg = self._cmsg.pop()
 			self.handle.controlWrite(*msg)
 		
 		while len(self._rmsg):
 			msg, index, size, callback = self._rmsg.pop()
-			if "SCC_DEBUG_USB_REQUESTS" in os.environ:
-				# There are actually only very few messages wrote with controlWrite,
-				# so this shouldn't have any performace penalty
-				log.debug("controlWrite %s", msg)
 			self.handle.controlWrite(*msg)
 			data = self.handle.controlRead(
 				0xA1,	# request_type
