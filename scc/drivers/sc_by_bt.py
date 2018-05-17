@@ -100,10 +100,9 @@ class SCByBt(SCController):
 		self._device_name = hidrawdev.getName()
 		self._hidrawdev = hidrawdev
 		self._fileno = hidrawdev._device.fileno()
-		# self.daemon.add_mainloop(self._input)
 		poller = self.daemon.get_poller()
-		poller.register(self._fileno, poller.POLLIN, self._input)
-
+		if poller:
+			poller.register(self._fileno, poller.POLLIN, self._input)
 	
 	
 	def get_device_filename(self):
@@ -268,7 +267,9 @@ def hidraw_test(filename):
 	c.configure()
 	c.flush()
 	while True:
-		c._input()
+		data = dev._device.read(PACKET_SIZE)
+		type, = struct.unpack("xxh16x", data)
+		print "".join([ hex(ord(i)).strip("0x").zfill(2) for i in data ])
 
 
 def init(daemon, config):

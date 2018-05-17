@@ -7,9 +7,12 @@
 #define SC_BY_BT_MODULE_VERSION 1
 
 enum BtInPacketType {
+	PING = 0x500,
 	BUTTON = 0x14,
 	TRIGGERS = 0x24,
-	AXIS = 0x84,
+	STICK = 0x84,
+	LPAD = 0x104,
+	RPAD = 0x204,
 };
 
 enum SCButtons {
@@ -94,38 +97,52 @@ int read_input(int fileno, size_t packet_size, InputPtr state, InputPtr old_stat
 	if (read(fileno, &buffer, packet_size) < packet_size)
 		return 2;
 	
-	uint8_t type = *((uint8_t*)(buffer + 2));
-	switch (type) {
-		case BUTTON: {
-			uint32_t bt_buttons = *((uint32_t*)(buffer + 4));
-			uint32_t sc_buttons = 0;
-			for (int bit=0; bit<BT_BUTTONS_BITS; bit++) {
-				if ((bt_buttons & 1) != 0)
-					sc_buttons |= BT_BUTTONS[bit];
-				bt_buttons >>= 1;
-			}
-			
-			*old_state = *state;
-			state->buttons = sc_buttons;
-			return 1;
-		}
-		case AXIS:
-			*old_state = *state;
-			state->stick_x = *((int16_t*)(buffer + 4));
-			state->stick_y = *((int16_t*)(buffer + 6));
-			return 1;
-		case TRIGGERS:
-			*old_state = *state;
-			state->ltrig = *((uint8_t*)(buffer + 4));
-			state->rtrig = *((uint8_t*)(buffer + 5));
-			// printf("IN: %i %i\n", (int)state->ltrig, (int)state->rtrig);
-			return 1;
+	int rv = 0;
+	uint16_t type = *((uint16_t*)(buffer + 2));
+	char* data = &buffer[4];
+	if ((type & PING) == PING) {
+		// Ignored packet
+		return 0;
 	}
-	// printf("IN: %i\n", type);
-	// *old_state = *state;
+	if ((type & BUTTON) == BUTTON) {
+		uint32_t bt_buttons = *((uint32_t*)data);
+		uint32_t sc_buttons = 0;
+		for (int bit=0; bit<BT_BUTTONS_BITS; bit++) {
+			if ((bt_buttons & 1) != 0)
+				sc_buttons |= BT_BUTTONS[bit];
+			bt_buttons >>= 1;
+		}
+		
+		if (rv == 0) { *old_state = *state; rv = 1; }
+		state->buttons = sc_buttons;
+		data += 3;
+	}
+	if ((type & TRIGGERS) == TRIGGERS) {
+		if (rv == 0) { *old_state = *state; rv = 1; }
+		state->ltrig = *(((uint8_t*)data) + 0);
+		state->rtrig = *(((uint8_t*)data) + 1);
+		data += 2;
+	}	
+	if ((type & STICK) == STICK) {
+		if (rv == 0) { *old_state = *state; rv = 1; }
+		state->stick_x = *(((int16_t*)data) + 0);
+		state->stick_y = *(((int16_t*)data) + 1);
+		data += 4;
+	}
+	if ((type & LPAD) == LPAD) {
+		if (rv == 0) { *old_state = *state; rv = 1; }
+		state->lpad_x = *(((int16_t*)data) + 0);
+		state->lpad_y = *(((int16_t*)data) + 1);
+		data += 4;
+	}
+	if ((type & RPAD) == RPAD) {
+		if (rv == 0) { *old_state = *state; rv = 1; }
+		state->rpad_x = *(((int16_t*)data) + 0);
+		state->rpad_y = *(((int16_t*)data) + 1);
+		data += 4;
+	}
 	
-	
-	return 0;
+	return rv;
 }
 
 const int sc_by_bt_module_version(void) {
