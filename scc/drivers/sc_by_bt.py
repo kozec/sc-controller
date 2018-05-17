@@ -11,10 +11,12 @@ from scc.lib.hidraw import HIDRaw
 from scc.lib import IntEnum
 from scc.drivers.evdevdrv import register_evdev_device
 from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
-from scc.constants import SCButtons
-from sc_dongle import SCStatus, SCPacketType, SCPacketLength, SCConfigType
-from sc_dongle import SCController, ControllerInput, SCI_NULL, TUP_FORMAT
-import os, sys, time, struct, logging
+from scc.constants import ControllerFlags
+from scc.tools import find_library
+from sc_dongle import SCPacketType, SCPacketLength, SCConfigType
+from sc_dongle import SCController
+from math import pi as PI, sin, cos
+import os, sys, time, struct, ctypes, logging
 
 VENDOR_ID = 0x28de
 PRODUCT_ID = 0x1106
@@ -23,39 +25,27 @@ PACKET_SIZE = 20
 log = logging.getLogger("SCBT")
 
 
-class BtInPacketType(IntEnum):
-	BUTTON = 0x14
-	TRIGGERS = 0x24
-	AXIS = 0x84
+class SCByBtControllerInput(ctypes.Structure):
+	_fields_ = [
+		('buttons', ctypes.c_uint32),
+		('ltrig', ctypes.c_uint8),
+		('rtrig', ctypes.c_uint8),
+		('stick_x', ctypes.c_int16),
+		('stick_y', ctypes.c_int16),
+		('lpad_x', ctypes.c_int16),
+		('lpad_y', ctypes.c_int16),
+		('rpad_x', ctypes.c_int16),
+		('rpad_y', ctypes.c_int16),
+		('gpitch', ctypes.c_int32),
+		('groll', ctypes.c_int32),
+		('gyaw', ctypes.c_int32),
+		('q1', ctypes.c_int32),
+		('q2', ctypes.c_int32),
+		('q3', ctypes.c_int32),
+		('q4', ctypes.c_int32),
+	]
 
-
-BT_BUTTONS_BITS = tuple(xrange(22))
-BT_BUTTONS = (
-	# Bit to SCButton
-	SCButtons.RT,			# 00
-	SCButtons.LT,			# 01
-	SCButtons.LB,			# 02
-	SCButtons.RB,			# 03
-	SCButtons.Y,			# 04
-	SCButtons.B,			# 05
-	SCButtons.X,			# 06
-	SCButtons.A,			# 07
-	0, 						# 08 - dpad, ignored
-	0, 						# 09 - dpad, ignored
-	0, 						# 10 - dpad, ignored
-	0, 						# 11 - dpad, ignored
-	SCButtons.BACK,			# 12
-	SCButtons.C,			# 13
-	SCButtons.START,		# 14
-	SCButtons.LGRIP,		# 15
-	SCButtons.RGRIP,		# 16
-	SCButtons.LPAD,			# 17
-	SCButtons.RPAD,			# 18
-	SCButtons.LPADTOUCH,	# 19
-	SCButtons.RPADTOUCH,	# 20
-	0,						# 21 - nothing
-	SCButtons.STICKPRESS,	# 22
-)
+InputPtr = ctypes.POINTER(SCByBtControllerInput)
 
 
 class Driver:
@@ -66,6 +56,10 @@ class Driver:
 		self._known = {}
 		self.config = config
 		self.daemon = daemon
+		self._lib = find_library('libsc_by_bt')
+		read_input = self._lib.read_input
+		read_input.restype = ctypes.c_int
+		read_input.argtypes = [ ctypes.c_int, ctypes.c_size_t, InputPtr, InputPtr ]
 	
 	
 	def new_device_callback(self, evdevdevices):
@@ -78,7 +72,7 @@ class Driver:
 						dev = HIDRaw(open(os.path.join("/dev/", filename), "w+b"))
 						i = dev.getInfo()
 						if (i.bustype, i.vendor, i.product) == (5, VENDOR_ID, PRODUCT_ID):
-							c = SCByBt(self.daemon, evdevdev, dev)
+							c = SCByBt(self, evdevdev, dev)
 							c.configure()
 							c.flush()
 							self._known[filename] = c
@@ -90,18 +84,26 @@ class Driver:
 
 
 class SCByBt(SCController):
+	flags = 0 | ControllerFlags.SEPARATE_STICK
 	
-	def __init__(self, daemon, evdevdev, hidrawdev):
+	def __init__(self, driver, evdevdev, hidrawdev):
 		self._cmsg = []  # controll messages
 		self._rmsg = []  # requests (excepts response)
 		self._transfer_list = []
-		self.daemon = daemon
+		self.driver = driver
+		self.daemon = driver.daemon
 		SCController.__init__(self, self, -1, -1)
+		self._old_state = SCByBtControllerInput()
+		self._state = SCByBtControllerInput()
 		self._led_level = 30
 		self._evdevdev_fn = evdevdev.fn if evdevdev else "unknown"
 		self._device_name = hidrawdev.getName()
-		self.hidrawdev = hidrawdev
-		daemon.add_mainloop(self._timer)
+		self._hidrawdev = hidrawdev
+		self._fileno = hidrawdev._device.fileno()
+		# self.daemon.add_mainloop(self._input)
+		poller = self.daemon.get_poller()
+		poller.register(self._fileno, poller.POLLIN, self._input)
+
 	
 	
 	def get_device_filename(self):
@@ -156,7 +158,7 @@ class SCByBt(SCController):
 		unknown2 = b'\x00\x2e'
 		
 		# Timeout & Gyros
-		self._driver.overwrite_control(self._ccidx, struct.pack('>BBB12sB2s',
+		self.overwrite_control(self._ccidx, struct.pack('>BBB12sB2s',
 			SCPacketType.CONFIGURE,
 			SCPacketLength.CONFIGURE_BT,
 			SCConfigType.CONFIGURE_BT,
@@ -165,7 +167,7 @@ class SCByBt(SCController):
 			unknown2))
 		
 		# LED
-		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBB',
+		self.overwrite_control(self._ccidx, struct.pack('>BBBB',
 			SCPacketType.CONFIGURE,
 			SCPacketLength.LED,
 			SCConfigType.LED,
@@ -208,7 +210,7 @@ class SCByBt(SCController):
 		""" Flushes all prepared control messages to the device """
 		while len(self._cmsg):
 			msg = self._cmsg.pop()
-			self.hidrawdev.sendFeatureReport(msg)
+			self._hidrawdev.sendFeatureReport(msg)
 		
 		while len(self._rmsg):
 			msg, callback = self._rmsg.pop()
@@ -216,22 +218,29 @@ class SCByBt(SCController):
 			# callback(data)
 	
 	
-	def _on_input(self, data):
-		packet_type = ord(data[2])
-		if packet_type == BtInPacketType.BUTTON:
-			bt_buttons, = struct.unpack("4xI12x", data)
-			sc_buttons = 0
-			for bit in BT_BUTTONS_BITS:
-				if (bt_buttons & 1) != 0:
-					sc_buttons |= BT_BUTTONS[bit]
-				bt_buttons >>= 1
-			tup = self._old_state._replace(buttons=sc_buttons)
-			self.input(tup)
+	def input(self, idata):
+		raise TypeError("This shouldn't be called, ever")
 	
 	
-	def _timer(self):
-		data = self.hidrawdev.read(PACKET_SIZE)
-		self._on_input(data)
+	def _input(self, *a):
+		r = self.driver._lib.read_input(self._fileno, PACKET_SIZE,
+				ctypes.byref(self._state), ctypes.byref(self._old_state))
+		
+		if r == 1:
+			if self.mapper is not None:
+				if self._input_rotation_l:
+					lx, ly = self._state.lpad_x, self._state.lpad_y
+					rx, ry = self._state.rpad_x, self._state.rpad_y
+					s, c = sin(self._input_rotation_l), cos(self._input_rotation_l)
+					self._state.lpad_x = int(lx * c - ly * s)
+					self._state.lpad_y = int(lx * s + ly * c)
+					s, c = sin(self._input_rotation_r), cos(self._input_rotation_r)
+					self._state.rpad_x = int(rx * c - ry * s)
+					self._state.rpad_y = int(rx * s + ry * c)
+				
+				self.mapper.input(self, self._old_state, self._state)
+		elif r > 1:
+			raise IOError("Read Failed")
 
 
 def hidraw_test(filename):
@@ -254,12 +263,12 @@ def hidraw_test(filename):
 			print tup
 	
 	dev = HIDRaw(open(filename, "w+b"))
-	print dev.getInfo()
-	c = TestSC(FakeDaemon(), None, dev)
+	driver = Driver(FakeDaemon(), {})
+	c = TestSC(driver, None, dev)
 	c.configure()
 	c.flush()
 	while True:
-		c._timer()
+		c._input()
 
 
 def init(daemon, config):

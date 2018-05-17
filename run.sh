@@ -1,7 +1,8 @@
 #!/bin/bash
-C_MODULES=(uinput hiddrv)
+C_MODULES=(uinput hiddrv sc_by_bt)
 C_VERSION_uinput=9
 C_VERSION_hiddrv=5
+C_VERSION_sc_by_bt=5
 
 function rebuild_c_modules() {
 	echo "lib$1.so is outdated or missing, building one"
@@ -11,9 +12,11 @@ function rebuild_c_modules() {
 	# Next line generates string like 'lib.linux-x86_64-2.7', directory where libuinput.so was just generated
 	LIB=$( python2 -c 'import platform ; print "lib.linux-%s-%s.%s" % ((platform.machine(),) + platform.python_version_tuple()[0:2])' )
 	
-	if [ -e build/$LIB/libuinput.so ] ; then
-		rm build/$LIB/libuinput.so || exit 1
-	fi
+	for cmod in ${C_MODULES[@]}; do
+		if [ -e build/$LIB/lib${cmod}.so ] ; then
+			rm build/$LIB/lib${cmod}.so || exit 1
+		fi
+	done
 	
 	python2 setup.py build || exit 1
 	echo ""

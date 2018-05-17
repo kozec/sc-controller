@@ -189,7 +189,6 @@ class SCController(Controller):
 		if self.mapper:
 			if self._input_rotation_l:
 				lx, ly = idata.lpad_x, idata.lpad_y
-				rx, ry = idata.rpad_x, idata.rpad_y
 				if idata.buttons & SCButtons.LPADTOUCH:
 					s, c = sin(self._input_rotation_l), cos(self._input_rotation_l)
 					lx = int(idata.lpad_x * c - idata.lpad_y * s)
