@@ -67,5 +67,6 @@ if __name__ == "__main__":
 			ext_modules = [
 				Extension('libuinput', sources = ['scc/uinput.c']),
 				Extension('libhiddrv', sources = ['scc/drivers/hiddrv.c']),
+				Extension('libsc_by_bt', sources = ['scc/drivers/sc_by_bt.c']),
 			]
 	)

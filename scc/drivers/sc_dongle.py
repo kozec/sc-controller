@@ -138,6 +138,7 @@ class SCPacketType(IntEnum):
 	CALIBRATE_JOYSTICK = 0xbf
 	CALIBRATE_TRACKPAD = 0xa7
 	SET_AUDIO_INDICES = 0xc1
+	LIZARD_MODE = 0x8e
 	FEEDBACK = 0x8f
 	RESET = 0x95
 	GET_SERIAL = 0xAE
@@ -148,12 +149,14 @@ class SCPacketLength(IntEnum):
 	OFF = 0x04
 	FEEDBACK = 0x07
 	CONFIGURE = 0x15
+	CONFIGURE_BT = 0x0f
 	GET_SERIAL = 0x15
 
 
 class SCConfigType(IntEnum):
 	LED = 0x2d
 	CONFIGURE = 0x32
+	CONFIGURE_BT = 0x18
 
 
 class SCController(Controller):
@@ -168,7 +171,7 @@ class SCController(Controller):
 		self._led_level = 10
 		# TODO: Is serial really used anywhere?
 		self._serial = "0000000000"
-		self._id = self._generate_id()
+		self._id = self._generate_id() if driver else "-"
 		self._old_state = SCI_NULL
 		self._ccidx = ccidx
 	
@@ -186,7 +189,6 @@ class SCController(Controller):
 		if self.mapper:
 			if self._input_rotation_l:
 				lx, ly = idata.lpad_x, idata.lpad_y
-				rx, ry = idata.rpad_x, idata.rpad_y
 				if idata.buttons & SCButtons.LPADTOUCH:
 					s, c = sin(self._input_rotation_l), cos(self._input_rotation_l)
 					lx = int(idata.lpad_x * c - idata.lpad_y * s)
@@ -216,9 +218,10 @@ class SCController(Controller):
 		sc_by_cable generates ids in scBUS:PORT format.
 		"""
 		magic_number = 1
+		tp = self.get_type()
 		id = None
 		while id is None or id in self._driver.daemon.get_active_ids():
-			id = "sc%s" % (magic_number,)
+			id = "%s%s" % (tp, magic_number,)
 			magic_number += 1
 		return id
 	
@@ -289,31 +292,31 @@ class SCController(Controller):
 		 - uint8_t type - SCPacketType.CONFIGURE
 		 - uint8_t size - SCPacketLength.CONFIGURE or SCPacketLength.LED
 		 - uint8_t config_type - SCConfigType.CONFIGURE or SCConfigType.LED
-		 - 61b data
+		 - 61B data
 		
 		Format for data when configuring controller:
 		 - uint16	timeout
-		 - 13b		unknown1 - (0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30)
+		 - 13B		unknown1 - (0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30)
 		 - uint8	enable gyro sensor - 0x14 enables, 0x00 disables
-		 - 2b		unknown2 - (0x00, 0x2e)
-		 - 43b		unused
+		 - 2B		unknown2 - (0x00, 0x2e)
+		 - 43B		unused
 		 
 		Format for data when configuring led:
 		 - uint8	led
-		 - 60b		unused
+		 - 60B		unused
 		"""
 		
 		if idle_timeout is not None : self._idle_timeout = idle_timeout
 		if enable_gyros is not None : self._enable_gyros = enable_gyros
 		if led_level is not None: self._led_level = led_level
 		
-		unknown1 = b'\x18\x00\x001\x02\x00\x08\x07\x00\x07\x07\x000'
+		unknown1 = b'\x18\x00\x00\x31\x02\x00\x08\x07\x00\x07\x07\x00\x30'
 		unknown2 = b'\x00\x2e'
 		timeout1 = self._idle_timeout & 0x00FF
 		timeout2 = (self._idle_timeout & 0xFF00) >> 8
 		
 		# Timeout & Gyros
-		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBBB13sB2s43x',
+		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBBB13sB2s',
 			SCPacketType.CONFIGURE,
 			SCPacketLength.CONFIGURE,
 			SCConfigType.CONFIGURE,
@@ -325,7 +328,7 @@ class SCController(Controller):
 		# LED
 		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBB59x',
 			SCPacketType.CONFIGURE,
-			0x03,
+			SCPacketLength.LED,
 			SCConfigType.LED,
 			self._led_level
 		))

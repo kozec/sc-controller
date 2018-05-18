@@ -31,6 +31,7 @@ class Config(object):
 									# Anything but False means enabled here.
 			"sc_dongle": True,
 			"sc_by_cable": True,
+			"sc_by_bt": True,
 			"fake": False,			# Used for developement
 			"hiddrv": True,
 			"evdevdrv": True,

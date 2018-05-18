@@ -126,6 +126,14 @@ class EvdevController(Controller):
 		return self._id
 	
 	
+	def get_device_filename(self):
+		return self.device.fn
+	
+	
+	def get_device_name(self):
+		return self.device.name	
+	
+	
 	def _generate_id(self):
 		"""
 		ID is generated as 'ev' + upper_case(hex(crc32(device name + X)))
@@ -387,9 +395,9 @@ class EvdevDriver(object):
 			log.exception(e)
 			return
 		if controller is not None:
-			self._devices[controller.device.fn] = controller
+			self._devices[controller.get_device_filename()] = controller
 			self.daemon.add_controller(controller)
-			log.debug("Evdev device added: %s", controller.device.name)
+			log.debug("Evdev device added: %s", controller.get_device_name())
 	
 	def make_new_device(self, vendor_id, product_id, factory, repeat=0):
 		"""
@@ -418,7 +426,7 @@ class EvdevDriver(object):
 		if controller:
 			self._devices[controller.device.fn] = controller
 			self.daemon.add_controller(controller)
-			log.debug("Evdev device added: %s", controller.device.name)
+			log.debug("Evdev device added: %s", controller.get_device_name())
 	
 	
 	def device_removed(self, dev):
@@ -456,6 +464,7 @@ class EvdevDriver(object):
 				continue
 			if dev.fn not in self._devices:
 				key = (dev.info.bustype, dev.info.vendor, dev.info.product)
+				# print dev.fn, dev.info, key
 				config_file = os.path.join(get_config_path(), "devices",
 					"evdev-%s.json" % (dev.name.strip(),))
 				if key in self._known_ids:
