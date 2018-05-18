@@ -27,15 +27,16 @@ log = logging.getLogger("SCBT")
 
 class SCByBtControllerInput(ctypes.Structure):
 	_fields_ = [
+		('type', ctypes.c_uint16),
 		('buttons', ctypes.c_uint32),
 		('ltrig', ctypes.c_uint8),
 		('rtrig', ctypes.c_uint8),
-		('stick_x', ctypes.c_int16),
-		('stick_y', ctypes.c_int16),
-		('lpad_x', ctypes.c_int16),
-		('lpad_y', ctypes.c_int16),
-		('rpad_x', ctypes.c_int16),
-		('rpad_y', ctypes.c_int16),
+		('stick_x', ctypes.c_int32),
+		('stick_y', ctypes.c_int32),
+		('lpad_x', ctypes.c_int32),
+		('lpad_y', ctypes.c_int32),
+		('rpad_x', ctypes.c_int32),
+		('rpad_y', ctypes.c_int32),
 		('gpitch', ctypes.c_int32),
 		('groll', ctypes.c_int32),
 		('gyaw', ctypes.c_int32),
@@ -155,6 +156,7 @@ class SCByBt(SCController):
 		
 		unknown1 = b'\x00\x00\x31\x02\x00\x08\x07\x00\x07\x07\x00\x30'
 		unknown2 = b'\x00\x2e'
+		self._enable_gyros = True
 		
 		# Timeout & Gyros
 		self.overwrite_control(self._ccidx, struct.pack('>BBB12sB2s',
@@ -267,9 +269,8 @@ def hidraw_test(filename):
 	c.configure()
 	c.flush()
 	while True:
-		data = dev._device.read(PACKET_SIZE)
-		type, = struct.unpack("xxh16x", data)
-		print "".join([ hex(ord(i)).strip("0x").zfill(2) for i in data ])
+		c._input()
+		print { x[0]: getattr(c._state, x[0]) for x in c._state._fields_ }
 
 
 def init(daemon, config):

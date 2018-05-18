@@ -7,13 +7,16 @@
 #define SC_BY_BT_MODULE_VERSION 1
 
 enum BtInPacketType {
-	PING = 0x500,
-	BUTTON = 0x14,
-	TRIGGERS = 0x24,
-	STICK = 0x84,
-	LPAD = 0x104,
-	RPAD = 0x204,
+	BUTTON   = 0x0010,
+	TRIGGERS = 0x0020,
+	STICK    = 0x0080,
+	LPAD     = 0x0100,
+	RPAD     = 0x0200,
+	PING     = 0x0500,
+	GYRO     = 0x1800,
 };
+
+#define LONG_PACKET 0x80
 
 enum SCButtons {
 	// This may be moved later to something shared, only this c file needs it right now
@@ -40,15 +43,16 @@ enum SCButtons {
 };
 
 struct SCByBtControllerInput {
+	uint16_t type;
 	uint32_t buttons;
 	uint8_t ltrig;
 	uint8_t rtrig;
-	int16_t stick_x;
-	int16_t stick_y;
-	int16_t lpad_x;
-	int16_t lpad_y;
-	int16_t rpad_x;
-	int16_t rpad_y;
+	int32_t stick_x;
+	int32_t stick_y;
+	int32_t lpad_x;
+	int32_t lpad_y;
+	int32_t rpad_x;
+	int32_t rpad_y;
 	int32_t gpitch;
 	int32_t groll;
 	int32_t gyaw;
@@ -89,13 +93,35 @@ static uint32_t BT_BUTTONS[] = {
 	SCB_STICKPRESS,			// 22
 };
 
+static inline void debug_packet(char* buffer, size_t size) {
+	for(size_t i=0; i<size; i++)
+		printf("%02x", buffer[i] & 0xff);
+	printf("\n");
+}
 
-static char buffer[256];
+
+static char buffer[256], buffer2[256];
+static bool long_packet = 0;
 
 /** Returns 1 if state has changed, 2 on read error. */
 int read_input(int fileno, size_t packet_size, InputPtr state, InputPtr old_state) {
-	if (read(fileno, &buffer, packet_size) < packet_size)
-		return 2;
+	if (long_packet) {
+		// Previous packet had long flag set and this is its 2nd part
+		if (read(fileno, &buffer2, packet_size) < packet_size)
+			return 2;
+		memcpy(buffer + packet_size, buffer2 + 1, packet_size - 1);
+		long_packet = false;
+		// debug_packet(buffer, packet_size * 2);
+	} else {
+		if (read(fileno, &buffer, packet_size) < packet_size)
+			return 2;
+		long_packet = *((uint8_t*)(buffer + 1)) == LONG_PACKET;
+		if (long_packet) {
+			// This is 1st part of long packet
+			return 0;
+		}
+		// debug_packet(buffer, packet_size);
+	}
 	
 	int rv = 0;
 	uint16_t type = *((uint16_t*)(buffer + 2));
@@ -113,33 +139,45 @@ int read_input(int fileno, size_t packet_size, InputPtr state, InputPtr old_stat
 			bt_buttons >>= 1;
 		}
 		
-		if (rv == 0) { *old_state = *state; rv = 1; }
+		if (rv == 0) { *old_state = *state; state->type = type; rv = 1; }
 		state->buttons = sc_buttons;
 		data += 3;
 	}
 	if ((type & TRIGGERS) == TRIGGERS) {
-		if (rv == 0) { *old_state = *state; rv = 1; }
+		if (rv == 0) { *old_state = *state; state->type = type; rv = 1; }
 		state->ltrig = *(((uint8_t*)data) + 0);
 		state->rtrig = *(((uint8_t*)data) + 1);
 		data += 2;
 	}	
 	if ((type & STICK) == STICK) {
-		if (rv == 0) { *old_state = *state; rv = 1; }
+		if (rv == 0) { *old_state = *state; state->type = type; rv = 1; }
 		state->stick_x = *(((int16_t*)data) + 0);
 		state->stick_y = *(((int16_t*)data) + 1);
 		data += 4;
+		// printf(">>> %i %i\n", state->stick_x, state->stick_y );
 	}
 	if ((type & LPAD) == LPAD) {
-		if (rv == 0) { *old_state = *state; rv = 1; }
+		if (rv == 0) { *old_state = *state; state->type = type; rv = 1; }
 		state->lpad_x = *(((int16_t*)data) + 0);
 		state->lpad_y = *(((int16_t*)data) + 1);
 		data += 4;
 	}
 	if ((type & RPAD) == RPAD) {
-		if (rv == 0) { *old_state = *state; rv = 1; }
+		if (rv == 0) { *old_state = *state; state->type = type; rv = 1; }
 		state->rpad_x = *(((int16_t*)data) + 0);
 		state->rpad_y = *(((int16_t*)data) + 1);
 		data += 4;
+	}
+	if ((type & GYRO) == GYRO) {
+		if (rv == 0) { *old_state = *state; state->type = type; rv = 1; }
+		state->gpitch = *(((int16_t*)data) + 0);
+		state->groll = *(((int16_t*)data) + 1);
+		state->gyaw = *(((int16_t*)data) + 2);
+		state->q1 = *(((int16_t*)data) + 3);
+		state->q2 = *(((int16_t*)data) + 4);
+		state->q3 = *(((int16_t*)data) + 5);
+		state->q4 = *(((int16_t*)data) + 6);
+		data += 14;
 	}
 	
 	return rv;
