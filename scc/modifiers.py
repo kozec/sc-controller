@@ -542,7 +542,9 @@ class BallModifier(Modifier, WholeHapticAction):
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
 				t = time.time()
-				dt, self._lastTime = t - self._lastTime, t
+				dt = t - self._lastTime
+				if dt < 0.0075: return
+				self._lastTime = t
 				dx, dy = x - self._old_pos[0], self._old_pos[1] - y
 				self._add(dx / dt, dy / dt)
 				self.action.add(mapper, dx * self.speed[0], dy * self.speed[1])

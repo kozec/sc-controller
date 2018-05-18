@@ -74,6 +74,7 @@ class Driver:
 						i = dev.getInfo()
 						if (i.bustype, i.vendor, i.product) == (5, VENDOR_ID, PRODUCT_ID):
 							c = SCByBt(self, evdevdev, dev)
+							c.read_serial()
 							c.configure()
 							c.flush()
 							self._known[filename] = c
@@ -82,6 +83,13 @@ class Driver:
 						# Expected, user usually can't access most of those
 						pass
 		return None
+	
+	
+	def remove_controller(self, controller):
+		self.daemon.remove_controller(controller)
+		for filename, c in self._known.items():
+			del self._known[filename]
+			return
 
 
 class SCByBt(SCController):
@@ -89,7 +97,6 @@ class SCByBt(SCController):
 	
 	def __init__(self, driver, evdevdev, hidrawdev):
 		self._cmsg = []  # controll messages
-		self._rmsg = []  # requests (excepts response)
 		self._transfer_list = []
 		self.driver = driver
 		self.daemon = driver.daemon
@@ -101,9 +108,9 @@ class SCByBt(SCController):
 		self._device_name = hidrawdev.getName()
 		self._hidrawdev = hidrawdev
 		self._fileno = hidrawdev._device.fileno()
-		poller = self.daemon.get_poller()
-		if poller:
-			poller.register(self._fileno, poller.POLLIN, self._input)
+		self._poller = self.daemon.get_poller()
+		if self._poller:
+			self._poller.register(self._fileno, self._poller.POLLIN, self._input)
 	
 	
 	def get_device_filename(self):
@@ -156,7 +163,6 @@ class SCByBt(SCController):
 		
 		unknown1 = b'\x00\x00\x31\x02\x00\x08\x07\x00\x07\x07\x00\x30'
 		unknown2 = b'\x00\x2e'
-		self._enable_gyros = True
 		
 		# Timeout & Gyros
 		self.overwrite_control(self._ccidx, struct.pack('>BBB12sB2s',
@@ -174,6 +180,11 @@ class SCByBt(SCController):
 			SCConfigType.LED,
 			self._led_level
 		))
+	
+	
+	def read_serial(self):	
+		self._serial = (self._hidrawdev
+			.getPhysicalAddress().replace(":", ""))
 	
 	
 	def send_control(self, index, data):
@@ -199,12 +210,10 @@ class SCByBt(SCController):
 	
 	def make_request(self, index, callback, data, size=PACKET_SIZE):
 		"""
-		Schedules synchronous request that requires response.
-		Request is done ASAP and provided callback is called with recieved data.
+		There are no requests one can send to BT controller,
+		so this just causes exception.
 		"""
-		# Still BT, index still ignored
-		assert False
-		self._rmsg.append(( data, callback ))
+		raise RuntimeError("make_request over BT not implemented")
 	
 	
 	def flush(self):
@@ -212,15 +221,20 @@ class SCByBt(SCController):
 		while len(self._cmsg):
 			msg = self._cmsg.pop()
 			self._hidrawdev.sendFeatureReport(msg)
-		
-		while len(self._rmsg):
-			msg, callback = self._rmsg.pop()
-			# TODO: This
-			# callback(data)
 	
 	
 	def input(self, idata):
-		raise TypeError("This shouldn't be called, ever")
+		raise RuntimeError("This shouldn't be called, ever")
+	
+	
+	def close(self):
+		if self._poller:
+			self._poller.unregister(self._fileno)
+		self.driver.remove_controller(self)
+	
+	
+	def disconnected(self):
+		pass
 	
 	
 	def _input(self, *a):
@@ -240,8 +254,10 @@ class SCByBt(SCController):
 					self._state.rpad_y = int(rx * s + ry * c)
 				
 				self.mapper.input(self, self._old_state, self._state)
+			self.flush()
 		elif r > 1:
-			raise IOError("Read Failed")
+			log.error("Read Failed")
+			self.close()
 
 
 def hidraw_test(filename):
