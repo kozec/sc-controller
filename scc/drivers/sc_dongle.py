@@ -6,15 +6,14 @@ Called and used when Dongle is detected on USB bus.
 Handles one or multiple controllers connected to dongle.
 """
 
-from scc.lib import usb1
 from scc.lib import IntEnum
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from scc.constants import SCButtons, HapticPos
+from scc.constants import SCButtons
 from scc.controller import Controller
 from scc.config import Config
 from collections import namedtuple
 from math import pi as PI, sin, cos
-import struct, time, logging
+import struct, logging
 
 VENDOR_ID = 0x28de
 PRODUCT_ID = 0x1142

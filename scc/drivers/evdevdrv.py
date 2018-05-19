@@ -12,12 +12,6 @@ from scc.controller import Controller
 from scc.paths import get_config_path
 from scc.tools import clamp
 
-HAVE_INOTIFY = False
-try:
-	import pyinotify
-	HAVE_INOTIFY = True
-except ImportError:
-	pass
 
 HAVE_EVDEV = False
 try:
@@ -220,7 +214,7 @@ class EvdevController(Controller):
 			# TODO: Maybe check e.errno to determine exact error
 			# all of them are fatal for now
 			log.error(e)
-			_evdevdrv.device_removed(self.device)
+			_evdevdrv.device_removed(self.device.fn)
 		
 		if new_state is not self._state:
 			# Something got changed
@@ -362,28 +356,80 @@ class EvdevDriver(object):
 	def __init__(self):
 		self.daemon = None
 		self._devices = {}
-		self._new_devices = Queue.Queue()
-		self._callbacks_to_call = {}
-		self._lock = threading.Lock()
 		self._known_ids = {}
 		self._scan_thread = None
 		self._next_scan = None
+	
+	
+	def start(self):
+		self.daemon.get_device_monitor().add_callback("input", None, None,
+				self.handle_new_device, self.handle_removed_device)
 	
 	
 	def set_daemon(self, daemon):
 		self.daemon = daemon
 	
 	
-	def handle_new_device(self, dev, config_path, config):
+	@staticmethod
+	def get_event_node(syspath):
+		filename = syspath.split("/")[-1]
+		if not filename.startswith("event"):
+			return None
+		return "/dev/input/%s" % (filename, )
+	
+	
+	def handle_new_device(self, syspath, *bunchofnones):
+		# There is no way to get anything usefull from /sys/.../input node,
+		# but I'm interested about event devices here anyway
+		eventnode = EvdevDriver.get_event_node(syspath)
+		if eventnode is None: return False				# Not evdev
+		if eventnode in self._devices: return False		# Already handled
+		
 		try:
-			controller = EvdevController(self.daemon, dev, config_path, config)
+			dev = evdev.InputDevice(eventnode)
+			assert dev.fn == eventnode
+			key = (dev.info.bustype, dev.info.vendor, dev.info.product)
+			config_fn = "evdev-%s.json" % (dev.name.strip(),)
+			config_file = os.path.join(get_config_path(), "devices", config_fn)
 		except Exception, e:
-			log.debug("Failed to add evdev device: %s", e)
 			log.exception(e)
-			return
-		self._devices[dev.fn] = controller
-		self.daemon.add_controller(controller)
-		log.debug("Evdev device added: %s", dev.name)
+			return False
+		
+		if key in self._known_ids:
+			callback = self._known_ids[key]
+			# if callback not in self._callbacks_to_call:
+			# 	self._callbacks_to_call[callback] = []
+			# self._callbacks_to_call[callback].append(dev)
+		elif os.path.exists(config_file):
+			config = None
+			try:
+				config = json.loads(open(config_file, "r").read())
+			except Exception, e:
+				log.exception(e)
+				return False
+			try:
+				controller = EvdevController(self.daemon, dev, config_file, config)
+			except Exception, e:
+				log.debug("Failed to add evdev device: %s", e)
+				log.exception(e)
+				return False
+			self._devices[eventnode] = controller
+			self.daemon.add_controller(controller)
+			log.debug("Evdev device added: %s", dev.name)
+			return True
+	
+	
+	def handle_removed_device(self, syspath, *bunchofnones):
+		eventnode = EvdevDriver.get_event_node(syspath)
+		self.device_removed(eventnode)
+	
+	
+	def device_removed(self, eventnode):
+		if eventnode in self._devices:
+			controller = self._devices[eventnode]
+			del self._devices[eventnode]
+			self.daemon.remove_controller(controller)
+			controller.close()	
 	
 	
 	def handle_callback(self, callback, devices):
@@ -429,103 +475,11 @@ class EvdevDriver(object):
 			log.debug("Evdev device added: %s", controller.get_device_name())
 	
 	
-	def device_removed(self, dev):
-		if dev.fn in self._devices:
-			controller = self._devices[dev.fn]
-			del self._devices[dev.fn]
-			self.daemon.remove_controller(controller)
-			controller.close()
-	
-	
-	def scan(self):
-		# Scanning is slow, so it runs in thread
-		with self._lock:
-			if self._scan_thread is None:
-				self._scan_thread = threading.Thread(
-						target = self._scan_thread_target)
-				if HAVE_INOTIFY:
-					log.debug("Rescan started")
-				self._scan_thread.start()
-	
-	
 	def register_evdev_device(self, callback, bus_id, vendor_id, product_id):
-		with self._lock:
-			self._known_ids[bus_id, vendor_id, product_id] = callback
-			bus = "bluetooth" if bus_id == 5 else "bus 0x%x" % (bus_id,)
-			log.debug("Registered evdev driver for %.4x:%.4x on %s",
-							vendor_id, product_id, bus)
-	
-	
-	def _scan_thread_target(self):
-		for fname in evdev.list_devices():
-			try:
-				dev = evdev.InputDevice(fname)
-			except Exception:
-				continue
-			if dev.fn not in self._devices:
-				key = (dev.info.bustype, dev.info.vendor, dev.info.product)
-				# print dev.fn, dev.info, key
-				config_file = os.path.join(get_config_path(), "devices",
-					"evdev-%s.json" % (dev.name.strip(),))
-				if key in self._known_ids:
-					with self._lock:
-						callback = self._known_ids[key]
-						if callback not in self._callbacks_to_call:
-							self._callbacks_to_call[callback] = []
-						self._callbacks_to_call[callback].append(dev)
-				elif os.path.exists(config_file):
-					config = None
-					try:
-						config = json.loads(open(config_file, "r").read())
-						with self._lock:
-							self._new_devices.put(( dev, config_file, config ))
-					except Exception, e:
-						log.exception(e)
-		with self._lock:
-			self._scan_thread = None
-			self._next_scan = time.time() + EvdevDriver.SCAN_INTERVAL
-			if HAVE_INOTIFY:
-				if not self._new_devices.empty() or len(self._callbacks_to_call) > 0:
-					self.daemon.get_scheduler().schedule(0, self.add_new_devices)
-	
-	
-	def add_new_devices(self):
-		with self._lock:
-			while not self._new_devices.empty():
-				dev, config_file, config = self._new_devices.get()
-				if dev.fn not in self._devices:
-					self.handle_new_device(dev, config_file, config)
-			if len(self._callbacks_to_call) > 0:
-				items, self._callbacks_to_call = self._callbacks_to_call.items(), {}
-				for callback, devices in items:
-					self.handle_callback(callback, devices)
-	
-	
-	def start(self):
-		self.scan()
-	
-	
-	def _inotify_cb(self, *a):
-		self._notifier.read_events()
-		self._notifier.process_events() 
-		# I don't really care about events above,
-		# just scheduling rescan is enough here.
-		self.daemon.get_scheduler().schedule(1, self.scan)
-	
-	
-	def enable_inotify(self):
-		self._wm = pyinotify.WatchManager()
-		self._notifier = pyinotify.Notifier(self._wm, lambda *a, **b: False)
-		self._wm.add_watch('/dev/input', pyinotify.IN_CREATE, False)
-		self.daemon.get_poller().register(self._notifier._fd,
-				self.daemon.get_poller().POLLIN, self._inotify_cb)
-	
-	
-	def dumb_mainloop(self):
-		if time.time() > self._next_scan:
-			self.scan()
-		if not self._new_devices.empty() or len(self._callbacks_to_call) > 0:
-			self.add_new_devices()
+		self._known_ids[bus_id, vendor_id, product_id] = callback
+		bus = "bluetooth" if bus_id == 5 else "bus 0x%x" % (bus_id,)
+		log.debug("Registered evdev driver for %.4x:%.4x on %s",
+						vendor_id, product_id, bus)
 
 
 if HAVE_EVDEV:
@@ -543,13 +497,6 @@ def init(daemon, config):
 		return False
 	
 	_evdevdrv.set_daemon(daemon)
-	if HAVE_INOTIFY:
-		_evdevdrv.enable_inotify()
-		daemon.on_rescan(_evdevdrv.scan)
-	else:
-		log.warning("Failed to import pyinotify. Evdev driver will scan for new devices every 5 seconds.")
-		log.warning("Consider installing python-pyinotify package.")
-		daemon.add_mainloop(_evdevdrv.dumb_mainloop)
 	return True
 
 

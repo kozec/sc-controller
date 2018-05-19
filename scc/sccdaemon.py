@@ -12,6 +12,7 @@ from scc.constants import LEFT, RIGHT, STICK, CPAD
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.uinput import CannotCreateUInputException
 from scc.tools import set_logging_level, find_binary, clamp
+from scc.device_monitor import create_device_monitor
 from scc.custom import load_custom_module
 from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
@@ -44,6 +45,7 @@ class SCCDaemon(Daemon):
 		self.exiting = False
 		self.socket_file = socket_file
 		self.poller = Poller()
+		self.dev_monitor = create_device_monitor(self)
 		self.scheduler = Scheduler()
 		self.xdisplay = None
 		self.sserver = None			# UnixStreamServer instance
@@ -57,7 +59,7 @@ class SCCDaemon(Daemon):
 		self.osd_ids = {}
 		self.controllers = []
 		self.mainloops = [ self.poller.poll, self.scheduler.run ]
-		self.rescan_cbs = []
+		self.rescan_cbs = [ ]
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
@@ -75,17 +77,25 @@ class SCCDaemon(Daemon):
 		log.debug("Initializing drivers...")
 		cfg = Config()
 		self._to_start = set()  # del-eted later by start_drivers
+		to_init = []
 		for importer, modname, ispkg in pkgutil.walk_packages(path=drivers.__path__, onerror=lambda x: None):
 			if not ispkg and modname != "driver":
 				if modname == "usb" or cfg["drivers"].get(modname):
 					# 'usb' driver has to be always active
 					mod = getattr(__import__('scc.drivers.%s' % (modname,)).drivers, modname)
 					if hasattr(mod, "init"):
-						if getattr(mod, "init")(self, cfg):
-							if hasattr(mod, "start"):
-								self._to_start.add(getattr(mod, "start"))
+						to_init.append(mod)
 				else:
-					log.debug("Skipping disabled driver '%s'", modname)
+					log.warn("Skipping disabled driver '%s'", modname)
+		
+		from scc.drivers import MOD_INIT_ORDER as order
+		index_fn = lambda n: order.index(n) if n in order else 1024
+		sort_fn = lambda m: index_fn(m.__name__)
+		
+		for mod in sorted(to_init, key=sort_fn):
+			if getattr(mod, "init")(self, cfg):
+				if hasattr(mod, "start"):
+					self._to_start.add(getattr(mod, "start"))
 	
 	
 	def init_default_mapper(self):
@@ -122,6 +132,13 @@ class SCCDaemon(Daemon):
 		return self.poller
 	
 	
+	def get_device_monitor(self):
+		"""
+		Returns device monitor that can be used to listen for device adding and removals
+		"""
+		return self.dev_monitor
+	
+	
 	def get_scheduler(self):
 		""" Returns scheduler instance """
 		return self.scheduler
@@ -144,7 +161,7 @@ class SCCDaemon(Daemon):
 			self.mainloops.remove(fn)
 	
 	
-	def on_daemon_exit(self, fn):
+	def add_on_exit(self, fn):
 		"""
 		Adds function that is called just before daemon is stopped.
 		Usefull for cleanup.
@@ -153,7 +170,7 @@ class SCCDaemon(Daemon):
 			self.on_exit_cbs.append(fn)
 	
 	
-	def on_rescan(self, fn):
+	def add_on_rescan(self, fn):
 		"""
 		Adds function that is called when `Rescan.` message is recieved.
 		"""
@@ -604,6 +621,7 @@ class SCCDaemon(Daemon):
 		log.debug("Starting SCCDaemon...")
 		signal.signal(signal.SIGTERM, self.sigterm)
 		self.init_drivers()
+		self.dev_monitor.start()
 		load_custom_module(log)
 		self.default_mapper = self.init_default_mapper()
 		self.free_mappers.append(self.default_mapper)
@@ -613,6 +631,7 @@ class SCCDaemon(Daemon):
 		self.connect_x()
 		self.lock.release()
 		self.start_drivers()
+		self.dev_monitor.rescan()
 		
 		while True:
 			for fn in self.mainloops:
@@ -846,8 +865,9 @@ class SCCDaemon(Daemon):
 				except:
 					pass
 		elif message.startswith("Rescan."):
+			cbs = []
 			with self.lock:
-				cbs = [] + self.rescan_cbs
+				cbs += self.rescan_cbs
 				# Respond first
 				try:
 					client.wfile.write(b"OK.\n")
@@ -861,6 +881,12 @@ class SCCDaemon(Daemon):
 					cb()
 				except Exception, e:
 					log.exception(e)
+			# dev_monitor rescan has to be last to run
+			try:
+				self.dev_monitor.rescan()
+			except Exception, e:
+				log.exception(e)
+
 		elif message.startswith("Turnoff."):
 			with self.lock:
 				if client.mapper.get_controller():

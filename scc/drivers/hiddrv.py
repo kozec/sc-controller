@@ -4,7 +4,6 @@ SC Controller - Universal HID driver. For all three universal HID devices.
 
 Borrows bit of code and configuration from evdevdrv.
 """
-
 from scc.lib.hidparse import GlobalItem, LocalItem, MainItem, ItemType
 from scc.lib.hidparse import UsagePage, parse_report_descriptor
 from scc.lib.hidparse import GenericDesktopPage, AXES
@@ -575,7 +574,7 @@ class HIDDrv(object):
 				config_file = os.path.join(path, name)
 				try:
 					config = json.loads(open(config_file, "r").read())
-				except Exception, e:
+				except Exception:
 					log.warning("Ignoring file that cannot be parsed: %s", name)
 					continue
 				
@@ -604,6 +603,7 @@ def hiddrv_test(cls, args):
 	"""
 	from scc.poller import Poller
 	from scc.drivers.usb import _usb
+	from scc.device_monitor import create_device_monitor
 	from scc.scripts import InvalidArguments
 	
 	try:
@@ -618,7 +618,11 @@ def hiddrv_test(cls, args):
 		
 		def __init__(self):
 			self.poller = Poller()
+			self.dev_monitor = create_device_monitor(self)
 			self.exitcode = -1
+		
+		def get_device_monitor(self):
+			return self.dev_monitor
 		
 		def add_error(self, id, error):
 			fake_daemon.exitcode = 2
@@ -644,9 +648,11 @@ def hiddrv_test(cls, args):
 			print >>sys.stderr, "Failed to open device:", str(e)
 			fake_daemon.exitcode = 2
 	
+	_usb.set_daemon(fake_daemon)
 	register_hotplug_device(cb, vid, pid)
-	_usb._daemon = fake_daemon
+	fake_daemon.dev_monitor.start()
 	_usb.start()
+	fake_daemon.dev_monitor.rescan()
 	
 	if fake_daemon.exitcode < 0:
 		print "Ready"
@@ -657,11 +663,10 @@ def hiddrv_test(cls, args):
 	
 	return fake_daemon.exitcode
 
-
 def init(daemon, config):
 	""" Called from scc-daemon """
 	d = HIDDrv(daemon)
-	daemon.on_rescan(d.scan_files)
+	daemon.add_on_rescan(d.scan_files)
 	return True
 
 

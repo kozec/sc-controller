@@ -9,9 +9,9 @@ Shares a lot of classes with sc_dongle.py
 
 from scc.lib.usb1 import USBError
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from sc_dongle import ControllerInput, SCI_NULL, TUP_FORMAT
-from sc_dongle import SCStatus, SCPacketType, SCConfigType, SCController
-import struct, time, logging
+from sc_dongle import ControllerInput, TUP_FORMAT
+from sc_dongle import SCStatus, SCController
+import struct, logging
 
 VENDOR_ID = 0x28de
 PRODUCT_ID = 0x1102
