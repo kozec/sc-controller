@@ -605,14 +605,13 @@ def hiddrv_test(cls, args):
 	from scc.poller import Poller
 	from scc.drivers.usb import _usb
 	from scc.scripts import InvalidArguments
-	from scc.tools import init_logging, set_logging_level
 	
 	try:
 		if ":" in args[0]:
 			args[0:1] = args[0].split(":")
 		vid = int(args[0], 16)
 		pid = int(args[1], 16)
-	except Exception, e:
+	except Exception:
 		raise InvalidArguments()
 	
 	class FakeDaemon(object):

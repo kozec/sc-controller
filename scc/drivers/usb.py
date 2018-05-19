@@ -11,7 +11,7 @@ Callback has to return created USBDevice instance or None.
 """
 from scc.lib import usb1
 
-import struct, os, time, select, traceback, atexit, logging
+import time, traceback, logging
 log = logging.getLogger("USB")
 
 class USBDevice(object):
@@ -161,7 +161,7 @@ class USBDevice(object):
 			try:
 				self.handle.releaseInterface(number)
 				self.handle.attachKernelDriver(number)
-			except usb1.USBErrorNoDevice, e:
+			except usb1.USBErrorNoDevice:
 				# Safe to ignore, happens when USB is removed
 				pass
 		self._claimed = []

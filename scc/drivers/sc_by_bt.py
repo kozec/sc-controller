@@ -8,15 +8,14 @@ Shares a lot of classes with sc_dongle.py
 """
 
 from scc.lib.hidraw import HIDRaw
-from scc.lib import IntEnum
 from scc.drivers.evdevdrv import register_evdev_device
-from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
+from scc.drivers.evdevdrv import HAVE_EVDEV
 from scc.constants import ControllerFlags
 from scc.tools import find_library
 from sc_dongle import SCPacketType, SCPacketLength, SCConfigType
 from sc_dongle import SCController
-from math import pi as PI, sin, cos
-import os, sys, time, struct, ctypes, logging
+from math import sin, cos
+import os, sys, struct, ctypes, logging
 
 VENDOR_ID = 0x28de
 PRODUCT_ID = 0x1106

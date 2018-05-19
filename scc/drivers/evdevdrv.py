@@ -10,7 +10,6 @@ from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, TRIGGER_MIN, TRIGGER_MAX
 from scc.constants import SCButtons, ControllerFlags
 from scc.controller import Controller
 from scc.paths import get_config_path
-from scc.config import Config
 from scc.tools import clamp
 
 HAVE_INOTIFY = False
@@ -399,6 +398,7 @@ class EvdevDriver(object):
 			self.daemon.add_controller(controller)
 			log.debug("Evdev device added: %s", controller.get_device_name())
 	
+	
 	def make_new_device(self, vendor_id, product_id, factory, repeat=0):
 		"""
 		Similar to handle_new_device, but meant for use by other drivers.
@@ -596,9 +596,7 @@ def evdevdrv_test(args):
 	Small input test used by GUI while setting up the device.
 	Output and usage matches one from hiddrv.
 	"""
-	from scc.poller import Poller
 	from scc.scripts import InvalidArguments
-	from scc.tools import init_logging, set_logging_level
 	
 	try:
 		path = args[0]

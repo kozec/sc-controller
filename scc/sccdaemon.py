@@ -3,17 +3,14 @@
 SC-Controller - Daemon class
 """
 from __future__ import unicode_literals
-from scc.tools import _
 
 from scc.lib import xwrappers as X
 from scc.lib import xinput
 from scc.lib.daemon import Daemon
-from scc.lib.usb1 import USBError
 from scc.constants import SCButtons, DAEMON_VERSION, HapticPos
 from scc.constants import LEFT, RIGHT, STICK, CPAD
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
-from scc.uinput import Keys, Axes, CannotCreateUInputException
-from scc.paths import get_menus_path, get_default_menus_path
+from scc.uinput import CannotCreateUInputException
 from scc.tools import set_logging_level, find_binary, clamp
 from scc.custom import load_custom_module
 from scc.gestures import GestureDetector
@@ -29,7 +26,7 @@ from scc.mapper import Mapper
 from scc import drivers
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
-import os, sys, pkgutil, signal, socket, select, weakref, time, json, logging
+import os, sys, pkgutil, signal, time, json, logging
 import threading, traceback, subprocess
 log = logging.getLogger("SCCDaemon")
 tlog = logging.getLogger("Socket Thread")
@@ -1189,7 +1186,7 @@ class ReportingAction(Action):
 		if mapper.get_controller():
 			self._report("Event: %s %s %s %s\n" % (
 				mapper.get_controller().get_id(),
-				self.what.name, position, old_position
+				nameof(self.what), position, old_position
 			))
 	
 	
@@ -1203,7 +1200,7 @@ class ReportingAction(Action):
 			else:
 				self._report("Event: %s %s %s\n" % (
 					mapper.get_controller().get_id(),
-					self.what.name,
+					nameof(self.what),
 					number
 				))
 	
