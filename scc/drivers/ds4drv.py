@@ -9,9 +9,9 @@ from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData
 from scc.drivers.hiddrv import HIDController, HIDDecoder, hiddrv_test
 from scc.drivers.hiddrv import AxisMode, AxisDataUnion, AxisModeData
 from scc.drivers.hiddrv import HatswitchModeData, _lib
-from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController
-from scc.drivers.evdevdrv import make_new_device, get_axes
-from scc.drivers.evdevdrv import register_evdev_device
+from scc.drivers.evdevdrv import HAVE_EVDEV, EvdevController, get_axes
+from scc.drivers.evdevdrv import get_evdev_devices_from_syspath
+from scc.drivers.evdevdrv import make_new_device
 from scc.drivers.usb import register_hotplug_device
 from scc.constants import SCButtons, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
@@ -362,14 +362,12 @@ def init(daemon, config):
 	def hid_callback(device, handle):
 		return DS4Controller(device, daemon, handle, None, None)
 	
-	def evdev_callback(evdevdevices):
-		return evdev_make_device_callback(daemon, evdevdevices)
-	
-	def evdev_make_device_callback(daemon, evdevdevices):
+	def make_evdev_device(syspath, *whatever):
+		devices = get_evdev_devices_from_syspath(syspath)
 		# With kernel 4.10 or later, PS4 controller pretends to be 3 different devices.
 		# 1st, determining which one is actual controller is needed
 		controllerdevice = None
-		for device in evdevdevices:
+		for device in devices:
 			count = len(get_axes(device))
 			if count == 8:
 				# 8 axes - Controller
@@ -377,11 +375,10 @@ def init(daemon, config):
 		if not controllerdevice:
 			log.warning("Failed to determine controller device")
 			return None
-		# 2nd, find motion sensor and touchpad with physical address matching
-		# controllerdevice
+		# 2nd, find motion sensor and touchpad with physical address matching controllerdevice
 		gyro, touchpad = None, None
 		phys = device.phys.split("/")[0]
-		for device in evdevdevices:
+		for device in devices:
 			if device.phys.startswith(phys):
 				count = len(get_axes(device))
 				if count == 6:
@@ -391,13 +388,13 @@ def init(daemon, config):
 					# 4 axes - Touchpad
 					touchpad = device
 		# 3rd, do a magic
-		return DS4EvdevController(daemon, controllerdevice, gyro, touchpad)
+		return make_new_device(DS4EvdevController, controllerdevice, gyro, touchpad)
 	
 	
-	def fail_cb(vid, pid):
+	def fail_cb(syspath, vid, pid):
 		if HAVE_EVDEV:
 			log.warning("Failed to acquire USB device, falling back to evdev driver. This is far from optimal.")
-			make_new_device(vid, pid, evdev_make_device_callback)
+			make_evdev_device(syspath)
 		else:
 			log.error("Failed to acquire USB device and evdev is not available. Everything is lost and DS4 support disabled.")
 			# TODO: Maybe add_error here, but error reporting needs little rework so it's not threated as fatal
@@ -406,7 +403,8 @@ def init(daemon, config):
 	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
 		register_hotplug_device(hid_callback, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
 		if HAVE_EVDEV and config["drivers"].get("evdevdrv"):
-			register_evdev_device(evdev_callback, 0x5, VENDOR_ID, PRODUCT_ID)
+			daemon.get_device_monitor().add_callback("bluetooth",
+							VENDOR_ID, PRODUCT_ID, make_evdev_device, None)
 		return True
 	else:
 		log.warning("Neither HID nor Evdev driver is enabled, DS4 support cannot be enabled.")

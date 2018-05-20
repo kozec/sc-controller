@@ -8,8 +8,6 @@ Shares a lot of classes with sc_dongle.py
 """
 
 from scc.lib.hidraw import HIDRaw
-from scc.drivers.evdevdrv import register_evdev_device
-from scc.drivers.evdevdrv import HAVE_EVDEV
 from scc.constants import ControllerFlags
 from scc.tools import find_library
 from sc_dongle import SCPacketType, SCPacketLength, SCConfigType
@@ -53,48 +51,32 @@ class Driver:
 	# TODO: It should be possible to merge this, usb and hiddrv
 	
 	def __init__(self, daemon, config):
-		self._known = {}
 		self.config = config
 		self.daemon = daemon
 		self._lib = find_library('libsc_by_bt')
 		read_input = self._lib.read_input
 		read_input.restype = ctypes.c_int
 		read_input.argtypes = [ ctypes.c_int, ctypes.c_size_t, InputPtr, InputPtr ]
+		daemon.get_device_monitor().add_callback("bluetooth",
+				VENDOR_ID, PRODUCT_ID, self.new_device_callback, None)
 	
 	
-	def new_device_callback(self, evdevdevices):
-		# Evdev is used only to detect that new device is connected,
-		# communication goes through hidraw
-		for evdevdev in evdevdevices:
-			for filename in os.listdir("/dev/"):
-				if filename.startswith("hidraw") and filename not in self._known:
-					try:
-						dev = HIDRaw(open(os.path.join("/dev/", filename), "w+b"))
-						i = dev.getInfo()
-						if (i.bustype, i.vendor, i.product) == (5, VENDOR_ID, PRODUCT_ID):
-							c = SCByBt(self, evdevdev, dev)
-							c.read_serial()
-							c.configure()
-							c.flush()
-							self._known[filename] = c
-							return c
-					except (OSError, IOError):
-						# Expected, user usually can't access most of those
-						pass
-		return None
-	
-	
-	def remove_controller(self, controller):
-		self.daemon.remove_controller(controller)
-		for filename, c in self._known.items():
-			del self._known[filename]
-			return
+	def new_device_callback(self, syspath, *whatever):
+		hidrawname = self.daemon.get_device_monitor().get_hidraw(syspath)
+		if hidrawname is None:
+			return None
+		try:
+			dev = HIDRaw(open(os.path.join("/dev/", hidrawname), "w+b"))
+			return SCByBt(self, syspath, dev)
+		except Exception, e:
+			log.exception(e)
+			return None
 
 
 class SCByBt(SCController):
 	flags = 0 | ControllerFlags.SEPARATE_STICK
 	
-	def __init__(self, driver, evdevdev, hidrawdev):
+	def __init__(self, driver, syspath, hidrawdev):
 		self._cmsg = []  # controll messages
 		self._transfer_list = []
 		self.driver = driver
@@ -103,18 +85,18 @@ class SCByBt(SCController):
 		self._old_state = SCByBtControllerInput()
 		self._state = SCByBtControllerInput()
 		self._led_level = 30
-		self._evdevdev_fn = evdevdev.fn if evdevdev else "unknown"
 		self._device_name = hidrawdev.getName()
 		self._hidrawdev = hidrawdev
 		self._fileno = hidrawdev._device.fileno()
 		self._poller = self.daemon.get_poller()
 		if self._poller:
 			self._poller.register(self._fileno, self._poller.POLLIN, self._input)
-	
-	
-	def get_device_filename(self):
-		# Method needed by evdev driver
-		return self._evdevdev_fn
+		self.daemon.get_device_monitor().add_remove_callback(
+			syspath, self.close)
+		self.read_serial()
+		self.configure()
+		self.flush()
+		self.daemon.add_controller(self)
 	
 	
 	def get_device_name(self):
@@ -226,10 +208,11 @@ class SCByBt(SCController):
 		raise RuntimeError("This shouldn't be called, ever")
 	
 	
-	def close(self):
+	def close(self, *a):
 		if self._poller:
 			self._poller.unregister(self._fileno)
-		self.driver.remove_controller(self)
+		self.daemon.remove_controller(self)
+		self._hidrawdev._device.close()
 	
 	
 	def disconnected(self):
@@ -287,15 +270,16 @@ def hidraw_test(filename):
 		c._input()
 		print { x[0]: getattr(c._state, x[0]) for x in c._state._fields_ }
 
+_drv = None
+
 
 def init(daemon, config):
 	""" Registers hotplug callback for controller dongle """
 
-	if not (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
-		log.warning("Evdev driver is not enabled, Steam Controller over Bluetooth support cannot be enabled.")
-		return False
-	drv = Driver(daemon, config)
-	register_evdev_device(drv.new_device_callback, 0x5, VENDOR_ID, PRODUCT_ID)
+	# if not (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
+	# 	log.warning("Evdev driver is not enabled, Steam Controller over Bluetooth support cannot be enabled.")
+	# 	return False
+	_drv = Driver(daemon, config)
 	return True
 
 

@@ -317,37 +317,6 @@ class Monitor:
 		return event
 
 
-def get_vendor_product(syspath):
-	"""
-	For given syspath, reads and returns (vendor_id, product_id) as ints.
-	
-	May throw all kinds of OSErrors or IOErrors
-	"""
-	vendor  = int(open(os.path.join(syspath, "idVendor")).read().strip(), 16)
-	product = int(open(os.path.join(syspath, "idProduct")).read().strip(), 16)
-	return vendor, product
-
-
-def get_usb_address(syspath):
-	"""
-	For given syspath, reads and returns (busnum, devnum) as ints.
-	
-	May throw all kinds of OSErrors or IOErrors
-	"""
-	busnum  = int(open(os.path.join(syspath, "busnum")).read().strip())
-	devnum = int(open(os.path.join(syspath, "devnum")).read().strip())
-	return busnum, devnum
-
-
-def get_subsystem(syspath):
-	"""
-	For given syspath, reads and returns subsystem as string.
-	
-	May throw OSError if directory is not readable.
-	"""
-	return os.readlink(os.path.join(syspath, "subsystem")).split("/")[-1]
-
-
 if __name__ == "__main__":
 	udev = Eudev()
 	en = udev.enumerate().match_subsystem("hidraw")

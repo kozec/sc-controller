@@ -10,7 +10,6 @@ Callback will be called with following arguments:
 Callback has to return created USBDevice instance or None.
 """
 from scc.lib import usb1
-from scc.lib.eudevmonitor import get_usb_address
 
 import time, traceback, logging
 log = logging.getLogger("USB")
@@ -229,7 +228,7 @@ class USBDriver(object):
 		handle = None
 		if tp not in self._known_ids:
 			return
-		bus, dev = get_usb_address(syspath)
+		bus, dev = self.daemon.get_device_monitor().get_usb_address(syspath)
 		for device in self._ctx.getDeviceIterator():
 			if (bus, dev) == (device.getBusNumber(), device.getDeviceAddress()):
 				try:
@@ -238,7 +237,7 @@ class USBDriver(object):
 				except usb1.USBError, e:
 					log.error("Failed to open USB device %.4x:%.4x : %s", tp[0], tp[1], e)
 					if tp in self._fail_cbs:
-						self._fail_cbs[tp](*tp)
+						self._fail_cbs[tp](syspath, *tp)
 						return
 					if self.daemon:
 						self.daemon.add_error(

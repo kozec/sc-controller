@@ -26,7 +26,7 @@ except ImportError:
 	ecodes = FakeECodes()
 
 from collections import namedtuple
-import threading, Queue, os, sys, time, binascii, json, logging
+import os, sys, binascii, json, logging
 log = logging.getLogger("evdev")
 
 TRIGGERS = "ltrig", "rtrig"
@@ -356,7 +356,6 @@ class EvdevDriver(object):
 	def __init__(self):
 		self.daemon = None
 		self._devices = {}
-		self._known_ids = {}
 		self._scan_thread = None
 		self._next_scan = None
 	
@@ -388,19 +387,13 @@ class EvdevDriver(object):
 		try:
 			dev = evdev.InputDevice(eventnode)
 			assert dev.fn == eventnode
-			key = (dev.info.bustype, dev.info.vendor, dev.info.product)
 			config_fn = "evdev-%s.json" % (dev.name.strip(),)
 			config_file = os.path.join(get_config_path(), "devices", config_fn)
 		except Exception, e:
 			log.exception(e)
 			return False
 		
-		if key in self._known_ids:
-			callback = self._known_ids[key]
-			# if callback not in self._callbacks_to_call:
-			# 	self._callbacks_to_call[callback] = []
-			# self._callbacks_to_call[callback].append(dev)
-		elif os.path.exists(config_file):
+		if os.path.exists(config_file):
 			config = None
 			try:
 				config = json.loads(open(config_file, "r").read())
@@ -445,41 +438,21 @@ class EvdevDriver(object):
 			log.debug("Evdev device added: %s", controller.get_device_name())
 	
 	
-	def make_new_device(self, vendor_id, product_id, factory, repeat=0):
+	def make_new_device(self, factory, evdevdevice, *userdata):
 		"""
 		Similar to handle_new_device, but meant for use by other drivers.
 		See global make_new_device method for more info
 		"""
-		devices = []
-		for fname in evdev.list_devices():
-			try:
-				dev = evdev.InputDevice(fname)
-			except Exception:
-				continue
-			if dev.fn not in self._devices:
-				if vendor_id == dev.info.vendor and product_id == dev.info.product:
-					devices.append(dev)
-		if len(devices) == 0 and repeat < 2:
-			# Sometimes evdev is slow; Give it another try
-			self.daemon.get_scheduler().schedule(1, self.make_new_device, vendor_id, product_id, factory, repeat + 1)
-			return
-		
 		try:
-			controller = factory(self.daemon, devices)
+			controller = factory(self.daemon, evdevdevice, *userdata)
 		except IOError, e:
 			print >>sys.stderr, "Failed to open device:", str(e)
-			return
+			return None
 		if controller:
-			self._devices[controller.device.fn] = controller
+			self._devices[evdevdevice.fn] = controller
 			self.daemon.add_controller(controller)
 			log.debug("Evdev device added: %s", controller.get_device_name())
-	
-	
-	def register_evdev_device(self, callback, bus_id, vendor_id, product_id):
-		self._known_ids[bus_id, vendor_id, product_id] = callback
-		bus = "bluetooth" if bus_id == 5 else "bus 0x%x" % (bus_id,)
-		log.debug("Registered evdev driver for %.4x:%.4x on %s",
-						vendor_id, product_id, bus)
+		return controller
 
 
 if HAVE_EVDEV:
@@ -500,36 +473,40 @@ def init(daemon, config):
 	return True
 
 
-def make_new_device(vendor_id, product_id, factory):
+def make_new_device(factory, evdevdevice, *userdata):
 	"""
-	Searchs for device with given USB vendor and product_id and if it's
-	found, calls given factory method to create new EvdevController instance.
-	Everything after is handled as if instance was created by evdev driver.
+	Creates and registers device using given evdev device and given factory method.
+	Factory is called as factory(daemon, device, *userdata) and if it returns device,
+	this device is added into watch list, so it can be closed automatically.
 	
-	Does scan on main thread, so it may cause small lag.
-	
-	Factory is called as factory(daemon, devices), where devices is list of
-	matching devices. Factory should return None or EvdevController instance.
-	
-	Returns created instance or None if no matching device was found.
+	Returns whatever Factory returned.
 	"""
 	assert HAVE_EVDEV, "evdev driver is not available"
-	return _evdevdrv.make_new_device(vendor_id, product_id, factory)
+	return _evdevdrv.make_new_device(factory, evdevdevice, *userdata)
 
 
-def register_evdev_device(cb, bus_id, vendor_id, product_id):
+def get_evdev_devices_from_syspath(syspath):
 	"""
-	Similar to register_hotplug_device in usb driver, this method registers
-	callback that allows other drivers to be notified when
-	new device is connected. Unlike register_hotplug_device, callback method
-	recieves list of all matching devices at once instead of being called
-	repeadedly.
-	
-	Using this method makes sense mostly for bus_id 0x5, bluetooth,
-	as other option is already covered by USB driver.
+	For given syspath, returns all assotiated event devices.
 	"""
 	assert HAVE_EVDEV, "evdev driver is not available"
-	return _evdevdrv.register_evdev_device(cb, bus_id, vendor_id, product_id)
+	rv = []
+	for name in os.listdir(syspath):
+		path = os.path.join(syspath, name)
+		if name.startswith("event"):
+			eventnode = EvdevDriver.get_event_node(path)
+			if eventnode is not None:
+				try:
+					dev = evdev.InputDevice(eventnode)
+					assert dev.fn == eventnode
+					rv.append(dev)
+				except Exception, e:
+					log.exception(e)
+					continue
+		else:
+			if os.path.isdir(path) and not os.path.islink(path):
+				rv += get_evdev_devices_from_syspath(path)
+	return rv
 
 
 def get_axes(dev):
@@ -537,6 +514,7 @@ def get_axes(dev):
 	assert HAVE_EVDEV, "evdev driver is not available"
 	caps = dev.capabilities(verbose=False)
 	return [ axis for (axis, trash) in caps.get(ecodes.EV_ABS, []) ]
+
 
 def evdevdrv_test(args):
 	"""
