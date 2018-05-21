@@ -53,12 +53,37 @@ class Driver:
 	def __init__(self, daemon, config):
 		self.config = config
 		self.daemon = daemon
+		self.reconnecting = set()
 		self._lib = find_library('libsc_by_bt')
 		read_input = self._lib.read_input
 		read_input.restype = ctypes.c_int
 		read_input.argtypes = [ ctypes.c_int, ctypes.c_size_t, InputPtr, InputPtr ]
 		daemon.get_device_monitor().add_callback("bluetooth",
 				VENDOR_ID, PRODUCT_ID, self.new_device_callback, None)
+	
+	
+	def retry(self, syspath):
+		"""
+		Schedules reconnecting controller after read operation fails.
+		"""
+		def reconnect(*a):
+			if syspath in self.reconnecting:
+				self.reconnecting.remove(syspath)
+				log.debug("Reconnecting to controller...")
+				self.new_device_callback(syspath)
+		
+		self.reconnecting.add(syspath)
+		self.daemon.get_device_monitor().add_remove_callback(
+			syspath, self._retry_cancel)
+		self.daemon.get_scheduler().schedule(1.0, reconnect)
+	
+	
+	def _retry_cancel(self, syspath):
+		"""
+		Cancels reconnection scheduled by 'retry'. Called when device monitor
+		reports controller (as in BT device) being disconencted.
+		"""
+		self.reconnecting.remove(syspath)
 	
 	
 	def new_device_callback(self, syspath, *whatever):
@@ -81,6 +106,7 @@ class SCByBt(SCController):
 		self._transfer_list = []
 		self.driver = driver
 		self.daemon = driver.daemon
+		self.syspath = syspath
 		SCController.__init__(self, self, -1, -1)
 		self._old_state = SCByBtControllerInput()
 		self._state = SCByBtControllerInput()
@@ -240,6 +266,7 @@ class SCByBt(SCController):
 		elif r > 1:
 			log.error("Read Failed")
 			self.close()
+			self.driver.retry(self.syspath)
 
 
 def hidraw_test(filename):

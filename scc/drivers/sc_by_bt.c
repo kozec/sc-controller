@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <limits.h>
 
-#define SC_BY_BT_MODULE_VERSION 1
+#define SC_BY_BT_MODULE_VERSION 2
 
 enum BtInPacketType {
 	BUTTON   = 0x0010,
@@ -126,10 +126,6 @@ int read_input(int fileno, size_t packet_size, InputPtr state, InputPtr old_stat
 	int rv = 0;
 	uint16_t type = *((uint16_t*)(buffer + 2));
 	char* data = &buffer[4];
-	if ((type & PING) == PING) {
-		// Ignored packet
-		return 0;
-	}
 	if ((type & BUTTON) == BUTTON) {
 		uint32_t bt_buttons = *((uint32_t*)data);
 		uint32_t sc_buttons = 0;
