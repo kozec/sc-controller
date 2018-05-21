@@ -127,11 +127,13 @@ class UserDataManager(object):
 			except Exception, e:
 				# https://github.com/kozec/sc-controller/issues/50
 				log.warning("enumerate_children_async failed: %s", e)
-				files = self._sync_load([ pdir for pdir, enumerator in data])
+				files = self._sync_load([ pdir for pdir, enumerator in data
+											if pdir is not None])
 			if len(files) < 1:
 				# https://github.com/kozec/sc-controller/issues/327
 				log.warning("enumerate_children_async returned no files")
-				files = self._sync_load([ pdir for pdir, enumerator in data])
+				files = self._sync_load([ pdir for pdir, enumerator in data
+											if pdir is not None])
 			
 			callback(files.values())
 	
