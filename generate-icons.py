@@ -18,6 +18,7 @@ RECOLORS = {							# Defines set of hue shifts for controller-icons
 }
 #	
 
+'''
 # Generate svg state icons
 for size in (22, 24):
 	for state in ('alive', 'dead', 'error', 'unknown'):
@@ -30,6 +31,7 @@ for size in (22, 24):
 			"--export-width=%s" % (size,),
 			"--export-height=%s" % (size,) ])
 
+'''
 
 def html_to_rgb(html):
 	""" Converts #rrggbbaa or #rrggbb to r, g, b,a in (0,1) ranges """
@@ -50,6 +52,8 @@ def rgb_to_html(r,g,b):
 
 def recolor(tree, add):
 	""" Recursive part of recolor_strokes and recolor_background """
+	if 'id' in tree.attrib and "overlay" in tree.attrib['id']:
+		return
 	for child in tree:
 		if 'style' in child.attrib:
 			styles = { a : b
@@ -76,7 +80,7 @@ def recolor(tree, add):
 
 # Generate different colors for controller icons
 ET.register_namespace("","http://www.w3.org/2000/svg")
-for tp in ("sc", "fake", "ds4", "hid"):
+for tp in ("sc", "scbt", "fake", "ds4", "hid"):
 	# Read svg and parse it
 	data = file("%s/%s-0.svg" % (CICONS, tp), "r").read()
 	# Create recolored images
@@ -85,4 +89,6 @@ for tp in ("sc", "fake", "ds4", "hid"):
 		# Walk recursively and recolor everything that has color
 		recolor(tree, RECOLORS[key])
 		
-		file("%s/%s-%s.svg" % (CICONS, tp, key), "w").write(ET.tostring(tree))
+		out = "%s/%s-%s.svg" % (CICONS, tp, key)
+		file(out, "w").write(ET.tostring(tree))
+		print out
