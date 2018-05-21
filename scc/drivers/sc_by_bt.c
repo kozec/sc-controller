@@ -94,7 +94,8 @@ static uint32_t BT_BUTTONS[] = {
 };
 
 static inline void debug_packet(char* buffer, size_t size) {
-	for(size_t i=0; i<size; i++)
+	size_t i;
+	for(i=0; i<size; i++)
 		printf("%02x", buffer[i] & 0xff);
 	printf("\n");
 }
@@ -124,12 +125,13 @@ int read_input(int fileno, size_t packet_size, InputPtr state, InputPtr old_stat
 	}
 	
 	int rv = 0;
+	int bit;
 	uint16_t type = *((uint16_t*)(buffer + 2));
 	char* data = &buffer[4];
 	if ((type & BUTTON) == BUTTON) {
 		uint32_t bt_buttons = *((uint32_t*)data);
 		uint32_t sc_buttons = 0;
-		for (int bit=0; bit<BT_BUTTONS_BITS; bit++) {
+		for (bit=0; bit<BT_BUTTONS_BITS; bit++) {
 			if ((bt_buttons & 1) != 0)
 				sc_buttons |= BT_BUTTONS[bit];
 			bt_buttons >>= 1;
