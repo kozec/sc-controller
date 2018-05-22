@@ -12,8 +12,8 @@ enum BtInPacketType {
 	STICK    = 0x0080,
 	LPAD     = 0x0100,
 	RPAD     = 0x0200,
-	PING     = 0x0500,
 	GYRO     = 0x1800,
+	PING     = 0x5000,
 };
 
 #define LONG_PACKET 0x80
@@ -128,6 +128,10 @@ int read_input(int fileno, size_t packet_size, InputPtr state, InputPtr old_stat
 	int bit;
 	uint16_t type = *((uint16_t*)(buffer + 2));
 	char* data = &buffer[4];
+	if ((type & PING) == PING) {
+		// PING packet does nothing
+		return 0;
+	}
 	if ((type & BUTTON) == BUTTON) {
 		uint32_t bt_buttons = *((uint32_t*)data);
 		uint32_t sc_buttons = 0;
@@ -152,7 +156,6 @@ int read_input(int fileno, size_t packet_size, InputPtr state, InputPtr old_stat
 		state->stick_x = *(((int16_t*)data) + 0);
 		state->stick_y = *(((int16_t*)data) + 1);
 		data += 4;
-		// printf(">>> %i %i\n", state->stick_x, state->stick_y );
 	}
 	if ((type & LPAD) == LPAD) {
 		if (rv == 0) { *old_state = *state; state->type = type; rv = 1; }
