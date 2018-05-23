@@ -95,6 +95,8 @@ class DeviceMonitor(Monitor):
 			return
 		cl = hci_conn_list_req()
 		cl.dev_id = btlib.hci_get_route(ctypes.c_void_p(0))
+		if cl.dev_id < 0 or cl.dev_id > 65534:
+			return
 		cl.conn_num = 256
 		
 		s = btlib.hci_open_dev(cl.dev_id)
