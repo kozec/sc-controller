@@ -251,12 +251,13 @@ class SCByBt(SCController):
 		
 		if r == 1:
 			if self.mapper is not None:
-				if self._input_rotation_l:
+				if self._input_rotation_l and (self._state.type & 0x0100) != 0:
 					lx, ly = self._state.lpad_x, self._state.lpad_y
-					rx, ry = self._state.rpad_x, self._state.rpad_y
 					s, c = sin(self._input_rotation_l), cos(self._input_rotation_l)
 					self._state.lpad_x = int(lx * c - ly * s)
 					self._state.lpad_y = int(lx * s + ly * c)
+				if self._input_rotation_r and (self._state.type & 0x0200) != 0:
+					rx, ry = self._state.rpad_x, self._state.rpad_y
 					s, c = sin(self._input_rotation_r), cos(self._input_rotation_r)
 					self._state.rpad_x = int(rx * c - ry * s)
 					self._state.rpad_y = int(rx * s + ry * c)
