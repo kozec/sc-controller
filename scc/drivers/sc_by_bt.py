@@ -43,7 +43,18 @@ class SCByBtControllerInput(ctypes.Structure):
 		('q4', ctypes.c_int32),
 	]
 
-InputPtr = ctypes.POINTER(SCByBtControllerInput)
+
+class SCByBtC(ctypes.Structure):
+	_fields_ = [
+		('fileno', ctypes.c_int),
+		('buffer', ctypes.c_char * 256),
+		('long_packet', ctypes.c_uint8),
+		('state', SCByBtControllerInput),
+		('old_state', SCByBtControllerInput),
+	]
+
+
+SCByBtCPtr = ctypes.POINTER(SCByBtC)
 
 
 class Driver:
@@ -57,7 +68,7 @@ class Driver:
 		self._lib = find_library('libsc_by_bt')
 		read_input = self._lib.read_input
 		read_input.restype = ctypes.c_int
-		read_input.argtypes = [ ctypes.c_int, ctypes.c_size_t, InputPtr, InputPtr ]
+		read_input.argtypes = [ SCByBtCPtr ]
 		daemon.get_device_monitor().add_callback("bluetooth",
 				VENDOR_ID, PRODUCT_ID, self.new_device_callback, None)
 	
@@ -108,12 +119,14 @@ class SCByBt(SCController):
 		self.daemon = driver.daemon
 		self.syspath = syspath
 		SCController.__init__(self, self, -1, -1)
-		self._old_state = SCByBtControllerInput()
-		self._state = SCByBtControllerInput()
 		self._led_level = 30
 		self._device_name = hidrawdev.getName()
 		self._hidrawdev = hidrawdev
 		self._fileno = hidrawdev._device.fileno()
+		self._c_data = SCByBtC(fileno=self._fileno, long_packet=0)
+		self._c_data_ptr = ctypes.byref(self._c_data)
+		self._old_state = self._c_data.old_state
+		self._state = self._c_data.state
 		self._poller = self.daemon.get_poller()
 		if self._poller:
 			self._poller.register(self._fileno, self._poller.POLLIN, self._input)
@@ -246,8 +259,7 @@ class SCByBt(SCController):
 	
 	
 	def _input(self, *a):
-		r = self.driver._lib.read_input(self._fileno, PACKET_SIZE,
-				ctypes.byref(self._state), ctypes.byref(self._old_state))
+		r = self.driver._lib.read_input(self._c_data_ptr)
 		
 		if r == 1:
 			if self.mapper is not None:

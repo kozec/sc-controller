@@ -17,6 +17,7 @@ enum BtInPacketType {
 };
 
 #define LONG_PACKET 0x80
+#define PACKET_SIZE 20
 
 enum SCButtons {
 	// This may be moved later to something shared, only this c file needs it right now
@@ -62,7 +63,15 @@ struct SCByBtControllerInput {
 	int32_t q4;
 };
 
-typedef struct SCByBtControllerInput* InputPtr;
+struct SCByBtC {
+	int fileno;
+	char buffer[256];
+	uint8_t long_packet;
+	struct SCByBtControllerInput state;
+	struct SCByBtControllerInput old_state;
+};
+
+typedef struct SCByBtC* SCByBtCPtr;
 
 #define BT_BUTTONS_BITS 23
 
@@ -100,34 +109,35 @@ static inline void debug_packet(char* buffer, size_t size) {
 	printf("\n");
 }
 
+static char tmp_buffer[256];
 
-static char buffer[256], buffer2[256];
-static bool long_packet = 0;
-
-/** Returns 1 if state has changed, 2 on read error. */
-int read_input(int fileno, size_t packet_size, InputPtr state, InputPtr old_state) {
-	if (long_packet) {
+/** Returns 1 if state has changed, 2 on read error */
+int read_input(SCByBtCPtr ptr) {
+	if (ptr->long_packet) {
 		// Previous packet had long flag set and this is its 2nd part
-		if (read(fileno, &buffer2, packet_size) < packet_size)
+		if (read(ptr->fileno, tmp_buffer, PACKET_SIZE) < PACKET_SIZE)
 			return 2;
-		memcpy(buffer + packet_size, buffer2 + 1, packet_size - 1);
-		long_packet = false;
-		// debug_packet(buffer, packet_size * 2);
+		memcpy(ptr->buffer + PACKET_SIZE, tmp_buffer + 1, PACKET_SIZE - 1);
+		ptr->long_packet = 0;
+		// debug_packet(ptr->buffer, PACKET_SIZE * 2);
 	} else {
-		if (read(fileno, &buffer, packet_size) < packet_size)
+		if (read(ptr->fileno, ptr->buffer, PACKET_SIZE) < PACKET_SIZE)
 			return 2;
-		long_packet = *((uint8_t*)(buffer + 1)) == LONG_PACKET;
-		if (long_packet) {
+		ptr->long_packet = *((uint8_t*)(ptr->buffer + 1)) == LONG_PACKET;
+		if (ptr->long_packet) {
 			// This is 1st part of long packet
 			return 0;
 		}
-		// debug_packet(buffer, packet_size);
+		// debug_packet(ptr->buffer, PACKET_SIZE);
 	}
+	
+	struct SCByBtControllerInput* state = &(ptr->state);
+	struct SCByBtControllerInput* old_state = &(ptr->old_state);
 	
 	int rv = 0;
 	int bit;
-	uint16_t type = *((uint16_t*)(buffer + 2));
-	char* data = &buffer[4];
+	uint16_t type = *((uint16_t*)(ptr->buffer + 2));
+	char* data = &ptr->buffer[4];
 	if ((type & PING) == PING) {
 		// PING packet does nothing
 		return 0;
