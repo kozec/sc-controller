@@ -20,14 +20,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 """
 
 from collections import namedtuple
+from ctypes.util import find_library
 import os, ctypes, errno
 
 class Eudev:
-	LIB_NAME = "libudev"
+	LIB_NAME = "udev"
 	
 	def __init__(self):
 		self._ctx = None
-		self._lib = ctypes.CDLL(self.LIB_NAME + ".so")
+		assert find_library(self.LIB_NAME), self.LIB_NAME + "library not found"
+		self._lib = ctypes.CDLL(find_library(self.LIB_NAME))
 		Eudev._setup_lib(self._lib)
 		self._ctx = self._lib.udev_new()
 		if self._ctx is None:

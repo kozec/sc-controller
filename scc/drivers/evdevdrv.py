@@ -389,6 +389,12 @@ class EvdevDriver(object):
 			assert dev.fn == eventnode
 			config_fn = "evdev-%s.json" % (dev.name.strip(),)
 			config_file = os.path.join(get_config_path(), "devices", config_fn)
+		except OSError, ose:
+			if ose.errno == 13:
+				# Excepted error that happens often, don't report
+				return False
+			log.exception(e)
+			return False
 		except Exception, e:
 			log.exception(e)
 			return False

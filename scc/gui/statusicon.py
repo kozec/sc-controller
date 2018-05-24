@@ -51,7 +51,7 @@ class StatusIcon(GObject.GObject):
 			"is the icon user-visible?",
 			"does the icon back-end think that anything is might be shown to the user?",
 			True,
-			GObject.ParamFlags.READWRITE
+			GObject.PARAM_READWRITE if hasattr(GObject, "PARAM_READWRITE") else GObject.ParamFlags.READWRITE
 		)		
 	}
 	
