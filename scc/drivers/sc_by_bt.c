@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <limits.h>
 
-#define SC_BY_BT_MODULE_VERSION 2
+#define SC_BY_BT_MODULE_VERSION 3
 
 enum BtInPacketType {
 	BUTTON   = 0x0010,
