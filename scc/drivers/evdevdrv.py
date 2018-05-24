@@ -393,7 +393,7 @@ class EvdevDriver(object):
 			if ose.errno == 13:
 				# Excepted error that happens often, don't report
 				return False
-			log.exception(e)
+			log.exception(ose)
 			return False
 		except Exception, e:
 			log.exception(e)
