@@ -45,6 +45,7 @@ class DS4Controller(HIDController):
 	flags = ( ControllerFlags.EUREL_GYROS
 			| ControllerFlags.HAS_RSTICK
 			| ControllerFlags.HAS_CPAD
+			| ControllerFlags.HAS_DPAD
 			| ControllerFlags.SEPARATE_STICK
 			| ControllerFlags.NO_GRIPS
 	)
@@ -231,6 +232,7 @@ class DS4EvdevController(EvdevController):
 	flags = ( ControllerFlags.EUREL_GYROS
 			| ControllerFlags.HAS_RSTICK
 			| ControllerFlags.HAS_CPAD
+			| ControllerFlags.HAS_DPAD
 			| ControllerFlags.SEPARATE_STICK
 			| ControllerFlags.NO_GRIPS
 	)

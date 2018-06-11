@@ -1,8 +1,8 @@
 #!/usr/bin/env python2
 """
-SC-Controller - Profile
+SC-Controller - Config
 
-Handles loading, storing and querying confir file
+Handles loading, storing and querying config file
 """
 from __future__ import unicode_literals
 

@@ -115,7 +115,8 @@ class ControllerFlags(IntEnum):
 								# and roll instead of quaterion. 'q4' is unused
 								# in such case.
 	HAS_CPAD =			1 << 3	# Controller has DS4-like touchpad in center
-	NO_GRIPS =			1 << 4	# Controller has no grips
+	HAS_DPAD =			1 << 4	# Controller has normal d-pad instead of touchpad
+	NO_GRIPS =			1 << 5	# Controller has no grips
 
 
 STICK_PAD_MIN = -32768

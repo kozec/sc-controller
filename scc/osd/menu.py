@@ -10,8 +10,8 @@ from scc.tools import _, set_logging_level
 from gi.repository import Gtk, GLib, Gio, Gdk, GdkX11, GdkPixbuf
 from scc.tools import point_in_gtkrect, find_menu, find_icon
 from scc.tools import circle_to_square, clamp
+from scc.constants import LEFT, RIGHT, SAME, STICK, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
-from scc.constants import LEFT, RIGHT, SAME, STICK
 from scc.menu_data import MenuData, Separator, Submenu
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
@@ -258,6 +258,13 @@ class Menu(OSDWindow):
 			self._use_cursor = True
 	
 	
+	def disable_cursor(self):
+		if self._use_cursor:
+			self.cursor.set_visible(False)
+			self.f.remove(self.cursor)
+			self._use_cursor = False
+	
+	
 	def generate_widget(self, item):
 		""" Generates gtk widget for specified menutitem """
 		if isinstance(item, Separator) and item.label:
@@ -375,6 +382,11 @@ class Menu(OSDWindow):
 			# There is no controller connected to daemon
 			self.on_failed_to_lock("Controller not connected")
 			return
+		
+		if (self.controller.get_flags() & ControllerFlags.HAS_DPAD) != 0:
+			if self._control_with == LEFT and self._use_cursor:
+				# Special case, using LEFT pad on controller with actual DPAD
+				self.disable_cursor()
 		
 		self._eh_ids += [
 			(self.controller, self.controller.connect('event', self.on_event)),
