@@ -6,17 +6,16 @@ Display dialog with text and set of items that user can navigate through and
 prints chosen item id to stdout
 """
 from __future__ import unicode_literals
-from scc.tools import _, set_logging_level
 
-from gi.repository import Gtk, GLib, Gdk, GdkX11
+from gi.repository import Gtk, GdkX11
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
 from scc.lib import xwrappers as X
+from scc.constants import DEFAULT, STICK
 from scc.menu_data import MenuData
-from scc.constants import STICK
 from scc.config import Config
 
-import os, sys, logging
+import sys, logging
 log = logging.getLogger("osd.dialog")
 
 
@@ -49,9 +48,6 @@ class Dialog(OSDWindow):
 		self._scon.connect("direction", self.on_stick_direction)
 		self._selected = None
 		self._eh_ids = []
-		self._control_with = STICK
-		self._confirm_with = 'A'
-		self._cancel_with = 'B'
 	
 	
 	def create_parent(self):
@@ -109,11 +105,11 @@ class Dialog(OSDWindow):
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 		self.argparser.add_argument('--confirm-with', type=str,
-			metavar="button", default='A',
-			help="button used to confirm choice (default: A)")
+			metavar="button", default=DEFAULT,
+			help="button used to confirm choice")
 		self.argparser.add_argument('--cancel-with', type=str,
-			metavar="button", default='B',
-			help="button used to cancel menu (default: B)")
+			metavar="button", default=DEFAULT,
+			help="button used to cancel dialog")
 		self.argparser.add_argument('--feedback-amplitude', type=int,
 			help="enables and sets power of feedback effect generated when active menu option is changed")
 		self.argparser.add_argument('--text', type=str, metavar='text',
@@ -136,10 +132,6 @@ class Dialog(OSDWindow):
 			return False
 		
 		self._text.set_label(self.args.text)
-		
-		# Parse simpler arguments
-		self._confirm_with = self.args.confirm_with
-		self._cancel_with = self.args.cancel_with
 		
 		if self.args.feedback_amplitude:
 			side = "LEFT"
@@ -224,14 +216,19 @@ class Dialog(OSDWindow):
 		
 		if not self.config:
 			self.config = Config()
-		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
 		self.controller = self.choose_controller(self.daemon)
 		if self.controller is None or not self.controller.is_connected():
 			# There is no controller connected to daemon
 			self.on_failed_to_lock("Controller not connected")
 			return
 		
+		ccfg = self.config.get_controller_config(self.controller.get_id())
+		self._control_with = ccfg["menu_control"]
+		self._confirm_with = ccfg["menu_confirm"] if self.args.confirm_with == DEFAULT else self.args.confirm_with
+		self._cancel_with = ccfg["menu_cancel"] if self.args.cancel_with == DEFAULT else self.args.cancel_with
+		
 		self._eh_ids += [ (self.controller, self.controller.connect('event', self.on_event)) ]
+		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
 		self.controller.lock(success, self.on_failed_to_lock, *locks)
 	
 	

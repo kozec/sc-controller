@@ -8,20 +8,18 @@ application (list is generated using xdg) and start it.
 Reuses styles from OSD Menu and OSD Dialog
 """
 from __future__ import unicode_literals
-from scc.tools import _, set_logging_level
+from scc.tools import _
 
-from gi.repository import Gtk, Gio, Gdk, GdkX11, GdkPixbuf, Pango
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
-from scc.constants import LEFT, RIGHT, SAME, STICK
+from gi.repository import Gtk, Gio, GdkX11, Pango
+from scc.constants import STICK_PAD_MAX, DEFAULT, LEFT, RIGHT, STICK
 from scc.tools import point_in_gtkrect, circle_to_square, clamp
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
 from scc.paths import get_share_path
 from scc.lib import xwrappers as X
 from scc.config import Config
-from math import sqrt
 
-import os, sys, re, logging
+import os, logging
 log = logging.getLogger("osd.menu")
 
 
@@ -202,11 +200,11 @@ class Launcher(OSDWindow):
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 		self.argparser.add_argument('--confirm-with', type=str,
-			metavar="button", default='A',
-			help="button used to confirm choice (default: A)")
+			metavar="button", default=DEFAULT,
+			help="button used to confirm choice")
 		self.argparser.add_argument('--cancel-with', type=str,
-			metavar="button", default='B',
-			help="button used to cancel menu (default: B)")
+			metavar="button", default=DEFAULT,
+			help="button used to cancel dialog")
 		self.argparser.add_argument('--feedback-amplitude', type=int,
 			help="enables and sets power of feedback effect generated when active menu option is changed")
 	
@@ -216,10 +214,6 @@ class Launcher(OSDWindow):
 			return False
 		if not self.config:
 			self.config = Config()
-		
-		# Parse simpler arguments
-		self._confirm_with = self.args.confirm_with
-		self._cancel_with = self.args.cancel_with
 		
 		if self.args.feedback_amplitude:
 			side = "LEFT"
@@ -350,18 +344,22 @@ class Launcher(OSDWindow):
 		
 		if not self.config:
 			self.config = Config()
-		locks = [ LEFT, RIGHT, STICK, "LPAD", "RPAD", "LB",
-		 	self._confirm_with, self._cancel_with ]
 		self.controller = self.choose_controller(self.daemon)
 		if self.controller is None or not self.controller.is_connected():
 			# There is no controller connected to daemon
 			self.on_failed_to_lock("Controller not connected")
 			return
 		
+		ccfg = self.config.get_controller_config(self.controller.get_id())
+		self._confirm_with = ccfg["menu_confirm"] if self.args.confirm_with == DEFAULT else self.args.confirm_with
+		self._cancel_with = ccfg["menu_cancel"] if self.args.cancel_with == DEFAULT else self.args.cancel_with
+		
 		self._eh_ids += [
 			(self.controller, self.controller.connect('event', self.on_event)),
 			(self.controller, self.controller.connect('lost', self.on_controller_lost)),
 		]
+		locks = [ LEFT, RIGHT, STICK, "LPAD", "RPAD", "LB",
+			self._confirm_with, self._cancel_with ]
 		self.controller.lock(success, self.on_failed_to_lock, *locks)
 	
 	

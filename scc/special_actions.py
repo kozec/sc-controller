@@ -277,22 +277,18 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 	"""
 	SA = COMMAND = "menu"
 	MENU_TYPE = "menu"
-	DEFAULT_CONFIRM = SCButtons.A
-	DEFAULT_CANCEL = SCButtons.B
-	DEFAULT_CONTROL = STICK
 	MIN_STICK_DISTANCE = STICK_PAD_MAX / 3
 	DEFAULT_POSITION = 10, -10
 	
-	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
-					confirm_with=DEFAULT, cancel_with=DEFAULT,
-					show_with_release=False, size = 0):
+	def __init__(self, menu_id, control_with=DEFAULT, confirm_with=DEFAULT,
+					cancel_with=DEFAULT, show_with_release=False, size = 0):
 		if control_with == SAME:
 			# Little touch of backwards compatibility
-			control_with, confirm_with = self.DEFAULT_CONTROL, SAME
+			control_with, confirm_with = DEFAULT, SAME
 		if type(control_with) == int:
 			# Allow short form in case when menu is assigned to pad
 			# eg.: menu("some-id", 3) sets size to 3
-			control_with, size = MenuAction.DEFAULT_CONTROL, control_with
+			control_with, size = DEFAULT, control_with
 		Action.__init__(self, menu_id, control_with, confirm_with, cancel_with, show_with_release, size)
 		HapticEnabledAction.__init__(self)
 		self.menu_id = menu_id
@@ -315,7 +311,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		if self.control_with in (self.DEFAULT_CONTROL, DEFAULT):
+		if self.control_with == DEFAULT:
 			dflt = (DEFAULT, DEFAULT, False)
 			vals = (self.confirm_with, self.cancel_with, self.show_with_release)
 			if dflt == vals:
@@ -342,11 +338,11 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 			cancel_with = self.cancel_with
 			args = [ mapper ]
 			if confirm_with == SAME:
-				confirm_with = mapper.get_pressed_button() or self.DEFAULT_CONFIRM
+				confirm_with = mapper.get_pressed_button() or DEFAULT
 			elif confirm_with == DEFAULT:
-				confirm_with = MenuAction.DEFAULT_CONFIRM
+				confirm_with = DEFAULT
 			if cancel_with == DEFAULT:
-				cancel_with = MenuAction.DEFAULT_CANCEL
+				cancel_with = DEFAULT
 			if nameof(self.control_with) in (LEFT, RIGHT):
 				args += [ '--use-cursor' ]
 			args += [
@@ -457,13 +453,9 @@ class RadialMenuAction(MenuAction):
 	"""
 	COMMAND = "radialmenu"
 	MENU_TYPE = "radialmenu"
-	DEFAULT_CONFIRM = SCButtons.A
-	DEFAULT_CANCEL = SCButtons.B
-	DEFAULT_CONTROL = STICK
 	
-	def __init__(self, menu_id, control_with=DEFAULT_CONTROL,
-					confirm_with=DEFAULT, cancel_with=DEFAULT,
-					show_with_release=False, size = 0):
+	def __init__(self, menu_id, control_with=DEFAULT, confirm_with=DEFAULT,
+					cancel_with=DEFAULT, show_with_release=False, size = 0):
 		MenuAction.__init__(self, menu_id, control_with, confirm_with,
 						cancel_with, show_with_release, size)
 		self.rotation = 0
@@ -489,16 +481,14 @@ class DialogAction(Action, SpecialAction):
 	Dialog is actually kind of menu, but options for it are different.
 	"""
 	SA = COMMAND = "dialog"
-	DEFAULT_CONFIRM = SCButtons.A
-	DEFAULT_CANCEL = SCButtons.B
 	DEFAULT_POSITION = 10, -10
 	
 	def __init__(self, *pars):
 		Action.__init__(self, pars)
 		
 		self.options = []
-		self.confirm_with = DialogAction.DEFAULT_CONFIRM
-		self.cancel_with  = DialogAction.DEFAULT_CANCEL
+		self.confirm_with = DEFAULT
+		self.cancel_with  = DEFAULT
 		self.text = _("Dialog")
 		self.x, self.y = MenuAction.DEFAULT_POSITION
 		# First and 2nd parameter may be confirm and cancel button
@@ -520,9 +510,9 @@ class DialogAction(Action, SpecialAction):
 	
 	def to_string(self, multiline=False, pad=0):
 		rv = "%s%s(" % (" " * pad, self.COMMAND)
-		if self.confirm_with not in (DialogAction.DEFAULT_CONFIRM, DEFAULT):
+		if self.confirm_with != DEFAULT:
 			rv += "%s, " % (nameof(self.confirm_with),)
-			if self.cancel_with not in (DialogAction.DEFAULT_CANCEL, DEFAULT):
+			if self.cancel_with != DEFAULT:
 				rv += "%s, " % (nameof(self.cancel_with),)
 		rv += "'%s', " % (self.text.encode('string_escape'),)
 		if multiline:
@@ -547,12 +537,8 @@ class DialogAction(Action, SpecialAction):
 	def button_release(self, mapper):
 		confirm_with = self.confirm_with
 		cancel_with = self.cancel_with
-		args = [ mapper ]
-		if confirm_with == DEFAULT:
-			confirm_with = MenuAction.DEFAULT_CONFIRM
-		if cancel_with == DEFAULT:
-			cancel_with = MenuAction.DEFAULT_CANCEL
-		args += [
+		args = [
+			mapper,
 			'-x', str(self.x), '-y', str(self.y),
 			'--confirm-with', nameof(confirm_with),
 			'--cancel-with', nameof(cancel_with),

@@ -7,13 +7,12 @@ Currently setups only one thing...
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gdk, GObject, GLib, GdkPixbuf
+from gi.repository import GLib, GdkPixbuf
 from scc.paths import get_controller_icons_path, get_default_controller_icons_path
-from scc.actions import Action
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
 
-import re, sys, os, logging
+import os, logging
 log = logging.getLogger("GS")
 
 class ControllerSettings(Editor, UserDataManager, ComboSetter):
@@ -67,6 +66,28 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		self._eh_ids = ()
 	
 	
+	def on_btClearControlWith_clicked(self, *a):
+		self.builder.get_object("cbControlWith").set_active(0)
+	
+	
+	def on_btClearConfirmWith_clicked(self, *a):
+		self.builder.get_object("cbConfirmWith").set_active(0)
+	
+	
+	def on_btClearCancelWith_clicked(self, *a):
+		self.builder.get_object("cbCancelWith").set_active(1)
+	
+	
+	def on_exTouchpadRotation_activate(self, ex, *a):
+		rvTouchpadRotation = self.builder.get_object("rvTouchpadRotation")
+		rvTouchpadRotation.set_reveal_child(not ex.get_expanded())
+	
+	
+	def on_exMenuButtons_activate(self, ex, *a):
+		rvMenuButtons = self.builder.get_object("rvMenuButtons")
+		rvMenuButtons.set_reveal_child(not ex.get_expanded())
+	
+	
 	def on_btClearLeftRotation_clicked(self, *a):
 		sclLeftRotation = self.builder.get_object("sclLeftRotation")
 		sclLeftRotation.set_value(20)
@@ -89,6 +110,9 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		sclIdleTimeout = self.builder.get_object("sclIdleTimeout")
 		sclLeftRotation = self.builder.get_object("sclLeftRotation")
 		sclRightRotation = self.builder.get_object("sclRightRotation")
+		cbControlWith = self.builder.get_object("cbControlWith")
+		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		cbCancelWith = self.builder.get_object("cbCancelWith")
 		
 		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		
@@ -99,6 +123,11 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		sclLeftRotation.set_value(float(cfg["input_rotation_l"]))
 		sclRightRotation.set_value(float(cfg["input_rotation_r"]))
 		cbAlignOSD.set_active(cfg["osd_alignment"] != 0)
+		self.set_cb(cbControlWith, cfg["menu_control"], keyindex=1)
+		self.set_cb(cbConfirmWith, cfg["menu_confirm"], keyindex=1)
+		self.set_cb(cbCancelWith, cfg["menu_cancel"], keyindex=1)
+		cbConfirmWith.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) == "-" )
+		cbCancelWith.set_row_separator_func( lambda model, iter : model.get_value(iter, 0)  == "-" )
 		self._recursing = False
 	
 	
@@ -114,14 +143,22 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		sclIdleTimeout = self.builder.get_object("sclIdleTimeout")
 		sclLeftRotation = self.builder.get_object("sclLeftRotation")
 		sclRightRotation = self.builder.get_object("sclRightRotation")
+		cbControlWith = self.builder.get_object("cbControlWith")
+		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		cbCancelWith = self.builder.get_object("cbCancelWith")
 		
 		# Store data
 		cfg = self.app.config.get_controller_config(self.controller.get_id())
 		cfg["name"] = txName.get_text().decode("utf-8")
 		cfg["led_level"] = sclLED.get_value()
 		cfg["osd_alignment"] = 1 if cbAlignOSD.get_active() else 0
+		cfg["idle_timeout"] = sclIdleTimeout.get_value()
 		cfg["input_rotation_l"] = sclLeftRotation.get_value()
 		cfg["input_rotation_r"] = sclRightRotation.get_value()
+		cfg["menu_control"] = cbControlWith.get_model().get_value(cbControlWith.get_active_iter(), 1)
+		cfg["menu_confirm"] = cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)
+		cfg["menu_cancel"] = cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1)
+		
 		try:
 			cfg["icon"] = cbIcon.get_model().get_value(cbIcon.get_active_iter(), 1)
 			if self.profile_switcher:
@@ -134,7 +171,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		self.schedule_save_config()
 	
 	
-	def schedule_save_config(self):
+	def schedule_save_config(self, *a):
 		"""
 		Schedules config saving in 1s.
 		Done to prevent literal madness when user moves slider.

@@ -120,6 +120,9 @@ class Config(object):
 		"osd_alignment":		0,		# not used yet
 		"input_rotation_l":		20,		# range -180 to 180
 		"input_rotation_r":		-20,	# range -180 to 180
+		"menu_control":			"STICK",
+		"menu_confirm":			"A",
+		"menu_cancel":			"B",
 	}
 	
 	

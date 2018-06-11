@@ -6,7 +6,6 @@ two components with MenuAction selectable.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import MenuAction, HorizontalMenuAction
 from scc.special_actions import RadialMenuAction, GridMenuAction
 from scc.special_actions import QuickMenuAction, PositionModifier
@@ -16,9 +15,8 @@ from scc.tools import nameof
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.menu_editor import MenuEditor
 from scc.gui.parser import GuiActionParser
-from scc.gui.ae import AEComponent
 
-import os, logging
+import logging
 log = logging.getLogger("AE.Menu")
 
 __all__ = [ 'MenuActionCofC' ]
@@ -102,8 +100,6 @@ class MenuActionCofC(UserDataManager):
 		
 		cow = action.confirm_with
 		caw = action.cancel_with
-		if cow == DEFAULT: cow = self.get_default_confirm()
-		if caw == DEFAULT: caw = self.get_default_cancel()
 		
 		if cbConfirmWith:
 			if cow == SAME and cbMenuAutoConfirm:
@@ -134,18 +130,18 @@ class MenuActionCofC(UserDataManager):
 	
 	def get_default_confirm(self):
 		"""
-		Returns MenuAction.DEFAULT_CONFIRM, but may be overriden when default
+		Returns DEFAULT, but may be overriden when default
 		confirm button is different - specifically when used with pads.
 		"""
-		return MenuAction.DEFAULT_CONFIRM
+		return DEFAULT
 	
 	
 	def get_default_cancel(self):
 		"""
-		Returns MenuAction.DEFAULT_CONFIRM, but may be overriden when default
+		Returns DEFAULT, but may be overriden when default
 		confirm button is different - specifically when used with pads.
 		"""
-		return MenuAction.DEFAULT_CANCEL
+		return DEFAULT
 	
 	
 	def on_menu_changed(self, new_id):
@@ -315,16 +311,16 @@ class MenuActionCofC(UserDataManager):
 				cow = DEFAULT
 			elif cbConfirmWith:
 				cow = cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)
-				cow = getattr(SCButtons, cow)
-				if cow == self.get_default_confirm(): cow = DEFAULT
+				if cow != DEFAULT:
+					cow = getattr(SCButtons, cow)
 			
 			caw = DEFAULT
 			if cbMenuAutoCancel and cbMenuAutoCancel.get_active():
 				caw = DEFAULT
 			elif cbCancelWith:
 				caw = cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1)
-				caw = getattr(SCButtons, caw)
-				if caw == self.get_default_cancel(): caw = DEFAULT
+				if caw != DEFAULT:
+					caw = getattr(SCButtons, caw)
 			
 			params += [ self.get_control_with(), cow, caw ]
 			

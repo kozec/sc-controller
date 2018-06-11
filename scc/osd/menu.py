@@ -5,13 +5,13 @@ SC-Controller - OSD Menu
 Display menu that user can navigate through and prints chosen item id to stdout
 """
 from __future__ import unicode_literals
-from scc.tools import _, set_logging_level
+from scc.tools import _
 
 from gi.repository import Gtk, GLib, Gio, Gdk, GdkX11, GdkPixbuf
 from scc.tools import point_in_gtkrect, find_menu, find_icon
 from scc.tools import circle_to_square, clamp
 from scc.constants import LEFT, RIGHT, SAME, STICK, ControllerFlags
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, SCButtons
+from scc.constants import DEFAULT, STICK_PAD_MAX, SCButtons
 from scc.menu_data import MenuData, Separator, Submenu
 from scc.gui.daemon_manager import DaemonManager
 from scc.osd import OSDWindow, StickController
@@ -20,7 +20,7 @@ from scc.lib import xwrappers as X
 from scc.config import Config
 from math import sqrt
 
-import os, sys, json, logging
+import os, sys, logging
 log = logging.getLogger("osd.menu")
 
 # Fill MENU_GENERATORS dict
@@ -128,14 +128,14 @@ class Menu(OSDWindow):
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 		self.argparser.add_argument('--control-with', '-c', type=str,
-			metavar="option", default=STICK, choices=(LEFT, RIGHT, STICK),
-			help="which pad or stick should be used to navigate menu (default: %s)" % (STICK,))
+			metavar="option", default=DEFAULT, choices=(DEFAULT, LEFT, RIGHT, STICK),
+			help="which pad or stick should be used to navigate menu")
 		self.argparser.add_argument('--confirm-with', type=str,
-			metavar="button", default='A',
-			help="button used to confirm choice (default: A)")
+			metavar="button", default=DEFAULT,
+			help="button used to confirm choice")
 		self.argparser.add_argument('--cancel-with', type=str,
-			metavar="button", default='B',
-			help="button used to cancel menu (default: B)")
+			metavar="button", default=DEFAULT,
+			help="button used to cancel menu")
 		self.argparser.add_argument('--confirm-with-release', action='store_true',
 			help="confirm choice with button release instead of button press")
 		self.argparser.add_argument('--cancel-with-release', action='store_true',
@@ -209,27 +209,7 @@ class Menu(OSDWindow):
 			self.config = Config()
 		
 		# Parse simpler arguments
-		self._control_with = self.args.control_with
-		self._confirm_with = self.args.confirm_with
-		self._cancel_with = self.args.cancel_with
 		self._size = self.args.size
-		
-		if self.args.use_cursor:
-			self.enable_cursor()
-		
-		if self.args.feedback_amplitude:
-			side = "LEFT"
-			if self._control_with == "RIGHT":
-				side = "RIGHT"
-			elif self._control_with == "STICK":
-				side = "BOTH"
-			self.feedback = side, int(self.args.feedback_amplitude)
-		
-		if self._confirm_with == SAME:
-			if self._control_with == RIGHT:
-				self._confirm_with = SCButtons.RPADTOUCH.name
-			else:
-				self._confirm_with = SCButtons.LPADTOUCH.name
 		
 		# Create buttons that are displayed on screen
 		items = self.items.generate(self)
@@ -256,13 +236,6 @@ class Menu(OSDWindow):
 			self.f.add(self.cursor)
 			self.f.show_all()
 			self._use_cursor = True
-	
-	
-	def disable_cursor(self):
-		if self._use_cursor:
-			self.cursor.set_visible(False)
-			self.f.remove(self.cursor)
-			self._use_cursor = False
 	
 	
 	def generate_widget(self, item):
@@ -382,17 +355,43 @@ class Menu(OSDWindow):
 			# There is no controller connected to daemon
 			self.on_failed_to_lock("Controller not connected")
 			return
-		
-		if (self.controller.get_flags() & ControllerFlags.HAS_DPAD) != 0:
-			if self._control_with == LEFT and self._use_cursor:
-				# Special case, using LEFT pad on controller with actual DPAD
-				self.disable_cursor()
+		self.use_controller(self.controller)
 		
 		self._eh_ids += [
 			(self.controller, self.controller.connect('event', self.on_event)),
 			(self.controller, self.controller.connect('lost', self.on_controller_lost)),
 		]
 		self.lock_inputs()
+	
+	
+	def use_controller(self, controller):
+		ccfg = self.config.get_controller_config(controller.get_id())
+		self._control_with = ccfg["menu_control"] if self.args.control_with == DEFAULT else self.args.control_with
+		self._cancel_with = ccfg["menu_cancel"] if self.args.cancel_with == DEFAULT else self.args.cancel_with
+		
+		if self.args.confirm_with == DEFAULT:
+			self._confirm_with = ccfg["menu_confirm"]
+		elif self.args.confirm_with == SAME:
+			if self._control_with == RIGHT:
+				self._confirm_with = SCButtons.RPADTOUCH.name
+			else:
+				self._confirm_with = SCButtons.LPADTOUCH.name
+		else:
+			self._confirm_with = self.args.confirm_with
+		
+		if self.args.use_cursor:
+			# As special case, using LEFT pad on controller with
+			# actual DPAD should not display cursor
+			if self._control_with != LEFT or (controller.get_flags() & ControllerFlags.HAS_DPAD) == 0:
+				self.enable_cursor()
+		
+		if self.args.feedback_amplitude:
+			side = "LEFT"
+			if self._control_with == "RIGHT":
+				side = "RIGHT"
+			elif self._control_with == "STICK":
+				side = "BOTH"
+			self.feedback = side, int(self.args.feedback_amplitude)
 	
 	
 	def lock_inputs(self):
@@ -466,6 +465,7 @@ class Menu(OSDWindow):
 			])
 			self._submenu.set_is_submenu()
 			self._submenu.use_daemon(self.daemon)
+			self._submenu.use_controller(self.controller)
 			self._submenu.controller = self.controller
 			self._submenu.connect('destroy', self.on_submenu_closed)
 			self._submenu.show()
