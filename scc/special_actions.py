@@ -19,6 +19,7 @@ from scc.actions import MOUSE_BUTTONS
 from scc.tools import strip_gesture, nameof, clamp
 from scc.modifiers import Modifier, NameModifier
 from math import sqrt
+from difflib import get_close_matches
 
 import sys, time, logging
 log = logging.getLogger("SActions")
@@ -683,21 +684,39 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 		if "osd" in data:
 			ga = OSDAction(ga)
 		return ga
-	
-	
-	def gesture(self, mapper, gesture_string):
-		action = None
-		if gesture_string in self.gestures:
-			action = self.gestures[gesture_string]
+
+	def _find_exact_gesture(self, gesture_string):
+		return self.gestures.get(gesture_string)
+
+	def _find_ignore_stroke_count_gesture(self, gesture_string):
+		stripped_gesture_string = strip_gesture(gesture_string)
+		return self.gestures.get(stripped_gesture_string)
+
+	def _find_best_match_gesture(self, gesture_string):
+		NUM_MATCHES_TO_RETURN = 1
+		MINIMUM_MATCH_RATIO = .5
+
+		similar_gestures = get_close_matches(gesture_string, self.gestures.keys(), NUM_MATCHES_TO_RETURN, MINIMUM_MATCH_RATIO)
+		best_gesture = next(iter(similar_gestures), None)
+
+		if best_gesture is not None:
+			return self.gestures[best_gesture]
 		else:
-			sgstr = strip_gesture(gesture_string)
-			if sgstr in self.gestures:
-				action = self.gestures[sgstr]
+			return None
+
+	def find_gesture_action(self, gesture_string):
+		action = None
+		action = action or self._find_exact_gesture(gesture_string)
+		action = action or self._find_ignore_stroke_count_gesture(gesture_string)
+		action = action or self._find_best_match_gesture(gesture_string)
+		return action
+
+	def gesture(self, mapper, gesture_string):
+		action = self.find_gesture_action(gesture_string)
 		if action:
 			action.button_press(mapper)
 			mapper.schedule(0, action.button_release)
-	
-	
+
 	def whole(self, mapper, x, y, what):
 		if (x, y) != (0, 0):
 			# (0, 0) singlanizes released touchpad
