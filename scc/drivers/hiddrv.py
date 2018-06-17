@@ -29,6 +29,15 @@ ALLOWED_SIZES = [1, 2, 4, 8, 16, 32]
 SYS_DEVICES = "/sys/devices"
 
 
+BLACKLIST = [
+	# List of devices known to pretend to be HID compatible but breaking horribly with HID
+	# vendor, product
+	(0x045e, 0x0719),	# Xbox controller	
+	(0x045e, 0x028e),	# Xbox wireless adapter
+	(0x0738, 0x4716),	# Mad Catz, Inc controller
+]
+
+
 class HIDDrvError(Exception): pass
 class NotHIDDevice(HIDDrvError): pass
 class UnparsableDescriptor(HIDDrvError): pass
@@ -195,6 +204,8 @@ class HIDController(USBDevice, Controller):
 		log.debug("Endpoint: %s", id)
 		
 		vid, pid = self.device.getVendorID(), self.device.getProductID()
+		if (vid, pid) in BLACKLIST:
+			raise NotHIDDevice("Blacklisted device: %x:%x", vid, pid)
 		self._packet_size = 64
 		self._load_hid_descriptor(config, max_size, vid, pid, test_mode)
 		self.claim_by(klass=DEV_CLASS_HID, subclass=0, protocol=0)
