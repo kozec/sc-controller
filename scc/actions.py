@@ -901,7 +901,10 @@ class MouseAction(WholeHapticAction, Action):
 			mapper.mouse_move(yaw * -self.speed[0], pitch * -self.speed[1])
 		else:
 			mapper.mouse_move(roll * -self.speed[0], pitch * -self.speed[1])
-
+	
+	def trigger(self, mapper, position, old_position):
+		delta = position - old_position
+		self.add(mapper, delta, delta) # add() will figure out the axis from the action parameters
 
 class MouseAbsAction(Action):
 	"""
