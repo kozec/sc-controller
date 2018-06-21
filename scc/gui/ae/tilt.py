@@ -34,13 +34,13 @@ class TiltComponent(AEComponent, BindingEditor):
 		AEComponent.__init__(self, app, editor)
 		BindingEditor.__init__(self, app)
 		self._recursing = False
-		self.actions = [ NoAction() ] * 4
+		self.actions = [ NoAction() ] * 6
 	
 	
 	def set_action(self, mode, action):
 		if isinstance(action, TiltAction):
 			self.actions = list(action.actions)
-			while len(self.actions) < 4:
+			while len(self.actions) < 6:
 				self.actions.append(NoAction())
 			self.update_button_desc(action)
 	
@@ -48,7 +48,7 @@ class TiltComponent(AEComponent, BindingEditor):
 	def update_button_desc(self, action):
 		for i in xrange(0, len(action.actions)):
 			self.actions[i] = action.actions[i]
-		for i in xrange(0, 4):
+		for i in xrange(0, 6):
 			self.set_button_desc(i)
 	
 	
