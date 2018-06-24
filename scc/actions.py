@@ -1270,7 +1270,7 @@ class ResetGyroAction(Action):
 	
 	def describe(self, context):
 		if self.name : return self.name
-		return _("Reset Gyro")
+		return _("Recenter Gyro")
 
 
 class MultichildAction(Action):

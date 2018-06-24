@@ -47,6 +47,10 @@
         <col id="1" translatable="yes">Show OSD Message</col>
       </row>
       <row>
+        <col id="0">resetgyro</col>
+        <col id="1" translatable="yes">Recenter gyro sensor</col>
+      </row>
+      <row>
         <col id="0">shell</col>
         <col id="1" translatable="yes">Execute Command</col>
       </row>
