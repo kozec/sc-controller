@@ -410,6 +410,21 @@ class RangeOP(object):
 		self.min = float(TRIGGER_MIN)
 		self.max = float(TRIGGER_MAX)
 		
+		if op == "<":
+			self.op_method = self.cmp_lt
+		elif op == ">":
+			self.op_method = self.cmp_gt
+		elif op == "<=":
+			self.op_method = self.cmp_le
+		elif op == ">=":
+			self.op_method = self.cmp_ge
+		elif op == "ABS<":
+			self.op_method = self.cmp_labs
+		elif op == "ABS>":
+			self.op_method = self.cmp_gabs
+		else:
+			raise ValueError("Unknown operator: '%s'" % (op, ))
+		
 		if what == SCButtons.LT:
 			# TODO: Somehow unify names here, LT button is related to ltrig axis and so on
 			self.axis_name = "ltrig"
@@ -421,20 +436,18 @@ class RangeOP(object):
 		elif what == SCButtons.Y:
 			self.axis_name = "lpad_y"
 			self.min, self.max = float(STICK_PAD_MIN), float(STICK_PAD_MAX)
+		elif what == STICK:
+			# Most special case of all special cases
+			self.axis_name = STICK
+			op = "ABS" + op.replace("=", "")
+			self.children = RangeOP(SCButtons.X, op, value), RangeOP(SCButtons.Y, op, value)
+			self.min, self.max = float(STICK_PAD_MIN), float(STICK_PAD_MAX)
+			self.op_method = self.cmp_or
 		else:
 			raise ValueError("'%s' is not trigger nor axis" % (nameof(what), ))
-		
-		if op == "<":
-			self.op_method = self.cmp_lt
-		elif op == ">":
-			self.op_method = self.cmp_gt
-		elif op == "<=":
-			self.op_method = self.cmp_le
-		elif op == ">=":
-			self.op_method = self.cmp_ge
-		else:
-			raise ValueError("Unknown operator: '%s'" % (op, ))
 	
+	def cmp_or(self, mapper):
+		return any([ x(mapper) for x in self.children ])
 	
 	def cmp_gt(self, mapper):
 		if mapper.state is None:
@@ -460,6 +473,17 @@ class RangeOP(object):
 		state = float(getattr(mapper.state, self.axis_name)) / self.max
 		return state <= self.value
 	
+	def cmp_labs(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return abs(state) < self.value
+	
+	def cmp_gabs(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return abs(state) > self.value
 	
 	def __call__(self, mapper):
 		return self.op_method(mapper)

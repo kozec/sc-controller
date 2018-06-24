@@ -7,17 +7,16 @@ Assigns emulated axis to trigger
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, MouseAction, MultiAction, RangeOP
 from scc.actions import GyroAction, GyroAbsAction, MouseAbsAction
 from scc.modifiers import ModeModifier, SensitivityModifier
-from scc.uinput import Keys, Axes, Rels
-from scc.constants import SCButtons, YAW, ROLL
-from scc.gui.parser import GuiActionParser, InvalidAction
+from scc.uinput import Axes, Rels
+from scc.constants import SCButtons, STICK, YAW, ROLL
+from scc.gui.parser import GuiActionParser
 from scc.gui.ae import AEComponent
 from scc.tools import nameof
 
-import os, logging, re
+import logging, re
 log = logging.getLogger("AE.GyroAction")
 
 __all__ = [ 'GyroActionComponent' ]
@@ -45,8 +44,7 @@ class GyroActionComponent(AEComponent):
 		(None, None),
 		(SCButtons.LGRIP,		_('Left Grip') ),
 		(SCButtons.RGRIP,		_('Right Grip') ),
-		(SCButtons.LT,			_('Left Trigger') ),
-		(SCButtons.RT,			_('Right Trigger') ),
+		(STICK,					_('Stick Tilted') ),
 		(None, None),
 		(SCButtons.A,			_('A') ),
 		(SCButtons.B,			_('B') ),
@@ -268,9 +266,12 @@ class GyroActionComponent(AEComponent):
 		action = self.parser.restart(action).parse()
 		
 		if item and action:
-			what = getattr(SCButtons, item)
 			if item in TRIGGERS:
-				what = RangeOP(what, ">=", sclSoftLevel.get_value())
+				what = RangeOP(getattr(SCButtons, item), ">=", sclSoftLevel.get_value())
+			elif item == STICK:
+				what = RangeOP(item, ">=", sclSoftLevel.get_value())
+			else:
+				what = getattr(SCButtons, item)
 			if cbInvertGyro.get_active():
 				action = ModeModifier(what, NoAction(), action)
 			else:
@@ -316,5 +317,5 @@ def fill_buttons(cb):
 	cb.set_row_separator_func( lambda model, iter : model.get_value(iter, 1) is None )
 	model = cb.get_model()
 	for button, text in GyroActionComponent.BUTTONS:
-		model.append(( None if button is None else button.name, text ))	
+		model.append(( None if button is None else nameof(button), text ))	
 	cb.set_active(0)

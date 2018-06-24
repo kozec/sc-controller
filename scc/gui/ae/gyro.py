@@ -7,17 +7,16 @@ Assigns emulated axis to trigger
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, NoAction, AxisAction, MultiAction
 from scc.actions import GyroAction, GyroAbsAction, RangeOP
 from scc.modifiers import ModeModifier
-from scc.constants import SCButtons
+from scc.constants import SCButtons, STICK
 from scc.tools import ensure_size, nameof
 from scc.gui.ae.gyro_action import TRIGGERS, is_gyro_enable, fill_buttons
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.simple_chooser import SimpleChooser
 
-import os, logging, re
+import logging
 log = logging.getLogger("AE.Gyro")
 
 __all__ = [ 'GyroComponent' ]
@@ -116,6 +115,7 @@ class GyroComponent(AEComponent):
 		cb = self.builder.get_object("cbGyroButton")
 		rvSoftLevel = self.builder.get_object("rvSoftLevel")
 		sclSoftLevel = self.builder.get_object("sclSoftLevel")
+		lblSoftLevel = self.builder.get_object("lblSoftLevel")
 		model = cb.get_model()
 		self._recursing = True
 		button = None
@@ -123,6 +123,10 @@ class GyroComponent(AEComponent):
 			button = nameof(item.what)
 			sclSoftLevel.set_value(item.value)
 			rvSoftLevel.set_reveal_child(True)
+			if item.what == STICK:
+				lblSoftLevel.set_label(_("Stick deadzone"))
+			else:
+				lblSoftLevel.set_label(_("Trigger Pull Level"))
 		elif item is not None:
 			button = nameof(item.name)
 		for row in model:

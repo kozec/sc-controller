@@ -9,13 +9,8 @@ from __future__ import unicode_literals
 from tokenize import generate_tokens, TokenError
 from collections import namedtuple
 
-from scc.constants import SCButtons, HapticPos, PARSER_CONSTANTS
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
-from scc.actions import Action, XYAction, DPadAction, DPad8Action
-from scc.actions import RangeOP, NoAction, MultiAction
-from scc.modifiers import ClickModifier, FeedbackModifier, DeadzoneModifier
-from scc.modifiers import SensitivityModifier, ModeModifier, BallModifier
-from scc.modifiers import HoldModifier, DoubleclickModifier
+from scc.constants import SCButtons, HapticPos, PARSER_CONSTANTS, STICK
+from scc.actions import Action, RangeOP, NoAction, MultiAction
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
@@ -176,12 +171,12 @@ class ActionParser(object):
 				if self._peek_token().value in RangeOP.OPS:
 					op = self._next_token().value
 					# TODO: Maybe other axes
-					if parameter not in (SCButtons.LT, SCButtons.RT,SCButtons.X,SCButtons.Y):
+					if parameter not in (STICK, SCButtons.LT, SCButtons.RT, SCButtons.X, SCButtons.Y):
 						raise ParseError("'%s' is not trigger nor axis" % (nameof(parameter), ))
 					if not self._tokens_left():
 						raise ParseError("Excepted number after '%s'" % (op, ))
 					try:
-						number = int(self._next_token().value)
+						number = float(self._next_token().value)
 					except ValueError:
 						raise ParseError("Excepted number after '%s'" % (op, ))
 					parameter = RangeOP(parameter, op, number)
