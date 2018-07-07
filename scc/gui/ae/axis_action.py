@@ -7,13 +7,13 @@ Assigns emulated axis to trigger
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GdkX11, GLib
-from ctypes import c_void_p, byref, cast, c_ulong, POINTER
-from scc.actions import Action, NoAction, AxisAction, MouseAction, XYAction
+from gi.repository import Gdk, GdkX11, GLib
+from ctypes import cast, POINTER
+from scc.actions import Action, NoAction, AxisAction, MouseAction
+from scc.actions import XYAction, RelXYAction
 from scc.actions import MultiAction, RelWinAreaAction, ButtonAction
 from scc.actions import AreaAction, WinAreaAction, RelAreaAction
 from scc.modifiers import BallModifier, CircularModifier
-from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import SCButtons
 from scc.lib import xwrappers as X
@@ -106,7 +106,10 @@ class AxisActionComponent(AEComponent, TimerManager):
 				if p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
 					self.set_cb(cb, "lstick", 2)
 				elif p[0] == Axes.ABS_RX and p[1] == Axes.ABS_RY:
-					self.set_cb(cb, "rstick", 2)
+					if isinstance(action, RelXYAction):
+						self.set_cb(cb, "rstick_rel", 2)
+					else:
+						self.set_cb(cb, "rstick", 2)
 				elif p[0] == Rels.REL_HWHEEL and p[1] == Rels.REL_WHEEL:
 					self.set_cb(cb, "wheel", 2)
 			else:

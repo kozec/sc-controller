@@ -6,19 +6,10 @@ import inspect
 
 class TestActions(object):
 	
-	def test_tests(self):
-		"""
-		Tests if this class has test for every Action defined in actions.py.
-		"""
-		for cls in Action.ALL.values():
-			if "/actions.py" in inspect.getfile(cls):
-				if HatAction in cls.__bases__ or cls in (NoAction,) :
-					# Skip over some hard-coded cases, these have
-					# tests merged together under weird names
-					continue
-				method_name = "test_%s" % (cls.COMMAND,)
-				assert hasattr(self, method_name), \
-					"There is no test for %s" % (cls.COMMAND)	
+	# def test_tests(self):
+	#	Tests if this class has test for every Action defined in actions.py.
+	#	Removed: profile is not parsed this way anymore, so newly added actions
+	#			don't have to support what's tested.
 	
 	
 	def test_none(self):

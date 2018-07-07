@@ -2253,23 +2253,26 @@ class XYAction(WholeHapticAction, Action):
 			WholeHapticAction.add(self, mapper, x, y)
 	
 	
+	def _haptic(self, mapper, x, y, what):
+		distance = sqrt(x*x + y*y)
+		is_close = distance > STICK_PAD_MAX * 2 / 3
+		was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
+		if self._old_pos:
+			WholeHapticAction.add(self, mapper,
+				x - self._old_pos[0], y - self._old_pos[1])
+		if is_close != was_close:
+			mapper.send_feedback(self.big_click)
+		
+		self._old_distance = distance
+		if mapper.is_touched(what):
+			self._old_pos = x, y
+		else:
+			self._old_pos = None
+	
+	
 	def whole(self, mapper, x, y, what):
 		if self.haptic:
-			distance = sqrt(x*x + y*y)
-			is_close = distance > STICK_PAD_MAX * 2 / 3
-			was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
-			if self._old_pos:
-				WholeHapticAction.add(self, mapper,
-					x - self._old_pos[0], y - self._old_pos[1])
-			if is_close != was_close:
-				mapper.send_feedback(self.big_click)
-			
-			self._old_distance = distance
-			if mapper.is_touched(what):
-				self._old_pos = x, y
-			else:
-				self._old_pos = None
-		
+			self._haptic(mapper, x, y, what)
 		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
 			self.x.axis(mapper, x, what)
 			self.y.axis(mapper, y, what)
@@ -2299,22 +2302,51 @@ class XYAction(WholeHapticAction, Action):
 	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
-			rv = [ (" " * pad) + "XY(" ]
+			rv = [ (" " * pad) + self.COMMAND + "(" ]
 			rv += self.x.to_string(True, pad + 2).split("\n")
 			rv += [ (" " * pad) + "," ]
 			rv += self.y.to_string(True, pad + 2).split("\n")
 			rv += [ (" " * pad) + ")" ]
 			return "\n".join(rv)
 		elif self.y:
-			return "XY(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
+			return self.COMMAND + "(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
 		else:
-			return "XY(" + self.x.to_string() + ")"
+			return self.COMMAND + "(" + self.x.to_string() + ")"
 	
 	
 	def __str__(self):
-		return "<XY %s >" % (", ".join([ str(x) for x in self.actions ]), )
+		return "<%s %s >" % (self.COMMAND, ", ".join([ str(x) for x in self.actions ]), )
 
 	__repr__ = __str__
+
+
+class RelXYAction(XYAction):
+	"""
+	XYAction with center positioned wherever finger touched first.
+	See https://github.com/kozec/sc-controller/issues/390
+	"""
+	COMMAND = "relXY"
+	
+	def __init__(self, *a, **b):
+		XYAction.__init__(self, *a, **b)
+		self.origin_x, self.origin_y = 0, 0
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Joystick Camera")
+	
+	
+	def whole(self, mapper, x, y, what):
+		if what in (LEFT, RIGHT, CPAD):
+			if not mapper.is_touched(what):
+				return XYAction.whole(self, mapper, 0, 0, what)
+			elif not mapper.was_touched(what):
+				self.origin_x, self.origin_y = x, y
+			x -= self.origin_x
+			y -= self.origin_y
+			return XYAction.whole(self, mapper, x, y, what)
+		XYAction.whole(self, mapper, x, y, what)
 
 
 class TriggerAction(Action, HapticEnabledAction):

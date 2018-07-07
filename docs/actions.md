@@ -171,6 +171,11 @@ This is automatically handled by GUI, so user usually doesn't need
 to write it directly.
 
 
+#### <a name="relXY"></a> relXY(xaction, yaction)
+Works same as [XY](#XY), but treats position where pad is touched as "center"
+of pad.
+
+
 #### <a name="press"></a> press(button)
 Presses button and leaves it pressed.
 

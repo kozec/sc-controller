@@ -130,6 +130,11 @@
         <col id="2">circular</col>
       </row>
       <row>
+        <col id="0">relXY( axis(Axes.ABS_RX), raxis(Axes.ABS_RY) )</col>
+        <col id="1" translatable="yes">Joystick Camera</col>
+        <col id="2">rstick_rel</col>
+      </row>
+      <row>
         <col id="0">ball(XY( mouse(Rels.REL_HWHEEL), mouse(Rels.REL_WHEEL) ))</col>
         <col id="1" translatable="yes">Mouse Wheel</col>
         <col id="2">wheel_pad</col>

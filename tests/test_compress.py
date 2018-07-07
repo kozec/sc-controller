@@ -69,6 +69,12 @@ CASES = {
 		'sensitivity' : (2.0, 3.0,),
 		'feedback' : ('BOTH',)
 	},
+	'relXY' : {
+		'X' : { 'action' : 'axis(ABS_RX)' },
+		'Y' : { 'action' : 'axis(ABS_RY)' },
+		'sensitivity' : (2.0, 3.0,),
+		'feedback' : ('BOTH',)
+	},
 	'trigger' : {
 		'action' : 'button(KEY_X)',
 		'levels' : [ 10, 80 ],

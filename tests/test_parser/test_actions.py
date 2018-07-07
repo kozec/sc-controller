@@ -272,6 +272,17 @@ class TestActions(object):
 		))
 
 
+	def test_relXY(self):
+		"""
+		Tests if relXYAciton can be converted to string and parsed back to
+		same action.
+		"""
+		assert _parses_as_itself(RelXYAction(
+			AxisAction(Axes.ABS_RX),
+			AxisAction(Axes.ABS_RY)
+		))
+
+
 	def test_trigger(self):
 		"""
 		Tests if TriggerAction can be converted to string and parsed back to
