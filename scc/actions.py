@@ -2253,26 +2253,23 @@ class XYAction(WholeHapticAction, Action):
 			WholeHapticAction.add(self, mapper, x, y)
 	
 	
-	def _haptic(self, mapper, x, y, what):
-		distance = sqrt(x*x + y*y)
-		is_close = distance > STICK_PAD_MAX * 2 / 3
-		was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
-		if self._old_pos:
-			WholeHapticAction.add(self, mapper,
-				x - self._old_pos[0], y - self._old_pos[1])
-		if is_close != was_close:
-			mapper.send_feedback(self.big_click)
-		
-		self._old_distance = distance
-		if mapper.is_touched(what):
-			self._old_pos = x, y
-		else:
-			self._old_pos = None
-	
-	
 	def whole(self, mapper, x, y, what):
 		if self.haptic:
-			self._haptic(mapper, x, y, what)
+			distance = sqrt(x*x + y*y)
+			is_close = distance > STICK_PAD_MAX * 2 / 3
+			was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
+			if self._old_pos:
+				WholeHapticAction.add(self, mapper,
+					x - self._old_pos[0], y - self._old_pos[1])
+			if is_close != was_close:
+				mapper.send_feedback(self.big_click)
+			
+			self._old_distance = distance
+			if mapper.is_touched(what):
+				self._old_pos = x, y
+			else:
+				self._old_pos = None
+		
 		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
 			self.x.axis(mapper, x, what)
 			self.y.axis(mapper, y, what)
