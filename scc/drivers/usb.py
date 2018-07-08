@@ -313,7 +313,12 @@ class USBDriver(object):
 			self._changed = 0
 		
 		for d in self._devices.values():		# TODO: don't use .values() here
-			d.flush()
+			try:
+				d.flush()
+			except usb1.USBErrorPipe:
+				log.error("USB device %s disconnected durring flush", d)
+				d.close()
+				break
 		if len(self._retry_devices):
 			if time.time() > self._retry_devices_timer:
 				self._retry_devices_timer = time.time() + 5.0
