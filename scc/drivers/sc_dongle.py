@@ -277,6 +277,9 @@ class SCController(Controller):
 		if Config()["ignore_serials"]:
 			self._driver._available_serials.add(self._serial)
 	
+	FORMAT1 = b'>BBBBB13sB2s43x'
+	# Has to be overriden in sc_by_cable
+	FORMAT2 = b'>BBBB59x'
 	
 	def configure(self, idle_timeout=None, enable_gyros=None, led_level=None):
 		"""
@@ -309,13 +312,13 @@ class SCController(Controller):
 		if enable_gyros is not None : self._enable_gyros = enable_gyros
 		if led_level is not None: self._led_level = led_level
 		
-		unknown1 = b'\x18\x00\x00\x31\x02\x00\x08\x07\x00\x07\x07\x00'
+		unknown1 = b'\x18\x00\x00\x31\x02\x00\x08\x07\x00\x07\x07\x00\x30'
 		unknown2 = b'\x00\x2e'
 		timeout1 = self._idle_timeout & 0x00FF
 		timeout2 = (self._idle_timeout & 0xFF00) >> 8
 		
 		# Timeout & Gyros
-		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBBB13sB2s43x',
+		self._driver.overwrite_control(self._ccidx, struct.pack(self.FORMAT1,
 			SCPacketType.CONFIGURE,
 			SCPacketLength.CONFIGURE,
 			SCConfigType.CONFIGURE,
@@ -325,7 +328,7 @@ class SCController(Controller):
 			unknown2))
 		
 		# LED
-		self._driver.overwrite_control(self._ccidx, struct.pack('>BBBB59x',
+		self._driver.overwrite_control(self._ccidx, struct.pack(self.FORMAT2,
 			SCPacketType.CONFIGURE,
 			SCPacketLength.LED,
 			SCConfigType.LED,

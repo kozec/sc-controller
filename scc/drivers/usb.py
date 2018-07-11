@@ -286,7 +286,11 @@ class USBDriver(object):
 			del self._syspaths[syspath]
 			del self._devices[device]
 			handled_device.close()
-			device.close()
+			try:
+				device.close()
+			except usb1.USBErrorNoDevice:
+				# Safe to ignore, happens when device is physiucally removed
+				pass
 	
 	
 	def register_hotplug_device(self, callback, vendor_id, product_id, on_failure):
