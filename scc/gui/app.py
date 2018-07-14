@@ -9,11 +9,11 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, Gio, GLib
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, GYROS
+from scc.gui.daemon_manager import DaemonManager, ControllerManager
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.controller_image import ControllerImage
 from scc.gui.profile_switcher import ProfileSwitcher
 from scc.gui.userdata_manager import UserDataManager
-from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
 from scc.gui.statusicon import get_status_icon
 from scc.gui.dwsnc import headerbar, IS_UNITY
@@ -125,6 +125,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.background.connect('hover', self.on_background_area_hover)
 		self.background.connect('leave', self.on_background_area_hover, None)
 		self.background.connect('click', self.on_background_area_click)
+		self.background.connect('button-press-event', self.on_background_button_press)
 		self.main_area.put(self.background, 0, 0)
 		self.main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		
@@ -156,9 +157,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		stckEditor = self.builder.get_object('stckEditor')
 		lblEmpty = self.builder.get_object('lblEmpty')
-		grEditor = self.builder.get_object('grEditor')
-		btC = self.builder.get_object('btC')
-		btCPAD = self.builder.get_object('btCPAD')
 		if controller:
 			config = controller.load_gui_config(self.imagepath or {})
 		else:
@@ -168,46 +166,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		def do_loading():
 			""" Called after transition is finished """
 			self.background.use_config(config)
-			buttons = ControllerImage.get_names(config.get('buttons', {}))
-			axes = ControllerImage.get_names(config.get('axes', {}))
-			gyros = config.get('gyros', False)
-			# Set sensitivity to signalize available inputs
-			# Buttons (as on image)
-			for b in BUTTONS:
-				w = self.builder.get_object("bt" + nameof(b))
-				if w:
-					w.set_sensitive(nameof(b) in buttons)
-			# Buttons (as GTK Widgets)
-			for b in self.button_widgets:
-				try:
-					w = self.button_widgets[b]
-					icon, trash = controller.get_button_icon(config, b, True)
-					w.icon.set_from_file(icon)
-				except Exception:
-					pass
-			# Triggers
-			w = self.builder.get_object("btLT")
-			if w: w.set_sensitive("ltrig" in axes)
-			w = self.builder.get_object("btRT")
-			if w: w.set_sensitive("rtrig" in axes)
-			# Sticks & pads
-			for b in PADS + STICKS:
-				w = self.builder.get_object("bt" + nameof(b))
-				if w:
-					w.set_sensitive(
-							b.lower() + "_x" in axes
-							or b.lower() + "_y" in axes
-							or nameof(b) in buttons)
-			# Gyro
-			for b in GYROS:
-				w = self.builder.get_object("bt" + b)
-				if w:
-					# TODO: Maybe actual detection
-					w.set_sensitive(gyros)
-			for w in (btC, btCPAD):
-				w.set_visible(w.get_sensitive())
-			stckEditor.set_visible_child(grEditor)
-			GLib.idle_add(self.on_c_size_allocate)
+			self.apply_gui_config_buttons(config)
 		
 		if first:
 			b1 = self.background.get_config()['gui']['background']
@@ -221,6 +180,55 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			stckEditor.set_transition_type(Gtk.StackTransitionType.SLIDE_DOWN)
 		stckEditor.set_visible_child(lblEmpty)
 		GLib.timeout_add(stckEditor.get_transition_duration(), do_loading)
+	
+	
+	def apply_gui_config_buttons(self, config):
+		""" Changes UI according to controller configuration """
+		stckEditor = self.builder.get_object('stckEditor')
+		grEditor = self.builder.get_object('grEditor')
+		btCPAD = self.builder.get_object('btCPAD')
+		btC = self.builder.get_object('btC')
+		
+		buttons = ControllerImage.get_names(config.get('buttons', {}))
+		axes = ControllerImage.get_names(config.get('axes', {}))
+		gyros = config.get('gyros', False)
+		# Set sensitivity to signalize available inputs
+		# Buttons (as on image)
+		for b in BUTTONS:
+			w = self.builder.get_object("bt" + nameof(b))
+			if w:
+				w.set_sensitive(nameof(b) in buttons)
+		# Buttons (as GTK Widgets)
+		for b in self.button_widgets:
+			try:
+				w = self.button_widgets[b]
+				icon, trash = ControllerManager.get_button_icon(config, b, True)
+				w.icon.set_from_file(icon)
+			except Exception:
+				pass
+		# Triggers
+		w = self.builder.get_object("btLT")
+		if w: w.set_sensitive("ltrig" in axes)
+		w = self.builder.get_object("btRT")
+		if w: w.set_sensitive("rtrig" in axes)
+		# Sticks & pads
+		for b in PADS + STICKS:
+			w = self.builder.get_object("bt" + nameof(b))
+			if w:
+				w.set_sensitive(
+						b.lower() + "_x" in axes
+						or b.lower() + "_y" in axes
+						or nameof(b) in buttons)
+		# Gyro
+		for b in GYROS:
+			w = self.builder.get_object("bt" + b)
+			if w:
+				# TODO: Maybe actual detection
+				w.set_sensitive(gyros)
+		for w in (btC, btCPAD):
+			w.set_visible(w.get_sensitive())
+		stckEditor.set_visible_child(grEditor)
+		GLib.idle_add(self.on_c_size_allocate)
 	
 	
 	def setup_statusicon(self):
@@ -732,6 +740,25 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def on_background_area_hover(self, trash, area):
 		self.hint(area)
+	
+	
+	def on_background_button_press(self, trash, event):
+		if event.button == 3:
+			mnuImage = self.builder.get_object("mnuImage")
+			mnuImage.popup(None, None, None, None,
+				3, Gtk.get_current_event_time())
+	
+	
+	def on_mnu_change_background_image(self, mnu, *a):
+		command, filename = mnu.get_name().split(",")
+		if command == "background":
+			self.background.override_background(filename)
+		elif command == "buttons":
+			self.background.override_buttons(filename)
+			self.apply_gui_config_buttons(self.background.get_config())
+		elif command == "undo":
+			self.background.undo_override()
+			self.apply_gui_config_buttons(self.background.get_config())
 	
 	
 	def on_background_area_click(self, trash, area):

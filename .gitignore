@@ -13,6 +13,5 @@ profiles
 .idea/
 out.svg
 *.AppImage
-*.json
 *.cpp
 *.vdf

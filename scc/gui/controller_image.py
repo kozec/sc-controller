@@ -11,7 +11,7 @@ from scc.gui.svg_widget import SVGWidget, SVGEditor
 from scc.constants import SCButtons
 from scc.tools import nameof
 
-import os, sys, json, logging
+import os, sys, copy, json, logging
 log = logging.getLogger("ContImage")
 
 
@@ -40,6 +40,7 @@ class ControllerImage(SVGWidget):
 	
 	def __init__(self, app, config=None):
 		self.app = app
+		self.backup = None
 		self.current = self._ensure_config({})
 		filename = self._make_controller_image_path(ControllerImage.DEFAULT)
 		SVGWidget.__init__(self, filename)
@@ -84,17 +85,51 @@ class ControllerImage(SVGWidget):
 		]
 	
 	
-	def use_config(self, config):
+	def use_config(self, config, backup=None):
 		"""
 		Loads controller settings from provided config, adding default values
 		when needed. Returns same config.
 		"""
+		self.backup = backup
 		self.current = self._ensure_config(config or {})
 		self.set_image(os.path.join(self.app.imagepath,
 			"controller-images/%s.svg" % (self.current["gui"]["background"], )))
 		self._fill_button_images(self.current["gui"]["buttons"])
 		self.hilight({})
 		return self.current
+	
+	
+	def override_background(self, filename):
+		"""
+		Overrides background image setting. This changes config in place,
+		so next time get_config is called, changed background is part of it.
+		"""
+		if self.backup is None:
+			self.backup = copy.deepcopy(self.current)
+		data = json.loads(open(os.path.join(self.app.imagepath,
+			"%s.json" % (filename,)), "r").read())
+		self.current["gui"]["background"] = data["gui"]["background"]
+		self.use_config(self.current, self.backup)
+	
+	
+	def override_buttons(self, filename):
+		"""
+		Overrides button settings. This changes config in place,
+		so next time get_config is called, changed background is part of it.
+		"""
+		if self.backup is None:
+			self.backup = copy.deepcopy(self.current)
+		data = json.loads(open(os.path.join(self.app.imagepath,
+			"%s.json" % (filename,)), "r").read())
+		self.current["gui"]["buttons"] = data["gui"]["buttons"]
+		self.current["buttons"] = data["buttons"]
+		self.use_config(self.current, self.backup)
+	
+	
+	def undo_override(self):
+		""" Undoes override_* changes """
+		if self.backup is not None:
+			self.use_config(self.backup, None)
 	
 	
 	def get_button_groups(self):
