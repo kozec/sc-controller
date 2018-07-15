@@ -211,6 +211,8 @@ def is_button_togle(action):
 
 
 def is_button_repeat(action):
+	if isinstance(action, Cycle):
+		return False
 	if isinstance(action, Macro) and action.repeat:
 		if len(action.actions) == 1:
 			return isinstance(action.actions[0], ButtonAction)
