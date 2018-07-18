@@ -384,7 +384,6 @@ def init(daemon, config):
 			if device.phys.startswith(phys):
 				axes = get_axes(device)
 				count = len(axes)
-				print "##", count, device
 				if count == 6:
 					# 6 axes
 					if EvdevController.ECODES.ABS_MT_POSITION_X in axes:
@@ -398,9 +397,6 @@ def init(daemon, config):
 					# 4 axes - Touchpad
 					touchpad = device
 		# 3rd, do a magic
-		print ">>> c", controllerdevice
-		print ">>> g", gyro
-		print ">>> t", touchpad
 		if controllerdevice and gyro and touchpad:
 			return make_new_device(DS4EvdevController, controllerdevice, gyro, touchpad)
 	
