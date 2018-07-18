@@ -456,7 +456,6 @@ class BallModifier(Modifier, WholeHapticAction):
 	def _roll(self, mapper):
 		# Compute time step
 		t = time.time()
-		print "roll"
 		dt, self._lastTime = t - self._lastTime, t
 		
 		# Free movement update velocity and compute movement
