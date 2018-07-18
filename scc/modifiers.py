@@ -1487,7 +1487,7 @@ class CircularModifier(Modifier, HapticEnabledAction):
 	
 	def get_haptic(self):
 		if isinstance(self.action, HapticEnabledAction):
-			return self.action.get_haptic(hd)
+			return self.action.get_haptic()
 		else:
 			return HapticEnabledAction.get_haptic(self)
 	
