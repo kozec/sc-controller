@@ -382,15 +382,27 @@ def init(daemon, config):
 		phys = device.phys.split("/")[0]
 		for device in devices:
 			if device.phys.startswith(phys):
-				count = len(get_axes(device))
+				axes = get_axes(device)
+				count = len(axes)
+				print "##", count, device
 				if count == 6:
-					# 6 axes - gyro sensor
-					gyro = device
+					# 6 axes
+					if EvdevController.ECODES.ABS_MT_POSITION_X in axes:
+						# kernel 4.17+ - touchpad
+						touchpad = device
+					else:
+						# gyro sensor
+						gyro = device
+					pass
 				elif count == 4:
 					# 4 axes - Touchpad
 					touchpad = device
 		# 3rd, do a magic
-		return make_new_device(DS4EvdevController, controllerdevice, gyro, touchpad)
+		print ">>> c", controllerdevice
+		print ">>> g", gyro
+		print ">>> t", touchpad
+		if controllerdevice and gyro and touchpad:
+			return make_new_device(DS4EvdevController, controllerdevice, gyro, touchpad)
 	
 	
 	def fail_cb(syspath, vid, pid):
