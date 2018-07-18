@@ -456,6 +456,7 @@ class BallModifier(Modifier, WholeHapticAction):
 	def _roll(self, mapper):
 		# Compute time step
 		t = time.time()
+		print "roll"
 		dt, self._lastTime = t - self._lastTime, t
 		
 		# Free movement update velocity and compute movement
@@ -534,6 +535,25 @@ class BallModifier(Modifier, WholeHapticAction):
 	
 	def pad(self, mapper, position, what):
 		self.whole(mapper, position, 0, what)
+	
+	
+	def change(self, mapper, dx, dy, what):
+		if what in (None, STICK) or (mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT):
+			return self.action.change(mapper, x, y, what)
+		if mapper.is_touched(what):
+			if mapper.was_touched(what):
+				t = time.time()
+				dt = t - self._lastTime
+				if dt < 0.0075: return
+				self._lastTime = t
+				self._add(dx / dt, dy / dt)
+				self.action.add(mapper, dx, dy)
+			else:
+				self._stop()
+		elif mapper.was_touched(what):
+			velocity = sqrt(self._xvel * self._xvel + self._yvel * self._yvel)
+			if velocity > BallModifier.MIN_LIFT_VELOCITY:
+				self._roll(mapper)
 	
 	
 	def whole(self, mapper, x, y, what):
@@ -1459,6 +1479,20 @@ class CircularModifier(Modifier, HapticEnabledAction):
 		self.speed = 1.0
 	
 	
+	def set_haptic(self, hd):
+		if isinstance(self.action, HapticEnabledAction):
+			self.action.set_haptic(hd)
+		else:
+			HapticEnabledAction.set_haptic(self, hd)
+	
+	
+	def get_haptic(self):
+		if isinstance(self.action, HapticEnabledAction):
+			return self.action.get_haptic(hd)
+		else:
+			return HapticEnabledAction.get_haptic(self)
+	
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return CircularModifier(a)
@@ -1487,6 +1521,8 @@ class CircularModifier(Modifier, HapticEnabledAction):
 		if distance < STICK_PAD_MAX_HALF:
 			# Finger lifted or too close to middle
 			self.angle = None
+			if mapper.was_touched(what):
+				self.action.change(mapper, 0, 0, what)
 		else:
 			# Compute current angle
 			angle = atan2(x, y)
@@ -1517,7 +1553,7 @@ class CircularModifier(Modifier, HapticEnabledAction):
 						self._haptic_counter += 0.5
 					mapper.send_feedback(self.haptic)
 			# Apply movement to child action
-			self.action.change(mapper, -angle * self.speed, 0)
+			self.action.change(mapper, -angle * self.speed, 0, what)
 			mapper.force_event.add(FE_PAD)
 
 
@@ -1583,7 +1619,7 @@ class CircularAbsModifier(Modifier, WholeHapticAction):
 						# Add a full rotation to counter the wrapping
 						angle += 2 * PI
 					if abs(diff) < 6:# Prevents crazy feedback burst when finger cross 360' angle
-						WholeHapticAction.change(self, mapper, diff * 10000, 0)
+						WholeHapticAction.change(self, mapper, diff * 10000, 0, what)
 				self.angle = angle
 			# Apply actual constant
 			angle *= STICK_PAD_MAX / PI

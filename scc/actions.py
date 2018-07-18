@@ -327,10 +327,12 @@ class Action(object):
 		self.whole(mapper, dx, dy, None)
 	
 	
-	def change(self, mapper, dx, dy):
+	def change(self, mapper, dx, dy, what):
 		"""
 		Called from CircularModifier to indicate incremental (or decremental)
 		change in value.
+		
+		'what' can be None.
 		"""
 		log.warn("Action %s can't handle incremental changes", self.__class__.__name__)
 	
@@ -689,7 +691,7 @@ class AxisAction(Action):
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
-	def change(self, mapper, dx, dy):
+	def change(self, mapper, dx, dy, what):
 		""" Called from CircularModifier """
 		p = AxisAction.old_positions[self.id]
 		p = clamp(-STICK_PAD_MAX, p + dx, STICK_PAD_MAX)
@@ -780,10 +782,10 @@ class WholeHapticAction(HapticEnabledAction):
 		self.reset_wholehaptic()
 	
 	
-	def change(self, mapper, dx, dy):
+	def change(self, mapper, dx, dy, what):
 		self._ax += dx
 		self._ay += dy
-
+		
 		distance = sqrt(self._ax * self._ax + self._ay * self._ay)
 		if distance > self.haptic.frequency:
 			self._ax = self._ay = 0
@@ -791,7 +793,7 @@ class WholeHapticAction(HapticEnabledAction):
 	
 	
 	def add(self, mapper, dx, dy):
-		self.change(mapper, dx, dy)
+		self.change(mapper, dx, dy, None)
 	
 	
 	def reset_wholehaptic(self):
@@ -854,9 +856,9 @@ class MouseAction(WholeHapticAction, Action):
 	def button_press(self, mapper):
 		# This is generaly bad idea...
 		if self._mouse_axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
-			self.change(mapper, 100000, 0)
+			self.change(mapper, 100000, 0, None)
 		else:
-			self.change(mapper, 100, 0)
+			self.change(mapper, 100, 0, None)
 	
 	
 	def button_release(self, mapper):
@@ -865,7 +867,7 @@ class MouseAction(WholeHapticAction, Action):
 	
 	
 	def axis(self, mapper, position, what):
-		self.change(mapper, position * MouseAbsAction.MOUSE_FACTOR, 0)
+		self.change(mapper, position * MouseAbsAction.MOUSE_FACTOR, 0, what)
 		mapper.force_event.add(FE_STICK)
 	
 		
@@ -873,21 +875,21 @@ class MouseAction(WholeHapticAction, Action):
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
 				d = position - self._old_pos[0]
-				self.change(mapper, d, 0)
+				self.change(mapper, d, 0, what)
 			self._old_pos = position, 0
 		else:
 			# Pad just released
 			self._old_pos = None
 	
 	
-	def change(self, mapper, dx, dy):
+	def change(self, mapper, dx, dy, what):
 		self.add(mapper, dx, dy)
 	
 	
 	def add(self, mapper, dx, dy):
 		""" Called from BallModifier """
 		if self.haptic:
-			WholeHapticAction.change(self, mapper, dx, dy)
+			WholeHapticAction.change(self, mapper, dx, dy, None)
 		
 		dx, dy = dx * self.speed[0], dy * self.speed[1]
 		if self._mouse_axis is None:
@@ -913,7 +915,7 @@ class MouseAction(WholeHapticAction, Action):
 			if mapper.is_touched(what):
 				if self._old_pos and mapper.was_touched(what):
 					dx, dy = x - self._old_pos[0], self._old_pos[1] - y
-					self.change(mapper, dx, dy)
+					self.change(mapper, dx, dy, what)
 				self._old_pos = x, y
 			else:
 				# Pad just released
@@ -1670,7 +1672,7 @@ class ButtonAction(HapticEnabledAction, Action):
 			self._released = True
 	
 	
-	def change(self, mapper, dx, dy):
+	def change(self, mapper, dx, dy, what):
 		""" Makes sense with circular() modifier """
 		self._change += dx
 		if self._change < -ButtonAction.CIRCULAR_INTERVAL:
@@ -1999,8 +2001,8 @@ class DPadAction(MultichildAction, HapticEnabledAction):
 		return None
 	
 	
-	def change(self, mapper, dx, dy):
-		self.whole(mapper, dx, -dy, None)
+	def change(self, mapper, dx, dy, what):
+		self.whole(mapper, dx, -dy, what)
 
 
 class DPad8Action(DPadAction):
