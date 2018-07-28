@@ -61,18 +61,18 @@ class AxisActionComponent(AEComponent, TimerManager):
 		
 		# Remove options that are not applicable to currently editted input
 		if self.editor.get_id() in STICKS:
-			# Remove "Mouse Region", "Trackball", "Trackpad"
-			# and "Mouse (Emulate Stick)" options when editing stick bindings
+			# Remove "Mouse Region", "Mouse" and "Mouse (Emulate Stick)" options
+			# when editing stick bindings
 			cb = self.builder.get_object("cbAxisOutput")
 			for row in cb.get_model():
-				if row[2] in ("wheel_pad", "area", "mouse_pad", "trackpad", "trackball"):
+				if row[2] in ("wheel_pad", "area", "mouse", "mouse_pad"):
 					cb.get_model().remove(row.iter)
 		else:
 			# Remove "Mouse" option when editing pads
 			# (it's effectivelly same as Trackpad)
 			cb = self.builder.get_object("cbAxisOutput")
 			for row in cb.get_model():
-				if row[2] in ("wheel_stick", "mouse_stick", ):
+				if row[2] in ("wheel_stick", "mouse_stick"):
 					cb.get_model().remove(row.iter)
 	
 	
@@ -90,28 +90,30 @@ class AxisActionComponent(AEComponent, TimerManager):
 				return
 			self.update_osd_area(None)
 			if isinstance(action, MouseAction):
-				self.set_cb(cb, "trackpad", 2)
-			elif isinstance(action, BallModifier):
-				self.load_trackball_action(action)
+				self.load_mouse_action(action)
 			elif isinstance(action, CircularModifier):
 				self.load_circular_action(action)
 			elif isinstance(action, ButtonAction):
 				self.load_button_action(action)
 			elif isinstance(action, XYAction):
-				p = [ None, None ]
-				for x in (0, 1):
-					if len(action.actions[0].strip().parameters) >= x:
-						if len(action.actions[x].strip().parameters) > 0:
-							p[x] = action.actions[x].strip().parameters[0]
-				if p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
-					self.set_cb(cb, "lstick", 2)
-				elif p[0] == Axes.ABS_RX and p[1] == Axes.ABS_RY:
-					if isinstance(action, RelXYAction):
-						self.set_cb(cb, "rstick_rel", 2)
-					else:
-						self.set_cb(cb, "rstick", 2)
-				elif p[0] == Rels.REL_HWHEEL and p[1] == Rels.REL_WHEEL:
-					self.set_cb(cb, "wheel", 2)
+				if self.editor.friction > 0:
+					self.load_mouse_action(action)
+				else:
+					p = [ None, None ]
+					for x in (0, 1):
+						if len(action.actions[0].strip().parameters) >= x:
+							if len(action.actions[x].strip().parameters) > 0:
+								p[x] = action.actions[x].strip().parameters[0]
+					if p[0] == Axes.ABS_X and p[1] == Axes.ABS_Y:
+						self.set_cb(cb, "lstick", 2)
+					elif p[0] == Axes.ABS_RX and p[1] == Axes.ABS_RY:
+						if isinstance(action, RelXYAction):
+							self.set_cb(cb, "rstick_rel", 2)
+						else:
+							self.set_cb(cb, "rstick", 2)
+					elif p[0] == Rels.REL_HWHEEL and p[1] == Rels.REL_WHEEL:
+						self.set_cb(cb, "wheel_pad", 2)
+						self.set_cb(cb, "wheel_stick", 2)
 			else:
 				self.set_cb(cb, "none", 2)
 	
@@ -170,30 +172,25 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self.set_cb(cbAxisOutput, "button", 2)
 	
 	
-	def load_trackball_action(self, action):
-		cbTracballOutput = self.builder.get_object("cbTracballOutput")
+	def load_mouse_action(self, action):
+		cbMouseOutput = self.builder.get_object("cbMouseOutput")
 		cbAxisOutput = self.builder.get_object("cbAxisOutput")
-		sclFriction = self.builder.get_object("sclFriction")
 		self._recursing = True
-		if isinstance(action.action, MouseAction):
-			self.set_cb(cbTracballOutput, "mouse", 1)
-			self.set_cb(cbAxisOutput, "trackball", 2)
-		elif isinstance(action.action, XYAction):
-			if isinstance(action.action.x, AxisAction):
-				if action.action.x.parameters[0] == Axes.ABS_X:
-					self.set_cb(cbTracballOutput, "left", 1)
+		if isinstance(action, MouseAction):
+			self.set_cb(cbMouseOutput, "mouse", 1)
+			self.set_cb(cbAxisOutput, "mouse", 2)
+		elif isinstance(action, XYAction):
+			if isinstance(action.x, AxisAction):
+				if action.x.parameters[0] == Axes.ABS_X:
+					self.set_cb(cbMouseOutput, "left", 1)
 				else:
-					self.set_cb(cbTracballOutput, "right", 1)
-				self.set_cb(cbAxisOutput, "trackball", 2)
-			elif isinstance(action.action.x, MouseAction):
+					self.set_cb(cbMouseOutput, "right", 1)
+				self.set_cb(cbAxisOutput, "mouse", 2)
+			elif isinstance(action.x, MouseAction):
 				if self.editor.get_id() in STICKS:
 					self.set_cb(cbAxisOutput, "wheel_stick", 2)
 				else:
 					self.set_cb(cbAxisOutput, "wheel_pad", 2)
-		if action.friction <= 0:
-			sclFriction.set_value(0)
-		else:
-			sclFriction.set_value(math.log(action.friction * 1000.0, 10))
 		self._recursing = False
 	
 	
@@ -330,20 +327,19 @@ class AxisActionComponent(AEComponent, TimerManager):
 					self.app.set_action(self.app.current, side, NoAction())
 	
 	
-	def make_trackball_action(self):
+	def on_mouse_options_changed(self, *a):
+		if self._recursing : return
+		action = self.make_mouse_action()
+		self.editor.set_action(action)
+	
+	
+	def make_mouse_action(self):
 		"""
 		Loads values from UI into trackball-related action
 		"""
-		sclFriction = self.builder.get_object("sclFriction")
-		
-		cbTracballOutput = self.builder.get_object("cbTracballOutput")
-		a_str = cbTracballOutput.get_model().get_value(cbTracballOutput.get_active_iter(), 2)
-		a = self.parser.restart(a_str).parse()
-		if sclFriction.get_value() <= 0:
-			friction = 0
-		else:
-			friction = ((10.0**sclFriction.get_value())/1000.0)
-		return BallModifier(round(friction, 3), a)
+		cbMouseOutput = self.builder.get_object("cbMouseOutput")
+		a_str = cbMouseOutput.get_model().get_value(cbMouseOutput.get_active_iter(), 2)
+		return self.parser.restart(a_str).parse()
 	
 	
 	def make_circular_action(self):
@@ -449,12 +445,6 @@ class AxisActionComponent(AEComponent, TimerManager):
 			self.on_sbArea_output(spin)
 	
 	
-	def on_trackball_options_changed(self, *a):
-		if self._recursing : return
-		action = self.make_trackball_action()
-		self.editor.set_action(action)
-	
-	
 	def on_sbArea_output(self, button, *a):
 		if self.relative_area:
 			button.set_text("%s %%" % (button.get_value()))
@@ -471,19 +461,9 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self.on_area_options_changed(button)
 	
 	
-	def on_btClearFriction_clicked(self, *a):
-		sclFriction = self.builder.get_object("sclFriction")
-		sclFriction.set_value(math.log(10 * 1000.0, 10))
+	def on_lblSetupTrackball_activate_link(self, trash, link):
+		self.editor.on_link(link)
 	
-	
-	def on_sclFriction_format_value(self, scale, value):
-		if value <= 0:
-			return "0.000"
-		elif value >= 6:
-			return "1000.00"
-		else:
-			return "%0.3f" % ((10.0**value)/1000.0)
-		
 	
 	def on_cbAxisOutput_changed(self, *a):
 		cbAxisOutput = self.builder.get_object("cbAxisOutput")
@@ -500,9 +480,12 @@ class AxisActionComponent(AEComponent, TimerManager):
 		elif key == "circular":
 			stActionData.set_visible_child(self.builder.get_object("grCircular"))
 			action = self.make_circular_action()
-		elif key == 'trackball':
-			stActionData.set_visible_child(self.builder.get_object("vbTrackball"))
-			action = self.make_trackball_action()
+		elif key == 'mouse':
+			stActionData.set_visible_child(self.builder.get_object("vbMose"))
+			if self.editor.friction == 0:
+				# When switching to mouse, enable trackball by default
+				self.editor.friction = 10
+			action = self.make_mouse_action()
 		else:
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			action = cbAxisOutput.get_model().get_value(cbAxisOutput.get_active_iter(), 0)

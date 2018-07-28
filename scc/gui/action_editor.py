@@ -8,12 +8,12 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
+from scc.actions import Action, XYAction, NoAction, RingAction, TriggerAction
 from scc.special_actions import OSDAction, GesturesAction, MenuAction
+from scc.modifiers import SmoothModifier, NameModifier, BallModifier
 from scc.modifiers import Modifier, ClickModifier, ModeModifier
 from scc.modifiers import SensitivityModifier, FeedbackModifier
 from scc.modifiers import DeadzoneModifier, RotateInputModifier
-from scc.modifiers import SmoothModifier, NameModifier
-from scc.actions import Action, XYAction, NoAction, RingAction
 from scc.constants import HapticPos, SCButtons
 from scc.constants import CUT, ROUND, LINEAR, MINIMUM
 from scc.controller import HapticData
@@ -23,13 +23,14 @@ from scc.tools import nameof
 from scc.gui.controller_widget import PRESSABLE, TRIGGERS, PADS
 from scc.gui.controller_widget import STICKS, GYROS, BUTTONS
 from scc.gui.modeshift_editor import ModeshiftEditor
+from scc.gui.parser import InvalidAction, GuiActionParser
+from scc.gui.simple_chooser import SimpleChooser
 from scc.gui.macro_editor import MacroEditor
 from scc.gui.ring_editor import RingEditor
-from scc.gui.parser import InvalidAction
 from scc.gui.dwsnc import headerbar
 from scc.gui.ae import AEComponent
 from scc.gui.editor import Editor
-import os, logging, importlib, types
+import os, logging, math, importlib, types
 log = logging.getLogger("ActionEditor")
 
 
@@ -61,9 +62,9 @@ DEADZONE_MODES = [ CUT, ROUND, LINEAR, MINIMUM ]
 class ActionEditor(Editor):
 	GLADE = "action_editor.glade"
 	ERROR_CSS = " #error {background-color:green; color:red;} "
-
+	
 	AEC_MENUITEM = -1
-
+	
 	MODE_TO_MODS = {
 		# Specified which modifiers are compatibile with which editor mode.
 		# That way, stuff like Rotation settings is not shown when editor
@@ -71,14 +72,14 @@ class ActionEditor(Editor):
 		Action.AC_BUTTON	: Action.MOD_OSD | Action.MOD_FEEDBACK,
 		Action.AC_TRIGGER	: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
 		Action.AC_STICK		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK | Action.MOD_SMOOTH,
-		Action.AC_PAD		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK | Action.MOD_SMOOTH,
+		Action.AC_PAD		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK | Action.MOD_SMOOTH | Action.MOD_BALL,
 		Action.AC_GYRO		: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_DEADZONE | Action.MOD_FEEDBACK,
 		Action.AC_OSK		: 0,
 		Action.AC_MENU		: Action.MOD_OSD,
 		AEC_MENUITEM		: 0,
 	}
-
-
+	
+	
 	def __init__(self, app, callback):
 		Editor.__init__(self)
 		self.app = app
@@ -97,6 +98,7 @@ class ActionEditor(Editor):
 		self.deadzone_mode = None		# None for 'disabled'
 		self.feedback_position = None	# None for 'disabled'
 		self.smoothing = None			# None for 'disabled'
+		self.friction = 0				# 0 for 'disabled'
 		self.click = False				# Click modifier value. None for disabled
 		self.rotation_angle = 0			# RotateInputModifier angle
 		self.osd = False				# 'OSD enabled' value.
@@ -112,8 +114,8 @@ class ActionEditor(Editor):
 		self._multiparams = [ None ] * 8
 		self._mode = None
 		self._recursing = False
-
-
+	
+	
 	def setup_widgets(self):
 		Editor.setup_widgets(self)
 		headerbar(self.builder.get_object("header"))
@@ -150,16 +152,16 @@ class ActionEditor(Editor):
 				self.builder.get_object("btClearDZ%s" % (key,)),
 				self.deadzone[i]	# default value
 			))
-
-
+	
+	
 	def load_components(self):
 		""" Loads list of editor components """
 		# Import and load components
 		for c in COMPONENTS:
 			self.load_component(c)
 		self._selected_component = None
-
-
+	
+	
 	def load_component(self, class_name):
 		"""
 		Loads and adds new component to editor.
@@ -176,16 +178,16 @@ class ActionEditor(Editor):
 					self.loaded_components[class_name] = instance
 					self.components.append(instance)
 					return instance
-
-
+	
+	
 	def on_Dialog_destroy(self, *a):
 		cbPreview = self.builder.get_object("cbPreview")
 		cbPreview.set_active(False)
 		self.remove_added_widget()
 		if self._selected_component is not None:
 			self._selected_component.hidden()
-
-
+	
+	
 	def set_osd_enabled(self, value):
 		"""
 		Sets value of OSD modifier checkbox, without firing any more events.
@@ -203,13 +205,43 @@ class ActionEditor(Editor):
 	def close(self):
 		self.on_Dialog_destroy()
 		Editor.close(self)
-
-
+	
+	
 	def get_id(self):
 		""" Returns ID of input that is being edited """
 		return self.id
-
-
+	
+	
+	def on_link(self, link):
+		parser = GuiActionParser()
+		if link.startswith("quick://"):
+			action = parser.restart(link[8:]).parse()
+			self.reset_active_component()
+			self.set_action(action, from_custom=True)
+		elif link == "grab://trigger_button":
+			def cb(action):
+				action = TriggerAction(254, 255, action)
+				self.set_action(action, from_custom=True)
+				self.force_page("trigger")
+			b = SimpleChooser(self.app, "buttons", cb)
+			b.set_title(_("Select Button"))
+			b.hide_axes()
+			b.show(self.window)
+		elif link.startswith("page://"):
+			def cb():
+				self.force_page(link[7:])
+			GLib.timeout_add(0.1, cb)
+		elif link.startswith("advanced://"):
+			exMore = self.builder.get_object("exMore")
+			rvMore = self.builder.get_object("rvMore")
+			ntbMore = self.builder.get_object("ntbMore")
+			assert exMore.get_visible()
+			exMore.set_expanded(True)
+			rvMore.set_reveal_child(True)
+			ntbMore.set_current_page(int(link[11:]))
+		else:
+			log.warning("Activated unknown link: %s", link)
+	
 	def on_action_type_changed(self, clicked_button):
 		"""
 		Called when user clicks on one of Action Type buttons.
@@ -223,7 +255,7 @@ class ActionEditor(Editor):
 			clicked_button.set_active(True)
 			self._recursing = False
 			return
-
+		
 		component = None
 		for c in self.c_buttons:
 			b = self.c_buttons[c]
@@ -232,7 +264,7 @@ class ActionEditor(Editor):
 			else:
 				b.set_active(False)
 		self._recursing = False
-
+		
 		stActionModes = self.builder.get_object("stActionModes")
 		component.set_action(self._mode, self._action)
 		if self._selected_component is not None:
@@ -241,10 +273,10 @@ class ActionEditor(Editor):
 		self._selected_component = component
 		self._selected_component.shown()
 		stActionModes.set_visible_child(component.get_widget())
-
+		
 		stActionModes.show_all()
-
-
+	
+	
 	def force_page(self, component, remove_rest=False):
 		"""
 		Forces action editor to display page with specified component.
@@ -282,13 +314,13 @@ class ActionEditor(Editor):
 		""" Returns action name as set in editor entry """
 		entName = self.builder.get_object("entName")
 		return entName.get_text().decode("utf-8").strip(" \t")
-
-
+	
+	
 	def get_current_page(self):
 		""" Returns currently displayed page (component) """
 		return self._selected_component
-
-
+	
+	
 	def _set_title(self):
 		""" Copies title from text entry into action instance """
 		entName = self.builder.get_object("entName")
@@ -300,46 +332,46 @@ class ActionEditor(Editor):
 		else:
 			#print ">>>", "_set_title", self._action, entName
 			self._action.name = name
-
-
+	
+	
 	def hide_modifiers(self):
 		""" Hides (and disables) all modifiers """
 		self.set_modifiers_enabled(False)
 		self.builder.get_object("exMore").set_visible(False)
-
-
+	
+	
 	def hide_advanced_settings(self):
 		"""
 		Hides entire 'Advanced Settings' expander.
 		"""
 		self.builder.get_object("exMore").set_visible(False)
 		self.builder.get_object("rvMore").set_visible(False)
-
-
+	
+	
 	def hide_modeshift(self):
 		"""
 		Hides Mode Shift button.
 		Used when displaying ActionEditor from ModeshiftEditor
 		"""
 		self.builder.get_object("btModeshift").set_visible(False)
-
-
+	
+	
 	def hide_macro(self):
 		"""
 		Hides Macro button.
 		Used when editing macro of pad/stick bindings.
 		"""
 		self.builder.get_object("btMacro").set_visible(False)
-
-
+	
+	
 	def hide_ring(self):
 		"""
 		Hides Ring Bindings button.
 		Used when editing anything but pad.
 		"""
 		self.builder.get_object("btInnerRing").set_visible(False)
-
-
+	
+	
 	def hide_action_buttons(self):
 		""" Hides action buttons, effectivelly disallowing user to change action type """
 		for x in ("lblActionType", "vbActionButtons"):
@@ -347,14 +379,14 @@ class ActionEditor(Editor):
 		self.hide_modeshift()
 		self.hide_macro()
 		self.hide_ring()
-
-
+	
+	
 	def hide_action_str(self):
 		""" Hides bottom part with action displayed as string """
 		self.builder.get_object("vbActionStr").set_visible(False)
 		self.builder.get_object("grEditor").set_property("margin-bottom", 30)
-
-
+	
+	
 	def hide_editor(self):
 		""" Hides everything but action buttons and action name field """
 		self.builder.get_object("stActionModes").set_visible(False)
@@ -362,8 +394,8 @@ class ActionEditor(Editor):
 		self.hide_modeshift()
 		self.hide_macro()
 		self.hide_ring()
-
-
+	
+	
 	def hide_name(self):
 		"""
 		Hides (and clears) name field.
@@ -372,52 +404,51 @@ class ActionEditor(Editor):
 		self.builder.get_object("lblName").set_visible(False)
 		self.builder.get_object("entName").set_visible(False)
 		self.builder.get_object("entName").set_text("")
-
-
+	
+	
 	def hide_clear(self):
 		""" Hides clear buttton """
 		self.builder.get_object("btClear").set_visible(False)
-
-
-
+	
+	
 	def on_btClearRotation_clicked(self, *a):
 		self.builder.get_object("sclRotation").set_value(0.0)
-
-
+	
+	
 	def on_btClearSens_clicked(self, source, *a):
 		i = 0
 		for scale, label, button, checkbox in self.sens_widgets:
 			if source == button:
 				scale.set_value(self.sens_defaults[i])
 				i += 1
-
-
+	
+	
 	def on_btClearFeedback_clicked(self, source, *a):
 		for scale, label, button, default in self.feedback_widgets:
 			if source == button:
 				scale.set_value(default)
-
-
+	
+	
 	def on_btClearSmoothing_clicked(self, source, *a):
 		for label, scale, button, default in self.smoothing_widgets:
 			if source == button:
 				scale.set_value(default)
-
-
+	
+	
 	def on_btClearDeadzone_clicked(self, source, *a):
 		for label, scale, button, default in self.deadzone_widgets:
 			if source == button:
 				scale.set_value(default)
-
-
+	
+	
 	def on_btClear_clicked(self, *a):
 		""" Handler for clear button """
 		action = NoAction()
 		if self.ac_callback is not None:
 			self.ac_callback(self.id, action)
 		self.close()
-
-
+	
+	
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
 		if self.ac_callback is not None:
@@ -431,8 +462,8 @@ class ActionEditor(Editor):
 			if self._selected_component:
 				self._selected_component.on_ok(a)
 		self.close()
-
-
+	
+	
 	def on_btModeshift_clicked(self, *a):
 		""" Convert current action into modeshift and send it to ModeshiftEditor """
 		e = ModeshiftEditor(self.app, self.ac_callback)
@@ -441,8 +472,8 @@ class ActionEditor(Editor):
 		self.send_added_widget(e)
 		self.close()
 		e.show(self.get_transient_for())
-
-
+	
+	
 	def on_btMacro_clicked(self, *a):
 		""" Convert current action into macro and send it to MacroEditor """
 		e = MacroEditor(self.app, self.ac_callback)
@@ -451,8 +482,8 @@ class ActionEditor(Editor):
 		self.send_added_widget(e)
 		self.close()
 		e.show(self.get_transient_for())
-
-
+	
+	
 	def on_btInnerRing_clicked(self, *a):
 		""" Convert current action into ring bindings and send it to RingEditor """
 		e = RingEditor(self.app, self.ac_callback)
@@ -461,8 +492,8 @@ class ActionEditor(Editor):
 		self.send_added_widget(e)
 		self.close()
 		e.show(self.get_transient_for())
-
-
+	
+	
 	def on_exMore_activate(self, ex, *a):
 		rvMore = self.builder.get_object("rvMore")
 		rvMore.set_reveal_child(not ex.get_expanded())
@@ -482,10 +513,20 @@ class ActionEditor(Editor):
 		cbSmoothing = self.builder.get_object("cbSmoothing")
 		rvSmoothing = self.builder.get_object("rvSmoothing")
 		sclRotation = self.builder.get_object("sclRotation")
+		sclFriction = self.builder.get_object("sclFriction")
 		cbOSD = self.builder.get_object("cbOSD")
+		set_action = False
+		
+		# Friction
+		if sclFriction.get_value() <= 0:
+			friction = 0
+		else:
+			friction = ((10.0**sclFriction.get_value())/1000.0)
+		if self.friction != friction:
+			self.friction = friction
+			set_action = True
 		
 		# Sensitivity
-		set_action = False
 		for i in xrange(0, len(self.sens)):
 			target = self.sens_widgets[i][0].get_value()
 			if self.sens_widgets[i][3].get_active():
@@ -502,30 +543,30 @@ class ActionEditor(Editor):
 		if self.feedback_position != feedback_position:
 			self.feedback_position = feedback_position
 			set_action = True
-
+		
 		for i in xrange(0, len(self.feedback)):
 			if self.feedback[i] != self.feedback_widgets[i][0].get_value():
 				self.feedback[i] = self.feedback_widgets[i][0].get_value()
 				set_action = True
-
+		
 		for i in xrange(0, len(self.feedback)):
 			if self.feedback[i] != self.feedback_widgets[i][0].get_value():
 				self.feedback[i] = self.feedback_widgets[i][0].get_value()
 				set_action = True
-
+		
 		# Deadzone
 		mode = (DEADZONE_MODES[cbDeadzoneMode.get_active()]
 					if cbDeadzone.get_active() else None)
 		if self.deadzone_mode != mode:
 			self.deadzone_mode = mode
 			set_action = True
-
+		
 		for i in xrange(0, len(self.deadzone)):
 			if self.deadzone[i] != self.deadzone_widgets[i][1].get_value():
 				self.deadzone[i] = self.deadzone_widgets[i][1].get_value()
 				set_action = True
-
-
+		
+		
 		# Smoothing
 		if cbSmoothing.get_active():
 			smoothing = (
@@ -538,28 +579,28 @@ class ActionEditor(Editor):
 		if self.smoothing != smoothing:
 			self.smoothing = smoothing
 			set_action = True
-
-
+		
+		
 		# Rest
 		if self.click is not None:
 			if cbRequireClick.get_active() != self.click:
 				self.click = cbRequireClick.get_active()
 				set_action = True
-
+		
 		if self.osd is not None:
 			if cbOSD.get_active() != self.osd:
 				self.osd = cbOSD.get_active()
 				set_action = True
-
+		
 		if self.rotation_angle != sclRotation.get_value():
 			self.rotation_angle = sclRotation.get_value()
 			set_action = True
-
+		
 		if set_action:
 			self.set_action(self._action)
 			self._selected_component.modifier_updated()
-
-
+	
+	
 	def generate_modifiers(self, action, from_custom=False):
 		"""
 		Returns Action with all modifiers from UI applied.
@@ -578,6 +619,10 @@ class ActionEditor(Editor):
 			return ModeModifier(*args)
 		
 		cm = action.get_compatible_modifiers()
+		
+		if (cm & Action.MOD_BALL) != 0:
+			if self.friction > 0:
+				action = BallModifier(round(self.friction, 3), action)
 		
 		if (cm & Action.MOD_SENSITIVITY) != 0:
 			# Strip 1.0's from sensitivity values
@@ -612,7 +657,6 @@ class ActionEditor(Editor):
 			if self.smoothing != None:
 				action = SmoothModifier(*( list(self.smoothing) + [ action ]))
 		
-		
 		if (cm & Action.MOD_DEADZONE) != 0:
 			if self.deadzone_mode is not None:
 				action = DeadzoneModifier(self.deadzone_mode, self.deadzone[0], self.deadzone[1], action)
@@ -630,7 +674,7 @@ class ActionEditor(Editor):
 				action = ClickModifier(action)
 		
 		return action
-
+	
 	@staticmethod
 	def is_editable_modifier(action):
 		"""
@@ -641,14 +685,14 @@ class ActionEditor(Editor):
 		"""
 		if isinstance(action, (ClickModifier, SensitivityModifier,
 				DeadzoneModifier, FeedbackModifier, RotateInputModifier,
-				SmoothModifier)):
+				SmoothModifier, BallModifier)):
 			return True
 		if isinstance(action, OSDAction):
 			if action.action is not None:
 				return True
 		return False
-
-
+	
+	
 	@staticmethod
 	def strip_modifiers(action):
 		"""
@@ -702,6 +746,9 @@ class ActionEditor(Editor):
 				else:
 					self.sens[index] = action.speeds[0]
 				action = action.action
+			if isinstance(action, BallModifier):
+				self.friction = action.friction
+				action = action.action
 		
 		self._recursing = True
 		cbRequireClick.set_active(self.click)
@@ -734,6 +781,13 @@ class ActionEditor(Editor):
 		for grp in self.smoothing_widgets:
 			for w in grp[0:-1]:
 				w.set_sensitive(cbSmoothing.get_active())
+		
+		# Ball
+		sclFriction = self.builder.get_object("sclFriction")
+		if self.friction <= 0:
+			sclFriction.set_value(0)
+		else:
+			sclFriction.set_value(math.log(self.friction * 1000.0, 10))
 		
 		# Deadzone
 		cbDeadzoneMode = self.builder.get_object("cbDeadzoneMode")
@@ -829,7 +883,8 @@ class ActionEditor(Editor):
 		elif not self._selected_component.handles(self._mode, ActionEditor.strip_modifiers(action)):
 			log.warning("selected_component no longer handles edited action")
 			log.warning(self._selected_component)
-			log.warning(action.to_string())
+			log.warning(ActionEditor.strip_modifiers(action).to_string())
+			log.warning("(%s)", action.to_string())
 		
 		if cbPreview.get_sensitive() and cbPreview.get_active():
 			self.apply_preview(action)
@@ -840,8 +895,8 @@ class ActionEditor(Editor):
 			self._replaced_action = self.ac_callback(self.id, action, mark_changed=False)
 		else:
 			self.ac_callback(self.id, action, mark_changed=False)
-
-
+	
+	
 	def on_cbPreview_toggled(self, cb):
 		if cb.get_active():
 			a = self.generate_modifiers(self._action, self._selected_component.NAME=="custom")
@@ -851,58 +906,60 @@ class ActionEditor(Editor):
 				# Is None if OK button handler was executed
 				self.ac_callback(self.id, self._replaced_action, mark_changed=False)
 			self._replaced_action = None
-
-
+	
+	
 	def enable_preview(self, action):
 		"""
 		Enables or disables and hides 'preview immediately' option, based on
 		if currently selected action supports it.
 		"""
 		cbPreview = self.builder.get_object("cbPreview")
-
+		
 		enabled = action.strip().get_previewable()
 		cbPreview.set_sensitive(enabled)
-
-
+	
+	
 	def enable_modifiers(self, action):
 		"""
 		Enables or disables and hides modifier settings according to what
 		is applicable for specified action AND what's allowed for current
 		editor mode.
-
+		
 		Uses value returned by action.get_compatible_modifiers.
 		"""
 		cm = action.get_compatible_modifiers() & ActionEditor.MODE_TO_MODS[self._mode]
-
+		
 		# Feedback
-		grFeedback		= self.builder.get_object("grFeedback")
+		grFeedback = self.builder.get_object("grFeedback")
 		grFeedback.set_sensitive((cm & Action.MOD_FEEDBACK) != 0)
-
+		
 		# Smoothing
-		grSmoothing		= self.builder.get_object("grSmoothing")
+		grSmoothing = self.builder.get_object("grSmoothing")
 		grSmoothing.set_sensitive((cm & Action.MOD_SMOOTH) != 0)
-
+		
 		# Deadzone
-		grDeadzone		= self.builder.get_object("grDeadzone")
+		grDeadzone = self.builder.get_object("grDeadzone")
 		grDeadzone.set_sensitive((cm & Action.MOD_DEADZONE) != 0)
-
+		
 		# Sensitivity
-		grSensitivity	= self.builder.get_object("grSensitivity")
+		grSensitivity = self.builder.get_object("grSensitivity")
 		grSensitivity.set_sensitive((cm & Action.MOD_SENSITIVITY) != 0)
 		for w in self.sens_widgets[2]:
 			w.set_visible((cm & Action.MOD_SENS_Z) != 0)
-
+		
 		# Rotation
-		# (this one is little more complicated than rest)
-		enabled = (cm & Action.MOD_ROTATE) != 0
-		self.builder.get_object("lblRotationHeader").set_sensitive(enabled)
-		self.builder.get_object("lblRotation").set_sensitive(enabled)
-		self.builder.get_object("sclRotation").set_sensitive(enabled)
-		self.builder.get_object("btClearRotation").set_sensitive(enabled)
-
+		for w in ("lblRotationHeader", "lblRotation", "sclRotation", "btClearRotation"):
+			self.builder.get_object(w).set_sensitive((cm & Action.MOD_ROTATE) != 0)
+		
 		# Click
 		cbRequireClick = self.builder.get_object("cbRequireClick")
-		cbRequireClick.set_sensitive(cm & Action.MOD_CLICK != 0)
+		cbRequireClick.set_sensitive((cm & Action.MOD_CLICK) != 0)
+		
+		# Ball
+		for w in ("sclFriction", "lblFriction", "lblBallMode", "btClearFriction"):
+			self.builder.get_object(w).set_sensitive((cm & Action.MOD_BALL) != 0)
+		if cm & Action.MOD_BALL == 0:
+			self.builder.get_object("sclFriction").set_value(0)
 
 		# OSD
 		cbOSD = self.builder.get_object("cbOSD")
@@ -920,13 +977,13 @@ class ActionEditor(Editor):
 		self._recursing = False
 		self.set_action(self._action)
 		self._selected_component.modifier_updated()
-
-
+	
+	
 	def get_sensitivity(self):
 		""" Returns sensitivity currently set in editor """
 		return tuple(self.sens)
-
-
+	
+	
 	def set_default_sensitivity(self, x, y=1.0, z=1.0):
 		"""
 		Sets default sensitivity values and, if sensitivity
@@ -957,7 +1014,7 @@ class ActionEditor(Editor):
 		entName = self.builder.get_object("entName")
 		vbActionButtons = self.builder.get_object("vbActionButtons")
 		stActionModes = self.builder.get_object("stActionModes")
-
+		
 		# Go throgh list of components and display buttons that are usable
 		# with this mode
 		self.c_buttons = {}
@@ -967,11 +1024,11 @@ class ActionEditor(Editor):
 				vbActionButtons.pack_start(b, True, True, 2)
 				b.connect('toggled', self.on_action_type_changed)
 				self.c_buttons[component] = b
-
+				
 				component.load()
 				if component.get_widget() not in stActionModes.get_children():
 					stActionModes.add(component.get_widget())
-
+		
 		if action.name is None:
 			entName.set_text("")
 		else:
@@ -984,6 +1041,20 @@ class ActionEditor(Editor):
 			# Special case
 			return " %0.2fHz" % (1.0/value,)
 		return "%0.2fmHz" % (100.0/value,)
+	
+	
+	def on_sclFriction_format_value(self, scale, value):
+		if value <= 0:
+			return _("disabled")
+		elif value >= 6:
+			return "1000.00"
+		else:
+			return "%0.3f" % ((10.0**value)/1000.0)
+	
+	
+	def on_btClearFriction_clicked(self, *a):
+		sclFriction = self.builder.get_object("sclFriction")
+		sclFriction.set_value(math.log(10 * 1000.0, 10))
 	
 	
 	def set_input(self, id, action, mode=None):
@@ -1041,12 +1112,12 @@ class ActionEditor(Editor):
 			self.hide_modeshift()
 			self.hide_macro()
 			self.hide_ring()
-
-
+	
+	
 	def set_menu_item(self, item, title_for_name_label=None):
 		"""
 		Setups action editor in way that allows editing only action name.
-
+		
 		In this mode, callback is called with editor instance instead of
 		generated action as 2nd argument.
 		"""
@@ -1063,8 +1134,8 @@ class ActionEditor(Editor):
 		self.id = item.id
 		if title_for_name_label:
 			self.builder.get_object("lblName").set_label(title_for_name_label)
-
-
+	
+	
 	def set_modifiers_enabled(self, enabled):
 		exMore = self.builder.get_object("exMore")
 		rvMore = self.builder.get_object("rvMore")

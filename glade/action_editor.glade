@@ -404,6 +404,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
+                        <property name="margin_left">5</property>
                         <signal name="clicked" handler="on_btClearRotation_clicked" swapped="no"/>
                         <child>
                           <object class="GtkImage" id="image9">
@@ -446,12 +447,12 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="lblSensitivityHeader3">
+                      <object class="GtkLabel" id="lblBallMode">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_top">10</property>
                         <property name="margin_bottom">5</property>
-                        <property name="label" translatable="yes">Trackball Effect</property>
+                        <property name="label" translatable="yes">Trackball Mode</property>
                         <property name="xalign">0</property>
                         <attributes>
                           <attribute name="weight" value="bold"/>
@@ -515,6 +516,8 @@
                         <property name="adjustment">adjFriction</property>
                         <property name="round_digits">1</property>
                         <property name="value_pos">right</property>
+                        <signal name="format-value" handler="on_sclFriction_format_value" swapped="no"/>
+                        <signal name="value-changed" handler="update_modifiers" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -526,6 +529,8 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
+                        <property name="margin_left">5</property>
+                        <signal name="clicked" handler="on_btClearFriction_clicked" swapped="no"/>
                         <child>
                           <object class="GtkImage" id="image13">
                             <property name="visible">True</property>

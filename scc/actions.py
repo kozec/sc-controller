@@ -89,6 +89,7 @@ class Action(object):
 	MOD_ROTATE		= 1 << 6
 	MOD_POSITION	= 1 << 7
 	MOD_SMOOTH		= 1 << 8
+	MOD_BALL		= 1 << 9
 	
 	def __init__(self, *parameters):
 		self.parameters = parameters
@@ -775,7 +776,7 @@ class WholeHapticAction(HapticEnabledAction):
 	"""
 	Helper class for actions that are generating haptic 'rolling clicks' as
 	finger moves over pad.
-	MouseAction, CircularAction, XYAction and BallModifier currently.
+	MouseAction, CircularModifier, XYAction and BallModifier currently.
 	"""
 	def __init__(self):
 		HapticEnabledAction.__init__(self)
@@ -821,8 +822,9 @@ class MouseAction(WholeHapticAction, Action):
 	
 	
 	def get_compatible_modifiers(self):
-		return ( Action.MOD_SENSITIVITY | Action.MOD_SENS_Z
-			| Action.MOD_ROTATE | Action.MOD_SMOOTH )
+		return ( Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_ROTATE
+				| Action.MOD_SMOOTH | Action.MOD_BALL | Action.MOD_FEEDBACK
+				| Action.MOD_DEADZONE )
 	
 	
 	def get_previewable(self):
@@ -2178,11 +2180,15 @@ class XYAction(WholeHapticAction, Action):
 	
 	
 	def get_compatible_modifiers(self):
-		return ( Action.MOD_FEEDBACK | Action.MOD_SENSITIVITY
+		mods = ( Action.MOD_FEEDBACK | Action.MOD_SENSITIVITY
 			| Action.MOD_ROTATE | Action.MOD_SMOOTH
 			| self.x.get_compatible_modifiers()
 			| self.y.get_compatible_modifiers()
 		)
+		if isinstance(self.x, AxisAction) and isinstance(self.y, AxisAction):
+			if self.x.get_axis() in (Axes.ABS_X, Axes.ABS_Y, Axes.ABS_RX, Axes.ABS_RY):
+				mods = (mods | Action.MOD_BALL) & ~Action.MOD_SMOOTH
+		return mods
 	
 	
 	def get_child_actions(self):
@@ -2346,6 +2352,10 @@ class RelXYAction(XYAction):
 			y -= self.origin_y
 			return XYAction.whole(self, mapper, x, y, what)
 		XYAction.whole(self, mapper, x, y, what)
+	
+	
+	def get_compatible_modifiers(self):
+		return (XYAction.get_compatible_modifiers(self) & ~Action.MOD_BALL)
 
 
 class TriggerAction(Action, HapticEnabledAction):

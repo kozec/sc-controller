@@ -9,9 +9,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.actions import Action, NoAction, TriggerAction
-from scc.gui.simple_chooser import SimpleChooser
-from scc.gui.parser import GuiActionParser
+from scc.actions import Action
 from scc.gui.ae import AEComponent
 from scc.tools import nameof
 
@@ -82,15 +80,11 @@ class FirstPage(AEComponent):
 	CTXS = 0
 	PRIORITY = 999
 	
-	
 	def __init__(self, app, editor):
 		AEComponent.__init__(self, app, editor)
-		self.parser = GuiActionParser()
-	
 	
 	def load(self):
 		if AEComponent.load(self):
-			# Unlike mose region, gesutres kinda work with XWayland
 			markup = ""
 			if self.editor.get_mode() == Action.AC_PAD:
 				markup = MARKUP_PAD
@@ -122,22 +116,5 @@ class FirstPage(AEComponent):
 			self.builder.get_object("lblMarkup").set_markup(markup.strip(" \r\n\t"))
 			return True
 	
-	
 	def on_lblMarkup_activate_link(self, trash, link):
-		if link.startswith("quick://"):
-			action = self.parser.restart(link[8:]).parse()
-			self.editor.reset_active_component()
-			self.editor.set_action(action, from_custom=True)
-		elif link == "grab://trigger_button":
-			def cb(action):
-				action = TriggerAction(254, 255, action)
-				self.editor.set_action(action, from_custom=True)
-				self.editor.force_page("trigger")
-			b = SimpleChooser(self.app, "buttons", cb)
-			b.set_title(_("Select Button"))
-			b.hide_axes()
-			b.show(self.editor.window)
-		elif link.startswith("page://"):
-			def cb():
-				self.editor.force_page(link[7:])
-			GLib.timeout_add(0.1, cb)
+		self.editor.on_link(link)

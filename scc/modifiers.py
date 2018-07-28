@@ -591,6 +591,16 @@ class BallModifier(Modifier, WholeHapticAction):
 			return self.action.get_haptic()
 		else:
 			return WholeHapticAction.get_haptic(self)
+	
+	
+	def compress(self):
+		# ball(circular(...) has to be turned around
+		if isinstance(self.action, CircularModifier):
+			cm = self.action
+			self.action = cm.action
+			cm.action = self
+			return cm
+		return self
 
 
 class DeadzoneModifier(Modifier):
