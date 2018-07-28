@@ -324,7 +324,7 @@ class ControllerRegistration(Editor):
 			os.makedirs(os.path.join(get_config_path(), "devices"))
 		except: pass
 		
-		filename = self._evdevice.name.strip()
+		filename = self._evdevice.name.strip().replace("/","")
 		if self._tester.driver == "hid":
 			filename = "%.4x:%.4x-%s" % (self._evdevice.info.vendor,
 				self._evdevice.info.product, filename)
@@ -702,7 +702,7 @@ class ControllerRegistration(Editor):
 			if what in STICK_PAD_AREAS:
 				area_name, axes = STICK_PAD_AREAS[what]
 				mnuStick = self.builder.get_object("mnuStick")
-				mnuStick._what = what
+				mnuStick._what = "STICKPRESS" if what == "STICK" else what 
 				mnuStick._axes = [ self._axis_data[index] for index in axes ]
 				mnuStick.popup(None, None, None, None, 1, Gtk.get_current_event_time())
 			elif what in TRIGGER_AREAS:

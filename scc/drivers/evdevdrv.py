@@ -388,7 +388,7 @@ class EvdevDriver(object):
 		try:
 			dev = evdev.InputDevice(eventnode)
 			assert dev.fn == eventnode
-			config_fn = "evdev-%s.json" % (dev.name.strip(),)
+			config_fn = "evdev-%s.json" % (dev.name.strip().replace("/", ""),)
 			config_file = os.path.join(get_config_path(), "devices", config_fn)
 		except OSError, ose:
 			if ose.errno == 13:
