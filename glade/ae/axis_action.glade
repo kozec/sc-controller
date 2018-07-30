@@ -637,7 +637,7 @@
                 <property name="margin_left">20</property>
                 <property name="margin_right">20</property>
                 <property name="margin_top">5</property>
-                <property name="label" translatable="yes">&lt;a href="advanced://0"&gt;Setup or disable Trackball Mode&lt;/a&gt;</property>
+                <property name="label" translatable="yes">&lt;a href="advanced://0#cbBallMode"&gt;Setup or disable Trackball Mode&lt;/a&gt;</property>
                 <property name="use_markup">True</property>
                 <property name="xalign">0</property>
                 <signal name="activate-link" handler="on_lblSetupTrackball_activate_link" swapped="no"/>

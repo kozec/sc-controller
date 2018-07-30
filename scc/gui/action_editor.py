@@ -238,7 +238,10 @@ class ActionEditor(Editor):
 			assert exMore.get_visible()
 			exMore.set_expanded(True)
 			rvMore.set_reveal_child(True)
-			ntbMore.set_current_page(int(link[11:]))
+			if "#" in link:
+				link, name = link.split("#")
+				self.blink_widget(name)
+			ntbMore.set_current_page(int(link.split("/")[-1]))
 		else:
 			log.warning("Activated unknown link: %s", link)
 	
@@ -332,6 +335,24 @@ class ActionEditor(Editor):
 		else:
 			#print ">>>", "_set_title", self._action, entName
 			self._action.name = name
+	
+	
+	def blink_widget(self, name, time=500):
+		GROUPS = {
+			'cbBallMode': ('cbBallMode', 'lblFriction', 'sclFriction', 'btClearFriction')
+		}
+		
+		def blink(widgets, count):
+			count = count - 1
+			for widget in widgets:
+				widget.set_opacity(1.0 if count % 2 == 0 else 0.1)
+			if count > 0:
+				GLib.timeout_add(time, blink, widgets, count)
+		
+		if name in GROUPS:
+			blink([self.builder.get_object(x) for x in GROUPS[name]], 7)
+		else:
+			blink([self.builder.get_object(name)], 7)
 	
 	
 	def hide_modifiers(self):
