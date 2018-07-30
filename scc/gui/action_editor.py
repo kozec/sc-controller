@@ -98,7 +98,7 @@ class ActionEditor(Editor):
 		self.deadzone_mode = None		# None for 'disabled'
 		self.feedback_position = None	# None for 'disabled'
 		self.smoothing = None			# None for 'disabled'
-		self.friction = 0				# 0 for 'disabled'
+		self.friction = -1				# -1 for 'disabled'
 		self.click = False				# Click modifier value. None for disabled
 		self.rotation_angle = 0			# RotateInputModifier angle
 		self.osd = False				# 'OSD enabled' value.
@@ -520,6 +520,8 @@ class ActionEditor(Editor):
 		
 		# Friction
 		if not self.builder.get_object("cbBallMode").get_active():
+			friction = -1
+		elif sclFriction.get_value() == 0:
 			friction = 0
 		else:
 			friction = ((10.0 ** sclFriction.get_value()) / 1000.0)
@@ -622,7 +624,7 @@ class ActionEditor(Editor):
 		cm = action.get_compatible_modifiers()
 		
 		if (cm & Action.MOD_BALL) != 0:
-			if self.friction > 0:
+			if self.friction >= 0:
 				action = BallModifier(round(self.friction, 3), action)
 		
 		if (cm & Action.MOD_SENSITIVITY) != 0:
@@ -786,8 +788,11 @@ class ActionEditor(Editor):
 		# Ball
 		sclFriction = self.builder.get_object("sclFriction")
 		cbBallMode = self.builder.get_object("cbBallMode")
-		if self.friction <= 0:
+		if self.friction < 0:
 			cbBallMode.set_active(False)
+		elif self.friction == 0:
+			cbBallMode.set_active(True)
+			sclFriction.set_value(0)
 		else:
 			cbBallMode.set_active(True)
 			sclFriction.set_value(math.log(self.friction * 1000.0, 10))
@@ -1050,7 +1055,7 @@ class ActionEditor(Editor):
 	
 	def on_sclFriction_format_value(self, scale, value):
 		if value <= 0:
-			return "%0.3f" % (0.001,)
+			return "%0.3f" % (0,)
 		elif value >= 6:
 			return "%0.3f" % (1000.00,)
 		else:
