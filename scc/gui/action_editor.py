@@ -514,14 +514,15 @@ class ActionEditor(Editor):
 		rvSmoothing = self.builder.get_object("rvSmoothing")
 		sclRotation = self.builder.get_object("sclRotation")
 		sclFriction = self.builder.get_object("sclFriction")
+		cbBallMode = self.builder.get_object("cbBallMode")
 		cbOSD = self.builder.get_object("cbOSD")
 		set_action = False
 		
 		# Friction
-		if sclFriction.get_value() <= 0:
+		if not self.builder.get_object("cbBallMode").get_active():
 			friction = 0
 		else:
-			friction = ((10.0**sclFriction.get_value())/1000.0)
+			friction = ((10.0 ** sclFriction.get_value()) / 1000.0)
 		if self.friction != friction:
 			self.friction = friction
 			set_action = True
@@ -784,9 +785,11 @@ class ActionEditor(Editor):
 		
 		# Ball
 		sclFriction = self.builder.get_object("sclFriction")
+		cbBallMode = self.builder.get_object("cbBallMode")
 		if self.friction <= 0:
-			sclFriction.set_value(0)
+			cbBallMode.set_active(False)
 		else:
+			cbBallMode.set_active(True)
 			sclFriction.set_value(math.log(self.friction * 1000.0, 10))
 		
 		# Deadzone
@@ -956,11 +959,13 @@ class ActionEditor(Editor):
 		cbRequireClick.set_sensitive((cm & Action.MOD_CLICK) != 0)
 		
 		# Ball
-		for w in ("sclFriction", "lblFriction", "lblBallMode", "btClearFriction"):
-			self.builder.get_object(w).set_sensitive((cm & Action.MOD_BALL) != 0)
+		cbBallMode = self.builder.get_object("cbBallMode")
+		cbBallMode.set_sensitive((cm & Action.MOD_BALL) != 0)
+		for w in ("sclFriction", "lblFriction", "btClearFriction"):
+			self.builder.get_object(w).set_sensitive(cbBallMode.get_active() and ((cm & Action.MOD_BALL) != 0))
 		if cm & Action.MOD_BALL == 0:
-			self.builder.get_object("sclFriction").set_value(0)
-
+			self.builder.get_object("cbBallMode").set_active(False)
+		
 		# OSD
 		cbOSD = self.builder.get_object("cbOSD")
 		cbOSD.set_sensitive(cm & Action.MOD_OSD != 0)
@@ -1045,9 +1050,9 @@ class ActionEditor(Editor):
 	
 	def on_sclFriction_format_value(self, scale, value):
 		if value <= 0:
-			return _("disabled")
+			return "%0.3f" % (0.001,)
 		elif value >= 6:
-			return "1000.00"
+			return "%0.3f" % (1000.00,)
 		else:
 			return "%0.3f" % ((10.0**value)/1000.0)
 	
