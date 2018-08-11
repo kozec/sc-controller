@@ -37,6 +37,10 @@ def headerbar(bar):
 	pass	# Not outside of Unity
 
 IS_UNITY = False
+IS_GNOME = False
+
+if "XDG_CURRENT_DESKTOP" in os.environ and "GNOME" in os.environ["XDG_CURRENT_DESKTOP"].split(":"):
+	IS_GNOME = True
 
 if "XDG_CURRENT_DESKTOP" in os.environ and "Unity" in os.environ["XDG_CURRENT_DESKTOP"].split(":"):
 	# User runs Unity

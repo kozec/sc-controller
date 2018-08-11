@@ -71,14 +71,17 @@ class TestActions(object):
 		assert _parses_as_itself(MouseAction())
 	
 	
-	def test_circular(self):
+	def test_mouseabs(self):
 		"""
-		Tests if CircularAction can be converted to string and parsed back to
+		Tests if MouseAbsAction can be converted to string and parsed back to
 		same action.
 		"""
-		assert _parses_as_itself(CircularAction(Rels.REL_WHEEL))
-
-
+		# With axis specified
+		assert _parses_as_itself(MouseAbsAction(Rels.REL_X))
+		# Without axis (when used on pad directly)
+		assert _parses_as_itself(MouseAbsAction())
+	
+	
 	def test_area(self):
 		"""
 		Tests if AreaAction can be converted to string and
@@ -130,6 +133,14 @@ class TestActions(object):
 		assert _parses_as_itself(GyroAbsAction(Axes.ABS_X))
 		assert _parses_as_itself(GyroAbsAction(Axes.ABS_X, Axes.ABS_Y))
 		assert _parses_as_itself(GyroAbsAction(Axes.ABS_X, Axes.ABS_Y, Axes.ABS_Z))
+	
+	
+	def test_resetgyro(self):
+		"""
+		Tests if ResetGyroAction can be converted to string and
+		parsed back to same action.
+		"""
+		assert _parses_as_itself(ResetGyroAction())
 	
 	
 	def test_tilt(self):
@@ -186,11 +197,38 @@ class TestActions(object):
 		Tests if DPadAction can be converted to string and
 		parsed back to same action.
 		"""
+		# Default diagonal rage
 		assert _parses_as_itself(DPadAction(
 			ButtonAction(Keys.BTN_LEFT),
 			ButtonAction(Keys.BTN_RIGHT),
 			ButtonAction(Keys.BTN_MIDDLE),
 			ButtonAction(Keys.KEY_A)
+		))
+		# Modified diagonal rage
+		assert _parses_as_itself(DPadAction(33,
+			ButtonAction(Keys.BTN_RIGHT),
+			ButtonAction(Keys.KEY_A),
+			ButtonAction(Keys.BTN_LEFT),
+			ButtonAction(Keys.BTN_MIDDLE),
+		))
+	
+	
+	def test_ring(self):
+		"""
+		Tests if DPadAction can be converted to string and
+		parsed back to same action.
+		"""
+		assert _parses_as_itself(RingAction(0.1,
+			DPadAction(
+				ButtonAction(Keys.BTN_LEFT),
+				ButtonAction(Keys.BTN_RIGHT),
+				ButtonAction(Keys.BTN_MIDDLE),
+				ButtonAction(Keys.KEY_A)
+			),
+			XYAction(
+				AxisAction(Axes.ABS_X),
+				AxisAction(Axes.ABS_Y)
+			)
 		))
 	
 	
@@ -199,6 +237,7 @@ class TestActions(object):
 		Tests if DPad8Action can be converted to string and
 		parsed back to same action.
 		"""
+		# Default diagonal rage
 		assert _parses_as_itself(DPad8Action(
 			ButtonAction(Keys.BTN_LEFT),
 			ButtonAction(Keys.BTN_RIGHT),
@@ -208,6 +247,17 @@ class TestActions(object):
 			ButtonAction(Keys.KEY_C),
 			ButtonAction(Keys.KEY_D),
 			ButtonAction(Keys.KEY_E)
+		))
+		# Modified diagonal rage
+		assert _parses_as_itself(DPad8Action(61,
+			ButtonAction(Keys.BTN_RIGHT),
+			ButtonAction(Keys.KEY_C),
+			ButtonAction(Keys.KEY_A),
+			ButtonAction(Keys.BTN_LEFT),
+			ButtonAction(Keys.KEY_E),
+			ButtonAction(Keys.KEY_B),
+			ButtonAction(Keys.KEY_D),
+			ButtonAction(Keys.BTN_MIDDLE),
 		))
 	
 	
@@ -219,6 +269,17 @@ class TestActions(object):
 		assert _parses_as_itself(XYAction(
 			AxisAction(Axes.ABS_X),
 			AxisAction(Axes.ABS_Y)
+		))
+
+
+	def test_relXY(self):
+		"""
+		Tests if relXYAciton can be converted to string and parsed back to
+		same action.
+		"""
+		assert _parses_as_itself(RelXYAction(
+			AxisAction(Axes.ABS_RX),
+			AxisAction(Axes.ABS_RY)
 		))
 
 

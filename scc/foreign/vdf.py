@@ -4,9 +4,9 @@ Imports VDF profile and converts it to Profile object.
 """
 from scc.uinput import Keys, Axes, Rels
 from scc.actions import Action, NoAction, ButtonAction, DPadAction, XYAction
-from scc.actions import HatUpAction, HatDownAction, HatLeftAction, HatRightAction
-from scc.actions import TriggerAction, CircularAction, MouseAction, AxisAction
-from scc.actions import RelAreaAction, MultiAction
+from scc.actions import HatRightAction, TriggerAction, MouseAction
+from scc.actions import HatUpAction, HatDownAction, HatLeftAction
+from scc.actions import AxisAction, RelAreaAction, MultiAction
 from scc.special_actions import ChangeProfileAction, GridMenuAction, MenuAction
 from scc.modifiers import SensitivityModifier, ClickModifier, FeedbackModifier
 from scc.constants import SCButtons, HapticPos, TRIGGER_CLICK, YAW, ROLL
@@ -48,9 +48,12 @@ class VDFProfile(Profile):
 		'PAGE_UP' : Keys.KEY_PAGEUP,
 		'PAGE_DOWN' : Keys.KEY_PAGEDOWN,
 		'SINGLE_QUOTE' : Keys.KEY_APOSTROPHE,
+		'DASH' : Keys.KEY_MINUS,
 		'RETURN' : Keys.KEY_ENTER,
 		'ESCAPE' : Keys.KEY_ESC,
 		'PERIOD' : Keys.KEY_DOT,
+		"LEFT_BRACKET" : Keys.KEY_LEFTBRACE,
+		"RIGHT_BRACKET" : Keys.KEY_RIGHTBRACE,
 		'KEYPAD_DASH' : Keys.KEY_KPMINUS,
 		'KEYPAD_FORWARD_SLASH' : Keys.KEY_KPSLASH,
 		'LEFT_CONTROL' : Keys.KEY_LEFTCTRL,

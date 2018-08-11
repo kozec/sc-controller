@@ -4,7 +4,8 @@ from scc.special_actions import *
 from . import _parses_as_itself, parser
 import inspect
 
-MENU_CLASSES = MenuAction, GridMenuAction, RadialMenuAction
+MENU_CLASSES = (MenuAction, HorizontalMenuAction, GridMenuAction,
+	RadialMenuAction, QuickMenuAction)
 
 class TestSpecialActions(object):
 	
@@ -91,6 +92,21 @@ class TestSpecialActions(object):
 				SCButtons.Y, True))
 	
 	
+	def test_dialog(self):
+		"""
+		Tests if all Menu*Actions can be converted to string and parsed
+		back to same action.
+		"""
+		assert _parses_as_itself(DialogAction("Some Text",
+			NameModifier('Option', OSDAction('display this'))))
+		assert _parses_as_itself(DialogAction(SCButtons.X, "Some Text",
+			NameModifier('Option', OSDAction('display this'))))
+		assert _parses_as_itself(DialogAction(SCButtons.X, SCButtons.Y,
+			"Some Text", NameModifier('Option', OSDAction('display this'))))
+		assert _parses_as_itself(DialogAction(SCButtons.X, SCButtons.Y,
+			"Some Text", NameModifier('Option', OSDAction('display this'))))
+	
+	
 	def test_position(self):
 		"""
 		Tests if PositionModifier can be converted to string and parsed
@@ -105,3 +121,16 @@ class TestSpecialActions(object):
 		same action.
 		"""
 		assert _parses_as_itself(KeyboardAction())
+	
+	
+	def test_gestures(self):
+		"""
+		Tests if GesturesAction can be converted to string and parsed back to
+		same action.
+		"""
+		assert _parses_as_itself(
+			GesturesAction(
+				'UUDD', KeyboardAction(),
+				'LRLR', TurnOffAction()
+			)
+		)

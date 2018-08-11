@@ -21,41 +21,43 @@ class RIBar(Gtk.Revealer):
 			Emitted when an action widget (button) is clicked
 	"""
 	__gsignals__ = {
-			b"response"	: (GObject.SIGNAL_RUN_FIRST, None, (int,)),
-			b"close"	: (GObject.SIGNAL_RUN_FIRST, None, ()),
+			b"response"	: (GObject.SignalFlags.RUN_FIRST, None, (int,)),
+			b"close"	: (GObject.SignalFlags.RUN_FIRST, None, ()),
 		}
 	
 	### Initialization
-	def __init__(self, label, message_type=Gtk.MessageType.INFO, *buttons):
+	def __init__(self, label, message_type=Gtk.MessageType.INFO,
+														infobar=None, *buttons):
 		"""
 		... where label can be Gtk.Widget or str and buttons are tuples
 		of (Gtk.Button, response_id)
 		"""
 		# Init
 		Gtk.Revealer.__init__(self)
-		self._infobar = Gtk.InfoBar()
+		self._infobar = infobar or Gtk.InfoBar()
 		self._values = {}
 		self._label = None
 		# Icon
-		icon_name = "dialog-information"
-		if message_type == Gtk.MessageType.ERROR:
-			icon_name = "dialog-error"
-		elif message_type == Gtk.MessageType.WARNING:
-			icon_name = "dialog-warning"
-		icon = Gtk.Image()
-		icon.set_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
-		self._infobar.get_content_area().pack_start(icon, False, False, 1)
-		# Label
-		if isinstance(label, Gtk.Widget):
-			self._infobar.get_content_area().pack_start(label, True, True, 0)
-			self._label = label
-		else:
-			self._label = Gtk.Label()
-			self._label.set_size_request(300, -1)
-			self._label.set_markup(label)
-			self._label.set_alignment(0, 0.5)
-			self._label.set_line_wrap(True)
-			self._infobar.get_content_area().add(self._label)
+		if infobar is None:
+			icon_name = "dialog-information"
+			if message_type == Gtk.MessageType.ERROR:
+				icon_name = "dialog-error"
+			elif message_type == Gtk.MessageType.WARNING:
+				icon_name = "dialog-warning"
+			icon = Gtk.Image()
+			icon.set_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
+			self._infobar.get_content_area().pack_start(icon, False, False, 1)
+			# Label
+			if isinstance(label, Gtk.Widget):
+				self._infobar.get_content_area().pack_start(label, True, True, 0)
+				self._label = label
+			else:
+				self._label = Gtk.Label()
+				self._label.set_size_request(300, -1)
+				self._label.set_markup(label)
+				self._label.set_alignment(0, 0.5)
+				self._label.set_line_wrap(True)
+				self._infobar.get_content_area().add(self._label)
 		# Buttons
 		for button, response_id in buttons:
 			self.add_button(button, response_id)

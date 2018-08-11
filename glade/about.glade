@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.4 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkDialog" id="Dialog">
@@ -109,7 +109,7 @@
               <object class="GtkLabel" id="label3">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="margin_bottom">50</property>
+                <property name="margin_bottom">25</property>
                 <property name="label" translatable="yes">&lt;b&gt;Code&amp;amp;UI © 2016 Kozec&lt;/b&gt;
 
 Source code available on &lt;a href="https://github.com/kozec/sc-controller"&gt;GitHub&lt;/a&gt;
@@ -118,8 +118,16 @@ I'd like to express my biggest thanks
 for all my &lt;b&gt;&lt;a href="https://www.patreon.com/kozec"&gt;Patreon&lt;/a&gt;&lt;/b&gt; supporters, with special mention of
 
 &lt;b&gt;Deryn L.&lt;/b&gt;
+&lt;b&gt;Eric Duhamel&lt;/b&gt;
+&lt;b&gt;Enric Morales&lt;/b&gt;
+&lt;b&gt;Orivej Desh&lt;/b&gt;
+&lt;b&gt;G. Wilson&lt;/b&gt;
+&lt;b&gt;Joshua M&lt;/b&gt;
+&lt;b&gt;Lutris&lt;/b&gt;
+&lt;b&gt;Taowa&lt;/b&gt;
 and
-&lt;b&gt;Enric Morales&lt;/b&gt;</property>
+&lt;b&gt;ambidot&lt;/b&gt;
+</property>
                 <property name="use_markup">True</property>
                 <property name="justify">center</property>
                 <property name="yalign">0</property>
@@ -136,7 +144,7 @@ and
                 <property name="can_focus">True</property>
                 <property name="margin_top">10</property>
                 <property name="label" translatable="yes">&lt;small&gt;This program comes with absolutely no warranty.
-See the &lt;a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html"&gt;GNU General Public License, version 2 or later&lt;/a&gt; for details.&lt;/small&gt;</property>
+See the &lt;a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html"&gt;GNU General Public License, version 2&lt;/a&gt; for details.&lt;/small&gt;</property>
                 <property name="use_markup">True</property>
                 <property name="justify">center</property>
                 <property name="yalign">1</property>
@@ -155,6 +163,9 @@ See the &lt;a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html"&gt;GN
           </packing>
         </child>
       </object>
+    </child>
+    <child>
+      <placeholder/>
     </child>
   </object>
 </interface>

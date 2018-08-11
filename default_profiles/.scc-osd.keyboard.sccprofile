@@ -16,6 +16,7 @@
 	
 	"pad_left":			{ "action": "OSK.cursor(LEFT)" },
 	"pad_right":		{ "action": "OSK.cursor(RIGHT)" },
+	"cpad":				{ "action": "OSK.cursor(LEFT)" },
 	"trigger_left":		{ "action": "button(Keys.KEY_LEFTSHIFT)" }, 
 	"trigger_right":	{ "action": "button(Keys.KEY_LEFTCTRL)" },
 

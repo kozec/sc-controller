@@ -38,7 +38,7 @@ class Chooser(Editor):
 		for id in self.IMAGES:
 			parent = self.builder.get_object(id)
 			if parent is not None:
-				image = SVGWidget(self.app, os.path.join(self.app.imagepath, self.IMAGES[id]))
+				image = SVGWidget(os.path.join(self.app.imagepath, self.IMAGES[id]))
 				image.connect('hover', self.on_background_area_hover)
 				image.connect('leave', self.on_background_area_hover, None)
 				image.connect('click', self.on_background_area_click)

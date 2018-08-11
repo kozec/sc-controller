@@ -1,5 +1,17 @@
 *.pyc
+.*
 *~
 *.so
+*.patch
+!scc/*tester*
+test.*
+test[0-9].*
 build/
 .atomignore
+commit*
+profiles
+.idea/
+out.svg
+*.AppImage
+*.cpp
+*.vdf

@@ -38,6 +38,18 @@
         <col id="0">OSK.move()</col>
         <col id="1" translatable="yes">Move Keyboard</col>
       </row>
+      <row>
+        <col id="0">button(Keys.BTN_LEFT)</col>
+        <col id="1" translatable="yes">Press LEFT mouse button</col>
+      </row>
+      <row>
+        <col id="0">button(Keys.BTN_RIGHT)</col>
+        <col id="1" translatable="yes">Press RIGHT mouse button</col>
+      </row>
+      <row>
+        <col id="0">OSK.move()</col>
+        <col id="1" translatable="yes">Move Keyboard</col>
+      </row>
     </data>
   </object>
   <object class="GtkBox" id="osk_action">

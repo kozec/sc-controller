@@ -7,19 +7,20 @@ Assigns emulated axis to trigger
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib
-from scc.actions import Action, NoAction, MouseAction, MultiAction
-from scc.actions import GyroAction, GyroAbsAction, TiltAction
+from scc.actions import Action, NoAction, MouseAction, MultiAction, RangeOP
+from scc.actions import GyroAction, GyroAbsAction, MouseAbsAction
 from scc.modifiers import ModeModifier, SensitivityModifier
-from scc.uinput import Keys, Axes, Rels
-from scc.constants import SCButtons, YAW, ROLL
-from scc.gui.parser import GuiActionParser, InvalidAction
+from scc.uinput import Axes, Rels
+from scc.constants import SCButtons, STICK, YAW, ROLL
+from scc.gui.parser import GuiActionParser
 from scc.gui.ae import AEComponent
+from scc.tools import nameof
 
-import os, logging, re
+import logging, re
 log = logging.getLogger("AE.GyroAction")
 
 __all__ = [ 'GyroActionComponent' ]
+TRIGGERS = ( nameof(SCButtons.LT), nameof(SCButtons.RT) )
 
 
 class GyroActionComponent(AEComponent):
@@ -43,6 +44,7 @@ class GyroActionComponent(AEComponent):
 		(None, None),
 		(SCButtons.LGRIP,		_('Left Grip') ),
 		(SCButtons.RGRIP,		_('Right Grip') ),
+		(STICK,					_('Stick Tilted') ),
 		(None, None),
 		(SCButtons.A,			_('A') ),
 		(SCButtons.B,			_('B') ),
@@ -76,13 +78,26 @@ class GyroActionComponent(AEComponent):
 				self.select_gyro_button(SCButtons.RPADTOUCH)
 				return
 			if isinstance(action, ModeModifier):
-				b = action.order[0]
-				action = action.mods[b]
+				self._recursing = True
+				self.builder.get_object("cbInvertGyro").set_active(bool(action.default))
+				self._recursing = False
+				b = action.mods.keys()[0]
+				action = action.mods[b] or action.default
 				self.select_gyro_button(b)
 			else:
 				self.select_gyro_button(None)
-			if isinstance(action, MouseAction):
+			if isinstance(action, SensitivityModifier) and isinstance(action.action, MouseAction):
+				# Mouse (Desktop)
 				self.select_gyro_output("mouse")
+				if len(action.action.parameters) > 0 and action.action.parameters[0] == YAW:
+					self.select_yaw_roll(YAW)
+				else:
+					self.select_yaw_roll(ROLL)
+				self.editor.set_default_sensitivity(3.5, 3.5, 3.5)
+				self.editor.set_sensitivity(*action.speeds)
+			elif isinstance(action, MouseAction):
+				# Mouse (Camera)
+				self.select_gyro_output("mouse_cam")
 				if len(action.parameters) > 0 and action.parameters[0] == YAW:
 					self.select_yaw_roll(YAW)
 				else:
@@ -103,6 +118,8 @@ class GyroActionComponent(AEComponent):
 						self.select_gyro_output("right_abs")
 					else:
 						self.select_gyro_output("right")
+				elif ap[0] == Rels.REL_Y and ap[-1] == Rels.REL_X:
+					self.select_gyro_output("mouse_stick")
 			self.modifier_updated()
 	
 	
@@ -136,18 +153,22 @@ class GyroActionComponent(AEComponent):
 		if isinstance(action, NoAction):
 			return True
 		if is_gyro_enable(action):
-			action = action.mods[action.order[0]]
+			action = action.mods.values()[0] or action.default
+			if isinstance(action, SensitivityModifier):
+				action = action.action
 		if isinstance(action, GyroAction):	# Takes GyroAbsAction as well
 			ap = action.parameters
 			if (len(ap) == 3 and not ap[1]) or len(ap) == 2:
 				if ap[0] == Axes.ABS_X and ap[-1] == Axes.ABS_Y:
 					return True
-				if ap[0] == Axes.ABS_RX and ap[-1] == Axes.ABS_RY:
+				elif ap[0] == Axes.ABS_RX and ap[-1] == Axes.ABS_RY:
+					return True
+				elif ap[0] == Rels.REL_Y and ap[-1] == Rels.REL_X:
 					return True
 			return False
-		if isinstance(action, (MultiAction, TiltAction)):
-			return False
-		return True
+		if isinstance(action, (MouseAction, MouseAbsAction)):
+			return True
+		return False
 	
 	
 	def select_gyro_output(self, key):
@@ -176,19 +197,41 @@ class GyroActionComponent(AEComponent):
 		self._recursing = False
 	
 	
-	def select_gyro_button(self, button):
+	def select_gyro_button(self, item):
 		""" Just sets combobox value """
 		cb = self.builder.get_object("cbGyroButton")
+		rvSoftLevel = self.builder.get_object("rvSoftLevel")
+		sclSoftLevel = self.builder.get_object("sclSoftLevel")
 		model = cb.get_model()
 		self._recursing = True
-		if button is not None:
-			button = button.name
+		button = None
+		if isinstance(item, RangeOP):
+			button = nameof(item.what)
+			sclSoftLevel.set_value(item.value)
+			rvSoftLevel.set_reveal_child(True)
+		elif item is not None:
+			button = nameof(item.name)
 		for row in model:
 			if button == row[0] and row[1] != None:
 				cb.set_active_iter(row.iter)
 				self._recursing = False
 				return
 		self._recursing = False
+	
+	
+	def on_cbInvertGyro_toggled(self, cb, *a):
+		lblGyroEnable = self.builder.get_object("lblGyroEnable")
+		if cb.get_active():
+			lblGyroEnable.set_label(_("Gyro Disable Button"))
+		else:
+			lblGyroEnable.set_label(_("Gyro Enable Button"))
+		if not self._recursing:
+			self.send()
+	
+	
+	def on_sclSoftLevel_format_value(self, scale, value):
+		return  "%s%%" % (int(value * 100.0),)
+	
 	
 	def update(self, *a):
 		pass
@@ -203,11 +246,15 @@ class GyroActionComponent(AEComponent):
 		
 		cbMode = self.builder.get_object("cbMode")
 		cbYawRoll = self.builder.get_object("cbYawRoll")
+		rvSoftLevel = self.builder.get_object("rvSoftLevel")
+		sclSoftLevel = self.builder.get_object("sclSoftLevel")
 		cbGyroButton = self.builder.get_object("cbGyroButton")
+		cbInvertGyro = self.builder.get_object("cbInvertGyro")
 		action = cbMode.get_model().get_value(cbMode.get_active_iter(), 0)
 		key = cbMode.get_model().get_value(cbMode.get_active_iter(), 2)
 		yawroll = cbYawRoll.get_model().get_value(cbYawRoll.get_active_iter(), 0)
-		button = cbGyroButton.get_model().get_value(cbGyroButton.get_active_iter(), 0)
+		item = cbGyroButton.get_model().get_value(cbGyroButton.get_active_iter(), 0)
+		rvSoftLevel.set_reveal_child(item in TRIGGERS)
 		
 		match = re.match(r"([^\[]+)\[([^\|]+)\|([^\]]+)\](.*)", action)
 		if match:
@@ -218,8 +265,17 @@ class GyroActionComponent(AEComponent):
 				action = "%s%s%s" % (grps[0], grps[2], grps[3])
 		action = self.parser.restart(action).parse()
 		
-		if button and action:
-			action = ModeModifier(getattr(SCButtons, button), action)
+		if item and action:
+			if item in TRIGGERS:
+				what = RangeOP(getattr(SCButtons, item), ">=", sclSoftLevel.get_value())
+			elif item == STICK:
+				what = RangeOP(item, ">=", sclSoftLevel.get_value())
+			else:
+				what = getattr(SCButtons, item)
+			if cbInvertGyro.get_active():
+				action = ModeModifier(what, NoAction(), action)
+			else:
+				action = ModeModifier(what, action)
 		if key == "mouse":
 			self.editor.set_default_sensitivity(3.5, 3.5, 3.5)
 		else:
@@ -231,11 +287,16 @@ class GyroActionComponent(AEComponent):
 def is_gyro_enable(modemod):
 	""" Returns True if ModeModifier instance is used to create "Gyro Enable Button" """
 	if isinstance(modemod, ModeModifier):
+		if len(modemod.mods) != 1:
+			return False
+		action = modemod.mods.values()[0]
 		if modemod.default:
-			return False
-		if len(modemod.order) != 1:
-			return False
-		action = modemod.mods[modemod.order[0]]
+			if not action:
+				# Possibly, default action is gyro and mode is NoAction.
+				# That would mean that Gyro Disable button mode is used.
+				action = modemod.default
+			else:
+				return False
 		if isinstance(action, SensitivityModifier):
 			action = action.action
 		if isinstance(action, ModeModifier):
@@ -256,5 +317,5 @@ def fill_buttons(cb):
 	cb.set_row_separator_func( lambda model, iter : model.get_value(iter, 1) is None )
 	model = cb.get_model()
 	for button, text in GyroActionComponent.BUTTONS:
-		model.append(( None if button is None else button.name, text ))	
+		model.append(( None if button is None else nameof(button), text ))	
 	cb.set_active(0)

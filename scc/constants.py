@@ -23,56 +23,77 @@
 # THE SOFTWARE.
 
 from scc.lib import IntEnum
-from scc.uinput import Axes, Keys
 
 """
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
 daemon will differ one one expected by UI and daemon will be forcefully restarted.
 """
-DAEMON_VERSION = "0.3"
+DAEMON_VERSION = "0.4.3"
 
 HPERIOD  = 0.02
 LPERIOD  = 0.5
 DURATION = 1.0
 
+# Constants used when forcing gamepad to read some type of event is needed
 FE_STICK	= 1
 FE_TRIGGER	= 2
 FE_PAD		= 3
 FE_GYRO		= 4
 
+# Trigger names, pads, etc. These constants are used on multiple places
 LEFT	= "LEFT"
 RIGHT	= "RIGHT"
+CPAD	= "CPAD"
 WHOLE	= "WHOLE"
 STICK	= "STICK"
 GYRO	= "GYRO"
 PITCH	= "PITCH"
 YAW		= "YAW"
 ROLL	= "ROLL"
-SAME	= "SAME"	# may be used with MenuAction
 
-PARSER_CONSTANTS = ( LEFT, RIGHT, WHOLE, STICK, GYRO, PITCH, YAW, ROLL, SAME )
+# Special constants currently used only by menus
+SAME = "SAME"		# Menu is canceled by releasing same button that intiated it
+DEFAULT = "DEFAULT"	# Default confirm/cancel button. A/B for menus initiated by
+					# button, pad clicking / releasing for menus on pads
+
+# Deadzone modes
+CUT		= "CUT"
+ROUND	= "ROUND"
+LINEAR	= "LINEAR"
+MINIMUM	= "MINIMUM"
+
+PARSER_CONSTANTS = ( LEFT, RIGHT, WHOLE, STICK, GYRO, PITCH,
+	YAW, ROLL, DEFAULT, SAME, CUT, ROUND, LINEAR, MINIMUM )
 
 
 
 class SCButtons(IntEnum):
-	RPADTOUCH	= 0b00010000000000000000000000000000
-	LPADTOUCH	= 0b00001000000000000000000000000000
-	RPAD		= 0b00000100000000000000000000000000
-	LPAD		= 0b00000010000000000000000000000000 # Same for stick but without LPadTouch
-	STICK		= 0b00000000000000000000000000000001 # generated internally, not sent by controller
-	RGRIP	 	= 0b00000001000000000000000000000000
-	LGRIP	 	= 0b00000000100000000000000000000000
-	START	 	= 0b00000000010000000000000000000000
-	C		 	= 0b00000000001000000000000000000000
-	BACK		= 0b00000000000100000000000000000000
-	A			= 0b00000000000000001000000000000000
-	X			= 0b00000000000000000100000000000000
-	B			= 0b00000000000000000010000000000000
-	Y			= 0b00000000000000000001000000000000
-	LB			= 0b00000000000000000000100000000000
-	RB			= 0b00000000000000000000010000000000
-	LT			= 0b00000000000000000000001000000000
-	RT			= 0b00000000000000000000000100000000
+	RPADTOUCH	= 0b10000000000000000000000000000
+	LPADTOUCH	= 0b01000000000000000000000000000
+	RPAD		= 0b00100000000000000000000000000
+	LPAD		= 0b00010000000000000000000000000 # Same for stick but without LPadTouch
+	STICKPRESS	= 0b00000000000000000000000000001 # generated internally, not sent by controller
+	RGRIP	 	= 0b00001000000000000000000000000
+	LGRIP	 	= 0b00000100000000000000000000000
+	START	 	= 0b00000010000000000000000000000
+	C		 	= 0b00000001000000000000000000000
+	BACK		= 0b00000000100000000000000000000
+	A			= 0b00000000000001000000000000000
+	X			= 0b00000000000000100000000000000
+	B			= 0b00000000000000010000000000000
+	Y			= 0b00000000000000001000000000000
+	LB			= 0b00000000000000000100000000000
+	RB			= 0b00000000000000000010000000000
+	LT			= 0b00000000000000000001000000000
+	RT			= 0b00000000000000000000100000000
+	CPADTOUCH	= 0b00000000000000000000000000100 # Available on DS4 pad
+	CPADPRESS	= 0b00000000000000000000000000010 # Available on DS4 pad
+
+
+# If lpad and stick is used at once, this is sent as
+# button with every other packet to signalize that
+# value of lpad_x and lpad_y belongs to stick
+STICKTILT		= 0b10000000000000000000000000000000
 
 
 class HapticPos(IntEnum):
@@ -80,6 +101,23 @@ class HapticPos(IntEnum):
 	RIGHT = 0
 	LEFT = 1
 	BOTH = 2	# emulated
+
+
+class ControllerFlags(IntEnum):
+	"""
+	Used by mapper to workaround some physical differences between
+	Steam Controller and other pads.
+	"""
+	NONE =				0		# No flags, default SC.
+	HAS_RSTICK =		1 << 0	# Controller has right stick instead of touchpad
+	SEPARATE_STICK =	1 << 1	# Left stick and left pad are using separate axes
+	EUREL_GYROS =		1 << 2	# Gyro sensor values are provided as pitch, yaw
+								# and roll instead of quaterion. 'q4' is unused
+								# in such case.
+	HAS_CPAD =			1 << 3	# Controller has DS4-like touchpad in center
+	HAS_DPAD =			1 << 4	# Controller has normal d-pad instead of touchpad
+	NO_GRIPS =			1 << 5	# Controller has no grips
+
 
 STICK_PAD_MIN = -32768
 STICK_PAD_MAX = 32768
@@ -90,17 +128,3 @@ TRIGGER_MIN = 0
 TRIGGER_HALF = 50
 TRIGGER_CLICK = 254 # Values under this are generated until trigger clicks
 TRIGGER_MAX = 255
-
-ALL_BUTTONS = ( Keys.BTN_START, Keys.BTN_MODE, Keys.BTN_SELECT, Keys.BTN_A,
-	Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
-	Keys.BTN_THUMBL, Keys.BTN_THUMBR, Keys.BTN_WHEEL, Keys.BTN_GEAR_DOWN,
-	Keys.BTN_GEAR_UP, Keys.KEY_OK, Keys.KEY_SELECT, Keys.KEY_GOTO,
-	Keys.KEY_CLEAR, Keys.KEY_OPTION, Keys.KEY_INFO, Keys.KEY_TIME,
-	Keys.KEY_VENDOR, Keys.KEY_ARCHIVE, Keys.KEY_PROGRAM, Keys.KEY_CHANNEL,
-	Keys.KEY_FAVORITES, Keys.KEY_EPG )
-
-ALL_AXES = ( Axes.ABS_X, Axes.ABS_Y, Axes.ABS_RX, Axes.ABS_RY, Axes.ABS_Z,
-	Axes.ABS_RZ, Axes.ABS_HAT0X, Axes.ABS_HAT0Y, Axes.ABS_HAT1X, Axes.ABS_HAT1Y,
-	Axes.ABS_HAT2X, Axes.ABS_HAT2Y, Axes.ABS_HAT3X, Axes.ABS_HAT3Y,
-	Axes.ABS_PRESSURE, Axes.ABS_DISTANCE, Axes.ABS_TILT_X, Axes.ABS_TILT_Y,
-	Axes.ABS_TOOL_WIDTH, Axes.ABS_VOLUME, Axes.ABS_MISC )

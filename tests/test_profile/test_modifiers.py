@@ -56,6 +56,62 @@ class TestModifiers(object):
 		assert _is_axis_with_value(a.action)
 	
 	
+	def test_pressed(self):
+		"""
+		Tests if PressedModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "pressed(axis(ABS_X))" })
+		assert isinstance(a, PressedModifier)
+		assert _is_axis_with_value(a.action)
+	
+	
+	def test_released(self):
+		"""
+		Tests if ReleasedModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "released(axis(ABS_X))" })
+		assert isinstance(a, ReleasedModifier)
+		assert _is_axis_with_value(a.action)
+	
+	
+	def test_touched(self):
+		"""
+		Tests if TouchedModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "touched(button(KEY_A))" })
+		assert isinstance(a, TouchedModifier)
+	
+	
+	def test_untouched(self):
+		"""
+		Tests if UntouchedModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({ 'action' : "untouched(button(KEY_A))" })
+		assert isinstance(a, UntouchedModifier)
+	
+	
+	def test_circular(self):
+		"""
+		Tests if CircularModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'action' : "axis(ABS_X)",
+			'circular' : True
+		})
+		assert isinstance(a, CircularModifier)
+	
+	
+	def test_circularabs(self):
+		"""
+		Tests if CircularModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'action' : "axis(ABS_X)",
+			'circularabs' : True
+		})
+		assert isinstance(a, CircularAbsModifier)
+	
+	
 	def test_ball(self):
 		"""
 		Tests if BallModifier is parsed correctly from json.
@@ -66,6 +122,21 @@ class TestModifiers(object):
 		})
 		
 		assert isinstance(a, BallModifier)
+		assert _is_axis_with_value(a.action)
+	
+	
+	def test_smooth(self):
+		"""
+		Tests if SmoothModifier is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'action' : "axis(ABS_X)",
+			'smooth' : [ 5, 0.3 ]
+		})
+		
+		assert isinstance(a, SmoothModifier)
+		assert a.level == 5
+		assert a.multiplier == 0.3
 		assert _is_axis_with_value(a.action)
 	
 	
@@ -109,29 +180,44 @@ class TestModifiers(object):
 		
 		# Hold and doubleclick
 		a = parser.from_json_data({
-			'hold' : { "action" : "mouse(ROLL)" },
-			"doubleclick" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
+			'hold' : {
+				"action" : "mouse(ROLL)",
+				'sensitivity' : [ 3.0, 4.0 ]
+			},
+			"doubleclick" : {
+				"action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)",
+				'sensitivity' : [ 7.0, 8.0, 9.0 ]
+			},
 			"action" : "axis(ABS_Z)",
-			'sensitivity' : [ 2.0, 3.0, 4.0 ]
+			'sensitivity' : [ 10.0, ]
 		}).compress()
-		assert isinstance(a.holdaction, MouseAction) and a.holdaction.get_speed() == ( 2.0, 3.0 )
-		assert isinstance(a.action, GyroAction) and a.action.get_speed() == ( 2.0, 3.0, 4.0 )
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.get_speed() == ( 2.0, )
+		assert isinstance(a.holdaction, MouseAction) and a.holdaction.get_speed() == ( 3.0, 4.0 )
+		assert isinstance(a.action, GyroAction) and a.action.get_speed() == ( 7.0, 8.0, 9.0 )
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.get_speed() == ( 10.0, )
 		
 		# Modeshift
 		a = parser.from_json_data({
 			'modes' : {
-				"A" : { "action" : "mouse(ROLL)" },
-				"B" : { "action" : "axis(ABS_X)" },
-				"X" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
+				"A" : {
+					"action" : "mouse(ROLL)",
+					'sensitivity' : [ 3.0, 4.0 ]
+				},
+				"B" : {
+					"action" : "axis(ABS_X)",
+					'sensitivity' : [ 7.0, ]
+				},
+				"X" : {
+					"action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)",
+					'sensitivity' : [ 8.0, 9.0, 10.0 ]
+				},
 			},
 			"action" : "axis(ABS_Z)",
-			'sensitivity' : [ 2.0, 3.0, 4.0 ]
+			'sensitivity' : [ 12.0, ]
 		}).compress()
-		assert isinstance(a.mods[SCButtons.A], MouseAction) and a.mods[SCButtons.A].get_speed() == ( 2.0, 3.0 )
-		assert isinstance(a.mods[SCButtons.B], AxisAction) and a.mods[SCButtons.B].get_speed() == ( 2.0, )
-		assert isinstance(a.mods[SCButtons.X], GyroAction) and a.mods[SCButtons.X].get_speed() == ( 2.0, 3.0, 4.0 )
-		assert isinstance(a.default, AxisAction) and a.default.get_speed() == ( 2.0, )
+		assert isinstance(a.mods[SCButtons.A], MouseAction) and a.mods[SCButtons.A].get_speed() == ( 3.0, 4.0 )
+		assert isinstance(a.mods[SCButtons.B], AxisAction) and a.mods[SCButtons.B].get_speed() == ( 7.0, )
+		assert isinstance(a.mods[SCButtons.X], GyroAction) and a.mods[SCButtons.X].get_speed() == ( 8.0, 9.0, 10.0 )
+		assert isinstance(a.default, AxisAction) and a.default.get_speed() == ( 12.0, )
 	
 	
 	def test_feedback(self):

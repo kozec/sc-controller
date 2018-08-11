@@ -82,6 +82,11 @@ class Macro(Action):
 				self._release = None
 	
 	
+	def cancel(self, mapper):
+		for a in self.actions:
+			a.cancel(mapper)
+	
+	
 	def set_haptic(self, hapticdata):
 		for a in self.actions:
 			if a and hasattr(a, "set_haptic"):
@@ -170,12 +175,6 @@ class Type(Macro):
 			raise ValueError("Invalid character for type(): '%s'" % (letter,))
 		Macro.__init__(self, *params)
 		self.letters = string
-	
-	
-	def encode(self):
-		rv = { 'action' : self.to_string() }
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def to_string(self, multiline=False, pad=0):
@@ -275,18 +274,18 @@ class PressAction(Action):
 	COMMAND = "press"
 	PR = _("Press")
 
-	def __init__(self, button):
-		Action.__init__(self, button)
-		self.button = button
-
-
+	def __init__(self, action):
+		Action.__init__(self, action)
+		self.action = action
+	
+	
 	def describe_short(self):
 		""" Used in macro editor """
-		if self.button in ButtonAction.SPECIAL_NAMES:
-			return _(ButtonAction.SPECIAL_NAMES[self.button])
-		elif self.button in MOUSE_BUTTONS:
-			return _("Mouse %s") % (self.button,)
-		return self.button.name.split("_", 1)[-1]
+		if isinstance(self.action, ButtonAction):
+			return self.action.describe_short()
+		if isinstance(self.action, Keys):
+			return ButtonAction.describe_button(self.action)
+		return self.action.describe(Action.AC_BUTTON)
 	
 	
 	def describe(self, context):
@@ -295,7 +294,7 @@ class PressAction(Action):
 	
 	
 	def button_press(self, mapper):
-		ButtonAction._button_press(mapper, self.button)
+		self.action.button_press(mapper)
 	
 	
 	def button_release(self, mapper):
@@ -312,7 +311,7 @@ class ReleaseAction(PressAction):
 	PR = _("Release")
 	
 	def button_press(self, mapper):
-		ButtonAction._button_release(mapper, self.button)
+		self.action.button_release(mapper)
 
 
 class TapAction(PressAction):
@@ -323,29 +322,106 @@ class TapAction(PressAction):
 	"""
 	COMMAND = "tap"
 	PR = _("Tap")
+	PAUSE = 0.1
+	COUNTER_VAL = 100
 	
+	def __init__(self, button, count=1):
+		PressAction.__init__(self, button)
+		self._lst = []
+		self._keep_pressed = False
+		self.button = button
+		self.count = count
+
 	
 	def button_press(self, mapper):
+		if len(self._lst):
+			# Still executing from scheduler
+			return
+		
+		# ---
+		# This thing abuses internal "button press" counter a little; First,
+		# if button is supposedly pressed more than 1 times (because two or more
+		# actions are holding it down at same time), tap is aborted. That is not
+		# ideal, but shouldn't be a problem in most cases.
+		#
+		# 2nd, counter is manipulated before every call to _button_press / release,
+		# so it always fires emulated button. Then, while scheduler is active,
+		# counter is bumped to 'COUNTER_VAL', so it can be detected that other
+		# action touched same button.
+		# ---
+		if self.button in mapper.pressed and mapper.pressed[self.button] > 1:
+			log.warning("Failed to tap, two or more actions are holding button")
+			return
+			
+		# Generate as many clicks as requested
+		# True is for press, False for release
+		self._lst = [ True, False ] * self.count
+		
 		if self.button in mapper.pressed and mapper.pressed[self.button] > 0:
-			# Uses scheduler to generate release-press-release-press sequence.
-			self.lst = [
-				ButtonAction._button_release,
-				ButtonAction._button_press,
-				ButtonAction._button_release,
-				ButtonAction._button_press,
-			]
-			self._rel_tap_press(mapper)
-		else:
-			ButtonAction._button_press(mapper, self.button)
-			mapper.schedule(0, self._scheduled_release)
+			# Surround by release - ... - press if button is currently pressed
+			self._lst = [ False ] + self._lst + [ True ]
+		elif self.count > 1:
+			# Keep button pressed if double-or-more tap was requested
+			self._lst = self._lst[0:-1]
+			self._keep_pressed = True
+		
+		mapper.pressed[self.button] = self.COUNTER_VAL
+		self._rel_tap_press(mapper)
+	
+	
+	def _bailout(self):
+		self._lst, self._keep_pressed = [], None
+		return None
 	
 	
 	def _rel_tap_press(self, mapper):
-		a, self.lst = self.lst[0], self.lst[1:]
-		a(mapper, self.button)
-		if len(self.lst):
-			mapper.schedule(0, self._rel_tap_press)
+		if not self.button in mapper.pressed or mapper.pressed[self.button] < self.COUNTER_VAL:
+			# Something else tried to _release_ button in meanwhile, bail out
+			mapper.pressed[self.button] = 1
+			ButtonAction._button_release(mapper, self.button)
+			return self._bailout()
+		elif mapper.pressed[self.button] > self.COUNTER_VAL:
+			# Something else pressed button in meanwhile, bail out
+			mapper.pressed[self.button] = 1
+			return self._bailout()
+		
+		a, self._lst = self._lst[0], self._lst[1:]
+		if a:
+			mapper.pressed[self.button] = 0
+			ButtonAction._button_press(mapper, self.button)
+		else:
+			mapper.pressed[self.button] = 1
+			ButtonAction._button_release(mapper, self.button)
+		if len(self._lst):
+			mapper.pressed[self.button] = self.COUNTER_VAL
+			mapper.schedule(self.PAUSE, self._rel_tap_press)
 	
 	
-	def _scheduled_release(self, mapper):
-		ButtonAction._button_release(mapper, self.button)
+	def button_release(self, mapper):
+		if self._keep_pressed:
+			self._keep_pressed = False
+			if len(self._lst) > 0:
+				# _rel_tap_press is still scheduled
+				self._lst += [ False ]
+			else:
+				ButtonAction._button_release(mapper, self.button)
+	
+	
+	def describe_short(self):
+		""" Used in macro editor """
+		if self.count <= 1:
+			return "%s %s" % (_("Tap"), ButtonAction.describe_button(self.button))
+		if self.count == 2:
+			return "%s %s" % (_("DblTap"), ButtonAction.describe_button(self.button))
+		return "%s%s %s" % (self.count, _("-tap"), ButtonAction.describe_button(self.button))
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return self.describe_short()
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if self.count <= 1:
+			return "%s(%s)" % (self.COMMAND, self.button)
+		return "%s(%s, %s)" % (self.COMMAND, self.button, self.count)

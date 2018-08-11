@@ -1,6 +1,21 @@
 #!/usr/bin/env python2
 """
 Python wrapper for some X-related stuff.
+
+Copyright (C) 2017 Kozec
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 2 as published by
+the Free Software Foundation
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
 
 from ctypes import CDLL, POINTER, c_void_p, Structure, byref, cast
@@ -395,9 +410,20 @@ if HAVE_X:
 				free(s)
 				return value
 			free(s)
-		
 		return None, None
+	
+	
+	def get_wm_state(dpy, window):
+		"""
+		Returns list of _NET_WM_STATE atoms assotiated with window or empty list
+		if list be obtained.
+		"""
+		count, state = get_window_prop(dpy, window, "_NET_WM_STATE", 1024)
+		if count <= 0: return []
+		return cast(state, POINTER(Atom))[0:count]
+	
 else:
+	
 	# TODO: I may end up with some kind of plugin architecture just for this :(
 	def open_display(*a):
 		""" Returns None as this platform doesn't support X """

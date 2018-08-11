@@ -1,0 +1,26 @@
+{
+	"_ " : "Currently, this file is used only when changing controller image",
+	"__" : "manually from context menu",
+
+	"gui": {
+		"background": "sc",
+		"buttons": [
+			"A", "B", "X", "Y", "BACK",
+			"C", "START", "LB", "RB", "LT", "RT",
+			"STICK", "LPAD", "RPAD", "LG", "RG"
+		]
+	},
+	
+	"gyros": true,
+	"buttons": {
+		"1": "A",
+		"2": "B",
+		"3": "X",
+		"4": "Y",
+		"5": "RB",
+		"6": "LB",
+		"7": "C",
+		"9": "BACK",
+		"10": "START"
+	}
+}

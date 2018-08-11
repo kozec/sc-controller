@@ -59,7 +59,7 @@ class OSKBindingEditor(Editor, BindingEditor):
 			ae.show(self.window)
 	
 	
-	def on_action_chosen(self, id, action):
+	def on_action_chosen(self, id, action, mark_changed=True):
 		self.set_action(self.current, id, action)
 		self.save_profile()
 	

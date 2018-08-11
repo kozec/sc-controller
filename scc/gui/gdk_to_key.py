@@ -88,7 +88,7 @@ GDK_TO_KEY = {
 }
 
 
-HW_TO_KEY = {
+KEYCODE_TO_KEY = {
 	# Row 1
 	9	: Keys.KEY_ESC,
 	67	: Keys.KEY_F1,
@@ -225,8 +225,9 @@ for x in xrange(ord('a'), ord('z')+1):
 	GDK_TO_KEY[getattr(Gdk, "KEY_" + chr(x))] = names["KEY_" + chr(x).upper()]
 
 KEY_TO_GDK = { GDK_TO_KEY[a] : a for a in GDK_TO_KEY }
+KEY_TO_KEYCODE = { KEYCODE_TO_KEY[a] : a for a in KEYCODE_TO_KEY }
 
 def keyevent_to_key(event):
-	if event.hardware_keycode in HW_TO_KEY:
-		return HW_TO_KEY[event.hardware_keycode]
+	if event.hardware_keycode in KEYCODE_TO_KEY:
+		return KEYCODE_TO_KEY[event.hardware_keycode]
 	return None

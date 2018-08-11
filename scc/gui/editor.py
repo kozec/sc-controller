@@ -18,10 +18,33 @@ from scc.gui.area_to_action import AREA_TO_ACTION
 
 import os
 
-class Editor(object):
+
+class ComboSetter(object):
+	
+	def set_cb(self, cb, key, keyindex=0):
+		"""
+		Sets combobox value.
+		Returns True on success or False if key is not found.
+		"""
+		model = cb.get_model()
+		self._recursing = True
+		for row in model:
+			if key == row[keyindex]:
+				cb.set_active_iter(row.iter)
+				self._recursing = False
+				return True
+		self._recursing = False
+		return False
+
+
+class Editor(ComboSetter):
 	""" Common stuff for all editor windows """
 	ERROR_CSS = " #error {background-color:green; color:red;} "
 	_error_css_provider = None
+	
+	def __init__(self):
+		self.added_widget = None		# See add_widget method
+	
 	
 	def on_window_key_press_event(self, trash, event):
 		""" Checks if pressed key was escape and if yes, closes window """
@@ -56,19 +79,6 @@ class Editor(object):
 		return True
 	
 	
-	def set_cb(self, cb, key, keyindex=0):
-		""" Sets combobox value """
-		model = cb.get_model()
-		self._recursing = True
-		self._transient_for = None
-		for row in model:
-			if key == row[keyindex]:
-				cb.set_active_iter(row.iter)
-				self._recursing = False
-				return
-		self._recursing = False
-	
-	
 	def set_title(self, title):
 		self.window.set_title(title)
 		self.builder.get_object("header").set_title(title)
@@ -91,21 +101,46 @@ class Editor(object):
 			self.window.set_transient_for(transient_for)
 			self.window.set_modal(True)
 		self.window.show()
-
-
-class ComboSetter(object):
 	
-	def set_cb(self, cb, key, keyindex=0):
+	
+	def add_widget(self, label, widget):
 		"""
-		Sets combobox value.
-		Returns True on success or False if key is not found.
+		Adds new widget into row before Action Name.
+		
+		Widget is automatically passed to Macro Editor or Modeshift Editor
+		if either one is opened from editor window.
+		
+		When editor window is closed or destroyed, widget is automatically
+		deattached to keep it from destroying.
 		"""
-		model = cb.get_model()
-		self._recursing = True
-		for row in model:
-			if key == row[keyindex]:
-				cb.set_active_iter(row.iter)
-				self._recursing = False
-				return True
-		self._recursing = False
-		return False
+		lblAddedWidget = self.builder.get_object("lblAddedWidget")
+		vbAddedWidget = self.builder.get_object("vbAddedWidget")
+		lblAddedWidget.set_label(label)
+		lblAddedWidget.set_visible(True)
+		for ch in vbAddedWidget.get_children():
+			vbAddedWidget.remove(ch)
+		self.added_widget = widget
+		vbAddedWidget.pack_start(widget, True, False, 0)
+		vbAddedWidget.set_visible(True)
+	
+	
+	def remove_added_widget(self):
+		"""
+		Removes added widget, if any.
+		Should be called from on_destory handlers.
+		"""
+		vbAddedWidget = self.builder.get_object("vbAddedWidget")
+		for ch in vbAddedWidget.get_children():
+			vbAddedWidget.remove(ch)
+		self.added_widget = None
+	
+	
+	def send_added_widget(self, target):
+		""" Transfers added widget to new editor window """
+		if self.added_widget:
+			vbAddedWidget  = self.builder.get_object("vbAddedWidget")
+			lblAddedWidget = self.builder.get_object("lblAddedWidget")
+			label = lblAddedWidget.get_label()
+			w = self.added_widget
+			self.remove_added_widget()
+			target.add_widget(label, w)

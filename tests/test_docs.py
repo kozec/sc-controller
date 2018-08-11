@@ -20,7 +20,7 @@ class TestDocs(object):
 		
 		# Do stupid fulltext search, because currently it's simply fast enough
 		for command in Action.ALL:
-			if command in (None, 'None'):
+			if command in (None, 'None', 'exit'):
 				# Woo for special cases
 				continue
 			anchor = '<a name="%s">' % (command,)

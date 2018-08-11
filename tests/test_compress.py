@@ -3,6 +3,7 @@ from scc.constants import SCButtons, HapticPos
 from scc.modifiers import DoubleclickModifier
 from scc.actions import Action, AxisAction
 from scc.macros import Macro
+from scc.special_actions import MenuAction
 from scc.parser import ActionParser
 
 parser = ActionParser()
@@ -24,6 +25,10 @@ CASES = {
 		'action' : 'mouse',
 		'sensitivity' : (2.0, 3.0,),
 		'feedback' : ('BOTH',)
+	},
+	'mouseabs' : {
+		'action' : 'mouseabs(REL_X)',
+		'sensitivity' : (2.0, 3.0,)
 	},
 	'gyro' : {
 		'action' : 'gyro(ABS_X, ABS_Y, ABS_Z)',
@@ -47,7 +52,14 @@ CASES = {
 		'feedback' : ('BOTH',)
 	},
 	'circular' : {
-		'action' : 'circular(REL_HWHEEL)',
+		'action' : 'mouse(REL_HWHEEL)',
+		'circular' : True,
+		'sensitivity' : (2.0,),
+		'feedback' : ('BOTH',)
+	},
+	'circularabs' : {
+		'action' : 'mouse(REL_HWHEEL)',
+		'circularabs' : True,
 		'sensitivity' : (2.0,),
 		'feedback' : ('BOTH',)
 	},
@@ -57,30 +69,59 @@ CASES = {
 		'sensitivity' : (2.0, 3.0,),
 		'feedback' : ('BOTH',)
 	},
+	'relXY' : {
+		'X' : { 'action' : 'axis(ABS_RX)' },
+		'Y' : { 'action' : 'axis(ABS_RY)' },
+		'sensitivity' : (2.0, 3.0,),
+		'feedback' : ('BOTH',)
+	},
 	'trigger' : {
 		'action' : 'button(KEY_X)',
 		'levels' : [ 10, 80 ],
 		'feedback' : ('BOTH',)
 	},
-	'doubleclick' : {
-		"doubleclick" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
-		'hold' : { "action" : "mouse(ROLL)" },
-		'sensitivity' : (2.0, 3.0, 4.0),
+	'tilt' : {
+		'action' : 'tilt( button(KEY_D), button(KEY_U), button(KEY_L), button(KEY_R) )',
+		'sensitivity' : (2.0, 3.0, 4.0,)
 	},
-	'hold' : {
-		"hold" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
-		'doubleclick' : { "action" : "mouse(ROLL)" },
-		'sensitivity' : (2.0, 3.0, 4.0),
+	'ball' : {
+		'action' : 'ball(XY(axis(Axes.ABS_RX), axis(Axes.ABS_RY)))',
+		'sensitivity' : (2.0, 3.0),
+		'feedback' : ('BOTH',)
 	},
-	'mode' : {
-		'modes' : {
-			"A" : { "action" : "mouse(ROLL)" },
-			"B" : { "action" : "axis(ABS_X)" },
-			"X" : { "action" : "gyro(ABS_RZ, ABS_RX, ABS_Z)" },
+	"dpad" : {
+		"dpad": [
+			{ "action": "button(Keys.KEY_W)" },
+			{ "action": "button(Keys.KEY_S)" },
+			{ "action": "button(Keys.KEY_A)" },
+			{ "action": "button(Keys.KEY_D)" }
+		],
+		"feedback": ["LEFT", 32640]
+	},
+	"dpad8" : {
+		"dpad": [
+			{ "action": "button(Keys.KEY_1)" },
+			{ "action": "button(Keys.KEY_2)" },
+			{ "action": "button(Keys.KEY_3)" },
+			{ "action": "button(Keys.KEY_4)" },
+			{ "action": "button(Keys.KEY_5)" },
+			{ "action": "button(Keys.KEY_6)" },
+			{ "action": "button(Keys.KEY_7)" },
+			{ "action": "button(Keys.KEY_8)" }
+		],
+		"feedback": ["LEFT", 32640]
+	},
+	"menu" : {
+		"action": "menu('Default.menu')", 
+		"feedback": ["LEFT", 32640]
+	},
+	"hold": {
+		"action": "button(Keys.KEY_W)",
+		"hold": {
+			"action": "menu('Default.menu')"
 		},
-		'sensitivity' : (2.0, 3.0, 4.0),
-	},	
-
+		"feedback": ["LEFT", 32640]
+	}
 }
 
 class TestCompress(object):
@@ -95,6 +136,12 @@ class TestCompress(object):
 		for cls in Action.ALL.values():
 			if Macro in cls.__bases__:
 				# Skip macros, they are handled separately
+				continue
+			if MenuAction in cls.__bases__ and cls != MenuAction:
+				# Skip alternate menu types, they all behave in same way
+				continue
+			if cls == DoubleclickModifier:
+				# Tested along with hold
 				continue
 			if hasattr(cls, "set_speed"):
 				assert cls.COMMAND in CASES, (
@@ -142,7 +189,11 @@ class TestCompress(object):
 			if 'sensitivity' in CASES[case]:
 				print "Testing 'sensitivity' on %s" % (case,)
 				a = parser.from_json_data(CASES[case]).compress()
-				assert a.get_speed() == CASES[case]['sensitivity']
+				assert (
+					a.get_speed() == CASES[case]['sensitivity']
+					or
+					a.strip().get_speed() == CASES[case]['sensitivity']
+				)
 	
 	
 	def test_feedback(self):

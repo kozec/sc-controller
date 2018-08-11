@@ -7,10 +7,12 @@ Various stuff that I don't care to fit anywhere else.
 from __future__ import unicode_literals
 
 from scc.paths import get_controller_icons_path, get_default_controller_icons_path
+from scc.paths import get_menuicons_path, get_default_menuicons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
+from scc.paths import get_button_images_path
 from math import pi as PI, sin, cos, atan2, sqrt
-import imp, os, sys, shlex, gettext, logging
+import os, sys, ctypes, imp, shlex, gettext, logging
 
 HAVE_POSIX1E = False
 try:
@@ -65,13 +67,6 @@ def set_logging_level(verbose, debug):
 		logger.setLevel(11)
 	else:			# INFO and worse
 		logger.setLevel(20)
-
-
-def strip_none(*lst):
-	""" Returns lst without trailing None's """
-	while len(lst) and not lst[-1]:
-		lst = lst[0:-1]
-	return lst
 
 
 def ensure_size(n, lst, fill_with=None):
@@ -155,11 +150,36 @@ def static_vars(**kwargs):
 	return decorate
 
 
-def get_so_extensions():
-	"""Return so file extenstion compatible with python and pypy"""
-	for ext, _, typ in imp.get_suffixes():
-		if typ == imp.C_EXTENSION:
-			yield ext
+def profile_is_override(name):
+	"""
+	Returns True if named profile exists both in user config directory and
+	default_profiles directory.
+	"""
+	filename = "%s.sccprofile" % (name,)
+	if os.path.exists(os.path.join(get_profiles_path(), filename)):
+		if os.path.exists(os.path.join(get_default_profiles_path(), filename)):
+			return True
+	return False
+
+
+def profile_is_default(name):
+	"""
+	Returns True if named profile exists in default_profiles directory, even
+	if it is overrided by profile in user config directory.
+	"""
+	filename = "%s.sccprofile" % (name,)
+	return os.path.exists(os.path.join(get_default_profiles_path(), filename))
+
+
+def get_profile_name(path):
+	"""
+	Returns profile name for specified path. Basically removes path and
+	.sccprofile and .mod extension.
+	"""
+	parts = os.path.split(path)[-1].split(".")
+	if parts[-1] == "mod": parts = parts[0:-1]
+	if parts[-1] == "sccprofile": parts = parts[0:-1]
+	return ".".join(parts)
 
 
 def find_profile(name):
@@ -177,6 +197,61 @@ def find_profile(name):
 		if os.path.exists(path):
 			return path
 	return None
+
+
+def find_icon(name, prefer_bw=False, paths=None, extension="png"):
+	"""
+	Returns (filename, has_colors) for specified icon name.
+	This is done by searching for name + '.png' and name + ".bw.png"
+	in user and default menu-icons folders.
+	
+	If both colored and grayscale version is found, colored is returned, unless
+	prefer_bw is set to True.
+	
+	paths defaults to icons for menuicons
+	
+	Returns (None, False) if icon cannot be found.
+	"""
+	if name is None:
+		# Special case, so code can pass menuitem.icon directly
+		return None, False
+	gray_filename = "%s.bw.%s" % (name, extension)
+	colors_filename = "%s.%s" % (name, extension)
+	gray, colors = None, None
+	if paths is None:
+		paths = get_default_menuicons_path(), get_menuicons_path()
+	for p in paths:
+		# Check grayscale
+		if gray is None:
+			path = os.path.join(p, gray_filename)
+			if os.path.exists(path):
+				if prefer_bw:
+					return path, False
+				gray = path
+		# Check colors
+		if colors is None:
+			path = os.path.join(p, colors_filename)
+			if os.path.exists(path):
+				if not prefer_bw:
+					return path, True
+				colors = path
+	if colors is not None:
+		return colors, True
+	return gray, False
+
+
+def find_button_image(name, prefer_bw=False):
+	""" Similar to find_icon, but searches for button image """
+	return find_icon(nameof(name), prefer_bw,
+			paths=[get_button_images_path()], extension="svg")
+
+
+def menu_is_default(name):
+	"""
+	Returns True if named menu exists in default_menus directory, even
+	if it is overrided by menu in user config directory.
+	"""
+	return os.path.exists(os.path.join(get_default_menus_path(), name))
 
 
 def find_menu(name):
@@ -209,21 +284,6 @@ def find_controller_icon(name):
 	return None
 
 
-def find_lib(name, base_path):
-	"""
-	Returns (filename, search_paths) if named library is found
-	or (None, search_paths) if not.
-	"""
-	search_paths = []
-	for extension in get_so_extensions():
-		search_paths.append(os.path.abspath(os.path.normpath(os.path.join( base_path, '..', name + extension ))))
-		search_paths.append(os.path.abspath(os.path.normpath(os.path.join( base_path, '../..', name + extension ))))
-	for path in search_paths:
-		if os.path.exists(path):
-			return path, search_paths
-	return None, search_paths
-
-
 def find_binary(name):
 	"""
 	Returns full path to script or binary.
@@ -236,12 +296,60 @@ def find_binary(name):
 	if name.startswith("scc-autoswitch-daemon"):
 		# As above
 		return os.path.join(os.path.split(__file__)[0], "x11", "scc-autoswitch-daemon.py")
-	for i in os.environ['PATH'].split(":"):
+	user_path = os.environ['PATH'].split(":")
+	# Try to add the standard binary paths if not present in PATH
+	for d in ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]:
+		if d not in user_path:
+			user_path.append(d)
+	for i in user_path:
 		path = os.path.join(i, name)
 		if os.path.exists(path):
 			return path
 	# Not found, return name back and hope for miracle
 	return name
+
+
+def find_library(libname):
+	"""
+	Search for 'libname.so'.
+	Returns library loaded with ctypes.CDLL
+	Raises OSError if library is not found
+	"""
+	base_path = os.path.dirname(__file__)
+	lib, search_paths = None, []
+	so_extensions = [ ext for ext, _, typ in imp.get_suffixes()
+			if typ == imp.C_EXTENSION ]
+	for extension in so_extensions:
+		search_paths += [
+			os.path.abspath(os.path.normpath(
+				os.path.join( base_path, '..', libname + extension ))),
+			os.path.abspath(os.path.normpath(
+				os.path.join( base_path, '../..', libname + extension )))
+			]
+	
+	for path in search_paths:
+		if os.path.exists(path):
+			lib = path
+			break
+	
+	if not lib:
+		raise OSError('Cant find %s.so. searched at:\n %s' % (
+			libname, '\n'.join(search_paths)))
+	return ctypes.CDLL(lib)
+
+
+def find_gksudo():
+	"""
+	Searchs for gksudo or other known graphical sudoing tool.
+	Returns list of arguments.
+	"""
+	SUDOS = ["gksudo", "gksu", "kdesudo", "pkexec", "xdg-su"]
+	for name in SUDOS:
+		args = name.split(" ")
+		bin = find_binary(args[0])
+		if bin != args[0]:
+			return args
+	return None
 
 
 def check_access(filename, write_required=True):
@@ -261,6 +369,22 @@ def check_access(filename, write_required=True):
 	if write_required:
 		return os.access(filename, os.R_OK | os.W_OK)
 	return os.access(filename, os.R_OK)
+
+
+def strip_gesture(gstr):
+	"""
+	Converts gesture string to version where stroke lenght is ignored.
+	
+	That means removing repeating characters and adding 'i' to front.
+	"""
+	last, uniq = None, []
+	for x in gstr:
+		if x != last:
+			uniq.append(x)
+		last = x
+	if uniq[0] != 'i':
+		uniq = [ 'i' ] + uniq
+	return "".join(uniq)
 
 
 clamp = lambda low, value, high : min(high, max(low, value))

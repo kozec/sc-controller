@@ -1,1 +1,1 @@
-Copy to ~/.config/scc/profiles/
+Drag and drop link on main window to import profile.

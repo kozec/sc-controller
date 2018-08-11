@@ -9,17 +9,19 @@ trigger should be pressed.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.tools import strip_none, ensure_size, quat2euler, anglediff
+from scc.tools import ensure_size, quat2euler, anglediff
 from scc.tools import circle_to_square, clamp, nameof
 from scc.uinput import Keys, Axes, Rels
 from scc.lib import xwrappers as X
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
 from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
-from scc.constants import LEFT, RIGHT, STICK, PITCH, YAW, ROLL
+from scc.constants import LEFT, RIGHT, CPAD, STICK, PITCH, YAW, ROLL
+from scc.constants import PARSER_CONSTANTS, ControllerFlags
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
 from scc.constants import TRIGGER_CLICK, TRIGGER_MAX
-from scc.constants import PARSER_CONSTANTS
-from math import sqrt, atan2, pi as PI
+from scc.constants import SCButtons
+from scc.aliases import ALL_BUTTONS as GAMEPAD_BUTTONS
+from math import sqrt, sin, cos, atan2, pi as PI
 
 import sys, time, logging, inspect
 log = logging.getLogger("Actions")
@@ -27,8 +29,6 @@ log = logging.getLogger("Actions")
 # Default delay after action, if used in macro. May be overriden using sleep() action.
 DEFAULT_DELAY = 0.01
 MOUSE_BUTTONS = ( Keys.BTN_LEFT, Keys.BTN_MIDDLE, Keys.BTN_RIGHT, Keys.BTN_SIDE, Keys.BTN_EXTRA )
-GAMEPAD_BUTTONS = ( Keys.BTN_A, Keys.BTN_B, Keys.BTN_X, Keys.BTN_Y, Keys.BTN_TL, Keys.BTN_TR,
-		Keys.BTN_SELECT, Keys.BTN_START, Keys.BTN_MODE, Keys.BTN_THUMBL, Keys.BTN_THUMBR )
 TRIGGERS = ( Axes.ABS_Z, Axes.ABS_RZ )
 
 
@@ -77,6 +77,19 @@ class Action(object):
 	AC_SWITCHER	= 1 << 11	# Autoswitcher display
 	#		bit 	09876543210
 	AC_ALL		= 0b10111111111	# ALL means everything but OSK
+	
+	
+	# See get_compatible_modifiers
+	MOD_CLICK		= 1 << 0
+	MOD_OSD			= 1 << 1
+	MOD_FEEDBACK	= 1 << 2
+	MOD_DEADZONE	= 1 << 3
+	MOD_SENSITIVITY	= 1 << 4
+	MOD_SENS_Z		= 1 << 5	# Sensitivity of 3rd axis
+	MOD_ROTATE		= 1 << 6
+	MOD_POSITION	= 1 << 7
+	MOD_SMOOTH		= 1 << 8
+	MOD_BALL		= 1 << 9
 	
 	def __init__(self, *parameters):
 		self.parameters = parameters
@@ -141,6 +154,46 @@ class Action(object):
 		rv = { 'action' : self.to_string() }
 		if self.name: rv['name'] = self.name
 		return rv
+	
+	
+	def get_child_actions(self):
+		"""
+		Returns iterable with all direct child actions or emtpty iterable if
+		there are none. Child action is, for example, any action that DPadAction
+		can choose from.
+		
+		May returns NoActions as well.
+		"""
+		return []	# Most will return this
+	
+	
+	def get_all_actions(self):
+		"""
+		Returns generator with self, actions from get_child_actions and child
+		actions of every child action, recursively including their children.
+		"""
+		yield self
+		for c in self.get_child_actions():
+			for cc in c.get_all_actions():
+				yield cc
+	
+	
+	def get_compatible_modifiers(self):
+		"""
+		Returns bit combination of MOD_* constants to indicate which modifier
+		can be used with this action.
+		Used by GUI.
+		"""
+		return 0
+	
+	
+	def get_previewable(self):
+		"""
+		Returns True if action can be saved immediately to preview user changes.
+		Used by editor.
+		"""
+		# Not for most of actions
+		return False
 	
 	
 	def __str__(self):
@@ -258,6 +311,41 @@ class Action(object):
 		log.warn("Action %s can't handle whole stick event", self.__class__.__name__)
 	
 	
+	def whole_blocked(self, mapper, x, y, what):
+		"""
+		Special case called when ClickModifier is used and prevents 'whole'
+		to be called because finger moves over non-pressed pad.
+		"""
+		pass
+	
+	
+	def add(self, mapper, dx, dy):
+		"""
+		Called from BallModifier while virtual "ball" is rolling.
+		
+		Passed to 'whole' by default.
+		"""
+		self.whole(mapper, dx, dy, None)
+	
+	
+	def change(self, mapper, dx, dy, what):
+		"""
+		Called from CircularModifier to indicate incremental (or decremental)
+		change in value.
+		
+		'what' can be None.
+		"""
+		log.warn("Action %s can't handle incremental changes", self.__class__.__name__)
+	
+	
+	def cancel(self, mapper):
+		"""
+		Called when profile is changed to give action chance to cancel
+		long-running effects it may have created.
+		"""
+		pass
+	
+	
 	def strip_defaults(self):
 		"""
 		Returns self.parameters list with all default values stripped from right
@@ -310,10 +398,112 @@ class Action(object):
 		log.warn("Action %s can't handle trigger event", self.__class__.__name__)
 
 
+class RangeOP(object):
+	"""
+	Allows to specify and store axis range and then use it in modeshift
+	instead of button.
+	"""
+	OPS = ("<", ">", "<=", ">=")
+	
+	def __init__(self, what, op, value):
+		""" Raises ValueError if 'what' or 'op' is not supported value """
+		self.what = what
+		self.op = op
+		self.value = value
+		self.min = float(TRIGGER_MIN)
+		self.max = float(TRIGGER_MAX)
+		
+		if op == "<":
+			self.op_method = self.cmp_lt
+		elif op == ">":
+			self.op_method = self.cmp_gt
+		elif op == "<=":
+			self.op_method = self.cmp_le
+		elif op == ">=":
+			self.op_method = self.cmp_ge
+		elif op == "ABS<":
+			self.op_method = self.cmp_labs
+		elif op == "ABS>":
+			self.op_method = self.cmp_gabs
+		else:
+			raise ValueError("Unknown operator: '%s'" % (op, ))
+		
+		if what == SCButtons.LT:
+			# TODO: Somehow unify names here, LT button is related to ltrig axis and so on
+			self.axis_name = "ltrig"
+		elif what == SCButtons.RT:
+			self.axis_name = "rtrig"
+		elif what == SCButtons.X:
+			self.axis_name = "lpad_x"
+			self.min, self.max = float(STICK_PAD_MIN), float(STICK_PAD_MAX)
+		elif what == SCButtons.Y:
+			self.axis_name = "lpad_y"
+			self.min, self.max = float(STICK_PAD_MIN), float(STICK_PAD_MAX)
+		elif what == STICK:
+			# Most special case of all special cases
+			self.axis_name = STICK
+			op = "ABS" + op.replace("=", "")
+			self.children = RangeOP(SCButtons.X, op, value), RangeOP(SCButtons.Y, op, value)
+			self.min, self.max = float(STICK_PAD_MIN), float(STICK_PAD_MAX)
+			self.op_method = self.cmp_or
+		else:
+			raise ValueError("'%s' is not trigger nor axis" % (nameof(what), ))
+	
+	def cmp_or(self, mapper):
+		return any([ x(mapper) for x in self.children ])
+	
+	def cmp_gt(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state > self.value
+	
+	def cmp_lt(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state < self.value
+	
+	def cmp_ge(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state >= self.value
+	
+	def cmp_le(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return state <= self.value
+	
+	def cmp_labs(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return abs(state) < self.value
+	
+	def cmp_gabs(self, mapper):
+		if mapper.state is None:
+			return False
+		state = float(getattr(mapper.state, self.axis_name)) / self.max
+		return abs(state) > self.value
+	
+	def __call__(self, mapper):
+		return self.op_method(mapper)
+	
+	
+	def __str__(self):
+		return "%s %s %s" % (nameof(self.what), self.op, self.value)
+
+
 class HapticEnabledAction(object):
 	""" Action that can generate haptic feedback """
 	def __init__(self):
 		self.haptic = None
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_FEEDBACK
 	
 	
 	def set_haptic(self, hd):
@@ -328,6 +518,10 @@ class OSDEnabledAction(object):
 	""" Action that displays some sort of OSD when executed """
 	def __init__(self):
 		self.osd_enabled = False
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_OSD
 	
 	
 	def enable_osd(self, timeout):
@@ -360,6 +554,10 @@ class SpecialAction(object):
 
 
 class AxisAction(Action):
+	"""
+	Action used to controll one output axis, such as one trigger
+	or one axis of stick.
+	"""
 	COMMAND = "axis"
 	
 	AXIS_NAMES = {
@@ -371,15 +569,29 @@ class AxisAction(Action):
 		Axes.ABS_HAT0Y : ("DPAD", "Up", "Down"),
 		Axes.ABS_Z  : ("Left Trigger", "Press", "Press"),
 		Axes.ABS_RZ : ("Right Trigger", "Press", "Press"),
+		Rels.REL_WHEEL : ("Mouse Wheel", "Up", "Down"),
+		Rels.REL_HWHEEL : ("Horizontal Wheel", "Left", "Right"),
 	}
+	AXES_PAIRS = [
+		(Axes.ABS_X, Axes.ABS_Y),
+		(Axes.ABS_RX, Axes.ABS_RY),
+		(Axes.ABS_HAT0X, Axes.ABS_HAT0Y)
+	]
 	X = [ Axes.ABS_X, Axes.ABS_RX, Axes.ABS_HAT0X ]
 	Z = [ Axes.ABS_Z, Axes.ABS_RZ ]
+	
+	# Storage of positions per axis common for all AxisActions
+	# This is important for cases when two different bindigs
+	# are mapped to same axis using change() / CircularModifier
+	# See https://github.com/kozec/sc-controller/issues/213
+	old_positions = {}
 	
 	def __init__(self, id, min = None, max = None):
 		Action.__init__(self, id, *strip_none(min, max))
 		self.id = id
 		self.speed = 1.0
-		self._old_pos = 0
+		if self.id not in AxisAction.old_positions:
+			AxisAction.old_positions[self.id] = 0
 		if self.id in TRIGGERS:
 			self.min = TRIGGER_MIN if min is None else min
 			self.max = TRIGGER_MAX if max is None else max
@@ -396,16 +608,42 @@ class AxisAction(Action):
 		return (self.speed,)
 	
 	
-	def _get_axis_description(self):
-		axis, neg, pos = "%s %s" % (self.id.name, _("Axis")), _("Negative"), _("Positive")
-		if self.id in AxisAction.AXIS_NAMES:
-			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.id] ]
-		return axis, neg, pos
+	def get_previewable(self):
+		return True
+	
+	
+	def get_compatible_modifiers(self):	
+		return Action.MOD_DEADZONE
+	
+	
+	@staticmethod
+	def get_axis_description(id, xy=False):
+		"""
+		Returns (axis_description, 'Negative', 'Positive'), where all strings
+		are localized and Negative/Positive may be switched over depending on
+		axis.
+		"""
+		if id in Axes or id in Rels:
+			axis, neg, pos = "%s %s" % (id.name, _("Axis")), _("Negative"), _("Positive")
+			if id in AxisAction.AXIS_NAMES:
+				axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[id] ]
+			if xy:
+				if id.name.endswith("X"): axis = _("%s X") % (axis,)
+				if id.name.endswith("Y"): axis = _("%s Y") % (axis,)
+			return axis, neg, pos
+		elif hasattr(id, "name"):
+			return _("Axis %s") % (id.name,), _("Negative"), _("Positive")
+		else:
+			return _("Axis %s") % (id,), _("Negative"), _("Positive")
+	
+	
+	def get_axis(self):
+		return self.id
 	
 	
 	def describe(self, context):
 		if self.name: return self.name
-		axis, neg, pos = self._get_axis_description()
+		axis, neg, pos = AxisAction.get_axis_description(self.id)
 		if context == Action.AC_BUTTON:
 			for x in self.parameters:
 				if type(x) in (int, float):
@@ -423,12 +661,12 @@ class AxisAction(Action):
 	
 	
 	def button_press(self, mapper):
-		mapper.gamepad.axisEvent(self.id, self.max)
+		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, self.max))
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
 	def button_release(self, mapper):
-		mapper.gamepad.axisEvent(self.id, self.min)
+		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, self.min))
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
@@ -448,11 +686,21 @@ class AxisAction(Action):
 	def axis(self, mapper, position, what):
 		p = float(position * self.speed - STICK_PAD_MIN) / (STICK_PAD_MAX - STICK_PAD_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, p))
+		p = AxisAction.clamp_axis(self.id, p)
+		AxisAction.old_positions[self.id] = p
+		mapper.gamepad.axisEvent(self.id, p)
 		mapper.syn_list.add(mapper.gamepad)
 	
 	
-	def change(self, mapper, dx, dy):
+	def change(self, mapper, dx, dy, what):
+		""" Called from CircularModifier """
+		p = AxisAction.old_positions[self.id]
+		p = clamp(-STICK_PAD_MAX, p + dx, STICK_PAD_MAX)
+		AxisAction.old_positions[self.id] = p
+		self.axis(mapper, p, None)
+	
+	
+	def add(self, mapper, dx, dy):
 		""" Called from BallModifier """
 		self.axis(mapper, clamp(STICK_PAD_MIN, dx, STICK_PAD_MAX), None)
 	
@@ -460,11 +708,14 @@ class AxisAction(Action):
 	def trigger(self, mapper, position, old_position):
 		p = float(position * self.speed - TRIGGER_MIN) / (TRIGGER_MAX - TRIGGER_MIN)
 		p = int((p * (self.max - self.min)) + self.min)
-		mapper.gamepad.axisEvent(self.id, AxisAction.clamp_axis(self.id, p))
+		p = AxisAction.clamp_axis(self.id, p)
+		AxisAction.old_positions[self.id] = p
+		mapper.gamepad.axisEvent(self.id, p)
 		mapper.syn_list.add(mapper.gamepad)
 
 
 class RAxisAction(AxisAction):
+	""" Reversed AxisAction (outputs reversed values) """
 	COMMAND = "raxis"
 	
 	def __init__(self, id, min = None, max = None):
@@ -474,7 +725,7 @@ class RAxisAction(AxisAction):
 	
 	def describe(self, context):
 		if self.name: return self.name
-		axis, neg, pos = self._get_axis_description()
+		axis, neg, pos = AxisAction.get_axis_description(self.id)
 		if context in (Action.AC_STICK, Action.AC_PAD):
 			xy = "X" if self.parameters[0] in AxisAction.X else "Y"
 			return _("%s %s (reversed)") % (axis, xy)
@@ -482,55 +733,107 @@ class RAxisAction(AxisAction):
 
 
 class HatAction(AxisAction):
+	"""
+	Works as AxisAction, but has values preset to emulate emulate movement in
+	either only positive or only negative half of range.
+	"""
 	COMMAND = None
 	def describe(self, context):
 		if self.name: return self.name
-		axis, neg, pos = self._get_axis_description()
+		axis, neg, pos = AxisAction.get_axis_description(self.id)
 		if "up" in self.COMMAND or "left" in self.COMMAND:
 			return "%s %s" % (axis, neg)
 		else:
 			return "%s %s" % (axis, pos)
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		return (" " * pad) + "%s(%s)" % (self.COMMAND, self.id)
+
 
 class HatUpAction(HatAction):
 	COMMAND = "hatup"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
-	
+		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
+
 class HatDownAction(HatAction):
 	COMMAND = "hatdown"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
+		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
 
 class HatLeftAction(HatAction):
 	COMMAND = "hatleft"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
+		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
 	
 class HatRightAction(HatAction):
 	COMMAND = "hatright"
 	def __init__(self, id, *a):
-		HatAction.__init__(self, id, 0, STICK_PAD_MIN + 1)
+		HatAction.__init__(self, id, 0, STICK_PAD_MAX - 1)
 
 
-class MouseAction(HapticEnabledAction, Action):
+class WholeHapticAction(HapticEnabledAction):
+	"""
+	Helper class for actions that are generating haptic 'rolling clicks' as
+	finger moves over pad.
+	MouseAction, CircularModifier, XYAction and BallModifier currently.
+	"""
+	def __init__(self):
+		HapticEnabledAction.__init__(self)
+		self.reset_wholehaptic()
+	
+	
+	def change(self, mapper, dx, dy, what):
+		self._ax += dx
+		self._ay += dy
+		
+		distance = sqrt(self._ax * self._ax + self._ay * self._ay)
+		if distance > self.haptic.frequency:
+			self._ax = self._ay = 0
+			mapper.send_feedback(self.haptic)	
+	
+	
+	def add(self, mapper, dx, dy):
+		self.change(mapper, dx, dy, None)
+	
+	
+	def reset_wholehaptic(self):
+		self._ax = self._ay = 0.0
+
+
+class MouseAction(WholeHapticAction, Action):
+	"""
+	Controlls mouse movement in either vertical or horizontal direction
+	or scroll wheel.
+	"""
 	COMMAND = "mouse"
 	ALIASES = ("trackpad", )
 	HAPTIC_FACTOR = 75.0	# Just magic number
 	
 	def __init__(self, axis=None, speed=None):
 		Action.__init__(self, *strip_none(axis, speed))
-		HapticEnabledAction.__init__(self)
+		WholeHapticAction.__init__(self)
 		self._mouse_axis = axis or None
 		self._old_pos = None
-		self._travelled = 0
 		if speed:
 			self.speed = (speed, speed)
 		else:
 			self.speed = (1.0, 1.0)
 	
 	
+	def get_compatible_modifiers(self):
+		return ( Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_ROTATE
+				| Action.MOD_SMOOTH | Action.MOD_BALL | Action.MOD_FEEDBACK
+				| Action.MOD_DEADZONE )
+	
+	
+	def get_previewable(self):
+		return True
+	
+	
 	def get_axis(self):
 		return self._mouse_axis
+	
 	
 	def set_speed(self, x, y, z):
 		self.speed = (x, y)
@@ -555,9 +858,9 @@ class MouseAction(HapticEnabledAction, Action):
 	def button_press(self, mapper):
 		# This is generaly bad idea...
 		if self._mouse_axis in (Rels.REL_WHEEL, Rels.REL_HWHEEL):
-			self.change(mapper, 100000, 0)
+			self.change(mapper, 100000, 0, None)
 		else:
-			self.change(mapper, 100, 0)
+			self.change(mapper, 100, 0, None)
 	
 	
 	def button_release(self, mapper):
@@ -566,7 +869,7 @@ class MouseAction(HapticEnabledAction, Action):
 	
 	
 	def axis(self, mapper, position, what):
-		self.change(mapper, position, 0)
+		self.change(mapper, position * MouseAbsAction.MOUSE_FACTOR, 0, what)
 		mapper.force_event.add(FE_STICK)
 	
 		
@@ -574,15 +877,22 @@ class MouseAction(HapticEnabledAction, Action):
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):
 				d = position - self._old_pos[0]
-				self.change(mapper, d, 0)
+				self.change(mapper, d, 0, what)
 			self._old_pos = position, 0
 		else:
 			# Pad just released
 			self._old_pos = None
 	
 	
-	def change(self, mapper, dx, dy):
+	def change(self, mapper, dx, dy, what):
+		self.add(mapper, dx, dy)
+	
+	
+	def add(self, mapper, dx, dy):
 		""" Called from BallModifier """
+		if self.haptic:
+			WholeHapticAction.change(self, mapper, dx, dy, None)
+		
 		dx, dy = dx * self.speed[0], dy * self.speed[1]
 		if self._mouse_axis is None:
 			mapper.mouse.moveEvent(dx, dy)
@@ -594,24 +904,20 @@ class MouseAction(HapticEnabledAction, Action):
 			mapper.mouse_wheel(0, -dx)
 		elif self._mouse_axis == Rels.REL_HWHEEL:
 			mapper.mouse_wheel(dx, 0)
-		if self.haptic:
-			distance = sqrt(dx * dx + dy * dy)
-			if distance * MouseAction.HAPTIC_FACTOR > self.haptic.frequency:
-				self._travelled += distance
-				if self._travelled > self.haptic.frequency:
-					self._travelled = 0
-					mapper.send_feedback(self.haptic)
 	
 	
 	def whole(self, mapper, x, y, what):
 		if what == STICK:
 			mapper.mouse_move(x * self.speed[0] * 0.01, y * self.speed[1] * 0.01)
 			mapper.force_event.add(FE_STICK)
+		elif what == RIGHT and mapper.controller_flags() & ControllerFlags.HAS_RSTICK:
+			mapper.mouse_move(x * self.speed[0] * 0.01, y * self.speed[1] * 0.01)
+			mapper.force_event.add(FE_PAD)
 		else:	# left or right pad
 			if mapper.is_touched(what):
 				if self._old_pos and mapper.was_touched(what):
 					dx, dy = x - self._old_pos[0], self._old_pos[1] - y
-					self.change(mapper, dx, dy)
+					self.change(mapper, dx, dy, what)
 				self._old_pos = x, y
 			else:
 				# Pad just released
@@ -623,82 +929,86 @@ class MouseAction(HapticEnabledAction, Action):
 			mapper.mouse_move(yaw * -self.speed[0], pitch * -self.speed[1])
 		else:
 			mapper.mouse_move(roll * -self.speed[0], pitch * -self.speed[1])
-
-
-class CircularAction(HapticEnabledAction, Action):
-	COMMAND = "circular"
 	
-	def __init__(self, axis):
-		Action.__init__(self, axis)
-		HapticEnabledAction.__init__(self)
+	def trigger(self, mapper, position, old_position):
+		delta = position - old_position
+		self.add(mapper, delta, delta) # add() will figure out the axis from the action parameters
+
+class MouseAbsAction(Action):
+	"""
+	Maps gyro rotation or position on pad to immediate mouse movement, similary
+	to how GyroAbsAction maps gyro rotation to gamepad stick.
+	
+	Controlls mouse movement in either vertical or horizontal direction
+	or scroll wheel.
+	"""
+	COMMAND = "mouseabs"
+	MOUSE_FACTOR = 0.005	# Just random number to put default sensitivity into sane range
+	
+	def __init__(self, axis = None):
+		Action.__init__(self, *strip_none(axis))
 		self._mouse_axis = axis
-		self.speed = 1.0
-		self.angle = None		# Last known finger position
-		self.travelled = 0
+		self._old_pos = None
+		self.speed = 1.0, 1.0
 	
 	
-	def set_speed(self, x, y, z):
-		self.speed = x
+	def get_compatible_modifiers(self):
+		return ( Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_DEADZONE )
+	
+	
+	def get_previewable(self):
+		return True
+	
+	
+	def get_axis(self):
+		return self._mouse_axis
+	
+	
+	def set_speed(self, x, y, *a):
+		self.speed = x, y
 	
 	
 	def get_speed(self):
-		return (self.speed,)
+		return self.speed
 	
 	
 	def describe(self, context):
 		if self.name: return self.name
 		if self._mouse_axis == Rels.REL_WHEEL:
-			return _("Circular Wheel")
+			return _("Wheel")
 		elif self._mouse_axis == Rels.REL_HWHEEL:
-			return _("Circular Horizontal Wheel")
-		return _("Circular Mouse %s") % (self._mouse_axis.name.split("_", 1)[-1],)
+			return _("Horizontal Wheel")
+		elif self._mouse_axis in (PITCH, YAW, ROLL, None):
+			return _("Mouse")
+		else:
+			return _("Mouse %s") % (self._mouse_axis.name.split("_", 1)[-1],)
+	
+	
+	def axis(self, mapper, position, what):
+		mapper.force_event.add(FE_STICK)
+		
+		p = position * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		if self._mouse_axis == Rels.REL_X:
+			mapper.mouse_move(p, 0)
+		elif self._mouse_axis == Rels.REL_Y:
+			mapper.mouse_move(0, p)
+		elif self._mouse_axis == Rels.REL_WHEEL:
+			mapper.mouse_wheel(0, -p)
+		elif self._mouse_axis == Rels.REL_HWHEEL:
+			mapper.mouse_wheel(p, 0)
+	pad = axis
 	
 	
 	def whole(self, mapper, x, y, what):
-		distance = sqrt(x*x + y*y)
-		if distance < STICK_PAD_MAX_HALF:
-			# Finger lifted or too close to middle
-			self.angle = None
-			self.travelled = 0
-		else:
-			# Compute current angle
-			angle = atan2(x, y)
-			# Compute movement
-			if self.angle is None:
-				# Finger just touched the pad
-				self.angle, angle = angle, 0
-			else:
-				self.angle, angle = angle, self.angle - angle
-				# Ensure we don't wrap from pi to -pi creating a large delta
-				if angle > PI:
-					# Subtract a full rotation to counter the wrapping
-					angle -= 2 * PI
-				# And same from -pi to pi
-				elif angle < -PI:
-					# Add a full rotation to counter the wrapping
-					angle += 2 * PI
-			# Apply bulgarian constant
-			self.travelled += angle * 5000
-			if self.haptic:
-				if abs(self.travelled) > self.haptic.frequency:
-					mapper.send_feedback(self.haptic)
-					self.travelled = 0
-			angle *= 10000.0
-			# Apply movement on axis
-			if self._mouse_axis == Rels.REL_X:
-				mapper.mouse.moveEvent(0, angle * self.speed)
-			elif self._mouse_axis == Rels.REL_Y:
-				mapper.mouse.moveEvent(1, angle * self.speed)
-			elif self._mouse_axis == Rels.REL_HWHEEL:
-				mapper.mouse.scrollEvent(0, angle * self.speed)
-			elif self._mouse_axis == Rels.REL_WHEEL:
-				mapper.mouse.scrollEvent(1, angle * self.speed)
-			else:
-				log.warning("Invalid axis for circular: %s", self._mouse_axis)
-			mapper.force_event.add(FE_PAD)
+		dx = x * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		dy = y * self.speed[0] * MouseAbsAction.MOUSE_FACTOR
+		mapper.mouse.moveEvent(dx, dy)
 
 
 class AreaAction(Action, SpecialAction, OSDEnabledAction):
+	"""
+	Translates pad position to position in specified area of screen.
+	"""
 	SA = COMMAND = "area"
 	
 	def __init__(self, x1, y1, x2, y2):
@@ -717,6 +1027,10 @@ class AreaAction(Action, SpecialAction, OSDEnabledAction):
 	def describe(self, context):
 		if self.name: return self.name
 		return _("Mouse Region")
+	
+	
+	def get_compatible_modifiers(self):
+		return OSDEnabledAction.get_compatible_modifiers(self)
 	
 	
 	def transform_coords(self, mapper):
@@ -765,6 +1079,9 @@ class AreaAction(Action, SpecialAction, OSDEnabledAction):
 	
 	
 	def whole(self, mapper, x, y, what):
+		if mapper.get_xdisplay() is None:
+			log.warning("XServer is not available, cannot use 'AreaAction")
+			return
 		if mapper.is_touched(what):
 			# Store mouse position if pad was just touched
 			if self.orig_position is None:
@@ -861,12 +1178,17 @@ class RelWinAreaAction(WinAreaAction):
 
 
 class GyroAction(Action):
+	""" Uses *relative* gyroscope position as input for emulated axes """
 	COMMAND = "gyro"
 	
 	def __init__(self, axis1, axis2=None, axis3=None):
 		Action.__init__(self, axis1, *strip_none(axis2, axis3))
 		self.axes = [ axis1, axis2, axis3 ]
 		self.speed = (1.0, 1.0, 1.0)
+	
+	
+	def get_compatible_modifiers(self):
+		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_DEADZONE
 	
 	
 	def set_speed(self, x, y, z):
@@ -878,13 +1200,10 @@ class GyroAction(Action):
 	
 	
 	def gyro(self, mapper, *pyr):
-		# p,y,r = quat2euler(sci.q1 / 32768.0, sci.q2 / 32768.0, sci.q3 / 32768.0, sci.q4 / 32768.0)
-		# print "% 7.2f, % 7.2f, % 7.2f" % (p,y,r)
-		# print sci.q1, sci.q2, sci.q3, sci.q4
 		for i in (0, 1, 2):
 			axis = self.axes[i]
 			# 'gyro' cannot map to mouse, but 'mouse' does that.
-			if axis in Axes:
+			if axis in Axes or type(axis) == int:
 				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i] * -10))
 				mapper.syn_list.add(mapper.gamepad)
 	
@@ -893,43 +1212,52 @@ class GyroAction(Action):
 		if self.name : return self.name
 		rv = []
 		
+		if self.axes[0] in Rels:
+			return _("Mouse")
+		
 		for x in self.axes:
 			if x:
-				s = _(AxisAction.AXIS_NAMES[x][0])
-				if s not in rv:
-					rv.append(s)
+				s, trash, trash = AxisAction.get_axis_description(x)
+				if s not in rv: rv.append(s)
 		return "\n".join(rv)
-	
-	
-	def _get_axis_description(self):
-		axis, neg, pos = "%s %s" % (self.id.name, _("Axis")), _("Negative"), _("Positive")
-		if self.id in AxisAction.AXIS_NAMES:
-			axis, neg, pos = [ _(x) for x in AxisAction.AXIS_NAMES[self.id] ]
-		return axis, neg, pos
 
 
 class GyroAbsAction(HapticEnabledAction, GyroAction):
+	""" Uses *absolute* gyroscope position as input for emulated axes """
 	COMMAND = "gyroabs"
+	MOUSE_FACTOR = 0.01	# Just random number to put default sensitivity into sane range
+	
 	def __init__(self, *blah):
 		GyroAction.__init__(self, *blah)
 		HapticEnabledAction.__init__(self)
-		self.ir = None
+		self.ir = [ 0, 0, None, 0 ]	# Initial rotation, last has to be determined
 		self._was_oor = False
 	
 	
+	def reset(self):
+		self.ir = [ None, None, None, None ]	# Determine everything
+	
+	
+	def get_compatible_modifiers(self):
+		return ( HapticEnabledAction.get_compatible_modifiers(self)
+			| GyroAction.get_compatible_modifiers(self) )
+	
+	
+	def get_previewable(self):
+		return True
+	
+	GYROAXES = (0, 1, 2)
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
-		pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
-		if self.ir is None:
-			# TODO: Move this to controller and allow some way to reset it
-			self.ir = pyr[2]
-		# Covert what quat2euler returns to what controller can use
-		for i in (0, 1):
-			pyr[i] = pyr[i] * (2**15) * self.speed[i] * 2 / PI
-		pyr[2] = anglediff(self.ir, pyr[2]) * (2**15) * self.speed[2] * 2 / PI
-		# Restrict to acceptablle range
+		if mapper.get_controller().flags & ControllerFlags.EUREL_GYROS:
+			pyr = [q1 / 10430.37, q2 / 10430.37, q3 / 10430.37]	# 2**15 / PI
+		else:
+			pyr = list(quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0))
+		for i in self.GYROAXES:
+			self.ir[i] = self.ir[i] or pyr[i]
+			pyr[i] = anglediff(self.ir[i], pyr[i]) * (2**15) * self.speed[2] * 2 / PI
 		if self.haptic:
 			oor = False # oor - Out Of Range
-			for i in (0, 1, 2):
+			for i in self.GYROAXES:
 				pyr[i] = int(pyr[i])
 				if pyr[i] > STICK_PAD_MAX:
 					pyr[i] = STICK_PAD_MAX
@@ -944,28 +1272,55 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 			else:
 				self._was_oor = False
 		else:
-			for i in (0, 1, 2):
+			for i in self.GYROAXES:
 				pyr[i] = int(clamp(STICK_PAD_MIN, pyr[i], STICK_PAD_MAX))
-		# print "% 12.0f, % 12.0f, % 12.5f" % (p,y,r)
-		for i in (0, 1, 2):
+		for i in self.GYROAXES:
 			axis = self.axes[i]
-			if axis in Axes:
+			if axis in Axes or type(axis) == int:
 				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i]))
 				mapper.syn_list.add(mapper.gamepad)
+			elif axis == Rels.REL_X:
+				mapper.mouse_move(AxisAction.clamp_axis(axis, pyr[i] * GyroAbsAction.MOUSE_FACTOR * self.speed[i]), 0)
+			elif axis == Rels.REL_Y:
+				mapper.mouse_move(0, AxisAction.clamp_axis(axis, pyr[i] * GyroAbsAction.MOUSE_FACTOR * self.speed[i]))
+
+
+class ResetGyroAction(Action):
+	"""
+	Asks mapper to search for all GyroAbsActions in profile and adjust offsets
+	so current pad orientation is treated as neutral.
+	"""
+	COMMAND = "resetgyro"
+	
+	def button_press(self, mapper):
+		mapper.reset_gyros()
+	
+	
+	def describe(self, context):
+		if self.name : return self.name
+		return _("Recenter Gyro")
 
 
 class MultichildAction(Action):
 	""" Mixin with nice looking to_string() method """
 	
 	def compress(self):
-		nw = [ x.compress() for x in self.actions ]
-		self.actions = nw
+		self.actions = [ x.compress() for x in self.actions ]
 		return self
 	
 	
-	def to_string(self, multiline=False, pad=0):
+	def get_child_actions(self):
+		return self.actions
+	
+	
+	def cancel(self, mapper):
+		for a in self.actions:
+			a.cancel(mapper)
+	
+	
+	def to_string(self, multiline=False, pad=0, prefixparams=""):
 		if multiline:
-			rv = [ (" " * pad) + self.COMMAND + "(" ]
+			rv = [ (" " * pad) + self.COMMAND + "(" + prefixparams.strip() ]
 			pad += 2
 			for a in strip_none(*self.actions):
 				rv += [ a.to_string(True, pad) + ","]
@@ -974,13 +1329,17 @@ class MultichildAction(Action):
 			pad -= 2
 			rv += [ (" " * pad) + ")" ]
 			return "\n".join(rv)
-		return self.COMMAND + "(" + (", ".join([
+		return self.COMMAND + "(" + prefixparams + (", ".join([
 			x.to_string() if x is not None else "None"
 			for x in strip_none(*self.actions)
 		])) + ")"
 
 
 class TiltAction(MultichildAction):
+	"""
+	Activates one of 6 defined actions based on direction in
+	which controller is tilted or rotated.
+	"""
 	COMMAND = "tilt"
 	MIN = 0.75
 	
@@ -1008,6 +1367,10 @@ class TiltAction(MultichildAction):
 		return self.speed
 	
 	
+	def get_compatible_modifiers(self):
+		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z
+	
+	
 	def gyro(self, mapper, *pyr):
 		q1, q2, q3, q4 = pyr[-4:]
 		pyr = quat2euler(q1 / 32768.0, q2 / 32768.0, q3 / 32768.0, q4 / 32768.0)
@@ -1017,6 +1380,7 @@ class TiltAction(MultichildAction):
 				if pyr[j] < TiltAction.MIN * -1 / self.speed[j]:
 					# Side faces down
 					if not self.states[i]:
+						# print self.actions[i]
 						self.actions[i].button_press(mapper)
 						self.states[i] = True
 				elif self.states[i]:
@@ -1033,13 +1397,6 @@ class TiltAction(MultichildAction):
 					# Side no longer faces up
 					self.actions[i+1].button_release(mapper)
 					self.states[i+1] = False
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { TiltAction.COMMAND : [ x.encode() for x in self.actions ]}
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	@staticmethod
@@ -1067,6 +1424,10 @@ class TrackballAction(Action):
 
 
 class ButtonAction(HapticEnabledAction, Action):
+	"""
+	Action that outputs as button press and release.
+	Button can be gamepad button, mouse button or keyboard key.
+	"""
 	COMMAND = "button"
 	SPECIAL_NAMES = {
 		Keys.BTN_LEFT	: "Mouse Left",
@@ -1085,6 +1446,13 @@ class ButtonAction(HapticEnabledAction, Action):
 		Keys.BTN_B		: "B Button",
 		Keys.BTN_X		: "X Button",
 		Keys.BTN_Y		: "Y Button",
+		
+		Keys.KEY_PREVIOUSSONG	: "<< Song",
+		Keys.KEY_STOP			: "Stop",
+		Keys.KEY_PLAYPAUSE		: "Play/Pause",
+		Keys.KEY_NEXTSONG		: "Song >>",
+		Keys.KEY_VOLUMEDOWN		: "- Volume",
+		Keys.KEY_VOLUMEUP		: "+ Volume"
 	}
 	MODIFIERS_NAMES = {
 		Keys.KEY_LEFTSHIFT	: "Shift",
@@ -1096,6 +1464,8 @@ class ButtonAction(HapticEnabledAction, Action):
 		Keys.KEY_RIGHTMETA	: "Meta",
 		Keys.KEY_RIGHTALT	: "Alt"
 	}
+	CIRCULAR_INTERVAL = 1000
+	STICK_DEADZONE = 100
 	
 	def __init__(self, button1, button2 = None, minustrigger = None, plustrigger = None):
 		Action.__init__(self, button1, *strip_none(button2, minustrigger, plustrigger))
@@ -1105,6 +1475,7 @@ class ButtonAction(HapticEnabledAction, Action):
 		# minustrigger and plustrigger are not used anymore, __init__ takes
 		# them only for backwards compatibility.
 		# TODO: Remove backwards compatibility
+		self._change = 0
 		self._pressed_key = None
 		self._released = True
 	
@@ -1121,19 +1492,28 @@ class ButtonAction(HapticEnabledAction, Action):
 			rv = [ ]
 			for x in (self.button, self.button2):
 				if x:
-					rv.append(ButtonAction.describe_button(x))
+					rv.append(ButtonAction.describe_button(x, context=context))
 			return ", ".join(rv)
 	
 	
 	@staticmethod
-	def describe_button(button):
+	def describe_button(button, context=Action.AC_BUTTON):
 		if button in ButtonAction.SPECIAL_NAMES:
 			return _(ButtonAction.SPECIAL_NAMES[button])
 		elif button in MOUSE_BUTTONS:
 			return _("Mouse %s") % (button,)
+		elif context == Action.AC_OSK:
+			if button in ButtonAction.MODIFIERS_NAMES:
+				return _(ButtonAction.MODIFIERS_NAMES[button])
+			elif button in Keys:
+				return button.name.split("_", 1)[-1].title()
+			return ""
 		elif button is None: # or isinstance(button, NoAction):
 			return "None"
-		return button.name.split("_", 1)[-1]
+		elif button in Keys:
+			return button.name.split("_", 1)[-1]
+		else:
+			return _("Button %i") % (button,)
 	
 	
 	def describe_short(self):
@@ -1145,6 +1525,11 @@ class ButtonAction(HapticEnabledAction, Action):
 			# Modifiers are special case here
 			return self.MODIFIERS_NAMES[self.button]
 		return self.describe(Action.AC_BUTTON)
+	
+	
+	def get_compatible_modifiers(self):
+		# Allows feedback and OSD
+		return Action.MOD_OSD | HapticEnabledAction.get_compatible_modifiers(self)
 	
 	
 	@staticmethod
@@ -1208,10 +1593,37 @@ class ButtonAction(HapticEnabledAction, Action):
 		ButtonAction._button_release(mapper, self.button)
 	
 	
+	def whole(self, mapper, x, y, what):
+		if what == STICK:
+			# Stick used used as one big button (probably as part of ring bindings)
+			if abs(x) < ButtonAction.STICK_DEADZONE and abs(y) < ButtonAction.STICK_DEADZONE:
+				if self._pressed_key == self.button:
+					self.button_release(mapper)
+					self._pressed_key = None
+			elif self._pressed_key != self.button:
+				self.button_press(mapper)
+				self._pressed_key = self.button
+			return
+		elif what in (LEFT, RIGHT):
+			# Possibly special case, pressing with click() on entire pad
+			if mapper.is_pressed(what) and not mapper.was_pressed(what):
+				return self.button_press(mapper)
+			elif not mapper.is_pressed(what) and mapper.was_pressed(what):
+				return self.button_release(mapper)
+		# Entire pad used as one big button
+		if mapper.is_touched(what) and not mapper.was_touched(what):
+			# Touched the pad
+			self.button_press(mapper)
+		if mapper.was_touched(what) and not mapper.is_touched(what):
+			# Released the pad
+			self.button_release(mapper)
+	
+	
 	def axis(self, mapper, position, what):
 		# Choses which key or button should be pressed or released based on
 		# current stick position.
 		
+		# TODO: Remove this, convert it to DPAD internally
 		if self._pressed_key == self.button and position > STICK_PAD_MIN_HALF:
 			ButtonAction._button_release(mapper, self.button)
 			self._pressed_key = None
@@ -1260,9 +1672,24 @@ class ButtonAction(HapticEnabledAction, Action):
 		
 		if p <= TRIGGER_MIN:
 			self._released = True
+	
+	
+	def change(self, mapper, dx, dy, what):
+		""" Makes sense with circular() modifier """
+		self._change += dx
+		if self._change < -ButtonAction.CIRCULAR_INTERVAL:
+			self._change += ButtonAction.CIRCULAR_INTERVAL
+			if self.button:
+				ButtonAction._button_press(mapper, self.button)
+				ButtonAction._button_release(mapper, self.button)
+		elif self._change > ButtonAction.CIRCULAR_INTERVAL:
+			self._change -= ButtonAction.CIRCULAR_INTERVAL
+			if self.button2:
+				ButtonAction._button_press(mapper, self.button2)
+				ButtonAction._button_release(mapper, self.button2)
 
 
-class MultiAction(Action):
+class MultiAction(MultichildAction):
 	"""
 	Two or more actions executed at once.
 	Generated when parsing 'and'
@@ -1275,13 +1702,6 @@ class MultiAction(Action):
 		self.actions = []
 		self.name = None
 		self._add_all(actions)
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { 'actions' : [ x.encode() for x in self.actions ] }
-		if self.name: rv['name'] = self.name
-		return rv	
 	
 	
 	@staticmethod
@@ -1385,15 +1805,27 @@ class MultiAction(Action):
 		return (1.0,)
 	
 	
+	def is_key_combination(self):
+		""" Returns True if all child actions are ButtonActions """
+		if len(self.actions) == 0:
+			return False
+		for x in self.actions:
+			if not isinstance(x, ButtonAction):
+				return False
+		return True
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
-		if isinstance(self.actions[0], ButtonAction):
-			# Special case, key combination
+		if self.is_key_combination():
 			rv = []
 			for a in self.actions:
-				if isinstance(a, ButtonAction,):
+				if isinstance(a, ButtonAction):
 					rv.append(a.describe_short())
 			return "+".join(rv)
+		if len(self.actions) >= 2 and isinstance(self.actions[1], RingAction):
+			# Special case, should be multiline
+			return "\n".join([ x.describe(context) for x in self.actions ])
 		return " and ".join([ x.describe(context) for x in self.actions ])
 	
 	
@@ -1416,6 +1848,12 @@ class MultiAction(Action):
 	def pad(self, *p):
 		for a in self.actions: a.pad(*p)
 	
+	def add(self, *p):
+		for a in self.actions: a.add(*p)
+	
+	def change(self, *p):
+		for a in self.actions: a.change(*p)
+	
 	def gyro(self, *p):
 		for a in self.actions: a.gyro(*p)
 	
@@ -1436,22 +1874,52 @@ class MultiAction(Action):
 	__repr__ = __str__
 
 
-class DPadAction(MultichildAction):
+class DPadAction(MultichildAction, HapticEnabledAction):
 	COMMAND = "dpad"
 	PROFILE_KEY_PRIORITY = -10	# First possible
 	
+	DEFAULT_DIAGONAL_RANGE = 45
+	MIN_DISTANCE_P2 = 2000000	# Power of 2 from minimal distance that finger
+								# has to be from center
+	
+	SIDE_NONE = (None, None)
+	SIDES = (
+		# Just list of magic numbers that would have
+		# to be computed on the fly otherwise
+		# 0 - up, 1 - down, 2 - left, 3 - right
+		( None, 1 ),		# Index 0, down
+		( 2, 1 ),			# Index 1, down-left
+		( 2, None),			# Index 2, left
+		( 2, 0 ),			# Index 3, up-left
+		( None, 0 ),		# Index 4, up
+		( 3, 0 ),			# Index 5, up-right
+		( 3, None ),		# Index 6, right
+		( 3, 1 ),			# Index 7, down-right
+		( None, 1 ),		# Index 8, same as 0
+	)
+	
 	def __init__(self, *actions):
 		MultichildAction.__init__(self, *actions)
-		self.actions = ensure_size(4, actions)
-		self.eight = False
-		self.dpad_state = [ None, None, None ]	# X, Y, 8-Way pad
+		HapticEnabledAction.__init__(self)
+		self.diagonal_rage = DPadAction.DEFAULT_DIAGONAL_RANGE
+		if len(actions) > 0 and type(actions[0]) in (int, float):
+			self.diagonal_rage = clamp(1, int(actions[0]), 89)
+			actions = actions[1:]
+		self.actions = self._ensure_size(actions)
+		self.dpad_state = [ None, None ]	# X, Y
+		self.side_before = None
+		# Generate mapping of angle range -> index
+		self.ranges = []
+		normal_range = 90 - self.diagonal_rage
+		i = 360-normal_range / 2
+		for x in xrange(0, 9):
+			r = normal_range if x % 2 == 0 else self.diagonal_rage
+			i, j = (i + r) % 360, i
+			self.ranges.append(( j, i, x % 8 ))
 	
 	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { DPadAction.COMMAND : [ x.encode() for x in self.actions ]}
-		if self.name: rv['name'] = self.name
-		return rv
+	def _ensure_size(self, actions):
+		return ensure_size(4, actions, NoAction())
 	
 	
 	@staticmethod
@@ -1465,85 +1933,266 @@ class DPadAction(MultichildAction):
 		return a
 	
 	
+	def to_string(self, multiline=False, pad=0, prefixparams=""):
+		if self.diagonal_rage != DPadAction.DEFAULT_DIAGONAL_RANGE:
+			return MultichildAction.to_string(self, multiline, pad,
+					prefixparams = "%s, " % (self.diagonal_rage, ))
+		return MultichildAction.to_string(self, multiline, pad)
+	
+	
+	def get_compatible_modifiers(self):
+		return (Action.MOD_CLICK | Action.MOD_ROTATE
+			| Action.MOD_DEADZONE | Action.MOD_FEEDBACK )
+	
+	
 	def describe(self, context):
 		if self.name: return self.name
+		# Two special, most used cases of dpad
+		wsad = [ a.button for a in self.actions if isinstance(a, ButtonAction) ]
+		if len(wsad) == 4:
+			if wsad == [Keys.KEY_UP, Keys.KEY_DOWN, Keys.KEY_LEFT, Keys.KEY_RIGHT]:
+				return _("Arrows")
+			if wsad == [Keys.KEY_W, Keys.KEY_S, Keys.KEY_A, Keys.KEY_D]:
+				return _("WSAD")
 		return "DPad"
 	
 	
-	def whole(self, mapper, x, y, what):
+	def compute_side(self, x, y):
+		""" Computes which sides of dpad are supposed to be active """
+		## dpad(up, down, left, right)
 		## dpad8(up, down, left, right, upleft, upright, downleft, downright)
-		side = [ None, None ]
-		if x <= STICK_PAD_MIN_HALF:
-			side[0] = 2 # left
-		elif x >= STICK_PAD_MAX_HALF:
-			side[0] = 3 # right
-		if y <= STICK_PAD_MIN_HALF:
-			side[1] = 1 # down
-		elif y >= STICK_PAD_MAX_HALF:
-			side[1] = 0 # up
-		
-		if self.eight:
-			if side[0] is None and side[1] is None:
-				side = None
-			elif side[0] is None:
-				side = side[1]
-			elif side[1] is None:
-				side = side[0]
-			else:
-				side = 2 + side[1] * 2 + side[0]
-			
-			if side != self.dpad_state[2] and self.dpad_state[2] is not None:
-				if self.actions[self.dpad_state[2]] is not None:
-					self.actions[self.dpad_state[2]].button_release(mapper)
-				self.dpad_state[2] = None
-			if side is not None and side != self.dpad_state[2]:
-				if self.actions[side] is not None:
-					rv = self.actions[side].button_press(mapper)
-				self.dpad_state[2] = side
+		side = self.SIDE_NONE
+		if x*x + y*y > self.MIN_DISTANCE_P2:
+			# Compute angle from center of pad to finger position
+			angle = (atan2(x, y) * 180.0 / PI) + 180
+			# Translate it to index
+			index = 0
+			for a1, a2, i in self.ranges:
+				if angle >= a1 and angle < a2:
+					index = i
+					break
+			side = self.SIDES[index]
+		return side
+	
+	
+	def whole(self, mapper, x, y, what):
+		if self.haptic:
+			# Called like this just so there is not same code on two places
+			side = self.whole_blocked(mapper, x, y, what)
 		else:
-			for i in (0, 1):
-				if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
-					if self.actions[self.dpad_state[i]] is not None:
-						self.actions[self.dpad_state[i]].button_release(mapper)
-					self.dpad_state[i] = None
-				if side[i] is not None and side[i] != self.dpad_state[i]:
-					if self.actions[side[i]] is not None:
-						self.actions[side[i]].button_press(mapper)
-					self.dpad_state[i] = side[i]
+			side = self.compute_side(x, y)
+		
+		for i in (0, 1):
+			if side[i] != self.dpad_state[i] and self.dpad_state[i] is not None:
+				if self.actions[self.dpad_state[i]] is not None:
+					self.actions[self.dpad_state[i]].button_release(mapper)
+				self.dpad_state[i] = None
+			if side[i] is not None and side[i] != self.dpad_state[i]:
+				if self.actions[side[i]] is not None:
+					self.actions[side[i]].button_press(mapper)
+				self.dpad_state[i] = side[i]
+	
+	
+	def whole_blocked(self, mapper, x, y, what):
+		if self.haptic:
+			side = self.compute_side(x, y)
+			if self.side_before != side:
+				self.side_before = side
+				mapper.send_feedback(self.haptic)
+			return side
+		return None
+	
+	
+	def change(self, mapper, dx, dy, what):
+		self.whole(mapper, dx, -dy, what)
 
 
 class DPad8Action(DPadAction):
 	COMMAND = "dpad8"
 	PROFILE_KEYS = ()
-
-	def __init__(self, *actions):
-		DPadAction.__init__(self, *actions)
-		self.actions = ensure_size(8, actions)
-		self.eight = True
+	
+	SIDE_NONE = None
+	SIDES = (
+		# Another list of magic numbers that would have`
+		# to be computed on the fly otherwise
+		1,	# index 0 - down
+		6,	# index 1 - down-left
+		2,	# index 2 - left
+		4,	# index 3 - up-left
+		0,	# index 4 - up
+		5,	# index 5 - up-right
+		3,	# index 6 - right
+		7,	# index 7 - downright
+		1,	# index 8 - same as 0
+	)
+	
+	
+	def _ensure_size(self, actions):
+		return ensure_size(8, actions, NoAction())
+	
 	
 	def describe(self, context):
 		if self.name: return self.name
 		return "8-Way DPad"
+	
+	
+	def whole(self, mapper, x, y, what):
+		side = self.compute_side(x, y)
+		
+		# 8-way dpad presses only one button at time, so only one index
+		# in dpad_state is used.
+		if side != self.dpad_state[0]:
+			if self.dpad_state[0] is not None:
+				self.actions[self.dpad_state[0]].button_release(mapper)
+			if side is not None:
+				self.actions[side].button_press(mapper)
+			self.dpad_state[0] = side
 
 
-class XYAction(HapticEnabledAction, Action):
+class RingAction(MultichildAction):
+	"""
+	Ring action splits pad into "inner" and "outer" ring and allow binding
+	two different child actions in same way as DPadAction does.
+	
+	Combining RingAction with two DPad8Actions allows to assign
+	up to 16 different bindings to one pad.
+	"""
+	COMMAND = "ring"
+	PROFILE_KEY_PRIORITY = -10	# First possible
+	DEFAULT_RADIUS = 0.5
+	
+	
+	def __init__(self, *params):
+		# 1st parameter may be inner ring radius (0.1 to 0.9), defaults to 50%
+		# of pad diameter.
+		self.radius = RingAction.DEFAULT_RADIUS
+		if len(params) > 1 and type(params[0]) in (int, float):
+			self.radius = float(params[0])
+			params = params[1:]
+		MultichildAction.__init__(self, *params)
+		self.actions = ensure_size(2, params, NoAction())
+		self.inner, self.outer = self.actions
+		self._radius_m = STICK_PAD_MAX * self.radius	# radius, multiplied
+		self._active = NoAction()
+	
+	
+	def compress(self):
+		self.inner = self.inner.compress()
+		self.outer = self.outer.compress()
+		return self
+	
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		""" Called when decoding profile from json """
+		args, data = [], data[RingAction.COMMAND]
+		if 'radius' in data: args.append(float(data['radius']))
+		args.append(parser.from_json_data(data['inner']) if 'inner' in data else NoAction())
+		args.append(parser.from_json_data(data['outer']) if 'outer' in data else NoAction())
+		return RingAction(*args)
+	
+	
+	def get_compatible_modifiers(self):
+		return 0
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		lines = [ x.describe(Action.AC_BUTTON) for x in self.actions if x ]
+		if any(["\n" in l for l in lines ]):
+			return " / ".join([ l for l in lines ])
+		else:
+			return "\n".join([ l for l in lines ])
+	
+	
+	def to_string(self, multiline=False, pad=0):
+		if self.radius != RingAction.DEFAULT_RADIUS:
+			return MultichildAction.to_string(self, multiline, pad, "%s, " % (self.radius,))
+		else:
+			return MultichildAction.to_string(self, multiline, pad)
+	
+	
+	def whole(self, mapper, x, y, what):
+		if what == STICK or mapper.is_touched(what):
+			angle = atan2(x, y)
+			distance = sqrt(x*x + y*y)
+			if distance < self._radius_m:
+				# Inner radius
+				action = self.inner
+				distance /= self.radius
+			else:
+				action = self.outer
+				distance = (distance - self._radius_m) / (1.0 - self.radius)
+			x = distance * sin(angle)
+			y = distance * cos(angle)
+			
+			if action == self._active:
+				action.whole(mapper, x, y, what)
+			elif what == STICK:
+				# Stck crossed radius border, so active action is changing.
+				# Simulate centering stick for former...
+				self._active.whole(mapper, 0, 0, what)
+				# ... and moving it back for new active child action
+				action.whole(mapper, x, y, what)
+				self._active = action
+			else:
+				# Finger crossed radius border, so active action is changing.
+				# Simulate releasing pad for former...
+				mapper.set_button(what, False)
+				self._active.whole(mapper, 0, 0, what)
+				# ... and touching it for new active child action
+				was = mapper.was_touched(what)
+				mapper.set_button(what, True)
+				mapper.set_was_pressed(what, False)
+				action.whole(mapper, x, y, what)
+				mapper.set_was_pressed(what, was)
+				self._active = action
+		elif mapper.was_touched(what):
+			# Pad just released
+			self._active.whole(mapper, x, y, what)
+			self._active = NoAction()
+		elif self._active and what == STICK and x == 0 and y == 0:
+			# Stick is centered
+			self._active.whole(mapper, x, y, what)
+			self._active = NoAction()
+
+
+class XYAction(WholeHapticAction, Action):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "XY"
 	PROFILE_KEYS = ("X", "Y")
 	PROFILE_KEY_PRIORITY = -10	# First possible, but not before MultiAction
+	STICK_REPEAT_INTERVAL = 0.01
+	STICK_REPEAT_MIN = 10
 	
 	def __init__(self, x=None, y=None):
 		Action.__init__(self, *strip_none(x, y))
-		HapticEnabledAction.__init__(self)
+		WholeHapticAction.__init__(self)
 		self.x = x or NoAction()
 		self.y = y or NoAction()
 		self.actions = (self.x, self.y)
 		self._old_distance = 0
-		self._travelled = 0
-		if hasattr(self.x, "change") or hasattr(self.y, "change"):
-			self.change = self._change
+		self._old_pos = None
+		if hasattr(self.x, "add") or hasattr(self.y, "add"):
+			self.add = self._add
+	
+	
+	def get_compatible_modifiers(self):
+		mods = ( Action.MOD_FEEDBACK | Action.MOD_SENSITIVITY
+			| Action.MOD_ROTATE | Action.MOD_SMOOTH
+			| self.x.get_compatible_modifiers()
+			| self.y.get_compatible_modifiers()
+		)
+		if isinstance(self.x, AxisAction) and isinstance(self.y, AxisAction):
+			if self.x.get_axis() in (Axes.ABS_X, Axes.ABS_Y, Axes.ABS_RX, Axes.ABS_RY):
+				mods = (mods | Action.MOD_BALL) & ~Action.MOD_SMOOTH
+		return mods
+	
+	
+	def get_child_actions(self):
+		return self.x, self.y
 	
 	
 	@staticmethod
@@ -1552,15 +2201,6 @@ class XYAction(HapticEnabledAction, Action):
 		x = parser.from_json_data(data["X"]) if "X" in data else NoAction()
 		y = parser.from_json_data(data["Y"]) if "Y" in data else NoAction()
 		return XYAction(x, y)
-	
-	
-	def encode(self):
-		""" Called from json encoder """
-		rv = { }
-		if self.x: rv["X"] = self.x.encode()
-		if self.y: rv["Y"] = self.y.encode()
-		if self.name: rv['name'] = self.name
-		return rv
 	
 	
 	def compress(self):
@@ -1592,8 +2232,10 @@ class XYAction(HapticEnabledAction, Action):
 	
 	
 	def set_speed(self, x, y, z):
-		self.x.set_speed(x, 1, 1)
-		self.y.set_speed(y, 1, 1)
+		if hasattr(self.x, "set_speed"):
+			self.x.set_speed(x, 1, 1)
+		if hasattr(self.y, "set_speed"):
+			self.y.set_speed(y, 1, 1)
 	
 	
 	def get_speed(self):
@@ -1603,40 +2245,44 @@ class XYAction(HapticEnabledAction, Action):
 		return tuple(rv)
 	
 	
-	def _haptic(self, mapper, x, y):
-		"""
-		Common part of _change and whole - sends haptic output, if enabled
-		"""
-		# Compute travelled distance and send 'small clicks' when user moves
-		# finger around the pad.
-		# Also, if user moves finger over circle around 2/3 area of pad,
-		# send one 'big click'.
-		distance = sqrt(x*x + y*y)
-		self._travelled += abs(self._old_distance - distance)
-		is_close = distance > STICK_PAD_MAX * 2 / 3
-		was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
-		if is_close != was_close:
-			mapper.send_feedback(self.big_click)
-		elif self._travelled > self.haptic.frequency:
-			self._travelled = 0
-			mapper.send_feedback(self.haptic)
-		self._old_distance = distance
+	def get_previewable(self):
+		return self.x.get_previewable() and self.y.get_previewable()
 	
 	
-	def _change(self, mapper, x, y):
+	def _add(self, mapper, x, y):
 		""" Not always available """
-		if hasattr(self.x, "change"):
-			self.x.change(mapper, x, 0)
-		if hasattr(self.y, "change"):
-			self.y.change(mapper, -y, 0)
 		if self.haptic:
-			self._haptic(mapper, x, y)
+			WholeHapticAction.add(self, mapper, x, y)
+		if hasattr(self.x, "add"):
+			self.x.add(mapper, x, 0)
+		if hasattr(self.y, "add"):
+			self.y.add(mapper, -y, 0)
+		if self.haptic:
+			WholeHapticAction.add(self, mapper, x, y)
 	
 	
 	def whole(self, mapper, x, y, what):
 		if self.haptic:
-			self._haptic(mapper, x, y)
-		if what in (LEFT, RIGHT):
+			distance = sqrt(x*x + y*y)
+			is_close = distance > STICK_PAD_MAX * 2 / 3
+			was_close = self._old_distance > STICK_PAD_MAX * 2 / 3
+			if self._old_pos:
+				WholeHapticAction.add(self, mapper,
+					x - self._old_pos[0], y - self._old_pos[1])
+			if is_close != was_close:
+				mapper.send_feedback(self.big_click)
+			
+			self._old_distance = distance
+			if mapper.is_touched(what):
+				self._old_pos = x, y
+			else:
+				self._old_pos = None
+		
+		if mapper.controller_flags() & ControllerFlags.HAS_RSTICK and what == RIGHT:
+			self.x.axis(mapper, x, what)
+			self.y.axis(mapper, y, what)
+			mapper.force_event.add(FE_PAD)
+		elif what in (LEFT, RIGHT, CPAD):
 			self.x.pad(mapper, x, what)
 			self.y.pad(mapper, y, what)
 		else:
@@ -1644,14 +2290,14 @@ class XYAction(HapticEnabledAction, Action):
 			self.y.axis(mapper, y, what)
 	
 	
-	def pad(self, mapper, x, y, what):
-		self.x.pad(mapper, sci.lpad_x, what)
-		self.y.pad(mapper, sci.lpad_y, what)
-	
-	
 	def describe(self, context):
 		if self.name: return self.name
 		rv = []
+		if isinstance(self.x, AxisAction) and isinstance(self.y, AxisAction):
+			if (self.x.id, self.y.id) in AxisAction.AXES_PAIRS:
+				# Special cases for default stick bindings
+				desc, trash, trash = AxisAction.get_axis_description(self.x.id)
+				return desc
 		if self.x: rv.append(self.x.describe(context))
 		if self.y: rv.append(self.y.describe(context))
 		if context in (Action.AC_STICK, Action.AC_PAD):
@@ -1661,34 +2307,68 @@ class XYAction(HapticEnabledAction, Action):
 	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
-			rv = [ (" " * pad) + "XY(" ]
+			rv = [ (" " * pad) + self.COMMAND + "(" ]
 			rv += self.x.to_string(True, pad + 2).split("\n")
 			rv += [ (" " * pad) + "," ]
 			rv += self.y.to_string(True, pad + 2).split("\n")
 			rv += [ (" " * pad) + ")" ]
 			return "\n".join(rv)
 		elif self.y:
-			return "XY(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
+			return self.COMMAND + "(" + (", ".join([ x.to_string() for x in (self.x, self.y) ])) + ")"
 		else:
-			return "XY(" + self.x.to_string() + ")"
+			return self.COMMAND + "(" + self.x.to_string() + ")"
 	
 	
 	def __str__(self):
-		return "<XY %s >" % (", ".join([ str(x) for x in self.actions ]), )
+		return "<%s %s >" % (self.COMMAND, ", ".join([ str(x) for x in self.actions ]), )
 
 	__repr__ = __str__
 
 
-class TriggerAction(Action):
+class RelXYAction(XYAction):
+	"""
+	XYAction with center positioned wherever finger touched first.
+	See https://github.com/kozec/sc-controller/issues/390
+	"""
+	COMMAND = "relXY"
+	
+	def __init__(self, *a, **b):
+		XYAction.__init__(self, *a, **b)
+		self.origin_x, self.origin_y = 0, 0
+	
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("Joystick Camera")
+	
+	
+	def whole(self, mapper, x, y, what):
+		if what in (LEFT, RIGHT, CPAD):
+			if not mapper.is_touched(what):
+				return XYAction.whole(self, mapper, 0, 0, what)
+			elif not mapper.was_touched(what):
+				self.origin_x, self.origin_y = x, y
+			x -= self.origin_x
+			y -= self.origin_y
+			return XYAction.whole(self, mapper, x, y, what)
+		XYAction.whole(self, mapper, x, y, what)
+	
+	
+	def get_compatible_modifiers(self):
+		return (XYAction.get_compatible_modifiers(self) & ~Action.MOD_BALL)
+
+
+class TriggerAction(Action, HapticEnabledAction):
 	"""
 	Used for sticks and pads when actions for X and Y axis are different.
 	"""
 	COMMAND = "trigger"
 	PROFILE_KEYS = "levels",
-	PROFILE_KEY_PRIORITY = -3	# After FeedbackModifier, rest doesn't matter
+	PROFILE_KEY_PRIORITY = -5
 	
 	def __init__(self, press_level, *params):
 		Action.__init__(self, press_level, *params)
+		HapticEnabledAction.__init__(self)
 		self.press_level = int(press_level)
 		if len(params) == 1:
 			self.release_level = press_level
@@ -1705,14 +2385,6 @@ class TriggerAction(Action):
 		self.child_is_axis = isinstance(self.action.strip(), AxisAction)
 	
 	
-	def encode(self):
-		""" Called from json encoder """
-		rv = self.action.encode()
-		rv[TriggerAction.PROFILE_KEYS[0]] = self.press_level, self.release_level
-		if self.name: rv['name'] = self.name
-		return rv	
-	
-	
 	@staticmethod
 	def decode(data, a, parser, *b):
 		""" Called when decoding profile from json """
@@ -1720,16 +2392,8 @@ class TriggerAction(Action):
 		return TriggerAction(press_level, release_level, a)
 	
 	
-	def set_haptic(self, hapticdata):
-		# Pass haptic settings to child action, if possible
-		if hasattr(self.action, "set_haptic"):
-			self.action.set_haptic(hapticdata)
-	
-	
-	def get_haptic(self):
-		if hasattr(self.action, "get_haptic"):
-			return self.action.get_haptic()
-		return None
+	def get_compatible_modifiers(self):
+		return Action.MOD_FEEDBACK
 	
 	
 	def compress(self):
@@ -1740,8 +2404,11 @@ class TriggerAction(Action):
 	def _press(self, mapper):
 		""" Called when trigger level enters active zone """
 		self.pressed = True
+		if self.haptic:
+			mapper.send_feedback(self.haptic)
 		if not self.child_is_axis:
 			self.action.button_press(mapper)
+	
 	
 	def _release(self, mapper, old_position):
 		""" Called when trigger level leaves active zone """
@@ -1750,6 +2417,7 @@ class TriggerAction(Action):
 			self.action.trigger(mapper, 0, old_position)
 		else:
 			self.action.button_release(mapper)
+	
 	
 	def trigger(self, mapper, position, old_position):
 		# There are 3 modes that TriggerAction can work in
@@ -1762,8 +2430,6 @@ class TriggerAction(Action):
 				self._release(mapper, old_position)
 			elif self.pressed and position < self.press_level and old_position >= self.press_level:
 				self._release(mapper, old_position)
-			#else:
-			#	print position
 		if self.release_level == self.press_level:
 			# Mode 2, there is only press_level and action is 'pressed'
 			# while current level is above it.
@@ -1771,8 +2437,6 @@ class TriggerAction(Action):
 				self._press(mapper)
 			elif self.pressed and position < self.press_level and old_position >= self.press_level:
 				self._release(mapper, old_position)
-			#else:
-			#	print position
 		if self.release_level < self.press_level:
 			# Mode 3, action is 'pressed' if current level is above 'press_level'
 			# and then released when it returns beyond 'release_level'.
@@ -1780,8 +2444,6 @@ class TriggerAction(Action):
 				self._press(mapper)
 			elif self.pressed and position < self.release_level and old_position >= self.release_level:
 				self._release(mapper, old_position)
-			#else:
-			#	print position
 		if self.child_is_axis and self.pressed:
 			self.action.trigger(mapper, position, old_position)
 	
@@ -1848,7 +2510,14 @@ class NoAction(Action):
 		return "NoAction"
 
 	__repr__ = __str__
-	
+
+
+def strip_none(*lst):
+	""" Returns lst without trailing None's and NoActions """
+	while len(lst) and (lst[-1] is None or isinstance(lst[-1], NoAction)):
+		lst = lst[0:-1]
+	return lst
+
 
 # Register actions from current module
 Action.register_all(sys.modules[__name__])

@@ -8,27 +8,29 @@ from __future__ import unicode_literals
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, Gio, GLib
-from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS
+from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, BUTTONS, GYROS
+from scc.gui.daemon_manager import DaemonManager, ControllerManager
 from scc.gui.parser import GuiActionParser, InvalidAction
+from scc.gui.controller_image import ControllerImage
+from scc.gui.profile_switcher import ProfileSwitcher
 from scc.gui.userdata_manager import UserDataManager
-from scc.gui.daemon_manager import DaemonManager
 from scc.gui.binding_editor import BindingEditor
 from scc.gui.statusicon import get_status_icon
 from scc.gui.dwsnc import headerbar, IS_UNITY
-from scc.gui.profile_switcher import ProfileSwitcher
-from scc.gui.svg_widget import SVGWidget
 from scc.gui.ribar import RIBar
+from scc.tools import check_access, find_gksudo, profile_is_override, nameof
+from scc.tools import get_profile_name, profile_is_default, find_profile
 from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.paths import get_config_path, get_profiles_path
-from scc.tools import check_access, find_profile
-from scc.actions import NoAction
+from scc.custom import load_custom_module
 from scc.modifiers import NameModifier
+from scc.actions import NoAction
 from scc.profile import Profile
 from scc.config import Config
 
 import scc.osd.menu_generators
-import os, sys, platform, json, logging
+import os, sys, platform, re, json, urllib, logging
 log = logging.getLogger("App")
 
 class App(Gtk.Application, UserDataManager, BindingEditor):
@@ -36,10 +38,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	Main application / window.
 	"""
 	
-	IMAGE = "background.svg"
 	HILIGHT_COLOR = "#FF00FF00"		# ARGB
-	OBSERVE_COLOR = "#00007FFF"		# ARGB
+	OBSERVE_COLOR = "#FF60A0FF"		# ARGB
 	CONFIG = "scc.config.json"
+	RELEASE_URL = "https://github.com/kozec/sc-controller/releases/tag/v%s"
+	OSD_MODE_PROF_NAME = ".scc-osd.profile_editor"
 	
 	def __init__(self, gladepath="/usr/share/scc",
 						imagepath="/usr/share/scc/images"):
@@ -53,11 +56,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		# Setup DaemonManager
 		self.dm = DaemonManager()
 		self.dm.connect("alive", self.on_daemon_alive)
+		self.dm.connect('event', self.on_daemon_event_observer)
 		self.dm.connect("controller-count-changed", self.on_daemon_ccunt_changed)
 		self.dm.connect("dead", self.on_daemon_dead)
 		self.dm.connect("error", self.on_daemon_error)
 		self.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		self.dm.connect("version", self.on_daemon_version)
+		# Load custom stuff
+		load_custom_module(log, "gui")
 		# Set variables
 		self.config = Config()
 		self.gladepath = gladepath
@@ -68,9 +74,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.status = "unknown"
 		self.context_menu_for = None
 		self.daemon_changed_profile = False
+		self.osd_mode = False	# In OSD mode, only active profile can be editted
+		self.osd_mode_mapper = None
 		self.background = None
 		self.outdated_version = None
 		self.profile_switchers = []
+		self.test_mode_controller = None
 		self.current_file = None	# Currently edited file
 		self.controller_count = 0
 		self.current = Profile(GuiActionParser())
@@ -93,7 +102,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.ribar = None
 		self.create_binding_buttons()
 		
-		ps = self.add_switcher(10, 10)
+		ps = self.add_switcher(12, 12)
 		ps.set_allow_new(True)
 		ps.set_profile(self.load_profile_selection())
 		ps.connect('new-clicked', self.on_new_clicked)
@@ -101,41 +110,134 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		# Drag&drop target
 		self.builder.get_object("content").drag_dest_set(Gtk.DestDefaults.ALL, [
-			Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0)
+			Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0),
+			Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.OTHER_APP, 0)
 			], Gdk.DragAction.COPY
 		)
 		
-		# 'C' button
+		# 'C' and 'CPAD' buttons
 		vbc = self.builder.get_object("vbC")
 		self.main_area = self.builder.get_object("mainArea")
 		vbc.get_parent().remove(vbc)
-		vbc.connect('size-allocate', self.on_vbc_allocated)
 		
 		# Background
-		self.background = SVGWidget(self, os.path.join(self.imagepath, self.IMAGE))
+		self.background = ControllerImage(self)
 		self.background.connect('hover', self.on_background_area_hover)
 		self.background.connect('leave', self.on_background_area_hover, None)
 		self.background.connect('click', self.on_background_area_click)
+		self.background.connect('button-press-event', self.on_background_button_press)
 		self.main_area.put(self.background, 0, 0)
 		self.main_area.put(vbc, 0, 0) # (self.IMAGE_SIZE[0] / 2) - 90, self.IMAGE_SIZE[1] - 100)
 		
 		# Test markers (those blue circles over PADs and sticks)
-		self.lpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.rpadTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.stickTest = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
-		self.main_area.put(self.lpadTest, 40, 40)
-		self.main_area.put(self.rpadTest, 290, 90)
-		self.main_area.put(self.stickTest, 150, 40)
+		self.lpad_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.rpad_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.stick_test = Gtk.Image.new_from_file(os.path.join(self.imagepath, "test-cursor.svg"))
+		self.main_area.put(self.lpad_test, 40, 40)
+		self.main_area.put(self.rpad_test, 290, 90)
+		self.main_area.put(self.stick_test, 150, 40)
+		
+		# OSD mode (if used)
+		if self.osd_mode:
+			self.builder.get_object("btDaemon").set_sensitive(False)
+			self.window.set_title(_("Edit Profile"))
 		
 		# Headerbar
 		headerbar(self.builder.get_object("hbWindow"))
 	
 	
+	def load_gui_config_for_controller(self, controller, first):
+		"""
+		Loads controller config, changes image and hides, shows or disables
+		buttons around it.
+		
+		To make this look less jumpy, Gtk.Stack is used to make transition
+		to empty page and only after that is grid repopulated, everything
+		set up and Stack switched back to original page.
+		"""
+		stckEditor = self.builder.get_object('stckEditor')
+		lblEmpty = self.builder.get_object('lblEmpty')
+		if controller:
+			config = controller.load_gui_config(self.imagepath or {})
+		else:
+			config = {}
+		config = self.background.use_config(config)
+		
+		def do_loading():
+			""" Called after transition is finished """
+			self.background.use_config(config)
+			self.apply_gui_config_buttons(config)
+		
+		if first:
+			b1 = self.background.get_config()['gui']['background']
+			b2 = config['gui']['background']
+			if b1 == b2:
+				# If application has just started and image is
+				# not changing, transition would just look weird
+				do_loading()
+				return
+		if not first:
+			stckEditor.set_transition_type(Gtk.StackTransitionType.SLIDE_DOWN)
+		stckEditor.set_visible_child(lblEmpty)
+		GLib.timeout_add(stckEditor.get_transition_duration(), do_loading)
+	
+	
+	def apply_gui_config_buttons(self, config):
+		""" Changes UI according to controller configuration """
+		stckEditor = self.builder.get_object('stckEditor')
+		grEditor = self.builder.get_object('grEditor')
+		btCPAD = self.builder.get_object('btCPAD')
+		btC = self.builder.get_object('btC')
+		
+		buttons = ControllerImage.get_names(config.get('buttons', {}))
+		axes = ControllerImage.get_names(config.get('axes', {}))
+		gyros = config.get('gyros', False)
+		# Set sensitivity to signalize available inputs
+		# Buttons (as on image)
+		for b in BUTTONS:
+			w = self.builder.get_object("bt" + nameof(b))
+			if w:
+				w.set_sensitive(nameof(b) in buttons)
+		# Buttons (as GTK Widgets)
+		for b in self.button_widgets:
+			try:
+				w = self.button_widgets[b]
+				icon, trash = ControllerManager.get_button_icon(config, b, True)
+				w.icon.set_from_file(icon)
+			except Exception:
+				pass
+		# Triggers
+		w = self.builder.get_object("btLT")
+		if w: w.set_sensitive("ltrig" in axes)
+		w = self.builder.get_object("btRT")
+		if w: w.set_sensitive("rtrig" in axes)
+		# Sticks & pads
+		for b in PADS + STICKS:
+			w = self.builder.get_object("bt" + nameof(b))
+			if w:
+				w.set_sensitive(
+						b.lower() + "_x" in axes
+						or b.lower() + "_y" in axes
+						or nameof(b) in buttons)
+		# Gyro
+		for b in GYROS:
+			w = self.builder.get_object("bt" + b)
+			if w:
+				# TODO: Maybe actual detection
+				w.set_sensitive(gyros)
+		for w in (btC, btCPAD):
+			w.set_visible(w.get_sensitive())
+		stckEditor.set_visible_child(grEditor)
+		GLib.idle_add(self.on_c_size_allocate)
+	
+	
 	def setup_statusicon(self):
-		menu = self.builder.get_object("mnuDaemon")
+		menu = self.builder.get_object("mnuTray")
 		self.statusicon = get_status_icon(self.imagepath, menu)
 		self.statusicon.connect('clicked', self.on_statusicon_clicked)
-		GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
+		if not self.statusicon.is_clickable():
+			self.builder.get_object("mnuShowWindowTray").set_visible(True)
+		GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC Controller"))
 	
 	
 	def destroy_statusicon(self):
@@ -162,7 +264,18 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# There is no uinput
 			msg = _('uinput kernel module not loaded')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
-			self.show_error(msg)
+			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
+			ribar = self.show_error(msg)
+			gksudo = find_gksudo()
+			if gksudo and not hasattr(ribar, "_fix_tmp"):
+				button = Gtk.Button.new_with_label(_("Fix Temporary"))
+				ribar._fix_tmp = button
+				button.connect('clicked', self.apply_temporary_fix,
+					gksudo + ["modprobe", "uinput"],
+					_("This will load missing uinput module.")
+				)
+				ribar.add_button(button, -1)
+			return True
 		elif not os.path.exists("/dev/uinput"):
 			# /dev/uinput missing
 			msg = _('/dev/uinput doesn\'t exists')
@@ -170,12 +283,66 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			#msg += "\n\n" + _('Please, consult your distribution manual on what in the world could cause this.')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
 			self.show_error(msg)
+			return True
 		elif not check_access("/dev/uinput"):
 			# Cannot acces uinput
 			msg = _('You don\'t have required access to /dev/uinput.')
-			msg += "\n" + _('This will most likely prevent emulation from working.')
+			msg += "\n"   + _('This will most likely prevent emulation from working.')
 			msg += "\n\n" + _('Please, consult your distribution manual on how to enable uinput')
-			self.show_error(msg)
+			msg += "\n"   + _('or click on "Fix Temporary" button to attempt fix that should work until next restart.')
+			ribar = self.show_error(msg)
+			gksudo = find_gksudo()
+			if gksudo and not hasattr(ribar, "_fix_tmp"):
+				button = Gtk.Button.new_with_label(_("Fix Temporary"))
+				ribar._fix_tmp = button
+				button.connect('clicked', self.apply_temporary_fix,
+					gksudo + ["chmod", "666", "/dev/uinput"],
+					_("This will enable input emulation for <i>every application</i> and <i>all users</i> on this machine.")
+				)
+				ribar.add_button(button, -1)
+			return True
+		return False
+	
+	
+	def apply_temporary_fix(self, trash, shell_command, message):
+		"""
+		Displays MessageBox with confirmation, tries to run passed shell
+		command and restarts daemon.
+		
+		Doing this allows user to teporary fix some uinput-related problems
+		by his vaim belief I'll not format his harddrive.
+		"""
+		d = Gtk.MessageDialog(parent=self.window,
+			flags = Gtk.DialogFlags.MODAL,
+			type = Gtk.MessageType.WARNING,
+			buttons = Gtk.ButtonsType.OK_CANCEL,
+			message_format = _("sudo fix-my-pc")
+		)
+		
+		def on_response(dialog, response_id):
+			if response_id == -5:	# OK button, not defined anywhere
+				sudo = Gio.Subprocess.new(shell_command, 0)
+				sudo.communicate(None, None)
+				if sudo.get_exit_status() == 0:
+					self.dm.restart()
+				else:
+					d2 = Gtk.MessageDialog(parent=d,
+						flags = Gtk.DialogFlags.MODAL,
+						type = Gtk.MessageType.ERROR,
+						buttons = Gtk.ButtonsType.OK,
+						message_format = _("Command Failed")
+					)
+					d2.run()
+					d2.destroy()
+			d.destroy()
+		
+		d.connect("response", on_response)
+		d.format_secondary_markup( _("""Following command is going to be executed:
+
+<b>%s</b>
+
+%s""") % (" ".join(shell_command), message), )
+		d.show()
 	
 	
 	def hilight(self, button):
@@ -199,9 +366,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		""" As hilight, but marks GTK Button as well """
 		active = None
 		for b in self.button_widgets.values():
-			b.widget.set_state(Gtk.StateType.NORMAL)
-			if b.name == button:
-				active = b.widget
+			if b.widget.get_sensitive():
+				b.widget.set_state(Gtk.StateType.NORMAL)
+				if b.name == button:
+					active = b.widget
 		
 		if active is not None:
 			active.set_state(Gtk.StateType.ACTIVE)
@@ -211,7 +379,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def show_editor(self, id):
 		action = self.get_action(self.current, id)
-		ae = self.choose_editor(action, "")
+		ae = self.choose_editor(action, "", id)
+		ae.allow_first_page()
 		ae.set_input(id, action)
 		ae.show(self.window)
 	
@@ -222,11 +391,16 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		mnuCopy = self.builder.get_object("mnuCopy")
 		mnuClear = self.builder.get_object("mnuClear")
 		mnuPaste = self.builder.get_object("mnuPaste")
+		mnuEPress = self.builder.get_object("mnuEditPress")
+		mnuEPressS = self.builder.get_object("mnuEditPressSeparator")
 		self.context_menu_for = for_id
 		clp = Gtk.Clipboard.get_default(Gdk.Display.get_default())
 		mnuCopy.set_sensitive(bool(self.get_action(self.current, for_id)))
 		mnuClear.set_sensitive(bool(self.get_action(self.current, for_id)))
 		mnuPaste.set_sensitive(clp.wait_is_text_available())
+		mnuEPress.set_visible(for_id in STICKS + PADS)
+		mnuEPressS.set_visible(mnuEPress.get_visible())
+		
 		mnuPopup.popup(None, None, None, None,
 			3, Gtk.get_current_event_time())
 	
@@ -247,8 +421,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if not IS_UNITY and self.config['gui']['enable_status_icon'] and self.config['gui']['minimize_to_status_icon']:
 			# Override closing and hide instead
 			self.window.set_visible(False)
-			return True
-		return False # Allow
+		else:
+			self.on_mnuExit_activate()
+		return True
 	
 	
 	def on_mnuClear_activate(self, *a):
@@ -285,7 +460,17 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			a = GuiActionParser().restart(text.decode('utf-8')).parse()
 			if not isinstance(a, InvalidAction):
 				self.on_action_chosen(self.context_menu_for, a)
-		
+	
+	
+	def on_mnuEditPress_activate(self, *a):
+		"""
+		Handler for 'Edit Pressed Action' context menu item.
+		"""
+		id = self.context_menu_for
+		if id == STICK:
+			id = nameof(SCButtons.STICKPRESS)
+		self.show_editor(getattr(SCButtons, id))
+	
 	
 	def on_mnuGlobalSettings_activate(self, *a):
 		from scc.gui.global_settings import GlobalSettings
@@ -298,9 +483,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Handler for 'Import Steam Profile' context menu item.
 		Displays apropriate dialog.
 		"""
-		from scc.gui.import_dialog import ImportDialog
-		gs = ImportDialog(self)
-		gs.show(self.window)
+		from scc.gui.importexport.dialog import Dialog
+		ied = Dialog(self)
+		ied.show(self.window)
 	
 	
 	def on_btUndo_clicked(self, *a):
@@ -330,7 +515,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			ps.set_profile_list(profiles)
 	
 	
-	def on_dlgNewProfile_delete_event(self, dlg, *a):
+	def undeletable_dialog(self, dlg, *a):
 		dlg.hide()
 		return True
 	
@@ -338,16 +523,44 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_btNewProfile_clicked(self, *a):
 		""" Called when new profile name is set and OK is clicked """
 		txNewProfile = self.builder.get_object("txNewProfile")
+		rbNewProfile = self.builder.get_object("rbNewProfile")
+		
 		dlg = self.builder.get_object("dlgNewProfile")
-		self.new_profile(self.current, txNewProfile.get_text())
+		if rbNewProfile.get_active():
+			# Creating blank profile is requested
+			self.current.clear()
+		else:
+			self.current.is_template = False
+		self.new_profile(self.current, txNewProfile.get_text().decode("utf-8"))
 		dlg.hide()
 	
 	
-	def on_profile_modified(self, *a):
+	def on_rbNewProfile_group_changed(self, *a):
+		"""
+		Called when user clicks 'Copy current profile' button.
+		If profile name was not changed by user before clicking it,
+		it's automatically changed.
+		"""
+		txNewProfile = self.builder.get_object("txNewProfile")
+		rbNewProfile = self.builder.get_object("rbNewProfile")
+		
+		if not txNewProfile._changed:
+			self.recursing = True
+			if rbNewProfile.get_active():
+				# Create empty profile
+				txNewProfile.set_text(self.generate_new_name())
+			else:
+				# Copy current profile
+				txNewProfile.set_text(self.generate_copy_name(txNewProfile._name))
+			self.recursing = False
+	
+	
+	def on_profile_modified(self, update_ui=True):
 		"""
 		Called when selected profile is modified in memory.
 		"""
-		self.profile_switchers[0].set_profile_modified(True)
+		if update_ui:
+			self.profile_switchers[0].set_profile_modified(True, self.current.is_template)
 		
 		if not self.current_file.get_path().endswith(".mod"):
 			mod = self.current_file.get_path() + ".mod"
@@ -359,9 +572,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_profile_loaded(self, profile, giofile):
 		self.current = profile
 		self.current_file = giofile
-		self.profile_switchers[0].set_profile_modified(False)
+		self.recursing = True
+		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
+		self.builder.get_object("txProfileFilename").set_text(giofile.get_path())
+		self.builder.get_object("txProfileDescription").get_buffer().set_text(self.current.description)
+		self.builder.get_object("cbProfileIsTemplate").set_active(self.current.is_template)
 		for b in self.button_widgets.values():
 			b.update()
+		self.recursing = False
 	
 	
 	def on_profile_selected(self, ps, name, giofile):
@@ -382,54 +600,165 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			orig = self.current_file.get_path()[0:-4]
 			self.current_file = Gio.File.new_for_path(orig)
 		
+		if self.current.is_template:
+			# Ask user if he is OK with overwriting template
+			d = Gtk.MessageDialog(parent=self.window,
+				flags = Gtk.DialogFlags.MODAL,
+				type = Gtk.MessageType.QUESTION,
+				buttons = Gtk.ButtonsType.YES_NO,
+				message_format = _("You are about to save changes over template.\nAre you sure?")
+			)
+			NEW_PROFILE_BUTTON = 7
+			d.add_button(_("Create New Profile"), NEW_PROFILE_BUTTON)
+			
+			
+			r = d.run()
+			d.destroy()
+			if r == NEW_PROFILE_BUTTON:
+				# New profile button clicked
+				ps = self.profile_switchers[0]
+				rbCopyProfile = self.builder.get_object("rbCopyProfile")
+				self.on_new_clicked(ps, ps.get_profile_name())
+				rbCopyProfile.set_active(True)
+				return
+			if r != -8:
+				# Bail out if user answers anything but yes
+				return
+		
 		self.save_profile(self.current_file, self.current)
+	
+	
+	def on_switch_to_clicked(self, ps, *a):
+		""" Switches editor to another controller """
+		ps0 = self.profile_switchers[0]
+		if ps == ps0: return
+		
+		c, p = ps.get_controller(), ps.get_profile_name()
+		c0, p0 = ps0.get_controller(), ps0.get_profile_name()
+		
+		ps0.set_controller(c); ps0.set_profile(p)
+		ps.set_controller(c0); ps.set_profile(p0)
+		
+		self.load_gui_config_for_controller(c, False)
+		self.enable_test_mode()
 	
 	
 	def on_profile_saved(self, giofile, send=True):
 		"""
 		Called when selected profile is saved to disk
 		"""
+		if self.osd_mode:
+			# Special case, profile shouldn't be changed while in osd_mode
+			return
+		
 		if giofile.get_path().endswith(".mod"):
 			# Special case, this one is saved only to be sent to daemon
 			# and user doesn't need to know about it
 			if self.dm.is_alive():
-				self.dm.set_profile(giofile.get_path())
+				controller = self.profile_switchers[0].get_controller()
+				if controller:
+					controller.set_profile(giofile.get_path())
+				else:
+					self.dm.set_profile(giofile.get_path())
 			return
 		
-		self.profile_switchers[0].set_profile_modified(False)
+		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 		if send and self.dm.is_alive() and not self.daemon_changed_profile:
-			self.dm.set_profile(giofile.get_path())
+			for ps in self.profile_switchers:
+				controller = ps.get_controller()
+				if controller:
+					active = controller.get_profile()
+					if active.endswith(".mod"): active = active[0:-4]
+					if active == giofile.get_path():
+						controller.set_profile(giofile.get_path())
 		
 		self.current_file = giofile	
 	
 	
-	def on_new_clicked(self, ps, name):
-		new_name = _("Copy of %s") % (name,)
+	def generate_new_name(self):
+		"""
+		Generates name for new profile.
+		That is 'New Profile X', where X is number that makes name unique.
+		"""
+		i = 1
+		new_name = _("New Profile %s") % (i,)
 		filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
-		i = 0
 		while os.path.exists(filename):
 			i += 1
-			new_name = _("Copy of %s (%s)") % (name, i)
+			new_name = _("New Profile %s") % (i,)
 			filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
-		
+		return new_name
+	
+	
+	def generate_copy_name(self, name):
+		"""
+		Generates name for profile copy.
+		That is 'New Profile X', where X is number that makes name unique.
+		"""
+		new_name = _("%s (copy)") % (name,)
+		filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+		i = 2
+		while os.path.exists(filename):
+			new_name = _("%s (copy %s)") % (name,)
+			filename = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+			i += 1
+		return new_name
+	
+	
+	def on_txNewProfile_changed(self, tx):
+		if self.recursing:
+			return
+		tx._changed = True
+	
+	
+	def on_new_clicked(self, ps, name):
 		dlg = self.builder.get_object("dlgNewProfile")
 		txNewProfile = self.builder.get_object("txNewProfile")
-		txNewProfile.set_text(new_name)
+		rbNewProfile = self.builder.get_object("rbNewProfile")
+		self.recursing = True
+		rbNewProfile.set_active(True)
+		txNewProfile.set_text(self.generate_new_name())
+		txNewProfile._name = name
+		txNewProfile._changed = False
+		self.recursing = False
 		dlg.set_transient_for(self.window)
 		dlg.show()
 	
 	
-	def on_action_chosen(self, id, action):
+	def on_action_chosen(self, id, action, mark_changed=True):
 		before = self.set_action(self.current, id, action)
-		if before.to_string() != action.to_string():
-			# TODO: Maybe better comparison
-			self.undo.append(UndoRedo(id, before, action))
-			self.builder.get_object("btUndo").set_sensitive(True)
-		self.on_profile_modified()
+		if mark_changed:
+			if before.to_string() != action.to_string():
+				# TODO: Maybe better comparison
+				self.undo.append(UndoRedo(id, before, action))
+				self.builder.get_object("btUndo").set_sensitive(True)
+			self.on_profile_modified()
+		else:
+			self.on_profile_modified(update_ui=False)
+		return before
 	
 	
 	def on_background_area_hover(self, trash, area):
 		self.hint(area)
+	
+	
+	def on_background_button_press(self, trash, event):
+		if event.button == 3:
+			mnuImage = self.builder.get_object("mnuImage")
+			mnuImage.popup(None, None, None, None,
+				3, Gtk.get_current_event_time())
+	
+	
+	def on_mnu_change_background_image(self, mnu, *a):
+		command, filename = mnu.get_name().split(",")
+		if command == "background":
+			self.background.override_background(filename)
+		elif command == "buttons":
+			self.background.override_buttons(filename)
+			self.apply_gui_config_buttons(self.background.get_config())
+		elif command == "undo":
+			self.background.undo_override()
+			self.apply_gui_config_buttons(self.background.get_config())
 	
 	
 	def on_background_area_click(self, trash, area):
@@ -441,23 +770,50 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.show_editor(area)
 	
 	
-	def on_vbc_allocated(self, vbc, allocation):
+	def on_c_size_allocate(self, *a):
 		"""
-		Called when size of 'Button C' is changed. Centers button
-		on background image
+		Called when size of 'Button C' or CPAD is changed.
+		Centers buttons on background image
 		"""
 		main_area = self.builder.get_object("mainArea")
-		x = (main_area.get_allocation().width - allocation.width) / 2
-		y = main_area.get_allocation().height - allocation.height
-		main_area.move(vbc, x, y)
+		y = main_area.get_allocation().height - 5
+		w = self.builder.get_object("vbC")
+		allocation = w.get_allocation()
+		x = (self.background.get_allocation().width - allocation.width) / 2
+		y -= allocation.height
+		if w.get_parent():
+			main_area.move(w, x, y)
+		else:
+			main_area.put(w, x, y)
+		return False
 	
 	
 	def on_ebImage_motion_notify_event(self, box, event):
 		self.background.on_mouse_moved(event.x, event.y)
 	
 	
-	def on_mnuExit_activate(self, *a):
+	def on_exiting_n_daemon_killed(self, *a):
 		self.quit()
+	
+	
+	def on_mnuExit_activate(self, *a):
+		if self.app.config['gui']['autokill_daemon']:
+			log.debug("Terminating scc-daemon")
+			for x in ("content", "mnuEmulationEnabled", "mnuEmulationEnabledTray"):
+				w = self.builder.get_object(x)
+				w.set_sensitive(False)
+			self.set_daemon_status("unknown", False)
+			self.hide_error()
+			if self.dm.is_alive():
+				self.dm.connect("dead", self.on_exiting_n_daemon_killed)
+				self.dm.connect("error", self.on_exiting_n_daemon_killed)
+				self.dm.stop()
+			else:
+				# Daemon appears to be dead, kill it just in case
+				self.dm.stop()
+				self.quit()
+		else:
+			self.quit()
 	
 	
 	def on_mnuAbout_activate(self, *a):
@@ -467,24 +823,28 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def on_daemon_alive(self, *a):
 		self.set_daemon_status("alive", True)
-		self.hide_error()
+		if not self.release_notes_visible():
+			self.hide_error()
 		self.just_started = False
-		if self.profile_switchers[0].get_file() is not None and not self.just_started:
+		if self.osd_mode:
+			self.enable_osd_mode()
+		elif self.profile_switchers[0].get_file() is not None and not self.just_started:
 			self.dm.set_profile(self.current_file.get_path())
 		GLib.timeout_add_seconds(1, self.check)
 		self.enable_test_mode()
 	
 	
 	def on_daemon_ccunt_changed(self, daemon, count):
-		if (self.controller_count, count) == (0, 1):
+		if self.controller_count == 0:
 			# First controller connected
 			# 
 			# 'event' signal should be connected only on first controller,
 			# so this block is executed only when number of connected
 			# controllers changes from 0 to 1
-			c = self.dm.get_controllers()[0]
-			c.connect('event', self.on_daemon_event_observer)
-		elif count > self.controller_count:
+			if len(self.dm.get_controllers()) > 0:
+				c = self.dm.get_controllers()[0]
+				self.load_gui_config_for_controller(c, first=True)
+		if count > self.controller_count:
 			# Controller added
 			while len(self.profile_switchers) < count:
 				s = self.add_switcher()
@@ -504,6 +864,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Special case, no controllers are connected, but one widget
 			# has to stay on screen
 			self.profile_switchers[0].set_controller(None)
+			self.load_gui_config_for_controller(None, first=True)
 		
 		self.controller_count = count
 	
@@ -512,29 +873,46 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		filename = os.path.join(get_profiles_path(), name + ".sccprofile")
 		self.current_file = Gio.File.new_for_path(filename)
 		self.save_profile(self.current_file, profile)
+		controller = self.profile_switchers[0].get_controller()
+		if controller:
+			controller.set_profile(filename)
+		else:
+			self.dm.set_profile(filename)
+		self.profile_switchers[0].set_profile(name, create=True)
 	
 	
-	def add_switcher(self, margin_left=30, margin_right=40, margin_bottom=2):
+	def add_switcher(self, margin_left=24, margin_right=24):
 		"""
 		Adds new profile switcher widgets on top of window. Called
 		when new controller is connected to daemon.
 		
 		Returns generated ProfileSwitcher instance.
 		"""
-		vbAllProfiles = self.builder.get_object("vbAllProfiles")
+		vbSwitchers = self.builder.get_object("vbSwitchers")
+		sepSwitchers = self.builder.get_object("sepSwitchers")
 		
 		ps = ProfileSwitcher(self.imagepath, self.config)
 		ps.set_margin_left(margin_left)
 		ps.set_margin_right(margin_right)
-		ps.set_margin_bottom(margin_bottom)
 		ps.connect('right-clicked', self.on_profile_right_clicked)
+		ps.connect('switch-to-clicked', self.on_switch_to_clicked)
 		
-		vbAllProfiles.pack_start(ps, False, False, 0)
-		vbAllProfiles.reorder_child(ps, 0)
-		vbAllProfiles.show_all()
+		vbSwitchers.pack_start(ps, False, False, 0)
+		vbSwitchers.reorder_child(ps, 0)
+		if len(vbSwitchers.get_children()) == 2:
+			# 1st switcher is bellow separator, rest is stacked on top.
+			# That means separator should be moved and shown when 2nd
+			# switcher is created.
+			vbSwitchers.reorder_child(sepSwitchers, 0)
+			sepSwitchers.set_visible(True)
+		vbSwitchers.show_all()
+		
+		if self.osd_mode:
+			ps.set_allow_switch(False)
 		
 		if len(self.profile_switchers) > 0:
 			ps.set_profile_list(self.profile_switchers[0].get_profile_list())
+			ps.set_switch_to_enabled(True)
 		
 		self.profile_switchers.append(ps)
 		ps.connect('changed', self.on_profile_selected)
@@ -546,9 +924,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		Removes given profile switcher from UI.
 		"""
-		vbAllProfiles = self.builder.get_object("vbAllProfiles")
-		vbAllProfiles.remove(s)
+		vbSwitchers = self.builder.get_object("vbSwitchers")
+		sepSwitchers = self.builder.get_object("sepSwitchers")
+		vbSwitchers.remove(s)
 		s.destroy()
+		if len(vbSwitchers.get_children()) == 2:
+			sepSwitchers.set_visible(False)
 	
 	
 	def enable_test_mode(self):
@@ -556,17 +937,64 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		Disables and re-enables Input Test mode. If sniffing is disabled in
 		daemon configuration, 2nd call fails and logs error.
 		"""
-		if self.dm.is_alive():
+		if self.dm.is_alive() and not self.osd_mode:
+			if self.test_mode_controller:
+				self.test_mode_controller.unlock_all()
 			try:
 				c = self.dm.get_controllers()[0]
 			except IndexError:
 				# Zero controllers
 				return
-			c.unlock_all()
-			c.observe(DaemonManager.nocallback, self.on_observe_failed,
-				'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
-				'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
-				'RIGHT', 'STICK', 'STICKPRESS')
+			if c:
+				c.unlock_all()
+				c.observe(DaemonManager.nocallback, self.on_observe_failed,
+					'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
+					'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
+					'RIGHT', 'STICK', 'STICKPRESS')
+				self.test_mode_controller = c
+	
+	
+	def enable_osd_mode(self):
+		# TODO: Support for multiple controllers here
+		self.osd_mode_controller = 0
+		osd_mode_profile = Profile(GuiActionParser())
+		osd_mode_profile.load(find_profile(App.OSD_MODE_PROF_NAME))
+		try:
+			c = self.dm.get_controllers()[self.osd_mode_controller]
+		except IndexError:
+			log.error("osd_mode: Controller not connected")
+			self.quit()
+			return
+		
+		def on_lock_failed(*a):
+			log.error("osd_mode: Locking failed")
+			self.quit()
+		
+		def on_lock_success(*a):
+			log.debug("osd_mode: Locked everything")
+			from scc.gui.osd_mode import OSDModeMapper, OSDModeMappings
+			self.osd_mode_mapper = OSDModeMapper(self, osd_mode_profile)
+			self.osd_mode_mapper.set_target_window(self.window.get_window())
+			self.builder.get_object("btUndo").set_visible(False)
+			self.builder.get_object("btRedo").set_visible(False)
+			m = OSDModeMappings(self, self.osd_mode_mapper,
+				self.builder.get_object("OsdmodeMappings"))
+			m.set_controller(self.profile_switchers[0].get_controller())
+			
+			m.show()
+		
+		# Locks everything but pads. Pads are emulating mouse and this is
+		# better left in daemon - involving socket in mouse controls
+		# adds too much lags.
+		c.lock(on_lock_success, on_lock_failed,
+			'A', 'B', 'X', 'Y', 'START', 'BACK', 'LB', 'RB', 'C',
+			'STICK', 'LGRIP', 'RGRIP', 'LT', 'RT', 'STICKPRESS')
+		
+		# Ask daemon to temporaly reconfigure pads for mouse emulation
+		c.replace(DaemonManager.nocallback, on_lock_failed,
+			LEFT, osd_mode_profile.pads[LEFT])
+		c.replace(DaemonManager.nocallback, on_lock_failed,
+			RIGHT, osd_mode_profile.pads[RIGHT])
 	
 	
 	def on_observe_failed(self, error):
@@ -585,6 +1013,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.outdated_version = version
 			self.set_daemon_status("unknown", False)
 			self.dm.restart()
+		else:
+			# At this point, correct daemon version of daemon is running
+			# and we can check if there is anything new to inform user about
+			if self.app.config['gui']['news']['last_version'] != App.get_release():
+				if self.app.config['gui']['news']['enabled']:
+					if not self.osd_mode:
+						self.check_release_notes()
 	
 	
 	def on_daemon_error(self, daemon, error):
@@ -600,19 +1035,33 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# TODO: Write howto somewhere instead of linking to ArchWiki
 		elif "LIBUSB_ERROR_BUSY" in error:
 			msg += "\n" + _("Another application (most likely Steam) is using the controller.")
+		elif "CANT_SUMMON_THE_DAEMON" in error:
+			msg += "\n" + _("Background process responsible for emulation is not starting.\n\nTry executing \"scc-daemon debug\" in terminal window to check for any errors"
+				"\nor <a href='https://github.com/kozec/sc-controller/issues'>open issue on GitHub</a> and copy output there.")
 		elif "LIBUSB_ERROR_PIPE" in error:
 			msg += "\n" + _("USB dongle was removed.")
+		elif "Failed to create uinput device." in error:
+			# Call check() method and try to determine what went wrong.
+			if self.check():
+				# Check() returns True if error was "handled".
+				return
+			# If check() fails to find error reason, error message is displayed as it is
+		
+		if self.osd_mode:
+			self.quit()
 		
 		self.show_error(msg)
 		self.set_daemon_status("error", True)
 	
 	
-	def on_daemon_event_observer(self, daemon, what, data):
-		if what in (LEFT, RIGHT, STICK):
+	def on_daemon_event_observer(self, daemon, c, what, data):
+		if self.osd_mode_mapper:
+			self.osd_mode_mapper.handle_event(daemon, what, data)
+		elif what in (LEFT, RIGHT, STICK):
 			widget, area = {
-				LEFT  : (self.lpadTest,  "LPADTEST"),
-				RIGHT : (self.rpadTest,  "RPADTEST"),
-				STICK : (self.stickTest, "STICKTEST"),
+				LEFT  : (self.lpad_test,  "LPADTEST"),
+				RIGHT : (self.rpad_test,  "RPADTEST"),
+				STICK : (self.stick_test, "STICKTEST"),
 			}[what]
 			# Check if stick or pad is released
 			if data[0] == data[1] == 0:
@@ -631,22 +1080,21 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Move circle
 			self.main_area.move(widget, x, y)
 		elif what in ("LT", "RT", "STICKPRESS"):
-			what = {
-				"LT" : "LEFT",
-				"RT" : "RIGHT",
-				"STICKPRESS" : "STICK"
-			}[what]
 			if data[0]:
 				self.hilights[App.OBSERVE_COLOR].add(what)
 			else:
 				self.hilights[App.OBSERVE_COLOR].remove(what)
 			self._update_background()
 		elif hasattr(SCButtons, what):
-			if data[0]:
-				self.hilights[App.OBSERVE_COLOR].add(what)
-			else:
-				self.hilights[App.OBSERVE_COLOR].remove(what)
-			self._update_background()
+			try:
+				if data[0]:
+					self.hilights[App.OBSERVE_COLOR].add(what)
+				else:
+					self.hilights[App.OBSERVE_COLOR].remove(what)
+				self._update_background()
+			except KeyError, e:
+				# Non fatal
+				pass
 		else:
 			print "event", what
 	
@@ -656,6 +1104,24 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Disable controller-related menu items if controller is not connected
 			obj = self.builder.get_object(name)
 			obj.set_sensitive(ps.get_controller() is not None)
+		
+		for name in ("mnuProfileNew", "mnuProfileCopy", "mnuProfileRename",
+					"mnuProfileDetails", "mnuProfileSeparator1",
+					"mnuProfileSeparator2"):
+			# Hide profile-related menu items for all but 1st profile switcher
+			obj = self.builder.get_object(name)
+			obj.set_visible(ps == self.profile_switchers[0])
+		
+		if ps == self.profile_switchers[0]:
+			name = ps.get_profile_name()
+			is_override = profile_is_override(name)
+			is_default = profile_is_default(name)
+			self.builder.get_object("mnuProfileDelete").set_visible(not is_default)
+			self.builder.get_object("mnuProfileRevert").set_visible(is_override)
+			self.builder.get_object("mnuProfileRename").set_visible(not is_default)
+		else:
+			self.builder.get_object("mnuProfileDelete").set_visible(False)
+			self.builder.get_object("mnuProfileRevert").set_visible(False)
 		
 		mnuPS = self.builder.get_object("mnuPS")
 		mnuPS.ps = ps
@@ -670,16 +1136,112 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		cs.show(self.window)
 	
 	
+	def on_mnuProfileNew_activate(self, *a):
+		mnuPS = self.builder.get_object("mnuPS")
+		self.on_new_clicked(mnuPS.ps, mnuPS.ps.get_name())
+	
+	
+	def on_mnuProfileCopy_activate(self, *a):
+		mnuPS = self.builder.get_object("mnuPS")
+		rbCopyProfile = self.builder.get_object("rbCopyProfile")
+		self.on_new_clicked(mnuPS.ps, mnuPS.ps.get_profile_name())
+		rbCopyProfile.set_active(True)
+	
+	
+	def on_mnuProfileDetails_activate(self, *a):
+		self.builder.get_object("dlgProfileDetails").show()
+	
+	
+	def on_mnuProfileRename_activate(self, *a):
+		dlg = self.builder.get_object("dlgRenameProfile")
+		txRename = self.builder.get_object("txRename")
+		mnuPS = self.builder.get_object("mnuPS")
+		name = mnuPS.ps.get_profile_name()
+		txRename.set_text(name)
+		dlg._name = name
+		dlg.set_transient_for(self.window)
+		dlg.show()
+	
+	
+	def on_txRename_changed(self, tx):
+		name = tx.get_text().decode("utf-8")
+		btRenameProfile = self.builder.get_object("btRenameProfile")
+		btRenameProfile.set_sensitive(find_profile(name) is None)
+	
+	
+	def on_btRenameProfile_clicked(self, *a):
+		dlg = self.builder.get_object("dlgRenameProfile")
+		txRename = self.builder.get_object("txRename")
+		old_name = dlg._name
+		new_name = txRename.get_text().decode("utf-8")
+		old_fname = os.path.join(get_profiles_path(), old_name + ".sccprofile")
+		new_fname = os.path.join(get_profiles_path(), new_name + ".sccprofile")
+		try:
+			os.rename(old_fname, new_fname)
+			for n in (old_fname, new_fname):
+				try:
+					os.unlink(n + ".mod")
+				except:
+					# non-existing .mod file is expected
+					pass
+		except Exception, e:
+			log.error("Failed to rename %s: %s", old_fname, e)
+		
+		controllers = list(self.dm.get_controllers())
+		for c in controllers:
+			if get_profile_name(c.get_profile()) == old_name:
+				ps = self.profile_switchers[controllers.index(c)]
+				ps.set_profile(new_name, True)
+				c.set_profile(new_name)
+		self.load_profile_list()
+		dlg.hide()
+	
+	
+	def on_mnuProfileDelete_activate(self, *a):
+		mnuPS = self.builder.get_object("mnuPS")
+		name = mnuPS.ps.get_profile_name()
+		is_override = profile_is_override(name)
+		
+		if is_override:
+			text = _("Really revert current profile to default values?")
+		else:
+			text = _("Really delete current profile?")
+		
+		d = Gtk.MessageDialog(parent=self.window,
+			flags = Gtk.DialogFlags.MODAL,
+			type = Gtk.MessageType.WARNING,
+			buttons = Gtk.ButtonsType.OK_CANCEL,
+			message_format = text,
+		)
+		d.format_secondary_text(_("This action is not undoable!"))
+		
+		if d.run() == -5: # OK button, no idea where is this defined...
+			fname = os.path.join(get_profiles_path(), name + ".sccprofile")
+			try:
+				os.unlink(fname)
+				try:
+					os.unlink(fname + ".mod")
+				except:
+					# non-existing .mod file is expected
+					pass
+				for ps in self.profile_switchers:
+					ps.refresh_profile_path(name)
+			except Exception, e:
+				log.error("Failed to remove %s: %s", fname, e)
+		d.destroy()
+	
+	
 	def mnuTurnoffController_activate(self, *a):
 		mnuPS = self.builder.get_object("mnuPS")
 		if mnuPS.ps.get_controller():
 			mnuPS.ps.get_controller().turnoff()
 	
-	def show_error(self, message):
-		if self.ribar is None:
-			self.ribar = RIBar(message, Gtk.MessageType.ERROR)
+	
+	def show_error(self, message, ribar=None):
+		if self.ribar is None or self.ribar.get_label() is None:
+			self.ribar = ribar or RIBar(message, Gtk.MessageType.ERROR)
 			content = self.builder.get_object("content")
-			content.pack_start(self.ribar, False, False, 1)
+			content.pack_start(self.ribar, False, False, 0)
 			content.reorder_child(self.ribar, 0)
 			self.ribar.connect("close", self.hide_error)
 			self.ribar.connect("response", self.hide_error)
@@ -687,6 +1249,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.ribar.get_label().set_markup(message)
 		self.ribar.show()
 		self.ribar.set_reveal_child(True)
+		return self.ribar
 	
 	
 	def hide_error(self, *a):
@@ -709,6 +1272,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.just_started = False
 			self.set_daemon_status("unknown", True)
 			return
+		
+		if self.osd_mode:
+			self.quit()
 		
 		for ps in self.profile_switchers:
 			ps.set_controller(None)
@@ -742,23 +1308,25 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def do_local_options(self, trash, lo):
 		set_logging_level(lo.contains("verbose"), lo.contains("debug") )
+		self.osd_mode = lo.contains("osd")
 		return -1
 	
 	
 	def do_command_line(self, cl):
 		Gtk.Application.do_command_line(self, cl)
 		if len(cl.get_arguments()) > 1:
-			filename = cl.get_arguments()[-1]
-			giofile = Gio.File.new_for_path(filename)
-			# Local file, looks like vdf profile
-			from scc.gui.import_dialog import ImportDialog
-			gs = ImportDialog(self)
-			def i_told_you_to_quit(*a):
-				sys.exit(0)
-			gs.window.connect('destroy', i_told_you_to_quit)
-			gs.show(self.window)
-			# Skip first screen and try to import this file
-			gs.on_preload_finished(gs.set_file, giofile.get_path())
+			filename = " ".join(cl.get_arguments()[1:]) # 'cos fuck Gtk...
+			from scc.gui.importexport.dialog import Dialog
+			if Dialog.determine_type(filename) is not None:
+				ied = Dialog(self)
+				def i_told_you_to_quit(*a):
+					sys.exit(0)
+				ied.window.connect('destroy', i_told_you_to_quit)
+				ied.show(self.window)
+				# Skip first screen and try to import this file
+				ied.import_file(filename)
+			else:
+				sys.exit(1)
 		else:
 			self.activate()
 		return 0
@@ -790,6 +1358,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		model.remove(model[0].iter)
 	
 	
+	def get_current_profile(self):
+		return self.profile_switchers[0].get_profile_name()
+	
+	
 	def set_daemon_status(self, status, daemon_runs):
 		""" Updates image that shows daemon status and menu shown when image is clicked """
 		log.debug("daemon status: %s", status)
@@ -797,12 +1369,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		imgDaemonStatus = self.builder.get_object("imgDaemonStatus")
 		btDaemon = self.builder.get_object("btDaemon")
 		mnuEmulationEnabled = self.builder.get_object("mnuEmulationEnabled")
+		mnuEmulationEnabledTray = self.builder.get_object("mnuEmulationEnabledTray")
 		imgDaemonStatus.set_from_file(icon)
 		mnuEmulationEnabled.set_sensitive(True)
+		mnuEmulationEnabledTray.set_sensitive(True)
 		self.window.set_icon_from_file(icon)
 		self.status = status
 		if self.statusicon:
-			GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC-Controller"))
+			GLib.idle_add(self.statusicon.set, "scc-%s" % (self.status,), _("SC Controller"))
 		self.recursing = True
 		if status == "alive":
 			btDaemon.set_tooltip_text(_("Emulation is active"))
@@ -813,7 +1387,23 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		else:
 			btDaemon.set_tooltip_text(_("Checking emulation status..."))
 		mnuEmulationEnabled.set_active(daemon_runs)
+		mnuEmulationEnabledTray.set_active(daemon_runs)
 		self.recursing = False
+	
+	
+	def on_btCloseDetails_clicked(self, *a):
+		self.builder.get_object("dlgProfileDetails").hide()
+	
+	
+	def on_buffProfileDescription_changed(self, buffer, *a):
+		if self.recursing: return
+		self.current.description = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+		self.on_profile_modified()
+	
+	def on_cbProfileIsTemplate_toggled(self, widget, *a):
+		if self.recursing: return
+		self.current.is_template = widget.get_active()
+		self.on_profile_modified()
 	
 	
 	def setup_commandline(self):
@@ -834,6 +1424,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
+		aso("osd",		b"o", "OSD mode (displays only editor only)")
 	
 	
 	def save_profile_selection(self, path):
@@ -851,28 +1442,160 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def load_profile_selection(self):
 		""" Returns name profile from config file or None if there is none saved """
 		try:
-			data = json.loads(open(os.path.join(get_config_path(), self.CONFIG), "r").read())
-			return data['current_profile']
+			return self.config['recent_profiles'][0]
 		except:
 			return None
 	
 	
+	@staticmethod
+	def get_release(n=3):
+		"""
+		Returns current version rounded to max. 'n' numbers.
+		( v0.14.1.3 ; n=3 -> v0.14.1 )
+		"""
+		split = DAEMON_VERSION.split(".")[0:n]
+		while split[-1] == "0": split = split[0:len(split) - 1]
+		return ".".join(split)
+	
+	
+	def release_notes_visible(self):
+		""" Returns True if release notes infobox is visible """
+		if not self.ribar: return False
+		riNewRelease = self.builder.get_object('riNewRelease')
+		return self.ribar._infobar == riNewRelease
+	
+	
+	def check_release_notes(self):
+		"""
+		Silently downloads release notes from github and displays infobar
+		informing user that they are ready to be displayed.
+		"""
+		url = App.RELEASE_URL % (App.get_release(),)
+		log.debug("Loading release notes from '%s'", url)
+		f = Gio.File.new_for_uri(url)
+		buffer = b""
+		
+		def stream_ready(stream, task, buffer):
+			try:
+				bytes = stream.read_bytes_finish(task)
+				if bytes.get_size() > 0:
+					buffer += bytes.get_data()
+					stream.read_bytes_async(102400, 0, None, stream_ready, buffer)
+				else:
+					self.on_got_release_notes(buffer.decode("utf-8"))
+			except Exception, e:
+				log.warning("Failed to read release notes")
+				log.exception(e)
+				return
+		
+		def http_ready(f, task, buffer):
+			try:
+				stream = f.read_finish(task)
+				assert stream
+				stream.read_bytes_async(102400, 0, None, stream_ready, buffer)
+			except Exception, e:
+				log.warning("Failed to read release notes")
+				log.exception(e)
+				log.warning("(above error is not fatal and can be ignored)")
+				return
+		
+		f.read_async(0, None, http_ready, buffer)
+	
+	
+	def on_got_release_notes(self, data):
+		"""" Called after entire HTML page of release notes is downloaded """
+		# There is actually only one thing parsed here;
+		# Sequence of words "see ... for more", in bold, containing <A> tag.
+		# If such sequence is found, it's displayed with message about extended
+		# release notes. Otherwise, shorter text and link to github is used.
+		RE_EXTENDED = r'<strong>see.*href=\"([^\"]+).*for more.*</strong>'
+		
+		if self.ribar is not None:
+			# There is already some error displayed, don't bother now...
+			return
+		
+		msg = ""
+		extended = re.search(RE_EXTENDED, data, re.IGNORECASE)
+		if extended:
+			msg += _("<a href='%s'>Click here</a> to check what's new!")
+			msg = msg % (extended.group(1), )
+		else:
+			url = App.RELEASE_URL % (App.get_release(), )
+			msg += _("Welcome to the version <b>%s</b>.")
+			msg += " " + _("<a href='%s'>Click here</a> to read release notes.")
+			msg = msg % (App.get_release(), url)
+		
+		infobar = self.builder.get_object('riNewRelease')
+		lblNewRelease = self.builder.get_object('lblNewRelease')
+		lblNewRelease.set_markup(msg)
+		ribar = RIBar(None, infobar=infobar)
+		ribar = self.show_error(None, ribar=ribar)
+		self.ribar.connect("close", self.on_new_release_dismissed)
+		self.ribar.connect("response", self.on_new_release_dismissed)
+		
+		
+	def on_new_release_dismissed(self, *a):
+		self.config['gui']['news']['last_version'] = App.get_release()
+		self.config.save() 
+	
+	
+	def on_cbNewRelease_toggled(self, cb):
+		self.app.config['gui']['news']['enabled'] = cb.get_active()
+		self.config.save()
+	
+	
 	def on_drag_data_received(self, widget, context, x, y, data, info, time):
 		""" Drag-n-drop handler """
+		uri = None
 		if str(data.get_data_type()) == "text/uri-list":
 			# Only file can be dropped here
 			if len(data.get_uris()):
 				uri = data.get_uris()[0]
+		elif str(data.get_data_type()) == "text/plain":
+			# This can be anything, so try to extract uri from it
+			lines = str(data.get_data()).split("\n")
+			if len(lines) > 0:
+				first = lines[0]
+				if first.startswith("http://") or first.startswith("https://") or first.startswith("ftp://"):
+					# I don't like other protocols
+					uri = first
+		if uri:
+			from scc.gui.importexport.dialog import Dialog
+			giofile = None
+			if uri.startswith("file://"):
 				giofile = Gio.File.new_for_uri(uri)
-				if giofile.get_path():
-					path = giofile.get_path()
-					if path.endswith(".vdf") or path.endswith(".vdffz"):
-						# Local file, looks like vdf profile
-						from scc.gui.import_dialog import ImportDialog
-						gs = ImportDialog(self)
-						gs.show(self.window)
-						# Skip first screen and try to import this file
-						gs.on_preload_finished(gs.set_file, giofile.get_path())
+			else:
+				# Local file can be used directly, remote has to
+				# be downloaded first
+				if uri.startswith("https://github.com/"):
+					# Convert link to repository display to link to raw file
+					uri = (uri
+						.replace("https://github.com/", "https://raw.githubusercontent.com/")
+						.replace("/blob/", "/")
+					)
+				name = urllib.unquote(".".join(uri.split("/")[-1].split(".")[0:-1]))
+				remote = Gio.File.new_for_uri(uri)
+				tmp, stream = Gio.File.new_tmp("%s.XXXXXX" % (name,))
+				stream.close()
+				if remote.copy(tmp, Gio.FileCopyFlags.OVERWRITE, None, None):
+					# Sucessfully downloaded
+					log.info("Downloaded '%s'" % (uri,))
+					giofile = tmp
+				else:
+					# Failed. Just do nothing
+					return
+			if giofile.get_path():
+				path = giofile.get_path().decode("utf-8")
+				filetype = Dialog.determine_type(path)
+				if filetype:
+					log.info("Importing '%s'..." % (filetype))
+					log.debug("(type %s)" % (filetype,))
+					ied = Dialog(self)
+					ied.show(self.window)
+					# Skip first screen and try to import this file
+					ied.import_file(path, filetype = filetype)
+				else:
+					log.error("Unknown file type: '%s'..." % (path,))
 
 
 class UndoRedo(object):

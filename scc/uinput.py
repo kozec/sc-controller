@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # The MIT License (MIT)
 #
@@ -22,26 +22,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import os
-import ctypes
-import time
+import os, ctypes, time
+from ctypes import Structure, POINTER, c_bool, c_int16, c_uint16, c_int32, byref
 from math import pi, copysign, sqrt
-from scc.lib import IntEnum
+from scc.lib.libusb1 import timeval
+from scc.tools import find_library
 from scc.cheader import defines
-from scc.tools import find_lib
+from scc.lib import IntEnum
 
-from collections import deque
+UNPUT_MODULE_VERSION = 9
 
 # Get All defines from linux headers
 if os.path.exists('/usr/include/linux/input-event-codes.h'):
 	CHEAD = defines('/usr/include', 'linux/input-event-codes.h')
-elif os.path.exists('/usr/include/linux/input.h'):
+elif os.path.exists(os.path.split(__file__)[0] + '/input-event-codes.h'):
+	CHEAD = defines(os.path.split(__file__)[0], 'input-event-codes.h')
+else:
 	CHEAD = defines('/usr/include', 'linux/input.h')
 elif os.path.exists('scc/android/input.h'):
 	CHEAD = defines('scc/android', 'input.h')
 else:
 	raise RuntimeError("Cannot find input.h")
 
+
+MAX_FEEDBACK_EFFECTS = 4
 
 # Keys enum contains all keys and button from linux/uinput.h (KEY_* BTN_*)
 Keys = IntEnum('Keys', {i: CHEAD[i] for i in CHEAD.keys() if (i.startswith('KEY_') or
@@ -176,6 +180,27 @@ Scans = {
 	Keys.KEY_FORWARD: 0xc00f3,
 }
 
+class InputEvent(ctypes.Structure):
+	_fields_ = [
+		('time', timeval),
+		('type', c_uint16),
+		('code', c_uint16),
+		('value', c_int32)
+	]
+
+class FeedbackEvent(ctypes.Structure):
+	_fields_ = [
+		('in_use', c_bool),
+		('continuous_rumble', c_bool),
+		('duration', c_int32),
+		('delay', c_int32),
+		('repetitions', c_int32),
+		('type', c_uint16),
+		('level', c_int16),
+	]
+
+	def __init__(self):
+		self.in_use = False
 
 
 class UInput(object):
@@ -186,23 +211,34 @@ class UInput(object):
 	"""
 
 
-	def __init__(self, vendor, product, name, keys, axes, rels, keyboard=False):
+	def __init__(self, vendor, product, version, name, keys, axes, rels, keyboard=False, rumble=False):
 		self._lib = None
 		self._k = keys
+		self.name = name
 		if not axes or len(axes) == 0:
 			self._a, self._amin, self._amax, self._afuzz, self._aflat = [[]] * 5
 		else:
 			self._a, self._amin, self._amax, self._afuzz, self._aflat = zip(*axes)
 
 		self._r = rels
-		lib, search_paths = find_lib("libuinput", os.path.dirname(__file__))
-		if not lib:
-			raise OSError('Cant find libuinput. searched at:\n {}'.format(
-				'\n'.join(search_paths)
-			)
-		)
-		self._lib = ctypes.CDLL(lib)
-
+		
+		self._lib = find_library("libuinput")
+		self._ff_events = None
+		if rumble:
+			self._ff_events = (POINTER(FeedbackEvent) * MAX_FEEDBACK_EFFECTS)()
+			for i in xrange(MAX_FEEDBACK_EFFECTS):
+				self._ff_events[i].contents = FeedbackEvent()
+		
+		try:
+			if self._lib.uinput_module_version() != UNPUT_MODULE_VERSION:
+				raise Exception()
+		except:
+			import sys
+			print >>sys.stderr, "Invalid native module version. Please, recompile 'libuinput.so'"
+			print >>sys.stderr, "If you are running sc-controller from source, you can do this by removing 'build' directory"
+			print >>sys.stderr, "and runinng 'python setup.py build' or 'run.sh' script"
+			raise Exception("Invalid native module version")
+		
 		c_k		= (ctypes.c_uint16 * len(self._k))(*self._k)
 		c_a		= (ctypes.c_uint16 * len(self._a))(*self._a)
 		c_amin	 = (ctypes.c_int32  * len(self._amin ))(*self._amin )
@@ -212,9 +248,11 @@ class UInput(object):
 		c_r		= (ctypes.c_uint16 * len(self._r))(*self._r)
 		c_vendor   = ctypes.c_uint16(vendor)
 		c_product  = ctypes.c_uint16(product)
+		c_version  = ctypes.c_uint16(version)
 		c_keyboard = ctypes.c_int(keyboard)
-
+		c_rumble = ctypes.c_int(MAX_FEEDBACK_EFFECTS if rumble else 0)
 		c_name = ctypes.c_char_p(name)
+		
 		self._fd = self._lib.uinput_init(ctypes.c_int(len(self._k)),
 										 c_k,
 										 ctypes.c_int(len(self._a)),
@@ -228,7 +266,15 @@ class UInput(object):
 										 c_keyboard,
 										 c_vendor,
 										 c_product,
+										 c_version,
+										 c_rumble,
 										 c_name)
+		if self._fd < 0:
+			raise CannotCreateUInputException("Failed to create uinput device. Error code: %s" % (self._fd,))
+
+
+	def getDescriptor(self):
+		return self._fd
 
 
 	def keyEvent(self, key, val):
@@ -302,6 +348,15 @@ class UInput(object):
 	def relManaged(self, ev):
 		return ev in self._r
 
+	def ff_read(self):
+		"""
+		Returns effect that should be played or None if there were no such request.
+		"""
+		if self._ff_events:
+			id = self._lib.uinput_ff_read(self._fd, MAX_FEEDBACK_EFFECTS, byref(self._ff_events))
+			if id >= 0:
+				return self._ff_events[id].contents
+		return None
 
 	def __del__(self):
 		if self._lib:
@@ -316,6 +371,7 @@ class Gamepad(UInput):
 	def __init__(self, name):
 		super(Gamepad, self).__init__(vendor=0x045e,
 									  product=0x028e,
+									  version=1,
 									  name=name,
 									  keys=[Keys.BTN_START,
 											Keys.BTN_MODE,
@@ -357,6 +413,7 @@ class Mouse(UInput):
 	def __init__(self, name):
 		super(Mouse, self).__init__(vendor=0x28de,
 									product=0x1142,
+									version=1,
 									name=name,
 									keys=[Keys.BTN_LEFT,
 										  Keys.BTN_RIGHT,
@@ -368,13 +425,20 @@ class Mouse(UInput):
 										  Rels.REL_Y,
 										  Rels.REL_WHEEL,
 										  Rels.REL_HWHEEL])
-		self._dx = 0.0
-		self._dy = 0.0
 		self.updateParams()
+		self.updateScrollParams()
+		self.reset()
 
+	def reset(self):
+		"""
+		Resets internal counters, especially one used for wheel.
+		Fixes scroll wheel feedback desynchronisation, as reported
+		in https://github.com/kozec/sc-controller/issues/222
+		"""
 		self._scr_dx = 0.0
 		self._scr_dy = 0.0
-		self.updateScrollParams()
+		self._dx = 0.0
+		self._dy = 0.0
 
 	def updateParams(self,
 					 xscale=DEFAULT_XSCALE,
@@ -409,7 +473,6 @@ class Mouse(UInput):
 		self._scr_xscale = xscale
 		self._scr_yscale = yscale
 
-
 	def moveEvent(self, dx=0, dy=0):
 		"""
 		Generate move events from parametters and displacement
@@ -438,7 +501,6 @@ class Mouse(UInput):
 
 		@param int dx		   delta movement from last call on x axis
 		@param int dy		   delta movement from last call on y axis
-		@param bool free		set to true for free ball move
 
 		@return float		   absolute distance moved this tick
 
@@ -473,6 +535,7 @@ class Keyboard(UInput):
 	def __init__(self, name):
 		super(Keyboard, self).__init__(vendor=0x28de,
 									   product=0x1142,
+									   version=1,
 									   name=name,
 									   keys=Scans.keys(),
 									   axes=[],
@@ -538,9 +601,15 @@ class Dummy(object):
 	scrollEvent = keyEvent
 	pressEvent = keyEvent
 	releaseEvent = keyEvent
+	reset = keyEvent
 	
 	def keyManaged(self, ev):
 		return False
 	
 	axisManaged = keyManaged
 	relManaged = keyManaged
+
+
+class CannotCreateUInputException(Exception):
+	# Special case when message should be displayed in UI
+	pass

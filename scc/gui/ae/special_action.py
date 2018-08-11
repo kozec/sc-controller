@@ -7,18 +7,13 @@ Assigns emulated axis to trigger
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib
 from scc.special_actions import ChangeProfileAction, ShellCommandAction
 from scc.special_actions import TurnOffAction, KeyboardAction, OSDAction
-from scc.special_actions import MenuAction
-from scc.actions import Action, NoAction
-from scc.constants import SAME
-from scc.gui.userdata_manager import UserDataManager
+from scc.actions import Action, NoAction, ResetGyroAction
 from scc.gui.ae.menu_action import MenuActionCofC
-from scc.gui.menu_editor import MenuEditor
 from scc.gui.ae import AEComponent
 
-import os, logging
+import logging
 log = logging.getLogger("AE.SA")
 
 __all__ = [ 'SpecialActionComponent' ]
@@ -67,7 +62,9 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 			elif isinstance(action, ShellCommandAction):
 				self.set_cb(cb, "shell")
 				enCommand = self.builder.get_object("enCommand")
-				enCommand.set_text(action.command)
+				enCommand.set_text(action.command.encode("utf-8"))
+			elif isinstance(action, ResetGyroAction):
+				self.set_cb(cb, "resetgyro")
 			elif isinstance(action, ChangeProfileAction):
 				self._current_profile = action.profile
 				self.set_cb(cb, "profile")
@@ -117,7 +114,7 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 		if isinstance(action, OSDAction) and action.action is None:
 			return True
 		return isinstance(action, (NoAction, TurnOffAction, ShellCommandAction,
-			ChangeProfileAction, KeyboardAction))
+			ChangeProfileAction, KeyboardAction, ResetGyroAction))
 	
 	
 	def on_cbActionType_changed(self, *a):
@@ -134,6 +131,10 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			if not self._recursing:
 				self.editor.set_action(KeyboardAction())
+		elif key == "resetgyro":
+			stActionData.set_visible_child(self.builder.get_object("nothing"))
+			if not self._recursing:
+				self.editor.set_action(ResetGyroAction())
 		elif key == "osd":
 			stActionData.set_visible_child(self.builder.get_object("vbOSD"))
 			if not self._recursing:
@@ -170,13 +171,13 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 	def on_enCommand_changed(self, *a):
 		if self._recursing : return
 		enCommand = self.builder.get_object("enCommand")
-		self.editor.set_action(ShellCommandAction(enCommand.get_text()))
+		self.editor.set_action(ShellCommandAction(enCommand.get_text().decode("utf-8")))
 	
 	
 	def on_enOSDText_changed(self, *a):
 		if self._recursing : return
 		enOSDText = self.builder.get_object("enOSDText")
-		self.editor.set_action(OSDAction(enOSDText.get_text()))
+		self.editor.set_action(OSDAction(enOSDText.get_text().decode("utf-8")))
 	
 	
 	def on_exMenuControl_activate(self, ex, *a):

@@ -6,19 +6,10 @@ import inspect
 
 class TestActions(object):
 	
-	def test_tests(self):
-		"""
-		Tests if this class has test for every Action defined in actions.py.
-		"""
-		for cls in Action.ALL.values():
-			if "/actions.py" in inspect.getfile(cls):
-				if HatAction in cls.__bases__ or cls in (NoAction,) :
-					# Skip over some hard-coded cases, these have
-					# tests merged together under weird names
-					continue
-				method_name = "test_%s" % (cls.COMMAND,)
-				assert hasattr(self, method_name), \
-					"There is no test for %s" % (cls.COMMAND)	
+	# def test_tests(self):
+	#	Tests if this class has test for every Action defined in actions.py.
+	#	Removed: profile is not parsed this way anymore, so newly added actions
+	#			don't have to support what's tested.
 	
 	
 	def test_none(self):
@@ -65,10 +56,10 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).min == 0
 		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).min == 0
 		
-		assert parser.from_json_data({ 'action' : 'hatup(ABS_X)' }).max == STICK_PAD_MAX - 1
-		assert parser.from_json_data({ 'action' : 'hatdown(ABS_X)' }).max == STICK_PAD_MIN + 1
-		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).max == STICK_PAD_MAX - 1
-		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).max == STICK_PAD_MIN + 1
+		assert parser.from_json_data({ 'action' : 'hatup(ABS_X)' }).max == STICK_PAD_MIN + 1
+		assert parser.from_json_data({ 'action' : 'hatdown(ABS_X)' }).max == STICK_PAD_MAX - 1
+		assert parser.from_json_data({ 'action' : 'hatleft(ABS_X)' }).max == STICK_PAD_MIN + 1
+		assert parser.from_json_data({ 'action' : 'hatright(ABS_X)' }).max == STICK_PAD_MAX - 1
 	
 	
 	def test_mouse(self):
@@ -78,13 +69,14 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'mouse()' })._mouse_axis == None
 		assert parser.from_json_data({ 'action' : 'trackpad()' })._mouse_axis == None
 		assert parser.from_json_data({ 'action' : 'mouse(REL_WHEEL)' })._mouse_axis == Rels.REL_WHEEL
-	
-	
-	def test_circular(self):
+
+
+	def test_mouseabs(self):
 		"""
-		Tests if CircularAction is parsed correctly from json.
+		Tests if MouseAction is parsed correctly from json.
 		"""
-		assert parser.from_json_data({ 'action' : 'circular(REL_WHEEL)' })._mouse_axis == Rels.REL_WHEEL
+		assert parser.from_json_data({ 'action' : 'mouseabs(REL_X)' })._mouse_axis == Rels.REL_X
+		assert parser.from_json_data({ 'action' : 'mouseabs()' })._mouse_axis is None
 	
 	
 	def test_area(self):
@@ -143,6 +135,13 @@ class TestActions(object):
 		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y)' }).axes[1] == Axes.ABS_Y
 		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y)' }).axes[2] is None
 		assert parser.from_json_data({ 'action' : 'gyroabs(ABS_X, ABS_Y, ABS_Z)' }).axes[2] == Axes.ABS_Z
+	
+	
+	def test_resetgyro(self):
+		"""
+		Tests if ResetGyroAction is parsed correctly from json.
+		"""
+		assert isinstance(parser.from_json_data({ 'action' : 'resetgyro()' }), ResetGyroAction)
 	
 	
 	def test_tilt(self):
@@ -216,6 +215,39 @@ class TestActions(object):
 			assert isinstance(sub, ButtonAction)
 	
 	
+	def test_ring(self):
+		"""
+		Tests if DPadAction is parsed correctly from json.
+		"""
+		a = parser.from_json_data({
+			'ring' : {
+				'radius' : 0.3,
+				'outer' : {
+					'dpad' : [{
+						'action' : 'button(KEY_A)'
+						} , {
+						'action' : 'button(KEY_B)'
+						} , {
+						'action' : 'button(KEY_C)'
+						} , {
+						'action' : 'button(KEY_D)'
+					}]
+				},
+				'inner' : {
+					'X' : { 'action' : 'axis(ABS_X)' },
+					'Y' : { 'action' : 'axis(ABS_Y)' },
+				}
+			}
+		})
+		
+		assert isinstance(a.outer, DPadAction)
+		for sub in a.outer.actions:
+			assert isinstance(sub, ButtonAction)
+		assert isinstance(a.inner, XYAction)
+		for sub in a.inner.actions:
+			assert isinstance(sub, AxisAction)
+	
+	
 	def test_dpad8(self):
 		"""
 		Tests if DPad8Action is parsed correctly from json.
@@ -240,6 +272,8 @@ class TestActions(object):
 			}]
 		})
 		
+		print a
+		print a.actions
 		assert isinstance(a, DPadAction)
 		for sub in a.actions:
 			assert isinstance(sub, ButtonAction)

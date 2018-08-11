@@ -8,8 +8,9 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.actions import Action, NoAction
+from scc.actions import Action, NoAction, ButtonAction
 from scc.constants import LEFT, RIGHT
+from scc.uinput import Keys
 from scc.gui.ae import AEComponent
 from scc.gui.parser import GuiActionParser
 from scc.osd.osk_actions import OSKAction, CloseOSKAction, OSKCursorAction
@@ -46,6 +47,11 @@ class OSKActionComponent(AEComponent):
 			self.set_cb(cb, "OSK.press(RIGHT)")
 		elif isinstance(action, MoveOSKAction):
 			self.set_cb(cb, "OSK.move()")
+		if isinstance(action, ButtonAction):
+			if action.button == Keys.BTN_LEFT:
+				self.set_cb(cb, "button(Keys.BTN_LEFT)")
+			elif action.button == Keys.BTN_RIGHT:
+				self.set_cb(cb, "button(Keys.BTN_RIGHT)")
 		else:
 			self.set_cb(cb, "None")
 	
@@ -55,6 +61,8 @@ class OSKActionComponent(AEComponent):
 	
 	
 	def handles(self, mode, action):
+		if isinstance(action, ButtonAction):
+			return action.button in ( Keys.BTN_LEFT, Keys.BTN_RIGHT )
 		return isinstance(action, (NoAction, OSKAction, OSKCursorAction))
 	
 	

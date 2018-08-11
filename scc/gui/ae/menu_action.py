@@ -6,18 +6,17 @@ two components with MenuAction selectable.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gtk, Gdk, GLib
-from scc.special_actions import MenuAction, GridMenuAction, RadialMenuAction
-from scc.special_actions import PositionModifier
-from scc.constants import SCButtons, SAME
+from scc.special_actions import MenuAction, HorizontalMenuAction
+from scc.special_actions import RadialMenuAction, GridMenuAction
+from scc.special_actions import QuickMenuAction, PositionModifier
+from scc.constants import SCButtons, SAME, STICK, DEFAULT
 from scc.actions import NoAction
 from scc.tools import nameof
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.menu_editor import MenuEditor
 from scc.gui.parser import GuiActionParser
-from scc.gui.ae import AEComponent
 
-import os, logging
+import logging
 log = logging.getLogger("AE.Menu")
 
 __all__ = [ 'MenuActionCofC' ]
@@ -61,6 +60,10 @@ class MenuActionCofC(UserDataManager):
 		"""
 		if isinstance(action, GridMenuAction):
 			return "gridmenu"
+		elif isinstance(action, QuickMenuAction):
+			return "quickmenu"
+		elif isinstance(action, HorizontalMenuAction):
+			return "hmenu"
 		elif isinstance(action, RadialMenuAction):
 			return "radialmenu"
 		else:
@@ -81,16 +84,64 @@ class MenuActionCofC(UserDataManager):
 		cbm = self.builder.get_object("cbMenuType")
 		self.set_cb(cbm, self.menu_class_to_key(action), 1)
 		
+		if self.builder.get_object("rvMenuSize"):
+			spMenuSize = self.builder.get_object("spMenuSize")
+			if self.update_size_display(action):
+				size = spMenuSize.get_adjustment().set_value(action.size)
+		
 		cbControlWith = self.builder.get_object("cbControlWith")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
+		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
 		if cbControlWith:
 			self.set_cb(cbControlWith, nameof(action.control_with), 1)
-			self.set_cb(cbConfirmWith, nameof(action.confirm_with), 1)
-			self.set_cb(cbCancelWith, nameof(action.cancel_with), 1)
-		if cbMenuAutoConfirm:
-			cbMenuAutoConfirm.set_active(action.confirm_with == SAME)
+		
+		cow = action.confirm_with
+		caw = action.cancel_with
+		
+		if cbConfirmWith:
+			if cow == SAME and cbMenuAutoConfirm:
+				cbMenuAutoConfirm.set_active(True)
+				cbConfirmWith.set_sensitive(False)
+			elif cbMenuConfirmWithClick and cow == self.get_default_confirm():
+				cbMenuConfirmWithClick.set_active(True)
+				cbConfirmWith.set_sensitive(False)
+			else:
+				if cbMenuAutoConfirm:
+					cbMenuAutoConfirm.set_active(False)
+				if cbMenuConfirmWithClick:
+					cbMenuAutoConfirm.set_active(False)
+				cbConfirmWith.set_sensitive(True)
+				self.set_cb(cbConfirmWith, nameof(cow), 1)
+		
+		if cbCancelWith:
+			if caw == SAME and cbMenuAutoCancel:
+				cbMenuAutoCancel.set_active(True)
+				cbCancelWith.set_sensitive(False)
+			else:
+				if cbMenuAutoCancel:
+					cbMenuAutoCancel.set_active(False)
+				self.set_cb(cbCancelWith, nameof(caw), 1)
+		
+		self.on_cbMenus_changed()
+	
+	
+	def get_default_confirm(self):
+		"""
+		Returns DEFAULT, but may be overriden when default
+		confirm button is different - specifically when used with pads.
+		"""
+		return DEFAULT
+	
+	
+	def get_default_cancel(self):
+		"""
+		Returns DEFAULT, but may be overriden when default
+		confirm button is different - specifically when used with pads.
+		"""
+		return DEFAULT
 	
 	
 	def on_menu_changed(self, new_id):
@@ -166,25 +217,77 @@ class MenuActionCofC(UserDataManager):
 		return model.get_value(iter, 1)
 	
 	
-	def confirm_with_same_active(self):
+	def prevent_confirm_cancel_nonsense(self, widget, *a):
 		"""
-		Returns value of 'Confirm selection by releasing the button' checkbox,
-		if there is any.
+		If 'confirm with click', 'confirm with release' and
+		'cbMenuAutoCancel' are all present, this method prevents them from
+		being checked in nonsensical way.
 		"""
-		return False	# there isn't any by default
+		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
+		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
+		if widget.get_active():
+			if widget == cbMenuConfirmWithClick:
+				if cbMenuAutoConfirm:
+					cbMenuAutoConfirm.set_active(False)
+			elif widget == cbMenuAutoConfirm:
+				if cbMenuConfirmWithClick:
+					cbMenuConfirmWithClick.set_active(False)
+				if cbMenuAutoCancel:
+					cbMenuAutoCancel.set_active(False)
+			elif widget == cbMenuAutoCancel:
+				if cbMenuAutoConfirm:
+					cbMenuAutoConfirm.set_active(False)
 	
 	
 	def on_cbMenus_changed(self, *a):
 		""" Called when user changes any menu settings """
 		if self._recursing : return
+		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
+		lblControlWith = self.builder.get_object("lblControlWith")
+		cbControlWith = self.builder.get_object("cbControlWith")
+		lblConfirmWith = self.builder.get_object("lblConfirmWith")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
+		lblCancelWith = self.builder.get_object("lblCancelWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
-		if cbMenuAutoConfirm and cbConfirmWith:
-			# Control Options block exists in UI
-			lblConfirmWith = self.builder.get_object("lblConfirmWith")
-			lblConfirmWith.set_sensitive(not cbMenuAutoConfirm.get_active())
-			cbConfirmWith.set_sensitive(not cbMenuAutoConfirm.get_active())
+		
+		cbm = self.builder.get_object("cbMenuType")
+		menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+		
+		if cbControlWith:
+			sensitive = True
+			if menu_type == "quickmenu":
+				sensitive = False
+			lblControlWith.set_sensitive(sensitive)
+			cbControlWith.set_sensitive(sensitive)
+		
+		if cbConfirmWith:
+			sensitive = True
+			if cbMenuAutoConfirm and cbMenuAutoConfirm.get_active():
+				sensitive = False
+			if cbMenuConfirmWithClick and cbMenuConfirmWithClick.get_active():
+				sensitive = False
+			if menu_type == "quickmenu":
+				sensitive = False
+			lblConfirmWith.set_sensitive(sensitive)
+			cbConfirmWith.set_sensitive(sensitive)
+		
+		if cbCancelWith:
+			sensitive = True
+			if cbMenuAutoCancel and cbMenuAutoCancel.get_active():
+				sensitive = False
+			if menu_type == "quickmenu":
+				sensitive = False
+			lblCancelWith.set_sensitive(sensitive)
+			cbCancelWith.set_sensitive(sensitive)
+		
+		if cbMenuAutoConfirm:
+			sensitive = True
+			if menu_type == "quickmenu":
+				sensitive = False
+			cbMenuAutoConfirm.set_sensitive(sensitive)
 		
 		name = self.get_selected_menu()
 		if name == "":
@@ -198,28 +301,72 @@ class MenuActionCofC(UserDataManager):
 			return
 		if name:
 			# There is some menu choosen
-			cbControlWith = self.builder.get_object("cbControlWith")
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
 			params = [ name ]
-			if cbControlWith:
-				params += [
-					cbControlWith.get_model().get_value(cbControlWith.get_active_iter(), 1),
-					getattr(SCButtons, cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)),
-					getattr(SCButtons, cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1))
-				]
-				if self.confirm_with_same_active():
-					params[2] = SAME
-			elif self.confirm_with_same_active():
-				params += [ STICK, SAME ]
+			
+			cow = SAME
+			if cbMenuAutoConfirm and cbMenuAutoConfirm.get_active():
+				cow = SAME
+			elif cbMenuConfirmWithClick and cbMenuConfirmWithClick.get_active():
+				cow = DEFAULT
+			elif cbConfirmWith:
+				cow = cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)
+				if cow != DEFAULT:
+					cow = getattr(SCButtons, cow)
+			
+			caw = DEFAULT
+			if cbMenuAutoCancel and cbMenuAutoCancel.get_active():
+				caw = DEFAULT
+			elif cbCancelWith:
+				caw = cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1)
+				if caw != DEFAULT:
+					caw = getattr(SCButtons, caw)
+			
+			params += [ self.get_control_with(), cow, caw ]
+			
+			
+			# Hide / apply and display 'Items per row' selector if it exists in UI
+			if self.builder.get_object("rvMenuSize"):
+				spMenuSize = self.builder.get_object("spMenuSize")
+				menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+				if menu_type == "gridmenu":
+					self.update_size_display(GridMenuAction("dummy"))
+					size = int(spMenuSize.get_adjustment().get_value())
+					if size > 0:
+						# size is 2nd parameter
+						params += [ False, size ]
+				elif menu_type == "radialmenu":
+					self.update_size_display(RadialMenuAction("dummy"))
+					size = int(spMenuSize.get_adjustment().get_value())
+					if size > 0 and size < 100:
+						# Both 0 and 100 means default here
+						# size is 2nd parameter
+						params += [ False, size ]
+				elif menu_type == "hmenu":
+					self.update_size_display(HorizontalMenuAction("dummy"))
+					size = int(spMenuSize.get_adjustment().get_value())
+					if size > 1:
+						# Size 0 and 1 means default here
+						# size is 2nd parameter
+						params += [ False, size ]
+				else:
+					# , "radialmenu"):
+					self.update_size_display(None)
+			
 			# Grab menu type and choose apropriate action
-			cbm = self.builder.get_object("cbMenuType")
 			action = NoAction()
-			if cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "gridmenu":
+			if cbm and menu_type == "gridmenu":
 				# Grid menu
 				action = GridMenuAction(*params)
-			elif cbm and cbm.get_model().get_value(cbm.get_active_iter(), 1) == "radialmenu":
+			elif cbm and menu_type == "radialmenu":
 				# Circular menu
 				action = RadialMenuAction(*params)
+			elif cbm and menu_type == "hmenu":
+				# Horizontal menu
+				action = HorizontalMenuAction(*params)
+			elif cbm and menu_type == "quickmenu":
+				# Horizontal menu
+				action = QuickMenuAction(name)
 			else:
 				# Normal menu
 				action = MenuAction(*params)
@@ -236,3 +383,60 @@ class MenuActionCofC(UserDataManager):
 					action = PositionModifier(x, y, action)
 			
 			self.editor.set_action(action)
+	
+	
+	def update_size_display(self, action):
+		"""
+		Displays or hides menu size area and upadates text displayed in it.
+		Returns True if action is menuaction where changing size makes sense
+		"""
+		rvMenuSize = self.builder.get_object("rvMenuSize")
+		lblMenuSize = self.builder.get_object("lblMenuSize")
+		spMenuSize = self.builder.get_object("spMenuSize")
+		sclMenuSize = self.builder.get_object("sclMenuSize")
+		if isinstance(action, GridMenuAction):
+			spMenuSize.set_visible(True)
+			sclMenuSize.set_visible(False)
+			lblMenuSize.set_text(_("Items per row"))
+			rvMenuSize.set_reveal_child(True)
+			return True
+		elif isinstance(action, (RadialMenuAction, HorizontalMenuAction)):
+			spMenuSize.set_visible(False)
+			sclMenuSize.set_visible(True)
+			lblMenuSize.set_text(_("Size"))
+			rvMenuSize.set_reveal_child(True)
+			return True
+		else:
+			rvMenuSize.set_reveal_child(False)
+			return False	
+	
+	
+	def get_control_with(self):
+		""" Returns value of "Control With" combo or STICK if there is none """
+		cbControlWith = self.builder.get_object("cbControlWith")
+		if cbControlWith:
+			return cbControlWith.get_model().get_value(cbControlWith.get_active_iter(), 1)
+		return STICK
+	
+	
+	def on_spMenuSize_format_value(self, spinner):
+		val = int(spinner.get_adjustment().get_value())
+		if val < 1:
+			spinner.get_buffer().set_text(_("auto"), -1)
+		else:
+			spinner.get_buffer().set_text(str(val), -1)
+		return True
+	
+	
+	def on_sclMenuSize_format_value(self, scale, val):
+		cbm = self.builder.get_object("cbMenuType")
+		menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+		if menu_type == "radialmenu":
+			if val < 1:
+				return _("default")
+			return  "%s%%" % (int(val),)
+		else: # if menu_type == "hmenu"
+			val = int(val)
+			if val < 2:
+				return _("default")
+			return str(int(val))

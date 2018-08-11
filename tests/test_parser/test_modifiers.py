@@ -35,6 +35,54 @@ class TestModifiers(object):
 		assert isinstance(a, ClickModifier)
 	
 	
+	def test_pressed(self):
+		"""
+		Tests if ReleasedModifier is parsed
+		"""
+		a = _parse_compressed("released(button(KEY_A))")
+		assert isinstance(a, ReleasedModifier)
+	
+	
+	def test_released(self):
+		"""
+		Tests if PressedModifier is parsed
+		"""
+		a = _parse_compressed("pressed(axis(KEY_A))")
+		assert isinstance(a, PressedModifier)	
+	
+	
+	def test_touched(self):
+		"""
+		Tests if TouchedModifier is parsed
+		"""
+		a = _parse_compressed("touched(button(KEY_A))")
+		assert isinstance(a, TouchedModifier)
+	
+	
+	def test_untouched(self):
+		"""
+		Tests if UntouchedModifier is parsed
+		"""
+		a = _parse_compressed("untouched(button(KEY_A))")
+		assert isinstance(a, UntouchedModifier)
+	
+	
+	def test_circular(self):
+		"""
+		Tests if CircularModifier is parsed
+		"""
+		assert isinstance(_parse_compressed("circular(axis(ABS_X))"), CircularModifier)
+		assert isinstance(_parse_compressed("circular(axis(REL_WHEEL))"), CircularModifier)
+	
+	
+	def test_circularabs(self):
+		"""
+		Tests if CircularAbsModifier is parsed
+		"""
+		assert isinstance(_parse_compressed("circularabs(axis(ABS_X))"), CircularAbsModifier)
+		assert isinstance(_parse_compressed("circularabs(axis(REL_WHEEL))"), CircularAbsModifier)
+	
+	
 	def test_ball(self):
 		"""
 		Tests if BallModifier is parsed
@@ -46,8 +94,20 @@ class TestModifiers(object):
 		a = _parse_compressed("ball(mouse())")
 		assert isinstance(a, BallModifier)
 		assert isinstance(a.action, MouseAction)
-
-
+	
+	
+	def test_smooth(self):
+		"""
+		Tests if SmoothModifier is parsed
+		"""
+		a = _parse_compressed("smooth(5, 0.3, axis(ABS_X))")
+		assert isinstance(a, SmoothModifier)
+		assert isinstance(a.action, AxisAction)
+		assert a.action.id == Axes.ABS_X
+		assert a.level == 5
+		assert a.multiplier == 0.3
+	
+	
 	def test_deadzone(self):
 		"""
 		Tests if DeadzoneModifier is parsed
@@ -169,31 +229,13 @@ class TestModifiers(object):
 		# Basic modifiers, sensitivity should always end applied to mouse() action
 		a = _parse_compressed("sens(2, 3, click(mouse()))")
 		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (2.0, 3.0)
-		a = _parse_compressed("sens(2, 3, ball(mouse()))")
-		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (2.0, 3.0)
 		a = _parse_compressed("sens(2, 3, deadzone(2.0, mouse()))")
 		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (2.0, 3.0)
 		
-		# Double and hold modifiers, sensitivity should always end applied to all actions
-		a = _parse_compressed("sens(2, 3, 4, hold(mouse(), doubleclick(axis(ABS_X), gyro(YAW))))")
-		assert isinstance(a.holdaction, MouseAction) and a.holdaction.get_speed() == (2.0, 3.0)
-		assert isinstance(a.action, AxisAction) and a.action.get_speed() == (2.0,)
-		assert isinstance(a.normalaction, GyroAction) and a.normalaction.get_speed() == (2.0, 3.0, 4.0)
-		
-		# Modeshift, sensitivity should always end applied to all actions
-		a = _parse_compressed("""sens(2, 3, 4, mode(
-					A, mouse(),
-					B, axis(ABS_Y),
-					X, gyro(YAW),
-					gyro(ROLL)
-				))""")
-		assert isinstance(a.mods[SCButtons.A], MouseAction) 
-		assert a.mods[SCButtons.A].get_speed() == (2.0, 3.0)
-		assert isinstance(a.mods[SCButtons.B], AxisAction)  
-		assert a.mods[SCButtons.B].get_speed() == (2.0,)
-		assert isinstance(a.mods[SCButtons.X], GyroAction)  
-		assert a.mods[SCButtons.X].get_speed() == (2.0, 3.0, 4.0)
-		assert isinstance(a.default, GyroAction)  and a.default.get_speed() == (2.0, 3.0, 4.0)
+		# Special case, sensitivity should be applied to ball(), not mouse()
+		a = _parse_compressed("sens(2, 3, ball(mouse()))")
+		assert isinstance(a.action, MouseAction) and a.action.get_speed() == (1.0, 1.0)
+		assert isinstance(a, BallModifier) and a.get_speed() == (2.0, 3.0)
 	
 	
 	def test_feedback(self):

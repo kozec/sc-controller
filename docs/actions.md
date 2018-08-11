@@ -50,6 +50,13 @@
   single step on scroll wheel.
 
 
+#### <a name="mouseabs"></a> mouseabs(axis)
+
+- For stick, lets cursor or mouse wheel to be controlled by stick tilt.
+- For pad, distance from center of pad controls speed of mouse movement
+- For gyroscope, please, use gyroabs action.
+
+
 #### <a name="trackpad"></a> trackpad(axis)
 Merged with [mouse](#mouse), does same thing.
 
@@ -62,20 +69,29 @@ eleasing button returns emulated axis back to 'min'.
   trigger position is not in middle, but in minimal possible value.
 
 
-#### <a name="dpad"></a> dpad(up, down, left, right)
-Emulates dpad. Touchpad is divided into 4 triangular parts. When the user touches the
-touchpad, action is executed depending on finger position.
-Available only for pads and sticks; for stick, works by translating
-stick position, what probably doesn't yields expected results.
+#### <a name="dpad"></a> dpad([diagonal_rage,] up, down, left, right)
+Emulates dpad. Touchpad is divided into 8 triangular parts. When the user
+touches the touchpad, action is executed depending on finger position.
+
+'diagonal_rage' is specified in degrees (1 to 89). If not set, all parts are
+sized equally, otherwise, diagonal parts are taking specified portion of pad
+and rest is assigned to up/left/right/down portions.
+
+Available only for pads and sticks.
 
 
-#### <a name="dpad8"></a> dpad8(up, down, left, right, upleft, upright, downleft, downright)
+#### <a name="dpad8"></a> dpad8([diagonal_rage,] up, down, left, right, upleft, upright, downleft, downright)
 Same as dpad, with more directions.
 
 
-#### <a name="circular"></a> circular(axis)
-Controls scroll wheel by scrolling finger around pad.
-Axis should be Rels.REL_WHEEL or Rels.REL_HWHEEL.
+#### <a name="ring"></a> ring([radius=0.5], inner, outer)
+Defines outer and inner ring bindings. When distance of finger from center of
+pad is smaller than 'radius', 'inner' action is activated, otherwise, 'outer'
+takes place.
+
+Unlike [dpad](#dpad), which executes actions as if they were bound to buttons,
+ring works more like defining two actions on same pad with non-overlapping
+deadzones.
 
 
 #### <a name="area"></a> area(x1, y1, x2, y2), <a name="winarea"></a> winarea(x1, y1, x2, y2)
@@ -128,8 +144,13 @@ Can be used to map gyroscope to camera when camera can be controlled only with a
 
 
 #### <a name="gyroabs"></a> gyroabs(axis1 [, axis2 [, axis3]])
-Maps absolute gyroscope pitch, yaw and roll movement into movements of gamepad stick.
+Maps absolute gyroscope pitch, yaw and roll movement into movements of mouse
+or gamepad stick.
 Can be used to map gyroscope to movement stick or to use controller as racing wheel.
+
+
+#### <a name="resetgyro"></a> resetgyro()
+Resets gyroscope offsets so current orientation is treated as neutral.
 
 
 #### <a name="tilt"></a> gyro(front_down, front_up, tilt_left, tilt_right)
@@ -150,6 +171,11 @@ This is automatically handled by GUI, so user usually doesn't need
 to write it directly.
 
 
+#### <a name="relXY"></a> relXY(xaction, yaction)
+Works same as [XY](#XY), but treats position where pad is touched as "center"
+of pad.
+
+
 #### <a name="press"></a> press(button)
 Presses button and leaves it pressed.
 
@@ -158,10 +184,15 @@ Presses button and leaves it pressed.
 Releases pressed button.
 
 
-#### <a name="tap"></a> tap(button)
-Presses button for a short while.
-If button is already pressed, releases it, taps it and presses it
-again in quick sequence.
+#### <a name="tap"></a> tap(button, number=1)
+Presses button for a short while, 'number' times.
+
+If 'number' is greater than 1 (when double-tap is performed), tapped button
+is kept press as long as physical button that started tap is pressed. For single
+tap, virtual button is released right away.
+
+If virtual button is already pressed before tapping, it is released first and
+restored after tap, resulting in sequence of "release - press - release - press"
 
 
 #### <a name="profile"></a> profile(name)
@@ -203,6 +234,10 @@ relative to `~/.config/scc/menus` or `/usr/share/scc/default_menus/`, whichever
 exists, in that order.
 
 
+#### <a name="hmenu"></a> hmenu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
+Same as `menu`, but packed in one row.
+
+
 #### <a name="gridmenu"></a> gridmenu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
 Same as `menu`, but displays items in grid.
 
@@ -211,20 +246,58 @@ Same as `menu`, but displays items in grid.
 Same as `menu`, but displays items in radial menu.
 
 
+#### <a name="quickmenu"></a> quickmenu(menu)
+Special kind of menu controled by buttons instead of stick. Every item has
+assigned button and user selects it by pressing that button.
+
+Fast to use, but is limited to 6 items at most.
+
+
+#### <a name="dialog"></a> dialog([ confirm_button=A [, cancel_button=B ], ] text, action1, [action2... actionN])
+Displays OSD dialog. Dialog works similary to horizontal menu and displays
+text message above list of options.
+
+
 #### <a name="keyboard"></a> keyboard()
 Displays on-screen keyboard
 
 # Modifiers:
 
 #### <a name="click"></a> click(action)
-Used to create action that occurs only if pad or stick is pressed.
+Creates action action that occurs only if pad or stick is pressed.
 For example, `click(dpad(...))` set to pad will create dpad that activates
 buttons only when pressed.
 
+#### <a name="pressed"></a> pressed(action)
+Creates action that occurs for brief moment when button is pressed.
+For example, `pressed(button(A))` will press and instantly release virtual
+A button whenever physical button is pressed.
+
+#### <a name="released"></a> released(action)
+Creates action that occurs for brief moment when button is released.
+
+#### <a name="touched"></a> pressed(action)
+Creates action that occurs for brief moment when finger touches pad.
+
+#### <a name="untouched"></a> released(action)
+Creates action that occurs for brief moment when pad is released.
 
 #### <a name="mode"></a> mode(button1, action1, [button2, action2... buttonN, actionN] [, default] )
 Defines mode shifting. If physical buttonX is pressed, actionX is executed.
 Optional default action is executed if none from specified buttons is pressed.
+
+
+#### <a name="gestures"></a> gestures(gesture1, action1, [gesture2, action2... gestureN, actionN] )
+If set to left or right pad, enables gesture recognition. If GestureX is drawn, actionX is executed.
+
+<a name="gesture_format"></a>Gestures are encoded in string and it may be good
+idea to use GUI to create them, but format is pretty simple:
+- Each stroke in one of four directions is stored as single character.
+- Characters are uppercase `U`, `D`, `L`, `R` for up, down, left, right
+- Default stroke length is 1/3 of pad size.
+- For stroke with twice of that length, characters is repeated twice
+- Three times for stroke through entire pad, or even more for longer.
+- If string starts with lowercase `i`, stroke length is ignored.
 
 
 #### <a name="doubleclick"></a> doubleclick(doubleclick_action [, normal_action [, timeout ]])
@@ -266,8 +339,38 @@ with decreasing speed, based on set mass and friction, until virtual
 'spinning ball' stops moving.
 
 
-#### <a name="deadzone"></a> deadzone(lower, [upper, ] action)
+#### <a name="circular"></a> circular(action)
+Designed to controls scroll wheel by scrolling finger around pad.
+Can be used with any axis. For example,
+
+`circular(axis(Axes.ABS_X))`
+
+turns touchpad into small raing wheel.
+
+
+#### <a name="circularabs"></a> circular(action)
+Works as to `circular`, but instead of counting with finger movements,
+translates exact position on dpad to axis value.
+
+
+#### <a name="deadzone"></a> deadzone([mode,] lower, [upper, ] action)
 Enables deadzone on trigger, pad or stick.
+Mode defaults to 'CUT' and can be one of:
+
+ - CUT     - if value is out of deadzone range, output value is zero
+ - ROUND   - for values bellow deadzone range, output value is zero. For values
+above range, output value is maximum allowed.
+ - LINEAR  - input value is scaled, so entire output range is covered by
+range of deadzone.
+ - MINIMUM - any non-zero input value is scaled so entire input range is mapped
+to range of deadzone. Zero on input is mapped to zero on output, so there is
+area over which output "jumps" when stick is tilted.
+
+
+#### <a name="smooth"></a> smooth([buffer=8, [multiplier=0.7, [filter=2, ]]] action)
+Enables input smoothing. Position is computed as weighed average of last X
+input positions with highest weight given to most recent position. If 'filter'
+is above zero, movements bellow that value are ignored.
 
 
 #### <a name="osd"></a> osd([timeout=5], action)

@@ -1,0 +1,6 @@
+[{
+    "separator": true,
+    "name": "Games"
+}, {
+    "generator" : "games"
+}]

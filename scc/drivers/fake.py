@@ -18,8 +18,8 @@ if ENV_VAR in os.environ:
 	log = logging.getLogger("FakeDrv")
 	
 	
-	def init(daemon):
-		pass
+	def init(daemon, config):
+		return True
 	
 	
 	def start(daemon):
@@ -29,20 +29,20 @@ if ENV_VAR in os.environ:
 			daemon.add_controller(FakeController(x))
 
 
-	class FakeController(Controller):
-		def __init__(self, number):
-			Controller.__init__(self)
-			self._number = number
-			self.set_id("fake%s" % (self._number,), True)
-		
-		
-		def get_type(self):
-			return "fake"
-		
-		
-		def set_led_level(self, level):
-			log.debug("FakeController %s led level set to %s", self.get_id(), level)
-		
-		
-		def __repr__(self):
-			return "<FakeController %s>" % (self.get_id(),)
+class FakeController(Controller):
+	def __init__(self, number):
+		Controller.__init__(self)
+		self._number = number
+		self._id = "fake%s" % (self._number,)
+	
+	
+	def get_type(self):
+		return "fake"
+	
+	
+	def set_led_level(self, level):
+		log.debug("FakeController %s led level set to %s", self.get_id(), level)
+	
+	
+	def __repr__(self):
+		return "<FakeController %s>" % (self.get_id(),)

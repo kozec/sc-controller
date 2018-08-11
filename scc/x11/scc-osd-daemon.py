@@ -13,19 +13,23 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Rsvg', '2.0')
 gi.require_version('GdkX11', '3.0')
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, Gdk, GdkX11, GLib
 from scc.gui.daemon_manager import DaemonManager
-from scc.osd import OSDWindow
-from scc.osd.grid_menu import GridMenu
+from scc.osd.gesture_display import GestureDisplay
 from scc.osd.radial_menu import RadialMenu
+from scc.osd.hmenu import HorizontalMenu
+from scc.osd.quick_menu import QuickMenu
+from scc.osd.grid_menu import GridMenu
 from scc.osd.keyboard import Keyboard
 from scc.osd.message import Message
+from scc.osd.dialog import Dialog
+from scc.osd import OSDWindow
 from scc.osd.menu import Menu
 from scc.osd.area import Area
 from scc.tools import shsplit, shjoin
 from scc.config import Config
 
-import os, sys, logging, time
+import os, sys, logging, time, traceback
 log = logging.getLogger("osd.daemon")
 
 class OSDDaemon(object):
@@ -109,7 +113,7 @@ class OSDDaemon(object):
 			# 0 means that user selected item and confirmed selection
 			self.daemon.request(
 				'Selected: %s' % ( shjoin([
-					m.get_menuid(), m.get_selected_item_id() 
+					m.get_menuid(), m.get_selected_item_id()
 				])),
 				lambda *a : False, lambda *a : False)
 	
@@ -119,13 +123,29 @@ class OSDDaemon(object):
 		self._window = None
 	
 	
+	def on_gesture_recognized(self, gd):
+		""" Called after on-screen keyboard is hidden from the screen """
+		self._window = None
+		if gd.get_exit_code() == 0:
+			self.daemon.request('Gestured: %s' % ( gd.get_gesture(), ),
+				lambda *a : False, lambda *a : False)
+		else:
+			self.daemon.request('Gestured: x', lambda *a : False, lambda *a : False)
+	
+	
 	@staticmethod
 	def _is_menu_message(m):
-		""" Returns True if m starts with 'OSD: [grid|radial]menu' """
+		"""
+		Returns True if m starts with 'OSD: [grid|radial]menu'
+		or "OSD: dialog"
+		"""
 		return (
 			m.startswith("OSD: menu")
-			or m.startswith("OSD: gridmenu")
 			or m.startswith("OSD: radialmenu")
+			or m.startswith("OSD: quickmenu")
+			or m.startswith("OSD: gridmenu")
+			or m.startswith("OSD: dialog")
+			or m.startswith("OSD: hmenu")
 		)
 	
 	
@@ -147,23 +167,44 @@ class OSDDaemon(object):
 				self._window.parse_argumets(args)
 				self._window.show()
 				self._window.use_daemon(self.daemon)
+		elif message.startswith("OSD: gesture"):
+			if self._window:
+				log.warning("Another OSD is already visible - refusing to show keyboard")
+			else:
+				args = shsplit(message)[1:]
+				self._window = GestureDisplay(self.config)
+				self._window.parse_argumets(args)
+				self._window.use_daemon(self.daemon)
+				self._window.show()
+				self._window.connect('destroy', self.on_gesture_recognized)
 		elif self._is_menu_message(message):
 			args = shsplit(message)[1:]
 			if self._window:
 				log.warning("Another OSD is already visible - refusing to show menu")
 			else:
-				if message.startswith("OSD: gridmenu"):
-					self._window = GridMenu()
+				if message.startswith("OSD: hmenu"):
+					self._window = HorizontalMenu()
 				elif message.startswith("OSD: radialmenu"):
 					self._window = RadialMenu()
+				elif message.startswith("OSD: quickmenu"):
+					self._window = QuickMenu()
+				elif message.startswith("OSD: gridmenu"):
+					self._window = GridMenu()
+				elif message.startswith("OSD: dialog"):
+					self._window = Dialog()
 				else:
 					self._window = Menu()
 				self._window.connect('destroy', self.on_menu_closed)
 				self._window.use_config(self.config)
-				if self._window.parse_argumets(args):
-					self._window.show()
-					self._window.use_daemon(self.daemon)
-				else:
+				try:
+					if self._window.parse_argumets(args):
+						self._window.show()
+						self._window.use_daemon(self.daemon)
+					else:
+						log.error("Failed to show menu")
+						self._window = None
+				except:
+					log.error(traceback.format_exc())
 					log.error("Failed to show menu")
 					self._window = None
 		elif message.startswith("OSD: area"):
@@ -195,6 +236,7 @@ class OSDDaemon(object):
 		"""
 		h = sum([ hash(self.config['osd_colors'][x]) for x in self.config['osd_colors'] ])
 		h += sum([ hash(self.config['osk_colors'][x]) for x in self.config['osk_colors'] ])
+		h += hash(self.config['osd_style'])
 		if self._hash_of_colors != h:
 			self._hash_of_colors = h
 			OSDWindow._apply_css(self.config)
@@ -205,6 +247,11 @@ class OSDDaemon(object):
 	
 	
 	def run(self):
+		on_wayland = "WAYLAND_DISPLAY" in os.environ or not isinstance(Gdk.Display.get_default(), GdkX11.X11Display)
+		if on_wayland:
+			log.error("Cannot run on Wayland")
+			self.exit_code = 8
+			return
 		self.daemon = DaemonManager()
 		self.config = Config()
 		self._check_colorconfig_change()

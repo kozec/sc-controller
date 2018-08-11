@@ -212,7 +212,7 @@ class TriggerComponent(AEComponent, BindingEditor):
 		b.show(self.editor.window)
 	
 	
-	def on_action_chosen(self, i, action):	
+	def on_action_chosen(self, i, action, mark_changed=True):
 		if i == "full":
 			self.full = action
 		elif i == "half":

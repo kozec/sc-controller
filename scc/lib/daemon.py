@@ -61,7 +61,7 @@ class Daemon(object):
 
 		# write pidfile
 		self.write_pid()
-	
+
 	def write_pid(self):
 		"""Write pid file"""
 		atexit.register(self.delpid)
@@ -80,16 +80,27 @@ class Daemon(object):
 		# Check for a pidfile to see if the daemon already runs
 		try:
 			with open(self.pidfile, 'r') as pidf:
-
 				pid = int(pidf.read().strip())
-		except IOError:
+		except Exception:
 			pid = None
 
 		if pid:
-			message = "pidfile {0} already exist. " + \
-					"Daemon already running?\n"
-			sys.stderr.write(message.format(self.pidfile))
-			sys.exit(1)
+			# Check if PID coresponds to running daemon process and fail if yes
+			try:
+				assert os.path.exists("/proc")	# Just in case of BSD...
+				cmdline = file("/proc/%s/cmdline" % (pid,), "r").read().replace("\x00", " ").strip()
+				if sys.argv[0] in cmdline:
+					raise Exception("already running")
+			except IOError:
+				# No such process
+				pass
+			except:
+				message = "pidfile {0} already exist. " + \
+						"Daemon already running?\n"
+				sys.stderr.write(message.format(self.pidfile))
+				sys.exit(1)
+
+			sys.stderr.write("Overwriting stale pidfile\n")
 
 		# Start the daemon
 		self.daemonize()
@@ -101,18 +112,18 @@ class Daemon(object):
 			except Exception as e: # pylint: disable=W0703
 				syslog.syslog(syslog.LOG_ERR, '{}: {!s}'.format(os.path.basename(sys.argv[0]), e))
 			time.sleep(2)
-	
+
 	def on_start(self):
 		pass
 	
-	def stop(self):
+	def stop(self, once=False):
 		"""Stop the daemon."""
 
 		# Get the pid from the pidfile
 		try:
 			with open(self.pidfile, 'r') as pidf:
 				pid = int(pidf.read().strip())
-		except IOError:
+		except Exception:
 			pid = None
 
 		if not pid:
@@ -123,9 +134,14 @@ class Daemon(object):
 
 		# Try killing the daemon process
 		try:
-			while True:
+			for x in xrange(0, 10): # Waits max 1s
 				os.kill(pid, signal.SIGTERM)
+				if once: break
+				for x in xrange(50):
+					os.kill(pid, 0)
+					time.sleep(0.1)
 				time.sleep(0.1)
+			os.kill(pid, signal.SIGKILL)
 		except OSError as err:
 			e = str(err.args)
 			if e.find("No such process") > 0:

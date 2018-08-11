@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 -->
+<!-- Generated with glade 3.20.4 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkListStore" id="lstMenu">
@@ -81,8 +81,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="valign">start</property>
             <property name="margin_top">20</property>
-            <property name="margin_bottom">20</property>
             <property name="hexpand">True</property>
             <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
@@ -95,7 +95,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">3</property>
+            <property name="top_attach">1</property>
           </packing>
         </child>
         <child>
@@ -104,8 +104,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="valign">start</property>
             <property name="margin_top">20</property>
-            <property name="margin_bottom">20</property>
             <property name="hexpand">True</property>
             <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
@@ -117,8 +117,8 @@
             </child>
           </object>
           <packing>
-            <property name="left_attach">2</property>
-            <property name="top_attach">3</property>
+            <property name="left_attach">3</property>
+            <property name="top_attach">1</property>
           </packing>
         </child>
         <child>
@@ -128,7 +128,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <property name="margin_top">20</property>
+            <property name="valign">start</property>
+            <property name="margin_top">50</property>
             <property name="hexpand">True</property>
             <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
@@ -141,7 +142,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
+            <property name="top_attach">0</property>
           </packing>
         </child>
         <child>
@@ -151,7 +152,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <property name="margin_top">20</property>
+            <property name="valign">start</property>
+            <property name="margin_top">50</property>
             <property name="hexpand">True</property>
             <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
@@ -163,8 +165,8 @@
             </child>
           </object>
           <packing>
-            <property name="left_attach">2</property>
-            <property name="top_attach">1</property>
+            <property name="left_attach">3</property>
+            <property name="top_attach">0</property>
           </packing>
         </child>
         <child>
@@ -172,30 +174,20 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_left">10</property>
-            <property name="margin_right">20</property>
+            <property name="margin_right">10</property>
             <property name="pixbuf">../../images/controller-side.svg</property>
           </object>
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">0</property>
-            <property name="height">5</property>
+            <property name="width">2</property>
+            <property name="height">2</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="label1">
+          <object class="GtkLabel" id="lblEmptySpace">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">4</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label2">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="vexpand">True</property>
           </object>
           <packing>
             <property name="left_attach">0</property>
@@ -203,44 +195,57 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="label3">
+          <object class="GtkLabel" id="lblEmptySpace1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label4">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-          </object>
-          <packing>
-            <property name="left_attach">2</property>
-            <property name="top_attach">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label5">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="vexpand">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">2</property>
+            <property name="left_attach">3</property>
             <property name="top_attach">2</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="label6">
+          <object class="GtkButton" id="btTilt4">
+            <property name="name">4</property>
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="valign">start</property>
+            <property name="hexpand">True</property>
+            <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
+            <child>
+              <object class="GtkLabel" id="lblTilt1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">(...)</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btTilt5">
+            <property name="name">5</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="valign">start</property>
+            <property name="hexpand">True</property>
+            <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
+            <child>
+              <object class="GtkLabel" id="lblTilt5">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">(...)</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="left_attach">2</property>
-            <property name="top_attach">4</property>
+            <property name="top_attach">2</property>
           </packing>
         </child>
       </object>

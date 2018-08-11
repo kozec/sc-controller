@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.4 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjMenuPosX">
@@ -47,6 +47,10 @@
         <col id="1" translatable="yes">Show OSD Message</col>
       </row>
       <row>
+        <col id="0">resetgyro</col>
+        <col id="1" translatable="yes">Recenter gyro sensor</col>
+      </row>
+      <row>
         <col id="0">shell</col>
         <col id="1" translatable="yes">Execute Command</col>
       </row>
@@ -60,6 +64,14 @@
       <column type="gchararray"/>
     </columns>
     <data>
+      <row>
+        <col id="0" translatable="yes">(Controller Default)</col>
+        <col id="1">DEFAULT</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">-</col>
+        <col id="1">x</col>
+      </row>
       <row>
         <col id="0" translatable="yes">A</col>
         <col id="1">A</col>
@@ -129,6 +141,10 @@
         <col id="1">x</col>
       </row>
       <row>
+        <col id="0" translatable="yes">Stick Press</col>
+        <col id="1">STICKPRESS</col>
+      </row>
+      <row>
         <col id="0" translatable="yes">Left Pad Press</col>
         <col id="1">LPAD</col>
       </row>
@@ -146,6 +162,10 @@
       <column type="gchararray"/>
     </columns>
     <data>
+      <row>
+        <col id="0" translatable="yes">(Controller Default)</col>
+        <col id="1">DEFAULT</col>
+      </row>
       <row>
         <col id="0" translatable="yes">Stick</col>
         <col id="1">STICK</col>
@@ -223,6 +243,14 @@
       <row>
         <col id="0" translatable="yes">Radial</col>
         <col id="1">radialmenu</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Horizontal Menu</col>
+        <col id="1">hmenu</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Quick Menu</col>
+        <col id="1">quickmenu</col>
       </row>
     </data>
   </object>
@@ -573,7 +601,7 @@
                     <property name="margin_top">5</property>
                     <property name="margin_bottom">10</property>
                     <child>
-                      <object class="GtkLabel" id="label7">
+                      <object class="GtkLabel" id="lblControlWith">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_right">20</property>
@@ -601,7 +629,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label9">
+                      <object class="GtkLabel" id="lblCancelWith">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_right">20</property>
@@ -685,7 +713,7 @@
                         <property name="margin_bottom">5</property>
                         <property name="hexpand">True</property>
                         <property name="model">lstButton</property>
-                        <property name="active">1</property>
+                        <property name="active">0</property>
                         <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
                         <child>
                           <object class="GtkCellRendererText" id="cellrenderertext7"/>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.2 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkListStore" id="lstItems">
@@ -256,7 +256,7 @@
                           <object class="GtkMenuItem" id="mnuAddItem">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add Action</property>
+                            <property name="label" translatable="yes">Add _Action</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_btAddItem_clicked" swapped="no"/>
                           </object>
@@ -265,7 +265,7 @@
                           <object class="GtkMenuItem" id="mnuAddSeparator">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add Separator</property>
+                            <property name="label" translatable="yes">Add SSeparator</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_mnuAddSeparator_clicked" swapped="no"/>
                           </object>
@@ -274,7 +274,7 @@
                           <object class="GtkMenuItem" id="mnuAddSubmenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add Submenu</property>
+                            <property name="label" translatable="yes">Add Su_bmenu</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_mnuAddSubmenu_clicked" swapped="no"/>
                           </object>
@@ -289,7 +289,7 @@
                           <object class="GtkMenuItem" id="mnuAddProfList">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add List of All Profiles</property>
+                            <property name="label" translatable="yes">Add List of All _Profiles</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_mnuAddProfList_clicked" swapped="no"/>
                           </object>
@@ -298,9 +298,18 @@
                           <object class="GtkMenuItem" id="mnuAddRecentList">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Add List of Recent Profiles</property>
+                            <property name="label" translatable="yes">Add List of _Recent Profiles</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="on_mnuAddRecentList_clicked" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="mnuAddGamesList">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Add List of _Games</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="on_mnuAddGamesList_activate" swapped="no"/>
                           </object>
                         </child>
                       </object>
@@ -414,6 +423,9 @@
             <property name="receives_default">True</property>
             <property name="use_stock">True</property>
             <signal name="clicked" handler="on_btSave_clicked" swapped="no"/>
+            <style>
+              <class name="suggested-action"/>
+            </style>
           </object>
           <packing>
             <property name="pack_type">end</property>
@@ -421,6 +433,67 @@
           </packing>
         </child>
       </object>
+    </child>
+  </object>
+  <object class="GtkBox" id="menu_icon">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkButton" id="btChangeItemIcon">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <signal name="clicked" handler="on_btChangeItemIcon_clicked" swapped="no"/>
+        <child>
+          <object class="GtkBox" id="vbChangeItemIcon">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lblItemIconName">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
+                <property name="label" translatable="yes">&lt;icon name&gt;</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="btClearItemIcon">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <signal name="clicked" handler="on_btClearItemIcon_clicked" swapped="no"/>
+        <child>
+          <object class="GtkImage" id="imgClearItemIcon">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="stock">gtk-clear</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
     </child>
   </object>
 </interface>

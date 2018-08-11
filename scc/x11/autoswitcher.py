@@ -8,10 +8,12 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.menu_data import MenuGenerator, MenuItem, Separator, MENU_GENERATORS
+from scc.special_actions import ChangeProfileAction
+from scc.parser import TalkingActionParser
+from scc.paths import get_daemon_socket
 from scc.lib import xwrappers as X
 from scc.tools import find_profile
-from scc.paths import get_daemon_socket
-from scc.parser import TalkingActionParser
+from scc.actions import Action
 from scc.mapper import Mapper
 from scc.config import Config
 
@@ -26,8 +28,7 @@ class AutoSwitcher(object):
 		self.lock = threading.Lock()
 		self.thread = threading.Thread(target=self.connect_daemon)
 		self.config = Config()
-		self.parser = TalkingActionParser()
-		self.mapper = Mapper(None, keyboard=None, mouse=None, gamepad=None)
+		self.mapper = Mapper(None, None, keyboard=None, mouse=None, gamepad=None)
 		self.mapper.set_special_actions_handler(self)
 		self.enabled = False
 		self.socket = None
@@ -41,10 +42,16 @@ class AutoSwitcher(object):
 	@staticmethod
 	def parse_conditions(config):
 		""" Parses conditions from config """
+		parser = TalkingActionParser()
 		conds = {}
 		for c in config['autoswitch']:
 			try:
-				conds[Condition.parse(c['condition'])] = c['action']
+				astr = c['action']
+				if type(astr) == dict and "action" in astr:
+					# Backwards compatibility
+					astr = astr["action"]
+				action = parser.restart(astr).parse()
+				conds[Condition.parse(c['condition'])] = action
 			except Exception, e:
 				# Failure here is not fatal
 				log.error("Failed to parse autoswitcher condition '%s'", c)
@@ -60,16 +67,17 @@ class AutoSwitcher(object):
 	
 	
 	@staticmethod
-	def unassign(conds, title, wm_class, profile):
+	def unassign(conds, title, wm_class, action):
 		"""
 		Removes any condition that matches given title/class/action combination.
 		'action' can be None, in which case, removes removes any condition
 		that matches title or wm class.
 		"""
-		count = 0
-		cmpwith = ChangeProfileAction(profile).to_string()
+		count, cmpwith = 0, None
+		if action is not None:
+			cmpwith = action.to_string()
 		for c in conds.keys():
-			if profile is None or conds[c] == cmpwith:
+			if action is None or conds[c].to_string() == cmpwith:
 				if c.matches(title, wm_class):
 					del conds[c]
 					count += 1
@@ -123,9 +131,16 @@ class AutoSwitcher(object):
 		self.current_window = w
 		log.debug("Window switched: %s", w)
 		pars = X.get_window_title(self.dpy, w), X.get_window_class(self.dpy, w)
+
+                if pars[0] is None:
+                        pars = ("",pars[1])
+
+                if pars[1] is None:
+                        pars = (pars[0], ("",""))
+
 		for c in self.conds:
 			if c.matches(*pars):
-				action = self.parser.restart(self.conds[c]).parse()
+				action = self.conds[c]
 				action.button_press(self.mapper)
 				action.button_release(self.mapper)
 	
@@ -290,7 +305,7 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 	""" Generates entire Autoswich Options submenu """
 	GENERATOR_NAME = "autoswitch"
 	
-	def callback(self, menu, daemon, menuitem):
+	def callback(self, menu, daemon, controller, menuitem):
 		def on_response(*a):
 			menu.quit(-2)
 		if menuitem.id in ("as::unassign", "as::assign"):
@@ -308,7 +323,7 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 			cfg = Config()
 			cfg["autoswitch"] = [{
 					"condition" : c.encode(),
-					"action" : self.conds[c]
+					"action" : self.conds[c].to_string()
 				} for c in self.conds
 			]
 			cfg.save()

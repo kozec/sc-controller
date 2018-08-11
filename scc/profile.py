@@ -6,8 +6,10 @@ Handles mapping profile stored in json file
 """
 from __future__ import unicode_literals
 
-from scc.constants import LEFT, RIGHT, WHOLE, STICK, GYRO
+from scc.constants import LEFT, RIGHT, CPAD, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
+from scc.special_actions import MenuAction
+from scc.modifiers import HoldModifier
 from scc.lib.jsonencoder import JSONEncoder
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
@@ -18,11 +20,14 @@ log = logging.getLogger("profile")
 
 
 class Profile(object):
-	VERSION = 1.2	# Current profile version. When loading profile file
+	VERSION = 1.3	# Current profile version. When loading profile file
 					# with version lower than this, auto-conversion may happen
 	
 	LEFT  = LEFT
 	RIGHT = RIGHT
+	LPAD = SCButtons.LPAD.name
+	RPAD = SCButtons.RPAD.name
+	CPAD = CPAD
 	WHOLE = WHOLE
 	STICK = STICK
 	GYRO  = GYRO
@@ -34,18 +39,26 @@ class Profile(object):
 	
 	def __init__(self, parser):
 		self.parser = parser
-		self.buttons = { x : NoAction() for x in SCButtons }
-		self.menus = {}
-		self.stick = NoAction()
-		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
-		self.pads = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
-		self.gyro = NoAction()
+		self.clear()
 		self.filename = None
+		# UI-only values
+		self.is_template = False
+		self.description = ""
 	
 	
 	def save(self, filename):
 		""" Saves profile into file. Returns self """
+		fileobj = file(filename, "w")
+		self.save_fileobj(fileobj)
+		fileobj.close()
+		return self
+	
+	
+	def save_fileobj(self, fileobj):
+		""" Saves profile into file-like object. Returns self """
 		data = {
+			"_"				: (self.description if "\n" not in self.description
+								else self.description.strip("\n").split("\n")),
 			'buttons'		: {},
 			'stick'			: self.stick,
 			'gyro'			: self.gyro,
@@ -53,8 +66,10 @@ class Profile(object):
 			'trigger_right'	: self.triggers[Profile.RIGHT],
 			"pad_left"		: self.pads[Profile.LEFT],
 			"pad_right"		: self.pads[Profile.RIGHT],
+			"cpad"			: self.pads[Profile.CPAD],
 			"menus"			: { id : self.menus[id].encode() for id in self.menus },
-			"version"		: Profile.VERSION
+			"is_template"	: self.is_template,
+			"version"		: Profile.VERSION,
 		}
 		
 		for i in self.buttons:
@@ -63,24 +78,52 @@ class Profile(object):
 		
 		# Generate & save json
 		jstr = Encoder(sort_keys=True, indent=4).encode(data)
-		open(filename, "w").write(jstr)
+		fileobj.write(jstr)
 		return self
 	
 	
 	def load(self, filename):
 		""" Loads profile from file. Returns self """
+		fileobj = open(filename, "r")
+		self.load_fileobj(fileobj)
 		self.filename = filename
-		data = json.loads(open(filename, "r").read())
+		return self
+	
+	
+	def load_fileobj(self, fileobj):
+		"""
+		Loads profile from file-like object.
+		Filename attribute is not set, what may cause some trouble if used in GUI.
+		
+		Returns self.
+		"""
+		data = json.loads(fileobj.read())
 		# Version
 		try:
 			version = int(data["version"])
 		except:
 			version = 0
 		
+		# Settings - Description
+		# (stored in key "_", so it's serialized on top of JSON file)
+		if "_" not in data:
+			self.description = ""
+		elif type(data["_"]) == list:
+			self.description = "\n".join(data["_"])
+		else:
+			self.description = data["_"]
+		# Settings - Template
+		self.is_template = bool(data["is_template"]) if "is_template" in data else False
+		
 		# Buttons
 		self.buttons = {}
 		for x in SCButtons:
 			self.buttons[x] = self.parser.from_json_data(data["buttons"], x.name)
+		# Pressing stick is interpreted as STICKPRESS button,
+		# formely called just STICK
+		if "STICK" in data["buttons"] and "STICKPRESS" not in data["buttons"]:
+			self.buttons[SCButtons.STICKPRESS] = self.parser.from_json_data(
+					data["buttons"], "STICK")
 		
 		# Stick & gyro
 		self.stick = self.parser.from_json_data(data, "stick")
@@ -97,6 +140,7 @@ class Profile(object):
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "left_pad"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "right_pad"),
+				Profile.CPAD	: NoAction()
 			}
 		else:
 			# New format
@@ -105,11 +149,12 @@ class Profile(object):
 				Profile.LEFT	: self.parser.from_json_data(data, "trigger_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "trigger_right"),
 			}
-		
+			
 			# Pads
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "pad_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "pad_right"),
+				Profile.CPAD	: self.parser.from_json_data(data, "cpad"),
 			}
 		
 		# Menus
@@ -126,6 +171,53 @@ class Profile(object):
 			self._convert(version)
 		
 		return self
+	
+	
+	def clear(self):
+		""" Clears all actions and adds default menu action on center button """
+		self.buttons = { x : NoAction() for x in SCButtons }
+		self.buttons[SCButtons.C] = HoldModifier(
+			MenuAction("Default.menu"),
+			normalaction = MenuAction("Default.menu")
+		)
+		self.menus = {}
+		self.stick = NoAction()
+		self.is_template = False
+		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
+		self.pads = { Profile.LEFT : NoAction(),
+				Profile.RIGHT : NoAction(), Profile.CPAD : NoAction() }
+		self.gyro = NoAction()
+	
+	
+	def get_all_actions(self):
+		"""
+		Returns generator with every action defined in this profile,
+		including actions in menus.
+		Recursively walks into macros, dpads and everything else that can have
+		nested actions, so both parent and all child actions are yielded.
+		
+		May yield NoAction, but shouldn't yield None.
+		
+		Used for checks when profile is exported or imported.
+		"""
+		for action in self.get_actions():
+			for i in action.get_all_actions():
+				yield i
+		for id in self.menus:
+			for i in self.menus[id].get_all_actions():
+				yield i
+	
+	
+	def get_actions(self):
+		"""
+		As get_all_actions, but returns only root actions, without children,
+		and ignores menus.
+		"""
+		for dct in (self.buttons, self.triggers, self.pads):
+			for k in dct:
+				yield dct[k]
+		for action in (self.stick, self.gyro):
+			yield action
 	
 	
 	def get_filename(self):
@@ -145,13 +237,14 @@ class Profile(object):
 				dct[x] = dct[x].compress()
 		self.stick = self.stick.compress()
 		self.gyro = self.gyro.compress()
+		for menu in self.menus.values():
+			menu.compress()
 	
 	
 	def _convert(self, from_version):
 		""" Performs conversion from older profile version """
 		if from_version < 1:
-			from scc.modifiers import ModeModifier, HoldModifier
-			from scc.special_actions import MenuAction
+			from scc.modifiers import ModeModifier
 			# Add 'display Default.menu if center button is held' for old profiles
 			c = self.buttons[SCButtons.C]
 			if not c:
@@ -224,13 +317,13 @@ class Profile(object):
 							TriggerAction(numbers[1], TRIGGER_MAX, ButtonAction(buttons[1]))
 						)
 					
-					print buttons
-					print numbers
 					if n:
 						log.info("Converted %s to %s",
 							self.triggers[p].to_string(), n.to_string())
 						self.triggers[p] = n
-
+		if from_version < 1.3:
+			# Action format completly changed in v0.4, but profile foramt is same.
+			pass
 
 class Encoder(JSONEncoder):
 	def default(self, obj):

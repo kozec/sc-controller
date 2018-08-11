@@ -10,7 +10,7 @@ python can't handle.
 All this is needed since I want to have entire thing installable, runnable
 from source tarball *and* debugable in working folder.
 """
-import os, __main__
+import os, sys, __main__
 
 
 def get_config_path():
@@ -40,6 +40,32 @@ def get_default_profiles_path():
 	script extracted from source tarball
 	"""
 	return os.path.join(get_share_path(), "default_profiles")
+
+
+def get_menuicons_path():
+	"""
+	Returns directory where menu icons are stored.
+	~/.config/scc/menu-icons under normal conditions.
+	"""
+	return os.path.join(get_config_path(), "menu-icons")
+
+
+def get_default_menuicons_path():
+	"""
+	Returns directory where default menu icons are stored.
+	Probably something like /usr/share/scc/images/menu-icons,
+	or $SCC_SHARED/images/menu-icons if program is being started from
+	script extracted from source tarball
+	"""
+	return os.path.join(get_share_path(), "images/menu-icons")
+
+
+def get_button_images_path():
+	"""
+	Returns directory where button images are stored.
+	/usr/share/scc/images/button-images by default.
+	"""
+	return os.path.join(get_share_path(), "images/button-images")
 
 
 def get_menus_path():
@@ -90,9 +116,16 @@ def get_share_path():
 	"""
 	if "SCC_SHARED" in os.environ:
 		return os.environ["SCC_SHARED"]
-	if os.path.exists("/usr/local/share/scc/"):
-		return "/usr/local/share/scc/"
-	return "/usr/share/scc/"
+	paths = (
+		"/usr/local/share/scc/",
+		os.path.expanduser("~/.local/share/scc"),
+		os.path.join(sys.prefix, "share/scc")
+	)
+	for path in paths:
+		if os.path.exists(path):
+			return path
+	# No path found, assume default and hope for best
+	return "/usr/share/scc"
 
 
 def get_pid_file():

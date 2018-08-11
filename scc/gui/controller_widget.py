@@ -14,20 +14,23 @@ from gi.repository import Gtk, Gdk, Pango
 from scc.constants import SCButtons, STICK, GYRO, LEFT, RIGHT
 from scc.actions import Action, XYAction, MultiAction
 from scc.gui.ae.gyro_action import is_gyro_enable
+from scc.modifiers import DoubleclickModifier
 from scc.profile import Profile
+from scc.tools import nameof
 import os, sys, logging
 
 log = logging.getLogger("ControllerWidget")
 
-TRIGGERS = [ Profile.LEFT, Profile.RIGHT ]
-PADS	= [ "LPAD", "RPAD" ]
+TRIGGERS = [ "LT", "RT" ]
+PADS	= [ Profile.LPAD, Profile.RPAD, Profile.CPAD ]
 STICKS	= [ STICK ]
 GYROS	= [ GYRO ]
-PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD, SCButtons.STICK ]
-_NOT_BUTTONS = PADS + STICKS + GYROS + [ "LT", "RT" ] 
+PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD,
+				SCButtons.STICKPRESS, SCButtons.CPADPRESS ]
+_NOT_BUTTONS = PADS + STICKS + GYROS + TRIGGERS
 _NOT_BUTTONS += [ x + "TOUCH" for x in PADS ]
 BUTTONS = [ b for b in SCButtons if b.name not in _NOT_BUTTONS ]
-LONG_TEXT = 12
+LONG_TEXT = 16
 
 class ControllerWidget:
 	ACTION_CONTEXT = None
@@ -76,12 +79,13 @@ class ControllerWidget:
 
 class ControllerButton(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_BUTTON
-
+	
 	def __init__(self, app, name, use_icon, widget):
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
-
+		
 		if use_icon:
 			vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+			vbox.set_spacing(6)
 			separator = Gtk.Separator(orientation = Gtk.Orientation.VERTICAL)
 			vbox.pack_start(self.icon, False, False, 1)
 			vbox.pack_start(separator, False, False, 1)
@@ -90,7 +94,7 @@ class ControllerButton(ControllerWidget):
 		else:
 			self.widget.add(self.label)
 		self.widget.show_all()
-		self.label.set_max_width_chars(12)
+		self.label.set_max_width_chars(LONG_TEXT)
 		if name == "C":
 			self.label.set_max_width_chars(10)
 	
@@ -111,25 +115,29 @@ class ControllerButton(ControllerWidget):
 
 class ControllerStick(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_STICK
+	
 	def __init__(self, app, name, use_icon, enable_press, widget):
 		self.pressed = Gtk.Label() if enable_press else None
+		self.click_button = SCButtons.STICKPRESS
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
 		
 		grid = Gtk.Grid()
+		grid.set_column_spacing(6)
 		self.widget.set_events(Gdk.EventMask.POINTER_MOTION_MASK)
 		self.widget.connect('motion-notify-event', self.on_cursor_motion)
-		self.label.set_property("vexpand", True)
-		self.label.set_property("hexpand", True)
+		self.label.set_max_width_chars(LONG_TEXT)
 		if self.pressed:
-			self.label.set_xalign(0.0); self.label.set_yalign(0.5)
-			self.pressed.set_property("hexpand", True)
-			self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
+			self.label.set_halign(Gtk.Align.START)
+			self.pressed.set_halign(Gtk.Align.START)
+			self.pressed.set_valign(Gtk.Align.END)
+			self.pressed.set_ellipsize(Pango.EllipsizeMode.END)
+			self.pressed.set_max_width_chars(LONG_TEXT)
 			grid.attach(self.pressed, 2, 2, 1, 1)
 		else:
-			self.label.set_xalign(0.5); self.label.set_yalign(0.5)
+			self.label.set_halign(Gtk.Align.CENTER)
+			self.label.set_valign(Gtk.Align.CENTER)
 			self.pressed = None
 		if self.icon:
-			self.icon.set_margin_right(5)
 			grid.attach(self.icon, 1, 1, 1, 2)
 		grid.attach(self.label, 2, 1, 1, 1)
 		self.over_icon = False
@@ -144,7 +152,7 @@ class ControllerStick(ControllerWidget):
 	
 	def on_click(self, *a):
 		if self.over_icon and self.enable_press:
-			self.app.show_editor(getattr(SCButtons, self.id))
+			self.app.show_editor(self.click_button)
 		else:
 			self.app.show_editor(self.id)
 	
@@ -154,7 +162,13 @@ class ControllerStick(ControllerWidget):
 		ix2 = 74
 		# Check if cursor is placed on icon
 		if event.x < ix2:
-			self.app.hilight(self.name + "_press")
+			what = {
+				Profile.LPAD : LEFT,
+				Profile.RPAD : RIGHT,
+				Profile.CPAD : nameof(SCButtons.CPADPRESS),
+				Profile.STICK : nameof(SCButtons.STICKPRESS),
+			}[self.name]
+			self.app.hilight(what)
 			self.over_icon = True
 		else:
 			self.app.hilight(self.name)
@@ -166,54 +180,82 @@ class ControllerStick(ControllerWidget):
 	
 	
 	def update(self):
-		action = self.app.current.buttons[SCButtons.STICK]
+		action = self.app.current.buttons[self.click_button]
 		self._set_label(self.app.current.stick)
-		txt = action.describe(self.ACTION_CONTEXT)
-		txt = txt.replace("<", "&lt;").replace(">", "&gt;")
 		if self.pressed:
+			self._update_pressed(action)
+	
+	
+	def _update_pressed(self, action):
+		escape = lambda t : t.replace("<", "&lt;").replace(">", "&gt;")
+		if isinstance(action, DoubleclickModifier):
+			lines = []
+			if action.normalaction:
+				txt = action.normalaction.describe(self.ACTION_CONTEXT)
+				lines.append("Pressed: %s" % (escape(txt),))
+			if action.holdaction:
+				txt = action.holdaction.describe(self.ACTION_CONTEXT)
+				lines.append("Hold: %s" % (escape(txt),))
+			self.pressed.set_markup("<small>%s</small>" % ("\n".join(lines), ))
+		else:
+			txt = escape(action.describe(self.ACTION_CONTEXT))
 			self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
 
 
 class ControllerTrigger(ControllerButton):
 	ACTION_CONTEXT = Action.AC_TRIGGER
+	
 	def update(self):
-		if self.id in TRIGGERS and self.id in self.app.current.triggers:
-			self.label.set_label(self.app.current.triggers[self.id].describe(self.ACTION_CONTEXT))
+		# TODO: Use LT and RT in profile as well
+		side = LEFT if self.id == "LT" else RIGHT
+		if self.id in TRIGGERS and side in self.app.current.triggers:
+			self.label.set_label(self.app.current.triggers[side].describe(self.ACTION_CONTEXT))
 		else:
 			self.label.set_label(_("(no action)"))
 
 
 class ControllerPad(ControllerStick):
 	ACTION_CONTEXT = Action.AC_PAD
+	
+	
+	def __init__(self, app, name, use_icon, enable_press, widget):
+		ControllerStick.__init__(self, app, name, use_icon, enable_press, widget)
+		if name in (Profile.LPAD, Profile.RPAD):
+			self.click_button = getattr(SCButtons, name)
+		elif name == Profile.CPAD:
+			self.click_button = SCButtons.CPADPRESS
+	
+	
 	def update(self):
-		if self.id == "LPAD":
+		if self.id == Profile.LPAD:
 			action = self.app.current.pads[Profile.LEFT]
 			pressed = self.app.current.buttons[SCButtons.LPAD]
-		else:
+		elif self.id == Profile.RPAD:
 			action = self.app.current.pads[Profile.RIGHT]
 			pressed = self.app.current.buttons[SCButtons.RPAD]
+		else:
+			action = self.app.current.pads[Profile.CPAD]
+			pressed = self.app.current.buttons[SCButtons.CPADPRESS]
 		
 		self._set_label(action)
-		txt = pressed.describe(self.ACTION_CONTEXT)
-		txt = txt.replace("<", "&lt;").replace(">", "&gt;")
 		if self.pressed:
-			self.pressed.set_markup("<small>Pressed: %s</small>" % (txt,))
+			self._update_pressed(pressed)
 
 
 class ControllerGyro(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_GYRO
+	
 	def __init__(self, app, name, use_icon, widget):
 		self.pressed = Gtk.Label()
 		ControllerWidget.__init__(self, app, name, use_icon, widget)
 		
 		grid = Gtk.Grid()
-		self.label.set_property("vexpand", True)
-		self.label.set_property("hexpand", True)
-		self.label.set_xalign(0.0); self.label.set_yalign(0.5)
-		self.pressed.set_property("hexpand", True)
-		self.pressed.set_xalign(0.0); self.pressed.set_yalign(1.0)
-		if self.icon:
-			self.icon.set_margin_right(5)
+		grid.set_column_spacing(6)
+		self.label.set_max_width_chars(LONG_TEXT)
+		self.label.set_halign(Gtk.Align.START)
+		self.pressed.set_max_width_chars(LONG_TEXT)
+		self.pressed.set_halign(Gtk.Align.START)
+		self.pressed.set_valign(Gtk.Align.END)
 		grid.attach(self.icon, 1, 1, 1, 2)
 		grid.attach(self.label, 2, 1, 1, 1)
 		grid.attach(self.pressed, 2, 2, 1, 1)
@@ -228,7 +270,7 @@ class ControllerGyro(ControllerWidget):
 	
 	def _set_label(self, action):
 		if is_gyro_enable(action):
-			action = action.mods[action.order[0]]
+			action = action.mods.values()[0] or action.default
 		if isinstance(action, MultiAction):
 			rv = []
 			for a in action.actions:

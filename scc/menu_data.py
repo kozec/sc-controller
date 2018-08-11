@@ -15,6 +15,7 @@ class MenuData(object):
 	def __init__(self, *items):
 		self.__items = list(items)
 	
+	
 	def generate(self, menuhandler):
 		"""
 		Converts all generators into MenuItems (by calling .generate() on them)
@@ -30,6 +31,13 @@ class MenuData(object):
 				items.append(i)
 		return MenuData(*items)
 	
+	
+	def compress(self):
+		for i in self.__items:
+			if i.action:
+				i.action = i.action.compress()
+	
+	
 	def __len__(self):
 		return len(self.__items)
 	
@@ -42,9 +50,15 @@ class MenuData(object):
 		return iter(self.__items)
 	
 	
-	def __str__(self):
-		return ("<Menu with IDs: '" 
-			+ ("', '".join([ i.id for i in self.__items ])) + "' >")
+	def get_all_actions(self):
+		"""
+		Returns generator with every action defined in this menu, including
+		child actions.
+		"""
+		for item in self:
+			if hasattr(item, "action") and item.action:
+				for i in item.action.get_all_actions():
+					yield i
 	
 	
 	def get_by_id(self, id):
@@ -109,7 +123,10 @@ class MenuData(object):
 			elif "separator" in i:
 				item = Separator(i["name"] if "name" in i else None)
 			elif "submenu" in i:
-				item = Submenu(i["submenu"], i["name"] if "name" in i else None)
+				item = Submenu(i["submenu"],
+					i["name"] if "name" in i else None,
+					icon = i["icon"] if "icon" in i else None,
+				)
 			elif "id" not in i:
 				# Cannot add menu without ID
 				continue
@@ -122,15 +139,36 @@ class MenuData(object):
 				if action_parser:
 					action = action_parser.from_json_data(i)
 				used_ids.add(id)
-				label = id
+				label, icon = id, None
 				if "name" in i:
 					label = i["name"]
 				elif action:
 					label = action.describe(Action.AC_OSD)
-				item = MenuItem(id, label, action)
+				if "icon" in i:
+					icon = i["icon"]
+				item = MenuItem(id, label, action, icon=icon)
 			m.__items.append(item)
 		
 		return m
+	
+	
+	@staticmethod
+	def from_fileobj(fileobj, action_parser=None):
+		"""
+		Loads menu from file-like object.
+		Actions are parsed only if action_parser is set to ActionParser instance.
+		"""
+		data = json.loads(fileobj.read())
+		return MenuData.from_json_data(data, action_parser)
+	
+	
+	@staticmethod
+	def from_file(filename, action_parser=None):
+		"""
+		Loads menu from file.
+		Actions are parsed only if action_parser is set to ActionParser instance.
+		"""
+		return MenuData.from_fileobj(file(filename, "r"), action_parser)
 	
 	
 	@staticmethod
@@ -154,10 +192,11 @@ class MenuData(object):
 
 class MenuItem(object):
 	""" Really just dummy container """
-	def __init__(self, id, label, action=None, callback=None):
+	def __init__(self, id, label, action=None, callback=None, icon=None):
 		self.id = id
 		self.label = label
 		self.action = action
+		self.icon = icon
 		self.callback = callback	# If defined, called when user chooses menu instead of using action
 		self.widget = None			# May be set by UI code
 	
@@ -171,12 +210,15 @@ class MenuItem(object):
 	
 	def encode(self):
 		""" Returns item data as dict storable in json (profile) file """
-		if self.action:
+		if self.action and type(self.action) in (str, unicode):
+			rv = { 'action' : self.action }
+		elif self.action:
 			rv = self.action.encode()
 		else:
 			rv = {}
 		rv['id'] = self.id
 		rv['name'] = self.label
+		if self.icon: rv['icon'] = self.icon
 		return rv
 
 
@@ -201,11 +243,11 @@ class Separator(MenuItem):
 
 class Submenu(MenuItem):
 	""" Internally, separator is MenuItem without action and id """
-	def __init__(self, filename, label=None):
+	def __init__(self, filename, label=None, icon=None):
 		if not label:
 			label = ".".join(os.path.split(filename)[-1].split(".")[0:-1])
 		self.filename = filename
-		MenuItem.__init__(self, str(id(self)), label)
+		MenuItem.__init__(self, str(id(self)), label=label, icon=icon)
 	
 	
 	def describe(self):
@@ -213,9 +255,10 @@ class Submenu(MenuItem):
 	
 	
 	def encode(self):
-		if self.label:
-			return { "submenu" : self.filename, "name" : self.label }
-		return { "submenu" : self.filename }
+		rv = { "submenu" : self.filename }
+		if self.label: rv["name"] = self.label
+		if self.icon: rv["icon"] = self.icon
+		return rv
 
 
 class MenuGenerator(object):
@@ -228,6 +271,7 @@ class MenuGenerator(object):
 		__init__ of generator should ignore all unknown keys.
 		"""
 		self.id = None		# Used only in editor
+		self.icon = None	# same
 	
 	
 	def describe(self):

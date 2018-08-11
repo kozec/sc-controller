@@ -70,6 +70,7 @@
             "name": "Melee"
         }
     }, 
+    "gyro": {}, 
     "left_pad": {
         "action": "dpad(button(Keys.KEY_1), button(Keys.KEY_2), button(Keys.KEY_3), button(Keys.KEY_4))", 
         "name": "Weapon Switch"
