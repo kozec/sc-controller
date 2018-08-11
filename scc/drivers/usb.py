@@ -264,7 +264,7 @@ class USBDriver(object):
 						"usb:%s:%s" % (tp[0], tp[1]),
 						"Failed to claim USB device: %s" % (e,)
 					)
-				self._retry_devices.append(tp)
+				self._retry_devices.append((syspath, tp))
 				device.close()
 				return True
 		if handled_device:
@@ -327,13 +327,8 @@ class USBDriver(object):
 			if time.time() > self._retry_devices_timer:
 				self._retry_devices_timer = time.time() + 5.0
 				lst, self._retry_devices = self._retry_devices, []
-				for vendor, product in lst:
-					try:
-						device = self._ctx.getByVendorIDAndProductID(vendor, product)
-					except:
-						self._retry_devices.append(( vendor, product ))
-						continue
-					self.handle_new_device(device)
+				for syspath, (vendor, product) in lst:
+					self.handle_new_device(syspath, vendor, product)
 
 
 # USBDriver should be process-wide singleton
