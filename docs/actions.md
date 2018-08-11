@@ -287,11 +287,16 @@ Defines mode shifting. If physical buttonX is pressed, actionX is executed.
 Optional default action is executed if none from specified buttons is pressed.
 
 
-#### <a name="gestures"></a> gestures(gesture1, action1, [gesture2, action2... gestureN, actionN] )
-If set to left or right pad, enables gesture recognition. If GestureX is drawn, actionX is executed.
+#### <a name="gestures"></a> gestures([precision=0,] gesture1, action1, [gesture2, action2... gestureN, actionN] )
+If set to left or right pad, enables gesture recognition. If GestureX
+is drawn, actionX is executed.
 
-<a name="gesture_format"></a>Gestures are encoded in string and it may be good
-idea to use GUI to create them, but format is pretty simple:
+If 'precision' is set to 1.0, gesture has to be exact. Otherwise,
+gestures resembling input with given precision are compared and
+one that matches it most is used. At precision of 0.0, all gestures are considered.
+
+<a name="gesture_format"></a>Gestures are encoded in string and it's
+recommended to use GUI to record them. Nevertheless, format is simple:
 - Each stroke in one of four directions is stored as single character.
 - Characters are uppercase `U`, `D`, `L`, `R` for up, down, left, right
 - Default stroke length is 1/3 of pad size.
