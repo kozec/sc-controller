@@ -37,7 +37,7 @@ if os.path.exists('/usr/include/linux/input-event-codes.h'):
 	CHEAD = defines('/usr/include', 'linux/input-event-codes.h')
 elif os.path.exists(os.path.split(__file__)[0] + '/input-event-codes.h'):
 	CHEAD = defines(os.path.split(__file__)[0], 'input-event-codes.h')
-else:
+elif os.path.exists('/usr/include/linux/input.h'):
 	CHEAD = defines('/usr/include', 'linux/input.h')
 elif os.path.exists('scc/android/input.h'):
 	CHEAD = defines('scc/android', 'input.h')
