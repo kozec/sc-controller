@@ -169,6 +169,18 @@ class GestureComponent(AEComponent):
 		self._grabber.grab(grabbed)
 	
 	
+	def on_sclPrecision_format_value(self, scl, value):
+		return "%s%%" % (int(value * 100.0),)
+	
+	
+	def on_sclPrecision_value_changed(self, *a):
+		self.update()
+	
+	
+	def on_btClearTolerance_clicked(self, *a):
+		self.builder.get_object("sclPrecision").set_value(GesturesAction.DEFAULT_PRECISION)
+	
+	
 	def on_action_chosen(self, id, action, mark_changed=True):
 		tvGestures = self.builder.get_object("tvGestures")
 		model, iter = tvGestures.get_selection().get_selected()
@@ -189,6 +201,7 @@ class GestureComponent(AEComponent):
 			a.gestures[item.gstr] = item.action
 			if item.action.name:
 				a.gestures[item.gstr] = NameModifier(item.action.name, item.action)
+		a.precision = self.builder.get_object("sclPrecision").get_value()
 		a = OSDAction(a)
 		self.editor.set_action(a)
 
