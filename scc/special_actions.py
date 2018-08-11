@@ -18,8 +18,8 @@ from scc.actions import HapticEnabledAction, OSDEnabledAction
 from scc.actions import MOUSE_BUTTONS
 from scc.tools import strip_gesture, nameof, clamp
 from scc.modifiers import Modifier, NameModifier
-from math import sqrt
 from difflib import get_close_matches
+from math import sqrt
 
 import sys, time, logging
 log = logging.getLogger("SActions")
@@ -614,12 +614,19 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	SA = COMMAND = "gestures"
 	PROFILE_KEYS = ("gestures",)
 	PROFILE_KEY_PRIORITY = 2
+	DEFAULT_MINIMUM_MATCH_RATIO = 1.0
 	
 	def __init__(self, *stuff):
 		OSDEnabledAction.__init__(self)
 		Action.__init__(self, *stuff)
 		self.gestures = {}
+		self.minimum_match_ratio = self.DEFAULT_MINIMUM_MATCH_RATIO
 		gstr = None
+		
+		if len(stuff) > 0 and type(stuff[0]) in (int, float):
+			self.minimum_match_ratio = float(stuff[0])
+			stuff = stuff[1:]
+		
 		for i in stuff:
 			if gstr is None and type(i) in (str, unicode):
 				gstr = i
@@ -643,6 +650,8 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			rv = [ (" " * pad) + self.COMMAND + "(" ]
+			if self.minimum_match_ratio != self.DEFAULT_MINIMUM_MATCH_RATIO:
+				rv[0] += "%s," % (self.minimum_match_ratio)
 			for gstr in self.gestures:
 				a_str = self.gestures[gstr].to_string(True).split("\n")
 				a_str[0] = (" " * pad) + "  '" + (gstr + "',").ljust(11) + a_str[0]	# Key has to be one of SCButtons
@@ -656,6 +665,8 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 			return "\n".join(rv)
 		else:
 			rv = [ ]
+			if self.minimum_match_ratio != self.DEFAULT_MINIMUM_MATCH_RATIO:
+				rv.append(str(self.minimum_match_ratio))
 			for gstr in self.gestures:
 				rv += [ "'%s'" % (gstr,), self.gestures[gstr].to_string(False) ]
 			return self.COMMAND + "(" + ", ".join(rv) + ")"	
@@ -694,9 +705,8 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 
 	def _find_best_match_gesture(self, gesture_string):
 		NUM_MATCHES_TO_RETURN = 1
-		MINIMUM_MATCH_RATIO = .5
-
-		similar_gestures = get_close_matches(gesture_string, self.gestures.keys(), NUM_MATCHES_TO_RETURN, MINIMUM_MATCH_RATIO)
+	
+		similar_gestures = get_close_matches(gesture_string, self.gestures.keys(), NUM_MATCHES_TO_RETURN, self.minimum_match_ratio)
 		best_gesture = next(iter(similar_gestures), None)
 
 		if best_gesture is not None:
