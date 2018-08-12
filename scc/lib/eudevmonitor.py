@@ -28,8 +28,13 @@ class Eudev:
 	
 	def __init__(self):
 		self._ctx = None
-		assert find_library(self.LIB_NAME), self.LIB_NAME + "library not found"
 		self._lib = ctypes.CDLL(find_library(self.LIB_NAME))
+		if self._lib is None:
+			# Alternative approach for NixOS
+			try:
+				self._lib = ctypes.cdll.LoadLibrary("libudev.so")
+			except OSError:
+				raise ImportError("No library named udev")
 		Eudev._setup_lib(self._lib)
 		self._ctx = self._lib.udev_new()
 		if self._ctx is None:
