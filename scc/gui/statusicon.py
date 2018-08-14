@@ -39,7 +39,7 @@ class StatusIcon(GObject.GObject):
 	"""
 	Base class for all status icon backends
 	"""
-	TRAY_TITLE     = _("Syncthing")
+	TRAY_TITLE     = _("SC-Controller")
 	
 	__gsignals__ = {
 		b"clicked": (GObject.SignalFlags.RUN_FIRST, None, ()),
@@ -62,7 +62,7 @@ class StatusIcon(GObject.GObject):
 		self.__active    = True
 		self.__visible   = False
 		self.__hidden    = False
-		self.__icon      = "si-syncthing-unknown"
+		self.__icon      = "scc-unknown"
 		self.__text      = ""
 		self.__force     = force
 	
@@ -214,7 +214,7 @@ class StatusIconGTK3(StatusIcon):
 		self._tray.connect("notify::embedded", self._on_embedded_change)
 		
 		self._tray.set_visible(True)
-		self._tray.set_name("syncthing-gtk")
+		self._tray.set_name("sc-controller")
 		self._tray.set_title(self.TRAY_TITLE)
 		
 		# self._tray.is_embedded() must be called asynchronously
@@ -273,7 +273,7 @@ class StatusIconAppIndicator(StatusIconDBus):
 		
 		category = appindicator.IndicatorCategory.APPLICATION_STATUS
 		# Whatever icon is set here will be used as a tooltip icon during the entire time to icon is shown
-		self._tray = appindicator.Indicator.new("syncthing-gtk", self._get_icon(), category)
+		self._tray = appindicator.Indicator.new("sc-controller", self._get_icon(), category)
 		self._tray.set_menu(self._get_popupmenu())
 		self._tray.set_title(self.TRAY_TITLE)
 	
@@ -303,7 +303,7 @@ class StatusIconProxy(StatusIcon):
 		self._arguments  = (args, kwargs)
 		self._status_fb  = None
 		self._status_gtk = None
-		self.set("si-syncthing-unknown", "")
+		self.set("scc-unknown", "")
 		
 		# Do not ever force-show indicators when they do not think they'll work
 		if "force" in self._arguments[1]:
