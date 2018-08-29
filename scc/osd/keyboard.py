@@ -400,16 +400,24 @@ class Keyboard(OSDWindow, TimerManager):
 		l_lines, r_lines, used = [], [], set()
 		
 		def add_action(side, button, a):
-			if a and not isinstance(a, scc.osd.osk_actions.OSKCursorAction):
-				if isinstance(a, ModeModifier):
-					for x in a.get_child_actions():
-						add_action(side, button, x)
+			if not a:
+				return
+			if isinstance(a, scc.osd.osk_actions.OSKCursorAction):
+				if a.side != CPAD: return
+			if isinstance(a, ModeModifier):
+				for x in a.get_child_actions():
+					add_action(side, button, x)
+				return
+			desc = a.describe(Action.AC_OSK)
+			if desc in used:
+				if isinstance(a, scc.osd.osk_actions.OSKPressAction):
+					# Special case, both triggers are set to "press a key"
+					pass
+				else:
 					return
-				desc = a.describe(Action.AC_OSK)
-				if desc in used: return
-				icon = self._controller.get_button_name(gui_config, button)
-				side.append(( icon, desc ))
-				used.add(desc)
+			icon = self._controller.get_button_name(gui_config, button)
+			side.append(( icon, desc ))
+			used.add(desc)
 		
 		def add_button(side, b):
 			add_action(side, b, self.profile.buttons[b])
@@ -423,6 +431,12 @@ class Keyboard(OSDWindow, TimerManager):
 			add_button(l_lines, b)
 		for b in (SCButtons.RB, SCButtons.B, SCButtons.A):
 			add_button(r_lines, b)
+		
+		if self._controller.get_flags() & ControllerFlags.HAS_CPAD != 0:
+			for lst in (l_lines, r_lines):
+				while len(lst) > 3: lst.pop()
+				while len(lst) < 3: lst.append((None, ""))
+			add_action(r_lines, CPAD, self.profile.pads[CPAD])
 		add_action(l_lines, SCButtons.STICKPRESS, self.profile.stick)
 		
 		self.background.set_help(l_lines, r_lines)
@@ -480,11 +494,6 @@ class Keyboard(OSDWindow, TimerManager):
 	
 	def load_profile(self):
 		self.profile.load(find_profile(Keyboard.OSK_PROF_NAME)).compress()
-		if not self.profile.pads[CPAD]:
-			# Backwards compatibility; Originally, there was
-			# no default mapping for CPDAD
-			self.profile.pads[CPAD] = scc.osd.osk_actions.OSKCursorAction(CPAD)
-			self.profile.pads[CPAD].speed = [ 1.0, 1.0 ]
 		self.set_help()
 	
 	
@@ -511,8 +520,6 @@ class Keyboard(OSDWindow, TimerManager):
 		
 		# TODO: Single-handed mode for PS4 posponed
 		locks = [ LEFT, RIGHT, STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
-		self.cursors[CPAD].hide()
-		"""
 		if (c.get_flags() & ControllerFlags.HAS_CPAD) == 0:
 			# Two pads, two hands
 			locks = [ LEFT, RIGHT, STICK, "STICKPRESS" ] + [ b.name for b in SCButtons ]
@@ -525,7 +532,17 @@ class Keyboard(OSDWindow, TimerManager):
 			self._pressed = { self.cursors[CPAD] : None }
 			self.cursors[LEFT].hide()
 			self.cursors[RIGHT].hide()
-		"""
+			
+			# There is no configurable nor default mapping for CPDAD,
+			# so situable mappings are hardcoded here
+			self.profile.pads[CPAD] = scc.osd.osk_actions.OSKCursorAction(CPAD)
+			self.profile.pads[CPAD].speed = [ 0.85, 1.2 ]
+			self.profile.buttons[SCButtons.CPADPRESS] = scc.osd.osk_actions.OSKPressAction(CPAD)
+			
+			for i in (LEFT, RIGHT):
+				if isinstance(self.profile.triggers[i], scc.osd.osk_actions.OSKPressAction):
+					self.profile.triggers[i] = scc.osd.osk_actions.OSKPressAction(CPAD)
+		
 		self._controller = c
 		c.lock(success, self.on_failed_to_lock, *locks)
 		self.set_help()

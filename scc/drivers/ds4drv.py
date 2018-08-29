@@ -172,7 +172,7 @@ class DS4Controller(HIDController):
 
 class DS4EvdevController(EvdevController):
 	TOUCH_FACTOR_X = STICK_PAD_MAX / 940.0
-	TOUCH_FACTOR_Y = STICK_PAD_MAX / -470.0
+	TOUCH_FACTOR_Y = STICK_PAD_MAX / 470.0
 	BUTTON_MAP = {
 		304: "A",
 		305: "B",
@@ -289,7 +289,7 @@ class DS4EvdevController(EvdevController):
 						new_state = new_state._replace(cpad_x = value)
 					elif event.code == self.ECODES.ABS_MT_POSITION_Y:
 						value = event.value * DS4EvdevController.TOUCH_FACTOR_Y
-						value = STICK_PAD_MIN + int(value)
+						value = STICK_PAD_MAX - int(value)
 						new_state = new_state._replace(cpad_y = value)
 				elif event.type == 0:
 					pass

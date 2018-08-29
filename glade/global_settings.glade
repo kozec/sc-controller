@@ -149,7 +149,7 @@
     <data>
       <row>
         <col id="0" translatable="yes">Shift and Ctrl</col>
-        <col id="1">button(Keys.KEY_LEFTSHIFT)|button(Keys.KEY_LEFTCTRL)</col>
+        <col id="1">trigger(50, button(Keys.KEY_LEFTSHIFT))|trigger(50, button(Keys.KEY_LEFTCTRL))</col>
         <col id="2">False</col>
       </row>
       <row>
