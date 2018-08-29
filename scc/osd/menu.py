@@ -314,7 +314,15 @@ class Menu(OSDWindow):
 	
 	def _check_on_screen_position(self):
 		x, y = Menu._get_on_screen_position(self._selected.widget)
-		screen_height = self.get_window().get_screen().get_height()
+		try:
+			m = self.get_window().get_display().get_monitor_at_window(self.get_window())
+			assert m
+			y_offset = m.get_geometry().y
+			screen_height = m.get_geometry().height
+		except:
+			y_offset = 0
+			screen_height = self.get_window().get_screen().get_height()
+		y -= y_offset
 		if y < 50:
 			wx, wy = self.get_window().get_position()
 			wy += 5
