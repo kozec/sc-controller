@@ -79,8 +79,8 @@ static uint32_t BT_BUTTONS[] = {
 	// Bit to SCButton
 	SCB_RT,					// 00
 	SCB_LT,					// 01
-	SCB_LB,					// 02
-	SCB_RB,					// 03
+	SCB_RB,					// 02
+	SCB_LB,					// 03
 	SCB_Y,					// 04
 	SCB_B,					// 05
 	SCB_X,					// 06
