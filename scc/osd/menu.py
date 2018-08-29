@@ -312,7 +312,7 @@ class Menu(OSDWindow):
 		return False
 	
 	
-	def _check_on_screen_position(self):
+	def _check_on_screen_position(self, quick=False):
 		x, y = Menu._get_on_screen_position(self._selected.widget)
 		try:
 			m = self.get_window().get_display().get_monitor_at_window(self.get_window())
@@ -325,14 +325,20 @@ class Menu(OSDWindow):
 		y -= y_offset
 		if y < 50:
 			wx, wy = self.get_window().get_position()
-			wy += 5
+			if quick:
+				wy = 50 - (y - wy)
+			else:
+				wy += 5
+				GLib.timeout_add(2, self._check_on_screen_position)
 			self.get_window().move(wx, wy)
-			GLib.timeout_add(2, self._check_on_screen_position)
 		if y > screen_height - 100:
 			wx, wy = self.get_window().get_position()
-			wy -= 5
+			if quick:
+				wy = screen_height - 100 - (y - wy)
+			else:
+				wy -= 5
+				GLib.timeout_add(2, self._check_on_screen_position)
 			self.get_window().move(wx, wy)
-			GLib.timeout_add(2, self._check_on_screen_position)
 	
 	
 	def _connect_handlers(self):
@@ -353,6 +359,7 @@ class Menu(OSDWindow):
 		if not self.select(0):
 			self.next_item(1)
 		OSDWindow.show(self, *a)
+		GLib.timeout_add(1, self._check_on_screen_position, True)
 	
 	
 	def on_daemon_connected(self, *a):
@@ -433,9 +440,11 @@ class Menu(OSDWindow):
 				break
 			if i >= len(self.items):
 				i = 0
+				GLib.timeout_add(1, self._check_on_screen_position, True)
 				continue
 			if i < 0:
 				i = len(self.items) - 1
+				GLib.timeout_add(1, self._check_on_screen_position, True)
 				continue
 			if self.select(i):
 				# Not a separator
