@@ -16,22 +16,20 @@ RECOLORS = {							# Defines set of hue shifts for controller-icons
 	"5" : 0.8,		# Orange
 	"6" : 0.5,		# Purple
 }
-#	
 
-'''
+
 # Generate svg state icons
-for size in (22, 24):
+for size in (24, 256):
 	for state in ('alive', 'dead', 'error', 'unknown'):
-		print "scc-%s.png" % (state,)
+		print "scc-statusicon-%s.png" % (state,)
 		subprocess.call([
 			"inkscape",
-		 	"%s/scc-%s.svg" % (ICODIR, state),
+			"%s/scc-statusicon-%s.svg" % (ICODIR, state),
 			"--export-area-page",
 			"--export-png=%s/%sx%s/status/scc-%s.png" % (ICODIR, size, size, state),
 			"--export-width=%s" % (size,),
 			"--export-height=%s" % (size,) ])
 
-'''
 
 def html_to_rgb(html):
 	""" Converts #rrggbbaa or #rrggbb to r, g, b,a in (0,1) ranges """
