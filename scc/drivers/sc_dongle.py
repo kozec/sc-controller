@@ -259,7 +259,11 @@ class SCController(Controller):
 	
 	
 	def on_serial_got(self):
-		log.debug("Got wireless SC with serial %s", self._serial)
+		try:
+			log.debug("Got wireless SC with serial %s", self._serial)
+		except UnicodeDecodeError:
+			log.debug("Failed to decode wireless SC serial")
+			self._serial = self._driver._available_serials.pop()
 		self._id = str(self._serial)
 		self._driver.daemon.add_controller(self)
 	
