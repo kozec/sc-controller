@@ -199,11 +199,12 @@ def find_profile(name):
 	return None
 
 
-def find_icon(name, prefer_bw=False, paths=None, extension="png"):
+def find_icon(name, prefer_bw=False, paths=None, extensions=("png", "svg")):
 	"""
 	Returns (filename, has_colors) for specified icon name.
 	This is done by searching for name + '.png' and name + ".bw.png"
-	in user and default menu-icons folders.
+	in user and default menu-icons folders. ".svg" is also supported, but only
+	if no pngs are found.
 	
 	If both colored and grayscale version is found, colored is returned, unless
 	prefer_bw is set to True.
@@ -215,29 +216,32 @@ def find_icon(name, prefer_bw=False, paths=None, extension="png"):
 	if name is None:
 		# Special case, so code can pass menuitem.icon directly
 		return None, False
-	gray_filename = "%s.bw.%s" % (name, extension)
-	colors_filename = "%s.%s" % (name, extension)
-	gray, colors = None, None
 	if paths is None:
 		paths = get_default_menuicons_path(), get_menuicons_path()
-	for p in paths:
-		# Check grayscale
-		if gray is None:
-			path = os.path.join(p, gray_filename)
-			if os.path.exists(path):
-				if prefer_bw:
-					return path, False
-				gray = path
-		# Check colors
-		if colors is None:
-			path = os.path.join(p, colors_filename)
-			if os.path.exists(path):
-				if not prefer_bw:
-					return path, True
-				colors = path
-	if colors is not None:
-		return colors, True
-	return gray, False
+	for extension in extensions:
+		gray_filename = "%s.bw.%s" % (name, extension)
+		colors_filename = "%s.%s" % (name, extension)
+		gray, colors = None, None
+		for p in paths:
+			# Check grayscale
+			if gray is None:
+				path = os.path.join(p, gray_filename)
+				if os.path.exists(path):
+					if prefer_bw:
+						return path, False
+					gray = path
+			# Check colors
+			if colors is None:
+				path = os.path.join(p, colors_filename)
+				if os.path.exists(path):
+					if not prefer_bw:
+						return path, True
+					colors = path
+		if colors is not None:
+			return colors, True
+		if gray is not None:
+			return gray, False
+	return None, False
 
 
 def find_button_image(name, prefer_bw=False):

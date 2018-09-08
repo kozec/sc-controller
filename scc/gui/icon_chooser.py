@@ -132,9 +132,12 @@ class IconChooser(Editor, UserDataManager):
 				tvCategories.get_model().append(( name, name.title() ))
 			else:
 				has_colors = True
+				if name.startswith("."):
+					# Ignore hidden files
+					continue
 				name = name.split(".")
-				if name[-1] != "png":
-					# Ignore non-PNG files
+				if name[-1] not in ("svg", "png"):
+					# Ignore non-supported files
 					continue
 				name = name[0:-1]
 				if name[-1] == "bw":
