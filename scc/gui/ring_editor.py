@@ -105,8 +105,7 @@ class RingEditor(Editor, ComboSetter):
 			from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 			e = ActionEditor(self.app, cb)
 			e.set_title(_("Edit Action"))
-			e.hide_macro()
-			e.hide_ring()
+			e.hide_editor_mode("Macro", "Ring")
 		return e
 	
 	

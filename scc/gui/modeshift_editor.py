@@ -224,7 +224,7 @@ class ModeshiftEditor(Editor):
 			from scc.gui.action_editor import ActionEditor	# Cannot be imported @ top
 			e = ActionEditor(self.app, cb)
 			e.set_title(_("Edit Action"))
-			e.hide_modeshift()
+			e.hide_editor_mode("Modeshift")
 		return e
 	
 	

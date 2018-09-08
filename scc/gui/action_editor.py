@@ -369,37 +369,32 @@ class ActionEditor(Editor):
 		self.builder.get_object("rvMore").set_visible(False)
 	
 	
-	def hide_modeshift(self):
+	def hide_editor_mode(self, *names):
 		"""
-		Hides Mode Shift button.
-		Used when displaying ActionEditor from ModeshiftEditor
+		Hides named mode from Mode menu.
+		Name can be one of "Modeshift", "Macro", "Ring".
+		If all three are hidden, mode change button is hidden as well.
 		"""
-		self.builder.get_object("btModeshift").set_visible(False)
-	
-	
-	def hide_macro(self):
-		"""
-		Hides Macro button.
-		Used when editing macro of pad/stick bindings.
-		"""
-		self.builder.get_object("btMacro").set_visible(False)
-	
-	
-	def hide_ring(self):
-		"""
-		Hides Ring Bindings button.
-		Used when editing anything but pad.
-		"""
-		self.builder.get_object("btInnerRing").set_visible(False)
+		OPTIONS = ("Modeshift", "Macro", "Ring")
+		for name in names:
+			assert name in OPTIONS
+			self.builder.get_object("mnuSw%s" % (name,)).set_visible(False)
+		
+		all_hidden = True
+		for name in OPTIONS:
+			if self.builder.get_object("mnuSw%s" % (name,)).get_visible():
+				all_hidden = False
+				break
+		
+		if all_hidden:
+			self.builder.get_object("btSwapEditor").set_visible(False)
 	
 	
 	def hide_action_buttons(self):
 		""" Hides action buttons, effectivelly disallowing user to change action type """
 		for x in ("lblActionType", "vbActionButtons"):
 			self.builder.get_object(x).set_visible(False)
-		self.hide_modeshift()
-		self.hide_macro()
-		self.hide_ring()
+		self.hide_editor_mode("Modeshift", "Macro", "Ring")
 	
 	
 	def hide_action_str(self):
@@ -412,9 +407,7 @@ class ActionEditor(Editor):
 		""" Hides everything but action buttons and action name field """
 		self.builder.get_object("stActionModes").set_visible(False)
 		self.hide_action_str()
-		self.hide_modeshift()
-		self.hide_macro()
-		self.hide_ring()
+		self.hide_editor_mode("Modeshift", "Macro", "Ring")
 	
 	
 	def hide_name(self):
@@ -485,7 +478,7 @@ class ActionEditor(Editor):
 		self.close()
 	
 	
-	def on_btModeshift_clicked(self, *a):
+	def on_mnuSwModeshift_activate(self, *a):
 		""" Convert current action into modeshift and send it to ModeshiftEditor """
 		e = ModeshiftEditor(self.app, self.ac_callback)
 		action = ModeModifier(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
@@ -495,7 +488,7 @@ class ActionEditor(Editor):
 		e.show(self.get_transient_for())
 	
 	
-	def on_btMacro_clicked(self, *a):
+	def on_mnuSwMacro_activate(self, *a):
 		""" Convert current action into macro and send it to MacroEditor """
 		e = MacroEditor(self.app, self.ac_callback)
 		action = Macro(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
@@ -505,7 +498,7 @@ class ActionEditor(Editor):
 		e.show(self.get_transient_for())
 	
 	
-	def on_btInnerRing_clicked(self, *a):
+	def on_mnuSwRing_activate(self, *a):
 		""" Convert current action into ring bindings and send it to RingEditor """
 		e = RingEditor(self.app, self.ac_callback)
 		action = RingAction(self.generate_modifiers(self._action, self._selected_component.NAME=="custom"))
@@ -1102,31 +1095,29 @@ class ActionEditor(Editor):
 				self.set_title(nameof(id),)
 			self._set_mode(action, mode or Action.AC_BUTTON)
 			self.hide_modifiers()
+			self.hide_editor_mode("Ring")
 			self.set_action(action)
 		elif id in TRIGGERS:
 			self.set_title(_("%s Trigger") % (id,))
 			self._set_mode(action, mode or Action.AC_TRIGGER)
 			self.set_action(action)
-			self.hide_macro()
-			self.hide_ring()
+			self.hide_editor_mode("Macro", "Ring")
 		elif id in STICKS:
 			self.set_title(_("Stick"))
 			self._set_mode(action, mode or Action.AC_STICK)
 			self.set_action(action)
-			self.hide_macro()
+			self.hide_editor_mode("Macro")
 			self.id = Profile.STICK
 		elif id in GYROS:
 			self.set_title(_("Gyro"))
 			self._set_mode(action, mode or Action.AC_GYRO)
 			self.set_action(action)
-			self.hide_modeshift()
-			self.hide_macro()
-			self.hide_ring()
+			self.hide_editor_mode("Modeshift", "Macro", "Ring")
 			self.id = Profile.GYRO
 		elif id in PADS:
 			self._set_mode(action, mode or Action.AC_PAD)
 			self.set_action(action)
-			self.hide_macro()
+			self.hide_editor_mode("Macro")
 			if id == Profile.LPAD:
 				self.set_title(_("Left Pad"))
 			elif id == Profile.RPAD:
@@ -1135,14 +1126,10 @@ class ActionEditor(Editor):
 				self.set_title(_("Touch Pad"))
 		if mode == Action.AC_OSK:
 			self.hide_name()
-			self.hide_modeshift()
-			self.hide_macro()
-			self.hide_ring()
+			self.hide_editor_mode("Modeshift", "Macro", "Ring")
 			# self.hide_rotation()
 		elif mode == Action.AC_MENU:
-			self.hide_modeshift()
-			self.hide_macro()
-			self.hide_ring()
+			self.hide_editor_mode("Modeshift", "Macro", "Ring")
 	
 	
 	def set_menu_item(self, item, title_for_name_label=None):

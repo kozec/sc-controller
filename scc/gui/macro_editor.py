@@ -276,9 +276,7 @@ class MacroEditor(Editor):
 		ae = ActionEditor(self.app, on_chosen)
 		ae.set_title(_("Edit Action"))
 		ae.set_input(self.id, action_data.action, mode=self.mode)
-		ae.hide_modeshift()
-		ae.hide_macro()
-		ae.hide_name()
+		ae.hide_editor_mode("Modeshift", "Macro", "Ring")
 		ae.show(self.window)
 	
 	

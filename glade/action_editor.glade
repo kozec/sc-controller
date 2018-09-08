@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.20.4 -->
 <interface>
-  <requires lib="gtk+" version="3.10"/>
+  <requires lib="gtk+" version="3.12"/>
   <object class="GtkAdjustment" id="adjDeadzoneLower">
     <property name="upper">32766</property>
     <property name="step_increment">1</property>
@@ -151,6 +151,79 @@
         <col id="1">BOTH</col>
       </row>
     </data>
+  </object>
+  <object class="GtkListStore" id="lstOutputMode">
+    <columns>
+      <!-- column-name action -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">XY( axis(Axes.ABS_X), raxis(Axes.ABS_Y) )</col>
+        <col id="1" translatable="yes">Left Stick</col>
+        <col id="2" translatable="yes">lstick</col>
+      </row>
+      <row>
+        <col id="0">XY( axis(Axes.ABS_RX), raxis(Axes.ABS_RY) )</col>
+        <col id="1" translatable="yes">Right Stick</col>
+        <col id="2" translatable="yes">rstick</col>
+      </row>
+      <row>
+        <col id="0">XY( axis(Axes.ABS_HAT0X), raxis(Axes.ABS_HAT0Y) )</col>
+        <col id="1" translatable="yes">DPad</col>
+        <col id="2" translatable="yes">dpad</col>
+      </row>
+      <row>
+        <col id="0">XY( mouse(Rels.REL_HWHEEL, sensitivity), mouse(Rels.REL_WHEEL, sensitivity) )</col>
+        <col id="1" translatable="yes">Mouse Wheel</col>
+        <col id="2" translatable="yes">wheel</col>
+      </row>
+      <row>
+        <col id="0">trackpad(sensitivity)</col>
+        <col id="1" translatable="yes">Trackpad (Mouse)</col>
+        <col id="2" translatable="yes">trackpad</col>
+      </row>
+      <row>
+        <col id="0">trackball(sensitivity)</col>
+        <col id="1" translatable="yes">Trackball (Mouse)</col>
+        <col id="2" translatable="yes">trackball</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkMenu" id="mnuSwapEditor">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="mnuSwModeshift">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Mode Shift</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuSwModeshift_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuSwMacro">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Macro</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuSwMacro_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuSwRing">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Ring Bindings</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuSwRing_activate" swapped="no"/>
+      </object>
+    </child>
   </object>
   <object class="GtkWindow" id="Dialog">
     <property name="width_request">650</property>
@@ -1508,40 +1581,46 @@
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
         <child>
-          <object class="GtkButton" id="btModeshift">
-            <property name="label" translatable="yes">Mode Shift</property>
+          <object class="GtkMenuButton" id="btSwapEditor">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <signal name="clicked" handler="on_btModeshift_clicked" swapped="no"/>
+            <property name="margin_left">5</property>
+            <property name="draw_indicator">True</property>
+            <property name="popup">mnuSwapEditor</property>
+            <property name="use_popover">False</property>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkLabel" id="lblSwapEditor">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_right">10</property>
+                    <property name="label" translatable="yes">Mode</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">menu-sort-down</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
           </object>
-          <packing>
-            <property name="position">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="btMacro">
-            <property name="label" translatable="yes">Macro</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="on_btMacro_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="position">3</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="btInnerRing">
-            <property name="label" translatable="yes">Ring Bindings</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="on_btInnerRing_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="position">4</property>
-          </packing>
         </child>
         <child>
           <object class="GtkButton" id="btOK">
@@ -1578,47 +1657,5 @@
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkListStore" id="lstOutputMode">
-    <columns>
-      <!-- column-name action -->
-      <column type="gchararray"/>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name key -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">XY( axis(Axes.ABS_X), raxis(Axes.ABS_Y) )</col>
-        <col id="1" translatable="yes">Left Stick</col>
-        <col id="2" translatable="yes">lstick</col>
-      </row>
-      <row>
-        <col id="0">XY( axis(Axes.ABS_RX), raxis(Axes.ABS_RY) )</col>
-        <col id="1" translatable="yes">Right Stick</col>
-        <col id="2" translatable="yes">rstick</col>
-      </row>
-      <row>
-        <col id="0">XY( axis(Axes.ABS_HAT0X), raxis(Axes.ABS_HAT0Y) )</col>
-        <col id="1" translatable="yes">DPad</col>
-        <col id="2" translatable="yes">dpad</col>
-      </row>
-      <row>
-        <col id="0">XY( mouse(Rels.REL_HWHEEL, sensitivity), mouse(Rels.REL_WHEEL, sensitivity) )</col>
-        <col id="1" translatable="yes">Mouse Wheel</col>
-        <col id="2" translatable="yes">wheel</col>
-      </row>
-      <row>
-        <col id="0">trackpad(sensitivity)</col>
-        <col id="1" translatable="yes">Trackpad (Mouse)</col>
-        <col id="2" translatable="yes">trackpad</col>
-      </row>
-      <row>
-        <col id="0">trackball(sensitivity)</col>
-        <col id="1" translatable="yes">Trackball (Mouse)</col>
-        <col id="2" translatable="yes">trackball</col>
-      </row>
-    </data>
   </object>
 </interface>
