@@ -218,6 +218,8 @@ def find_icon(name, prefer_bw=False, paths=None, extensions=("png", "svg")):
 		return None, False
 	if paths is None:
 		paths = get_default_menuicons_path(), get_menuicons_path()
+	if name.endswith(".bw"):
+		name = name[0:-3]
 	for extension in extensions:
 		gray_filename = "%s.bw.%s" % (name, extension)
 		colors_filename = "%s.%s" % (name, extension)
@@ -247,7 +249,7 @@ def find_icon(name, prefer_bw=False, paths=None, extensions=("png", "svg")):
 def find_button_image(name, prefer_bw=False):
 	""" Similar to find_icon, but searches for button image """
 	return find_icon(nameof(name), prefer_bw,
-			paths=[get_button_images_path()], extension="svg")
+			paths=[get_button_images_path()], extensions=("svg",))
 
 
 def menu_is_default(name):

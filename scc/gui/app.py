@@ -1424,7 +1424,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
-		aso("osd",		b"o", "OSD mode (displays only editor only)")
+		aso("osd",		b"o", "OSD mode (OSD-controllable editor for current profile)")
 	
 	
 	def save_profile_selection(self, path):
