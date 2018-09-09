@@ -152,6 +152,9 @@ class ActionEditor(Editor):
 				self.builder.get_object("btClearDZ%s" % (key,)),
 				self.deadzone[i]	# default value
 			))
+		
+		if self.app.osd_mode:
+			self.builder.get_object("entName").set_sensitive(False)
 	
 	
 	def load_components(self):
@@ -186,6 +189,11 @@ class ActionEditor(Editor):
 		self.remove_added_widget()
 		if self._selected_component is not None:
 			self._selected_component.hidden()
+	
+	
+	def on_Dialog_key_press_event(self, window, event):
+		if self.app.osd_mode and event.keyval == 65471:
+			self.on_btOK_clicked()
 	
 	
 	def set_osd_enabled(self, value):

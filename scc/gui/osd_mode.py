@@ -130,12 +130,15 @@ class OSDModeMouse(object):
 class OSDModeMappings(object):
 	
 	ICONS = {
-		'imgOsdmodeOK'    : SCButtons.A,
-		'imgOsdmodeClose' : SCButtons.B,
-		'imgOsdmodeExit'  : SCButtons.C,
-		'imgOsdmodeSave'  : SCButtons.Y,
+		'imgOsdmodeAct'    : SCButtons.A,
+		'imgOsdmodeClose'  : SCButtons.B,
+		'imgOsdmodeExit'   : SCButtons.C,
+		'imgOsdmodeSave'   : SCButtons.Y,
+		'imgOsdmodeOK'     : SCButtons.Y,
 	}
 	
+	MAIN_WINDOW_BUTTONS = { "vbOsdmodeExit", "vbOsdmodeSave" }
+	OTHER_WINDOW_BUTTONS = { "vbOsdmodeExit", "vbOsdmodeAct", "vbOsdmodeClose", "vbOsdmodeOK" }
 	
 	def __init__(self, app, mapper, window):
 		self.app = app
@@ -144,6 +147,9 @@ class OSDModeMappings(object):
 		self.parent = app.window
 		self.first_window = None
 		GLib.timeout_add(10, self.move_around)
+		self.app.window.connect("focus-in-event", self.on_main_window_focus_in_event)
+		self.app.window.connect("focus-out-event", self.on_main_window_focus_out_event)
+		self.on_main_window_focus_in_event()
 	
 	
 	def set_controller(self, c):
@@ -152,6 +158,20 @@ class OSDModeMappings(object):
 			w = self.app.builder.get_object(name)
 			icon, trash = c.get_button_icon(config, OSDModeMappings.ICONS[name])
 			w.set_from_file(icon)
+	
+	
+	def on_main_window_focus_in_event(self, *a):
+		for x in self.OTHER_WINDOW_BUTTONS:
+			self.app.builder.get_object(x).set_visible(False)
+		for x in self.MAIN_WINDOW_BUTTONS:
+			self.app.builder.get_object(x).set_visible(True)
+	
+	
+	def on_main_window_focus_out_event(self, *a):
+		for x in self.MAIN_WINDOW_BUTTONS:
+			self.app.builder.get_object(x).set_visible(False)
+		for x in self.OTHER_WINDOW_BUTTONS:
+			self.app.builder.get_object(x).set_visible(True)
 	
 	
 	def get_target_position(self):

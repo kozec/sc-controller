@@ -2,6 +2,7 @@
 	"buttons": {
 		"A":	{ "action": "button(Keys.KEY_SPACE)" },
 		"B":	{ "action": "button(Keys.KEY_ESC)" },
+		"Y":	{ "action": "button(Keys.KEY_F2)" },
 		"LB":	{ "action": "button(Keys.KEY_BACKSPACE)" },
 		"RB":	{ "action": "button(Keys.KEY_SPACE)" },
 		"LPAD":	{ "action": "button(Keys.BTN_RIGHT)" },

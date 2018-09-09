@@ -21,14 +21,89 @@
         <property name="margin_top">5</property>
         <property name="margin_bottom">5</property>
         <child>
-          <object class="GtkLabel" id="label57">
+          <object class="GtkBox" id="vbOsdmodeExit">
+            <property name="width_request">75</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <child>
+              <object class="GtkImage" id="imgOsdmodeExit">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stock">gtk-missing-image</property>
+                <property name="icon_size">3</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="padding">5</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lblOsdmodeExit">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Exit</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                  <attribute name="scale" value="1.5"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
           </object>
           <packing>
-            <property name="expand">True</property>
+            <property name="expand">False</property>
             <property name="fill">True</property>
+            <property name="padding">5</property>
             <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vbOsdmodeAct">
+            <property name="width_request">75</property>
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <child>
+              <object class="GtkImage" id="imgOsdmodeAct">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stock">gtk-missing-image</property>
+                <property name="icon_size">3</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="padding">5</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lblOsdmodeAct">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Activate</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                  <attribute name="scale" value="1.5"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">5</property>
+            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -71,14 +146,14 @@
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="padding">5</property>
-            <property name="position">1</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>
           <object class="GtkBox" id="vbOsdmodeClose">
             <property name="width_request">75</property>
-            <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
             <child>
               <object class="GtkImage" id="imgOsdmodeClose">
                 <property name="visible">True</property>
@@ -98,49 +173,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Close</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                  <attribute name="scale" value="1.5"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="padding">5</property>
-            <property name="position">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="vbOsdmodeExit">
-            <property name="width_request">75</property>
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <child>
-              <object class="GtkImage" id="imgOsdmodeExit">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="stock">gtk-missing-image</property>
-                <property name="icon_size">3</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="padding">5</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="lblOsdmodeExit">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Exit</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
                   <attribute name="scale" value="1.5"/>
@@ -204,7 +236,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="label58">
+          <object class="GtkLabel" id="label57">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
           </object>
@@ -212,6 +244,17 @@
             <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">5</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label58">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">6</property>
           </packing>
         </child>
       </object>
@@ -516,6 +559,7 @@
     <property name="resizable">False</property>
     <property name="window_position">center</property>
     <signal name="delete-event" handler="on_window_delete_event" swapped="no"/>
+    <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
     <child>
       <object class="GtkBox" id="content">
         <property name="visible">True</property>
@@ -526,8 +570,8 @@
           <object class="GtkBox" id="vbSwitchers">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="margin_bottom">2</property>
             <property name="orientation">vertical</property>
-            <property name="margin">12</property>
             <property name="spacing">6</property>
             <child>
               <object class="GtkSeparator" id="sepSwitchers">

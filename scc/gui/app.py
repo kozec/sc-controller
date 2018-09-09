@@ -649,6 +649,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		if self.osd_mode:
 			# Special case, profile shouldn't be changed while in osd_mode
+			if not giofile.get_path().endswith(".mod"):
+				self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 			return
 		
 		if giofile.get_path().endswith(".mod"):
@@ -977,10 +979,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.osd_mode_mapper.set_target_window(self.window.get_window())
 			self.builder.get_object("btUndo").set_visible(False)
 			self.builder.get_object("btRedo").set_visible(False)
+			
 			m = OSDModeMappings(self, self.osd_mode_mapper,
 				self.builder.get_object("OsdmodeMappings"))
 			m.set_controller(self.profile_switchers[0].get_controller())
-			
 			m.show()
 		
 		# Locks everything but pads. Pads are emulating mouse and this is
@@ -1235,6 +1237,14 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		mnuPS = self.builder.get_object("mnuPS")
 		if mnuPS.ps.get_controller():
 			mnuPS.ps.get_controller().turnoff()
+	
+	
+	def on_window_key_press_event(self, window, event):
+		if (event.state & Gdk.ModifierType.CONTROL_MASK) != 0:
+			if event.keyval == 115:
+				self.on_save_clicked()
+		elif self.osd_mode and event.keyval == 65471:
+			self.on_save_clicked()
 	
 	
 	def show_error(self, message, ribar=None):
