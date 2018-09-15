@@ -75,7 +75,9 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 				self.set_cb(cb, "keyboard")
 			elif isinstance(action, OSDAction):
 				self.set_cb(cb, "osd")
+				sclOSDTimeout = self.builder.get_object("sclOSDTimeout")
 				enOSDText = self.builder.get_object("enOSDText")
+				sclOSDTimeout.set_value(action.timeout or 60.1)
 				enOSDText.set_text(action.text)
 			else:
 				self.set_cb(cb, "none")
@@ -174,10 +176,14 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 		self.editor.set_action(ShellCommandAction(enCommand.get_text().decode("utf-8")))
 	
 	
-	def on_enOSDText_changed(self, *a):
+	def on_osd_settings_changed(self, *a):
 		if self._recursing : return
 		enOSDText = self.builder.get_object("enOSDText")
-		self.editor.set_action(OSDAction(enOSDText.get_text().decode("utf-8")))
+		sclOSDTimeout = self.builder.get_object("sclOSDTimeout")
+		timeout = sclOSDTimeout.get_value()
+		self.editor.set_action(OSDAction(
+			0 if timeout > 60.0 else timeout,
+			enOSDText.get_text().decode("utf-8")))
 	
 	
 	def on_exMenuControl_activate(self, ex, *a):
@@ -188,3 +194,12 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 	def on_exMenuPosition_activate(self, ex, *a):
 		rvMenuPosition = self.builder.get_object("rvMenuPosition")
 		rvMenuPosition.set_reveal_child(not ex.get_expanded())
+	
+	
+	def on_sclOSDTimeout_format_value(self, scale, value):
+		if value > 60.0:
+			return _("forever")
+		elif value < 1:
+			return "%sms" % int(value * 1000)
+		else:
+			return "%ss" % value
