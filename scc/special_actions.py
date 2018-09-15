@@ -182,14 +182,16 @@ class OSDAction(Action, SpecialAction):
 		Action.__init__(self, *parameters)
 		self.action = None
 		self.timeout = self.DEFAULT_TIMEOUT
-		if len(parameters) > 1:
+		if len(parameters) > 1 and type(parameters[0]) in (int, float):
 			# timeout parameter included
-			self.timeout = parameters[0]
-		if isinstance(parameters[-1], Action):
-			self.action = parameters[-1]
+			self.timeout = float(parameters[0])
+			parameters = parameters[1:]
+		if isinstance(parameters[0], Action):
+			self.action = parameters[0]
 			self.text = self.action.describe(Action.AC_OSD)
 		else:
-			self.text = unicode(parameters[-1])
+			self.text = unicode(parameters[0])
+		self.hash = hash(self.text) + self.timeout
 		if self.action and isinstance(self.action, OSDEnabledAction):
 			self.action.enable_osd(self.timeout)
 	
@@ -218,16 +220,14 @@ class OSDAction(Action, SpecialAction):
 	
 	
 	def to_string(self, multiline=False, pad=0):
-		if isinstance(self.parameters[0], Action):
-			p0str = self.parameters[0].to_string(multiline=multiline, pad=pad)
+		parameters = []
+		if self.timeout != self.DEFAULT_TIMEOUT:
+			parameters.append(str(self.timeout))
+		if self.action:
+			parameters.append(self.action.to_string(multiline=multiline, pad=pad))
 		else:
-			p0str = "'%s'" % (str(self.parameters[0]).encode('string_escape'),)
-		if len(self.parameters) == 1:
-			return (" " * pad) + "%s(%s)" % (self.COMMAND, p0str)
-		else:
-			return (" " * pad) + "%s(%s, %s)" % (self.COMMAND,
-				p0str, self.parameters[1]
-			)
+			parameters.append("'%s'" % (str(self.text).encode('string_escape'),))
+		return (" " * pad) + "%s(%s)" % (self.COMMAND, ",".join(parameters))
 	
 	
 	def strip(self):
