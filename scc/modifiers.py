@@ -10,12 +10,13 @@ from __future__ import unicode_literals
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
+from scc.actions import GyroAbsAction
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
 from scc.constants import FE_PAD, SCButtons, HapticPos, ControllerFlags
 from scc.constants import CUT, ROUND, LINEAR, MINIMUM, FE_STICK, FE_TRIGGER
 from scc.constants import TRIGGER_MAX, LEFT, CPAD, RIGHT, STICK
+from scc.tools import nameof, clamp, quat2euler, euler2quat
 from scc.controller import HapticData
-from scc.tools import nameof, clamp
 from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign, atan2, sin, cos
 from collections import OrderedDict, deque
@@ -648,7 +649,7 @@ class DeadzoneModifier(Modifier):
 		if y == 0:
 			# Small optimalization for 1D input, for example trigger
 			if abs(x) > self.upper:
-				return copysign(range, x)
+				return copysign(range, x), 0
 			return (0 if abs(x) < self.lower else x), 0
 		distance = sqrt(x*x + y*y)
 		if distance < self.lower:
@@ -720,6 +721,11 @@ class DeadzoneModifier(Modifier):
 			ballmod = self.action
 			self.action, ballmod.action = ballmod.action, self
 			return ballmod
+		elif isinstance(self.action, GyroAbsAction):
+			# Another special case, GyroAbs has to handle deadzone
+			# only after math is finished
+			self.action._deadzone_fn = self._convert
+			return self.action
 		return self
 	
 	
@@ -754,17 +760,17 @@ class DeadzoneModifier(Modifier):
 	
 	
 	def trigger(self, mapper, position, old_position):
-		position = self._convert(position, None, TRIGGER_MAX)
+		position = self._convert(position, 0, TRIGGER_MAX)
 		return self.action.trigger(mapper, position, old_position)
 	
 	
 	def axis(self, mapper, position, what):
-		position = self._convert(position, None, STICK_PAD_MAX)
+		position = self._convert(position, 0, STICK_PAD_MAX)
 		return self.action.axis(mapper, position, what)
 	
 	
 	def pad(self, mapper, position, what):
-		position = self._convert(position, None, STICK_PAD_MAX)
+		position = self._convert(position, 0, STICK_PAD_MAX)
 		return self.action.pad(mapper, position, what)
 	
 	
@@ -774,8 +780,6 @@ class DeadzoneModifier(Modifier):
 	
 	
 	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
-		q2 = self._convert(q2, STICK_PAD_MAX)
-		q3 = self._convert(q3, STICK_PAD_MAX)
 		return self.action.gyro(mapper, pitch, yaw, roll, q1, q2, q3, q4)
 
 

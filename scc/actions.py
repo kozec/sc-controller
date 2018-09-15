@@ -1188,7 +1188,7 @@ class GyroAction(Action):
 	
 	
 	def get_compatible_modifiers(self):
-		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_DEADZONE
+		return Action.MOD_SENSITIVITY | Action.MOD_SENS_Z
 	
 	
 	def set_speed(self, x, y, z):
@@ -1232,6 +1232,7 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 		HapticEnabledAction.__init__(self)
 		self.ir = [ 0, 0, None, 0 ]	# Initial rotation, last has to be determined
 		self._was_oor = False
+		self._deadzone_fn = None
 	
 	
 	def reset(self):
@@ -1240,7 +1241,8 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 	
 	def get_compatible_modifiers(self):
 		return ( HapticEnabledAction.get_compatible_modifiers(self)
-			| GyroAction.get_compatible_modifiers(self) )
+			| GyroAction.get_compatible_modifiers(self)
+			| Action.MOD_DEADZONE )
 	
 	
 	def get_previewable(self):
@@ -1277,7 +1279,11 @@ class GyroAbsAction(HapticEnabledAction, GyroAction):
 		for i in self.GYROAXES:
 			axis = self.axes[i]
 			if axis in Axes or type(axis) == int:
-				mapper.gamepad.axisEvent(axis, AxisAction.clamp_axis(axis, pyr[i] * self.speed[i]))
+				val = AxisAction.clamp_axis(axis, pyr[i] * self.speed[i])
+				if self._deadzone_fn:
+					val, trash = self._deadzone_fn(val, 0, STICK_PAD_MAX)
+					val = int(val)
+				mapper.gamepad.axisEvent(axis, val)
 				mapper.syn_list.add(mapper.gamepad)
 			elif axis == Rels.REL_X:
 				mapper.mouse_move(AxisAction.clamp_axis(axis, pyr[i] * GyroAbsAction.MOUSE_FACTOR * self.speed[i]), 0)

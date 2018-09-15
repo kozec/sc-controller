@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 """
-SC-Controller - Action Editor - Axis Component
-
-Assigns emulated axis to trigger
+SC-Controller - Action Editor - Gyro -> Joystick or Mouse component
 """
 from __future__ import unicode_literals
 from scc.tools import _

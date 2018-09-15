@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 """
-SC-Controller - Action Editor - Axis Component
-
-Assigns emulated axis to trigger
+SC-Controller - Action Editor - Gyro -> Per Axis component
 """
 from __future__ import unicode_literals
 from scc.tools import _
@@ -170,7 +168,7 @@ class GyroComponent(AEComponent):
 		absolute, a_set  = [ None, None, None ], False
 		
 		for i in xrange(0, 3):
-			if self.axes[i] is not None:
+			if self.axes[i]:
 				if self.cbs[i].get_active():
 					absolute[i] = self.axes[i]
 					a_set = True
