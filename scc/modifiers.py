@@ -15,7 +15,7 @@ from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
 from scc.constants import FE_PAD, SCButtons, HapticPos, ControllerFlags
 from scc.constants import CUT, ROUND, LINEAR, MINIMUM, FE_STICK, FE_TRIGGER
 from scc.constants import TRIGGER_MAX, LEFT, CPAD, RIGHT, STICK
-from scc.tools import nameof, clamp, quat2euler, euler2quat
+from scc.tools import nameof, clamp, quat2euler
 from scc.controller import HapticData
 from scc.uinput import Axes, Rels
 from math import pi as PI, sqrt, copysign, atan2, sin, cos
