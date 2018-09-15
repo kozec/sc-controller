@@ -799,7 +799,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	
 	def on_mnuExit_activate(self, *a):
-		if self.app.config['gui']['autokill_daemon']:
+		if not self.osd_mode and self.app.config['gui']['autokill_daemon']:
 			log.debug("Terminating scc-daemon")
 			for x in ("content", "mnuEmulationEnabled", "mnuEmulationEnabledTray"):
 				w = self.builder.get_object(x)
