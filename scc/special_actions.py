@@ -191,7 +191,6 @@ class OSDAction(Action, SpecialAction):
 			self.text = self.action.describe(Action.AC_OSD)
 		else:
 			self.text = unicode(parameters[0])
-		self.hash = hash(self.text) + self.timeout
 		if self.action and isinstance(self.action, OSDEnabledAction):
 			self.action.enable_osd(self.timeout)
 	

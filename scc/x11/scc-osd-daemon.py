@@ -40,6 +40,7 @@ class OSDDaemon(object):
 		# hash_of_colors is used to determine if css needs to be reapplied
 		# after configuration change
 		self._hash_of_colors = -1
+		self._visible_messages = {}
 		self._window = None
 		self._registered = False
 		self._last_profile_change = 0
@@ -118,6 +119,12 @@ class OSDDaemon(object):
 				lambda *a : False, lambda *a : False)
 	
 	
+	def on_message_closed(self, m):
+		hsh = m.hash()
+		if hsh in self._visible_messages:
+			del self._visible_messages[hsh]
+	
+	
 	def on_keyboard_closed(self, *a):
 		""" Called after on-screen keyboard is hidden from the screen """
 		self._window = None
@@ -156,7 +163,22 @@ class OSDDaemon(object):
 			args = shsplit(message)[1:]
 			m = Message()
 			m.parse_argumets(args)
-			m.show()
+			hsh = m.hash()
+			if hsh in self._visible_messages:
+				self._visible_messages[hsh].extend()
+				m.destroy()
+			else:
+				# TODO: Do this only for default position once changing
+				# TODO: is allowed
+				if len(self._visible_messages):
+					height = self._visible_messages.values()[0].get_size().height
+					x, y = m.position
+					while y in [ i.position[1] for i in self._visible_messages.values() ]:
+						y -= height + 5
+					m.position = x, y
+				m.show()
+				self._visible_messages[hsh] = m
+				m.connect("destroy", self.on_message_closed)
 		elif message.startswith("OSD: keyboard"):
 			if self._window:
 				log.warning("Another OSD is already visible - refusing to show keyboard")

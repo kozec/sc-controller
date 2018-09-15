@@ -6,6 +6,10 @@
 	opacity: 1;
 }
 
+#osd-message:active {
+	border: 6px #%(border+150)s double;
+}
+
 #osd-menu-inactive {
 	opacity: 0.90;
 }
@@ -19,6 +23,10 @@
 	border: none;
 	font-size: xx-large;
 	margin: 15px 15px 15px 15px;
+}
+
+#osd-label:active {
+	color: #%(text+150)s;
 }
 
 #osd-menu, #osd-gesture {
