@@ -182,6 +182,7 @@ class SCCDaemon(Daemon):
 		# Called from socket server thread
 		p = Profile(TalkingActionParser())
 		p.load(filename).compress()
+		self._osd('clear_messages')
 		self.profile_file = filename
 		
 		if mapper.profile.gyro and not p.gyro:

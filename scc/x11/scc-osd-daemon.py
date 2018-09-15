@@ -242,13 +242,24 @@ class OSDDaemon(object):
 				else:
 					self._window.quit()
 					self._window = None
+		elif message.startswith("OSD: clear_messages"):
+			# Clears all displayed OSD messages, but not other windowswitch
+			self.clear_windows(messages_only=True)
 		elif message.startswith("OSD: clear"):
-			# Clears active OSD window (if any)
-			if self._window:
-				self._window.quit()
-				self._window = None
+			# Clears active OSD windows
+			self.clear_windows()
 		else:
 			log.warning("Unknown command from daemon: '%s'", message)
+	
+	
+	def clear_windows(self, messages_only=False):
+		if self._window and not messages_only:
+			self._window.quit()
+			self._window = None
+		to_destroy = [] + self._visible_messages.values()
+		self._visible_messages = {}
+		for m in to_destroy:
+			m.destroy()
 	
 	
 	def _check_colorconfig_change(self):

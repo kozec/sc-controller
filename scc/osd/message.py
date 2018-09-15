@@ -31,14 +31,15 @@ class Message(OSDWindow):
 		self.add(self.l)
 		
 		OSDWindow.show(self)
-		self._timeout_id = GLib.timeout_add_seconds(self.timeout, self.quit)
+		if self.timeout > 0:
+			self._timeout_id = GLib.timeout_add_seconds(self.timeout, self.quit)
 	
 	
 	def extend(self):
+		self.set_state(Gtk.StateType.ACTIVE)
+		self.l.set_state(Gtk.StateType.ACTIVE)
+		GLib.timeout_add_seconds(0.5, self.cancel_active_state)
 		if self._timeout_id:
-			self.set_state(Gtk.StateType.ACTIVE)
-			self.l.set_state(Gtk.StateType.ACTIVE)
-			GLib.timeout_add_seconds(0.5, self.cancel_active_state)
 			GLib.source_remove(self._timeout_id)
 			self._timeout_id = GLib.timeout_add_seconds(self.timeout, self.quit)
 	
@@ -55,7 +56,7 @@ class Message(OSDWindow):
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 		self.argparser.add_argument('-t', type=float, metavar="seconds",
-				default=5, help="time before message is hidden (default: 5)")
+				default=5, help="time before message is hidden (default: 5; 0 means forever)")
 		self.argparser.add_argument('text', type=str, help="text to display")
 	
 	
