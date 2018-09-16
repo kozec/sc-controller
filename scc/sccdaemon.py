@@ -306,6 +306,12 @@ class SCCDaemon(Daemon):
 			self._osd('message', '-t', action.timeout, action.text)
 	
 	
+	def on_sa_clearosd(self, mapper, action):
+		""" Called when 'clearosd' action is used """
+		with self.lock:
+			self._osd('clear')
+	
+	
 	def on_sa_area(self, mapper, action, x1, y1, x2, y2):
 		""" Called when *AreaAction has OSD enabled """
 		with self.lock:

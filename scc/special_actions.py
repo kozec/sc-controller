@@ -271,6 +271,21 @@ class OSDAction(Action, SpecialAction):
 			return self.action.whole(mapper, x, y, what)
 
 
+class ClearOSDAction(Action, SpecialAction):
+	"""
+	Clears all windows from OSD layer. Cancels all menus, clears all messages,
+	etc, etc.
+	"""
+	SA = COMMAND = "clearosd"
+	
+	def describe(self, context):
+		return _("Clear OSD")
+	
+	
+	def button_press(self, mapper):
+		self.execute(mapper)
+
+
 class MenuAction(Action, SpecialAction, HapticEnabledAction):
 	"""
 	Displays menu defined in profile or globally.
