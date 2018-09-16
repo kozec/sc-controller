@@ -219,6 +219,13 @@ Sets brightness of controller led. 'Brightness' is percent in 0 to 100 range.
 Displays text in OSD.
 
 
+#### <a name="clearosd"></a> clearosd()
+Clears all windows from OSD layer. Cancels all menus, clears all messages,
+hides on screen keyboard.
+
+Does _not_ clear OSD windows created using command line tools.
+
+
 #### <a name="menu"></a> menu(menu [, confirm_button=A [, cancel_button=B [, show_with_release=False]]]])
 Displays OSD menu.
 'confirm_button' and 'cancel_button' sets which gamepad button should be used to
