@@ -26,6 +26,7 @@ from scc.osd.dialog import Dialog
 from scc.osd import OSDWindow
 from scc.osd.menu import Menu
 from scc.osd.area import Area
+from scc.special_actions import OSDAction
 from scc.tools import shsplit, shjoin
 from scc.config import Config
 
@@ -88,6 +89,7 @@ class OSDDaemon(object):
 			self.config['recent_profiles'] = recents
 			self.config.save()
 			log.debug("Updated recent profile list")
+			self.clear_messages()
 	
 	
 	def on_daemon_died(self, *a):
@@ -242,9 +244,6 @@ class OSDDaemon(object):
 				else:
 					self._window.quit()
 					self._window = None
-		elif message.startswith("OSD: clear_messages"):
-			# Clears all displayed OSD messages, but not other windowswitch
-			self.clear_windows(messages_only=True)
 		elif message.startswith("OSD: clear"):
 			# Clears active OSD windows
 			self.clear_windows()
@@ -252,14 +251,23 @@ class OSDDaemon(object):
 			log.warning("Unknown command from daemon: '%s'", message)
 	
 	
-	def clear_windows(self, messages_only=False):
-		if self._window and not messages_only:
+	def clear_windows(self):
+		if self._window:
 			self._window.quit()
 			self._window = None
+		self.clear_messages(only_long_lasting=False)
+	
+	
+	def clear_messages(self, only_long_lasting=True):
+		"""
+		Clears all OSD messages from screen.
+		If only_long_lasting is True, which is default behaviour on profile
+		change, only messages set to last more than 10s are hidden.
+		"""
 		to_destroy = [] + self._visible_messages.values()
-		self._visible_messages = {}
 		for m in to_destroy:
-			m.destroy()
+			if not only_long_lasting or m.timeout <= 0 or m.timeout > OSDAction.DEFAULT_TIMEOUT * 2:
+				m.destroy()
 	
 	
 	def _check_colorconfig_change(self):
