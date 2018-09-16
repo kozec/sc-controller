@@ -10,19 +10,10 @@ MENU_CLASSES = (MenuAction, HorizontalMenuAction, GridMenuAction,
 
 class TestSpecialActions(object):
 	
-	def test_tests(self):
-		"""
-		Tests if this class has test for each known SpecialAction defined.
-		"""
-		for cls in Action.ALL.values():
-			if "/special_actions.py" in inspect.getfile(cls):
-				if cls in MENU_CLASSES:
-					# Skip over some hard-coded cases, these have
-					# tests merged together under weird names
-					continue
-				method_name = "test_%s" % (cls.COMMAND,)
-				assert hasattr(self, method_name), \
-					"There is no test for %s" % (cls.COMMAND)
+	# def test_tests(self):
+	#	Tests if this class has test for each known SpecialAction defined.
+	#	Removed: profile is not parsed this way anymore, so newly added actions
+	#			don't have to support what's tested.
 	
 	
 	def test_profile(self):

@@ -73,8 +73,17 @@ class TestSpecialActions(object):
 		assert _parses_as_itself(OSDAction("Hello"))
 		# With subaction
 		assert _parses_as_itself(OSDAction(TurnOffAction()))
-
-
+	
+	
+	def test_clearosd(self):
+		"""
+		Tests if ClearOSDAction can be converted to string and parsed back to
+		same action.
+		"""
+		# With text
+		assert _parses_as_itself(ClearOSDAction())
+	
+	
 	def test_menus(self):
 		"""
 		Tests if all Menu*Actions can be converted to string and parsed
