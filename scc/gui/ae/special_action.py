@@ -9,6 +9,7 @@ from scc.tools import _
 
 from scc.special_actions import ChangeProfileAction, ShellCommandAction
 from scc.special_actions import TurnOffAction, KeyboardAction, OSDAction
+from scc.special_actions import ClearOSDAction
 from scc.actions import Action, NoAction, ResetGyroAction
 from scc.gui.ae.menu_action import MenuActionCofC
 from scc.gui.ae import AEComponent
@@ -79,6 +80,8 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 				enOSDText = self.builder.get_object("enOSDText")
 				sclOSDTimeout.set_value(action.timeout or 60.1)
 				enOSDText.set_text(action.text)
+			elif isinstance(action, ClearOSDAction):
+				self.set_cb(cb, "clearosd")
 			else:
 				self.set_cb(cb, "none")
 	
@@ -116,7 +119,7 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 		if isinstance(action, OSDAction) and action.action is None:
 			return True
 		return isinstance(action, (NoAction, TurnOffAction, ShellCommandAction,
-			ChangeProfileAction, KeyboardAction, ResetGyroAction))
+			ChangeProfileAction, KeyboardAction, ClearOSDAction, ResetGyroAction))
 	
 	
 	def on_cbActionType_changed(self, *a):
@@ -133,6 +136,10 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			if not self._recursing:
 				self.editor.set_action(KeyboardAction())
+		elif key == "clearosd":
+			stActionData.set_visible_child(self.builder.get_object("nothing"))
+			if not self._recursing:
+				self.editor.set_action(ClearOSDAction())
 		elif key == "resetgyro":
 			stActionData.set_visible_child(self.builder.get_object("nothing"))
 			if not self._recursing:

@@ -279,7 +279,7 @@ class ClearOSDAction(Action, SpecialAction):
 	SA = COMMAND = "clearosd"
 	
 	def describe(self, context):
-		return _("Clear OSD")
+		return _("Hide all OSD Menus and Messages")
 	
 	
 	def button_press(self, mapper):

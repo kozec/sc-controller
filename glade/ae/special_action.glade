@@ -54,6 +54,10 @@
         <col id="1" translatable="yes">Show OSD Message</col>
       </row>
       <row>
+        <col id="0">clearosd</col>
+        <col id="1" translatable="yes">Hide all OSD Menus and Messages</col>
+      </row>
+      <row>
         <col id="0">resetgyro</col>
         <col id="1" translatable="yes">Recenter gyro sensor</col>
       </row>
