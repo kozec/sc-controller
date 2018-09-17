@@ -1,13 +1,21 @@
 /* Used colors: all */
 
-#osd-message, #osd-menu, #osd-menu-inactive, #osd-gesture, #osd-keyboard {
+#osd-message, #osd-message-1, #osd-menu, #osd-menu-inactive, #osd-gesture, #osd-keyboard {
 	background-color: #%(background)s;
 	border: 6px #%(border)s double;
 	opacity: 1;
 }
 
+#osd-message-1 {
+	border: 3px #%(border)s double;
+}
+
 #osd-message:active {
 	border: 6px #%(border+150)s double;
+}
+
+#osd-message-1:active {
+	border: 3px #%(border+150)s double;
 }
 
 #osd-menu-inactive {
@@ -18,14 +26,24 @@
 	background-color: #%(border)s;
 }
 
-#osd-label {
+#osd-label-3, #osd-label-2, #osd-label-1 {
 	color: #%(text)s;
 	border: none;
 	font-size: xx-large;
 	margin: 15px 15px 15px 15px;
 }
 
-#osd-label:active {
+#osd-label-2 {
+	font-size: large;
+	margin: 10px 10px 10px 10px;
+}
+
+#osd-label-1 {
+	font-size: medium;
+	margin: 5px 5px 5px 5px;
+}
+
+#osd-label-3:active, #osd-label-2:active, #osd-label-1:active {
 	color: #%(text+150)s;
 }
 

@@ -1,12 +1,16 @@
 /* Used colors: background text menuseparator osk_text osk_button1 osk_button1_border osk_hilight osk_pressed */
 
-#osd-message, #osd-menu, #osd-menu-inactive, #osd-gesture, #osd-keyboard {
+#osd-message, #osd-message-1, #osd-menu, #osd-menu-inactive, #osd-gesture, #osd-keyboard {
 	background-color: #%(background)s;
 	border: 6px #%(background+1)s solid;
 	opacity: 0.95;
 }
 
-#osd-message:active {
+#osd-message-1 {
+	border: 3px #%(background+1)s solid;
+}
+
+#osd-message:active, #osd-message-1:active {
 	background-color: #%(background+10)s;
 }
 
@@ -22,14 +26,24 @@
 	background-color: #%(background+1)s;
 }
 
-#osd-label {
+#osd-label-3, #osd-label-2, #osd-label-1 {
 	color: #%(text)s;
 	border: none;
 	font-size: xx-large;
 	padding: 15px 15px 15px 15px;
 }
 
-#osd-label:active {
+#osd-label-2 {
+	font-size: large;
+	margin: 5px 5px 5px 5px;
+}
+
+#osd-label-1 {
+	font-size: small;
+	margin: 0px 0px 0px 0px;
+}
+
+#osd-label-3:active, #osd-label-2:active, #osd-label-1:active {
 	color: #%(text+50)s;
 }
 

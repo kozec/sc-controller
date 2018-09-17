@@ -215,8 +215,16 @@ Restarts scc-daemon. Don't use unless you have good reason to.
 Sets brightness of controller led. 'Brightness' is percent in 0 to 100 range.
 
 
-#### <a name="osd"></a> osd([timeout=5], text)
-Displays text in OSD.
+#### <a name="osd"></a> osd([timeout=5, [size=3]], text)
+Displays message in OSD.
+
+'timeout' sets for how many seconds should message stay visible. Value of 0 has
+special meaning and leaves message displayed indefinitely, until profile is
+changed or [clearosd](#clearosd) action is used.
+
+'size' sets size of font on message. Only three options are supported right now,
+3 for "default size", 2 for "smalller" and 1 for "small".
+
 
 
 #### <a name="clearosd"></a> clearosd()

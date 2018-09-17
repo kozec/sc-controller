@@ -303,7 +303,7 @@ class SCCDaemon(Daemon):
 	def on_sa_osd(self, mapper, action):
 		""" Called when 'osd' action is used """
 		with self.lock:
-			self._osd('message', '-t', action.timeout, action.text)
+			self._osd('message', '-t', action.timeout, '-s', action.size, action.text)
 	
 	
 	def on_sa_clearosd(self, mapper, action):

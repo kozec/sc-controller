@@ -176,15 +176,21 @@ class OSDAction(Action, SpecialAction):
 	"""
 	SA = COMMAND = "osd"
 	DEFAULT_TIMEOUT = 5
+	DEFAULT_SIZE = 3
 	PROFILE_KEY_PRIORITY = -5	# After XYAction, but beforee everything else
 	
 	def __init__(self, *parameters):
 		Action.__init__(self, *parameters)
 		self.action = None
 		self.timeout = self.DEFAULT_TIMEOUT
+		self.size = self.DEFAULT_SIZE
 		if len(parameters) > 1 and type(parameters[0]) in (int, float):
 			# timeout parameter included
 			self.timeout = float(parameters[0])
+			parameters = parameters[1:]
+		if len(parameters) > 1 and type(parameters[0]) in (int, float):
+			# size parameter included
+			self.size = int(parameters[0])
 			parameters = parameters[1:]
 		if isinstance(parameters[0], Action):
 			self.action = parameters[0]

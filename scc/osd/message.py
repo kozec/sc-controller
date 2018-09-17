@@ -21,17 +21,20 @@ class Message(OSDWindow):
 		OSDWindow.__init__(self, "osd-message")
 		
 		self.timeout = OSDAction.DEFAULT_TIMEOUT
+		self.size = OSDAction.DEFAULT_SIZE
 		self.text = "text"
 		self._timeout_id = None
 	
 	
 	def show(self):
 		self.l = Gtk.Label()
-		self.l.set_name("osd-label")
+		self.l.set_name("osd-label-%s" % (self.size, ))
 		self.l.set_label(self.text)
 		
 		self.add(self.l)
 		
+		if self.size < 2:
+			self.set_name("osd-message-1")
 		OSDWindow.show(self)
 		if self.timeout > 0:
 			self._timeout_id = GLib.timeout_add_seconds(self.timeout, self.quit)
@@ -52,13 +55,15 @@ class Message(OSDWindow):
 	
 	
 	def hash(self):
-		return hash(self.text) + self.timeout
+		return hash(self.text) + self.timeout - (self.size * 5)
 	
 	
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 		self.argparser.add_argument('-t', type=float, metavar="seconds",
 				default=5, help="time before message is hidden (default: 5; 0 means forever)")
+		self.argparser.add_argument('-s', type=int, metavar="size",
+				default=3, help="font size, in range 1 to 3 (default: 3)")
 		self.argparser.add_argument('text', type=str, help="text to display")
 	
 	
@@ -67,4 +72,5 @@ class Message(OSDWindow):
 			return False
 		self.text = self.args.text
 		self.timeout = self.args.t
+		self.size = self.args.s
 		return True	
