@@ -310,7 +310,7 @@ class TouchedModifier(Modifier):
 	def whole(self, mapper, x, y, what):
 		if mapper.is_touched(what) and not mapper.was_touched(what):
 			self.action.button_press(mapper)
-			mapper.schedule(0, self._release)
+			mapper.schedule(0.02, self._release)
 
 
 class UntouchedModifier(TouchedModifier):
@@ -320,7 +320,7 @@ class UntouchedModifier(TouchedModifier):
 	def whole(self, mapper, x, y, what):
 		if not mapper.is_touched(what) and mapper.was_touched(what):
 			self.action.button_press(mapper)
-			mapper.schedule(0, self._release)
+			mapper.schedule(0.02, self._release)
 
 
 class PressedModifier(Modifier):
@@ -345,7 +345,7 @@ class PressedModifier(Modifier):
 	
 	def button_press(self, mapper):
 		self.action.button_press(mapper)
-		mapper.schedule(0, self._release)
+		mapper.schedule(0.02, self._release)
 	
 	
 	def _release(self, mapper):
@@ -372,7 +372,7 @@ class ReleasedModifier(PressedModifier):
 	
 	def button_release(self, mapper):
 		self.action.button_press(mapper)
-		mapper.schedule(0, self._release)
+		mapper.schedule(0.02, self._release)
 
 
 class BallModifier(Modifier, WholeHapticAction):
@@ -1167,7 +1167,7 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 			self.waiting_task = None
 			if self.normalaction:
 				self.normalaction.button_press(mapper)
-				self.normalaction.button_release(mapper)
+				mapper.schedule(0.02, self.normalaction.button_release)
 		elif self.active:
 			# Released held button
 			self.active.button_release(mapper)
@@ -1186,7 +1186,7 @@ class DoubleclickModifier(Modifier, HapticEnabledAction):
 			elif self.normalaction:
 				# User did short click and nothing else
 				self.normalaction.button_press(mapper)
-				self.normalaction.button_release(mapper)
+				mapper.schedule(0.02, self.normalaction.button_release)
 
 
 class HoldModifier(DoubleclickModifier):
