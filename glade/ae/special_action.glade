@@ -265,6 +265,28 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="lstOSDSize">
+    <columns>
+      <!-- column-name size -->
+      <column type="gint"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">Smaller</col>
+      </row>
+      <row>
+        <col id="0">2</col>
+        <col id="1" translatable="yes">Small</col>
+      </row>
+      <row>
+        <col id="0">3</col>
+        <col id="1" translatable="yes">Default</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="lstProfile">
     <columns>
       <!-- column-name name -->
@@ -506,6 +528,44 @@
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label9">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Size</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="cbOSDSize">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">10</property>
+                <property name="margin_right">10</property>
+                <property name="model">lstOSDSize</property>
+                <property name="active">0</property>
+                <signal name="changed" handler="on_osd_settings_changed" swapped="no"/>
+                <child>
+                  <object class="GtkCellRendererText" id="text1"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
               </packing>
             </child>
           </object>

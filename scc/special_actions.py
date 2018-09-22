@@ -226,8 +226,10 @@ class OSDAction(Action, SpecialAction):
 	
 	def to_string(self, multiline=False, pad=0):
 		parameters = []
-		if self.timeout != self.DEFAULT_TIMEOUT:
+		if self.timeout != self.DEFAULT_TIMEOUT or self.size != self.DEFAULT_SIZE:
 			parameters.append(str(self.timeout))
+		if self.size != self.DEFAULT_SIZE:
+			parameters.append(str(self.size))
 		if self.action:
 			parameters.append(self.action.to_string(multiline=multiline, pad=pad))
 		else:
@@ -336,7 +338,7 @@ class MenuAction(Action, SpecialAction, HapticEnabledAction):
 			dflt = (DEFAULT, DEFAULT, False)
 			vals = (self.confirm_with, self.cancel_with, self.show_with_release)
 			if dflt == vals:
-				# Special case when menu is assigned to pad 
+				# Special case when menu is assigned to pad
 				if self.size == 0:
 					return "%s%s('%s')" % (" " * pad, self.COMMAND, self.menu_id)
 				else:

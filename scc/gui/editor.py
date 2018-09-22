@@ -16,7 +16,8 @@ from scc.gui.svg_widget import SVGWidget
 from scc.gui.gdk_to_key import keyevent_to_key
 from scc.gui.area_to_action import AREA_TO_ACTION
 
-import os
+import os, logging
+log = logging.getLogger("Editor")
 
 
 class ComboSetter(object):
@@ -33,6 +34,8 @@ class ComboSetter(object):
 				cb.set_active_iter(row.iter)
 				self._recursing = False
 				return True
+		else:
+			log.warning("Failed to set combobox value, key '%s' not found", key)
 		self._recursing = False
 		return False
 

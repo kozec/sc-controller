@@ -78,8 +78,12 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 				self.set_cb(cb, "osd")
 				sclOSDTimeout = self.builder.get_object("sclOSDTimeout")
 				enOSDText = self.builder.get_object("enOSDText")
+				cbOSDSize = self.builder.get_object("cbOSDSize")
+				self._recursing = True
 				sclOSDTimeout.set_value(action.timeout or 60.1)
 				enOSDText.set_text(action.text)
+				self.set_cb(cbOSDSize, action.size)
+				self._recursing = False
 			elif isinstance(action, ClearOSDAction):
 				self.set_cb(cb, "clearosd")
 			else:
@@ -187,10 +191,14 @@ class SpecialActionComponent(AEComponent, MenuActionCofC):
 		if self._recursing : return
 		enOSDText = self.builder.get_object("enOSDText")
 		sclOSDTimeout = self.builder.get_object("sclOSDTimeout")
+		cbOSDSize = self.builder.get_object("cbOSDSize")
 		timeout = sclOSDTimeout.get_value()
+		size = cbOSDSize.get_model().get_value(cbOSDSize.get_active_iter(), 0)
 		self.editor.set_action(OSDAction(
 			0 if timeout > 60.0 else timeout,
-			enOSDText.get_text().decode("utf-8")))
+			size,
+			enOSDText.get_text().decode("utf-8"
+		)))
 	
 	
 	def on_exMenuControl_activate(self, ex, *a):
