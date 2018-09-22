@@ -290,6 +290,11 @@ class MenuEditor(Editor):
 		entName.set_text("")
 	
 	
+	@staticmethod
+	def menu_is_global(id):
+		return "." in id
+	
+	
 	def set_menu(self, id):
 		"""
 		Setups editor for menu with specified ID.
@@ -301,7 +306,7 @@ class MenuEditor(Editor):
 		entName = self.builder.get_object("entName")
 		
 		MenuEditor.OPEN.add(id)
-		if "." in id:
+		if MenuEditor.menu_is_global(id):
 			id = id.split(".")[0]
 			rbGlobal.set_active(True)
 			self.original_type = MenuEditor.TYPE_GLOBAL

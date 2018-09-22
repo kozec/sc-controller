@@ -642,6 +642,7 @@
                 <property name="margin_right">5</property>
                 <property name="hexpand">True</property>
                 <property name="model">lstMenu</property>
+                <signal name="button-press-event" handler="on_cbMenus_button_press_event" swapped="no"/>
                 <signal name="changed" handler="on_cbMenus_changed" swapped="no"/>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext4"/>
@@ -975,6 +976,46 @@
         <property name="fill">True</property>
         <property name="position">2</property>
       </packing>
+    </child>
+  </object>
+  <object class="GtkMenu" id="mnuMenu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="mnuMenuNew">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_New Menu</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuMenuNew_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuMenuCopy">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Copy Menu</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuMenuCopy_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuMenuRename">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Rename Menu</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuMenuRename_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="mnuMenuDelete">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Delete Menu</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_mnuMenuDelete_activate" swapped="no"/>
+      </object>
     </child>
   </object>
 </interface>

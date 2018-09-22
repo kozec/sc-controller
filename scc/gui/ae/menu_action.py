@@ -6,17 +6,19 @@ two components with MenuAction selectable.
 from __future__ import unicode_literals
 from scc.tools import _
 
+from gi.repository import Gtk
 from scc.special_actions import MenuAction, HorizontalMenuAction
 from scc.special_actions import RadialMenuAction, GridMenuAction
 from scc.special_actions import QuickMenuAction, PositionModifier
 from scc.constants import SCButtons, SAME, STICK, DEFAULT
+from scc.paths import get_menus_path
 from scc.actions import NoAction
 from scc.tools import nameof
 from scc.gui.userdata_manager import UserDataManager
 from scc.gui.menu_editor import MenuEditor
 from scc.gui.parser import GuiActionParser
 
-import logging
+import os, logging
 log = logging.getLogger("AE.Menu")
 
 __all__ = [ 'MenuActionCofC' ]
@@ -162,6 +164,56 @@ class MenuActionCofC(UserDataManager):
 			me.show(self.editor.window)
 	
 	
+	def on_cbMenus_button_press_event(self, trash, event):
+		if event.button == 3:
+			mnuMenu = self.builder.get_object("mnuMenu")
+			mnuMenu.popup(None, None, None, None,
+				3, Gtk.get_current_event_time())
+	
+	
+	def on_mnuMenuNew_activate(self, *a):
+		self.on_new_menu_selected()
+	
+	
+	def on_mnuMenuCopy_activate(self, *a):
+		self.on_new_menu_selected(make_copy=True)
+	
+	
+	def on_mnuMenuRename_activate(self, *a):
+		self.on_btEditMenu_clicked()
+	
+	
+	def on_mnuMenuDelete_activate(self, *a):
+		id = self.get_selected_menu()
+		if MenuEditor.menu_is_global(id):
+			text = _("Really delete selected global menu?")
+		else:
+			text = _("Really delete selected menu?")
+		
+		d = Gtk.MessageDialog(parent=self.editor.window,
+			flags = Gtk.DialogFlags.MODAL,
+			type = Gtk.MessageType.WARNING,
+			buttons = Gtk.ButtonsType.OK_CANCEL,
+			message_format = text,
+		)
+		
+		if MenuEditor.menu_is_global(id):
+			d.format_secondary_text(_("This action is not undoable!"))
+		
+		if d.run() == -5: # OK button, no idea where is this defined...
+			if MenuEditor.menu_is_global(id):
+				fname = os.path.join(get_menus_path(), id)
+				try:
+					os.unlink(fname)
+				except Exception, e:
+					log.error("Failed to remove %s: %s", fname, e)
+			else:
+				del self.app.current.menus[id]
+				self.app.on_profile_modified()
+			self.load_menu_list()
+		d.destroy()
+	
+	
 	def on_menus_loaded(self, menus):
 		cb = self.builder.get_object("cbMenus")
 		cb.set_row_separator_func( lambda model, iter : model.get_value(iter, 1) is None )
@@ -291,14 +343,7 @@ class MenuActionCofC(UserDataManager):
 		
 		name = self.get_selected_menu()
 		if name == "":
-			# 'New menu' selected
-			self.load_menu_list()
-			log.debug("Creating editor for new menu")
-			me = MenuEditor(self.app, self.on_menu_changed)
-			me.set_new_menu()
-			me.allow_menus(self.allow_globals, self.allow_in_profile)
-			me.show(self.editor.window)
-			return
+			return self.on_new_menu_selected()
 		if name:
 			# There is some menu choosen
 			self.builder.get_object("btEditMenu").set_sensitive(name not in MenuEditor.OPEN)
@@ -383,6 +428,21 @@ class MenuActionCofC(UserDataManager):
 					action = PositionModifier(x, y, action)
 			
 			self.editor.set_action(action)
+	
+	
+	def on_new_menu_selected(self, make_copy=False):
+		# 'New menu' selected
+		self.load_menu_list()
+		log.debug("Creating editor for new menu")
+		me = MenuEditor(self.app, self.on_menu_changed)
+		if make_copy:
+			name = self.get_selected_menu()
+			log.debug("Copying %s", name)
+			me = MenuEditor(self.app, self.on_menu_changed)
+			me.set_menu(name)
+		me.set_new_menu()
+		me.allow_menus(self.allow_globals, self.allow_in_profile)
+		me.show(self.editor.window)
 	
 	
 	def update_size_display(self, action):
