@@ -101,7 +101,7 @@ python2 setup.py build
 python2 setup.py install --prefix ${BUILD_APPDIR}/usr
 
 # Move udev stuff
-mv ${BUILD_APPDIR}/usr/lib/udev/rules.d/90-${APP}.rules ${BUILD_APPDIR}/
+mv ${BUILD_APPDIR}/usr/lib/udev/rules.d/69-${APP}.rules ${BUILD_APPDIR}/
 rmdir ${BUILD_APPDIR}/usr/lib/udev/rules.d/
 rmdir ${BUILD_APPDIR}/usr/lib/udev/
 cp "/usr/include/linux/input-event-codes.h" ${BUILD_APPDIR}/usr/${LIB}/python2.7/site-packages/scc/
