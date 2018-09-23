@@ -9,8 +9,6 @@ from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, GLib
 from scc.special_actions import OSDAction
-from scc.tools import find_icon
-from scc.osd.menu import MenuIcon
 from scc.osd import OSDWindow
 
 import os, sys, logging
@@ -25,7 +23,6 @@ class Message(OSDWindow):
 		self.timeout = OSDAction.DEFAULT_TIMEOUT
 		self.size = OSDAction.DEFAULT_SIZE
 		self.text = "text"
-		self.icon = "system/cog"
 		self._timeout_id = None
 	
 	
@@ -34,15 +31,7 @@ class Message(OSDWindow):
 		self.l.set_name("osd-label-%s" % (self.size, ))
 		self.l.set_label(self.text)
 		
-		icon_file, has_colors = find_icon(self.icon, prefer_bw=True)
-		if icon_file:
-			self.vbox = Gtk.Box(Gtk.Orientation.HORIZONTAL)
-			self.i = MenuIcon(icon_file, has_colors)
-			self.vbox.pack_start(self.i, True, False, 0)
-			self.vbox.pack_start(self.l, True, True, 0)
-			self.add(self.vbox)
-		else:
-			self.add(self.l)
+		self.add(self.l)
 		
 		if self.size < 2:
 			self.set_name("osd-message-1")
