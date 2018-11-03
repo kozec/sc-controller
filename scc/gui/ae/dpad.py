@@ -194,7 +194,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		# ae = ActionEditor(self.app, self.on_choosen)
 		ae.set_title(_("Select DPAD Action"))
 		ae.set_input(i, action, mode = Action.AC_BUTTON)
-		ae.show(self.app.window)
+		ae.show(self.editor.window)
 	
 	
 	def get_default_confirm(self):

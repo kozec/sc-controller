@@ -85,4 +85,4 @@ class TiltComponent(AEComponent, BindingEditor):
 		ae = self.choose_editor(action, "")
 		ae.set_title(_("Select Tilt Action"))
 		ae.set_input(i, action, mode = Action.AC_BUTTON)
-		ae.show(self.app.window)
+		ae.show(self.editor.window)
