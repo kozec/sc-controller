@@ -1,29 +1,31 @@
 [{
     "separator": true,
-    "name": "Recent profiles"
+    "name": "Switch profile"
 }, {
-    "generator": "recent",
-    "rows": 3
-}, {
-    "submenu": "Profiles.menu",
     "icon": "system/profiles",
-    "name": "All Profiles"
+    "name": "Desktop",
+    "id": "desktop",
+    "action": "profile('Desktop')",
+    "osd": true
+}, {
+    "icon": "system/profiles",
+    "name": "Controller",
+    "id": "xbox_controller",
+    "action": "profile('XBox Controller')",
+    "osd": true
+}, {
+    "icon": "system/profiles",
+    "name": "Controller + Mouse",
+    "id": "xbox_controller_with_high_precision_camera",
+    "action": "profile('XBox Controller with High Precision Camera')",
+    "osd": true
 }, {
     "separator": true,
     "name": "Options"
 }, {
-    "submenu": ".autoswitch.menu",
-    "icon": "system/autoswitch",
-    "name": "Autoswitch Options"
-}, {
     "action": "turnoff()", 
-    "id": "item4", 
+    "id": "turnoff_item", 
     "icon": "system/turn-off",
     "name": "Turn Controller OFF", 
     "osd": true
-}, {
-    "action": "keyboard()", 
-    "id": "item5", 
-    "icon": "system/keyboard",
-    "name": "Display Keyboard"
 }]

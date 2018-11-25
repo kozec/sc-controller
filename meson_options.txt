@@ -1,0 +1,8 @@
+option('tracebacks', type: 'feature', value: 'enabled', description: '''
+	Compiles-in support for printing tracebacks when code crashes.
+	Available only on Linux.
+''')
+option('android', type: 'feature', value: 'disabled', description: '''
+	Enables building on android, disabling all Linux specific features.
+	Available only on Android/Linux.
+''')

@@ -1,17 +1,17 @@
 /* Used colors: background text menuseparator osk_text osk_button1 osk_button1_border osk_hilight osk_pressed */
 
 #osd-message, #osd-message-1, #osd-menu, #osd-menu-inactive, #osd-gesture, #osd-keyboard {
-	background-color: #%(background)s;
-	border: 6px #%(background+1)s solid;
+	background-color: #{background};
+	border: 6px #{background+1} solid;
 	opacity: 0.95;
 }
 
 #osd-message-1 {
-	border: 3px #%(background+1)s solid;
+	border: 3px #{background+1} solid;
 }
 
 #osd-message:active, #osd-message-1:active {
-	background-color: #%(background+10)s;
+	background-color: #{background+10};
 }
 
 #osd-menu-inactive {
@@ -19,15 +19,15 @@
 }
 
 #osd-message {
-	border-left: 5px #%(menuitem_hilight_text)s solid;
+	border-left: 5px #{menuitem_hilight_text} solid;
 }
 
 #osd-area {
-	background-color: #%(background+1)s;
+	background-color: #{background+1};
 }
 
 #osd-label-3, #osd-label-2, #osd-label-1 {
-	color: #%(text)s;
+	color: #{text};
 	border: none;
 	font-size: xx-large;
 	padding: 15px 15px 15px 15px;
@@ -44,7 +44,7 @@
 }
 
 #osd-label-3:active, #osd-label-2:active, #osd-label-1:active {
-	color: #%(text+50)s;
+	color: #{text+50};
 }
 
 #osd-menu, #osd-gesture {
@@ -60,54 +60,54 @@
 #osd-key-buton, #osd-key-buton-hilight, #osd-launcher-item,
 #osd-launcher-item-selected, #osd-hidden-item,
 #osd-hidden-item-selected, #osd-key-buton-selected {
-	color: #%(text)s;
+	color: #{text};
 	border-radius: 0;
 	font-size: x-large;
 	background-image: none;
-	background-color: #%(background)s;
+	background-color: #{background};
 	margin: 0px 0px 2px 0px;
 }
 
 
 #osd-hidden-item, #osd-hidden-item-selected {
-	color: #%(background)s;
-	border-color: #%(background)s;
+	color: #{background};
+	border-color: #{background};
 }
 
 
 #osd-radial-menu-icon {
-	color: #%(text)s;
+	color: #{text};
 }
 
 #osd-radial-menu-icon-selected {
-	color: #%(menuitem_hilight_text)s;
+	color: #{menuitem_hilight_text};
 }
 
 #osd-menu-item, #osd-menu-item-big-icon,
 #osd-launcher-item, #osd-launcher-item-selected {
-	border: 1px #%(background+1)s solid;
+	border: 1px #{background+1} solid;
 }
 
 #osd-menu-separator {
-	color: #%(background+50)s;
+	color: #{background+50};
 	font-size: large;
 	background-image: none;
-	background-color: #%(background)s;
+	background-color: #{background};
 	margin: 5px 0px 0px 0px;
 	padding: 0px 0px 0px 0px;
 }
 
 #osd-gesture-separator {
-	color: #%(menuseparator)s;
-	background-color: #%(menuseparator)s;
+	color: #{menuseparator};
+	background-color: #{menuseparator};
 	margin: 0px 5px 0px 5px;
 }
 
 #osd-menu-item-selected, #osd-menu-item-big-icon-selected,
 #osd-launcher-item-selected {
-	color: #%(text)s;
-	background-color: #%(background+15)s;
-	border: 1px #%(menuitem_hilight_border)s solid;
+	color: #{text};
+	background-color: #{background+15};
+	border: 1px #{menuitem_hilight_border} solid;
 }
 
 #osd-menu-cursor, #osd-keyboard-cursor {
@@ -118,7 +118,7 @@
 }
 
 #osd-dialog-text {
-	color: #%(text)s;
+	color: #{text};
 	font-size: large;
 	margin: 10px 20px 0px 20px;
 }
@@ -128,16 +128,16 @@
 }
 
 #osd-key-buton, #osd-key-buton-selected {
-	background-color: #%(osk_button1)s;
-	border: 1px #%(osk_button1_border)s solid;
-	color: #%(osk_text)s;
+	background-color: #{osk_button1};
+	border: 1px #{osk_button1_border} solid;
+	color: #{osk_text};
 }
 
 #osd-key-buton-hilight {
-	color: #%(osk_text)s;
-	background-color: #%(osk_hilight)s;
+	color: #{osk_text};
+	background-color: #{osk_hilight};
 }
 
 #osd-key-buton-selected {
-	background-color: #%(osk_pressed)s;
+	background-color: #{osk_pressed};
 }

@@ -3,7 +3,7 @@
 		"A"         : { "action": "button(Keys.KEY_ENTER)" }, 
 		"B"         : { "action": "button(Keys.KEY_ESC)" }, 
 		"BACK"      : { "action": "button(Keys.KEY_BACKSPACE)" }, 
-		"C"         : { "action": "hold(menu('Default.menu'), menu('Default.menu'))" },
+		"C"          : { "action": "menu('Default.menu')" },
 		"CPADPRESS" : { "action": "button(Keys.BTN_LEFT)" }, 
 		"LB"        : { "action": "button(Keys.KEY_LEFTCTRL)" }, 
 		"RB"        : { "action": "button(Keys.KEY_LEFTALT)" }, 

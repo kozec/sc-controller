@@ -1,11 +1,10 @@
+# - old -
 *.pyc
 .*
 *~
 *.so
 *.patch
 !scc/*tester*
-test.*
-test[0-9].*
 build/
 .atomignore
 commit*
@@ -15,3 +14,15 @@ out.svg
 *.AppImage
 *.cpp
 *.vdf
+
+# - c -
+*.exe
+*.dll
+*.so
+*.dylib
+
+pkg/
+bin/
+build/
+build-win32/
+build-w10/

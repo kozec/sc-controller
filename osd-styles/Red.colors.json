@@ -4,7 +4,7 @@
 		"background": "101010",
 		"border": "DF0000",
 		"text": "FF2020",
-		"menuitem_border": "400000",
+		"menuitem_border": "150000",
 		"menuitem_hilight": "600000",
 		"menuitem_hilight_text": "FFFFFF",
 		"menuitem_hilight_border": "FF0000",
