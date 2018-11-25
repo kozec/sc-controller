@@ -83,6 +83,25 @@ const char* scc_get_share_path() {
 		return share_path;
 	}
 	
+#ifdef _WIN32
+	// What this does is taking path to current executable and going
+	// up one directory until directory with "default_menus" subdir is found.
+	// That one is our "SHARE_PATH", place where default scc stuff is stored.
+	char arg0[PATH_MAX];
+	char test[PATH_MAX];
+	GetModuleFileName(NULL, arg0, MAX_PATH);
+	while (1) {
+		snprintf(test, PATH_MAX, "%s\\default_menus", arg0);
+		if (access(test, F_OK) != -1) {
+			strncpy(share_path, arg0, PATH_MAX);
+			return share_path;
+		}
+		char* slash = strrchr(arg0, '\\');
+		if (slash == NULL) break;
+		*slash = 0;
+	}
+	strncpy(share_path, "./", PATH_MAX);
+#else
 	const char* possibilities[] = {
 		"/usr/local/share/scc",
 		"/usr/share/scc",
@@ -112,6 +131,7 @@ const char* scc_get_share_path() {
 	
 	// No path found, assume default and hope for best
 	strncpy(share_path, "/usr/share/scc", PATH_MAX);
+#endif
 	return share_path;
 }
 
@@ -154,9 +174,14 @@ const char* scc_get_default_menus_path() {
 
 // TODO: This, but properly
 char* scc_find_binary(const char* name) {
-	const char* paths[3] = {
+	const char* paths[] = {
+#ifndef _WIN32
 		"./",
 		"./tools",
+#else
+		scc_get_share_path(),
+		"./build-win32/src/osd",
+#endif
 		"./build/src/osd",
 	};
 	
@@ -167,19 +192,21 @@ char* scc_find_binary(const char* name) {
 		strbuilder_add_path(sb, name);
 #ifdef _WIN32
 		strbuilder_add(sb, ".exe");
-		if (!strbuilder_failed(sb)) {
+		if (!strbuilder_failed(sb))
 			if (access(strbuilder_get_value(sb), F_OK) != -1)
-#else
-		if (!strbuilder_failed(sb)) {
-			if (access(strbuilder_get_value(sb), X_OK) != -1)
-#endif
 				return strbuilder_consume(sb);
-		}
+#else
+		if (!strbuilder_failed(sb))
+			if (access(strbuilder_get_value(sb), X_OK) != -1)
+				return strbuilder_consume(sb);
+#endif
 		
 		strbuilder_clear(sb);
 	}
 	
+	LOG("F1");
 	strbuilder_free(sb);
+	LOG("F2");
 	return NULL;
 }
 

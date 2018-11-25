@@ -10,7 +10,7 @@ static const char *const usage[] = {
 	NULL,
 };
 
-int main(int argc, char** argv) {
+int main(int argc, const char** argv) {
 	traceback_set_argv0(argv[0]);
 	gtk_init(&argc, &argv);
 	

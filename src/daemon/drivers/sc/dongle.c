@@ -78,7 +78,11 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 		return;		// failed in the past, ignore
 	else if (sc->state == SS_NOT_CONFIGURED) {
 		// Just connected / not configured
+#ifdef _WIN32
+		if (!read_serial(sc) || !clear_mappings(sc) || !configure(sc)) {
+#else
 		if (!read_serial(sc) || !configure(sc)) {
+#endif
 			sc->state = SS_FAILED;
 			return;
 		}
@@ -149,39 +153,6 @@ hotplug_cb_fail:
 	daemon->usb_close(hndl);
 }
 
-#if 0
-void nothing {
-	if ((sc = create_usb_controller(daemon, hndl, SC_WIRED, CONTROLIDX)) == NULL) {
-		LERROR("Failed to allocate memory");
-		goto hotplug_cb_fail;
-	}
-#ifdef _WIN32
-	if (!clear_mappings(sc))
-		// clear_mappings is needed on Windows, as kernel driver cannot be deatached there
-		goto hotplug_cb_failed_to_configure;
-#endif
-	if (!read_serial(sc))
-		goto hotplug_cb_failed_to_configure;
-	if (!configure(sc))
-		goto hotplug_cb_failed_to_configure;
-	if (!daemon->usb_interupt_read_loop(hndl, ENDPOINT, 64, &input_interrupt_cb, sc))
-		goto hotplug_cb_failed_to_configure;
-	DEBUG("New wired Steam Controller with serial %s connected", sc->serial);
-	sc->ready = true;
-	if (!daemon->controller_add(&sc->controller)) {
-		// This shouldn't happen unless memory is running out
-		DEBUG("Failed to add controller to daemon");
-		goto hotplug_cb_fail;
-	}
-	return;
-hotplug_cb_failed_to_configure:
-	LERROR("Failed to configure controlller");
-hotplug_cb_fail:
-	if (sc != NULL)
-		free(sc);
-	daemon->usb_close(hndl);
-}
-#endif
 
 Driver* scc_driver_init(Daemon* daemon) {
 	ASSERT(sizeof(TriggerValue) == 1);

@@ -187,8 +187,8 @@ static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data
 			if (pid < 0)
 				LERROR("Fork failed: %s", strerror(errno));
 		}
-		free(menu);
 		free(scc_osd_menu);
+		free(menu);
 		return true;
 	} if (sa_action_type == SAT_PROFILE) {
 		// TODO: This
