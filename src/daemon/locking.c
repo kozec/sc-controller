@@ -229,8 +229,8 @@ void sccd_change_locked_profile(Profile* _p, Profile* child) {
 	ASSERT(sccd_is_locked_profile(_p));
 	LockProfile* p = container_of(_p, LockProfile, profile);
 	RC_REL(p->original);
-	RC_ADD(child);
 	p->original = child;
+	RC_ADD(p->original);
 }
 
 static char* locked_action_to_string(Action* a) {

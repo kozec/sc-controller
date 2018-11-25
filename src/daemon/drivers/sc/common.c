@@ -190,7 +190,6 @@ bool read_serial(SCController* sc) {
 	return true;
 }
 
-#ifdef _WIN32
 bool clear_mappings(SCController* sc) {
 	uint8_t data[64] = { PT_CLEAR_MAPPINGS, 0x01 };
 	if (sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
@@ -199,7 +198,6 @@ bool clear_mappings(SCController* sc) {
 	}
 	return true;
 }
-#endif
 
 bool configure(SCController* sc) {
 	uint8_t gyro_and_timeout[64] = {

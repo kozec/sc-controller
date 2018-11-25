@@ -44,57 +44,6 @@ static void button_dealloc(Action* a) {
 	free(b);
 }
 
-static void button_press(Action *a, Mapper *m);
-static void button_release(Action *a, Mapper *m);
-static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what);
-static void set_haptic(Action* a, HapticData hdata);
-
-Action* scc_button_action_from_keycode(unsigned short keycode) {
-	ButtonAction* b = malloc(sizeof(ButtonAction));
-	if (b == NULL) return NULL;
-	scc_action_init(&b->action, KW_BUTTON, AF_ACTION, &button_dealloc, &button_to_string);
-	b->action.flags = 0;
-	b->button[0] = keycode;
-	b->button[1] = 0;
-	b->param[0] = NULL;
-	b->param[1] = NULL;
-	b->pressed_button = 0;
-	HAPTIC_DISABLE(&b->hdata);
-	b->action.whole = &whole;
-	b->action.button_press = &button_press;
-	b->action.button_release = &button_release;
-	return &b->action;
-}
-
-static ActionOE button_constructor(const char* keyword, ParameterList params) {
-	ParamError* err = scc_param_checker_check(&pc, keyword, params);
-	if (err != NULL) return (ActionOE)err;
-	params = scc_param_checker_fill_defaults(&pc, params);
-	if (params == NULL) return (ActionOE)scc_oom_action_error();
-	
-	ButtonAction* b = malloc(sizeof(ButtonAction));
-	if (b == NULL) {
-		list_free(params);
-		return (ActionOE)scc_oom_action_error();
-	}
-	scc_action_init(&b->action, KW_BUTTON, AF_ACTION, &button_dealloc, &button_to_string);
-	b->button[0] = scc_parameter_as_int(params->items[0]);
-	b->button[1] = scc_parameter_as_int(params->items[1]);
-	b->param[0] = params->items[0];
-	b->param[1] = params->items[1];
-	b->pressed_button = 0;
-	HAPTIC_DISABLE(&b->hdata);
-	b->action.whole = &whole;
-	b->action.button_press = &button_press;
-	b->action.button_release = &button_release;
-	b->action.extended.set_haptic = &set_haptic;
-	
-	RC_ADD(params->items[0]);
-	RC_ADD(params->items[1]);
-	list_free(params);
-	return (ActionOE)&b->action;
-}
-
 
 static void button_press(Action* a, Mapper* m) {
 	ButtonAction* b = container_of(a, ButtonAction, action);
@@ -149,10 +98,68 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 	}
 }
 
+static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos, PadStickTrigger what) {
+	// TODO: Remove this, convert to TriggerAction internally
+	if ((pos >= TRIGGER_HALF) && (old_pos < TRIGGER_HALF)) {
+		button_press(a, m);
+	} else if ((pos < TRIGGER_HALF) && (old_pos >= TRIGGER_HALF)) {
+		button_release(a, m);
+	}
+}
+
 static void set_haptic(Action* a, HapticData hdata) {
 	ButtonAction* b = container_of(a, ButtonAction, action);
 	b->hdata = hdata;
 }
+
+
+Action* scc_button_action_from_keycode(unsigned short keycode) {
+	ButtonAction* b = malloc(sizeof(ButtonAction));
+	if (b == NULL) return NULL;
+	scc_action_init(&b->action, KW_BUTTON, AF_ACTION, &button_dealloc, &button_to_string);
+	b->action.flags = 0;
+	b->button[0] = keycode;
+	b->button[1] = 0;
+	b->param[0] = NULL;
+	b->param[1] = NULL;
+	b->pressed_button = 0;
+	HAPTIC_DISABLE(&b->hdata);
+	b->action.whole = &whole;
+	b->action.button_press = &button_press;
+	b->action.button_release = &button_release;
+	return &b->action;
+}
+
+static ActionOE button_constructor(const char* keyword, ParameterList params) {
+	ParamError* err = scc_param_checker_check(&pc, keyword, params);
+	if (err != NULL) return (ActionOE)err;
+	params = scc_param_checker_fill_defaults(&pc, params);
+	if (params == NULL) return (ActionOE)scc_oom_action_error();
+	
+	ButtonAction* b = malloc(sizeof(ButtonAction));
+	if (b == NULL) {
+		list_free(params);
+		return (ActionOE)scc_oom_action_error();
+	}
+	scc_action_init(&b->action, KW_BUTTON, AF_ACTION, &button_dealloc, &button_to_string);
+	b->button[0] = scc_parameter_as_int(params->items[0]);
+	b->button[1] = scc_parameter_as_int(params->items[1]);
+	b->param[0] = params->items[0];
+	b->param[1] = params->items[1];
+	b->pressed_button = 0;
+	HAPTIC_DISABLE(&b->hdata);
+	b->action.whole = &whole;
+	b->action.button_press = &button_press;
+	b->action.button_release = &button_release;
+	b->action.trigger = &trigger;
+	b->action.extended.set_haptic = &set_haptic;
+	
+	RC_ADD(params->items[0]);
+	RC_ADD(params->items[1]);
+	list_free(params);
+	return (ActionOE)&b->action;
+}
+
 
 // TODO: Auto-convert button used on axis to DPAD
 // TODO: Auto-convert button used on trigger to TriggerAction

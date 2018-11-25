@@ -17,12 +17,12 @@
 static const char* PROFILE_TYPE_JSON = "json";
 #define LAST_BUTTON_INDEX 20
 #define LAST_AXIS_INDEX PST_GYRO
-#define LAST_TRIGGER_INDEX 2
+#define LAST_TRIGGER_INDEX 1
 
 typedef struct {
 	Profile		profile;
 	Action*		buttons[LAST_BUTTON_INDEX + 1];
-	Action*		triggers[LAST_TRIGGER_INDEX];
+	Action*		triggers[LAST_TRIGGER_INDEX + 1];
 	Action*		axes[LAST_AXIS_INDEX + 1];
 } JSONProfile;
 

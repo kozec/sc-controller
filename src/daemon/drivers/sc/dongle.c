@@ -78,11 +78,7 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 		return;		// failed in the past, ignore
 	else if (sc->state == SS_NOT_CONFIGURED) {
 		// Just connected / not configured
-#ifdef _WIN32
 		if (!read_serial(sc) || !clear_mappings(sc) || !configure(sc)) {
-#else
-		if (!read_serial(sc) || !configure(sc)) {
-#endif
 			sc->state = SS_FAILED;
 			return;
 		}

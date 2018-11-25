@@ -59,11 +59,9 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 	}
 	if (!read_serial(sc))
 		goto hotplug_cb_failed_to_configure;
-#ifdef _WIN32
 	if (!clear_mappings(sc))
 		// clear_mappings is needed on Windows, as kernel driver cannot be deatached there
 		goto hotplug_cb_failed_to_configure;
-#endif
 	if (!configure(sc))
 		goto hotplug_cb_failed_to_configure;
 	if (!daemon->usb_interupt_read_loop(hndl, ENDPOINT, 64, &input_interrupt_cb, sc))

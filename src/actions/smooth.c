@@ -50,8 +50,8 @@ static char* smooth_to_string(Action* a) {
 
 static void smooth_dealloc(Action* a) {
 	SmoothModifier* s = container_of(a, SmoothModifier, action);
-	list_free(s->weights);
 	RC_REL(s->child);
+	free(s->weights);
 	free(s);
 }
 
