@@ -1,21 +1,4 @@
-# - old -
-*.pyc
-.*
-*~
-*.so
-*.patch
-!scc/*tester*
-build/
-.atomignore
-commit*
-profiles
-.idea/
-out.svg
-*.AppImage
-*.cpp
-*.vdf
-
-# - c -
+# Binaries for programs and plugins
 *.exe
 *.dll
 *.so
@@ -26,3 +9,4 @@ bin/
 build/
 build-win32/
 build-w10/
+release-win32/

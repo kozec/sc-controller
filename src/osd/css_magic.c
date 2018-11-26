@@ -28,7 +28,7 @@ void install_css_provider() {
 	StrBuilder* b = NULL;
 	if (config == NULL) goto install_css_provider_fail;
 	
-	char* css_path = strbuilder_fmt("%s/osd-styles/%s", scc_get_share_path(), config_get(config, "osd_style"));
+	char* css_path = strbuilder_fmt("%s/osd_styles/%s", scc_get_share_path(), config_get(config, "osd_style"));
 	if (css_path == NULL) goto install_css_provider_fail;
 	DDEBUG("Loading css_provider %s", css_path);
 	

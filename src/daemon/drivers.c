@@ -2,6 +2,7 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/list.h"
+#include "scc/tools.h"
 #include "daemon.h"
 #include <string.h>
 #include <dirent.h>
@@ -10,12 +11,10 @@
 #include <windows.h>
 #define FILENAME_PREFIX "libscc_drv_"
 #define FILENAME_SUFFIX ".dll"
-#define DRIVERS_PATH "build-win32/src/daemon/drivers";
 #else
 #include <dlfcn.h>
 #define FILENAME_PREFIX "libscc_drv_"
 #define FILENAME_SUFFIX ".so"
-#define DRIVERS_PATH "build/src/daemon/drivers";
 #endif
 
 
@@ -79,7 +78,11 @@ void sccd_drivers_init() {
 	Daemon* d = get_daemon();
 	INFO("Initializing drivers...");
 	// TODO: This path should be somehow configurable or determined on runtime
-	const char* path = DRIVERS_PATH;
+#ifdef _WIN32
+	const char* path = strbuilder_fmt("%s\\drivers", scc_get_share_path());
+#else
+	const char* path = "build/src/daemon/drivers";
+#endif
 	DIR *dir;
 	struct dirent *ent;
 	if ((dir = opendir (path)) == NULL) {

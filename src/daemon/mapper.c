@@ -176,6 +176,10 @@ static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data
 		SAMenuActionData* sa_menu_data = (SAMenuActionData*)sa_data;
 		char* scc_osd_menu = scc_find_binary("scc-osd-menu");
 		char* menu = scc_find_menu(sa_menu_data->menu_id);
+		if (scc_osd_menu == NULL)
+			LERROR("Could not find 'scc-osd-menu'");
+		if (menu == NULL)
+			LERROR("Could not find menu '%s'", sa_menu_data->menu_id);
 		if ((scc_osd_menu != NULL) && (menu != NULL)) {
 #ifndef _WIN32
 			char* argv[] = { scc_osd_menu, "-f", menu, NULL };
