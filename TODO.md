@@ -1,10 +1,9 @@
-List of (possibly) planned features in no particular order
+List of (possibly) planned features in no particular order:
 
 - Multiple on-screen menus (and possibly keyboards) when using multiple controllers
 - Injecting emulated xbox controller into wine
 
 Hard stuff:
-- Support for other controllers ( #145 )
 - Injecting emulated xbox controller into PlayOnLinux
 
 Very hard stuff:
