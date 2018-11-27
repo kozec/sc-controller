@@ -120,9 +120,7 @@ struct Action {
 		void	(*set_haptic)(Action* a, HapticData hdata);
 		/**
 		 * If action supports sensitivity, this method is called from
-		 * SensitivityModifier. Otherwise, SensitivityModifier will multiply
-		 * input values by itself and call methods on action with inputsy
-		 * alread modified.
+		 * SensitivityModifier. Otherwise, SensitivityModifier will not do anything.
 		 */
 		void	(*set_sensitivity)(Action* a, float x, float y, float z);
 		/**

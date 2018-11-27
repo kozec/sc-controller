@@ -10,8 +10,13 @@
 
 
 static const char* CONSTANTS[] = {
+	// Buttons
 	"A", "B", "X", "Y", "START", "SELECT",
-	"LEFT", "RIGHT", NULL
+	"LEFT", "RIGHT",
+	// Deadzone modes
+	"CUT", "ROUND", "LINEAR", "MINIMUM",
+	// Terminator
+	NULL
 };
 
 

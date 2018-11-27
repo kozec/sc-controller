@@ -140,6 +140,11 @@ static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos
 	// mapper.syn_list.add(mapper.gamepad)
 }
 
+static void set_sensitivity(Action* a, float x, float y, float z) {
+	AxisAction* ax = container_of(a, AxisAction, action);
+	ax->scale = x;
+}
+
 
 static ActionOE axis_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -161,6 +166,7 @@ static ActionOE axis_constructor(const char* keyword, ParameterList params) {
 	ax->action.trigger = &trigger;
 	ax->action.button_press = &button_press;
 	ax->action.button_release = &button_release;
+	ax->action.extended.set_sensitivity = &set_sensitivity;
 	return (ActionOE)&ax->action;
 }
 

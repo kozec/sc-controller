@@ -115,6 +115,11 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 	}
 }
 
+static void set_sensitivity(Action* a, float x, float y, float z) {
+	MouseAction* b = container_of(a, MouseAction, action);
+	vec_set(b->sensitivity, x, y);
+}
+
 static void gyro(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
 					GyroValue q1, GyroValue q2, GyroValue q3, GyroValue q4) {
 	// MouseAction* b = container_of(a, MouseAction, action);
@@ -147,6 +152,7 @@ static ActionOE mouse_constructor(const char* keyword, ParameterList params) {
 	b->action.whole = &whole;
 	b->action.gyro = &gyro;
 	b->action.trigger = &trigger;
+	b->action.extended.set_sensitivity = &set_sensitivity;
 	b->action.extended.set_haptic = &set_haptic;
 	b->action.extended.change = &change;
 	

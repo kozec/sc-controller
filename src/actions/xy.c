@@ -116,6 +116,14 @@ static void set_haptic(Action* _a, HapticData hdata) {
 	}
 }
 
+static void set_sensitivity(Action* _a, float x, float y, float z) {
+	XYAction* xy = container_of(_a, XYAction, action);
+	if (xy->x->extended.set_sensitivity != NULL)
+		xy->x->extended.set_sensitivity(xy->x, x, 1, 1);
+	if (xy->y->extended.set_sensitivity != NULL)
+		xy->y->extended.set_sensitivity(xy->y, y, 1, 1);
+}
+
 
 static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -138,6 +146,7 @@ static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 	xy->action.compress = &compress;
 	xy->action.extended.change = &change;
 	xy->action.extended.set_haptic = &set_haptic;
+	xy->action.extended.set_sensitivity = &set_sensitivity;
 	
 	RC_ADD(xy->x);
 	RC_ADD(xy->y);

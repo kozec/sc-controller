@@ -10,7 +10,7 @@ static const char *const usage[] = {
 	NULL,
 };
 
-int main(int argc, const char** argv) {
+int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
 	gtk_init(&argc, &argv);
 	
@@ -24,7 +24,7 @@ int main(int argc, const char** argv) {
 	struct argparse argparse;
 	argparse_init(&argparse, options, usage, 0);
 	argparse_describe(&argparse, "\nDisplays on-screen menu", NULL);
-	argc = argparse_parse(&argparse, argc, argv);
+	argc = argparse_parse(&argparse, argc, (const char**)argv);
 	if (filename == NULL) {
 		argparse_usage(&argparse);
 		return 1;

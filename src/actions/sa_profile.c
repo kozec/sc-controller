@@ -44,10 +44,13 @@ static ActionOE sa_profile_constructor(const char* keyword, ParameterList params
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
 	if (err != NULL) return (ActionOE)err;
 	params = scc_copy_param_list(params);
-	if (params == NULL) return (ActionOE)scc_oom_action_error();
 	
 	SAProfileAction* sa = malloc(sizeof(SAProfileAction));
-	if (sa == NULL) return (ActionOE)scc_oom_action_error();
+	if ((sa == NULL) || (params == NULL)) {
+		list_free(params);
+		free(sa);
+		return (ActionOE)scc_oom_action_error();
+	}
 	scc_action_init(&sa->action, KW_PROFILE, AF_SPECIAL_ACTION, &sa_profile_dealloc, &sa_profile_to_string);
 	sa->action.button_press = &button_press;
 	

@@ -32,18 +32,33 @@ Works in python, missing here
 
 Modifiers
 =========
-[ ] NameModifier
+[x] NameModifier
 [x] ClickModifier
 [ ] TouchedModifier
 [ ] UntouchedModifier
 [ ] PressedModifier
 [ ] ReleasedModifier
 [x] BallModifier
-[ ] DeadzoneModifier
+[x] DeadzoneModifier
 [ ] ModeModifier
 [ ] DoubleclickModifier
 [ ] HoldModifier
-[ ] SensitivityModifier
+[x] SensitivityModifier
+	[x] Axis, RAxis & co
+	[x] MouseAction
+	[ ] MouseAbsAction
+	[ ] GyroAction
+	[ ] GyroAbsAction
+	[ ] TiltAction
+	[ ] TrackballAction
+	[ ] MultiAction
+	[?] DPadAction
+	[?] DPad8Action
+	[ ] RingAction
+	[x] XYAction
+	[ ] RelXYAction
+	[?] CircularModifier
+	[?] CircularAbsModifier
 [x] FeedbackModifier
 [ ] RotateInputModifier
 [x] SmoothModifier
