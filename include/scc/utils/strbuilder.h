@@ -16,16 +16,18 @@ struct StrBuilder {
 StrBuilder* strbuilder_new();
 /** Deallocates StrBuilder allong with not-yet-retrieved string it has generated */
 void strbuilder_free(StrBuilder* b);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_add(StrBuilder* b, const char* string);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_add_char(StrBuilder* b, char c);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_prepend_char(StrBuilder* b, char c);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_addf(StrBuilder* b, const char* format, ...);
 /**
  * Clears strbuilder value, without deallocating anything.
+ * If 'b' is NULL, does nothing.
+ *
  * Also clears 'failed' flag.
  */
 void strbuilder_clear(StrBuilder* b);
@@ -33,38 +35,40 @@ void strbuilder_clear(StrBuilder* b);
 /**
  * Reads and appends all available data from file descriptor.
  *
- * Returns 1 on succes, 0 if memory cannot be allocated or (-errno) if reading fails.
+ * Returns 1 on succes.
+ * Returns 0 if memory cannot be allocated or if 'b' is NULL.
+ * Returns (-errno) if reading fails.
  */
 int strbuilder_add_fd(StrBuilder* b, int fd);
 
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_add(StrBuilder* b, const char* string);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_add_char(StrBuilder* b, char c);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_addf(StrBuilder* b, const char* format, ...);
 /**
  * Adds string as path node, with separator apropriate for platform.
- * Returns false if memory cannot be allocated.
+ * Returns false if memory cannot be allocated or if 'b' is NULL.
  */
 bool strbuilder_add_path(StrBuilder* b, const char* node);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_insert(StrBuilder* b, size_t pos, const char* string);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_insert_char(StrBuilder* b, size_t pos, char c);
-/** Returns false if memory cannot be allocated */
+/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_insertf(StrBuilder* b, size_t pos, const char* format, ...);
 
 /**
  * Returns true if any _add*, _insert*, _prepend* (etc) method failed at any
  * point. This can be used to check for OOM error after adding multiple strings.
- * Also returns true if passed StrBuilder is NULL.
+ * Also returns true if 'b' is NULL.
  */
 bool strbuilder_failed(StrBuilder* b);
 
 /**
  * Escapes any instance of any character in 'chars' in stored string.
- * Returns false if memory for operation cannot be allocated.
+ * Returns false if memory for operation cannot be allocated or if 'b' is NULL.
  */
 bool strbuilder_escape(StrBuilder* b, const char* chars);
 
@@ -78,6 +82,7 @@ bool strbuilder_escape(StrBuilder* b, const char* chars);
  * Returns false if allocation fails; That may happen if convert_fn returns NULL
  * for any argument or if allocation of string fails at any given point. In such
  * case, string in builder is not modified.
+ * Also returns false if 'b' is NULL
  */
 #define strbuilder_add_all(b, iterator, convert_fn, glue) _strbuilder_add_all(b, \
 		iterator, (iterator)->has_next, (iterator)->get_next, \
@@ -108,6 +113,7 @@ bool _strbuilder_add_all(StrBuilder* b, void* iterator, bool(*has_next)(void* i)
  * 
  * If memory allocation fails at any given point, function returns 0, but string
  * stored in builder is left half-modified as well.
+ * If passed StrBuilder 'b' is NULL, returns 0 without changing anything.
  */
 int strbuilder_template(StrBuilder* b,
 		char* (*callback)(const char* keyword, int* err_return, void* userdata),

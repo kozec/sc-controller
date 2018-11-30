@@ -13,6 +13,7 @@ endif
 if get_option('android').enabled()
 	add_global_arguments('-DANDROID', '-DNO_TRACEBACKS', language: 'c')
 endif
+add_global_arguments('-Werror=incompatible-pointer-types', language: 'c')
 
 include = include_directories('./include/')
 

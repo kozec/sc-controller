@@ -76,6 +76,7 @@ static bool strbuilder_realloc(StrBuilder* b, size_t new_length) {
 
 
 bool strbuilder_add(StrBuilder* b, const char* string) {
+	if (b == NULL) return false;
 	size_t len = strlen(string);
 	if (b->length + len > b->allocation)
 		if (!strbuilder_realloc(b, b->length + len))
@@ -111,6 +112,7 @@ bool strbuilder_addf(StrBuilder* b, const char* format, ...) {
 	size_t len;
 	va_list args;
 	size_t free_space = b->allocation - b->length;
+	if (b == NULL) return false;
 	if (free_space < 4) {
 		if (!strbuilder_realloc(b, b->allocation + STRBUILDER_ALOC_INC))
 			return false;
@@ -148,6 +150,7 @@ strbuilder_addf_this_shouldnt_ever_happen:
 
 
 bool strbuilder_add_path(StrBuilder* b, const char* node) {
+	if (b == NULL) return false;
 	if ((b->length > 0) && (*(b->next-1) != '/')&& (*(b->next-1) != '\\')) {
 #ifndef _WIN32
 		if (!strbuilder_add(b, "/")) return false;
@@ -159,6 +162,7 @@ bool strbuilder_add_path(StrBuilder* b, const char* node) {
 }
 
 int strbuilder_add_fd(StrBuilder* b, int fd) {
+	if (b == NULL) return false;
 	size_t original_len = b->length;
 	int err = 0;
 	while (1) {
@@ -189,7 +193,8 @@ int strbuilder_template(StrBuilder* b,
 			const char* chars,
 			void* userdata) {
 	// TODO: removing and replacing part can be optimized
-	
+	// Check
+	if (b == NULL) return 0;
 	// Setup
 	int err = 0;
 	*b->next = 0;	// just to be sure
@@ -254,6 +259,7 @@ int strbuilder_template(StrBuilder* b,
 
 
 bool strbuilder_insert(StrBuilder* b, size_t pos, const char* string) {
+	if (b == NULL) return false;
 	size_t free_space = b->allocation - b->length;
 	size_t needed = strlen(string);
 	if (needed > free_space)
@@ -266,6 +272,7 @@ bool strbuilder_insert(StrBuilder* b, size_t pos, const char* string) {
 
 
 bool strbuilder_insert_char(StrBuilder* b, size_t pos, char c) {
+	if (b == NULL) return false;
 	size_t free_space = b->allocation - b->length;
 	if (free_space < 1)
 		if (!strbuilder_realloc(b, b->allocation + STRBUILDER_ALOC_INC))
@@ -278,6 +285,7 @@ bool strbuilder_insert_char(StrBuilder* b, size_t pos, char c) {
 
 bool strbuilder_insertf(StrBuilder* b, size_t pos, const char* format, ...) {
 	// TODO: This could be optimized to not use buf and save one allocation
+	if (b == NULL) return false;
 	int r;
 	va_list args;
 	
@@ -308,6 +316,7 @@ strbuilder_insertf_this_shouldnt_ever_happen:
 
 
 bool strbuilder_escape(StrBuilder* b, const char* chars) {
+	if (b == NULL) return false;
 	// Count space needed 1st
 	size_t space_needed = 0;
 	for (size_t i=0; i<b->length; i++)
@@ -334,6 +343,7 @@ bool _strbuilder_add_all(StrBuilder* b, void* iterator,
 					const char* glue) {
 	if (!has_next(iterator))
 		return true;
+	if (b == NULL) return false;
 	size_t original_length = b->length;
 	while (has_next(iterator)) {
 		void* item = get_next(iterator);
@@ -360,7 +370,7 @@ _strbuilder_add_all_fail:
 
 char* strbuilder_cpy(const char* src) {
 	char* copy = malloc(strlen(src) + 1);
-	if (copy == NULL) return copy;
+	if (copy == NULL) return NULL;
 	strcpy(copy, src);
 	return copy;
 }
