@@ -262,7 +262,7 @@ static void load_default_profile(SCCDMapper* m) {
 		// TODO: find_profile function
 		Config* c = config_load();
 		char* recents[1];
-		if (config_get_recents(c, (const char**)&recents, 1) >= 1)
+		if (config_get_strings(c, "recent_profiles", (const char**)&recents, 1) >= 1)
 			default_profile = scc_find_profile(recents[0]);
 	}
 	
@@ -359,6 +359,15 @@ void sccd_set_special_client(enum SpecialClientType t, Client* client) {
 	*target = client;
 }
 
+/** Loads config, fills defaults and saves it back if needed */
+void sccd_config_init(Daemon* daemon) {
+	Config* c = config_load();
+	ASSERT(c != NULL);
+	if (config_fill_defaults(c))
+		config_save(c);
+	RC_REL(c);
+}
+
 
 int main(int argc, char** argv) {
 	INFO("Starting SC Controller Daemon v%s...", DAEMON_VERSION);
@@ -368,6 +377,7 @@ int main(int argc, char** argv) {
 	controllers = list_new(Controller, 16);
 	errors = list_new(ErrorData, 16);
 	
+	sccd_config_init(&daemon);
 	sccd_scheduler_init();
 	sccd_poller_init();
 	if (!sccd_socket_init()) {
@@ -375,7 +385,6 @@ int main(int argc, char** argv) {
 		// Nothing important was open yet, so I can just bail out on this error.
 		return 1;
 	}
-	
 	sccd_device_monitor_init(&daemon);
 	sccd_usb_helper_init(&daemon);
 	sccd_drivers_init(&daemon);

@@ -60,13 +60,13 @@
  * Every JSON value is identified by one of these tags
  */
 typedef enum {
-	JS_OBJECT, /**< Tag for JSON object */
-	JS_ARRAY, /**< Tag for JSON array */
-	JS_NUMBER, /**< Tag for JSON number */
-	JS_STRING, /**< Tag for JSON string */
-	JS_BOOL, /**< Tag for JSON bool */
-	JS_NULL, /**< Tag for JSON null */
-	INVALID /**< This tag is never used in any object, however, it may be returned from tag query, in case of invalid reference */
+	JS_OBJECT		= 0, /**< Tag for JSON object */
+	JS_ARRAY		= 1, /**< Tag for JSON array */
+	JS_NUMBER		= 2, /**< Tag for JSON number */
+	JS_STRING		= 3, /**< Tag for JSON string */
+	JS_BOOL			= 4, /**< Tag for JSON bool */
+	JS_NULL			= 5, /**< Tag for JSON null */
+	INVALID			= 6 /**< This tag is never used in any object, however, it may be returned from tag query, in case of invalid reference */
 } json_type_t;
 
 /**
@@ -229,6 +229,7 @@ json_object* json_make_object(aojls_ctx_t* ctx);
  * JSON object!
  */
 json_object* json_object_add(json_object* o, const char* key, json_value_t* value);
+
 /**
  * @brief Adds key-value pair to this JSON object
  *
@@ -241,6 +242,21 @@ json_object* json_object_add(json_object* o, const char* key, json_value_t* valu
  * JSON object!
  */
 json_object* json_object_nadd(json_object* o, const char* key, size_t len, json_value_t* value);
+
+/**
+ * @brief Sets value for key in this JSON object
+ *
+ * If key doesn't exists, this acts like json_object_add.
+ * If key already exists, assotiated value is replaced.
+ *
+ * @param o JSON object
+ * @param key null terminated string
+ * @value value to be bound to this key
+ * @return NULL in case of failure or JSON object
+ * @warning Key must be null terminated and will be copied and stored in the context bound to the
+ * JSON object!
+ */
+json_object* json_object_set(json_object* o, const char* key, json_value_t* value);
 
 /**
  * @return number of keys in this JSON object
@@ -469,9 +485,9 @@ bool json_array_is_null(json_array* a, size_t i);
  * @see json_object
  * @see aojls_ctx_t
  * @see json_context_error_happened
- * @warning @p string may be deallocated/modified after this call
+ * @warning @p string is copied into created object so source can be deallocated/modified after this call
  */
-json_string* json_from_string(aojls_ctx_t* ctx, char* string);
+json_string* json_from_string(aojls_ctx_t* ctx, const char* string);
 /**
  * @brief Creates JSON number from @p number.
  *

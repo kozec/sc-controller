@@ -293,6 +293,23 @@ json_object* json_object_nadd(json_object* o, const char* key, size_t len, json_
 	return o;
 }
 
+json_object* json_object_set(json_object* o, const char* key, json_value_t* value) {
+	if (o == NULL || value == NULL || key == NULL) {
+		if (o != NULL)
+			o->self.ctx->failed = true;
+		return NULL;
+	}
+
+	for (size_t i=0; i<o->n; i++) {
+		if (0 == strcmp(o->keys[i], key)) {
+			o->values[o->n] = value;
+			return o;
+		}
+	}
+	
+	return json_object_nadd(o, key, strlen(key), value);
+}
+
 size_t json_object_numkeys(json_object* o) {
 	if (o == NULL)
 		return 0;
@@ -529,7 +546,7 @@ bool json_array_is_null(json_array* a, size_t key) {
 
 // primitives
 
-json_string* json_from_string(aojls_ctx_t* ctx, char* string) {
+json_string* json_from_string(aojls_ctx_t* ctx, const char* string) {
 	if (ctx == NULL || string == NULL) {
 		if (ctx != NULL)
 			ctx->failed = true;
@@ -540,15 +557,15 @@ json_string* json_from_string(aojls_ctx_t* ctx, char* string) {
 		ctx->failed = true;
 		return NULL;
 	}
-	string = append_string(ctx, string, strlen(string));
-	if (string == NULL) {
+	char* copy = append_string(ctx, string, strlen(string));
+	if (copy == NULL) {
 		free(o);
 		ctx->failed = true;
 		return NULL;
 	}
 
 	o->self.type = JS_STRING;
-	o->value = string;
+	o->value = copy;
 	append_to_context(ctx, &o->self);
 	return o;
 }
@@ -908,7 +925,7 @@ char* aojls_serialize(json_value_t* value, aojls_serialization_prefs* prefs) {
 	bool result = serialize(value, &p);
 	p.success = result;
 
-	if ((!result && selfbuffer) || (!p.writer("\0", 1, p.writer_data) && selfbuffer)) {
+	if ((!result && selfbuffer) || (selfbuffer && !p.writer("\0", 1, p.writer_data))) {
 		free(((string_buffer_data_t*)p.writer_data)->data);
 		free(p.writer_data);
 		if (prefs != NULL) {

@@ -4,17 +4,26 @@ project('scc', 'c',
 	default_options : ['c_std=gnu11'],
 )
 
+CONFIG_BACKEND = 'config_json'
+PARSER_LIB_DEPS = []
+C_FILES = '*.c'
+
 if host_machine.system() == 'windows'
 	add_global_arguments('-D_POSIX', '-DNO_TRACEBACKS', '-mno-ms-bitfields', language: 'c')
+	PARSER_LIB_DEPS = [ meson.get_compiler('c').find_library('regex') ]
+	CONFIG_BACKEND = 'config_win32'
+	C_FILES = '\\*.c'
 endif
+
 if get_option('tracebacks').disabled()
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 endif
+
 if get_option('android').enabled()
 	add_global_arguments('-DANDROID', '-DNO_TRACEBACKS', language: 'c')
 endif
-add_global_arguments('-Werror=incompatible-pointer-types', language: 'c')
 
+add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', language: 'c')
 include = include_directories('./include/')
 
 utils_lib = static_library('utils',
@@ -47,28 +56,30 @@ tools_lib = static_library('tools',
 )
 
 config_lib = static_library('config',
-	link_with: [utils_lib],
+	link_with: [utils_lib, tools_lib],
 	include_directories: include,
-	sources: run_command('find', 'src/config',
-				'-maxdepth', '1', '-name', '*.c').stdout().strip().split('\n')
+	sources: [
+		'src/config/config_defaults.c',
+		'src/config/' + CONFIG_BACKEND + '.c',
+	],
 )
 
 params_lib = static_library('params',
 	link_with: [utils_lib],
 	include_directories: include,
 	sources: run_command('find', 'src/actions/parameter',
-				'-maxdepth', '1', '-name', '*.c').stdout().strip().split('\n')
+			'-maxdepth', '1', '-name', C_FILES).stdout().strip().split('\n')
 )
 
 param_checker_lib = static_library('param_checker',
 	link_with: [utils_lib],
 	include_directories: include,
 	sources: run_command('find', 'src/actions/param_checker',
-				'-maxdepth', '1', '-name', '*.c').stdout().strip().split('\n')
+			'-maxdepth', '1', '-name', C_FILES).stdout().strip().split('\n')
 )
 
-action_files = (run_command('find', 'src/actions/', '-name', '*.c')
-											.stdout().strip().split('\n'))
+action_files = (run_command('find', 'src/actions/',
+			'-name', C_FILES).stdout().strip().split('\n'))
 actions_lib = static_library('actions',
 	link_with: [utils_lib, tools_lib, params_lib, param_checker_lib],
 	include_directories: include,
@@ -85,17 +96,12 @@ actions_lib = static_library('actions',
 	]
 )
 
-parser_lib_deps = []
-if host_machine.system() == 'windows'
-	parser_lib_deps = [ meson.get_compiler('c').find_library('regex') ]
-endif
-
 parser_lib = static_library('parser',
 	include_directories: include,
-	dependencies: parser_lib_deps,
+	dependencies: PARSER_LIB_DEPS,
 	link_with: [utils_lib, actions_lib, params_lib],
 	sources: run_command('find', 'src/parser',
-				'-maxdepth', '1', '-name', '*.c').stdout().strip().split('\n')
+			'-maxdepth', '1', '-name', C_FILES).stdout().strip().split('\n')
 )
 
 subdir('tests')

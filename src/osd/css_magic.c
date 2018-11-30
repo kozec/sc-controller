@@ -126,6 +126,7 @@ static char* template_cb(const char* keyword, int* err_return, void* _tdata) {
 	}
 	free(config_kw);
 	
+	if (*value == '#') value ++;
 	if (operator != 0) {
 		long int color = strtol(value, NULL, 16);
 		if (operator == '-')

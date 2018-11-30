@@ -34,6 +34,22 @@ struct Config {
 Config* config_load();
 
 /**
+ * Saves configuration. It's illegal to call this on config loaded with config_load_from
+ * Returns true on success.
+ */
+bool config_save(Config* cfg);
+
+/**
+ * Fills config with default where user-provided value is missing.
+ * Usually there is no need to call this as config_get* automatically returns
+ * default when needed.
+ *
+ * Returns true if any default was replaced. If false is returned, calling
+ * config_save would have no point.
+ */
+bool config_fill_defaults(Config* cfg);
+
+/**
  * Loads configuration from specified file handle.
  *
  * If valid JSON cannot be loaded from given handle, returns NULL and updates
@@ -51,21 +67,60 @@ Config* config_load_from(int fd, char* error_return, size_t error_limit);
  *
  * Returned string is part of Config object memory and shall NOT be deallocated by caller.
  */
-const char* config_get(Config* c, const char* json_path);
+const char* config_get(Config* c, const char* path);
+
+/** Returns integer value. Returns 0 (and logs error) if invalid path is requested */
+int64_t config_get_int(Config* c, const char* path);
+
+/** Returns double value. Returns 0 (and logs error) if invalid path is requested */
+double config_get_double(Config* c, const char* path);
+
+/** Returns true if given driver name is mentioned and set to enabled in config */
+bool config_is_driver_enabled(Config* c, const char* path);
 
 /**
- * Fills 'target' with up to 'limit' recent profiles names. Returns number of
- * stored profiles.
+ * Retrieves elements of string array.
+ * Fills 'target' up to 'limit'. Returns number of stored strings.
  * Strings set to 'target' are part Config object memory and shall _not_ be
  * deallocated by caller.
  */
-size_t config_get_recents(Config* c, const char** target, size_t limit);
+size_t config_get_strings(Config* c, const char* path, const char** target, size_t limit);
 
-/** Returns integer value. Returns 0 (and logs error) if invalid path is requested */
-int64_t config_get_int(Config* c, const char* json_path);
 
-/** Returns double value. Returns 0 (and logs error) if invalid path is requested */
-double config_get_double(Config* c, const char* json_path);
+/**
+ * Stores string.
+ * Returns 1 on success, 0 if memory cannot be allocated.
+ * Returns -1 if invalid path is requested.
+ * Returns -2 if config_set tries to overwrite value with different type.
+ */
+int config_set(Config* c, const char* path, const char* value);
 
-/** Returns true if given driver name is mentioned and set to enabled in config */
-bool config_is_driver_enabled(Config* c, const char* json_path);
+/**
+ * Stores integer value.
+ * Returns 1 on success, 0 if memory cannot be allocated.
+ * Returns -1 if invalid path is requested.
+ * Returns -2 if config_set_int tries to overwrite value with different type.
+ */
+int config_set_int(Config* c, const char* path, int64_t value);
+
+/**
+ * Stores double value.
+ * Returns 1 on success, 0 if memory cannot be allocated.
+ * Returns -1 if invalid path is requested.
+ * Returns -2 if config_set_double tries to overwrite value with different type.
+ */
+int config_set_double(Config* c, const char* path, double value);
+
+/**
+ * Stores string array. Empty strings are not allowed.
+ * If 'count' is set to negative, size of stored array is determined by
+ * searching for last element of 'list' which has to be be NULL.
+ *
+ * Elements stored before are discarded, but not deallocated
+ * until entire Config object is not deallocated.
+ *
+ * Returns 1 on success, 0 if memory cannot be allocated.
+ * Returns -1 if invalid path is requested.
+ * Returns -2 if config_set_strings tries to overwrite value with different type.
+ */
+int config_set_strings(Config* c, const char* path, const char** list, ssize_t count);
