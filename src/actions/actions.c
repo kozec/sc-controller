@@ -99,7 +99,7 @@ bool scc_action_compress(Action** a) {
 		return false;
 	
 	RC_ADD(compressed);
-	// RC_REL(original);
+	RC_REL(original);
 	*a = compressed;
 	return true;
 }

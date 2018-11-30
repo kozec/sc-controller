@@ -29,6 +29,17 @@ Works in python, missing here
 [x] TriggerAction
 [x] NoAction
 
+Macros
+=========
+[ ] MultiAction (and)
+[x] Macro (;)
+[ ] Type
+[ ] Cycle
+[x] Repeat
+[x] Sleep
+[ ] Press
+[ ] Release
+[ ] Tap
 
 Modifiers
 =========

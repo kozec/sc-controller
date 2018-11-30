@@ -20,7 +20,7 @@ typedef struct _List_data {
 	struct List_ ## tpe {										\
 		tpe**			items;									\
 		_List_data		_data;									\
-		struct _ListIterator*(*iter_get)(void* obj);		\
+		struct _ListIterator*(*iter_get)(void* obj);			\
 	}*
 
 typedef void(*list_foreach_cb)(void*);
@@ -41,8 +41,17 @@ typedef struct _ListIterator {
 #define list_new(tpe, allocation) ((struct List_ ## tpe *)_list_new(allocation));
 void* _list_new(size_t allocation);
 
-/** Adds new item to list. Returns false on out-of-memory error */
+/**
+ * Adds new item to list. Both list should be of same type.
+ * Returns false on out-of-memory error.
+ */
 bool list_add(void* list, void* item);
+
+/**
+ * Adds all items from list2. NULLs are ignored (skipped over.)
+ * Returns false on out-of-memory error. List is not modified in such case.
+ */
+bool list_add_all(void* list, void* list2);
 
 /**
  * Inserts item to list at specified position. All items from item on given

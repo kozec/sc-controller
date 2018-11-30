@@ -142,10 +142,21 @@ void scc_action_init(Action* a, const char* type, ActionFlags flags,
 
 /** Returns true if there is action registered for given keyword */
 bool scc_action_known(const char* keyword);
-/** Initializes new action using given keyword and parameters */
+
+/** Creates new action using given keyword and parameters */
 ActionOE scc_action_new(const char* keyword, ParameterList params);
 /** Returns NULL if memory cannot be allocated */
 Action* scc_button_action_from_keycode(unsigned short keycode);
+/** Creates new Macro. Returns NULL if memory cannot be allocated. */
+Action* scc_macro_new(Action** actions, size_t action_count);
+/**
+ * Combines two actions into Macro. If either (or both) already are Macro,
+ * new Macro will contain combination of actions from them, but not macros themselves.
+ * Returns NULL if memory cannot be allocated.
+ */
+Action* scc_macro_combine(Action* a1, Action* a2);
+
+
 /**
  * Calls compress method on action to which *a points to and replaces *a target
  * with aciton it returns. Reference cointers are properly decreased on old

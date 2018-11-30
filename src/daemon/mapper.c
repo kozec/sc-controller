@@ -167,7 +167,7 @@ static TaskID schedule(Mapper* m, uint32_t delay, MapperScheduleCallback cb, voi
 	return sccd_scheduler_schedule(delay, (sccd_scheduler_cb)cb, m, userdata);
 }
 
-static void cancel (Mapper* _m, TaskID task_id) {
+static void cancel(Mapper* _m, TaskID task_id) {
 	sccd_scheduler_cancel(task_id);
 }
 

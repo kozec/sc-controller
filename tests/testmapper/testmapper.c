@@ -1,4 +1,6 @@
 #include "scc/utils/container_of.h"
+#include "scc/utils/strbuilder.h"
+#include "scc/utils/list.h"
 #include "scc/utils/math.h"
 #include "scc/controller.h"
 #include "scc/mapper.h"
@@ -7,12 +9,25 @@
 #include <string.h>
 #include <stdlib.h>
 
+typedef struct Task {
+	MapperScheduleCallback		callback;
+	void*						userdata;
+	bool						canceled;
+	uint32_t					at;
+} Task;
+
+typedef LIST_TYPE(Task) Schedule;
+
 struct Testmapper {
-	Mapper				mapper;
-	ControllerInput		old_state;
-	ControllerInput		state;
-	dvec_t				mouse;
-	AxisValue			axes[ABS_CNT];
+	Mapper						mapper;
+	ControllerInput				old_state;
+	ControllerInput				state;
+	dvec_t						mouse;
+	AxisValue					axes[ABS_CNT];
+	bool						keys[KEY_CNT];
+	Schedule					schedule;
+	StrBuilder*					keylog;
+	uint32_t					now;
 };
 
 static ControllerFlags get_flags(Mapper* _m) {
@@ -53,7 +68,6 @@ static void move_mouse(Mapper* _m, double dx, double dy) {
 
 static void move_wheel(Mapper* _m, double dx, double dy) {
 	// struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
-	// pass
 }
 
 static void set_axis(Mapper* _m, Axis axis, AxisValue v) {
@@ -61,8 +75,45 @@ static void set_axis(Mapper* _m, Axis axis, AxisValue v) {
 	m->axes[axis] = v;
 }
 
+static void key_press(Mapper* _m, Keycode b) {
+	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	m->keys[b] = true;
+	if (strlen(strbuilder_get_value(m->keylog)) == 0)
+		strbuilder_addf(m->keylog, "%i", b);
+	else
+		strbuilder_addf(m->keylog, ", %i", b);
+}
+
+static void key_release(Mapper* _m, Keycode b) {
+	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	m->keys[b] = false;
+}
+
+static TaskID schedule(Mapper* _m, uint32_t delay, MapperScheduleCallback cb, void* userdata) {
+	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	if (!list_allocate(m->schedule, 1)) return 0;		// OOM
+	Task* task = malloc(sizeof(Task));
+	if (task == NULL) return 0;							// OOM
+	task->userdata = userdata;
+	task->canceled = false;
+	task->callback = cb;
+	task->at = m->now + delay;
+	list_add(m->schedule, task);
+	
+	return (TaskID)task;
+}
+
+static void cancel(Mapper* _m, TaskID task_id) {
+	Task* task = (Task*)task_id;
+	task->canceled = true;
+}
+
+
 void testmapper_free(Mapper* _m) {
 	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	strbuilder_free(m->keylog);
+	list_foreach(m->schedule, &free);
+	list_free(m->schedule);
 	free(m);
 }
 
@@ -75,6 +126,9 @@ void testmapper_set_buttons(Mapper* _m, SCButton buttons) {
 void testmapper_reset(Mapper* _m) {
 	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
 	vec_set(m->mouse, 0, 0);
+	strbuilder_clear(m->keylog);
+	list_foreach(m->schedule, &free);
+	list_clear(m->schedule);
 }
 
 void testmapper_get_mouse_position(Mapper* _m, double* x, double* y) {
@@ -88,12 +142,57 @@ AxisValue testmapper_get_axis_position(Mapper* _m, Axis axis) {
 	return m->axes[axis];
 }
 
+const char* testmapper_get_keylog(Mapper* _m) {
+	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	return strbuilder_get_value(m->keylog);
+}
+
+size_t testmapper_get_key_count(Mapper* _m) {
+	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	size_t c = 0;
+	for (size_t i=0; i<KEY_CNT; i++)
+		if (m->keys[i])
+			c ++;
+	
+	return c;
+}
+
+bool testmapper_has_scheduled(Mapper* _m) {
+	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	return list_len(m->schedule) > 0;
+}
+
+bool testmapper_run_scheduled(Mapper* _m, uint32_t time_delta) {
+	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	m->now += time_delta;
+	for (size_t i=0; i<list_len(m->schedule); i++) {
+		Task* s = list_get(m->schedule, i);
+		if (s->at <= m->now) {
+			list_remove(m->schedule, s);
+			if (!s->canceled)
+				s->callback(_m, s->userdata);
+			free(s);
+			return testmapper_has_scheduled(_m);
+		}
+	}
+	return testmapper_has_scheduled(_m);
+}
+
 
 Mapper* testmapper_new() {
 	struct Testmapper* m = malloc(sizeof(struct Testmapper));
 	if (m == NULL) return NULL;
 	memset(m, 0, sizeof(struct Testmapper));
 	
+	m->now = 1;
+	m->keylog = strbuilder_new();
+	m->schedule = list_new(Task, 5);
+	if ((m->keylog == NULL) || (m->schedule == NULL)) {
+		list_free(m->schedule);
+		strbuilder_free(m->keylog);
+		free(m);
+		return NULL;
+	}
 	testmapper_reset(&m->mapper);
 	m->mapper.get_flags = &get_flags;
 	m->mapper.set_profile = NULL;
@@ -103,8 +202,8 @@ Mapper* testmapper_new() {
 	m->mapper.set_axis = &set_axis;
 	m->mapper.move_mouse = &move_mouse;
 	m->mapper.move_wheel = &move_wheel;
-	m->mapper.key_press = NULL;
-	m->mapper.key_release = NULL;
+	m->mapper.key_press = &key_press;
+	m->mapper.key_release = &key_release;
 	m->mapper.is_touched = &is_touched;
 	m->mapper.was_touched = &was_touched;
 	m->mapper.is_pressed = &is_pressed;
@@ -113,8 +212,8 @@ Mapper* testmapper_new() {
 	m->mapper.reset_gyros = NULL;
 	m->mapper.special_action = &special_action;
 	m->mapper.haptic_effect = NULL;
-	m->mapper.schedule = NULL;
-	m->mapper.cancel = NULL;
+	m->mapper.schedule = &schedule;
+	m->mapper.cancel = &cancel;
 	m->mapper.input = NULL;
 	return &m->mapper;
 }

@@ -30,6 +30,7 @@ void test_sensitivity_mouse(CuTest* tc) {
 	assert(tc, IS_AROUND(x, 0.2 * 10.0));
 	assert(tc, IS_AROUND(y, 0.85 * -100.0));
 	
+	RC_REL(a);
 	testmapper_free(m);
 }
 
@@ -51,6 +52,7 @@ void test_sensitivity_axis(CuTest* tc) {
 	assert(tc, testmapper_get_axis_position(m, ABS_X) == (int)(10.0 * 0.2));
 	assert(tc, testmapper_get_axis_position(m, ABS_Y) == (int)(-100.0 * 0.3));
 	
+	RC_REL(a);
 	testmapper_free(m);
 }
 

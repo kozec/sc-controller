@@ -31,6 +31,7 @@ static void free_action_param(void* _p) {
 
 
 Parameter* scc_new_action_parameter(Action* a) {
+	if (a == NULL) return NULL;
 	ASSERT(!(a->flags & AF_ERROR));
 	ASSERT(!(a->flags & PT_ANY));			// I've managed to mess this up in the past :(
 	ActionParameter* p = malloc(sizeof(ActionParameter));

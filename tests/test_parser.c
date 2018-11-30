@@ -166,19 +166,28 @@ void test_dpad(CuTest* tc) {
 }
 
 
+/** Tests parsing of macro */
+void test_macro(CuTest* tc) {
+	ActionOE a;
+	a = scc_parse_action("button(Keys.KEY_Q); button(KEY_W);button(KEY_E)");
+	COMPARE_ACTION_TO_STR(a, "button(KEY_Q); button(KEY_W); button(KEY_E)");
+}
+
+
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
-	// DEFAULT_SUITE_ADD(test_none);
-	// DEFAULT_SUITE_ADD(test_param_parser_none);
-	// DEFAULT_SUITE_ADD(test_param_parser_int);
-	// DEFAULT_SUITE_ADD(test_param_parser_float);
-	// DEFAULT_SUITE_ADD(test_param_parser_string);
-	// DEFAULT_SUITE_ADD(test_tokenizing_strings);
-	// DEFAULT_SUITE_ADD(test_invalid_action);
-	// DEFAULT_SUITE_ADD(test_button);
+	DEFAULT_SUITE_ADD(test_none);
+	DEFAULT_SUITE_ADD(test_param_parser_none);
+	DEFAULT_SUITE_ADD(test_param_parser_int);
+	DEFAULT_SUITE_ADD(test_param_parser_float);
+	DEFAULT_SUITE_ADD(test_param_parser_string);
+	DEFAULT_SUITE_ADD(test_tokenizing_strings);
+	DEFAULT_SUITE_ADD(test_invalid_action);
+	DEFAULT_SUITE_ADD(test_button);
 	DEFAULT_SUITE_ADD(test_feedback);
-	// DEFAULT_SUITE_ADD(test_xy);
-	// DEFAULT_SUITE_ADD(test_dpad);
+	DEFAULT_SUITE_ADD(test_xy);
+	DEFAULT_SUITE_ADD(test_dpad);
+	DEFAULT_SUITE_ADD(test_macro);
 	
 	return CuSuiteRunDefault();
 }

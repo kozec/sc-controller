@@ -85,6 +85,19 @@ bool list_add(void* _list, void* item) {
 	return true;
 }
 
+bool list_add_all(void* _list, void* _list2) {
+	_voidlist list = (_voidlist)_list;
+	_voidlist list2 = (_voidlist)_list2;
+	if (!list_allocate(_list, list2->_data.size))
+		return false;
+	
+	for (size_t i=0; i<list2->_data.size; i++) {
+		list->items[list->_data.size] = list2->items[i];
+		list->_data.size ++;
+	}
+	return true;
+}
+
 bool list_insert(void* _list, size_t n, void* item) {
 	_voidlist list = (_voidlist)_list;
 	if (n >= list->_data.size)

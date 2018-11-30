@@ -51,3 +51,10 @@ test('test_modifiers', executable('test_modifiers',
 	link_with: [utils_lib, parser_lib],
 	sources: [ 'test_modifiers.c', 'testmapper/testmapper.c' ]
 ))
+
+test('test_macros', executable('test_macros',
+	dependencies: [cu_test],
+	include_directories: include,
+	link_with: [utils_lib, parser_lib],
+	sources: [ 'test_macros.c', 'testmapper/testmapper.c' ]
+))

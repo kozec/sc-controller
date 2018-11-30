@@ -44,6 +44,20 @@ ActionOE parse_after_keyword(Tokens* tokens, const char* keyword) {
 		if ((t == ')') || (t == ','))
 			return a;
 		
+		if (t == ';') {
+			// Macro
+			iter_next(tokens);	// skip ';'
+			tokens_skip_whitespace(tokens);
+			ActionOE a2 = parse_action(tokens);
+			if (IS_ACTION_ERROR(a2)) return a2;
+			Action* macro = scc_macro_combine(ACTION(a), ACTION(a2));
+			RC_REL(ACTION(a));
+			RC_REL(ACTION(a2));
+			if (macro == NULL)
+				return (ActionOE)scc_oom_action_error();
+			return (ActionOE)macro;
+		}
+		
 		RC_REL(ACTION(a));
 		return (ActionOE)scc_new_parse_error("Parsing shit after action not yet implemented");
 		
