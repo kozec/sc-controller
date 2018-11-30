@@ -114,6 +114,12 @@ struct Daemon {
 	 */
 	void			(*error_remove)(intptr_t id);
 	/**
+	 * Returns X11 display connection (casted to void*)
+	 * On platforms where X11 is not used, or if connection to XServer failed
+	 * before, returns NULL.
+	 */
+	void*			(*get_x_display)();
+	/**
 	 * Opens USB device represented by given syspath.
 	 *
 	 * Returns opaque pointer to something only libusb knows about,

@@ -9,7 +9,7 @@ PARSER_LIB_DEPS = []
 C_FILES = '*.c'
 
 if host_machine.system() == 'windows'
-	add_global_arguments('-D_POSIX', '-DNO_TRACEBACKS', '-mno-ms-bitfields', language: 'c')
+	add_global_arguments('-D_POSIX', '-DNO_X11', '-DNO_TRACEBACKS', '-mno-ms-bitfields', language: 'c')
 	PARSER_LIB_DEPS = [ meson.get_compiler('c').find_library('regex') ]
 	CONFIG_BACKEND = 'config_win32'
 	C_FILES = '\\*.c'

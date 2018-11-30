@@ -38,6 +38,7 @@ static Daemon daemon = {
 	.mainloop_cb_remove			= remove_mainloop,
 	.poller_cb_add				= sccd_poller_add,
 	.hotplug_cb_add				= sccd_register_hotplug_cb,
+	.get_x_display				= sccd_x11_get_display,
 	.usb_open					= sccd_usb_dev_open_by_syspath,
 	.usb_close					= sccd_usb_dev_close,
 	.usb_claim_interfaces_by	= sccd_usb_dev_claim_interfaces_by,
@@ -387,6 +388,7 @@ int main(int argc, char** argv) {
 	}
 	sccd_device_monitor_init(&daemon);
 	sccd_usb_helper_init(&daemon);
+	sccd_x11_init();
 	sccd_drivers_init(&daemon);
 #ifndef _WIN32
 	sccd_device_monitor_start(&daemon);

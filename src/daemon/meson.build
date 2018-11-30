@@ -15,6 +15,7 @@ if host_machine.system() == 'windows'
 else
 	platform_dependent_deps = [
 		meson.get_compiler('c').find_library('dl'),
+		meson.get_compiler('c').find_library('X11'),
 	]
 	if get_option('android').disabled()
 		platform_dependent_deps += [
@@ -31,6 +32,7 @@ executable('scc-daemon',
 				actions_lib, config_lib, uinput_lib],
 	dependencies: platform_dependent_deps,
 	sources: [
+		'x11.c',
 		'daemon.c',
 		'socket.c',
 		'poller.c',

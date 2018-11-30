@@ -96,6 +96,15 @@ void sccd_send_controller_list(Client* client);
  */
 void sccd_drop_client_asap(Client* client);
 
+/** Initializes connection to X11 display. On Windows, does nothing */
+void sccd_x11_init();
+void sccd_x11_close();
+/**
+ * Returns open connection to X11 display.
+ * Returns NULL on Windows, Android, or on *nix if connection to display failed
+ */
+void* sccd_x11_get_display();
+
 void sccd_usb_helper_init();
 USBDevHandle sccd_usb_dev_open_by_syspath(const char* syspath);
 bool sccd_usb_dev_interupt_read_loop(USBDevHandle dev, uint8_t endpoint, int length, sccd_usb_input_read_cb cb, void* userdata);
