@@ -39,12 +39,7 @@ static Daemon daemon = {
 	.poller_cb_add				= sccd_poller_add,
 	.hotplug_cb_add				= sccd_register_hotplug_cb,
 	.get_x_display				= sccd_x11_get_display,
-	.usb_open					= sccd_usb_dev_open_by_syspath,
-	.usb_close					= sccd_usb_dev_close,
-	.usb_claim_interfaces_by	= sccd_usb_dev_claim_interfaces_by,
-	.usb_interupt_read_loop		= sccd_usb_dev_interupt_read_loop,
-	.usb_hid_write				= sccd_usb_dev_hid_write,
-	.usb_hid_request			= sccd_usb_dev_hid_request,
+	.get_usb_helper				= sccd_get_usb_helper,
 };
 
 Daemon* get_daemon() {

@@ -51,7 +51,7 @@ void handle_input(SCController* sc, SCInput* i) {
 static void deallocate(Controller* c) {
 	SCController* sc = container_of(c, SCController, controller);
 	if (sc->usb_hndl != NULL)
-		sc->daemon->usb_close(sc->usb_hndl);
+		sc->daemon->get_usb_helper()->close(sc->usb_hndl);
 	free(sc);
 }
 
@@ -150,7 +150,7 @@ static void flush(Controller* c, Mapper* m) {
 			haptic.position = i;
 			haptic.amplitude = sc->hdata[i].amplitude;
 			haptic.period = sc->hdata[i].period;
-			sc->daemon->usb_hid_write(sc->usb_hndl, sc->idx, haptic.bytes, 64);
+			sc->daemon->get_usb_helper()->hid_write(sc->usb_hndl, sc->idx, haptic.bytes, 64);
 		}
 		HAPTIC_DISABLE(&sc->hdata[i]);
 	}
@@ -167,7 +167,7 @@ bool read_serial(SCController* sc) {
 	// 	return
 	uint8_t data[64] = { PT_GET_SERIAL, PL_GET_SERIAL, 0x01 };
 	uint8_t* response;
-	response = sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, data, -64);
+	response = sc->daemon->get_usb_helper()->hid_request(sc->usb_hndl, sc->idx, data, -64);
 	if (response == NULL) {
 		LERROR("Failed to retrieve serial number");
 		return false;
@@ -197,12 +197,12 @@ bool read_serial(SCController* sc) {
 
 bool lizard_mode(SCController* sc) {
 	uint8_t data[64] = { PT_LIZARD_BUTTONS, 0x01 };
-	if (sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
+	if (sc->daemon->get_usb_helper()->hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
 		LERROR("Failed to activate lizard mode");
 		return false;
 	}
 	data[0] = PT_LIZARD_MOUSE;
-	if (sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
+	if (sc->daemon->get_usb_helper()->hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
 		LERROR("Failed to activate lizard mode");
 		return false;
 	}
@@ -211,7 +211,7 @@ bool lizard_mode(SCController* sc) {
 
 bool clear_mappings(SCController* sc) {
 	uint8_t data[64] = { PT_CLEAR_MAPPINGS, 0x01 };
-	if (sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
+	if (sc->daemon->get_usb_helper()->hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
 		LERROR("Failed to clear mappings");
 		return false;
 	}
@@ -219,6 +219,7 @@ bool clear_mappings(SCController* sc) {
 }
 
 bool configure(SCController* sc) {
+	USBHelper* usb = sc->daemon->get_usb_helper();
 	uint8_t gyro_and_timeout[64] = {
 		// Header
 		PT_CONFIGURE, PL_CONFIGURE, CT_CONFIGURE,
@@ -235,9 +236,9 @@ bool configure(SCController* sc) {
 	if (sc->usb_hndl == NULL)
 		// Special case, controller was disconnected, but it's not deallocated yet
 		goto configure_fail;
-	if (sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, gyro_and_timeout, -64) == NULL)
+	if (usb->hid_request(sc->usb_hndl, sc->idx, gyro_and_timeout, -64) == NULL)
 		goto configure_fail;
-	if (sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, leds, -64) == NULL)
+	if (usb->hid_request(sc->usb_hndl, sc->idx, leds, -64) == NULL)
 		goto configure_fail;
 	return true;
 configure_fail:

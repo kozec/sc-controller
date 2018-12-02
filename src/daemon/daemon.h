@@ -106,13 +106,8 @@ void sccd_x11_close();
 void* sccd_x11_get_display();
 
 void sccd_usb_helper_init();
-USBDevHandle sccd_usb_dev_open_by_syspath(const char* syspath);
-bool sccd_usb_dev_interupt_read_loop(USBDevHandle dev, uint8_t endpoint, int length, sccd_usb_input_read_cb cb, void* userdata);
-int sccd_usb_dev_claim_interfaces_by(USBDevHandle dev, int cls, int subclass, int protocol);
-void sccd_usb_dev_hid_write(USBDevHandle hndl, uint16_t idx, uint8_t* data, uint16_t length);
-uint8_t* sccd_usb_dev_hid_request(USBDevHandle hndl, uint16_t idx, uint8_t* data, int32_t length);
-void sccd_usb_dev_close(USBDevHandle dev);
 void sccd_usb_helper_close();
+USBHelper* sccd_get_usb_helper();
 
 void sccd_device_monitor_init();
 void sccd_device_monitor_start();

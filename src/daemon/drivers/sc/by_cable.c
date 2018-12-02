@@ -28,7 +28,8 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 	if (data == NULL) {
 		// Means controller disconnected (or failed in any other way)
 		DEBUG("%s disconnected", sc->desc);
-		// sc->daemon->usb_close(sc->usb_hndl);
+		// USBHelper* usb = d->get_usb_helper();
+		// usb->close(sc->usb_hndl);
 		// TODO: Calling close at this point may hang. Closing should be
 		//       scheduled for later time instead, ideally in sccd_usb_dev_close.
 		sc->usb_hndl = NULL;
@@ -43,7 +44,8 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 
 
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
-	USBDevHandle hndl = daemon->usb_open(syspath);
+	USBHelper* usb = daemon->get_usb_helper();
+	USBDevHandle hndl = usb->open(syspath);
 	SCController* sc = NULL;
 	if (hndl == NULL) {
 		LERROR("Failed to open '%s'", syspath);
@@ -53,7 +55,7 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		LERROR("Failed to allocate memory");
 		goto hotplug_cb_fail;
 	}
-	if (daemon->usb_claim_interfaces_by(hndl, 3, 0, 0) <= 0) {
+	if (usb->claim_interfaces_by(hndl, 3, 0, 0) <= 0) {
 		LERROR("Failed to claim interfaces");
 		goto hotplug_cb_fail;
 	}
@@ -66,7 +68,7 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		goto hotplug_cb_failed_to_configure;
 	if (!configure(sc))
 		goto hotplug_cb_failed_to_configure;
-	if (!daemon->usb_interupt_read_loop(hndl, ENDPOINT, 64, &input_interrupt_cb, sc))
+	if (!usb->interupt_read_loop(hndl, ENDPOINT, 64, &input_interrupt_cb, sc))
 		goto hotplug_cb_failed_to_configure;
 	DEBUG("New wired Steam Controller with serial %s connected", sc->serial);
 	sc->state = SS_READY;
@@ -81,7 +83,7 @@ hotplug_cb_failed_to_configure:
 hotplug_cb_fail:
 	if (sc != NULL)
 		free(sc);
-	daemon->usb_close(hndl);
+	usb->close(hndl);
 }
 
 Driver* scc_driver_init(Daemon* daemon) {

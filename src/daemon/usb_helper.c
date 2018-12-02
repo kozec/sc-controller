@@ -19,6 +19,21 @@
 static libusb_context* ctx;
 
 static void sccd_usb_helper_mainloop(Daemon* d);
+static USBDevHandle sccd_usb_dev_open_by_syspath(const char* syspath);
+static bool sccd_usb_dev_interupt_read_loop(USBDevHandle dev, uint8_t endpoint, int length, sccd_usb_input_read_cb cb, void* userdata);
+static int sccd_usb_dev_claim_interfaces_by(USBDevHandle dev, int cls, int subclass, int protocol);
+static void sccd_usb_dev_hid_write(USBDevHandle hndl, uint16_t idx, uint8_t* data, uint16_t length);
+static uint8_t* sccd_usb_dev_hid_request(USBDevHandle hndl, uint16_t idx, uint8_t* data, int32_t length);
+static void sccd_usb_dev_close(USBDevHandle dev);
+
+static USBHelper usb_helper = {
+	.open						= sccd_usb_dev_open_by_syspath,
+	.close						= sccd_usb_dev_close,
+	.claim_interfaces_by		= sccd_usb_dev_claim_interfaces_by,
+	.interupt_read_loop			= sccd_usb_dev_interupt_read_loop,
+	.hid_write					= sccd_usb_dev_hid_write,
+	.hid_request				= sccd_usb_dev_hid_request,
+};
 
 typedef struct InputInterruptData {
 	sccd_usb_input_read_cb			cb;
@@ -57,7 +72,11 @@ void sccd_usb_helper_close() {
 	libusb_exit(ctx);
 }
 
-void sccd_usb_helper_mainloop(Daemon *d) {
+USBHelper* sccd_get_usb_helper() {
+	return &usb_helper;
+}
+
+static void sccd_usb_helper_mainloop(Daemon *d) {
 #ifdef _WIN32
 	static struct timeval timeout;
 	sccd_scheduler_get_sleep_time(&timeout);	
@@ -79,7 +98,7 @@ void sccd_usb_helper_mainloop(Daemon *d) {
 }
 
 // Used by win32.c
-libusb_context* sccd_usb_get_context() {
+static libusb_context* sccd_usb_get_context() {
 	return ctx;
 }
 
@@ -122,7 +141,7 @@ static bool get_usb_address(const char* syspath, uint8_t* bus, uint8_t* dev) {
 	return true;
 }
 
-USBDevHandle sccd_usb_dev_open_by_syspath(const char* syspath) {
+static USBDevHandle sccd_usb_dev_open_by_syspath(const char* syspath) {
 	USBDevHandle hndl = NULL;
 	libusb_device** list = NULL;
 	uint8_t syspath_bus;
@@ -155,11 +174,11 @@ sccd_usb_helper_open_by_syspath_end:
 	return hndl;
 }
 
-void sccd_usb_dev_close(USBDevHandle hndl) {
+static void sccd_usb_dev_close(USBDevHandle hndl) {
 	libusb_close(hndl);
 }
 
-int sccd_usb_dev_claim_interfaces_by(USBDevHandle hndl, int cls, int subclass, int protocol) {
+static int sccd_usb_dev_claim_interfaces_by(USBDevHandle hndl, int cls, int subclass, int protocol) {
 	struct libusb_config_descriptor* desc;
 	struct libusb_device* dev = libusb_get_device(hndl);
 	int count = 0;
@@ -194,7 +213,7 @@ int sccd_usb_dev_claim_interfaces_by(USBDevHandle hndl, int cls, int subclass, i
 	return count;
 }
 
-void sccd_usb_dev_hid_write(USBDevHandle hndl, uint16_t idx, uint8_t* data, uint16_t length) {
+static void sccd_usb_dev_hid_write(USBDevHandle hndl, uint16_t idx, uint8_t* data, uint16_t length) {
 	uint8_t request_type = (0x21 & ~LIBUSB_ENDPOINT_DIR_MASK) | LIBUSB_ENDPOINT_OUT;
 	uint8_t request = 0x09;
 	uint16_t value = 0x0300;
@@ -205,7 +224,7 @@ void sccd_usb_dev_hid_write(USBDevHandle hndl, uint16_t idx, uint8_t* data, uint
 		LERROR("sccd_usb_dev_hid_write: out: %s", libusb_strerror(err));
 }
 
-uint8_t* sccd_usb_dev_hid_request(USBDevHandle hndl, uint16_t idx, uint8_t* data, int32_t _length) {
+static uint8_t* sccd_usb_dev_hid_request(USBDevHandle hndl, uint16_t idx, uint8_t* data, int32_t _length) {
 	uint8_t* out_buffer = NULL;
 	bool use_same_buffer = false;
 	uint16_t length;
@@ -309,7 +328,7 @@ input_interrupt_cb_error:
 	libusb_free_transfer(t);
 }
 
-bool sccd_usb_dev_interupt_read_loop(USBDevHandle hndl, uint8_t endpoint, int length, sccd_usb_input_read_cb cb, void* userdata) {
+static bool sccd_usb_dev_interupt_read_loop(USBDevHandle hndl, uint8_t endpoint, int length, sccd_usb_input_read_cb cb, void* userdata) {
 	uint8_t* buffer = malloc(length);
 	InputInterruptData* idata = malloc(sizeof(InputInterruptData));
 	struct libusb_transfer* t = libusb_alloc_transfer(0);
@@ -346,7 +365,7 @@ sccd_usb_dev_interupt_read_loop_fail:
 #ifdef _WIN32
 void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product);
 
-void sccd_usb_rescan() {
+static void sccd_usb_rescan() {
 	char fake_syspath_buffer[1024];
 	struct libusb_device_descriptor desc;
 	libusb_device** list = NULL;

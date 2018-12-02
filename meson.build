@@ -9,21 +9,22 @@ PARSER_LIB_DEPS = []
 C_FILES = '*.c'
 
 if host_machine.system() == 'windows'
-	add_global_arguments('-D_POSIX', '-DNO_X11', '-DNO_TRACEBACKS', '-mno-ms-bitfields', language: 'c')
+	add_global_arguments('-D_POSIX', '-DNO_X11', '-mno-ms-bitfields', language: 'c')
+	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
+	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
 	PARSER_LIB_DEPS = [ meson.get_compiler('c').find_library('regex') ]
 	CONFIG_BACKEND = 'config_win32'
 	C_FILES = '\\*.c'
+elif get_option('android').enabled()
+	add_global_arguments('-DANDROID', language: 'c')
+elif host_machine.system() == 'linux'
+	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
 endif
 
-if get_option('tracebacks').disabled()
+if get_option('tracebacks').disabled() or host_machine.system() == 'windows' or get_option('android').enabled()
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 endif
 
-if get_option('android').enabled()
-	add_global_arguments('-DANDROID', '-DNO_TRACEBACKS', language: 'c')
-endif
-
-add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', language: 'c')
 include = include_directories('./include/')
 
 utils_lib = static_library('utils',

@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 #include "scc/controller.h"
+#include "scc/usb_helper.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef DLL_EXPORT
@@ -34,19 +35,12 @@ typedef enum {
 #endif
 } Subsystem;
 
-#ifdef LIBUSB_H
-typedef struct libusb_device_handle* USBDevHandle;
-#else
-typedef void* USBDevHandle;
-#endif
-
 typedef struct Daemon Daemon;
 typedef struct Driver Driver;
 
 typedef void (*sccd_mainloop_cb)(Daemon* d);
 typedef void (*sccd_poller_cb)(Daemon* d, int fd, void* userdata);
 typedef void (*sccd_hotplug_cb)(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product);
-typedef void (*sccd_usb_input_read_cb)(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const uint8_t* data, void* userdata);
 
 /** This is 'daemon from POV of driver', not everything that driver does */
 struct Daemon {
@@ -124,49 +118,14 @@ struct Daemon {
 	 */
 	void*			(*get_x_display)();
 	/**
-	 * Opens USB device represented by given syspath.
+	 * Returns USBHelper instance or NULL on platforms where it's not supported.
+	 * USBHelper is singleton and will stay allocated until daemon terminates,
+	 * so it's safe to keep this value.
 	 *
-	 * Returns opaque pointer to something only libusb knows about,
-	 * or NULL on failure.
-	 * Doesn't work on Android (always returns NULL)
+	 * USBHelper is just libusb wrapper and is available only on Windows and Linux.
 	 */
-	USBDevHandle	(*usb_open)(const char* syspath);
-	/** Closes given USBDevHandle */
-	void			(*usb_close)(USBDevHandle hndl);
-	/**
-	 * Claims all interfaces matching specified parameters.
-	 * Returns number of claimed interfaces, which will be zero in case of error.
-	 */
-	int				(*usb_claim_interfaces_by)(USBDevHandle hndl, int cls, int subclass, int protocol);
-	/**
-	 * Setups kind-of read loop with callback that will be called repeadedly
-	 * every time USB device sends new packet.
-	 *
-	 * This will be done until it device is closed, disconnected or it's canceled
-	 * by other error with same effect, in which case callback will be called one
-	 * last time with NULL data. Cleanup is automatic.
-	 * 
-	 * Returns true on success or false on OOM error.
-	 */
-	bool			(*usb_interupt_read_loop)(USBDevHandle hndl, uint8_t endpoint, int length, sccd_usb_input_read_cb cb, void* userdata);
-	/**
-	 * Makes synchronous HID write on given USB device.
-	 */
-	void			(*usb_hid_write)(USBDevHandle hndl, uint16_t idx, uint8_t* data, uint16_t length);
-	/**
-	 * Makes synchronous HID request on given USB device.
-	 * 
-	 * There are two ways how to call this method:
-	 *  - if 'length' is positive (or zero, but don't do that), method returns
-	 *    data responsed by device in freshly allocated buffer that caller has
-	 *    to deallocate.
-	 *  - if 'length' negative, buffer in which request was stored is reused as
-	 *    buffer for response. Doing this prevents possible OOM error.
-	 *
-	 * In both cases, length of response is same as length of request. Returns
-	 * pointer to buffer with response or NULL if request fails.
-	 */
-	uint8_t*		(*usb_hid_request)(USBDevHandle hndl, uint16_t idx, uint8_t* data, int32_t length);
+	USBHelper*		(*get_usb_helper)();
+
 };
 
 struct Driver {
@@ -174,7 +133,7 @@ struct Driver {
 	 * Called when daemon is exiting to give driver chance to deallocate things.
 	 * May be NULL.
 	 */
-	void				(*unload)(struct Driver* drv, struct Daemon* d);
+	void			(*unload)(struct Driver* drv, struct Daemon* d);
 };
 
 /** 
