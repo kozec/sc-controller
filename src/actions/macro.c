@@ -16,9 +16,6 @@
 #include <stdio.h>
 
 const char* KW_MACRO = "macro";	// not used normally
-extern const char* KW_REPEAT;
-extern const char* KW_SLEEP;
-extern uint32_t sor_get_sleep_time(Action *a);
 
 typedef struct {
 	Action			action;
@@ -29,9 +26,37 @@ typedef struct {
 } Macro;
 
 
+char* actions_to_string(ActionList l, const char* separator) {
+	StrBuilder* sb = strbuilder_new();
+	ListIterator it = iter_get(l);
+	if ((sb == NULL) || (it == NULL))
+		goto actions_to_string_fail;
+	if (!strbuilder_add_all(sb, it, &scc_action_to_string, separator))
+		goto actions_to_string_fail;
+	iter_free(it);
+	return strbuilder_consume(sb);
+	
+actions_to_string_fail:
+	free(sb); iter_free(it);
+	return NULL;
+}
+
+/** Situable as callback for list_foreach */
+static void deref_action(void* _a) {
+	Action* a = (Action*)_a;
+	RC_REL(a);
+}
+
+/** Situable as callback for list_foreach */
+static void ref_action(void* _a) {
+	Action* a = (Action*)_a;
+	RC_ADD(a);
+}
+
+
 static char* macro_to_string(Action* a) {
 	Macro* x = container_of(a, Macro, action);
-	return ACTIONS_TO_STRING(x->children, "; ");
+	return actions_to_string(x->children, "; ");
 }
 
 static void macro_dealloc(Action* a) {
@@ -116,6 +141,22 @@ void macro_set_repeat(Action* a, bool repeat) {
 	Macro* x = container_of(a, Macro, action);
 	x->repeat = repeat;
 }
+
+bool macro_add_from_params(Action* a, ParameterList lst) {
+	ASSERT(a->type == KW_MACRO);
+	Macro* x = container_of(a, Macro, action);
+	if (!list_allocate(x->children, list_len(lst)))
+		return false;		// OOM
+	
+	for(size_t i=0; i<list_len(lst); i++) {
+		Action* a = scc_parameter_as_action(list_get(lst, i));
+		list_add(x->children, a);
+		RC_ADD(a);
+	}
+	
+	return true;
+}
+
 
 Action* scc_macro_new(Action** actions, size_t action_count) {
 	ActionList lst = list_new(Action, action_count);

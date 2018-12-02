@@ -45,7 +45,7 @@ struct Action {
 	 *
 	 * Returned string has to be free'd by caller. Returns NULL on OOM error.
 	 */
-	char*(*to_string)(Action* a);
+	char*	(*to_string)(Action* a);
 	
 	/**
 	 * Called when action is executed by pressing physical gamepad button.

@@ -34,7 +34,7 @@ Macros
 [ ] MultiAction (and)
 [x] Macro (;)
 [ ] Type
-[ ] Cycle
+[x] Cycle
 [x] Repeat
 [x] Sleep
 [ ] Press

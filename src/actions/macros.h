@@ -4,43 +4,33 @@
  * Common code for all macro-like actions and action with multiple child actions.
  */
 #pragma once
-#include "scc/utils/strbuilder.h"
-#include "scc/utils/iterable.h"
 #include "scc/utils/list.h"
 #include "scc/utils/rc.h"
+#include "scc/parameter.h"
 #include "scc/action.h"
 #include <stdlib.h>
 #include <stdio.h>
 
 typedef LIST_TYPE(Action) ActionList;
 
+extern const char* KW_MACRO;
+extern const char* KW_REPEAT;
+extern const char* KW_SLEEP;
 
-static char* ACTIONS_TO_STRING(ActionList l, const char* separator) {
-	StrBuilder* sb = strbuilder_new();
-	ListIterator it = iter_get(l);
-	if ((sb == NULL) || (it == NULL))
-		goto actions_to_string_fail;
-	if (!strbuilder_add_all(sb, it, &scc_action_to_string, separator))
-		goto actions_to_string_fail;
-	iter_free(it);
-	return strbuilder_consume(sb);
-	
-actions_to_string_fail:
-	free(sb); iter_free(it);
-	return NULL;
-}
+uint32_t sor_get_sleep_time(Action *a);
 
-/** Situable as callback for list_foreach */
-static void deref_action(void* _a) {
-	Action* a = (Action*)_a;
-	RC_REL(a);
-}
+void macro_set_repeat(Action* a, bool repeat);
 
-/** Situable as callback for list_foreach */
-static void ref_action(void* _a) {
-	Action* a = (Action*)_a;
-	RC_ADD(a);
-}
+/**
+ * Adds actions form parameter list. Every parameter
+ * of list has to be ActionParameter.
+ * Returns false if memory cannot be allocated.
+ */
+bool macro_add_from_params(Action* a, ParameterList lst);
+
+/** Returned string has to be deallocated b caller */
+char* actions_to_string(ActionList l, const char* separator);
+
 
 #define MULTICHILD_DEALLOC(a) do {						\
 	list_foreach((a)->children, &deref_action);			\

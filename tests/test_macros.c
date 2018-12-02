@@ -126,11 +126,43 @@ void test_repeat(CuTest* tc) {
 	testmapper_free(m);
 }
 
+/** Tests cycling  */
+void test_cycle(CuTest* tc) {
+	ActionOE aoe = scc_parse_action("cycle(button(Keys.KEY_Q), button(Keys.KEY_W), button(Keys.KEY_E))");
+	assert_msg(tc, !IS_ACTION_ERROR(aoe), ACTION_ERROR(aoe)->message);
+	assert(tc, 0 == strcmp("cycle(button(KEY_Q), button(KEY_W), button(KEY_E))",
+						scc_action_to_string(ACTION(aoe))));
+	
+	Mapper* m = testmapper_new();
+	Action* a = ACTION(aoe);
+	scc_action_compress(&a);
+	
+	testmapper_set_buttons(m, B_A);
+	a->button_press(a, m);
+	a->button_release(a, m);
+	assert(tc, 0 == strcmp("16", testmapper_get_keylog(m)));
+	
+	a->button_press(a, m);
+	a->button_release(a, m);
+	a->button_press(a, m);
+	a->button_release(a, m);
+	assert(tc, 0 == strcmp("16, 17, 18", testmapper_get_keylog(m)));
+	
+	a->button_press(a, m);
+	a->button_release(a, m);
+	assert(tc, 0 == strcmp("16, 17, 18, 16", testmapper_get_keylog(m)));
+	
+	RC_REL(a);
+	testmapper_free(m);
+}
+
+
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
-	// DEFAULT_SUITE_ADD(test_macro);
-	// DEFAULT_SUITE_ADD(test_sleep);
+	DEFAULT_SUITE_ADD(test_macro);
+	DEFAULT_SUITE_ADD(test_sleep);
 	DEFAULT_SUITE_ADD(test_repeat);
+	DEFAULT_SUITE_ADD(test_cycle);
 	
 	return CuSuiteRunDefault();
 }

@@ -13,16 +13,15 @@
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "macros.h"
 #include <stdlib.h>
 #include <stdio.h>
 
 static ParamChecker pc_sleep;
 static ParamChecker pc_repeat;
 
-extern const char* KW_MACRO;
 const char* KW_REPEAT = "repeat";
 const char* KW_SLEEP = "sleep";
-void macro_set_repeat(Action* a, bool repeat);
 
 typedef struct {
 	Action				action;
@@ -57,7 +56,6 @@ static Action* compress(Action* a) {
 				return c;
 			}
 		}
-		// macro_set_repeat(c, true);
 		scc_action_compress(&sor->macro);
 	}
 	return a;
