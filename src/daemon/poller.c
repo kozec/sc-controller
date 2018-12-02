@@ -8,6 +8,7 @@
 #define LOG_TAG "Poller"
 #include "scc/utils/logging.h"
 #include "daemon.h"
+#include "scc/utils/intmap.h"
 #include "scc/utils/assert.h"
 #ifdef _WIN32
 	#define FD_SETSIZE 512
@@ -30,10 +31,11 @@ typedef struct {
 } Cbdata;
 
 static fd_set readset;
-static Cbdata callbacks[FD_SETSIZE];
+static intmap_t callbacks;
 static int nfds = 0;
 
 static void sccd_poller_mainloop(Daemon* d) {
+	Cbdata* cbd;
 	struct timeval timeout;
 	fd_set cur_readset = readset;
 #ifdef _WIN32
@@ -60,19 +62,23 @@ static void sccd_poller_mainloop(Daemon* d) {
 #ifdef _WIN32
 	for (int j = 0; j<count; j++) {
 		int i = cur_readset.fd_array[j];
+		if (intmap_get(callbacks, i, (any_t*)&cbd) == MAP_OK)
+			cbd->callback(d, i, cbd->userdata);
+	}
 #else
 	for (int i = 0; (i<nfds) && (count>0); i++) {
 		if (FD_ISSET(i, &cur_readset))
-#endif
-			if (callbacks[i].callback != NULL)
-				callbacks[i].callback(d, i, callbacks[i].userdata);
+			if (intmap_get(callbacks, i, (any_t*)&cbd) == MAP_OK)
+				cbd->callback(d, i, cbd->userdata);
 	}
+#endif
 }
 
 void sccd_poller_init() {
 	Daemon* d = get_daemon();
 	FD_ZERO(&readset);
-	memset(callbacks, 0, sizeof(Cbdata) * FD_SETSIZE);
+	callbacks = intmap_new();
+	ASSERT(callbacks != NULL);
 	ASSERT(d->mainloop_cb_add(&sccd_poller_mainloop));
 }
 
@@ -87,12 +93,19 @@ bool sccd_poller_add(int fd, sccd_poller_cb cb, void* userdata) {
 		return false;
 	}
 #endif
-	if (fd > FD_SETSIZE) {
-		LERROR("Cannot monitor fd #%i. This is seriously bad and means code has to be rewitten.", fd);
+	Cbdata* cbd;
+	if (intmap_get(callbacks, fd, (any_t*)&cbd) == MAP_OK) {
+		WARN("Request was made to monitor same file descriptor twice. This is not supported");
 		return false;
 	}
-	callbacks[fd].callback = cb;
-	callbacks[fd].userdata = userdata;
+	cbd = malloc(sizeof(Cbdata));
+	if ((cbd == NULL) || (intmap_put(callbacks, fd, cbd) != MAP_OK))  {
+		WARN("Cannot monitor fd #%i: Out of memory", fd);
+		free(cbd);
+		return false;
+	}
+	cbd->callback = cb;
+	cbd->userdata = userdata;
 	FD_SET(fd, &readset);
 	if (fd + 1 > nfds)
 		nfds = fd + 1;
@@ -100,7 +113,12 @@ bool sccd_poller_add(int fd, sccd_poller_cb cb, void* userdata) {
 }
 
 void sccd_poller_remove(int fd) {
-	callbacks[fd].callback = NULL;
-	callbacks[fd].userdata = NULL;
+	Cbdata* cbd;
+	if (intmap_get(callbacks, fd, (any_t*)&cbd) != MAP_OK) {
+		WARN("Request was made to stop monitoring file descriptor that is not monitored. This is weird.");
+		return;
+	}
+	intmap_remove(callbacks, fd);
 	FD_CLR(fd, &readset);
+	free(cbd);
 }
