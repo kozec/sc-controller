@@ -78,7 +78,13 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 		return;		// failed in the past, ignore
 	else if (sc->state == SS_NOT_CONFIGURED) {
 		// Just connected / not configured
-		if (!read_serial(sc) || !clear_mappings(sc) || !configure(sc)) {
+		if (!read_serial(sc)) {
+			// Freshly connected controller, not yet able to communicate.
+			// Just wait for next input_interrupt, it should be OK then
+			sc->state = SS_NOT_CONFIGURED;
+			return;
+		}
+		if (!clear_mappings(sc) || !configure(sc)) {
 			sc->state = SS_FAILED;
 			return;
 		}

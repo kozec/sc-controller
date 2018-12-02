@@ -57,8 +57,10 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		LERROR("Failed to claim interfaces");
 		goto hotplug_cb_fail;
 	}
-	if (!read_serial(sc))
+	if (!read_serial(sc)) {
+		LERROR("Failed to read serial number");
 		goto hotplug_cb_failed_to_configure;
+	}
 	if (!clear_mappings(sc))
 		// clear_mappings is needed on Windows, as kernel driver cannot be deatached there
 		goto hotplug_cb_failed_to_configure;

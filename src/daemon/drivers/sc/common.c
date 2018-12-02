@@ -172,6 +172,11 @@ bool read_serial(SCController* sc) {
 		LERROR("Failed to retrieve serial number");
 		return false;
 	}
+	if (data[1] != PL_GET_SERIAL) {
+		// Sometimes, freshly connectedn controller is not able to send its own
+		// serial straight away
+		return false;
+	}
 	data[13] = 0;	// to terminate string
 	strncpy(sc->serial, (const char*) &data[3], MAX_SERIAL_LEN);
 	snprintf(sc->id, MAX_ID_LEN, "sc%s", sc->serial);
@@ -186,6 +191,20 @@ bool read_serial(SCController* sc) {
 	case SC_BT:
 		snprintf(sc->desc, MAX_DESC_LEN, "<SCByBt %s>", sc->serial);
 		break;
+	}
+	return true;
+}
+
+bool lizard_mode(SCController* sc) {
+	uint8_t data[64] = { PT_LIZARD_BUTTONS, 0x01 };
+	if (sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
+		LERROR("Failed to activate lizard mode");
+		return false;
+	}
+	data[0] = PT_LIZARD_MOUSE;
+	if (sc->daemon->usb_hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL) {
+		LERROR("Failed to activate lizard mode");
+		return false;
 	}
 	return true;
 }

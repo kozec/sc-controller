@@ -81,7 +81,8 @@ typedef enum {
 	PT_CALIBRATE_JOYSTICK = 0xbf,
 	PT_CALIBRATE_TRACKPAD = 0xa7,
 	PT_SET_AUDIO_INDICES = 0xc1,
-	PT_LIZARD_MODE = 0x8e,
+	PT_LIZARD_BUTTONS = 0x85,
+	PT_LIZARD_MOUSE = 0x8e,
 	PT_FEEDBACK = 0x8f,
 	PT_RESET = 0x95,
 	PT_GET_SERIAL = 0xAE,
@@ -110,5 +111,7 @@ void handle_input(SCController* sc, SCInput* i);
 bool read_serial(SCController* sc);
 /** Returns false on failure */
 bool clear_mappings(SCController* sc);
+/** This is effectively reverse of clear_mappings. Returns false on failure */
+bool lizard_mode(SCController* sc);
 /** Returns false on failure */
 bool configure(SCController* sc);
