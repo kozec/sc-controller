@@ -12,7 +12,7 @@
 
 typedef struct VirtualDevice VirtualDevice;
 
-typedef enum VirtualDeviceType {
+typedef enum {
 	/** Dummy device can take any kind of input and does nothing with it */
 	VTP_DUMMY				= 0,
 	VTP_GAMEPAD				= 1 << 0,
@@ -20,24 +20,34 @@ typedef enum VirtualDeviceType {
 	VTP_KEYBOARD			= 1 << 2,
 } VirtualDeviceType;
 
-typedef struct {
+/**
+ * VirtualGamepadType is used in VirtualDeviceSettings struct.
+ *
+ * On Windows, 'gamepad' member of that struct is ignored and only gamepad_type
+ * is used. VGT_AUTO then means 'DS4' on Windows 7 and 'X360' on later.
+ *
+ * On Linux, VGT_AUTO means using data from 'gamepad' struct and VGT_DS4 or
+ * VGT_X360 can be used as shortcuts instead of filling all values.
+ */
+typedef enum {
+	VGT_AUTO				= 0,
+	VGT_DS4					= 1,
+	VGT_X360				= 2,
+} VirtualGamepadType;
+
+typedef struct VirtualDeviceSettings {
 	/** Name can be NULL in which case default is used */
-	const char*			name;
+	const char*					name;
 	union {
-		int				mouse_button_count;
+		int						mouse_button_count;
 		struct {
-			int			button_count;
-			int			axis_count;
-			uint16_t	vendor_id;
-			uint16_t	product_id;
-			uint16_t	version;
+			int					button_count;
+			int					axis_count;
+			uint16_t			vendor_id;
+			uint16_t			product_id;
+			uint16_t			version;
 		} gamepad;
-		/** 
-		* On windows, gamepad values above are ignored and only this is used.
-		* If true, virtual gamepad will be DS4.
-		* On Linux, gamepad type is determined by vendor & product ID
-		*/
-		bool		gamepad_is_ds4;
+		VirtualGamepadType		gamepad_type;
 		// There is no keyboard button count, keyboard is not configurable
 	};
 } VirtualDeviceSettings;

@@ -13,6 +13,7 @@
 #include "scc/special_action.h"
 #include "scc/profile.h"
 #include "scc/mapper.h"
+#include "scc/config.h"
 #include "scc/tools.h"
 #include "daemon.h"
 #include "errno.h"
@@ -20,6 +21,7 @@
 #ifndef _WIN32
 	#include <spawn.h>
 #else
+	#include <windows.h>
 	#include <process.h>
 #endif
 
@@ -218,15 +220,39 @@ void sccd_mapper_flush(SCCDMapper* m) {
 	m->to_sync = 0;
 }
 
+
+/**
+ * Applies gamepad configuration settings to 'VirtualDeviceSettings' struct.
+ * This is platform-dependent.
+ */
+static void apply_gamepad_config(Config* c, VirtualDeviceSettings* settings) {
+	// TODO: Linux here
+#ifdef _WIN32
+	const char* output = config_get(c, "output");
+	if (0 == strcmp(output, "ds4")) {
+		settings->gamepad_type = VGT_DS4;
+	} else if (0 == strcmp(output, "x360")) {
+		settings->gamepad_type = VGT_X360;
+	} else {		// 'auto'
+		settings->gamepad_type = VGT_AUTO;
+	}
+#else
+	settings->gamepad_type = VGT_AUTO;
+#endif
+}
+
+
 SCCDMapper* sccd_mapper_create() {
 	SCCDMapper* m = malloc(sizeof(struct SCCDMapper));
 	if (m == NULL) return NULL;
 	memset(m, 0, sizeof(struct SCCDMapper));
+	Config* c = config_load();
 
 	DEBUG("Creating virtual devices...");
 	
 	VirtualDeviceSettings settings = { NULL };
 	settings.name = NULL; // take default
+	apply_gamepad_config(c, &settings);
 	m->gamepad = scc_virtual_device_create(VTP_GAMEPAD, &settings);
 	if (m->gamepad == NULL) m->gamepad = scc_virtual_device_create(VTP_DUMMY, NULL);
 	DDEBUG("Gamepad:  %s", scc_virtual_device_to_string(m->gamepad));
@@ -238,6 +264,7 @@ SCCDMapper* sccd_mapper_create() {
 	m->keyboard = scc_virtual_device_create(VTP_KEYBOARD, &settings);
 	if (m->keyboard == NULL) m->keyboard = scc_virtual_device_create(VTP_DUMMY, NULL);
 	DDEBUG("keyboard: %s", scc_virtual_device_to_string(m->keyboard));
+	RC_REL(c);
 	
 	m->mapper.get_flags = &get_flags;
 	m->mapper.set_profile = &set_profile;

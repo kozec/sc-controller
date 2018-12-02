@@ -60,21 +60,30 @@ VirtualDevice* setup_gamepad(const VirtualDeviceSettings* settings) {
 		}
 	}
 	
-	// TODO: Right now, my Windows machine can't install xbox drivers...
-	((VirtualDeviceSettings*)settings)->gamepad_is_ds4 = true;
-	
-	if (settings->gamepad_is_ds4) {
-		// DS4 controller
-		name = "DS4 Gamepad";
-		vdev->is_ds4 = true;
-		DS4_REPORT_INIT(&vdev->ds4_report);
-		vdev->target = vigem_target_ds4_alloc();
-		if (vdev->target == NULL) {
-			LERROR("vigem_target_ds4_alloc failed");
-			free(vdev);
-			return NULL;
-		}
+	VirtualGamepadType gamepad_type = settings->gamepad_type;
+	OSVERSIONINFO osvi;
+	memset(&osvi, 0, sizeof(OSVERSIONINFO));
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionExA(&osvi);
+	LOG("osvi.dwMajorVersion = %i osvi.dwMinorVersion = %i", osvi.dwMajorVersion, osvi.dwMinorVersion);
+	if ((osvi.dwMajorVersion > 6) || ((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >=2))) {
+		// Windows 8 or later
+		if (gamepad_type == VGT_AUTO)
+			gamepad_type = VGT_X360;
 	} else {
+		// Windows 7
+		if (gamepad_type == VGT_AUTO)
+			gamepad_type = VGT_DS4;
+		if (gamepad_type == VGT_X360) {
+			WARN("!!!!!!!!!!");
+			WARN("It appears that you've manually configured x360 controller emulation on Windows 7");
+			WARN("This will most likely crash your entire system.");
+			WARN("Have fun.");
+			WARN("!!!!!!!!!!");
+		}
+	}
+	
+	if (gamepad_type == VGT_X360) {
 		// Xbox controller
 		name = "x360 Controller";
 		vdev->is_ds4 = false;
@@ -82,6 +91,17 @@ VirtualDevice* setup_gamepad(const VirtualDeviceSettings* settings) {
 		vdev->target = vigem_target_x360_alloc();
 		if (vdev->target == NULL) {
 			LERROR("vigem_target_x360_alloc failed");
+			free(vdev);
+			return NULL;
+		}
+	} else {
+		// DS4 controller
+		name = "DS4 Gamepad";
+		vdev->is_ds4 = true;
+		DS4_REPORT_INIT(&vdev->ds4_report);
+		vdev->target = vigem_target_ds4_alloc();
+		if (vdev->target == NULL) {
+			LERROR("vigem_target_ds4_alloc failed");
 			free(vdev);
 			return NULL;
 		}
