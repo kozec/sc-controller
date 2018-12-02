@@ -81,6 +81,10 @@ struct Daemon {
 	 * Adds file descriptor that will be monitored for having data available to
 	 * read and callback that will be called from Daemon's mainloop when that
 	 * happens.
+	 *
+	 * Note that on Windows, select() from Winsock2 is used and polling works
+	 * only with sockets.
+	 *
 	 * Returns true on success or false on OOM error.
 	 */
 	bool			(*poller_cb_add)(int fd, sccd_poller_cb cb, void* userdata);

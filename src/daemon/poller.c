@@ -35,44 +35,51 @@ static intmap_t callbacks;
 static int nfds = 0;
 
 static void sccd_poller_mainloop(Daemon* d) {
+#ifndef _WIN32
+	////// Unix //////
 	Cbdata* cbd;
 	struct timeval timeout;
 	fd_set cur_readset = readset;
-#ifdef _WIN32
-	// On Windows, sccd_scheduler_get_sleep_time is used by usb_helper,
-	// so select should return ASAP
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-#else
 	sccd_scheduler_get_sleep_time(&timeout);
-#endif
 	int count = select(nfds, &cur_readset, NULL, NULL, &timeout);
 	if (count < 0) {
-#ifdef _WIN32
-		WARN("select failed: error %i", WSAGetLastError());
-		Daemon* d = get_daemon();
-		d->mainloop_cb_remove(&sccd_poller_mainloop);
-#else
 		WARN("select failed: %s", strerror(errno));
-#endif
 		return;
 	}
 	if (count == 0)
 		return;
-#ifdef _WIN32
-	for (int j = 0; j<count; j++) {
-		int i = cur_readset.fd_array[j];
-		if (intmap_get(callbacks, i, (any_t*)&cbd) == MAP_OK)
-			cbd->callback(d, i, cbd->userdata);
-	}
-#else
 	for (int i = 0; (i<nfds) && (count>0); i++) {
 		if (FD_ISSET(i, &cur_readset))
 			if (intmap_get(callbacks, i, (any_t*)&cbd) == MAP_OK)
 				cbd->callback(d, i, cbd->userdata);
 	}
+	
+#else
+	////// Windows //////
+	Cbdata* cbd;
+	struct timeval timeout;
+	fd_set cur_readset = readset;
+	// On Windows, sccd_scheduler_get_sleep_time is used by usb_helper,
+	// so select should return ASAP
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+	int count = select(nfds, &cur_readset, NULL, NULL, &timeout);
+	if (count < 0) {
+		WARN("select failed: error %i", WSAGetLastError());
+		Daemon* d = get_daemon();
+		d->mainloop_cb_remove(&sccd_poller_mainloop);
+		return;
+	}
+	if (count == 0)
+		return;
+	for (int j = 0; j<count; j++) {
+		int i = cur_readset.fd_array[j];
+		if (intmap_get(callbacks, i, (any_t*)&cbd) == MAP_OK)
+			cbd->callback(d, i, cbd->userdata);
+	}
 #endif
 }
+
 
 void sccd_poller_init() {
 	Daemon* d = get_daemon();
