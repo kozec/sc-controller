@@ -20,6 +20,10 @@
 
 #define BUFFER_SIZE		256
 
+#ifndef _WIN32
+	#error "config_json.c included outside of Windows"
+#endif
+
 static void config_dealloc(void* _c) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	

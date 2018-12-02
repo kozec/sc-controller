@@ -4,7 +4,6 @@
  *
  * Default config backend that stores data in json file
  */
-#ifndef _WIN32
 #define LOG_TAG "config"
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
@@ -21,6 +20,9 @@
 #define CONFIG_FILENAME			"config.c.json"
 // TODO: Remove '.c.' from CONFIG_FILENAME.
 
+#ifdef _WIN32
+	#error "config_json.c included on Windows"
+#endif
 
 static void config_dealloc(void* _c) {
 	struct _Config* c = container_of(_c, struct _Config, config);
@@ -339,5 +341,3 @@ int config_set_strings(Config* _c, const char* path, const char** list, ssize_t 
 		return 0;
 	return 1;
 }
-
-#endif // _WIN32

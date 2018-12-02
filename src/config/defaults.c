@@ -97,9 +97,12 @@ const struct config_item DEFAULT_VALUES[] = {
 	{ "gui/news/enabled",					CVT_BOOL,		.v_bool = true },
 	/// Stores last version when "new in this version" was shown
 	{ "gui/news/last_version",				CVT_STRING,		.v_str = "0.3.12" },
+	/// Output - modifies emulated controller
+	/// On windows, this is just string 'x360', 'ds4' or 'auto'
+	{ "output",								CVT_STRING,		.v_str = "auto" },
 	
 	// TODO: "controllers": { },
-	// TODO: Output - modifies emulated controller
+	// TODO: Output on Linux
 	/*
 	 * # Changing this may be usefull, but can break a lot of things
 	 * "output": {
