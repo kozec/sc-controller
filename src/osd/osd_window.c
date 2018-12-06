@@ -50,6 +50,11 @@ static void osd_window_class_init(OSDWindowClass *klass) {
 
 	gtk_window_show = w_class->show;
 	w_class->show = &osd_window_show;
+	
+	g_signal_new("ready", GTK_TYPE_WINDOW, G_SIGNAL_RUN_FIRST, 0, NULL, NULL,
+					g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	g_signal_new("exit", GTK_TYPE_WINDOW, G_SIGNAL_RUN_FIRST, 0, NULL, NULL,
+					g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
 }
 
 static void osd_window_show(GtkWidget* widget) {
@@ -113,10 +118,7 @@ void osd_window_setup(OSDWindow* osdwin, const char* wmclass, const OSDWindowCal
 }
 
 void osd_window_exit(OSDWindow* osdwin, int code) {
-	// TODO: This :)
-	gtk_widget_hide(GTK_WIDGET(osdwin));
-	// gtk_main_quit();
-	exit(code);
+	g_signal_emit_by_name(G_OBJECT(osdwin), "exit", code);
 }
 
 void osd_window_get_active_screen_geometry(OSDWindow* osdwin, GdkRectangle* geometry) {

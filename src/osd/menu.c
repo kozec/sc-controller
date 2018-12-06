@@ -1,3 +1,4 @@
+#include "scc/utils/logging.h"
 #include "scc/utils/traceback.h"
 #include "scc/utils/iterable.h"
 #include "scc/utils/argparse.h"
@@ -6,9 +7,18 @@
 #include <gtk/gtk.h>
 
 static const char *const usage[] = {
-	"scc-ost-menu -f <filename>",
+	"scc-osd-menu -f <filename>",
 	NULL,
 };
+
+void on_mnu_exit(void* _mnu, int code) {
+	exit(code);
+}
+
+void on_mnu_ready(void* _mnu) {
+	gtk_widget_show_all(GTK_WIDGET(_mnu));
+}
+
 
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
@@ -31,8 +41,9 @@ int main(int argc, char** argv) {
 	}
 	
 	OSDMenu* mnu = osd_menu_new(filename);
+	g_signal_connect(G_OBJECT(mnu), "exit", (GCallback)&on_mnu_exit, NULL);
+	g_signal_connect(G_OBJECT(mnu), "ready", (GCallback)&on_mnu_ready, NULL);
 	if (mnu != NULL) {
-		gtk_widget_show_all(GTK_WIDGET(mnu));
 		gtk_main();
 		return 0;
 	} else {

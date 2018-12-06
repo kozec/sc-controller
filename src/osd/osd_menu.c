@@ -17,12 +17,12 @@
 typedef struct _OSDMenuPrivate		OSDMenuPrivate;
 
 struct _OSDMenu {
-	GtkMenu				parent;
+	GtkWindow			parent;
 	OSDMenuPrivate*		priv;
 };
 
 struct _OSDMenuClass {
-	GtkMenuClass		parent_class;
+	GtkWindowClass		parent_class;
 };
 
 struct _OSDMenuPrivate {
@@ -150,6 +150,8 @@ static void osd_menu_connection_ready(SCCClient* c) {
 		LERROR("Failed to lock controller");
 		osd_window_exit(OSD_WINDOW(mnu), 3);
 	}
+	
+	g_signal_emit_by_name(G_OBJECT(mnu), "ready");
 }
 
 static void osd_menu_on_event(SCCClient* c, uint32_t handle, SCButton button, PadStickTrigger pst, int values[]) {
