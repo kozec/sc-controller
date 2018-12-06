@@ -32,13 +32,13 @@ Macros
 =========
 [x] MultiAction (and)
 [x] Macro (;)
-[ ] Type
+[x] Type
 [x] Cycle
 [x] Repeat
 [x] Sleep
-[ ] Press
-[ ] Release
-[ ] Tap
+[x] Press
+[x] Release
+[x] Tap
 
 Modifiers
 =========

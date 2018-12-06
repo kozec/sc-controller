@@ -49,7 +49,7 @@ static void button_press(Action* a, Mapper* m) {
 	ButtonAction* b = container_of(a, ButtonAction, action);
 	if (HAPTIC_ENABLED(&b->hdata))
 		m->haptic_effect(m, &b->hdata);
-	m->key_press(m, b->button[0]);
+	m->key_press(m, b->button[0], false);
 }
 
 static void button_release (Action* a, Mapper* m) {
@@ -69,7 +69,7 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 				b->pressed_button = 0;
 			}
 		} else if (b->pressed_button != b->button[0]) {
-			m->key_press(m, b->button[0]);
+			m->key_press(m, b->button[0], false);
 			b->pressed_button = b->button[0];
 		}
 		break;
@@ -78,7 +78,7 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 		// Possibly special case, pressing with click() on entire pad
 		press = scc_what_to_pressed_button(what);
 		if (m->is_pressed(m, press) && !m->was_pressed(m, press)) {
-			m->key_press(m, b->button[0]);
+			m->key_press(m, b->button[0], false);
 		} else if (!m->is_pressed(m, press) && m->was_pressed(m, press)) {
 			m->key_release(m, b->button[0]);
 		}
@@ -89,7 +89,7 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 		// Entire pad used as one big button
 		if (m->is_touched(m, what) && !m->was_touched(m, what)) {
 			// Touched the pad
-			m->key_press(m, b->button[0]);
+			m->key_press(m, b->button[0], false);
 		}
 		if (m->was_touched(m, what) && !m->is_touched(m, what)) {
 			// Released the pad

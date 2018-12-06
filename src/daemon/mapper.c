@@ -45,6 +45,7 @@ struct SCCDMapper {
 	ForceEvent			force_event;
 	VirtualDeviceType	to_sync;
 	ControllerFlags		c_flags;
+	uint8_t				keys[KEY_CNT];
 };
 
 static void input(Mapper* _m, ControllerInput* i);
@@ -112,16 +113,29 @@ inline static VirtualDevice* device_for_button(SCCDMapper* m, Keycode b) {
 	return m->keyboard;
 }
 
-static void key_press(Mapper* _m, Keycode b) {
+static void key_press(Mapper* _m, Keycode b, bool release_press) {
 	SCCDMapper* m = container_of(_m, SCCDMapper, mapper);
 	VirtualDevice* d = device_for_button(m, b);
-	scc_virtual_device_key_press(d, b);
+	if (m->keys[b] == 0) {
+		scc_virtual_device_key_press(d, b);
+	} else if (release_press) {
+		scc_virtual_device_key_release(d, b);
+		scc_virtual_device_key_press(d, b);
+	}
+	
+	if (m->keys[b] < 0xFE)
+		m->keys[b] ++;
 }
 
 static void key_release(Mapper* _m, Keycode b) {
 	SCCDMapper* m = container_of(_m, SCCDMapper, mapper);
 	VirtualDevice* d = device_for_button(m, b);
-	scc_virtual_device_key_release(d, b);
+	if (m->keys[b] > 1) {
+		m->keys[b] --;
+	} else if (m->keys[b] == 1) {
+		scc_virtual_device_key_release(d, b);
+		m->keys[b] --;
+	}
 }
 
 static bool is_touched(Mapper* _m, PadStickTrigger pad) {
@@ -139,6 +153,12 @@ static bool was_touched(Mapper* _m, PadStickTrigger pad) {
 static bool is_pressed(Mapper* _m, SCButton button) {
 	SCCDMapper* m = container_of(_m, SCCDMapper, mapper);
 	return m->state.buttons & button;
+}
+
+static bool is_virtual_key_pressed(Mapper* _m, Keycode key) {
+	SCCDMapper* m = container_of(_m, SCCDMapper, mapper);
+	if ((key < 0) || (key > KEY_CNT)) return false;
+	return m->keys[key] > 0;
 }
 
 static bool was_pressed(Mapper* _m, SCButton button) {
@@ -280,6 +300,7 @@ SCCDMapper* sccd_mapper_create() {
 	m->mapper.was_touched = &was_touched;
 	m->mapper.is_pressed = &is_pressed;
 	m->mapper.was_pressed = &was_pressed;
+	m->mapper.is_virtual_key_pressed = &is_virtual_key_pressed;
 	m->mapper.release_virtual_buttons = NULL;
 	m->mapper.reset_gyros = NULL;
 	m->mapper.special_action = &special_action;

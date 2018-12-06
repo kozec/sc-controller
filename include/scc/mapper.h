@@ -43,12 +43,13 @@ struct Mapper {
 	 * KeyPress emulates pressing key on virtual keyboard or button on
 	 * key_press mouse or gamepad. Virtual device to use is determined from
 	 * keycode.
-	 * If virtual button is already pressed, implementation _may optionaly_
-	 * simulate releasing and pressing it again and keep counter so virtual
-	 * button is released only after number of 'presses' matches
-	 * number of 'releases'
+	 *
+	 * If release_press is set to true and virtual button is already pressed,
+	 * implementation _may_ simulate releasing and pressing it again. It also
+	 * _may_ keep counter so virtual button is released only after number
+	 * of 'presses' matches number of 'releases'. This is not strictly necessary.
 	 */
-	void				(*key_press)(Mapper* m, Keycode b);
+	void				(*key_press)(Mapper* m, Keycode b, bool release_press);
 	/** Releases virtual button. See key_press for details. */
 	void				(*key_release)(Mapper* m, Keycode b);
 	
@@ -74,6 +75,12 @@ struct Mapper {
 	// get_pressed_button
 	// set_button
 	// set_was_pressed
+	
+	/**
+	 * Returns true if button on virtual mouse, keyboard or gamepad is believed
+	 * to be pressed.
+	 */
+	bool				(*is_virtual_key_pressed)(Mapper* m, Keycode key);
 	
 	/**
 	 * Called when daemon is killed or USB dongle is disconnected.

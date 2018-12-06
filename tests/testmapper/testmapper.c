@@ -24,7 +24,7 @@ struct Testmapper {
 	ControllerInput				state;
 	dvec_t						mouse;
 	AxisValue					axes[ABS_CNT];
-	bool						keys[KEY_CNT];
+	uint8_t						keys[KEY_CNT];
 	Schedule					schedule;
 	StrBuilder*					keylog;
 	uint32_t					now;
@@ -55,6 +55,12 @@ static bool is_pressed(Mapper* _m, SCButton button) {
 	return m->state.buttons & button;
 }
 
+static bool is_virtual_key_pressed(Mapper* _m, Keycode key) {
+	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
+	if ((key < 0) || (key > KEY_CNT)) return false;
+	return m->keys[key] > 0;
+}
+
 static bool was_pressed(Mapper* _m, SCButton button) {
 	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
 	return m->old_state.buttons & button;
@@ -75,18 +81,23 @@ static void set_axis(Mapper* _m, Axis axis, AxisValue v) {
 	m->axes[axis] = v;
 }
 
-static void key_press(Mapper* _m, Keycode b) {
+static void key_press(Mapper* _m, Keycode b, bool release_press) {
 	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
-	m->keys[b] = true;
-	if (strlen(strbuilder_get_value(m->keylog)) == 0)
-		strbuilder_addf(m->keylog, "%i", b);
-	else
-		strbuilder_addf(m->keylog, ", %i", b);
+	if ((m->keys[b] == 0) || release_press) {
+		if (strlen(strbuilder_get_value(m->keylog)) == 0)
+			strbuilder_addf(m->keylog, "%i", b);
+		else
+			strbuilder_addf(m->keylog, ", %i", b);
+	}
+	
+	if (m->keys[b] < 0xFE)
+		m->keys[b] ++;
 }
 
 static void key_release(Mapper* _m, Keycode b) {
 	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
-	m->keys[b] = false;
+	if (m->keys[b] > 0)
+		m->keys[b] --;
 }
 
 static TaskID schedule(Mapper* _m, uint32_t delay, MapperScheduleCallback cb, void* userdata) {
@@ -126,6 +137,7 @@ void testmapper_set_buttons(Mapper* _m, SCButton buttons) {
 void testmapper_reset(Mapper* _m) {
 	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
 	vec_set(m->mouse, 0, 0);
+	memset(m->keys, 0, KEY_CNT);
 	strbuilder_clear(m->keylog);
 	list_foreach(m->schedule, &free);
 	list_clear(m->schedule);
@@ -209,6 +221,7 @@ Mapper* testmapper_new() {
 	m->mapper.is_pressed = &is_pressed;
 	m->mapper.was_pressed = &was_pressed;
 	m->mapper.release_virtual_buttons = NULL;
+	m->mapper.is_virtual_key_pressed = &is_virtual_key_pressed;
 	m->mapper.reset_gyros = NULL;
 	m->mapper.special_action = &special_action;
 	m->mapper.haptic_effect = NULL;
