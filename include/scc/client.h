@@ -3,12 +3,17 @@
  *
  * Tools for remote controling scc-daemon. SCCClient is what was (is) called
  * DaemonManager in python version.
+ *
+ * SCCClient is reference-counted. sccc_connect creates instance with single
+ * reference and connection is automatically closed when last reference to
+ * SCCClient is released.
  */
 
 #pragma once
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "scc/utils/rc.h"
 #include "scc/controller.h"
 #include <stdbool.h>
 
@@ -17,6 +22,8 @@ extern "C" {
 typedef struct SCCClient SCCClient;
 
 struct SCCClient {
+	RC_HEADER;
+	
 	// All these are callbacks and none of them needs to be set.
 	// Old 'alive' signal is not needed, if sccc_connect returns client, daemon is alive
 	
@@ -25,8 +32,8 @@ struct SCCClient {
 	/** Called after list of controllers (as reported by daemon) is updated */
 	void (*on_controllers_changed)	(SCCClient* c, int controller_count);
 	/**
-	 * Called after connection to daemon is terminated. sccc_close should be
-	 * called as response to this to deallocate SCCClient data
+	 * Called after connection to daemon is terminated. RC_REL should
+	 * be used as response to this to deallocate SCCClient data.
 	 */
 	void (*on_disconnected)			(SCCClient* c);
 	/**
@@ -49,6 +56,8 @@ struct SCCClient {
 
 /**
  * Connects to scc-daemon. Blocks until connection is initiated or fails.
+ *
+ * Returns SCCClient* with single reference.
  * Returns NULL and logs error if connection cannot be initiated.
  */
 SCCClient* sccc_connect();
@@ -121,9 +130,6 @@ char* sccc_get_response(SCCClient* c, int32_t id);
 
 /** Returns file descriptor assotiated with client */
 int sccc_get_fd(SCCClient* c);
-
-/** Closes connection *and deallocates* client data */
-void sccc_close(SCCClient* c);
 
 
 /**

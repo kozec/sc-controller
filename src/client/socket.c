@@ -11,6 +11,7 @@
 #include "scc/utils/iterable.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/list.h"
+#include "scc/utils/rc.h"
 #ifdef _WIN32
 	#include "scc/utils/msys_socket.h"
 	#define SOCKETERROR ": error %i", WSAGetLastError()
@@ -48,9 +49,11 @@ SCCClient* sccc_connect() {
 	struct sockaddr_un addr;
 	memset(&addr, 0, sizeof(addr));
 	memset(c, 0, sizeof(struct _SCCClient));
+	RC_INIT(&c->client, &sccc_dealloc);
 	list_set_dealloc_cb(controllers, &free);
 	c->next = c->buffer;
 	c->controllers = controllers;
+	c->fd = -1;
 	*c->buffer = 0;
 	addr.sun_family = AF_UNIX;
 	strcpy(addr.sun_path, scc_get_daemon_socket());
@@ -78,16 +81,25 @@ SCCClient* sccc_connect() {
 		LERROR("Connection failed" SOCKETERROR);
 		goto sccc_connect_fail;
 	}
+	
 	return &c->client;
 	
 sccc_connect_fail:
-	free(c);
+	RC_REL(&c->client);
 	return NULL;
 }
 
 int sccc_get_fd(SCCClient* _c) {
 	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
 	return c->fd;
+}
+
+void sccc_dealloc(void* _c) {
+	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
+	if (c->fd >= 0)
+		close(c->fd);
+	list_free(c->controllers);
+	free(c);
 }
 
 const char* sccc_recieve(SCCClient* _c) {
@@ -213,10 +225,4 @@ char* sccc_get_response(SCCClient* _c, int32_t id) {
 			return response;
 		}
 	}
-}
-
-void sccc_close(SCCClient* _c) {
-	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
-	list_free(c->controllers);
-	free(c);
 }

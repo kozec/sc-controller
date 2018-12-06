@@ -1,5 +1,6 @@
 #pragma once
 #include <gtk/gtk.h>
+#include "scc/client.h"
 
 G_BEGIN_DECLS
 

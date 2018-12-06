@@ -26,6 +26,8 @@ struct _SCCClient {
 	char*				next;
 };
 
+void sccc_dealloc(void* c);
+
 /** Returns 1 if message was parsed and handled, -1 on OOM error */
 int on_command(struct _SCCClient* c, char* msg);
 
