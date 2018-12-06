@@ -54,7 +54,7 @@ const struct config_item DEFAULT_VALUES[] = {
 	{ "ignore_serials",						CVT_BOOL,		.v_bool = false },
 	
 	/** OSD style and colors config */
-	{ "osd_style",							CVT_STRING,		.v_str = "Classic.gtkstyle.css" },
+	{ "osd_style",							CVT_STRING,		.v_str = "Reloaded.gtkstyle.css" },
 	{ "osd_colors/background",				CVT_STRING, 	.v_str = "#101010" },
 	{ "osd_colors/border",					CVT_STRING, 	.v_str = "#00FF00" },
 	{ "osd_colors/text",					CVT_STRING, 	.v_str = "#16BF24" },
@@ -143,7 +143,6 @@ bool config_fill_defaults(Config* _c) {
 	for (const struct config_item* v = DEFAULT_VALUES; v->path != NULL; v++) {
 		const config_value_t* value = config_get_value(c, v->path, v->type);
 		if (value == NULL) {
-			LOG("Substituting default for %s", v->path);
 			switch (v->type) {
 			case CVT_STRING:
 				if (1 != config_set(_c, v->path, v->v_str))

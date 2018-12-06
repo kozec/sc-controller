@@ -75,7 +75,8 @@
 	color: #{text};
 }
 
-#osd-hidden-item, #osd-hidden-item-selected {
+#osd-hidden-item, #osd-hidden-item-selected,
+#osd-hidden-item label, #osd-hidden-item-selected label {
 	color: #{background};
 	border-color: #{background};
 }

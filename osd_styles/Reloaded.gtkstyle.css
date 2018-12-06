@@ -60,7 +60,6 @@
 #osd-key-buton, #osd-key-buton-hilight, #osd-launcher-item,
 #osd-launcher-item-selected, #osd-hidden-item,
 #osd-hidden-item-selected, #osd-key-buton-selected {
-	color: #{text};
 	border-radius: 0;
 	font-size: x-large;
 	background-image: none;
@@ -68,8 +67,14 @@
 	margin: 0px 0px 2px 0px;
 }
 
+#osd-menu-item label, #osd-menu-item-selected label, #osd-menu-dummy label,
+#osd-menu-item-big-icon label, #osd-menu-item-big-icon-selected label,
+#osd-launcher-item label, #osd-launcher-item-selected label {
+	color: #{text};
+}
 
-#osd-hidden-item, #osd-hidden-item-selected {
+#osd-hidden-item, #osd-hidden-item-selected,
+#osd-hidden-item label, #osd-hidden-item-selected label {
 	color: #{background};
 	border-color: #{background};
 }
@@ -89,7 +94,6 @@
 }
 
 #osd-menu-separator {
-	color: #{background+50};
 	font-size: large;
 	background-image: none;
 	background-color: #{background};
@@ -97,8 +101,11 @@
 	padding: 0px 0px 0px 0px;
 }
 
+#osd-menu-separator label, #osd-gesture-separator label {
+	color: #{background+50};
+}
+
 #osd-gesture-separator {
-	color: #{menuseparator};
 	background-color: #{menuseparator};
 	margin: 0px 5px 0px 5px;
 }
