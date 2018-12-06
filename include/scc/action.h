@@ -92,15 +92,15 @@ struct Action {
 	 * compress() is called automatically on every action laoded from profile.
 	 * 
 	 * For modifier that's not needed for execution (such as NameModifier
-	 * or SensitivityModifier that already applied its settings on SensitivitySetter),
-	 * it should return child action, passing one reference from its own 
-	 * counter to counter on returned action (and potentially deallocating
-	 * itself automatically).
+	 * or SensitivityModifier that already applied its settings), it should
+	 * return child action, without touching reference count of it or of itself.
 	 * For anything else, compress method should return itself.
 	 * 
 	 * When called on action that contains other child action, parent aciton
 	 * should ensure that Compress is called on all child actions and those
-	 * child actions are replaced by results.
+	 * child actions are replaced by results if needed.
+	 *
+	 * Also see scc_action_compress.
 	 */
 	Action*	(*compress)(Action* a);
 	
@@ -155,6 +155,24 @@ Action* scc_macro_new(Action** actions, size_t action_count);
  * Returns NULL if memory cannot be allocated.
  */
 Action* scc_macro_combine(Action* a1, Action* a2);
+/**
+ * Appends action to Macro. This modifies Macro in place and increases reference
+ * count on 'a' on success.
+ * There are two rules to this:
+ *  - action 'm' (one being modified) has to be a macro
+ *  - action 'a' has to be anything but macro
+ * Returns false if memory cannot be allocated or if called with wrong arguments.
+ */
+bool scc_macro_add_action(Action* m, Action* a);
+/** Creates new Multiaction ("and"). Returns NULL if memory cannot be allocated. */
+Action* scc_multiaction_new(Action** actions, size_t action_count);
+/**
+ * Combines two actions into Multiaction. If either (or both) already are Multiaction,
+ * new Multiaction will contain combination of actions from them,
+ * but not multiactions themselves.
+ * Returns NULL if memory cannot be allocated.
+ */
+Action* scc_multiaction_combine(Action* a1, Action* a2);
 
 
 /**
@@ -176,27 +194,3 @@ bool scc_action_compress(Action** a);
  * Returned string has to be freed by caller.
  */
 char* scc_action_to_string(Action* a);
-
-/** 
- * Generates default 'to_string' method. This will work with any action
- * class that stores parameters in 'params' field.
- * If 'pc' is not NULL, defaults are stripped.
- */
-#define ACTION_MAKE_TO_STRING(ActionType, prefix, keyword, pc)				\
-	static char* prefix ## _to_string(Action* _a) {							\
-		ActionType* a = container_of(_a, ActionType, action);				\
-		char* parmsstr;														\
-		if ((pc) == NULL) {													\
-			parmsstr = scc_param_list_to_string(a->params);					\
-		} else {															\
-			ParameterList c = scc_copy_param_list(a->params);				\
-			if (c == NULL) return NULL;										\
-			scc_param_checker_strip_defaults((pc), c);						\
-			parmsstr = scc_param_list_to_string(c);							\
-			list_free(c);													\
-		}																	\
-		if (parmsstr == NULL) return NULL;	/* OOM */						\
-		char* rv = strbuilder_fmt("%s(%s)", keyword, parmsstr);				\
-		free(parmsstr);														\
-		return rv;															\
-	}

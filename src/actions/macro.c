@@ -41,18 +41,6 @@ actions_to_string_fail:
 	return NULL;
 }
 
-/** Situable as callback for list_foreach */
-static void deref_action(void* _a) {
-	Action* a = (Action*)_a;
-	RC_REL(a);
-}
-
-/** Situable as callback for list_foreach */
-static void ref_action(void* _a) {
-	Action* a = (Action*)_a;
-	RC_ADD(a);
-}
-
 
 static char* macro_to_string(Action* a) {
 	Macro* x = container_of(a, Macro, action);
@@ -65,7 +53,17 @@ static void macro_dealloc(Action* a) {
 	free(x);
 }
 
+void compress_actions(ActionList lst) {
+	for(size_t i=0; i<list_len(lst); i++) {
+		Action* a = list_get(lst, i);
+		scc_action_compress(&a);
+		list_set(lst, i, a);
+	}
+}
+
 static Action* compress(Action* a) {
+	Macro* x = container_of(a, Macro, action);
+	compress_actions(x->children);
 	return a;
 }
 
@@ -129,10 +127,15 @@ static void button_press(Action* a, Mapper* m) {
 	timer(m, x);
 }
 
+
 static void set_sensitivity(Action* a, float x, float y, float z) {
+	Macro* ma = container_of(a, Macro, action);
+	FOR_ALL_CHILDREN(c->extended.set_sensitivity, extended.set_sensitivity, x, y, z);
 }
 
 static void set_haptic(Action* a, HapticData hdata) {
+	Macro* ma = container_of(a, Macro, action);
+	FOR_ALL_CHILDREN(c->extended.set_haptic, extended.set_haptic, hdata);
 }
 
 
@@ -184,39 +187,68 @@ Action* scc_macro_new(Action** actions, size_t action_count) {
 	return &x->action;
 }
 
+bool scc_macro_add_action(Action* m, Action* a) {
+	if (0 != strcmp(m->type, KW_MACRO)) {
+		// 'm' is not a macro
+		WARN("scc_macro_add_action: First parameter has to be a macro");
+		return false;
+	}
+	if (0 == strcmp(a->type, KW_MACRO)) {
+		// 'a' is a macro
+		WARN("scc_macro_add_action: 2nd parameter can not be a macro");
+		return false;
+	}
+	Macro* x = container_of(m, Macro, action);
+	if (!list_add(x->children, a))
+		return false;
+	RC_ADD(a);
+	return true;
+}
 
-Action* scc_macro_combine(Action* a1, Action* a2) {
-	Action* x_ = NULL;
-	if (0 == strcmp(a1->type, KW_MACRO)) {
+
+static ActionList get_children(Action* a) {
+	Macro* x = container_of(a, Macro, action);
+	return x->children;
+}
+
+/** Common code for scc_macro_combine and scc_multiaction_combine */
+Action* combine(const char* keyword, Action* a1, Action* a2, ActionList (*get_children)(Action*), Action* (*constructor)(Action**, size_t)) {
+	Action* x = NULL;
+	if (0 == strcmp(a1->type, keyword)) {
 		// If a1 is macro, I'll take all actions from it instead of adding
 		// macro itself.
-		Macro* m1 = container_of(a1, Macro, action);
-		x_ = scc_macro_new(m1->children->items, list_len(m1->children));
+		ActionList children = get_children(a1);
+		x = constructor(children->items, list_len(children));
 	} else {
-		x_ = scc_macro_new(&a1, 1);
+		x = constructor(&a1, 1);
 	}
-	if (x_ == NULL)
+	if (x == NULL)
 		return NULL;		// return NULL
 	
-	Macro* x = container_of(x_, Macro, action);
-	if (0 == strcmp(a2->type, KW_MACRO)) {
+	if (0 == strcmp(a2->type, keyword)) {
 		// If a2 is macro, I'll copy actions from it to Macro created with a1
-		Macro* m2 = container_of(a2, Macro, action);
-		if (!list_add_all(x->children, m2->children))
-			goto scc_macro_combine_fail;		// Failed to allocate space for items from 2nd macro
-		// For 1st set of items, scc_macro_new adds new references. For this one,
+		ActionList children1 = get_children(x);
+		ActionList children2 = get_children(a2);
+		if (!list_add_all(children1, children2))
+			goto combine_fail;					// Failed to allocate space for items from 2nd
+		// For 1st set of items, constructor adds new references. For this one,
 		// list_add_all does not, so they are added here.
-		list_foreach(m2->children, &ref_action);
+		list_foreach(children2, &ref_action);
 	} else {
-		if (!list_allocate(x->children, 1))
-			goto scc_macro_combine_fail;		// Failed to allocate space for single item :(
-		list_add(x->children, a2);
+		ActionList children = get_children(x);
+		if (!list_allocate(children, 1))
+			goto combine_fail;					// Failed to allocate space for single item :(
+		list_add(children, a2);
 		RC_ADD(a2);
 	}
 	
-	return x_;
+	return x;
 	
-scc_macro_combine_fail:
-	RC_REL(x_);
+combine_fail:
+	RC_REL(x);
 	return NULL;
+}
+
+Action* scc_macro_combine(Action* a1, Action* a2) {
+	return combine(KW_MACRO, a1, a2, &get_children, &scc_macro_new);
 }

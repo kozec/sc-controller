@@ -9,6 +9,7 @@
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "tostring.h"
 #include <sys/time.h>
 #include <string.h>
 #include <stdlib.h>

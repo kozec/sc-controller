@@ -10,6 +10,7 @@
 #include "scc/special_action.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "tostring.h"
 #include <stdlib.h>
 #include <stdio.h>
 

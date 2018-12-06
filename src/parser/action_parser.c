@@ -6,6 +6,7 @@
 #include "scc/error.h"
 #include "parser.h"
 #include <stdlib.h>
+#include <string.h>
 
 
 inline static ParamOE unexpected_token_error(const char* token) {
@@ -58,33 +59,22 @@ ActionOE parse_after_keyword(Tokens* tokens, const char* keyword) {
 			return (ActionOE)macro;
 		}
 		
-		RC_REL(ACTION(a));
-		return (ActionOE)scc_new_parse_error("Parsing shit after action not yet implemented");
+		const char* after = iter_next(tokens);
+		if (0 == strcmp(after, "and")) {
+			// Multiaction
+			tokens_skip_whitespace(tokens);
+			ActionOE a2 = parse_action(tokens);
+			if (IS_ACTION_ERROR(a2)) return a2;
+			Action* ma = scc_multiaction_combine(ACTION(a), ACTION(a2));
+			RC_REL(ACTION(a));
+			RC_REL(ACTION(a2));
+			if (ma == NULL)
+				return (ActionOE)scc_oom_action_error();
+			return (ActionOE)ma;
+		}
 		
-		// if p.s.Peek() == ')' || p.s.Peek() == ',' {
-		// 	return a, nil
-		// }
-		// p.s.Scan()
-		// if p.s.TokenText() == "and" {
-		// 	if !p.tokensLeft() {
-		// 		return nil, &ParseError{"Expected action after 'and'", p.s.Pos()}
-		// 	}
-		// 	next, err := p.parseAction()
-		// 	if err != nil { return nil, err }
-		// 	a = actions.NewMultiAction([]scc.Action{ a, next })
-		// 	return a, nil
-		// }
-		// if p.s.TokenText() == ";" {
-		// 	p.skipWhitespace()
-		// 	if !p.tokensLeft() {
-		// 		// Unlike with 'and', ; at end of line is OK and just silently ignored
-		// 		return a, nil
-		// 	}
-		// 	next, err := p.parseAction()
-		// 	if err != nil { return nil, err }
-		// 	a = actions.NewMacro([]scc.Action{ a, next })
-		// 	return a, nil
-		// TODO: newline
+		RC_REL(ACTION(a));
+		return (ActionOE)scc_new_parse_error("Unexpected '%s' after action", after);
 	}
 	return a;
 }

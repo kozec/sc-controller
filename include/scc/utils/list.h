@@ -23,7 +23,8 @@ typedef struct _List_data {
 		struct _ListIterator*(*iter_get)(void* obj);			\
 	}*
 
-typedef void(*list_foreach_cb)(void*);
+typedef void(*list_foreach_cb)(void* item);
+typedef bool(*list_filter_cb)(void* item, void* userdata);
 
 typedef LIST_TYPE(void) _voidlist;
 typedef LIST_TYPE(char) StringList;
@@ -122,7 +123,7 @@ void list_set_dealloc_cb(void* list, void(*dealloc_cb)(void*));
  *
  * This allocates no additional memory and cannot fail.
  */
-void list_filter(void* list, bool(*filter_fn)(void* item, void* userdata), void* userdata);
+void list_filter(void* list, list_filter_cb cb, void* userdata);
 
 /**
  * Deallocates list and returns pointer to first item in it.

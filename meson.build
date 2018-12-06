@@ -80,10 +80,19 @@ param_checker_lib = static_library('param_checker',
 			'-maxdepth', '1', '-name', C_FILES).stdout().strip().split('\n')
 )
 
+parser_constants_lib = static_library('parser_constants',
+	include_directories: include,
+	sources: [
+		'src/parser/generated_constants.c',
+		'src/parser/string_constants.c',
+	]
+)
+
 action_files = (run_command('find', 'src/actions/',
 			'-name', C_FILES).stdout().strip().split('\n'))
 actions_lib = static_library('actions',
-	link_with: [utils_lib, tools_lib, params_lib, param_checker_lib],
+	link_with: [ utils_lib, tools_lib, params_lib,
+				 param_checker_lib, parser_constants_lib ],
 	include_directories: include,
 	dependencies: [ meson.get_compiler('c').find_library('m') ],
 	sources: action_files + [
@@ -101,9 +110,14 @@ actions_lib = static_library('actions',
 parser_lib = static_library('parser',
 	include_directories: include,
 	dependencies: PARSER_LIB_DEPS,
-	link_with: [utils_lib, actions_lib, params_lib],
-	sources: run_command('find', 'src/parser',
-			'-maxdepth', '1', '-name', C_FILES).stdout().strip().split('\n')
+	link_with: [ utils_lib, actions_lib, params_lib, parser_constants_lib ],
+	sources: [
+		'src/parser/action_parser.c',
+		'src/parser/jsonprofile.c',
+		'src/parser/menu_data.c',
+		'src/parser/param_parser.c',
+		'src/parser/regexes.c',
+	]
 )
 
 subdir('tests')

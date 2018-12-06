@@ -11,6 +11,7 @@
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "tostring.h"
 #include "macros.h"
 
 static ParamChecker pc;

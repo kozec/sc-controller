@@ -20,7 +20,6 @@ Works in python, missing here
 [ ] TiltAction
 [ ] TrackballAction
 [x] ButtonAction
-[ ] MultiAction
 [x] DPadAction
 [x] DPad8Action
 [ ] RingAction
@@ -31,7 +30,7 @@ Works in python, missing here
 
 Macros
 =========
-[ ] MultiAction (and)
+[x] MultiAction (and)
 [x] Macro (;)
 [ ] Type
 [x] Cycle

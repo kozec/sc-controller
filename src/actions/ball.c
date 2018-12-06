@@ -13,6 +13,7 @@
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "wholehaptic.h"
+#include "tostring.h"
 #include <sys/time.h>
 #include <tgmath.h>
 #include <stdlib.h>
