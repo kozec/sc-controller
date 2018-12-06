@@ -61,6 +61,7 @@ config_lib = static_library('config',
 	include_directories: include,
 	sources: [
 		'src/config/defaults.c',
+		'src/config/common.c',
 		'src/config/' + CONFIG_BACKEND + '.c',
 	],
 )

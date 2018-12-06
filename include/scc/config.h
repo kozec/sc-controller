@@ -25,9 +25,18 @@ struct Config {
 };
 
 /**
+ * Makes sure that configuration directory exists and contains config file.
+ * Then loads config file, ensures all required values are set (adding defaults
+ * where needed) and saves it back.
+ *
+ * Returns Config* instance with single reference or NULL if anything fails.
+ */
+Config* config_init();
+
+/**
  * Loads configuration from default location (~/.config/scc/config.json).
- * This works even if file doesn't exists or cannot be readed, defaults are
- * supplied in such case.
+ * This works even if file or parent directory doesn't exists or cannot be
+ * readed, as defaults are supplied in such case.
  *
  * Returns Config object with single reference or NULL if memory cannot be allocated.
  */
@@ -41,13 +50,15 @@ bool config_save(Config* cfg);
 
 /**
  * Fills config with default where user-provided value is missing.
+ *
  * Usually there is no need to call this as config_get* automatically returns
- * default when needed.
+ * default when needed and config_init ensures all defaults are in place.
  *
  * Returns true if any default was replaced. If false is returned, calling
  * config_save would have no point.
  */
 bool config_fill_defaults(Config* cfg);
+
 
 /**
  * Loads configuration from specified file handle.

@@ -48,6 +48,8 @@ const char* scc_get_config_path() {
 	
 #ifdef _WIN32
 	SHGetFolderPathA(NULL, CSIDL_APPDATA|CSIDL_FLAG_CREATE, NULL, 0, config_path);
+	ASSERT(strlen(config_path) < PATH_MAX - 6);
+	strcat(config_path, "\\scc");
 #else
 	const char* xdg_config_home = getenv("XDG_CONFIG_HOME");
 	if (xdg_config_home != NULL) {

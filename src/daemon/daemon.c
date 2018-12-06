@@ -355,15 +355,6 @@ void sccd_set_special_client(enum SpecialClientType t, Client* client) {
 	*target = client;
 }
 
-/** Loads config, fills defaults and saves it back if needed */
-void sccd_config_init(Daemon* daemon) {
-	Config* c = config_load();
-	ASSERT(c != NULL);
-	if (config_fill_defaults(c))
-		config_save(c);
-	RC_REL(c);
-}
-
 
 int main(int argc, char** argv) {
 	INFO("Starting SC Controller Daemon v%s...", DAEMON_VERSION);
@@ -372,8 +363,10 @@ int main(int argc, char** argv) {
 	mappers = list_new(SCCDMapper, 16);
 	controllers = list_new(Controller, 16);
 	errors = list_new(ErrorData, 16);
+	Config* c = config_init();
+	if (c == NULL) return 1;
+	RC_REL(c);
 	
-	sccd_config_init(&daemon);
 	sccd_scheduler_init();
 	sccd_poller_init();
 	if (!sccd_socket_init()) {
