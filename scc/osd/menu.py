@@ -67,6 +67,7 @@ class Menu(OSDWindow):
 		self._use_cursor = False
 		self._eh_ids = []
 		self._control_with = STICK
+		self._control_with_dpad = False
 		self._confirm_with = 'A'
 		self._cancel_with = 'B'
 	
@@ -413,6 +414,10 @@ class Menu(OSDWindow):
 		def success(*a):
 			log.error("Sucessfully locked input")
 		locks = [ self._control_with, self._confirm_with, self._cancel_with ]
+		if self._control_with == "STICK":
+			if self.controller.get_flags() & ControllerFlags.HAS_DPAD != 0:
+				self._control_with_dpad = True
+				locks += [ "LEFT" ]
 		self.controller.lock(success, self.on_failed_to_lock, *locks)
 	
 	
@@ -514,7 +519,7 @@ class Menu(OSDWindow):
 	def on_event(self, daemon, what, data):
 		if self._submenu:
 			return self._submenu.on_event(daemon, what, data)
-		if what == self._control_with:
+		if what == self._control_with or what == "LEFT" and self._control_with_dpad:
 			x, y = data
 			if self._use_cursor:
 				# Special case, both confirm_with and cancel_with
