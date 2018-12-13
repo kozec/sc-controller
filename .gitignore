@@ -1,4 +1,5 @@
 # Binaries for programs and plugins
+.atomignore
 *.exe
 *.dll
 *.so
@@ -10,3 +11,6 @@ build/
 build-win32/
 build-w10/
 release-win32/
+sc-controller.wiki/
+.trash/
+profiles
