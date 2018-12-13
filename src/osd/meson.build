@@ -15,7 +15,7 @@ osd_lib = static_library('osd',
 	c_args: ['-Wno-deprecated-declarations'],
 	dependencies: [
 		dependency('gtk+-3.0', version: '>=3.22.0'),
-		dependency('glib-2.0', version: '>=2.58.0'),
+		dependency('glib-2.0', version: '>=2.56.0'),
 	] + platform_dependent_deps,
 	sources: [
 		'stick_controller.c',

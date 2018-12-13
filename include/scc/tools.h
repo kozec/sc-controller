@@ -13,8 +13,10 @@
 	// Luckily, NT can handle even more than this, so this redefines it with more
 	#undef PATH_MAX
 	#define PATH_MAX 4096
-#else
+#elif __linux__
 	#include <linux/limits.h>
+#else
+	#include <sys/syslimits.h>
 #endif
 
 

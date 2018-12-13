@@ -21,7 +21,9 @@ elif host_machine.system() == 'linux'
 	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
 endif
 
-if get_option('tracebacks').disabled() or host_machine.system() == 'windows' or get_option('android').enabled()
+if (get_option('tracebacks').disabled() or host_machine.system() == 'windows'
+			or get_option('android').enabled()
+			or meson.get_compiler('c').get_id() != 'gcc')
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 endif
 

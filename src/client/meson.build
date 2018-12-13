@@ -23,7 +23,7 @@ gio_client_lib = static_library('gio_client',
 	link_with: [ client_lib ],
 	c_args: ['-Wno-deprecated-declarations'],
 	dependencies: [
-		dependency('glib-2.0', version: '>=2.58.0'),
+		dependency('glib-2.0', version: '>=2.56.0'),
 	],
 	sources: [
 		'gio.c',

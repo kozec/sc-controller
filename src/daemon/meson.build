@@ -1,9 +1,16 @@
 platform_dependent_deps = []
 
 if host_machine.system() == 'linux'
-	subdir('uinput')
+	# subdir('uinput')
+	subdir('uinput-x11')
+elif host_machine.system() == 'openbsd'
+	subdir('uinput-x11')
 elif host_machine.system() == 'windows'
 	subdir('uinput-win32')
+elif host_machine.system() == 'openbsd'
+	error('BSD')
+else
+	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif
 
 if host_machine.system() == 'windows'

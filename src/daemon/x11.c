@@ -11,6 +11,9 @@ void sccd_x11_init() {
 	x11display = (void*)XOpenDisplay(NULL);
 	if (x11display == NULL) {
 		WARN("Failed to connect to XServer. Some functionality will be unavailable.");
+#ifdef BSD
+		WARN("Running on BSD. 'Some functionality' includes keyboard and mouse emulation.");
+#endif
 	} else {
 		LOG("Connected to XServer %s", DisplayString(x11display));
 	}
