@@ -115,3 +115,8 @@ bool clear_mappings(SCController* sc);
 bool lizard_mode(SCController* sc);
 /** Returns false on failure */
 bool configure(SCController* sc);
+/**
+ * Called to inform daemon & mapper about controller being disconnected.
+ * Does not deallocate 'sc'.
+ */
+void disconnected(SCController* sc);

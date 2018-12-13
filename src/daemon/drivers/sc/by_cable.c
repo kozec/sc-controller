@@ -32,11 +32,8 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 		// usb->close(sc->usb_hndl);
 		// TODO: Calling close at this point may hang. Closing should be
 		//       scheduled for later time instead, ideally in sccd_usb_dev_close.
-		sc->usb_hndl = USBDEV_NONE;
-		// Releases all buttons, centers all sticks and sends fake input to mapper
-		memset(&sc->input, 0, sizeof(ControllerInput));
-		sc->mapper->input(sc->mapper, &sc->input);
-		d->controller_remove(&sc->controller);
+		disconnected(sc);
+		// TODO: Deallocate sc
 		return;
 	}
 	handle_input(sc, (SCInput*)data);

@@ -20,6 +20,8 @@
 #define FIRST_CONTROLIDX	1
 #define CHUNK_LENGTH		64
 
+#ifndef __BSD__
+
 typedef struct Dongle {
 	USBDevHandle			hndl;
 	struct SCController*	controllers[CTRLS_PER_DONGLE];
@@ -29,23 +31,22 @@ typedef LIST_TYPE(Dongle) DonglesList;
 
 static DonglesList dongles;
 
+#endif
+
 static Driver driver = {
 	.unload = NULL
 };
 
 void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const uint8_t* data, void* userdata) {
+#ifndef __BSD__
 	Dongle* dg = (Dongle*)userdata;
 	if (data == NULL) {
 		// Means dongle disconnected (or failed in any other way)
 		DEBUG("Dongle disconnected");
 		for (size_t j=0; j<CTRLS_PER_DONGLE; j++) {
 			SCController* sc = dg->controllers[j];
-			if (sc->state == SS_READY) {
-				memset(&sc->input, 0, sizeof(ControllerInput));
-				sc->mapper->input(sc->mapper, &sc->input);
-				sc->state = SS_FAILED;
-				d->controller_remove(&sc->controller);
-			}
+			disconnected(sc);
+			// TODO: Deallocate sc
 		}
 		
 		list_remove(dongles, dg);
@@ -62,6 +63,17 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 		return;
 	
 	SCController* sc = dg->controllers[endpoint - FIRST_ENDPOINT];
+#else
+	SCController* sc = (SCController*)userdata;
+	if (data == NULL) {
+		// Controller disconnected (or failed in any other way)
+		DEBUG("%s disconnected", sc->desc);
+		d->get_usb_helper()->close(sc->usb_hndl);
+		disconnected(sc);
+		// TODO: Deallocate sc
+		return;
+	}
+#endif
 	SCInput* i = (SCInput*)data;
 	if (i->ptype == PT_HOTPLUG) {
 		if (data[4] == 1) {
@@ -109,17 +121,14 @@ static void turnoff(Controller* c) {
 		LERROR("Failed to turn off controller");
 }
 
+#ifndef __BSD__
+////// Linux and Windows, there is dongle, controllers are connected to it
 
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
 	USBHelper* usb = daemon->get_usb_helper();
 	Dongle* dongle = NULL;
-#ifdef __BSD__
-	USBDevHandle hndl = USBDEV_NONE;
-	LERROR("Failed to claim interfaces");
-	goto hotplug_cb_fail;
-#else
 	USBDevHandle hndl = usb->open(syspath);
-	if (hndl == NULL) {
+	if (hndl == USBDEV_NONE) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
@@ -127,7 +136,6 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		LERROR("Failed to claim interfaces");
 		goto hotplug_cb_fail;
 	}
-#endif
 	
 	if (!list_allocate(dongles, 1))
 		goto hotplug_cb_oom;
@@ -162,6 +170,36 @@ hotplug_cb_fail:
 	usb->close(hndl);
 }
 
+#else
+////// BSD - there is no dongle, each controller has its own /dev/uhidX node
+////// that is created all the time and it is registered with daemon only
+////// after 1st input is recieved
+
+static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
+	USBHelper* usb = daemon->get_usb_helper();
+	USBDevHandle hndl = usb->open_uhid(syspath);
+	if (hndl == USBDEV_NONE) {
+		LERROR("Failed to open '%s'", syspath);
+		return;		// and nothing happens
+	}
+	SCController* sc = create_usb_controller(daemon, hndl, SC_WIRELESS, 0);
+	if (sc == NULL) {
+		LERROR("Failed to allocate memory");
+		usb->close(hndl);
+		return;
+	}
+	
+	sc->controller.turnoff = &turnoff;
+	if (!usb->interupt_read_loop(hndl, 0, 64, &input_interrupt_cb, sc)) {
+		LERROR("Failed to configure dongle");
+		usb->close(hndl);
+		free(sc);
+		return;
+	}
+}
+
+#endif
+
 
 Driver* scc_driver_init(Daemon* daemon) {
 	ASSERT(sizeof(TriggerValue) == 1);
@@ -170,11 +208,13 @@ Driver* scc_driver_init(Daemon* daemon) {
 	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
 	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	
+#ifndef __BSD__
 	dongles = list_new(Dongle, 4);
 	if (dongles == NULL) {
 		LERROR("Out of memory");
 		return NULL;
 	}
+#endif
 	if (!daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, &hotplug_cb)) {
 		LERROR("Failed to register hotplug callback");
 		return NULL;

@@ -55,6 +55,20 @@ static void deallocate(Controller* c) {
 	free(sc);
 }
 
+void disconnected(SCController* sc) {
+	sc->usb_hndl = USBDEV_NONE;
+	if (sc->state == SS_READY) {
+		if (sc->mapper != NULL) {
+			// Releases all buttons, centers all sticks and sends fake input to mapper
+			memset(&sc->input, 0, sizeof(ControllerInput));
+			sc->mapper->input(sc->mapper, &sc->input);
+		}
+		sc->state = SS_FAILED;
+		sc->daemon->controller_remove(&sc->controller);
+	}
+}
+
+
 static void deallocate_dongle_controller(Controller* c) {
 	// TODO: This. It will need reference count of some sort
 	// SCController* sc = container_of(c, SCController, controller);
