@@ -39,39 +39,6 @@ ParamOE scc_parse_parameter(Tokens* tokens) {
 	const char* c2 = scc_get_string_constant(token);
 	if (c2 != NULL)
 		return mOOM(scc_new_const_string_parameter(c2));
-	// TODO: range
-	/*
-	token := p.s.TokenText()
-	param := ConstantToParameter(token)
-	if param != nil {
-		p.skipWhitespace()
-		op := p.s.Peek()
-		if param.Type() & actions.PTInteger == actions.PTInteger && (op == '<' || op == '>') {
-			rangeType := actions.RangeTypeGreater
-			if op == '<' {
-				rangeType = actions.RangeTypeLess
-			}
-			p.s.Scan()
-			or_eq := p.s.Peek()
-			if or_eq == '=' {
-				rangeType |= actions.RangeTypeOrEqual
-				p.s.Scan()
-			} else {
-				or_eq = 0
-			}
-			next_param, err := p.parseParameter()
-			if err != nil || next_param.Type() & actions.PTFloat == 0 || next_param.Type() & actions.PTConstant != 0 {
-				if or_eq != 0 {
-					return nil, p.parseError(fmt.Sprintf("Expected number after '%c%c'", op, or_eq))
-				} else {
-					return nil, p.parseError(fmt.Sprintf("Expected number after '%c'", op))
-				}
-			}
-			return actions.NewRange(param, rangeType, next_param.Float()), nil
-		}
-		return param, nil
-	}
-	*/
 	
 	// "None"
 	if (strcmp(token, "None") == 0) {
@@ -119,32 +86,6 @@ ParamOE scc_parse_parameter(Tokens* tokens) {
 	}
 	
 	return (ParamOE)scc_new_parse_error("Unexpected '%s'", token);
-	
-	
-	/*
-	// String
-	if strings.HasPrefix(token, "\"") && strings.HasSuffix(token, "\"") {
-		return actions.NewStringParameter(token[1:len(token)-1]), nil
-	}
-	
-	// Backwards compatibility; This is just silently ignored,  "X.y" is parsed as "y"
-	if token == "Keys" || token == "Axes" || token == "Rels" {
-		p.s.Scan()
-		dot := p.s.TokenText()
-		if dot != "." {
-			return nil, p.parseError(fmt.Sprintf("Expected '.' after '%s'", token))
-		}
-		p.s.Scan()
-		conststr := p.s.TokenText()
-		param := ConstantToParameter(conststr)
-		if param == nil {
-			return nil, p.parseError(fmt.Sprintf("Expected constant after '%s.'", token))
-		}
-		return param, nil
-	}
-	
-	return nil, p.parseError(fmt.Sprintf("Expected parameter, got '%s'", token))
-	*/
 }
 
 
