@@ -1,5 +1,6 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/assert.h"
+#include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
@@ -48,9 +49,6 @@ static void axis_dealloc(Action* a) {
 	list_free(ax->params);
 	free(ax);
 }
-
-#define min(x, y) ( ((x)<(y)) ? (x) : (y) )
-#define max(x, y) ( ((x)>(y)) ? (x) : (y) )
 
 static bool apply_axis_params(AxisAction* ax, const char* keyword, ParameterList params) {
 	ax->axis = (Axis)scc_parameter_as_int(params->items[0]);

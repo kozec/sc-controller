@@ -15,6 +15,7 @@
 #include "scc/utils/list.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
+// TODO: Split parser and parser constants header
 #include "scc/parser.h"
 #include "scc/action.h"
 #include "tostring.h"

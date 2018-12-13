@@ -41,6 +41,9 @@ typedef struct {
 #define vec_mul(v, v2) do { (v).x *= (v2).x; (v).y *= (v2).y; } while(0);
 #define vec_muls(v, scalar) do { (v).x *= (scalar); (v).y *= (scalar); } while(0);
 
+#define min(x, y) ( ((x)<(y)) ? (x) : (y) )
+#define max(x, y) ( ((x)>(y)) ? (x) : (y) )
+
 /**
  * Initializes (and clears) dequeue.
  * Should allocation fail, dq->items will be set to NULL and method returns false

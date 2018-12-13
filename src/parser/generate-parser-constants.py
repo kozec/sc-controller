@@ -9,6 +9,9 @@ def good_constant(k):
 		return False
 	return True
 
+def key_or_abs(k):
+	return "_" in k and k.split("_", 1)[0] in ("ABS", "KEY", "BTN", "REL")
+
 
 if __name__ == '__main__':
 	output = open("generated_constants.c", "w")
@@ -26,9 +29,11 @@ if __name__ == '__main__':
  */
 
 #include "scc/utils/hashmap.h"
+#include "scc/utils/intmap.h"
 #include "scc/utils/assert.h"
 
 static map_t constants = NULL;
+static intmap_t keys = NULL;
 
 static void generate_constants();
 
@@ -44,9 +49,18 @@ int64_t scc_get_int_constant(const char* key) {
 	return (int64_t)value;
 }
 
+const char* scc_get_key_name(int32_t code) {
+	const char* name;
+	if (intmap_get(keys, code, (any_t)&name) != MAP_OK) {
+		return NULL;
+	}
+	return name;
+}
+
 static void generate_constants() {
 	constants = hashmap_new();
-	if (constants == NULL) return;
+	keys = intmap_new();
+	if ((constants == NULL) || (keys == NULL)) return;
 	hashmap_dont_copy_keys(constants);
 	
 """,
@@ -60,6 +74,10 @@ static void generate_constants() {
 			if good_constant(k):
 				if k.startswith("SCC_"): k = k[4:]
 				print >>output, '\thashmap_put(constants, "%s", (void*)%s);' % (k, v)
+		
+		for k, v in chead.items():
+			if "KEY_" in k:
+				print >>output, '\tintmap_put(keys, %s, "%s");' % (v, k)
 
 	print >>output, """}
 """,

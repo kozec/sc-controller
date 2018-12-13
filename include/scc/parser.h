@@ -32,3 +32,10 @@ int32_t scc_get_int_constant(const char* key);
  * Returns NULL for unrecognized strings.
  */
 const char* scc_get_string_constant(const char* key);
+
+
+/**
+ * Returns name of key (e.g. KEY_A for 30) or NULL if key is not recognized.
+ * Returned value shall not be deallocated.
+ */
+const char* scc_get_key_name(int32_t code);
