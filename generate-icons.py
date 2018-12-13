@@ -78,7 +78,7 @@ def recolor(tree, add):
 
 # Generate different colors for controller icons
 ET.register_namespace("","http://www.w3.org/2000/svg")
-for tp in ("sc", "scbt", "fake", "ds4", "hid"):
+for tp in ("sc", "scbt", "fake", "ds4", "hid", "rpad"):
 	# Read svg and parse it
 	data = file("%s/%s-0.svg" % (CICONS, tp), "r").read()
 	# Create recolored images

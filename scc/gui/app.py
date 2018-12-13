@@ -784,6 +784,12 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		allocation = w.get_allocation()
 		x = (self.background.get_allocation().width - allocation.width) / 2
 		y -= allocation.height
+		
+		if self.background.get_config()['gui']["no_buttons_in_gui"]:
+			# no_buttons_in_gui is used to keep image without changes
+			# This moves "C" button away so it doesn't obscure it as well
+			y = 10
+		
 		if w.get_parent():
 			main_area.move(w, x, y)
 		else:

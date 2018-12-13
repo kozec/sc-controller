@@ -65,6 +65,7 @@ class ControllerImage(SVGWidget):
 		data['gui'] = data.get('gui', {})
 		data['gui']['background'] = data['gui'].get("background", "sc")
 		data['gui']['buttons'] = data['gui'].get("buttons") or self._get_default_images()
+		data["gui"]["no_buttons_in_gui"] = data["gui"].get("no_buttons_in_gui") or False
 		data['buttons'] = data.get("buttons") or ControllerImage.DEFAULT_BUTTONS
 		data['axes'] = data.get("axes") or ControllerImage.DEFAULT_AXES
 		data['gyros'] = data.get("gyros", data['gui']["background"] == "sc")
@@ -94,7 +95,8 @@ class ControllerImage(SVGWidget):
 		self.current = self._ensure_config(config or {})
 		self.set_image(os.path.join(self.app.imagepath,
 			"controller-images/%s.svg" % (self.current["gui"]["background"], )))
-		self._fill_button_images(self.current["gui"]["buttons"])
+		if not self.current["gui"]["no_buttons_in_gui"]:
+			self._fill_button_images(self.current["gui"]["buttons"])
 		self.hilight({})
 		return self.current
 	
