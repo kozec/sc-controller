@@ -365,7 +365,7 @@ sccd_usb_dev_interupt_read_loop_fail:
 #ifdef _WIN32
 void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product);
 
-static void sccd_usb_rescan() {
+void sccd_usb_rescan() {
 	char fake_syspath_buffer[1024];
 	struct libusb_device_descriptor desc;
 	libusb_device** list = NULL;

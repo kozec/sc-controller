@@ -18,14 +18,14 @@
 
 typedef struct Task {
 	/** at is value of 'now' (in ms) when task will be executed */
-	monotime_t			at;
-	sccd_scheduler_cb	callback;
-	void*				userdata;
+	monotime_t						at;
+	sccd_scheduler_cb_internal		callback;
+	void*							userdata;
 	/**
 	 * parent is another form of userdata, used when removing tasks
 	 * by mapper and to match 'MapperScheduleCallback' signature
 	 */
-	void*				parent;
+	void*							parent;
 } Task;
 
 typedef LIST_TYPE(Task) TaskList;
@@ -75,7 +75,7 @@ void sccd_scheduler_get_sleep_time(struct timeval* t) {
 	}
 }
 
-TaskID sccd_scheduler_schedule(uint32_t timeout, sccd_scheduler_cb cb, void* parent, void* userdata) {
+TaskID sccd_scheduler_schedule(uint32_t timeout, sccd_scheduler_cb_internal cb, void* parent, void* userdata) {
 	monotime_t at = now + (monotime_t)timeout;
 	if (!list_allocate(tasks, 1))
 		return (TaskID)NULL;	// oom

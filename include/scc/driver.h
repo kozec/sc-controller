@@ -41,6 +41,8 @@ typedef struct Driver Driver;
 typedef void (*sccd_mainloop_cb)(Daemon* d);
 typedef void (*sccd_poller_cb)(Daemon* d, int fd, void* userdata);
 typedef void (*sccd_hotplug_cb)(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product);
+typedef void (*sccd_scheduler_cb)(void* userdata);
+
 
 /** This is 'daemon from POV of driver', not everything that driver does */
 struct Daemon {
@@ -71,6 +73,17 @@ struct Daemon {
 	bool			(*mainloop_cb_add)(sccd_mainloop_cb cb);
 	/** Removes callback added by mainloop_cb_add. */
 	void			(*mainloop_cb_remove)(sccd_mainloop_cb cb);
+	/**
+	 * Schedules function to be called after given delay.
+	 *
+	 * Callback will be called from main loop and unlike with mapper, it's
+	 * guaranteed that this callback will be eventually called,
+	 * assuming entire daemon doesn't crash before.
+	 *
+	 * 'delay' is in milliseconds. It can be zero, in which case callback will be called ASAP.
+	 * Returns false if allocation fails.
+	 */
+	bool			(*schedule)(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
 	/**
 	 * Adds file descriptor that will be monitored for having data available to
 	 * read and callback that will be called from Daemon's mainloop when that

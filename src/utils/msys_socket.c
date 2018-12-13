@@ -57,7 +57,7 @@ int msys_bind(int sock, const struct sockaddr* _address, socklen_t address_len) 
 	
 	if (secrets == NULL)
 		secrets = intmap_new();
-	gid = malloc(sizeof(gid));
+	gid = malloc(sizeof(GUID));
 	if ((secrets == NULL) || (gid == NULL) || (intmap_put(secrets, sock, gid) != MAP_OK)) {
 		free(gid);
 		LERROR("msys_bind: Out of memory");

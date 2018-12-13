@@ -186,7 +186,7 @@ static void move_wheel(Mapper* _m, double dx, double dy) {
 }
 
 static TaskID schedule(Mapper* m, uint32_t delay, MapperScheduleCallback cb, void* userdata) {
-	return sccd_scheduler_schedule(delay, (sccd_scheduler_cb)cb, m, userdata);
+	return sccd_scheduler_schedule(delay, (sccd_scheduler_cb_internal)cb, m, userdata);
 }
 
 static void cancel(Mapper* _m, TaskID task_id) {

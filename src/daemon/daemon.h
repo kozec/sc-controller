@@ -40,7 +40,7 @@ enum SpecialClientType {
 typedef LIST_TYPE(ErrorData) ErrorList;
 typedef LIST_TYPE(Controller) ControllerList;
 
-typedef void (*sccd_scheduler_cb)(void* parent, void* userdata);
+typedef void (*sccd_scheduler_cb_internal)(void* parent, void* userdata);
 typedef uintptr_t TaskID;
 
 intptr_t sccd_error_add(const char* message, bool fatal);
@@ -60,7 +60,7 @@ void sccd_scheduler_close();
  * Schedules function to be called in 'timeout' ms.
  * May return 0 if allocation fails.
  */
-TaskID sccd_scheduler_schedule(uint32_t timeout, sccd_scheduler_cb cb, void* parent, void* userdata);
+TaskID sccd_scheduler_schedule(uint32_t timeout, sccd_scheduler_cb_internal cb, void* parent, void* userdata);
 /** Cancels task with given ID. Does nothing if ID is not valid */
 void sccd_scheduler_cancel(TaskID id);
 /** Returns NULL if there is no such task scheduled */

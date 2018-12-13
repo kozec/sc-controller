@@ -11,8 +11,13 @@
 
 
 Config* config_init() {
+	// TODO: Maybe re-enable this on Windows for other files
 	if (access(scc_get_config_path(), F_OK) != 0) {
+#ifdef _WIN32
+		if (mkdir(scc_get_config_path()) != 0) {
+#else
 		if (mkdir(scc_get_config_path(), 0700) != 0) {
+#endif
 			LERROR(
 				"Failed to create config directory '%s': %s",
 				scc_get_config_path(),

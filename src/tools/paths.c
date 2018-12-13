@@ -13,6 +13,7 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/traceback.h"
+#include "scc/utils/assert.h"
 #include "scc/tools.h"
 #include <dirent.h>
 #include <errno.h>

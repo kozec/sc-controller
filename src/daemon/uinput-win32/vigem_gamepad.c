@@ -65,7 +65,6 @@ VirtualDevice* setup_gamepad(const VirtualDeviceSettings* settings) {
 	memset(&osvi, 0, sizeof(OSVERSIONINFO));
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionExA(&osvi);
-	LOG("osvi.dwMajorVersion = %i osvi.dwMinorVersion = %i", osvi.dwMajorVersion, osvi.dwMinorVersion);
 	if ((osvi.dwMajorVersion > 6) || ((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >=2))) {
 		// Windows 8 or later
 		if (gamepad_type == VGT_AUTO)

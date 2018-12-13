@@ -27,6 +27,7 @@ static bool add_mainloop(sccd_mainloop_cb cb);
 static void remove_mainloop(sccd_mainloop_cb cb);
 static bool controller_add(Controller* c);
 static void controller_remove(Controller* c);
+static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
 
 
 static Daemon daemon = {
@@ -36,6 +37,7 @@ static Daemon daemon = {
 	.error_remove				= sccd_error_remove,
 	.mainloop_cb_add			= add_mainloop,
 	.mainloop_cb_remove			= remove_mainloop,
+	.schedule					= schedule,
 	.poller_cb_add				= sccd_poller_add,
 	.hotplug_cb_add				= sccd_register_hotplug_cb,
 	.get_x_display				= sccd_x11_get_display,
@@ -54,6 +56,16 @@ static bool add_mainloop(sccd_mainloop_cb cb) {
 static void remove_mainloop(sccd_mainloop_cb cb) {
 	list_remove(mainloop_callbacks, cb);
 }
+
+static void schedule_cb(void* cb, void* userdata) {
+	((sccd_scheduler_cb)(cb))(userdata);
+}
+
+static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata) {
+	TaskID id = sccd_scheduler_schedule(timeout, &schedule_cb, (void*)cb, userdata);
+	return (id != 0);
+}
+
 
 static void sigint_handler(int sig) {
 	INFO("^C caught");
