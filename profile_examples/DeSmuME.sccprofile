@@ -1,4 +1,5 @@
 {
+    "_": "", 
     "buttons": {
         "A": {
             "action": "button(Keys.BTN_EAST)", 
@@ -13,11 +14,7 @@
             "name": "Select"
         }, 
         "C": {
-            "action": "menu('Default.menu')", 
-            "doubleclick": {}, 
-            "hold": {
-                "action": "menu('Default.menu')"
-            }
+            "action": "hold(menu('Default.menu'), menu('Default.menu'))"
         }, 
         "LB": {
             "action": "button(Keys.KEY_O)", 
@@ -51,7 +48,9 @@
             "name": "Y"
         }
     }, 
+    "cpad": {}, 
     "gyro": {}, 
+    "is_template": false, 
     "menus": {
         "Load-Save": [{
             "action": "button(Keys.KEY_LEFTSHIFT) and button(Keys.KEY_F1)", 
@@ -94,19 +93,13 @@
         "action": "relwinarea(0.01, 0.5, 0.99, 0.99)"
     }, 
     "stick": {
-        "X": {
-            "action": "axis(Axes.ABS_X)"
-        }, 
-        "Y": {
-            "action": "raxis(Axes.ABS_Y)"
-        }
+        "action": "XY(axis(Axes.ABS_X), raxis(Axes.ABS_Y))"
     }, 
     "trigger_left": {
-        "action": "button(Keys.BTN_SELECT)", 
-        "name": "L"
+        "action": "trigger(50, button(Keys.BTN_SELECT))"
     }, 
     "trigger_right": {
-        "action": "button(Keys.BTN_START)", 
-        "name": "R"
-    }
+        "action": "trigger(50, button(Keys.BTN_START))"
+    }, 
+    "version": 1.4
 }

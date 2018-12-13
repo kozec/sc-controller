@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include "remotepad.h"
 
-#define REMOTEPAD_MODULE_VERSION 3
+#define REMOTEPAD_MODULE_VERSION 1
 
 static uint32_t next_id = 0;
 

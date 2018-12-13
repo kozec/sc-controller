@@ -52,6 +52,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		UserDataManager.__init__(self)
 		BindingEditor.__init__(self, self)
 		# Setup Gtk.Application
+		self.convert_old_profiles()
 		self.setup_commandline()
 		# Setup DaemonManager
 		self.dm = DaemonManager()
@@ -1410,6 +1411,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.current.description = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
 		self.on_profile_modified()
 	
+	
 	def on_cbProfileIsTemplate_toggled(self, widget, *a):
 		if self.recursing: return
 		self.current.is_template = widget.get_active()
@@ -1606,6 +1608,38 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 					ied.import_file(path, filetype = filetype)
 				else:
 					log.error("Unknown file type: '%s'..." % (path,))
+	
+	
+	def convert_old_profiles(self):
+		"""
+		Checks all available profiles and automatically converts anything with
+		version 1.3 or lower.
+		"""
+		from scc.parser import ActionParser
+		to_convert = {}
+		for name in os.listdir(get_profiles_path()):
+			try:
+				p = Profile(ActionParser())
+				p.load(os.path.join(get_profiles_path(), name))
+			except:
+				# Just ignore invalid profiles here
+				continue
+			if p.original_version < 1.4:
+				to_convert[name] = p
+		
+		if to_convert:
+			log.warning("Auto-converting old profile files to version 1.4. This should take only moment.")
+			log.warning("All files are modified in-place, but backup files are created. Feel free to remove them later.")
+			for name in to_convert:
+				try:
+					to_convert[name].save("%s/%s.convert" % (get_profiles_path(), name))
+					os.rename("%s/%s" % (get_profiles_path(), name),
+							"%s/%s~" % (get_profiles_path(), name))
+					os.rename("%s/%s.convert" % (get_profiles_path(), name),
+							"%s/%s" % (get_profiles_path(), name))
+					log.warning("Converted %s (from v%s)", name, to_convert[name].original_version)
+				except Exception, e:
+					log.warning("Failed to convert %s: %s", name, e)
 
 
 class UndoRedo(object):

@@ -1,13 +1,8 @@
 {
+    "_": "", 
     "buttons": {
         "A": {
-            "action": "button(Keys.KEY_SPACE) and button(Keys.KEY_ENTER)", 
-            "modes": {
-                "LGRIP": {
-                    "action": "repeat(button(Keys.KEY_LEFT); button(Keys.KEY_RIGHT))", 
-                    "name": "Mash left/right"
-                }
-            }, 
+            "action": "mode(LGRIP, name('Mash left/right', repeat(button(Keys.KEY_LEFT); button(Keys.KEY_RIGHT))), name('Jump / Confirm', button(Keys.KEY_SPACE) and button(Keys.KEY_ENTER)))", 
             "name": "Jump / Confirm"
         }, 
         "B": {
@@ -19,7 +14,7 @@
             "name": "Map"
         }, 
         "C": {
-            "action": "button(Keys.KEY_LEFTALT)"
+            "action": "hold(menu('Default.menu'), button(Keys.KEY_LEFTALT))"
         }, 
         "LB": {
             "action": "button(Keys.KEY_Q)", 
@@ -45,52 +40,40 @@
             "action": "button(Keys.KEY_ESC)", 
             "name": "Menu / Cancel"
         }, 
-        "STICK": {
+        "STICKPRESS": {
             "action": "button(Keys.KEY_LEFTCTRL)", 
             "name": "Walk"
         }, 
         "X": {
-            "action": "button(Keys.KEY_E)", 
-            "modes": {
-                "LGRIP": {
-                    "action": "repeat(button(Keys.KEY_E))", 
-                    "name": "Interact (rapid)"
-                }
-            }, 
+            "action": "mode(LGRIP, name('Interact (rapid)', repeat(button(Keys.KEY_E))), name('Interact', button(Keys.KEY_E)))", 
             "name": "Interact"
         }, 
         "Y": {
-            "action": "button(Keys.KEY_F)", 
-            "modes": {
-                "LGRIP": {
-                    "action": "repeat(button(Keys.KEY_F))", 
-                    "name": "Melee (rapid)"
-                }
-            }, 
+            "action": "mode(LGRIP, name('Melee (rapid)', repeat(button(Keys.KEY_F))), name('Melee', button(Keys.KEY_F)))", 
             "name": "Melee"
         }
     }, 
+    "cpad": {}, 
     "gyro": {}, 
-    "left_pad": {
+    "is_template": false, 
+    "menus": {}, 
+    "pad_left": {
         "action": "dpad(button(Keys.KEY_1), button(Keys.KEY_2), button(Keys.KEY_3), button(Keys.KEY_4))", 
         "name": "Weapon Switch"
     }, 
-    "right_pad": {
-        "action": "trackball(1.0)", 
+    "pad_right": {
+        "action": "ball(mouse(None, 1.0))", 
         "name": "Camera"
     }, 
     "stick": {
         "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))", 
         "name": "Movement"
     }, 
-    "triggers": {
-        "LEFT": {
-            "action": "button(Keys.BTN_RIGHT)", 
-            "name": "Aim"
-        }, 
-        "RIGHT": {
-            "action": "button(Keys.BTN_LEFT)", 
-            "name": "Fire"
-        }
-    }
+    "trigger_left": {
+        "action": "trigger(50, button(Keys.BTN_RIGHT))"
+    }, 
+    "trigger_right": {
+        "action": "trigger(50, button(Keys.BTN_LEFT))"
+    }, 
+    "version": 1.4
 }

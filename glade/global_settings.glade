@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.2 -->
+<!-- Generated with glade 3.20.4 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjLED">
@@ -1444,7 +1444,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">6</property>
+                    <property name="top_attach">8</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -1473,7 +1473,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">7</property>
+                    <property name="top_attach">9</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -1517,7 +1517,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">10</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -1667,7 +1667,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">11</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -1683,6 +1683,51 @@ or even crash.</property>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">5</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbEnableDriver_remotepad">
+                    <property name="name">remotepad</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="margin_top">5</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_cbEnableDriver_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="lblKuaa1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Enable Remote RetroPad protocol support</property>
+                        <property name="xalign">0</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">6</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lblKuaa2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">30</property>
+                    <property name="label" translatable="yes">If enabled, any device or application compatibile with Retroarch's Remote RetroPad protocol
+on network can connect and remote-control this computer as additional gamepad.
+&lt;a href="https://github.com/kozec/sc-controller/wiki/Using-phone-with-Retroarch-as-additional-controller"&gt;See wiki for instructions and more info.&lt;/a&gt;</property>
+                    <property name="use_markup">True</property>
+                    <property name="xalign">0</property>
+                    <property name="yalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">7</property>
+                    <property name="width">3</property>
                   </packing>
                 </child>
                 <child>

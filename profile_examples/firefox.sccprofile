@@ -1,4 +1,5 @@
 {
+    "_": "", 
     "buttons": {
         "A": {
             "action": "button(Keys.KEY_ENTER)"
@@ -7,148 +8,59 @@
             "action": "button(Keys.KEY_BACKSPACE)"
         }, 
         "BACK": {
-            "actions": [{
-                "action": "button(Keys.KEY_LEFTCTRL)"
-            }, {
-                "action": "button(Keys.KEY_LEFTALT)"
-            }, {
-                "action": "button(Keys.KEY_LEFT)"
-            }], 
-            "modes": {
-                "RT": {
-                    "actions": [{
-                        "action": "button(Keys.KEY_LEFTCTRL)"
-                    }, {
-                        "action": "button(Keys.KEY_LEFTSHIFT)"
-                    }, {
-                        "action": "button(Keys.KEY_R)"
-                    }]
-                }
-            }
+            "action": "mode(RT, button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_LEFTSHIFT) and button(Keys.KEY_R), button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_LEFTALT) and button(Keys.KEY_LEFT))"
         }, 
         "C": {
-            "action": "menu('Default.menu')", 
-            "doubleclick": {}, 
-            "hold": {
-                "action": "menu('Default.menu')"
-            }
+            "action": "hold(menu('Default.menu'), menu('Default.menu'))"
         }, 
         "LB": {
-            "actions": [{
-                "action": "button(Keys.KEY_LEFTCTRL)"
-            }, {
-                "action": "button(Keys.KEY_LEFTSHIFT)"
-            }, {
-                "action": "button(Keys.KEY_TAB)"
-            }]
+            "action": "button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_LEFTSHIFT) and button(Keys.KEY_TAB)"
         }, 
         "LGRIP": {
-            "action": "button(Keys.KEY_PAGEDOWN)", 
-            "doubleclick": {
-                "action": "button(Keys.KEY_END)"
-            }, 
-            "modes": {
-                "RT": {
-                    "actions": [{
-                        "action": "button(Keys.KEY_LEFTCTRL)"
-                    }, {
-                        "action": "button(Keys.KEY_KPMINUS)"
-                    }]
-                }
-            }
+            "action": "doubleclick(button(Keys.KEY_END), mode(RT, button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_KPMINUS), button(Keys.KEY_PAGEDOWN)))"
         }, 
         "RB": {
-            "actions": [{
-                "action": "button(Keys.KEY_LEFTCTRL)"
-            }, {
-                "action": "button(Keys.KEY_TAB)"
-            }]
+            "action": "button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_TAB)"
         }, 
         "RGRIP": {
-            "action": "button(Keys.KEY_PAGEUP)", 
-            "doubleclick": {
-                "action": "button(Keys.KEY_HOME)"
-            }, 
-            "modes": {
-                "RT": {
-                    "actions": [{
-                        "action": "button(Keys.KEY_LEFTCTRL)"
-                    }, {
-                        "action": "button(Keys.KEY_KPPLUS)"
-                    }]
-                }
-            }
+            "action": "doubleclick(button(Keys.KEY_HOME), mode(RT, button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_KPPLUS), button(Keys.KEY_PAGEUP)))"
         }, 
         "RPAD": {
             "action": "button(Keys.BTN_LEFT)"
         }, 
         "START": {
-            "actions": [{
-                "action": "button(Keys.KEY_LEFTCTRL)"
-            }, {
-                "action": "button(Keys.KEY_LEFTALT)"
-            }, {
-                "action": "button(Keys.KEY_RIGHT)"
-            }], 
-            "modes": {
-                "RT": {
-                    "actions": [{
-                        "action": "button(Keys.KEY_LEFTCTRL)"
-                    }, {
-                        "action": "button(Keys.KEY_R)"
-                    }]
-                }
-            }
+            "action": "mode(RT, button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_R), button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_LEFTALT) and button(Keys.KEY_RIGHT))"
         }, 
-        "STICK": {
+        "STICKPRESS": {
             "action": "keyboard()"
         }, 
         "X": {
             "action": "button(Keys.KEY_SPACE)"
         }, 
         "Y": {
-            "actions": [{
-                "action": "button(Keys.KEY_LEFTCTRL)"
-            }, {
-                "action": "button(Keys.KEY_W)"
-            }]
+            "action": "button(Keys.KEY_LEFTCTRL) and button(Keys.KEY_W)"
         }
     }, 
+    "cpad": {}, 
     "gyro": {
-        "modes": {
-            "RPADTOUCH": {
-                "action": "mouse(ROLL)"
-            }
-        }, 
-        "sensitivity": [3.5, 3.5, 3.5]
+        "action": "mode(RPADTOUCH, mouse(ROLL), None)"
     }, 
+    "is_template": false, 
     "menus": {}, 
     "pad_left": {
-        "action": "circular(Rels.REL_WHEEL)"
+        "action": "circular(mouse(Rels.REL_WHEEL))"
     }, 
     "pad_right": {
-        "action": "mouse(None, 1.0)", 
-        "ball": true, 
-        "feedback": ["RIGHT", 256]
+        "action": "feedback(RIGHT, 256, ball(mouse(None, 1.0)))"
     }, 
     "stick": {
-        "dpad": [{
-            "action": "button(Keys.KEY_UP)"
-        }, {
-            "action": "button(Keys.KEY_DOWN)"
-        }, {
-            "action": "button(Keys.KEY_LEFT)"
-        }, {
-            "action": "button(Keys.KEY_RIGHT)"
-        }]
+        "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))"
     }, 
     "trigger_left": {
-        "action": "button(Keys.BTN_RIGHT)", 
-        "levels": [50, 50]
+        "action": "trigger(50, 50, button(Keys.BTN_RIGHT))"
     }, 
     "trigger_right": {
-        "action": "button(Keys.BTN_LEFT)", 
-        "levels": [50, 50]
+        "action": "trigger(50, 50, button(Keys.BTN_LEFT))"
     }, 
-    "version": 1.2
+    "version": 1.4
 }

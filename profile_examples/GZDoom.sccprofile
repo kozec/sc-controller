@@ -1,8 +1,5 @@
 {
-    "_" : [
-        "Please, note that GZDoom doesn't have keys for Jump and Crouch bound",
-        "by default, so you may need to do some initial setup in game as well."
-	],
+    "_": ["Please, note that GZDoom doesn't have keys for Jump and Crouch bound", "by default, so you may need to do some initial setup in game as well."], 
     "buttons": {
         "A": {
             "action": "button(Keys.KEY_ENTER) and button(Keys.KEY_LEFTALT)", 
@@ -28,9 +25,9 @@
             "name": "Run"
         }, 
         "RB": {
-            "action": "radialmenu('All Weapons',SAME)", 
+            "action": "radialmenu('All Weapons',DEFAULT,SAME)", 
             "name": "Weapon Switch"
-        },
+        }, 
         "START": {
             "action": "button(Keys.KEY_ESC)", 
             "name": "Menu / Cancel"
@@ -44,60 +41,90 @@
             "name": "Reload"
         }
     }, 
+    "cpad": {}, 
     "gyro": {}, 
+    "is_template": false, 
     "menus": {
-        "4 Weapons": [
-            { "id": "item1", "action": "button(Keys.KEY_2)", "name": "Pistol" },
-            { "id": "item2", "action": "button(Keys.KEY_3)", "name": "Shotgun" },
-            { "id": "item3", "action": "button(Keys.KEY_4)", "name": "Chaingun" },
-            { "id": "item4", "action": "button(Keys.KEY_6)", "name": "Plasma" }
-        ], 
-        "All Weapons": [
-            { "id": "item1", "action": "button(Keys.KEY_1)", "name": "Fists" },
-            { "id": "item2", "action": "button(Keys.KEY_2)", "name": "Pistol" },
-            { "id": "item3", "action": "button(Keys.KEY_3)", "name": "Shotgun" },
-            { "id": "item4", "action": "button(Keys.KEY_4)", "name": "Chaingun" },
-            { "id": "item5", "action": "button(Keys.KEY_5)", "name": "Rocket" },
-            { "id": "item6", "action": "button(Keys.KEY_6)", "name": "Plasma" },
-            { "id": "item7", "action": "button(Keys.KEY_7)", "name": "BFG "}
-        ], 
-        "Cheats": [
-            { "id": "item1", "action": "type('idfa')",   "name": "All Weapons & Ammo" },
-            { "id": "item2", "action": "type('iddt')",   "name": "Full Map" },
-            { "id": "item3", "action": "type('idclip')", "name": "Walk Through Walls" },
-            { "id": "item4", "action": "type('iddqd')",  "name": "God Mode" }
-		]
+        "4 Weapons": [{
+            "action": "button(Keys.KEY_2)", 
+            "id": "item1", 
+            "name": "Pistol"
+        }, {
+            "action": "button(Keys.KEY_3)", 
+            "id": "item2", 
+            "name": "Shotgun"
+        }, {
+            "action": "button(Keys.KEY_4)", 
+            "id": "item3", 
+            "name": "Chaingun"
+        }, {
+            "action": "button(Keys.KEY_6)", 
+            "id": "item4", 
+            "name": "Plasma"
+        }], 
+        "All Weapons": [{
+            "action": "button(Keys.KEY_1)", 
+            "id": "item1", 
+            "name": "Fists"
+        }, {
+            "action": "button(Keys.KEY_2)", 
+            "id": "item2", 
+            "name": "Pistol"
+        }, {
+            "action": "button(Keys.KEY_3)", 
+            "id": "item3", 
+            "name": "Shotgun"
+        }, {
+            "action": "button(Keys.KEY_4)", 
+            "id": "item4", 
+            "name": "Chaingun"
+        }, {
+            "action": "button(Keys.KEY_5)", 
+            "id": "item5", 
+            "name": "Rocket"
+        }, {
+            "action": "button(Keys.KEY_6)", 
+            "id": "item6", 
+            "name": "Plasma"
+        }, {
+            "action": "button(Keys.KEY_7)", 
+            "id": "item7", 
+            "name": "BFG "
+        }], 
+        "Cheats": [{
+            "action": "type('idfa')", 
+            "id": "item1", 
+            "name": "All Weapons & Ammo"
+        }, {
+            "action": "type('iddt')", 
+            "id": "item2", 
+            "name": "Full Map"
+        }, {
+            "action": "type('idclip')", 
+            "id": "item3", 
+            "name": "Walk Through Walls"
+        }, {
+            "action": "type('iddqd')", 
+            "id": "item4", 
+            "name": "God Mode"
+        }]
     }, 
     "pad_left": {
         "action": "radialmenu('4 Weapons')", 
         "name": "Quick Weapon Switch"
     }, 
     "pad_right": {
-        "action": "trackball(1.0)", 
-        "feedback": ["RIGHT", 256]
+        "action": "feedback(RIGHT, 256, ball(mouse(None, 1.0)))"
     }, 
     "stick": {
-        "dpad": [{
-            "action": "button(Keys.KEY_UP)", 
-            "name": "Forwards"
-        }, {
-            "action": "button(Keys.KEY_DOWN)", 
-            "name": "Backwards"
-        }, {
-            "action": "button(Keys.KEY_COMMA)", 
-            "name": "Strafe Left"
-        }, {
-            "action": "button(Keys.KEY_DOT)", 
-            "name": "Strafe Right"
-        }], 
+        "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_COMMA), button(Keys.KEY_DOT))", 
         "name": "Movement"
     }, 
     "trigger_left": {
-        "action": "button(Keys.KEY_Z)", 
-        "name": "Zoom"
+        "action": "trigger(50, button(Keys.KEY_Z))"
     }, 
     "trigger_right": {
-        "action": "button(Keys.BTN_LEFT)"
+        "action": "trigger(50, button(Keys.BTN_LEFT))"
     }, 
-    "version": 1
+    "version": 1.4
 }

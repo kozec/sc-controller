@@ -1,4 +1,5 @@
 {
+    "_": "", 
     "buttons": {
         "A": {
             "action": "button(Keys.KEY_SPACE)", 
@@ -43,7 +44,7 @@
             "action": "button(Keys.KEY_ESC)", 
             "name": "Menu"
         }, 
-        "STICK": {
+        "STICKPRESS": {
             "action": "button(Keys.KEY_C)", 
             "name": "Scan"
         }, 
@@ -56,47 +57,28 @@
             "name": "Reload"
         }
     }, 
+    "cpad": {}, 
     "gyro": {}, 
+    "is_template": false, 
     "menus": {}, 
     "pad_left": {
-        "dpad": [{
-            "action": "button(Keys.KEY_UP)"
-        }, {
-            "action": "button(Keys.KEY_DOWN)"
-        }, {
-            "action": "button(Keys.KEY_LEFT)"
-        }, {
-            "action": "button(Keys.KEY_RIGHT)"
-        }], 
+        "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))", 
         "name": "Move Map"
     }, 
     "pad_right": {
-        "action": "mouse(None, 1.0)", 
-        "ball": true, 
-        "feedback": ["RIGHT", 256], 
-        "name": "Mouse", 
-        "sensitivity": [0.5, 0.5, 1.0]
+        "action": "feedback(RIGHT, 256, sens(0.5, 0.5, ball(mouse(None, 1.0))))", 
+        "name": "Mouse"
     }, 
     "stick": {
-        "dpad": [{
-            "action": "button(Keys.KEY_W)"
-        }, {
-            "action": "button(Keys.KEY_S)"
-        }, {
-            "action": "button(Keys.KEY_A)"
-        }, {
-            "action": "button(Keys.KEY_D)"
-        }]
+        "action": "dpad(button(Keys.KEY_W), button(Keys.KEY_S), button(Keys.KEY_A), button(Keys.KEY_D))"
     }, 
     "trigger_left": {
-        "action": "button(Keys.BTN_RIGHT)", 
-        "levels": [50, 50], 
+        "action": "trigger(50, 50, button(Keys.BTN_RIGHT))", 
         "name": "(RClick) Zoom"
     }, 
     "trigger_right": {
-        "action": "button(Keys.BTN_LEFT)", 
-        "levels": [50, 50], 
+        "action": "trigger(50, 50, button(Keys.BTN_LEFT))", 
         "name": "(LClick) Fire"
     }, 
-    "version": 1.2
+    "version": 1.4
 }
