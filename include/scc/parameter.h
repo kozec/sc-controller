@@ -26,10 +26,10 @@ typedef enum {
 } ParameterType;
 
 typedef enum {
-	RT_GREATER		 			= 0b00000001,
-	RT_LESS						= 0b00000010,
-	RT_OREQUAL					= 0b00000100,
-	RangeType_pad_				= 0xFF
+	RT_GREATER		 			= 1,
+	RT_LESS						= 2,
+	RT_GREATER_OREQUAL 			= 3,
+	RT_LESS_OREQUAL				= 4
 } RangeType;
 
 typedef struct Parameter Parameter;

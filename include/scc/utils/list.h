@@ -101,7 +101,11 @@ bool list_set(void* list, size_t n, void* item);
 /** Returns size of list */
 #define list_size(list) ((size_t)(((_voidlist)list)->_data.size))
 
-/** Pops last item from list or NULL if list is empty */
+/**
+ * Pops last item from list or NULL if list is empty.
+ * Allocation is not decreased and so it's safe to add one item for every item
+ * poped out of list.
+ */
 #define list_pop(tpe, list) ((tpe*)_list_pop(list))
 void* _list_pop(void* list);
 

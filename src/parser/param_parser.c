@@ -162,10 +162,51 @@ ActionOE scc_parse_action_parameters(Tokens* tokens, const char* keyword) {
 				break;
 			param = scc_parse_parameter(tokens);
 			if (IS_PARAM_ERROR(param)) goto scc_pap_err_cleanup;
-			if (!list_add(params, PARAMETER(param))) goto scc_pap_err_cleanup;
 			
 			tokens_skip_whitespace(tokens);
 			t = tokens_peek_char(tokens);
+			if ((t == '>') || (t == '<')) {			// Check & parse range operator
+				const char* op = iter_next(tokens);
+				RangeType rt = 0;
+				if (0 == strcmp(">", op))
+					rt = RT_GREATER;
+				else if (0 == strcmp("<", op))
+					rt = RT_LESS;
+				else if (0 == strcmp(">=", op))
+					rt = RT_GREATER_OREQUAL;
+				else if (0 == strcmp("<=", op))
+					rt = RT_LESS_OREQUAL;
+				if (rt == 0) {
+					RC_REL(PARAMETER(param));
+					param = (ParamOE)scc_new_parse_error("Unexpected '%s' after parameter", op);
+					goto scc_pap_err_cleanup;
+				}
+				ParamOE rigth_side = scc_parse_parameter(tokens);
+				if (IS_PARAM_ERROR(rigth_side)) {
+					RC_REL(PARAMETER(param));
+					param = rigth_side;
+					goto scc_pap_err_cleanup;
+				}
+				if (!(scc_parameter_type(PARAMETER(rigth_side)) & PT_FLOAT)) {
+					RC_REL(PARAMETER(param));
+					char* _rigth_side = scc_parameter_to_string(PARAMETER(rigth_side));
+					param = (ParamOE)((_rigth_side == NULL) ? NULL : scc_new_parse_error("Unexpected '%s' after operator", _rigth_side));
+					free(_rigth_side);
+					RC_REL(PARAMETER(rigth_side));
+					goto scc_pap_err_cleanup;
+				}
+				// Sucesfully parsed range
+				Parameter* range = scc_new_range_parameter(PARAMETER(param), rt, scc_parameter_as_float(PARAMETER(rigth_side)));
+				RC_REL(PARAMETER(param));
+				RC_REL(PARAMETER(rigth_side));
+				param = (ParamOE)range;
+				if (range == NULL)
+					goto scc_pap_err_cleanup;
+				t = tokens_peek_char(tokens);
+			}
+			
+			if (!list_add(params, PARAMETER(param))) goto scc_pap_err_cleanup;
+			
 			if (t == 0) {
 				param = (ParamOE)scc_new_parse_error("Expected ')'");
 				goto scc_pap_err_cleanup;

@@ -58,3 +58,10 @@ test('test_macros', executable('test_macros',
 	link_with: [utils_lib, parser_lib],
 	sources: [ 'test_macros.c', 'testmapper/testmapper.c' ]
 ))
+
+test('test_modeshift', executable('test_modeshift',
+	dependencies: [cu_test],
+	include_directories: include,
+	link_with: [utils_lib, parser_lib],
+	sources: [ 'test_modeshift.c', 'testmapper/testmapper.c' ]
+))

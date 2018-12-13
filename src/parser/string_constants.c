@@ -11,10 +11,15 @@
 
 static const char* CONSTANTS[] = {
 	// Buttons
-	"A", "B", "X", "Y", "START", "SELECT",
-	"LEFT", "RIGHT",
+	"A", "B", "X", "Y", "START", "C", "SELECT",
+	// Bumpers
+	"LB", "RB",
+	// Triggers
+	"LT", "RT",
 	// Deadzone modes
 	"CUT", "ROUND", "LINEAR", "MINIMUM",
+	// Haptic positions
+	"LEFT", "RIGHT",
 	// Terminator
 	NULL
 };
