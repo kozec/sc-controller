@@ -894,13 +894,15 @@ class SCCDaemon(Daemon):
 				log.exception(e)
 
 		elif message.startswith("Turnoff."):
+			to_turn_off = []
 			with self.lock:
 				if client.mapper.get_controller():
-					client.mapper.get_controller().turnoff()
+					to_turn_off.append(client.mapper.get_controller())
 				else:
-					for c in self.controllers:
-						c.turnoff()
-				client.wfile.write(b"OK.\n")
+					to_turn_off += [ c for c in self.controllers ]
+			for c in to_turn_off:
+				c.turnoff()
+			client.wfile.write(b"OK.\n")
 		elif message.startswith("Gesture:"):
 			try:
 				what, up_angle = message[8:].strip().split(" ", 2)
