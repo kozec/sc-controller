@@ -10,14 +10,19 @@ User-mode driver and mapper for Steam Controller, DS4 and similar controllers.
 
 -----------
 
-## WIP win32/linux/android port in c
+## WIP Windows/BSD/Linux/android port in c
 
 Hi there. What you are browsing is WIP branch in which I'm rewriting major parts of SCC into much more portable and much less python requiring code.
 
-It should be somehow usable, but only very basic stuff works right now.
+It should be somehow usable, but there is no GUI and only very basic OSD menu right now.
 See this [wiki page](https://github.com/kozec/sc-controller/wiki/Running-SC-Controller-on-Windows) for how to run it.
 
 -----------
+
+#### Like what I'm doing?
+
+[![Help me become filthy rich on Patreon](https://img.shields.io/badge/Help_me_become_filthy_rich_on-Patreon-Orange.svg)](https://www.patreon.com/kozec) <sup>or</sup> [![pay what you want with PayPal](https://img.shields.io/badge/pay_what_you_want_with-Paypal-yellow.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=77DQD3L9K8RPU&lc=SK&item_name=kozec&item_number=scc&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted)
+
 
 #### Building
 
@@ -32,7 +37,16 @@ $ SCC_SHARED=$(pwd) build/src/daemon/scc-daemon
 
 ```
 # on Windows (with mingw)
-$ PROCESSOR_ARCHITEW6432=x86 meson build
+$ export PROCESSOR_ARCHITEW6432=x86
+$ meson build
 $ ninja -C build
 $ build/src/daemon/scc-daemon
+```
+
+```
+# on OpenBSD or NetBSD
+# (install pkg-config, ninja-build and meson packages first. Meson is available as pip package)
+$ meson build
+$ ninja -C build
+$ SCC_SHARED=$(pwd) build/src/daemon/scc-daemon
 ```
