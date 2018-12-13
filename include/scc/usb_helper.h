@@ -16,23 +16,27 @@ extern "C" {
 struct Daemon;
 #if defined(__linux__) || defined(_WIN32)
 typedef struct libusb_device_handle* USBDevHandle;
+#define USBDEV_NONE				NULL
+#define USBDEV_OPEN_FAILED(x)	((x) == NULL)
 #else
-typedef struct usbhelper_handle* USBDevHandle;
+typedef intptr_t USBDevHandle;
+#define USBDEV_NONE				-1
+#define USBDEV_OPEN_FAILED(x)	((x) < 0)
 #endif
 
 typedef void (*sccd_usb_input_read_cb)(struct Daemon* d, USBDevHandle hndl, uint8_t endpoint, const uint8_t* data, void* userdata);
 
 typedef struct USBHelper {
+	#if defined(__linux__) || defined(_WIN32)
 	/**
 	 * Opens USB device represented by given syspath.
 	 *
 	 * Returns opaque pointer to something only libusb knows about,
 	 * or NULL on failure.
+	 *
+	 * Available only on Linux and Windows. On Windows, syspaths are just emulated.
 	 */
 	USBDevHandle	(*open)(const char* syspath);
-	/** Closes given USBDevHandle */
-	void			(*close)(USBDevHandle hndl);
-#if defined(__linux__) || defined(_WIN32)
 	/**
 	 * Claims all interfaces matching specified parameters.
 	 * Returns number of claimed interfaces, which will be zero in case of error.
@@ -42,12 +46,13 @@ typedef struct USBHelper {
 	int				(*claim_interfaces_by)(USBDevHandle hndl, int cls, int subclass, int protocol);
 #elif defined(__BSD__)
 	/**
-	 * Opens n-th uhid device related to opened usb device. Returns true on success.
-	 *
-	 * Available only on BSD.
+	 * Opens uhid device. Available only on BSD, where USBDevHandle is just
+	 * file descriptor. Returns number < 0 on failure.
 	 */
-	bool			(*open_uhid)(USBDevHandle hndl, uint index);
+	USBDevHandle	(*open_uhid)(const char* syspath);
 #endif
+	/** Closes given USBDevHandle */
+	void			(*close)(USBDevHandle hndl);
 	/**
 	 * Setups kind-of read loop with callback that will be called repeadedly
 	 * every time USB device sends new packet.
@@ -55,12 +60,16 @@ typedef struct USBHelper {
 	 * This will be done until it device is closed, disconnected or it's canceled
 	 * by other error with same effect, in which case callback will be called one
 	 * last time with NULL data. Cleanup is automatic.
+	 *
+	 * On BSD, handle references directly to /dev/uhidX node and so endpoint
+	 * is ignored, but it is still supplied when calling 'cb'.
 	 * 
 	 * Returns true on success or false on OOM error.
 	 */
 	bool			(*interupt_read_loop)(USBDevHandle hndl, uint8_t endpoint, int length, sccd_usb_input_read_cb cb, void* userdata);
 	/**
 	 * Makes synchronous HID write on given USB device.
+	 * On BSD, 'idx' is ignored.
 	 */
 	void			(*hid_write)(USBDevHandle hndl, uint16_t idx, uint8_t* data, uint16_t length);
 	/**
@@ -75,6 +84,8 @@ typedef struct USBHelper {
 	 *
 	 * In both cases, length of response is same as length of request. Returns
 	 * pointer to buffer with response or NULL if request fails.
+	 *
+	 * On BSD, 'idx' is ignored.
 	 */
 	uint8_t*		(*hid_request)(USBDevHandle hndl, uint16_t idx, uint8_t* data, int32_t length);
 } USBHelper;

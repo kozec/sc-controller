@@ -142,7 +142,7 @@ static bool get_usb_address(const char* syspath, uint8_t* bus, uint8_t* dev) {
 }
 
 static USBDevHandle sccd_usb_dev_open_by_syspath(const char* syspath) {
-	USBDevHandle hndl = NULL;
+	USBDevHandle hndl = USBDEV_NONE;
 	libusb_device** list = NULL;
 	uint8_t syspath_bus;
 	uint8_t syspath_dev;
@@ -160,7 +160,7 @@ static USBDevHandle sccd_usb_dev_open_by_syspath(const char* syspath) {
 			if ((err = libusb_open(list[i], (struct libusb_device_handle**)&hndl)) != 0) {
 				LERROR("Failed to open device %u on bus %u: %s",
 							syspath_dev, syspath_bus, libusb_strerror(err));
-				hndl = NULL;
+				hndl = USBDEV_NONE;
 				goto sccd_usb_helper_open_by_syspath_end;
 			}
 			libusb_set_auto_detach_kernel_driver(hndl, 1);

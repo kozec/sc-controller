@@ -112,16 +112,17 @@ static void turnoff(Controller* c) {
 
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
 	USBHelper* usb = daemon->get_usb_helper();
+	Dongle* dongle = NULL;
+#ifdef __BSD__
+	USBDevHandle hndl = USBDEV_NONE;
+	LERROR("Failed to claim interfaces");
+	goto hotplug_cb_fail;
+#else
 	USBDevHandle hndl = usb->open(syspath);
 	if (hndl == NULL) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
-	Dongle* dongle = NULL;
-#ifdef __BSD__
-	LERROR("Failed to claim interfaces");
-	goto hotplug_cb_fail;
-#else
 	if (usb->claim_interfaces_by(hndl, 3, 0, 0) <= 0) {
 		LERROR("Failed to claim interfaces");
 		goto hotplug_cb_fail;

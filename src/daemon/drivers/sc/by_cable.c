@@ -32,7 +32,7 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 		// usb->close(sc->usb_hndl);
 		// TODO: Calling close at this point may hang. Closing should be
 		//       scheduled for later time instead, ideally in sccd_usb_dev_close.
-		sc->usb_hndl = NULL;
+		sc->usb_hndl = USBDEV_NONE;
 		// Releases all buttons, centers all sticks and sends fake input to mapper
 		memset(&sc->input, 0, sizeof(ControllerInput));
 		sc->mapper->input(sc->mapper, &sc->input);
@@ -45,26 +45,21 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
 	USBHelper* usb = daemon->get_usb_helper();
-	USBDevHandle hndl = usb->open(syspath);
 	SCController* sc = NULL;
-	if (hndl == NULL) {
+#ifdef __BSD__
+	USBDevHandle hndl = usb->open_uhid(syspath);
+#else
+	USBDevHandle hndl = usb->open(syspath);
+#endif
+	if (USBDEV_OPEN_FAILED(hndl)) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
-#ifdef __BSD__
-	if ((sc = create_usb_controller(daemon, hndl, SC_WIRED, 0)) == NULL) {
-		LERROR("Failed to allocate memory");
-		goto hotplug_cb_fail;
-	}
-	if (!usb->open_uhid(hndl, 0)) {
-		LERROR("Failed to open uhid device");
-		goto hotplug_cb_fail;
-	}
-#else
 	if ((sc = create_usb_controller(daemon, hndl, SC_WIRED, CONTROLIDX)) == NULL) {
 		LERROR("Failed to allocate memory");
 		goto hotplug_cb_fail;
 	}
+#ifndef __BSD__
 	if (usb->claim_interfaces_by(hndl, 3, 0, 0) <= 0) {
 		LERROR("Failed to claim interfaces");
 		goto hotplug_cb_fail;
