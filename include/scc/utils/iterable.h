@@ -1,17 +1,50 @@
+/**
+ * Iterable.h
+ *
+ * This is closest thing to generic iterator class I was able to come with.
+ * It defines two headers:
+ * - ITERATOR_STRUCT_HEADER	allows using iter_* methods to create iterator object
+ *							and use it in similar fashion as iterators are used
+ *							in higher level languages (including using FOREACH macro)
+ * - FOREACHIN_HEADER		allows using FOREACH_IN macro that iterates object
+ *							directly, without having to allocate additional memory
+ */
 #pragma once
+#include <stdint.h>
 #include <stdbool.h>
 
-#define ITERATOR_STRUCT_HEADER(tpe)					\
-	bool (*has_next)(void* iterator);				\
-	tpe (*get_next)(void* iterator);				\
+#define ITERATOR_STRUCT_HEADER(tpe)								\
+	bool (*has_next)(void* iterator);							\
+	tpe (*get_next)(void* iterator);							\
 	void (*reset)(void* iterator);
 
+#define FOREACHIN_HEADER(tpe)									\
+	/**															\
+	 * foreachin sets 'i' to next item in iterable object.		\
+	 * 'state' should be used by foreachin to keep position		\
+	 * while iterating and it is initailized to 0.				\
+	 * foreachin returns true if iteration should continue or	\
+	 * false if there are no more items to return.				\
+	 */															\
+	bool (*foreachin)(void* obj, tpe** i, uintptr_t* state);
+
+
+/** FOREACH iterates over iterator 'it', supplying 'tpe' objects into 'i' */
 #define FOREACH(tpe, i, it)										\
 	for (														\
 		tpe i;													\
 		iter_has_next(it) && ( (i=iter_next(it)) || true )		\
-		; \
+		;														\
 	)
+
+/** FOREACH_IN runs loop body for every 'tpe' item in iterable object 'obj' */
+#define FOREACH_IN(tpe, i, obj)									\
+	for (														\
+		tpe i = NULL, *__itrnl_ ## i = NULL;					\
+		obj->foreachin((obj), &i, (uintptr_t*)&__itrnl_ ## i)	\
+		;														\
+	)
+
 
 #define ITERATOR_INIT(itrb, _has_next, _get_next, _reset) do {	\
 	(itrb)->has_next = &_has_next;								\

@@ -1,5 +1,6 @@
 #include "scc/utils/container_of.h"
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/iterable.h"
 #include "scc/utils/list.h"
 #include "scc/utils/math.h"
 #include "scc/controller.h"
@@ -177,13 +178,12 @@ bool testmapper_has_scheduled(Mapper* _m) {
 bool testmapper_run_scheduled(Mapper* _m, uint32_t time_delta) {
 	struct Testmapper* m = container_of(_m, struct Testmapper, mapper);
 	m->now += time_delta;
-	for (size_t i=0; i<list_len(m->schedule); i++) {
-		Task* s = list_get(m->schedule, i);
-		if (s->at <= m->now) {
-			list_remove(m->schedule, s);
-			if (!s->canceled)
-				s->callback(_m, s->userdata);
-			free(s);
+	FOREACH_IN(Task*, task, m->schedule) {
+		if (task->at <= m->now) {
+			list_remove(m->schedule, task);
+			if (!task->canceled)
+				task->callback(_m, task->userdata);
+			free(task);
 			return testmapper_has_scheduled(_m);
 		}
 	}

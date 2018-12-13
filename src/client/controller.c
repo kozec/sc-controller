@@ -58,9 +58,9 @@ ControllerData* get_data_by_id(struct _SCCClient* c, const char* id) {
 
 ControllerData* get_data_by_handle(struct _SCCClient* c, int handle) {
 	// Not using Iterator here to avoid need to allocate it
-	for(size_t i=0; i<list_len(c->controllers); i++)
-		if (c->controllers->items[i]->handle == handle)
-			return c->controllers->items[i];
+	FOREACH_IN(ControllerData*, cd, c->controllers)
+		if (cd->handle == handle)
+			return cd;
 	return NULL;
 }
 
@@ -149,10 +149,10 @@ uint32_t sccc_get_controller_handle(SCCClient* _c, const char* id) {
 		if (list_len(c->controllers) > 0)
 			return c->controllers->items[0]->handle;
 	} else {
-		for(size_t i=0; i<list_len(c->controllers); i++) {
-			if (strcmp(c->controllers->items[0]->id, id) == 0) {
+		FOREACH_IN(ControllerData*, cd, c->controllers) {
+			if (strcmp(cd->id, id) == 0) {
 				// Got one
-				return c->controllers->items[0]->handle;
+				return cd->handle;
 			}
 		}
 	}

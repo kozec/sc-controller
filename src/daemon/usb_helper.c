@@ -8,8 +8,9 @@
  * really good idea.
  */
 #define LOG_TAG "USB"
-#include "scc/utils/strbuilder.h"
 #include "scc/utils/logging.h"
+#include "scc/utils/strbuilder.h"
+#include "scc/utils/iterable.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/list.h"
 #include "daemon.h"
@@ -87,8 +88,7 @@ static void sccd_usb_helper_mainloop(Daemon *d) {
 #endif
 	if (list_len(scheduled_interupts) > 0) {
 		Daemon* d = get_daemon();
-		for (size_t i=0; i<list_len(scheduled_interupts); i++) {
-			InputInterruptData* idata = scheduled_interupts->items[i];
+		FOREACH_IN(InputInterruptData*, idata, scheduled_interupts) {
 			idata->cb(d, idata->hndl, idata->endpoint, idata->buffer, idata->userdata);
 			free(idata->buffer);
 			free(idata);

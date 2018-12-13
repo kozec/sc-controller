@@ -71,15 +71,14 @@ static void struct_mode_free(void* a) {
 
 static Action* compress(Action* a) {
 	ModeModifier* mm = container_of(a, ModeModifier, action);
-	for (size_t i=0; i<list_len(mm->modes); i++)
-		scc_action_compress(&mm->modes->items[i]->action);
+	FOREACH_IN(Mode*, mode, mm->modes)
+		scc_action_compress(&mode->action);
 	return a;
 }
 
 static Mode* choose(ModeModifier* mm, Mapper* m) {
 	Mode* deflt = NULL;
-	for (size_t i=0; i<list_len(mm->modes); i++) {
-		Mode* mode = mm->modes->items[i];
+	FOREACH_IN(Mode*, mode, mm->modes) {
 		switch (mode->c_type) {
 		case MCT_BUTTON:
 			if (m->is_pressed(m, mode->c_button))
@@ -98,8 +97,7 @@ static Mode* choose(ModeModifier* mm, Mapper* m) {
 
 
 #define DEACTIVATE_ALL(mm, condition, input, ...) do {					\
-	for (size_t i=0; i<list_len(mm->modes); i++) {						\
-		Mode* md = mm->modes->items[i];									\
+	FOREACH_IN(Mode*, md, mm->modes) {									\
 		if ((condition) && (md->is_active)) {							\
 			md->action->input(md->action, __VA_ARGS__);					\
 			md->is_active = false;										\
@@ -196,8 +194,7 @@ static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos
 
 static void set_haptic(Action* a, HapticData hdata) {
 	ModeModifier* mm = container_of(a, ModeModifier, action);
-	for (size_t i=0; i<list_len(mm->modes); i++) {
-		Mode* mode = mm->modes->items[i];
+	FOREACH_IN(Mode*, mode, mm->modes) {
 		if (mode->action->extended.set_haptic != NULL)
 			mode->action->extended.set_haptic(mode->action, hdata);
 	}
@@ -205,8 +202,7 @@ static void set_haptic(Action* a, HapticData hdata) {
 
 static void set_sensitivity(Action* a, float x, float y, float z) {
 	ModeModifier* mm = container_of(a, ModeModifier, action);
-	for (size_t i=0; i<list_len(mm->modes); i++) {
-		Mode* mode = mm->modes->items[i];
+	FOREACH_IN(Mode*, mode, mm->modes) {
 		if (mode->action->extended.set_sensitivity != NULL)
 			mode->action->extended.set_sensitivity(mode->action, x, y, z);
 	}

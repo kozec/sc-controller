@@ -7,6 +7,7 @@
 
 #define LOG_TAG "Scheduler"
 #include "scc/utils/logging.h"
+#include "scc/utils/iterable.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/list.h"
 #include "scc/utils/math.h"
@@ -100,17 +101,14 @@ TaskID sccd_scheduler_schedule(uint32_t timeout, sccd_scheduler_cb_internal cb, 
 }
 
 void* sccd_scheduler_get_user_data(TaskID id) {
-	for(int i=0; i<list_len(tasks); i++) {
-		Task* task = list_get(tasks, i);
+	FOREACH_IN(Task*, task, tasks)
 		if (task == (Task*)id)
 			return task->userdata;
-	}
 	return NULL;
 }
 
 void sccd_scheduler_cancel(TaskID id) {
-	for(int i=0; i<list_len(tasks); i++) {
-		Task* task = list_get(tasks, i);
+	FOREACH_IN(Task*, task, tasks) {
 		if (task == (Task*)id) {
 			list_remove(tasks, task);
 			free(task);

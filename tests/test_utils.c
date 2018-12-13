@@ -107,6 +107,36 @@ void test_list_iterator(CuTest* tc) {
 	list_free(sl);
 }
 
+void test_list_for_in(CuTest* tc) {
+	StringList sl = list_new(char, 2);
+	size_t total = 0;
+	// Check iterating over empty list
+	FOREACH_IN(char*, i, sl)
+		total += 10;
+	assert(tc, total == 0);
+	
+	// Check iterating over single item list
+	list_add(sl, "Randm");
+	FOREACH_IN(char*, i, sl)
+		total += 10;
+	assert(tc, total == 10);
+	
+	// Check iterating over long list
+	list_add(sl, "List_");
+	list_add(sl, "_of__");
+	list_add(sl, "_some");
+	list_add(sl, "five_");
+	list_add(sl, "chars");
+	list_add(sl, "_long");
+	list_add(sl, "texts");
+	
+	total = 0;
+	FOREACH_IN(char*, i, sl)
+		total += strlen(i);
+	assert(tc, total == 40);
+	list_free(sl);
+}
+
 
 /**
  * Used by test_hashmap_iterator to ensure that every string returned by
@@ -277,6 +307,7 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_list_insert);
 	DEFAULT_SUITE_ADD(test_list_filter);
 	DEFAULT_SUITE_ADD(test_list_iterator);
+	DEFAULT_SUITE_ADD(test_list_for_in);
 	DEFAULT_SUITE_ADD(test_intmap);
 	DEFAULT_SUITE_ADD(test_hashmap_iterator);
 	DEFAULT_SUITE_ADD(test_hashmap_iterator_1item);

@@ -18,9 +18,10 @@ typedef struct _List_data {
 
 #define LIST_TYPE(tpe)											\
 	struct List_ ## tpe {										\
-		tpe**			items;									\
-		_List_data		_data;									\
+		tpe** items;											\
+		_List_data _data;										\
 		struct _ListIterator*(*iter_get)(void* obj);			\
+		FOREACHIN_HEADER(tpe);									\
 	}*
 
 typedef void(*list_foreach_cb)(void* item);

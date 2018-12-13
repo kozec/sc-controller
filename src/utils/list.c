@@ -6,6 +6,7 @@
 #define ALLOCATION_INCREMENT 10
 #define MAX(a, b) ( ((a)>(b)) ? (a) : (b) )
 static ListIterator get_list_iterator(void* list);
+static bool list_foreachin(void* obj, void** i, uintptr_t* state);
 
 void* _list_new(size_t allocation) {
 	_voidlist list = malloc(sizeof(struct List_void));
@@ -20,6 +21,7 @@ void* _list_new(size_t allocation) {
 		}
 	}
 	list->iter_get = &get_list_iterator;
+	list->foreachin = &list_foreachin;
 	list->_data.size = 0;
 	list->_data.allocation = allocation;
 	list->_data.dealloc_cb = NULL;
@@ -212,4 +214,13 @@ static ListIterator get_list_iterator(void* list) {
 	iter->list = list;
 	iter->index = 0;
 	return iter;
+}
+
+static bool list_foreachin(void* obj, void** i, uintptr_t* state) {
+	_voidlist lst = (_voidlist)obj;
+	if (*state >= lst->_data.size)
+		return false;
+	*i = lst->items[*state];
+	(*state) ++;
+	return true;
 }

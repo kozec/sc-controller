@@ -151,8 +151,8 @@ bool macro_add_from_params(Action* a, ParameterList lst) {
 	if (!list_allocate(x->children, list_len(lst)))
 		return false;		// OOM
 	
-	for(size_t i=0; i<list_len(lst); i++) {
-		Action* a = scc_parameter_as_action(list_get(lst, i));
+	FOREACH_IN(Parameter*, param, lst) {
+		Action* a = scc_parameter_as_action(param);
 		list_add(x->children, a);
 		RC_ADD(a);
 	}
