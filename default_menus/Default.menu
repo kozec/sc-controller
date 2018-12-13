@@ -21,6 +21,7 @@
     "osd": true
 }, {
     "separator": true,
+    "id": "separator-after-profile-list",
     "name": "Options"
 }, {
     "action": "turnoff()", 
