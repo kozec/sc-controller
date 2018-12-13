@@ -1,6 +1,6 @@
 uinput_lib = static_library('uinput',
 	include_directories: include,
-	dependencies: [ meson.get_compiler('c').find_library('Xtst') ],
+	dependencies: [ dependency('xtst') ],
 	sources: [
 		'common.c',
 		'mouse.c',

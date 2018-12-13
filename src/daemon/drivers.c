@@ -80,6 +80,8 @@ void sccd_drivers_init() {
 	// TODO: This path should be somehow configurable or determined on runtime
 #ifdef _WIN32
 	const char* path = strbuilder_fmt("%s\\drivers", scc_get_share_path());
+#elif defined(__BSD__)
+	const char* path = "build-bsd/src/daemon/drivers";
 #else
 	const char* path = "build/src/daemon/drivers";
 #endif

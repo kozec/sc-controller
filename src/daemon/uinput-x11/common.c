@@ -7,11 +7,8 @@
 #include "common.h"
 
 #include <sys/stat.h>
-#include <stropts.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
 
 static int have_xtest = -1;			// 1 - yes, 0 - no, -1 - no idea
 static struct Internal dummy = { VTP_DUMMY };

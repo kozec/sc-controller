@@ -17,17 +17,16 @@ if host_machine.system() == 'windows'
 	C_FILES = '\\*.c'
 elif get_option('android').enabled()
 	add_global_arguments('-DANDROID', language: 'c')
+	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 elif host_machine.system() == 'linux'
 	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
-endif
-
-if (get_option('tracebacks').disabled() or host_machine.system() == 'windows'
-			or get_option('android').enabled()
-			or meson.get_compiler('c').get_id() != 'gcc')
+elif host_machine.system() == 'openbsd'
+	add_global_arguments('-D__BSD__', language: 'c')
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 endif
 
-include = include_directories('./include/')
+add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', language: 'c')
+include = [ include_directories('./include/') ]
 
 utils_lib = static_library('utils',
 	include_directories: include,
@@ -126,6 +125,6 @@ subdir('tests')
 subdir('src/daemon/drivers')
 subdir('src/daemon')
 subdir('src/client')
-if get_option('android').disabled()
+if get_option('android').disabled() and host_machine.system() != 'openbsd'
 	subdir('src/osd')
 endif

@@ -30,7 +30,7 @@ static void controller_remove(Controller* c);
 static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
 
 
-static Daemon daemon = {
+static Daemon _daemon = {
 	.controller_add				= controller_add,
 	.controller_remove			= controller_remove,
 	.error_add					= sccd_error_add,
@@ -45,7 +45,7 @@ static Daemon daemon = {
 };
 
 Daemon* get_daemon() {
-	return &daemon;
+	return &_daemon;
 }
 
 
@@ -386,12 +386,12 @@ int main(int argc, char** argv) {
 		// Nothing important was open yet, so I can just bail out on this error.
 		return 1;
 	}
-	sccd_device_monitor_init(&daemon);
-	sccd_usb_helper_init(&daemon);
+	sccd_device_monitor_init(&_daemon);
+	sccd_usb_helper_init(&_daemon);
 	sccd_x11_init();
-	sccd_drivers_init(&daemon);
-#ifndef _WIN32
-	sccd_device_monitor_start(&daemon);
+	sccd_drivers_init(&_daemon);
+#ifdef __linux__
+	sccd_device_monitor_start(&_daemon);
 #endif
 	// here: load_custom_module
 	setup_default_mapper();
@@ -400,7 +400,7 @@ int main(int argc, char** argv) {
 	// here: start_listening()
 	// here: check X server
 	// here: start_drivers() // needed?
-	sccd_device_monitor_rescan(&daemon);
+	sccd_device_monitor_rescan(&_daemon);
 	
 	ListIterator iter = iter_get(mainloop_callbacks);
 	if (iter == NULL) {
@@ -417,7 +417,7 @@ int main(int argc, char** argv) {
 	// On windows, sccd_usb_helper_mainloop fullfills same side-effect.
 	while (running) {
 		FOREACH(sccd_mainloop_cb, cb, iter)
-			cb(&daemon);
+			cb(&_daemon);
 		list_foreach(mappers, (list_foreach_cb)sccd_mapper_flush);
 		iter_reset(iter);
 	}

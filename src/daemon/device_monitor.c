@@ -11,7 +11,7 @@
 #include "daemon.h"
 #include <stdio.h>
 #include <unistd.h>
-#ifndef _WIN32
+#ifdef __linux__
 #include <libudev.h>
 static struct udev* ctx;
 static struct udev_monitor* monitor;
@@ -41,7 +41,7 @@ void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sy
 	}
 }
 
-#ifndef _WIN32
+#ifdef __linux__
 static void on_new_syspath(Daemon* d, const char* subsystem, const char* syspath) {
 	any_t trash;
 	if (hashmap_get(known_devs, syspath, &trash) != MAP_MISSING)
@@ -149,7 +149,7 @@ void sccd_device_monitor_init() {
 	callbacks = hashmap_new();
 	known_devs = hashmap_new();
 	ASSERT((callbacks != NULL) && (known_devs != NULL));
-#ifdef _WIN32
+#ifndef __linux__
 }
 #else
 	Daemon* d = get_daemon();
@@ -232,7 +232,7 @@ void sccd_device_monitor_rescan() {
 void sccd_device_monitor_close() {
 	hashmap_free(callbacks);
 	hashmap_free(known_devs);
-#ifndef _WIN32
+#ifdef __linux__
 	udev_monitor_unref(monitor);
 	udev_unref(ctx);
 #endif
@@ -252,7 +252,7 @@ bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, scc
 	return true;
 }
 
-#ifdef _WIN32
+#ifndef __linux__
 
 void sccd_usb_rescan();
 
