@@ -19,11 +19,11 @@
 	"gyro": {}, 
 	
 	"pad_left": {
-		"action": "feedback(LEFT, 4096, 16, ball(XY(mouse(Rels.REL_HWHEEL, 1.0), mouse(Rels.REL_WHEEL, 1.0))))"
+		"action": "feedback(LEFT, 4096, 16, XY(mouse(Rels.REL_HWHEEL, 1.0), mouse(Rels.REL_WHEEL, 1.0)))"
 	},
 	
 	"pad_right": {
-		"action": "smooth(8, 0.78, 2.0, feedback(RIGHT, 256, ball(mouse())))"
+		"action": "smooth(8, 0.78, 2.0, feedback(RIGHT, 256, mouse()))"
 	},
 	
 	"cpad": {

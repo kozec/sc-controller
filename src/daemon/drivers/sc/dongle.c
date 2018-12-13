@@ -118,10 +118,15 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		return;		// and nothing happens
 	}
 	Dongle* dongle = NULL;
+#ifdef __BSD__
+	LERROR("Failed to claim interfaces");
+	goto hotplug_cb_fail;
+#else
 	if (usb->claim_interfaces_by(hndl, 3, 0, 0) <= 0) {
 		LERROR("Failed to claim interfaces");
 		goto hotplug_cb_fail;
 	}
+#endif
 	
 	if (!list_allocate(dongles, 1))
 		goto hotplug_cb_oom;

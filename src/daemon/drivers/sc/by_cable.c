@@ -51,6 +51,16 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
+#ifdef __BSD__
+	if ((sc = create_usb_controller(daemon, hndl, SC_WIRED, 0)) == NULL) {
+		LERROR("Failed to allocate memory");
+		goto hotplug_cb_fail;
+	}
+	if (!usb->open_uhid(hndl, 0)) {
+		LERROR("Failed to open uhid device");
+		goto hotplug_cb_fail;
+	}
+#else
 	if ((sc = create_usb_controller(daemon, hndl, SC_WIRED, CONTROLIDX)) == NULL) {
 		LERROR("Failed to allocate memory");
 		goto hotplug_cb_fail;
@@ -59,6 +69,7 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		LERROR("Failed to claim interfaces");
 		goto hotplug_cb_fail;
 	}
+#endif
 	if (!read_serial(sc)) {
 		LERROR("Failed to read serial number");
 		goto hotplug_cb_failed_to_configure;

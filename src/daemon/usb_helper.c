@@ -78,7 +78,7 @@ USBHelper* sccd_get_usb_helper() {
 }
 
 static void sccd_usb_helper_mainloop(Daemon *d) {
-#if defined(__linux__) || defined(__BSD__)
+#ifdef __linux__
 	static struct timeval zero = { 0, 0 };
 	libusb_handle_events_timeout_completed(ctx, &zero, NULL);
 #else
@@ -102,7 +102,7 @@ static libusb_context* sccd_usb_get_context() {
 	return ctx;
 }
 
-/** 
+/**
  * For given syspath, reads and sets busnum and devnum.
  * Returns true on success
  */
@@ -110,16 +110,11 @@ static bool get_usb_address(const char* syspath, uint8_t* bus, uint8_t* dev) {
 	int i;
 	#define BUFFER_SIZE 4096
 	char fullpath[BUFFER_SIZE];
-#if defined(_WIN32) || defined(__BSD__)
 #ifdef _WIN32
 	if (strstr(syspath, "/win32/usb/") == syspath) {
 		const char* s_bus = syspath + strlen("/win32/usb/");
-#else
-	if (strstr(syspath, "/bsd/usb/") == syspath) {
-		const char* s_bus = syspath + strlen("/bsd/usb/");
-#endif
 		// Special case, this fake path is generated when enumerating
-		// devices on Windows or BSD.
+		// devices on Windows.
 		// strtol is used to parse VendorId and ProductId from string.
 		const char* s_dev = strstr(s_bus, "/") + 1;
 		long l_bus = strtol(s_bus, NULL, 16);
@@ -205,7 +200,7 @@ static int sccd_usb_dev_claim_interfaces_by(USBDevHandle hndl, int cls, int subc
 						LERROR("libusb_claim_interface: %s", libusb_strerror(err));
 						// Not fatal. Maybe.
 					} else {
-#if defined(__linux__) || defined(__BSD__)
+#ifdef __linux__
 						libusb_detach_kernel_driver(hndl, alt->bInterfaceNumber);
 #endif
 						count++;
@@ -245,7 +240,7 @@ static uint8_t* sccd_usb_dev_hid_request(USBDevHandle hndl, uint16_t idx, uint8_
 		out_buffer = malloc(length);
 		if (out_buffer == NULL) {
 			LERROR("sccd_usb_dev_hid_request: OOM Error");
-			goto sccd_usb_dev_hid_request_fail;
+			return NULL;
 		}
 	}
 	
@@ -368,7 +363,7 @@ sccd_usb_dev_interupt_read_loop_fail:
 	return false;
 }
 
-#if defined(_WIN32) || defined(__BSD__)
+#ifdef _WIN32
 void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product);
 
 void sccd_usb_rescan() {
@@ -382,11 +377,7 @@ void sccd_usb_rescan() {
 			continue;
 		uint8_t bus = libusb_get_bus_number(list[i]);
 		uint8_t dev = libusb_get_device_address(list[i]);
-#ifdef _WIN32
 		snprintf(fake_syspath_buffer, 1024, "/win32/usb/%x/%x", bus, dev);
-#else
-		snprintf(fake_syspath_buffer, 1024, "/bsd/usb/%x/%x", bus, dev);
-#endif
 		sccd_device_monitor_new_device(get_daemon(), fake_syspath_buffer, USB, desc.idVendor, desc.idProduct);
 	}
 	

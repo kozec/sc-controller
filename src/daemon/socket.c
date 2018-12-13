@@ -212,7 +212,6 @@ bool sccd_socket_init() {
 	
 	const char* path = scc_get_daemon_socket();
 	struct sockaddr_un server_addr;
-	LOG(">>> %s", path);
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sun_family = AF_UNIX;
 	strncpy(server_addr.sun_path, path, sizeof(server_addr.sun_path) - 1);

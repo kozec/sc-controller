@@ -14,7 +14,11 @@ extern "C" {
 #include <stdint.h>
 
 struct Daemon;
+#if defined(__linux__) || defined(_WIN32)
 typedef struct libusb_device_handle* USBDevHandle;
+#else
+typedef struct usbhelper_handle* USBDevHandle;
+#endif
 
 typedef void (*sccd_usb_input_read_cb)(struct Daemon* d, USBDevHandle hndl, uint8_t endpoint, const uint8_t* data, void* userdata);
 
@@ -28,11 +32,22 @@ typedef struct USBHelper {
 	USBDevHandle	(*open)(const char* syspath);
 	/** Closes given USBDevHandle */
 	void			(*close)(USBDevHandle hndl);
+#if defined(__linux__) || defined(_WIN32)
 	/**
 	 * Claims all interfaces matching specified parameters.
 	 * Returns number of claimed interfaces, which will be zero in case of error.
+	 *
+	 * Available only on Linux and Windows.
 	 */
 	int				(*claim_interfaces_by)(USBDevHandle hndl, int cls, int subclass, int protocol);
+#elif defined(__BSD__)
+	/**
+	 * Opens n-th uhid device related to opened usb device. Returns true on success.
+	 *
+	 * Available only on BSD.
+	 */
+	bool			(*open_uhid)(USBDevHandle hndl, uint index);
+#endif
 	/**
 	 * Setups kind-of read loop with callback that will be called repeadedly
 	 * every time USB device sends new packet.

@@ -1,5 +1,5 @@
 /*
- * SC-Controller - Device Monitor
+ * SC-Controller - Device Monitor - Linux
  *
  * Watches and enumerates physical devices connected to machine using eudev
  * and allows stuff to happen when new one is detected.
@@ -11,14 +11,13 @@
 #include "daemon.h"
 #include <stdio.h>
 #include <unistd.h>
-#ifdef __linux__
 #include <libudev.h>
 static struct udev* ctx;
 static struct udev_monitor* monitor;
 
 static bool get_vendor_product(const char* subsystem, const char* syspath, Vendor* vendor, Product* product);
 static void on_new_syspath(Daemon* d, const char* subsystem, const char* syspath);
-#endif
+
 
 static map_t callbacks;
 static map_t known_devs;
@@ -41,7 +40,6 @@ void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sy
 	}
 }
 
-#ifdef __linux__
 static void on_new_syspath(Daemon* d, const char* subsystem, const char* syspath) {
 	any_t trash;
 	if (hashmap_get(known_devs, syspath, &trash) != MAP_MISSING)
@@ -133,7 +131,6 @@ static bool get_vendor_product(const char* subsystem, const char* syspath, Vendo
 	// 				return vendor, product
 	return false;
 }
-#endif
 
 long int read_long_from_file(const char* filename, int base) {
 	char buffer[256];
@@ -149,9 +146,6 @@ void sccd_device_monitor_init() {
 	callbacks = hashmap_new();
 	known_devs = hashmap_new();
 	ASSERT((callbacks != NULL) && (known_devs != NULL));
-#ifndef __linux__
-}
-#else
 	Daemon* d = get_daemon();
 	ctx = udev_new();
 	ASSERT(ctx != NULL);
@@ -227,15 +221,12 @@ void sccd_device_monitor_rescan() {
 		}
 	}
 }
-#endif
 
 void sccd_device_monitor_close() {
 	hashmap_free(callbacks);
 	hashmap_free(known_devs);
-#ifdef __linux__
 	udev_monitor_unref(monitor);
 	udev_unref(ctx);
-#endif
 }
 
 bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, sccd_hotplug_cb cb) {
@@ -251,12 +242,3 @@ bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, scc
 	enabled_subsystems[sys] = true;
 	return true;
 }
-
-#ifndef __linux__
-
-void sccd_usb_rescan();
-
-void sccd_device_monitor_rescan() {
-	sccd_usb_rescan();
-}
-#endif

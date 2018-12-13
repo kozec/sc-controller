@@ -173,7 +173,7 @@ bool read_serial(SCController* sc) {
 		return false;
 	}
 	if (data[1] != PL_GET_SERIAL) {
-		// Sometimes, freshly connectedn controller is not able to send its own
+		// Sometimes, freshly connected controller is not able to send its own
 		// serial straight away
 		return false;
 	}
