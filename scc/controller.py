@@ -125,7 +125,7 @@ class HapticData(object):
 			raise ValueError("Invalid position")
 		for i in (1,2,3):
 			if data[i] > 0x8000 or data[i] < 0:
-				raise ValueError("Value out of range")
+				raise ValueError("Value out of range: %s", data[i])
 		# frequency is multiplied by 1000 just so I don't have big numbers everywhere;
 		# it's float until here, so user still can make pad squeak if he wish
 		frequency = int(max(1.0, frequency * 1000.0))

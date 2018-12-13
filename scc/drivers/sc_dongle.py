@@ -382,6 +382,7 @@ class SCController(Controller):
 		@param int period	   signal period from 0 to 65535
 		@param int count		number of period to play
 		"""
-		self._driver.send_control(self._ccidx, struct.pack('<BBBHHH',
-				SCPacketType.FEEDBACK, 0x07, position,
-				amplitude, period, count))	
+		if amplitude >= 0:
+			self._driver.send_control(self._ccidx, struct.pack('<BBBHHH',
+					SCPacketType.FEEDBACK, 0x07, position,
+					amplitude, period, count))	
