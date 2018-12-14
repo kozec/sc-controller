@@ -12,7 +12,7 @@ endif
 
 shared_library('scc_drv_sc_by_cable',
 	include_directories: [ include ],
-	link_with: [ utils_lib ],
+	link_with: [ utils_lib, config_lib ],
 	dependencies: deps,
 	sources: [
 		'sc/common.c',
@@ -22,7 +22,7 @@ shared_library('scc_drv_sc_by_cable',
 
 shared_library('scc_drv_sc_dongle',
 	include_directories: [ include ],
-	link_with: [ utils_lib ],
+	link_with: [ utils_lib, config_lib ],
 	dependencies: deps,
 	sources: [
 		'sc/common.c',

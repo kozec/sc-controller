@@ -1,8 +1,10 @@
 #define LOG_TAG "sc"
 #include "scc/utils/container_of.h"
 #include "scc/utils/logging.h"
+#include "scc/utils/rc.h"
 #include "scc/mapper.h"
 #include "scc/driver.h"
+#include "scc/config.h"
 #include "sc.h"
 #include <stddef.h>
 #include <string.h>
@@ -16,6 +18,7 @@ static void set_mapper(Controller* c, Mapper* m);
 static void haptic_effect(Controller* c, HapticData* hdata);
 static void flush(Controller* c, Mapper* m);
 
+static uint64_t used_serials = 0;
 
 void handle_input(SCController* sc, SCInput* i) {
 	if (sc->mapper != NULL) {
@@ -98,6 +101,7 @@ SCController* create_usb_controller(Daemon* daemon, USBDevHandle hndl, SCControl
 	sc->state = SS_NOT_CONFIGURED;
 	sc->usb_hndl = hndl;
 	sc->daemon = daemon;
+	sc->auto_id_used = false;
 	sc->idle_timeout = 10 * 60;		// 10 minutes
 	sc->led_level = 50;
 	sc->type = type;
@@ -171,14 +175,42 @@ static void flush(Controller* c, Mapper* m) {
 }
 
 
+static void update_desc(SCController* sc) {
+	switch (sc->type) {
+	case SC_WIRED:
+		snprintf(sc->desc, MAX_DESC_LEN, "<SCByCable %s>", sc->serial);
+		break;
+	case SC_WIRELESS:
+		snprintf(sc->desc, MAX_DESC_LEN, "<SC %s>", sc->serial);
+		break;
+	case SC_BT:
+		snprintf(sc->desc, MAX_DESC_LEN, "<SCByBt %s>", sc->serial);
+		break;
+	}
+}
+
+
 bool read_serial(SCController* sc) {
-	// TODO:
-	// if Config()["ignore_serials"]:
-	// 	// Special exception for cases when controller drops instead of
-	// 	// sending serial number. See issue #103
-	// 	self.generate_serial()
-	// 	self.on_serial_got()
-	// 	return
+	Config* c = config_load();
+	if ((c != NULL) && (config_get_int(c, "ignore_serials") == 1)) {
+		// Special exception for cases when controller drops instead of
+		// sending serial number. See issue #103
+		int i = 0;
+		for (; i<64; i++) {
+			if ((used_serials & (1 << i)) == 0)
+				break;
+		}
+		used_serials |= (1 << i);
+		sc->auto_id_used = true;
+		sc->auto_id = i;
+		snprintf(sc->serial, MAX_SERIAL_LEN, "%d", i);
+		snprintf(sc->id, MAX_ID_LEN, "sc%s", sc->serial);
+		update_desc(sc);
+		RC_REL(c);
+		return true;
+	}
+	RC_REL(c);
+	
 	uint8_t data[64] = { PT_GET_SERIAL, PL_GET_SERIAL, 0x01 };
 	uint8_t* response;
 	response = sc->daemon->get_usb_helper()->hid_request(sc->usb_hndl, sc->idx, data, -64);
@@ -194,18 +226,8 @@ bool read_serial(SCController* sc) {
 	data[13] = 0;	// to terminate string
 	strncpy(sc->serial, (const char*) &data[3], MAX_SERIAL_LEN);
 	snprintf(sc->id, MAX_ID_LEN, "sc%s", sc->serial);
+	update_desc(sc);
 	
-	switch (sc->type) {
-	case SC_WIRED:
-		snprintf(sc->desc, MAX_DESC_LEN, "<SCByCable %s>", sc->serial);
-		break;
-	case SC_WIRELESS:
-		snprintf(sc->desc, MAX_DESC_LEN, "<SC %s>", sc->serial);
-		break;
-	case SC_BT:
-		snprintf(sc->desc, MAX_DESC_LEN, "<SCByBt %s>", sc->serial);
-		break;
-	}
 	return true;
 }
 

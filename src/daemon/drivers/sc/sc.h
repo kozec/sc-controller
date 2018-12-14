@@ -63,6 +63,8 @@ struct SCController {
 	char				id[MAX_ID_LEN];
 	uint16_t			idx;
 	bool				gyro_enabled;
+	uint64_t			auto_id;
+	bool				auto_id_used;
 	uint16_t			idle_timeout;	// in seconds
 	uint8_t				led_level;		// 1 to 100
 	HapticData			hdata[2];
