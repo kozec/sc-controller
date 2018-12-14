@@ -22,7 +22,7 @@ done
 
 cp -v build-win32/src/daemon/scc-daemon.exe release-win32/
 cp -v build-win32/src/osd/scc-osd-menu.exe release-win32/
-cp -v build-win32/src/daemon/libvigemclient.dll release-win32/
+cp -v build-win32/src/daemon/uinput-win32/libvigemclient.dll release-win32/
 
 mkdir -p release-win32/drivers/
 for i in "${DRIVERS[@]}" ; do

@@ -17,8 +17,9 @@ osd_lib = static_library('osd',
 		dependency('gtk+-3.0', version: '>=3.22.0'),
 		dependency('glib-2.0', version: '>=2.56.0'),
 		
-		meson.get_compiler('c').find_library('cairo', dirs: ['/usr/local/lib']),
-		meson.get_compiler('c').find_library('gio-2.0', dirs: ['/usr/local/lib']),
+		# TODO: Re-enable cairo & gio for OSK
+		# meson.get_compiler('c').find_library('cairo', dirs: ['/usr/local/lib']),
+		# meson.get_compiler('c').find_library('gio-2.0', dirs: ['/usr/local/lib']),
 	] + platform_dependent_deps,
 	sources: [
 		'stick_controller.c',
