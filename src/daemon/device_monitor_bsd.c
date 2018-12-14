@@ -2,7 +2,7 @@
  * SC-Controller - Device Monitor - BSD
  *
  * BSD version of device monitor monitors only uhid devices.
- * It does so every X secounds and allows stuff to happen when new device is detected.
+ * It does so every X seconds and allows stuff to happen when new device is detected.
  */
 #define LOG_TAG "DevMon"
 #include "scc/utils/logging.h"
@@ -23,7 +23,7 @@
 
 
 static map_t callbacks;
-static map_t known_devs;	// char* -> struct device_data*
+static map_t known_devs;
 static bool enabled_subsystems[] = { false, false };
 
 static char _key[256];
@@ -57,6 +57,7 @@ bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, scc
 	return true;
 }
 
+// TODO: Schedule this to be really done every X seconds
 void sccd_device_monitor_rescan() {
 	char node_name[NODE_NAME_MAX];
 	Daemon* d = get_daemon();
