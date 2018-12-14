@@ -1014,14 +1014,27 @@ class ModeModifier(Modifier):
 		for c in self.shell_commands.values():
 			if c.__proc and c.__proc.poll() == 0:
 				sel = self.select(mapper)
-				for c2 in self.shell_commands.values():
-					c2.__proc = None
+				self.kill_shell_commands()
 				self.held_buttons.add(sel)
 				return sel.button_press(mapper)
 		
 		self.shell_timeout -= 0.05
 		if self.shell_timeout > 0:
 			mapper.schedule(0.05, self.check_shell_commands)
+		else:
+			# time is up, kill all processes and execute what's left
+			self.kill_shell_commands()
+			sel = self.select(mapper)
+			self.held_buttons.add(sel)
+			return sel.button_press(mapper)
+	
+	
+	def kill_shell_commands(self):
+		for c in self.shell_commands.values():
+			try:
+				if c.__proc: c.__proc.kill()
+			except: pass
+			c.__proc = None
 	
 	
 	def button_release(self, mapper):

@@ -246,9 +246,7 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_shell(self, mapper, action):
 		""" Called when 'shell' action is used """
-		return subprocess.Popen(shlex.split(action.command), shell=True)
-		# subprocess.call(action.command, shell=True)
-		# os.system((action.command + " &").encode('utf-8'))
+		return subprocess.Popen(action.command, shell=True)
 	
 	
 	def on_sa_gestures(self, mapper, action, x, y, what):
