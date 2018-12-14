@@ -28,23 +28,24 @@ See this [wiki page](https://github.com/kozec/sc-controller/wiki/Running-SC-Cont
 
 Navigate to directory with sources and use meson to compile:
 
+###### on Linux
 ```
-# on Linux
 $ meson build
 $ ninja -C build
 $ SCC_SHARED=$(pwd) build/src/daemon/scc-daemon
 ```
 
+###### on Windows
 ```
-# on Windows (with mingw)
+# (you'll need mingw)
 $ export PROCESSOR_ARCHITEW6432=x86
 $ meson build
 $ ninja -C build
 $ build/src/daemon/scc-daemon
 ```
 
+###### on OpenBSD or NetBSD
 ```
-# on OpenBSD or NetBSD
 # (install pkg-config, ninja-build and meson packages first. Meson is available as pip package)
 $ meson build
 $ ninja -C build
