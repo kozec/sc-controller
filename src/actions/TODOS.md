@@ -24,7 +24,7 @@ Works in python, missing here
 [x] DPad8Action
 [ ] RingAction
 [x] XYAction
-[ ] RelXYAction
+[x] RelXYAction
 [x] TriggerAction
 [x] NoAction
 

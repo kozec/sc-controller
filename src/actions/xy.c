@@ -1,3 +1,11 @@
+/**
+ * SC-Controller - XYAction and RelXYAction
+ *
+ * XYAction splits two axes of stick or pad between two different actions.
+ *
+ * RelXYAction does the same, but remembers where pad was originally touched
+ * and treats that place as center. See https://github.com/kozec/sc-controller/issues/390
+ */
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/iterable.h"
 #include "scc/utils/math.h"
@@ -6,9 +14,11 @@
 #include "scc/action.h"
 #include "wholehaptic.h"
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 static const char* KW_XY = "XY";
+static const char* KW_RELXY = "relXY";
 static ParamChecker pc;
 
 typedef struct {
@@ -17,6 +27,8 @@ typedef struct {
 	HapticData			bighaptic;
 	dvec_t				haptic_counter;
 	ivec_t				old_pos;
+	ivec_t				origin;
+	bool				is_relative;
 	bool				inner_circle;
 	Action*				x;
 	Action*				y;
@@ -62,6 +74,13 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 	} else if ((what == PST_LEFT) || (what == PST_RIGHT) || (what == PST_CPAD)) {
 		// TODO: Special call for PAD as with old stuff?
 		if (HAPTIC_ENABLED(&xy->hdata)) {
+			if ((xy->is_relative) && (m->is_touched(m, what))) {
+				if (!m->was_touched(m, what))
+					vec_set(xy->origin, x, y);
+				x -= xy->origin.x;
+				y -= xy->origin.y;
+			}
+			
 			if (m->was_touched(m, what)) {
 				bool inner_circle = is_inner_circle(x, y);
 				double distance = dvec_len(xy->haptic_counter);
@@ -139,7 +158,9 @@ static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 	scc_action_init(&xy->action, KW_XY, AF_ACTION, &xy_dealloc, &xy_to_string);
 	HAPTIC_DISABLE(&xy->hdata);
 	vec_set(xy->old_pos, 0, 0);
+	vec_set(xy->origin, 0, 0);
 	vec_set(xy->haptic_counter, 0, 0);
+	xy->is_relative = (0 == strcmp(keyword, KW_RELXY));
 	xy->x = scc_parameter_as_action(params->items[0]);
 	xy->y = scc_parameter_as_action(params->items[1]);
 	xy->action.whole = &whole;
@@ -158,4 +179,5 @@ void scc_actions_init_xy() {
 	scc_param_checker_init(&pc, "aa?");
 	scc_param_checker_set_defaults(&pc, NULL);
 	scc_action_register(KW_XY, &xy_constructor);
+	scc_action_register(KW_RELXY, &xy_constructor);
 }
