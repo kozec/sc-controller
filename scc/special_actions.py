@@ -88,8 +88,8 @@ class ShellCommandAction(Action, SpecialAction):
 	
 	
 	def button_press(self, mapper):
-		# Execute only when button is pressed
-		self.execute(mapper)
+		# Executes only when button is pressed
+		return self.execute(mapper)
 
 
 class TurnOffAction(Action, SpecialAction):

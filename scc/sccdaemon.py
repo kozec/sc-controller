@@ -28,7 +28,7 @@ from scc import drivers
 
 from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
 import os, sys, pkgutil, signal, time, json, logging
-import threading, traceback, subprocess
+import threading, traceback, subprocess, shlex
 log = logging.getLogger("SCCDaemon")
 tlog = logging.getLogger("Socket Thread")
 
@@ -246,7 +246,9 @@ class SCCDaemon(Daemon):
 	
 	def on_sa_shell(self, mapper, action):
 		""" Called when 'shell' action is used """
-		os.system((action.command + " &").encode('utf-8'))
+		return subprocess.Popen(shlex.split(action.command), shell=True)
+		# subprocess.call(action.command, shell=True)
+		# os.system((action.command + " &").encode('utf-8'))
 	
 	
 	def on_sa_gestures(self, mapper, action, x, y, what):

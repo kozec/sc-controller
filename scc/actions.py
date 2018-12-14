@@ -546,7 +546,7 @@ class SpecialAction(object):
 			log.warning("Mapper can't handle '%s' action" % (name,))
 	
 	def execute(self, mapper, *a):
-		self.execute_named(self.SA, mapper, *a)
+		return self.execute_named(self.SA, mapper, *a)
 	
 	# Prevent warnings when special action is bound to button
 	def button_press(self, mapper): pass

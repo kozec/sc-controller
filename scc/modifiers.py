@@ -791,6 +791,8 @@ class ModeModifier(Modifier):
 	PROFILE_KEY_PRIORITY = 2
 	
 	def __init__(self, *stuff):
+		# TODO: Better documentation for this. For now, using shell
+		# TODO: and range as condition is not documented
 		Modifier.__init__(self)
 		self.default = None
 		self.mods = OrderedDict()
@@ -798,14 +800,22 @@ class ModeModifier(Modifier):
 		self.held_sticks = set()
 		self.held_triggers = {}
 		self.old_action = None
+		self.shell_commands = {}
+		self.shell_timeout = 0.5
 		self.timeout = DoubleclickModifier.DEAFAULT_TIMEOUT
 		
+		# ShellCommandAction cannot be imported normally, it would create
+		# import cycle of hell
+		ShellCommandAction = Action.ALL['shell']
 		button = None
 		for i in stuff:
 			if self.default is not None:
 				# Default has to be last parameter
 				raise ValueError("Invalid parameters for 'mode'")
-			if isinstance(i, Action) and button is None:
+			if isinstance(i, ShellCommandAction) and button is None:
+				# 'shell' can be used instead of button
+				button = i
+			elif isinstance(i, Action) and button is None:	
 				self.default = i
 			elif isinstance(i, Action):
 				self.mods[button] = i
@@ -816,16 +826,24 @@ class ModeModifier(Modifier):
 				raise ValueError("Invalid parameter for 'mode': %s" % (i,))
 		self.make_checks()
 		if self.default is None:
-			self.default = NoAction()
+			if isinstance(button, ShellCommandAction):
+				self.default = button
+			else:
+				self.default = NoAction()
 	
 	
 	def make_checks(self):
 		self.checks = []
-		for button, action in self.mods.items():
-			if isinstance(button, RangeOP):
-				self.checks.append(( button, action ))
+		self.shell_commands = {}
+		ShellCommandAction = Action.ALL['shell']
+		for c, action in self.mods.items():
+			if isinstance(c, RangeOP):
+				self.checks.append(( c, action ))
+			elif isinstance(c, ShellCommandAction):
+				self.shell_commands[c.command] = c
+				self.checks.append(( self.make_shell_check(c), action ))
 			else:
-				self.checks.append(( self.make_button_check(button), action ))
+				self.checks.append(( self.make_button_check(c), action ))
 	
 	
 	def get_child_actions(self):
@@ -961,10 +979,49 @@ class ModeModifier(Modifier):
 		return cb
 	
 	
+	@staticmethod
+	def make_shell_check(c):
+		def cb(mapper):
+			try:
+				return c.__proc.poll() == 0
+			except:
+				return False
+		
+		c.name = cb.name = c.to_string()	# So nameof() still works on keys in self.mods
+		c.__proc = None
+		return cb
+	
+	
 	def button_press(self, mapper):
+		if len(self.shell_commands) > 0:
+			# https://github.com/kozec/sc-controller/issues/427
+			# If 'shell' is used as any condition, all shell commands
+			# are executed and ModeShift waits up to 500ms for them
+			# to terminate. Then, if command returned zero exit code
+			# it's considered as 'true' condition.
+			for c in self.shell_commands.values():
+				c.__proc = c.button_press(mapper)
+			self.shell_timeout = 0.5
+			mapper.schedule(0, self.check_shell_commands)
+			return
+		
 		sel = self.select(mapper)
 		self.held_buttons.add(sel)
 		return sel.button_press(mapper)
+	
+	
+	def check_shell_commands(self, mapper):
+		for c in self.shell_commands.values():
+			if c.__proc and c.__proc.poll() == 0:
+				sel = self.select(mapper)
+				for c2 in self.shell_commands.values():
+					c2.__proc = None
+				self.held_buttons.add(sel)
+				return sel.button_press(mapper)
+		
+		self.shell_timeout -= 0.05
+		if self.shell_timeout > 0:
+			mapper.schedule(0.05, self.check_shell_commands)
 	
 	
 	def button_release(self, mapper):
