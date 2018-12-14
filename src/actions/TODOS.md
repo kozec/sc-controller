@@ -18,7 +18,7 @@ Works in python, missing here
 [ ] GyroAbsAction
 [ ] ResetGyroAction
 [ ] TiltAction
-[ ] TrackballAction
+[x] TrackballAction
 [x] ButtonAction
 [x] DPadAction
 [x] DPad8Action

@@ -21,7 +21,7 @@
 
 static ParamChecker pc;
 
-static const char* KW_BALL = "ball";
+const char* KW_BALL = "ball";
 #define BALL_HAPTIC_FACTOR		60.0		/* Just magic number */
 #define BALL_DEFAULT_FRICTION	10.0
 #define BALL_DEFAULT_MASS		80.0

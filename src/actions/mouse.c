@@ -12,12 +12,15 @@
 #include "wholehaptic.h"
 #include "tostring.h"
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 static ParamChecker pc;
 
 static const char* KW_MOUSE = "mouse";
 static const char* KW_TRACKPAD = "trackpad";
+static const char* KW_TRACKBALL = "trackball";
+extern const char* KW_BALL;
 #define MOUSE_FACTOR 0.005	/* Just random number to put default sensitivity into sane range */
 
 typedef struct {
@@ -163,6 +166,17 @@ static ActionOE mouse_constructor(const char* keyword, ParameterList params) {
 	b->params = params;
 	wholehaptic_init(&b->whdata);
 	
+	if (0 == strcmp(KW_TRACKBALL, keyword)) {
+		// Backwards compatibility - 'trackball(x)' is translated to 'ball(mouse(x))' internally
+		Parameter* p = scc_new_action_parameter(&b->action);
+		ParameterList lst = scc_inline_param_list(p);
+		RC_REL(&b->action);
+		if (lst == NULL) return (ActionOE)scc_oom_action_error();
+		ActionOE ball = scc_action_new(KW_BALL, lst);
+		list_free(lst);
+		return ball;
+	}
+	
 	return (ActionOE)&b->action;
 }
 
@@ -171,4 +185,5 @@ void scc_actions_init_mouse() {
 	scc_param_checker_set_defaults(&pc, REL_CNT, 1.0);
 	scc_action_register(KW_MOUSE, &mouse_constructor);
 	scc_action_register(KW_TRACKPAD, &mouse_constructor);
+	scc_action_register(KW_TRACKBALL, &mouse_constructor);
 }
