@@ -847,10 +847,10 @@ class ModeModifier(Modifier):
 	
 	
 	def get_child_actions(self):
-		if self.default is None:
-			return self.mods.values()
-		else:
-			return [ self.default ] + self.mods.values()
+		rv = list(self.mods.values()) + list(self.shell_commands.values())
+		if self.default is not None:
+			rv += [ self.default ]
+		return rv
 	
 	
 	@staticmethod
