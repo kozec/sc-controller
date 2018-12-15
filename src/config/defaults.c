@@ -54,11 +54,7 @@ const struct config_item DEFAULT_VALUES[] = {
 	{ "ignore_serials",						CVT_BOOL,		.v_bool = false },
 	
 	/** OSD style and colors config */
-#ifndef _WIN32
 	{ "osd_style",							CVT_STRING,		.v_str = "Reloaded.gtkstyle.css" },
-#else
-	{ "osd_style",							CVT_STRING,		.v_str = "Classic.gtkstyle.css" },
-#endif
 	{ "osd_colors/background",				CVT_STRING, 	.v_str = "#101010" },
 	{ "osd_colors/border",					CVT_STRING, 	.v_str = "#00FF00" },
 	{ "osd_colors/text",					CVT_STRING, 	.v_str = "#16BF24" },
