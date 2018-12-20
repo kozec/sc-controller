@@ -1624,6 +1624,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		from scc.parser import ActionParser
 		to_convert = {}
 		for name in os.listdir(get_profiles_path()):
+			if name.endswith("~"):
+				# Ignore backups - https://github.com/kozec/sc-controller/issues/440
+				continue
 			try:
 				p = Profile(ActionParser())
 				p.load(os.path.join(get_profiles_path(), name))
