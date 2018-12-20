@@ -21,7 +21,7 @@
 #define BUFFER_SIZE		256
 
 #ifndef _WIN32
-	#error "config_json.c included outside of Windows"
+	#error "config_win32.c included outside of Windows"
 #endif
 
 static void config_dealloc(void* _c) {

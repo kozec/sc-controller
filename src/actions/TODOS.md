@@ -50,9 +50,9 @@ Modifiers
 [ ] ReleasedModifier
 [x] BallModifier
 [x] DeadzoneModifier
-[ ] ModeModifier
-[ ] DoubleclickModifier
-[ ] HoldModifier
+[x] ModeModifier
+[x] DoubleclickModifier
+[x] HoldModifier
 [x] SensitivityModifier
 	[x] Axis, RAxis & co
 	[x] MouseAction
@@ -96,7 +96,7 @@ Special actions
 [ ] GesturesAction
 
 
-Check if everything that implemented theee in python still works
+Check if everything that implemented thesee in python still works
 ================================================================
 [ ] HapticEnabledAction
 [ ] OSDEnabledAction

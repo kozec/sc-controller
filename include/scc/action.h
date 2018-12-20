@@ -105,6 +105,16 @@ struct Action {
 	Action*	(*compress)(Action* a);
 	
 	/**
+	 * Returns named property of action. This is used mainly by tests and
+	 * potetially by GUI and doesn't have to be implemented - defaults to method
+	 * that return NULL for anything.
+	 *
+	 * If implemented, method should return Parameter* instance with one reference
+	 * that caller has to release or NULL for unknown property names.
+	 */
+	Parameter*	(*get_property)(Action* a, const char* name);
+	
+	/**
 	 * ExtendedMethods are methods that most of actions _don't_ have, and
 	 * so there would be no point in polluting 'struct Action' with them.
 	 *

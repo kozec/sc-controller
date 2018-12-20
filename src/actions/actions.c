@@ -67,6 +67,11 @@ void def_trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos, P
 	RATE_LIMIT(DWARN("Action %s can't handle trigger event", a->type));
 }
 
+Parameter* def_get_property(Action* a, const char* name) {
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
 
 void scc_action_init(Action* a, const char* type, ActionFlags flags,
 					void(*dealloc)(Action* a), char*(*to_string)(Action* a)) {
@@ -83,6 +88,7 @@ void scc_action_init(Action* a, const char* type, ActionFlags flags,
 	
 	a->button_press = &def_button_press;
 	a->button_release = &def_button_release;
+	a->get_property = &def_get_property;
 	a->axis = &def_axis;
 	a->gyro = &def_gyro;
 	a->whole = &def_whole;
