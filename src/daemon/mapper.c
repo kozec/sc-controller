@@ -55,12 +55,12 @@ extern char** environ;
 
 static void set_profile(Mapper* _m, Profile* p, bool cancel_effects) {
 	SCCDMapper* m = container_of(_m, SCCDMapper, mapper);
-	if (m->profile != NULL) RC_REL(m->profile);
+	RC_REL(m->profile);
 	
 	// TODO: Before profile is set, mapper should automatically cancel all long-running
 	// TODO: effects they may have created. For example, it should stop any active rumble.
+	if (p != NULL) RC_ADD(p);
 	m->profile = p;
-	RC_ADD(m->profile);
 }
 
 static Profile* get_profile(Mapper* _m) {
@@ -96,6 +96,7 @@ static void haptic_effect(Mapper* _m, HapticData* hdata) {
 void sccd_mapper_deallocate(SCCDMapper* m) {
 	if (m->profile != NULL) RC_REL(m->profile);
 	free(m);
+	DDEBUG("Unloaded mapper %p", m);
 }
 
 Mapper* sccd_mapper_to_mapper(SCCDMapper* m) {

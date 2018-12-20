@@ -61,7 +61,7 @@ void scc_param_checker_set_defaults(ParamChecker* pc, ...) {
 }
 
 ParameterList scc_param_checker_fill_defaults(ParamChecker* pc, ParameterList src) {
-	ParameterList params = list_new(Parameter, 0);
+	ParameterList params = scc_make_param_list(NULL);
 	if (params == NULL) return NULL;
 	
 	int s = 0;

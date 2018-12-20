@@ -101,7 +101,8 @@ Parameter* scc_new_int_parameter(int64_t value);
  */
 Parameter* scc_new_const_int_parameter(const char* name, int64_t value);
 /**
- * Returns new Constant String Parameter. See above.
+ * Returns new Constant String Parameter.
+ * String is not copied and should not be deallocated.
  */
 Parameter* scc_new_const_string_parameter(const char* name);
 /**

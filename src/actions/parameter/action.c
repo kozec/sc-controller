@@ -19,7 +19,6 @@ static char* action_param_to_string(Parameter* _p) {
 
 static Action* action_param_to_action(Parameter* _p) {
 	ActionParameter* p = container_of(_p, ActionParameter, parameter);
-	RC_ADD(p->action);
 	return p->action;
 }
 

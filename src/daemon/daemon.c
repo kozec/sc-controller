@@ -81,16 +81,13 @@ static void sigint_handler(int sig) {
  * Returns NULL if allocation fails.
  */
 static SCCDMapper* grab_mapper() {
-	ListIterator it = iter_get(mappers);
-	FOREACH(SCCDMapper*, m, it) {
+	FOREACH_IN(SCCDMapper*, m, mappers) {
 		Mapper* m_ = sccd_mapper_to_mapper(m);
 		if (m_->get_controller(m_) == NULL) {
 			// Got one
-			iter_free(it);
 			return m;
 		}
 	}
-	iter_free(it);
 	
 	// No mappers left
 	if (!list_allocate(mappers, 1)) {
@@ -263,6 +260,19 @@ SCCDMapper* sccd_get_default_mapper() {
 	return default_mapper;
 }
 
+/** Unloads all mappers and default profile */
+static void unload_mappers() {
+	FOREACH_IN(SCCDMapper*, m, mappers) {
+		Mapper* m_ = sccd_mapper_to_mapper(m);
+		Controller* c = m_->get_controller(m_);
+		m_->set_profile(m_, NULL, true);
+		if (c != NULL) c->set_mapper(c, m_);
+		sccd_mapper_deallocate(m);
+	}
+	list_clear(mappers);
+	default_mapper = NULL;
+}
+
 static void load_default_profile(SCCDMapper* m) {
 	if (m == NULL) m = default_mapper;
 	if (default_profile == NULL) {
@@ -272,6 +282,7 @@ static void load_default_profile(SCCDMapper* m) {
 		char* recents[1];
 		if (config_get_strings(c, "recent_profiles", (const char**)&recents, 1) >= 1)
 			default_profile = scc_find_profile(recents[0]);
+		RC_REL(c);
 	}
 	
 	int err;
@@ -432,5 +443,6 @@ int main(int argc, char** argv) {
 	sccd_poller_close();
 	sccd_scheduler_close();
 	list_free(mainloop_callbacks);
+	unload_mappers();
 	return 0;
 }
