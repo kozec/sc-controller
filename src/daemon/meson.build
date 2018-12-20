@@ -17,10 +17,13 @@ if host_machine.system() == 'linux'
 			meson.get_compiler('c').find_library('libusb-1.0'),
 		]
 	endif
-elif host_machine.system() == 'openbsd'
+elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 	subdir('uinput-x11')
 	USB_HELPER = 'usb_helper_bsd.c'
-	include += [ include_directories('/usr/local/include') ]
+	if host_machine.system() == 'openbsd'
+		# not needed on netbsd
+		include += [ include_directories('/usr/local/include') ]
+	endif
 	platform_dependent_deps = [
 		dependency('x11'),
 		meson.get_compiler('c').find_library('libusbhid'),
@@ -40,8 +43,6 @@ elif host_machine.system() == 'windows'
 		'device_monitor_win32.c',
 		'usb_helper.c',
 	]
-elif host_machine.system() == 'openbsd'
-	subdir('uinput-x11')
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif

@@ -20,7 +20,7 @@ elif get_option('android').enabled()
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 elif host_machine.system() == 'linux'
 	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
-elif host_machine.system() == 'openbsd'
+elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 	add_global_arguments('-D__BSD__', language: 'c')
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 endif
@@ -125,6 +125,6 @@ subdir('tests')
 subdir('src/daemon/drivers')
 subdir('src/daemon')
 subdir('src/client')
-if get_option('android').disabled() and host_machine.system() != 'openbsd'
+if get_option('android').disabled() and host_machine.system() != 'openbsd' and host_machine.system() != 'netbsd'
 	subdir('src/osd')
 endif
