@@ -122,7 +122,7 @@ class UserDataManager(object):
 					if pdir is not None:
 						for finfo in enumerator:
 							name = finfo.get_name()
-							if name:
+							if name and not name.endswith("~"):
 								files[name] = pdir.get_child(name)
 			except Exception, e:
 				# https://github.com/kozec/sc-controller/issues/50
