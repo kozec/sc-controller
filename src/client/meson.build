@@ -6,9 +6,9 @@ if host_machine.system() == 'windows'
 endif
 
 
-client_lib = static_library('client',
+client_lib = shared_library('scc-client',
 	include_directories: include,
-	link_with: [tools_lib],
+	link_with: [ tools_lib, utils_lib ],
 	dependencies: platform_dependent_deps,
 	sources: [
 		'slave_mapper.c',
@@ -18,7 +18,7 @@ client_lib = static_library('client',
 	]
 )
 
-gio_client_lib = static_library('gio_client',
+gio_client_lib = shared_library('scc-gio-client',
 	include_directories: include,
 	link_with: [ client_lib ],
 	c_args: ['-Wno-deprecated-declarations'],
@@ -29,3 +29,4 @@ gio_client_lib = static_library('gio_client',
 		'gio.c',
 	]
 )
+

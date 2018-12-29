@@ -43,32 +43,32 @@ bool scc_action_known(const char* keyword) {
 		}									\
 	} while (0)
 
-void def_button_press(Action* a, Mapper* m) {
+static void def_button_press(Action* a, Mapper* m) {
 	DWARN("Action %s can't handle button press event", a->type);
 }
 
-void def_button_release(Action* a, Mapper* m) {
+static void def_button_release(Action* a, Mapper* m) {
 	DWARN("Action %s can't handle button release event", a->type);
 }
 
-void def_axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) {
+static void def_axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) {
 	RATE_LIMIT(DWARN("Action %s can't handle axis event", a->type));
 }
 
-void def_gyro(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
+static void def_gyro(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
 					GyroValue q1, GyroValue q2, GyroValue q3, GyroValue q4) {
 	RATE_LIMIT(DWARN("Action %s can't handle gyro event", a->type));
 }
 
-void def_whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) {
+static void def_whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) {
 	RATE_LIMIT(DWARN("Action %s can't handle whole stick/pad event", a->type));
 }
 
-void def_trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos, PadStickTrigger what) {
+static void def_trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos, PadStickTrigger what) {
 	RATE_LIMIT(DWARN("Action %s can't handle trigger event", a->type));
 }
 
-Parameter* def_get_property(Action* a, const char* name) {
+static Parameter* def_get_property(Action* a, const char* name) {
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
 }

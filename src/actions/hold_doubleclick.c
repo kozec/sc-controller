@@ -7,6 +7,12 @@
  *
  * Both are implemented in same class, as they have to be merged together
  * when both are set to same button
+ *
+ * Supported properties:
+ *  - hold_action		(action)
+ *  - dblclick_action	(action)
+ *  - default_action	(action)
+ *  - timeout			(float)
  */
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
@@ -222,7 +228,7 @@ static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos
 		button_release(a, m);
 }
 
-Parameter* get_property(Action* a, const char* name) {
+static Parameter* get_property(Action* a, const char* name) {
 	HoldDblClick* hdbl = container_of(a, HoldDblClick, action);
 	if (0 == strcmp(name, "hold_action"))
 		return scc_new_action_parameter(hdbl->hold_action);

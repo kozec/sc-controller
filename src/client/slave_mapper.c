@@ -56,7 +56,7 @@ Mapper* sccc_create_slave_mapper(SCCClient* c) {
 	if (m == NULL) return NULL;
 	memset(m, 0, sizeof(struct SlaveMapper));
 	
-	// TODO: All of this. Right now it can wotk only with OSD menu
+	// TODO: All of this. Right now it can work only with OSD menu
 	m->client = c;
 	m->c_flags = 0;
 	m->mapper.get_flags = NULL;
@@ -82,3 +82,4 @@ Mapper* sccc_create_slave_mapper(SCCClient* c) {
 	m->mapper.input = NULL;
 	return &m->mapper;
 }
+

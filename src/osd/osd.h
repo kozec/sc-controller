@@ -17,3 +17,6 @@ StickController* stick_controller_create(StickControllerCallback cb, void* userd
 void stick_controller_feed(StickController* sc, int values[]);
 /** Frees StickController data */
 void stick_controller_free(StickController* sc);
+/** Converts KEY_* constant to GDK constant */
+guint keycode_to_gdk_hw_keycode(int64_t key);
+

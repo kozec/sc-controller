@@ -14,6 +14,7 @@ typedef enum ActionFlags {
 	AF_MODIFIER					= 0b00010 << 8,
 	AF_SPECIAL_ACTION			= 0b00100 << 8,
 	AF_AXIS						= 0b01000 << 8,	// special in some cases
+	AF_KEYCODE					= 0b10000 << 8, // action support 'keycode' property which is used by OSD keyboard
 	ActionFlags_pad_			= 0xFFFF
 } ActionFlags;
 

@@ -1,3 +1,12 @@
+/*
+ * SC-Controller - ButtonAction
+ *
+ * Action that presses virtual button, be it on keyboard, mouse or gamepad
+ *
+ * Supported properties:
+ *  - keycode	(int)
+ */
+#include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
@@ -148,11 +157,21 @@ static void set_haptic(Action* a, HapticData hdata) {
 	b->hdata = hdata;
 }
 
+static Parameter* get_property(Action* a, const char* name) {
+	ButtonAction* b = container_of(a, ButtonAction, action);
+	if (0 == strcmp(name, "keycode"))
+		return scc_new_int_parameter(b->button[0]);
+	
+	DWARN("Requested unknown property '%s' from '%s'", a->type);
+	return NULL;
+}
+
 
 Action* scc_button_action_from_keycode(unsigned short keycode) {
 	ButtonAction* b = malloc(sizeof(ButtonAction));
 	if (b == NULL) return NULL;
-	scc_action_init(&b->action, KW_BUTTON, AF_ACTION, &button_dealloc, &button_to_string);
+	scc_action_init(&b->action, KW_BUTTON, AF_ACTION | AF_KEYCODE,
+						&button_dealloc, &button_to_string);
 	b->action.flags = 0;
 	b->button[0] = keycode;
 	b->button[1] = 0;
@@ -177,7 +196,8 @@ static ActionOE button_constructor(const char* keyword, ParameterList params) {
 		list_free(params);
 		return (ActionOE)scc_oom_action_error();
 	}
-	scc_action_init(&b->action, KW_BUTTON, AF_ACTION, &button_dealloc, &button_to_string);
+	scc_action_init(&b->action, KW_BUTTON, AF_ACTION | AF_KEYCODE,
+						&button_dealloc, &button_to_string);
 	b->button[0] = scc_parameter_as_int(params->items[0]);
 	b->button[1] = scc_parameter_as_int(params->items[1]);
 	b->param[0] = params->items[0];
@@ -189,6 +209,7 @@ static ActionOE button_constructor(const char* keyword, ParameterList params) {
 	b->action.button_press = &button_press;
 	b->action.button_release = &button_release;
 	b->action.trigger = &trigger;
+	b->action.get_property = &get_property;
 	b->action.extended.set_haptic = &set_haptic;
 	
 	RC_ADD(params->items[0]);

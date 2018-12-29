@@ -78,6 +78,8 @@ static bool strbuilder_realloc(StrBuilder* b, size_t new_length) {
 bool strbuilder_add(StrBuilder* b, const char* string) {
 	if (b == NULL) return false;
 	size_t len = strlen(string);
+	if (len == 0)
+		return true;
 	if (b->length + len > b->allocation)
 		if (!strbuilder_realloc(b, b->length + len))
 			return false;
