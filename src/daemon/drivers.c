@@ -9,11 +9,11 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#define FILENAME_PREFIX "libscc_drv_"
+#define FILENAME_PREFIX "libscc-drv-"
 #define FILENAME_SUFFIX ".dll"
 #else
 #include <dlfcn.h>
-#define FILENAME_PREFIX "libscc_drv_"
+#define FILENAME_PREFIX "libscc-drv-"
 #define FILENAME_SUFFIX ".so"
 #endif
 

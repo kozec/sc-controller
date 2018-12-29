@@ -10,7 +10,7 @@ else
 endif
 
 
-shared_library('scc_drv_sc_by_cable',
+shared_library('scc-drv-sc_by_cable',
 	include_directories: [ include ],
 	link_with: [ utils_lib, config_lib ],
 	dependencies: deps,
@@ -20,7 +20,7 @@ shared_library('scc_drv_sc_by_cable',
 	]
 )
 
-shared_library('scc_drv_sc_dongle',
+shared_library('scc-drv-sc_dongle',
 	include_directories: [ include ],
 	link_with: [ utils_lib, config_lib ],
 	dependencies: deps,
@@ -30,7 +30,7 @@ shared_library('scc_drv_sc_dongle',
 	]
 )
 
-shared_library('scc_drv_remotepad',
+shared_library('scc-drv-remotepad',
 	include_directories: [ include ],
 	link_with: [ utils_lib ],
 	dependencies: remotepad_deps,
