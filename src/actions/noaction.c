@@ -1,3 +1,4 @@
+#include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/action.h"
 #include <stdlib.h>
@@ -5,6 +6,7 @@
 
 static Action _noaction;
 static const char* KW_NONE = "None";
+Action* NoAction = NULL;
 
 
 static char* noaction_to_string(Action* _button) {

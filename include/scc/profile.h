@@ -88,3 +88,4 @@ Profile* scc_profile_from_json(const char* filename, int* error);
 
 /** Generates new empty profile. This may return NULL only if there is no memory */
 Profile* scc_make_empty_profile();
+

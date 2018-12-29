@@ -157,7 +157,7 @@ struct Action {
 };
 
 
-Action* NoAction;
+extern Action* NoAction;
 
 typedef ActionOE(*scc_action_constructor)(const char* keyword, ParameterList params);
 

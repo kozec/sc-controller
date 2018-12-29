@@ -6,6 +6,7 @@
  */
 #define LOG_TAG "Profile"
 #include "scc/utils/logging.h"
+#include "scc/utils/assert.h"
 #include "scc/utils/aojls.h"
 #include "scc/utils/rc.h"
 #include "scc/profile.h"
@@ -157,6 +158,7 @@ static JSONProfile* new_profile() {
 	JSONProfile* p = malloc(sizeof(JSONProfile));
 	if (p == NULL) return NULL;
 	
+	ASSERT(NoAction != NULL);
 	for (int i=0; i<=LAST_BUTTON_INDEX; i++)
 		p->buttons[i] = NoAction;
 	for (int i=0; i<=LAST_TRIGGER_INDEX; i++)
