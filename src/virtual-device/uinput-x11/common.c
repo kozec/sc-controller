@@ -12,9 +12,9 @@
 #include <unistd.h>
 
 static int have_xtest = -1;			// 1 - yes, 0 - no, -1 - no idea
+static Display* dpy = NULL;
 static struct Internal dummy = { VTP_DUMMY };
 
-Daemon* get_daemon();
 
 void scc_virtual_device_close(VirtualDevice* dev) {
 	struct Internal* idev = (struct Internal*)dev;
@@ -40,6 +40,11 @@ void scc_virtual_device_flush(VirtualDevice* dev) {
 	struct Internal* idev = (struct Internal*)dev;
 	if (idev->type == VTP_DUMMY) return;
 	if (idev->type == VTP_MOUSE) flush_mouse(idev);
+}
+
+void scc_virtual_device_set_x_display(void* _dpy) {
+	// Not... in fact, this is only place where this is relevant
+	dpy = (Display*)_dpy;
 }
 
 void scc_virtual_device_key_release(VirtualDevice* dev, Keycode key) {
@@ -126,12 +131,9 @@ void scc_virtual_device_set_axis(VirtualDevice* dev, Axis a, AxisValue value) {
 
 
 VirtualDevice* scc_virtual_device_create(VirtualDeviceType type, VirtualDeviceSettings* settings) {
-	Daemon* d = get_daemon();
-	Display* dpy = (Display*)d->get_x_display();
-	
 	if (have_xtest < 0) {
 		if (dpy == NULL) {
-			LERROR("Connection to XServer failed, mouse and keyboard emulation is not possible.");
+			LERROR("Connection to XServer failed or was not set up, mouse and keyboard emulation is not possible.");
 			have_xtest = 0;
 		} else {
 			int event_base, error_base;
@@ -143,7 +145,7 @@ VirtualDevice* scc_virtual_device_create(VirtualDeviceType type, VirtualDeviceSe
 		}
 	}
 	
-	if (have_xtest == 0)
+	if ((have_xtest == 0) && (type != VTP_DUMMY))
 		return NULL;
 	
 	switch (type) {

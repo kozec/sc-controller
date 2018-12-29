@@ -15,6 +15,7 @@ void sccd_x11_init() {
 		WARN("Running on BSD. 'Some functionality' includes keyboard and mouse emulation.");
 #endif
 	} else {
+		scc_virtual_device_set_x_display((void*)x11display);
 		LOG("Connected to XServer %s", DisplayString(x11display));
 	}
 }

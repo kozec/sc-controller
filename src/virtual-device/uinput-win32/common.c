@@ -38,6 +38,10 @@ void scc_virtual_device_flush(VirtualDevice* dev) {
 	if (idev->type == VTP_MOUSE) flush_mouse(idev);
 }
 
+void scc_virtual_device_set_x_display(void* dpy) {
+	// Not used on Windows
+}
+
 void scc_virtual_device_key_release(VirtualDevice* dev, Keycode key) {
 	struct Internal* idev = (struct Internal*)dev;
 	switch (idev->type) {

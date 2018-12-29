@@ -64,9 +64,15 @@ typedef struct VirtualDeviceSettings {
 VirtualDevice* scc_virtual_device_create(VirtualDeviceType type, VirtualDeviceSettings* settings);
 /** Closes all handles and deallocates device. No method on method can be called after this. */
 void scc_virtual_device_close(VirtualDevice* dev);
-
 /** Returns device type. If you need to call this, you are already doing it wrong :) */
 VirtualDeviceType scc_virtual_device_get_type(VirtualDevice* dev);
+
+/**
+ * On platforms where X11 is relevant (Linux and BSD), this function should be
+ * called with active connection to Xserver before scc_virtual_device_create.
+ */
+void scc_virtual_device_set_x_display(void* dpy);
+
 /**
  * Returns readable string description of virtual device, good for logging.
  * Returned string should _not_ be deallocated.

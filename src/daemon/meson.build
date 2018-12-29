@@ -2,7 +2,6 @@ platform_dependent_deps = []
 platform_dependent_src = []
 
 if host_machine.system() == 'linux'
-	subdir('uinput')
 	platform_dependent_deps = [
 		meson.get_compiler('c').find_library('dl'),
 		dependency('x11'),
@@ -18,7 +17,6 @@ if host_machine.system() == 'linux'
 		]
 	endif
 elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
-	subdir('uinput-x11')
 	USB_HELPER = 'usb_helper_bsd.c'
 	if host_machine.system() == 'openbsd'
 		# not needed on netbsd
@@ -33,7 +31,6 @@ elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 		'usb_helper_bsd.c',
 	]
 elif host_machine.system() == 'windows'
-	subdir('uinput-win32')
 	platform_dependent_deps = [
 		meson.get_compiler('c').find_library('regex'),
 		meson.get_compiler('c').find_library('wsock32'),
@@ -50,8 +47,8 @@ endif
 
 executable('scc-daemon',
 	include_directories: include,
-	link_with: [utils_lib, tools_lib, parser_lib,
-				actions_lib, config_lib, uinput_lib],
+	link_with: [ utils_lib, tools_lib, parser_lib,
+				 actions_lib, config_lib, virtual_device_lib ],
 	dependencies: platform_dependent_deps,
 	build_rpath: '/usr/X11R6/lib',
 	sources: platform_dependent_src + [

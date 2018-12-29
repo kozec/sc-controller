@@ -127,6 +127,10 @@ void scc_virtual_device_flush(VirtualDevice* dev) {
 	write(idev->fd, &ev, sizeof(ev));
 }
 
+void scc_virtual_device_set_x_display(void* dpy) {
+	// Not needed by uinput
+}
+
 void scc_virtual_device_key_release(VirtualDevice* dev, Keycode key) {
 	struct Internal* idev = (struct Internal*)dev;
 	if (idev->type == VTP_DUMMY) return;

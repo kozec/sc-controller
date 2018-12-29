@@ -124,6 +124,7 @@ parser_lib = static_library('parser',
 )
 
 subdir('tests')
+subdir('src/virtual-device')
 subdir('src/daemon/drivers')
 subdir('src/daemon')
 subdir('src/client')
