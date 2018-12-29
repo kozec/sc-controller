@@ -36,7 +36,9 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 		// TODO: Deallocate sc
 		return;
 	}
-	handle_input(sc, (SCInput*)data);
+	SCInput* i = (SCInput*)data;
+	if (i->ptype == PT_INPUT)
+		handle_input(sc, i);
 }
 
 

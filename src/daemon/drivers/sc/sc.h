@@ -72,9 +72,9 @@ struct SCController {
 };
 
 typedef enum {
-	PT_IDLE = 0x04,
 	PT_INPUT = 0x01,
 	PT_HOTPLUG = 0x03,
+	PT_IDLE = 0x04,
 	PT_OFF = 0x9f,
 	PT_AUDIO = 0xb6,
 	PT_CLEAR_MAPPINGS = 0x81,
