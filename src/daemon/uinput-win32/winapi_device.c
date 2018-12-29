@@ -4,6 +4,7 @@
 #define LOG_TAG "UInput"
 #include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
+#include "scc/conversions.h"
 #include "common.h"
 #include <winuser.h>
 #include <math.h>
@@ -73,18 +74,20 @@ void winapi_mouse_button(struct Internal* idev, Keycode key, bool pressed) {
 
 void winapi_keyboard_button(struct Internal* idev, Keycode key, bool pressed) {
 	INPUT input;
-	if ((key >= keyboard_scancode_count) || (keyboard_scancodes[key] == 0))
+	if (scc_keycode_to_win32_scan(key) == 0) {
 		// Invalid keycode
 		return;
+	}
 	
 	input.type = INPUT_KEYBOARD;
 	input.ki.wVk = 0;
 	input.ki.dwFlags = (pressed ? 0 : KEYEVENTF_KEYUP) | KEYEVENTF_SCANCODE;
-	if (keyboard_scancodes[key] & 0xE000) {
+	uint16_t scancode = scc_keycode_to_win32_scan(key);
+	if (scancode & 0xE000) {
 		input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-		input.ki.wScan = keyboard_scancodes[key] & 0x00FF;
+		input.ki.wScan = scancode & 0x00FF;
 	} else {
-		input.ki.wScan = keyboard_scancodes[key];
+		input.ki.wScan = scancode;
 	}
 	
 	UINT r = SendInput(1, &input, sizeof(input));

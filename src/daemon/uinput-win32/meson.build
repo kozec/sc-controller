@@ -16,6 +16,5 @@ uinput_lib = static_library('win32',
 		'common.c',
 		'vigem_gamepad.c',
 		'winapi_device.c',
-		'keyboard_buttons.c',
 	]
 )

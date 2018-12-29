@@ -40,3 +40,4 @@ executable('scc-osd-menu',
 		'menu.c',
 	],
 )
+

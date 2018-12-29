@@ -1,6 +1,7 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/tokenizer.h"
 #include "scc/utils/assert.h"
+#include "scc/conversions.h"
 #include "scc/parameter.h"
 #include "scc/action.h"
 #include "scc/parser.h"

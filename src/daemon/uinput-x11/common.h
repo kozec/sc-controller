@@ -21,9 +21,6 @@ struct Internal {
 	};
 };
 
-uint32_t* keyboard_x11_keycodes;
-size_t keyboard_x11_keycode_count;
-
 void flush_mouse(struct Internal* idev);
 
 VirtualDevice* get_dummy_device();

@@ -3,9 +3,13 @@
  */
 #define LOG_TAG "UInput"
 #include "scc/utils/logging.h"
+#include "scc/conversions.h"
 #include "common.h"
 #include <stdlib.h>
 #include <unistd.h>
+
+
+static uint16_t* keyboard_buttons = NULL;
 
 
 static void set_delay_period(struct Internal* idev, int32_t delay, int32_t period) {
@@ -26,7 +30,7 @@ void keyboard_scan_event(struct Internal* idev, Keycode key) {
 	memset(&ev, 0, sizeof(ev));
 	ev.type = EV_MSC;
 	ev.code = MSC_SCAN;
-	ev.value = keyboard_scancodes[key];
+	ev.value = scc_keycode_to_hw_scan(key);
 	write(idev->fd, &ev, sizeof(ev));
 }
 
@@ -43,16 +47,24 @@ VirtualDevice* setup_keyboard(const VirtualDeviceSettings* settings) {
 	uidev.id.version = 1;
 	uidev.ff_effects_max = 0;
 	
-	bool* pressed = malloc(sizeof(bool) * keyboard_scancode_count);
-	if (pressed == NULL) {
+	bool* pressed = malloc(sizeof(bool) * (SCC_KEYCODE_MAX + 1));
+	if (keyboard_buttons == NULL) {
+		// This array is generated only once
+		keyboard_buttons = malloc(sizeof(uint16_t) * (SCC_KEYCODE_MAX + 1));
+		if (keyboard_buttons != NULL)
+			for (uint16_t i=0; i<=SCC_KEYCODE_MAX; i++)
+				keyboard_buttons[i] = i;
+	}
+	if ((pressed == NULL) || (keyboard_buttons == NULL)) {
+		free(pressed);
 		LERROR("OOM while allocating uinput device");
 		return NULL;
 	}
-	memset(pressed, 0, sizeof(bool) * keyboard_scancode_count);
+	memset(pressed, 0, sizeof(bool) * (SCC_KEYCODE_MAX + 1));
 	
 	struct Internal* idev = (struct Internal*)setup_device(VTP_KEYBOARD, uidev,
 				NULL, 0,
-				keyboard_buttons, keyboard_button_count,
+				keyboard_buttons, SCC_KEYCODE_MAX,
 				NULL, 0
 	);
 	if (idev == NULL) {

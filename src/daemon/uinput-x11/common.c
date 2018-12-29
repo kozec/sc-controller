@@ -3,6 +3,7 @@
  */
 #define LOG_TAG "UInput"
 #include "scc/utils/logging.h"
+#include "scc/conversions.h"
 #include "scc/driver.h"
 #include "common.h"
 
@@ -42,13 +43,15 @@ void scc_virtual_device_flush(VirtualDevice* dev) {
 }
 
 void scc_virtual_device_key_release(VirtualDevice* dev, Keycode key) {
+	unsigned int x11_keycode;
 	struct Internal* idev = (struct Internal*)dev;
 	switch (idev->type) {
 	case VTP_KEYBOARD:
-		if ((key >= keyboard_x11_keycode_count) || (keyboard_x11_keycodes[key] == 0))
-			return;			// Invalid keycode
-		XTestFakeKeyEvent(idev->dpy, keyboard_x11_keycodes[key], false, CurrentTime);
-		XFlush(idev->dpy);
+		x11_keycode = scc_keycode_to_x11(key);
+		if (x11_keycode != 0) {
+			XTestFakeKeyEvent(idev->dpy, x11_keycode, false, CurrentTime);
+			XFlush(idev->dpy);
+		}
 		return;
 	case VTP_MOUSE:
 		switch (key) {
@@ -79,13 +82,15 @@ void scc_virtual_device_key_release(VirtualDevice* dev, Keycode key) {
 }
 
 void scc_virtual_device_key_press(VirtualDevice* dev, Keycode key) {
+	unsigned int x11_keycode;
 	struct Internal* idev = (struct Internal*)dev;
 	switch (idev->type) {
 	case VTP_KEYBOARD:
-		if ((key >= keyboard_x11_keycode_count) || (keyboard_x11_keycodes[key] == 0))
-			return;			// Invalid keycode
-		XTestFakeKeyEvent(idev->dpy, keyboard_x11_keycodes[key], true, CurrentTime);
-		XFlush(idev->dpy);
+		x11_keycode = scc_keycode_to_x11(key);
+		if (x11_keycode != 0) {
+			XTestFakeKeyEvent(idev->dpy, x11_keycode, true, CurrentTime);
+			XFlush(idev->dpy);
+		}
 		return;
 	case VTP_MOUSE:
 		switch (key) {

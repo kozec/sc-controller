@@ -32,11 +32,6 @@ struct axis {
 	int32_t		flat;
 };
 
-extern uint16_t* keyboard_buttons;
-extern int* keyboard_scancodes;
-extern size_t keyboard_button_count;
-extern size_t keyboard_scancode_count;
-
 void keyboard_scan_event(struct Internal* idev, Keycode key);
 void flush_mouse(struct Internal* idev);
 

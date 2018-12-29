@@ -45,6 +45,16 @@ utils_lib = static_library('utils',
 	]
 )
 
+
+conversions_lib = static_library('conversions',
+	include_directories: include,
+	sources: [
+		'src/conversions/string_constants.c',
+		'src/conversions/generated.c',
+		'src/conversions/methods.c',
+	]
+)
+
 # Difference between tools and utils:
 #  - utils are universal stuff taken from other project (such as hashmap)
 #  - tools are scc-specific functions used on many places (such as find_profile)
@@ -81,19 +91,11 @@ param_checker_lib = static_library('param_checker',
 			'-maxdepth', '1', '-name', C_FILES).stdout().strip().split('\n')
 )
 
-parser_constants_lib = static_library('parser_constants',
-	include_directories: include,
-	sources: [
-		'src/parser/generated_constants.c',
-		'src/parser/string_constants.c',
-	]
-)
-
 action_files = (run_command('find', 'src/actions/',
 			'-name', C_FILES).stdout().strip().split('\n'))
 actions_lib = static_library('actions',
-	link_with: [ utils_lib, tools_lib, params_lib,
-				 param_checker_lib, parser_constants_lib ],
+	link_with: [ utils_lib, tools_lib, params_lib, param_checker_lib,
+					conversions_lib ],
 	include_directories: include,
 	dependencies: [ meson.get_compiler('c').find_library('m') ],
 	sources: action_files + [
@@ -111,7 +113,7 @@ actions_lib = static_library('actions',
 parser_lib = static_library('parser',
 	include_directories: include,
 	dependencies: PARSER_LIB_DEPS,
-	link_with: [ utils_lib, actions_lib, params_lib, parser_constants_lib ],
+	link_with: [ utils_lib, actions_lib, params_lib ],
 	sources: [
 		'src/parser/action_parser.c',
 		'src/parser/jsonprofile.c',

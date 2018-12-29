@@ -32,9 +32,6 @@ struct Internal {
 	};
 };
 
-extern int* keyboard_scancodes;
-extern size_t keyboard_scancode_count;
-
 VirtualDevice* get_dummy_device();
 
 void scc_virtual_ds4_set_button(struct Internal* idev, Keycode key, bool pressed);

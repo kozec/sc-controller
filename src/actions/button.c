@@ -1,6 +1,8 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
+#include "scc/action_description_context.h"
+#include "scc/conversions.h"
 #include "scc/action.h"
 #include "scc/tools.h"
 #include <stdlib.h>
@@ -38,6 +40,40 @@ static char* button_to_string(Action* a) {
 		return rv;
 	}
 }
+
+static char* button_describe(Action* a, const ActionDescriptionContext* ctx) {
+	ButtonAction* b = container_of(a, ButtonAction, action);
+	const char* keyname;
+	switch (b->button[0]) {
+	case BTN_LEFT:			return strbuilder_cpy("Mouse Left");
+	case BTN_MIDDLE:		return strbuilder_cpy("Mouse Middle");
+	case BTN_RIGHT:			return strbuilder_cpy("Mouse Right");
+	case BTN_SIDE:			return strbuilder_cpy("Mouse 8");
+	case BTN_EXTRA:			return strbuilder_cpy("Mouse 9");
+	case BTN_TR:			return strbuilder_cpy("Right Bumper");
+	case BTN_TL:			return strbuilder_cpy("Left Bumper");
+	case BTN_THUMBL:		return strbuilder_cpy("LStick Click");
+	case BTN_THUMBR:		return strbuilder_cpy("RStick Click");
+	case BTN_START:			return strbuilder_cpy("Start >");
+	case BTN_SELECT:		return strbuilder_cpy("< Select");
+	case BTN_A:				return strbuilder_cpy("A Button");
+	case BTN_B:				return strbuilder_cpy("B Button");
+	case BTN_X:				return strbuilder_cpy("X Button");
+	case BTN_Y:				return strbuilder_cpy("Y Button");
+	case KEY_PREVIOUSSONG:	return strbuilder_cpy("<< Song");
+	case KEY_STOP:			return strbuilder_cpy("Stop");
+	case KEY_PLAYPAUSE:		return strbuilder_cpy("Play/Pause");
+	case KEY_NEXTSONG:		return strbuilder_cpy("Song >>");
+	case KEY_VOLUMEDOWN:	return strbuilder_cpy("- Volume");
+	case KEY_VOLUMEUP:		return strbuilder_cpy("+ Volume");
+	default:
+		keyname = scc_get_key_name(b->button[0]);
+		if (keyname != NULL)
+			return strbuilder_fmt("%s", keyname + 4); // +4 to skip over "KEY_"
+		return button_to_string(a);
+	}
+}
+
 
 static void button_dealloc(Action* a) {
 	ButtonAction* b = container_of(a, ButtonAction, action);
@@ -148,6 +184,7 @@ static ActionOE button_constructor(const char* keyword, ParameterList params) {
 	b->param[1] = params->items[1];
 	b->pressed_button = 0;
 	HAPTIC_DISABLE(&b->hdata);
+	b->action.describe = &button_describe;
 	b->action.whole = &whole;
 	b->action.button_press = &button_press;
 	b->action.button_release = &button_release;

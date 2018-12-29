@@ -19,6 +19,8 @@ typedef enum ActionFlags {
 
 typedef struct Action Action;
 
+struct ActionDescriptionContext;
+
 // Action, Parameter, ActionError and ParamError begins with same header
 // and both ParameterType and ActionFlags have value 1 reserved for error.
 // 
@@ -46,6 +48,19 @@ struct Action {
 	 * Returned string has to be free'd by caller. Returns NULL on OOM error.
 	 */
 	char*	(*to_string)(Action* a);
+	
+	/** 
+	 * Action->to_string returns string that is situable for displaying in
+	 * GUI, OSD, or on similar place. 'ctx' contains information about intended
+	 * use of string, and (unlike in scc_action_get_description) _cannot_ be NULL.
+	 *
+	 * This method may be set to NULL. Use scc_action_get_description instead of
+	 * callign it directly if you prefer having defaults provided instead of
+	 * handling that.
+	 *
+	 * Returned string has to be free'd by caller. Returns NULL on OOM error.
+	 */
+	char*	(*describe)(Action* a, const struct ActionDescriptionContext* ctx);
 	
 	/**
 	 * Called when action is executed by pressing physical gamepad button.
@@ -204,3 +219,12 @@ bool scc_action_compress(Action** a);
  * Returned string has to be freed by caller.
  */
 char* scc_action_to_string(Action* a);
+
+/**
+ * Returns string description of action, as should be displayed in GUI or in OSD.
+ * 'ctx' contains information about intended use of string, but it can be NULL.
+ * Returns NULL if space for generated string cannot be allocated.
+ *
+ * Returned string has to be freed by caller.
+ */
+char* scc_action_get_description(Action* a, const struct ActionDescriptionContext* ctx);

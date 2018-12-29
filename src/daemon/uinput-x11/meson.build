@@ -5,6 +5,5 @@ uinput_lib = static_library('uinput',
 		'common.c',
 		'mouse.c',
 		'keyboard.c',
-		'keyboard_buttons.c',
 	]
 )

@@ -3,6 +3,7 @@
  */
 #define LOG_TAG "UInput"
 #include "scc/utils/logging.h"
+#include "scc/conversions.h"
 #include "common.h"
 
 #include <sys/stat.h>
@@ -130,9 +131,10 @@ void scc_virtual_device_key_release(VirtualDevice* dev, Keycode key) {
 	struct Internal* idev = (struct Internal*)dev;
 	if (idev->type == VTP_DUMMY) return;
 	if (idev->type == VTP_KEYBOARD) {
-		if ((key >= keyboard_scancode_count) || (keyboard_scancodes[key] == 0) || !idev->pressed[key])
+		if ((scc_keycode_to_hw_scan(key) == 0) || !idev->pressed[key]) {
 			// Invalid or not pressed key
 			return;
+		}
 		keyboard_scan_event(idev, key);
 		idev->pressed[key] = false;
 	}
@@ -148,9 +150,10 @@ void scc_virtual_device_key_press(VirtualDevice* dev, Keycode key) {
 	struct Internal* idev = (struct Internal*)dev;
 	if (idev->type == VTP_DUMMY) return;
 	if (idev->type == VTP_KEYBOARD) {
-		if ((key >= keyboard_scancode_count) || (keyboard_scancodes[key] == 0) || idev->pressed[key])
+		if ((scc_keycode_to_hw_scan(key) == 0) || idev->pressed[key]) {
 			// Invalid or already pressed key
 			return;
+		}
 		keyboard_scan_event(idev, key);
 		idev->pressed[key] = true;
 	}

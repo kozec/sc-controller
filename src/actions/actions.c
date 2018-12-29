@@ -3,6 +3,7 @@
 #include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
+#include "scc/action_description_context.h"
 #include "scc/action.h"
 #include "action_initializers.inc"
 
@@ -81,6 +82,7 @@ void scc_action_init(Action* a, const char* type, ActionFlags flags,
 	a->type = type;
 	a->flags = flags;
 	a->to_string = to_string;
+	a->describe = NULL;
 	a->compress = NULL;
 	
 	memset(&a->extended, 0, sizeof(a->extended));
@@ -114,6 +116,15 @@ bool scc_action_compress(Action** a) {
 char* scc_action_to_string(Action* a) {
 	ASSERT(a->to_string != NULL);
 	return a->to_string(a);
+}
+
+char* scc_action_get_description(Action* a, const ActionDescriptionContext* ctx) {
+	static ActionDescriptionContext default_ctx = { .on_button = true,
+										.multiline = false, .on_osk = false };
+	if (a->describe == NULL)
+		return scc_action_to_string(a);
+	if (ctx == NULL) ctx = &default_ctx;
+	return a->describe(a, ctx);
 }
 
 

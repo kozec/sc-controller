@@ -11,11 +11,11 @@ static const char *const usage[] = {
 	NULL,
 };
 
-void on_mnu_exit(void* _mnu, int code) {
+static void on_mnu_exit(void* _mnu, int code) {
 	exit(code);
 }
 
-void on_mnu_ready(void* _mnu) {
+static void on_mnu_ready(void* _mnu) {
 	gtk_widget_show_all(GTK_WIDGET(_mnu));
 }
 
