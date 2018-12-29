@@ -253,7 +253,7 @@ static void scc_virtual_xusb_set_axis(struct Internal* idev, Axis a, AxisValue v
 		idev->xusb_report.sThumbLX = value;
 		return scc_virtual_xusb_update(idev);
 	case ABS_Y:
-		idev->xusb_report.sThumbLY = -value;
+		idev->xusb_report.sThumbLY = -((int32_t)value+1);
 		return scc_virtual_xusb_update(idev);
 	case ABS_Z:
 		idev->xusb_report.bLeftTrigger = (uint8_t)value;
@@ -262,7 +262,7 @@ static void scc_virtual_xusb_set_axis(struct Internal* idev, Axis a, AxisValue v
 		idev->xusb_report.sThumbRX = value;
 		return scc_virtual_xusb_update(idev);
 	case ABS_RY:
-		idev->xusb_report.sThumbRY = value;
+		idev->xusb_report.sThumbRY = -((int32_t)value+1);
 		return scc_virtual_xusb_update(idev);
 	case ABS_RZ:
 		idev->xusb_report.bRightTrigger = (uint8_t)value;
