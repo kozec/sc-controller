@@ -183,7 +183,7 @@ char* scc_find_binary(const char* name) {
 		"./tools",
 #else
 		scc_get_share_path(),
-		"./build-win32/src/osd",
+		"./src/osd",
 #endif
 		"./build/src/osd",
 	};
@@ -207,9 +207,7 @@ char* scc_find_binary(const char* name) {
 		strbuilder_clear(sb);
 	}
 	
-	LOG("F1");
 	strbuilder_free(sb);
-	LOG("F2");
 	return NULL;
 }
 

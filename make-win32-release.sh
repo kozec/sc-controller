@@ -12,21 +12,25 @@ GTK_LIBS=(libgtk-3-0.dll libgdk-3-0.dll libharfbuzz-0.dll libfreetype-6.dll
 		)
 DRIVERS=(sc_by_cable sc_dongle)
 
-meson build-win32
-ninja -C build-win32 || exit 1
+meson $1
+ninja -C $1 || exit 1
 
 mkdir -p release-win32
 for d in default_profiles default_menus osd_styles ; do
 	cp -vr $d release-win32/
 done
 
-cp -v build-win32/src/daemon/scc-daemon.exe release-win32/
-cp -v build-win32/src/osd/scc-osd-menu.exe release-win32/
-cp -v build-win32/src/daemon/uinput-win32/libvigemclient.dll release-win32/
+cp -v $1/src/daemon/scc-daemon.exe release-win32/
+cp -v $1/src/osd/scc-osd-menu.exe release-win32/
+# cp -v $1/src/daemon/uinput-win32/libvigemclient.dll release-win32/
+
+for dll in $(find $1 -name "*.dll" -not -name "libscc-drv*") ; do
+	cp -v $dll release-win32/ || exit 1
+done
 
 mkdir -p release-win32/drivers/
 for i in "${DRIVERS[@]}" ; do
-	cp -v "build-win32/src/daemon/drivers/libscc_drv_$i.dll" release-win32/drivers/
+	cp -v "$1/src/daemon/drivers/libscc-drv-$i.dll" release-win32/drivers/
 done
 
 for i in "${LIBS[@]}" "${GTK_LIBS[@]}" ; do
