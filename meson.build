@@ -46,8 +46,9 @@ utils_lib = static_library('utils',
 )
 
 
-conversions_lib = static_library('conversions',
+conversions_lib = shared_library('scc-conversions',
 	include_directories: include,
+	link_with: [utils_lib],
 	sources: [
 		'src/conversions/string_constants.c',
 		'src/conversions/generated.c',
@@ -67,7 +68,7 @@ tools_lib = static_library('tools',
 	]
 )
 
-config_lib = static_library('config',
+config_lib = shared_library('scc-config',
 	link_with: [utils_lib, tools_lib],
 	include_directories: include,
 	sources: [
@@ -93,7 +94,7 @@ param_checker_lib = static_library('param_checker',
 
 action_files = (run_command('find', 'src/actions/',
 			'-name', C_FILES).stdout().strip().split('\n'))
-actions_lib = static_library('actions',
+actions_lib = shared_library('scc-actions',
 	link_with: [ utils_lib, tools_lib, params_lib, param_checker_lib,
 					conversions_lib ],
 	include_directories: include,
@@ -110,10 +111,10 @@ actions_lib = static_library('actions',
 	]
 )
 
-parser_lib = static_library('parser',
+parser_lib = shared_library('scc-parser',
 	include_directories: include,
 	dependencies: PARSER_LIB_DEPS,
-	link_with: [ utils_lib, actions_lib, params_lib ],
+	link_with: [ utils_lib, actions_lib, params_lib, conversions_lib ],
 	sources: [
 		'src/parser/action_parser.c',
 		'src/parser/jsonprofile.c',

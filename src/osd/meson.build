@@ -11,7 +11,7 @@ endif
 
 osd_lib = static_library('osd',
 	include_directories: include,
-	link_with: [ utils_lib, parser_lib, tools_lib, config_lib, gio_client_lib ],
+	link_with: [ utils_lib, tools_lib, config_lib, gio_client_lib ],
 	c_args: ['-Wno-deprecated-declarations'],
 	dependencies: [
 		dependency('gtk+-3.0', version: '>=3.22.0'),
@@ -32,7 +32,7 @@ osd_lib = static_library('osd',
 
 executable('scc-osd-menu',
 	include_directories: include,
-	link_with: [ osd_lib ],
+	link_with: [ osd_lib, actions_lib, parser_lib ],
 	dependencies: [
 		dependency('gtk+-3.0', version: '>=3.22.0'),
 	],

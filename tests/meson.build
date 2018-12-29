@@ -1,4 +1,4 @@
-link = [ utils_lib, config_lib, parser_lib, conversions_lib ]
+link = [ utils_lib, actions_lib, config_lib, parser_lib, conversions_lib ]
 
 cu_test = declare_dependency(
 	include_directories: include_directories('cu_test/'),
