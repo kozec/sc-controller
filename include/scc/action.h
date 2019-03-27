@@ -10,11 +10,11 @@ typedef enum ActionFlags {
 	// with exception of AF_ERROR / PT_ERROR
 	AF_NONE						= 0b00000000000000,
 	AF_ERROR					= 0b00000000000001,
-	AF_ACTION					= 0b00001 << 8,
-	AF_MODIFIER					= 0b00010 << 8,
-	AF_SPECIAL_ACTION			= 0b00100 << 8,
-	AF_AXIS						= 0b01000 << 8,	// special in some cases
-	AF_KEYCODE					= 0b10000 << 8, // action support 'keycode' property which is used by OSD keyboard
+	AF_ACTION					= 0b00001 << 9,
+	AF_MODIFIER					= 0b00010 << 9,
+	AF_SPECIAL_ACTION			= 0b00101 << 9,
+	AF_AXIS						= 0b01000 << 9,		// special in some cases
+	AF_KEYCODE					= 0b10000 << 9,		// action support 'keycode' property which is used by OSD keyboard
 	ActionFlags_pad_			= 0xFFFF
 } ActionFlags;
 
@@ -24,7 +24,7 @@ struct ActionDescriptionContext;
 
 // Action, Parameter, ActionError and ParamError begins with same header
 // and both ParameterType and ActionFlags have value 1 reserved for error.
-// 
+//
 // This is done this way so type of returned pointer can be determined simply
 // by casting it to (unsigned short*) and comparing to 1.
 // Only error vs Parameter and error vs Action is interesting check,
@@ -41,7 +41,7 @@ struct Action {
 	 */
 	const char*		type;
 	
-	/** 
+	/**
 	 * Action->to_string returns string that can be parsed back to same action.
 	 * This is used when serializing or letting user to edit action with
 	 * Custom Action Editor in GUI.
@@ -50,7 +50,7 @@ struct Action {
 	 */
 	char*	(*to_string)(Action* a);
 	
-	/** 
+	/**
 	 * Action->to_string returns string that is situable for displaying in
 	 * GUI, OSD, or on similar place. 'ctx' contains information about intended
 	 * use of string, and (unlike in scc_action_get_description) _cannot_ be NULL.
@@ -203,7 +203,7 @@ Action* scc_multiaction_combine(Action* a1, Action* a2);
 
 /**
  * Calls compress method on action to which *a points to and replaces *a target
- * with aciton it returns. Reference cointers are properly decreased on old
+ * with aciton it returns. Reference counters are properly decreased on old
  * and increased on new target or 'a'.
  *
  * Returns true if value of *a was changed.
@@ -229,3 +229,4 @@ char* scc_action_to_string(Action* a);
  * Returned string has to be freed by caller.
  */
 char* scc_action_get_description(Action* a, const struct ActionDescriptionContext* ctx);
+

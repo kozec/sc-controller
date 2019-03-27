@@ -162,7 +162,7 @@ static Parameter* get_property(Action* a, const char* name) {
 	if (0 == strcmp(name, "keycode"))
 		return scc_new_int_parameter(b->button[0]);
 	
-	DWARN("Requested unknown property '%s' from '%s'", a->type);
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
 }
 
@@ -227,3 +227,4 @@ void scc_actions_init_button() {
 	scc_param_checker_set_defaults(&pc, 0);
 	scc_action_register(KW_BUTTON, &button_constructor);
 }
+

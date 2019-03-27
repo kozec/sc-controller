@@ -74,7 +74,8 @@ bool strbuilder_escape(StrBuilder* b, const char* chars);
 
 /**
  * Iterates over iterator (as defined in iterable.h) and adds every item in it
- * converting it to string using provided conversion function.
+ * converting it to string using provided conversion function. Empty strings are
+ * ignored.
  *
  * If 'glue' is not NULL, it's used as separator between joined items.
  * Values returned by convert_fn is free()'d
@@ -106,11 +107,11 @@ bool _strbuilder_add_all(StrBuilder* b, void* iterator, bool(*has_next)(void* i)
  * Callback is called with every keyword found as parameter (excluding braces)
  * and is expected to return string that should keyword be replaced with.
  * Then, if free_cb is set, it's called to free memory allocated for used string.
- * 
+ *
  * If callback returns NULL, templating is interrupted and function returns
  * value set in err_return (which is 0 by default). String stored in builder
  * stays half-way modified in such case.
- * 
+ *
  * If memory allocation fails at any given point, function returns 0, but string
  * stored in builder is left half-modified as well.
  * If passed StrBuilder 'b' is NULL, returns 0 without changing anything.

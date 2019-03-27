@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 
-extern size_t rel_abs_count;
+extern const size_t SCC_REL_ABS_MAX;
 
 extern struct Item keys[];
 extern struct Item rels_and_abses[];
@@ -34,7 +34,7 @@ static inline void generate_constants() {
 			}
 		}
 	}
-	for (size_t i=0; i<rel_abs_count; i++) {
+	for (size_t i=0; i<SCC_REL_ABS_MAX; i++) {
 		if (rels_and_abses[i].name != NULL) {
 			if (hashmap_put(constants, rels_and_abses[i].name, &rels_and_abses[i]) != MAP_OK) {
 				hashmap_free(constants);

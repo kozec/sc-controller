@@ -65,3 +65,4 @@ typedef struct _voiditerator {
 #define iter_has_next(itrb) ((itrb)->has_next(itrb))
 
 #define iter_next(itrb) ((itrb)->get_next(itrb))
+

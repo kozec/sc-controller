@@ -482,7 +482,7 @@ def generate(chead):
 	
 	print >>output, ""
 	print >>output, "const uint16_t SCC_KEYCODE_MAX = %s;" % (key_max,)
-	print >>output, "size_t rel_abs_count = %s;" % (len([ x for x in chead if is_rel_or_abs(x) ]),)
+	print >>output, "const size_t SCC_REL_ABS_MAX = %s;" % (len([ x for x in chead if is_rel_or_abs(x) ]),)
 	print >>output, ""
 	
 	print >>output, unindent(2, """

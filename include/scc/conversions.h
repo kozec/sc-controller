@@ -37,7 +37,7 @@ uint16_t scc_keycode_to_win32_scan(Keycode code);
 /**
  * There is pre-set list of constants recognized by parser (mainly keycodes
  * and gamepad and mouse axes).
- * 
+ *
  * This function returns integer value (which fits to uint16_t alias Keycode)
  * for given constant name, or -1 (which doesn't fit to uint16_t, that's why
  * int32_t is return type here) if there is no constant with given name.

@@ -1,4 +1,5 @@
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
@@ -143,6 +144,17 @@ static void set_sensitivity(Action* a, float x, float y, float z) {
 	ax->scale = x;
 }
 
+static Parameter* get_property(Action* a, const char* name) {
+	AxisAction* ax = container_of(a, AxisAction, action);
+	if (0 == strcmp(name, "sensitivity")) {
+		Parameter* params[] = { scc_new_float_parameter(ax->scale) };
+		return scc_new_tuple_parameter(1, params);
+	}
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
 
 static ActionOE axis_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -164,6 +176,7 @@ static ActionOE axis_constructor(const char* keyword, ParameterList params) {
 	ax->action.trigger = &trigger;
 	ax->action.button_press = &button_press;
 	ax->action.button_release = &button_release;
+	ax->action.get_property = &get_property;
 	ax->action.extended.set_sensitivity = &set_sensitivity;
 	return (ActionOE)&ax->action;
 }

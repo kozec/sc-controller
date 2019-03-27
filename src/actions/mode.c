@@ -15,6 +15,7 @@
 #include "scc/tools.h"
 #include "tostring.h"
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 static const char* KW_MODE = "mode";
@@ -208,6 +209,62 @@ static void set_sensitivity(Action* a, float x, float y, float z) {
 	}
 }
 
+static char* get_property_mode_to_string(void* _m) {
+	Mode* m = (Mode*)_m;
+	switch (m->c_type) {
+	case MCT_BUTTON:
+		return strbuilder_cpy(scc_button_to_string(m->c_button));
+	case MCT_RANGE:
+		break;
+	default:
+		break;
+	}
+	return strbuilder_cpy("");
+}
+
+static Parameter* get_property(Action* a, const char* name) {
+	ModeModifier* mm = container_of(a, ModeModifier, action);
+	if (0 == strcmp("default", name)) {
+		Action* deflt = NULL;
+		FOREACH_IN(Mode*, mode, mm->modes) {
+			switch (mode->c_type) {
+			case MCT_DEFAULT:
+				deflt = mode->action;
+				break;
+			default:
+				continue;
+			}
+		}
+		if (deflt == NULL) deflt = NoAction;
+		return scc_new_action_parameter(deflt);
+	} else if (0 == strcmp("modes", name)) {
+		StrBuilder* sb = strbuilder_new();
+		if (sb == NULL) return NULL;
+		ListIterator it = iter_get(mm->modes);
+		if (!strbuilder_add_all(sb, it, get_property_mode_to_string, ",")) {
+			strbuilder_free(sb);
+			iter_free(it);
+			return NULL;
+		}
+		iter_free(it);
+		return scc_new_string_parameter(strbuilder_consume(sb));
+	}
+	
+	FOREACH_IN(Mode*, mode, mm->modes) {
+		char* s = get_property_mode_to_string(mode);
+		if (s == NULL) { free(s); break; }
+		char* mode_s = strbuilder_fmt("mode_%s", s);
+		free(s);
+		if (mode_s && (0 == strcasecmp(name, mode_s))) {
+			free(mode_s);
+			return scc_new_action_parameter(mode->action);
+		}
+		free(mode_s);
+	}
+	
+	return NULL;
+}
+
 
 static ActionOE mode_constructor(const char* keyword, ParameterList params) {
 	ListIterator it = iter_get(params);
@@ -234,6 +291,7 @@ static ActionOE mode_constructor(const char* keyword, ParameterList params) {
 	mm->action.whole = &whole;
 	mm->action.gyro = &gyro;
 	mm->action.trigger = &trigger;
+	mm->action.get_property = &get_property;
 	mm->action.extended.set_sensitivity = &set_sensitivity;
 	mm->action.extended.set_haptic = &set_haptic;
 	mm->action.extended.change = &change;
@@ -333,3 +391,4 @@ mode_constructor_fail:
 void scc_actions_init_mode() {
 	scc_action_register(KW_MODE, &mode_constructor);
 }
+

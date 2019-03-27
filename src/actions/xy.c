@@ -8,6 +8,7 @@
  */
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/iterable.h"
+#include "scc/utils/logging.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
@@ -143,6 +144,34 @@ static void set_sensitivity(Action* _a, float x, float y, float z) {
 		xy->y->extended.set_sensitivity(xy->y, y, 1, 1);
 }
 
+static Parameter* get_property(Action* a, const char* name) {
+	XYAction* xy = container_of(a, XYAction, action);
+	if (0 == strcmp(name, "sensitivity")) {
+		// Little magic happens here...
+		Parameter* params[] = {
+			xy->x->get_property == NULL ? NULL : xy->x->get_property(xy->x, "sensitivity"),
+			xy->y->get_property == NULL ? NULL : xy->y->get_property(xy->y, "sensitivity")
+		};
+		for (int i=0; i<2; i++) {
+			if ((params[i] != NULL) && ((params[i]->type & PT_TUPLE) != 0)
+					&& (scc_parameter_tuple_get_count(params[i]) > 0)) {
+				Parameter* child = scc_parameter_tuple_get_child(params[i], 0);
+				RC_ADD(child);
+				RC_REL(params[i]);
+				params[i] = child;
+			} else {
+				RC_REL(params[i]);
+				params[i] = scc_new_float_parameter(1.0);
+			}
+		}
+		return scc_new_tuple_parameter(2, params);
+	}
+	
+	DWARN("Requested unknown property '%s' from '%s'",
+			name, xy->is_relative ? KW_XY : KW_RELXY);
+	return NULL;
+}
+
 
 static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -165,6 +194,7 @@ static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 	xy->y = scc_parameter_as_action(params->items[1]);
 	xy->action.whole = &whole;
 	xy->action.compress = &compress;
+	xy->action.get_property = &get_property;
 	xy->action.extended.change = &change;
 	xy->action.extended.set_haptic = &set_haptic;
 	xy->action.extended.set_sensitivity = &set_sensitivity;

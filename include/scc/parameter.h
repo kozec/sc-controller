@@ -9,19 +9,20 @@ typedef struct Action Action;
 typedef enum {
 	// ActionFlags and ParameterType values has to be mutually exclusive,
 	// with exception of AF_ERROR / PT_ERROR
-	PT_ERROR					= 0b00000001,
-	PT_CONSTANT					= 0b00000010,
-	PT_ACTION					= 0b00000100,
-	PT_RANGE					= 0b00001000,
+	PT_ERROR					= 0b000000001,
+	PT_CONSTANT					= 0b000000010,
+	PT_ACTION					= 0b000000100,
+	PT_RANGE					= 0b000001000,
 	// PTNone mask intantionally covers Action
-	PT_NONE						= 0b00010100,
+	PT_NONE						= 0b000010100,
 
-	PT_INT						= 0b00100000,
+	PT_INT						= 0b000100000,
 	// PTFLOAT mask intantionally covers Integer
-	PT_FLOAT					= 0b01100000,
-	PT_STRING					= 0b10000000,
+	PT_FLOAT					= 0b001100000,
+	PT_STRING					= 0b010000000,
+	PT_TUPLE					= 0b100000000,
 	// PT_ANY  _has_ to cover all but error
-	PT_ANY						= 0b11111110,
+	PT_ANY						= 0b111111110,
 	ParameterType_pad_			= 0xFFFF
 } ParameterType;
 
@@ -36,9 +37,9 @@ typedef struct Parameter Parameter;
 
 // Action, Parameter, ActionError and ParamError begins with same header
 // and both ParameterType and ActionFlags have value 1 reserved for error.
-// 
+//
 // This is done this way so type of returned pointer can be determined simply
-// by casting it to (unsigned short*) and comparing to 1.
+// by casting it to (uint16_t*) and comparing to 1.
 // Only error vs Parameter and error vs Action is interesting check,
 // there should be no way to return Action where Parameter is expected.
 
@@ -46,7 +47,7 @@ struct Parameter {
 	ParameterType			type;
 	RC_HEADER;
 	
-	/** 
+	/**
 	 * Parameter->to_string returns string that can be parsed back to
 	 * same parameter. This is not straightforward as some value.ToString()
 	 * or it is same thing as Parameter->as_string. For example, for Int
@@ -64,7 +65,7 @@ struct Parameter {
 	 * dereferenced by caller.
 	 */
 	Action*(*as_action)(Parameter* p);
-	/** 
+	/**
 	 * Returns string value of parameter, exactly as it is stored. Using this
 	 * on parameter that's not string nor number is undefined behaviour and
 	 * will result in crash.
@@ -138,6 +139,13 @@ Parameter* scc_new_action_parameter(Action* a);
  */
 Parameter* scc_new_range_parameter(Parameter* a, RangeType type, float b);
 /**
+ * Returns new Parameter. Returned value has to be dereferenced manually.
+ * Steals references to child parameters.
+ * May return NULL if memory cannot be allocated or if any or child parameters
+ * is NULL. References to child parameters are stolen even if NULL is returned.
+ */
+Parameter* scc_new_tuple_parameter(uint8_t count, Parameter* children[]);
+/**
  * Creates param list out of varargs.
  * Reference counter on added parameters is properly increased and decreased
  * when ParameterList is deallocated.
@@ -205,6 +213,11 @@ char* scc_parameter_to_string(Parameter* p);
 /** Returns float value of parameter. Works only with float and int, crashes with others */
 #define scc_parameter_as_float(p) ((p)->as_float(p))
 
+/** Returns number of children in tuple */
+uint8_t scc_parameter_tuple_get_count(Parameter* p);
+/** Returns n-th child from tuple. Caller should not dereference returned value */
+Parameter* scc_parameter_tuple_get_child(Parameter* p, uint8_t n);
+
 /** Returns formatted "<keyword> cannot take <parameter> as <n>th parameter" error */
 ParamError* scc_new_invalid_parameter_type_error(const char* keyword, unsigned int n, Parameter* param);
 /** Returns formatted "<parameter> is out of range for <n>th parameter of <keyword>" error */
@@ -218,3 +231,4 @@ char* scc_param_as_string_invalid(Parameter* p);
 int64_t scc_param_as_int_invalid(Parameter* p);
 /** Default callback used when nonsensical conversion is requested. Calling this intentionally crashes! */
 float scc_param_as_float_invalid(Parameter* p);
+

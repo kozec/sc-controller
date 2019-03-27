@@ -80,3 +80,4 @@ ActionError* scc_oom_action_error();
 #define scc_new_param_error(code, fmt, ...) ((ParamError*)scc_new_action_error((code), (fmt), ##__VA_ARGS__))
 /** Returns new instance of ActionError, with error code set to AEC_PARSE_ERROR */
 #define scc_new_parse_error(fmt, ...) ((ParamError*)scc_new_action_error(AEC_PARSE_ERROR, (fmt), ##__VA_ARGS__))
+

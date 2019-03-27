@@ -75,3 +75,10 @@ test('test_actions', executable('test_actions',
 	link_with: link,
 	sources: [ 'test_actions.c', 'tools.c' ]
 ))
+
+test('test_compress', executable('test_compress',
+	dependencies: [cu_test],
+	include_directories: include,
+	link_with: link,
+	sources: [ 'test_compress.c' ]
+))

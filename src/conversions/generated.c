@@ -17,7 +17,7 @@
 #define GDK_KEYCODE(x)	0
 
 const uint16_t SCC_KEYCODE_MAX = 248;
-size_t rel_abs_count = 174;
+const size_t SCC_REL_ABS_MAX = 174;
 
 struct Item keys[] = {
 	{ 0,	"KEY_RESERVED", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },

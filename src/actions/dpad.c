@@ -11,7 +11,6 @@
 static ParamChecker pc4;
 static ParamChecker pc8;
 static const char* KW_DPAD4 = "dpad";
-static const char* KW_DPAD8 = "dpad8";
 
 // Power of 2 from minimal distance that finger has to be from center
 #define MIN_DISTANCE_P2 (double)2000000
@@ -188,5 +187,4 @@ void scc_actions_init_dpad() {
 	scc_param_checker_set_defaults(&pc8, DEFAULT_DIAGONAL_RANGE,
 		NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);	// 8 NULLs
 	scc_action_register(KW_DPAD4, &dpad_constructor);
-	scc_action_register(KW_DPAD8, &dpad_constructor);
 }

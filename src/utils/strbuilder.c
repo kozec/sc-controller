@@ -163,6 +163,7 @@ bool strbuilder_add_path(StrBuilder* b, const char* node) {
 	return strbuilder_add(b, node);
 }
 
+
 int strbuilder_add_fd(StrBuilder* b, int fd) {
 	if (b == NULL) return false;
 	size_t original_len = b->length;
@@ -347,20 +348,26 @@ bool _strbuilder_add_all(StrBuilder* b, void* iterator,
 		return true;
 	if (b == NULL) return false;
 	size_t original_length = b->length;
+	bool needs_glue = false;
 	while (has_next(iterator)) {
 		void* item = get_next(iterator);
 		char* str = convert_fn(item);
 		if (str == NULL)
 			goto _strbuilder_add_all_fail;
+		if (str[0] == 0) {
+			free(str);
+			continue;
+		}
+		if (needs_glue && (glue != NULL)) {
+			if (!strbuilder_add(b, glue))
+				goto _strbuilder_add_all_fail;
+		}
 		if (!strbuilder_add(b, str)) {
 			free(str);
 			goto _strbuilder_add_all_fail;
 		}
+		needs_glue = true;
 		free(str);
-		if ((glue != NULL) && has_next(iterator)) {
-			if (!strbuilder_add(b, glue))
-				goto _strbuilder_add_all_fail;
-		}
 	}
 	return true;
 _strbuilder_add_all_fail:
@@ -396,3 +403,4 @@ char* strbuilder_fmt(const char* format, ...) {
 	va_end (args);
 	return longbuffer;
 }
+

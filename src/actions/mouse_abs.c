@@ -47,29 +47,6 @@ static void mouseabs_dealloc(Action* a) {
 	free(b);
 }
 
-static void axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what);
-static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what);
-
-
-static ActionOE mouseabs_constructor(const char* keyword, ParameterList params) {
-	ParamError* err = scc_param_checker_check(&pc, keyword, params);
-	if (err != NULL) return (ActionOE)err;
-	
-	MouseAbsAction* b = malloc(sizeof(MouseAbsAction));
-	if (b == NULL) return (ActionOE)scc_oom_action_error();
-	scc_action_init(&b->action, KW_MOUSEABS, AF_ACTION, &mouseabs_dealloc, &mouseabs_to_string);
-	b->action.axis = &axis;
-	b->action.whole = &whole;
-	
-	b->axis = scc_parameter_as_int(params->items[0]);
-	b->sensitivity.x = b->sensitivity.y = scc_parameter_as_float(params->items[1]);
-	b->param = params->items[0];
-	
-	RC_ADD(b->param);
-	return (ActionOE)&b->action;
-}
-
-
 static void axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) {
 	MouseAbsAction* b = container_of(a, MouseAbsAction, action);
 	double d = (double)value * b->sensitivity.x * MOUSE_ABS_FACTOR;
@@ -91,7 +68,30 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 }
 
 
+static ActionOE mouseabs_constructor(const char* keyword, ParameterList params) {
+	ParamError* err = scc_param_checker_check(&pc, keyword, params);
+	if (err != NULL) return (ActionOE)err;
+	params = scc_param_checker_fill_defaults(&pc, params);
+	if (params == NULL) return (ActionOE)scc_oom_action_error();
+	
+	MouseAbsAction* b = malloc(sizeof(MouseAbsAction));
+	if (b == NULL) return (ActionOE)scc_oom_action_error();
+	scc_action_init(&b->action, KW_MOUSEABS, AF_ACTION, &mouseabs_dealloc, &mouseabs_to_string);
+	b->action.axis = &axis;
+	b->action.whole = &whole;
+	
+	b->axis = scc_parameter_as_int(params->items[0]);
+	b->sensitivity.x = b->sensitivity.y = scc_parameter_as_float(params->items[1]);
+	b->param = params->items[0];
+	
+	RC_ADD(b->param);
+	list_free(params);
+	return (ActionOE)&b->action;
+}
+
 void scc_actions_init_mouseabs() {
-	scc_param_checker_init(&pc, "c");
+	scc_param_checker_init(&pc, "x?f?");
+	scc_param_checker_set_defaults(&pc, REL_CNT, 1.0);
 	scc_action_register(KW_MOUSEABS, &mouseabs_constructor);
 }
+

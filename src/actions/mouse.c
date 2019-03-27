@@ -5,6 +5,7 @@
  * or scroll wheel.
  */
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/logging.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
@@ -141,6 +142,20 @@ static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos
 	change(a, m, delta, delta, 0);
 }
 
+static Parameter* get_property(Action* a, const char* name) {
+	MouseAction* b = container_of(a, MouseAction, action);
+	if (0 == strcmp(name, "sensitivity")) {
+		Parameter* params[] = {
+			scc_new_float_parameter(b->sensitivity.x),
+			scc_new_float_parameter(b->sensitivity.y)
+		};
+		return scc_new_tuple_parameter(2, params);
+	}
+	
+	DWARN("Requested unknown property '%s' from '%s'", a->type);
+	return NULL;
+}
+
 
 static ActionOE mouse_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -159,6 +174,7 @@ static ActionOE mouse_constructor(const char* keyword, ParameterList params) {
 	b->action.extended.set_sensitivity = &set_sensitivity;
 	b->action.extended.set_haptic = &set_haptic;
 	b->action.extended.change = &change;
+	b->action.get_property = &get_property;
 	
 	b->old_pos_set = false;
 	b->axis = scc_parameter_as_int(params->items[0]);
@@ -187,3 +203,4 @@ void scc_actions_init_mouse() {
 	scc_action_register(KW_TRACKPAD, &mouse_constructor);
 	scc_action_register(KW_TRACKBALL, &mouse_constructor);
 }
+
