@@ -5,6 +5,7 @@
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "props.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -150,6 +151,8 @@ static Parameter* get_property(Action* a, const char* name) {
 		Parameter* params[] = { scc_new_float_parameter(ax->scale) };
 		return scc_new_tuple_parameter(1, params);
 	}
+	MAKE_INT_PROPERTY(ax->axis, "axis");
+	MAKE_INT_PROPERTY(ax->axis, "id");		// backwards compatibility
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;

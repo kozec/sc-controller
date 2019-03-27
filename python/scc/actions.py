@@ -10,15 +10,21 @@ import ctypes
 from itertools import chain
 from scc.parser import ParseError
 from scc.tools import find_library
-import traceback
+from scc.constants import SCButtons, HapticPos
+
+import logging
+log = logging.getLogger("Actions")
 
 
 class Parameter:
 	class CParameterOE(ctypes.Structure):
 		_fields_ = [
-			("type", ctypes.c_int),
+			("type", ctypes.c_uint32),
 			("ref_count", ctypes.c_size_t),
 		]
+	
+	CParameterOEp = ctypes.POINTER(CParameterOE)
+	CParameterOEpp = ctypes.POINTER(CParameterOEp)
 	
 	PT_ERROR					= 0b000000001
 	PT_CONSTANT					= 0b000000010
@@ -32,7 +38,7 @@ class Parameter:
 	PT_ANY						= 0b111111110
 	
 	def __init__(self, value):
-		if isinstance(value, Parameter.CParameterOE):
+		if isinstance(value, Parameter.CParameterOEp):
 			if (value.contents.type & Parameter.PT_ERROR) != 0:
 				try:
 					raise ValueError(lib_bindings.scc_error_get_message(CAPError(value)))
@@ -54,15 +60,15 @@ class Parameter:
 				cparam = lib_actions.scc_new_action_parameter(value._caction)
 			elif hasattr(value, "__int__"):
 				cparam = lib_actions.scc_new_int_parameter(value)
+			elif isinstance(value, HapticPos):
+				cparam = lib_actions.scc_new_const_string_parameter(value.value)
 			else:
 				raise TypeError("Cannot convert %s" % (repr(value),))
 			self._cparam = cparam
 	
 	def __del__(self):
-		print "deleting par", self.__class__, "with rc", self._cparam.contents.ref_count
 		lib_bindings.scc_parameter_unref(self._cparam)
 		self._cparam = None
-		print "OK"
 	
 	def get_value(self):
 		""" Returns python value """
@@ -73,13 +79,13 @@ class Parameter:
 		elif (self._cparam.contents.type & Parameter.PT_STRING) != 0:
 			return lib_bindings.scc_parameter_as_string(self._cparam)
 		elif (self._cparam.contents.type & Parameter.PT_INT) != 0:
+			if (self._cparam.contents.type & Parameter.PT_FLOAT) == Parameter.PT_FLOAT:
+				return round(lib_bindings.scc_parameter_as_float(self._cparam), 4)
 			return lib_bindings.scc_parameter_as_int(self._cparam)
-		elif (self._cparam.contents.type & Parameter.PT_FLOAT) != 0:
-			return lib_bindings.scc_parameter_as_float(self._cparam)
 		elif (self._cparam.contents.type & Parameter.PT_TUPLE) != 0:
 			count = lib_bindings.scc_parameter_tuple_get_count(self._cparam)
 			return tuple((
-				Parameter(cp).get_value()
+				Parameter(lib_bindings.scc_parameter_ref(cp)).get_value()
 				for cp in (
 					lib_bindings.scc_parameter_tuple_get_child(self._cparam, i)
 					for i in xrange(count)
@@ -88,16 +94,15 @@ class Parameter:
 		return None
 
 
-CParameterOEp = ctypes.POINTER(Parameter.CParameterOE)
-CParameterOEpp = ctypes.POINTER(CParameterOEp)
-
-
 class Action(object):
 	class CActionOE(ctypes.Structure):
 		_fields_ = [
-			("flags", ctypes.c_int),
+			("flags", ctypes.c_uint32),
 			("ref_count", ctypes.c_size_t),
 		]
+	
+	CActionOEp = ctypes.POINTER(CActionOE)
+	CActionOEpp = ctypes.POINTER(CActionOEp)
 	
 	AF_NONE					= 0b00000000
 	AF_ERROR				= 0b00000001
@@ -111,17 +116,17 @@ class Action(object):
 		If CActionOEp is passed, steals one reference.
 		"""
 		self._caction = None
-		if len(args) == 1 and isinstance(args[0], CActionOEp):
+		if len(args) == 1 and isinstance(args[0], Action.CActionOEp):
 			caction = args[0]
 		else:
 			if self.__class__ in (Action, Modifier):
 				raise TypeError("%s cannot be instantiated directly (use subclass)" % (self.__class__.__name__,))
 			pars = [ Parameter(v) for v in args ]
-			cpars = (CParameterOEp * (len(pars)))()
+			cpars = (Parameter.CParameterOEp * (len(pars)))()
 			for i, par in enumerate(pars):
 				cpars[i] = par._cparam
-			caction = lib_bindings.scc_action_new_from_array(self.KEYWORD,
-								ctypes.cast(cpars, CParameterOEpp), len(pars))
+			caction = lib_bindings.scc_action_new_from_array(self.KEYWORD, len(pars),
+								ctypes.cast(cpars, Parameter.CParameterOEpp))
 		
 		if caction.contents.flags == Action.AF_NONE:
 			pass
@@ -131,14 +136,11 @@ class Action(object):
 			raise OSError("Invalid value returned by scc_parse_action (flags = 0x%x)" % caction.contents.flags)
 		
 		self._caction = caction
-		print "Initialized", self
 	
 	def __del__(self):
 		if self._caction:
-			print "deleting", self.__class__, "with rc", self._caction.contents.ref_count
 			lib_bindings.scc_action_unref(self._caction)
 			self._caction = None
-			print "OK"
 	
 	def to_string(self, multiline=False):
 		""" Converts action back to string """
@@ -153,9 +155,9 @@ class Action(object):
 		action.
 		"""
 		caction = lib_bindings.scc_action_get_compressed(self._caction)
-		if caction is None:
+		if not caction:
 			return self
-		return Action(caction)
+		return Action._from_c(caction)
 	
 	def strip(self):
 		# TODO: This? Is it still needed?
@@ -177,15 +179,22 @@ class Action(object):
 	@staticmethod
 	def parse(s):
 		caction = lib_parse.scc_parse_action(s)
-		if (caction.contents.flags & Parameter.AF_ERROR) != 0:
+		if (caction.contents.flags & Action.AF_ERROR) != 0:
 			try:
-				raise OSError(lib_actions.scc_error_get_message(CAPError(caction)))
+				raise OSError(lib_bindings.scc_error_get_message(CAPError(caction)))
 			finally:
 				lib_bindings.scc_action_unref(caction)
+		return Action._from_c(caction)
+	
+	@staticmethod
+	def _from_c(caction):
 		tpe = lib_bindings.scc_action_get_type(caction)
 		cls = KEYWORD_TO_ACTION.get(tpe, Action)
 		if cls is Action:
-			log
+			log.warning("Parsed unknown action type '%s'", tpe)
+			instance = cls(caction)
+			instance.KEYWORD = tpe
+			return instance
 		return cls(caction)
 	
 	def __getattr__(self, name):
@@ -200,14 +209,10 @@ class Action(object):
 		return self.sensitivity
 
 
-CActionOEp = ctypes.POINTER(Action.CActionOE)
-CActionOEpp = ctypes.POINTER(CActionOEp)
-
-
 class CAPError(ctypes.Union):
 	_fields_ = [
-		('e1', CActionOEp),
-		('e2', CParameterOEp),
+		('e1', Action.CActionOEp),
+		('e2', Parameter.CParameterOEp),
 	]
 
 
@@ -217,8 +222,18 @@ class NoAction(Action):
 	def __nonzero__(self):
 		return False
 
-class Modifier(Action): pass
-class ModeModifier(Modifier): KEYWORD = "mode"
+class Modifier(Action):
+	
+	@property
+	def child(self):
+		c = lib_bindings.scc_action_get_child(self._caction)
+		if not c:
+			raise AttributeError("Action '%s' has no child" % (self.KEYWORD,))
+		return Action._from_c(c)
+	
+	action = child	# backwards compatibility :(
+
+
 class BallModifier(Modifier): KEYWORD = "ball"
 class MenuAction(Action): KEYWORD = "menu"
 class ChangeProfileAction(Action): KEYWORD = "profile"
@@ -235,9 +250,9 @@ class HatDownAction(Action): KEYWORD = "hatdown"
 class HatLeftAction(Action): KEYWORD = "hatleft"
 class HatRightAction(Action): KEYWORD = "hatright"
 class XYAction(Action): KEYWORD = "XY"
-class RelXYAction(Action): KEYWORD = "relxy"
-class CycleAction(Action): KEYWORD = "cycle"
-class TypeAction(Action): KEYWORD = "type"
+class RelXYAction(Action): KEYWORD = "relXY"
+class Cycle(Action): KEYWORD = "cycle"
+class Type(Action): KEYWORD = "type"
 class ButtonAction(Action): KEYWORD = "button"
 class DeadzoneModifier(Modifier): KEYWORD = "deadzone"
 class MouseAction(Action): KEYWORD = "mouse"
@@ -246,16 +261,39 @@ class TrackballAction(Action): KEYWORD = "trackball"
 class HoldModifier(Modifier): KEYWORD = "hold"
 class DblclickModifier(Modifier): KEYWORD = "dblclick"
 class SleepAction(Action): KEYWORD = "sleep"
-class RepeatModifier(Modifier): KEYWORD = "repeat"
+class Repeat(Modifier): KEYWORD = "repeat"
 class SensitivityModifier(Modifier): KEYWORD = "sens"
 class FeedbackModifier(Modifier): KEYWORD = "feedback"
 class ClickedModifier(Modifier): KEYWORD = "clicked"
-class ClickModifier(Modifier): KEYWORD = "click"
 class NameModifier(Modifier): KEYWORD = "name"
 class TriggerAction(Action): KEYWORD = "trigger"
 class DPadAction(Action): KEYWORD = "dpad"
-class DoubleclickModifier(Action): KEYWORD = "dblclick"
-class Macro(Action): KEYWORD = "macro"
+class DPad8Action(Action): KEYWORD = "dpad8"
+class DoubleclickModifier(Modifier): KEYWORD = "doubleclick"
+
+
+class ModeModifier(Modifier):
+	KEYWORD = "mode"
+	
+	class CModeshiftModes(ctypes.Structure):
+		_fields_ = [
+			("mode", Parameter.CParameterOEp),
+			("action", Action.CActionOEp),
+		]
+	
+	CModeshiftModesp = ctypes.POINTER(CModeshiftModes)
+	CModeshiftModespp = ctypes.POINTER(CModeshiftModesp)
+	
+	@property
+	def mods(self):
+		""" Backwards-python-compatibile way to retrieve modifiers """
+		return {
+			SCButtons(k): v
+			for (k, v) in Parameter(lib_actions
+				.scc_modeshift_get_modes(self._caction)).get_value()
+			if k
+		}
+
 
 KEYWORD_TO_ACTION = {
 	y.KEYWORD: y
@@ -266,80 +304,99 @@ KEYWORD_TO_ACTION = {
 
 lib_bindings = find_library("libscc-bindings")
 
+
 class MultiAction(Action):
 	BUILD_FN = lib_bindings.scc_multiaction_new
 	
 	def __init__(self, *args):
 		self._caction = None
-		pars = (CActionOEp * (len(args)))()
+		pars = (Action.CActionOEp * (len(args)))()
 		for i, value in enumerate(args):
 			if not isinstance(value, Action) or value._caction is None:
 				raise TypeError("%s is not Action" % (repr(value), ))
 			pars[i] = value._caction
-		Action.__init__(self, self.BUILD_FN(ctypes.cast(pars, CActionOEpp), len(pars)))
+		Action.__init__(self, self.BUILD_FN(ctypes.cast(pars, Action.CActionOEpp), len(pars)))
 
 
-lib_bindings.scc_action_get_type.argtypes = [ CActionOEp ]
+class Macro(MultiAction):
+	BUILD_FN = lib_bindings.scc_macro_new
+
+
+lib_bindings.scc_action_get_type.argtypes = [ Action.CActionOEp ]
 lib_bindings.scc_action_get_type.restype = ctypes.c_char_p
 
-lib_bindings.scc_action_get_property.argtypes = [ CActionOEp, ctypes.c_char_p ]
-lib_bindings.scc_action_get_property.restype = CParameterOEp
+lib_bindings.scc_action_get_property.argtypes = [ Action.CActionOEp, ctypes.c_char_p ]
+lib_bindings.scc_action_get_property.restype = Parameter.CParameterOEp
 
-lib_bindings.scc_parameter_as_action.argtypes = [ CParameterOEp ]
-lib_bindings.scc_parameter_as_action.restype = CActionOEp
+lib_bindings.scc_parameter_as_action.argtypes = [ Parameter.CParameterOEp ]
+lib_bindings.scc_parameter_as_action.restype = Action.CActionOEp
 
-lib_bindings.scc_parameter_as_string.argtypes = [ CParameterOEp ]
+lib_bindings.scc_parameter_as_string.argtypes = [ Parameter.CParameterOEp ]
 lib_bindings.scc_parameter_as_string.restype = ctypes.c_char_p
 
-lib_bindings.scc_parameter_as_string.argtypes = [ CParameterOEp ]
-lib_bindings.scc_parameter_as_string.restype = ctypes.c_char_p
+lib_bindings.scc_parameter_as_float.argtypes = [ Parameter.CParameterOEp ]
+lib_bindings.scc_parameter_as_float.restype = ctypes.c_float
 
-lib_bindings.scc_parameter_as_string.argtypes = [ CParameterOEp ]
-lib_bindings.scc_parameter_as_string.restype = ctypes.c_char_p
+lib_bindings.scc_parameter_as_int.argtypes = [ Parameter.CParameterOEp ]
+lib_bindings.scc_parameter_as_int.restype = ctypes.c_int64
 
-lib_bindings.scc_parameter_tuple_get_count.argtypes = [ CParameterOEp ]
+lib_bindings.scc_parameter_tuple_get_count.argtypes = [ Parameter.CParameterOEp ]
 lib_bindings.scc_parameter_tuple_get_count.restype = ctypes.c_uint8
 
-lib_bindings.scc_parameter_tuple_get_child.argtypes = [ CParameterOEp, ctypes.c_uint8 ]
-lib_bindings.scc_parameter_tuple_get_child.restype = CParameterOEp
+lib_bindings.scc_parameter_tuple_get_child.argtypes = [ Parameter.CParameterOEp, ctypes.c_uint8 ]
+lib_bindings.scc_parameter_tuple_get_child.restype = Parameter.CParameterOEp
 
 lib_bindings.scc_error_get_message.argtypes = [ CAPError ]
 lib_bindings.scc_error_get_message.restype = ctypes.c_char_p
 
-lib_bindings.scc_action_new_from_array.argtypes = [ ctypes.c_char_p, CParameterOEpp, ctypes.c_size_t ]
-lib_bindings.scc_action_new_from_array.restype = CActionOEp
+lib_bindings.scc_action_new_from_array.argtypes = [ ctypes.c_char_p, ctypes.c_size_t, Parameter.CParameterOEpp ]
+lib_bindings.scc_action_new_from_array.restype = Action.CActionOEp
 
-lib_bindings.scc_multiaction_new.argtypes = [ CActionOEpp, ctypes.c_size_t ]
-lib_bindings.scc_multiaction_new.restype = CActionOEp
+lib_bindings.scc_multiaction_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
+lib_bindings.scc_multiaction_new.restype = Action.CActionOEp
 
-lib_bindings.scc_action_ref.argtypes = [ CActionOEp ]
-lib_bindings.scc_action_unref.argtypes = [ CActionOEp ]
-lib_bindings.scc_parameter_ref.argtypes = [ CParameterOEp ]
-lib_bindings.scc_parameter_unref.argtypes = [ CParameterOEp ]
+lib_bindings.scc_macro_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
+lib_bindings.scc_macro_new.restype = Action.CActionOEp
 
-lib_bindings.scc_action_get_compressed.argtypes = [ CActionOEp ]
-lib_bindings.scc_action_get_compressed.restype = CActionOEp
+lib_bindings.scc_action_ref.argtypes = [ Action.CActionOEp ]
+lib_bindings.scc_action_ref.restype = Action.CActionOEp
+lib_bindings.scc_action_unref.argtypes = [ Action.CActionOEp ]
+lib_bindings.scc_parameter_ref.argtypes = [ Parameter.CParameterOEp ]
+lib_bindings.scc_parameter_ref.restype = Parameter.CParameterOEp
+lib_bindings.scc_parameter_unref.argtypes = [ Parameter.CParameterOEp ]
+
+lib_bindings.scc_action_get_compressed.argtypes = [ Action.CActionOEp ]
+lib_bindings.scc_action_get_compressed.restype = Action.CActionOEp
+
+lib_bindings.scc_action_get_child.argtypes = [ Action.CActionOEp ]
+lib_bindings.scc_action_get_child.restype = Action.CActionOEp
 
 
 lib_parse = find_library("libscc-parser")
 lib_parse.scc_parse_action.argtypes = [ ctypes.c_char_p ]
-lib_parse.scc_parse_action.restype = CActionOEp
+lib_parse.scc_parse_action.restype = Action.CActionOEp
 
 
 lib_actions = find_library("libscc-actions")
 
-lib_actions.scc_action_to_string.argtypes = [ CActionOEp ]
+lib_actions.scc_action_to_string.argtypes = [ Action.CActionOEp ]
 lib_actions.scc_action_to_string.restype = ctypes.c_char_p
 
 lib_actions.scc_new_int_parameter.argtypes = [ ctypes.c_int64 ]
-lib_actions.scc_new_int_parameter.restype = CParameterOEp
+lib_actions.scc_new_int_parameter.restype = Parameter.CParameterOEp
 
 lib_actions.scc_new_float_parameter.argtypes = [ ctypes.c_float ]
-lib_actions.scc_new_float_parameter.restype = CParameterOEp
+lib_actions.scc_new_float_parameter.restype = Parameter.CParameterOEp
 
-lib_actions.scc_new_action_parameter.argtypes = [ CActionOEp ]
-lib_actions.scc_new_action_parameter.restype = CParameterOEp
+lib_actions.scc_new_action_parameter.argtypes = [ Action.CActionOEp ]
+lib_actions.scc_new_action_parameter.restype = Parameter.CParameterOEp
 
 lib_actions.scc_new_string_parameter.argtypes = [ ctypes.c_char_p ]
-lib_actions.scc_new_string_parameter.restype = CParameterOEp
+lib_actions.scc_new_string_parameter.restype = Parameter.CParameterOEp
+
+lib_actions.scc_modeshift_get_modes.argtypes = [ Action.CActionOEp ]
+lib_actions.scc_modeshift_get_modes.restype = Parameter.CParameterOEp
+
+lib_actions.scc_new_const_string_parameter.argtypes = [ ctypes.c_char_p ]
+lib_actions.scc_new_const_string_parameter.restype = Parameter.CParameterOEp
 

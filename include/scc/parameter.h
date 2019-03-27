@@ -27,7 +27,7 @@ typedef enum {
 } ParameterType;
 
 typedef enum {
-	RT_GREATER		 			= 1,
+	RT_GREATER					= 1,
 	RT_LESS						= 2,
 	RT_GREATER_OREQUAL 			= 3,
 	RT_LESS_OREQUAL				= 4

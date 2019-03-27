@@ -7,7 +7,6 @@ import pytest
 
 class TestMacros(object):
 	
-	@pytest.mark.skip
 	def test_macro(self):
 		"""
 		Tests if Macro can be converted to string and parsed back to
@@ -19,7 +18,6 @@ class TestMacros(object):
 			ButtonAction(Keys.BTN_MIDDLE)
 		))
 	
-	@pytest.mark.skip
 	def test_type(self):
 		"""
 		Tests if Type macro can be converted to string and parsed back to
@@ -27,7 +25,6 @@ class TestMacros(object):
 		"""
 		assert _parses_as_itself(Type("ilovecandy"))
 	
-	@pytest.mark.skip
 	def test_cycle(self):
 		"""
 		Tests if Cycle can be converted to string and parsed back to
@@ -39,7 +36,6 @@ class TestMacros(object):
 			ButtonAction(Keys.BTN_MIDDLE)
 		))
 	
-	@pytest.mark.skip
 	def test_repeat(self):
 		"""
 		Tests if Repeat can be converted to string and parsed back to
@@ -59,7 +55,6 @@ class TestMacros(object):
 		"""
 		assert _parses_as_itself(SleepAction(1.5))
 	
-	@pytest.mark.skip
 	def test_press(self):
 		"""
 		Tests if PressAction can be converted to string and
@@ -67,7 +62,6 @@ class TestMacros(object):
 		"""
 		assert _parses_as_itself(PressAction(Keys.BTN_LEFT))
 	
-	@pytest.mark.skip
 	def test_release(self):
 		"""
 		Tests if ReleaseAction can be converted to string
@@ -75,7 +69,6 @@ class TestMacros(object):
 		"""
 		assert _parses_as_itself(ReleaseAction(Keys.BTN_LEFT))
 	
-	@pytest.mark.skip
 	def test_tap(self):
 		"""
 		Tests if TapAction can be converted to string

@@ -13,6 +13,7 @@
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "wholehaptic.h"
+#include "props.h"
 #include "tostring.h"
 #include <sys/time.h>
 #include <tgmath.h>
@@ -34,7 +35,7 @@ const char* KW_BALL = "ball";
 
 typedef struct {
 	Action				action;
-	Action*			 	child;
+	Action*				child;
 	ParameterList		params;
 	WholeHapticData		whdata;
 	PadStickTrigger		what;
@@ -85,7 +86,6 @@ static void set_sensitivity(Action *a, float x, float y, float z) {
 	b->sensitivity.x = x;
 	b->sensitivity.y = y;
 }
-
 
 /** Stops rolling of the 'ball' */
 static void stop(BallModifier* b, Mapper* m) {
@@ -179,6 +179,28 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 	}
 }
 
+static Action* get_child(Action* a) {
+	BallModifier* b = container_of(a, BallModifier, action);
+	RC_ADD(b->child);
+	return b->child;
+}
+
+static Parameter* get_property(Action* a, const char* name) {
+	BallModifier* b = container_of(a, BallModifier, action);
+	MAKE_FLOAT_PROPERTY(b->friction, "friction");
+	MAKE_DVEC_PROPERTY(b->sensitivity, "sensitivity");
+	MAKE_INT_PROPERTY(b->ampli, "ampli");
+	MAKE_FLOAT_PROPERTY(b->degree, "degree");
+	MAKE_FLOAT_PROPERTY(b->radscale, "radscale");
+	MAKE_FLOAT_PROPERTY(b->mass, "mass");
+	MAKE_FLOAT_PROPERTY(b->r, "r");
+	MAKE_FLOAT_PROPERTY(b->i, "i");
+	MAKE_FLOAT_PROPERTY(b->a, "a");
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
 
 static ActionOE ball_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -191,6 +213,8 @@ static ActionOE ball_constructor(const char* keyword, ParameterList params) {
 	scc_action_init(&b->action, KW_BALL, AF_MODIFIER, &ball_dealloc, &ball_to_string);
 	b->action.compress = &compress;
 	b->action.whole = &whole;
+	b->action.get_property = &get_property;
+	b->action.extended.get_child = &get_child;
 	b->action.extended.set_haptic = &set_haptic;
 	b->action.extended.set_sensitivity = &set_sensitivity;
 	

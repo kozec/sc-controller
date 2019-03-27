@@ -174,6 +174,14 @@ void test_macro(CuTest* tc) {
 }
 
 
+/** Tests parsing of string with newline in it */
+void test_multiline(CuTest* tc) {
+	ActionOE a = scc_parse_action("mode(\nA, button(Keys.KEY_Q),\nB, button(KEY_W))");
+	assert_msg(tc, !IS_ACTION_ERROR(a), ACTION_ERROR(a)->message);
+	COMPARE_ACTION_TO_STR(a, "mode(A, button(KEY_Q), B, button(KEY_W))");
+}
+
+
 /** Tests case that failed in past */
 void test_axis0(CuTest* tc) {
 	ActionOE a;
@@ -197,6 +205,7 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_dpad);
 	DEFAULT_SUITE_ADD(test_macro);
 	DEFAULT_SUITE_ADD(test_axis0);
+	DEFAULT_SUITE_ADD(test_multiline);
 	
 	return CuSuiteRunDefault();
 }

@@ -52,7 +52,7 @@ typedef struct {
 	TaskID				task;
 } HoldDblClick;
 
-ACTION_MAKE_TO_STRING(HoldDblClick, holddblclick, KW_HOLD, &pc); // _a->keyword
+ACTION_MAKE_TO_STRING(HoldDblClick, holddblclick, _a->type, &pc);
 
 /** Deallocates HoldDblClick */
 static void holddblclick_dealloc(Action* a) {
@@ -64,8 +64,10 @@ static void holddblclick_dealloc(Action* a) {
 	free(hdbl);
 }
 
-static inline bool mergable(Action* a) {
+static inline bool mergable(HoldDblClick* hdbl, Action* a) {
 	if (a == NULL)
+		return false;
+	if (a->type == hdbl->action.type)
 		return false;
 	if (a->type == KW_HOLD)
 		return true;
@@ -74,22 +76,11 @@ static inline bool mergable(Action* a) {
 	return false;
 }
 
-static void merge(HoldDblClick* hdbl, Action* a) {
-	HoldDblClick* hdbl2 = container_of(a, HoldDblClick, action);
-	#define TRY_MERGE(child)													\
-		if ((hdbl2->child != NULL) &&											\
-					((hdbl->child == NULL) || (hdbl->child == a))) {			\
-			Action* old = hdbl->child;											\
-			hdbl->child = hdbl2->child;											\
-			RC_ADD(hdbl->child);												\
-			RC_REL(old);														\
-		}
-	TRY_MERGE(hold_action);
-	TRY_MERGE(dblclick_action);
-	TRY_MERGE(default_action);
-	if (hdbl->timeout == DEAFAULT_TIMEOUT * 1000.0)
-		hdbl->timeout = hdbl2->timeout;
-}
+#define TRY_MERGE(T1, T2)											\
+	if ((hdbl->T1 == NULL) && (hdbl2->T2 != NULL)) {				\
+		hdbl->T1 = hdbl2->T2;										\
+		RC_ADD(hdbl->T1);											\
+	}
 
 static Action* compress(Action* a) {
 	HoldDblClick* hdbl = container_of(a, HoldDblClick, action);
@@ -100,12 +91,29 @@ static Action* compress(Action* a) {
 	if (hdbl->default_action != NULL)
 		scc_action_compress(&hdbl->default_action);
 	
-	if (mergable(hdbl->hold_action))
-		merge(hdbl, hdbl->hold_action);
-	if (mergable(hdbl->dblclick_action))
-		merge(hdbl, hdbl->dblclick_action);
-	if (mergable(hdbl->default_action))
-		merge(hdbl, hdbl->default_action);
+	if (mergable(hdbl, hdbl->hold_action)) {
+		HoldDblClick* hdbl2 = container_of(hdbl->hold_action, HoldDblClick, action);
+		hdbl->hold_action = NULL;
+		TRY_MERGE(dblclick_action, dblclick_action);
+		TRY_MERGE(hold_action, default_action);
+		RC_REL(&hdbl2->action);
+	}
+	if (mergable(hdbl, hdbl->dblclick_action)) {
+		HoldDblClick* hdbl2 = container_of(hdbl->dblclick_action, HoldDblClick, action);
+		hdbl->dblclick_action = NULL;
+		TRY_MERGE(hold_action, hold_action);
+		TRY_MERGE(dblclick_action, default_action);
+		RC_REL(&hdbl2->action);
+	}
+	if (mergable(hdbl, hdbl->default_action)) {
+		HoldDblClick* hdbl2 = container_of(hdbl->default_action, HoldDblClick, action);
+		hdbl->default_action = NULL;
+		TRY_MERGE(dblclick_action, dblclick_action);
+		TRY_MERGE(hold_action, hold_action);
+		TRY_MERGE(default_action, default_action);
+		RC_REL(&hdbl2->action);
+	}
+	
 	return a;
 }
 
@@ -228,14 +236,29 @@ static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos
 		button_release(a, m);
 }
 
+static Action* get_child(Action* a) {
+	// Backwards compatibility: 'self.child' was dblclick_action back in python
+	HoldDblClick* hdbl = container_of(a, HoldDblClick, action);
+	Action* c = hdbl->dblclick_action;
+	if (c == NULL)
+		c = NoAction;
+	RC_ADD(c);
+	return c;
+}
+
+#define action_par_null_aware(a) (((a) == NULL)			\
+				? scc_new_action_parameter(NoAction)	\
+				: scc_new_action_parameter(a))
+
+
 static Parameter* get_property(Action* a, const char* name) {
 	HoldDblClick* hdbl = container_of(a, HoldDblClick, action);
-	if (0 == strcmp(name, "hold_action"))
-		return scc_new_action_parameter(hdbl->hold_action);
-	if (0 == strcmp(name, "dblclick_action"))
-		return scc_new_action_parameter(hdbl->dblclick_action);
-	if (0 == strcmp(name, "default_action"))
-		return scc_new_action_parameter(hdbl->default_action);
+	if ((0 == strcmp(name, "hold_action")) || (0 == strcmp(name, "holdaction")))
+		return action_par_null_aware(hdbl->hold_action);
+	if ((0 == strcmp(name, "dblclick_action")) || (0 == strcmp(name, "dblclickaction")))
+		return action_par_null_aware(hdbl->dblclick_action);
+	if ((0 == strcmp(name, "default_action")) || (0 == strcmp(name, "normalaction")))
+		return action_par_null_aware(hdbl->default_action);
 	if (0 == strcmp(name, "timeout"))
 		return scc_new_float_parameter((float)hdbl->timeout / 1000.0f);
 	
@@ -285,7 +308,8 @@ static ActionOE holddblclick_constructor(const char* keyword, ParameterList para
 	hdbl->action.get_property = &get_property;
 	hdbl->action.extended.set_sensitivity = &set_sensitivity;
 	hdbl->action.extended.set_haptic = &set_haptic;
-
+	hdbl->action.extended.get_child = &get_child;
+	
 	hdbl->hold_action = (keyword == KW_HOLD) ? scc_parameter_as_action(params->items[0]) : NULL;
 	hdbl->dblclick_action = (keyword == KW_DBLCLICK) ? scc_parameter_as_action(params->items[0]) : NULL;
 	hdbl->default_action = scc_parameter_as_action(params->items[1]);

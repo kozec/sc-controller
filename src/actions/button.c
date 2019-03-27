@@ -14,6 +14,7 @@
 #include "scc/conversions.h"
 #include "scc/action.h"
 #include "scc/tools.h"
+#include "props.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -85,7 +86,6 @@ static char* button_describe(Action* a, const ActionDescriptionContext* ctx) {
 
 
 static void button_dealloc(Action* a) {
-	LOG("button_dealloc %p", a);
 	ButtonAction* b = container_of(a, ButtonAction, action);
 	free(b);
 }
@@ -160,8 +160,8 @@ static void set_haptic(Action* a, HapticData hdata) {
 
 static Parameter* get_property(Action* a, const char* name) {
 	ButtonAction* b = container_of(a, ButtonAction, action);
-	if (0 == strcmp(name, "keycode"))
-		return scc_new_int_parameter(b->button[0]);
+	MAKE_INT_PROPERTY(b->button[0], "button");		// old name
+	MAKE_INT_PROPERTY(b->button[0], "keycode");		// better name
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
@@ -183,6 +183,7 @@ Action* scc_button_action_from_keycode(unsigned short keycode) {
 	b->action.whole = &whole;
 	b->action.button_press = &button_press;
 	b->action.button_release = &button_release;
+	b->action.get_property = &get_property;
 	return &b->action;
 }
 

@@ -4,12 +4,13 @@
  * Sets input or output sensitivity to if action suppors it.
 */
 
-#include "scc/utils/strbuilder.h"
 #include "scc/utils/logging.h"
+#include "scc/utils/strbuilder.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "tostring.h"
+#include "props.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -19,6 +20,7 @@ static const char* KW_SENSITIVITY = "sens";
 
 typedef struct {
 	Action				action;
+	Action*				child;
 	ParameterList		params;
 } SensitivityModifier;
 
@@ -27,6 +29,7 @@ ACTION_MAKE_TO_STRING(SensitivityModifier, sensitivity, KW_SENSITIVITY, &pc);
 static void sensitivity_dealloc(Action* a) {
 	SensitivityModifier* s = container_of(a, SensitivityModifier, action);
 	list_free(s->params);
+	RC_REL(s->child);
 	free(s);
 }
 
@@ -40,12 +43,37 @@ static Action* compress(Action* a) {
 		float z = scc_parameter_as_float(s->params->items[2]);
 		child->extended.set_sensitivity(child, x, y, z);
 		return child;
+	} else if (child->extended.get_child != NULL) {
+		Action* c = child;
+		RC_ADD(c);
+		do {
+			Action* next_c = c->extended.get_child(c);
+			if (next_c->extended.set_sensitivity != NULL) {
+				float x = scc_parameter_as_float(s->params->items[0]);
+				float y = scc_parameter_as_float(s->params->items[1]);
+				float z = scc_parameter_as_float(s->params->items[2]);
+				next_c->extended.set_sensitivity(next_c, x, y, z);
+				RC_REL(next_c);
+				RC_REL(c);
+				return child;
+			}
+			RC_REL(c);
+			c = next_c;
+		} while (c->extended.get_child != NULL);
+		RC_REL(c);
 	}
 	return a;
 }
 
+static Action* get_child(Action* a) {
+	SensitivityModifier* s = container_of(a, SensitivityModifier, action);
+	RC_ADD(s->child);
+	return s->child;
+}
+
 static Parameter* get_property(Action* a, const char* name) {
 	SensitivityModifier* s = container_of(a, SensitivityModifier, action);
+	
 	if (0 == strcmp(name, "sensitivity")) {
 		uint8_t count = 3;
 		while ((count > 0) && (scc_parameter_as_float(list_get(s->params, count - 1)) == 1.0))
@@ -55,7 +83,7 @@ static Parameter* get_property(Action* a, const char* name) {
 		return scc_new_tuple_parameter(count, s->params->items);
 	}
 	
-	DWARN("Requested unknown property '%s' from '%s'", KW_SENSITIVITY);
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
 }
 
@@ -71,8 +99,11 @@ static ActionOE sensitivity_constructor(const char* keyword, ParameterList param
 	scc_action_init(&s->action, KW_SENSITIVITY, AF_MODIFIER, &sensitivity_dealloc, &sensitivity_to_string);
 	s->action.compress = &compress;
 	s->action.get_property = &get_property;
+	s->action.extended.get_child = &get_child;
 	
 	s->params = params;
+	s->child = scc_parameter_as_action(list_get(params, 3));
+	RC_ADD(s->child);
 	return (ActionOE)&s->action;
 }
 

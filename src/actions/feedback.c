@@ -4,12 +4,14 @@
  * Enables feedback for action if action supports it.
 */
 
+#include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "tostring.h"
+#include "props.h"
 #include <sys/time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -21,7 +23,7 @@ static const char* KW_FEEDBACK = "feedback";
 
 typedef struct {
 	Action				action;
-	Action*			 	child;
+	Action*				child;
 	ParameterList		params;
 	HapticData			hdata;
 } FeedbackModifier;
@@ -43,6 +45,12 @@ static Action* compress(Action* a) {
 	return f->child;
 }
 
+static Action* get_child(Action* a) {
+	FeedbackModifier* f = container_of(a, FeedbackModifier, action);
+	RC_ADD(f->child);
+	return f->child;
+}
+
 
 static ActionOE feedback_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -54,6 +62,7 @@ static ActionOE feedback_constructor(const char* keyword, ParameterList params) 
 	if (f == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&f->action, KW_FEEDBACK, AF_MODIFIER, &feedback_dealloc, &feedback_to_string);
 	f->action.compress = &compress;
+	f->action.extended.get_child = &get_child;
 	
 	const char* pos = scc_parameter_as_string(params->items[0]);
 	if (0 == strcmp(pos, "LEFT"))

@@ -177,9 +177,6 @@ class TestActions(object):
 		parsed back to same action.
 		"""
 		# Default diagonal range
-		print DPadAction(ButtonAction(Keys.BTN_LEFT))
-		assert False
-		'''
 		assert _parses_as_itself(DPadAction(
 			ButtonAction(Keys.BTN_LEFT),
 			ButtonAction(Keys.BTN_RIGHT),
@@ -193,7 +190,6 @@ class TestActions(object):
 			ButtonAction(Keys.BTN_LEFT),
 			ButtonAction(Keys.BTN_MIDDLE),
 		))
-		'''
 	
 	@pytest.mark.skip
 	def test_ring(self):
@@ -214,7 +210,6 @@ class TestActions(object):
 			)
 		))
 	
-	@pytest.mark.skip
 	def test_dpad8(self):
 		"""
 		Tests if DPad8Action can be converted to string and
@@ -253,7 +248,6 @@ class TestActions(object):
 			AxisAction(Axes.ABS_Y)
 		))
 	
-	@pytest.mark.skip
 	def test_relXY(self):
 		"""
 		Tests if relXYAciton can be converted to string and parsed back to

@@ -37,6 +37,24 @@ static Action* compress(Action* a) {
 	return child;
 }
 
+static Action* get_child(Action* a) {
+	NameModifier* n = container_of(a, NameModifier, action);
+	Action* child = scc_parameter_as_action(n->params->items[1]);
+	RC_ADD(child);
+	return child;
+}
+
+static Parameter* get_property(Action* a, const char* name) {
+	if (0 == strcmp(name, "name")) {
+		NameModifier* n = container_of(a, NameModifier, action);
+		RC_ADD(n->params->items[0]);
+		return n->params->items[0];
+	}
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
 
 static ActionOE name_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -51,6 +69,8 @@ static ActionOE name_constructor(const char* keyword, ParameterList params) {
 	}
 	scc_action_init(&n->action, KW_NAME, AF_MODIFIER, &name_dealloc, &name_to_string);
 	n->action.compress = &compress;
+	n->action.get_property = &get_property;
+	n->action.extended.get_child = &get_child;
 	
 	n->params = params;
 	return (ActionOE)&n->action;

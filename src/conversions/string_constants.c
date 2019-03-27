@@ -19,16 +19,17 @@ static const char* CONSTANTS[] = {
 	// Deadzone modes
 	"CUT", "ROUND", "LINEAR", "MINIMUM",
 	// Haptic positions
-	"LEFT", "RIGHT",
+	"LEFT", "RIGHT", "BOTH",
 	// Terminator
 	NULL
 };
 
 
-/** Returns -1 if there is no constant for given name */
+/** Returns NULL if there is no constant for given name */
 const char* scc_get_string_constant(const char* key) {
 	for (size_t i=0; CONSTANTS[i] != NULL; i++)
 		if (strcmp(CONSTANTS[i], key) == 0)
 			return CONSTANTS[i];
-	return false;
+	return NULL;
 }
+

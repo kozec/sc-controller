@@ -167,8 +167,7 @@ static Parameter* get_property(Action* a, const char* name) {
 		return scc_new_tuple_parameter(2, params);
 	}
 	
-	DWARN("Requested unknown property '%s' from '%s'",
-			name, xy->is_relative ? KW_XY : KW_RELXY);
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
 }
 

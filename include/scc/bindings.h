@@ -52,16 +52,24 @@ DLL_EXPORT Parameter* scc_action_get_property(Action* a, const char* name);
  *
  * If returned value is not NULL, caller has to release reference on it.
   */
-Action* scc_action_get_compressed(Action* a);
+DLL_EXPORT Action* scc_action_get_compressed(Action* a);
+
+/**
+ * For applicable modifiers, returns child action.
+ * For everything else, returns NULL.
+ *
+ * If returned value is not NULL, caller has to release reference on it.
+ */
+DLL_EXPORT Action* scc_action_get_child(Action* a);
 
 /** Increases reference count on action */
-DLL_EXPORT void scc_action_ref(Action* a);
+DLL_EXPORT Action* scc_action_ref(Action* a);
 
 /** Unreferences action */
 DLL_EXPORT void scc_action_unref(Action* a);
 
 /** Increases reference count on parameter */
-DLL_EXPORT void scc_parameter_ref(Parameter* p);
+DLL_EXPORT Parameter* scc_parameter_ref(Parameter* p);
 
 /** Unreferences parameter */
 DLL_EXPORT void scc_parameter_unref(Parameter* p);
@@ -70,7 +78,7 @@ DLL_EXPORT void scc_parameter_unref(Parameter* p);
 DLL_EXPORT const char* scc_error_get_message(APError e);
 
 /** Parses array of paramertrers into action */
-DLL_EXPORT ActionOE scc_action_new_from_array(const char* keyword, Parameter* params[], size_t count);
+DLL_EXPORT ActionOE scc_action_new_from_array(const char* keyword, size_t count, Parameter* params[]);
 
 
 #undef scc_parameter_as_action
@@ -112,6 +120,12 @@ DLL_EXPORT size_t scc_get_rels_constants(EnumValue array[], size_t count);
 
 /** Same as scc_get_key_constants, but returns button names */
 DLL_EXPORT size_t scc_get_button_constants(EnumValue array[], size_t count);
+
+/**
+ * Converts string into string-constant-parameter. Returns NULL if given string
+ * is not recognized.
+ */
+DLL_EXPORT Parameter* scc_get_string_const_parameter(const char* s);
 
 #ifdef __cplusplus
 }

@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from scc.lib import IntEnum
+from scc.lib import Enum, IntEnum
 
 """
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
@@ -96,11 +96,11 @@ class SCButtons(IntEnum):
 STICKTILT		= 0b10000000000000000000000000000000
 
 
-class HapticPos(IntEnum):
+class HapticPos(Enum):
 	"""Specify witch pad or trig is used"""
-	RIGHT = 0
-	LEFT = 1
-	BOTH = 2	# emulated
+	RIGHT = "RIGHT"
+	LEFT = "LEFT"
+	BOTH = "BOTH"
 
 
 class ControllerFlags(IntEnum):
@@ -119,8 +119,8 @@ class ControllerFlags(IntEnum):
 	NO_GRIPS =			1 << 5	# Controller has no grips
 
 
-STICK_PAD_MIN = -32768
-STICK_PAD_MAX = 32768
+STICK_PAD_MIN = -0x8000
+STICK_PAD_MAX = 0x7FFF
 STICK_PAD_MIN_HALF = STICK_PAD_MIN / 3
 STICK_PAD_MAX_HALF = STICK_PAD_MAX / 3
 

@@ -14,6 +14,7 @@
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "scc/tools.h"
+#include "props.h"
 #include <sys/time.h>
 #include <tgmath.h>
 #include <stdlib.h>
@@ -26,7 +27,7 @@ static const char* KW_CLICK = "click";		// old name
 
 typedef struct {
 	Action				action;
-	Action*			 	child;
+	Action*				child;
 } ClickedModifier;
 
 
@@ -37,7 +38,7 @@ static char* click_to_string(Action* a) {
 	);
 	
 	char* strl = scc_param_list_to_string(l);
-	char* rv = (strl == NULL) ? NULL : strbuilder_fmt("smooth(%s)", strl);
+	char* rv = (strl == NULL) ? NULL : strbuilder_fmt("clicked(%s)", strl);
 	list_free(l);
 	free(strl);
 	return rv;
@@ -100,6 +101,12 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 	// self.action.whole_blocked(mapper, x, y, what)
 }
 
+static Action* get_child(Action* a) {
+	ClickedModifier* c = container_of(a, ClickedModifier, action);
+	RC_ADD(c->child);
+	return c->child;
+}
+
 
 static ActionOE clicked_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -114,6 +121,7 @@ static ActionOE clicked_constructor(const char* keyword, ParameterList params) {
 	c->action.trigger = &trigger;
 	c->action.whole = &whole;
 	c->action.axis = &axis;
+	c->action.extended.get_child = &get_child;
 	
 	c->child = scc_parameter_as_action(params->items[0]);
 	RC_ADD(c->child);

@@ -9,6 +9,7 @@
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "props.h"
 #include "tostring.h"
 #include <tgmath.h>
 #include <stdlib.h>
@@ -26,7 +27,7 @@ typedef void (*DeadzoneMode)(DeadzoneModifier* d, AxisValue* x, AxisValue* y, Ax
 
 struct DeadzoneModifier {
 	Action				action;
-	Action*			 	child;
+	Action*				child;
 	ParameterList		params;
 	AxisValue			upper;
 	AxisValue			lower;
@@ -139,7 +140,6 @@ static void mode_minimum(DeadzoneModifier* d, AxisValue* x, AxisValue* y, AxisVa
 	}
 }
 
-
 static Action* compress(Action* a) {
 	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
 	scc_action_compress(&d->child);
@@ -159,6 +159,16 @@ static Action* compress(Action* a) {
 		*/
 	return a;
 }
+
+static Parameter* get_property(Action* a, const char* name) {
+	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
+	MAKE_INT_PROPERTY(d->upper, "upper");
+	MAKE_INT_PROPERTY(d->lower, "lower");
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
 
 static void axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) {
 	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
@@ -189,6 +199,12 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 //	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
 //		return self.action.gyro(mapper, pitch, yaw, roll, q1, q2, q3, q4)
 
+static Action* get_child(Action* a) {
+	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
+	RC_ADD(d->child);
+	return d->child;
+}
+
 
 static ActionOE deadzone_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -215,10 +231,12 @@ static ActionOE deadzone_constructor(const char* keyword, ParameterList params) 
 	DeadzoneModifier* d = malloc(sizeof(DeadzoneModifier));
 	if (d == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&d->action, KW_DEADZONE, AF_MODIFIER, &deadzone_dealloc, &deadzone_to_string);
+	d->action.get_property = &get_property;
 	d->action.compress = &compress;
 	d->action.trigger = &trigger;
 	d->action.whole = &whole;
 	d->action.axis = &axis;
+	d->action.extended.get_child = &get_child;
 	
 	d->lower = scc_parameter_as_int(params->items[1]);
 	d->upper = scc_parameter_as_int(params->items[2]);

@@ -121,7 +121,7 @@ const char* tokens_get_rest(Tokens* _t) {
 void tokens_skip_whitespace(Tokens* _t) {
 	struct _Tokens* t = container_of(_t, struct _Tokens, tokens);
 	char next = tokens_peek_char(_t);
-	while ((next == ' ') || (next == '\t')) {
+	while ((next == ' ') || (next == '\t') || (next == '\n')) {
 		t->i++;
 		next = tokens_peek_char(_t);
 	}

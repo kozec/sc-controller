@@ -9,6 +9,7 @@
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "props.h"
 #include <sys/time.h>
 #include <tgmath.h>
 #include <stdlib.h>
@@ -20,7 +21,7 @@ static const char* KW_SMOOTH = "smooth";
 
 typedef struct {
 	Action				action;
-	Action*			 	child;
+	Action*				child;
 	double				multiplier;
 	double				filter;
 	double*				weights;
@@ -61,6 +62,23 @@ static Action* compress(Action* a) {
 	scc_action_compress(&s->child);
 	return a;
 }
+
+static Action* get_child(Action* a) {
+	SmoothModifier* s = container_of(a, SmoothModifier, action);
+	RC_ADD(s->child);
+	return s->child;
+}
+
+static Parameter* get_property(Action* a, const char* name) {
+	SmoothModifier* s = container_of(a, SmoothModifier, action);
+	MAKE_FLOAT_PROPERTY(s->multiplier, "multiplier");
+	MAKE_FLOAT_PROPERTY(s->filter, "filter");
+	MAKE_INT_PROPERTY(dequeue_len(&(s->dq)), "level");
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
 
 /** Computes weighted average from all accumulated positions */
 static void get_pos(SmoothModifier* s, AxisValue* x, AxisValue* y) {
@@ -111,8 +129,10 @@ static ActionOE smooth_constructor(const char* keyword, ParameterList params) {
 	SmoothModifier* s = malloc(sizeof(SmoothModifier));
 	if (s == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&s->action, KW_SMOOTH, AF_MODIFIER, &smooth_dealloc, &smooth_to_string);
+	s->action.get_property = &get_property;
 	s->action.compress = &compress;
 	s->action.whole = &whole;
+	s->action.extended.get_child = &get_child;
 	
 	size_t level = scc_parameter_as_int(params->items[0]);
 	s->multiplier = scc_parameter_as_float(params->items[1]);
@@ -143,3 +163,4 @@ void scc_actions_init_smooth() {
 	scc_param_checker_set_defaults(&pc, 8, 0.75, 2.0);
 	scc_action_register(KW_SMOOTH, &smooth_constructor);
 }
+

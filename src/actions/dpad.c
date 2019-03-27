@@ -12,6 +12,7 @@
 static ParamChecker pc4;
 static ParamChecker pc8;
 static const char* KW_DPAD4 = "dpad";
+static const char* KW_DPAD8 = "dpad8";
 
 // Power of 2 from minimal distance that finger has to be from center
 #define MIN_DISTANCE_P2 (double)2000000
@@ -130,14 +131,7 @@ static void whole(Action* _a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigg
 
 static ActionOE dpad_constructor(const char* keyword, ParameterList params) {
 	uint8_t size;
-	ParamError* err;
-	if (strcmp(keyword, KW_DPAD4) == 0) {
-		size = 4;
-		err = scc_param_checker_check(&pc4, keyword, params);
-	} else {
-		size = 8;
-		err = scc_param_checker_check(&pc8, keyword, params);
-	}
+	ParamError* err = scc_param_checker_check(&pc8, keyword, params);
 	
 	if (err != NULL) return (ActionOE)err;
 	params = scc_param_checker_fill_defaults(&pc8, params);
@@ -151,7 +145,7 @@ static ActionOE dpad_constructor(const char* keyword, ParameterList params) {
 	scc_action_init(&dpad->action, KW_DPAD4, AF_ACTION, &dpad_dealloc, &dpad_to_string);
 	dpad->action.whole = &whole;
 	
-	dpad->size = size;
+	dpad->size = 8;			// TODO: Is this needed?
 	dpad->state[0] = -1;
 	dpad->state[1] = -1;
 	dpad->first_param = params->items[0];
@@ -188,4 +182,5 @@ void scc_actions_init_dpad() {
 	scc_param_checker_set_defaults(&pc8, DEFAULT_DIAGONAL_RANGE,
 		NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);	// 8 NULLs
 	scc_action_register(KW_DPAD4, &dpad_constructor);
+	scc_action_register(KW_DPAD8, &dpad_constructor);		// for backwards compatibility
 }

@@ -130,13 +130,16 @@ char* scc_action_get_description(Action* a, const ActionDescriptionContext* ctx)
 
 ActionOE scc_action_new(const char* keyword, ParameterList params) {
 	scc_action_constructor ctr;
-	ASSERT (MAP_OK == hashmap_get(actions, keyword, (any_t)&ctr));
+	if (MAP_OK != hashmap_get(actions, keyword, (any_t)&ctr))
+		return (ActionOE)scc_new_action_error(AEC_UNKNOWN_KEYWORD, "Unknown keyword: '%s'", keyword);
 	return ctr(keyword, params);
 }
 
 void scc_initialize_none();
 
 __attribute__((constructor)) void whatever() {
+	ASSERT(sizeof(ActionFlags) == sizeof(ParameterType));
+	ASSERT(sizeof(ActionFlags) == sizeof(ErrorFlag));
 	if (actions == NULL) actions = hashmap_new();
 	scc_run_action_initializers();
 	scc_initialize_none();

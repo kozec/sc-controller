@@ -153,6 +153,11 @@ struct Action {
 		 * 'change' is called on supported actions by BallModifier
 		 */
 		void	(*change)(Action* a, Mapper* m, double dx, double dy, PadStickTrigger what);
+		/**
+		 * For modifier, 'get_child' returns child action or NoAction if there is none.
+		 * Caller has to dereference returned action.
+		 */
+		Action*	(*get_child)(Action* a);
 	} extended;
 };
 
@@ -200,6 +205,20 @@ Action* scc_multiaction_new(Action** actions, size_t action_count);
  */
 Action* scc_multiaction_combine(Action* a1, Action* a2);
 
+struct ModeshiftModes {
+	Parameter*		mode;
+	Action*			action;
+};
+
+/**
+ * Returns tuple parameter containing list of modes and actions assotiated with
+ * mode modifier. Each mode is represented by nested tuple containing
+ * (condition, action). Condition may be button, range or None for default item.
+ *
+ * Returned value has to be dereferenced by called.
+ * May return NULL if allocation fails.
+ */
+Parameter* scc_modeshift_get_modes(Action* a);
 
 /**
  * Calls compress method on action to which *a points to and replaces *a target
@@ -212,6 +231,7 @@ Action* scc_multiaction_combine(Action* a1, Action* a2);
  * method defined, function does nothing and returns false.
  */
 bool scc_action_compress(Action** a);
+
 /**
  * Returns string representation of action, same or equivalent to one that parser
  * used to construct this action in 1st place.

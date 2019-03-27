@@ -8,14 +8,17 @@ typedef enum ActionErrorCode {
 	AEC_INVALID_VALUE					= 3,
 	AEC_INVALID_PARAMETER_TYPE			= 4,
 	AEC_PARAMETER_OUT_OF_RANGE			= 5,
+	AEC_UNKNOWN_KEYWORD					= 6,
 } ActionErrorCode;
+
+typedef uint32_t ErrorFlag;
 
 #define SCC_MAX_ERROR_MSG_LEN 1024
 
 typedef struct ActionError ActionError;
 
 struct ActionError {
-	unsigned short 		flag;
+	ErrorFlag			flag;
 	RC_HEADER;
 	ActionErrorCode		code;
 	char				message[SCC_MAX_ERROR_MSG_LEN];

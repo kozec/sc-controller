@@ -11,22 +11,18 @@ static regex_t re_int;
 static regex_t re_float;
 
 static void init() {
-	ASSERT(0 == regcomp(&re_int, "^[1-9][0-9]*$", 0));
-	// ASSERT(0 == regcomp(&re_float, "^((0\\.)|([1-9][0-9]*\\.))[0-9]+$", 0));
-	ASSERT(0 == regcomp(&re_float, "^[0-9]*\\.[0-9]*$", 0));
+	ASSERT(0 == regcomp(&re_int, "^-?(([1-9][0-9]*)|(0))$", REG_EXTENDED | REG_NOSUB));
+	ASSERT(0 == regcomp(&re_float, "^-?[0-9]*\\.[0-9]*$", REG_EXTENDED | REG_NOSUB));
 	initialized = true;
 }
 
 
 bool scc_str_is_int(const char* str) {
 	if (!initialized) init();
-	if (str[0] == '-') str ++;
-	if ((str[0] == '0') || (str[1] == 0)) return true;
-	return regexec(&re_int, str, 0, NULL, 0) != REG_NOMATCH;
+	return regexec(&re_int, str, 0, NULL, 0) == 0;
 }
 
 bool scc_str_is_float(const char* str) {
 	if (!initialized) init();
-	if (str[0] == '-') str ++;
-	return regexec(&re_float, str, 0, NULL, 0) != REG_NOMATCH;
+	return regexec(&re_float, str, 0, NULL, 0) == 0;
 }

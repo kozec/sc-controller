@@ -152,7 +152,7 @@ static Parameter* get_property(Action* a, const char* name) {
 		return scc_new_tuple_parameter(2, params);
 	}
 	
-	DWARN("Requested unknown property '%s' from '%s'", a->type);
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
 }
 

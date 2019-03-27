@@ -7,6 +7,7 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/iterable.h"
+#include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/utils/list.h"
 #include "scc/utils/rc.h"
@@ -225,43 +226,63 @@ static char* get_property_mode_to_string(void* _m) {
 static Parameter* get_property(Action* a, const char* name) {
 	ModeModifier* mm = container_of(a, ModeModifier, action);
 	if (0 == strcmp("default", name)) {
-		Action* deflt = NULL;
 		FOREACH_IN(Mode*, mode, mm->modes) {
 			switch (mode->c_type) {
 			case MCT_DEFAULT:
-				deflt = mode->action;
-				break;
+				return scc_new_action_parameter(mode->action);
 			default:
 				continue;
 			}
 		}
-		if (deflt == NULL) deflt = NoAction;
-		return scc_new_action_parameter(deflt);
-	} else if (0 == strcmp("modes", name)) {
-		StrBuilder* sb = strbuilder_new();
-		if (sb == NULL) return NULL;
-		ListIterator it = iter_get(mm->modes);
-		if (!strbuilder_add_all(sb, it, get_property_mode_to_string, ",")) {
-			strbuilder_free(sb);
-			iter_free(it);
-			return NULL;
-		}
-		iter_free(it);
-		return scc_new_string_parameter(strbuilder_consume(sb));
+		return scc_new_action_parameter(NoAction);
 	}
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
+
+Parameter* scc_modeshift_get_modes(Action* a) {
+	ASSERT(a->type == KW_MODE);
+	ModeModifier* mm = container_of(a, ModeModifier, action);
+	ParameterList lst_modes = scc_make_param_list(NULL);
+	if (lst_modes == NULL) return NULL;
 	
 	FOREACH_IN(Mode*, mode, mm->modes) {
-		char* s = get_property_mode_to_string(mode);
-		if (s == NULL) { free(s); break; }
-		char* mode_s = strbuilder_fmt("mode_%s", s);
-		free(s);
-		if (mode_s && (0 == strcasecmp(name, mode_s))) {
-			free(mode_s);
-			return scc_new_action_parameter(mode->action);
+		Parameter* m[2];
+		switch (mode->c_type) {
+		case MCT_DEFAULT:
+			m[0] = None;
+			break;
+		case MCT_BUTTON:
+			m[0] = scc_new_int_parameter(mode->c_button);
+			if (m[0] == NULL)
+				goto scc_modeshift_get_modes_fail;
+			break;
+		case MCT_RANGE:
+			m[0] = mode->c_range;
+			RC_ADD(m[0]);
+			break;
 		}
-		free(mode_s);
+		m[1] = scc_new_action_parameter(mode->action);
+		if (m[1] == NULL) {
+			RC_REL(m[0]);
+			goto scc_modeshift_get_modes_fail;
+		}
+		Parameter* tuple = scc_new_tuple_parameter(2, m);
+		if ((tuple == NULL) || (!list_add(lst_modes, tuple))) {
+			RC_REL(m[0]);
+			RC_REL(m[1]);
+			goto scc_modeshift_get_modes_fail;
+		}
 	}
 	
+	Parameter* modes = scc_new_tuple_parameter(list_len(lst_modes), lst_modes->items);
+	if (modes == NULL) goto scc_modeshift_get_modes_fail;
+	list_free(lst_modes);
+	return modes;
+
+scc_modeshift_get_modes_fail:
+	list_free(lst_modes);
 	return NULL;
 }
 

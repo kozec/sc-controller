@@ -42,7 +42,6 @@ static void str_param_dealloc_normal(void* _p) {
 
 static void str_param_dealloc_non_owned(void* _p) {
 	StringParameter* p = container_of(_p, StringParameter, parameter);
-	free(p->value);
 	free(p);
 }
 
@@ -86,3 +85,4 @@ Parameter* scc_new_const_string(const char* value) {
 	if (value == NULL) return NULL;
 	return new_string((char*)value, false);
 }
+

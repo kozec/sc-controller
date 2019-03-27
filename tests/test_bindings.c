@@ -1,7 +1,9 @@
 #include "CuTest.h"
 #include "scc/utils/traceback.h"
 #include "scc/bindings.h"
+#include "scc/parser.h"
 #include "scc/action.h"
+#include <string.h>
 
 
 /** Tests reference counting with DPadAction */
@@ -15,7 +17,7 @@ void test_dpad_rc(CuTest* tc) {
 	assert(tc, b.action->_rc.count == 2);
 	assert(tc, pars[0]->_rc.count == 1);
 	
-	ActionOE dpad = scc_action_new_from_array("dpad", pars, 1);
+	ActionOE dpad = scc_action_new_from_array("dpad", 1, pars);
 	assert_msg(tc, !IS_ACTION_ERROR(dpad), ACTION_ERROR(dpad)->message);
 	assert(tc, dpad.action->_rc.count == 1);
 	assert(tc, b.action->_rc.count == 3);
@@ -34,10 +36,24 @@ void test_dpad_rc(CuTest* tc) {
 	scc_action_unref(b.action);
 }
 
+/** Tests case that caused segfault in past */
+void test_parser_segfault(CuTest* tc) {
+	const uint32_t AF_ERROR = 0b00000001;
+	struct CActionOE {
+		uint32_t	flags;
+		size_t		ref_count;
+	};
+	
+	struct CActionOE* a = (struct CActionOE*)scc_parse_action("reXeased(button(KEY_A))").action;
+	assert(tc, (a->flags & AF_ERROR) != 0);
+	assert(tc, 0 == strcmp("Unexpected 'reXeased'", scc_error_get_message((APError)(ActionError*)a)));
+}
+
+
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
+	DEFAULT_SUITE_ADD(test_parser_segfault);
 	DEFAULT_SUITE_ADD(test_dpad_rc);
-	
 	return CuSuiteRunDefault();
 }
 

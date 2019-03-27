@@ -98,3 +98,4 @@ void scc_actions_init_por() {
 	scc_action_register(KW_PRESS, &por_constructor);
 	scc_action_register(KW_RELEASE, &por_constructor);
 }
+
