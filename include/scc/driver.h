@@ -44,7 +44,7 @@ typedef void (*sccd_hotplug_cb)(Daemon* d, const char* syspath, Subsystem sys, V
 typedef void (*sccd_scheduler_cb)(void* userdata);
 
 
-/** This is 'daemon from POV of driver', not everything that driver does */
+/** This is 'daemon from POV of driver', not everything that daemon does */
 struct Daemon {
 	/**
 	 * Registers new physical controller with daemon.
@@ -56,7 +56,7 @@ struct Daemon {
 	/**
 	 * Informs daemon that controller has been removed (physically disconnected)
 	 * and should not be used anymore.
-	 * 
+	 *
 	 * Note that Controller object should NOT be deallocated until daemon calls
 	 * it's deallocate method and its possible that daemon will make other
 	 * requests even between controller_remove and deallocate calls.

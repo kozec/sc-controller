@@ -39,3 +39,13 @@ shared_library('scc-drv-remotepad',
 		'remotepad/remotepad_controller.c',
 	]
 )
+
+shared_library('scc-drv-fake',
+	include_directories: [ include ],
+	link_with: [ utils_lib ],
+	sources: [
+		'fake/fake.c',
+		'fake/fake_controller.c',
+	]
+)
+
