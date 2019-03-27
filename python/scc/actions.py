@@ -8,9 +8,10 @@ trigger should be pressed.
 """
 import ctypes
 from itertools import chain
-from scc.parser import ParseError
-from scc.tools import find_library
 from scc.constants import SCButtons, HapticPos
+from scc.tools import find_library
+from scc.parser import ParseError
+from scc.lib import Enum
 
 import logging
 log = logging.getLogger("Actions")
@@ -58,10 +59,9 @@ class Parameter:
 				cparam = lib_actions.scc_new_string_parameter(value.encode("utf-8"))
 			elif isinstance(value, Action):
 				cparam = lib_actions.scc_new_action_parameter(value._caction)
-			elif hasattr(value, "__int__"):
-				cparam = lib_actions.scc_new_int_parameter(value)
-			elif isinstance(value, HapticPos):
-				cparam = lib_actions.scc_new_const_string_parameter(value.value)
+			elif isinstance(value, Enum):
+				print value.name
+				cparam = lib_bindings.scc_get_const_parameter(value.name)
 			else:
 				raise TypeError("Cannot convert %s" % (repr(value),))
 			self._cparam = cparam
@@ -163,6 +163,9 @@ class Action(object):
 		# TODO: This? Is it still needed?
 		return self
 	
+	def get_haptic(self):
+		return HapticData(*self.haptic)
+	
 	def __str__(self):
 		if self._caction is None: return "<C>"
 		tpe = lib_bindings.scc_action_get_type(self._caction)
@@ -214,6 +217,49 @@ class CAPError(ctypes.Union):
 		('e1', Action.CActionOEp),
 		('e2', Parameter.CParameterOEp),
 	]
+
+
+class HapticData(object):
+	""" Simple container to hold haptic feedback settings """
+	
+	def __init__(self, position, amplitude=512, frequency=4, period=1024):
+		"""
+		'frequency' is used only when emulating touchpad and describes how many
+		pixels should mouse travell between two feedback ticks.
+		"""
+		data = tuple([ position ] + [ int(x) for x in (amplitude, frequency, period) ])
+		if data[0] not in HapticPos.__members__:
+			raise ValueError("Invalid position: '%s'" % (data[0], ))
+		for i in (1,3):
+			if data[i] > 0x8000 or data[i] < 0:
+				raise ValueError("Value out of range")
+		self.data = data
+	
+	def with_position(self, position):
+		""" Creates copy of HapticData with position value changed """
+		trash, amplitude, frequency, period = self.data
+		return HapticData(position, amplitude, frequency, period)
+	
+	def get_position(self):
+		return HapticPos(self.data[0])
+	
+	def get_amplitude(self):
+		return self.data[1]
+	
+	def get_frequency(self):
+		return self.data[2]
+	
+	def get_period(self):
+		return self.data[3]
+	
+	def __mul__(self, by):
+		"""
+		Allows multiplying HapticData by scalar to get same values
+		with increased amplitude.
+		"""
+		position, amplitude, frequency, period = self.data
+		amplitude = min(amplitude * by, 0x8000)
+		return HapticData(position, amplitude, frequency, period)
 
 
 class NoAction(Action):
@@ -371,6 +417,9 @@ lib_bindings.scc_action_get_compressed.restype = Action.CActionOEp
 lib_bindings.scc_action_get_child.argtypes = [ Action.CActionOEp ]
 lib_bindings.scc_action_get_child.restype = Action.CActionOEp
 
+lib_bindings.scc_get_const_parameter.argtypes = [ ctypes.c_char_p ]
+lib_bindings.scc_get_const_parameter.restype = Parameter.CParameterOEp
+
 
 lib_parse = find_library("libscc-parser")
 lib_parse.scc_parse_action.argtypes = [ ctypes.c_char_p ]
@@ -396,7 +445,4 @@ lib_actions.scc_new_string_parameter.restype = Parameter.CParameterOEp
 
 lib_actions.scc_modeshift_get_modes.argtypes = [ Action.CActionOEp ]
 lib_actions.scc_modeshift_get_modes.restype = Parameter.CParameterOEp
-
-lib_actions.scc_new_const_string_parameter.argtypes = [ ctypes.c_char_p ]
-lib_actions.scc_new_const_string_parameter.restype = Parameter.CParameterOEp
 

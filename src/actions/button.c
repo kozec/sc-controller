@@ -162,6 +162,7 @@ static Parameter* get_property(Action* a, const char* name) {
 	ButtonAction* b = container_of(a, ButtonAction, action);
 	MAKE_INT_PROPERTY(b->button[0], "button");		// old name
 	MAKE_INT_PROPERTY(b->button[0], "keycode");		// better name
+	MAKE_HAPTIC_PROPERTY(b->hdata, "haptic");
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;

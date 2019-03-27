@@ -4,11 +4,13 @@
  * Executes action when trigger finally 'clicks' and then holds it until
  * specified 'release level' is reached.
  */
+#include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "scc/tools.h"
+#include "props.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -127,6 +129,15 @@ static void set_haptic(Action* a, HapticData hdata) {
 	t->hdata = hdata;
 }
 
+static Parameter* get_property(Action* a, const char* name) {
+	TriggerAction* t = container_of(a, TriggerAction, action);
+	MAKE_HAPTIC_PROPERTY(t->hdata, "haptic");
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
+
 
 static ActionOE trigger_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -137,6 +148,7 @@ static ActionOE trigger_constructor(const char* keyword, ParameterList params) {
 	scc_action_init(&t->action, KW_TRIGGER, AF_ACTION, &trigger_dealloc, &trigger_to_string);
 	t->action.trigger = &trigger;
 	t->action.compress = &compress;
+	t->action.get_property = &get_property;
 	t->action.extended.set_haptic = &set_haptic;
 	
 	t->pressed = false;

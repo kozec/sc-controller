@@ -6,14 +6,15 @@
  * RelXYAction does the same, but remembers where pad was originally touched
  * and treats that place as center. See https://github.com/kozec/sc-controller/issues/390
  */
+#include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/iterable.h"
-#include "scc/utils/logging.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "wholehaptic.h"
+#include "props.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -166,6 +167,7 @@ static Parameter* get_property(Action* a, const char* name) {
 		}
 		return scc_new_tuple_parameter(2, params);
 	}
+	MAKE_HAPTIC_PROPERTY(xy->hdata, "haptic");
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;

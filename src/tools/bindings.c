@@ -98,11 +98,18 @@ ActionOE scc_action_new_from_array(const char* keyword, size_t count, Parameter*
 	return aoe;
 }
 
-Parameter* scc_get_string_const_parameter(const char* s) {
-	const char* cnst = scc_get_string_constant(s);
-	if (cnst == NULL) return NULL;
+Parameter* scc_get_const_parameter(const char* name) {
+	// Is it int constant?
+	int32_t i = scc_get_int_constant(name);
+	if (i >= 0)
+		return scc_new_const_int_parameter(name, i);
 	
-	return scc_new_const_string_parameter(cnst);
+	// Is it string constant?
+	const char* s = scc_get_string_constant(name);
+	if (s != NULL)
+		return scc_new_const_string_parameter(s);
+	
+	return NULL;
 }
 
 static size_t scc_get_constants(EnumValue array[], size_t count,

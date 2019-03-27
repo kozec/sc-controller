@@ -189,6 +189,7 @@ static Parameter* get_property(Action* a, const char* name) {
 	BallModifier* b = container_of(a, BallModifier, action);
 	MAKE_FLOAT_PROPERTY(b->friction, "friction");
 	MAKE_DVEC_PROPERTY(b->sensitivity, "sensitivity");
+	MAKE_HAPTIC_PROPERTY(b->whdata.hdata, "haptic");
 	MAKE_INT_PROPERTY(b->ampli, "ampli");
 	MAKE_FLOAT_PROPERTY(b->degree, "degree");
 	MAKE_FLOAT_PROPERTY(b->radscale, "radscale");

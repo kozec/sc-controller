@@ -122,10 +122,12 @@ DLL_EXPORT size_t scc_get_rels_constants(EnumValue array[], size_t count);
 DLL_EXPORT size_t scc_get_button_constants(EnumValue array[], size_t count);
 
 /**
- * Converts string into string-constant-parameter. Returns NULL if given string
- * is not recognized.
+ * Converts constant name into constant-parameter.
+ * Caller has to dereference returned parameter.
+ *
+ * Returns NULL if name is not recognized.
  */
-DLL_EXPORT Parameter* scc_get_string_const_parameter(const char* s);
+DLL_EXPORT Parameter* scc_get_const_parameter(const char* name);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 from scc.constants import SCButtons, HapticPos
-from scc.actions import DoubleclickModifier, SensitivityModifier, MenuAction
+from scc.actions import DoubleclickModifier, SensitivityModifier, FeedbackModifier
 from scc.actions import Action, AxisAction, Macro
 from scc.parser import ActionParser
 import pytest
@@ -51,40 +51,11 @@ CASES = {
 		'levels' : [ 10, 80 ],
 		'feedback' : ('BOTH',)
 	},
-	# 'tilt' : {
-	# 	'action' : 'tilt( button(KEY_D), button(KEY_U), button(KEY_L), button(KEY_R) )',
-	# 	'sensitivity' : (2.0, 3.0, 4.0,)
-	# },
-	# 'ball' : {
-	# 	'action' : 'ball(XY(axis(Axes.ABS_RX), axis(Axes.ABS_RY)))',
-	# 	'sensitivity' : (2.0, 3.0),
-	# 	'feedback' : ('BOTH',)
-	# },
-	"dpad" : {
-		'action': 'dpad(button(Keys.KEY_W), button(Keys.KEY_S), button(Keys.KEY_A), button(Keys.KEY_D))',
-		"feedback": ["LEFT", 32640]
+	'ball' : {
+		'action' : 'ball(XY(axis(Axes.ABS_RX), axis(Axes.ABS_RY)))',
+		'sensitivity' : (2.0, 3.0),
+		'feedback' : ('BOTH',)
 	},
-	"dpad8" : {
-		"action": '''dpad(
-			button(Keys.KEY_1),
-			button(Keys.KEY_2),
-			button(Keys.KEY_3),
-			button(Keys.KEY_4),
-			button(Keys.KEY_5),
-			button(Keys.KEY_6),
-			button(Keys.KEY_7),
-			button(Keys.KEY_8))
-		''',
-		"feedback": ["LEFT", 32640]
-	},
-	"menu" : {
-		"action": "menu('Default.menu')",
-		"feedback": ["LEFT", 32640]
-	},
-	"hold": {
-		"action": "hold(menu('Default.menu'), button(Keys.KEY_W))",
-		"feedback": ["LEFT", 32640]
-	}
 }
 
 _DISABLED = {
@@ -112,6 +83,36 @@ _DISABLED = {
 		'circularabs' : True,
 		'sensitivity' : (2.0,),
 		'feedback' : ('BOTH',)
+	},
+	"dpad" : {
+		'action': '''dpad(
+			button(Keys.KEY_W),
+			button(Keys.KEY_S),
+			button(Keys.KEY_A),
+			button(Keys.KEY_D)
+		)''',
+		"feedback": ["LEFT", 32640]
+	},
+	"dpad8" : {
+		"action": '''dpad(
+			button(Keys.KEY_1),
+			button(Keys.KEY_2),
+			button(Keys.KEY_3),
+			button(Keys.KEY_4),
+			button(Keys.KEY_5),
+			button(Keys.KEY_6),
+			button(Keys.KEY_7),
+			button(Keys.KEY_8)
+		)''',
+		"feedback": ["LEFT", 32640]
+	},
+	"hold": {
+		"action": "hold(menu('Default.menu'), button(Keys.KEY_W))",
+		"feedback": ["LEFT", 32640]
+	},
+	"menu" : {
+		"action": "menu('Default.menu')",
+		"feedback": ["LEFT", 32640]
 	},
 }
 
@@ -148,14 +149,9 @@ class TestCompress(object):
 		for case in CASES:
 			if 'sensitivity' in CASES[case]:
 				print "Testing 'sensitivity' on %s" % (case,)
-				a_str = "sens(%s)" % (
-					",".join([str(x) for x in (
-						list(CASES[case]['sensitivity'])
-						+ [ CASES[case]["action"] ]
-					)
-				]))
+				a = parser.restart(CASES[case]["action"]).parse()
 				params = list(CASES[case]['sensitivity'])
-				params += [ parser.restart(a_str).parse() ]
+				params += [ a ]
 				a = SensitivityModifier(*params).compress()
 				assert (
 					a.get_speed() == CASES[case]['sensitivity']
@@ -163,7 +159,6 @@ class TestCompress(object):
 					a.strip().get_speed() == CASES[case]['sensitivity']
 				)
 	
-	@pytest.mark.skip
 	def test_feedback(self):
 		"""
 		Tests if all feedback setting are parsed and applied
@@ -172,7 +167,10 @@ class TestCompress(object):
 		for case in CASES:
 			if 'feedback' in CASES[case]:
 				print "Testing 'feedback' on %s" % (case,)
-				a = parser.from_json_data(CASES[case]).compress()
+				a = parser.restart(CASES[case]["action"]).parse()
+				params = list(CASES[case]['feedback'])
+				params += [ a ]
+				a = FeedbackModifier(*params).compress()
 				assert a.get_haptic().get_position().name == CASES[case]['feedback'][0]
 	
 	@pytest.mark.skip
@@ -204,4 +202,9 @@ class TestCompress(object):
 		for action in a.actions:
 			assert action.get_haptic().get_position().name == "BOTH"
 			assert action.get_speed()[0] == 2.0
+
+
+if __name__ == "__main__":
+	t = TestCompress()
+	t.test_sensitivity()
 

@@ -8,8 +8,7 @@ from __future__ import unicode_literals
 
 from scc.constants import LEFT, RIGHT, CPAD, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
-from scc.special_actions import MenuAction
-from scc.modifiers import HoldModifier
+from scc.actions import MenuAction, HoldModifier
 from scc.lib.jsonencoder import JSONEncoder
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData

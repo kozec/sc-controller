@@ -35,16 +35,15 @@ static void sensitivity_dealloc(Action* a) {
 
 static Action* compress(Action* a) {
 	SensitivityModifier* s = container_of(a, SensitivityModifier, action);
-	Action* child = scc_parameter_as_action(s->params->items[3]);
-	scc_action_compress(&child);
-	if (child->extended.set_sensitivity != NULL) {
+	scc_action_compress(&s->child);
+	if (s->child->extended.set_sensitivity != NULL) {
 		float x = scc_parameter_as_float(s->params->items[0]);
 		float y = scc_parameter_as_float(s->params->items[1]);
 		float z = scc_parameter_as_float(s->params->items[2]);
-		child->extended.set_sensitivity(child, x, y, z);
-		return child;
-	} else if (child->extended.get_child != NULL) {
-		Action* c = child;
+		s->child->extended.set_sensitivity(s->child, x, y, z);
+		return s->child;
+	} else if (s->child->extended.get_child != NULL) {
+		Action* c = s->child;
 		RC_ADD(c);
 		do {
 			Action* next_c = c->extended.get_child(c);
@@ -55,7 +54,7 @@ static Action* compress(Action* a) {
 				next_c->extended.set_sensitivity(next_c, x, y, z);
 				RC_REL(next_c);
 				RC_REL(c);
-				return child;
+				return s->child;
 			}
 			RC_REL(c);
 			c = next_c;

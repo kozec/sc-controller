@@ -49,10 +49,37 @@ void test_parser_segfault(CuTest* tc) {
 	assert(tc, 0 == strcmp("Unexpected 'reXeased'", scc_error_get_message((APError)(ActionError*)a)));
 }
 
+void test_better_segfault(CuTest* tc) {
+	Action* a = scc_parse_action("sens(0.3, 1.3, hatright(ABS_X))").action;
+	Parameter* pars[] = {
+		scc_new_float_parameter(0.3f),
+		scc_new_float_parameter(1.3f),
+		scc_new_action_parameter(a)
+	};
+	assert(tc, pars[2]->_rc.count == 1);
+	assert(tc, a->_rc.count == 2);
+	
+	Action* s = scc_action_new_from_array("sens", 3, pars).action;
+	assert(tc, pars[2]->_rc.count == 2);
+	assert(tc, a->_rc.count == 3);
+	scc_action_unref(a);
+	scc_parameter_unref(pars[0]);
+	scc_parameter_unref(pars[1]);
+	scc_parameter_unref(pars[2]);
+	assert(tc, pars[2]->_rc.count == 1);
+	assert(tc, a->_rc.count == 2);
+	
+	Action* c = scc_action_get_compressed(s);
+	scc_action_unref(s);
+	scc_action_to_string(c);
+	scc_action_unref(c);
+}
+
 
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
 	DEFAULT_SUITE_ADD(test_parser_segfault);
+	DEFAULT_SUITE_ADD(test_better_segfault);
 	DEFAULT_SUITE_ADD(test_dpad_rc);
 	return CuSuiteRunDefault();
 }

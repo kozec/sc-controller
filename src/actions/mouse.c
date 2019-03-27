@@ -4,14 +4,15 @@
  * Controlls mouse movement in either vertical or horizontal direction,
  * or scroll wheel.
  */
-#include "scc/utils/strbuilder.h"
 #include "scc/utils/logging.h"
+#include "scc/utils/strbuilder.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "wholehaptic.h"
 #include "tostring.h"
+#include "props.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -151,6 +152,7 @@ static Parameter* get_property(Action* a, const char* name) {
 		};
 		return scc_new_tuple_parameter(2, params);
 	}
+	MAKE_HAPTIC_PROPERTY(b->whdata.hdata, "haptic");
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
