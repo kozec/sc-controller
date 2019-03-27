@@ -20,8 +20,9 @@
 #include <stdio.h>
 
 static const char* KW_MODE = "mode";
-#define MIN_TRIGGER		2 /* When trigger is bellow this position, list of held_triggers is cleared */
-#define MIN_STICK		2 /* When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared */
+#define DEAFAULT_TIMEOUT	0.2
+#define MIN_TRIGGER			2 /* When trigger is bellow this position, list of held_triggers is cleared */
+#define MIN_STICK			2 /* When abs(stick) < MIN_STICK, stick is considered released and held_sticks is cleared */
 
 typedef enum {
 	MCT_BUTTON,
@@ -235,6 +236,9 @@ static Parameter* get_property(Action* a, const char* name) {
 			}
 		}
 		return scc_new_action_parameter(NoAction);
+	}
+	else if (0 == strcmp("timeout", name)) {
+		return scc_new_float_parameter(DEAFAULT_TIMEOUT);
 	}
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;

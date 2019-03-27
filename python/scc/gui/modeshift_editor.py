@@ -428,3 +428,4 @@ class ModeshiftEditor(Editor):
 		if mode != Action.AC_BUTTON:
 			for w in ("vbHold", "vbDoubleClick", "lblHold", "lblDoubleClick"):
 				self.builder.get_object(w).set_sensitive(False)
+
