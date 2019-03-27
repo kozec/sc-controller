@@ -161,6 +161,11 @@ static void set_sensitivity(Action* _a, float x, float y, float z) {
 		xy->y->extended.set_sensitivity(xy->y, y, 1, 1);
 }
 
+static ActionList get_children(Action* a) {
+	XYAction* xy = container_of(a, XYAction, action);
+	return scc_make_action_list(xy->x, xy->y);
+}
+
 static Parameter* get_property(Action* a, const char* name) {
 	XYAction* xy = container_of(a, XYAction, action);
 	if (0 == strcmp(name, "sensitivity")) {
@@ -182,11 +187,10 @@ static Parameter* get_property(Action* a, const char* name) {
 			}
 		}
 		return scc_new_tuple_parameter(2, params);
-	} else if (0 == strcmp(name, "x")) {
-		return scc_new_action_parameter(xy->x);
-	} else if (0 == strcmp(name, "y")) {
-		return scc_new_action_parameter(xy->y);
 	}
+	
+	MAKE_ACTION_PROPERTY(xy->x, "x");
+	MAKE_ACTION_PROPERTY(xy->y, "y");
 	MAKE_HAPTIC_PROPERTY(xy->hdata, "haptic");
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
@@ -205,7 +209,12 @@ static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 		list_free(params);
 		return (ActionOE)scc_oom_action_error();
 	}
-	scc_action_init(&xy->action, KW_XY, AF_ACTION, &xy_dealloc, &xy_to_string);
+	bool is_relative = (0 == strcmp(keyword, KW_RELXY));
+	scc_action_init(&xy->action, KW_XY,
+					AF_ACTION | AF_MOD_FEEDBACK | AF_MOD_SENSITIVITY
+						| AF_MOD_ROTATE | AF_MOD_SMOOTH
+						| (is_relative ? 0 : AF_MOD_BALL),
+					&xy_dealloc, &xy_to_string);
 	HAPTIC_DISABLE(&xy->hdata);
 	vec_set(xy->old_pos, 0, 0);
 	vec_set(xy->origin, 0, 0);
@@ -219,6 +228,7 @@ static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 	xy->action.get_property = &get_property;
 	xy->action.extended.change = &change;
 	xy->action.extended.set_haptic = &set_haptic;
+	xy->action.extended.get_children = &get_children;
 	xy->action.extended.set_sensitivity = &set_sensitivity;
 	
 	RC_ADD(xy->x);

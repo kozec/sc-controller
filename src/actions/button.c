@@ -198,8 +198,9 @@ static ActionOE button_constructor(const char* keyword, ParameterList params) {
 		list_free(params);
 		return (ActionOE)scc_oom_action_error();
 	}
-	scc_action_init(&b->action, KW_BUTTON, AF_ACTION | AF_KEYCODE,
-						&button_dealloc, &button_to_string);
+	scc_action_init(&b->action, KW_BUTTON,
+					AF_ACTION | AF_KEYCODE | AF_MOD_FEEDBACK | AF_MOD_OSD,
+					&button_dealloc, &button_to_string);
 	b->button[0] = scc_parameter_as_int(params->items[0]);
 	b->button[1] = scc_parameter_as_int(params->items[1]);
 	b->param[0] = params->items[0];

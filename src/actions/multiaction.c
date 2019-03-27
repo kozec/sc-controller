@@ -117,7 +117,7 @@ Action* scc_multiaction_new(Action** actions, size_t action_count) {
 
 static ActionList get_children(Action* a) {
 	Multiaction* x = container_of(a, Multiaction, action);
-	return x->children;
+	return scc_copy_action_list(x->children);
 }
 
 Action* scc_multiaction_combine(Action* a1, Action* a2) {

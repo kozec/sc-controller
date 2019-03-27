@@ -120,13 +120,13 @@ class AxisActionComponent(AEComponent, TimerManager):
 	def update_osd_area(self, action):
 		""" Updates preview area displayed on screen """
 		if action:
-			if self.osd_area_instance is None:
-				if self.on_wayland:
-					# Cannot display preview with non-X11 backends
-					return
-				self.osd_area_instance = Area()
-				self.osd_area_instance.show()
 			# TODO: This
+			# if self.osd_area_instance is None:
+			# 	if self.on_wayland:
+			# 		# Cannot display preview with non-X11 backends
+			# 		return
+			# 	self.osd_area_instance = Area()
+			# 	self.osd_area_instance.show()
 			# action.update_osd_area(self.osd_area_instance, FakeMapper(self.editor))
 			self.timer("area", 0.5, self.update_osd_area, action)
 		elif self.osd_area_instance:

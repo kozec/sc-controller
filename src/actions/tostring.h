@@ -6,6 +6,7 @@
  * If 'pc' (ParamChecker) is not NULL, defaults are stripped.
  */
 #pragma once
+#include "scc/utils/strbuilder.h"
 
 #define ACTION_MAKE_TO_STRING(ActionType, prefix, keyword, pc)				\
 	static char* prefix ## _to_string(Action* _a) {							\

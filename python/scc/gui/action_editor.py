@@ -68,13 +68,13 @@ class ActionEditor(Editor):
 		# Specified which modifiers are compatibile with which editor mode.
 		# That way, stuff like Rotation settings is not shown when editor
 		# is used to edit menu actions.
-		Action.AC_BUTTON	: Action.MOD_OSD | Action.MOD_FEEDBACK,
-		Action.AC_TRIGGER	: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK,
-		Action.AC_STICK		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK | Action.MOD_SMOOTH,
-		Action.AC_PAD		: Action.MOD_OSD | Action.MOD_CLICK | Action.MOD_DEADZONE | Action.MOD_ROTATE | Action.MOD_SENSITIVITY | Action.MOD_FEEDBACK | Action.MOD_SMOOTH | Action.MOD_BALL,
-		Action.AC_GYRO		: Action.MOD_OSD | Action.MOD_SENSITIVITY | Action.MOD_SENS_Z | Action.MOD_DEADZONE | Action.MOD_FEEDBACK,
+		Action.AC_BUTTON	: Action.AF_MOD_OSD | Action.AF_MOD_FEEDBACK,
+		Action.AC_TRIGGER	: Action.AF_MOD_OSD | Action.AF_MOD_SENSITIVITY | Action.AF_MOD_FEEDBACK,
+		Action.AC_STICK		: Action.AF_MOD_OSD | Action.AF_MOD_CLICK | Action.AF_MOD_DEADZONE | Action.AF_MOD_ROTATE | Action.AF_MOD_SENSITIVITY | Action.AF_MOD_FEEDBACK | Action.AF_MOD_SMOOTH,
+		Action.AC_PAD		: Action.AF_MOD_OSD | Action.AF_MOD_CLICK | Action.AF_MOD_DEADZONE | Action.AF_MOD_ROTATE | Action.AF_MOD_SENSITIVITY | Action.AF_MOD_FEEDBACK | Action.AF_MOD_SMOOTH | Action.AF_MOD_BALL,
+		Action.AC_GYRO		: Action.AF_MOD_OSD | Action.AF_MOD_SENSITIVITY | Action.AF_MOD_SENS_Z | Action.AF_MOD_DEADZONE | Action.AF_MOD_FEEDBACK,
 		Action.AC_OSK		: 0,
-		Action.AC_MENU		: Action.MOD_OSD,
+		Action.AC_MENU		: Action.AF_MOD_OSD,
 		AEC_MENUITEM		: 0,
 	}
 	
@@ -653,11 +653,11 @@ class ActionEditor(Editor):
 		
 		cm = action.get_compatible_modifiers()
 		
-		if (cm & Action.MOD_BALL) != 0:
+		if (cm & Action.AF_MOD_BALL) != 0:
 			if self.friction >= 0:
 				action = BallModifier(round(self.friction, 3), action)
 		
-		if (cm & Action.MOD_SENSITIVITY) != 0:
+		if (cm & Action.AF_MOD_SENSITIVITY) != 0:
 			# Strip 1.0's from sensitivity values
 			sens = [] + self.sens
 			while len(sens) > 0 and sens[-1] == 1.0:
@@ -669,7 +669,7 @@ class ActionEditor(Editor):
 				# Create modifier
 				action = SensitivityModifier(*sens)
 		
-		if (cm & Action.MOD_FEEDBACK) != 0:
+		if (cm & Action.AF_MOD_FEEDBACK) != 0:
 			if self.feedback_position != None:
 				# Strip defaults from feedback values
 				feedback = [] + self.feedback
@@ -686,23 +686,23 @@ class ActionEditor(Editor):
 					# Create modifier
 					action = FeedbackModifier(*feedback)
 		
-		if (cm & Action.MOD_SMOOTH) != 0:
+		if (cm & Action.AF_MOD_SMOOTH) != 0:
 			if self.smoothing != None:
 				action = SmoothModifier(*( list(self.smoothing) + [ action ]))
 		
-		if (cm & Action.MOD_DEADZONE) != 0:
+		if (cm & Action.AF_MOD_DEADZONE) != 0:
 			if self.deadzone_mode is not None:
 				action = DeadzoneModifier(self.deadzone_mode, self.deadzone[0], self.deadzone[1], action)
 		
-		if (cm & Action.MOD_ROTATE) != 0:
+		if (cm & Action.AF_MOD_ROTATE) != 0:
 			if self.rotation_angle != 0.0:
 				action = RotateInputModifier(self.rotation_angle, action)
 		
-		if (cm & Action.MOD_OSD) != 0:
+		if (cm & Action.AF_MOD_OSD) != 0:
 			if self.osd:
 				action = OSDAction(action)
 		
-		if (cm & Action.MOD_CLICK) != 0:
+		if (cm & Action.AF_MOD_CLICK) != 0:
 			if self.click:
 				action = ClickedModifier(action)
 		
@@ -775,9 +775,9 @@ class ActionEditor(Editor):
 			if isinstance(action, SensitivityModifier):
 				if index < 0:
 					for i in xrange(0, len(self.sens)):
-						self.sens[i] = action.speeds[i]
+						self.sens[i] = action.sensitivity[i]
 				else:
-					self.sens[index] = action.speeds[0]
+					self.sens[index] = action.sensitivity[0]
 				action = action.action
 			if isinstance(action, BallModifier):
 				self.friction = action.friction
@@ -969,41 +969,41 @@ class ActionEditor(Editor):
 		
 		# Feedback
 		grFeedback = self.builder.get_object("grFeedback")
-		grFeedback.set_sensitive((cm & Action.MOD_FEEDBACK) != 0)
+		grFeedback.set_sensitive((cm & Action.AF_MOD_FEEDBACK) != 0)
 		
 		# Smoothing
 		grSmoothing = self.builder.get_object("grSmoothing")
-		grSmoothing.set_sensitive((cm & Action.MOD_SMOOTH) != 0)
+		grSmoothing.set_sensitive((cm & Action.AF_MOD_SMOOTH) != 0)
 		
 		# Deadzone
 		grDeadzone = self.builder.get_object("grDeadzone")
-		grDeadzone.set_sensitive((cm & Action.MOD_DEADZONE) != 0)
+		grDeadzone.set_sensitive((cm & Action.AF_MOD_DEADZONE) != 0)
 		
 		# Sensitivity
 		grSensitivity = self.builder.get_object("grSensitivity")
-		grSensitivity.set_sensitive((cm & Action.MOD_SENSITIVITY) != 0)
+		grSensitivity.set_sensitive((cm & Action.AF_MOD_SENSITIVITY) != 0)
 		for w in self.sens_widgets[2]:
-			w.set_visible((cm & Action.MOD_SENS_Z) != 0)
+			w.set_visible((cm & Action.AF_MOD_SENS_Z) != 0)
 		
 		# Rotation
 		for w in ("lblRotationHeader", "lblRotation", "sclRotation", "btClearRotation"):
-			self.builder.get_object(w).set_sensitive((cm & Action.MOD_ROTATE) != 0)
+			self.builder.get_object(w).set_sensitive((cm & Action.AF_MOD_ROTATE) != 0)
 		
 		# Click
 		cbRequireClick = self.builder.get_object("cbRequireClick")
-		cbRequireClick.set_sensitive((cm & Action.MOD_CLICK) != 0)
+		cbRequireClick.set_sensitive((cm & Action.AF_MOD_CLICK) != 0)
 		
 		# Ball
 		cbBallMode = self.builder.get_object("cbBallMode")
-		cbBallMode.set_sensitive((cm & Action.MOD_BALL) != 0)
+		cbBallMode.set_sensitive((cm & Action.AF_MOD_BALL) != 0)
 		for w in ("sclFriction", "lblFriction", "btClearFriction"):
-			self.builder.get_object(w).set_sensitive(cbBallMode.get_active() and ((cm & Action.MOD_BALL) != 0))
-		if cm & Action.MOD_BALL == 0:
+			self.builder.get_object(w).set_sensitive(cbBallMode.get_active() and ((cm & Action.AF_MOD_BALL) != 0))
+		if cm & Action.AF_MOD_BALL == 0:
 			self.builder.get_object("cbBallMode").set_active(False)
 		
 		# OSD
 		cbOSD = self.builder.get_object("cbOSD")
-		cbOSD.set_sensitive(cm & Action.MOD_OSD != 0)
+		cbOSD.set_sensitive(cm & Action.AF_MOD_OSD != 0)
 
 
 	def set_sensitivity(self, x, y=1.0, z=1.0):

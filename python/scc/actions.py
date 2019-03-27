@@ -110,11 +110,23 @@ class Action(object):
 	CActionOEp = ctypes.POINTER(CActionOE)
 	CActionOEpp = ctypes.POINTER(CActionOEp)
 	
-	AF_NONE					= 0b00000000
-	AF_ERROR				= 0b00000001
-	AF_ACTION				= 0b00001 << 9
-	AF_MODIFIER				= 0b00010 << 9
-	AF_SPECIAL_ACTION		= 0b00100 << 9
+	AF_NONE					= 0b0000
+	AF_ERROR				= 0b0001
+	AF_ACTION				= 0b000000000000001 << 9
+	AF_MODIFIER				= 0b000000000000010 << 9
+	AF_SPECIAL_ACTION		= 0b000000000000101 << 9
+	AF_AXIS					= 0b000000000001000 << 9
+	AF_KEYCODE				= 0b000000000010000 << 9
+	AF_MOD_CLICK			= 0b000000000100000 << 9
+	AF_MOD_OSD				= 0b000000001000000 << 9
+	AF_MOD_FEEDBACK			= 0b000000010000000 << 9
+	AF_MOD_DEADZONE			= 0b000000100000000 << 9
+	AF_MOD_SENSITIVITY		= 0b000001000000000 << 9
+	AF_MOD_SENS_Z			= 0b000010000000000 << 9
+	AF_MOD_ROTATE			= 0b000100000000000 << 9
+	AF_MOD_POSITION			= 0b001000000000000 << 9
+	AF_MOD_SMOOTH			= 0b010000000000000 << 9
+	AF_MOD_BALL				= 0b100000000000000 << 9
 	
 	# "Action Context" constants used by GUI
 	AC_BUTTON	= 1 << 0
@@ -128,18 +140,8 @@ class Action(object):
 	AC_SWITCHER	= 1 << 11	# Autoswitcher display
 	AC_ALL		= 0b10111111111	# ALL means everything but OSK
 	
-	# TODO: WTF should be done with this?
-	# Used by get_compatible_modifiers in past
-	MOD_CLICK		= 1 << 0
-	MOD_OSD			= 1 << 1
-	MOD_FEEDBACK	= 1 << 2
-	MOD_DEADZONE	= 1 << 3
-	MOD_SENSITIVITY	= 1 << 4
-	MOD_SENS_Z		= 1 << 5	# Sensitivity of 3rd axis
-	MOD_ROTATE		= 1 << 6
-	MOD_POSITION	= 1 << 7
-	MOD_SMOOTH		= 1 << 8
-	MOD_BALL		= 1 << 9
+	# TODO: Load those from c?
+	DEFAULT_DIAGONAL_RANGE = 45
 	
 	def __init__(self, *args):
 		"""
@@ -182,9 +184,8 @@ class Action(object):
 	def encode(self):
 		return dumps({ "action": self.to_string() })
 	
-	# TODO: This:
 	def get_compatible_modifiers(self):
-		return 0
+		return self._caction.contents.flags
 	
 	def compress(self):
 		"""
@@ -338,6 +339,7 @@ class NoAction(Action):
 	def __nonzero__(self):
 		return False
 
+
 class Modifier(Action):
 	
 	@property
@@ -348,6 +350,9 @@ class Modifier(Action):
 		return Action._from_c(c)
 	
 	action = child	# backwards compatibility :(
+	
+	def get_compatible_modifiers(self):
+		return self._caction.contents.flags | self.child._caction.contents.flags
 
 
 class BallModifier(Modifier): KEYWORD = "ball"
@@ -382,10 +387,34 @@ class SensitivityModifier(Modifier): KEYWORD = "sens"
 class FeedbackModifier(Modifier): KEYWORD = "feedback"
 class ClickedModifier(Modifier): KEYWORD = "clicked"
 class NameModifier(Modifier): KEYWORD = "name"
+class OSDAction(Modifier): KEYWORD = "osd"
+class RotateInputModifier(Modifier): KEYWORD = "rotate"
+class PositionModifier(Modifier): KEYWORD = "position"
 class TriggerAction(Action): KEYWORD = "trigger"
 class DPadAction(Action): KEYWORD = "dpad"
 class DPad8Action(Action): KEYWORD = "dpad8"
 class DoubleclickModifier(Modifier): KEYWORD = "doubleclick"
+class CircularModifier(Action): KEYWORD = "circular"
+class CircularAbsModifier(Action): KEYWORD = "circularabs"
+class GyroAbsAction(Action): KEYWORD = "gyroabs"
+class TiltAction(Action): KEYWORD = "tilt"
+class GyroAction(Action): KEYWORD = "gyro"
+class RingAction(Action): KEYWORD = "ring"
+class KeyboardAction(Action): KEYWORD = "keyboard"
+class GesturesAction(Action): KEYWORD = "gestures"
+class TurnOffAction(Action): KEYWORD = "turnoff"
+class ResetGyroAction(Action): KEYWORD = "resetgyro"
+class ClearOSDAction(Action): KEYWORD = "clearosd"
+class ShellCommandAction(Action): KEYWORD = "shell"
+class RestartDaemonAction(Action): KEYWORD = "restart"
+class RelWinAreaAction(Action): KEYWORD = "relwinarea"
+class RelAreaAction(Action): KEYWORD = "relarea"
+class WinAreaAction(Action): KEYWORD = "winarea"
+class AreaAction(Action): KEYWORD = "area"
+class HorizontalMenuAction(Action): KEYWORD = "hmenu"
+class RadialMenuAction(Action): KEYWORD = "radialmenu"
+class QuickMenuAction(Action): KEYWORD = "quickmenu"
+class GridMenuAction(Action): KEYWORD = "gridmenu"
 
 
 class ModeModifier(Modifier):
@@ -433,36 +462,6 @@ class MultiAction(Action):
 
 class Macro(MultiAction):
 	BUILD_FN = lib_bindings.scc_macro_new
-
-
-class Stub:
-	
-	def __init__(self, *a, **b):
-		pass
-
-
-class GyroAction(Stub): pass
-class GyroAbsAction(Stub): pass
-class RingAction(Stub): pass
-class OSDAction(Stub): pass
-class RotateInputModifier(Stub): pass
-class RelWinAreaAction(Stub): pass
-class WinAreaAction(Stub): pass
-class AreaAction(Stub): pass
-class RelAreaAction(Stub): pass
-class CircularModifier(Stub): pass
-class HorizontalMenuAction(Stub): pass
-class ShellCommandAction(Stub): pass
-class RadialMenuAction(Stub): pass
-class QuickMenuAction(Stub): pass
-class GridMenuAction(Stub): pass
-class PositionModifier(Stub): pass
-class GesturesAction(Stub): pass
-class TurnOffAction(Stub): pass
-class KeyboardAction(Stub): pass
-class ResetGyroAction(Stub): pass
-class ClearOSDAction(Stub): pass
-class TiltAction(Stub): pass
 
 
 lib_bindings.scc_action_get_type.argtypes = [ Action.CActionOEp ]

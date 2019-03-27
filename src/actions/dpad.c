@@ -173,7 +173,10 @@ static ActionOE dpad_constructor(const char* keyword, ParameterList params) {
 		list_free(params);
 		return (ActionOE)scc_oom_action_error();
 	}
-	scc_action_init(&dpad->action, KW_DPAD4, AF_ACTION, &dpad_dealloc, &dpad_to_string);
+	scc_action_init(&dpad->action, KW_DPAD4,
+					AF_ACTION | AF_MOD_CLICK | AF_MOD_ROTATE
+						| AF_MOD_DEADZONE | AF_MOD_FEEDBACK,
+					&dpad_dealloc, &dpad_to_string);
 	dpad->action.describe = &describe;
 	dpad->action.whole = &whole;
 	dpad->action.get_property = &get_property;

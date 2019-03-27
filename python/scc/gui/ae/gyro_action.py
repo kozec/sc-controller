@@ -92,7 +92,7 @@ class GyroActionComponent(AEComponent):
 				else:
 					self.select_yaw_roll(ROLL)
 				self.editor.set_default_sensitivity(3.5, 3.5, 3.5)
-				self.editor.set_sensitivity(*action.speeds)
+				self.editor.set_sensitivity(*action.sensitivity)
 			elif isinstance(action, MouseAction):
 				# Mouse (Camera)
 				self.select_gyro_output("mouse_cam")

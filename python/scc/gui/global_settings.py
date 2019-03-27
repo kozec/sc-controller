@@ -10,10 +10,9 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GObject, GLib, GdkPixbuf
 from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
 from scc.paths import get_profiles_path, get_menus_path, get_config_path
-from scc.special_actions import TurnOffAction, RestartDaemonAction
-from scc.special_actions import ChangeProfileAction
+from scc.actions import ChangeProfileAction, SensitivityModifier
+from scc.actions import TurnOffAction, RestartDaemonAction
 from scc.tools import find_profile, find_menu, find_binary
-from scc.modifiers import SensitivityModifier
 from scc.profile import Profile, Encoder
 from scc.actions import Action, NoAction
 from scc.constants import LEFT, RIGHT
@@ -23,12 +22,12 @@ from scc.gui.userdata_manager import UserDataManager
 from scc.gui.editor import Editor, ComboSetter
 from scc.gui.parser import GuiActionParser
 from scc.gui.dwsnc import IS_UNITY
-from scc.x11.autoswitcher import AutoSwitcher, Condition
-from scc.osd.menu_generators import RecentListMenuGenerator
-from scc.osd.menu_generators import WindowListMenuGenerator
-from scc.osd.keyboard import Keyboard as OSDKeyboard
-from scc.osd.osk_actions import OSKCursorAction
-import scc.osd.osk_actions
+# from scc.x11.autoswitcher import AutoSwitcher, Condition
+# from scc.osd.menu_generators import RecentListMenuGenerator
+# from scc.osd.menu_generators import WindowListMenuGenerator
+# from scc.osd.keyboard import Keyboard as OSDKeyboard
+# from scc.osd.osk_actions import OSKCursorAction
+# import scc.osd.osk_actions
 
 import re, sys, os, json, logging, traceback
 log = logging.getLogger("GS")
@@ -38,11 +37,12 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	DEFAULT_MENU_OPTIONS = [
 		# label,				order, class, icon, parameter
-		('Recent profiles',		0, RecentListMenuGenerator, None, 3),
-		('Autoswitch Options',	1, Submenu, 'system/autoswitch', '.autoswitch.menu'),
-		('Switch To',			1, Submenu, 'system/windowlist', '.windowlist.menu'),
-		('Display Keyboard',	2, MenuItem, 'system/keyboard', 'keyboard()'),
-		('Turn Controller OFF', 2, MenuItem, 'system/turn-off', 'osd(turnoff())'),
+		# TODO: Disabled
+		# ('Recent profiles',		0, RecentListMenuGenerator, None, 3),
+		# ('Autoswitch Options',	1, Submenu, 'system/autoswitch', '.autoswitch.menu'),
+		# ('Switch To',			1, Submenu, 'system/windowlist', '.windowlist.menu'),
+		# ('Display Keyboard',	2, MenuItem, 'system/keyboard', 'keyboard()'),
+		# ('Turn Controller OFF', 2, MenuItem, 'system/turn-off', 'osd(turnoff())'),
 		('Kill Current Window',	1, MenuItem, 'weapons/pistol-gun',
 			"dialog('Really? Non-saved progress or data will be lost', "
 			"name('Back', None), "
@@ -68,14 +68,12 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 					self.app.imagepath, "controller-icons", "unknown.svg"))
 		}
 		self.app.config.reload()
-		Action.register_all(sys.modules['scc.osd.osk_actions'], prefix="OSK")
 		self.load_settings()
 		self.load_profile_list()
 		self._recursing = False
 		self._eh_ids = (
 			self.app.dm.connect('reconfigured', self.on_daemon_reconfigured),
 		)
-	
 	
 	def _get_gamepad_icon(self, drv):
 		if drv in self._gamepad_icons:
@@ -89,20 +87,16 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self._gamepad_icons[drv] = p
 		return p
 	
-	
 	def on_daemon_reconfigured(self, *a):
 		# config is reloaded in main window 'reconfigured' handler.
 		# Using GLib.idle_add here ensures that main window hanlder will run
 		# *before* self.load_conditions
 		GLib.idle_add(self.load_settings)
 	
-	
 	def on_Dialog_destroy(self, *a):
 		for x in self._eh_ids:
 			self.app.dm.disconnect(x)
 		self._eh_ids = ()
-		Action.unregister_prefix('OSK')
-	
 	
 	def load_settings(self):
 		self.load_autoswitch()
@@ -143,13 +137,11 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				self.builder.get_object(w).set_sensitive(False)
 			self.builder.get_object("txEvdevMissing").set_visible(True)
 	
-	
 	def load_drivers(self):
 		for key, value in self.app.config['drivers'].items():
 			w = self.builder.get_object("cbEnableDriver_%s" % (key, ))
 			if w:
 				w.set_active(value)
-	
 	
 	def _load_color(self, w, dct, key):
 		""" Common part of load_colors """
@@ -158,7 +150,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			if not success:
 				success, color = Gdk.Color.parse("#%s" % (self.app.config[dct][key],))
 			w.set_color(color)
-	
 	
 	def load_colors(self):
 		cbOSDStyle = self.builder.get_object("cbOSDStyle")
@@ -173,9 +164,11 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.set_cb(cbOSDColorPreset, theme)
 		self.set_cb(cbOSDStyle, self.app.config.get("osd_style"))
 	
-	
 	def load_autoswitch(self):
 		""" Transfers autoswitch settings from config to UI """
+		# TODO: This
+		return
+		'''
 		tvItems = self.builder.get_object("tvItems")
 		cbShowOSD = self.builder.get_object("cbShowOSD")
 		conditions = AutoSwitcher.parse_conditions(self.app.config)
@@ -191,9 +184,12 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.on_tvItems_cursor_changed()
 		cbShowOSD.set_active(bool(self.app.config['autoswitch_osd']))
 		self._recursing = False
-	
+		'''
 	
 	def load_osk(self):
+		# TODO: This
+		return
+		'''
 		cbStickAction = self.builder.get_object("cbStickAction")
 		cbTriggersAction = self.builder.get_object("cbTriggersAction")
 		profile = Profile(GuiActionParser())
@@ -213,12 +209,12 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			self.add_custom(cbStickAction, profile.stick.to_string())
 		
 		# Load sensitivity
-		s = profile.pads[LEFT].compress().speed
+		s = profile.pads[LEFT].compress().sensitivity
 		self.builder.get_object("sclSensX").set_value(s[0])
 		self.builder.get_object("sclSensY").set_value(s[1])
 		
 		self._recursing = False
-	
+		'''
 	
 	def add_custom(self, cb, key):
 		for k in cb.get_model():
@@ -229,7 +225,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cb.get_model().append(( _("(customized)"), key, True ))
 		self.set_cb(cb, key, keyindex=1)
 	
-	
 	def _load_osk_profile(self):
 		"""
 		Loads and returns on-screen keyboard profile.
@@ -238,7 +233,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		profile = Profile(GuiActionParser())
 		profile.load(find_profile(OSDKeyboard.OSK_PROF_NAME))
 		return profile
-	
 	
 	def _save_osk_profile(self, profile):
 		"""
@@ -249,14 +243,12 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				OSDKeyboard.OSK_PROF_NAME + ".sccprofile"))
 		self.app.dm.reconfigure()
 	
-	
 	def on_cbStickAction_changed(self, cb):
 		if self._recursing: return
 		key = cb.get_model().get_value(cb.get_active_iter(), 1)
 		profile = self._load_osk_profile()
 		profile.stick = GuiActionParser().restart(key).parse()
 		self._save_osk_profile(profile)
-	
 	
 	def on_cbTriggersAction_changed(self, cb):
 		if self._recursing: return
@@ -266,7 +258,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		profile.triggers[LEFT]  = GuiActionParser().restart(l).parse()
 		profile.triggers[RIGHT] = GuiActionParser().restart(r).parse()
 		self._save_osk_profile(profile)
-	
 	
 	def on_osd_color_set(self, *a):
 		"""
@@ -290,7 +281,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.set_cb(cbOSDColorPreset, "None")
 		self.app.save_config()
 	
-	
 	def schedule_save_config(self):
 		"""
 		Schedules config saving in 3s.
@@ -303,7 +293,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		if self._timer is not None:
 			GLib.source_remove(self._timer)
 		self._timer = GLib.timeout_add_seconds(3, cb)
-	
 	
 	def save_config(self):
 		""" Transfers settings from UI back to config """
@@ -341,11 +330,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		# Save
 		self.app.save_config()
 	
-	
 	def on_cbShowOSD_toggled(self, cb):
 		if self._recursing: return
 		self.save_config()
-	
 	
 	def on_btRestartEmulation_clicked(self, *a):
 		rvRestartWarning = self.builder.get_object("rvRestartWarning")
@@ -353,18 +340,15 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		rvRestartWarning.set_reveal_child(False)
 		GLib.timeout_add_seconds(1, self.app.dm.start)
 	
-	
 	def on_restarting_checkbox_toggled(self, *a):
 		if self._recursing: return
 		self.on_random_checkbox_toggled()
 		self._needs_restart()
 	
-	
 	def _needs_restart(self):
 		if self.app.dm.is_alive():
 			rvRestartWarning = self.builder.get_object("rvRestartWarning")
 			rvRestartWarning.set_reveal_child(True)
-	
 	
 	DRIVER_DEPS = {
 		'ds4drv' : ( "evdevdrv", "hiddrv" )
@@ -403,16 +387,13 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.save_config()
 		self._needs_restart()
 	
-	
 	def on_random_checkbox_toggled(self, *a):
 		if self._recursing: return
 		self.save_config()
 	
-	
 	def on_butEditKeyboardBindings_clicked(self, *a):
 		e = OSKBindingEditor(self.app)
 		e.show(self.window)
-	
 	
 	def btEdit_clicked_cb(self, *a):
 		""" Handler for "Edit condition" button """
@@ -471,7 +452,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		# Show editor
 		ce.show()
 	
-	
 	def on_btSave_clicked(self, *a):
 		tvItems = self.builder.get_object("tvItems")
 		cbProfile = self.builder.get_object("cbProfile")
@@ -519,7 +499,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.hide_dont_destroy(ce)
 		self.save_config()
 	
-	
 	def on_btAdd_clicked(self, *a):
 		""" Handler for "Add Item" button """
 		tvItems = self.builder.get_object("tvItems")
@@ -532,7 +511,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.on_tvItems_cursor_changed()
 		self.btEdit_clicked_cb()
 	
-	
 	def on_btRemove_clicked(self, *a):
 		""" Handler for "Remove Condition" button """
 		tvItems = self.builder.get_object("tvItems")
@@ -541,7 +519,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			model.remove(iter)
 		self.save_config()
 		self.on_tvItems_cursor_changed()
-	
 	
 	def on_tvItems_cursor_changed(self, *a):
 		"""
@@ -555,7 +532,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		model, iter = tvItems.get_selection().get_selected()
 		btRemove.set_sensitive(iter is not None)
 		btEdit.set_sensitive(iter is not None)
-	
 	
 	def on_profiles_loaded(self, profiles):
 		cb = self.builder.get_object("cbProfile")
@@ -571,12 +547,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		
 		cb.set_active(0)
 	
-	
 	def on_ConditionEditor_key_press_event(self, w, event):
 		""" Checks if pressed key was escape and if yes, closes window """
 		if event.keyval == Gdk.KEY_Escape:
 			self.hide_dont_destroy(w)
-	
 	
 	def on_cbExactTitle_toggled(self, tg):
 		# Ensure that 'Match Title' checkbox is checked and only one of
@@ -587,7 +561,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			cbMatchTitle.set_active(True)
 			cbRegExp.set_active(False)
 	
-	
 	def on_cbRegExp_toggled(self, tg):
 		# Ensure that 'Match Title' checkbox is checked and only one of
 		# 'match exact title' and 'use regexp' is checked
@@ -597,14 +570,11 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			cbMatchTitle.set_active(True)
 			cbExactTitle.set_active(False)
 	
-	
 	def on_btClearSensX_clicked(self, *a):
 		self.builder.get_object("sclSensX").set_value(1.0)
 	
-	
 	def on_btClearSensY_clicked(self, *a):
 		self.builder.get_object("sclSensY").set_value(1.0)
-	
 	
 	def on_sens_value_changed(self, *a):
 		if self._recursing : return
@@ -619,7 +589,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			profile.pads[LEFT]  = SensitivityModifier(s[0], s[1], OSKCursorAction(LEFT))
 			profile.pads[RIGHT] = SensitivityModifier(s[0], s[1], OSKCursorAction(RIGHT))
 		self._save_osk_profile(profile)
-	
 	
 	def on_entTitle_changed(self, ent):
 		cbRegExp = self.builder.get_object("cbRegExp")
@@ -639,8 +608,9 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				return
 		btSave.set_sensitive(True)
 	
-	
 	def on_cbOSDColorPreset_changed(self, cb):
+		# TODO: This
+		return
 		theme = cb.get_model().get_value(cb.get_active_iter(), 0)
 		if theme in (None, "None"): return
 		filename = os.path.join(get_share_path(), "osd-styles", theme)
@@ -656,7 +626,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		# Save
 		self.app.config["osd_color_theme"] = theme
 		self.app.save_config()
-	
 	
 	def on_cbOSDStyle_changed(self, cb):
 		color_keys = self.app.config['osk_colors'].keys() + self.app.config['osd_colors'].keys()
@@ -677,7 +646,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.app.config["osd_style"] = osd_style
 		self.app.save_config()
 	
-	
 	@staticmethod
 	def _make_mi_instance(index):
 		""" Helper method used by on_cbMI_toggled and load_cbMIs """
@@ -692,7 +660,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			instance.icon = icon
 			instance.label = label
 		return instance
-	
 	
 	def on_cbMI_toggled(self, widget):
 		"""
@@ -757,7 +724,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		open(path, "w").write(jstr)
 		log.debug("Wrote menu file %s", path)
 	
-	
 	def load_cbMIs(self):
 		"""
 		See above. This method just parses Default menu and checks
@@ -789,13 +755,11 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			cbMI_5.set_sensitive(True)
 			cbMI_5.set_tooltip_text("")
 	
-	
 	def on_btAddController_clicked(self, *a):
 		from scc.gui.creg.dialog import ControllerRegistration
 		cr = ControllerRegistration(self.app)
 		cr.window.connect("destroy", self.load_controllers)
 		cr.show(self.window)
-	
 	
 	def on_btRemoveController_clicked(self, *a):
 		tvControllers = self.builder.get_object("tvControllers")
@@ -818,7 +782,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			self.load_controllers()
 		d.destroy()
 	
-	
 	def load_controllers(self, *a):
 		lstControllers = self.builder.get_object("lstControllers")
 		lstControllers.clear()
@@ -835,3 +798,4 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 					name = name[0:-5]
 				path = os.path.join(get_config_path(), "devices", filename)
 				lstControllers.append((path, name, self._get_gamepad_icon(drv)))
+

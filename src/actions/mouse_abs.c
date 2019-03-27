@@ -76,7 +76,9 @@ static ActionOE mouseabs_constructor(const char* keyword, ParameterList params) 
 	
 	MouseAbsAction* b = malloc(sizeof(MouseAbsAction));
 	if (b == NULL) return (ActionOE)scc_oom_action_error();
-	scc_action_init(&b->action, KW_MOUSEABS, AF_ACTION, &mouseabs_dealloc, &mouseabs_to_string);
+	scc_action_init(&b->action, KW_MOUSEABS,
+					AF_ACTION | AF_MOD_SENSITIVITY | AF_MOD_SENS_Z | AF_MOD_DEADZONE,
+					&mouseabs_dealloc, &mouseabs_to_string);
 	b->action.axis = &axis;
 	b->action.whole = &whole;
 	

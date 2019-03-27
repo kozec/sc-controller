@@ -23,7 +23,7 @@ typedef enum {
 	PT_TUPLE					= 0b100000000,
 	// PT_ANY  _has_ to cover all but error
 	PT_ANY						= 0b111111110,
-	ParameterType_pad_			= 0xFFFF
+	ParameterType_pad_			= 0xFFFFFFFF
 } ParameterType;
 
 typedef enum {

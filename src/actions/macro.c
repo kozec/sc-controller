@@ -208,7 +208,7 @@ bool scc_macro_add_action(Action* m, Action* a) {
 
 static ActionList get_children(Action* a) {
 	Macro* x = container_of(a, Macro, action);
-	return x->children;
+	return scc_copy_action_list(x->children);
 }
 
 /** Common code for scc_macro_combine and scc_multiaction_combine */

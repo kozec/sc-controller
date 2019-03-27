@@ -94,7 +94,7 @@ void scc_param_checker_init(ParamChecker* pc, const char* expression) {
 		case 'f':
 			list_add(lst, PD(PT_FLOAT));
 			last = list_last(lst);
-			last->fmin = FLT_MIN; last->fmax = FLT_MAX;
+			last->fmin = FLT_MAX * -1.0; last->fmax = FLT_MAX;
 			break;
 		case 'i':
 			list_add(lst, PD(PT_INT));

@@ -11,6 +11,10 @@ typedef struct ControllerInput ControllerInput;
 typedef struct Mapper Mapper;
 typedef struct HapticData HapticData;
 
+#define KEY_INVALID 0
+#define REL_INVALID REL_MAX
+#define ABS_INVALID ABS_MAX
+
 
 typedef enum ControllerFlags {
 	// uint32

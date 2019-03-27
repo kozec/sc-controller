@@ -79,9 +79,7 @@ static Parameter* get_property(Action* a, const char* name) {
 	SensitivityModifier* s = container_of(a, SensitivityModifier, action);
 	
 	if (0 == strcmp(name, "sensitivity")) {
-		uint8_t count = 3;
-		while ((count > 0) && (scc_parameter_as_float(list_get(s->params, count - 1)) == 1.0))
-			count --;
+		static const uint8_t count = 3;
 		for (uint8_t i=0; i<count; i++)
 			RC_ADD(list_get(s->params, i));
 		return scc_new_tuple_parameter(count, s->params->items);

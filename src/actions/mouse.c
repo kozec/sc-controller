@@ -145,13 +145,7 @@ static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos
 
 static Parameter* get_property(Action* a, const char* name) {
 	MouseAction* b = container_of(a, MouseAction, action);
-	if (0 == strcmp(name, "sensitivity")) {
-		Parameter* params[] = {
-			scc_new_float_parameter(b->sensitivity.x),
-			scc_new_float_parameter(b->sensitivity.y)
-		};
-		return scc_new_tuple_parameter(2, params);
-	}
+	MAKE_DVEC_PROPERTY(b->sensitivity, "sensitivity");
 	MAKE_HAPTIC_PROPERTY(b->whdata.hdata, "haptic");
 	MAKE_INT_PROPERTY(b->axis, "axis");
 	
@@ -168,7 +162,11 @@ static ActionOE mouse_constructor(const char* keyword, ParameterList params) {
 	
 	MouseAction* b = malloc(sizeof(MouseAction));
 	if (b == NULL) return (ActionOE)scc_oom_action_error();
-	scc_action_init(&b->action, KW_MOUSE, AF_ACTION, &mouse_dealloc, &mouse_to_string);
+	scc_action_init(&b->action, KW_MOUSE,
+					AF_ACTION | AF_MOD_SENSITIVITY | AF_MOD_SENS_Z
+						| AF_MOD_ROTATE | AF_MOD_SMOOTH | AF_MOD_BALL
+						| AF_MOD_FEEDBACK | AF_MOD_DEADZONE,
+					&mouse_dealloc, &mouse_to_string);
 	b->action.button_press = &button_press;
 	b->action.axis = &axis;
 	b->action.whole = &whole;

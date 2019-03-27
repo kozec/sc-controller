@@ -17,7 +17,7 @@ from scc.gui.binding_editor import BindingEditor
 from scc.gui.controller_widget import TRIGGERS, STICKS
 from scc.gui.parser import GuiActionParser
 from scc.gui.editor import Editor
-from scc.osd.keyboard import Keyboard as OSDKeyboard
+# from scc.osd.keyboard import Keyboard as OSDKeyboard
 
 import os, logging
 log = logging.getLogger("OSKEdit")

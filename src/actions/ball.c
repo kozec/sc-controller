@@ -7,7 +7,6 @@
  * movements using 'extended.change' method.
 */
 #include "scc/utils/logging.h"
-#include "scc/utils/strbuilder.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
@@ -211,7 +210,10 @@ static ActionOE ball_constructor(const char* keyword, ParameterList params) {
 	
 	BallModifier* b = malloc(sizeof(BallModifier));
 	if (b == NULL) return (ActionOE)scc_oom_action_error();
-	scc_action_init(&b->action, KW_BALL, AF_MODIFIER, &ball_dealloc, &ball_to_string);
+	scc_action_init(&b->action, KW_BALL,
+					AF_MODIFIER | AF_MOD_SENSITIVITY | AF_MOD_FEEDBACK
+						| AF_MOD_SMOOTH | AF_MOD_DEADZONE,
+					&ball_dealloc, &ball_to_string);
 	b->action.compress = &compress;
 	b->action.whole = &whole;
 	b->action.get_property = &get_property;

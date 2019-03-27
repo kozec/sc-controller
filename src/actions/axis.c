@@ -204,7 +204,8 @@ static ActionOE axis_constructor(const char* keyword, ParameterList params) {
 		free(ax);
 		return (ActionOE)scc_oom_action_error();
 	}
-	scc_action_init(&ax->action, KW_AXIS, AF_ACTION | AF_AXIS, &axis_dealloc, &axis_to_string);
+	scc_action_init(&ax->action, KW_AXIS, AF_ACTION | AF_AXIS | AF_MOD_DEADZONE,
+					&axis_dealloc, &axis_to_string);
 	if (!apply_axis_params(ax, keyword, params))
 		return (ActionOE)invalid_number_of_parameters(keyword);
 	ax->params = params;

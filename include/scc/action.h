@@ -8,14 +8,24 @@
 typedef enum ActionFlags {
 	// ActionFlags and ParameterType values has to be mutually exclusive,
 	// with exception of AF_ERROR / PT_ERROR
-	AF_NONE						= 0b00000000000000,
-	AF_ERROR					= 0b00000000000001,
-	AF_ACTION					= 0b00001 << 9,
-	AF_MODIFIER					= 0b00010 << 9,
-	AF_SPECIAL_ACTION			= 0b00101 << 9,
-	AF_AXIS						= 0b01000 << 9,		// special in some cases
-	AF_KEYCODE					= 0b10000 << 9,		// action support 'keycode' property which is used by OSD keyboard
-	ActionFlags_pad_			= 0xFFFF
+	AF_NONE						= 0b0000,
+	AF_ERROR					= 0b0001,
+	AF_ACTION					= 0b000000000000001 << 9,
+	AF_MODIFIER					= 0b000000000000010 << 9,
+	AF_SPECIAL_ACTION			= 0b000000000000101 << 9,
+	AF_AXIS						= 0b000000000001000 << 9,		// special in some cases
+	AF_KEYCODE					= 0b000000000010000 << 9,		// action supports 'keycode' property which is used by OSD keyboard
+	AF_MOD_CLICK				= 0b000000000100000 << 9,		// action supports 'clicked' modifier
+	AF_MOD_OSD					= 0b000000001000000 << 9,		// action supports 'osd' modifier
+	AF_MOD_FEEDBACK				= 0b000000010000000 << 9,		// ... et cetera. AF_MOD_* is used by GUI
+	AF_MOD_DEADZONE				= 0b000000100000000 << 9,
+	AF_MOD_SENSITIVITY			= 0b000001000000000 << 9,
+	AF_MOD_SENS_Z				= 0b000010000000000 << 9,		// Sensitivity of 3rd axis
+	AF_MOD_ROTATE				= 0b000100000000000 << 9,
+	AF_MOD_POSITION				= 0b001000000000000 << 9,
+	AF_MOD_SMOOTH				= 0b010000000000000 << 9,
+	AF_MOD_BALL					= 0b100000000000000 << 9,
+	ActionFlags_pad_			= 0xFFFFFFFF
 } ActionFlags;
 
 typedef enum ActionDescContext {
@@ -172,7 +182,7 @@ struct Action {
 		Action*		(*get_child)(Action* a);
 		/**
 		 * For dpad, 'and', macro and similar multiaction, returns list of child
-		 * actions. Returned ActionList should hold references to eacg Actions in it.
+		 * actions. Returned ActionList should hold references to each Actions in it.
 		 */
 		ActionList	(*get_children)(Action* a);
 	} extended;
@@ -191,6 +201,14 @@ typedef ActionOE(*scc_action_constructor)(const char* keyword, ParameterList par
  */
 #define scc_make_action_list(...) _scc_make_action_list(__VA_ARGS__, NULL)
 ActionList _scc_make_action_list(Action* list, ...);
+
+/**
+ * Creates copy of action list. Reference counts are properly increased
+ * and decreased when ActionList is deallocated.
+ *
+ * Returns NULL if allocation fails.
+ */
+ActionList scc_copy_action_list(ActionList lst);
 
 
 void scc_action_register(const char* keyword, scc_action_constructor constructor);

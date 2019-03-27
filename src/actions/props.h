@@ -17,6 +17,12 @@
 		return scc_new_int_parameter(accessor);				\
 	} while (0);
 
+/** Macro for returning 'x' as action property */
+#define MAKE_ACTION_PROPERTY(accessor, prop_name) do {		\
+	if (0 == strcmp(name, prop_name))						\
+		return scc_new_action_parameter(accessor);			\
+	} while (0);
+
 /** Macro for returning dvec_t property */
 #define MAKE_DVEC_PROPERTY(accessor, prop_name) do {		\
 	if (0 == strcmp(name, prop_name)) {						\

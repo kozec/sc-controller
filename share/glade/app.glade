@@ -1028,10 +1028,10 @@
         </child>
         <child>
           <object class="GtkButton" id="btUndo">
-            <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="no_show_all">True</property>
             <property name="tooltip_text" translatable="yes">Undo</property>
             <signal name="clicked" handler="on_btUndo_clicked" swapped="no"/>
             <child>
@@ -1048,10 +1048,10 @@
         </child>
         <child>
           <object class="GtkButton" id="btRedo">
-            <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="no_show_all">True</property>
             <property name="tooltip_text" translatable="yes">Redo</property>
             <signal name="clicked" handler="on_btRedo_clicked" swapped="no"/>
             <child>

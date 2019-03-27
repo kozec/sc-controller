@@ -145,7 +145,8 @@ static ActionOE trigger_constructor(const char* keyword, ParameterList params) {
 	
 	TriggerAction* t = malloc(sizeof(TriggerAction));
 	if (t == NULL) return (ActionOE)scc_oom_action_error();
-	scc_action_init(&t->action, KW_TRIGGER, AF_ACTION, &trigger_dealloc, &trigger_to_string);
+	scc_action_init(&t->action, KW_TRIGGER, AF_ACTION | AF_MOD_FEEDBACK,
+					&trigger_dealloc, &trigger_to_string);
 	t->action.trigger = &trigger;
 	t->action.compress = &compress;
 	t->action.get_property = &get_property;

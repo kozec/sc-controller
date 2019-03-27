@@ -278,6 +278,7 @@ or even crash.</property>
             <child>
               <object class="GtkGrid" id="grid3">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
                 <property name="margin_right">10</property>
@@ -813,6 +814,7 @@ or even crash.</property>
             <child>
               <object class="GtkGrid" id="grid67">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
                 <property name="margin_right">10</property>
@@ -1372,6 +1374,7 @@ or even crash.</property>
             <child>
               <object class="GtkGrid" id="grid68">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
                 <property name="margin_right">10</property>
@@ -1755,6 +1758,7 @@ on network can connect and remote-control this computer as additional gamepad.
             <child>
               <object class="GtkGrid" id="grid1">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
                 <property name="margin_right">10</property>
@@ -2012,6 +2016,7 @@ on network can connect and remote-control this computer as additional gamepad.
             <child>
               <object class="GtkGrid" id="grid12">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
                 <property name="margin_right">10</property>

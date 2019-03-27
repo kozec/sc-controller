@@ -64,6 +64,21 @@ ActionList _scc_make_action_list(Action* a1, ...) {
 }
 
 
+ActionList scc_copy_action_list(ActionList lst) {
+	ActionList cpy = list_new(Action, list_len(lst));
+	ListIterator it = iter_get(lst);
+	if ((cpy == NULL) || (it == NULL))
+		return NULL;
+	list_set_dealloc_cb(cpy, &release_action);
+	FOREACH(Action*, a, it) {
+		RC_ADD(a);
+		list_add(cpy, a);
+	}
+	iter_free(it);
+	return cpy;
+}
+
+
 // What follows are default handlers that are set to inputs that every action
 // has to have by 'scc_action_init'. Those defaults can only log message about
 // not being overriden.
