@@ -174,6 +174,14 @@ void test_macro(CuTest* tc) {
 }
 
 
+/** Tests case that failed in past */
+void test_axis0(CuTest* tc) {
+	ActionOE a;
+	a = scc_parse_action("axis(0)");
+	COMPARE_ACTION_TO_STR(a, "axis(0)");
+}
+
+
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
 	DEFAULT_SUITE_ADD(test_none);
@@ -188,6 +196,8 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_xy);
 	DEFAULT_SUITE_ADD(test_dpad);
 	DEFAULT_SUITE_ADD(test_macro);
+	DEFAULT_SUITE_ADD(test_axis0);
 	
 	return CuSuiteRunDefault();
 }
+

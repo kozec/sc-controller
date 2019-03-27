@@ -21,6 +21,7 @@ static void init() {
 bool scc_str_is_int(const char* str) {
 	if (!initialized) init();
 	if (str[0] == '-') str ++;
+	if ((str[0] == '0') || (str[1] == 0)) return true;
 	return regexec(&re_int, str, 0, NULL, 0) != REG_NOMATCH;
 }
 
