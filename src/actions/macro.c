@@ -211,13 +211,19 @@ static ActionList get_children(Action* a) {
 	return scc_copy_action_list(x->children);
 }
 
+static ActionList get_children_ref(Action* a) {
+	Macro* x = container_of(a, Macro, action);
+	return x->children;
+}
+
+
 /** Common code for scc_macro_combine and scc_multiaction_combine */
 Action* combine(const char* keyword, Action* a1, Action* a2, ActionList (*get_children)(Action*), Action* (*constructor)(Action**, size_t)) {
 	Action* x = NULL;
 	if (0 == strcmp(a1->type, keyword)) {
 		// If a1 is macro, I'll take all actions from it instead of adding
 		// macro itself.
-		ActionList children = get_children(a1);
+		ActionList children = get_children_ref(a1);
 		x = constructor(children->items, list_len(children));
 	} else {
 		x = constructor(&a1, 1);
@@ -227,15 +233,15 @@ Action* combine(const char* keyword, Action* a1, Action* a2, ActionList (*get_ch
 	
 	if (0 == strcmp(a2->type, keyword)) {
 		// If a2 is macro, I'll copy actions from it to Macro created with a1
-		ActionList children1 = get_children(x);
-		ActionList children2 = get_children(a2);
+		ActionList children1 = get_children_ref(x);
+		ActionList children2 = get_children_ref(a2);
 		if (!list_add_all(children1, children2))
 			goto combine_fail;					// Failed to allocate space for items from 2nd
 		// For 1st set of items, constructor adds new references. For this one,
 		// list_add_all does not, so they are added here.
 		list_foreach(children2, &ref_action);
 	} else {
-		ActionList children = get_children(x);
+		ActionList children = get_children_ref(x);
 		if (!list_allocate(children, 1))
 			goto combine_fail;					// Failed to allocate space for single item :(
 		list_add(children, a2);
@@ -250,5 +256,5 @@ combine_fail:
 }
 
 Action* scc_macro_combine(Action* a1, Action* a2) {
-	return combine(KW_MACRO, a1, a2, &get_children, &scc_macro_new);
+	return combine(KW_MACRO, a1, a2, &get_children_ref, &scc_macro_new);
 }

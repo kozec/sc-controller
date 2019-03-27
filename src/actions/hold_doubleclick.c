@@ -96,6 +96,7 @@ static Action* compress(Action* a) {
 		hdbl->hold_action = NULL;
 		TRY_MERGE(dblclick_action, dblclick_action);
 		TRY_MERGE(hold_action, default_action);
+		hdbl->timeout = max(hdbl->timeout, hdbl2->timeout);
 		RC_REL(&hdbl2->action);
 	}
 	if (mergable(hdbl, hdbl->dblclick_action)) {
@@ -103,6 +104,7 @@ static Action* compress(Action* a) {
 		hdbl->dblclick_action = NULL;
 		TRY_MERGE(hold_action, hold_action);
 		TRY_MERGE(dblclick_action, default_action);
+		hdbl->timeout = max(hdbl->timeout, hdbl2->timeout);
 		RC_REL(&hdbl2->action);
 	}
 	if (mergable(hdbl, hdbl->default_action)) {
@@ -111,6 +113,7 @@ static Action* compress(Action* a) {
 		TRY_MERGE(dblclick_action, dblclick_action);
 		TRY_MERGE(hold_action, hold_action);
 		TRY_MERGE(default_action, default_action);
+		hdbl->timeout = max(hdbl->timeout, hdbl2->timeout);
 		RC_REL(&hdbl2->action);
 	}
 	
