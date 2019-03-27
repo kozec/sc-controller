@@ -206,6 +206,7 @@ Mapper* testmapper_new() {
 		return NULL;
 	}
 	testmapper_reset(&m->mapper);
+	m->mapper.type = "testmapper";
 	m->mapper.get_flags = &get_flags;
 	m->mapper.set_profile = NULL;
 	m->mapper.get_profile = NULL;

@@ -126,6 +126,21 @@ static SCCDMapper* get_mapper_for_controller(Controller* c) {
 	return NULL;
 }
 
+const char* get_profile_for_controller(Controller* c) {
+	ListIterator it = iter_get(mappers);
+	const char* filename = NULL;
+	FOREACH(SCCDMapper*, m, it) {
+		Mapper* m_ = sccd_mapper_to_mapper(m);
+		if (m_->get_controller(m_) == c) {
+			filename = sccd_mapper_get_profile_filename(m);
+			if (filename == NULL) filename = "None";
+			break;
+		}
+	}
+	iter_free(it);
+	return filename;
+}
+
 static const char* profile_load_error_to_string(int err) {
 	switch (err) {
 	case 0:
@@ -142,10 +157,20 @@ static const char* profile_load_error_to_string(int err) {
 
 bool sccd_set_profile(Mapper* m, const char* filename) {
 	int err;
+	char* message;
 	Profile* current = m->get_profile(m);
 	Profile* p = scc_profile_from_json(filename, &err);
+	SCCDMapper* m_ = sccd_mapper_to_sccd_mapper(m);
+	if (m_ != NULL) {
+		if (!sccd_mapper_set_profile_filename(m_, filename)) {
+			WARN("Failed to load profile (out of memory). Ignoring request.");
+			RC_REL(p);
+			return false;
+		}
+	}
 	if (p == NULL) {
 		WARN("Failed to load profile (%s). Ignoring request.", profile_load_error_to_string(err));
+		RC_REL(p);
 		return false;
 	}
 	
@@ -156,9 +181,24 @@ bool sccd_set_profile(Mapper* m, const char* filename) {
 		m->set_profile(m, p, true);
 		RC_REL(p);
 	}
-	LOG("Activated profile '%s'", filename);
-	return true;
-	
+	if (m == sccd_mapper_to_mapper(default_mapper)) {
+		LOG("Activated profile '%s' on default_mapper", filename);
+		message = strbuilder_fmt("Current profile: %s\n", filename);
+		if (message != NULL) {
+			sccd_socket_send_to_all(message);
+			free(message);
+		}
+	} else {
+		LOG("Activated profile '%s'", filename);
+	}
+	if (m->get_controller(m) != NULL) {
+		Controller* c = m->get_controller(m);
+		message = strbuilder_fmt("Controller profile: %s %s\n", c->get_id(c), filename);
+		if (message != NULL) {
+			sccd_socket_send_to_all(message);
+			free(message);
+		}
+	}
 	// TODO: all of this
 	/*
 	if mapper.profile.gyro and not p.gyro:
@@ -186,6 +226,15 @@ bool sccd_set_profile(Mapper* m, const char* filename) {
 	else:
 		self.send_profile_info(None, self._send_to_all, mapper=mapper)
 	*/
+	
+	return true;
+}
+
+const char* sccd_get_current_profile() {
+	const char* filename = sccd_mapper_get_profile_filename(default_mapper);
+	if (filename == NULL) filename = default_profile;
+	if (filename == NULL) filename = "None";
+	return filename;
 }
 
 static bool controller_add(Controller* c) {
@@ -215,7 +264,7 @@ static bool controller_add(Controller* c) {
 		// grab_mapper logs error message
 		return false;
 	if (m != default_mapper)
-		DEBUG("Reusing mapper %p for %s", m, c->get_description(c));
+		DEBUG("(Re)using mapper %p for %s", m, c->get_description(c));
 	ASSERT(list_add(controllers, c));
 	
 	// Store & assign mapper
@@ -233,9 +282,8 @@ static bool controller_add(Controller* c) {
 	// c.apply_config(Config().get_controller_config(c.get_id()))
 	
 	LOG("Controller added: %s", c->get_description(c));
-	// TODO: this:
-	// self.send_controller_list(self._send_to_all)
-	// self.send_all_profiles(self._send_to_all)	
+	sccd_clients_for_all(sccd_send_controller_list);
+	sccd_clients_for_all(sccd_send_profile_list);
 	
 	return true;
 }
@@ -251,6 +299,8 @@ static void controller_remove(Controller* c) {
 		}
 		LOG("Controller removed: %s", c->get_description(c));
 		c->deallocate(c);
+		sccd_clients_for_all(sccd_send_controller_list);
+		sccd_clients_for_all(sccd_send_profile_list);
 	}
 }
 
@@ -292,6 +342,11 @@ static void load_default_profile(SCCDMapper* m) {
 	
 	int err;
 	Profile* p = scc_profile_from_json(default_profile, &err);
+	if (!sccd_mapper_set_profile_filename(m, default_profile)) {
+		WARN("Failed to load profile (out of memory). Starting with no mappings.");
+		RC_REL(p);
+		p = scc_make_empty_profile();
+	}
 	if (p == NULL) {
 		WARN("Failed to load profile (%s). Starting with no mappings.", profile_load_error_to_string(err));
 		p = scc_make_empty_profile();
@@ -301,7 +356,7 @@ static void load_default_profile(SCCDMapper* m) {
 	Mapper* m_ = sccd_mapper_to_mapper(m);
 	m_->set_profile(m_, p, true);
 	RC_REL(p);
-	LOG("Activated profile '%s'", default_profile);
+	LOG("Activated default profile '%s'", default_profile);
 }
 
 intptr_t sccd_error_add(const char* message, bool fatal) {

@@ -36,6 +36,7 @@ typedef enum ForceEvent {
 struct SCCDMapper {
 	Mapper				mapper;
 	Profile*			profile;
+	char*				profile_filename;
 	Controller*			controller;
 	VirtualDevice*		gamepad;
 	VirtualDevice*		keyboard;
@@ -49,6 +50,8 @@ struct SCCDMapper {
 };
 
 static void input(Mapper* _m, ControllerInput* i);
+
+static const char* SCCD_MAPPER_TYPE = "SCCD";
 
 extern char** environ;
 
@@ -101,6 +104,16 @@ void sccd_mapper_deallocate(SCCDMapper* m) {
 
 Mapper* sccd_mapper_to_mapper(SCCDMapper* m) {
 	return &m->mapper;
+}
+
+bool sccd_mapper_is(Mapper* m) {
+	return m->type == SCCD_MAPPER_TYPE;
+}
+
+SCCDMapper* sccd_mapper_to_sccd_mapper(Mapper* m) {
+	if (m->type == SCCD_MAPPER_TYPE)
+		return container_of(m, SCCDMapper, mapper);
+	return NULL;
 }
 
 inline static VirtualDevice* device_for_button(SCCDMapper* m, Keycode b) {
@@ -241,6 +254,17 @@ void sccd_mapper_flush(SCCDMapper* m) {
 	m->to_sync = 0;
 }
 
+bool sccd_mapper_set_profile_filename(SCCDMapper* m, const char* filename) {
+	char* cpy = strbuilder_cpy(filename);
+	if (cpy == NULL) return false;
+	free(m->profile_filename);
+	m->profile_filename = cpy;
+	return true;
+}
+
+const char* sccd_mapper_get_profile_filename(SCCDMapper* m) {
+	return m->profile_filename;
+}
 
 /**
  * Applies gamepad configuration settings to 'VirtualDeviceSettings' struct.
@@ -287,6 +311,7 @@ SCCDMapper* sccd_mapper_create() {
 	DDEBUG("keyboard: %s", scc_virtual_device_to_string(m->keyboard));
 	RC_REL(c);
 	
+	m->mapper.type = SCCD_MAPPER_TYPE;
 	m->mapper.get_flags = &get_flags;
 	m->mapper.set_profile = &set_profile;
 	m->mapper.get_profile = &get_profile;

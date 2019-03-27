@@ -88,7 +88,7 @@ static void on_client_socket_data(Daemon* d, int fd, void* _client) {
 	client->next += r;
 	
 	char* newline = strchr(client->buffer, '\n');
-	if (newline != NULL) {
+	while (newline != NULL) {
 		*newline = 0;
 		size_t len = newline - client->buffer;
 		sccd_on_client_command(client, client->buffer, len);
@@ -98,6 +98,7 @@ static void on_client_socket_data(Daemon* d, int fd, void* _client) {
 			memmove(client->buffer, newline + 1, CLIENT_BUFFER_SIZE + 1 - len);
 			client->next -= len + 1;
 		}
+		newline = strchr(client->buffer, '\n');
 	}
 }
 
@@ -135,6 +136,17 @@ void sccd_send_controller_list(Client* client) {
 	sccd_socket_consume(client, strbuilder_fmt("Controller Count: %i\n", count));
 }
 
+void sccd_send_profile_list(Client* client) {
+	ControllerList lst = sccd_get_controller_list();
+	FOREACH_IN(Controller*, c, lst) {
+		const char* filename = get_profile_for_controller(c);
+		if (filename != NULL)
+			sccd_socket_consume(client, strbuilder_fmt(
+				"Controller profile: %s %s\n", c->get_id(c), filename));
+	}
+	sccd_socket_consume(client, strbuilder_fmt("Current profile: %s\n", sccd_get_current_profile()));
+}
+
 void sccd_socket_send(Client* client, const char* str) {
 	if (client->should_be_dropped) return;
 	if (str == NULL) {
@@ -155,6 +167,13 @@ void sccd_socket_send_to_all(const char* str) {
 	ListIterator it = iter_get(clients);
 	FOREACH(Client*, client, it)
 		sccd_socket_send(client, str);
+	iter_free(it);
+}
+
+void sccd_clients_for_all(void (*cb)(Client* c)) {
+	ListIterator it = iter_get(clients);
+	FOREACH(Client*, client, it)
+		cb(client);
 	iter_free(it);
 }
 
@@ -184,7 +203,7 @@ static void on_new_connection(Daemon* d, int fd, void* userdata) {
 	sccd_socket_consume(client, strbuilder_fmt("Version: %s\n", DAEMON_VERSION));
 	sccd_socket_consume(client, strbuilder_fmt("PID: %i\n", getpid()));
 	sccd_send_controller_list(client);
-	// self.send_all_profiles(wfile.write)
+	sccd_send_profile_list(client);
 	if (!sccd_send_error_list(client))
 		sccd_socket_send(client, "Ready.\n");
 	// ... really warm welcome

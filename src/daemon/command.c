@@ -75,7 +75,7 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 			iter_free(it);
 			return send_error(client, tokens, "Fail: no such controller\n");
 		}
-		goto sccd_on_client_command_unknown_command;
+		break;
 	case 'L':
 		if (0 == strcmp(command, "Lock:")) {
 			// Generates list of sources and attempts to lock them
@@ -102,22 +102,33 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 			list_free(sources);
 			return;
 		}
-		goto sccd_on_client_command_unknown_command;
+		break;
+	case 'O':
+		if (0 == strcmp(command, "Observe:")) {
+			// TODO: This
+			send_error(client, tokens, "Fail: Sniffing disabled.\n");
+			return;
+		}
+		break;
 	case 'P':
 		if (0 == strcmp(command, "Profile:")) {
-			// Generates list of sources and attempts to lock them
-			const char* profile = tokens_get_rest(tokens);
-			char* filename = scc_find_profile(profile);
-			if (filename == NULL)
-				return send_error_dealoc(client, tokens, strbuilder_fmt("Fail: Profile '%s' not found\n", profile));
-			if (sccd_set_profile(client->mapper, filename))
+			const char* name = tokens_get_rest(tokens);
+			char* filename = NULL;
+			if (strstr(name, "/") == NULL) {
+				// If there is no slash in path, string is treat as profile name
+				filename = scc_find_profile(name);
+				if (filename == NULL)
+					return send_error_dealoc(client, tokens, strbuilder_fmt("Fail: Profile '%s' not found\n", name));
+				name = filename;
+			}
+			if (sccd_set_profile(client->mapper, name))
 				send_ok(client, tokens);
 			else
-				send_error_dealoc(client, tokens, strbuilder_fmt("Fail: Failed to activate profile"));
+				send_error_dealoc(client, tokens, strbuilder_fmt("Fail: Failed to activate profile\n"));
 			free(filename);
 			return;
 		}
-		goto sccd_on_client_command_unknown_command;
+		break;
 	case 'R':
 		if (0 == strcmp(command, "Reconfigure.")) {
 			// // Load config
@@ -142,7 +153,7 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 			}
 			return send_ok(client, tokens);
 		}
-		goto sccd_on_client_command_unknown_command;
+		break;
 	case 'T':
 		if (0 == strcmp(command, "Turnoff.")) {
 			Controller* c = client->mapper->get_controller(client->mapper);
@@ -155,15 +166,15 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 			}
 			return send_ok(client, tokens);
 		}
-		goto sccd_on_client_command_unknown_command;
+		break;
 	case 'U':
 		if (0 == strcmp(command, "Unlock.")) {
 			sccd_unlock_actions(client);
 			return send_ok(client, tokens);
 		}
-		goto sccd_on_client_command_unknown_command;
+		break;
 	default:
-		goto sccd_on_client_command_unknown_command;
+		break;
 	}
 	
 	// TODO: All of this shit
@@ -367,8 +378,8 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 	else:
 		client.wfile.write(b"Fail: Unknown command\n")
 	*/
-
-sccd_on_client_command_unknown_command:
+	
+	LOG("Unknown command: %s", command);
 	send_error(client, tokens, "Fail: Unknown command\n");
 	return;
 }

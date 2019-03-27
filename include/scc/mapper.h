@@ -15,6 +15,12 @@ typedef void (*MapperScheduleCallback)(Mapper* m, void* userdata);
 typedef uintptr_t TaskID;
 
 struct Mapper {
+	/**
+	 * Determines type of mapper implementation.
+	 * Should be unique for every implementation, but same for all mappers using
+	 * single implementation.
+	 */
+	const char*			type;
 	/** Returns controller flags of assigned controller (or 0 if there is none) */
 	ControllerFlags		(*get_flags)(Mapper* m);
 	/** Sets controller used by mapper. */

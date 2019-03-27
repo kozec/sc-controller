@@ -48,6 +48,11 @@ void sccd_error_remove(intptr_t id);
 ErrorList sccd_get_errors();
 /** Returns true on success */
 bool sccd_set_profile(Mapper* m, const char* filename);
+/**
+ * Returns filename of 'main' profile, one that's loaded on 1st controller
+ * or just held in memory waiting for controller to be connected.
+ */
+const char* sccd_get_current_profile();
 
 void sccd_poller_init();
 bool sccd_poller_add(int fd, sccd_poller_cb cb, void* userdata);
@@ -86,8 +91,10 @@ void sccd_socket_send(Client* client, const char* str);
 void sccd_socket_consume(Client* client, char* str);
 /** Sends message to all connected clients */
 void sccd_socket_send_to_all(const char* str);
+void sccd_clients_for_all(void (*cb)(Client* c));
 void sccd_on_client_command(Client* client, char* buffer, size_t len);
 void sccd_send_controller_list(Client* client);
+void sccd_send_profile_list(Client* client);
 /**
  * Schedules client to be dropped. This is better than dropping it immediatelly,
  * as code can still send messages to such client (but they will be
@@ -123,7 +130,7 @@ void sccd_drivers_init();
 
 ControllerList sccd_get_controller_list();
 
-/** 
+/**
  * Returns NULL on success or source that was not available for locking
  * Additionally, may return SCCD_OOM in case of OOM error.
  */
@@ -143,14 +150,26 @@ bool sccd_is_locked_profile(Profile* p);
 /** Returns NULL on failure */
 SCCDMapper* sccd_mapper_create();
 Mapper* sccd_mapper_to_mapper(SCCDMapper* m);
+/** Returns NULL if mapper is not SCCDMapper */
+SCCDMapper* sccd_mapper_to_sccd_mapper(Mapper* m);
 SCCDMapper* sccd_get_default_mapper();
 void sccd_mapper_deallocate(SCCDMapper* m);
 void sccd_mapper_flush(SCCDMapper* m);
+/** Returns false if allocation fails */
+bool sccd_mapper_set_profile_filename(SCCDMapper* m, const char* filename);
+/** Returns NULL if no filename was set */
+const char* sccd_mapper_get_profile_filename(SCCDMapper* m);
 
-/** 
+/**
+ * Returns NULL if mapper for controller cannot be determined; Returns None
+ * if mapper has no profile assigned.
+ */
+const char* get_profile_for_controller(Controller* c);
+
+/**
  * Used to read and decode Vendor a Product id from /sys/.../idVendor and idProduct
  * Also used by usb_helper to read devnum and busnum numbers.
- * 
+ *
  * Returns -1 on failure.
  */
 long int read_long_from_file(const char* filename, int base);

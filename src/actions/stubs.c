@@ -83,7 +83,7 @@ static Action* get_child(Action* a) {
 		RC_ADD(b->child);
 		return b->child;
 	}
-	return NULL;
+	return NoAction;
 }
 
 static ActionList get_children(Action* a) {

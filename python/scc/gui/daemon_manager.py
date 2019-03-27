@@ -226,9 +226,6 @@ class DaemonManager(GObject.GObject):
 				self.alive = True
 				log.debug("Daemon reported error '%s'", error)
 				self.emit('error', error)
-			elif line.startswith("Current profile:"):
-				self._profile = line.split(":", 1)[-1].strip()
-				self.emit('profile-changed', self._profile)
 			elif line.startswith("Reconfigured."):
 				self.emit('reconfigured')
 			elif line.startswith("PID:") or line == "SCCDaemon":
