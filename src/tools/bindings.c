@@ -97,8 +97,8 @@ Action* scc_action_ref(Action* a) {
 }
 
 void scc_action_unref(Action* a) {
-	if (a && (a->_rc.count == 1) && ((a->flags & AF_ERROR) == 0))
-		DDEBUG("Deleting action of type %s", a->type);
+	// if (a && (a->_rc.count == 1) && ((a->flags & AF_ERROR) == 0))
+	//	DDEBUG("Deleting action of type %s", a->type);
 	RC_REL(a);
 }
 
@@ -107,8 +107,8 @@ Parameter* scc_parameter_ref(Parameter* p) {
 }
 
 void scc_parameter_unref(Parameter* p) {
-	if (p && (p->_rc.count == 1))
-		DDEBUG("Deleting parameter %p of type 0x%x", p, p->type);
+	// if (p && (p->_rc.count == 1))
+	//	DDEBUG("Deleting parameter %p of type 0x%x", p, p->type);
 	RC_REL(p);
 }
 

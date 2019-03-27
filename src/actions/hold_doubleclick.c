@@ -319,6 +319,10 @@ static ActionOE holddblclick_constructor(const char* keyword, ParameterList para
 	hdbl->active = NULL;
 	hdbl->task = 0;
 	
+	if (hdbl->hold_action != NULL) RC_ADD(hdbl->hold_action);
+	if (hdbl->dblclick_action != NULL) RC_ADD(hdbl->dblclick_action);
+	if (hdbl->default_action != NULL) RC_ADD(hdbl->default_action);
+	
 	return (ActionOE)&hdbl->action;
 }
 
