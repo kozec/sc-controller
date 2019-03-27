@@ -31,43 +31,45 @@ class Parameter:
 	PT_TUPLE					= 0b100000000
 	PT_ANY						= 0b111111110
 	
-	def __init__(self, cparam):
-		if (cparam.contents.type & Parameter.PT_ERROR) != 0:
-			try:
-				raise ValueError(lib_bindings.scc_error_get_message(CAPError(cparam)))
-			finally:
-				lib_bindings.scc_parameter_unref(cparam)
-		if (cparam.contents.type & Parameter.PT_ANY) == 0:
-			raise ValueError("Invalid parameter")
-		self._cparam = cparam
+	def __init__(self, value):
+		if isinstance(value, Parameter.CParameterOE):
+			if (value.contents.type & Parameter.PT_ERROR) != 0:
+				try:
+					raise ValueError(lib_bindings.scc_error_get_message(CAPError(value)))
+				finally:
+					lib_bindings.scc_parameter_unref(value)
+			if (value.contents.type & Parameter.PT_ANY) == 0:
+				raise ValueError("Invalid parameter")
+			self._cparam = value
+		else:
+			if type(value) == int:
+				cparam = lib_actions.scc_new_int_parameter(value)
+			elif type(value) == float:
+				cparam = lib_actions.scc_new_float_parameter(value)
+			elif type(value) == str:
+				cparam = lib_actions.scc_new_string_parameter(value)
+			elif type(value) == unicode:
+				cparam = lib_actions.scc_new_string_parameter(value.encode("utf-8"))
+			elif isinstance(value, Action):
+				cparam = lib_actions.scc_new_action_parameter(value._caction)
+			elif hasattr(value, "__int__"):
+				cparam = lib_actions.scc_new_int_parameter(value)
+			else:
+				raise TypeError("Cannot convert %s" % (repr(value),))
+			self._cparam = cparam
 	
 	def __del__(self):
-		print "deleting par", self
+		print "deleting par", self.__class__, "with rc", self._cparam.contents.ref_count
 		lib_bindings.scc_parameter_unref(self._cparam)
 		self._cparam = None
 		print "OK"
 	
-	@staticmethod
-	def _from_py_value(value):
-		if type(value) == int:
-			return lib_actions.scc_new_int_parameter(value)
-		elif type(value) == float:
-			return lib_actions.scc_new_float_parameter(value)
-		elif type(value) == str:
-			return lib_actions.scc_new_string_parameter(value)
-		elif type(value) == unicode:
-			return lib_actions.scc_new_string_parameter(value.encode("utf-8"))
-		elif isinstance(value, Action):
-			return lib_actions.scc_new_action_parameter(value._caction)
-		elif hasattr(value, "__int__"):
-			return lib_actions.scc_new_int_parameter(value)
-		else:
-			raise TypeError("Cannot convert %s" % (repr(value),))
-	
 	def get_value(self):
 		""" Returns python value """
 		if (self._cparam.contents.type & Parameter.PT_ACTION) != 0:
-			return Action._from_c(lib_bindings.scc_parameter_as_action(self._cparam))
+			caction = lib_bindings.scc_parameter_as_action(self._cparam)
+			lib_bindings.scc_action_ref(caction)
+			return Action._from_c(caction)
 		elif (self._cparam.contents.type & Parameter.PT_STRING) != 0:
 			return lib_bindings.scc_parameter_as_string(self._cparam)
 		elif (self._cparam.contents.type & Parameter.PT_INT) != 0:
@@ -103,28 +105,23 @@ class Action(object):
 	AF_MODIFIER				= 0b00010 << 9
 	AF_SPECIAL_ACTION		= 0b00100 << 9
 	
-	def __new__(cls, *args):
-		""" When called with CActionOEp instance, adds one reference to c object """
-		caction = None
+	def __init__(self, *args):
+		"""
+		Takes either CActionOEp instance or action parameters.
+		If CActionOEp is passed, steals one reference.
+		"""
+		self._caction = None
 		if len(args) == 1 and isinstance(args[0], CActionOEp):
 			caction = args[0]
 		else:
-			if cls in (Action, Modifier):
+			if self.__class__ in (Action, Modifier):
 				raise TypeError("%s cannot be instantiated directly (use subclass)" % (self.__class__.__name__,))
-			pars = (CParameterOEp * (len(args)))()
-			print args
-			for i, value in enumerate(args):
-				pars[i] = Parameter._from_py_value(value)
-			print "Par.RCs", [ x.contents.ref_count for x in pars ]
-			try:
-				caction = lib_bindings.scc_action_new_from_array(cls.KEYWORD,
-								ctypes.cast(pars, CParameterOEpp), len(pars))
-				print "RCs aft", [ x.contents.ref_count for x in pars ]
-				return cls.__new__(cls, caction)
-			finally:
-				for par in pars:
-					lib_bindings.scc_parameter_unref(par)
-				lib_bindings.scc_action_unref(caction)
+			pars = [ Parameter(v) for v in args ]
+			cpars = (CParameterOEp * (len(pars)))()
+			for i, par in enumerate(pars):
+				cpars[i] = par._cparam
+			caction = lib_bindings.scc_action_new_from_array(self.KEYWORD,
+								ctypes.cast(cpars, CParameterOEpp), len(pars))
 		
 		if caction.contents.flags == Action.AF_NONE:
 			pass
@@ -133,15 +130,8 @@ class Action(object):
 				raise ParseError(lib_bindings.scc_error_get_message(CAPError(caction)))
 			raise OSError("Invalid value returned by scc_parse_action (flags = 0x%x)" % caction.contents.flags)
 		
-		tpe = lib_bindings.scc_action_get_type(caction)
-		cls = KEYWORD_TO_ACTION.get(tpe, Action)
-		if cls is Action:
-			print "Warning: unkown action keyword '%s'" % (tpe,)
-		self = object.__new__(cls)
 		self._caction = caction
-		lib_bindings.scc_action_ref(caction)
 		print "Initialized", self
-		return self
 	
 	def __del__(self):
 		if self._caction:
@@ -162,12 +152,10 @@ class Action(object):
 		or SensitivityModifier that already applied its settings), returns child
 		action.
 		"""
-		lib_bindings.scc_action_ref(self._caction)
-		ptr = CActionOEpp(self._caction)
-		if lib_actions.scc_action_compress(ptr):
-			return Action(ptr.contents)
-		lib_bindings.scc_action_unref(self._caction)
-		return self
+		caction = lib_bindings.scc_action_get_compressed(self._caction)
+		if caction is None:
+			return self
+		return Action(caction)
 	
 	def strip(self):
 		# TODO: This? Is it still needed?
@@ -188,7 +176,17 @@ class Action(object):
 	
 	@staticmethod
 	def parse(s):
-		return Action(lib_parse.scc_parse_action(s))
+		caction = lib_parse.scc_parse_action(s)
+		if (caction.contents.flags & Parameter.AF_ERROR) != 0:
+			try:
+				raise OSError(lib_actions.scc_error_get_message(CAPError(caction)))
+			finally:
+				lib_bindings.scc_action_unref(caction)
+		tpe = lib_bindings.scc_action_get_type(caction)
+		cls = KEYWORD_TO_ACTION.get(tpe, Action)
+		if cls is Action:
+			log
+		return cls(caction)
 	
 	def __getattr__(self, name):
 		rv = lib_bindings.scc_action_get_property(self._caction, name)
@@ -278,9 +276,7 @@ class MultiAction(Action):
 			if not isinstance(value, Action) or value._caction is None:
 				raise TypeError("%s is not Action" % (repr(value), ))
 			pars[i] = value._caction
-		a = Action._from_c(self.BUILD_FN(ctypes.cast(pars, CActionOEpp), len(pars)))
-		lib_bindings.scc_action_ref(a._caction)
-		self._caction= a._caction
+		Action.__init__(self, self.BUILD_FN(ctypes.cast(pars, CActionOEpp), len(pars)))
 
 
 lib_bindings.scc_action_get_type.argtypes = [ CActionOEp ]
@@ -321,6 +317,10 @@ lib_bindings.scc_action_unref.argtypes = [ CActionOEp ]
 lib_bindings.scc_parameter_ref.argtypes = [ CParameterOEp ]
 lib_bindings.scc_parameter_unref.argtypes = [ CParameterOEp ]
 
+lib_bindings.scc_action_get_compressed.argtypes = [ CActionOEp ]
+lib_bindings.scc_action_get_compressed.restype = CActionOEp
+
+
 lib_parse = find_library("libscc-parser")
 lib_parse.scc_parse_action.argtypes = [ ctypes.c_char_p ]
 lib_parse.scc_parse_action.restype = CActionOEp
@@ -330,9 +330,6 @@ lib_actions = find_library("libscc-actions")
 
 lib_actions.scc_action_to_string.argtypes = [ CActionOEp ]
 lib_actions.scc_action_to_string.restype = ctypes.c_char_p
-
-lib_actions.scc_action_compress.argtypes = [ CActionOEpp ]
-lib_actions.scc_action_compress.restype = ctypes.c_bool
 
 lib_actions.scc_new_int_parameter.argtypes = [ ctypes.c_int64 ]
 lib_actions.scc_new_int_parameter.restype = CParameterOEp

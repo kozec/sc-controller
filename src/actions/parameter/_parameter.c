@@ -24,7 +24,7 @@ ParameterList _scc_make_param_list(Parameter* p1, ...) {
 				list_free(lst);
 				return NULL;
 			}
-			RC_ADD(p1);
+			RC_ADD(i);
 			i = va_arg(ap, Parameter*);
 		}
 		va_end(ap);

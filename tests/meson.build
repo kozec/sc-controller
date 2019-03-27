@@ -76,6 +76,13 @@ test('test_actions', executable('test_actions',
 	sources: [ 'test_actions.c', 'tools.c' ]
 ))
 
+test('test_bindings', executable('test_bindings',
+	dependencies: [cu_test],
+	include_directories: include,
+	link_with: link + [ bindings_lib ],
+	sources: [ 'test_bindings.c' ]
+))
+
 test('test_compress', executable('test_compress',
 	dependencies: [cu_test],
 	include_directories: include,

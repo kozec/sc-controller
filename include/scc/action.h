@@ -90,7 +90,7 @@ struct Action {
 	/**
 	 * Called when action is executed by moving physical stick or touching
 	 * physical pad, when one action is defined for whole pad or stick.
-	 * 
+	 *
 	 * 'x' and 'y' contains current stick or finger position.
 	 * 'what' is one of LEFT, RIGHT or STICK, describing what is being updated
 	 */
@@ -98,7 +98,7 @@ struct Action {
 	/**
 	 * Called when action is executed by pressing (or releasing) physical
 	 * trigger.
-	 * 
+	 *
 	 * 'old_pos' is last known trigger position.
 	 * 'pos' is current trigger position.
 	 */
@@ -106,12 +106,12 @@ struct Action {
 	
 	/**
 	 * compress() is called automatically on every action laoded from profile.
-	 * 
+	 *
 	 * For modifier that's not needed for execution (such as NameModifier
 	 * or SensitivityModifier that already applied its settings), it should
 	 * return child action, without touching reference count of it or of itself.
 	 * For anything else, compress method should return itself.
-	 * 
+	 *
 	 * When called on action that contains other child action, parent aciton
 	 * should ensure that Compress is called on all child actions and those
 	 * child actions are replaced by results if needed.

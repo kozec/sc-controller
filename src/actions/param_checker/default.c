@@ -111,8 +111,6 @@ static bool equals(Parameter* p1, Parameter* p2) {
 			if (scc_parameter_type(p2) == PT_ACTION) {
 				Action* a1 = scc_parameter_as_action(p1);
 				Action* a2 = scc_parameter_as_action(p2);
-				RC_REL(a1);
-				RC_REL(a2);
 				return (a1 == a2);
 			}
 			return false;
@@ -183,6 +181,6 @@ ParameterList scc_param_checker_strip_defaults(ParamChecker* pc, ParameterList p
 	}
 	
 	list_filter(params, &no_nulls, NULL);
-	
 	return params;
 }
+

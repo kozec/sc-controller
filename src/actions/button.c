@@ -85,6 +85,7 @@ static char* button_describe(Action* a, const ActionDescriptionContext* ctx) {
 
 
 static void button_dealloc(Action* a) {
+	LOG("button_dealloc %p", a);
 	ButtonAction* b = container_of(a, ButtonAction, action);
 	free(b);
 }

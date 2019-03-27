@@ -345,6 +345,69 @@ void test_fill_defaults(CuTest* tc) {
 	assert(tc, list_len(params) == 6);
 }
 
+/** Tests reference counting when fill defaults is used */
+void test_rc(CuTest* tc) {
+	Action* a = scc_button_action_from_keycode(0x11);
+	Parameter* i = scc_new_int_parameter(15);
+	ParameterList params;
+	ParamChecker pc;
+	
+	scc_param_checker_init(&pc, "i?a");
+	scc_param_checker_set_defaults(&pc, 42);
+	
+	// Initially, 'a' should have single reference
+	assert(tc, a->_rc.count == 1);
+	Parameter* p = scc_new_action_parameter(a);
+	// Parameter 'p' now holds one reference to action 'a'.
+	// Creating lst bellow doesn't change that
+	assert(tc, a->_rc.count == 2);
+	ParameterList lst = scc_make_param_list(p);
+	assert(tc, p->_rc.count == 2);	// one for me and one for list
+	
+	// fill defaults adds reference to parameter 'p', but not to action 'a'
+	ParameterList filled = scc_param_checker_fill_defaults(&pc, lst);
+	assert(tc, p->_rc.count == 3);	// me, list and 'filled' list
+	assert(tc, a->_rc.count == 2);
+	
+	// freeing 'filled' list should get back to state before fill_defaults
+	list_free(filled);
+	assert(tc, p->_rc.count == 2);
+	assert(tc, a->_rc.count == 2);
+	// freeing 'lst' should leave parameter 'p' with single reference
+	list_free(lst);
+	assert(tc, p->_rc.count == 1);
+	assert(tc, a->_rc.count == 2);
+	
+	// Now same thing with use of 'i' parameter as well
+	assert(tc, i->_rc.count == 1);
+	assert(tc, p->_rc.count == 1);
+	lst = scc_make_param_list(i, p);
+	assert(tc, a->_rc.count == 2);
+	assert(tc, i->_rc.count == 2);
+	assert(tc, p->_rc.count == 2);
+	
+	filled = scc_param_checker_fill_defaults(&pc, lst);
+	assert(tc, p->_rc.count == 3);
+	assert(tc, i->_rc.count == 3);
+	assert(tc, a->_rc.count == 2);
+	
+	list_free(filled);
+	assert(tc, p->_rc.count == 2);
+	assert(tc, i->_rc.count == 2);
+	assert(tc, a->_rc.count == 2);
+	
+	list_free(lst);
+	assert(tc, p->_rc.count == 1);
+	assert(tc, i->_rc.count == 1);
+	assert(tc, a->_rc.count == 2);
+	
+	// Finall cleanup
+	RC_REL(p);
+	RC_REL(i);
+	assert(tc, a->_rc.count == 1);
+	RC_REL(a);
+}
+
 /*
 
 // Tests specifications used by actual actions
@@ -400,6 +463,7 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_optionals);
 	DEFAULT_SUITE_ADD(test_repeat);
 	DEFAULT_SUITE_ADD(test_fill_defaults);
+	DEFAULT_SUITE_ADD(test_rc);
 	
 	return CuSuiteRunDefault();
 }

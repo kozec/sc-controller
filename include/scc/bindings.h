@@ -45,6 +45,15 @@ DLL_EXPORT const char* scc_action_get_type(Action* a);
  */
 DLL_EXPORT Parameter* scc_action_get_property(Action* a, const char* name);
 
+/**
+ * Calls compress method on action and returns Action that it returns, or NULL
+ * if it returs itself. If 'a' is NULL, action it points to doesn't have compress
+ * method defined, function returns NULL.
+ *
+ * If returned value is not NULL, caller has to release reference on it.
+  */
+Action* scc_action_get_compressed(Action* a);
+
 /** Increases reference count on action */
 DLL_EXPORT void scc_action_ref(Action* a);
 

@@ -27,6 +27,17 @@ Parameter* scc_action_get_property(Action* a, const char* name) {
 	return a->get_property(a, name);
 }
 
+Action* scc_action_get_compressed(Action* a) {
+	if ((a == NULL) || (a->compress == NULL))
+		return NULL;
+	Action* compressed = a->compress(a);
+	if (a == compressed)
+		return NULL;
+	
+	RC_ADD(compressed);
+	return compressed;
+}
+
 Action* scc_parameter_as_action(Parameter* p) {
 	return p->as_action(p);
 }
@@ -88,10 +99,10 @@ static size_t scc_get_constants(EnumValue array[], size_t count,
 			continue;
 		if ((prefix == NULL) || (strstr(lst[i].name, prefix) == lst[i].name)) {
 			if (j < count) {
-				array[j].name = lst[i].name;
+				array[j].name =  lst[i].name;
 				array[j].value = lst[i].value;
-				j ++;
 			}
+			j ++;
 		}
 	}
 	return j;

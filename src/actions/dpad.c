@@ -1,3 +1,4 @@
+#include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/iterable.h"
 #include "scc/utils/rc.h"
@@ -53,7 +54,7 @@ const side DPAD_SIDES[9][2] = {
 static char* dpad_to_string(Action* a) {
 	DPadAction* dpad = container_of(a, DPadAction, action);
 	RC_ADD(dpad->first_param);
-	ParameterList l = 
+	ParameterList l =
 		scc_inline_param_list(
 			dpad->first_param,
 			scc_new_action_parameter(dpad->actions[0]),
