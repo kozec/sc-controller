@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.1 -->
+<interface>
+  <requires lib="gtk+" version="3.10"/>
+  <object class="GtkAdjustment" id="adjSoftLevel">
+    <property name="lower">0.01</property>
+    <property name="upper">1</property>
+    <property name="value">0.69999999999999996</property>
+    <property name="step_increment">0.01</property>
+    <property name="page_increment">0.01</property>
+  </object>
+  <object class="GtkListStore" id="lstGyroButton">
+    <columns>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="lstOutputMode">
+    <columns>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">None</col>
+        <col id="1" translatable="yes">None</col>
+        <col id="2">none</col>
+      </row>
+      <row>
+        <col id="0">mouse([YAW|ROLL])</col>
+        <col id="1" translatable="yes">Mouse (Desktop)</col>
+        <col id="2">mouse</col>
+      </row>
+      <row>
+        <col id="0">mouse([YAW|ROLL])</col>
+        <col id="1" translatable="yes">Mouse (Camera)</col>
+        <col id="2">mouse_cam</col>
+      </row>
+      <row>
+        <col id="0">gyroabs(Rels.REL_Y, [Rels.REL_X|None, Rels.REL_X])</col>
+        <col id="1" translatable="yes">Mouse (Emulate Stick)</col>
+        <col id="2">mouse_stick</col>
+      </row>
+      <row>
+        <col id="0">gyro(ABS_RY, [ABS_RX|None, ABS_RX])</col>
+        <col id="1" translatable="yes">Right Stick (Camera)</col>
+        <col id="2">right</col>
+      </row>
+      <row>
+        <col id="0">gyroabs(ABS_RY, [ABS_RX|None, ABS_RX])</col>
+        <col id="1" translatable="yes">Right Stick (Absolute)</col>
+        <col id="2">right_abs</col>
+      </row>
+      <row>
+        <col id="0">gyro(ABS_Y, [ABS_X|None, ABS_X])</col>
+        <col id="1" translatable="yes">Left Stick (Camera)</col>
+        <col id="2">left</col>
+      </row>
+      <row>
+        <col id="0">gyroabs(ABS_Y, [ABS_X|None, ABS_X])</col>
+        <col id="1" translatable="yes">Left Stick (Absolute)</col>
+        <col id="2">left_abs</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="lstYawRoll">
+    <columns>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">YAW</col>
+        <col id="1" translatable="yes">Yaw</col>
+      </row>
+      <row>
+        <col id="0">ROLL</col>
+        <col id="1" translatable="yes">Roll</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkGrid" id="gyro_action">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="margin_left">25</property>
+    <property name="margin_right">30</property>
+    <property name="row_spacing">3</property>
+    <property name="column_spacing">10</property>
+    <child>
+      <object class="GtkLabel" id="label1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">20</property>
+        <property name="label" translatable="yes">X Axis Controlled by</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkComboBox" id="cbMode">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="hexpand">True</property>
+        <property name="model">lstOutputMode</property>
+        <property name="active">1</property>
+        <signal name="changed" handler="send" swapped="no"/>
+        <child>
+          <object class="GtkCellRendererText" id="text"/>
+          <attributes>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="label5">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">20</property>
+        <property name="label" translatable="yes">Output Mode</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkComboBox" id="cbYawRoll">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="hexpand">True</property>
+        <property name="model">lstYawRoll</property>
+        <property name="active">0</property>
+        <signal name="changed" handler="send" swapped="no"/>
+        <child>
+          <object class="GtkCellRendererText" id="text1"/>
+          <attributes>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkComboBox" id="cbGyroButton">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_top">20</property>
+        <property name="hexpand">True</property>
+        <property name="model">lstGyroButton</property>
+        <property name="active">1</property>
+        <signal name="changed" handler="send" swapped="no"/>
+        <child>
+          <object class="GtkCellRendererText" id="text2"/>
+          <attributes>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">3</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lblGyroEnable">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_top">20</property>
+        <property name="label" translatable="yes">Gyro Enable Button</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">3</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkCheckButton" id="cbInvertY">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">False</property>
+        <property name="draw_indicator">True</property>
+        <signal name="toggled" handler="cbInvertY_toggled_cb" swapped="no"/>
+        <child>
+          <object class="GtkLabel" id="label3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Invert Y Axis</property>
+            <property name="xalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">2</property>
+        <property name="width">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkCheckButton" id="cbInvertGyro">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">False</property>
+        <property name="draw_indicator">True</property>
+        <signal name="toggled" handler="on_cbInvertGyro_toggled" swapped="no"/>
+        <child>
+          <object class="GtkLabel" id="label4">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Button disables Gyro</property>
+            <property name="xalign">0</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">5</property>
+        <property name="width">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkRevealer" id="rvSoftLevel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">10</property>
+        <child>
+          <object class="GtkBox" id="vbSoftLevel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkLabel" id="lblSoftLevel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="label" translatable="yes">Trigger Pull Level</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="sclSoftLevel">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_left">5</property>
+                <property name="margin_right">20</property>
+                <property name="adjustment">adjSoftLevel</property>
+                <property name="round_digits">2</property>
+                <property name="value_pos">right</property>
+                <signal name="format-value" handler="on_sclSoftLevel_format_value" swapped="no"/>
+                <signal name="value-changed" handler="send" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">4</property>
+        <property name="width">2</property>
+      </packing>
+    </child>
+  </object>
+</interface>

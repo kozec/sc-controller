@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.4 -->
+<interface>
+  <requires lib="gtk+" version="3.10"/>
+  <object class="GtkDialog" id="Dialog">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">About SC-Controller</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="icon">../images/sc-controller-small.svg</property>
+    <property name="type_hint">dialog</property>
+    <signal name="response" handler="on_dialog_response" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="vb1">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="vb2">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="btnClose">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_dialog_response" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vb3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">50</property>
+            <property name="margin_right">50</property>
+            <property name="margin_top">10</property>
+            <property name="margin_bottom">10</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkImage" id="image1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">10</property>
+                <property name="pixbuf">../images/sc-controller-small.svg</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">&lt;span size="large"&gt;&lt;b&gt;SC-Controller&lt;/b&gt;&lt;/span&gt;</property>
+                <property name="use_markup">True</property>
+                <property name="justify">center</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lblVersion">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">5</property>
+                <property name="margin_bottom">10</property>
+                <property name="label" translatable="yes">(version)</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label4">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">20</property>
+                <property name="label" translatable="yes">User-mode driver and GTK3 based GUI for Steam Controller.</property>
+                <property name="use_markup">True</property>
+                <property name="justify">center</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label3">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_bottom">25</property>
+                <property name="label" translatable="yes">&lt;b&gt;Code&amp;amp;UI © 2016 Kozec&lt;/b&gt;
+
+Source code available on &lt;a href="https://github.com/kozec/sc-controller"&gt;GitHub&lt;/a&gt;
+
+I'd like to express my biggest thanks
+for all my &lt;b&gt;&lt;a href="https://www.patreon.com/kozec"&gt;Patreon&lt;/a&gt;&lt;/b&gt; supporters, with special mention of
+
+&lt;b&gt;Deryn L.&lt;/b&gt;
+&lt;b&gt;Eric Duhamel&lt;/b&gt;
+&lt;b&gt;Enric Morales&lt;/b&gt;
+&lt;b&gt;Orivej Desh&lt;/b&gt;
+&lt;b&gt;G. Wilson&lt;/b&gt;
+&lt;b&gt;Joshua M&lt;/b&gt;
+&lt;b&gt;Lutris&lt;/b&gt;
+&lt;b&gt;Taowa&lt;/b&gt;
+and
+&lt;b&gt;ambidot&lt;/b&gt;
+</property>
+                <property name="use_markup">True</property>
+                <property name="justify">center</property>
+                <property name="yalign">0</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label2">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="margin_top">10</property>
+                <property name="label" translatable="yes">&lt;small&gt;This program comes with absolutely no warranty.
+See the &lt;a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html"&gt;GNU General Public License, version 2&lt;/a&gt; for details.&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+                <property name="justify">center</property>
+                <property name="yalign">1</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+  </object>
+</interface>

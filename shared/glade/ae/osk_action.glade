@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.10"/>
+  <object class="GtkListStore" id="lstActionType">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">None</col>
+        <col id="1" translatable="yes">None</col>
+      </row>
+      <row>
+        <col id="0">OSK.close()</col>
+        <col id="1" translatable="yes">Hide Keyboard</col>
+      </row>
+      <row>
+        <col id="0">OSK.cursor(LEFT)</col>
+        <col id="1" translatable="yes">Move LEFT Cursor</col>
+      </row>
+      <row>
+        <col id="0">OSK.cursor(RIGHT)</col>
+        <col id="1" translatable="yes">Move RIGHT Cursor</col>
+      </row>
+      <row>
+        <col id="0">OSK.press(LEFT)</col>
+        <col id="1" translatable="yes">Press Key Under LEFT Cursor</col>
+      </row>
+      <row>
+        <col id="0">OSK.press(RIGHT)</col>
+        <col id="1" translatable="yes">Press Key Under RIGHT Cursor</col>
+      </row>
+      <row>
+        <col id="0">OSK.move()</col>
+        <col id="1" translatable="yes">Move Keyboard</col>
+      </row>
+      <row>
+        <col id="0">button(Keys.BTN_LEFT)</col>
+        <col id="1" translatable="yes">Press LEFT mouse button</col>
+      </row>
+      <row>
+        <col id="0">button(Keys.BTN_RIGHT)</col>
+        <col id="1" translatable="yes">Press RIGHT mouse button</col>
+      </row>
+      <row>
+        <col id="0">OSK.move()</col>
+        <col id="1" translatable="yes">Move Keyboard</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkBox" id="osk_action">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkLabel" id="label5">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_top">10</property>
+        <property name="margin_bottom">10</property>
+        <property name="label" translatable="yes">Action</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkComboBox" id="cbActionType">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">10</property>
+        <property name="margin_right">10</property>
+        <property name="model">lstActionType</property>
+        <property name="active">0</property>
+        <signal name="changed" handler="on_cbActionType_changed" swapped="no"/>
+        <child>
+          <object class="GtkCellRendererText" id="text"/>
+          <attributes>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+  </object>
+</interface>

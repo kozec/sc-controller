@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 
 from scc.paths import get_config_path
 from scc.profile import Encoder
-from scc.special_actions import ChangeProfileAction
+from scc.actions import ChangeProfileAction
 
 import os, json, logging
 log = logging.getLogger("Config")

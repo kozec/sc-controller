@@ -129,7 +129,8 @@ bindings_lib = shared_library('scc-bindings',
 	link_with: [ actions_lib, params_lib, parser_lib, conversions_lib ],
 	sources: [
 		'src/actions/parameter/tuple.c',
-		'src/tools/bindings.c'
+		'src/tools/bindings.c',
+		'src/tools/paths.c',
 	]
 )
 
@@ -141,4 +142,5 @@ subdir('src/client')
 if get_option('android').disabled() and host_machine.system() != 'openbsd' and host_machine.system() != 'netbsd'
 	subdir('src/osd')
 endif
+subdir('src/gui')
 

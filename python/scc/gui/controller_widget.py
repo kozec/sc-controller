@@ -13,8 +13,8 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, Pango
 from scc.constants import SCButtons, STICK, GYRO, LEFT, RIGHT
 from scc.actions import Action, XYAction, MultiAction
+from scc.actions import DoubleclickModifier
 from scc.gui.ae.gyro_action import is_gyro_enable
-from scc.modifiers import DoubleclickModifier
 from scc.profile import Profile
 from scc.tools import nameof
 import os, sys, logging

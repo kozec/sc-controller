@@ -1,3 +1,8 @@
+/**
+ * SC Controller - Daemon - main module
+ *
+ * Here is where everything starts
+ */
 #define LOG_TAG "Daemon"
 #include "scc/utils/traceback.h"
 #include "scc/utils/logging.h"

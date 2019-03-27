@@ -61,6 +61,11 @@ const char* scc_get_default_profiles_path();
 const char* scc_get_menus_path();
 
 /**
+ * Returns directory when python (gui) modules are stored.
+ */
+const char* scc_get_python_src_path();
+
+/**
  * Returns directory where default menus are stored.
  * Probably something like /usr/share/scc/default_menus,
  * or $SCC_SHARED/default_menus if program is being started from

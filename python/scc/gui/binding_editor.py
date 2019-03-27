@@ -7,10 +7,10 @@ Base class for main application window and OSD Keyboard bindings editor.
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.modifiers import ModeModifier, SensitivityModifier, FeedbackModifier
-from scc.modifiers import DoubleclickModifier, HoldModifier
+from scc.actions import ModeModifier, SensitivityModifier, FeedbackModifier
+from scc.actions import DoubleclickModifier, HoldModifier
 from scc.actions import NoAction, RingAction, MultiAction
-from scc.macros import Macro, Type, Repeat, Cycle
+from scc.actions import Macro, Type, Repeat, Cycle
 from scc.constants import SCButtons, LEFT, RIGHT
 from scc.profile import Profile
 from scc.gui.controller_widget import TRIGGERS, PADS, STICKS, GYROS, BUTTONS, PRESSABLE

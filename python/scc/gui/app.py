@@ -24,12 +24,10 @@ from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.paths import get_config_path, get_profiles_path
 from scc.custom import load_custom_module
-from scc.modifiers import NameModifier
-from scc.actions import NoAction
+from scc.actions import NoAction, NameModifier
 from scc.profile import Profile
 from scc.config import Config
 
-import scc.osd.menu_generators
 import os, sys, platform, re, json, urllib, logging
 log = logging.getLogger("App")
 

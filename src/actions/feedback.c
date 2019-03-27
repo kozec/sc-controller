@@ -51,6 +51,14 @@ static Action* get_child(Action* a) {
 	return f->child;
 }
 
+static Parameter* get_property(Action* a, const char* name) {
+	FeedbackModifier* f = container_of(a, FeedbackModifier, action);
+	MAKE_HAPTIC_PROPERTY(f->hdata, "haptic");
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
 
 static ActionOE feedback_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
@@ -62,6 +70,7 @@ static ActionOE feedback_constructor(const char* keyword, ParameterList params) 
 	if (f == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&f->action, KW_FEEDBACK, AF_MODIFIER, &feedback_dealloc, &feedback_to_string);
 	f->action.compress = &compress;
+	f->action.get_property = &get_property;
 	f->action.extended.get_child = &get_child;
 	
 	const char* pos = scc_parameter_as_string(params->items[0]);

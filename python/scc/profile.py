@@ -8,18 +8,17 @@ from __future__ import unicode_literals
 
 from scc.constants import LEFT, RIGHT, CPAD, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
-from scc.actions import MenuAction, HoldModifier
+from scc.actions import MenuAction, HoldModifier, NoAction
 from scc.lib.jsonencoder import JSONEncoder
 from scc.parser import TalkingActionParser
 from scc.menu_data import MenuData
-from scc.actions import NoAction
 
 import json, logging
 log = logging.getLogger("profile")
 
 
 class Profile(object):
-	VERSION = 1.3	# Current profile version. When loading profile file
+	VERSION = 1.4	# Current profile version. When loading profile file
 					# with version lower than this, auto-conversion may happen
 	
 	LEFT  = LEFT
@@ -177,7 +176,7 @@ class Profile(object):
 		self.buttons = { x : NoAction() for x in SCButtons }
 		self.buttons[SCButtons.C] = HoldModifier(
 			MenuAction("Default.menu"),
-			normalaction = MenuAction("Default.menu")
+			MenuAction("Default.menu")
 		)
 		self.menus = {}
 		self.stick = NoAction()
@@ -243,7 +242,7 @@ class Profile(object):
 	def _convert(self, from_version):
 		""" Performs conversion from older profile version """
 		if from_version < 1:
-			from scc.modifiers import ModeModifier
+			from scc.actions import ModeModifier
 			# Add 'display Default.menu if center button is held' for old profiles
 			c = self.buttons[SCButtons.C]
 			if not c:
@@ -265,7 +264,7 @@ class Profile(object):
 				)
 		if from_version < 1.1:
 			# Convert old scrolling wheel to new representation
-			from scc.modifiers import FeedbackModifier, BallModifier
+			from scc.actions import FeedbackModifier, BallModifier
 			from scc.actions import MouseAction, XYAction
 			from scc.uinput import Rels
 			iswheelaction = ( lambda x : isinstance(x, MouseAction) and
@@ -273,7 +272,7 @@ class Profile(object):
 			for p in (Profile.LEFT, Profile.RIGHT):
 				a, feedback = self.pads[p], None
 				if isinstance(a, FeedbackModifier):
-					feedback = a.haptic.get_position()
+					feedback = a.get_haptic().get_position()
 					a = a.action
 				if isinstance(a, XYAction):
 					if iswheelaction(a.x) or iswheelaction(a.y):

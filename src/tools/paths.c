@@ -37,6 +37,7 @@
 static char config_path[PATH_MAX] = {0};
 static char socket_path[PATH_MAX + 128] = {0};
 static char share_path[PATH_MAX] = {0};
+static char python_path[PATH_MAX] = {0};
 static char profiles_path[PATH_MAX + 128] = {0};
 static char default_profiles_path[PATH_MAX + 128] = {0};
 static char menus_path[PATH_MAX + 128] = {0};
@@ -74,6 +75,15 @@ const char* scc_get_config_path() {
 	return config_path;
 }
 
+static bool dir_exists(const char* path) {
+	DIR* dir = opendir(share_path);
+	if (dir) {
+		closedir(dir);
+		return true;
+	}
+	return false;
+}
+
 const char* scc_get_share_path() {
 	if (share_path[0] != 0)
 		// Return cached value
@@ -81,8 +91,13 @@ const char* scc_get_share_path() {
 	
 	const char* scc_shared = getenv("SCC_SHARED");
 	if (scc_shared != NULL) {
-		if (snprintf(share_path, PATH_MAX, "%s", scc_shared) >= PATH_MAX)
+		// Automatically adding '/shared' to end just because it's more
+		// comfortable to write SCC_SHARED=$(pwd)
+		if (snprintf(share_path, PATH_MAX, "%s/shared", scc_shared) >= PATH_MAX)
 			FATAL("$SCC_SHARED doesn't fit PATH_MAX.");
+		if (dir_exists(share_path))
+			return share_path;
+		snprintf(share_path, PATH_MAX, "%s", scc_shared);
 		return share_path;
 	}
 	
@@ -123,12 +138,8 @@ const char* scc_get_share_path() {
 			strncpy(share_path, possibilities[i], PATH_MAX);
 		}
 		
-		DIR* dir = opendir(share_path);
-		if (dir) {
-			// exists
-			closedir(dir);
+		if (dir_exists(share_path))
 			return share_path;
-		}
 		// Dir doesn't exists, try another
 	}
 	
@@ -309,6 +320,23 @@ def get_pid_file():
 */
 
 
+const char* scc_get_python_src_path() {
+	char path[PATH_MAX];
+#ifdef _WIN32
+	snprintf(path, PATH_MAX, "%s\\..\python", scc_get_share_path());
+#else
+	snprintf(path, PATH_MAX, "%s/../python/scc", scc_get_share_path());
+	if (access(path, F_OK) != -1) {
+		snprintf(path, PATH_MAX, "%s/../python", scc_get_share_path());
+	} else {
+		snprintf(path, PATH_MAX, "/usr/lib/python2.7/site-packages");
+	}
+#endif
+	strncpy(python_path, path, PATH_MAX);
+	return python_path;
+}
+
+
 const char* scc_get_daemon_socket() {
 	if (socket_path[0] != 0)
 		// Return cached value
@@ -317,3 +345,4 @@ const char* scc_get_daemon_socket() {
 	snprintf(socket_path, PATH_MAX + 128, "%s" SEP "daemon.socket", scc_get_config_path());
 	return socket_path;
 }
+

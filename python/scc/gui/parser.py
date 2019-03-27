@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from scc.parser import ActionParser, ParseError
-from scc.actions import Action
+from scc.actions import Action, NoAction
 from scc.tools import _
 
 import logging
@@ -36,7 +36,6 @@ class GuiActionParser(ActionParser):
 	def restart(self, string):
 		self.string = string
 		return ActionParser.restart(self, string)
-
 	
 	def parse(self):
 		"""
@@ -50,3 +49,16 @@ class GuiActionParser(ActionParser):
 			log.error("Failed to parse '%s'", self.string)
 			log.error(e)
 			return InvalidAction(self.string, e)
+	
+	def from_json_data(self, data, key=None):
+		# TODO: Ideally, there shouldn't be any need for this method
+		if key is not None:
+			if key in data:
+				return self.from_json_data(data[key])
+			return NoAction()
+		
+		if "action" in data:
+			return self.restart(data['action']).parse()
+		else:
+			return NoAction()
+

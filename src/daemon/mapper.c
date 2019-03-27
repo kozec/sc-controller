@@ -1,6 +1,6 @@
 /**
  * SC Controller - Default Mapper
- * 
+ *
  * This is mapper used by daemon. It outputs to set of virtual devices created
  * with uinput.
  *

@@ -166,6 +166,10 @@ static Parameter* get_property(Action* a, const char* name) {
 			}
 		}
 		return scc_new_tuple_parameter(2, params);
+	} else if (0 == strcmp(name, "x")) {
+		return scc_new_action_parameter(xy->x);
+	} else if (0 == strcmp(name, "y")) {
+		return scc_new_action_parameter(xy->y);
 	}
 	MAKE_HAPTIC_PROPERTY(xy->hdata, "haptic");
 	

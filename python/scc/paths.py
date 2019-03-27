@@ -10,7 +10,7 @@ python can't handle.
 All this is needed since I want to have entire thing installable, runnable
 from source tarball *and* debugable in working folder.
 """
-import os, sys, __main__
+import os, sys, ctypes, __main__
 
 
 def get_config_path():
@@ -114,18 +114,14 @@ def get_share_path():
 	Usually "/usr/share/scc" or $SCC_SHARED if program is being started from
 	script extracted from source tarball
 	"""
-	if "SCC_SHARED" in os.environ:
-		return os.environ["SCC_SHARED"]
-	paths = (
-		"/usr/local/share/scc/",
-		os.path.expanduser("~/.local/share/scc"),
-		os.path.join(sys.prefix, "share/scc")
-	)
-	for path in paths:
-		if os.path.exists(path):
-			return path
-	# No path found, assume default and hope for best
-	return "/usr/share/scc"
+	global lib_bindings
+	if lib_bindings is None:
+		from scc.tools import find_library
+		lib_bindings = find_library("libscc-bindings")
+		lib_bindings.scc_get_share_path.argtypes = [ ]
+		lib_bindings.scc_get_share_path.restype = ctypes.c_char_p
+	
+	return str(lib_bindings.scc_get_share_path())
 
 
 def get_pid_file():
@@ -143,3 +139,6 @@ def get_daemon_socket():
 	~/.config/scc/daemon.socket under normal conditions.
 	"""
 	return os.path.join(get_config_path(), "daemon.socket")
+
+lib_bindings = None
+

@@ -20,6 +20,7 @@ extern struct Item rels_and_abses[];
 extern const uint16_t SCC_KEYCODE_MAX;
 extern const size_t SCC_REL_ABS_MAX;
 
+
 const char* scc_action_get_type(Action* a) {
 	return a->type;
 }

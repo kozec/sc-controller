@@ -11,8 +11,7 @@ from scc.gui.controller_widget import ControllerButton
 from scc.gui.controller_widget import STICKS, PADS
 from scc.gui.editor import Editor, ComboSetter
 from scc.gui.dwsnc import headerbar
-from scc.modifiers import ModeModifier, DoubleclickModifier, HoldModifier
-from scc.actions import Action, RingAction, NoAction, MultiAction
+from scc.actions import Action, ModeModifier, RingAction, NoAction, MultiAction
 from scc.constants import SCButtons
 from scc.profile import Profile
 

@@ -10,7 +10,7 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import Action, ButtonAction, MouseAction
 from scc.actions import AxisAction, MultiAction, NoAction
-from scc.macros import Macro, Cycle, PressAction, ReleaseAction
+from scc.actions import Macro, Cycle, PressAction, ReleaseAction
 from scc.uinput import Rels, Keys
 from scc.gui.area_to_action import action_to_area
 from scc.gui.key_grabber import KeyGrabber

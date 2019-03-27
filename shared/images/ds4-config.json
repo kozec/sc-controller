@@ -1,0 +1,27 @@
+{
+	"gui": {
+		"background": "ds4",
+		"buttons": [
+			"CROSS", "CIRCLE", "SQUARE", "TRIANGLE", "ds4SHARE",
+			"C", "ds4SHARE", "LB", "RB", "LT", "RT",
+			"STICK", "LPAD", "RPAD", "LG", "RG"
+		]
+	},
+	
+	"_ " : "Buttons defined here are not actually loaded by driver, but gui",
+	"__" : "uses list to determine what buttons and axes are available",
+	
+	"gyros": true,
+	"buttons": {
+		"288": "Y",
+		"289": "B",
+		"290": "A",
+		"291": "X",
+		"294": "RB",
+		"295": "LB",
+		"298": "C",
+		"293": "CPAD",
+		"296": "BACK",
+		"297": "START"
+	}
+}

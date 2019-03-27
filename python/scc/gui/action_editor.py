@@ -8,17 +8,16 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.actions import Action, XYAction, NoAction, RingAction, TriggerAction
-from scc.special_actions import OSDAction, GesturesAction, MenuAction
-from scc.modifiers import SmoothModifier, NameModifier, BallModifier
-from scc.modifiers import Modifier, ClickModifier, ModeModifier
-from scc.modifiers import SensitivityModifier, FeedbackModifier
-from scc.modifiers import DeadzoneModifier, RotateInputModifier
+from scc.actions import Action, NoAction, RingAction, TriggerAction
+from scc.actions import OSDAction, Macro
+from scc.actions import SmoothModifier, NameModifier, BallModifier
+from scc.actions import Modifier, ClickedModifier, ModeModifier
+from scc.actions import SensitivityModifier, FeedbackModifier
+from scc.actions import DeadzoneModifier, RotateInputModifier
+from scc.actions import HapticData
 from scc.constants import HapticPos, SCButtons
 from scc.constants import CUT, ROUND, LINEAR, MINIMUM
-from scc.controller import HapticData
 from scc.profile import Profile
-from scc.macros import Macro
 from scc.tools import nameof
 from scc.gui.controller_widget import PRESSABLE, TRIGGERS, PADS
 from scc.gui.controller_widget import STICKS, GYROS, BUTTONS
@@ -703,7 +702,7 @@ class ActionEditor(Editor):
 		
 		if (cm & Action.MOD_CLICK) != 0:
 			if self.click:
-				action = ClickModifier(action)
+				action = ClickedModifier(action)
 		
 		return action
 	
@@ -715,7 +714,7 @@ class ActionEditor(Editor):
 		Returns False for everything else, even if it is instalce of Modifier
 		subclass.
 		"""
-		if isinstance(action, (ClickModifier, SensitivityModifier,
+		if isinstance(action, (ClickedModifier, SensitivityModifier,
 				DeadzoneModifier, FeedbackModifier, RotateInputModifier,
 				SmoothModifier, BallModifier)):
 			return True
@@ -754,14 +753,14 @@ class ActionEditor(Editor):
 			if isinstance(action, OSDAction):
 				self.osd = True
 				action = action.action
-			if isinstance(action, ClickModifier):
+			if isinstance(action, ClickedModifier):
 				self.click = True
 				action = action.action
 			if isinstance(action, FeedbackModifier):
-				self.feedback_position = action.haptic.get_position()
-				self.feedback[0] = action.haptic.get_amplitude()
-				self.feedback[1] = action.haptic.get_frequency()
-				self.feedback[2] = action.haptic.get_period()
+				self.feedback_position = action.get_haptic().get_position()
+				self.feedback[0] = action.get_haptic().get_amplitude()
+				self.feedback[1] = action.get_haptic().get_frequency()
+				self.feedback[2] = action.get_haptic().get_period()
 				action = action.action
 			if isinstance(action, SmoothModifier):
 				self.smoothing = ( action.level, action.multiplier, action.filter)

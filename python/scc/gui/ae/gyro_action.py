@@ -7,7 +7,7 @@ from scc.tools import _
 
 from scc.actions import Action, NoAction, MouseAction, MultiAction, RangeOP
 from scc.actions import GyroAction, GyroAbsAction, MouseAbsAction
-from scc.modifiers import ModeModifier, SensitivityModifier
+from scc.actions import ModeModifier, SensitivityModifier
 from scc.uinput import Axes, Rels
 from scc.constants import SCButtons, STICK, YAW, ROLL
 from scc.gui.parser import GuiActionParser

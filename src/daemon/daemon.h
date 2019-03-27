@@ -3,13 +3,13 @@
  */
 #pragma once
 
-#define DAEMON_VERSION "0.4.5"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/list.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #include <sys/time.h>
 #include <stdbool.h>
+#include "version.h"
 
 #define MIN_SLEEP_TIME 10 /** ms */
 #define CLIENT_BUFFER_SIZE 10240

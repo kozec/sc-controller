@@ -17,6 +17,11 @@ import logging
 log = logging.getLogger("Actions")
 
 
+lib_bindings = find_library("libscc-bindings")
+lib_parse = find_library("libscc-parser")
+lib_actions = find_library("libscc-actions")
+
+
 class Parameter:
 	class CParameterOE(ctypes.Structure):
 		_fields_ = [
@@ -110,6 +115,31 @@ class Action(object):
 	AF_MODIFIER				= 0b00010 << 9
 	AF_SPECIAL_ACTION		= 0b00100 << 9
 	
+	# "Action Context" constants used by GUI
+	AC_BUTTON	= 1 << 0
+	AC_STICK	= 1 << 2
+	AC_TRIGGER	= 1 << 3
+	AC_GYRO		= 1 << 4
+	AC_PAD		= 1 << 5
+	AC_OSD		= 1 << 8
+	AC_OSK		= 1 << 9	# On screen keyboard
+	AC_MENU		= 1 << 10	# Menu Item
+	AC_SWITCHER	= 1 << 11	# Autoswitcher display
+	AC_ALL		= 0b10111111111	# ALL means everything but OSK
+	
+	# TODO: WTF should be done with this?
+	# Used by get_compatible_modifiers in past
+	MOD_CLICK		= 1 << 0
+	MOD_OSD			= 1 << 1
+	MOD_FEEDBACK	= 1 << 2
+	MOD_DEADZONE	= 1 << 3
+	MOD_SENSITIVITY	= 1 << 4
+	MOD_SENS_Z		= 1 << 5	# Sensitivity of 3rd axis
+	MOD_ROTATE		= 1 << 6
+	MOD_POSITION	= 1 << 7
+	MOD_SMOOTH		= 1 << 8
+	MOD_BALL		= 1 << 9
+	
 	def __init__(self, *args):
 		"""
 		Takes either CActionOEp instance or action parameters.
@@ -137,14 +167,20 @@ class Action(object):
 		
 		self._caction = caction
 	
+	"""
 	def __del__(self):
 		if self._caction:
 			lib_bindings.scc_action_unref(self._caction)
 			self._caction = None
+	"""
 	
 	def to_string(self, multiline=False):
 		""" Converts action back to string """
 		return lib_actions.scc_action_to_string(self._caction).decode("utf-8")
+	
+	# TODO: This:
+	def get_compatible_modifiers(self):
+		return 0
 	
 	def compress(self):
 		"""
@@ -174,17 +210,20 @@ class Action(object):
 		if pars.endswith(")"): pars = pars[:-1]
 		return "<%s, %s>" % (self.__class__.__name__, pars)
 	
-	__repr__ = __str__
+	# __repr__ = __str__
 	
 	def __nonzero__(self):
 		return True
+	
+	def describe(self, ctx):
+		return self.to_string()[0:20]
 	
 	@staticmethod
 	def parse(s):
 		caction = lib_parse.scc_parse_action(s)
 		if (caction.contents.flags & Action.AF_ERROR) != 0:
 			try:
-				raise OSError(lib_bindings.scc_error_get_message(CAPError(caction)))
+				raise ParseError(lib_bindings.scc_error_get_message(CAPError(caction)))
 			finally:
 				lib_bindings.scc_action_unref(caction)
 		return Action._from_c(caction)
@@ -260,6 +299,10 @@ class HapticData(object):
 		position, amplitude, frequency, period = self.data
 		amplitude = min(amplitude * by, 0x8000)
 		return HapticData(position, amplitude, frequency, period)
+
+
+class RangeOP:
+	pass
 
 
 class NoAction(Action):
@@ -348,9 +391,6 @@ KEYWORD_TO_ACTION = {
 }
 
 
-lib_bindings = find_library("libscc-bindings")
-
-
 class MultiAction(Action):
 	BUILD_FN = lib_bindings.scc_multiaction_new
 	
@@ -366,6 +406,19 @@ class MultiAction(Action):
 
 class Macro(MultiAction):
 	BUILD_FN = lib_bindings.scc_macro_new
+
+
+class Stub:
+	
+	def __init__(self, *a, **b):
+		pass
+
+
+class GyroAction(Stub): pass
+class GyroAbsAction(Stub): pass
+class RingAction(Stub): pass
+class OSDAction(Stub): pass
+class RotateInputModifier(Stub): pass
 
 
 lib_bindings.scc_action_get_type.argtypes = [ Action.CActionOEp ]
@@ -421,12 +474,9 @@ lib_bindings.scc_get_const_parameter.argtypes = [ ctypes.c_char_p ]
 lib_bindings.scc_get_const_parameter.restype = Parameter.CParameterOEp
 
 
-lib_parse = find_library("libscc-parser")
 lib_parse.scc_parse_action.argtypes = [ ctypes.c_char_p ]
 lib_parse.scc_parse_action.restype = Action.CActionOEp
 
-
-lib_actions = find_library("libscc-actions")
 
 lib_actions.scc_action_to_string.argtypes = [ Action.CActionOEp ]
 lib_actions.scc_action_to_string.restype = ctypes.c_char_p
