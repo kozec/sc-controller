@@ -82,7 +82,7 @@ class TestModifiers(object):
 		a = _parse_compressed("ball(axis(ABS_X))")
 		assert isinstance(a, BallModifier)
 		assert isinstance(a.action, AxisAction)
-		assert a.action.id == Axes.ABS_X
+		assert a.action.axis == Axes.ABS_X
 		a = _parse_compressed("ball(mouse())")
 		assert isinstance(a, BallModifier)
 		assert isinstance(a.action, MouseAction)
@@ -94,7 +94,7 @@ class TestModifiers(object):
 		a = _parse_compressed("smooth(5, 0.3, axis(ABS_X))")
 		assert isinstance(a, SmoothModifier)
 		assert isinstance(a.action, AxisAction)
-		assert a.action.id == Axes.ABS_X
+		assert a.action.axis == Axes.ABS_X
 		assert a.level == 5
 		assert a.multiplier == 0.3
 	
@@ -107,13 +107,13 @@ class TestModifiers(object):
 		assert isinstance(a, DeadzoneModifier)
 		assert a.lower == 100 and a.upper == STICK_PAD_MAX
 		assert isinstance(a.action, AxisAction)
-		assert a.action.id == Axes.ABS_X
+		assert a.action.axis == Axes.ABS_X
 		# Lower and upper
 		a = _parse_compressed("deadzone(100, 2000, axis(ABS_X))")
 		assert isinstance(a, DeadzoneModifier)
 		assert a.lower == 100 and a.upper == 2000
 		assert isinstance(a.action, AxisAction)
-		assert a.action.id == Axes.ABS_X
+		assert a.action.axis == Axes.ABS_X
 	
 	def test_mode(self):
 		"""
@@ -145,17 +145,17 @@ class TestModifiers(object):
 		"""
 		# With doubleclick action only
 		a = _parse_compressed("doubleclick(axis(ABS_X))")
-		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_X
+		assert isinstance(a.action, AxisAction) and a.action.axis == Axes.ABS_X
 		assert not a.holdaction and not a.normalaction
 		# With doubleclick and normal action
 		a = _parse_compressed("doubleclick(axis(ABS_X), axis(ABS_Y))")
-		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_X
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Y
+		assert isinstance(a.action, AxisAction) and a.action.axis == Axes.ABS_X
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.axis == Axes.ABS_Y
 		assert not a.holdaction
 		# With all parameters
 		a = _parse_compressed("doubleclick(axis(ABS_X), axis(ABS_Y), 1.5)")
-		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_X
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Y
+		assert isinstance(a.action, AxisAction) and a.action.axis == Axes.ABS_X
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.axis == Axes.ABS_Y
 		assert not a.holdaction
 		assert a.timeout == 1.5
 	
@@ -165,17 +165,17 @@ class TestModifiers(object):
 		"""
 		# With hold action only
 		a = _parse_compressed("hold(axis(ABS_X))")
-		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_X
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.axis == Axes.ABS_X
 		assert not a.action and not a.normalaction
 		# With hold and normal action
 		a = _parse_compressed("hold(axis(ABS_X), axis(ABS_Y))")
-		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_X
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Y
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.axis == Axes.ABS_X
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.axis == Axes.ABS_Y
 		assert not a.action
 		# With all parameters
 		a = _parse_compressed("hold(axis(ABS_X), axis(ABS_Y), 1.5)")
-		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_X
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Y
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.axis == Axes.ABS_X
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.axis == Axes.ABS_Y
 		assert not a.action
 		assert a.timeout == 1.5	
 	
@@ -185,21 +185,21 @@ class TestModifiers(object):
 		are parsed as expected
 		"""
 		a = _parse_compressed("doubleclick(axis(ABS_X), hold(axis(ABS_Y), axis(ABS_Z)))")
-		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_X
-		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_Y
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Z
+		assert isinstance(a.action, AxisAction) and a.action.axis == Axes.ABS_X
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.axis == Axes.ABS_Y
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.axis == Axes.ABS_Z
 		a = _parse_compressed("hold(axis(ABS_X), doubleclick(axis(ABS_Y), axis(ABS_Z)))")
-		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_X
-		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_Y
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Z
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.axis == Axes.ABS_X
+		assert isinstance(a.action, AxisAction) and a.action.axis == Axes.ABS_Y
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.axis == Axes.ABS_Z
 		a = _parse_compressed("doubleclick(hold(axis(ABS_RX), axis(ABS_RY)), axis(ABS_Z))")
-		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_RY
-		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_RX
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_Z
+		assert isinstance(a.action, AxisAction) and a.action.axis == Axes.ABS_RY
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.axis == Axes.ABS_RX
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.axis == Axes.ABS_Z
 		a = _parse_compressed("hold(doubleclick(axis(ABS_Z), axis(ABS_RZ)), axis(ABS_X))")
-		assert isinstance(a.action, AxisAction) and a.action.id == Axes.ABS_Z
-		assert isinstance(a.holdaction, AxisAction) and a.holdaction.id == Axes.ABS_RZ
-		assert isinstance(a.normalaction, AxisAction) and a.normalaction.id == Axes.ABS_X
+		assert isinstance(a.action, AxisAction) and a.action.axis == Axes.ABS_Z
+		assert isinstance(a.holdaction, AxisAction) and a.holdaction.axis == Axes.ABS_RZ
+		assert isinstance(a.normalaction, AxisAction) and a.normalaction.axis == Axes.ABS_X
 	
 	def test_sens(self):
 		"""

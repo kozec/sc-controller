@@ -96,7 +96,7 @@ class ButtonsComponent(AEComponent, Chooser):
 		if isinstance(action, AxisAction):
 			return len(action.parameters) == 1
 		if isinstance(action, MouseAction):
-			if action.get_axis() == Rels.REL_WHEEL:
+			if action.axis == Rels.REL_WHEEL:
 				return True
 		if is_button_togle(action):
 			return True

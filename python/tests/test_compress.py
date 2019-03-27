@@ -137,9 +137,9 @@ class TestCompress(object):
 		assert isinstance(a.normalaction, AxisAction)
 		assert isinstance(a.action, AxisAction)
 		assert isinstance(a.holdaction, AxisAction)
-		assert a.normalaction.id == Axes.ABS_RX
-		assert a.action.id == Axes.ABS_Z
-		assert a.holdaction.id == Axes.ABS_X
+		assert a.normalaction.axis == Axes.ABS_RX
+		assert a.action.axis == Axes.ABS_Z
+		assert a.holdaction.axis == Axes.ABS_X
 	
 	def test_sensitivity(self):
 		"""
