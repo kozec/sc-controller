@@ -8,7 +8,7 @@
 
 /** Tests loading menu file */
 void test_loading(CuTest* tc) {
-	MenuData* m = scc_menudata_from_json("../default_menus/Default.menu", NULL);
+	MenuData* m = scc_menudata_from_json("../share/default_menus/Default.menu", NULL);
 	assert(tc, m != NULL);
 	
 	MenuItem* it = scc_menudata_get_by_id(m, "turnoff_item");

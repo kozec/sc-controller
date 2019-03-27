@@ -91,9 +91,9 @@ const char* scc_get_share_path() {
 	
 	const char* scc_shared = getenv("SCC_SHARED");
 	if (scc_shared != NULL) {
-		// Automatically adding '/shared' to end just because it's more
+		// Automatically adding '/share' to end just because it's more
 		// comfortable to write SCC_SHARED=$(pwd)
-		if (snprintf(share_path, PATH_MAX, "%s/shared", scc_shared) >= PATH_MAX)
+		if (snprintf(share_path, PATH_MAX, "%s/share", scc_shared) >= PATH_MAX)
 			FATAL("$SCC_SHARED doesn't fit PATH_MAX.");
 		if (dir_exists(share_path))
 			return share_path;

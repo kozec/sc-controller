@@ -8,7 +8,7 @@
 
 /** Tests loading profile file */
 void test_loading(CuTest* tc) {
-	Profile* p = scc_profile_from_json("../default_profiles/XBox Controller.sccprofile", NULL);
+	Profile* p = scc_profile_from_json("../share/default_profiles/XBox Controller.sccprofile", NULL);
 	assert(tc, p != NULL);
 	
 	assert(tc, strcmp(scc_action_to_string(p->get_button(p, B_A)), "button(BTN_A)") == 0);
