@@ -59,6 +59,14 @@ void scc_param_checker_init(ParamChecker* pc, const char* expression) {
 			} else if ((list_len(lst) > 0) && (list_last(lst)->type == PT_FLOAT)) {
 				last = list_last(lst);
 				last->fmin = 0;
+			} else if ((list_len(lst) > 0) && (list_last(lst)->type == PT_STRING)) {
+				last = list_last(lst);
+				if (last->check_value == check_button_name)
+					last->check_value = check_button_name_plus;
+				else if (last->check_value == check_axis_name)
+					last->check_value = check_axis_name_plus;
+				else
+					FATAL("Unexpected '+' in ParamChecker specification");
 			} else {
 				FATAL("Unexpected '+' in ParamChecker specification");
 			}
@@ -67,7 +75,16 @@ void scc_param_checker_init(ParamChecker* pc, const char* expression) {
 			list_add(lst, PD(PT_ANY));
 			break;
 		case 's':
+		case 'A':
+		case 'B':
 			list_add(lst, PD(PT_STRING));
+			last = list_last(lst);
+			if (*i == 'B')
+				last->check_value = check_button_name;
+			else if (*i == 'A')
+				last->check_value = check_axis_name;
+			else
+				last->check_value = NULL;
 			break;
 		case 'c':
 			list_add(lst, PD(PT_INT));

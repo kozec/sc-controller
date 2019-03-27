@@ -15,8 +15,11 @@
 #include <stdio.h>
 
 static ParamChecker pc;
+static ParamChecker pc_short;
 #define DEFAULT_POSITION_X		10
 #define DEFAULT_POSITION_Y		-10
+#define SAME					0xFE
+#define DEFAULT					0xFF
 
 static const char* KW_MENU = "menu";
 
@@ -57,9 +60,20 @@ static void button_release(Action* a, Mapper* m) {
 
 
 static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
-	ParamError* err = scc_param_checker_check(&pc, keyword, params);
-	if (err != NULL) return (ActionOE)err;
-	params = scc_param_checker_fill_defaults(&pc, params);
+	// Backwards compatibility / convience thing: Menu can have 'short form'
+	// where only menu id and size is specified, eg. menu("some-id", 3) 
+	ParamError* err = scc_param_checker_check(&pc_short, keyword, params);
+	bool short_form = false;
+	if (err == NULL) {
+		// Short form is used
+		params = scc_copy_param_list(params);
+		short_form = true;
+	} else {
+		// Full form is tried
+		err = scc_param_checker_check(&pc, keyword, params);
+		if (err != NULL) return (ActionOE)err;
+		params = scc_param_checker_fill_defaults(&pc, params);
+	}
 	if (params == NULL) return (ActionOE)scc_oom_action_error();
 	
 	SAMenuAction* sa = malloc(sizeof(SAMenuAction));
@@ -69,12 +83,21 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 	sa->action.button_release = &button_release;
 	
 	sa->params = params;
-	sa->data.menu_id = scc_parameter_as_string(params->items[0]);	// this string will be kept in mem until sa->params is freed
-	sa->data.control_with = scc_parameter_as_int(params->items[1]);
-	sa->data.confirm_with = scc_parameter_as_int(params->items[2]);
-	sa->data.cancel_with = scc_parameter_as_int(params->items[3]);
-	sa->data.show_with_release = scc_parameter_as_int(params->items[4]) ? true: false;
-	sa->data.size = scc_parameter_as_int(params->items[5]);
+	sa->data.menu_id = scc_parameter_as_string(params->items[0]);
+	if (short_form) {
+		sa->data.control_with = DEFAULT;
+		sa->data.confirm_with = DEFAULT;
+		sa->data.cancel_with = DEFAULT;
+		sa->data.show_with_release = false;
+		sa->data.size = scc_parameter_as_int(params->items[1]);
+	} else {
+		sa->data.menu_id = scc_parameter_as_string(params->items[0]);
+		sa->data.control_with = scc_string_to_pst(scc_parameter_as_string(params->items[1]));
+		sa->data.confirm_with = scc_string_to_button(scc_parameter_as_string(params->items[2]));
+		sa->data.cancel_with = scc_string_to_button(scc_parameter_as_string(params->items[3]));
+		sa->data.show_with_release = scc_parameter_as_int(params->items[4]) ? true: false;
+		sa->data.size = scc_parameter_as_int(params->items[5]);
+	}
 	sa->stick_distance = 0;
 	vec_set(sa->data.position, DEFAULT_POSITION_X, DEFAULT_POSITION_Y);
 	
@@ -83,7 +106,9 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 
 
 void scc_actions_init_sa_menu() {
-	scc_param_checker_init(&pc, "si?i?i?b?i?");
-	scc_param_checker_set_defaults(&pc, SCC_DEFAULT, SCC_DEFAULT, SCC_DEFAULT, SCC_False, 0);
+	scc_param_checker_init(&pc, "sA+?B+?B+?b?i?");
+	scc_param_checker_set_defaults(&pc, "DEFAULT", "DEFAULT", "DEFAULT", SCC_False, 0);
+	scc_param_checker_init(&pc_short, "si");
 	scc_action_register(KW_MENU, &sa_menu_constructor);
 }
+

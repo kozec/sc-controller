@@ -20,6 +20,8 @@ static const char* CONSTANTS[] = {
 	"CUT", "ROUND", "LINEAR", "MINIMUM",
 	// Haptic positions
 	"LEFT", "RIGHT", "BOTH",
+	// Stuff used by menus
+	"SAME", "DEFAULT",
 	// Terminator
 	NULL
 };

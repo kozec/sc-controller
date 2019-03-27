@@ -2,6 +2,7 @@
 #include "scc/utils/list.h"
 #include "scc/param_checker.h"
 #include "scc/error.h"
+#include "scc/tools.h"
 #include "param_checker.h"
 #include <stdbool.h>
 #include <stdlib.h>
@@ -27,8 +28,32 @@ bool is_ok_for(Parameter* param, ParamData* data) {
 		float value = param->as_float(param);
 		if ((value < data->fmin) || (value > data->fmax))
 			return false;
+	} else if (data->type == PT_STRING) {
+		if (data->check_value != NULL)
+			return data->check_value(param->as_string(param));
 	}
 	return true;
+}
+
+
+bool check_button_name(const char* value) {
+	return scc_string_to_button(value) != 0;
+}
+
+bool check_axis_name(const char* value) {
+	return scc_string_to_pst(value) != 0;
+}
+
+static bool check_plus(const char* value) {
+	return (0 == strcmp(value, "DEFAULT")) || (0 == strcmp(value, "SAME"));
+}
+
+bool check_button_name_plus(const char* value) {
+	return check_plus(value) || check_button_name(value);
+}
+
+bool check_axis_name_plus(const char* value) {
+	return check_plus(value) || check_axis_name(value);
 }
 
 
@@ -59,9 +84,14 @@ static ParamError* check(ParamChecker* pc, size_t index, const char* keyword, Pa
 			// Wrong type
 			err = scc_new_invalid_parameter_type_error(keyword, index, params->items[p]);
 		} else {
-			if (!is_ok_for(params->items[p], pc->data[d]))
-				// This should fail only if float or int is out of range
-				return scc_new_parameter_out_of_range_error(keyword, index, params->items[p]);
+			if (!is_ok_for(params->items[p], pc->data[d])) {
+				// This should fail only if float or int is out of range, or
+				// if string parameter is not one of expected vaues
+				if (pc->data[d]->type == PT_STRING)
+					return scc_new_invalid_parameter_value_error(keyword, index, params->items[p]);
+				else
+					return scc_new_parameter_out_of_range_error(keyword, index, params->items[p]);
+			}
 		}
 		// TODO: Move this up, into 'wrong type' check
 		if ((err != NULL) && (!pc->data[d]->optional)) {

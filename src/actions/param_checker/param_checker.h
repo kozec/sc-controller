@@ -55,9 +55,20 @@ struct ParamData {
 			float			fmin;
 			float			fmax;
 		};
+		bool (*check_value)(const char* value);
 	};
 };
 
 
 // Returns true if parameter matches paramData type and allowed range.
 bool is_ok_for(Parameter* param, ParamData* data);
+
+// Returns true if value is valid button name
+bool check_button_name(const char* value);
+// Returns true if value is valid axis name
+bool check_axis_name(const char* value);
+// Returns true if value is valid button name or is one of DEFAULT, SAME
+bool check_button_name_plus(const char* value);
+// Returns true if value is valid axis name or is one of DEFAULT, SAME
+bool check_axis_name_plus(const char* value);
+

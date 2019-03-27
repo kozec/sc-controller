@@ -19,11 +19,14 @@ Supported characters:
  - u	unsigned. Has to be followed by 'i8', 'i16' or 'i32'
  - c	keycode. This is special case of integer in range from 1 to 0x7FFF
  - x	axis. This is shortcut for 'u8', for values between ABS_X and ABS_MAX, 0 to 63
+ - b	boolean. Also known as integer in range from 0 to 1
  - f	float
  - a	action
  - r	range
+ - B	button name (string). If extended with '+', allows 'SAME' and 'DEFAULT' used in menus
+ - A	axis name (string). If extended with '+', allows 'SAME' and 'DEFAULT' used in menus
  - .	anything. Just skipped over, not checked at all
- 
+
  - ?	marks previous parameter as optional
  - *	marks previous parameter as repeating, matching any (including zero) instances
  - +	after i16 or i32 restricts range to positive numbers
@@ -97,3 +100,4 @@ ParameterList scc_param_checker_strip_defaults(ParamChecker* pc, ParameterList l
 
 /** Creates new instance of 'invalid_number_of_parameters' error */
 ParamError* invalid_number_of_parameters(const char* keyword);
+

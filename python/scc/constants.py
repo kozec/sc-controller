@@ -52,8 +52,8 @@ YAW		= "YAW"
 ROLL	= "ROLL"
 
 # Special constants currently used only by menus
-SAME = "SAME"		# Menu is canceled by releasing same button that intiated it
-DEFAULT = "DEFAULT"	# Default confirm/cancel button. A/B for menus initiated by
+SAME	= 0xFE			# Menu is canceled by releasing same button that intiated it
+DEFAULT	= 0xFF		# Default confirm/cancel button. A/B for menus initiated by
 					# button, pad clicking / releasing for menus on pads
 
 # Deadzone modes

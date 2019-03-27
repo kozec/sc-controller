@@ -3,7 +3,6 @@ from collections import OrderedDict
 from gi.repository import Gdk
 from cheader import defines
 
-
 HW_SCANS = {
 	'KEY_ESC':			0x70029,
 	'KEY_F1':			0x7003a,
@@ -394,6 +393,7 @@ GDK_TO_KEY = {
 }
 
 KEY_TO_GTK = { v: k for (k, v) in GDK_TO_KEY.items() }
+
 
 for x in dir(Gdk):
 	if x.startswith("KEY_"):

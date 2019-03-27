@@ -229,6 +229,8 @@ Parameter* scc_parameter_tuple_get_child(Parameter* p, uint8_t n);
 ParamError* scc_new_invalid_parameter_type_error(const char* keyword, unsigned int n, Parameter* param);
 /** Returns formatted "<parameter> is out of range for <n>th parameter of <keyword>" error */
 ParamError* scc_new_parameter_out_of_range_error(const char* keyword, unsigned int n, Parameter* param);
+/** Returns formatted "<parameter> is not valid value <n>th parameter of <keyword>" error */
+ParamError* scc_new_invalid_parameter_value_error(const char* keyword, unsigned int n, Parameter* param);
 
 /** Default callback used when nonsensical conversion is requested. Calling this intentionally crashes! */
 Action* scc_param_as_action_invalid(Parameter* p);

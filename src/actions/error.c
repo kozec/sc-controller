@@ -83,3 +83,20 @@ ParamError* scc_new_parameter_out_of_range_error(const char* keyword, unsigned i
 	free(_p);
 	return e;	
 }
+
+
+ParamError* scc_new_invalid_parameter_value_error(const char* keyword, unsigned int n, Parameter* p) {
+	char* _p = scc_parameter_to_string(p);
+	char* _th = th(n);
+	ParamError* e;
+	if ((_th == NULL) || (_p == NULL)) {
+		e = scc_oom_action_error();
+	} else {
+		e = scc_new_param_error(AEC_PARAMETER_OUT_OF_RANGE,
+			"%s is not valid value for %s parameter of '%s'", _p, _th, keyword);
+	}
+	free(_th);
+	free(_p);
+	return e;	
+}
+

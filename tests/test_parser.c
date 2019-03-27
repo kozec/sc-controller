@@ -190,6 +190,15 @@ void test_axis0(CuTest* tc) {
 }
 
 
+/** Tests case that failed in past */
+void test_menu_w_default(CuTest* tc) {
+	ActionOE a = scc_parse_action("menu('Default.menu',DEFAULT,B,A)");
+	assert_msg(tc, !IS_ACTION_ERROR(a), ACTION_ERROR(a)->message);
+	a = scc_parse_action("menu('Default.menu',3)");
+	assert_msg(tc, !IS_ACTION_ERROR(a), ACTION_ERROR(a)->message);
+}
+
+
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
 	DEFAULT_SUITE_ADD(test_none);
@@ -206,6 +215,7 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_macro);
 	DEFAULT_SUITE_ADD(test_axis0);
 	DEFAULT_SUITE_ADD(test_multiline);
+	DEFAULT_SUITE_ADD(test_menu_w_default);
 	
 	return CuSuiteRunDefault();
 }

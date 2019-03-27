@@ -48,6 +48,7 @@ void scc_param_checker_set_defaults(ParamChecker* pc, ...) {
 			}
 		} else if (data->type == PT_STRING) {
 			const char* value = va_arg(ap, const char*);
+			ASSERT(value);
 			p = scc_new_const_string(value);
 		}
 		ASSERT(p);

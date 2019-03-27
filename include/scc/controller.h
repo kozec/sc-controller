@@ -163,8 +163,6 @@ typedef enum PadStickTrigger {
 	PST_GYRO			= 5,
 } PadStickTrigger;
 
-#define SCC_DEFAULT		0xFF			/* This is used by menus for both SCButton and PadStickTrigger values */
-#define SCC_SAME		0xFE			/* This is used by menus for both SCButton and PadStickTrigger values */
 #define SCC_True		0x01			/* This is used only by generate-parser-constants script */
 #define SCC_False		0x00			/* This is used only by generate-parser-constants script */
 
