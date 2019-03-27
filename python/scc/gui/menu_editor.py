@@ -12,11 +12,11 @@ from scc.gui.action_editor import ActionEditor
 from scc.gui.icon_chooser import IconChooser
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
-from scc.osd.menu_generators import ProfileListMenuGenerator
-from scc.osd.menu_generators import RecentListMenuGenerator
-from scc.osd.menu_generators import GameListMenuGenerator
-from scc.osd.menu import MenuIcon
-from scc.menu_data import MenuData, MenuItem, Submenu, Separator, MenuGenerator
+# from scc.osd.menu_generators import ProfileListMenuGenerator
+# from scc.osd.menu_generators import RecentListMenuGenerator
+# from scc.osd.menu_generators import GameListMenuGenerator
+# from scc.osd.menu import MenuIcon
+from scc.menu_data import MenuData, MenuItem, Submenu, Separator
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.parser import TalkingActionParser
 from scc.actions import Action, NoAction
@@ -24,6 +24,15 @@ from scc.tools import find_icon
 from scc.profile import Encoder
 import os, traceback, logging, json
 log = logging.getLogger("MenuEditor")
+
+
+# TODO: Following
+class ProfileListMenuGenerator: pass
+class RecentListMenuGenerator: pass
+class GameListMenuGenerator: pass
+class MenuIcon:
+	def __init__(self, a, b):
+		pass
 
 
 class MenuEditor(Editor):

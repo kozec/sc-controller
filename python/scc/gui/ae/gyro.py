@@ -7,7 +7,7 @@ from scc.tools import _
 
 from scc.actions import Action, NoAction, AxisAction, MultiAction
 from scc.actions import GyroAction, GyroAbsAction, RangeOP
-from scc.modifiers import ModeModifier
+from scc.actions import ModeModifier
 from scc.constants import SCButtons, STICK
 from scc.tools import ensure_size, nameof
 from scc.gui.ae.gyro_action import TRIGGERS, is_gyro_enable, fill_buttons

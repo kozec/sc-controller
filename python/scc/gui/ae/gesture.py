@@ -14,10 +14,10 @@ from scc.gui.area_to_action import action_to_area
 from scc.gui.simple_chooser import SimpleChooser
 from scc.gui.action_editor import ActionEditor
 from scc.gui.parser import GuiActionParser
-from scc.special_actions import GesturesAction, OSDAction
-from scc.osd.gesture_display import GestureDisplay
+# from scc.osd.gesture_display import GestureDisplay
+from scc.actions import GesturesAction, OSDAction
 from scc.actions import Action, NoAction, XYAction
-from scc.modifiers import NameModifier
+from scc.actions import NameModifier
 from scc.tools import strip_gesture
 
 import os, logging

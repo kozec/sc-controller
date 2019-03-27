@@ -7,10 +7,10 @@ Assigns emulated axis to trigger
 from __future__ import unicode_literals
 from scc.tools import _
 
-from scc.special_actions import ChangeProfileAction, ShellCommandAction
-from scc.special_actions import TurnOffAction, KeyboardAction, OSDAction
-from scc.special_actions import ClearOSDAction
+from scc.actions import ChangeProfileAction, ShellCommandAction
+from scc.actions import TurnOffAction, KeyboardAction, OSDAction
 from scc.actions import Action, NoAction, ResetGyroAction
+from scc.actions import ClearOSDAction
 from scc.gui.ae.menu_action import MenuActionCofC
 from scc.gui.ae import AEComponent
 

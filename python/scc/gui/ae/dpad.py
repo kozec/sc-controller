@@ -11,9 +11,8 @@ from scc.tools import _
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction,HatRightAction
 from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
+from scc.actions import MenuAction, NameModifier
 from scc.constants import LEFT, RIGHT, STICK, SAME, DEFAULT, SCButtons
-from scc.modifiers import NameModifier
-from scc.special_actions import MenuAction
 from scc.uinput import Keys, Axes
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC

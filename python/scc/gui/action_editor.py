@@ -341,7 +341,9 @@ class ActionEditor(Editor):
 			self._action = NameModifier(name, self._action)
 		else:
 			#print ">>>", "_set_title", self._action, entName
-			self._action.name = name
+			# TODO: this
+			pass
+			# self._action.name = name
 	
 	
 	def blink_widget(self, name, time=500):

@@ -13,14 +13,13 @@ from scc.actions import Action, NoAction, AxisAction, MouseAction
 from scc.actions import XYAction, RelXYAction
 from scc.actions import MultiAction, RelWinAreaAction, ButtonAction
 from scc.actions import AreaAction, WinAreaAction, RelAreaAction
-from scc.modifiers import BallModifier, CircularModifier
+from scc.actions import BallModifier, CircularModifier
 from scc.uinput import Keys, Axes, Rels
 from scc.constants import SCButtons
-from scc.lib import xwrappers as X
-from scc.osd.timermanager import TimerManager
-from scc.osd.area import Area
+# from scc.osd.area import Area
 from scc.gui.parser import GuiActionParser, InvalidAction
 from scc.gui.simple_chooser import SimpleChooser
+from scc.gui.timermanager import TimerManager
 from scc.gui.controller_widget import STICKS
 from scc.gui.ae import AEComponent
 
@@ -127,7 +126,8 @@ class AxisActionComponent(AEComponent, TimerManager):
 					return
 				self.osd_area_instance = Area()
 				self.osd_area_instance.show()
-			action.update_osd_area(self.osd_area_instance, FakeMapper(self.editor))
+			# TODO: This
+			# action.update_osd_area(self.osd_area_instance, FakeMapper(self.editor))
 			self.timer("area", 0.5, self.update_osd_area, action)
 		elif self.osd_area_instance:
 			self.osd_area_instance.quit()
@@ -495,6 +495,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 		self.editor.set_action(action)
 
 
+'''
 class FakeMapper(object):
 	"""
 	Class that pretends to be mapper used when calling update_osd_area.
@@ -548,3 +549,4 @@ class FakeMapper(object):
 		
 		# Failed to get property or there is not any usable window
 		return root
+'''

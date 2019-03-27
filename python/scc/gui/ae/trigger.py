@@ -11,11 +11,11 @@ from gi.repository import Gtk, Gdk, GLib
 from scc.constants import TRIGGER_MIN, TRIGGER_HALF, TRIGGER_CLICK, TRIGGER_MAX
 from scc.actions import TriggerAction, ButtonAction, AxisAction, MouseAction
 from scc.actions import Action, NoAction, MultiAction
+from scc.actions import FeedbackModifier
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.area_to_action import action_to_area
 from scc.gui.simple_chooser import SimpleChooser
 from scc.gui.binding_editor import BindingEditor
-from scc.modifiers import FeedbackModifier
 from scc.gui.parser import InvalidAction
 
 import os, logging

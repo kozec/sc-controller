@@ -13,8 +13,8 @@ from scc.constants import LEFT, RIGHT
 from scc.uinput import Keys
 from scc.gui.ae import AEComponent
 from scc.gui.parser import GuiActionParser
-from scc.osd.osk_actions import OSKAction, CloseOSKAction, OSKCursorAction
-from scc.osd.osk_actions import MoveOSKAction, OSKPressAction
+# from scc.osd.osk_actions import OSKAction, CloseOSKAction, OSKCursorAction
+# from scc.osd.osk_actions import MoveOSKAction, OSKPressAction
 
 import os, logging
 log = logging.getLogger("AE.SA")

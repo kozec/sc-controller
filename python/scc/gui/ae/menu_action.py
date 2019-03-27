@@ -7,10 +7,10 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk
-from scc.special_actions import MenuAction, HorizontalMenuAction
-from scc.special_actions import RadialMenuAction, GridMenuAction
-from scc.special_actions import QuickMenuAction, PositionModifier
 from scc.constants import SCButtons, SAME, STICK, DEFAULT
+from scc.actions import MenuAction, HorizontalMenuAction
+from scc.actions import RadialMenuAction, GridMenuAction
+from scc.actions import QuickMenuAction, PositionModifier
 from scc.paths import get_menus_path
 from scc.actions import NoAction
 from scc.tools import nameof

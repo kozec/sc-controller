@@ -7,6 +7,7 @@ stick, pad or trigger is generated - typicaly what emulated button, stick or
 trigger should be pressed.
 """
 import ctypes
+from json import dumps
 from itertools import chain
 from scc.constants import SCButtons, HapticPos
 from scc.tools import find_library
@@ -178,6 +179,9 @@ class Action(object):
 		""" Converts action back to string """
 		return lib_actions.scc_action_to_string(self._caction).decode("utf-8")
 	
+	def encode(self):
+		return dumps({ "action": self.to_string() })
+	
 	# TODO: This:
 	def get_compatible_modifiers(self):
 		return 0
@@ -217,6 +221,14 @@ class Action(object):
 	
 	def describe(self, ctx):
 		return self.to_string()[0:20]
+	
+	@property
+	def name(self):
+		return "(name)"
+	
+	def get_previewable(self):
+		# TODO: Return this
+		return False
 	
 	@staticmethod
 	def parse(s):
@@ -419,6 +431,23 @@ class GyroAbsAction(Stub): pass
 class RingAction(Stub): pass
 class OSDAction(Stub): pass
 class RotateInputModifier(Stub): pass
+class RelWinAreaAction(Stub): pass
+class WinAreaAction(Stub): pass
+class AreaAction(Stub): pass
+class RelAreaAction(Stub): pass
+class CircularModifier(Stub): pass
+class HorizontalMenuAction(Stub): pass
+class ShellCommandAction(Stub): pass
+class RadialMenuAction(Stub): pass
+class QuickMenuAction(Stub): pass
+class GridMenuAction(Stub): pass
+class PositionModifier(Stub): pass
+class GesturesAction(Stub): pass
+class TurnOffAction(Stub): pass
+class KeyboardAction(Stub): pass
+class ResetGyroAction(Stub): pass
+class ClearOSDAction(Stub): pass
+class TiltAction(Stub): pass
 
 
 lib_bindings.scc_action_get_type.argtypes = [ Action.CActionOEp ]
