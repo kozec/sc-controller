@@ -90,10 +90,12 @@ ParamOE scc_parse_parameter(Tokens* tokens) {
 }
 
 
-ActionOE scc_parse_action_parameters(Tokens* tokens, const char* keyword) {
+ParameterList _scc_tokens_to_param_list(Tokens* tokens, ParamError** err) {
+	*err = NULL;
 	ParamOE param;
-	ActionOE a = {NULL};
-	ParameterList params = list_new(Parameter, 0);
+	ParameterList params = scc_make_param_list(NULL);
+	if (params == NULL) return NULL;
+	
 	tokens_skip_whitespace(tokens);
 	char t = tokens_peek_char(tokens);
 	if (t == '(') {
@@ -164,12 +166,27 @@ ActionOE scc_parse_action_parameters(Tokens* tokens, const char* keyword) {
 		iter_next(tokens); // skips over ')'
 	}
 	
-	a = scc_action_new(keyword, params);
+	return params;
+	
 scc_pap_err_cleanup:
 	list_free(params);
-	if (a.action != NULL)
-		return a;
-	else if (IS_PARAM_ERROR(param))
-		return (ActionOE)param.error;
-	return (ActionOE)scc_oom_action_error();
+	*err = param.error;
+	return NULL;
 }
+
+
+ActionOE scc_parse_action_with_parameters(Tokens* tokens, const char* keyword) {
+	ActionOE a = {NULL};
+	ParamError* err = NULL;
+	ParameterList params = _scc_tokens_to_param_list(tokens, &err);
+	if (params == NULL) {
+		if (err == NULL)
+			return (ActionOE)scc_oom_action_error();
+		return (ActionOE)err;
+	}
+	
+	a = scc_action_new(keyword, params);
+	list_free(params);
+	return a;
+}
+

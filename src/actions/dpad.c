@@ -4,6 +4,7 @@
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "props.h"
 #include <stdlib.h>
 #include <string.h>
 #include <tgmath.h>
@@ -32,6 +33,7 @@ typedef struct {
 	Action			action;
 	Parameter*		first_param;
 	uint8_t			size;
+	uint16_t		diagonal_range;
 	side			state[2];
 	Action*			actions[8];
 	DPadRange		ranges[9];
@@ -77,6 +79,12 @@ static char* dpad_to_string(Action* a) {
 	list_free(l);
 	free(strl);
 	return rv;
+}
+
+static char* describe(Action* a, ActionDescContext ctx) {
+	// DPadAction* dpad = container_of(a, DPadAction, action);
+	// TODO: Detect WSAD, detect arrows
+	return strbuilder_cpy("DPad");
 }
 
 static void dpad_dealloc(Action* a) {
@@ -126,8 +134,31 @@ static void whole(Action* _a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigg
 		}
 		dpad->state[i] = sides[i];
 	}
-
 }
+
+static ActionList get_children(Action* a) {
+	DPadAction* dpad = container_of(a, DPadAction, action);
+	ActionList lst = scc_make_action_list(NULL);
+	for (size_t i=0; i<8; i++) {
+		if (dpad->actions[i] != NoAction) {
+			if (!list_add(lst, dpad->actions[i])) {
+				list_free(lst);
+				return NULL;
+			}
+			RC_ADD(dpad->actions[i]);
+		}
+	}
+	return lst;
+}
+
+static Parameter* get_property(Action* a, const char* name) {
+	DPadAction* dpad = container_of(a, DPadAction, action);
+	MAKE_INT_PROPERTY(dpad->diagonal_range, "diagonal_range");
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
 
 static ActionOE dpad_constructor(const char* keyword, ParameterList params) {
 	uint8_t size;
@@ -143,7 +174,10 @@ static ActionOE dpad_constructor(const char* keyword, ParameterList params) {
 		return (ActionOE)scc_oom_action_error();
 	}
 	scc_action_init(&dpad->action, KW_DPAD4, AF_ACTION, &dpad_dealloc, &dpad_to_string);
+	dpad->action.describe = &describe;
 	dpad->action.whole = &whole;
+	dpad->action.get_property = &get_property;
+	dpad->action.extended.get_children = &get_children;
 	
 	dpad->size = 8;			// TODO: Is this needed?
 	dpad->state[0] = -1;
@@ -155,14 +189,14 @@ static ActionOE dpad_constructor(const char* keyword, ParameterList params) {
 		RC_ADD(dpad->actions[i]);
 	}
 	
-	uint16_t diagonal_range = scc_parameter_as_int(params->items[0]);
-	uint16_t normal_range = 90 - diagonal_range;
+	dpad->diagonal_range = scc_parameter_as_int(params->items[0]);
+	uint16_t normal_range = 90 - dpad->diagonal_range;
 	uint16_t i = 360 - (normal_range / 2);
 	uint16_t j = 0;
 	for (uint8_t x=0; x<9; x++) {
 		uint16_t r = normal_range;
 		if ((x % 2) == 0) {
-			r = diagonal_range;
+			r = dpad->diagonal_range;
 		}
 		
 		j = i;

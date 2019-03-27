@@ -219,12 +219,27 @@ class Action(object):
 	def __nonzero__(self):
 		return True
 	
-	def describe(self, ctx):
-		return self.to_string()[0:20]
+	def describe(self, ctx=AC_BUTTON):
+		return lib_actions.scc_action_get_description(self._caction, ctx)
 	
 	@property
 	def name(self):
-		return "(name)"
+		return None
+	
+	@property
+	def parameters(self):
+		magic = "(" + self.to_string().split("(", 1)[-1]
+		cparam = lib_bindings.scc_parse_param_list(magic)
+		if not cparam:
+			raise MemoryError("Out of memory")
+		return Parameter(cparam).get_value()
+	
+	@property
+	def actions(self):
+		c = lib_bindings.scc_action_get_children(self._caction)
+		if not c:
+			raise TypeError("Action '%s' cannot have children" % (self.KEYWORD,))
+		return Parameter(c).get_value()
 	
 	def get_previewable(self):
 		# TODO: Return this
@@ -329,7 +344,7 @@ class Modifier(Action):
 	def child(self):
 		c = lib_bindings.scc_action_get_child(self._caction)
 		if not c:
-			raise AttributeError("Action '%s' has no child" % (self.KEYWORD,))
+			raise TypeError("Action '%s' cannot have children" % (self.KEYWORD,))
 		return Action._from_c(c)
 	
 	action = child	# backwards compatibility :(
@@ -486,6 +501,9 @@ lib_bindings.scc_multiaction_new.restype = Action.CActionOEp
 lib_bindings.scc_macro_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
 lib_bindings.scc_macro_new.restype = Action.CActionOEp
 
+lib_bindings.scc_parse_param_list.argtypes = [ ctypes.c_char_p ]
+lib_bindings.scc_parse_param_list.restype = Parameter.CParameterOEp
+
 lib_bindings.scc_action_ref.argtypes = [ Action.CActionOEp ]
 lib_bindings.scc_action_ref.restype = Action.CActionOEp
 lib_bindings.scc_action_unref.argtypes = [ Action.CActionOEp ]
@@ -499,6 +517,9 @@ lib_bindings.scc_action_get_compressed.restype = Action.CActionOEp
 lib_bindings.scc_action_get_child.argtypes = [ Action.CActionOEp ]
 lib_bindings.scc_action_get_child.restype = Action.CActionOEp
 
+lib_bindings.scc_action_get_children.argtypes = [ Action.CActionOEp ]
+lib_bindings.scc_action_get_children.restype = Parameter.CParameterOEp
+
 lib_bindings.scc_get_const_parameter.argtypes = [ ctypes.c_char_p ]
 lib_bindings.scc_get_const_parameter.restype = Parameter.CParameterOEp
 
@@ -509,6 +530,9 @@ lib_parse.scc_parse_action.restype = Action.CActionOEp
 
 lib_actions.scc_action_to_string.argtypes = [ Action.CActionOEp ]
 lib_actions.scc_action_to_string.restype = ctypes.c_char_p
+
+lib_actions.scc_action_get_description.argtypes = [ Action.CActionOEp ]
+lib_actions.scc_action_get_description.restype = ctypes.c_char_p
 
 lib_actions.scc_new_int_parameter.argtypes = [ ctypes.c_int64 ]
 lib_actions.scc_new_int_parameter.restype = Parameter.CParameterOEp

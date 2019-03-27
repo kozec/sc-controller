@@ -55,6 +55,22 @@ DLL_EXPORT Parameter* scc_action_get_property(Action* a, const char* name);
 DLL_EXPORT Action* scc_action_get_compressed(Action* a);
 
 /**
+* For dpad, 'and', macro and similar multiaction, returns child actions as tuple.
+* For action that doesn't support children (or if memory allocation fails),
+* returns NULL.
+*/
+DLL_EXPORT Parameter* scc_action_get_children(Action* a);
+
+/**
+ * Parses parameter list expressed as string into list of parameters.
+ * Expects part of action string after first '('.
+ *
+ * Returns tuple parameter or ParamError if string cannot be parsed.
+ * Returns NULL if memory cannot be allocated.
+ */
+DLL_EXPORT ParamOE scc_parse_param_list(const char* str);
+
+/**
  * For applicable modifiers, returns child action.
  * For everything else, returns NULL.
  *

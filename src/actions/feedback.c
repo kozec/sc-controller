@@ -30,6 +30,11 @@ typedef struct {
 
 ACTION_MAKE_TO_STRING(FeedbackModifier, feedback, KW_FEEDBACK, &pc);
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	FeedbackModifier* f = container_of(a, FeedbackModifier, action);
+	return scc_action_get_description(f->child, ctx);
+}
+
 static void feedback_dealloc(Action* a) {
 	FeedbackModifier* f = container_of(a, FeedbackModifier, action);
 	list_free(f->params);
@@ -69,6 +74,7 @@ static ActionOE feedback_constructor(const char* keyword, ParameterList params) 
 	FeedbackModifier* f = malloc(sizeof(FeedbackModifier));
 	if (f == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&f->action, KW_FEEDBACK, AF_MODIFIER, &feedback_dealloc, &feedback_to_string);
+	f->action.describe = &describe;
 	f->action.compress = &compress;
 	f->action.get_property = &get_property;
 	f->action.extended.get_child = &get_child;

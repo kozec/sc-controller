@@ -240,6 +240,8 @@ static bool compare_paramteters(Parameter* p1, Parameter* p2) {
 	char* s1 = scc_parameter_to_string(p1);
 	char* s2 = scc_parameter_to_string(p2);
 	bool rv = strcmp(s1, s2) == 0;
+	if (!rv)
+		printf(">> '%s' '%s'\n", s1, s2);
 	free(s1); free(s2);
 	RC_REL(p1); RC_REL(p2);
 	

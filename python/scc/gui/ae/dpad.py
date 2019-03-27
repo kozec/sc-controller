@@ -64,7 +64,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		scl = self.builder.get_object("sclDiagonalRange")
 		if isinstance(action, DPadAction):
 			self.set_cb(cbm, "menu", 1)
-			scl.set_value(action.diagonal_rage)
+			scl.set_value(action.diagonal_range)
 			if isinstance(action, DPad8Action):
 				self.set_cb(cb, "dpad8", 1)
 			else:

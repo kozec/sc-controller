@@ -46,6 +46,41 @@ static char* axis_to_string(Action* a) {
 	return NULL;
 }
 
+static char* AXIS_NAMES[][3] = {
+	{ "LStick", "Left", "Right" },				// ABS_X			0x00
+	{ "LStick", "Up", "Down" },					// ABS_Y
+	{ "Left Trigger", "Press", "Press" },		// ABS_Z
+	{ "RStick", "Left", "Right" },				// ABS_RX
+	{ "RStick", "Up", "Down" },					// ABS_RY
+	{ "Right Trigger", "Press", "Press" },		// ABS_RZ			0x05
+	{ NULL },									// ABS_THROTTLE
+	{ NULL },									// ABS_RUDDER
+	{ "Mouse Wheel", "Up", "Down" },			// REL_WHEEL		0x08
+	{ "Horizontal Wheel", "Left", "Right" },	// REL_HWHEEL		0x09
+	{ NULL },									// ABS_BRAKE		0x0A
+	{ NULL },									//					0x0B
+	{ NULL },									//					0x0C
+	{ NULL },									//					0x0D
+	{ NULL },									//					0x0E
+	{ NULL },									//					0x0F
+	{ "DPAD", "Left", "Right" },				// ABS_HAT0X		0x10
+	{ "DPAD", "Up", "Down" },					// ABS_HAT0Y		0x11
+};
+
+static char* describe(Action* a, ActionDescContext ctx) {
+	AxisAction* ax = container_of(a, AxisAction, action);
+	if ((ax->axis >= ABS_X) && (ax->axis <= ABS_HAT0Y)) {
+		if (AXIS_NAMES[ax->axis][0]) {
+			int lr = (ax->min < ax->max) ? 2 : 1;
+			return strbuilder_fmt("%s %s",
+					AXIS_NAMES[ax->axis][0],
+					AXIS_NAMES[ax->axis][lr]);
+		}
+	}
+	
+	return strbuilder_fmt("Axis 0x%x", ax->axis);
+}
+
 static void axis_dealloc(Action* a) {
 	AxisAction* ax = container_of(a, AxisAction, action);
 	list_free(ax->params);
@@ -175,6 +210,7 @@ static ActionOE axis_constructor(const char* keyword, ParameterList params) {
 		return (ActionOE)invalid_number_of_parameters(keyword);
 	ax->params = params;
 	
+	ax->action.describe = &describe;
 	ax->action.axis = &axis;
 	ax->action.trigger = &trigger;
 	ax->action.button_press = &button_press;

@@ -6,6 +6,7 @@
  */
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/tokenizer.h"
 #include "scc/utils/list.h"
 #include "scc/utils/rc.h"
 #include "scc/conversions.h"
@@ -38,6 +39,34 @@ Action* scc_action_get_compressed(Action* a) {
 	
 	RC_ADD(compressed);
 	return compressed;
+}
+
+Parameter* scc_action_get_children(Action* a) {
+	if (a->extended.get_children != NULL) {
+		ActionList children = a->extended.get_children(a);
+		if (children == NULL) return NULL;
+		Parameter** arr = malloc(sizeof(Parameter*) * list_len(children));
+		if (arr == NULL) {
+			list_free(children);
+			return NULL;
+		}
+		memset(arr, 0, sizeof(Parameter*) * list_len(children));
+		for (size_t i=0; i<list_len(children); i++) {
+			arr[i] = scc_new_action_parameter(list_get(children, i));
+			if (arr[i] == NULL) {
+				for (size_t j=0; j<i; j++)
+					RC_REL(arr[j]);
+				list_free(children);
+				free(arr);
+				return NULL;
+			}
+		}
+		Parameter* tup = scc_new_tuple_parameter(list_len(children), arr);
+		free(arr);
+		list_free(children);
+		return tup;
+	}
+	return NULL;
 }
 
 Action* scc_action_get_child(Action* a) {
@@ -82,6 +111,20 @@ void scc_parameter_unref(Parameter* p) {
 		DDEBUG("Deleting parameter %p of type 0x%x", p, p->type);
 	RC_REL(p);
 }
+
+ParameterList _scc_tokens_to_param_list(Tokens* tokens, ParamError** err);
+
+ParamOE scc_parse_param_list(const char* str) {
+	ParamOE rv = { NULL };
+	Tokens* tokens = tokenize(str);
+	if (tokens == NULL) return rv;			// OOM
+	ParameterList lst = _scc_tokens_to_param_list(tokens, &rv.error);
+	if (lst == NULL) return rv;				// OOM
+	
+	rv.parameter = scc_param_list_to_tuple(lst);
+	return rv;
+}
+
 
 const char* scc_error_get_message(APError e) {
 	return e.e->message;

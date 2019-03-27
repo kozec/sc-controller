@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef LIST_TYPE(Action) ActionList;
 
 extern const char* KW_MACRO;
 extern const char* KW_REPEAT;

@@ -18,24 +18,30 @@ static ActionOE noaction_constructor(const char* keyword, ParameterList params) 
 }
 
 
-void noaction_button_press(Action* a, Mapper* m) { }
+static void noaction_button_press(Action* a, Mapper* m) { }
 
-void noaction_button_release(Action* a, Mapper* m) { }
+static void noaction_button_release(Action* a, Mapper* m) { }
 
-void noaction_axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) { }
+static void noaction_axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) { }
 
-void noaction_gyro(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
+static void noaction_gyro(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
 					GyroValue q1, GyroValue q2, GyroValue q3, GyroValue q4) { }
 
-void noaction_whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) { }
+static void noaction_whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) { }
 
-void noaction_trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos, PadStickTrigger what) { }
+static void noaction_trigger(Action* a, Mapper* m, TriggerValue old_pos,
+					TriggerValue pos, PadStickTrigger what) { }
+
+static char* noaction_describe(Action* a, ActionDescContext ctx) {
+	return strbuilder_cpy("(not set)");
+}
 
 void scc_actions_init_noaction() {
 	if (NoAction == NULL) {
 		NoAction = (Action*)&_noaction;
 		
 		scc_action_init(NoAction, KW_NONE, AF_NONE, NULL, noaction_to_string);
+		NoAction->describe = &noaction_describe;
 		NoAction->button_press = &noaction_button_press;
 		NoAction->button_release = &noaction_button_release;
 		NoAction->axis = &noaction_axis;
@@ -46,3 +52,4 @@ void scc_actions_init_noaction() {
 		scc_action_register(KW_NONE, &noaction_constructor);
 	}
 }
+

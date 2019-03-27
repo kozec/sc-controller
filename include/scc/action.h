@@ -18,9 +18,21 @@ typedef enum ActionFlags {
 	ActionFlags_pad_			= 0xFFFF
 } ActionFlags;
 
-typedef struct Action Action;
+typedef enum ActionDescContext {
+	AC_BUTTON	= 1 << 0,
+	AC_STICK	= 1 << 2,
+	AC_TRIGGER	= 1 << 3,
+	AC_GYRO		= 1 << 4,
+	AC_PAD		= 1 << 5,
+	AC_OSD		= 1 << 8,
+	AC_OSK		= 1 << 9,			// On screen keyboard
+	AC_MENU		= 1 << 10,			// Menu Item
+	AC_SWITCHER	= 1 << 11,			// Autoswitcher display
+	AC_ALL		= 0b10111111111		// ALL means everything but OSK
+} ActionDescContext;
 
-struct ActionDescriptionContext;
+typedef struct Action Action;
+typedef LIST_TYPE(Action) ActionList;
 
 // Action, Parameter, ActionError and ParamError begins with same header
 // and both ParameterType and ActionFlags have value 1 reserved for error.
@@ -52,16 +64,16 @@ struct Action {
 	
 	/**
 	 * Action->to_string returns string that is situable for displaying in
-	 * GUI, OSD, or on similar place. 'ctx' contains information about intended
-	 * use of string, and (unlike in scc_action_get_description) _cannot_ be NULL.
+	 * GUI, OSD, or on similar place. Contex is information about intended
+	 * use of string.
 	 *
 	 * This method may be set to NULL. Use scc_action_get_description instead of
 	 * callign it directly if you prefer having defaults provided instead of
-	 * handling that.
+	 * handling it.
 	 *
 	 * Returned string has to be free'd by caller. Returns NULL on OOM error.
 	 */
-	char*	(*describe)(Action* a, const struct ActionDescriptionContext* ctx);
+	char*	(*describe)(Action* a, ActionDescContext ctx);
 	
 	/**
 	 * Called when action is executed by pressing physical gamepad button.
@@ -143,21 +155,26 @@ struct Action {
 		 * If action supports handling haptic effects, this method is called from
 		 * FeedbackModifier to set effect to be used.
 		 */
-		void	(*set_haptic)(Action* a, HapticData hdata);
+		void		(*set_haptic)(Action* a, HapticData hdata);
 		/**
 		 * If action supports sensitivity, this method is called from
 		 * SensitivityModifier. Otherwise, SensitivityModifier will not do anything.
 		 */
-		void	(*set_sensitivity)(Action* a, float x, float y, float z);
+		void		(*set_sensitivity)(Action* a, float x, float y, float z);
 		/**
 		 * 'change' is called on supported actions by BallModifier
 		 */
-		void	(*change)(Action* a, Mapper* m, double dx, double dy, PadStickTrigger what);
+		void		(*change)(Action* a, Mapper* m, double dx, double dy, PadStickTrigger what);
 		/**
 		 * For modifier, 'get_child' returns child action or NoAction if there is none.
 		 * Caller has to dereference returned action.
 		 */
-		Action*	(*get_child)(Action* a);
+		Action*		(*get_child)(Action* a);
+		/**
+		 * For dpad, 'and', macro and similar multiaction, returns list of child
+		 * actions. Returned ActionList should hold references to eacg Actions in it.
+		 */
+		ActionList	(*get_children)(Action* a);
 	} extended;
 };
 
@@ -165,6 +182,16 @@ struct Action {
 extern Action* NoAction;
 
 typedef ActionOE(*scc_action_constructor)(const char* keyword, ParameterList params);
+
+/**
+ * Creates action list out of varargs.
+ * Reference counter on added actions is properly increased and decreased
+ * when ActionList is deallocated.
+ * Returns NULL (and releases/deallocates everything) if allocation fails
+ */
+#define scc_make_action_list(...) _scc_make_action_list(__VA_ARGS__, NULL)
+ActionList _scc_make_action_list(Action* list, ...);
+
 
 void scc_action_register(const char* keyword, scc_action_constructor constructor);
 /** Initializes Action struct, setting everything not given as argument to NULL */
@@ -248,5 +275,5 @@ char* scc_action_to_string(Action* a);
  *
  * Returned string has to be freed by caller.
  */
-char* scc_action_get_description(Action* a, const struct ActionDescriptionContext* ctx);
+char* scc_action_get_description(Action* a, ActionDescContext ctx);
 

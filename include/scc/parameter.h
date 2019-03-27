@@ -146,6 +146,13 @@ Parameter* scc_new_range_parameter(Parameter* a, RangeType type, float b);
  */
 Parameter* scc_new_tuple_parameter(uint8_t count, Parameter* children[]);
 /**
+ * _Destructivelly_ converts ParameterList into tuple parameter.
+ *
+ * Returns NULL if allocation fails.
+ * Whether this call suceeds or not, ParameterList is deallocated and cannot be used after.
+ */
+Parameter* scc_param_list_to_tuple(ParameterList lst);
+/**
  * Creates param list out of varargs.
  * Reference counter on added parameters is properly increased and decreased
  * when ParameterList is deallocated.

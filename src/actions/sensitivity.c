@@ -26,6 +26,11 @@ typedef struct {
 
 ACTION_MAKE_TO_STRING(SensitivityModifier, sensitivity, KW_SENSITIVITY, &pc);
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	SensitivityModifier* s = container_of(a, SensitivityModifier, action);
+	return scc_action_get_description(s->child, ctx);
+}
+
 static void sensitivity_dealloc(Action* a) {
 	SensitivityModifier* s = container_of(a, SensitivityModifier, action);
 	list_free(s->params);
@@ -96,6 +101,7 @@ static ActionOE sensitivity_constructor(const char* keyword, ParameterList param
 	SensitivityModifier* s = malloc(sizeof(SensitivityModifier));
 	if (s == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&s->action, KW_SENSITIVITY, AF_MODIFIER, &sensitivity_dealloc, &sensitivity_to_string);
+	s->action.describe = &describe;
 	s->action.compress = &compress;
 	s->action.get_property = &get_property;
 	s->action.extended.get_child = &get_child;

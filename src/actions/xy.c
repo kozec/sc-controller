@@ -53,6 +53,22 @@ static char* xy_to_string(Action* a) {
 	return rv;
 }
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	XYAction* xy = container_of(a, XYAction, action);
+	// TODO: Special cases for default stick bindings
+	switch (ctx) {
+	case AC_STICK:
+	case AC_PAD:
+		return strbuilder_fmt("%s\n%s",
+			scc_action_get_description(xy->x, ctx),
+			scc_action_get_description(xy->y, ctx));
+	default:
+		return strbuilder_fmt("%s %s",
+			scc_action_get_description(xy->x, ctx),
+			scc_action_get_description(xy->y, ctx));
+	}
+}
+
 static void xy_dealloc(Action* a) {
 	XYAction* xy = container_of(a, XYAction, action);
 	RC_REL(xy->x);
@@ -197,8 +213,9 @@ static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 	xy->is_relative = (0 == strcmp(keyword, KW_RELXY));
 	xy->x = scc_parameter_as_action(params->items[0]);
 	xy->y = scc_parameter_as_action(params->items[1]);
-	xy->action.whole = &whole;
+	xy->action.describe = &describe;
 	xy->action.compress = &compress;
+	xy->action.whole = &whole;
 	xy->action.get_property = &get_property;
 	xy->action.extended.change = &change;
 	xy->action.extended.set_haptic = &set_haptic;

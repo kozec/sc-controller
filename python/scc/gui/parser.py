@@ -6,11 +6,10 @@ from scc.tools import _
 import logging
 log = logging.getLogger("gui.parse")
 
-class InvalidAction(Action):
+class InvalidAction:
 	def __init__(self, string, error):
 		self.string = string
 		self.error = error
-		self.name = None
 	
 	
 	def __str__(self):

@@ -1,5 +1,6 @@
 #pragma once
 #include "scc/utils/tokenizer.h"
+#include "scc/parameter.h"
 #include "scc/error.h"
 #include <stdbool.h>
 
@@ -14,7 +15,7 @@ ParamOE scc_parse_parameter(Tokens* tokens);
  * Returns action generated using this list and given keyword.
  * Returned action (or error) has to be dereferenced manually.
  */
-ActionOE scc_parse_action_parameters(Tokens* tokens, const char* keyword);
+ActionOE scc_parse_action_with_parameters(Tokens* tokens, const char* keyword);
 
 /** Returns true if passed string is valid integer */
 bool scc_str_is_int(const char* str);

@@ -1,11 +1,12 @@
+#include "scc/utils/strbuilder.h"
 #include "scc/utils/hashmap.h"
 #include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
-#include "scc/action_description_context.h"
 #include "scc/action.h"
 #include "action_initializers.inc"
+#include <stdarg.h>
 
 static map_t actions = NULL;
 #define QUOTE(str) #str
@@ -29,6 +30,39 @@ bool scc_action_known(const char* keyword) {
 	if (actions == NULL) return false;
 	return (MAP_OK == hashmap_get(actions, keyword, &trash));
 }
+
+
+void release_action(void* _a) {
+	Action* a = (Action*)_a;
+	RC_REL(a);
+}
+
+
+ActionList _scc_make_action_list(Action* a1, ...) {
+	va_list ap;
+	ActionList lst = list_new(Action, 1);
+	if (lst == NULL) return NULL;
+	list_set_dealloc_cb(lst, &release_action);
+	if (a1 != NULL) {
+		// a1 == NULL means empty param list
+		list_add(lst, a1);
+		RC_ADD(a1);
+		va_start(ap, a1);
+		Action* i = va_arg(ap, Action*);
+		while (i != NULL) {
+			if (!list_add(lst, i)) {
+				va_end(ap);
+				list_free(lst);
+				return NULL;
+			}
+			RC_ADD(i);
+			i = va_arg(ap, Action*);
+		}
+		va_end(ap);
+	}
+	return lst;
+}
+
 
 // What follows are default handlers that are set to inputs that every action
 // has to have by 'scc_action_init'. Those defaults can only log message about
@@ -118,13 +152,10 @@ char* scc_action_to_string(Action* a) {
 	return a->to_string(a);
 }
 
-char* scc_action_get_description(Action* a, const ActionDescriptionContext* ctx) {
-	static ActionDescriptionContext default_ctx = { .on_button = true,
-										.multiline = false, .on_osk = false };
-	if (a->describe == NULL)
-		return scc_action_to_string(a);
-	if (ctx == NULL) ctx = &default_ctx;
-	return a->describe(a, ctx);
+char* scc_action_get_description(Action* a, ActionDescContext ctx) {
+	if (a->describe != NULL)
+		return a->describe(a, ctx);
+	return strbuilder_cpy(a->type);
 }
 
 

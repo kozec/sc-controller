@@ -10,7 +10,6 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
-#include "scc/action_description_context.h"
 #include "scc/conversions.h"
 #include "scc/action.h"
 #include "scc/tools.h"
@@ -51,7 +50,7 @@ static char* button_to_string(Action* a) {
 	}
 }
 
-static char* button_describe(Action* a, const ActionDescriptionContext* ctx) {
+static char* describe(Action* a, ActionDescContext ctx) {
 	ButtonAction* b = container_of(a, ButtonAction, action);
 	const char* keyname;
 	switch (b->button[0]) {
@@ -207,7 +206,7 @@ static ActionOE button_constructor(const char* keyword, ParameterList params) {
 	b->param[1] = params->items[1];
 	b->pressed_button = 0;
 	HAPTIC_DISABLE(&b->hdata);
-	b->action.describe = &button_describe;
+	b->action.describe = &describe;
 	b->action.whole = &whole;
 	b->action.button_press = &button_press;
 	b->action.button_release = &button_release;

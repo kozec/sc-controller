@@ -36,6 +36,15 @@ Parameter* scc_parameter_tuple_get_child(Parameter* _p, uint8_t n) {
 }
 
 
+Parameter* scc_param_list_to_tuple(ParameterList lst) {
+	Parameter* p = scc_new_tuple_parameter(list_len(lst), lst->items);
+	if (p != NULL)
+		// Tuple takes over references, so 'lst' should not release them.
+		list_set_dealloc_cb(lst, NULL);
+	list_free(lst);
+	return p;
+}
+
 Parameter* scc_new_tuple_parameter(uint8_t count, Parameter* children[]) {
 	Tuple* p = malloc(sizeof(Tuple));
 	if (p == NULL) return NULL;

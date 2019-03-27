@@ -35,7 +35,7 @@ static ActionOE parse_action(Tokens* tokens) {
 
 
 ActionOE parse_after_keyword(Tokens* tokens, const char* keyword) {
-	ActionOE a = scc_parse_action_parameters(tokens, keyword);
+	ActionOE a = scc_parse_action_with_parameters(tokens, keyword);
 	if (IS_ACTION_ERROR(a)) return a;
 	
 	if (iter_has_next(tokens)) {
