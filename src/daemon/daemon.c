@@ -71,10 +71,13 @@ static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata) {
 	return (id != 0);
 }
 
+void sccd_exit() {
+	running = false;
+}
 
 static void sigint_handler(int sig) {
 	INFO("^C caught");
-	running = false;
+	sccd_exit();
 }
 
 
@@ -360,6 +363,7 @@ static void load_default_profile(SCCDMapper* m) {
 	}
 	
 	int err;
+	ASSERT(default_profile != NULL);
 	Profile* p = scc_profile_from_json(default_profile, &err);
 	if (!sccd_mapper_set_profile_filename(m, default_profile)) {
 		WARN("Failed to load profile (out of memory). Starting with no mappings.");
@@ -458,6 +462,7 @@ void sccd_set_special_client(enum SpecialClientType t, Client* client) {
 	*target = client;
 }
 
+#ifndef _WIN32
 static void store_pid() {
 	FILE* f = fopen(scc_get_pid_file(), "w");
 	if (f != NULL) {
@@ -494,6 +499,7 @@ static void remove_pid_file() {
 		}
 	}
 }
+#endif
 
 void sccd_set_default_profile(const char* profile) {
 	default_profile = scc_find_profile(profile);
@@ -528,7 +534,9 @@ int sccd_start() {
 	// here: load_custom_module
 	setup_default_mapper();
 	load_default_profile(NULL);
+#ifndef _WIN32
 	store_pid();
+#endif
 	// here: load default profile
 	// here: start_listening()
 	// here: check X server
@@ -556,7 +564,9 @@ int sccd_start() {
 	}
 	
 	DEBUG("Exiting...");
+#ifndef _WIN32
 	remove_pid_file();
+#endif
 	iter_free(iter);
 	// here: stop listening
 	// here: kill mappers

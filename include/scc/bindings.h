@@ -8,20 +8,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "scc/utils/dll_export.h"
 #include "scc/action.h"
 #include "scc/parameter.h"
-
-#ifndef DLL_EXPORT
-#if defined _WIN32 || defined __CYGWIN__
-#	define DLL_EXPORT __declspec(dllexport)
-#else
-#	if __GNUC__ >= 4
-#		define DLL_EXPORT __attribute__((visibility("default")))
-#	else
-#		define DLL_EXPORT
-#	endif
-#endif
-#endif
 
 typedef union { ParamOE* p; ActionOE* a; ActionError* e; } APError;
 

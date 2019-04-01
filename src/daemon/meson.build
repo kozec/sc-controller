@@ -39,6 +39,9 @@ elif host_machine.system() == 'windows'
 	platform_dependent_src = [
 		'device_monitor_win32.c',
 		'usb_helper.c',
+		'../client/controller.c',
+		'../client/command.c',
+		'../client/socket.c',
 	]
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
@@ -47,8 +50,8 @@ endif
 
 executable('scc-daemon',
 	include_directories: include,
-	link_with: [ utils_lib, tools_lib, parser_lib,
-				 actions_lib, config_lib, virtual_device_lib ],
+	link_with: [ utils_lib, tools_lib, parser_lib, actions_lib,
+				 config_lib, virtual_device_lib ],
 	dependencies: platform_dependent_deps,
 	build_rpath: '/usr/X11R6/lib',
 	sources: platform_dependent_src + [

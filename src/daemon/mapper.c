@@ -99,7 +99,7 @@ static void haptic_effect(Mapper* _m, HapticData* hdata) {
 void sccd_mapper_deallocate(SCCDMapper* m) {
 	if (m->profile != NULL) RC_REL(m->profile);
 	free(m);
-	DDEBUG("Unloaded mapper %p", m);
+	DDEBUG("Unloaded mapper 0x%p", m);
 }
 
 Mapper* sccd_mapper_to_mapper(SCCDMapper* m) {
@@ -221,11 +221,13 @@ static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data
 			char* argv[] = { scc_osd_menu, "-f", menu, NULL };
 			pid_t pid;
 			posix_spawn(&pid, scc_osd_menu, NULL, NULL, argv, environ);
-#else
-			intptr_t pid = _spawnl(_P_NOWAIT, scc_osd_menu, scc_osd_menu, "-f", menu, NULL);
-#endif
 			if (pid < 0)
 				LERROR("Fork failed: %s", strerror(errno));
+#else
+			intptr_t pid = _spawnl(_P_NOWAIT, scc_osd_menu, scc_osd_menu, "-f", menu, NULL);
+			if (pid == 0)
+				LERROR("Failed to execute %s: %i", scc_osd_menu, GetLastError());
+#endif
 		}
 		free(scc_osd_menu);
 		free(menu);

@@ -10,10 +10,13 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/tools.h"
 #include "daemon.h"
-#include <sys/prctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifndef _WIN32
 #include <signal.h>
+#else
+#include "scc/client.h"
+#endif
 #include <errno.h>
 #include <stdio.h>
 
@@ -29,6 +32,12 @@ typedef enum {
 	M_DEBUG,
 	M_STOP,
 } Mode;
+
+static char* argv0;
+
+#ifndef _WIN32
+
+static size_t max_argv0_size = 0;
 
 
 /// daemonize function is adapted from original python code, which was adapted
@@ -78,17 +87,29 @@ int sccd_daemonize() {
 		chdir(cwd);
 		free(cwd);
 	}
-	
 	return 0;
 }
+#endif
+
 
 static int start_daemon() {
+#ifndef _WIN32
 	int err = sccd_daemonize();
 	if (err != 0) return err;
 	return sccd_start();
+#else
+	LOG("Spawning: %s debug", argv0);
+	intptr_t pid = _spawnl(_P_NOWAIT, argv0, argv0, "debug", NULL);
+	if (pid == 0) {
+		LERROR("Failed to execute: %i", GetLastError());
+		return 1;
+	}
+	return 0;
+#endif
 }
 
 static int stop_daemon(bool once) {
+#ifndef _WIN32
 	char buffer[256];
 	pid_t pid = -1;
 	FILE* f = fopen(scc_get_pid_file(), "r");
@@ -123,24 +144,42 @@ static int stop_daemon(bool once) {
 	}
 	
 	return 0;
+#else
+	SCCClient* c = sccc_connect();
+	if (c == NULL) {
+		LERROR("Failed to connect to running scc-daemon. Is it running?");
+		return 1;
+	}
+	char* r = sccc_get_response(c, sccc_request(c, "Exit."));
+	int rv = 1;
+	if ((r != NULL) && (0 == strcmp("OK.", r))) {
+		// Done
+		rv = 0;
+	} else {
+		LERROR("Request failed: %s", r);
+	}
+	
+	free(r);
+	RC_REL(c);
+	return rv;
+#endif
 }
 
-
-static char* argv0;
-static size_t max_argv0_size;
-
 void sccd_set_proctitle(const char* procname) {
+#ifndef _WIN32
 	strncpy(argv0, procname, max_argv0_size);
 	argv0[max_argv0_size] = 0;
+#endif
 }
 
 
 int main(int argc, char** argv) {
-	traceback_set_argv0(argv[0]);
-	max_argv0_size = 0;
 	argv0 = argv[0];
+	traceback_set_argv0(argv[0]);
+#ifndef _WIN32
 	for (int i=0; i<argc; i++)
 		max_argv0_size += strlen(argv[i]) + 1;
+#endif
 	
 	bool alone = false, once = false;
 	Mode mode = M_NOT_SET;

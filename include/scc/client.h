@@ -14,6 +14,7 @@
 extern "C" {
 #endif
 #include "scc/utils/rc.h"
+#include "scc/utils/dll_export.h"
 #include "scc/controller.h"
 #include <stdbool.h>
 
@@ -60,7 +61,7 @@ struct SCCClient {
  * Returns SCCClient* with single reference.
  * Returns NULL and logs error if connection cannot be initiated.
  */
-SCCClient* sccc_connect();
+DLL_EXPORT SCCClient* sccc_connect();
 
 /**
  * Attempts to retrieve single message from socket. This function will call
@@ -76,21 +77,21 @@ SCCClient* sccc_connect();
  *
  * If socket is closed or other error occurs, returns empty string.
  */
-const char* sccc_recieve(SCCClient* c);
+DLL_EXPORT const char* sccc_recieve(SCCClient* c);
 
 /**
  * Returns handle of controller with given id or 0 if there is no such controller connected.
  * As special case, if id parameter is NULL, returns handle of first controller,
  * or 0 if there no controller at all.
  */
-uint32_t sccc_get_controller_handle(SCCClient* c, const char* id);
+DLL_EXPORT uint32_t sccc_get_controller_handle(SCCClient* c, const char* id);
 
 /**
  * Returns controller ID of specified controller or NULL if handle is invalid.
  * Returned value should _not_ be deallocated by caller and will be available
  * at least until next call to 'sccc_recieve'.
  */
-const char* sccc_get_controller_id(SCCClient* c, int handle);
+DLL_EXPORT const char* sccc_get_controller_id(SCCClient* c, int handle);
 
 /**
  * Locks physical button, axis or pad. Events from locked sources are
@@ -102,7 +103,7 @@ const char* sccc_get_controller_id(SCCClient* c, int handle);
  * Suceeds only if all sources are available. Returns true on success.
  */
 #define sccc_lock(c, handle, ...) _sccc_lock(c, handle, __VA_ARGS__, NULL)
-bool _sccc_lock(SCCClient* c, int handle, const char* src1, ...);
+DLL_EXPORT bool _sccc_lock(SCCClient* c, int handle, const char* src1, ...);
 
 
 /**
@@ -115,7 +116,7 @@ bool _sccc_lock(SCCClient* c, int handle, const char* src1, ...);
  * Note that sending request _without_ retrieving response will lead to
  * filling request buffer and eventually end up with requests failing.
  */
-int32_t sccc_request(SCCClient* c, const char* request);
+DLL_EXPORT int32_t sccc_request(SCCClient* c, const char* request);
 
 /**
  * Retrieves response assotiated with given request ID.
@@ -126,10 +127,10 @@ int32_t sccc_request(SCCClient* c, const char* request);
  * Returns string that has to be deallocated by caller on success.
  * Returns NULL on failure.
  */
-char* sccc_get_response(SCCClient* c, int32_t id);
+DLL_EXPORT char* sccc_get_response(SCCClient* c, int32_t id);
 
 /** Returns file descriptor assotiated with client */
-int sccc_get_fd(SCCClient* c);
+DLL_EXPORT int sccc_get_fd(SCCClient* c);
 
 
 /**
@@ -138,7 +139,7 @@ int sccc_get_fd(SCCClient* c);
  *
  * Returns NULL on failure.
  */
-Mapper* sccc_create_slave_mapper(SCCClient* c);
+DLL_EXPORT Mapper* sccc_create_slave_mapper(SCCClient* c);
 
 // TODO: Deallocator for this
 
@@ -153,7 +154,7 @@ Mapper* sccc_create_slave_mapper(SCCClient* c);
  * Converts SCCClient to GSource and adds source to main loop.
  * Use g_source_set_callback to recieve events.
  */
-GSource* scc_gio_client_to_gsource(SCCClient* c);
+DLL_EXPORT GSource* scc_gio_client_to_gsource(SCCClient* c);
 
 #endif
 
@@ -161,3 +162,4 @@ GSource* scc_gio_client_to_gsource(SCCClient* c);
 #ifdef __cplusplus
 }
 #endif
+

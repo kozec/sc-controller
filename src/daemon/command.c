@@ -76,6 +76,13 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 			return send_error(client, tokens, "Fail: no such controller\n");
 		}
 		break;
+	case 'E':
+		if (0 == strcmp(command, "Exit.")) {
+			// Shuts down daemon
+			LOG("Exit command recieved.");	
+			sccd_exit();
+			return send_ok(client, tokens);
+		}
 	case 'L':
 		if (0 == strcmp(command, "Lock:")) {
 			// Generates list of sources and attempts to lock them

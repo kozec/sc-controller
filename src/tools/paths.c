@@ -110,9 +110,10 @@ const char* scc_get_share_path() {
 	char test[PATH_MAX];
 	GetModuleFileName(NULL, arg0, MAX_PATH);
 	while (1) {
-		snprintf(test, PATH_MAX, "%s\\default_menus", arg0);
+		snprintf(test, PATH_MAX, "%s\\share\\default_menus", arg0);
 		if (access(test, F_OK) != -1) {
 			strncpy(share_path, arg0, PATH_MAX);
+			strcat(share_path, "\\share");
 			return share_path;
 		}
 		char* slash = strrchr(arg0, '\\');
@@ -326,7 +327,7 @@ def get_share_path():
 const char* scc_get_python_src_path() {
 	char path[PATH_MAX];
 #ifdef _WIN32
-	snprintf(path, PATH_MAX, "%s\\..\python", scc_get_share_path());
+	snprintf(path, PATH_MAX, "%s\\..\\python", scc_get_share_path());
 #else
 	snprintf(path, PATH_MAX, "%s/../python/scc", scc_get_share_path());
 	if (access(path, F_OK) != -1) {

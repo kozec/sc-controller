@@ -114,6 +114,10 @@ Otherwise, `Fail: no such controller` error message is sent.
 Restores default state after controller is chosen.
 Daemon responds with `OK.`
 
+#### `Exit.`
+Asks daemon to exit ASAP. Used on Windows instead of sending SIGTERM.
+Daemon responds with `OK.`
+
 #### `Gesture: side up_angle`
 Requests gesture to be detected on one of pads. 'side' can be LEFT or RIGHT.
 'up_angle' is angle in radians and sets how much should be gesture input

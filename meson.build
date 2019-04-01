@@ -135,10 +135,10 @@ bindings_lib = shared_library('scc-bindings',
 )
 
 subdir('tests')
+subdir('src/client')
 subdir('src/virtual-device')
 subdir('src/daemon/drivers')
 subdir('src/daemon')
-subdir('src/client')
 if get_option('android').disabled() and host_machine.system() != 'openbsd' and host_machine.system() != 'netbsd'
 	subdir('src/osd')
 endif

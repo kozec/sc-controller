@@ -47,6 +47,7 @@ typedef uintptr_t TaskID;
 int sccd_start();
 void sccd_set_proctitle(const char* name);
 void sccd_set_default_profile(const char* profile);
+void sccd_exit();
 
 intptr_t sccd_error_add(const char* message, bool fatal);
 void sccd_error_remove(intptr_t id);

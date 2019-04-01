@@ -207,6 +207,8 @@ int32_t sccc_request(SCCClient* _c, const char* request) {
 char* sccc_get_response(SCCClient* _c, int32_t id) {
 	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
 	ASSERT(id < SCCC_MAX_ACTIVE_REQUESTS);
+	if (id < 0)
+		return NULL;
 	while (1) {
 		char* response = c->responses[id];
 		if (response == RQ_OCCUPIED) {
@@ -226,3 +228,4 @@ char* sccc_get_response(SCCClient* _c, int32_t id) {
 		}
 	}
 }
+

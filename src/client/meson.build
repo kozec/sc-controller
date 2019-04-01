@@ -5,8 +5,7 @@ if host_machine.system() == 'windows'
 	]
 endif
 
-
-client_lib = shared_library('scc-client',
+client_lib = static_library('scc-client',
 	include_directories: include,
 	link_with: [ tools_lib, utils_lib ],
 	dependencies: platform_dependent_deps,

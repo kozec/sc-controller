@@ -1,4 +1,6 @@
 #pragma once
+#include "scc/utils/dll_export.h"
+#include "scc/utils/rc.h"
 #include <gtk/gtk.h>
 #include "scc/client.h"
 
@@ -18,17 +20,17 @@ typedef struct OSDWindowCallbacks {
 	
 } OSDWindowCallbacks;
 
-GType osd_window_get_type(void) G_GNUC_CONST;
-OSDWindow* osd_window_new(const char* wmclass, const OSDWindowCallbacks callbacks);
+DLL_EXPORT GType osd_window_get_type(void) G_GNUC_CONST;
+DLL_EXPORT OSDWindow* osd_window_new(const char* wmclass, const OSDWindowCallbacks callbacks);
 /** Called by osd_window_new, usefull for classes derived from OSDWindow */
-void osd_window_setup(OSDWindow* osdwin, const char* wmclass, const OSDWindowCallbacks callbacks);
+DLL_EXPORT void osd_window_setup(OSDWindow* osdwin, const char* wmclass, const OSDWindowCallbacks callbacks);
 /** Adjusts position for currently active screen (display) */
-void osd_window_compute_position(OSDWindow* osdwin, int* x, int* y);
+DLL_EXPORT void osd_window_compute_position(OSDWindow* osdwin, int* x, int* y);
 /**
  * Retrieves geometry of active screen (display), that is screen where
  * currently active window (not this OSDWindow) is located.
  */
-void osd_window_get_active_screen_geometry(OSDWindow* osdwin, GdkRectangle* geometry);
+DLL_EXPORT void osd_window_get_active_screen_geometry(OSDWindow* osdwin, GdkRectangle* geometry);
 
 /**
  * Marks osd_window as done.
@@ -46,6 +48,7 @@ void osd_window_get_active_screen_geometry(OSDWindow* osdwin, GdkRectangle* geom
  *	 3  - erorr, failed to lock input stick, pad or button(s)
  *	 4  - error, request controller not connected or there is no controller connected at all
  */
-void osd_window_exit(OSDWindow* osdwin, int code);
+DLL_EXPORT void osd_window_exit(OSDWindow* osdwin, int code);
 
 G_END_DECLS
+

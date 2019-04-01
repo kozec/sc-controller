@@ -1,4 +1,6 @@
 #pragma once
+#include "scc/utils/dll_export.h"
+#include "scc/utils/rc.h"
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
@@ -17,7 +19,8 @@ typedef struct OSDMenuCallbacks {
 	
 } OSDMenuCallbacks;
 
-GType osd_menu_get_type(void) G_GNUC_CONST;
-OSDMenu* osd_menu_new(const char* filename);
+DLL_EXPORT GType osd_menu_get_type(void) G_GNUC_CONST;
+DLL_EXPORT OSDMenu* osd_menu_new(const char* filename);
 
 G_END_DECLS
+
