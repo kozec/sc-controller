@@ -23,7 +23,7 @@
 	},
 	
 	"pad_right": {
-		"action": "smooth(8, 0.78, 2.0, feedback(RIGHT, 256, mouse()))"
+		"action": "smooth(8, 0.78, 2.0, feedback(RIGHT, 256, ball(mouse())))"
 	},
 	
 	"cpad": {

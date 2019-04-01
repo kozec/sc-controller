@@ -20,5 +20,3 @@ GObject.threads_init()
 from scc.gui.app import App
 App(glades, images).run(sys.argv)
 
-print "GUI loader here!"
-
