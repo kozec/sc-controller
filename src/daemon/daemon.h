@@ -43,6 +43,11 @@ typedef LIST_TYPE(Controller) ControllerList;
 typedef void (*sccd_scheduler_cb_internal)(void* parent, void* userdata);
 typedef uintptr_t TaskID;
 
+
+int sccd_start();
+void sccd_set_proctitle(const char* name);
+void sccd_set_default_profile(const char* profile);
+
 intptr_t sccd_error_add(const char* message, bool fatal);
 void sccd_error_remove(intptr_t id);
 ErrorList sccd_get_errors();

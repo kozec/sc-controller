@@ -1,10 +1,10 @@
 """
 SC Controller - UInput constants
 
-Long time ago, this module actually handled uinput-related stuff. Since that is
-now handled in c, it just loads and keeps list of constants now.
+Long time ago, this module actually handled uinput-related stuff.
+Since that is now handled in c, now it just loads and keeps list of constants.
 """
-from scc.tools import find_library
+from scc.find_library import find_library
 from itertools import chain
 from enum import IntEnum
 import ctypes

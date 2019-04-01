@@ -42,6 +42,7 @@ static char profiles_path[PATH_MAX + 128] = {0};
 static char default_profiles_path[PATH_MAX + 128] = {0};
 static char menus_path[PATH_MAX + 128] = {0};
 static char default_menus_path[PATH_MAX + 128] = {0};
+static char pid_file_path[PATH_MAX] = {0};
 
 const char* scc_get_config_path() {
 	if (config_path[0] != 0)
@@ -185,6 +186,15 @@ const char* scc_get_default_menus_path() {
 	return default_menus_path;
 }
 
+const char* scc_get_pid_file() {
+	if (pid_file_path[0] != 0)
+		// Return cached value
+		return pid_file_path;
+	
+	sprintf(pid_file_path, "%s" SEP "daemon.pid", scc_get_config_path());
+	return pid_file_path;
+}
+
 
 // TODO: This, but properly
 char* scc_find_binary(const char* name) {
@@ -197,6 +207,7 @@ char* scc_find_binary(const char* name) {
 		"./src/osd",
 #endif
 		"./build/src/osd",
+		"./build/src/daemon",
 	};
 	
 	StrBuilder* sb = strbuilder_new();
@@ -308,14 +319,6 @@ def get_share_path():
 			return path
 	# No path found, assume default and hope for best
 	return "/usr/share/scc"
-
-
-def get_pid_file():
-	"""
-	Returns path to PID file.
-	~/.config/scc/daemon.pid under normal conditions.
-	"""
-	return os.path.join(get_config_path(), "daemon.pid")
 
 */
 

@@ -51,3 +51,4 @@ void _log(const char* tag, const char* filename, _LogLevel lvl, const char* fmt,
 	traceback_print(1);											\
 	exit(1);													\
 } while (0)
+

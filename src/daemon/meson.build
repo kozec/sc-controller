@@ -53,6 +53,7 @@ executable('scc-daemon',
 	build_rpath: '/usr/X11R6/lib',
 	sources: platform_dependent_src + [
 		'x11.c',
+		'main.c',
 		'daemon.c',
 		'socket.c',
 		'poller.c',

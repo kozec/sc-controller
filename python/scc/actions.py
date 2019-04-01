@@ -10,7 +10,7 @@ import ctypes
 from json import dumps
 from itertools import chain
 from scc.constants import SCButtons, HapticPos
-from scc.tools import find_library
+from scc.find_library import find_library
 from scc.parser import ParseError
 from scc.lib import Enum
 

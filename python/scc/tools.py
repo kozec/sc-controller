@@ -11,8 +11,9 @@ from scc.paths import get_menuicons_path, get_default_menuicons_path
 from scc.paths import get_profiles_path, get_default_profiles_path
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.paths import get_button_images_path
+from scc.find_library import find_library
 from math import pi as PI, sin, cos, atan2, sqrt
-import os, sys, ctypes, imp, shlex, gettext, logging
+import os, sys, ctypes, shlex, gettext, logging
 
 HAVE_POSIX1E = False
 try:
@@ -25,6 +26,7 @@ log = logging.getLogger("tools.py")
 _ = lambda x : x
 
 LOG_FORMAT				= "%(levelname)s %(name)-13s %(message)s"
+
 
 def init_logging(prefix="", suffix=""):
 	"""
@@ -302,48 +304,12 @@ def find_binary(name):
 	if name.startswith("scc-autoswitch-daemon"):
 		# As above
 		return os.path.join(os.path.split(__file__)[0], "x11", "scc-autoswitch-daemon.py")
-	user_path = os.environ['PATH'].split(":")
-	# Try to add the standard binary paths if not present in PATH
-	for d in ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]:
-		if d not in user_path:
-			user_path.append(d)
-	for i in user_path:
-		path = os.path.join(i, name)
-		if os.path.exists(path):
-			return path
+	
+	path = lib_bindings.scc_find_binary(name)
+	if path is not None:
+		return path
 	# Not found, return name back and hope for miracle
 	return name
-
-
-def find_library(libname):
-	"""
-	Search for 'libname.so'.
-	Returns library loaded with ctypes.CDLL
-	Raises OSError if library is not found
-	"""
-	base_path = os.path.dirname(__file__)
-	lib, search_paths = None, []
-	so_extensions = [ ext for ext, _, typ in imp.get_suffixes()
-			if typ == imp.C_EXTENSION ]
-	for extension in so_extensions:
-		search_paths += [
-			os.path.abspath(os.path.normpath(
-				os.path.join( base_path, '..', libname + extension ))),
-			os.path.abspath(os.path.normpath(
-				os.path.join( base_path, '../..', libname + extension ))),
-			os.path.abspath(os.path.normpath(
-				os.path.join( './build', libname + extension )))
-			]
-	
-	for path in search_paths:
-		if os.path.exists(path):
-			lib = path
-			break
-	
-	if not lib:
-		raise OSError('Cant find %s.so. searched at:\n %s' % (
-			libname, '\n'.join(search_paths)))
-	return ctypes.CDLL(lib)
 
 
 def find_gksudo():
@@ -426,3 +392,9 @@ def circle_to_square(x, y):
 		raise ValueError("Invalid angle...?")
 	
 	return squared
+
+
+lib_bindings = find_library("libscc-bindings")
+lib_bindings.scc_find_binary.argtypes = [ ctypes.c_char_p ]
+lib_bindings.scc_find_binary.restype = ctypes.c_char_p
+

@@ -1,7 +1,5 @@
 /**
- * SC Controller - Daemon - main module
- *
- * Here is where everything starts
+ * SC Controller - Daemon
  */
 #define LOG_TAG "Daemon"
 #include "scc/utils/traceback.h"
@@ -14,7 +12,9 @@
 #include "scc/tools.h"
 #include "daemon.h"
 #include <signal.h>
+#include <unistd.h>
 
+static const char* process_name = "scc-daemon";
 static LIST_TYPE(sccd_mainloop_cb) mainloop_callbacks;
 static LIST_TYPE(SCCDMapper) mappers;
 static ControllerList controllers;
@@ -155,6 +155,26 @@ static const char* profile_load_error_to_string(int err) {
 	return "unknown error";
 }
 
+/**
+ * Sets proctitle.
+ * Allocates memory, parses profile name from path and does all that
+ * boring stuff so it's not repeated everywhere.
+ */
+static void set_proctitle(const char* profile_filename) {
+	char* title;
+	if (profile_filename == NULL) {
+		title = strbuilder_fmt("%s (starting)", process_name);
+	} else {
+		while (strstr(profile_filename, "/") != NULL)
+			profile_filename = strstr(profile_filename, "/") + 1;
+		title = strbuilder_fmt("%s (%s)", process_name, profile_filename);
+	}
+	if (title != NULL) {
+		sccd_set_proctitle(title);
+		free(title);
+	}
+}
+
 bool sccd_set_profile(Mapper* m, const char* filename) {
 	int err;
 	char* message;
@@ -183,6 +203,7 @@ bool sccd_set_profile(Mapper* m, const char* filename) {
 	}
 	if (m == sccd_mapper_to_mapper(default_mapper)) {
 		LOG("Activated profile '%s' on default_mapper", filename);
+		set_proctitle(filename);
 		message = strbuilder_fmt("Current profile: %s\n", filename);
 		if (message != NULL) {
 			sccd_socket_send_to_all(message);
@@ -331,8 +352,6 @@ static void unload_mappers() {
 static void load_default_profile(SCCDMapper* m) {
 	if (m == NULL) m = default_mapper;
 	if (default_profile == NULL) {
-		// TODO: self.default_profile = find_profile(Config()["recent_profiles"][0])
-		// TODO: find_profile function
 		Config* c = config_load();
 		char* recents[1];
 		if (config_get_strings(c, "recent_profiles", (const char**)&recents, 1) >= 1)
@@ -357,6 +376,7 @@ static void load_default_profile(SCCDMapper* m) {
 	m_->set_profile(m_, p, true);
 	RC_REL(p);
 	LOG("Activated default profile '%s'", default_profile);
+	set_proctitle(default_profile);
 }
 
 intptr_t sccd_error_add(const char* message, bool fatal) {
@@ -438,10 +458,51 @@ void sccd_set_special_client(enum SpecialClientType t, Client* client) {
 	*target = client;
 }
 
+static void store_pid() {
+	FILE* f = fopen(scc_get_pid_file(), "w");
+	if (f != NULL) {
+		fprintf(f, "%i\n", getpid());
+		fclose(f);
+	} else {
+		WARN("Failed to write pid file");
+	}
+}
 
-int main(int argc, char** argv) {
+/**
+ * Removes pidfile _only_ if it still contains my own PID.
+ * There is no locking around this so it's not really safe, but should
+ * be enough in most cases.
+ */
+static void remove_pid_file() {
+	char r_buffer[256];
+	char m_buffer[256];
+	const char* pid_file = scc_get_pid_file();
+	size_t r = 0;
+	FILE* f = fopen(pid_file, "r");
+	if (f != NULL) {
+		r = fread(r_buffer, 1, 255, f);
+		fclose(f);
+	}
+	if (r <= 0) {
+		// Failed read PID file, just (try to) remove it as it is
+		unlink(pid_file);
+	} else {
+		// Check whether PID matches my own PID, remove pidfile if it does
+		snprintf(m_buffer, 255, "%i\n", getpid());
+		if (0 == strcmp(m_buffer, r_buffer)) {
+			unlink(pid_file);
+		}
+	}
+}
+
+void sccd_set_default_profile(const char* profile) {
+	default_profile = scc_find_profile(profile);
+}
+
+
+int sccd_start() {
 	INFO("Starting SC Controller Daemon v%s...", DAEMON_VERSION);
-	traceback_set_argv0(argv[0]);
+	set_proctitle(NULL);
 	mainloop_callbacks = list_new(sccd_mainloop_cb, 0);
 	mappers = list_new(SCCDMapper, 16);
 	controllers = list_new(Controller, 16);
@@ -467,6 +528,7 @@ int main(int argc, char** argv) {
 	// here: load_custom_module
 	setup_default_mapper();
 	load_default_profile(NULL);
+	store_pid();
 	// here: load default profile
 	// here: start_listening()
 	// here: check X server
@@ -494,6 +556,7 @@ int main(int argc, char** argv) {
 	}
 	
 	DEBUG("Exiting...");
+	remove_pid_file();
 	iter_free(iter);
 	// here: stop listening
 	// here: kill mappers
@@ -506,3 +569,4 @@ int main(int argc, char** argv) {
 	unload_mappers();
 	return 0;
 }
+

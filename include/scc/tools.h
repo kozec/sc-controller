@@ -74,6 +74,12 @@ const char* scc_get_python_src_path();
 const char* scc_get_default_menus_path();
 
 /**
+ * Returns path to scc-daemon PID file.
+ * Usually ~/.config/scc/daemon.pid
+ */
+const char* scc_get_pid_file();
+
+/**
  * Returns filename for specified profile name.
  * This is done by searching for name + '.sccprofile' in ~/.config/scc/profiles
  * first and in /usr/share/scc/default_profiles if file is not found in first
