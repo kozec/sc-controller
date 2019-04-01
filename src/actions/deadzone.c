@@ -37,6 +37,8 @@ struct DeadzoneModifier {
 
 ACTION_MAKE_TO_STRING(DeadzoneModifier, deadzone, KW_DEADZONE, &pc);
 
+MODIFIER_MAKE_DESCRIBE(DeadzoneModifier, "%s (with deadzone)", "%s\n(with deadzone)");
+
 static void deadzone_dealloc(Action* a) {
 	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
 	list_free(d->params);
@@ -232,6 +234,7 @@ static ActionOE deadzone_constructor(const char* keyword, ParameterList params) 
 	if (d == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&d->action, KW_DEADZONE, AF_MODIFIER, &deadzone_dealloc, &deadzone_to_string);
 	d->action.get_property = &get_property;
+	d->action.describe = &describe;
 	d->action.compress = &compress;
 	d->action.trigger = &trigger;
 	d->action.whole = &whole;

@@ -295,3 +295,13 @@ char* scc_action_to_string(Action* a);
  */
 char* scc_action_get_description(Action* a, ActionDescContext ctx);
 
+
+/**
+ * See get_property method on Action.
+ * This wrappers just ensures that returned parameter is of expected type.
+ * expected_type may be set to PT_ANY to skip this check.
+ *
+ * Returns NULL (while properly deallocating thrown-out parameter if needed)
+ */
+Parameter* scc_action_get_property_with_type(Action* a, const char* name, ParameterType expected_type);
+

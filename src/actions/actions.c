@@ -173,6 +173,15 @@ char* scc_action_get_description(Action* a, ActionDescContext ctx) {
 	return strbuilder_cpy(a->type);
 }
 
+Parameter* scc_action_get_property_with_type(Action* a, const char* name, ParameterType expected_type) {
+	if (a == NULL) return NULL;
+	Parameter* p = a->get_property(a, name);
+	if ((p != NULL) && ((p->type & expected_type) == 0)) {
+		RC_REL(p);
+		p = NULL;
+	}
+	return p;
+}
 
 ActionOE scc_action_new(const char* keyword, ParameterList params) {
 	scc_action_constructor ctr;

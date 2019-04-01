@@ -83,7 +83,6 @@ static char* describe(Action* a, ActionDescContext ctx) {
 	}
 }
 
-
 static void button_dealloc(Action* a) {
 	ButtonAction* b = container_of(a, ButtonAction, action);
 	free(b);

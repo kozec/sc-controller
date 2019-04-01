@@ -54,6 +54,34 @@ typedef struct {
 
 ACTION_MAKE_TO_STRING(HoldDblClick, holddblclick, _a->type, &pc);
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	HoldDblClick* hdbl = container_of(a, HoldDblClick, action);
+	StrBuilder* sb = strbuilder_new();
+	if (sb != NULL) {
+		bool needs_newline = false;
+		Action* lst[] = { hdbl->dblclick_action, hdbl->hold_action, hdbl->default_action };
+		for (int i=0; i<3; i++) {
+			if (lst[i] != NULL) {
+				char* cdesc = scc_action_get_description(lst[i], ctx);
+				if (cdesc != NULL) {
+					if (needs_newline) strbuilder_add_char(sb, '\n');
+					strbuilder_add(sb, cdesc);
+					free(cdesc);
+					needs_newline = true;
+				}
+			}
+		}
+		
+		if (strbuilder_failed(sb)) {
+			strbuilder_free(sb);
+			return NULL;
+		}
+		return strbuilder_consume(sb);
+	}
+	
+	return NULL;
+}
+
 /** Deallocates HoldDblClick */
 static void holddblclick_dealloc(Action* a) {
 	HoldDblClick* hdbl = container_of(a, HoldDblClick, action);
@@ -306,6 +334,7 @@ static ActionOE holddblclick_constructor(const char* keyword, ParameterList para
 	
 	scc_action_init(&hdbl->action, keyword, AF_ACTION, &holddblclick_dealloc, &holddblclick_to_string);
 	hdbl->action.compress = &compress;
+	hdbl->action.describe = &describe;
 	hdbl->action.button_press = &button_press;
 	hdbl->action.button_release = &button_release;
 	hdbl->action.get_property = &get_property;

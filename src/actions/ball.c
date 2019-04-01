@@ -32,6 +32,10 @@ const char* KW_BALL = "ball";
 #define M_PI		3.14159265358979323846
 #endif
 
+bool scc_action_is_mouse(Action* a);
+bool scc_action_is_axis(Action* a);
+bool scc_action_is_xy(Action* a);
+
 typedef struct {
 	Action				action;
 	Action*				child;
@@ -56,6 +60,44 @@ typedef struct {
 ACTION_MAKE_TO_STRING(BallModifier, ball, KW_BALL, &pc);
 
 WHOLEHAPTIC_MAKE_SET_HAPTIC(BallModifier, a->whdata);
+
+static char* describe(Action* a, ActionDescContext ctx) {
+	BallModifier* b = container_of(a, BallModifier, action);
+	if (scc_action_is_mouse(b->child))
+		return strbuilder_cpy("Trackball");
+	if (scc_action_is_xy(b->child)) {
+		char* rv = NULL;
+		Parameter* px = scc_action_get_property_with_type(b->child, "x", PT_ACTION);
+		Parameter* py = scc_action_get_property_with_type(b->child, "y", PT_ACTION);
+		if ((px != NULL) && (py != NULL)) {
+			Action* x = px->as_action(px);
+			Action* y = py->as_action(py);
+			if ((scc_action_is_axis(x) && scc_action_is_axis(y))
+					|| (scc_action_is_mouse(x) && scc_action_is_mouse(y))) {
+				Parameter* axis_x = scc_action_get_property_with_type(x, "axis", PT_INT);
+				Parameter* axis_y = scc_action_get_property_with_type(y, "axis", PT_INT);
+				if ((axis_x != NULL) && (axis_y != NULL)) {
+					if ((axis_x->as_int(axis_x) == ABS_X) && (axis_y->as_int(axis_y) == ABS_Y)) {
+						rv = strbuilder_cpy("Mouse-like LStick");
+					} else if (((axis_x->as_int(axis_x) == REL_WHEEL) || (axis_x->as_int(axis_x) == REL_HWHEEL))
+								&& ((axis_y->as_int(axis_y) == REL_WHEEL) || (axis_y->as_int(axis_y) == REL_HWHEEL))) {
+						rv = strbuilder_cpy("Mouse Wheel");
+					} else {
+						rv = strbuilder_cpy("Mouse-like RStick");
+					}
+				}
+				RC_REL(axis_x); RC_REL(axis_y);
+			}
+		}
+		RC_REL(px); RC_REL(py);
+		if (rv != NULL)
+			return rv;
+	}
+	char* child_desc = scc_action_get_description(b->child, ctx);
+	char* rv = strbuilder_fmt(child_desc ? "Ball(%s)" : "Ball", child_desc);
+	free(child_desc);
+	return rv;
+}
 
 static void ball_dealloc(Action* a) {
 	BallModifier* b = container_of(a, BallModifier, action);
@@ -217,6 +259,7 @@ static ActionOE ball_constructor(const char* keyword, ParameterList params) {
 	b->action.compress = &compress;
 	b->action.whole = &whole;
 	b->action.get_property = &get_property;
+	b->action.describe = &describe;
 	b->action.extended.get_child = &get_child;
 	b->action.extended.set_haptic = &set_haptic;
 	b->action.extended.set_sensitivity = &set_sensitivity;
@@ -239,6 +282,7 @@ static ActionOE ball_constructor(const char* keyword, ParameterList params) {
 	b->roll_task = 0;
 	b->last_time = mono_time_d();
 	b->old_pos_set = false;
+	
 	wholehaptic_init(&b->whdata);
 	if (!dequeue_init(&b->dq, mean_len)) {
 		free(b);

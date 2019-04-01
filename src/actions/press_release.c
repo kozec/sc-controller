@@ -25,6 +25,11 @@ typedef struct {
 
 ACTION_MAKE_TO_STRING(PoR, por, _a->type, NULL);
 
+MODIFIER_MAKE_DESCRIBE(PoR,
+		((_a->type == KW_PRESS) ? "(when pressed) %s"  : "(when released) %s"),
+		((_a->type == KW_PRESS) ? "(when pressed)\n%s" : "(when released)\n%s")
+);
+
 static void por_dealloc(Action* a) {
 	PoR* por = container_of(a, PoR, action);
 	list_free(por->params);
@@ -85,6 +90,7 @@ static ActionOE por_constructor(const char* keyword, ParameterList params) {
 	}
 	scc_action_init(&por->action, keyword, AF_ACTION, &por_dealloc, &por_to_string);
 	por->action.compress = &compress;
+	por->action.describe = &describe;
 	por->action.button_press = &button_press;
 	por->action.button_release = &button_release;
 	

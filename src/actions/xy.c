@@ -166,6 +166,11 @@ static ActionList get_children(Action* a) {
 	return scc_make_action_list(xy->x, xy->y);
 }
 
+/** Intended for internal use */
+bool scc_action_is_xy(Action* a) {
+	return (a->type == KW_XY) || (a->type == KW_RELXY);
+}
+
 static Parameter* get_property(Action* a, const char* name) {
 	XYAction* xy = container_of(a, XYAction, action);
 	if (0 == strcmp(name, "sensitivity")) {

@@ -9,6 +9,7 @@
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "tostring.h"
 #include "props.h"
 #include <sys/time.h>
 #include <tgmath.h>
@@ -48,6 +49,8 @@ static char* smooth_to_string(Action* a) {
 	free(strl);
 	return rv;
 }
+
+MODIFIER_MAKE_DESCRIBE(SmoothModifier, "%s (smooth)", "%s (smooth)");
 
 static void smooth_dealloc(Action* a) {
 	SmoothModifier* s = container_of(a, SmoothModifier, action);
@@ -130,6 +133,7 @@ static ActionOE smooth_constructor(const char* keyword, ParameterList params) {
 	if (s == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&s->action, KW_SMOOTH, AF_MODIFIER, &smooth_dealloc, &smooth_to_string);
 	s->action.get_property = &get_property;
+	s->action.describe = &describe;
 	s->action.compress = &compress;
 	s->action.whole = &whole;
 	s->action.extended.get_child = &get_child;

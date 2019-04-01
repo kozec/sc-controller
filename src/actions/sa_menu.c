@@ -41,6 +41,10 @@ typedef struct {
 
 ACTION_MAKE_TO_STRING(SAMenuAction, sa_menu, _a->type, &pc);
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	return strbuilder_cpy("Menu");
+}
+
 static void sa_menu_dealloc(Action* a) {
 	SAMenuAction* sa = container_of(a, SAMenuAction, action);
 	list_free(sa->params);
@@ -79,6 +83,7 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 	SAMenuAction* sa = malloc(sizeof(SAMenuAction));
 	if (sa == NULL) return (ActionOE)scc_oom_action_error();
 	scc_action_init(&sa->action, KW_MENU, AF_SPECIAL_ACTION, &sa_menu_dealloc, &sa_menu_to_string);
+	sa->action.describe = &describe;
 	sa->action.button_press = &button_press;
 	sa->action.button_release = &button_release;
 	

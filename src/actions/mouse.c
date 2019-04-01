@@ -40,6 +40,18 @@ ACTION_MAKE_TO_STRING(MouseAction, mouse, KW_MOUSE, &pc);
 
 WHOLEHAPTIC_MAKE_SET_HAPTIC(MouseAction, a->whdata);
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	MouseAction* b = container_of(a, MouseAction, action);
+	switch (b->axis) {
+	case REL_WHEEL:
+		return strbuilder_cpy("Wheel");
+	case REL_HWHEEL:
+		return strbuilder_cpy("Horizontal Wheel");
+	default:
+		return strbuilder_cpy("Mouse");
+	}
+}
+
 static void mouse_dealloc(Action* a) {
 	MouseAction* b = container_of(a, MouseAction, action);
 	list_free(b->params);
@@ -143,6 +155,11 @@ static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos
 	change(a, m, delta, delta, 0);
 }
 
+/** Intended for internal use */
+bool scc_action_is_mouse(Action* a) {
+	return a->type == KW_MOUSE;
+}
+
 static Parameter* get_property(Action* a, const char* name) {
 	MouseAction* b = container_of(a, MouseAction, action);
 	MAKE_DVEC_PROPERTY(b->sensitivity, "sensitivity");
@@ -172,6 +189,7 @@ static ActionOE mouse_constructor(const char* keyword, ParameterList params) {
 	b->action.whole = &whole;
 	b->action.gyro = &gyro;
 	b->action.trigger = &trigger;
+	b->action.describe = &describe;
 	b->action.extended.set_sensitivity = &set_sensitivity;
 	b->action.extended.set_haptic = &set_haptic;
 	b->action.extended.change = &change;

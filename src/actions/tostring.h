@@ -26,3 +26,39 @@
 		free(parmsstr);														\
 		return rv;															\
 	}
+
+/**
+ * Generates '_to_string' method for modifier that has no 'params' field
+ * and remembers only its child
+ */
+#define MODIFIER_MAKE_TOSTRING(ActionType, prefix, keyword)					\
+	static char* prefix ## _to_string(Action* _a) {							\
+		ActionType* a = container_of(_a, ClickedModifier, action);			\
+		ParameterList l = scc_inline_param_list(							\
+				scc_new_action_parameter(a->child)							\
+		);																	\
+																			\
+		char* strl = scc_param_list_to_string(l);							\
+		char* rv = (strl == NULL)											\
+					? NULL													\
+					: strbuilder_fmt("%s(%s)", keyword, strl);				\
+		list_free(l);														\
+		free(strl);															\
+		return rv;															\
+	}
+
+#define MODIFIER_MAKE_DESCRIBE(ActionType, format,multiline_format)			\
+	static char* describe(Action* _a, ActionDescContext ctx) {				\
+		ActionType* a = container_of(_a, ActionType, action);				\
+		char* cdesc = scc_action_get_description(a->child, ctx);			\
+		char* rv = NULL;													\
+		if (cdesc != NULL) {												\
+			if ((ctx == AC_STICK) || (ctx == AC_PAD))						\
+				rv = strbuilder_fmt((multiline_format), cdesc);				\
+			else															\
+				rv = strbuilder_fmt((format), cdesc);						\
+			free(cdesc);													\
+		}																	\
+		return rv;															\
+	}
+

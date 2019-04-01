@@ -180,6 +180,17 @@ static void set_sensitivity(Action* a, float x, float y, float z) {
 	ax->scale = x;
 }
 
+/** Intended for internal use */
+bool scc_action_is_axis(Action* a) {
+	return (a->type == KW_AXIS)
+			|| (a->type == KW_RAXIS)
+			|| (a->type == KW_HATUP)
+			|| (a->type == KW_HATDOWN)
+			|| (a->type == KW_HATLEFT)
+			|| (a->type == KW_HATRIGHT)
+	;
+}
+
 static Parameter* get_property(Action* a, const char* name) {
 	AxisAction* ax = container_of(a, AxisAction, action);
 	if (0 == strcmp(name, "sensitivity")) {

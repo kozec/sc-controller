@@ -53,6 +53,11 @@ static char* trigger_to_string(Action* a) {
 	return rv;
 }
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	TriggerAction* t = container_of(a, TriggerAction, action);
+	return scc_action_get_description(t->child, ctx);
+}
+
 static void trigger_dealloc(Action* a) {
 	TriggerAction* t = container_of(a, TriggerAction, action);
 	RC_REL(t->child);
@@ -148,6 +153,7 @@ static ActionOE trigger_constructor(const char* keyword, ParameterList params) {
 	scc_action_init(&t->action, KW_TRIGGER, AF_ACTION | AF_MOD_FEEDBACK,
 					&trigger_dealloc, &trigger_to_string);
 	t->action.trigger = &trigger;
+	t->action.describe = &describe;
 	t->action.compress = &compress;
 	t->action.get_property = &get_property;
 	t->action.extended.set_haptic = &set_haptic;

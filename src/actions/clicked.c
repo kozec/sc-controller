@@ -14,6 +14,7 @@
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "scc/tools.h"
+#include "tostring.h"
 #include "props.h"
 #include <sys/time.h>
 #include <tgmath.h>
@@ -31,20 +32,11 @@ typedef struct {
 } ClickedModifier;
 
 
-static char* click_to_string(Action* a) {
-	ClickedModifier* c = container_of(a, ClickedModifier, action);
-	ParameterList l = scc_inline_param_list(
-			scc_new_action_parameter(c->child)
-	);
-	
-	char* strl = scc_param_list_to_string(l);
-	char* rv = (strl == NULL) ? NULL : strbuilder_fmt("clicked(%s)", strl);
-	list_free(l);
-	free(strl);
-	return rv;
-}
+MODIFIER_MAKE_TOSTRING(ClickedModifier, clicked, KW_CLICKED);
 
-static void click_dealloc(Action* a) {
+MODIFIER_MAKE_DESCRIBE(ClickedModifier, "(if pressed) %s", "(if pressed)\n%s");
+
+static void clicked_dealloc(Action* a) {
 	ClickedModifier* c = container_of(a, ClickedModifier, action);
 	RC_REL(c->child);
 	free(c);
@@ -114,8 +106,9 @@ static ActionOE clicked_constructor(const char* keyword, ParameterList params) {
 	
 	ClickedModifier* c = malloc(sizeof(ClickedModifier));
 	if (c == NULL) return (ActionOE)scc_oom_action_error();
-	scc_action_init(&c->action, KW_CLICKED, AF_MODIFIER, &click_dealloc, &click_to_string);
+	scc_action_init(&c->action, KW_CLICKED, AF_MODIFIER, &clicked_dealloc, &clicked_to_string);
 	c->action.compress = &compress;
+	c->action.describe = &describe;
 	c->action.button_press = &button_press;
 	c->action.button_release = &button_release;
 	c->action.trigger = &trigger;

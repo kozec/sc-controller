@@ -29,6 +29,39 @@ static char* multiaction_to_string(Action* a) {
 	return actions_to_string(x->children, " and ");
 }
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	Multiaction* x = container_of(a, Multiaction, action);
+	// TODO: Quite a lot here
+	/*
+	 if self.is_key_combination():
+			rv = []
+			for a in self.actions:
+				if isinstance(a, ButtonAction):
+					rv.append(a.describe_short())
+			return "+".join(rv)
+	*/
+	/*
+	 if len(self.actions) >= 2 and isinstance(self.actions[1], RingAction):
+			# Special case, should be multiline
+			return "\n".join([ x.describe(context) for x in self.actions ])
+	 */
+	StrBuilder* sb = strbuilder_new();
+	if (sb != NULL) {
+		bool needs_separator = false;
+		FOREACH_IN(Action*, c, x->children) {
+			char* cdesc = scc_action_get_description(c, ctx);
+			if (cdesc != NULL) {
+				if (needs_separator) strbuilder_add(sb, " and ");
+				strbuilder_add(sb, cdesc);
+				free(cdesc);
+				needs_separator = true;
+			}
+		}
+		return strbuilder_consume(sb);
+	}
+	return NULL;
+}
+
 static void multiaction_dealloc(Action* a) {
 	Multiaction* x = container_of(a, Multiaction, action);
 	MULTICHILD_DEALLOC(x);
@@ -95,6 +128,7 @@ Action* scc_multiaction_new(Action** actions, size_t action_count) {
 	
 	scc_action_init(&x->action, KW_MULTIACTION, AF_ACTION, &multiaction_dealloc, &multiaction_to_string);
 	x->action.compress = &compress;
+	x->action.describe = &describe;
 	x->action.button_press = &button_press;
 	x->action.button_release = &button_release;
 	x->action.axis = &axis;
