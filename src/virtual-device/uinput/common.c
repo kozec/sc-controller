@@ -148,6 +148,7 @@ void scc_virtual_device_key_release(VirtualDevice* dev, Keycode key) {
 	ev.code = key;
 	ev.value = 0;
 	write(idev->fd, &ev, sizeof(ev));
+	scc_virtual_device_flush(dev);
 }
 
 void scc_virtual_device_key_press(VirtualDevice* dev, Keycode key) {
@@ -167,6 +168,7 @@ void scc_virtual_device_key_press(VirtualDevice* dev, Keycode key) {
 	ev.code = key;
 	ev.value = 1;
 	write(idev->fd, &ev, sizeof(ev));
+	scc_virtual_device_flush(dev);
 }
 
 
