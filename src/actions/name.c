@@ -10,6 +10,7 @@
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "tostring.h"
+#include "props.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -45,11 +46,8 @@ static Action* get_child(Action* a) {
 }
 
 static Parameter* get_property(Action* a, const char* name) {
-	if (0 == strcmp(name, "name")) {
-		NameModifier* n = container_of(a, NameModifier, action);
-		RC_ADD(n->params->items[0]);
-		return n->params->items[0];
-	}
+	NameModifier* n = container_of(a, NameModifier, action);
+	MAKE_PARAM_PROPERTY(n->params->items[0], "name");
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;

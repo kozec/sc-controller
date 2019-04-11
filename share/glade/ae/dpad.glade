@@ -672,6 +672,7 @@
             <child>
               <object class="GtkLabel" id="label1">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="margin_bottom">5</property>
                 <property name="label" translatable="yes">Menu Type</property>
@@ -689,6 +690,7 @@
             <child>
               <object class="GtkComboBox" id="cbMenuType">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="hexpand">True</property>
                 <property name="model">lstMenuType</property>

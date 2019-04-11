@@ -17,6 +17,12 @@
 		return scc_new_int_parameter(accessor);				\
 	} while (0);
 
+/** Macro for returning 'x' as string property */
+#define MAKE_STRING_PROPERTY(accessor, prop_name) do {		\
+	if (0 == strcmp(name, prop_name))						\
+		return scc_new_string_parameter(accessor);			\
+	} while (0);
+
 /** Macro for returning 'x' as action property */
 #define MAKE_ACTION_PROPERTY(accessor, prop_name) do {		\
 	if (0 == strcmp(name, prop_name))						\
@@ -59,6 +65,16 @@
 			return NULL;									\
 		}													\
 		return scc_new_tuple_parameter(4, h);				\
+	}														\
+} while (0);
+
+
+/** Macro for returning actual Parameter as property */
+#define MAKE_PARAM_PROPERTY(accessor, prop_name) do {		\
+	if (0 == strcmp(name, prop_name)) {						\
+		Parameter* p = accessor;							\
+		RC_ADD(p);											\
+		return p;											\
 	}														\
 } while (0);
 

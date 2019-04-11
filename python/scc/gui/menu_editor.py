@@ -30,8 +30,9 @@ log = logging.getLogger("MenuEditor")
 class ProfileListMenuGenerator: pass
 class RecentListMenuGenerator: pass
 class GameListMenuGenerator: pass
-class MenuIcon:
+class MenuIcon(Gtk.Image):
 	def __init__(self, a, b):
+		Gtk.Image.__init__(self)
 		pass
 
 
@@ -458,3 +459,4 @@ class MenuEditor(Editor):
 	def on_btClearItemIcon_clicked(self, *a):
 		self.selected_icon = None
 		self.update_menu_icon()
+

@@ -224,10 +224,6 @@ class Action(object):
 		return lib_actions.scc_action_get_description(self._caction, ctx)
 	
 	@property
-	def name(self):
-		return None
-	
-	@property
 	def parameters(self):
 		magic = "(" + self.to_string().split("(", 1)[-1]
 		cparam = lib_bindings.scc_parse_param_list(magic)

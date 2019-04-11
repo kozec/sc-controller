@@ -20,6 +20,7 @@ from scc.gui.parser import GuiActionParser
 
 import os, logging
 log = logging.getLogger("AE.Menu")
+DEFAULT_POSITION = (10, -10)		# Should match values in sa_menu.c
 
 __all__ = [ 'MenuActionCofC' ]
 
@@ -424,7 +425,7 @@ class MenuActionCofC(UserDataManager):
 				y = int(self.builder.get_object("spMenuPosY").get_value())
 				x *= cbMenuPosX.get_model().get_value(cbMenuPosX.get_active_iter(), 0)
 				y *= cbMenuPosY.get_model().get_value(cbMenuPosY.get_active_iter(), 0)
-				if (x, y) != MenuAction.DEFAULT_POSITION:
+				if (x, y) != DEFAULT_POSITION:
 					action = PositionModifier(x, y, action)
 			
 			self.editor.set_action(action)

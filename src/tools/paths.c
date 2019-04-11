@@ -234,6 +234,17 @@ char* scc_find_binary(const char* name) {
 	return NULL;
 }
 
+#ifdef _WIN32
+size_t scc_path_fix_slashes(char* path) {
+	size_t count = 0;
+	while (*path != 0) {
+		if (*path == '\\') *path = '/';
+		path ++;
+	}
+}
+#endif
+
+
 
 /*
 def get_menuicons_path():

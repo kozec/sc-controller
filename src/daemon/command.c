@@ -146,6 +146,9 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 		if (0 == strcmp(command, "Profile:")) {
 			const char* name = tokens_get_rest(tokens);
 			char* filename = NULL;
+#ifdef _WIN32
+			scc_path_fix_slashes(name);
+#endif
 			if (strstr(name, "/") == NULL) {
 				// If there is no slash in path, string is treat as profile name
 				filename = scc_find_profile(name);
@@ -153,6 +156,7 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 					return send_error_dealoc(client, tokens, strbuilder_fmt("Fail: Profile '%s' not found\n", name));
 				name = filename;
 			}
+			LOG("Activating profile '%s'", name);
 			if (sccd_set_profile(client->mapper, name))
 				send_ok(client, tokens);
 			else

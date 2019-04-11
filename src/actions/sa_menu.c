@@ -10,7 +10,9 @@
 #include "scc/special_action.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
+#include "scc/tools.h"
 #include "tostring.h"
+#include "props.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -59,7 +61,20 @@ static void button_press(Action* a, Mapper* m) {
 }
 
 static void button_release(Action* a, Mapper* m) {
+	// SAMenuAction* sa = container_of(a, SAMenuAction, action);
+}
+
+static Parameter* get_property(Action* a, const char* name) {
 	SAMenuAction* sa = container_of(a, SAMenuAction, action);
+	MAKE_HAPTIC_PROPERTY(sa->data.hdata, "haptic");
+	MAKE_PARAM_PROPERTY(sa->params->items[0], "menu_id");
+	MAKE_PARAM_PROPERTY(sa->params->items[1], "control_with");
+	MAKE_PARAM_PROPERTY(sa->params->items[2], "confirm_with");
+	MAKE_PARAM_PROPERTY(sa->params->items[3], "cancel_with");
+	MAKE_PARAM_PROPERTY(sa->params->items[4], "show_with_release");
+	MAKE_PARAM_PROPERTY(sa->params->items[5], "show_with_release");
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
 }
 
 
@@ -67,17 +82,17 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 	// Backwards compatibility / convience thing: Menu can have 'short form'
 	// where only menu id and size is specified, eg. menu("some-id", 3) 
 	ParamError* err = scc_param_checker_check(&pc_short, keyword, params);
-	bool short_form = false;
 	if (err == NULL) {
 		// Short form is used
-		params = scc_copy_param_list(params);
-		short_form = true;
-	} else {
-		// Full form is tried
-		err = scc_param_checker_check(&pc, keyword, params);
-		if (err != NULL) return (ActionOE)err;
-		params = scc_param_checker_fill_defaults(&pc, params);
+		Parameter* menu_id = params->items[0];
+		Parameter* size = params->items[1];
+		params = scc_make_param_list(menu_id, scc_new_int_parameter(SCC_False), size);
+		if (params == NULL) return (ActionOE)scc_oom_action_error();
 	}
+	// Full form is tried
+	err = scc_param_checker_check(&pc, keyword, params);
+	if (err != NULL) return (ActionOE)err;
+	params = scc_param_checker_fill_defaults(&pc, params);
 	if (params == NULL) return (ActionOE)scc_oom_action_error();
 	
 	SAMenuAction* sa = malloc(sizeof(SAMenuAction));
@@ -86,23 +101,15 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 	sa->action.describe = &describe;
 	sa->action.button_press = &button_press;
 	sa->action.button_release = &button_release;
+	sa->action.get_property = &get_property;
 	
 	sa->params = params;
 	sa->data.menu_id = scc_parameter_as_string(params->items[0]);
-	if (short_form) {
-		sa->data.control_with = DEFAULT;
-		sa->data.confirm_with = DEFAULT;
-		sa->data.cancel_with = DEFAULT;
-		sa->data.show_with_release = false;
-		sa->data.size = scc_parameter_as_int(params->items[1]);
-	} else {
-		sa->data.menu_id = scc_parameter_as_string(params->items[0]);
-		sa->data.control_with = scc_string_to_pst(scc_parameter_as_string(params->items[1]));
-		sa->data.confirm_with = scc_string_to_button(scc_parameter_as_string(params->items[2]));
-		sa->data.cancel_with = scc_string_to_button(scc_parameter_as_string(params->items[3]));
-		sa->data.show_with_release = scc_parameter_as_int(params->items[4]) ? true: false;
-		sa->data.size = scc_parameter_as_int(params->items[5]);
-	}
+	sa->data.control_with = scc_string_to_pst(scc_parameter_as_string(params->items[1]));
+	sa->data.confirm_with = scc_string_to_button(scc_parameter_as_string(params->items[2]));
+	sa->data.cancel_with = scc_string_to_button(scc_parameter_as_string(params->items[3]));
+	sa->data.show_with_release = scc_parameter_as_int(params->items[4]) ? true: false;
+	sa->data.size = scc_parameter_as_int(params->items[5]);
 	sa->stick_distance = 0;
 	vec_set(sa->data.position, DEFAULT_POSITION_X, DEFAULT_POSITION_Y);
 	

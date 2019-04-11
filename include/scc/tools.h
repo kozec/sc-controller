@@ -153,3 +153,14 @@ const char* scc_what_to_string(PadStickTrigger what);
  * Returned string shall not be deallocated.
  */
 const char* scc_button_to_string(SCButton b);
+
+
+#ifdef _WIN32
+/**
+ * Replaces backslashes with forward slashes in given string.
+ * String is modified in-place.
+ * Returns number of replacements made.
+ */
+size_t scc_path_fix_slashes(char* path);
+#endif
+

@@ -121,7 +121,7 @@ class DaemonManager(GObject.GObject):
 			sccc = libscc_client.sccc_connect()
 			if sccc is None:
 				self.connecting = False
-				return self._on_daemon_died()	
+				return self._on_daemon_died()
 			fd = libscc_client.sccc_get_fd(sccc)
 			sock = Gio.Socket.new_from_fd(fd)
 			connection = Gio.Socket.connection_factory_create_connection(sock)

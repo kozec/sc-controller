@@ -131,6 +131,11 @@ static void signal_handler(int sig) {
 
 void traceback_set_argv0(const char* executablename) {
 	argv0 = executablename;
+	char* argv0_copy = malloc(strlen(argv0) + 1);
+	if (argv0_copy != NULL) {
+		strcpy(argv0_copy, argv0);
+		argv0 = argv0_copy;
+	}
 	sa.sa_handler = signal_handler;
 	sa.sa_flags = SA_NODEFER;
 	sigaction(SIGSEGV, &sa, NULL);

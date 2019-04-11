@@ -28,7 +28,7 @@ from scc.actions import NoAction, NameModifier
 from scc.profile import Profile
 from scc.config import Config
 
-import os, sys, platform, re, json, urllib, logging
+import os, sys, platform, re, json, urllib, platform, logging
 log = logging.getLogger("App")
 
 class App(Gtk.Application, UserDataManager, BindingEditor):
@@ -245,6 +245,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def check(self):
 		""" Performs various (three) checks and reports possible problems """
+		if platform.system() == "Windows":
+			# No meaningful checks for Windows here
+			return
+		
 		# TODO: Maybe not best place to do this
 		try:
 			# Dynamic modules
@@ -837,7 +841,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	def on_daemon_ccunt_changed(self, daemon, count):
 		if self.controller_count == 0:
 			# First controller connected
-			# 
+			#
 			# 'event' signal should be connected only on first controller,
 			# so this block is executed only when number of connected
 			# controllers changes from 0 to 1
