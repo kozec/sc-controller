@@ -8,6 +8,7 @@
 #include "scc/osd/menu_icon.h"
 #include "scc/controller.h"
 #include "scc/menu_data.h"
+#include "scc/config.h"
 #include <glib.h> // glib.h has to be included before client.h
 #include "scc/client.h"
 #include "scc/tools.h"
@@ -51,16 +52,26 @@ static void align_cb(GtkWidget* w, void* align) {
 
 static GtkWidget* make_menu_row(const char* label, const char* icon, bool is_submenu) {
 	bool has_colors;
-	char* filename = scc_find_icon("driving/steering-wheel", false, &has_colors, NULL, NULL);
-	GtkWidget* w_icon = GTK_WIDGET(menu_icon_new(filename, has_colors));
-	free(filename);
+	GtkWidget* w_icon = NULL;
+	if (icon != NULL) {	
+		char* filename = scc_find_icon(icon, false, &has_colors, NULL, NULL);
+		if (filename != NULL) {
+			w_icon = GTK_WIDGET(menu_icon_new(filename, has_colors));
+			free(filename);
+		}
+	}
 	GtkWidget* label1 = gtk_label_new(label);
 	GtkWidget* label2 = is_submenu ? gtk_label_new(">>") : NULL;
 	GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	GtkWidget* button = gtk_button_new();
 	gtk_label_set_xalign(GTK_LABEL(label1), 0.0);
-	gtk_box_pack_start(GTK_BOX(box), w_icon, false, true, 0);
-	gtk_box_pack_start(GTK_BOX(box), label1, true, true, 10);
+	if (w_icon != NULL) {
+		gtk_box_pack_start(GTK_BOX(box), w_icon, false, true, 0);
+		gtk_box_pack_start(GTK_BOX(box), label1, true, true, 10);
+		gtk_widget_set_name(GTK_WIDGET(w_icon), "icon");
+	} else {
+		gtk_box_pack_start(GTK_BOX(box), label1, true, true, 1);
+	}
 	if (label2 != NULL) {
 		gtk_widget_set_margin_start(label2, 30);
 		gtk_label_set_xalign(GTK_LABEL(label2), 1.0);
@@ -83,10 +94,10 @@ static GtkWidget* make_widget(MenuItem* i) {
 				return NULL;
 			char* label = scc_action_to_string(i->action);
 			ASSERT(label != NULL);
-			w = make_menu_row(label, NULL, false);
+			w = make_menu_row(label, i->icon, false);
 			free(label);
 		} else {
-			w = make_menu_row(i->name, NULL, false);
+			w = make_menu_row(i->name, i->icon, false);
 		}
 		if (i->type == MI_DUMMY)
 			gtk_widget_set_name(w, "osd-menu-dummy");
@@ -97,7 +108,7 @@ static GtkWidget* make_widget(MenuItem* i) {
 		if (i->submenu == NULL)
 			// Shouldn't be possible
 			return NULL;
-		w = make_menu_row(i->name == NULL ? i->submenu : i->name, NULL, true);
+		w = make_menu_row(i->name == NULL ? i->submenu : i->name, i->icon, true);
 		gtk_widget_set_name(GTK_WIDGET(w), "osd-menu-item");
 		break;
 	}
@@ -289,11 +300,19 @@ static void osd_menu_init(OSDMenu* mnu) {
 
 OSDMenu* osd_menu_new(const char* filename) {
 	int err;
+	Config* cfg = config_load();
+	if (cfg == NULL) {
+		LERROR("Failed load configuration");
+		return NULL;
+	}
 	MenuData* data = scc_menudata_from_json(filename, &err);
 	if (data == NULL) {
 		LERROR("Failed to decode menu");
+		RC_REL(cfg);
 		return NULL;
 	}
+	scc_menudata_apply_generators(data, cfg);
+	RC_REL(cfg);
 	
 	SCCClient* client = sccc_connect();
 	if (client == NULL) {

@@ -48,6 +48,20 @@ test('test_menudata', executable('test_menudata',
 	sources: [ 'test_menudata.c' ]
 ))
 
+test('test_menu_generators', executable('test_menu_generators',
+	dependencies: [cu_test],
+	include_directories: include,
+	link_with: link,
+	sources: [ 'test_menu_generators.c' ]
+))
+
+test('test_paths', executable('test_paths',
+	dependencies: [cu_test],
+	include_directories: include,
+	link_with: link,
+	sources: [ 'test_paths.c' ]
+))
+
 test('test_modifiers', executable('test_modifiers',
 	dependencies: [cu_test],
 	include_directories: include,

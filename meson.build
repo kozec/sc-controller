@@ -5,14 +5,14 @@ project('scc', 'c',
 )
 
 CONFIG_BACKEND = 'config_json'
-PARSER_LIB_DEPS = []
+parser_lib_deps = []
 C_FILES = '*.c'
 
 if host_machine.system() == 'windows'
 	add_global_arguments('-D_POSIX', '-DNO_X11', '-mno-ms-bitfields', language: 'c')
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
-	PARSER_LIB_DEPS = [ meson.get_compiler('c').find_library('regex') ]
+	parser_lib_deps = [ meson.get_compiler('c').find_library('regex') ]
 	CONFIG_BACKEND = 'config_win32'
 	C_FILES = '\\*.c'
 elif get_option('android').enabled()
@@ -23,6 +23,12 @@ elif host_machine.system() == 'linux'
 elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 	add_global_arguments('-D__BSD__', language: 'c')
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
+endif
+if get_option('menu-generators').enabled()
+	add_global_arguments('-DMENU_GENERATORS_ENABLED', language: 'c')
+	if host_machine.system() == 'linux'
+		parser_lib_deps += [ meson.get_compiler('c').find_library('dl') ]
+	endif
 endif
 
 add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', language: 'c')
@@ -113,7 +119,7 @@ actions_lib = shared_library('scc-actions',
 
 parser_lib = shared_library('scc-parser',
 	include_directories: include,
-	dependencies: PARSER_LIB_DEPS,
+	dependencies: parser_lib_deps,
 	link_with: [ utils_lib, actions_lib, params_lib, conversions_lib ],
 	sources: [
 		'src/parser/action_parser.c',
@@ -142,6 +148,9 @@ subdir('src/daemon/drivers')
 subdir('src/daemon')
 if get_option('android').disabled() and host_machine.system() != 'openbsd' and host_machine.system() != 'netbsd'
 	subdir('src/osd')
+endif
+if get_option('menu-generators').enabled()
+	subdir('src/menu-generators')
 endif
 subdir('src/gui')
 

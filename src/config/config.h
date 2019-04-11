@@ -83,3 +83,4 @@ inline static const char* last_element(const char* path) {
 const struct config_item* config_get_default(struct _Config* c, const char* path);
 
 config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValueType type);
+

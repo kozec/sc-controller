@@ -2,6 +2,9 @@ option('tracebacks', type: 'feature', value: 'enabled', description: '''
 	Compiles-in support for printing tracebacks when code crashes.
 	Available only on Linux.
 ''')
+option('menu-generators', type: 'feature', value: 'enabled', description: '''
+	Compiles-in support for menu generators, loadable libraries providing menu items.
+''')
 option('x11-output', type: 'feature', value: 'disabled', description: '''
 	Forces use of x11 (XTest) to emulate mouse and keyboard even on systems
 	where this is not default
@@ -10,3 +13,4 @@ option('android', type: 'feature', value: 'disabled', description: '''
 	Enables building on android, disabling all Linux specific features.
 	Available only on Android/Linux.
 ''')
+

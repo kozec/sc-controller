@@ -3,29 +3,21 @@
 #include "scc/utils/rc.h"
 #include "scc/menu_data.h"
 #include <string.h>
-#include <stdlib.h>
-#include <math.h>
+#include <unistd.h>
+
 
 /** Tests loading menu file */
 void test_loading(CuTest* tc) {
 	MenuData* m = scc_menudata_from_json("../share/default_menus/Default.menu", NULL);
 	assert(tc, m != NULL);
 	
-	MenuItem* it = scc_menudata_get_by_id(m, "turnoff_item");
-	assert(tc, it != NULL);
-	assert(tc, strcmp(it->icon, "system/turn-off") == 0);
+	MenuItem* i = scc_menudata_get_by_id(m, "turnoff_item");
+	assert(tc, i != NULL);
+	assert(tc, strcmp(i->icon, "system/turn-off") == 0);
 	
-	it = scc_menudata_get_by_id(m, "separator-after-profile-list");
-	assert(tc, it != NULL);
-	assert(tc, it->rows == 5);	// checks default
-	assert(tc, it->type == MI_SEPARATOR);
-	
-	// TODO: Reenable this, there is currently no generator there
-	// it = scc_menudata_get_by_id(m, "auto-id-2");
-	// assert(tc, it != NULL);
-	// assert(tc, it->type == MI_GENERATOR);
-	// assert(tc, it->rows == 3);
-	// assert(tc, strcmp(it->generator, "recent") == 0);
+	i = scc_menudata_get_by_id(m, "separator-after-profile-list");
+	assert(tc, i != NULL);
+	assert(tc, i->type == MI_SEPARATOR);
 }
 
 

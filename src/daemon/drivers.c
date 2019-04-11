@@ -87,13 +87,12 @@ void sccd_drivers_init() {
 #endif
 	DIR *dir;
 	struct dirent *ent;
-	if ((dir = opendir (path)) == NULL) {
+	if ((dir = opendir(path)) == NULL) {
 		// Failed to open directory
 		LERROR("Failed to enumerate '%s'", path);
 		return;
 	}
-	/* print all the files and directories within directory */
-	while ((ent = readdir (dir)) != NULL) {
+	while ((ent = readdir(dir)) != NULL) {
 		bool is_driver = (strstr(ent->d_name, FILENAME_SUFFIX) == ent->d_name + strlen(ent->d_name) - strlen(FILENAME_SUFFIX));
 		is_driver = is_driver && (strstr(ent->d_name, FILENAME_PREFIX) == ent->d_name);
 		if (is_driver)
@@ -101,3 +100,4 @@ void sccd_drivers_init() {
 	}
 	closedir (dir);
 }
+

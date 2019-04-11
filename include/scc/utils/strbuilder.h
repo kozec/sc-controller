@@ -58,6 +58,8 @@ bool strbuilder_insert(StrBuilder* b, size_t pos, const char* string);
 bool strbuilder_insert_char(StrBuilder* b, size_t pos, char c);
 /** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_insertf(StrBuilder* b, size_t pos, const char* format, ...);
+/** Removes up to 'count' characters from right of the string */
+void strbuilder_rtrim(StrBuilder* b, size_t count);
 
 /**
  * Returns true if any _add*, _insert*, _prepend* (etc) method failed at any

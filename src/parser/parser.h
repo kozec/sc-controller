@@ -27,3 +27,7 @@ bool scc_str_is_float(const char* str);
  * no parentheses at all)
  */
 ActionOE parse_after_keyword(Tokens* tokens, const char* keyword);
+
+/** Very internal piece of parser */
+ParameterList _scc_tokens_to_param_list(Tokens* tokens, ParamError** err);
+

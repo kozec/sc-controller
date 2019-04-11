@@ -197,6 +197,11 @@ void list_filter(void* _list, bool(*filter_fn)(void* item, void* userdata), void
 	}
 }
 
+void list_sort(void* _list, comparison_fn_t compare) {
+	_voidlist list = (_voidlist)_list;
+	qsort(list->items, list->_data.size, sizeof(void*), compare);
+}
+
 
 static bool list_iterator_has_next(void* _iter) {
 	ListIterator iter = (ListIterator)_iter;

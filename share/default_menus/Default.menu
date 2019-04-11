@@ -2,24 +2,14 @@
     "separator": true,
     "name": "Switch profile"
 }, {
-    "icon": "system/profiles",
-    "name": "Desktop",
-    "id": "desktop",
-    "action": "profile('Desktop')",
-    "osd": true
+    "generator": "recent",
+    "rows": 3
 }, {
+    "submenu": "Profiles.menu",
     "icon": "system/profiles",
-    "name": "Controller",
-    "id": "xbox_controller",
-    "action": "profile('XBox Controller')",
-    "osd": true
-}, {
-    "icon": "system/profiles",
-    "name": "Controller + Mouse",
-    "id": "xbox_controller_with_high_precision_camera",
-    "action": "profile('XBox Controller with High Precision Camera')",
-    "osd": true
-}, {
+    "name": "All Profiles"
+},
+{
     "separator": true,
     "id": "separator-after-profile-list",
     "name": "Options"

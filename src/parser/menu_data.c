@@ -2,6 +2,7 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/container_of.h"
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/tokenizer.h"
 #include "scc/utils/iterable.h"
 #include "scc/utils/aojls.h"
 #include "scc/utils/list.h"
@@ -9,14 +10,29 @@
 #include "scc/menu_data.h"
 #include "scc/action.h"
 #include "scc/parser.h"
-#include <errno.h>
+#include "parser.h"
+#include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 
-typedef LIST_TYPE(MenuItem) ItemsList;
+#if MENU_GENERATORS_ENABLED
+#ifdef _WIN32
+#include <windows.h>
+#define FILENAME_PREFIX "libscc-menugen-"
+#define FILENAME_SUFFIX ".dll"
+#else
+#include <dlfcn.h>
+#define FILENAME_PREFIX "libscc-menugen-"
+#define FILENAME_SUFFIX ".so"
+#endif
+#include "scc/menu_generator.h"
+#endif
+
+typedef LIST_TYPE(MenuItem) MItemList;
 
 struct _MenuData {
-	MenuData			menudata;
-	ItemsList			items;
+	MenuData		menudata;
+	MItemList		items;
 };
 
 long json_reader_fn(char* buffer, size_t len, void* reader_data);
@@ -25,7 +41,6 @@ static MenuItem* menuitem_new(MenuItemType t) {
 	MenuItem* i = malloc(sizeof(MenuItem));
 	memset(i, 0, sizeof(MenuItem));
 	*(MenuItemType*)&i->type = t;
-	*(size_t*)&i->rows = 5;
 	return i;
 }
 
@@ -76,7 +91,7 @@ MenuItem* scc_menudata_get_by_id(const MenuData* _dt, const char* id) {
 	struct _MenuData* dt = container_of(_dt, struct _MenuData, menudata);
 	ListIterator it = iter_get(dt->items);
 	FOREACH(MenuItem*, i, it) {
-		if (strcmp(i->id, id) == 0) {
+		if ((i->id != NULL) && (strcmp(i->id, id) == 0)) {
 			// Already used
 			iter_free(it);
 			return i;
@@ -171,9 +186,19 @@ MenuData* scc_menudata_from_json(const char* filename, int* error) {
 		SET_FROM_JSON(id);
 		SET_FROM_JSON(name);
 		SET_FROM_JSON(icon);
-		double rows = json_object_get_double(item, "rows", NULL);
-		if (rows < 1.0) rows = 5.0;
-		*(size_t*)&it->rows = (size_t)rows;
+		if ((it->type == MI_GENERATOR) && (it->generator != NULL)) {
+			// Backwards compatiblity thing: If 'rows' key is defined,
+			// use it as parameter.
+			double rows = json_object_get_double(item, "rows", NULL);
+			if (rows > 0.0) {
+				char* new_generator = strbuilder_fmt("%s(%g)", it->generator, rows);
+				if (new_generator != NULL) {
+					// OOM here is not really that important.
+					free((char*)it->generator);
+					it->generator = new_generator;
+				}
+			}
+		}
 		#undef SET_FROM_JSON
 		
 		const char* actionstr = json_object_get_string(item, "action");
@@ -216,3 +241,268 @@ scc_menudata_from_json_invalid:
 	if (dt != NULL) scc_menudata_free(&dt->menudata);
 	return NULL;
 }
+
+static bool contains_generators(struct _MenuData* dt) {
+	FOREACH_IN(MenuItem*, i, dt->items) {
+		if ((i->type == MI_GENERATOR) && (i->generator != NULL))
+			return true;
+	}
+	return false;
+}
+
+int scc_menudata_apply_generators(MenuData* _dt, Config* cfg) {
+	struct _MenuData* dt = container_of(_dt, struct _MenuData, menudata);
+	int rv = 1;				// 1 - all OK
+	int failsafe = 10;		// Failsafe is here only to prevent generator generating generators and bombing entire process
+	int next_auto_id = 0;
+	for (; (failsafe > 0) && contains_generators(dt); failsafe--) {
+		for (size_t index = 0; index<list_len(dt->items); index++) {
+			MenuItem* i = list_get(dt->items, index);
+			if ((i->type == MI_GENERATOR) && (i->generator != NULL)) {
+				int error;
+				list_remove(dt->items, i);
+				MenuData* generated = scc_menudata_from_generator(i->generator, cfg, &error);
+				if (generated == NULL) {
+					if (error == 4) {
+						menuitem_free(i);
+						return 4;			// 4 - OOM
+					} else if (error != 0) {
+						WARN("Generator '%s' failed", i->generator);
+						rv = 0;				// 0 - failed to generate
+					}
+				} else {
+					struct _MenuData* generated_ = container_of(generated, struct _MenuData, menudata);
+					MItemList generated_lst = generated_->items;
+					for (size_t j=0; j<list_len(generated_lst); j++) {
+						MenuItem* gi = list_get(generated_lst, j);
+						// If item has no ID (usually), new will be assigned here
+						while (gi->id == NULL) {
+							gi->id = strbuilder_fmt("menugen-id-%lx", next_auto_id++);
+							if (gi->id == NULL) {
+								menuitem_free(i);
+								scc_menudata_free(generated);
+								return 4;		// 4 - OOM
+							}
+							if (scc_menudata_get_by_id(_dt, gi->id) != NULL) {
+								// ID already used
+								free((char*)gi->id);
+								gi->id = NULL;
+							}
+						}
+						if (!list_insert(dt->items, index, gi)) {
+							menuitem_free(i);
+							scc_menudata_free(generated);
+							return 4;			// 4 - OOM
+						}
+						// Item is moved, not just copied. That way, it will not be
+						// deallocated once scc_menudata_free is called.
+						list_set(generated_lst, j, NULL);
+						index ++;
+					}
+					scc_menudata_free(generated);
+				}
+				menuitem_free(i);
+			}
+		}
+	}
+	return rv;
+}
+
+
+#if MENU_GENERATORS_ENABLED
+
+struct _GeneratorContext {
+	GeneratorContext ctx;
+	struct _MenuData* data;
+	ParameterList params;
+	Config* config;
+	bool failed;
+};
+
+static bool ctx_add_action(GeneratorContext* _ctx, const char* name, const char* icon, Action* action) {
+	struct _GeneratorContext* ctx = container_of(_ctx, struct _GeneratorContext, ctx);
+	if (ctx->failed) return false;
+	MenuItem* item = menuitem_new(MI_ACTION);
+	if (item == NULL)
+		goto scc_menu_generator_add_item_oom;
+	if (name != NULL) {
+		*((char**)&item->name) = strbuilder_cpy(name);
+		if (item->name == NULL)
+			goto scc_menu_generator_add_item_oom;
+	}
+	if (icon != NULL) {
+		*((char**)&item->icon) = strbuilder_cpy(icon);
+		if (item->icon == NULL)
+			goto scc_menu_generator_add_item_oom;
+	}
+	*((Action**)&item->action) = (action != NULL) ? action : NoAction;
+	if (!list_add(ctx->data->items, item))
+		goto scc_menu_generator_add_item_oom;
+	return true;
+	
+scc_menu_generator_add_item_oom:
+	ctx->failed = true;
+	RC_REL(item->action);
+	free((char*)item->name);
+	free((char*)item->icon);
+	free(item);
+	return false;
+}
+
+static Config* ctx_get_config(GeneratorContext* _ctx) {
+	struct _GeneratorContext* ctx = container_of(_ctx, struct _GeneratorContext, ctx);
+	return ctx->config;
+}
+
+static Parameter* ctx_get_parameter(GeneratorContext* _ctx, size_t index) {
+	struct _GeneratorContext* ctx = container_of(_ctx, struct _GeneratorContext, ctx);
+	if (ctx->params == NULL)
+		return NULL;
+	if (index >= list_len(ctx->params))
+		return NULL;
+	return list_get(ctx->params, index);
+}
+
+
+MenuData* scc_menudata_from_generator(const char* generator, Config* config, int* error) {
+	// TODO: Check freeing memory here
+	struct _MenuData* rv = NULL;
+	char* filename = NULL;
+	*error = 4;		// OOM
+	
+	// Prepare library name & load library
+	// TODO: This path should be somehow configurable or determined on runtime
+	StrBuilder* sb = strbuilder_new();
+	if (sb == NULL) return NULL;
+#ifdef _WIN32
+	strbuilder_add(sb, scc_get_share_path());
+	strbuilder_add_path(sb, "..\\menu-generators");
+#elif defined(__BSD__)
+	strbuilder_add(sb, "build-bsd/src/menu-generators");
+#else
+	strbuilder_add(sb, "build/src/menu-generators");
+#endif
+	strbuilder_add_path(sb, FILENAME_PREFIX);
+	strbuilder_add(sb, generator);
+	if (strchr(generator, '('))
+		// Stuff after ( are parameters, not part of filename
+		strbuilder_rtrim(sb, strlen(generator) - (strchr(generator, '(') - generator));
+	strbuilder_add(sb, FILENAME_SUFFIX);
+	if (strbuilder_failed(sb)) {
+		strbuilder_free(sb);
+		return NULL;
+	}
+	filename = strbuilder_consume(sb);
+	if (access(filename, R_OK) != 0) {
+		*error = 1;		// not found
+		LERROR("Failed to load '%s': file not found", filename);
+		free(filename);
+		return NULL;
+	}
+#ifdef _WIN32
+	HMODULE mdl = NULL;
+	mdl = LoadLibrary(full_path);
+	if (mdl == NULL) {
+		DWORD err = GetLastError();
+		LERROR("Failed to load '%s': Windows error 0x%x", filename, err);
+		*error = 2;		// found, but failed
+		goto scc_menudata_from_generator_cleanup;
+	}
+	scc_menu_generator_generate_fn generate_fn = (scc_driver_init_fn)GetProcAddress(mdl, "generate");
+	if (generate_fn == NULL) {
+		DWORD err = GetLastError();
+		LERROR("Failed to load 'scc_menu_generator_get_items' function from '%s': Windows error 0x%x", filename, err);
+		*error = 2;		// found, but failed
+		goto scc_menudata_from_generator_cleanup;
+	}
+#else
+	void* img = NULL;
+	img = dlopen(filename, RTLD_LAZY);
+	if (img == NULL) {
+		LERROR("Failed to load '%s': %s", generator, dlerror());
+		*error = 2;		// found, but failed
+		goto scc_menudata_from_generator_cleanup;
+	}
+	scc_menu_generator_generate_fn generate_fn = dlsym(img, "generate");
+	if (generate_fn == NULL) {
+		LERROR("Failed to load 'scc_menu_generator_get_items' function from '%s': Windows error 0x%x", generator, dlerror());
+		*error = 2;		// found, but failed
+		goto scc_menudata_from_generator_cleanup;
+	}
+#endif
+	free(filename);
+	
+	// Prepare context
+	struct _GeneratorContext ctx = {
+		.ctx = {
+			ctx_add_action,
+			ctx_get_config,
+			ctx_get_parameter
+		},
+		.data = malloc(sizeof(struct _MenuData)),
+		.params = NULL,
+		.config = config,
+		.failed = false
+	};
+	
+	if (ctx.data == NULL) goto scc_menudata_from_generator_cleanup;
+	ctx.data->items = list_new(MenuItem, 0);
+	if (ctx.data->items == NULL) goto scc_menudata_from_generator_cleanup;
+	
+	// Parse parameters
+	char* param_str = strchr(generator, '(');
+	if (param_str != NULL) {
+		ParamError* err;
+		Tokens* tokens = tokenize(param_str);
+		if (tokens == NULL)
+			goto scc_menudata_from_generator_cleanup;
+		ctx.params = _scc_tokens_to_param_list(tokens, &err);
+		tokens_free(tokens);
+		if (err != NULL) {
+			LERROR("Failed to parse generator arguments: %s", err->message);
+			RC_REL(err);
+			*error = 3;
+			goto scc_menudata_from_generator_cleanup;
+		}
+	}
+	
+	// Generate
+	generate_fn(&ctx.ctx);
+	
+	// Check results
+	if (ctx.failed) {
+		// OOM durring generation
+		scc_menudata_free(&ctx.data->menudata);
+		goto scc_menudata_from_generator_cleanup;
+	}
+	if (list_len(ctx.data->items) == 0) {
+		// Generator finished, but generated no data
+		*error = 0;
+		goto scc_menudata_from_generator_cleanup;
+	}
+	
+	*error = 0;
+	ctx.data->menudata.iter_get = &menudata_iter_get;
+	rv = ctx.data;
+	
+scc_menudata_from_generator_cleanup:
+#ifdef _WIN32
+	if (hndl != NULL) FreeLibrary(hndl);
+#else
+	if (img != NULL) dlclose(img);
+#endif	// _WIN32
+	if (ctx.params != NULL)
+		list_free(ctx.params);
+	if ((rv == NULL) && (ctx.data != NULL))
+		scc_menudata_free(&ctx.data->menudata);
+	return &rv->menudata;
+}
+
+#else
+
+MenuData* scc_menudata_from_generator(const char* generator, Config* config, int* error) {
+	*error = 0;
+	return NULL;
+}
+
+#endif

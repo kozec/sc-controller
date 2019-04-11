@@ -123,6 +123,7 @@ ParamOE scc_parse_param_list(const char* str) {
 	Tokens* tokens = tokenize(str);
 	if (tokens == NULL) return rv;			// OOM
 	ParameterList lst = _scc_tokens_to_param_list(tokens, &rv.error);
+	tokens_free(tokens);
 	if (lst == NULL) return rv;				// OOM
 	
 	rv.parameter = scc_param_list_to_tuple(lst);

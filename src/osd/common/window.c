@@ -76,6 +76,7 @@ static void osd_window_show(GtkWidget* widget) {
 	gtk_window_show(widget);
 #else
 	gtk_window_show(widget);
+	/*
 	Display* dpy = gdk_x11_get_default_xdisplay();
 	ASSERT(dpy != NULL);
 	GdkWindow* gdk_window = gtk_widget_get_window(GTK_WIDGET(w));
@@ -86,6 +87,7 @@ static void osd_window_show(GtkWidget* widget) {
 	XFixesSetWindowShapeRegion(dpy, xid, ShapeBounding, 0, 0, (XserverRegion)0);
 	XFixesSetWindowShapeRegion(dpy, xid, ShapeInput, 0, 0, reg);
 	XFixesDestroyRegion(dpy, reg);
+	*/
 #endif
 	gdk_window_move(gtk_widget_get_window(widget), x, y);
 }

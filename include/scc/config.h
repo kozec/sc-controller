@@ -135,3 +135,4 @@ int config_set_double(Config* c, const char* path, double value);
  * Returns -2 if config_set_strings tries to overwrite value with different type.
  */
 int config_set_strings(Config* c, const char* path, const char** list, ssize_t count);
+

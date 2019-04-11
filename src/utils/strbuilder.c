@@ -318,6 +318,18 @@ strbuilder_insertf_this_shouldnt_ever_happen:
 }
 
 
+void strbuilder_rtrim(StrBuilder* b, size_t count) {
+	if (count > b->length) {
+		b->length = 0;
+		b->value[0] = 0;
+	} else {
+		b->length -= count;
+		b->next -= count;
+		*b->next = 0;
+	}
+}
+
+
 bool strbuilder_escape(StrBuilder* b, const char* chars) {
 	if (b == NULL) return false;
 	// Count space needed 1st

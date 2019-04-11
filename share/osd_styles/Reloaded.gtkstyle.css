@@ -67,10 +67,17 @@
 	margin: 0px 0px 2px 0px;
 }
 
-#osd-menu-item label, #osd-menu-item-selected label, #osd-menu-dummy label,
-#osd-menu-item-big-icon label, #osd-menu-item-big-icon-selected label,
-#osd-launcher-item label, #osd-launcher-item-selected label {
+#osd-menu-item label, #osd-menu-dummy label, #osd-menu-item-big-icon label,
+#osd-key-buton label, #osd-key-buton-hilight label, #osd-launcher-item label,
+#osd-hidden-item label, #osd-menu-item #icon, #osd-menu-item-big-icon #icon {
 	color: #{text};
+}
+
+#osd-menu-item-selected label, #osd-menu-item-big-icon-selected label,
+#osd-launcher-item-selected label, #osd-hidden-item-selected label,
+#osd-key-buton-selected label, #osd-menu-item-selected #icon,
+#osd-menu-item-big-icon-selected #icon {
+	color: #{menuitem_hilight_text};
 }
 
 #osd-hidden-item, #osd-hidden-item-selected,

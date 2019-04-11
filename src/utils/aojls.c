@@ -302,7 +302,7 @@ json_object* json_object_set(json_object* o, const char* key, json_value_t* valu
 
 	for (size_t i=0; i<o->n; i++) {
 		if (0 == strcmp(o->keys[i], key)) {
-			o->values[o->n] = value;
+			o->values[i] = value;
 			return o;
 		}
 	}

@@ -7,8 +7,9 @@ Usable for any kind of pointer and compatible with get_iter macro from iterable.
 
 #pragma once
 #include "scc/utils/iterable.h"
-#include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <stddef.h>
 
 typedef struct _List_data {
 	size_t				size;
@@ -26,6 +27,7 @@ typedef struct _List_data {
 
 typedef void(*list_foreach_cb)(void* item);
 typedef bool(*list_filter_cb)(void* item, void* userdata);
+typedef int(*comparison_fn_t)(const void* i1, const void* i2);
 
 typedef LIST_TYPE(void) _voidlist;
 typedef LIST_TYPE(char) StringList;
@@ -132,6 +134,12 @@ void list_set_dealloc_cb(void* list, void(*dealloc_cb)(void*));
  * This allocates no additional memory and cannot fail.
  */
 void list_filter(void* list, list_filter_cb cb, void* userdata);
+
+/**
+ * Sorts list using 'compare' function. List size is not changed and so
+ * this cannot fail.
+ */
+void list_sort(void* list, comparison_fn_t compare);
 
 /**
  * Deallocates list and returns pointer to first item in it.

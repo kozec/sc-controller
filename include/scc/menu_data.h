@@ -16,6 +16,7 @@
 
 typedef struct MenuData MenuData;
 typedef struct MenuItem MenuItem;
+typedef struct Config Config;
 
 typedef enum {
 	MI_SEPARATOR,
@@ -49,7 +50,7 @@ struct MenuItem {
 	const char*				name;
 	
 	union {
-		/** Action to be executed. May be NULL. Available only with MI_SUBMENU */
+		/** Action to be executed. May be NULL. Available only with MI_ACTION */
 		Action*				action;
 		
 		/**
@@ -61,12 +62,6 @@ struct MenuItem {
 		/** Name of menu file to load submenu from. Available only with MI_SUBMENU */
 		const char*			submenu;
 	};
-	
-	/**
-	 * Number of rows used by generator. Used only by 'recent' generator.
-	 * Defaults to 5
-	 */
-	const size_t			rows;
 	
 	/** Name of icon displayed along with label */
 	const char*				icon;
@@ -90,6 +85,27 @@ struct MenuData {
 MenuData* scc_menudata_from_json(const char* filename, int* error);
 
 /**
+ * Errors codes set when NULL is returned:
+ * - 0: Generator generated no data (not really error)
+ * - 1: Unknown generator
+ * - 2: Generator is known, but failed to be loaded
+ * - 3: Parameters provided, but failed to parse
+ * - 4: Out of memory
+ */
+MenuData* scc_menudata_from_generator(const char* generator, Config* config, int* error);
+
+/**
+ * Converts all MI_GENERATOR items into items they generated.
+ * Returns 1 on success
+ * Returns 0 if any generator failed.
+ * Returns 4 on memory error.
+ *
+ * It's partially safe to ignore errors; MenuData will be changed
+ * in some undefined way, but it will still contain valid menu.
+ */
+int scc_menudata_apply_generators(MenuData* data, Config* cfg);
+
+/**
  * Returns menu item with matching id or NULL if there is no such.
  * Returned item shall not be deallocated - it will be alive
  * as long as parent MenuData is.
@@ -103,4 +119,6 @@ MenuItem* scc_menudata_get_by_index(const MenuData* data, size_t index);
 size_t scc_menudata_len(const MenuData* data);
 
 
+
 // TODO: Where t.f. is scc_menudata_free?
+
