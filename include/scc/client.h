@@ -143,9 +143,19 @@ DLL_EXPORT void sccc_unref(SCCClient* c);
  *
  * Returns NULL on failure.
  */
-DLL_EXPORT Mapper* sccc_create_slave_mapper(SCCClient* c);
+DLL_EXPORT Mapper* sccc_slave_mapper_new(SCCClient* c);
 
-// TODO: Deallocator for this
+// TODO: Deallocator for above
+
+typedef struct VirtualDevice VirtualDevice;
+
+/**
+ * Attaches virtual devices to slave mapper. Either of devices (or both) may be NULL.
+ */
+DLL_EXPORT void sccc_slave_mapper_set_devices(Mapper* mapper, VirtualDevice* keyboard, VirtualDevice* mouse);
+
+/** Parses data recieved by 'on_event' callback to generate slave mapper inputs. */
+DLL_EXPORT void sccc_slave_mapper_feed(Mapper* mapper, SCButton button, PadStickTrigger pst, int values[]);
 
 /** Returns true if message startws with "OK." */
 #define sccc_is_ok(x) ((x != NULL) && ((x)[0] == 'O') && ((x)[1] == 'K') && ((x)[2] == '.'))

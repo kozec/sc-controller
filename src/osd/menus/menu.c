@@ -327,7 +327,7 @@ OSDMenu* osd_menu_new(const char* filename) {
 	
 	priv->sc = stick_controller_create(&osd_menu_stick, mnu);
 	ASSERT(priv->sc != NULL);
-	priv->slave_mapper = sccc_create_slave_mapper(client);
+	priv->slave_mapper = sccc_slave_mapper_new(client);
 	ASSERT(priv->slave_mapper != NULL);
 	priv->data = data;
 	priv->selected = NULL;

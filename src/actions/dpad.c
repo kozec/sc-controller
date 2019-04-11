@@ -161,7 +161,6 @@ static Parameter* get_property(Action* a, const char* name) {
 
 
 static ActionOE dpad_constructor(const char* keyword, ParameterList params) {
-	uint8_t size;
 	ParamError* err = scc_param_checker_check(&pc8, keyword, params);
 	
 	if (err != NULL) return (ActionOE)err;

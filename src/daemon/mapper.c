@@ -419,3 +419,4 @@ static void input(Mapper* _m, ControllerInput* i) {
 	
 	sccd_mapper_flush(m);
 }
+

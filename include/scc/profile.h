@@ -27,7 +27,7 @@ struct Profile {
 	 * is ignored (but it's safe to decrease.)
 	 */
 	Action*			(*get_button)(Profile* p, SCButton b);
-
+	
 	/**
 	 * Returns action assigned to given trigger or NoAction.
 	 * Reference counter on returned action is increased and has to be 
@@ -35,7 +35,7 @@ struct Profile {
 	 * is ignored (but it's safe to decrease.)
 	 */
 	Action*			(*get_trigger)(Profile* p, PadStickTrigger t);
-
+	
 	/**
 	 * Returns action assigned to given pad or NoAction.
 	 * Reference counter on returned action is increased and has to be 
@@ -43,25 +43,25 @@ struct Profile {
 	 * is ignored (but it's safe to decrease.)
 	 */
 	Action*			(*get_pad)(Profile* p, PadStickTrigger t);
-
+	
 	/**
 	 * Returns action assigned to stick (which can be NoAction).
 	 * Reference counter on returned action is increased and has to be 
 	 * decreased by caller unless it's NoAction, in which case reference counter
 	 * is ignored (but it's safe to decrease.)
 	 */
-
+	
 	Action*			(*get_stick)(Profile* p);
-
+	
 	/**
 	 * Returns action assigned to gyros (which can be NoAction).
 	 * Reference counter on returned action is increased and has to be 
 	 * decreased by caller unless it's NoAction, in which case reference counter
 	 * is ignored (but it's safe to decrease.)
 	 */
-
+	
 	Action*			(*get_gyro)(Profile* p);
-
+	
 	bool			(*is_template)(Profile* p);
 	float			(*get_version)(Profile* p);
 	

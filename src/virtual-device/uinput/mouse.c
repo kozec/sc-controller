@@ -25,8 +25,10 @@ static uint16_t mouse_rels[] = {
 VirtualDevice* setup_mouse(const VirtualDeviceSettings* settings) {
 	struct uinput_user_dev uidev;
 	memset(&uidev, 0, sizeof(uidev));
-	strncpy(uidev.name, (settings->name == NULL) ? "SC Controller Mouse" :
-										settings->name, UINPUT_MAX_NAME_SIZE);
+	if ((settings == NULL) || (settings->name == NULL))
+		strncpy(uidev.name, "SC Controller Mouse", UINPUT_MAX_NAME_SIZE);
+	else
+		strncpy(uidev.name, settings->name, UINPUT_MAX_NAME_SIZE);
 	uidev.id.bustype = BUS_USB;
 	uidev.id.vendor = 0x28de;
 	uidev.id.product = 0x1142;

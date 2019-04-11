@@ -22,10 +22,17 @@ client_lib = shared_library('scc-client',
 	link_with: [ tools_lib, utils_lib ] + platform_dependent_link_with,
 	dependencies: platform_dependent_deps,
 	sources: [
-		'slave_mapper.c',
 		'controller.c',
 		'command.c',
 		'socket.c',
+	]
+)
+
+slave_mapper_lib = shared_library('scc-slave-mapper',
+	include_directories: include,
+	link_with: [ client_lib, virtual_device_lib ],
+	sources: [
+		'slave_mapper.c',
 	]
 )
 

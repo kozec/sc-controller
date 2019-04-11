@@ -60,7 +60,7 @@ VirtualDevice* setup_gamepad(const VirtualDeviceSettings* settings) {
 		}
 	}
 	
-	VirtualGamepadType gamepad_type = settings->gamepad_type;
+	VirtualGamepadType gamepad_type = (settings == NULL) ? VGT_AUTO : settings->gamepad_type;
 	OSVERSIONINFO osvi;
 	memset(&osvi, 0, sizeof(OSVERSIONINFO));
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);

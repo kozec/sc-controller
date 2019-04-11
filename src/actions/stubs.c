@@ -17,7 +17,6 @@ const char* KW_CIRCULAR_ABS = "circularabs";
 const char* KW_TILT = "tilt";
 const char* KW_GYRO = "gyro";
 const char* KW_GYRO_ABS = "gyroabs";
-const char* KW_RING = "ring";
 const char* KW_KEYBOARD = "keyboard";
 const char* KW_RESETGYRO = "resetgyro";
 const char* KW_CLEAROSD = "clearosd";
@@ -40,7 +39,6 @@ const char* KW_GRID_MENU = "gridmenu";
 static ParamChecker pc_circular;
 static ParamChecker pc_tilt;
 static ParamChecker pc_gyro;
-static ParamChecker pc_ring;
 static ParamChecker pc_osd;
 static ParamChecker pc_rotate;
 static ParamChecker pc_position;
@@ -103,10 +101,6 @@ static ActionOE stub_constructor(const char* keyword, ParameterList params) {
 		keyword = KW_CIRCULAR_ABS;
 		flags = AF_ACTION;
 		pc = &pc_circular;
-	} else if (0 == strcmp(KW_RING, keyword)) {
-		keyword = KW_RING;
-		flags = AF_ACTION;
-		pc = &pc_ring;
 	} else if (0 == strcmp(KW_GYRO, keyword)) {
 		keyword = KW_GYRO;
 		flags = AF_ACTION;
@@ -216,10 +210,6 @@ static ActionOE stub_constructor(const char* keyword, ParameterList params) {
 		b->children = scc_make_action_list(
 				scc_parameter_as_action(list_get(params, 0)),
 				scc_parameter_as_action(list_get(params, 1)));
-	} else if (keyword == KW_RING) {
-		b->children = scc_make_action_list(
-				scc_parameter_as_action(list_get(params, 1)),
-				scc_parameter_as_action(list_get(params, 2)));
 	} else if (keyword == KW_TILT) {
 		b->children = scc_make_action_list(
 				scc_parameter_as_action(list_get(params, 0)),
@@ -245,9 +235,6 @@ void scc_actions_init_stub() {
 	scc_param_checker_init(&pc_circular, "a?a?");
 	scc_param_checker_set_defaults(&pc_circular, NoAction, NoAction);
 	
-	scc_param_checker_init(&pc_ring, "f?aa?");
-	scc_param_checker_set_defaults(&pc_ring, 0.5, NoAction);
-	
 	scc_param_checker_init(&pc_rotate, "fa");
 	
 	scc_param_checker_init(&pc_shell, "s");
@@ -271,7 +258,6 @@ void scc_actions_init_stub() {
 	scc_action_register(KW_TILT, &stub_constructor);
 	scc_action_register(KW_GYRO, &stub_constructor);
 	scc_action_register(KW_GYRO_ABS, &stub_constructor);
-	scc_action_register(KW_RING, &stub_constructor);
 	scc_action_register(KW_KEYBOARD, &stub_constructor);
 	scc_action_register(KW_RESETGYRO, &stub_constructor);
 	scc_action_register(KW_CLEAROSD, &stub_constructor);

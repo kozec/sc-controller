@@ -38,8 +38,10 @@ void keyboard_scan_event(struct Internal* idev, Keycode key) {
 VirtualDevice* setup_keyboard(const VirtualDeviceSettings* settings) {
 	struct uinput_user_dev uidev;
 	memset(&uidev, 0, sizeof(uidev));
-	strncpy(uidev.name, (settings->name == NULL) ? "SC Controller Keyboard" :
-										settings->name, UINPUT_MAX_NAME_SIZE);
+	if ((settings == NULL) || (settings->name == NULL))
+		strncpy(uidev.name, "SC Controller Keyboard", UINPUT_MAX_NAME_SIZE);
+	else
+		strncpy(uidev.name, settings->name, UINPUT_MAX_NAME_SIZE);
 	
 	uidev.id.bustype = BUS_USB;
 	uidev.id.vendor = 0x28de;

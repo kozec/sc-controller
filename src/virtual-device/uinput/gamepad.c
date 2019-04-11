@@ -28,12 +28,18 @@ static struct axis gamepad_axes[] = {
 VirtualDevice* setup_gamepad(const VirtualDeviceSettings* settings) {
 	struct uinput_user_dev uidev;
 	memset(&uidev, 0, sizeof(uidev));
-	strncpy(uidev.name, (settings->name == NULL) ? "Microsoft X-Box 360 pad" :
-										settings->name, UINPUT_MAX_NAME_SIZE);
 	uidev.id.bustype = BUS_USB;
-	uidev.id.vendor = settings->gamepad.vendor_id;
-	uidev.id.product = settings->gamepad.product_id;
-	uidev.id.version = settings->gamepad.version;
+	if ((settings == NULL) || (settings->name == NULL)) {
+		strncpy(uidev.name, "Microsoft X-Box 360 pad", UINPUT_MAX_NAME_SIZE);
+		uidev.id.vendor = settings->gamepad.vendor_id;
+		uidev.id.product = settings->gamepad.product_id;
+		uidev.id.version = settings->gamepad.version;
+	} else {
+		strncpy(uidev.name, settings->name, UINPUT_MAX_NAME_SIZE);
+		uidev.id.vendor = 0x045e;
+		uidev.id.product = 0x110;
+		uidev.id.version = 1;
+	}
 	uidev.ff_effects_max = 0;
 	
 	return setup_device(VTP_GAMEPAD, uidev,
