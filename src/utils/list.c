@@ -133,6 +133,17 @@ bool list_remove(void* _list, void* item) {
 	return false;
 }
 
+int list_index(void* _list, void* item) {
+	_voidlist list = (_voidlist)_list;
+	int i = 0;
+	while (i < list->_data.size) {
+		if (item == list->items[i])
+			return i;
+		i++;
+	}
+	return -1;
+}
+
 bool list_set(void* _list, size_t n, void* item) {
 	_voidlist list = (_voidlist)_list;
 	if (n < list->_data.size) {

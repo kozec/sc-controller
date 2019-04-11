@@ -130,6 +130,8 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 				sccd_socket_send(client, line);
 				free(line);
 			}
+			if (!sccd_logger_client_add(client))
+				sccd_drop_client_asap(client);	// OOM
 			return;
 		}
 		break;

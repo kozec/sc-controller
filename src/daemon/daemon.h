@@ -63,6 +63,12 @@ const char* sccd_get_current_profile();
 void sccd_logger_init(bool log_to_stdout);
 /** Returns entire log as one giant string */
 const char* sccd_logger_get_log();
+/**
+ * Adds client to list of clients that are getting log messages.
+ * Returns false if memory cannot be allocated.
+ */
+bool sccd_logger_client_add(Client* c);
+void sccd_logger_client_remove(Client* c);
 
 void sccd_poller_init();
 bool sccd_poller_add(int fd, sccd_poller_cb cb, void* userdata);

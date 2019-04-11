@@ -57,6 +57,7 @@ static void drop(Client* client) {
 		sccd_set_special_client(SCT_AUTOSWITCH, NULL);
 		INFO("scc-autoswitch-daemon lost");
 	}
+	sccd_logger_client_remove(client);
 
 	if (client->tag != NULL)
 		free(client->tag);

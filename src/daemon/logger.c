@@ -6,13 +6,35 @@
 #define LOG_TAG "log"
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/list.h"
 #include "daemon.h"
+
+typedef LIST_TYPE(Client) ClientList;
 
 #define BUFFER_SIZE		20480	/* 20kB */
 static logging_handler original = NULL;
 static char* buffer = NULL;
 static size_t used = 0;
+static ClientList clients = NULL;
 static const char* OOM = "(oom. failed to store message)";
+
+bool sccd_logger_client_add(Client* c) {
+	if (clients == NULL) {
+		clients = list_new(Client, 5);
+		if (clients == NULL) return false;
+	}
+	if (list_index(clients, c) >= 0)
+		return true;	// already there
+	if (!list_add(clients, c))
+		return false;
+	return true;
+}
+
+void sccd_logger_client_remove(Client* c) {
+	if (clients == NULL)
+		return;
+	list_remove(clients, c);
+}
 
 /** Removes first message from buffer */
 static void sccd_logger_unshift_message() {
@@ -32,7 +54,7 @@ static void sccd_logger_log(const char* tag, const char* filename, int level, co
 	if (original != NULL)
 		original(tag, filename, level, message);
 	char* msg = strbuilder_fmt("%i %s %s", level, tag, message);
-	if (msg == NULL) msg = OOM;
+	if (msg == NULL) msg = (char*)OOM;
 	size_t len = strlen(msg);
 	if (len >= BUFFER_SIZE) {
 		WARN("Failed to store log message: message too long");
@@ -43,6 +65,15 @@ static void sccd_logger_log(const char* tag, const char* filename, int level, co
 		if (used != 0)
 			*(buffer + used - 1) = '\n';
 		used += len + 1;
+	}
+	if (clients != NULL) {
+		char* line = strbuilder_fmt("Log: %s\n", msg);
+		if (line != NULL) {
+			FOREACH_IN(Client*, client, clients) {
+				sccd_socket_send(client, line);
+			}
+			free(line);
+		}
 	}
 	if (msg != OOM) free(msg);
 }

@@ -75,6 +75,9 @@ bool list_remove(void* list, void* item);
  */
 void list_clear(void* list);
 
+/** Returns index of intem in list or -1 if item is not found */
+int list_index(void* list, void* item);
+
 /**
  * Ensures that list has enough space for at least n new items.
  * This is good way to ensure memory is available before creating objects,
@@ -89,7 +92,7 @@ bool list_allocate(void* list, size_t n);
  * Sets n-th element of list.
  * If n is bigger or equal to current size of list lis tsize is increased and
  * padded with NULLs.
- * 
+ *
  * Returns false on out-of-memory error
  */
 bool list_set(void* list, size_t n, void* item);
@@ -138,3 +141,4 @@ void** list_consume(void* list);
 
 /** Deallocates list */
 void list_free(void* list);
+
