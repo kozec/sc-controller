@@ -99,7 +99,7 @@ int on_command(struct _SCCClient* c, char* msg) {
 			return 1;
 		}
 		break;
-
+	
 	}
 	tokens_free(tokens);
 	return 0;
@@ -108,3 +108,4 @@ on_command_oom:
 	tokens_free(tokens);
 	return -1;
 }
+

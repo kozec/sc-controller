@@ -138,6 +138,19 @@ DLL_EXPORT size_t scc_get_button_constants(EnumValue array[], size_t count);
 DLL_EXPORT Parameter* scc_get_const_parameter(const char* name);
 
 /**
+ * Returns configuration directory, that is ~/.config/scc under normal conditions.
+ * Returned value is cached internally and should NOT be free'd by caller.
+ */
+DLL_EXPORT const char* scc_get_config_path();
+
+/**
+ * Returns path to socket that can be used to control scc-daemon,
+ * that usually is ~/.config/scc/daemon.socket
+ * Returned value is cached internally and should NOT be free'd by caller.
+ */
+DLL_EXPORT const char* scc_get_daemon_socket();
+
+/**
  * Returns directory where shared files are kept.
  * Usually /usr/share/scc, cwd() or $SCC_SHARED if defined
  * Returned value is cached internally and should NOT be free'd by caller.

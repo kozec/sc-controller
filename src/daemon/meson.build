@@ -1,5 +1,6 @@
 platform_dependent_deps = []
 platform_dependent_src = []
+platform_dependent_link_with = []
 
 if host_machine.system() == 'linux'
 	platform_dependent_deps = [
@@ -36,12 +37,12 @@ elif host_machine.system() == 'windows'
 		meson.get_compiler('c').find_library('wsock32'),
 		meson.get_compiler('c').find_library('libusb-1.0'),
 	]
+	platform_dependent_link_with = [
+		client_lib, msys_socket_lib,
+	]
 	platform_dependent_src = [
 		'device_monitor_win32.c',
 		'usb_helper.c',
-		'../client/controller.c',
-		'../client/command.c',
-		'../client/socket.c',
 	]
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
@@ -51,7 +52,7 @@ endif
 executable('scc-daemon',
 	include_directories: include,
 	link_with: [ utils_lib, tools_lib, parser_lib, actions_lib,
-				 config_lib, virtual_device_lib ],
+				 config_lib, virtual_device_lib ] + platform_dependent_link_with,
 	dependencies: platform_dependent_deps,
 	build_rpath: '/usr/X11R6/lib',
 	sources: platform_dependent_src + [

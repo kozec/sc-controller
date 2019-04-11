@@ -51,3 +51,4 @@ void remove_nonalive(ControllerList lst);
 
 /** Marks controller not 'alive' */
 void mark_non_alive_foreach_cb(void* item);
+

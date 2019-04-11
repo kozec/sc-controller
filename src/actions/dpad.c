@@ -221,3 +221,4 @@ void scc_actions_init_dpad() {
 	scc_action_register(KW_DPAD4, &dpad_constructor);
 	scc_action_register(KW_DPAD8, &dpad_constructor);		// for backwards compatibility
 }
+

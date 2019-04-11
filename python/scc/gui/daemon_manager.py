@@ -118,10 +118,18 @@ class DaemonManager(GObject.GObject):
 		self.connecting = True
 		sc = Gio.SocketClient()
 		if platform.system() == "Windows":
-			pass
+			sccc = libscc_client.sccc_connect()
+			if sccc is None:
+				self.connecting = False
+				return self._on_daemon_died()	
+			fd = libscc_client.sccc_get_fd(sccc)
+			sock = Gio.Socket.new_from_fd(fd)
+			connection = Gio.Socket.connection_factory_create_connection(sock)
+			connection._sccc = sccc
+			return self._on_connected(None, None, connection=connection)
 		else:
 			address = Gio.UnixSocketAddress.new(get_daemon_socket())
-			sc.connect_async(address, None, self._on_connected)
+		sc.connect_async(address, None, self._on_connected)
 	
 	
 	def _on_daemon_died(self, *a):
@@ -136,22 +144,31 @@ class DaemonManager(GObject.GObject):
 		# Close connection, if any
 		if self.connection is not None:
 			self.connection.close()
-			self.connection = None
+			if platform.system() == "Windows":
+				sccc = self.connection._sccc
+				self.connection = None
+				libscc_client.sccc_unref(sccc)
+			else:
+				self.connection = None
 		# Emit event
 		# Try to reconnect
 		GLib.timeout_add_seconds(self.RECONNECT_INTERVAL, self._connect)
 	
 	
-	def _on_connected(self, sc, results):
+	def _on_connected(self, sc, results, connection = False):
 		""" Called when connection to daemon socket is initiated """
 		self.connecting = False
-		try:
-			self.connection = sc.connect_finish(results)
-			if self.connection == None:
-				raise Exception("Unknown error")
-		except Exception, e:
-			self._on_daemon_died()
-			return
+		if connection:
+			self.connection = connection
+		else:
+			try:
+				self.connection = sc.connect_finish(results)
+				if self.connection == None:
+					raise Exception("Unknown error")
+			except Exception, e:
+				self._on_daemon_died()
+				return
+		
 		self.buffer = ""
 		self.connection.get_input_stream().read_bytes_async(102400,
 			1, None, self._on_read_data)
@@ -534,3 +551,16 @@ class ControllerManager(GObject.GObject):
 		if self._dm.alive:
 			self._send_id()
 			self._dm.request("Unlock.", lambda *a: False, lambda *a: False)
+
+
+if platform.system() == "Windows":
+	from scc.find_library import find_library
+	import ctypes
+	libscc_client = find_library("libscc-client")
+	libscc_client.sccc_connect.argtypes = [ ]
+	libscc_client.sccc_connect.restype = ctypes.c_void_p
+	libscc_client.sccc_get_fd.argtypes = [ ctypes.c_void_p ]
+	libscc_client.sccc_get_fd.restype = ctypes.c_int
+	libscc_client.sccc_unref.argtypes = [ ctypes.c_void_p ]
+	libscc_client.sccc_unref.restype = None
+

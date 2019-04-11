@@ -19,10 +19,7 @@ def get_config_path():
 	Returns configuration directory.
 	~/.config/scc under normal conditions.
 	"""
-	confdir = os.path.expanduser("~/.config")
-	if "XDG_CONFIG_HOME" in os.environ:
-		confdir = os.environ['XDG_CONFIG_HOME']
-	return os.path.join(confdir, "scc")
+	return str(lib_bindings.scc_get_config_path())
 
 
 def get_profiles_path():
@@ -132,10 +129,15 @@ def get_daemon_socket():
 	
 	~/.config/scc/daemon.socket under normal conditions.
 	"""
-	return os.path.join(get_config_path(), "daemon.socket")
+	return str(lib_bindings.scc_get_daemon_socket())
 
 
 lib_bindings = find_library("libscc-bindings")
+
+lib_bindings.scc_get_config_path.argtypes = [ ]
+lib_bindings.scc_get_config_path.restype = ctypes.c_char_p
+lib_bindings.scc_get_daemon_socket.argtypes = [ ]
+lib_bindings.scc_get_daemon_socket.restype = ctypes.c_char_p
 lib_bindings.scc_get_share_path.argtypes = [ ]
 lib_bindings.scc_get_share_path.restype = ctypes.c_char_p
 

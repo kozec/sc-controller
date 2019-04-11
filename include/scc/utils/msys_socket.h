@@ -11,6 +11,7 @@
 #error "You've included msys_socket.h from something that's not Windows. Why?"
 #else
 #define FD_SETSIZE 512
+#include "scc/utils/dll_export.h"
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
@@ -26,21 +27,22 @@ struct sockaddr_un {
  * Creates msys-compatible 'unix' socket. domain has to be PF_UNIX.
  * Don't forget to call WSAStartup before this.
  */
-int msys_socket(int domain, int type, int protocol);
+DLL_EXPORT int msys_socket(int domain, int type, int protocol);
 
 /** Connects to 'unix' socket. address_len has to be sizeof(struct sockaddr_un) */
-int msys_connect(int socket, const struct sockaddr* address, socklen_t address_len);
+DLL_EXPORT int msys_connect(int socket, const struct sockaddr* address, socklen_t address_len);
 
 /** Binds socket. address_len has to be sizeof(struct sockaddr_un) */
-int msys_bind(int socket, const struct sockaddr *address, socklen_t address_len);
+DLL_EXPORT int msys_bind(int socket, const struct sockaddr *address, socklen_t address_len);
 
 /** Closes socket. You have ot call this for every socket created by msys_socket to free memory  */
-int msys_close(int socket);
+DLL_EXPORT int msys_close(int socket);
 
 /** Accepts connection on socket created by msys_socket */
-int msys_accept(int sock, struct sockaddr* address, socklen_t* address_len);
+DLL_EXPORT int msys_accept(int sock, struct sockaddr* address, socklen_t* address_len);
 
 /** You can just use listen instead of this */
 #define msys_listen(socket, buffer) listen(socket, buffer)
+
 
 #endif

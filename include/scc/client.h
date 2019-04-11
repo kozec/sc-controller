@@ -132,6 +132,10 @@ DLL_EXPORT char* sccc_get_response(SCCClient* c, int32_t id);
 /** Returns file descriptor assotiated with client */
 DLL_EXPORT int sccc_get_fd(SCCClient* c);
 
+/**
+ * Releases reference on SCCClient. This is same as using RC_REL(c) macro.
+ */
+DLL_EXPORT void sccc_unref(SCCClient* c);
 
 /**
  * Creates Slave Mapper. Slave Mapper can take inputs from actual controller

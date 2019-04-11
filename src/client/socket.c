@@ -229,3 +229,7 @@ char* sccc_get_response(SCCClient* _c, int32_t id) {
 	}
 }
 
+void sccc_unref(SCCClient* c) {
+	RC_REL(c);
+}
+

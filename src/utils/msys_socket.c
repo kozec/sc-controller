@@ -186,7 +186,7 @@ int msys_accept(int sock, struct sockaddr* address, socklen_t* address_len) {
 	DWORD timeout = 500;
 	DWORD old_timeout;
 	int trash = sizeof(DWORD);
-
+	
 	if (getsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&old_timeout, &trash) < 0) {
 		LERROR("getsockopt SO_RCVTIMEO failed");
 		goto msys_accept_fail;
@@ -205,12 +205,16 @@ int msys_accept(int sock, struct sockaddr* address, socklen_t* address_len) {
 	}
 	
 	send(c, buffer, 16, 0);
-	if (recv(c, buffer, 12, MSG_WAITALL) < 12)
+	if (recv(c, buffer, 12, MSG_WAITALL) < 12) {
+		WSASetLastError(WSA_OPERATION_ABORTED);
 		goto msys_accept_fail;
+	}
 	send(c, buffer, 12, 0);
 	
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&old_timeout, sizeof(DWORD)) < 0)
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&old_timeout, sizeof(DWORD)) < 0) {
+		WSASetLastError(WSA_OPERATION_ABORTED);
 		goto msys_accept_fail;
+	}
 	
 	return c;
 	
@@ -230,8 +234,9 @@ int msys_close(int sock) {
 		intmap_remove(secrets, sock);
 		free(gid);
 	}
-
+	
 	return closesocket(sock);
 }
 
 #endif // _WIN32
+
