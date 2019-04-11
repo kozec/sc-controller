@@ -108,6 +108,29 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 				send_error_dealoc(client, tokens, strbuilder_fmt("Fail: Cannot lock %s\n", failed));
 			list_free(sources);
 			return;
+		} else if (0 == strcmp(command, "Log.")) {
+			const char* log = sccd_logger_get_log();
+			const char* end = log + strlen(log);
+			while (log < end) {
+				char* line = NULL;
+				const char* next = strstr(log, "\n");
+				if (next == NULL) {
+					line = malloc(strlen(log) + 7);
+					if (line == NULL) return;
+					strcpy(line, "Log: ");
+					strcat(line, log);
+					log = end;
+				} else {
+					line = malloc(next - log + 1 + 7);
+					strcpy(line, "Log: ");
+					strncat(line, log, next-log);
+					log = next + 1;
+				}
+				strcat(line, "\n");
+				sccd_socket_send(client, line);
+				free(line);
+			}
+			return;
 		}
 		break;
 	case 'O':

@@ -224,6 +224,7 @@ int main(int argc, char** argv) {
 		stop_daemon(once);
 		return start_daemon();
 	case M_DEBUG:
+		sccd_logger_init(true);
 		return sccd_start();
 	default:
 		argparse_usage(&argparse);

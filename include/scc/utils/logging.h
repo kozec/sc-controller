@@ -4,6 +4,15 @@
 #include <string.h>
 #include <stdlib.h>
 
+typedef void (*logging_handler)(const char* tag, const char* filename, int level, const char* message);
+
+/**
+ * Sets log handler, function that's responsible for getting logged messages to screen
+ * (or to any other output file or device)
+ * Returns previously set logging_handler.
+ */
+logging_handler logging_set_handler(logging_handler new_handler);
+
 #define LOG_TAG_LEN 12
 
 typedef enum {
