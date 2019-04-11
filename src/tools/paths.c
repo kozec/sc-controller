@@ -16,6 +16,7 @@
 #include "scc/utils/assert.h"
 #include "scc/tools.h"
 #include <dirent.h>
+#include <unistd.h>
 #include <errno.h>
 
 #ifdef _WIN32
@@ -32,7 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// I know that PATH_MAX is bad idea, but I'm kinda relying on nobody having 
+// I know that PATH_MAX is bad idea, but I'm kinda relying on nobody having
 // path to home directory over 1kB long...
 static char config_path[PATH_MAX] = {0};
 static char socket_path[PATH_MAX + 128] = {0};
@@ -42,6 +43,8 @@ static char profiles_path[PATH_MAX + 128] = {0};
 static char default_profiles_path[PATH_MAX + 128] = {0};
 static char menus_path[PATH_MAX + 128] = {0};
 static char default_menus_path[PATH_MAX + 128] = {0};
+static char menuicons_path[PATH_MAX + 128] = {0};
+static char default_menuicons_path[PATH_MAX + 128] = {0};
 static char pid_file_path[PATH_MAX] = {0};
 
 const char* scc_get_config_path() {
@@ -111,7 +114,7 @@ const char* scc_get_share_path() {
 	GetModuleFileName(NULL, arg0, MAX_PATH);
 	while (1) {
 		snprintf(test, PATH_MAX, "%s\\share\\default_menus", arg0);
-		if (access(test, F_OK) != -1) {
+		if (access(test, F_OK) == 0) {
 			strncpy(share_path, arg0, PATH_MAX);
 			strcat(share_path, "\\share");
 			return share_path;
@@ -187,6 +190,24 @@ const char* scc_get_default_menus_path() {
 	return default_menus_path;
 }
 
+const char* scc_get_menuicons_path() {
+	if (menuicons_path[0] != 0)
+		// Return cached value
+		return menuicons_path;
+	
+	sprintf(menuicons_path, "%s" SEP "menu-icons", scc_get_config_path());
+	return menuicons_path;
+}
+
+const char* scc_get_default_menuicons_path() {
+	if (default_menuicons_path[0] != 0)
+		// Return cached value
+		return default_menuicons_path;
+	
+	sprintf(default_menuicons_path, "%s" SEP "images" SEP "menu-icons", scc_get_share_path());
+	return default_menuicons_path;
+}
+
 const char* scc_get_pid_file() {
 	if (pid_file_path[0] != 0)
 		// Return cached value
@@ -219,11 +240,11 @@ char* scc_find_binary(const char* name) {
 #ifdef _WIN32
 		strbuilder_add(sb, ".exe");
 		if (!strbuilder_failed(sb))
-			if (access(strbuilder_get_value(sb), F_OK) != -1)
+			if (access(strbuilder_get_value(sb), F_OK) == 0)
 				return strbuilder_consume(sb);
 #else
 		if (!strbuilder_failed(sb))
-			if (access(strbuilder_get_value(sb), X_OK) != -1)
+			if (access(strbuilder_get_value(sb), X_OK) == 0)
 				return strbuilder_consume(sb);
 #endif
 		
@@ -244,27 +265,110 @@ size_t scc_path_fix_slashes(char* path) {
 }
 #endif
 
+char* scc_find_icon(const char* name, bool prefer_colored, bool* has_colors, const char** paths, const char** extensions) {
+	static const char* default_extensions[] = { "png", "svg", NULL };
+	static const char* default_paths[] = { NULL, NULL, NULL };
+	char* rv = NULL;
+	char* gray_filename = NULL;
+	char* colr_filename = NULL;
+	char* gray = NULL;
+	char* colr = NULL;
+	if (default_paths[0] == NULL) {
+		default_paths[0] = scc_get_default_menuicons_path();
+		default_paths[1] = scc_get_menuicons_path();
+	}
+	
+	if (name == NULL) return NULL;
+	if ((strlen(name) > 3) && (0 == strcmp(name + strlen(name) - 3, ".bw"))) {
+		// TODO: Tests for this
+		char* no_suffix = strbuilder_cpy(name);
+		if (no_suffix == NULL)
+			goto scc_find_icon_oom;
+		*(no_suffix + strlen(no_suffix) - 3) = 0;
+		char* rv = scc_find_icon(name, prefer_colored, has_colors, paths, extensions);
+		free(no_suffix);
+		return rv;
+	}
+	
+	if (paths == NULL) paths = default_paths;
+	if (extensions == NULL) extensions = default_extensions;
+	
+	while (*extensions != NULL) {
+		const char* extension = *extensions;
+		gray_filename = strbuilder_fmt("%s.bw.%s", name, extension);
+		colr_filename = strbuilder_fmt("%s.%s", name, extension);
+		if ((gray_filename == NULL) || (colr_filename == NULL))
+			goto scc_find_icon_oom;
+		gray = NULL;
+		colr = NULL;
+		const char** paths_ = paths;
+		while (*paths_ != NULL) {
+			// Check grayscale
+			if (gray == NULL) {
+				char* path = strbuilder_fmt("%s" SEP "%s", *paths_, gray_filename);
+				if (path == NULL) {
+					free(path);
+					goto scc_find_icon_oom;
+				}
+				if (access(path, F_OK) == 0) {
+					if (!prefer_colored) {
+						if (has_colors != NULL) *has_colors = false;
+						rv = path;
+						goto scc_find_icon_cleanup;
+					} else {
+						gray = path;
+					}
+				} else {
+					free(path);
+				}
+			}
+			if (colr == NULL) {
+				char* path = strbuilder_fmt("%s" SEP "%s", *paths_, colr_filename);
+				if (path == NULL) {
+					free(path);
+					goto scc_find_icon_oom;
+				}
+				if (access(path, F_OK) == 0) {
+					if (prefer_colored) {
+						if (has_colors != NULL) *has_colors = true;
+						rv = path;
+						goto scc_find_icon_cleanup;
+					} else {
+						colr = path;
+					}
+				} else {
+					free(path);
+				}
+			}
+			paths_ ++;
+		}
+		if (colr != NULL) {
+			if (has_colors != NULL) *has_colors = true;
+			rv = colr;
+			goto scc_find_icon_cleanup;
+		} else if (gray != NULL) {
+			if (has_colors != NULL) *has_colors = false;
+			rv = gray;
+			goto scc_find_icon_cleanup;
+		}
+		extensions ++;
+	}
+	rv = NULL;
+	goto scc_find_icon_cleanup;
+	
+scc_find_icon_oom:
+	LERROR("scc_find_icon: out of memory");
+	rv = NULL;
+scc_find_icon_cleanup:
+	if (gray != rv) free(gray);
+	if (colr != rv) free(colr);
+	free(gray_filename);
+	free(colr_filename);
+	return rv;
+}
 
 
 /*
-def get_menuicons_path():
-	"""
-	Returns directory where menu icons are stored.
-	~/.config/scc/menu-icons under normal conditions.
-	"""
-	return os.path.join(get_config_path(), "menu-icons")
-
-
-def get_default_menuicons_path():
-	"""
-	Returns directory where default menu icons are stored.
-	Probably something like /usr/share/scc/images/menu-icons,
-	or $SCC_SHARED/images/menu-icons if program is being started from
-	script extracted from source tarball
-	"""
-	return os.path.join(get_share_path(), "images/menu-icons")
-
-
 def get_button_images_path():
 	"""
 	Returns directory where button images are stored.

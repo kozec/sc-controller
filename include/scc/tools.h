@@ -6,7 +6,7 @@
  */
 #pragma once
 #include "scc/controller.h"
-
+#include <stdbool.h>
 #ifdef _WIN32
 	#include <windows.h>
 	// Windows have MAX_PATH instead and that's 250. Like, characters. Really.
@@ -61,6 +61,20 @@ const char* scc_get_default_profiles_path();
 const char* scc_get_menus_path();
 
 /**
+ * Returns directory where menu icons are stored.
+ * ~/.config/scc/menu-icons under normal conditions.
+ */
+const char* scc_get_menuicons_path();
+
+/**
+ * Returns directory where default menu icons are stored.
+ * Probably something like /usr/share/scc/images/menu-icons,
+ * or $SCC_SHARED/images/menu-icons if program is being started from
+ * script extracted from source tarball
+ */
+const char* scc_get_default_menuicons_path();
+
+/**
  * Returns directory when python (gui) modules are stored.
  */
 const char* scc_get_python_src_path();
@@ -100,6 +114,24 @@ char* scc_find_profile(const char* name);
  * Returned string has to be deallocated by caller.
  */
 char* scc_find_menu(const char* name);
+
+/**
+ * Returns filename for specified icon name.
+ * This is done by searching for <name>.png and <name>.bw.png, <name>.svg
+ * and <name>.bw.svg in user and default menu-icons folders.
+ *
+ * If both colored and grayscale version is found, colored is returned, unless
+ * prefer_colored is set to false.
+ *
+ * If has_colors is not set NULL, value it points to is set to true if colored
+ * version of icon is found or to false if only grayscale icon is found. If no
+ * icon is found at all, value is not changed.
+ *
+ * both 'paths' and 'extensions' has to be NULL-terminated. If set to NULL, defaults are used.
+ * Returns NULL if icon cannot be found.
+ * Returned value has to be freed by called.
+ */
+char* scc_find_icon(const char* name, bool prefer_colored, bool* has_colors, const char** paths, const char** extensions);
 
 /**
  * Returns full path to script or binary.

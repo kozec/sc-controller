@@ -23,6 +23,7 @@ osd_lib = shared_library('scc-osd',
 	sources: [
 		'css_magic.c',
 		'window.c',
+		'icon.c',
 	]
 )
 

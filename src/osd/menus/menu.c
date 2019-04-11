@@ -5,6 +5,7 @@
 #include "scc/utils/assert.h"
 #include "scc/osd/osd_window.h"
 #include "scc/osd/osd_menu.h"
+#include "scc/osd/menu_icon.h"
 #include "scc/controller.h"
 #include "scc/menu_data.h"
 #include <glib.h> // glib.h has to be included before client.h
@@ -49,12 +50,17 @@ static void align_cb(GtkWidget* w, void* align) {
 }
 
 static GtkWidget* make_menu_row(const char* label, const char* icon, bool is_submenu) {
+	bool has_colors;
+	char* filename = scc_find_icon("driving/steering-wheel", false, &has_colors, NULL, NULL);
+	GtkWidget* w_icon = GTK_WIDGET(menu_icon_new(filename, has_colors));
+	free(filename);
 	GtkWidget* label1 = gtk_label_new(label);
 	GtkWidget* label2 = is_submenu ? gtk_label_new(">>") : NULL;
 	GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	GtkWidget* button = gtk_button_new();
 	gtk_label_set_xalign(GTK_LABEL(label1), 0.0);
-	gtk_box_pack_start(GTK_BOX(box), label1, true, true, 1);
+	gtk_box_pack_start(GTK_BOX(box), w_icon, false, true, 0);
+	gtk_box_pack_start(GTK_BOX(box), label1, true, true, 10);
 	if (label2 != NULL) {
 		gtk_widget_set_margin_start(label2, 30);
 		gtk_label_set_xalign(GTK_LABEL(label2), 1.0);
