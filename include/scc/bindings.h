@@ -9,9 +9,13 @@
 extern "C" {
 #endif
 #include "scc/utils/dll_export.h"
-#include "scc/action.h"
-#include "scc/parameter.h"
+#include <stdint.h>
 
+typedef struct Action Action;
+typedef struct Parameter Parameter;
+typedef struct ActionError ActionError;
+typedef union ActionOE ActionOE;
+typedef union ParamOE ParamOE;
 typedef union { ParamOE* p; ActionOE* a; ActionError* e; } APError;
 
 typedef struct EnumValue {
@@ -84,7 +88,6 @@ DLL_EXPORT const char* scc_error_get_message(APError e);
 
 /** Parses array of paramertrers into action */
 DLL_EXPORT ActionOE scc_action_new_from_array(const char* keyword, size_t count, Parameter* params[]);
-
 
 #undef scc_parameter_as_action
 #undef scc_parameter_as_string

@@ -90,9 +90,3 @@ test('test_bindings', executable('test_bindings',
 	sources: [ 'test_bindings.c' ]
 ))
 
-test('test_compress', executable('test_compress',
-	dependencies: [cu_test],
-	include_directories: include,
-	link_with: link,
-	sources: [ 'test_compress.c' ]
-))

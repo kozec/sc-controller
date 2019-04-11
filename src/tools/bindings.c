@@ -10,7 +10,9 @@
 #include "scc/utils/list.h"
 #include "scc/utils/rc.h"
 #include "scc/conversions.h"
+#include "scc/parameter.h"
 #include "scc/bindings.h"
+#include "scc/action.h"
 #include "scc/error.h"
 #include "../conversions/conversions.h"
 #include <string.h>
@@ -94,6 +96,7 @@ float scc_parameter_as_float(Parameter* p) {
 
 Action* scc_action_ref(Action* a) {
 	RC_ADD(a);
+	return a;
 }
 
 void scc_action_unref(Action* a) {
@@ -104,6 +107,7 @@ void scc_action_unref(Action* a) {
 
 Parameter* scc_parameter_ref(Parameter* p) {
 	RC_ADD(p);
+	return p;
 }
 
 void scc_parameter_unref(Parameter* p) {

@@ -1,7 +1,10 @@
+import sys
 import gi
 gi.require_version('Gtk', '3.0') 
-gi.require_version('GdkX11', '3.0') 
 gi.require_version('Rsvg', '2.0') 
+try:
+	gi.require_version('GdkX11', '3.0') 
+except ValueError: pass
 
 from scc.tools import init_logging
 from scc.paths import get_share_path

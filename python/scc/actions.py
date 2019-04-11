@@ -448,7 +448,7 @@ KEYWORD_TO_ACTION = {
 
 
 class MultiAction(Action):
-	BUILD_FN = lib_bindings.scc_multiaction_new
+	BUILD_FN = lib_actions.scc_multiaction_new
 	
 	def __init__(self, *args):
 		self._caction = None
@@ -461,7 +461,7 @@ class MultiAction(Action):
 
 
 class Macro(MultiAction):
-	BUILD_FN = lib_bindings.scc_macro_new
+	BUILD_FN = lib_actions.scc_macro_new
 
 
 lib_bindings.scc_action_get_type.argtypes = [ Action.CActionOEp ]
@@ -493,12 +493,6 @@ lib_bindings.scc_error_get_message.restype = ctypes.c_char_p
 
 lib_bindings.scc_action_new_from_array.argtypes = [ ctypes.c_char_p, ctypes.c_size_t, Parameter.CParameterOEpp ]
 lib_bindings.scc_action_new_from_array.restype = Action.CActionOEp
-
-lib_bindings.scc_multiaction_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
-lib_bindings.scc_multiaction_new.restype = Action.CActionOEp
-
-lib_bindings.scc_macro_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
-lib_bindings.scc_macro_new.restype = Action.CActionOEp
 
 lib_bindings.scc_parse_param_list.argtypes = [ ctypes.c_char_p ]
 lib_bindings.scc_parse_param_list.restype = Parameter.CParameterOEp
@@ -547,4 +541,10 @@ lib_actions.scc_new_string_parameter.restype = Parameter.CParameterOEp
 
 lib_actions.scc_modeshift_get_modes.argtypes = [ Action.CActionOEp ]
 lib_actions.scc_modeshift_get_modes.restype = Parameter.CParameterOEp
+
+lib_actions.scc_multiaction_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
+lib_actions.scc_multiaction_new.restype = Action.CActionOEp
+
+lib_actions.scc_macro_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
+lib_actions.scc_macro_new.restype = Action.CActionOEp
 

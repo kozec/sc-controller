@@ -7,7 +7,7 @@ Assigns emulated axis to trigger
 from __future__ import unicode_literals
 from scc.tools import _
 
-from gi.repository import Gdk, GdkX11, GLib
+from gi.repository import Gdk, GLib
 from ctypes import cast, POINTER
 from scc.actions import Action, NoAction, AxisAction, MouseAction
 from scc.actions import XYAction, RelXYAction
@@ -23,7 +23,7 @@ from scc.gui.timermanager import TimerManager
 from scc.gui.controller_widget import STICKS
 from scc.gui.ae import AEComponent
 
-import os, logging, math
+import os, logging, math, platform
 log = logging.getLogger("AE.AxisAction")
 
 __all__ = [ 'AxisActionComponent' ]
@@ -53,7 +53,11 @@ class AxisActionComponent(AEComponent, TimerManager):
 		AEComponent.load(self)
 		cbAreaType = self.builder.get_object("cbAreaType")
 		cbAreaType.set_row_separator_func( lambda model, iter : model.get_value(iter, 0) == "-" )
-		self.on_wayland = "WAYLAND_DISPLAY" in os.environ or not isinstance(Gdk.Display.get_default(), GdkX11.X11Display)
+		if platform.system() == "Windows":
+			self.on_wayland = False
+		else:
+			from gi.repository import GdkX11
+			self.on_wayland = "WAYLAND_DISPLAY" in os.environ or not isinstance(Gdk.Display.get_default(), GdkX11.X11Display)
 		if self.on_wayland:
 			self.builder.get_object("lblArea").set_text(_("Note: Mouse Region option is not available with Wayland-based display server"))
 			self.builder.get_object("grArea").set_sensitive(False)

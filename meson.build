@@ -127,6 +127,7 @@ parser_lib = shared_library('scc-parser',
 bindings_lib = shared_library('scc-bindings',
 	include_directories: include,
 	link_with: [ actions_lib, params_lib, parser_lib, conversions_lib ],
+	c_args: [ '-Wl,--export-all-symbols ' ],
 	sources: [
 		'src/actions/parameter/tuple.c',
 		'src/tools/bindings.c',

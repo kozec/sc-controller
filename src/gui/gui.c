@@ -9,8 +9,10 @@
  */
 #define LOG_TAG "GUI"
 #include "Python.h"
+#include "scc/utils/strbuilder.h"
 #include "scc/utils/traceback.h"
 #include "scc/utils/logging.h"
+#include "scc/utils/assert.h"
 #include "scc/tools.h"
 #include "../daemon/version.h"
 
@@ -26,11 +28,21 @@ int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
 	
 	DEBUG("Initializing python...");
+	StrBuilder* sys_path = strbuilder_new();
+	strbuilder_add(sys_path, scc_get_python_src_path());
+#ifdef _WIN32
+	Py_SetProgramName(argv[0]);
+	Py_SetPythonHome("C:/msys32/mingw32/");
+	Py_InitializeEx(0);
+	strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7");
+	strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/lib-dynload");
+	strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/site-packages");
+#else
 	Py_Initialize();
-	char* sys_path = malloc(PATH_MAX * 2);
-	snprintf(sys_path, PATH_MAX * 2,
-				"%s" LIB_PYTHON_PATH, scc_get_python_src_path());
-	PySys_SetPath(sys_path);
+	strbuilder_add(sys_path, LIB_PYTHON_PATH);
+#endif
+	ASSERT(!strbuilder_failed(sys_path));
+	PySys_SetPath((char*)strbuilder_get_value(sys_path));
 	
 	PyObject* gui = PyImport_ImportModule("gui_loader");
 	if (PyErr_Occurred()) {
@@ -43,6 +55,9 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	Py_DECREF(gui);
+	
+	strbuilder_free(sys_path);
+	DEBUG("Python code finished.");
 	
 	return 0;
 }

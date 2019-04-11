@@ -15,7 +15,7 @@ from scc.paths import get_daemon_socket
 from scc.gui import BUTTON_ORDER
 from gi.repository import GObject, Gio, GLib
 
-import os, json, logging
+import os, json, logging, platform
 log = logging.getLogger("DaemonCtrl")
 
 
@@ -117,8 +117,11 @@ class DaemonManager(GObject.GObject):
 		if self.connecting : return
 		self.connecting = True
 		sc = Gio.SocketClient()
-		address = Gio.UnixSocketAddress.new(get_daemon_socket())
-		sc.connect_async(address, None, self._on_connected)
+		if platform.system() == "Windows":
+			pass
+		else:
+			address = Gio.UnixSocketAddress.new(get_daemon_socket())
+			sc.connect_async(address, None, self._on_connected)
 	
 	
 	def _on_daemon_died(self, *a):
