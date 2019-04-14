@@ -36,6 +36,21 @@ class ActionParser(object):
 		"""
 		from scc.actions import Action
 		return Action.parse(self.string)
+	
+	def from_json_data(self, data, key=None):
+		# TODO: It would be really cool to get rid of this one ASAP
+		if key is not None:
+			# Don't fail if called for non-existent key, return NoAction instead.
+			# Using this is sorter than
+			# calling 'if button in data["buttons"]: ...' everywhere
+			if key in data:
+				return self.from_json_data(data[key], None)
+			else:
+				return NoAction()
+		
+		if "action" not in data:
+			return NoAction()
+		return self.restart(data["action"]).parse()
 
 
 class TalkingActionParser(ActionParser):

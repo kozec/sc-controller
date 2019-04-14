@@ -436,6 +436,7 @@ class MenuEditor(Editor):
 			self.menu_icon.set_visible(False)
 		else:
 			lblItemIconName.set_label(self.selected_icon)
+			"""
 			try:
 				filename, trash = find_icon(self.selected_icon)
 				self.menu_icon.set_filename(filename)
@@ -444,6 +445,8 @@ class MenuEditor(Editor):
 				log.error(e)
 				log.error(traceback.format_exc())
 				self.menu_icon.set_visible(False)
+			"""
+			self.menu_icon.set_visible(False)
 	
 	
 	def on_icon_choosen(self, name):

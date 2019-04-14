@@ -11,6 +11,7 @@
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "tostring.h"
+#include "props.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -41,6 +42,15 @@ static void button_press(Action* a, Mapper* m) {
 }
 
 
+static Parameter* get_property(Action* a, const char* name) {
+	SAProfileAction* sa = container_of(a, SAProfileAction, action);
+	MAKE_PARAM_PROPERTY(sa->params->items[0], "profile");
+	
+	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	return NULL;
+}
+
+
 static ActionOE sa_profile_constructor(const char* keyword, ParameterList params) {
 	ParamError* err = scc_param_checker_check(&pc, keyword, params);
 	if (err != NULL) return (ActionOE)err;
@@ -54,6 +64,7 @@ static ActionOE sa_profile_constructor(const char* keyword, ParameterList params
 	}
 	scc_action_init(&sa->action, KW_PROFILE, AF_SPECIAL_ACTION, &sa_profile_dealloc, &sa_profile_to_string);
 	sa->action.button_press = &button_press;
+	sa->action.get_property = &get_property;
 	
 	sa->params = params;
 	return (ActionOE)&sa->action;
