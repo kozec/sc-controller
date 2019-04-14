@@ -30,7 +30,6 @@ struct _OSDWindowClass {
 };
 
 struct _OSDWindowPrivate {
-	int						exit_code;
 	struct {
 		int						x;
 		int						y;
@@ -155,13 +154,25 @@ void osd_window_compute_position(OSDWindow* osdwin, int* x, int* y) {
 	// to me 20 minutes from now: have fun decoding that.
 }
 
+void osd_window_set_position(OSDWindow* osdwin, int x, int y) {
+	OSDWindowPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(osdwin, OSD_WINDOW_TYPE, OSDWindowPrivate);
+	priv->position.x = x;
+	priv->position.y = y;
+}
+
+ivec_t osd_window_get_position(OSDWindow* osdwin) {
+	OSDWindowPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(osdwin, OSD_WINDOW_TYPE, OSDWindowPrivate);
+	ivec_t rv = { priv->position.x, priv->position.y };
+	return rv;
+}
+
 static void osd_window_init(OSDWindow* osdwin) {
 	gtk_widget_set_has_window(GTK_WIDGET(osdwin), TRUE);
 	install_css_provider();
 	
 	OSDWindowPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(osdwin, OSD_WINDOW_TYPE, OSDWindowPrivate);
-	priv->exit_code = -1;
 	priv->position.x = 20;
 	priv->position.y = -20;
 	memset(&priv->callbacks, 0, sizeof(OSDWindowCallbacks));
 }
+

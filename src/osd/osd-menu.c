@@ -41,9 +41,10 @@ int main(int argc, char** argv) {
 	}
 	
 	OSDMenu* mnu = osd_menu_new(filename);
-	g_signal_connect(G_OBJECT(mnu), "exit", (GCallback)&on_mnu_exit, NULL);
-	g_signal_connect(G_OBJECT(mnu), "ready", (GCallback)&on_mnu_ready, NULL);
 	if (mnu != NULL) {
+		g_signal_connect(G_OBJECT(mnu), "exit", (GCallback)&on_mnu_exit, NULL);
+		g_signal_connect(G_OBJECT(mnu), "ready", (GCallback)&on_mnu_ready, NULL);
+		osd_menu_connect(mnu);
 		gtk_main();
 		return 0;
 	} else {

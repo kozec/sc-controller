@@ -14,9 +14,9 @@
     "id": "separator-after-profile-list",
     "name": "Options"
 }, {
-    "action": "turnoff()", 
-    "id": "turnoff_item", 
+    "action": "turnoff()",
+    "id": "turnoff_item",
     "icon": "system/turn-off",
-    "name": "Turn Controller OFF", 
+    "name": "Turn Controller OFF",
     "osd": true
 }]

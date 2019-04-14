@@ -21,6 +21,10 @@ typedef struct OSDMenuCallbacks {
 
 DLL_EXPORT GType osd_menu_get_type(void) G_GNUC_CONST;
 DLL_EXPORT OSDMenu* osd_menu_new(const char* filename);
-
+/**
+ * Connects to the daemon. 'ready' or 'exit' signal is emitted to signal
+ * success or failure.
+ */
+DLL_EXPORT void osd_menu_connect(OSDMenu* mnu);
 G_END_DECLS
 

@@ -16,6 +16,8 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
+#define SUBMENU_OFFSET	20
+
 typedef struct _OSDMenuPrivate		OSDMenuPrivate;
 
 struct _OSDMenu {
@@ -32,6 +34,7 @@ struct _OSDMenuPrivate {
 	MenuData*			data;
 	SCCClient*			client;
 	GtkWidget*			selected;
+	OSDMenu*			child;
 	Mapper*				slave_mapper;
 	const char*			controller_id;	// NULL for "take 1st available"
 	PadStickTrigger		control_with;
@@ -108,7 +111,14 @@ static GtkWidget* make_widget(MenuItem* i) {
 		if (i->submenu == NULL)
 			// Shouldn't be possible
 			return NULL;
-		w = make_menu_row(i->name == NULL ? i->submenu : i->name, i->icon, true);
+		if (i->name == NULL) {
+			char* name = scc_path_strip_extension(i->submenu);
+			ASSERT(name != NULL);
+			w = make_menu_row(name, i->icon, true);
+			free(name);
+		} else {
+			w = make_menu_row(i->name == NULL ? i->submenu : i->name, i->icon, true);
+		}
 		gtk_widget_set_name(GTK_WIDGET(w), "osd-menu-item");
 		break;
 	}
@@ -130,6 +140,24 @@ static GtkWidget* make_widget(MenuItem* i) {
 	return w;
 }
 
+
+static void on_mnu_child_exit(void* _child, int code, void* _mnu) {
+	OSDMenu* mnu = (OSDMenu*)_mnu;
+	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	if (code == -1) {
+		// Canceled
+		gtk_widget_destroy(GTK_WIDGET(priv->child));
+		priv->child = NULL;
+		gtk_widget_set_name(GTK_WIDGET(mnu), "osd-menu");
+	} else {
+		osd_window_exit(OSD_WINDOW(mnu), code);
+	}
+}
+
+static void on_mnu_child_ready(void* _child, void* _mnu) {
+	gtk_widget_show_all(GTK_WIDGET(_child));
+	gtk_widget_set_name(GTK_WIDGET(_mnu), "osd-menu-inactive");
+}
 
 static gboolean osd_menu_on_data_ready(GIOChannel* source, GIOCondition condition, gpointer _mnu) {
 	OSDMenu* mnu = OSD_MENU(_mnu);
@@ -171,19 +199,25 @@ static void osd_menu_connection_ready(SCCClient* c) {
 	g_signal_emit_by_name(G_OBJECT(mnu), "ready");
 }
 
-static void osd_menu_on_event(SCCClient* c, uint32_t handle, SCButton button, PadStickTrigger pst, int values[]) {
-	OSDMenu* mnu = OSD_MENU(c->userdata);
+static void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
+			SCButton button, PadStickTrigger pst, int values[]) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	if (priv->child != NULL)
+		return osd_menu_parse_event(priv->child, c, handle, button, pst, values);
 	if (pst == priv->control_with)
 		stick_controller_feed(priv->sc, values);
 	else if ((button == priv->cancel_with) && (values[0]))
 		osd_window_exit(OSD_WINDOW(mnu), -1);
-	else if ((button == priv->confirm_with) && (values[0])) {
+	else if ((button == priv->confirm_with) && (values[0]))
 		osd_menu_item_selected(mnu);
-		osd_window_exit(OSD_WINDOW(mnu), 0);
-	}
 	// else
 	// 	LOG("# %i %i %i > %i %i", handle, button, pst, values[0], values[1]);
+}
+
+static void osd_menu_on_event(SCCClient* c, uint32_t handle, SCButton button,
+			PadStickTrigger pst, int values[]) {
+	OSDMenu* mnu = OSD_MENU(c->userdata);
+	return osd_menu_parse_event(mnu, c, handle, button, pst, values);
 }
 
 void osd_menu_next_item(OSDMenu* mnu, int direction);
@@ -279,13 +313,80 @@ void osd_menu_next_item(OSDMenu* mnu, int direction) {
 	}
 }
 
+/** Configures menu to use already connected client */
+void osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) {
+	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	priv->client = client;
+	if (slave_mapper == NULL) {
+		priv->slave_mapper = sccc_slave_mapper_new(client);
+		// TODO: Handle OOM here?
+		ASSERT(priv->slave_mapper);
+	} else {
+		priv->slave_mapper = slave_mapper;
+	}
+	g_signal_emit_by_name(G_OBJECT(mnu), "ready");
+}
+
+/** Establishes connection to daemon. Emits 'ready' or 'exit' signal when done */
+void osd_menu_connect(OSDMenu* mnu) {
+	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	SCCClient* client = sccc_connect();
+	if (client == NULL) {
+		LERROR("Failed to connect to scc-daemon");
+		osd_window_exit(OSD_WINDOW(mnu), 2);
+		return;
+	}
+	
+	priv->slave_mapper = sccc_slave_mapper_new(client);
+	if (priv->slave_mapper == NULL) {
+		// OOM
+		RC_REL(client);
+		osd_window_exit(OSD_WINDOW(mnu), 4);
+		return;
+	}
+	
+	priv->client = client;
+	priv->client->userdata = mnu;
+	priv->client->on_ready = &osd_menu_connection_ready;
+	priv->client->on_event = &osd_menu_on_event;
+	GSource* src = scc_gio_client_to_gsource(client);
+	g_source_set_callback(src, (GSourceFunc)osd_menu_on_data_ready, mnu, NULL);
+}
+
 static void osd_menu_item_selected(OSDMenu* mnu) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	char* filename = NULL;
 	MenuItem* i = NULL;
 	if (priv->selected != NULL)
 		i = g_object_get_data(G_OBJECT(priv->selected), "scc-menu-item-data");
-	if ((i != NULL) && (i->action != NULL)) {
+	
+	if (i == NULL) return;
+	switch (i->type) {
+	case MI_ACTION:
 		i->action->button_press(i->action, priv->slave_mapper);
+		osd_window_exit(OSD_WINDOW(mnu), 0);
+		break;
+	case MI_SUBMENU: {
+		filename = scc_find_menu(i->submenu);
+		if (filename != NULL) {
+			DDEBUG("Opening submenu '%s'", filename);
+			OSDMenu* child = osd_menu_new(filename);
+			free(filename);
+			if (child != NULL) {
+				priv->child = child;
+				g_signal_connect(G_OBJECT(child), "exit", (GCallback)&on_mnu_child_exit, mnu);
+				g_signal_connect(G_OBJECT(child), "ready", (GCallback)&on_mnu_child_ready, mnu);
+				ivec_t pos = osd_window_get_position(OSD_WINDOW(mnu));
+				pos.x += (pos.x < 0) ? -SUBMENU_OFFSET : SUBMENU_OFFSET;
+				pos.y += (pos.y < 0) ? -SUBMENU_OFFSET : SUBMENU_OFFSET;
+				osd_window_set_position(OSD_WINDOW(child), pos.x, pos.y);
+				osd_menu_set_client(child, priv->client, priv->slave_mapper);
+			}
+		}
+		break;
+	}
+	default:
+		break;
 	}
 }
 
@@ -314,11 +415,6 @@ OSDMenu* osd_menu_new(const char* filename) {
 	scc_menudata_apply_generators(data, cfg);
 	RC_REL(cfg);
 	
-	SCCClient* client = sccc_connect();
-	if (client == NULL) {
-		LERROR("Failed to connect to scc-daemon");
-		return NULL;
-	}
 	const OSDWindowCallbacks callbacks = {};
 	GtkWidget* o = g_object_new(OSD_MENU_TYPE, GTK_WINDOW_TOPLEVEL, NULL);
 	osd_window_setup(OSD_WINDOW(o), "osd-menu", callbacks);
@@ -327,19 +423,13 @@ OSDMenu* osd_menu_new(const char* filename) {
 	
 	priv->sc = stick_controller_create(&osd_menu_stick, mnu);
 	ASSERT(priv->sc != NULL);
-	priv->slave_mapper = sccc_slave_mapper_new(client);
-	ASSERT(priv->slave_mapper != NULL);
-	priv->data = data;
+		priv->data = data;
 	priv->selected = NULL;
 	priv->control_with = PST_STICK;
 	priv->confirm_with = B_A;
 	priv->cancel_with = B_B;
-	priv->client = client;
-	priv->client->userdata = mnu;
-	priv->client->on_ready = &osd_menu_connection_ready;
-	priv->client->on_event = &osd_menu_on_event;
-	GSource* src = scc_gio_client_to_gsource(client);
-	g_source_set_callback(src, (GSourceFunc)osd_menu_on_data_ready, mnu, NULL);
+	priv->slave_mapper = NULL;
+	priv->client = NULL;
 	
 	GtkWidget* v = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_name(GTK_WIDGET(v), "osd-menu");

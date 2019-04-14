@@ -196,3 +196,12 @@ const char* scc_button_to_string(SCButton b);
 size_t scc_path_fix_slashes(char* path);
 #endif
 
+/**
+ * Simply strips part after last '.' (including '.')
+ * Caller is responsible for deallocating returned string.
+ *
+ * Returns copy of string if there is no '.' in it.
+ * Returns NULL if memory cannot be allocated.
+ */
+char* scc_path_strip_extension(const char* path);
+

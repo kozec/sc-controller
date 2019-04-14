@@ -41,14 +41,8 @@ void generate(GeneratorContext* ctx) {
 			bool is_profile = (strstr(ent->d_name, FILENAME_SUFFIX) == ent->d_name + strlen(ent->d_name) - strlen(FILENAME_SUFFIX));
 			if (is_profile) {
 				if (ent->d_name[0] == '.') continue;
-				StrBuilder* sb = strbuilder_new();
-				if (sb == NULL) break;
-				if (!strbuilder_add(sb, ent->d_name)) {
-					strbuilder_free(sb);
-					break;
-				}
-				strbuilder_rtrim(sb, suffix_len);
-				char* name = strbuilder_consume(sb);
+				char* name = scc_path_strip_extension(ent->d_name);
+				if (name == NULL) break;	// OOM
 				if (!list_add(all, name)) {
 					free(name);
 					break;

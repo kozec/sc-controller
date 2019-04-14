@@ -265,6 +265,21 @@ size_t scc_path_fix_slashes(char* path) {
 }
 #endif
 
+char* scc_path_strip_extension(const char* path) {
+	char* dot = strrchr(path, '.');
+	if (dot == NULL)
+		return strbuilder_cpy(path);
+	
+	StrBuilder* b = strbuilder_new();
+	if (b == NULL) return NULL;
+	if (!strbuilder_add(b, path)) {
+		strbuilder_free(b);
+		return NULL;
+	}
+	strbuilder_rtrim(b, (path + strlen(path)) - dot);
+	return strbuilder_consume(b);
+}
+
 char* scc_find_icon(const char* name, bool prefer_colored, bool* has_colors, const char** paths, const char** extensions) {
 	static const char* default_extensions[] = { "png", "svg", NULL };
 	static const char* default_paths[] = { NULL, NULL, NULL };

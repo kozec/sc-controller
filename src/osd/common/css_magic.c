@@ -20,8 +20,11 @@ struct template_data {
 	char		buffer[256];
 };
 
+static bool installed = false;
+
 
 void install_css_provider() {
+	if (installed) return;
 	Config* config = config_load();
 	struct template_data tdata = { config };
 	StrBuilder* b = NULL;
@@ -72,6 +75,7 @@ void install_css_provider() {
 	gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
 			GTK_STYLE_PROVIDER(css_provider),
 			GTK_STYLE_PROVIDER_PRIORITY_USER);
+	installed = true;
 	return;
 
 install_css_provider_fail:

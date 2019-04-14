@@ -1,5 +1,6 @@
 #pragma once
 #include "scc/utils/dll_export.h"
+#include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include <gtk/gtk.h>
 #include "scc/client.h"
@@ -31,6 +32,13 @@ DLL_EXPORT void osd_window_compute_position(OSDWindow* osdwin, int* x, int* y);
  * currently active window (not this OSDWindow) is located.
  */
 DLL_EXPORT void osd_window_get_active_screen_geometry(OSDWindow* osdwin, GdkRectangle* geometry);
+/**
+ * Returns "osd position" set to window.
+ * Note that this is _not_ actual on-screen position
+ */
+DLL_EXPORT ivec_t osd_window_get_position(OSDWindow* osdwin);
+/** Sets "osd position" of window */
+DLL_EXPORT void osd_window_set_position(OSDWindow* osdwin, int x, int y);
 
 /**
  * Marks osd_window as done.
