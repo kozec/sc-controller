@@ -12,10 +12,7 @@ from scc.gui.action_editor import ActionEditor
 from scc.gui.icon_chooser import IconChooser
 from scc.gui.dwsnc import headerbar
 from scc.gui.editor import Editor
-# from scc.osd.menu_generators import ProfileListMenuGenerator
-# from scc.osd.menu_generators import RecentListMenuGenerator
-# from scc.osd.menu_generators import GameListMenuGenerator
-# from scc.osd.menu import MenuIcon
+from scc.menu_data import ProfileListMenuGenerator, RecentListMenuGenerator, GameListMenuGenerator
 from scc.menu_data import MenuData, MenuItem, Submenu, Separator
 from scc.paths import get_menus_path, get_default_menus_path
 from scc.parser import TalkingActionParser
@@ -26,10 +23,6 @@ import os, traceback, logging, json
 log = logging.getLogger("MenuEditor")
 
 
-# TODO: Following
-class ProfileListMenuGenerator: pass
-class RecentListMenuGenerator: pass
-class GameListMenuGenerator: pass
 class MenuIcon(Gtk.Image):
 	def __init__(self, a, b):
 		Gtk.Image.__init__(self)
@@ -139,7 +132,9 @@ class MenuEditor(Editor):
 		else:
 			btRemoveItem.set_sensitive(True)
 			o = model.get_value(iter, 0)
-			if isinstance(o.item, (MenuItem, RecentListMenuGenerator)):
+			# if isinstance(o.item, (MenuItem, RecentListMenuGenerator)):
+			if isinstance(o.item, MenuItem):
+				# TODO: Reenable for RecentListMenuGenerator
 				btEdit.set_sensitive(True)
 			else:
 				btEdit.set_sensitive(False)

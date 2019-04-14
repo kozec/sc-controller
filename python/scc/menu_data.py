@@ -10,32 +10,40 @@ from scc.actions import Action
 
 import json, os
 
+# TODO: This all, from c
+class _Generator:
+	def __init__(self):
+		self.id = None
+	
+	def describe(self):
+		return "[ %s ] " % (self.__class__.__name__,)
+	
+	def encode(self):
+		""" Returns generator data as dict storable in json (profile) file """
+		return { "generator" : self.GENERATOR_NAME }
+	
+
+class ProfileListMenuGenerator(_Generator):
+	GENERATOR_NAME="profile"
+
+class RecentListMenuGenerator(_Generator):
+	GENERATOR_NAME="recent"
+
+class GameListMenuGenerator(_Generator):
+	GENERATOR_NAME="games"
+
+
+MENU_GENERATORS = { x.GENERATOR_NAME: x for x in (
+	ProfileListMenuGenerator,
+	RecentListMenuGenerator,
+	GameListMenuGenerator,
+)}
+
+
 class MenuData(object):
 	""" Contains list of menu items. Indexable """
 	def __init__(self, *items):
 		self.__items = list(items)
-	
-	
-	def generate(self, menuhandler):
-		"""
-		Converts all generators into MenuItems (by calling .generate() on them)
-		and returns generated MenuData.
-		
-		Returns new MenuData instance.
-		"""
-		items = []
-		for i in self:
-			if isinstance(i, MenuGenerator):
-				items.extend(i.generate(menuhandler))
-			else:
-				items.append(i)
-		return MenuData(*items)
-	
-	
-	def compress(self):
-		for i in self.__items:
-			if i.action:
-				i.action = i.action.compress()
 	
 	
 	def __len__(self):
@@ -85,30 +93,6 @@ class MenuData(object):
 	
 	
 	@staticmethod
-	def from_args(data):
-		"""
-		Parses list of arguments in [id1, label1, id2, label2 ...] format.
-		Throws ValueError if number of items in 'data' is odd.
-		"""
-		if len(data) % 2 != 0:
-			raise ValueError("Odd number of items")
-		if len(data) < 1:
-			raise ValueError("Not items")
-		
-		# Rearange data into list of pair tuples
-		data = [
-			(data[i * 2], data[(i * 2) + 1])
-			for i in xrange(0, len(data) / 2)
-		]
-		
-		# Parse data
-		m = MenuData()
-		for id, label in data:
-			m.__items.append(MenuItem(id, label))
-		return m
-	
-	
-	@staticmethod
 	def from_json_data(data, action_parser=None):
 		"""
 		Loads menu from parsed JSON dict.
@@ -119,7 +103,7 @@ class MenuData(object):
 		for i in data:
 			item = None
 			if "generator" in i and i["generator"] in MENU_GENERATORS:
-				item = MENU_GENERATORS[i["generator"]](**i)
+				item = MENU_GENERATORS[i["generator"]]()
 			elif "separator" in i:
 				item = Separator(i["name"] if "name" in i else None)
 			elif "submenu" in i:
@@ -127,9 +111,6 @@ class MenuData(object):
 					i["name"] if "name" in i else None,
 					icon = i["icon"] if "icon" in i else None,
 				)
-			elif "id" not in i:
-				# Cannot add menu without ID
-				continue
 			else:
 				action = None
 				id = i["id"]
@@ -278,16 +259,9 @@ class MenuGenerator(object):
 		"""
 		Returns user-friendly description of MenuItem or MenuGenerator.
 		"""
-		return "[ %s ] " % (self.__class__.__name__,)
 	
 	
-	def encode(self):
-		""" Returns generator data as dict storable in json (profile) file """
-		return { "generator" : self.GENERATOR_NAME }
-	
+
 	def generate(self, menuhandler):
 		return []
 
-
-# Holds dict of knowm menu ganerators, but generated elsewhere
-MENU_GENERATORS = { }

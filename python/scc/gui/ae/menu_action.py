@@ -307,7 +307,8 @@ class MenuActionCofC(UserDataManager):
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		
 		cbm = self.builder.get_object("cbMenuType")
-		menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+		# menu_type = cbm.get_model().get_value(cbm.get_active_iter(), 1)
+		menu_type = "menu"
 		
 		if cbControlWith:
 			sensitive = True
