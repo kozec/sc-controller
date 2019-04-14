@@ -17,7 +17,6 @@ from scc.gui.parser import GuiActionParser
 # from scc.osd.gesture_display import GestureDisplay
 from scc.actions import GesturesAction, OSDAction
 from scc.actions import Action, NoAction, XYAction
-from scc.actions import NameModifier
 from scc.tools import strip_gesture
 
 import os, logging, platform
@@ -203,8 +202,6 @@ class GestureComponent(AEComponent):
 		for row in model:
 			item = row[2]
 			a.gestures[item.gstr] = item.action
-			if item.action.name:
-				a.gestures[item.gstr] = NameModifier(item.action.name, item.action)
 		a.precision = self.builder.get_object("sclPrecision").get_value()
 		a = OSDAction(a)
 		self.editor.set_action(a)

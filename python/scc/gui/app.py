@@ -24,7 +24,7 @@ from scc.constants import SCButtons, STICK, STICK_PAD_MAX
 from scc.constants import DAEMON_VERSION, LEFT, RIGHT
 from scc.paths import get_config_path, get_profiles_path
 from scc.custom import load_custom_module
-from scc.actions import NoAction, NameModifier
+from scc.actions import NoAction
 from scc.profile import Profile
 from scc.config import Config
 
@@ -443,8 +443,6 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		a = self.get_action(self.current, self.context_menu_for)
 		if a:
-			if a.name:
-				a = NameModifier(a.name, a)
 			clp = Gtk.Clipboard.get_default(Gdk.Display.get_default())
 			clp.set_text(a.to_string().encode('utf-8'), -1)
 			clp.store()

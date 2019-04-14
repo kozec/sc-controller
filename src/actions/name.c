@@ -31,6 +31,11 @@ static void name_dealloc(Action* a) {
 	free(n);
 }
 
+static char* describe(Action* a, ActionDescContext ctx) {
+	NameModifier* n = container_of(a, NameModifier, action);
+	return strbuilder_cpy(scc_parameter_as_string(n->params->items[0]));
+}
+
 static Action* compress(Action* a) {
 	NameModifier* n = container_of(a, NameModifier, action);
 	Action* child = scc_parameter_as_action(n->params->items[1]);
@@ -67,6 +72,7 @@ static ActionOE name_constructor(const char* keyword, ParameterList params) {
 	}
 	scc_action_init(&n->action, KW_NAME, AF_MODIFIER, &name_dealloc, &name_to_string);
 	n->action.compress = &compress;
+	n->action.describe = &describe;
 	n->action.get_property = &get_property;
 	n->action.extended.get_child = &get_child;
 	
@@ -79,3 +85,4 @@ void scc_actions_init_name() {
 	scc_param_checker_init(&pc, "sa");
 	scc_action_register(KW_NAME, &name_constructor);
 }
+

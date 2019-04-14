@@ -8,8 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
-from scc.actions import Action, NoAction, TiltAction, ButtonAction
-from scc.actions import MenuAction, NameModifier
+from scc.actions import Action, NoAction, TiltAction, ButtonAction, MenuAction
 from scc.uinput import Keys
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.ae.menu_action import MenuActionCofC

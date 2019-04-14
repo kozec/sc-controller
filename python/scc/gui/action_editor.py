@@ -331,22 +331,6 @@ class ActionEditor(Editor):
 		return self._selected_component
 	
 	
-	def _set_title(self):
-		""" Copies title from text entry into action instance """
-		entName = self.builder.get_object("entName")
-		name = entName.get_text().decode("utf-8").strip(" \t\r\n")
-		if len(name) < 1:
-			if isinstance(self._action, NameModifier):
-				self._action = self._action.child
-		elif not self._action:
-			self._action = NameModifier(name, self._action)
-		else:
-			#print ">>>", "_set_title", self._action, entName
-			# TODO: this
-			pass
-			# self._action.name = name
-	
-	
 	def blink_widget(self, name, time=500):
 		GROUPS = {
 			'cbBallMode': ('cbBallMode', 'lblFriction', 'sclFriction', 'btClearFriction')
@@ -483,11 +467,14 @@ class ActionEditor(Editor):
 	def on_btOK_clicked(self, *a):
 		""" Handler for OK button """
 		if self.ac_callback is not None:
-			self._set_title()
 			if self._mode == ActionEditor.AEC_MENUITEM:
 				self.ac_callback(self.id, self)
 			else:
+				entName = self.builder.get_object("entName")
 				a = self.generate_modifiers(self._action, self._selected_component.NAME=="custom")
+				name = entName.get_text().decode("utf-8").strip(" \t\r\n")
+				if name:
+					a = NameModifier(name, a or NoAction())
 				self.ac_callback(self.id, a)
 				self.ac_callback = None
 			if self._selected_component:
@@ -1056,6 +1043,13 @@ class ActionEditor(Editor):
 		vbActionButtons = self.builder.get_object("vbActionButtons")
 		stActionModes = self.builder.get_object("stActionModes")
 		
+		if isinstance(action, NameModifier):
+			entName.set_text(action.name)
+			print "_NameModifier: ", action, "->", action.child
+			action = action.child
+		else:
+			entName.set_text("")
+		
 		# Go throgh list of components and display buttons that are usable
 		# with this mode
 		self.c_buttons = {}
@@ -1070,12 +1064,10 @@ class ActionEditor(Editor):
 				if component.get_widget() not in stActionModes.get_children():
 					stActionModes.add(component.get_widget())
 		
-		if action.name is None:
-			entName.set_text("")
-		else:
-			entName.set_text(action.name)
 		if vbActionButtons.get_visible():
 			vbActionButtons.show_all()
+		
+		return action
 	
 	def on_sclFFrequency_format_value(self, scale, value):
 		if value == 1:
@@ -1110,31 +1102,31 @@ class ActionEditor(Editor):
 				self.set_title(_("%s Press") % (nameof(id),))
 			elif id in SCButtons:
 				self.set_title(nameof(id),)
-			self._set_mode(action, mode or Action.AC_BUTTON)
+			action = self._set_mode(action, mode or Action.AC_BUTTON)
 			self.hide_modifiers()
 			self.set_action(action)
 		elif id in TRIGGERS:
 			self.set_title(_("%s Trigger") % (id,))
-			self._set_mode(action, mode or Action.AC_TRIGGER)
+			action = self._set_mode(action, mode or Action.AC_TRIGGER)
 			self.set_action(action)
 			self.hide_macro()
 			self.hide_ring()
 		elif id in STICKS:
 			self.set_title(_("Stick"))
-			self._set_mode(action, mode or Action.AC_STICK)
+			action = self._set_mode(action, mode or Action.AC_STICK)
 			self.set_action(action)
 			self.hide_macro()
 			self.id = Profile.STICK
 		elif id in GYROS:
 			self.set_title(_("Gyro"))
-			self._set_mode(action, mode or Action.AC_GYRO)
+			action = self._set_mode(action, mode or Action.AC_GYRO)
 			self.set_action(action)
 			self.hide_modeshift()
 			self.hide_macro()
 			self.hide_ring()
 			self.id = Profile.GYRO
 		elif id in PADS:
-			self._set_mode(action, mode or Action.AC_PAD)
+			action = self._set_mode(action, mode or Action.AC_PAD)
 			self.set_action(action)
 			self.hide_macro()
 			if id == Profile.LPAD:

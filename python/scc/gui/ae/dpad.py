@@ -10,8 +10,8 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.actions import HatUpAction, HatDownAction, HatLeftAction,HatRightAction
-from scc.actions import Action, NoAction, DPadAction, DPad8Action, ButtonAction
-from scc.actions import MenuAction, NameModifier
+from scc.actions import Action, NoAction, DPadAction, DPad8Action
+from scc.actions import ButtonAction, MenuAction
 from scc.constants import LEFT, RIGHT, STICK, SAME, DEFAULT, SCButtons
 from scc.uinput import Keys, Axes
 from scc.gui.ae import AEComponent, describe_action
@@ -163,8 +163,6 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 			# When user chooses WSAD, Arrows or DPAD emulation and then changes
 			# one of actions, swap back to 'Simple DPAD' mode.
 			self.set_cb(cb, "dpad", 1)
-		#if action.name:
-		#	action = NameModifier(action.name, action)
 		self.set_button_desc(i)
 		self.update()
 	
@@ -186,11 +184,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 		""" 'Select DPAD Left Action' handler """
 		i = int(b.get_name())
 		action = self.actions[i]
-		#f isinstance(action, NameModifier):
-		#action.action.name = action.name
-		#action = action.action
 		ae = self.choose_editor(action, "")
-		# ae = ActionEditor(self.app, self.on_choosen)
 		ae.set_title(_("Select DPAD Action"))
 		ae.set_input(i, action, mode = Action.AC_BUTTON)
 		ae.show(self.editor.window)
