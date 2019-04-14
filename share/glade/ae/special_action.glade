@@ -362,6 +362,7 @@
         <child>
           <object class="GtkBox" id="vbShell">
             <property name="visible">True</property>
+            <property name="sensitive">False</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
@@ -462,6 +463,7 @@
         <child>
           <object class="GtkBox" id="vbOSD">
             <property name="visible">True</property>
+            <property name="sensitive">False</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <property name="spacing">1</property>
@@ -707,6 +709,7 @@
                 <child>
                   <object class="GtkGrid" id="grMenuControl">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
                     <property name="margin_right">20</property>
@@ -881,6 +884,7 @@
                 <child>
                   <object class="GtkGrid" id="grid7">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
                     <property name="margin_right">20</property>

@@ -66,6 +66,10 @@ MARKUP_STICK = """
 MARKUP_GYRO = """
 <big>Gyro: Quick settings</big>
 
+  Welcome to the prerelease. Gyro is next thing on TODO list.
+"""
+
+"""
   • Setup for aiming when right <a href='quick://mode(RPADTOUCH, mouse(ROLL), None)'>pad is touched</a>
   
   • Setup for aiming when right <a href='quick://mode(LT >= 0.7, mouse(ROLL), None)'>trigger is pushed</a>
