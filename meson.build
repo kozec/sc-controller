@@ -34,10 +34,10 @@ endif
 add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', language: 'c')
 include = [ include_directories('./include/') ]
 
-utils_lib = static_library('utils',
+
+utils_lib = shared_library('utils',
 	include_directories: include,
 	sources: [
-		'src/utils/msys_socket.c',
 		'src/utils/strbuilder.c',
 		'src/utils/traceback.c',
 		'src/utils/tokenizer.c',
@@ -65,8 +65,9 @@ conversions_lib = shared_library('scc-conversions',
 # Difference between tools and utils:
 #  - utils are universal stuff taken from other project (such as hashmap)
 #  - tools are scc-specific functions used on many places (such as find_profile)
-tools_lib = static_library('tools',
+tools_lib = shared_library('tools',
 	include_directories: include,
+	link_with: [utils_lib],
 	sources: [
 		'src/tools/constants.c',
 		'src/tools/userdata.c',
@@ -120,7 +121,7 @@ actions_lib = shared_library('scc-actions',
 parser_lib = shared_library('scc-parser',
 	include_directories: include,
 	dependencies: parser_lib_deps,
-	link_with: [ utils_lib, actions_lib, params_lib, conversions_lib ],
+	link_with: [ utils_lib, tools_lib, actions_lib, params_lib, conversions_lib ],
 	sources: [
 		'src/parser/action_parser.c',
 		'src/parser/jsonprofile.c',

@@ -34,7 +34,7 @@ static char* find_stuff(const char* paths[], size_t path_count, const char* name
 
 char* scc_find_profile(const char* name) {
 	const char* paths[] = {
-		// scc_get_profiles_path(), // TODO: reenable this
+		scc_get_profiles_path(),
 		scc_get_default_profiles_path()
 	};
 	return find_stuff(paths, sizeof(paths) / sizeof(char*), name, ".sccprofile");
@@ -42,7 +42,7 @@ char* scc_find_profile(const char* name) {
 
 char* scc_find_menu(const char* name) {
 	const char* paths[] = {
-		// scc_get_menus_path(), // TODO: reenable this
+		scc_get_menus_path(),
 		scc_get_default_menus_path()
 	};
 	return find_stuff(paths, sizeof(paths) / sizeof(char*), name, "");

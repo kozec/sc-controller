@@ -10,7 +10,7 @@ endif
 
 osd_lib = shared_library('scc-osd',
 	include_directories: include,
-	link_with: [ config_lib, gio_client_lib ],
+	link_with: [ utils_lib, tools_lib, config_lib, gio_client_lib ],
 	c_args: ['-Wno-deprecated-declarations'],
 	dependencies: [
 		dependency('gtk+-3.0', version: '>=3.22.0'),

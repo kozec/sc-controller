@@ -259,9 +259,13 @@ char* scc_find_binary(const char* name) {
 size_t scc_path_fix_slashes(char* path) {
 	size_t count = 0;
 	while (*path != 0) {
-		if (*path == '\\') *path = '/';
+		if (*path == '\\') {
+			*path = '/';
+			count++;
+		}
 		path ++;
 	}
+	return count;
 }
 #endif
 

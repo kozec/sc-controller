@@ -16,6 +16,7 @@
 #include <errno.h>
 
 #if MENU_GENERATORS_ENABLED
+#include "scc/tools.h"
 #ifdef _WIN32
 #include <windows.h>
 #define FILENAME_PREFIX "libscc-menugen-"
@@ -401,14 +402,14 @@ MenuData* scc_menudata_from_generator(const char* generator, Config* config, int
 	}
 #ifdef _WIN32
 	HMODULE mdl = NULL;
-	mdl = LoadLibrary(full_path);
+	mdl = LoadLibrary(filename);
 	if (mdl == NULL) {
 		DWORD err = GetLastError();
 		LERROR("Failed to load '%s': Windows error 0x%x", filename, err);
 		*error = 2;		// found, but failed
 		goto scc_menudata_from_generator_cleanup;
 	}
-	scc_menu_generator_generate_fn generate_fn = (scc_driver_init_fn)GetProcAddress(mdl, "generate");
+	scc_menu_generator_generate_fn generate_fn = (scc_menu_generator_generate_fn)GetProcAddress(mdl, "generate");
 	if (generate_fn == NULL) {
 		DWORD err = GetLastError();
 		LERROR("Failed to load 'scc_menu_generator_get_items' function from '%s': Windows error 0x%x", filename, err);
@@ -487,7 +488,7 @@ MenuData* scc_menudata_from_generator(const char* generator, Config* config, int
 	
 scc_menudata_from_generator_cleanup:
 #ifdef _WIN32
-	if (hndl != NULL) FreeLibrary(hndl);
+	if (mdl != NULL) FreeLibrary(mdl);
 #else
 	if (img != NULL) dlclose(img);
 #endif	// _WIN32

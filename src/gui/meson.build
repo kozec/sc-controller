@@ -9,7 +9,9 @@ elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 	platform_dependent_src = []
 elif host_machine.system() == 'windows'
 	platform_dependent_deps = []
-	platform_dependent_src = []
+	platform_dependent_src = [
+		import('windows').compile_resources('sc-controller.rc')
+	]
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif

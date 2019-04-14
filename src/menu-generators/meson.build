@@ -15,7 +15,7 @@ shared_library('scc-menugen-recent',
 
 shared_library('scc-menugen-profiles',
 	include_directories: [ include ],
-	link_with: [ config_lib, actions_lib, bindings_lib ],
+	link_with: [ utils_lib, actions_lib, bindings_lib ],
 	dependencies: deps,
 	sources: [ 'profiles.c' ]
 )

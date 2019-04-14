@@ -30,7 +30,7 @@ client_lib = shared_library('scc-client',
 
 slave_mapper_lib = shared_library('scc-slave-mapper',
 	include_directories: include,
-	link_with: [ client_lib, virtual_device_lib ],
+	link_with: [utils_lib, tools_lib, client_lib, virtual_device_lib ],
 	sources: [
 		'slave_mapper.c',
 	]

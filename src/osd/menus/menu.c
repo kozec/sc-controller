@@ -363,10 +363,15 @@ static void osd_menu_item_selected(OSDMenu* mnu) {
 	
 	if (i == NULL) return;
 	switch (i->type) {
-	case MI_ACTION:
-		i->action->button_press(i->action, priv->slave_mapper);
+	case MI_ACTION: {
+		Action* a = i->action;
+		RC_ADD(a);
+		scc_action_compress(&a);
+		a->button_press(a, priv->slave_mapper);
+		RC_REL(a);
 		osd_window_exit(OSD_WINDOW(mnu), 0);
 		break;
+	}
 	case MI_SUBMENU: {
 		filename = scc_find_menu(i->submenu);
 		if (filename != NULL) {
