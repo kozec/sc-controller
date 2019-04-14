@@ -1018,10 +1018,13 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		else:
 			# At this point, correct daemon version of daemon is running
 			# and we can check if there is anything new to inform user about
+			"""
 			if self.app.config['gui']['news']['last_version'] != App.get_release():
 				if self.app.config['gui']['news']['enabled']:
 					if not self.osd_mode:
 						self.check_release_notes()
+			"""
+			# TODO: ... except we are not doing that in pre-release
 	
 	
 	def on_daemon_error(self, daemon, error):

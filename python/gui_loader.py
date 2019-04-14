@@ -6,9 +6,10 @@ try:
 	gi.require_version('GdkX11', '3.0') 
 except ValueError: pass
 
-from scc.tools import init_logging
+from scc.tools import init_logging, set_logging_level
 from scc.paths import get_share_path
 init_logging()
+set_logging_level(True, True)
 
 import os, sys
 sys.argv = [ "sc-controller" ]

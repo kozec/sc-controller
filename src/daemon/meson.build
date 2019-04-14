@@ -1,6 +1,7 @@
 platform_dependent_deps = []
 platform_dependent_src = []
 platform_dependent_link_with = []
+platform_dependent_link_args = []
 
 if host_machine.system() == 'linux'
 	platform_dependent_deps = [
@@ -44,6 +45,7 @@ elif host_machine.system() == 'windows'
 		'device_monitor_win32.c',
 		'usb_helper.c',
 	]
+	platform_dependent_link_args += [ '-mwindows' ]
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif
@@ -53,6 +55,7 @@ executable('scc-daemon',
 	include_directories: include,
 	link_with: [ utils_lib, tools_lib, parser_lib, actions_lib,
 				 config_lib, virtual_device_lib ] + platform_dependent_link_with,
+	link_args: platform_dependent_link_args,
 	dependencies: platform_dependent_deps,
 	build_rpath: '/usr/X11R6/lib',
 	sources: platform_dependent_src + [
@@ -69,3 +72,4 @@ executable('scc-daemon',
 		'scheduler.c',
 	],
 )
+

@@ -21,17 +21,22 @@
 						":/usr/lib/python2.7/lib-dynload" \
 						":/usr/lib/python2.7/site-packages"
 
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	_putenv("PYTHONIOENCODING=UTF-8");
+#else
 int main(int argc, char** argv) {
 	INFO("Starting SC Controller GUI v%s...", DAEMON_VERSION);
 	// Just btw, GUI version and DAEMON_VERSION should match. GUI will
 	// try to get rid of old daemon automatically
 	traceback_set_argv0(argv[0]);
+#endif
 	
 	DEBUG("Initializing python...");
 	StrBuilder* sys_path = strbuilder_new();
 	strbuilder_add(sys_path, scc_get_python_src_path());
 #ifdef _WIN32
-	Py_SetProgramName(argv[0]);
+	Py_SetProgramName("sc-controller.exe");
 	Py_SetPythonHome("C:/msys32/mingw32/");
 	Py_InitializeEx(0);
 	strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7");

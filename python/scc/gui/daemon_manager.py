@@ -79,10 +79,10 @@ class DaemonManager(GObject.GObject):
 		self.connection = None
 		self.connecting = False
 		self.buffer = ""
-		self._connect()
 		self._requests = []
 		self._controllers = []			# Ordered as daemon says
 		self._controller_by_id = {}		# Source of memory leak
+		GLib.idle_add(self._connect)
 	
 	
 	def get_controllers(self):
@@ -121,15 +121,18 @@ class DaemonManager(GObject.GObject):
 			sccc = libscc_client.sccc_connect()
 			if sccc is None:
 				self.connecting = False
-				return self._on_daemon_died()
-			fd = libscc_client.sccc_get_fd(sccc)
-			sock = Gio.Socket.new_from_fd(fd)
-			connection = Gio.Socket.connection_factory_create_connection(sock)
-			connection._sccc = sccc
-			return self._on_connected(None, None, connection=connection)
+				self._on_daemon_died()
+			else:
+				fd = libscc_client.sccc_get_fd(sccc)
+				sock = Gio.Socket.new_from_fd(fd)
+				connection = Gio.Socket.connection_factory_create_connection(sock)
+				connection._sccc = sccc
+				self._on_connected(None, None, connection=connection)
+			return False
 		else:
 			address = Gio.UnixSocketAddress.new(get_daemon_socket())
 		sc.connect_async(address, None, self._on_connected)
+		return False
 	
 	
 	def _on_daemon_died(self, *a):
@@ -153,6 +156,7 @@ class DaemonManager(GObject.GObject):
 		# Emit event
 		# Try to reconnect
 		GLib.timeout_add_seconds(self.RECONNECT_INTERVAL, self._connect)
+		return False
 	
 	
 	def _on_connected(self, sc, results, connection = False):
@@ -303,7 +307,7 @@ class DaemonManager(GObject.GObject):
 	
 	def stop(self):
 		""" Stops the daemon """
-		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", "stop" ], Gio.SubprocessFlags.NONE)
+		Gio.Subprocess.new([ find_binary('scc-daemon'), "stop" ], Gio.SubprocessFlags.NONE)
 		self.connecting = False
 	
 	
@@ -315,7 +319,8 @@ class DaemonManager(GObject.GObject):
 			# Just to clean up living connection
 			self.alive = None
 			self._on_daemon_died()
-		Gio.Subprocess.new([ find_binary('scc-daemon'), "/dev/null", mode ], Gio.SubprocessFlags.NONE)
+		log.error(">>>>>>>> START!")
+		Gio.Subprocess.new([ find_binary('scc-daemon'), mode ], Gio.SubprocessFlags.NONE)
 		self._connect()
 		GLib.timeout_add_seconds(10, self._check_connected)
 	
