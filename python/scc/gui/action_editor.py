@@ -336,7 +336,8 @@ class ActionEditor(Editor):
 		entName = self.builder.get_object("entName")
 		name = entName.get_text().decode("utf-8").strip(" \t\r\n")
 		if len(name) < 1:
-			self._action.name = None
+			if isinstance(self._action, NameModifier):
+				self._action = self._action.child
 		elif not self._action:
 			self._action = NameModifier(name, self._action)
 		else:

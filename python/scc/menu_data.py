@@ -213,7 +213,7 @@ class MenuItem(object):
 		if self.action and type(self.action) in (str, unicode):
 			rv = { 'action' : self.action }
 		elif self.action:
-			rv = self.action.encode()
+			rv = { 'action': self.action.to_string() }
 		else:
 			rv = {}
 		rv['id'] = self.id

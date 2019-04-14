@@ -66,7 +66,6 @@ class Parameter:
 			elif isinstance(value, Action):
 				cparam = lib_actions.scc_new_action_parameter(value._caction)
 			elif isinstance(value, Enum):
-				print value.name
 				cparam = lib_bindings.scc_get_const_parameter(value.name)
 			else:
 				raise TypeError("Cannot convert %s" % (repr(value),))
@@ -182,7 +181,8 @@ class Action(object):
 		return lib_actions.scc_action_to_string(self._caction).decode("utf-8")
 	
 	def encode(self):
-		return dumps({ "action": self.to_string() })
+		# TODO: Get rid of this method
+		return { "action": self.to_string() }
 	
 	def get_compatible_modifiers(self):
 		return self._caction.contents.flags
@@ -237,6 +237,13 @@ class Action(object):
 		if not c:
 			raise TypeError("Action '%s' cannot have children" % (self.KEYWORD,))
 		return Parameter(c).get_value()
+	
+	@property
+	def name(self):
+		try:
+			return Action.__getattr__(self, "name")
+		except AttributeError:
+			return None
 	
 	def get_previewable(self):
 		# TODO: Return this
@@ -436,28 +443,43 @@ class ModeModifier(Modifier):
 		}
 
 
-KEYWORD_TO_ACTION = {
-	y.KEYWORD: y
-	for (x, y) in locals().items()
-	if hasattr(y, "KEYWORD")
-}
-
-
 class MultiAction(Action):
+	KEYWORD = "and"
 	BUILD_FN = lib_actions.scc_multiaction_new
 	
 	def __init__(self, *args):
 		self._caction = None
 		pars = (Action.CActionOEp * (len(args)))()
 		for i, value in enumerate(args):
-			if not isinstance(value, Action) or value._caction is None:
+			if isinstance(value, Action.CActionOEp):
+				pars[i] = value
+			elif not isinstance(value, Action) or value._caction is None:
 				raise TypeError("%s is not Action" % (repr(value), ))
-			pars[i] = value._caction
+			else:
+				pars[i] = value._caction
 		Action.__init__(self, self.BUILD_FN(ctypes.cast(pars, Action.CActionOEpp), len(pars)))
+	
+	@staticmethod
+	def make(*a):
+		a = [ a for a in a if a.strip() ]	# 8-)
+		# (^^ NoAction is eveluated as False)
+		if len(a) == 0:
+			return NoAction()
+		if len(a) == 1:
+			return a[0]
+		return MultiAction(*a)
 
 
 class Macro(MultiAction):
+	KEYWORD = "macro"
 	BUILD_FN = lib_actions.scc_macro_new
+
+
+KEYWORD_TO_ACTION = {
+	y.KEYWORD: y
+	for (x, y) in locals().items()
+	if hasattr(y, "KEYWORD")
+}
 
 
 lib_bindings.scc_action_get_type.argtypes = [ Action.CActionOEp ]

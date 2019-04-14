@@ -1,6 +1,6 @@
 /**
  * SC-Controller - Client - Slave Mapper
- * 
+ *
  * Slave mapper... right now... does almost nothing :)
  * If used with SAProfileAction or SATurnoffAction, it forwads request to daemon.
  */
@@ -188,8 +188,6 @@ void sccc_slave_mapper_feed(Mapper* _m, SCButton button, PadStickTrigger pst, in
 	} else {
 		return;
 	}
-	
-	
 }
 
 Mapper* sccc_slave_mapper_new(SCCClient* c) {

@@ -318,6 +318,7 @@ void osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) 
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	priv->client = client;
 	if (slave_mapper == NULL) {
+		WARN("osd_menu_set_client: creating new slave mapper");
 		priv->slave_mapper = sccc_slave_mapper_new(client);
 		// TODO: Handle OOM here?
 		ASSERT(priv->slave_mapper);

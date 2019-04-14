@@ -137,11 +137,13 @@ static void set_haptic(Action* a, HapticData hdata) {
 static Parameter* get_property(Action* a, const char* name) {
 	TriggerAction* t = container_of(a, TriggerAction, action);
 	MAKE_HAPTIC_PROPERTY(t->hdata, "haptic");
+	MAKE_ACTION_PROPERTY(t->child, "child");
+	MAKE_INT_PROPERTY(t->press_level, "press_level");
+	MAKE_INT_PROPERTY(t->release_level, "release_level");
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
 }
-
 
 
 static ActionOE trigger_constructor(const char* keyword, ParameterList params) {

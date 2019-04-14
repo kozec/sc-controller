@@ -117,6 +117,12 @@ static void set_haptic(Action* a, HapticData hdata) {
 }
 
 
+static ActionList get_children(Action* a) {
+	Multiaction* x = container_of(a, Multiaction, action);
+	return scc_copy_action_list(x->children);
+}
+
+
 Action* scc_multiaction_new(Action** actions, size_t action_count) {
 	ActionList lst = list_new(Action, action_count);
 	Multiaction* x = malloc(sizeof(Multiaction));
@@ -137,6 +143,7 @@ Action* scc_multiaction_new(Action** actions, size_t action_count) {
 	x->action.trigger = &trigger;
 	
 	x->action.extended.set_sensitivity = &set_sensitivity;
+	x->action.extended.get_children = &get_children;
 	x->action.extended.set_haptic = &set_haptic;
 	
 	x->children = lst;
@@ -146,12 +153,6 @@ Action* scc_multiaction_new(Action** actions, size_t action_count) {
 	}
 	
 	return &x->action;
-}
-
-
-static ActionList get_children(Action* a) {
-	Multiaction* x = container_of(a, Multiaction, action);
-	return scc_copy_action_list(x->children);
 }
 
 Action* scc_multiaction_combine(Action* a1, Action* a2) {

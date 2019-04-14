@@ -118,7 +118,9 @@ static void def_trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue
 }
 
 static Parameter* def_get_property(Action* a, const char* name) {
-	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
+	if (0 != strcmp("name", name))
+		// 'name' is always known, just often undefined
+		DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
 }
 

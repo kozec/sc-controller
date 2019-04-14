@@ -138,7 +138,6 @@ static void set_haptic(Action* a, HapticData hdata) {
 	FOR_ALL_CHILDREN(c->extended.set_haptic, extended.set_haptic, hdata);
 }
 
-
 void macro_set_repeat(Action* a, bool repeat) {
 	ASSERT(a->type == KW_MACRO);
 	Macro* x = container_of(a, Macro, action);
@@ -161,6 +160,17 @@ bool macro_add_from_params(Action* a, ParameterList lst) {
 }
 
 
+static ActionList get_children(Action* a) {
+	Macro* x = container_of(a, Macro, action);
+	return scc_copy_action_list(x->children);
+}
+
+static ActionList get_children_ref(Action* a) {
+	Macro* x = container_of(a, Macro, action);
+	return x->children;
+}
+
+
 Action* scc_macro_new(Action** actions, size_t action_count) {
 	ActionList lst = list_new(Action, action_count);
 	Macro* x = malloc(sizeof(Macro));
@@ -174,6 +184,7 @@ Action* scc_macro_new(Action** actions, size_t action_count) {
 	x->action.compress = &compress;
 	x->action.button_press = &button_press;
 	x->action.extended.set_sensitivity = &set_sensitivity;
+	x->action.extended.get_children = &get_children;
 	x->action.extended.set_haptic = &set_haptic;
 	
 	x->active = -1;
@@ -203,17 +214,6 @@ bool scc_macro_add_action(Action* m, Action* a) {
 		return false;
 	RC_ADD(a);
 	return true;
-}
-
-
-static ActionList get_children(Action* a) {
-	Macro* x = container_of(a, Macro, action);
-	return scc_copy_action_list(x->children);
-}
-
-static ActionList get_children_ref(Action* a) {
-	Macro* x = container_of(a, Macro, action);
-	return x->children;
 }
 
 
@@ -258,3 +258,4 @@ combine_fail:
 Action* scc_macro_combine(Action* a1, Action* a2) {
 	return combine(KW_MACRO, a1, a2, &get_children_ref, &scc_macro_new);
 }
+

@@ -111,7 +111,7 @@ class TriggerComponent(AEComponent, BindingEditor):
 		Returns passed action otherwise.
 		"""
 		if isinstance(action, TriggerAction):
-			return action.action
+			return action.child
 		return action
 	
 	
@@ -208,7 +208,7 @@ class TriggerComponent(AEComponent, BindingEditor):
 		""" 'Analog Output' handler """
 		b = SimpleChooser(self.app, "axis", lambda action: self.on_action_chosen("analog", action) )
 		b.set_title(_("Select Analog Axis"))
-		b.display_action(Action.AC_STICK, AxisAction(self.analog))
+		b.display_action(Action.AC_STICK, self.analog)
 		b.show(self.editor.window)
 	
 	
