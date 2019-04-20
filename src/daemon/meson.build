@@ -45,7 +45,7 @@ elif host_machine.system() == 'windows'
 		'device_monitor_win32.c',
 		'usb_helper.c',
 	]
-	platform_dependent_link_args += [ '-mwindows' ]
+	platform_dependent_link_args += [ '-mconsole' ]
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif

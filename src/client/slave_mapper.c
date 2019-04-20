@@ -61,7 +61,6 @@ static bool special_action(Mapper* _m, unsigned int sa_action_type, void* sa_dat
 		return true;
 	} else if (sa_action_type == SAT_MENU) {
 		LOG("Menu selected");
-		LOG(">>> %p", sa_data);
 		return true;
 	}
 	return false;

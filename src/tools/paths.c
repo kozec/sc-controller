@@ -16,16 +16,17 @@
 #include "scc/utils/assert.h"
 #include "scc/tools.h"
 #include <dirent.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 
 #ifdef _WIN32
-	#include <windows.h>
-	#include <shlobj.h>
-	#define SEP "\\"
+#include <windows.h>
+#include <shlobj.h>
+#define SEP "\\"
 #else
-	#include <pwd.h>
-	#define SEP "/"
+#include <pwd.h>
+#define SEP "/"
 #endif
 #include <sys/types.h>
 #include <unistd.h>
@@ -217,6 +218,19 @@ const char* scc_get_pid_file() {
 	return pid_file_path;
 }
 
+#ifdef _WIN32
+static char exe_path[PATH_MAX] = {0};
+
+const char* scc_get_exe_path() {
+	if (exe_path[0] != 0)
+		// Return cached value
+		return exe_path;
+	char path[PATH_MAX];
+	snprintf(path, PATH_MAX, "%s\\..", scc_get_share_path());
+	ASSERT(exe_path == scc_realpath(path, exe_path));
+	return exe_path;
+}
+#endif
 
 // TODO: This, but properly
 char* scc_find_binary(const char* name) {
@@ -225,8 +239,7 @@ char* scc_find_binary(const char* name) {
 		"./",
 		"./tools",
 #else
-		scc_get_share_path(),
-		"./src/osd",
+		scc_get_exe_path(),
 #endif
 		"./build/src/osd",
 		"./build/src/daemon",
@@ -457,8 +470,25 @@ def get_share_path():
 
 */
 
+char* scc_realpath(char* path, char* resolved_path) {
+	if (resolved_path == NULL) {
+		resolved_path = malloc(PATH_MAX);
+		if (resolved_path == NULL)
+			return NULL;
+	}
+#ifdef _WIN32
+	DWORD r = GetFullPathName(path, PATH_MAX, resolved_path, NULL);
+	if ((r > PATH_MAX) || (r == 0)) return NULL;
+	return resolved_path;
+#else
+	return realpath(path, resolved_path);
+#endif
+}
 
 const char* scc_get_python_src_path() {
+	if (python_path[0] != 0)
+		// Return cached value
+		return python_path;
 	char path[PATH_MAX];
 #ifdef _WIN32
 	snprintf(path, PATH_MAX, "%s\\..\\python", scc_get_share_path());
@@ -470,10 +500,9 @@ const char* scc_get_python_src_path() {
 		snprintf(path, PATH_MAX, "/usr/lib/python2.7/site-packages");
 	}
 #endif
-	strncpy(python_path, path, PATH_MAX);
+	ASSERT(python_path == scc_realpath(path, python_path));
 	return python_path;
 }
-
 
 const char* scc_get_daemon_socket() {
 	if (socket_path[0] != 0)

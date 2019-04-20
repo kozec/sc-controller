@@ -197,7 +197,14 @@ int main(int argc, char** argv) {
 	argparse_init(&argparse, options, usage, 0);
 	argparse_describe(&argparse, "\nSC-Controller daemon.", NULL);
 	argc = argparse_parse(&argparse, argc, (const char**)argv);
-	
+
+#ifdef _WIN32
+	// Special case for Windows: running daemon with no arguments should be
+	// same as running 'scc-daemon debug', so user can just double-click
+	// scc-daemon.exe icon and get console window with working emulation.
+	mode = M_DEBUG;
+#endif
+
 	for (int i=0; i<argc; i++) {
 		if		(0 == strcmp("start",	argv[i])) mode = M_START;
 		else if	(0 == strcmp("stop",	argv[i])) mode = M_STOP;

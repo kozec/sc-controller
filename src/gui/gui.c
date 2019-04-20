@@ -24,6 +24,14 @@
 #ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	_putenv("PYTHONIOENCODING=UTF-8");
+	char* new_path = NULL;
+	if (getenv("PATH") == NULL)
+		new_path = strbuilder_fmt("PATH=%s", scc_get_exe_path());
+	else
+		new_path = strbuilder_fmt("PATH=%s;%s", scc_get_exe_path(), getenv("PATH"));
+	ASSERT(new_path != NULL);
+	_putenv(new_path);
+	free(new_path);
 #else
 int main(int argc, char** argv) {
 	INFO("Starting SC Controller GUI v%s...", DAEMON_VERSION);
@@ -37,11 +45,32 @@ int main(int argc, char** argv) {
 	strbuilder_add(sys_path, scc_get_python_src_path());
 #ifdef _WIN32
 	Py_SetProgramName("sc-controller.exe");
-	Py_SetPythonHome("C:/msys32/mingw32/");
-	Py_InitializeEx(0);
-	strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7");
-	strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/lib-dynload");
-	strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/site-packages");
+	
+	// When running from release, this directory will exists and in so it will
+	// be part of our PYTHONPATH.
+	char* test = strbuilder_fmt("%s\\..\\lib\\python2.7", scc_get_python_src_path());
+	ASSERT(test != NULL);
+	if (access(test, F_OK) == 0) {
+		free(test);
+		char* root = strbuilder_fmt("%s\\..", scc_get_python_src_path());
+		ASSERT(root != NULL);
+		char* python_home = scc_realpath(root, NULL);
+		ASSERT(python_home != NULL);
+		free(root);
+		DDEBUG("Python home: %s", python_home);
+		Py_SetPythonHome((char*)python_home);
+		Py_InitializeEx(0);
+		strbuilder_addf(sys_path, ";%s\\lib\\python2.7", python_home);
+		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\lib-dynload", python_home);
+		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\site-packages", python_home);
+	} else {
+		Py_SetPythonHome("C:/msys32/mingw32/");
+		Py_InitializeEx(0);
+		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7");
+		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/lib-dynload");
+		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/site-packages");
+	}
+	DDEBUG("Python path: %s", strbuilder_get_value(sys_path));
 #else
 	Py_Initialize();
 	strbuilder_add(sys_path, LIB_PYTHON_PATH);

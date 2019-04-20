@@ -194,7 +194,21 @@ const char* scc_button_to_string(SCButton b);
  * Returns number of replacements made.
  */
 size_t scc_path_fix_slashes(char* path);
+
+/** Returns path to directory where sc-controller.exe is located */
+const char* scc_get_exe_path();
 #endif
+
+
+/**
+ * Works as realpath, which is not available in mingw32.
+ * 'resolved_path' has to have place for at least PATH_MAX bytes.
+ * If 'resolved_path' is NULL, new buffer is allocated.
+ *
+ * Returns 'resolved_path', new allocated buffer if 'resolved_path' is NULL.
+ * Returns NULL in case of error or if memory cannot be allocated.
+ */
+char* scc_realpath(char* path, char* resolved_path);
 
 /**
  * Simply strips part after last '.' (including '.')

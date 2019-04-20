@@ -35,7 +35,7 @@ add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', lan
 include = [ include_directories('./include/') ]
 
 
-utils_lib = shared_library('utils',
+utils_lib = shared_library('scc-utils',
 	include_directories: include,
 	sources: [
 		'src/utils/strbuilder.c',
@@ -65,7 +65,7 @@ conversions_lib = shared_library('scc-conversions',
 # Difference between tools and utils:
 #  - utils are universal stuff taken from other project (such as hashmap)
 #  - tools are scc-specific functions used on many places (such as find_profile)
-tools_lib = shared_library('tools',
+tools_lib = shared_library('scc-tools',
 	include_directories: include,
 	link_with: [utils_lib],
 	sources: [

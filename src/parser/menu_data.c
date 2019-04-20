@@ -376,7 +376,7 @@ MenuData* scc_menudata_from_generator(const char* generator, Config* config, int
 	StrBuilder* sb = strbuilder_new();
 	if (sb == NULL) return NULL;
 #ifdef _WIN32
-	strbuilder_add(sb, scc_get_share_path());
+	strbuilder_add(sb, scc_get_exe_path());
 	strbuilder_add_path(sb, "..\\menu-generators");
 #elif defined(__BSD__)
 	strbuilder_add(sb, "build-bsd/src/menu-generators");
