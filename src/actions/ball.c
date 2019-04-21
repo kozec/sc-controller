@@ -197,8 +197,10 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 		double t = mono_time_d();
 		if (b->old_pos_set && m->was_touched(m, what)) {
 			double dt = t - b->last_time;
+			if (dt < 0.0075) return;
 			double dx = (double)(x - b->old_pos.x);
 			double dy = (double)(y - b->old_pos.y);
+			LOG("Added movement over %g", dt);
 			add(b, dx / dt, dy / dt);
 			if (b->child->extended.change != NULL) {
 				wholehaptic_change(&b->whdata, m, dx, dy);
@@ -272,7 +274,7 @@ static ActionOE ball_constructor(const char* keyword, ParameterList params) {
 	b->child = scc_parameter_as_action(params->items[6]);
 	
 	size_t mean_len = scc_parameter_as_int(params->items[2]);
-	float fampli = scc_parameter_as_float(params->items[4]);
+	double fampli = scc_parameter_as_float(params->items[4]);
 	b->radscale = (b->degree * M_PI / 180.0) / fampli;
 	b->i = (2.0 * b->mass * (b->r * b->r)) / 5.0;
 	b->a = b->r * b->friction / b->i;
@@ -305,3 +307,4 @@ void scc_actions_init_ball() {
 			0.02, 65536, 40.0);
 	scc_action_register(KW_BALL, &ball_constructor);
 }
+

@@ -11,8 +11,8 @@
 
 #define XSCALE 0.006
 #define YSCALE 0.006
-#define SCR_XSCALE 0.0005
-#define SCR_YSCALE 0.0005
+#define SCR_XSCALE 0.01
+#define SCR_YSCALE 0.01
 
 
 VirtualDevice* setup_winapi_device(VirtualDeviceType type, const VirtualDeviceSettings* settings) {
