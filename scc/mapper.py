@@ -418,12 +418,16 @@ class Mapper(object):
 					if not self.lpad_touched:
 						self.lpad_touched = True
 					self.profile.pads[LEFT].whole(self, state.lpad_x, state.lpad_y, LEFT)
+					if self.old_state.buttons & STICKTILT and not self.buttons & STICKTILT:
+						# LPAD and stick share axes and so when they are used simultaneously (by someone with 3 hands or so :)
+						# this is how mapper can tell that stick was recentered
+						self.profile.stick.whole(self, 0, 0, STICK)
 				elif not self.buttons & STICKTILT:
 					# Pad is not being touched
 					if self.lpad_touched:
 						self.lpad_touched = False
 						self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
-			
+					
 			# CPAD (touchpad on DS4 controller)
 			if controller.flags & ControllerFlags.HAS_CPAD:
 				if FE_PAD in fe or self.old_state.cpad_x != state.cpad_x or self.old_state.cpad_y != state.cpad_y:
