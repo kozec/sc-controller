@@ -1040,7 +1040,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		elif "LIBUSB_ERROR_ACCESS" in error:
 			msg += "\n" + _("You don't have access to controller device.")
 			msg += "\n\n" + ( _("Consult your distribution manual, try installing Steam package or <a href='%s'>install required udev rules manually</a>.") %
-					'https://wiki.archlinux.org/index.php/Gamepad#Steam_Controller_Not_Pairing' )
+					'https://wiki.archlinux.org/index.php/Gamepad#Steam_Controller_not_pairing' )
 			# TODO: Write howto somewhere instead of linking to ArchWiki
 		elif "LIBUSB_ERROR_BUSY" in error:
 			msg += "\n" + _("Another application (most likely Steam) is using the controller.")
