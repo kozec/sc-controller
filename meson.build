@@ -8,6 +8,8 @@ CONFIG_BACKEND = 'config_json'
 parser_lib_deps = []
 C_FILES = '*.c'
 
+libexecinfo = []
+
 if host_machine.system() == 'windows'
 	add_global_arguments('-D_POSIX', '-DNO_X11', '-mno-ms-bitfields', language: 'c')
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
@@ -22,7 +24,17 @@ elif host_machine.system() == 'linux'
 	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
 elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 	add_global_arguments('-D__BSD__', language: 'c')
-	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
+endif
+# Check for backtrace and libexecinfo
+if host_machine.system() == 'linux' or host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
+	compiler = meson.get_compiler('c')
+	if compiler.has_header('execinfo.h')
+		if not compiler.has_function('backtrace', prefix : '#include <execinfo.h>')
+			libexecinfo += [ compiler.find_library('execinfo') ]
+		endif
+	else
+		add_global_arguments('-DNO_TRACEBACKS', language: 'c')
+	endif
 endif
 if get_option('menu-generators').enabled()
 	add_global_arguments('-DMENU_GENERATORS_ENABLED', language: 'c')
@@ -48,7 +60,8 @@ utils_lib = shared_library('scc-utils',
 		'src/utils/aojls.c',
 		'src/utils/list.c',
 		'src/utils/math.c',
-	]
+	],
+	dependencies: libexecinfo
 )
 
 
