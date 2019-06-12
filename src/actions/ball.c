@@ -200,7 +200,7 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 			if (dt < 0.0075) return;
 			double dx = (double)(x - b->old_pos.x);
 			double dy = (double)(y - b->old_pos.y);
-			LOG("Added movement over %g", dt);
+			// LOG("Added movement over %g", dt);
 			add(b, dx / dt, dy / dt);
 			if (b->child->extended.change != NULL) {
 				wholehaptic_change(&b->whdata, m, dx, dy);

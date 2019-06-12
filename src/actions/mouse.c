@@ -138,8 +138,7 @@ static void set_sensitivity(Action* a, float x, float y, float z) {
 	vec_set(b->sensitivity, x, y);
 }
 
-static void gyro(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
-					GyroValue q1, GyroValue q2, GyroValue q3, GyroValue q4) {
+static void gyro(Action* a, Mapper* m, struct GyroInput* value) {
 	// MouseAction* b = container_of(a, MouseAction, action);
 	
 	// TODO: So, yeah, wtf should I do with yaw?

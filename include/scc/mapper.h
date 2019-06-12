@@ -36,8 +36,8 @@ struct Mapper {
 	Profile*			(*get_profile)(Mapper* m);
 	/**
 	 * Returns controller assigned to this mapper, or NULL if there is none.
-	 * If controller is returned, reference-count is increased and caller has
-	 * to dereference it.
+	 * Returned value has to stay allocated at least as long Mapper is, or
+	 * until set_controller method is called.
 	 */
 	Controller*			(*get_controller)(Mapper* m);
 	void				(*set_axis)(Mapper* m, Axis axis, AxisValue v);
@@ -140,3 +140,4 @@ struct Mapper {
 	 */
 	void				(*cancel)(Mapper* m, TaskID task_id);
 };
+

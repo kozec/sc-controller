@@ -167,16 +167,16 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 	}
 }
 
-static void gyro(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
-					GyroValue q1, GyroValue q2, GyroValue q3, GyroValue q4) {
+static void gyro(Action* a, Mapper* m, struct GyroInput* value) {
 	ModeModifier* mm = container_of(a, ModeModifier, action);
 	Mode* mode = choose(mm, m);
 	if ((mode == NULL) || (!mode->is_active)) {
 		// Switching to no or different action
-		DEACTIVATE_ALL(mm, true, gyro, m, 0, 0, 0, q1, q2, q3, q4);
+		struct GyroInput d = { 0, 0, 0, value->q1, value->q2, value->q3, value->q4 };
+		DEACTIVATE_ALL(mm, true, gyro, m, &d);
 	}
 	if (mode) {
-		mode->action->gyro(mode->action, m, pitch, yaw, roll, q1, q2, q3, q4);
+		mode->action->gyro(mode->action, m, value);
 		mode->is_active = true;
 	}
 }

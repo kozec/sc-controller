@@ -15,6 +15,8 @@ static const char* get_description(Controller* c);
 static const char* get_type(Controller* c);
 static const char* get_id(Controller* c);
 static void set_mapper(Controller* c, Mapper* m);
+static void set_gyro_enabled(Controller* c, bool enabled);
+static bool get_gyro_enabled(Controller* c);
 static void haptic_effect(Controller* c, HapticData* hdata);
 static void flush(Controller* c, Mapper* m);
 
@@ -24,7 +26,7 @@ void handle_input(SCController* sc, SCInput* i) {
 	if (sc->mapper != NULL) {
 		memcpy(&sc->input.ltrig, &i->ltrig, sizeof(TriggerValue) * 2);
 		memcpy(&sc->input.rpad_x, &i->rpad_x, sizeof(AxisValue) * 2);
-		memcpy(&sc->input.gpitch, &i->gpitch, sizeof(GyroValue) * 7);
+		memcpy(&sc->input.gyro, &i->gpitch, sizeof(struct GyroInput));
 		
 		SCButton buttons = (((SCButton)i->buttons1) << 24) | (((SCButton)i->buttons0) << 8);
 		bool lpadtouch = buttons & B_LPADTOUCH;
@@ -92,6 +94,8 @@ SCController* create_usb_controller(Daemon* daemon, USBDevHandle hndl, SCControl
 	sc->controller.turnoff = NULL;
 	sc->controller.flush = &flush;
 	sc->controller.set_mapper = &set_mapper;
+	sc->controller.set_gyro_enabled = &set_gyro_enabled;
+	sc->controller.get_gyro_enabled = &get_gyro_enabled;
 	// Main difference between dongle-bound and wired controller is that dongle-bound
 	// countroller doesn't close USB device when deallocated
 	sc->controller.deallocate = (type == SC_WIRED) ? &deallocate : &deallocate_dongle_controller;
@@ -99,6 +103,7 @@ SCController* create_usb_controller(Daemon* daemon, USBDevHandle hndl, SCControl
 	HAPTIC_DISABLE(&sc->hdata[0]); sc->hdata[0].pos = HAPTIC_LEFT;
 	HAPTIC_DISABLE(&sc->hdata[1]); sc->hdata[1].pos = HAPTIC_RIGHT;
 	sc->state = SS_NOT_CONFIGURED;
+	sc->gyro_enabled = true;
 	sc->usb_hndl = hndl;
 	sc->daemon = daemon;
 	sc->auto_id_used = false;
@@ -126,6 +131,17 @@ static const char* get_description(Controller* c) {
 static void set_mapper(Controller* c, Mapper* m) {
 	SCController* sc = container_of(c, SCController, controller);
 	sc->mapper = m;
+}
+
+static void	set_gyro_enabled(Controller* c, bool enabled) {
+	SCController* sc = container_of(c, SCController, controller);
+	sc->gyro_enabled = enabled;
+	configure(sc);
+}
+
+static bool get_gyro_enabled(Controller* c) {
+	SCController* sc = container_of(c, SCController, controller);
+	return sc->gyro_enabled;
 }
 
 static inline void haptic_effect_add(HapticData* target, HapticData* src) {
@@ -281,3 +297,4 @@ configure_fail:
 	LERROR("Failed to configure controller");
 	return false;
 }
+

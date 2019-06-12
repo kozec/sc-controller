@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 #ifdef __linux__
 #include <linux/input-event-codes.h>
@@ -21,9 +22,9 @@ typedef enum ControllerFlags {
 	CF_NO_FLAGS			= 0,		// No flags means Steam Controller
 	CF_HAS_RSTICK		= 1 << 0,	// Controller has right stick instead of touchpad
 	CF_SEPARATE_STICK	= 1 << 1,	// Left stick and left pad are using separate axes
-	// EUREL_GYROS is set when syro sensor values are provided as pitch, yaw
-	// and roll instead of quaterion. 'q4' is unused in such case.
-	CF_EUREL_GYROS		= 1 << 2,
+	CF_EUREL_GYROS		= 1 << 2,	// EUREL_GYROS is set when syro sensor values
+									// are provided as pitch, yaw and roll instead of quaterion.
+									// 'q4' is unused in such case.
 	CF_HAS_CPAD			= 1 << 3,	// Controller has DS4-like touchpad in center
 	CF_HAS_DPAD			= 1 << 4,	// Controller has normal d-pad instead of touchpad
 	CF_NO_GRIPS			= 1 << 5,	// Controller has no grips
@@ -80,6 +81,18 @@ struct Controller {
 	 */
 	const char*			(*get_gui_config_file)(Controller* c);
 	/**
+	 * Enables or disables gyroscope hardware.
+	 * This callback may be set to NULL if controller doesn't have gyroscope,
+	 * but has to be implemented otherwise, even if gyroscope is not
+	 * configurable and calling it will do nothing.
+	 */
+	void				(*set_gyro_enabled)(Controller* c, bool enabled);
+	/**
+	 * Returns TRUE if gyroscope hardware is enabled.
+	 * This callback may be set to NULL under same conditions as set_gyro_enabled
+	 */
+	bool				(*get_gyro_enabled)(Controller* c);
+	/**
 	 * Plays haptic effect. This callback may be set to NULL if controller has
 	 * no rumble support.
 	 */
@@ -134,6 +147,16 @@ typedef enum SCButton {
 	_SCButton_padding = 0xFFFFFFFF	// uint32_t
 } SCButton;
 
+struct GyroInput {
+	GyroValue			gpitch;
+	GyroValue			groll;
+	GyroValue			gyaw;
+	GyroValue			q1;
+	GyroValue			q2;
+	GyroValue			q3;
+	GyroValue			q4;
+};
+
 struct ControllerInput {
 	SCButton			buttons;
 	TriggerValue		ltrig;
@@ -146,13 +169,7 @@ struct ControllerInput {
 	AxisValue			rpad_y;
 	AxisValue			cpad_x;
 	AxisValue			cpad_y;
-	GyroValue			gpitch;
-	GyroValue			groll;
-	GyroValue			gyaw;
-	GyroValue			q1;
-	GyroValue			q2;
-	GyroValue			q3;
-	GyroValue			q4;
+	struct GyroInput	gyro;
 };
 
 typedef enum PadStickTrigger {

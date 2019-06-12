@@ -104,11 +104,11 @@ struct Action {
 	void	(*axis)(Action* a, Mapper* m, AxisValue value, PadStickTrigger what);
 	/**
 	 * Called when action is set by rotating gyroscope.
-	 * 'pitch', 'yaw' and 'roll' represents change in gyroscope rotations.
+	 * 'pitch', 'yaw' and 'roll' fields in GyroInput struct represents change
+	 * in gyroscope rotations.
 	 * 'q1' to 'q4' represents absolute rotation expressed as quaterion.
 	 */
-	void	(*gyro)(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
-						GyroValue q1, GyroValue q2, GyroValue q3, GyroValue q4);
+	void	(*gyro)(Action* a, Mapper* m, struct GyroInput* value);
 	/**
 	 * Called when action is executed by moving physical stick or touching
 	 * physical pad, when one action is defined for whole pad or stick.

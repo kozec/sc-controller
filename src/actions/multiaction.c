@@ -89,10 +89,9 @@ static void axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) {
 	FOR_ALL_CHILDREN(ALWAYS, axis, m, value, what);
 }
 
-static void gyro(Action* a, Mapper* m, GyroValue pitch, GyroValue yaw, GyroValue roll,
-					GyroValue q1, GyroValue q2, GyroValue q3, GyroValue q4) {
+static void gyro(Action* a, Mapper* m, struct GyroInput* value) {
 	Multiaction* ma = container_of(a, Multiaction, action);
-	FOR_ALL_CHILDREN(ALWAYS, gyro, m, pitch, yaw, roll, q1, q2, q3, q4);
+	FOR_ALL_CHILDREN(ALWAYS, gyro, m, value);
 }
 
 static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) {

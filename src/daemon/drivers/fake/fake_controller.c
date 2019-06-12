@@ -55,6 +55,8 @@ FakeGamepad* fakegamepad_new(Daemon* daemon) {
 	pad->controller.get_description = &fakegamepad_get_description;
 	pad->controller.set_mapper = &fakegamepad_set_mapper;
 	pad->controller.turnoff = &fakegamepad_turnoff;
+	pad->controller.set_gyro_enabled = NULL;
+	pad->controller.get_gyro_enabled = NULL;
 	
 	snprintf(pad->id, MAX_ID_LEN, "fake%i", next_id);
 	snprintf(pad->desc, MAX_DESC_LEN, "<FakeGamepad #%i>", next_id);

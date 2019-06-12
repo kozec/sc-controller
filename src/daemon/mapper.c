@@ -377,8 +377,13 @@ static void input(Mapper* _m, ControllerInput* i) {
 		a->whole(a, _m, m->state.stick_x, m->state.stick_y, PST_STICK);
 	}
 	
-	/*
 	// Gyro
+	Controller* c = _m->get_controller(_m);
+	if ((c != NULL) && (c->get_gyro_enabled != NULL) && (c->get_gyro_enabled(c))) {
+		Action* a = m->profile->get_gyro(m->profile);
+		// LOG("GYYYYRO %i %i %i", i->q1, i->q2, i->q3);
+	}
+	/*
 	if c.GyroEnabled() {
 		m.profile.Gyro().Gyro(m, i.GPitch(), i.GRoll(), i.GYaw(), i.Q1(), i.Q2(), i.Q3(), i.Q4())
 	}
