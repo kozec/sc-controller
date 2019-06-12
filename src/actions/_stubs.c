@@ -15,8 +15,6 @@
 const char* KW_CIRCULAR = "circular";
 const char* KW_CIRCULAR_ABS = "circularabs";
 const char* KW_TILT = "tilt";
-const char* KW_GYRO = "gyro";
-const char* KW_GYRO_ABS = "gyroabs";
 const char* KW_KEYBOARD = "keyboard";
 const char* KW_RESETGYRO = "resetgyro";
 const char* KW_CLEAROSD = "clearosd";
@@ -38,7 +36,6 @@ const char* KW_GRID_MENU = "gridmenu";
 
 static ParamChecker pc_circular;
 static ParamChecker pc_tilt;
-static ParamChecker pc_gyro;
 static ParamChecker pc_osd;
 static ParamChecker pc_rotate;
 static ParamChecker pc_position;
@@ -101,14 +98,6 @@ static ActionOE stub_constructor(const char* keyword, ParameterList params) {
 		keyword = KW_CIRCULAR_ABS;
 		flags = AF_ACTION;
 		pc = &pc_circular;
-	} else if (0 == strcmp(KW_GYRO, keyword)) {
-		keyword = KW_GYRO;
-		flags = AF_ACTION;
-		pc = &pc_gyro;
-	} else if (0 == strcmp(KW_GYRO_ABS, keyword)) {
-		keyword = KW_GYRO_ABS;
-		flags = AF_ACTION;
-		pc = &pc_gyro;
 	} else if (0 == strcmp(KW_TILT, keyword)) {
 		keyword = KW_TILT;
 		flags = AF_ACTION;
@@ -247,17 +236,12 @@ void scc_actions_init_stub() {
 	scc_param_checker_set_defaults(&pc_tilt, NoAction, NoAction, NoAction,
 										NoAction, NoAction, NoAction);
 	
-	scc_param_checker_init(&pc_gyro, "xx?x?");
-	scc_param_checker_set_defaults(&pc_gyro, ABS_INVALID, ABS_INVALID);
-	
 	scc_param_checker_init(&pc_osd, "s?a?");
 	scc_param_checker_set_defaults(&pc_osd, "", NoAction);
 	
 	scc_action_register(KW_CIRCULAR, &stub_constructor);
 	scc_action_register(KW_CIRCULAR_ABS, &stub_constructor);
 	scc_action_register(KW_TILT, &stub_constructor);
-	scc_action_register(KW_GYRO, &stub_constructor);
-	scc_action_register(KW_GYRO_ABS, &stub_constructor);
 	scc_action_register(KW_KEYBOARD, &stub_constructor);
 	scc_action_register(KW_RESETGYRO, &stub_constructor);
 	scc_action_register(KW_CLEAROSD, &stub_constructor);

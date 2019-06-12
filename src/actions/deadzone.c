@@ -46,12 +46,6 @@ static void deadzone_dealloc(Action* a) {
 	free(d);
 }
 
-static inline AxisValue clamp(AxisValue min, AxisValue x, AxisValue max) {
-	if (x < min) return min;
-	if (x > max) return max;
-	return x;
-}
-
 
 /** If input value is out of deadzone range, output value is zero */
 static void mode_cut(DeadzoneModifier* d, AxisValue* x, AxisValue* y, AxisValue range) {
@@ -101,7 +95,8 @@ static void mode_round(DeadzoneModifier* d, AxisValue* x, AxisValue* y, AxisValu
 static void mode_linear(DeadzoneModifier* d, AxisValue* x, AxisValue* y, AxisValue range) {
 	if (*y == 0) {
 		// Small optimalization for 1D input, for example trigger
-		AxisValue clamped = clamp(0, ((double)(*x - d->lower) / (double)(d->upper - d->lower)) * range, range);
+		double distance = ((double)(*x - d->lower) / (double)(d->upper - d->lower)) * range;
+		AxisValue clamped = clamp(0, distance, range);
 		*x = copysign(clamped, *x);
 	} else {
 		double distance = sqrt(POW2(*x) + POW2(*y));
@@ -257,3 +252,4 @@ void scc_actions_init_deadzone() {
 	scc_param_checker_set_defaults(&pc, "CUT", STICK_PAD_MAX);
 	scc_action_register(KW_DEADZONE, &deadzone_constructor);
 }
+

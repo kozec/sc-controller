@@ -60,3 +60,4 @@ void scc_virtual_device_set_axis(VirtualDevice* dev, Axis a, AxisValue value) {
 	ev.value = value;
 	write(idev->fd, &ev, sizeof(ev));
 }
+

@@ -1,6 +1,7 @@
 #include "scc/utils/assert.h"
 #include "scc/utils/list.h"
 #include "scc/param_checker.h"
+#include "scc/conversions.h"
 #include "scc/parameter.h"
 #include "scc/error.h"
 #include "param_checker.h"
@@ -56,6 +57,8 @@ void scc_param_checker_init(ParamChecker* pc, const char* expression) {
 			if ((list_len(lst) > 0) && (list_last(lst)->type == PT_INT)) {
 				last = list_last(lst);
 				last->min = 0;
+				if (last->max == ABS_MAX)
+					last->max = ABS_CNT;
 			} else if ((list_len(lst) > 0) && (list_last(lst)->type == PT_FLOAT)) {
 				last = list_last(lst);
 				last->fmin = 0;
@@ -100,7 +103,7 @@ void scc_param_checker_init(ParamChecker* pc, const char* expression) {
 			list_add(lst, PD(PT_INT));
 			last = list_last(lst);
 			// TODO: Use ABS_MAX here.
-			last->min = 0; last->max = 63;
+			last->min = 0; last->max = ABS_MAX;
 			break;
 		case 'a':
 			list_add(lst, PD(PT_ACTION));

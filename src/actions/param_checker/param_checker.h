@@ -27,7 +27,7 @@
  *
  *  - ?		marks previous parameter as optional
  *  - *		marks previous parameter as repeating, matching any (including zero) instances
- *  - +		after i16 or i32 restricts range to positive numbers
+ *  - +		after i16 or i32 restricts range to positive numbers. After 'x', extends range to ABS_CNT
  *  - (		in form of (min,max) specifies limit for float and integer parameter
  *
  * Example:

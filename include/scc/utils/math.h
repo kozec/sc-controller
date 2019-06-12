@@ -43,6 +43,7 @@ typedef struct {
 
 #define min(x, y) ( ((x)<(y)) ? (x) : (y) )
 #define max(x, y) ( ((x)>(y)) ? (x) : (y) )
+#define clamp(x, v, y) ( ((v)<(x)) ? (x) : ( ((v)>(y)) ? (y) : (v) ) )
 
 /**
  * Initializes (and clears) dequeue.

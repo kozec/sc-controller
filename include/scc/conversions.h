@@ -62,7 +62,20 @@ const char* scc_get_string_constant(const char* key);
 
 /**
  * Returns name of key (e.g. KEY_A for 30) or NULL if key is not recognized.
+ *
  * Returned value shall not be deallocated.
  */
 const char* scc_get_key_name(int32_t code);
+
+
+/**
+ * Returns string description of axis, such as "LStick Left" or "DPAD Up"
+ * Negative direction will return description for Left or Up,
+ * positive for Rigth or Down.
+ * If direction is set to 0, only axis name is returned.
+ *
+ * May return NULL if memory can't be allocated.
+ * Returned value has to be deallocated by caller.
+ */
+char* scc_describe_axis(Axis a, int direction);
 

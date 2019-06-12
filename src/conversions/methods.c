@@ -1,92 +1,50 @@
 /*
  * SC Controller - Conversions.
  *
- * Works with auto-generated list in generated.c and provides
- * function to query those mappings.
+ * Random methods mostly for converting numbers to strings.
  */
-#include "scc/utils/hashmap.h"
-#include "scc/input-event-codes.h"
+#include "scc/utils/strbuilder.h"
 #include "scc/conversions.h"
-#include "conversions.h"
-#include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
 
 
-extern const size_t SCC_REL_ABS_MAX;
+static char* AXIS_NAMES[][3] = {
+	{ "LStick", "Left", "Right" },				// ABS_X			0x00
+	{ "LStick", "Up", "Down" },					// ABS_Y			0x01
+	{ "Left Trigger", "Press", "Press" },		// ABS_Z			0x02
+	{ "RStick", "Left", "Right" },				// ABS_RX			0x03
+	{ "RStick", "Up", "Down" },					// ABS_RY			0x04
+	{ "Right Trigger", "Press", "Press" },		// ABS_RZ			0x05
+	{ NULL },									// ABS_THROTTLE		0x06
+	{ NULL },									// ABS_RUDDER		0x07
+	{ "Mouse Wheel", "Up", "Down" },			// REL_WHEEL		0x08
+	{ "Horizontal Wheel", "Left", "Right" },	// REL_HWHEEL		0x09
+	{ NULL },									// ABS_BRAKE		0x0A
+	{ NULL },									//					0x0B
+	{ NULL },									//					0x0C
+	{ NULL },									//					0x0D
+	{ NULL },									//					0x0E
+	{ NULL },									//					0x0F
+	{ "DPAD", "Left", "Right" },				// ABS_HAT0X		0x10
+	{ "DPAD", "Up", "Down" },					// ABS_HAT0Y		0x11
+};
 
-extern struct Item keys[];
-extern struct Item rels_and_abses[];
 
-static map_t constants = NULL;	// Basically just cache to get values little faster
-
-
-static inline void generate_constants() {
-	constants = hashmap_new();
-	if (constants == NULL) return;
-	hashmap_dont_copy_keys(constants);
-	for (size_t i=1; i<=SCC_KEYCODE_MAX; i++) {	// intentionalyl skips 0/KEY_RESERVED
-		if (keys[i].name != NULL) {
-			if (hashmap_put(constants, keys[i].name, &keys[i]) != MAP_OK) {
-				hashmap_free(constants);
-				constants = NULL;
-				return;
+char* scc_describe_axis(Axis a, int direction) {
+	if ((a >= ABS_X) && (a <= ABS_HAT0Y)) {
+		if (AXIS_NAMES[a][0]) {
+			if (direction == 0) {
+				return strbuilder_fmt("%s", AXIS_NAMES[a][0]);
+			} else {
+				int lr = (direction < 0) ? 2 : 1;
+				return strbuilder_fmt("%s %s",
+						AXIS_NAMES[a][0],
+						AXIS_NAMES[a][lr]);
 			}
 		}
 	}
-	for (size_t i=0; i<SCC_REL_ABS_MAX; i++) {
-		if (rels_and_abses[i].name != NULL) {
-			if (hashmap_put(constants, rels_and_abses[i].name, &rels_and_abses[i]) != MAP_OK) {
-				hashmap_free(constants);
-				constants = NULL;
-				return;
-			}
-		}
-	}
-}
-
-
-/** Returns -1 if there is no constant for given name */
-int32_t scc_get_int_constant(const char* key) {
-	if (constants == NULL) generate_constants();
-	if (constants == NULL) return -2;	// OOM happened
 	
-	struct Item* item;
-	if (hashmap_get(constants, key, (any_t)&item) != MAP_OK) {
-		return -1;
-	}
-	return (int32_t)item->value;
+	return strbuilder_fmt("Axis 0x%x", a);
 }
-
-
-const char* scc_get_key_name(int32_t code) {
-	if ((code < 1) || (code > SCC_KEYCODE_MAX)) return NULL;
-	return keys[code].name;
-}
-
-
-uint16_t scc_keycode_to_hw_scan(Keycode code) {
-	if ((code <= 0) || (code > SCC_KEYCODE_MAX))
-		return 0;
-	
-	return keys[code].hw_scan;
-}
-
-
-unsigned int scc_keycode_to_x11(Keycode code) {
-	if ((code <= 0) || (code > SCC_KEYCODE_MAX))
-		return 0;
-	
-	return keys[code].x11_keycode;
-}
-
-
-#ifdef _WIN32
-uint16_t scc_keycode_to_win32_scan(Keycode code) {
-	if ((code <= 0) || (code > SCC_KEYCODE_MAX))
-		return 0;
-	
-	return keys[code].win32_scan;
-}
-#endif
 

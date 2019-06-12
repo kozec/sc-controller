@@ -479,8 +479,8 @@ static void store_pid() {
  * be enough in most cases.
  */
 static void remove_pid_file() {
-	char r_buffer[256];
-	char m_buffer[256];
+	char r_buffer[256] = {0};
+	char m_buffer[256] = {0};
 	const char* pid_file = scc_get_pid_file();
 	size_t r = 0;
 	FILE* f = fopen(pid_file, "r");

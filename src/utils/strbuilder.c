@@ -352,6 +352,29 @@ bool strbuilder_escape(StrBuilder* b, const char* chars) {
 }
 
 
+bool strbuilder_join(StrBuilder* b, const char* array[], size_t size, const char* glue) {
+	size_t original_length = b->length;
+	bool needs_glue = false;
+	for (size_t i=0; i<size; i++) {
+		const char* str = array[i];
+		if ((str == NULL) || (str[0] == 0))
+			continue;
+		if (needs_glue && (glue != NULL)) {
+			if (!strbuilder_add(b, glue))
+				goto strbuilder_join_fail;
+		}
+		if (!strbuilder_add(b, str))
+			goto strbuilder_join_fail;
+		needs_glue = true;
+	}
+	return true;
+strbuilder_join_fail:
+	b->length = original_length;
+	b->value[b->length] = 0;
+	return false;
+}
+
+
 bool _strbuilder_add_all(StrBuilder* b, void* iterator,
 					bool(*has_next)(void* i),
 					void*(*get_next)(void *i), char*(*convert_fn)(void* item),

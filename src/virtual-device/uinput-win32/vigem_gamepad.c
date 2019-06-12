@@ -326,3 +326,4 @@ void scc_virtual_device_set_axis(VirtualDevice* dev, Axis a, AxisValue value) {
 	else if (idev->type == VTP_GAMEPAD)
 		scc_virtual_xusb_set_axis(idev, a, value);
 }
+

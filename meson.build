@@ -57,6 +57,7 @@ conversions_lib = shared_library('scc-conversions',
 	link_with: [utils_lib],
 	sources: [
 		'src/conversions/string_constants.c',
+		'src/conversions/int_constants.c',
 		'src/conversions/generated.c',
 		'src/conversions/methods.c',
 	]

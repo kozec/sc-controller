@@ -16,6 +16,7 @@
 #include "scc/special_action.h"
 #include "scc/profile.h"
 #include "scc/mapper.h"
+#include "scc/tools.h"
 #include "client.h"
 
 const char* SLAVE_MAPPER_TYPE = "slave";

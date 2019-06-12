@@ -75,6 +75,15 @@ bool strbuilder_failed(StrBuilder* b);
 bool strbuilder_escape(StrBuilder* b, const char* chars);
 
 /**
+ * Adds all strings from array to builder. Empty strings and NULLs are ignored.
+ * If 'glue' is not NULL, it's used as separator between joined items.
+ *
+ * Returns false if allocation fails; In such case, string in builder is not modified.
+ */
+bool strbuilder_join(StrBuilder* b, const char* array[], size_t size, const char* glue);
+
+
+/**
  * Iterates over iterator (as defined in iterable.h) and adds every item in it
  * converting it to string using provided conversion function. Empty strings are
  * ignored.
@@ -150,3 +159,4 @@ static inline size_t strbuilder_len(StrBuilder* b) {
 char* strbuilder_cpy(const char* src);
 /** Shortcut to create new string out of given format. Returns NULL if memory cannot be allocated */
 char* strbuilder_fmt(const char* format, ...);
+

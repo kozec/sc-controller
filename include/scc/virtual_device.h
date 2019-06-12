@@ -90,3 +90,4 @@ void scc_virtual_device_set_axis(VirtualDevice* dev, Axis a, AxisValue value);
 void scc_virtual_device_mouse_move(VirtualDevice* dev, double dx, double dy);
 /** Scrolls mouse wheel by offset */
 void scc_virtual_device_mouse_scroll(VirtualDevice* dev, double dx, double dy);
+
