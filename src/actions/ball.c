@@ -7,13 +7,15 @@
  * movements using 'extended.change' method.
 */
 #include "scc/utils/logging.h"
+#include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
 #include "wholehaptic.h"
-#include "props.h"
 #include "tostring.h"
+#include "internal.h"
+#include "props.h"
 #include <sys/time.h>
 #include <tgmath.h>
 #include <stdlib.h>
@@ -28,10 +30,6 @@ const char* KW_BALL = "ball";
 #define BALL_DEFAULT_MEAN_LEN	10
 // If finger is lifter after movement slower than MIN_LIFT_VELOCITY roll doesn't happens
 #define MIN_LIFT_VELOCITY		0.2
-#ifndef M_PI
-#define M_PI		3.14159265358979323846
-#endif
-
 bool scc_action_is_mouse(Action* a);
 bool scc_action_is_axis(Action* a);
 bool scc_action_is_xy(Action* a);
@@ -105,6 +103,14 @@ static void ball_dealloc(Action* a) {
 	list_free(b->params);
 	RC_REL(b->child);
 	free(b);
+}
+
+void scc_ball_replace_child(Action* a, Action* new_child) {
+	ASSERT(a->type == KW_BALL);
+	BallModifier* b = container_of(a, BallModifier, action);
+	RC_ADD(new_child);
+	RC_REL(b->child);
+	b->child = new_child;
 }
 
 static Action* compress(Action* a) {

@@ -104,7 +104,7 @@ static void def_axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what
 	RATE_LIMIT(DWARN("Action %s can't handle axis event", a->type));
 }
 
-static void def_gyro(Action* a, Mapper* m, struct GyroInput* value) {
+static void def_gyro(Action* a, Mapper* m, const struct GyroInput* value) {
 	RATE_LIMIT(DWARN("Action %s can't handle gyro event", a->type));
 }
 

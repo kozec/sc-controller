@@ -1,7 +1,7 @@
 /**
  * SC-Controller - Math tools
  * 
- * Dequeue, Integer, float and double 2D vectors.
+ * Dequeue, Integer, float and double 2D vectors and some random angle math.
  */
 #pragma once
 #include <stdbool.h>
@@ -45,6 +45,11 @@ typedef struct {
 #define max(x, y) ( ((x)>(y)) ? (x) : (y) )
 #define clamp(x, v, y) ( ((v)<(x)) ? (x) : ( ((v)>(y)) ? (y) : (v) ) )
 
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
+#endif
+
+
 /**
  * Initializes (and clears) dequeue.
  * Should allocation fail, dq->items will be set to NULL and method returns false
@@ -64,8 +69,18 @@ void dequeue_avg(Dequeue* dq, double* x, double* y);
 /** Frees memory allocated by dequeue_init */
 #define dequeue_deinit(dq) free((dq)->items)
 
+/**
+ * Converts quaterion to pitch, yaw and roll
+ * and stores computed values (-PI to PI range) in 'pyr'
+ */
+void quat2euler(double pyr[3], double q0, double q1, double q2, double q3);
+
+/* Returns shorter distance between two angles. 'a1' and 'a2' are in radians */
+double anglediff(double a1, double a2);
+
 /** Returns current value of CLOCK_MONOTONIC converted to number of milliseconds */
 monotime_t mono_time_ms();
 
 /** As mono_time_ms, but returns number of seconds as double */
 double mono_time_d();
+

@@ -108,7 +108,7 @@ struct Action {
 	 * in gyroscope rotations.
 	 * 'q1' to 'q4' represents absolute rotation expressed as quaterion.
 	 */
-	void	(*gyro)(Action* a, Mapper* m, struct GyroInput* value);
+	void	(*gyro)(Action* a, Mapper* m, const struct GyroInput* value);
 	/**
 	 * Called when action is executed by moving physical stick or touching
 	 * physical pad, when one action is defined for whole pad or stick.

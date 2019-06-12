@@ -186,7 +186,6 @@ const char* scc_what_to_string(PadStickTrigger what);
  */
 const char* scc_button_to_string(SCButton b);
 
-
 #ifdef _WIN32
 /**
  * Replaces backslashes with forward slashes in given string.

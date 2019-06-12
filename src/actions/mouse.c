@@ -13,6 +13,7 @@
 #include "scc/conversions.h"
 #include "scc/action.h"
 #include "wholehaptic.h"
+#include "internal.h"
 #include "tostring.h"
 #include "props.h"
 #include <stdlib.h>
@@ -24,7 +25,6 @@ static ParamChecker pc;
 static const char* KW_MOUSE = "mouse";
 static const char* KW_TRACKPAD = "trackpad";
 static const char* KW_TRACKBALL = "trackball";
-extern const char* KW_BALL;
 #define MOUSE_FACTOR 0.005	/* Just random number to put default sensitivity into sane range */
 
 static int YAW = -1;
@@ -144,7 +144,7 @@ static void set_sensitivity(Action* a, float x, float y, float z) {
 	vec_set(b->sensitivity, x, y);
 }
 
-static void gyro(Action* a, Mapper* m, struct GyroInput* value) {
+static void gyro(Action* a, Mapper* m, const struct GyroInput* value) {
 	MouseAction* b = container_of(a, MouseAction, action);
 	
 	if (b->axis == YAW) {

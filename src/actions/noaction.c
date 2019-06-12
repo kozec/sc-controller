@@ -24,7 +24,7 @@ static void noaction_button_release(Action* a, Mapper* m) { }
 
 static void noaction_axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) { }
 
-static void noaction_gyro(Action* a, Mapper* m, struct GyroInput* value) { }
+static void noaction_gyro(Action* a, Mapper* m, const struct GyroInput* value) { }
 
 static void noaction_whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) { }
 

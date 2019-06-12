@@ -98,7 +98,7 @@ static bool apply_axis_params(AxisAction* ax, const char* keyword, ParameterList
 }
 
 // clampAxis returns value clamped between min/max allowed for axis
-static AxisValue clamp_axis(Axis axis, AxisValue value) {
+AxisValue clamp_axis(Axis axis, AxisValue value) {
 	switch (axis) {
 	case ABS_Z:
 	case ABS_RZ:

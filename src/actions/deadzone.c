@@ -5,12 +5,14 @@
 */
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
 #include "scc/action.h"
-#include "props.h"
+#include "internal.h"
 #include "tostring.h"
+#include "props.h"
 #include <tgmath.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,7 +24,6 @@ static const char* KW_DEADZONE = "deadzone";
 #define JUMP_HARDCODED_LIMIT	5
 
 typedef struct DeadzoneModifier DeadzoneModifier;
-
 typedef void (*DeadzoneMode)(DeadzoneModifier* d, AxisValue* x, AxisValue* y, AxisValue range);
 
 struct DeadzoneModifier {
@@ -31,6 +32,7 @@ struct DeadzoneModifier {
 	ParameterList		params;
 	AxisValue			upper;
 	AxisValue			lower;
+	Action*				old_child;
 	DeadzoneMode		mode;
 };
 
@@ -43,6 +45,7 @@ static void deadzone_dealloc(Action* a) {
 	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
 	list_free(d->params);
 	RC_REL(d->child);
+	RC_REL(d->old_child);
 	free(d);
 }
 
@@ -140,21 +143,29 @@ static void mode_minimum(DeadzoneModifier* d, AxisValue* x, AxisValue* y, AxisVa
 static Action* compress(Action* a) {
 	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
 	scc_action_compress(&d->child);
-	// TODO:
-	/*
-	if isinstance(self.action, BallModifier) and self.mode == MINIMUM:
-		# Special case where BallModifier has to be applied before
-		# deadzone is computed
-		ballmod = self.action
-		self.action, ballmod.action = ballmod.action, self
-		return ballmod
-	elif isinstance(self.action, GyroAbsAction):
-		# Another special case, GyroAbs has to handle deadzone
-		# only after math is finished
-		self.action._deadzone_fn = self._convert
-		return self.action
-		*/
+	if (d->child->type == KW_BALL) {
+		// Special case where BallModifier has to be applied before
+		// deadzone is computed
+		Action* ball = d->child;
+		Action* new_child = ball->extended.get_child(ball);
+		scc_ball_replace_child(ball, a);
+		d->old_child = d->child;
+		d->child = new_child;
+		return ball;
+	} else if (d->child->type == KW_GYROABS) {
+		// Another special case, GyroAbs has to handle deadzone
+		// only after math is finished
+		scc_gyroabs_set_deadzone_mod(d->child, a);
+		return d->child;
+	}
 	return a;
+}
+
+void scc_deadzone_apply(Action* a, AxisValue* value) {
+	ASSERT(a->type == KW_DEADZONE);
+	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
+	AxisValue trash = 0;
+	d->mode(d, value, &trash, STICK_PAD_MAX);
 }
 
 static Parameter* get_property(Action* a, const char* name) {
@@ -192,9 +203,10 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 	d->child->whole(d->child, m, x, y, what);
 }
 
-// TODO: Gyros
-//	def gyro(self, mapper, pitch, yaw, roll, q1, q2, q3, q4):
-//		return self.action.gyro(mapper, pitch, yaw, roll, q1, q2, q3, q4)
+static void gyro(Action* a, Mapper* m, const struct GyroInput* value) {
+	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
+	d->child->gyro(d->child, m, value);
+}
 
 static Action* get_child(Action* a) {
 	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
@@ -233,12 +245,14 @@ static ActionOE deadzone_constructor(const char* keyword, ParameterList params) 
 	d->action.compress = &compress;
 	d->action.trigger = &trigger;
 	d->action.whole = &whole;
+	d->action.gyro = &gyro;
 	d->action.axis = &axis;
 	d->action.extended.get_child = &get_child;
 	
 	d->lower = scc_parameter_as_int(params->items[1]);
 	d->upper = scc_parameter_as_int(params->items[2]);
 	d->child = scc_parameter_as_action(params->items[3]);
+	d->old_child = NULL;
 	d->params = params;
 	d->mode = mode;
 	

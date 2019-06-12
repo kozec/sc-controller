@@ -2,8 +2,8 @@
 #include "scc/utils/traceback.h"
 #include "scc/utils/logging.h"
 #include "scc/utils/math.h"
-#include <time.h>
 #include <math.h>
+#include <time.h>
 
 bool dequeue_init(Dequeue* dq, size_t size) {
 	dq->size = size;
@@ -35,6 +35,27 @@ void dequeue_avg(Dequeue* dq, double* x, double* y) {
 	
 	*x /= (double)dq->count;
 	*y /= (double)dq->count;
+}
+
+void quat2euler(double pyr[3], double q0, double q1, double q2, double q3) {
+	double qq0 = q0 * q0;
+	double qq1 = q1 * q1;
+	double qq2 = q2 * q2;
+	double qq3 = q3 * q3;
+	double xa = qq0 - qq1 - qq2 + qq3;
+	double xb = 2 * (q0 * q1 + q2 * q3);
+	double xn = 2 * (q0 * q2 - q1 * q3);
+	double yn = 2 * (q1 * q2 + q0 * q3);
+	double zn = qq3 + qq2 - qq0 - qq1;
+	
+	pyr[0] = atan2(xb , xa);
+	pyr[1] = atan2(xn , sqrt(1 - xn*xn));
+	pyr[2] = atan2(yn , zn);
+}
+
+
+double anglediff(double a1, double a2) {
+	return fmod((a2 - a1 + M_PI), (2.0 * M_PI) - M_PI);
 }
 
 uint64_t mono_time_ms() {

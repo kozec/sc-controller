@@ -151,10 +151,10 @@ struct GyroInput {
 	GyroValue			gpitch;
 	GyroValue			groll;
 	GyroValue			gyaw;
+	GyroValue			q0;
 	GyroValue			q1;
 	GyroValue			q2;
 	GyroValue			q3;
-	GyroValue			q4;
 };
 
 struct ControllerInput {
