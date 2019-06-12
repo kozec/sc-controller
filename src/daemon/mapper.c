@@ -381,7 +381,8 @@ static void input(Mapper* _m, ControllerInput* i) {
 	Controller* c = _m->get_controller(_m);
 	if ((c != NULL) && (c->get_gyro_enabled != NULL) && (c->get_gyro_enabled(c))) {
 		Action* a = m->profile->get_gyro(m->profile);
-		// LOG("GYYYYRO %i %i %i", i->q1, i->q2, i->q3);
+		// LOG("GYYYYRO %s", scc_action_to_string(a));
+		a->gyro(a, _m, &i->gyro);
 	}
 	/*
 	if c.GyroEnabled() {

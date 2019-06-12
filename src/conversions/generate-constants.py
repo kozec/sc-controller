@@ -394,6 +394,13 @@ GDK_TO_KEY = {
 
 KEY_TO_GTK = { v: k for (k, v) in GDK_TO_KEY.items() }
 
+NUMBERS = {
+	# Values are assigned when generating to make sure it is bellow 1st button
+	# and out of (0, ABS_CNT) range.
+	"YAW",
+	"ROLL",
+}
+
 
 for x in dir(Gdk):
 	if x.startswith("KEY_"):
@@ -450,13 +457,17 @@ def generate(chead):
 		everything[x].win32_scan = WIN32_SCANS[x]
 	for x in KEY_TO_GTK:
 		everything[x].gdk_constant = KEY_TO_GTK[x]
-	
+		
 	key_max = max([ a.value for a in everything.values() ])
 	key_max = 256		# TODO: Removing all above this; Those keys are probably not
 						# TODO: used on desktop anyway, so I'll see what will this break
-	everything = { a.value: a for a in everything.values() }
-	while key_max and (key_max not in everything or not everything[key_max].name):
+	values = { a.value: a for a in everything.values() }
+	while key_max and (key_max not in values or not values[key_max].name):
 		key_max -= 1
+	
+	for (i, x) in enumerate(NUMBERS):
+		everything[x] = Item(x)
+		everything[x].value = i + chead["ABS_CNT"] + 1
 	
 	output = open("generated.c", "w")
 	print >>output, unindent(2, """
@@ -476,7 +487,9 @@ def generate(chead):
 		#include <unistd.h>
 		#include <stdint.h>
 		
-		#define GDK_KEYCODE(x)	0
+		#ifndef GDK_KEYCODE
+		#	define GDK_KEYCODE(x)	0
+		#endif
 		
 		""")
 	
@@ -490,17 +503,20 @@ def generate(chead):
 		""")
 	
 	for x in xrange(key_max + 1):
-		if x not in everything:
-			everything[x] = Item("", x)
-		print >>output, "\t%s," % (everything[x],)
+		if x not in values:
+			values[x] = Item("", x)
+		print >>output, "\t%s," % (values[x],)
 	
 	print >>output, unindent(2, """};
 		
 		struct Item rels_and_abses[] = {
 		""")
 	
-	for x in sorted([ x for x in chead if is_rel_or_abs(x) ], key=lambda a: chead[a]):
-		print >>output, "\t%s," % (Item(x, chead[x]),)
+	all_numbers = NUMBERS.union(set(( x for x in chead if is_rel_or_abs(x) )))
+	sort_key = lambda a: chead[a] if a in chead else everything[a].value
+	print everything['YAW']
+	for x in sorted(all_numbers, key=sort_key):
+		print >>output, "\t%s," % (Item(x, sort_key(x)),)
 	
 	print >>output, "};";
 

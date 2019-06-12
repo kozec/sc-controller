@@ -6,9 +6,11 @@
  */
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/utils/rc.h"
 #include "scc/param_checker.h"
+#include "scc/conversions.h"
 #include "scc/action.h"
 #include "wholehaptic.h"
 #include "tostring.h"
@@ -24,6 +26,10 @@ static const char* KW_TRACKPAD = "trackpad";
 static const char* KW_TRACKBALL = "trackball";
 extern const char* KW_BALL;
 #define MOUSE_FACTOR 0.005	/* Just random number to put default sensitivity into sane range */
+
+static int YAW = -1;
+static int ROLL = -1;
+
 
 typedef struct {
 	Action				action;
@@ -139,13 +145,13 @@ static void set_sensitivity(Action* a, float x, float y, float z) {
 }
 
 static void gyro(Action* a, Mapper* m, struct GyroInput* value) {
-	// MouseAction* b = container_of(a, MouseAction, action);
+	MouseAction* b = container_of(a, MouseAction, action);
 	
-	// TODO: So, yeah, wtf should I do with yaw?
-	// if self._mouse_axis == YAW:
-	// 	mapper.mouse_move(yaw * -self.sensitivity[0], pitch * -self.sensitivity[1])
-	// else:
-	// 	mapper.mouse_move(roll * -self.sensitivity[0], pitch * -self.sensitivity[1])
+	if (b->axis == YAW) {
+		m->move_mouse(m, (double)value->gyaw * -b->sensitivity.x, (double)value->gpitch * -b->sensitivity.y);
+	} else {
+		m->move_mouse(m, (double)value->groll * -b->sensitivity.x, (double)value->gpitch * -b->sensitivity.y);
+	}
 }
 
 static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos, PadStickTrigger what) {
@@ -215,6 +221,9 @@ static ActionOE mouse_constructor(const char* keyword, ParameterList params) {
 }
 
 void scc_actions_init_mouse() {
+	YAW = scc_get_int_constant("YAW");
+	ROLL = scc_get_int_constant("ROLL");
+	ASSERT((YAW > 0) && (ROLL > 0));
 	scc_param_checker_init(&pc, "c?f?");
 	scc_param_checker_set_defaults(&pc, REL_CNT, 1.0);
 	scc_action_register(KW_MOUSE, &mouse_constructor);

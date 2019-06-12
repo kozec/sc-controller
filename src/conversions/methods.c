@@ -54,7 +54,8 @@ int32_t scc_get_int_constant(const char* key) {
 	struct Item* item;
 	if (hashmap_get(constants, key, (any_t)&item) != MAP_OK) {
 		return -1;
-	}	return (int32_t)item->value;
+	}
+	return (int32_t)item->value;
 }
 
 
