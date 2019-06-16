@@ -1,16 +1,19 @@
 # Binaries for programs and plugins
 .atomignore
+python/**/*.pyc
 *.exe
 *.dll
 *.so
 *.dylib
 
+tags
 pkg/
 bin/
 build/
-build-win32/
 build-w10/
+build-win32/
 release-win32/
+
 sc-controller.wiki/
 .trash/
 profiles

@@ -67,13 +67,24 @@ class Parameter:
 				cparam = lib_actions.scc_new_action_parameter(value._caction)
 			elif isinstance(value, Enum):
 				cparam = lib_bindings.scc_get_const_parameter(value.name)
+				if not cparam:
+					raise ValueError("Unknown or invalid name of constant: '%s'" % (value.name,))
 			else:
 				raise TypeError("Cannot convert %s" % (repr(value),))
+			if not cparam:
+				raise OSError("Failed to convert %s" % (repr(value),))
 			self._cparam = cparam
 	
 	def __del__(self):
 		lib_bindings.scc_parameter_unref(self._cparam)
 		self._cparam = None
+	
+	def __repr__(self):
+		if self._cparam:
+			s = lib_bindings.scc_parameter_to_string(self._cparam).decode("utf-8")
+		else:
+			s = "(null)"
+		return "<Parameter '%s'>" % (s,)
 	
 	def get_value(self):
 		""" Returns python value """
@@ -156,6 +167,7 @@ class Action(object):
 			pars = [ Parameter(v) for v in args ]
 			cpars = (Parameter.CParameterOEp * (len(pars)))()
 			for i, par in enumerate(pars):
+				assert par._cparam
 				cpars[i] = par._cparam
 			caction = lib_bindings.scc_action_new_from_array(self.KEYWORD, len(pars),
 								ctypes.cast(cpars, Parameter.CParameterOEpp))
@@ -420,7 +432,7 @@ class QuickMenuAction(Action): KEYWORD = "quickmenu"
 class GridMenuAction(Action): KEYWORD = "gridmenu"
 
 
-class ModeModifier(Modifier):
+class ModeModifier(Action):
 	KEYWORD = "mode"
 	
 	class CModeshiftModes(ctypes.Structure):
@@ -435,13 +447,15 @@ class ModeModifier(Modifier):
 	@property
 	def mods(self):
 		""" Backwards-python-compatibile way to retrieve modifiers """
-		return {
-			SCButtons(k): v
-			for (k, v) in Parameter(lib_actions
-				.scc_modeshift_get_modes(self._caction)).get_value()
-			if k
-		}
-
+		modes = Parameter(lib_actions.scc_modeshift_get_modes(self._caction))
+		return { SCButtons(k): v for (k, v) in modes.get_value() if k }
+	
+	def get_compatible_modifiers(self):
+		modes = Parameter(lib_actions.scc_modeshift_get_modes(self._caction))
+		flags = self._caction.contents.flags
+		for (k, v) in modes.get_value():
+			if k: flags |= v._caction.contents.flags
+		return flags
 
 class MultiAction(Action):
 	KEYWORD = "and"
@@ -490,6 +504,9 @@ lib_bindings.scc_action_get_property.restype = Parameter.CParameterOEp
 
 lib_bindings.scc_parameter_as_action.argtypes = [ Parameter.CParameterOEp ]
 lib_bindings.scc_parameter_as_action.restype = Action.CActionOEp
+
+lib_bindings.scc_parameter_to_string.argtypes = [ Parameter.CParameterOEp ]
+lib_bindings.scc_parameter_to_string.restype = ctypes.c_char_p
 
 lib_bindings.scc_parameter_as_string.argtypes = [ Parameter.CParameterOEp ]
 lib_bindings.scc_parameter_as_string.restype = ctypes.c_char_p
