@@ -1,7 +1,8 @@
 /*
- * SC-Controller - GyroAction
+ * SC-Controller - Gyro and GyroAbs
  *
- * Uses *relative* gyroscope position as input for emulated axes
+ * 'gyro' uses *relative* gyroscope position as input for emulated axes.
+ * 'gyroabs' sets axis position based on absolute rotation.
  */
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
