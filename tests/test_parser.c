@@ -199,6 +199,14 @@ void test_menu_w_default(CuTest* tc) {
 }
 
 
+/** Tests case that failed in past */
+void test_gyro(CuTest* tc) {
+	ActionOE a = scc_parse_action("gyroabs(Rels.REL_Y, None, Rels.REL_X)");
+	assert_msg(tc, !IS_ACTION_ERROR(a), ACTION_ERROR(a)->message);
+	COMPARE_ACTION_TO_STR(a, "gyroabs(REL_Y, None, REL_X)");
+}
+
+
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
 	DEFAULT_SUITE_ADD(test_none);
@@ -214,6 +222,7 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_dpad);
 	DEFAULT_SUITE_ADD(test_macro);
 	DEFAULT_SUITE_ADD(test_axis0);
+	DEFAULT_SUITE_ADD(test_gyro);
 	DEFAULT_SUITE_ADD(test_multiline);
 	DEFAULT_SUITE_ADD(test_menu_w_default);
 	

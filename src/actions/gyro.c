@@ -20,7 +20,6 @@
 #include <string.h>
 #include <stdio.h>
 
-static ParamChecker pc;
 
 static const char* KW_GYRO = "gyro";
 const char* KW_GYROABS = "gyroabs";
@@ -39,8 +38,7 @@ typedef struct {
 } GyroAction;
 
 
-ACTION_MAKE_TO_STRING(GyroAction, gyro, _a->type, &pc);
-
+ACTION_MAKE_TO_STRING(GyroAction, gyro, _a->type, NULL);
 
 static char* describe(Action* a, ActionDescContext ctx) {
 	GyroAction* g = container_of(a, GyroAction, action);
@@ -92,7 +90,7 @@ static void gyro(Action* a, Mapper* m, const struct GyroInput* value) {
 	const GyroValue* pyr = &value->gpitch;
 	
 	for (int i=0; i<3; i++) {
-		if (g->axes[i] <= ABS_MAX) {
+		if (g->axes[i] < ABS_CNT) {
 			double v = (double)pyr[i] * g->sensitivity[i] * -10.0;
 			m->set_axis(m, g->axes[i], clamp(STICK_PAD_MIN, v, STICK_PAD_MAX));
 		}
@@ -158,7 +156,7 @@ static void gyroabs(Action* a, Mapper* m, const struct GyroInput* value) {
 			m->move_mouse(m, clamp_axis(axis, pyr[i] * MOUSE_FACTOR * g->sensitivity[i]), 0);
 		} else if (axis == REL_Y) {
 			m->move_mouse(m, 0, clamp_axis(axis, pyr[i] * MOUSE_FACTOR * g->sensitivity[i]));
-		} else {
+		} else if (axis < ABS_CNT) {
 			AxisValue val = clamp_axis(axis, pyr[i] * g->sensitivity[i]);
 			if (g->deadzone != NULL) {
 				scc_deadzone_apply(g->deadzone, &val);
@@ -203,9 +201,24 @@ static Parameter* get_property(Action* a, const char* name) {
 
 
 static ActionOE gyro_constructor(const char* keyword, ParameterList params) {
-	ParamError* err = scc_param_checker_check(&pc, keyword, params);
-	if (err != NULL) return (ActionOE)err;
-	params = scc_param_checker_fill_defaults(&pc, params);
+	// gyro doesn't use ParamChecker, as it allows either axis (number) or None
+	// for any of one to three parameters.
+	if ((list_len(params) < 1) || (list_len(params) > 3)) {
+		return (ActionOE)scc_new_param_error(AEC_INVALID_NUMBER_OF_PARAMETERS,
+							"Invalid number of parameters for '%s'", keyword);
+	}
+	Axis axes[3] = { ABS_CNT, ABS_CNT, ABS_CNT };
+	for (int i=0; i<3; i++) {
+		if (i >= list_len(params))
+			break;
+		if (scc_parameter_type(list_get(params, i)) == PT_NONE)
+			continue;
+		if ((scc_parameter_type(list_get(params, i)) & PT_INT) == 0)
+			return (ActionOE)scc_new_invalid_parameter_type_error(keyword, i, list_get(params, i));
+		axes[i] = scc_parameter_as_int(list_get(params, i));
+	}
+	
+	params = scc_copy_param_list(params);
 	if (params == NULL) return (ActionOE)scc_oom_action_error();
 	
 	GyroAction* g = malloc(sizeof(GyroAction));
@@ -228,13 +241,13 @@ static ActionOE gyro_constructor(const char* keyword, ParameterList params) {
 	g->action.get_property = &get_property;
 	g->action.extended.set_haptic = &set_haptic;
 	
-	g->axes[0] = scc_parameter_as_int(params->items[0]);
-	g->axes[1] = scc_parameter_as_int(params->items[1]);
-	g->axes[2] = scc_parameter_as_int(params->items[2]);
-	g->sensitivity[0] = g->sensitivity[1] = g->sensitivity[2] = 1.0;
+	for (int i=0; i<3; i++) {
+		g->axes[i] = axes[i];
+		g->sensitivity[i] = 1.0;
+	}
 	g->ir[0] = g->ir[1] = g->ir[2] = g->ir[3] = 0;
-	g->deadzone = NULL;
 	g->was_out_of_range = false;
+	g->deadzone = NULL;
 	HAPTIC_DISABLE(&g->hdata);
 	g->params = params;
 	
@@ -242,8 +255,6 @@ static ActionOE gyro_constructor(const char* keyword, ParameterList params) {
 }
 
 void scc_actions_init_gyro() {
-	scc_param_checker_init(&pc, "xx+?x+?");
-	scc_param_checker_set_defaults(&pc, ABS_CNT, ABS_CNT);
 	scc_action_register(KW_GYRO, &gyro_constructor);
 	scc_action_register(KW_GYROABS, &gyro_constructor);
 }
