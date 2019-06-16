@@ -25,7 +25,7 @@ from scc.tools import nameof, clamp
 from scc.config import Config
 
 import evdev
-import os, logging, json
+import os, logging, json, re
 log = logging.getLogger("CRegistration")
 
 
@@ -84,14 +84,18 @@ class ControllerRegistration(Editor):
 		Device is considered gamepad-like if has at least one button with
 		keycode in gamepad range and at least two axes.
 		"""
+
+		# Strip special symbols
+		name = re.sub( r"[^a-zA-Z0-9.]+", ' ', dev.name.lower() )
+
 		# ... but some cheating first
-		if "keyboard" in dev.name.lower():
+		if "keyboard" in name:
 			return False
-		if "touchpad" in dev.name.lower():
+		if "touchpad" in name:
 			return False
-		if "mouse" in dev.name.lower():
+		if "mouse" in name:
 			return False
-		if "gamepad" in dev.name.lower():
+		if "gamepad" in name:
 			return True
 		caps = dev.capabilities(verbose=False)
 		if evdev.ecodes.EV_ABS in caps: # Has axes
