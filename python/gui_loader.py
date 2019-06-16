@@ -1,3 +1,4 @@
+import locale
 import sys
 import gi
 gi.require_version('Gtk', '3.0') 
@@ -22,5 +23,6 @@ if Gtk.IconTheme.get_default():
 GObject.threads_init()
 
 from scc.gui.app import App
+locale.setlocale(locale.LC_NUMERIC, "C")
 App(glades, images).run(sys.argv)
 

@@ -3,6 +3,7 @@
 #include "scc/parameter.h"
 #include "scc/error.h"
 #include <stdlib.h>
+#include <locale.h>
 
 typedef struct {
 	Parameter				parameter;

@@ -7,6 +7,7 @@
 #include "scc/action.h"
 #include "action_initializers.inc"
 #include <stdarg.h>
+#include <locale.h>
 
 static map_t actions = NULL;
 #define QUOTE(str) #str
@@ -197,6 +198,10 @@ __attribute__((constructor)) void whatever() {
 	ASSERT(sizeof(ActionFlags) == sizeof(ParameterType));
 	ASSERT(sizeof(ActionFlags) == sizeof(ErrorFlag));
 	if (actions == NULL) actions = hashmap_new();
+	if (0 != strcmp(localeconv()->decimal_point, ".")) {
+		WARN("Decimal separator is not dot. Unsetting LC_NUMERIC to prevent parser from going mad");
+		setlocale(LC_NUMERIC, "C");
+	}
 	scc_run_action_initializers();
 	scc_initialize_none();
 }
