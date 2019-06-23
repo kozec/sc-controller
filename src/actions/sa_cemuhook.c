@@ -41,9 +41,9 @@ static void gyro(Action* a, Mapper* m, const struct GyroInput* value) {
 	
 	// if ((m->get_flags(m) & CF_EUREL_GYROS) != 0) {
 	// TODO: Check DS4 support here
-	sa_data[0] = 0; // -(float)(value->accel_x * MAGIC_ACCEL);
-	sa_data[1] = 0; // -(float)(value->accel_z * MAGIC_ACCEL);
-	sa_data[2] = 0; // (float)(value->accel_y * MAGIC_ACCEL);
+	sa_data[0] = -(float)(value->accel_x * MAGIC_ACCEL);
+	sa_data[1] = -(float)(value->accel_z * MAGIC_ACCEL - 1.0);
+	sa_data[2] = (float)(value->accel_y * MAGIC_ACCEL);
 	sa_data[3] = (float)(value->gpitch * MAGIC_GYRO);
 	sa_data[4] = -(float)(value->gyaw * MAGIC_GYRO);
 	sa_data[5] = -(float)(value->groll * MAGIC_GYRO);
