@@ -482,7 +482,7 @@ class AxisActionComponent(AEComponent, TimerManager):
 			action = self.make_circular_action()
 		elif key == 'mouse':
 			stActionData.set_visible_child(self.builder.get_object("vbMose"))
-			if self.editor.friction == 0:
+			if not self._recursing and self.editor.friction == 0:
 				# When switching to mouse, enable trackball by default
 				self.editor.friction = 10
 			action = self.make_mouse_action()

@@ -1183,3 +1183,4 @@ class ActionEditor(Editor):
 			rvMore.set_reveal_child(False)
 		exMore.set_sensitive(enabled)
 		self._modifiers_enabled = enabled
+
