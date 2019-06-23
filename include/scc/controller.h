@@ -148,6 +148,9 @@ typedef enum SCButton {
 } SCButton;
 
 struct GyroInput {
+	GyroValue			accel_x;
+	GyroValue			accel_y;
+	GyroValue			accel_z;
 	GyroValue			gpitch;
 	GyroValue			groll;
 	GyroValue			gyaw;

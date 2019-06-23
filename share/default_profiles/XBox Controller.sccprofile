@@ -18,7 +18,7 @@
 	"trigger_left":  { "action": "axis(Axes.ABS_Z)" },
 	"trigger_right": { "action": "axis(Axes.ABS_RZ)" },
 	
-	"gyro": {}, 
+	"gyro": { "action": "cemuhook" },
 	
 	"stick" : {
 		"action": "XY(axis(Axes.ABS_X), raxis(Axes.ABS_Y))"

@@ -16,6 +16,7 @@
 #define ITERATOR_STRUCT_HEADER(tpe)								\
 	bool (*has_next)(void* iterator);							\
 	tpe (*get_next)(void* iterator);							\
+	bool (*remove)(void* iterator);								\
 	void (*reset)(void* iterator);
 
 #define FOREACHIN_HEADER(tpe)									\
@@ -46,10 +47,12 @@
 	)
 
 
-#define ITERATOR_INIT(itrb, _has_next, _get_next, _reset) do {	\
-	(itrb)->has_next = &_has_next;								\
-	(itrb)->get_next = &_get_next;								\
-	(itrb)->reset = &_reset;									\
+/** Initializes iterator. '_remove' may be NULL. */
+#define ITERATOR_INIT(itrb, _has_next, _get_next, _reset, _remove) do {		\
+	(itrb)->has_next = _has_next;											\
+	(itrb)->get_next = _get_next;											\
+	(itrb)->reset = _reset;													\
+	(itrb)->remove = _remove;												\
 } while(0)
 
 typedef struct _voiditerator {
@@ -60,9 +63,18 @@ typedef struct _voiditerator {
 
 #define iter_free(iter) do { if ((iter) != NULL) ((iter)->free(iter)); } while (0)
 
+/** Resets iterator to initial position */
 #define iter_reset(iter) ((iter)->reset(iter))
 
-#define iter_has_next(itrb) ((itrb)->has_next(itrb))
+/** Returns true if iterator still has some items available */
+#define iter_has_next(iter) ((iter)->has_next(iter))
 
-#define iter_next(itrb) ((itrb)->get_next(itrb))
+/** Returns next object and advances iterator */
+#define iter_next(iter) ((iter)->get_next(iter))
+
+/**
+ * Removes last object returned by iter_next from iterable.
+ * Returns true on success, false on failure or if operation is not supported.
+ */
+#define iter_remove(iter) ( ((iter)->remove == NULL) ? false : (iter)->remove(iter) )
 

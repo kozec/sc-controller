@@ -58,10 +58,11 @@ double anglediff(double a1, double a2) {
 	return fmod((a2 - a1 + M_PI), (2.0 * M_PI) - M_PI);
 }
 
+
 uint64_t mono_time_ms() {
 	static struct timespec t;
 	clock_gettime(CLOCK_MONOTONIC, &t);
-	return t.tv_sec * 1000 + (t.tv_nsec / 10e6);
+	return t.tv_sec * 1000 + (t.tv_nsec / 10e5);
 }
 
 double mono_time_d() {
@@ -69,3 +70,4 @@ double mono_time_d() {
 	clock_gettime(CLOCK_MONOTONIC, &t);
 	return (double)t.tv_sec + ((double)t.tv_nsec / (double)10e8);
 }
+

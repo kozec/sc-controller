@@ -208,7 +208,8 @@ static void cancel(Mapper* _m, TaskID task_id) {
 }
 
 static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data) {
-	if (sa_action_type == SAT_MENU) {
+	switch (sa_action_type) {
+	case SAT_MENU: {
 		SAMenuActionData* sa_menu_data = (SAMenuActionData*)sa_data;
 		char* scc_osd_menu = scc_find_binary("scc-osd-menu");
 		char* menu = scc_find_menu(sa_menu_data->menu_id);
@@ -232,14 +233,17 @@ static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data
 		free(scc_osd_menu);
 		free(menu);
 		return true;
-	} if (sa_action_type == SAT_PROFILE) {
-		// TODO: This
-		return false;
-	} else if (sa_action_type == SAT_TURNOFF) {
-		// TODO: This
+	}
+	case SAT_CEMUHOOK:
+		// TODO: Determine index, multicontroller support here
+		sccd_cemuhook_feed(0, (float*)sa_data);
+		return true;
+	// TODO: All This
+	case SAT_PROFILE:
+	case SAT_TURNOFF:
+	default:
 		return false;
 	}
-	return false;
 }
 
 

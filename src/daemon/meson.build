@@ -56,7 +56,9 @@ executable('scc-daemon',
 	link_with: [ utils_lib, tools_lib, parser_lib, actions_lib,
 				 config_lib, virtual_device_lib ] + platform_dependent_link_with,
 	link_args: platform_dependent_link_args,
-	dependencies: platform_dependent_deps,
+	dependencies: platform_dependent_deps + [
+		dependency('zlib'),
+	],
 	build_rpath: '/usr/X11R6/lib',
 	sources: platform_dependent_src + [
 		'x11.c',
@@ -70,6 +72,7 @@ executable('scc-daemon',
 		'drivers.c',
 		'locking.c',
 		'scheduler.c',
+		'cemuhook_server.c',
 	],
 )
 

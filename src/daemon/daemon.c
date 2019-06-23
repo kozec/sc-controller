@@ -533,6 +533,7 @@ int sccd_start() {
 #endif
 	// here: load_custom_module
 	setup_default_mapper();
+	sccd_cemuhook_socket_enable();
 	load_default_profile(NULL);
 #ifndef _WIN32
 	store_pid();

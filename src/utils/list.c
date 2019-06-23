@@ -218,6 +218,12 @@ static void list_iterator_reset(void* _iter) {
 	iter->index = 0;
 }
 
+static bool list_iterator_remove(void* _iter) {
+	ListIterator iter = (ListIterator)_iter;
+	iter->index--;
+	return list_remove(iter->list, list_get(iter->list, iter->index));
+}
+
 static void list_iterator_free(void* _iter) {
 	free(_iter);
 }
@@ -225,7 +231,8 @@ static void list_iterator_free(void* _iter) {
 static ListIterator get_list_iterator(void* list) {
 	ListIterator iter = malloc(sizeof(struct _ListIterator));
 	if (iter == NULL) return NULL;
-	ITERATOR_INIT(iter, list_iterator_has_next, list_iterator_get_next, list_iterator_reset);
+	ITERATOR_INIT(iter, list_iterator_has_next, list_iterator_get_next,
+					list_iterator_reset, list_iterator_remove);
 	iter->free = &list_iterator_free;
 	iter->list = list;
 	iter->index = 0;

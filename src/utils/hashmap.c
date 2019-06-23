@@ -462,7 +462,8 @@ static void hashmap_iterator_free(void* _iter) {
 static HashMapIterator get_hashmap_iterator(map_t m) {
 	HashMapIterator iter = malloc(sizeof(struct _HashMapIterator));
 	if (iter == NULL) return NULL;
-	ITERATOR_INIT(iter, hashmap_iterator_has_next, hashmap_iterator_get_next, hashmap_iterator_reset);
+	ITERATOR_INIT(iter, hashmap_iterator_has_next,
+					hashmap_iterator_get_next, hashmap_iterator_reset, NULL);
 	iter->free = &hashmap_iterator_free;
 	iter->map = m;
 	hashmap_iterator_reset(iter);

@@ -36,7 +36,10 @@ struct SCInput {
 	int16_t			lpad_y;
 	int16_t			rpad_x;
 	int16_t			rpad_y;
-	uint8_t			ukn_06[10];
+	uint8_t			_a3[4];
+	int16_t			accel_x;
+	int16_t			accel_y;
+	int16_t			accel_z;
 	int16_t			gpitch;
 	int16_t			groll;
 	int16_t			gyaw;
@@ -44,7 +47,7 @@ struct SCInput {
 	int16_t			q2;
 	int16_t			q3;
 	int16_t			q4;
-	// uint8_t		_a3[16];
+	// uint8_t		_a4[16];
 };
 
 

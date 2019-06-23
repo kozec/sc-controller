@@ -158,6 +158,6 @@ Tokens* tokenize(const char* source) {
 	t->end = t->copy + strlen(t->copy);
 	t->auto_skip_whitespace = false;
 	
-	ITERATOR_INIT(&t->tokens, tokens_has_next, tokens_get_next, tokens_reset);
+	ITERATOR_INIT(&t->tokens, tokens_has_next, tokens_get_next, tokens_reset, NULL);
 	return &t->tokens;
 }

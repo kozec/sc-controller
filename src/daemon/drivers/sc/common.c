@@ -26,7 +26,7 @@ void handle_input(SCController* sc, SCInput* i) {
 	if (sc->mapper != NULL) {
 		memcpy(&sc->input.ltrig, &i->ltrig, sizeof(TriggerValue) * 2);
 		memcpy(&sc->input.rpad_x, &i->rpad_x, sizeof(AxisValue) * 2);
-		memcpy(&sc->input.gyro, &i->gpitch, sizeof(struct GyroInput));
+		memcpy(&sc->input.gyro, &i->accel_x, sizeof(struct GyroInput));
 		
 		SCButton buttons = (((SCButton)i->buttons1) << 24) | (((SCButton)i->buttons0) << 8);
 		bool lpadtouch = buttons & B_LPADTOUCH;
@@ -280,7 +280,7 @@ bool configure(SCController* sc) {
 		// unknown1
 		0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30,
 		// Gyros
-		(sc->gyro_enabled ? 0x14 : 0),
+		(sc->gyro_enabled ? 0x1c : 0),
 		// unknown2:
 		0x00, 0x2e,
 	};

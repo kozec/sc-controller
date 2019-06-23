@@ -119,6 +119,11 @@ void sccd_send_profile_list(Client* client);
  */
 void sccd_drop_client_asap(Client* client);
 
+/** Starts CemuHookUDP motion provider server */
+bool sccd_cemuhook_socket_enable();
+/** Stores and/or sends rotation data to clients */
+bool sccd_cemuhook_feed(int index, float data[6]);
+
 /** Initializes connection to X11 display. On Windows, does nothing */
 void sccd_x11_init();
 void sccd_x11_close();

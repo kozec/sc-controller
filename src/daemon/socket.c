@@ -37,8 +37,8 @@
 #include <errno.h>
 
 static LIST_TYPE(Client) clients;
-
 static int sock;
+
 
 void sccd_drop_client_asap(Client* client) {
 	client->should_be_dropped = true;

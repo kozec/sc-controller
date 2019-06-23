@@ -28,8 +28,8 @@ static const char* KW_TILT = "tilt";
 #define MIN 0.75
 
 typedef struct {
-	ParameterList		params;
 	Action				action;
+	ParameterList		params;
 	Action*				actions[6];
 	bool				states[6];
 	double				sensitivity[3];
@@ -136,7 +136,6 @@ static ActionOE tilt_constructor(const char* keyword, ParameterList params) {
 	t->action.describe = &describe;
 	t->action.get_property = &get_property;
 	t->action.extended.set_sensitivity = &set_sensitivity;
-	
 	
 	for (uint8_t i=0; i<6; i++) {
 		t->actions[i] = scc_parameter_as_action(params->items[i]);

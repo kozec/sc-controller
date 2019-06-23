@@ -171,8 +171,8 @@ static void gyro(Action* a, Mapper* m, const struct GyroInput* value) {
 	ModeModifier* mm = container_of(a, ModeModifier, action);
 	Mode* mode = choose(mm, m);
 	if ((mode == NULL) || (!mode->is_active)) {
-		// Switching to no or different action
-		struct GyroInput d = { 0, 0, 0, value->q0, value->q1, value->q2, value->q3 };
+		// Switching to none or different action
+		struct GyroInput d = { 0, 0, 0, 0, 0, 0, value->q0, value->q1, value->q2, value->q3 };
 		DEACTIVATE_ALL(mm, true, gyro, m, &d);
 	}
 	if (mode) {

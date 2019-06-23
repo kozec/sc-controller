@@ -33,6 +33,7 @@ typedef struct {
 	size_t		count;
 } Dequeue;
 
+
 #define POW2(x) ( (x) * (x) )
 #define fvec_len(v) sqrtf(POW2(v.x) + POW2(v.y))
 #define dvec_len(v) sqrt(POW2(v.x) + POW2(v.y))
@@ -70,7 +71,7 @@ void dequeue_avg(Dequeue* dq, double* x, double* y);
 #define dequeue_deinit(dq) free((dq)->items)
 
 /**
- * Converts quaterion to pitch, yaw and roll
+ * Converts quaternion to pitch, yaw and roll
  * and stores computed values (-PI to PI range) in 'pyr'
  */
 void quat2euler(double pyr[3], double q0, double q1, double q2, double q3);

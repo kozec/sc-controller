@@ -18,6 +18,7 @@ typedef enum SAType {
 	SAT_MENU = 1,		// Displays on-screen menu. sa_data is SAMenuActionData*
 	SAT_PROFILE = 2,	// Changes profile. sa_data is (char*) representing profile name
 	SAT_TURNOFF = 3,	// Turns profile off. sa_data is NULL, ignored.
+	SAT_CEMUHOOK = 10,	// Feeds data for CemuHook motion provider. sa_data is (float[6])
 } SAType;
 
 

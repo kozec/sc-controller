@@ -302,7 +302,8 @@ static void intmap_iterator_free(void* _iter) {
 static IntMapIterator get_intmap_iterator(intmap_t m) {
 	IntMapIterator iter = malloc(sizeof(struct _IntMapIterator));
 	if (iter == NULL) return NULL;
-	ITERATOR_INIT(iter, intmap_iterator_has_next, intmap_iterator_get_next, intmap_iterator_reset);
+	ITERATOR_INIT(iter, intmap_iterator_has_next,
+					intmap_iterator_get_next, intmap_iterator_reset, NULL);
 	iter->free = &intmap_iterator_free;
 	iter->map = m;
 	intmap_iterator_reset(iter);
