@@ -67,6 +67,11 @@
         <col id="1" translatable="yes">Left Stick (Absolute)</col>
         <col id="2">left_abs</col>
       </row>
+      <row>
+        <col id="0">cemuhook</col>
+        <col id="1" translatable="yes">CemuHook motion provider</col>
+        <col id="2">cemuhook</col>
+      </row>
     </data>
   </object>
   <object class="GtkListStore" id="lstYawRoll">
@@ -95,7 +100,7 @@
     <property name="row_spacing">3</property>
     <property name="column_spacing">10</property>
     <child>
-      <object class="GtkLabel" id="label1">
+      <object class="GtkLabel" id="lblYawRoll">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">5</property>

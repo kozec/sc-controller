@@ -6,7 +6,8 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.actions import Action, NoAction, MouseAction, MultiAction, RangeOP
-from scc.actions import GyroAction, GyroAbsAction, MouseAbsAction
+from scc.actions import MouseAbsAction, CemuHookAction
+from scc.actions import GyroAction, GyroAbsAction
 from scc.actions import ModeModifier, SensitivityModifier
 from scc.uinput import Axes, Rels
 from scc.constants import SCButtons, STICK, YAW, ROLL
@@ -118,6 +119,8 @@ class GyroActionComponent(AEComponent):
 						self.select_gyro_output("right")
 				elif ap[0] == Rels.REL_Y and ap[-1] == Rels.REL_X:
 					self.select_gyro_output("mouse_stick")
+			elif isinstance(action, CemuHookAction):
+					self.select_gyro_output("cemuhook")
 			self.modifier_updated()
 	
 	
@@ -129,6 +132,8 @@ class GyroActionComponent(AEComponent):
 			self._recursing = True
 			cbInvertY.set_active(inverted)
 			self._recursing = False
+
+		self.update()
 	
 	
 	def cbInvertY_toggled_cb(self, cb, *a):
@@ -164,7 +169,7 @@ class GyroActionComponent(AEComponent):
 				elif ap[0] == Rels.REL_Y and ap[-1] == Rels.REL_X:
 					return True
 			return False
-		if isinstance(action, (MouseAction, MouseAbsAction)):
+		if isinstance(action, (MouseAction, MouseAbsAction, CemuHookAction)):
 			return True
 		return False
 	
@@ -232,7 +237,12 @@ class GyroActionComponent(AEComponent):
 	
 	
 	def update(self, *a):
-		pass
+		cbMode = self.builder.get_object("cbMode")
+		cbYawRoll = self.builder.get_object("cbYawRoll")
+		lblYawRoll = self.builder.get_object("lblYawRoll")
+		key = cbMode.get_model().get_value(cbMode.get_active_iter(), 2)
+		cbYawRoll.set_sensitive(key != "cemuhook")
+		lblYawRoll.set_sensitive(key != "cemuhook")	
 	
 	
 	def hidden(self):
@@ -247,6 +257,7 @@ class GyroActionComponent(AEComponent):
 		rvSoftLevel = self.builder.get_object("rvSoftLevel")
 		sclSoftLevel = self.builder.get_object("sclSoftLevel")
 		cbGyroButton = self.builder.get_object("cbGyroButton")
+		cbInvertGyro = self.builder.get_object("cbInvertGyro")
 		cbInvertGyro = self.builder.get_object("cbInvertGyro")
 		action = cbMode.get_model().get_value(cbMode.get_active_iter(), 0)
 		key = cbMode.get_model().get_value(cbMode.get_active_iter(), 2)
@@ -279,6 +290,7 @@ class GyroActionComponent(AEComponent):
 		else:
 			self.editor.set_default_sensitivity(1, 1, 1)
 		
+		self.update()
 		self.editor.set_action(action)
 
 
