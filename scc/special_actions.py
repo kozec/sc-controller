@@ -755,5 +755,22 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 			self.execute(mapper, x, y, what)
 
 
+class CemuHookAction(SpecialAction):
+	SA = COMMAND = "cemuhook"
+	MAGIC_GYRO = (2000.0 / 32768.0)
+	
+	def gyro(self, mapper, *pyr):
+		sa_data = (
+			pyr[0] * CemuHookAction.MAGIC_GYRO,
+			-pyr[1] * CemuHookAction.MAGIC_GYRO,
+			-pyr[2] * CemuHookAction.MAGIC_GYRO,
+		)
+		self.execute(mapper, sa_data)
+	
+	def describe(self, context):
+		if self.name: return self.name
+		return _("CemuHook")
+
 # Register actions from current module
 Action.register_all(sys.modules[__name__])
+
