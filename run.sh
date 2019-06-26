@@ -1,9 +1,10 @@
 #!/bin/bash
-C_MODULES=(uinput hiddrv sc_by_bt remotepad)
+C_MODULES=(uinput hiddrv sc_by_bt remotepad cemuhook)
 C_VERSION_uinput=9
 C_VERSION_hiddrv=5
 C_VERSION_sc_by_bt=3
 C_VERSION_remotepad=1
+C_VERSION_cemuhook=1
 
 function rebuild_c_modules() {
 	echo "lib$1.so is outdated or missing, building one"

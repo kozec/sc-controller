@@ -13,6 +13,7 @@ from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.uinput import CannotCreateUInputException
 from scc.tools import set_logging_level, find_binary, clamp
 from scc.device_monitor import create_device_monitor
+from scc.cemuhook_server import CemuhookServer
 from scc.custom import load_custom_module
 from scc.gestures import GestureDetector
 from scc.parser import TalkingActionParser
@@ -63,6 +64,7 @@ class SCCDaemon(Daemon):
 		self.on_exit_cbs = []
 		self.subprocs = []
 		self.lock = threading.Lock()
+		self.cemuhook = None
 		self.default_mapper = None
 		self.free_mappers = [ ]
 		self.clients = set()
@@ -276,6 +278,15 @@ class SCCDaemon(Daemon):
 			log.debug("Gesture detection started on %s", what)
 			gd.whole(mapper, x, y, what)
 	
+	def on_sa_cemuhook(self, mapper, action, data):
+		""" Called by 'cemuhook' action """
+		if self.cemuhook is None:
+			try:
+				self.cemuhook = CemuhookServer(self)
+			except Exception, e:
+				log.error("Failed to initialize CemuHookUDP Motion Provider: %s", e)
+				return
+		self.cemuhook.feed(data)
 	
 	def _osd(self, *data):
 		"""

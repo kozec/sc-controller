@@ -66,8 +66,11 @@ if __name__ == "__main__":
 			platforms = ['Linux'],
 			ext_modules = [
 				Extension('libuinput', sources = ['scc/uinput.c']),
+				Extension('libcemuhook', define_macros = [('PYTHON', 1)],
+							sources = ['scc/cemuhook_server.c'], libraries = ["z"]),
 				Extension('libhiddrv', sources = ['scc/drivers/hiddrv.c']),
 				Extension('libsc_by_bt', sources = ['scc/drivers/sc_by_bt.c']),
 				Extension('libremotepad', sources = ['scc/drivers/remotepad_controller.c']),
 			]
 	)
+
