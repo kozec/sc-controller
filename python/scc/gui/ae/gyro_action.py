@@ -258,7 +258,6 @@ class GyroActionComponent(AEComponent):
 		sclSoftLevel = self.builder.get_object("sclSoftLevel")
 		cbGyroButton = self.builder.get_object("cbGyroButton")
 		cbInvertGyro = self.builder.get_object("cbInvertGyro")
-		cbInvertGyro = self.builder.get_object("cbInvertGyro")
 		action = cbMode.get_model().get_value(cbMode.get_active_iter(), 0)
 		key = cbMode.get_model().get_value(cbMode.get_active_iter(), 2)
 		yawroll = cbYawRoll.get_model().get_value(cbYawRoll.get_active_iter(), 0)
