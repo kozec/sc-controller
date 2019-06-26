@@ -49,7 +49,7 @@ include = [ include_directories('./include/') ]
 
 utils_lib = shared_library('scc-utils',
 	include_directories: include,
-	dependencies: [ meson.get_compiler('c').find_library('m') ],
+	dependencies: [ meson.get_compiler('c').find_library('m'), libexecinfo ],
 	sources: [
 		'src/utils/strbuilder.c',
 		'src/utils/traceback.c',
@@ -62,7 +62,6 @@ utils_lib = shared_library('scc-utils',
 		'src/utils/list.c',
 		'src/utils/math.c',
 	],
-	dependencies: libexecinfo
 )
 
 
