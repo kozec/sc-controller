@@ -755,7 +755,7 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 			self.execute(mapper, x, y, what)
 
 
-class CemuHookAction(SpecialAction):
+class CemuHookAction(Action, SpecialAction):
 	SA = COMMAND = "cemuhook"
 	MAGIC_GYRO = (2000.0 / 32768.0)
 	

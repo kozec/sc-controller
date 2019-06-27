@@ -535,6 +535,7 @@ class SpecialAction(object):
 	to actually do something.
 	"""
 	SA = ""
+	
 	def execute_named(self, name, mapper, *a):
 		sa = mapper.get_special_actions_handler()
 		h_name = "on_sa_%s" % (name,)

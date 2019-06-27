@@ -6,10 +6,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define LERROR(fmt, ...) do { fprintf(stderr, "[E] " fmt, ##__VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr); } while(0)
-#define WARN(fmt, ...) do { fprintf(stderr, "[W] " fmt, ##__VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr); } while(0)
-#define DEBUG(fmt, ...) do { fprintf(stdout, "[D] " fmt, ##__VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout); } while(0)
-#define LOG(fmt, ...) do { fprintf(stdout, "[L] " fmt, ##__VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout); } while(0)
+#define LERROR(fmt, ...) do { fprintf(stderr, "E " LOG_TAG " " fmt, ##__VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr); } while(0)
+#define WARN(fmt, ...) do { fprintf(stderr, "W " LOG_TAG " " fmt, ##__VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr); } while(0)
+#define DEBUG(fmt, ...) do { fprintf(stdout, "D " LOG_TAG " " fmt, ##__VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout); } while(0)
+#define LOG(fmt, ...) do { fprintf(stdout, "L " LOG_TAG " " fmt, ##__VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout); } while(0)
 
 typedef uint64_t monotime_t;
 
