@@ -10,6 +10,7 @@ from scc.actions import GyroAction, GyroAbsAction, RangeOP
 from scc.actions import ModeModifier
 from scc.constants import SCButtons, STICK
 from scc.tools import ensure_size, nameof
+from scc.uinput import Axes
 from scc.gui.ae.gyro_action import TRIGGERS, is_gyro_enable, fill_buttons
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.simple_chooser import SimpleChooser
@@ -37,7 +38,6 @@ class GyroComponent(AEComponent):
 		AEComponent.load(self)
 		cbGyroButton = self.builder.get_object("cbGyroButton")
 		self._recursing = True
-		cbGyroButton = self.builder.get_object("cbGyroButton")
 		fill_buttons(cbGyroButton)
 		self._recursing = False
 		self.buttons = [ self.builder.get_object(x) for x in ("btPitch", "btYaw", "btRoll") ]
@@ -99,7 +99,8 @@ class GyroComponent(AEComponent):
 		b = SimpleChooser(self.app, "axis", cb)
 		b.set_title(_("Select Axis"))
 		b.hide_mouse()
-		b.display_action(Action.AC_STICK, AxisAction(self.axes[i]))
+		a = AxisAction(self.axes[i]) if self.axes[i] is not None else NoAction()
+		b.display_action(Action.AC_STICK, a)
 		b.show(self.editor.window)
 	
 	
@@ -168,12 +169,12 @@ class GyroComponent(AEComponent):
 		absolute, a_set  = [ None, None, None ], False
 		
 		for i in xrange(0, 3):
-			if self.axes[i]:
+			if self.axes[i] is not None:
 				if self.cbs[i].get_active():
-					absolute[i] = self.axes[i]
+					absolute[i] = Axes(self.axes[i])
 					a_set = True
 				else:
-					normal[i] = self.axes[i]
+					normal[i] = Axes(self.axes[i])
 					n_set = True
 		
 		if n_set and a_set:
@@ -187,11 +188,13 @@ class GyroComponent(AEComponent):
 		
 		if item and action:
 			what = getattr(SCButtons, item)
-			if item in TRIGGERS:
-				what = RangeOP(what, ">=", sclSoftLevel.get_value())
+			# TODO: Restore this
+			#if item in TRIGGERS:
+			#	what = RangeOP(what, ">=", sclSoftLevel.get_value())
 			if cbInvertGyro.get_active():
 				action = ModeModifier(what, NoAction(), action)
 			else:
 				action = ModeModifier(what, action)
 		
 		self.editor.set_action(action)
+

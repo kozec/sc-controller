@@ -68,7 +68,6 @@
     <child>
       <object class="GtkGrid" id="grTilt">
         <property name="visible">True</property>
-        <property name="sensitive">False</property>
         <property name="can_focus">False</property>
         <property name="margin_left">10</property>
         <property name="margin_right">10</property>
@@ -158,7 +157,7 @@
             <property name="hexpand">True</property>
             <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
-              <object class="GtkLabel" id="lblTilt">
+              <object class="GtkLabel" id="lblTilt1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">(...)</property>
@@ -215,7 +214,7 @@
             <property name="hexpand">True</property>
             <signal name="clicked" handler="on_btTilt_clicked" swapped="no"/>
             <child>
-              <object class="GtkLabel" id="lblTilt1">
+              <object class="GtkLabel" id="lblTilt4">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">(...)</property>

@@ -102,7 +102,7 @@ def describe_action(mode, cls, v):
 	Returns action description with 'v' as parameter, unless unless v is None.
 	Returns "not set" if v is None
 	"""
-	if v is None or type(v) in (int, float, str, unicode):
+	if v is None:
 		return _('(not set)')
 	elif isinstance(v, Action):
 		dsc = v.describe(Action.AC_STICK if cls == XYAction else Action.AC_BUTTON)
@@ -111,3 +111,4 @@ def describe_action(mode, cls, v):
 		return dsc
 	else:
 		return (cls(v)).describe(mode)
+

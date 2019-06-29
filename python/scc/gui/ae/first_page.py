@@ -71,6 +71,8 @@ MARKUP_GYRO = """
   • Setup for aiming when right <a href='quick://mode(LT >= 0.7, mouse(ROLL), None)'>trigger is pushed</a>
   
   • <a href='quick://sens(3.5, 3.5, 3.5, mouse(ROLL))'>Use as mouse</a>
+  
+  • <a href='quick://cemuhook'>Use with Citra, Cemu or other compatibile emulator</a>
 """
 
 

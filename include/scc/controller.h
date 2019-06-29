@@ -6,6 +6,7 @@
 #else
 #include "scc/input-event-codes.h"
 #endif
+#include "scc/rel-event-codes.h"
 
 typedef struct Controller Controller;
 typedef struct ControllerInput ControllerInput;

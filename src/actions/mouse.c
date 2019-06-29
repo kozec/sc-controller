@@ -71,7 +71,7 @@ static void change(Action* a, Mapper* m, double dx, double dy, PadStickTrigger w
 	dx = dx * b->sensitivity.x;
 	dy = dy * b->sensitivity.y;
 	// TODO: dx & dy conversion here probably breaks on double->int
-	if (b->axis == REL_CNT)
+	if (b->axis == 0)
 		m->move_mouse(m, dx, dy);
 	else if (b->axis == REL_X)
 		m->move_mouse(m, dx, 0);
@@ -225,7 +225,7 @@ void scc_actions_init_mouse() {
 	ROLL = scc_get_int_constant("ROLL");
 	ASSERT((YAW > 0) && (ROLL > 0));
 	scc_param_checker_init(&pc, "c?f?");
-	scc_param_checker_set_defaults(&pc, REL_CNT, 1.0);
+	scc_param_checker_set_defaults(&pc, 0, 1.0);
 	scc_action_register(KW_MOUSE, &mouse_constructor);
 	scc_action_register(KW_TRACKPAD, &mouse_constructor);
 	scc_action_register(KW_TRACKBALL, &mouse_constructor);

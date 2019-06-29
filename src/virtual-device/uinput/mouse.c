@@ -71,9 +71,9 @@ void flush_mouse(struct Internal* idev) {
 		struct input_event ev;
 		memset(&ev, 0, sizeof(ev));
 		ev.type = EV_REL;
-		ev.code = REL_X; ev.value = dx;
+		ev.code = REL_X - SCC_REL_OFFSET; ev.value = dx;
 		write(idev->fd, &ev, sizeof(ev));
-		ev.code = REL_Y; ev.value = -dy;
+		ev.code = REL_Y - SCC_REL_OFFSET; ev.value = -dy;
 		write(idev->fd, &ev, sizeof(ev));
 	}
 	
@@ -86,9 +86,9 @@ void flush_mouse(struct Internal* idev) {
 		struct input_event ev;
 		memset(&ev, 0, sizeof(ev));
 		ev.type = EV_REL;
-		ev.code = REL_HWHEEL; ev.value = dx;
+		ev.code = REL_HWHEEL - SCC_REL_OFFSET; ev.value = dx;
 		write(idev->fd, &ev, sizeof(ev));
-		ev.code = REL_WHEEL; ev.value = -dy;
+		ev.code = REL_WHEEL - SCC_REL_OFFSET; ev.value = -dy;
 		write(idev->fd, &ev, sizeof(ev));
 	}
 }

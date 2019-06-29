@@ -495,7 +495,6 @@ def generate(chead):
 	
 	print >>output, ""
 	print >>output, "const uint16_t SCC_KEYCODE_MAX = %s;" % (key_max,)
-	print >>output, "const size_t SCC_REL_ABS_MAX = %s;" % (len([ x for x in chead if is_rel_or_abs(x) ]),)
 	print >>output, ""
 	
 	print >>output, unindent(2, """
@@ -514,18 +513,19 @@ def generate(chead):
 	
 	all_numbers = NUMBERS.union(set(( x for x in chead if is_rel_or_abs(x) )))
 	sort_key = lambda a: chead[a] if a in chead else everything[a].value
-	print everything['YAW']
 	for x in sorted(all_numbers, key=sort_key):
 		print >>output, "\t%s," % (Item(x, sort_key(x)),)
 	
 	print >>output, "};";
+	print >>output, "size_t rels_and_abses_cnt = sizeof(rels_and_abses) / sizeof(struct Item);";
 
 
 if __name__ == '__main__':
 	chead = OrderedDict()
 	for path, filename in [
 			('../../include/scc/', 'controller.h'),
-			('../../include/scc/', 'input-event-codes.h')]:
+			('../../include/scc/', 'input-event-codes.h'),
+			('../../include/scc/', 'rel-event-codes.h')]:
 		chead.update(defines(path, filename))
 	
 	generate(chead)

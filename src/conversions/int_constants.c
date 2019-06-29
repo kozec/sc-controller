@@ -5,18 +5,15 @@
  * function to query those mappings.
  */
 #include "scc/utils/hashmap.h"
-#include "scc/input-event-codes.h"
 #include "scc/conversions.h"
 #include "conversions.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
 
-
-extern const size_t SCC_REL_ABS_MAX;
-
 extern struct Item keys[];
 extern struct Item rels_and_abses[];
+extern size_t rels_and_abses_cnt;
 
 static map_t constants = NULL;	// Basically just cache to get values little faster
 
@@ -34,7 +31,7 @@ static inline void generate_constants() {
 			}
 		}
 	}
-	for (size_t i=0; i<SCC_REL_ABS_MAX; i++) {
+	for (size_t i=0; i<=rels_and_abses_cnt; i++) {
 		if (rels_and_abses[i].name != NULL) {
 			if (hashmap_put(constants, rels_and_abses[i].name, &rels_and_abses[i]) != MAP_OK) {
 				hashmap_free(constants);

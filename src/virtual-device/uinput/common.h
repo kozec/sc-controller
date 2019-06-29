@@ -6,9 +6,14 @@
 #include "scc/virtual_device.h"
 #include <linux/input-event-codes.h>
 #include <linux/uinput.h>
+#include "scc/rel-event-codes.h"
 
 #define UINPUT_PATH "/dev/uinput"
 #define NAME_SIZE (UINPUT_MAX_NAME_SIZE + 64)
+
+#if REL_X == 0
+#error "scc/rel-event-codes.h not included"
+#endif
 
 
 struct Internal {

@@ -20,6 +20,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#if REL_X == 0
+#error "WTF"
+#endif
 
 static const char* KW_GYRO = "gyro";
 const char* KW_GYROABS = "gyroabs";
@@ -43,6 +46,7 @@ ACTION_MAKE_TO_STRING(GyroAction, gyro, _a->type, NULL);
 static char* describe(Action* a, ActionDescContext ctx) {
 	GyroAction* g = container_of(a, GyroAction, action);
 	
+	LOG(">>> %i %i", REL_X, REL_MAX);
 	if ((g->axes[0] >= REL_X) && (g->axes[0] <= REL_MAX))
 		return strbuilder_cpy("Mouse");
 	

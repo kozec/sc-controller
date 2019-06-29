@@ -274,12 +274,16 @@ class GyroActionComponent(AEComponent):
 		action = self.parser.restart(action).parse()
 		
 		if item and action:
+			# TODO: Restore this
+			"""
 			if item in TRIGGERS:
 				what = RangeOP(getattr(SCButtons, item), ">=", sclSoftLevel.get_value())
 			elif item == STICK:
 				what = RangeOP(item, ">=", sclSoftLevel.get_value())
 			else:
 				what = getattr(SCButtons, item)
+			"""
+			what = getattr(SCButtons, item)
 			if cbInvertGyro.get_active():
 				action = ModeModifier(what, NoAction(), action)
 			else:

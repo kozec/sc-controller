@@ -91,6 +91,22 @@ static void gyro(Action* a, Mapper* m, const struct GyroInput* value) {
 }
 
 
+static ActionList get_children(Action* a) {
+	TiltAction* t = container_of(a, TiltAction, action);
+	ActionList lst = scc_make_action_list(NULL);
+	if (lst == NULL) return NULL;
+	for (size_t i=0; i<6; i++) {
+		if (t->actions[i] != NoAction) {
+			if (!list_add(lst, t->actions[i])) {
+				list_free(lst);
+				return NULL;
+			}
+			RC_ADD(t->actions[i]);
+		}
+	}
+	return lst;
+}
+
 static Parameter* get_property(Action* a, const char* name) {
 	TiltAction* t = container_of(a, TiltAction, action);
 	if (0 == strcmp(name, "sensitivity")) {
@@ -135,6 +151,7 @@ static ActionOE tilt_constructor(const char* keyword, ParameterList params) {
 	t->action.gyro = &gyro;
 	t->action.describe = &describe;
 	t->action.get_property = &get_property;
+	t->action.extended.get_children = &get_children;
 	t->action.extended.set_sensitivity = &set_sensitivity;
 	
 	for (uint8_t i=0; i<6; i++) {

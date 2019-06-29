@@ -19,7 +19,6 @@
   </object>
   <object class="GtkBox" id="gyro">
     <property name="visible">True</property>
-    <property name="sensitive">False</property>
     <property name="can_focus">False</property>
     <property name="margin_left">30</property>
     <property name="margin_right">30</property>

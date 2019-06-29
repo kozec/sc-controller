@@ -113,6 +113,12 @@ DLL_EXPORT uint8_t scc_parameter_tuple_get_count(Parameter* p);
 DLL_EXPORT Parameter* scc_parameter_tuple_get_child(Parameter* p, uint8_t n);
 
 /**
+ * Returns 'None' parameter.
+ * 'None' is sigleton and so caller doesn't have to care about dereferencing it.
+ */
+DLL_EXPORT Parameter* scc_parameter_get_none();
+
+/**
  * Fills constants into pre-allocated array. 'count' is number of values to which
  * array is allocated.
  * Returns actual number of values. If this number is larger than 'count',

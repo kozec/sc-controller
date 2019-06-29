@@ -19,7 +19,6 @@
 #endif
 
 const uint16_t SCC_KEYCODE_MAX = 248;
-const size_t SCC_REL_ABS_MAX = 174;
 
 struct Item keys[] = {
 	{ 0,	"KEY_RESERVED", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
@@ -274,28 +273,17 @@ struct Item keys[] = {
 };
 
 struct Item rels_and_abses[] = {
-	{ 0,	"REL_X", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 0,	"ABS_X", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 1,	"REL_Y", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 1,	"ABS_Y", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 2,	"ABS_Z", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 2,	"REL_Z", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 3,	"ABS_RX", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 3,	"REL_RX", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 4,	"ABS_RY", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 4,	"REL_RY", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 5,	"ABS_RZ", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 5,	"REL_RZ", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 6,	"REL_HWHEEL", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 6,	"ABS_THROTTLE", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 7,	"REL_DIAL", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 7,	"ABS_RUDDER", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 8,	"REL_WHEEL", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 8,	"ABS_WHEEL", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 9,	"ABS_GAS", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 9,	"REL_MISC", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 10,	"ABS_BRAKE", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
-	{ 15,	"REL_MAX", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 16,	"ABS_HAT0X", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 16,	"REL_CNT", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 17,	"ABS_HAT0Y", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
@@ -450,4 +438,16 @@ struct Item rels_and_abses[] = {
 	{ 741,	"BTN_TRIGGER_HAPPY38", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 742,	"BTN_TRIGGER_HAPPY39", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 	{ 743,	"BTN_TRIGGER_HAPPY40", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1024,	"REL_X", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1025,	"REL_Y", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1026,	"REL_Z", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1027,	"REL_RX", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1028,	"REL_RY", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1029,	"REL_RZ", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1030,	"REL_HWHEEL", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1031,	"REL_DIAL", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1032,	"REL_WHEEL", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1033,	"REL_MISC", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
+	{ 1039,	"REL_MAX", 0x0, 0x0, 0x0, GDK_KEYCODE(0) },
 };
+size_t rels_and_abses_cnt = sizeof(rels_and_abses) / sizeof(struct Item);

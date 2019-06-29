@@ -139,6 +139,7 @@ static void whole(Action* _a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigg
 static ActionList get_children(Action* a) {
 	DPadAction* dpad = container_of(a, DPadAction, action);
 	ActionList lst = scc_make_action_list(NULL);
+	if (lst == NULL) return NULL;
 	for (size_t i=0; i<8; i++) {
 		if (dpad->actions[i] != NoAction) {
 			if (!list_add(lst, dpad->actions[i])) {

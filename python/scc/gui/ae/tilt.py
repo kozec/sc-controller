@@ -52,6 +52,7 @@ class TiltComponent(AEComponent, BindingEditor):
 	
 	def set_button_desc(self, i):
 		desc = describe_action(Action.AC_BUTTON, None, self.actions[i])
+		print "SET", i, self.actions[i], desc
 		l = self.builder.get_object("lblTilt%s" % (i,))
 		if l is None:
 			l = self.builder.get_object("btTilt%s" % (i,)).get_children()[0]
@@ -84,3 +85,4 @@ class TiltComponent(AEComponent, BindingEditor):
 		ae.set_title(_("Select Tilt Action"))
 		ae.set_input(i, action, mode = Action.AC_BUTTON)
 		ae.show(self.editor.window)
+

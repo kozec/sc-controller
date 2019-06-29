@@ -21,7 +21,7 @@
 extern struct Item keys[];
 extern struct Item rels_and_abses[];
 extern const uint16_t SCC_KEYCODE_MAX;
-extern const size_t SCC_REL_ABS_MAX;
+extern size_t rels_and_abses_cnt;
 
 
 const char* scc_action_get_type(Action* a) {
@@ -116,6 +116,10 @@ void scc_parameter_unref(Parameter* p) {
 	RC_REL(p);
 }
 
+Parameter* scc_parameter_get_none() {
+	return None;
+}
+
 ParameterList _scc_tokens_to_param_list(Tokens* tokens, ParamError** err);
 
 ParamOE scc_parse_param_list(const char* str) {
@@ -183,14 +187,14 @@ size_t scc_get_key_constants(EnumValue array[], size_t count) {
 }
 
 size_t scc_get_axis_constants(EnumValue array[], size_t count) {
-	return scc_get_constants(array, count, rels_and_abses, SCC_REL_ABS_MAX, "ABS_");
+	return scc_get_constants(array, count, rels_and_abses, rels_and_abses_cnt, "ABS_");
 }
 
 size_t scc_get_rels_constants(EnumValue array[], size_t count) {
-	return scc_get_constants(array, count, rels_and_abses, SCC_REL_ABS_MAX, "REL_");
+	return scc_get_constants(array, count, rels_and_abses, rels_and_abses_cnt, "REL_");
 }
 
 size_t scc_get_button_constants(EnumValue array[], size_t count) {
-	return scc_get_constants(array, count, rels_and_abses, SCC_REL_ABS_MAX, "BTN_");
+	return scc_get_constants(array, count, rels_and_abses, rels_and_abses_cnt, "BTN_");
 }
 

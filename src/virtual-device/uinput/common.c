@@ -67,7 +67,7 @@ VirtualDevice* setup_device(VirtualDeviceType type,
 	if (rel_count > 0) {
 		IOCTLSETUP(UI_SET_EVBIT, EV_REL);
 		for (size_t i = 0; i<rel_count; i++) {
-			IOCTLSETUP(UI_SET_RELBIT, rels[i]);
+			IOCTLSETUP(UI_SET_RELBIT, rels[i] - SCC_REL_OFFSET);
 		}
 	}
 	

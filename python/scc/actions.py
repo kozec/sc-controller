@@ -69,6 +69,8 @@ class Parameter:
 				cparam = lib_bindings.scc_get_const_parameter(value.name)
 				if not cparam:
 					raise ValueError("Unknown or invalid name of constant: '%s'" % (value.name,))
+			elif value is None:
+				cparam = lib_bindings.scc_parameter_get_none()
 			else:
 				raise TypeError("Cannot convert %s" % (repr(value),))
 			if not cparam:
@@ -348,13 +350,6 @@ class RangeOP:
 	pass
 
 
-class NoAction(Action):
-	KEYWORD = "None"
-	
-	def __nonzero__(self):
-		return False
-
-
 class Modifier(Action):
 	
 	@property
@@ -490,6 +485,19 @@ class Macro(MultiAction):
 	BUILD_FN = lib_actions.scc_macro_new
 
 
+class NoAction(Action):
+	KEYWORD = "None"
+	_singleton = None
+	
+	def __nonzero__(self):
+		return False
+	
+	def __new__(cls, *whatever):
+		""" NoAction should be singleton and work both as class and as value """
+		if cls._singleton is None: cls._singleton = Action.__new__(cls)
+		return cls._singleton
+
+
 KEYWORD_TO_ACTION = {
 	y.KEYWORD: y
 	for (x, y) in locals().items()
@@ -552,6 +560,9 @@ lib_bindings.scc_action_get_children.restype = Parameter.CParameterOEp
 lib_bindings.scc_get_const_parameter.argtypes = [ ctypes.c_char_p ]
 lib_bindings.scc_get_const_parameter.restype = Parameter.CParameterOEp
 
+lib_bindings.scc_parameter_get_none.argtypes = [ ]
+lib_bindings.scc_parameter_get_none.restype = Parameter.CParameterOEp
+
 
 lib_parse.scc_parse_action.argtypes = [ ctypes.c_char_p ]
 lib_parse.scc_parse_action.restype = Action.CActionOEp
@@ -583,4 +594,5 @@ lib_actions.scc_multiaction_new.restype = Action.CActionOEp
 
 lib_actions.scc_macro_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
 lib_actions.scc_macro_new.restype = Action.CActionOEp
+
 
