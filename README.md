@@ -38,7 +38,7 @@ $ SCC_SHARED=$(pwd) build/src/daemon/scc-daemon
 ###### on Windows
 ```
 # (you'll need mingw)
-$ pacman -S mingw-w64-i686-pkg-config mingw-w64-i686-meson mingw-w64-i686-gcc mingw-w64-i686-python2 mingw-w64-i686-gtk3 mingw-w64-i686-libusb
+$ pacman -S --needed mingw-w64-i686-pkg-config mingw-w64-i686-meson mingw-w64-i686-gcc mingw-w64-i686-python2 mingw-w64-i686-gtk3 mingw-w64-i686-libusb mingw-w64-i686-libmicroutils
 $ export PROCESSOR_ARCHITEW6432=x86
 $ meson build
 $ ninja -C build
