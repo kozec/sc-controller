@@ -33,6 +33,7 @@ struct DeadzoneModifier {
 	AxisValue			upper;
 	AxisValue			lower;
 	Action*				old_child;
+	Parameter*			mode_param;
 	DeadzoneMode		mode;
 };
 
@@ -172,6 +173,7 @@ static Parameter* get_property(Action* a, const char* name) {
 	DeadzoneModifier* d = container_of(a, DeadzoneModifier, action);
 	MAKE_INT_PROPERTY(d->upper, "upper");
 	MAKE_INT_PROPERTY(d->lower, "lower");
+	MAKE_PARAM_PROPERTY(d->mode_param, "mode");
 	
 	DWARN("Requested unknown property '%s' from '%s'", name, a->type);
 	return NULL;
@@ -252,6 +254,7 @@ static ActionOE deadzone_constructor(const char* keyword, ParameterList params) 
 	d->lower = scc_parameter_as_int(params->items[1]);
 	d->upper = scc_parameter_as_int(params->items[2]);
 	d->child = scc_parameter_as_action(params->items[3]);
+	d->mode_param = params->items[0];
 	d->old_child = NULL;
 	d->params = params;
 	d->mode = mode;
