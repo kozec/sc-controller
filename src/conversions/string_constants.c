@@ -16,6 +16,8 @@ static const char* CONSTANTS[] = {
 	"LB", "RB",
 	// Triggers
 	"LT", "RT",
+	// Grips
+	"LGRIP", "RGRIP",
 	// Deadzone modes
 	"CUT", "ROUND", "LINEAR", "MINIMUM",
 	// Haptic positions
