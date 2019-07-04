@@ -1351,6 +1351,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 	
 	def do_activate(self, *a):
 		self.builder.get_object("window").show()
+		if self.config['gui']['minimize_on_start'] and self.statusicon.get_property("active"):
+			self.builder.get_object("window").hide()
+		else:
+			self.builder.get_object("window").show()
 	
 	
 	def remove_dot_profile(self):
