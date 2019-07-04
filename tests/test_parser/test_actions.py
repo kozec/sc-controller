@@ -270,8 +270,8 @@ class TestActions(object):
 			AxisAction(Axes.ABS_X),
 			AxisAction(Axes.ABS_Y)
 		))
-
-
+	
+	
 	def test_relXY(self):
 		"""
 		Tests if relXYAciton can be converted to string and parsed back to
@@ -281,8 +281,8 @@ class TestActions(object):
 			AxisAction(Axes.ABS_RX),
 			AxisAction(Axes.ABS_RY)
 		))
-
-
+	
+	
 	def test_trigger(self):
 		"""
 		Tests if TriggerAction can be converted to string and parsed back to
@@ -292,3 +292,4 @@ class TestActions(object):
 			15, 234,
 			ButtonAction(Keys.KEY_A)
 		))
+

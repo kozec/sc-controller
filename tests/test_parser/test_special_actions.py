@@ -143,3 +143,11 @@ class TestSpecialActions(object):
 				'LRLR', TurnOffAction()
 			)
 		)
+	
+	
+	def test_cemuhook(self):
+		"""
+		Nothing to test here
+		"""
+		pass
+

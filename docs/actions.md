@@ -153,6 +153,11 @@ Can be used to map gyroscope to movement stick or to use controller as racing wh
 Resets gyroscope offsets so current orientation is treated as neutral.
 
 
+#### <a name="cemuhook"></a> cemuhook()
+When set to gyro, outputs gyroscope data in way compatibile with Cemu, Citra and
+other applications using CemuHookUDP motion provider protocol.
+
+
 #### <a name="tilt"></a> gyro(front_down, front_up, tilt_left, tilt_right)
 Maps tilting of gamepad into actions. When gamepad is tilt to one of for supported
 sides, assigned action is executed as if by button press and then "released" after

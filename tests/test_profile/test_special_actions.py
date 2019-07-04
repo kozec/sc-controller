@@ -161,3 +161,11 @@ class TestSpecialActions(object):
 		assert isinstance(a, OSDAction)
 		assert isinstance(a.action, GesturesAction)
 		assert isinstance(a.action.gestures['UD'], TurnOffAction)
+	
+	
+	def test_cemuhook(self):
+		"""
+		Nothing to test here
+		"""
+		pass
+
