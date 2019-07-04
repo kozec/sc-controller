@@ -251,8 +251,8 @@ static ActionOE deadzone_constructor(const char* keyword, ParameterList params) 
 	d->action.axis = &axis;
 	d->action.extended.get_child = &get_child;
 	
-	d->lower = scc_parameter_as_int(params->items[1]);
-	d->upper = scc_parameter_as_int(params->items[2]);
+	d->lower = max(0, scc_parameter_as_int(params->items[1]));
+	d->upper = min(STICK_PAD_MAX, scc_parameter_as_int(params->items[2]));
 	d->child = scc_parameter_as_action(params->items[3]);
 	d->mode_param = params->items[0];
 	d->old_child = NULL;
