@@ -15,13 +15,14 @@
 	#include "scc/utils/assert.h"
 	#include "scc/utils/math.h"
 	#include "scc/utils/list.h"
-	#include "scc/tools.h"
-	#include "daemon.h"
 #else	// PYTHON
 	#include "c_branch.h"
 #endif	// PYTHON
 #ifdef _WIN32
-	#error "Implement me!"
+	#include <winsock2.h>
+	#include <windows.h>
+	#include <ws2tcpip.h>
+	#define SOCKETERROR ": error %i", WSAGetLastError()
 #else	// _WIN32
 	#include <netinet/in.h>
 	#include <sys/socket.h>
@@ -29,6 +30,10 @@
 	#include <sys/types.h>
 	#define SOCKETERROR  ": %s", strerror(errno)
 #endif	// _WIN32
+#ifndef PYTHON
+	#include "scc/tools.h"
+	#include "daemon.h"
+#endif
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -168,6 +173,7 @@ static void send_gyro_data(int fd, CEHClient* target, uint16_t id, float data[6]
 static void parse_message(int fd, const char* buffer, size_t size, struct sockaddr_in* source) {
 	struct Message* msg = (struct Message*)&buffer[0];
 	struct Message out;
+	int i, x;
 	if ((size < 20) || (buffer[0] != 'D') || (buffer[1]!='S') || (buffer[2] != 'U') || (buffer[3] != 'C')) {
 		WARN("Recieved invalid message: Invalid header");
 		return;
@@ -189,7 +195,7 @@ static void parse_message(int fd, const char* buffer, size_t size, struct sockad
 		break;
 	case DSUC_LISTPORTS:
 		if ((msg->list_ports.count > 0) && (msg->list_ports.count <= 4)) {
-			for (int i=0; i<msg->list_ports.count; i++)
+			for (i=0; i<msg->list_ports.count; i++)
 				fill_port_info(&out.port_info[i], msg->list_ports.ids[i], 0);
 			send_msg(fd, source, &out, DSUS_PORTINFO, 12 * msg->list_ports.count);
 		}
@@ -211,7 +217,7 @@ static void parse_message(int fd, const char* buffer, size_t size, struct sockad
 		}
 		CEHClient* c = NULL;
 #ifdef PYTHON
-		for (int x=0; x<CLIENT_LIMIT; x++) {
+		for (x=0; x<CLIENT_LIMIT; x++) {
 			if (clients[x].address.sin_port == 0)
 				continue;
 			CEHClient* i = &clients[x];
@@ -226,7 +232,7 @@ static void parse_message(int fd, const char* buffer, size_t size, struct sockad
 		}
 		if (c == NULL) {
 #ifdef PYTHON
-			for (int x=0; x<CLIENT_LIMIT; x++) {
+			for (x=0; x<CLIENT_LIMIT; x++) {
 				if (clients[x].address.sin_port == 0) {
 					c = &clients[x];
 				}
@@ -265,7 +271,8 @@ bool sccd_cemuhook_feed(int index, float data[6]) {
 #endif
 	monotime_t t = mono_time_ms();
 #ifdef PYTHON
-	for (int x=0; x<CLIENT_LIMIT; x++) {
+	int x;
+	for (x=0; x<CLIENT_LIMIT; x++) {
 		CEHClient* c = &clients[x];
 		if (c->address.sin_port == 0)
 			continue;
@@ -307,7 +314,8 @@ void cemuhook_data_recieved(int fd, int port, const char* buffer, size_t size) {
 }
 
 bool cemuhook_socket_enable() {
-	for (int i=0; i<CLIENT_LIMIT; i++)
+	int i;
+	for (i=0; i<CLIENT_LIMIT; i++)
 		clients[i].address.sin_port = 0;
 	// listening is done in python
 	return true;
@@ -356,7 +364,6 @@ bool sccd_cemuhook_socket_enable() {
 		return false;
 	}
 	
-	/*
 #ifndef _WIN32
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)) < 0) {
 #else
@@ -365,7 +372,6 @@ bool sccd_cemuhook_socket_enable() {
 		// stupid, but not fatal
 		WARN("setsockopt failed" SOCKETERROR);
 	}
-	*/
 	if (bind(sock, (const struct sockaddr *)&server_addr, sizeof(struct sockaddr_in)) < 0) {
 		LERROR("Bind failed" SOCKETERROR);
 		return false;
