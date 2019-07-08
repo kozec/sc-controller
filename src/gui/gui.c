@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
 		DDEBUG("Python home: %s", python_home);
 		Py_SetPythonHome((char*)python_home);
 		Py_InitializeEx(0);
+		strbuilder_addf(sys_path, ";%s\\python\\scc\\lib", python_home);
 		strbuilder_addf(sys_path, ";%s\\lib\\python2.7", python_home);
 		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\lib-dynload", python_home);
 		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\site-packages", python_home);

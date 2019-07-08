@@ -14,23 +14,23 @@ GTK_LIBS=(libgtk-3-0.dll libgdk-3-0.dll libharfbuzz-0.dll libfreetype-6.dll
 		libcrypto-1_1.dll)
 GTK_ICONS=(
 		status/image-missing.png
-		status/dialog-information.png
-		status/dialog-warning.png
-		status/dialog-error.png
-		status/checkbox-symbolic.symbolic.png
-		status/checkbox-mixed-symbolic.symbolic.png
-		status/checkbox-checked-symbolic.symbolic.png
+		legacy/dialog-information.png
+		legacy/dialog-warning.png
+		legacy/dialog-error.png
+		ui/checkbox-symbolic.symbolic.png
+		ui/checkbox-mixed-symbolic.symbolic.png
+		ui/checkbox-checked-symbolic.symbolic.png
 		actions/open-menu-symbolic.symbolic.png
-		actions/window-close-symbolic.symbolic.png
-		actions/window-maximize-symbolic.symbolic.png
-		actions/window-restore-symbolic.symbolic.png
-		actions/window-minimize-symbolic.symbolic.png
+		ui/window-close-symbolic.symbolic.png
+		ui/window-maximize-symbolic.symbolic.png
+		ui/window-restore-symbolic.symbolic.png
+		ui/window-minimize-symbolic.symbolic.png
 		actions/list-add-symbolic.symbolic.png
 		actions/list-remove-symbolic.symbolic.png
-		actions/pan-up-symbolic.symbolic.png
-		actions/pan-start-symbolic.symbolic.png
-		actions/pan-end-symbolic.symbolic.png
-		actions/pan-down-symbolic.symbolic.png
+		ui/pan-up-symbolic.symbolic.png
+		ui/pan-start-symbolic.symbolic.png
+		ui/pan-end-symbolic.symbolic.png
+		ui/pan-down-symbolic.symbolic.png
 )
 DRIVERS=(sc_by_cable sc_dongle)
 
@@ -41,13 +41,13 @@ ninja -C $1 || exit 1
 mkdir -p release-win32/python
 mkdir -p release-win32/share
 mkdir -p release-win32/lib
-cp -vur share/* release-win32/share
+cp -vnur share/* release-win32/share
 cp -vur python/scc release-win32/python
-cp -vur /mingw32/lib/python2.7 release-win32/lib
+cp -vnur /mingw32/lib/python2.7 release-win32/lib
 cp -vu python/gui_loader.py release-win32/python/
-cp -vur /mingw32/lib/girepository-1.0/ release-win32/lib
-cp -vur /mingw32/lib/gdk-pixbuf-2.0/ release-win32/lib
-cp -vu	/mingw32/bin/gspawn-win32-helper.exe \
+cp -vnur /mingw32/lib/girepository-1.0/ release-win32/lib
+cp -vnur /mingw32/lib/gdk-pixbuf-2.0/ release-win32/lib
+cp -vnu	/mingw32/bin/gspawn-win32-helper.exe \
 		/mingw32/bin/gspawn-win32-helper-console.exe release-win32/
 
 find release-win32/python/ -iname "*.pyc" -delete
@@ -69,14 +69,21 @@ mkdir -p release-win32/menu-generators/
 cp -vu "$1"/src/menu-generators/*.dll release-win32/menu-generators
 
 for i in "${LIBS[@]}" "${GTK_LIBS[@]}" ; do
-	[ -e release-win32/$i ] || cp -v $(whereis "$i" | cut -d ":" -f 2) release-win32/
+	if [ ! -e release-win32/$i ] ; then
+		FROM=$(whereis "$i" | cut -d ":" -f 2)
+		if [ -z "$FROM" ] ; then
+			echo "Library not found: $i" >/dev/stderr
+			exit 1
+		fi
+		cp -vn $FROM release-win32/
+	fi
 done
 
 mkdir -p release-win32/share/images/status
 mkdir -p release-win32/share/images/actions
 for i in "${GTK_ICONS[@]}" ; do
 	n=$(basename "$i")
-	[ -e release-win32/share/images/"$n" ] || cp -v \
+	[ -e release-win32/share/images/"$n" ] || cp -nv \
 		/mingw32/share/icons/Adwaita/16x16/"$i" release-win32/share/images/"$n"
 done
 

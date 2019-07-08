@@ -83,7 +83,7 @@ class Parameter:
 	
 	def __repr__(self):
 		if self._cparam:
-			s = lib_bindings.scc_parameter_to_string(self._cparam).decode("utf-8")
+			s = lib_actions.scc_parameter_to_string(self._cparam).decode("utf-8")
 		else:
 			s = "(null)"
 		return "<Parameter '%s'>" % (s,)
@@ -514,8 +514,8 @@ lib_bindings.scc_action_get_property.restype = Parameter.CParameterOEp
 lib_bindings.scc_parameter_as_action.argtypes = [ Parameter.CParameterOEp ]
 lib_bindings.scc_parameter_as_action.restype = Action.CActionOEp
 
-lib_bindings.scc_parameter_to_string.argtypes = [ Parameter.CParameterOEp ]
-lib_bindings.scc_parameter_to_string.restype = ctypes.c_char_p
+lib_actions.scc_parameter_to_string.argtypes = [ Parameter.CParameterOEp ]
+lib_actions.scc_parameter_to_string.restype = ctypes.c_char_p
 
 lib_bindings.scc_parameter_as_string.argtypes = [ Parameter.CParameterOEp ]
 lib_bindings.scc_parameter_as_string.restype = ctypes.c_char_p
