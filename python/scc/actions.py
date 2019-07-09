@@ -55,7 +55,7 @@ class Parameter:
 				raise ValueError("Invalid parameter")
 			self._cparam = value
 		else:
-			if type(value) == int:
+                        if type(value) in (int, long):
 				cparam = lib_actions.scc_new_int_parameter(value)
 			elif type(value) == float:
 				cparam = lib_actions.scc_new_float_parameter(value)
