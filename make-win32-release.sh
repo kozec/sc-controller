@@ -17,6 +17,13 @@ GTK_ICONS=(
 		legacy/dialog-information.png
 		legacy/dialog-warning.png
 		legacy/dialog-error.png
+		legacy/edit-delete.png
+		legacy/edit-clear.png
+		legacy/list-add.png
+		legacy/go-up.png
+		legacy/go-next.png
+		legacy/go-down.png
+		legacy/go-previous.png
 		ui/checkbox-symbolic.symbolic.png
 		ui/checkbox-mixed-symbolic.symbolic.png
 		ui/checkbox-checked-symbolic.symbolic.png
