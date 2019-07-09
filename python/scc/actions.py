@@ -12,7 +12,7 @@ from itertools import chain
 from scc.constants import SCButtons, HapticPos
 from scc.find_library import find_library
 from scc.parser import ParseError
-from scc.lib import Enum
+from scc.lib.enum import Enum
 
 import logging
 log = logging.getLogger("Actions")
