@@ -382,26 +382,27 @@ class Menu(OSDWindow):
 	
 	def use_controller(self, controller):
 		ccfg = self.config.get_controller_config(controller.get_id())
-		self._control_with = ccfg["menu_control"] if self.args.control_with == DEFAULT else self.args.control_with
-		self._cancel_with = ccfg["menu_cancel"] if self.args.cancel_with == DEFAULT else self.args.cancel_with
+		self._control_with = getattr(self.args, "control_with", DEFAULT)
+		self._cancel_with = getattr(self.args, "cancel_with", DEFAULT)
+		if self._control_with == DEFAULT: self._control_with = ccfg["menu_control"]
+		if self._cancel_with == DEFAULT: self._cancel_with = ccfg["menu_cancel"]
 		
-		if self.args.confirm_with == DEFAULT:
+		self._confirm_with = getattr(self.args, "confirm_with", DEFAULT)
+		if self._confirm_with == DEFAULT:
 			self._confirm_with = ccfg["menu_confirm"]
-		elif self.args.confirm_with == SAME:
+		elif self._confirm_with == SAME:
 			if self._control_with == RIGHT:
 				self._confirm_with = SCButtons.RPADTOUCH.name
 			else:
 				self._confirm_with = SCButtons.LPADTOUCH.name
-		else:
-			self._confirm_with = self.args.confirm_with
 		
-		if self.args.use_cursor:
+		if getattr(self.args, "use_cursor", False):
 			# As special case, using LEFT pad on controller with
 			# actual DPAD should not display cursor
 			if self._control_with != LEFT or (controller.get_flags() & ControllerFlags.HAS_DPAD) == 0:
 				self.enable_cursor()
 		
-		if self.args.feedback_amplitude:
+		if getattr(self.args, "feedback_amplitude", None):
 			side = "LEFT"
 			if self._control_with == "RIGHT":
 				side = "RIGHT"

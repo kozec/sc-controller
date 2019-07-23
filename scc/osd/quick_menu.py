@@ -104,6 +104,10 @@ class QuickMenu(Menu):
 			help="Menu items")
 	
 	
+	def _check_on_screen_position(self, quick=False):
+		pass
+	
+	
 	def lock_inputs(self):
 		def success(*a):
 			log.error("Sucessfully locked input")
@@ -161,7 +165,7 @@ class QuickMenu(Menu):
 		pass
 	
 	
-	def show_submenu(self, trash, trash2, menuitem):
+	def show_submenu(self, trash, trash2, trash3, menuitem):
 		""" Called when user chooses menu item pointing to submenu """
 		filename = find_menu(menuitem.filename)
 		if filename:
@@ -180,6 +184,7 @@ class QuickMenu(Menu):
 			self._submenu.set_is_submenu()
 			self._submenu.use_daemon(self.daemon)
 			self._submenu.connect('destroy', self.on_submenu_closed)
+			self._submenu.controller = self.controller
 			self._submenu.show()
 			self.cancel_timer()
 	
