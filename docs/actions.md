@@ -355,7 +355,7 @@ from 1 to 32768, but note that setting count to large number will start long
 running feedback that you may not be able to stop.
 
 'frequency' is used only when emulating touchpad and describes how many pixels
-should mouse travell between two feedback ticks.
+should mouse travel between two feedback ticks.
 
 
 #### <a name="ball"></a> ball([friction=10.0, [mass=80.0, ]] action)
