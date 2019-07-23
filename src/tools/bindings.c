@@ -198,3 +198,5 @@ size_t scc_get_button_constants(EnumValue array[], size_t count) {
 	return scc_get_constants(array, count, rels_and_abses, rels_and_abses_cnt, "BTN_");
 }
 
+extern char* scc_parameter_to_string(Parameter* p);
+
