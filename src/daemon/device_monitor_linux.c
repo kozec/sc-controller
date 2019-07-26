@@ -68,6 +68,11 @@ static void on_data_ready(Daemon* d, int fd, void* userdata) {
 	const char* subsystem = udev_device_get_subsystem(dev);
 	const char* syspath = udev_device_get_syspath(dev);
 	int initialized = udev_device_get_is_initialized(dev);
+	if ((action == NULL) || (subsystem == NULL) || (syspath == NULL)) {
+		// Failed to get device info
+		udev_device_unref(dev);
+		return;
+	}
 	if (initialized) {
 		if (strcmp(action, "bind") == 0) {
 			// USB devices are bound
