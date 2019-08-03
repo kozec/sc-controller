@@ -126,7 +126,7 @@ class TestModifiers(object):
 		)""")
 		assert isinstance(a, ModeModifier)
 		assert isinstance(a.mods[SCButtons.A], AxisAction)
-		assert a.mods[SCButtons.A].id == Axes.ABS_X
+		assert a.mods[SCButtons.A].axis == Axes.ABS_X
 		
 		# With default
 		a = _parse_compressed("""mode(
