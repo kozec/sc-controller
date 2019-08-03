@@ -249,14 +249,15 @@ class TestActions(object):
 		))
 	
 	def test_relXY(self):
-		"""
-		Tests if relXYAciton can be converted to string and parsed back to
-		same action.
-		"""
+		""" Tests parsing of relXYAciton """
 		assert _parses_as_itself(RelXYAction(
 			AxisAction(Axes.ABS_RX),
 			AxisAction(Axes.ABS_RY)
 		))
+		# Issue #487: 'relxy' converts to 'xy'
+		a = RelXYAction(AxisAction(Axes.ABS_RX), AxisAction(Axes.ABS_RY))
+		assert a.to_string().startswith("relXY(")
+		assert a.KEYWORD == "relXY"
 	
 	def test_trigger(self):
 		"""

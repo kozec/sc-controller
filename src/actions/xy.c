@@ -91,14 +91,14 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 		// m.force_event.add(FE_PAD)
 	} else if ((what == PST_LEFT) || (what == PST_RIGHT) || (what == PST_CPAD)) {
 		// TODO: Special call for PAD as with old stuff?
+		if ((xy->is_relative) && (m->is_touched(m, what))) {
+			if (!m->was_touched(m, what))
+				vec_set(xy->origin, x, y);
+			x = clamp(STICK_PAD_MIN, (int)x - (int)xy->origin.x, STICK_PAD_MAX);
+			y = clamp(STICK_PAD_MIN, (int)y - (int)xy->origin.y, STICK_PAD_MAX);
+		}
+		
 		if (HAPTIC_ENABLED(&xy->hdata)) {
-			if ((xy->is_relative) && (m->is_touched(m, what))) {
-				if (!m->was_touched(m, what))
-					vec_set(xy->origin, x, y);
-				x -= xy->origin.x;
-				y -= xy->origin.y;
-			}
-			
 			if (m->was_touched(m, what)) {
 				bool inner_circle = is_inner_circle(x, y);
 				double distance = dvec_len(xy->haptic_counter);
@@ -215,7 +215,8 @@ static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 		return (ActionOE)scc_oom_action_error();
 	}
 	bool is_relative = (0 == strcmp(keyword, KW_RELXY));
-	scc_action_init(&xy->action, KW_XY,
+	scc_action_init(&xy->action,
+					is_relative ? KW_RELXY : KW_XY,
 					AF_ACTION | AF_MOD_FEEDBACK | AF_MOD_SENSITIVITY
 						| AF_MOD_ROTATE | AF_MOD_SMOOTH
 						| (is_relative ? 0 : AF_MOD_BALL),
@@ -224,7 +225,7 @@ static ActionOE xy_constructor(const char* keyword, ParameterList params) {
 	vec_set(xy->old_pos, 0, 0);
 	vec_set(xy->origin, 0, 0);
 	vec_set(xy->haptic_counter, 0, 0);
-	xy->is_relative = (0 == strcmp(keyword, KW_RELXY));
+	xy->is_relative = is_relative;
 	xy->x = scc_parameter_as_action(params->items[0]);
 	xy->y = scc_parameter_as_action(params->items[1]);
 	xy->action.describe = &describe;
