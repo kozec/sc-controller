@@ -11,8 +11,8 @@
 #include <float.h>
 #include <stdlib.h>
 
-
 typedef LIST_TYPE(ParamData) ParamDataList;
+#define MAX_RANGE_SIZE	16
 
 
 static inline ParamData* PD(ParameterType type) {
@@ -25,6 +25,7 @@ static inline ParamData* PD(ParameterType type) {
 	d->max = LONG_MAX;
 	return d;
 }
+
 
 void scc_param_checker_init(ParamChecker* pc, const char* expression) {
 	ParamDataList lst = list_new(ParamData, 0);
@@ -50,9 +51,34 @@ void scc_param_checker_init(ParamChecker* pc, const char* expression) {
 			if (*i == '*')
 				last->repeating = true;
 			break;
-		case '(':
-			FATAL("TODO: Range in ParamChecker specification");
+		case '(': {
+			char range[MAX_RANGE_SIZE];
+			size_t k = 0;
+			if (list_len(lst) < 1)
+				FATAL("Unexpected '%c' in ParamChecker specification", *i);
+			last = list_last(lst);
+			if (last->type != PT_INT)
+				FATAL("'(' after non-numeric in ParamChecker specification");
+			for (++i; i<end; i++) {
+				range[k++] = *i;
+				if (k >= MAX_RANGE_SIZE)
+					FATAL("Range number too long in ParamChecker specification");
+				if (*i == ')') {
+					range[k-1] = 0;
+					last->max = atoi(range);
+					break;
+				} else if (*i == ',') {
+					range[k-1] = 0;
+					last->min = atoi(range);
+					k = 0;
+				} else if ((*i != ',') && !((*i >= '0') && (*i <= '9'))) {
+					FATAL("Invalid character '%c' in ParamChecker range specification", *i);
+				}
+			}
+			if (*i != ')')
+				FATAL("'(' without ')' in ParamChecker specification");
 			break;
+		}
 		case '+':
 			if ((list_len(lst) > 0) && (list_last(lst)->type == PT_INT)) {
 				last = list_last(lst);

@@ -92,8 +92,9 @@ static ActionOE mouseabs_constructor(const char* keyword, ParameterList params) 
 }
 
 void scc_actions_init_mouseabs() {
-	scc_param_checker_init(&pc, "x?f?");
-	scc_param_checker_set_defaults(&pc, 0, 1.0);
+	// 1024 == REL_X
+	scc_param_checker_init(&pc, "i(1024,1039)?f?");
+	scc_param_checker_set_defaults(&pc, 1024, 1.0);
 	scc_action_register(KW_MOUSEABS, &mouseabs_constructor);
 }
 

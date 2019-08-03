@@ -46,7 +46,7 @@ static char* xy_to_string(Action* a) {
 		)
 	);
 	char* strl = scc_param_list_to_string(l);
-	char* rv = (strl == NULL) ? NULL : strbuilder_fmt("%s(%s)", KW_XY, strl);
+	char* rv = (strl == NULL) ? NULL : strbuilder_fmt("%s(%s)", xy->action.type, strl);
 	
 	list_free(l);
 	free(strl);
