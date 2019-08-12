@@ -33,6 +33,7 @@ static void remove_mainloop(sccd_mainloop_cb cb);
 static bool controller_add(Controller* c);
 static void controller_remove(Controller* c);
 static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
+static bool sccd_hidapi_enabled();
 
 
 static Daemon _daemon = {
@@ -47,6 +48,7 @@ static Daemon _daemon = {
 	.hotplug_cb_add				= sccd_register_hotplug_cb,
 	.get_x_display				= sccd_x11_get_display,
 	.get_usb_helper				= sccd_get_usb_helper,
+	.hidapi_enabled				= sccd_hidapi_enabled,
 };
 
 Daemon* get_daemon() {
@@ -79,6 +81,15 @@ static void sigint_handler(int sig) {
 	INFO("^C caught");
 	sccd_exit();
 }
+
+static bool sccd_hidapi_enabled() {
+#if USE_HIDAPI
+	return true;
+#else
+	return false;
+#endif
+}
+
 
 
 /**

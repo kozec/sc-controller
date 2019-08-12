@@ -43,7 +43,7 @@ void sccd_device_monitor_close() {
 	hashmap_free(known_devs);
 }
 
-bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, sccd_hotplug_cb cb) {
+bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb) {
 	any_t trash;
 	const char* key = make_key(sys, vendor, product);
 	if (hashmap_get(callbacks, key, &trash) != MAP_MISSING) {
@@ -84,7 +84,7 @@ void sccd_device_monitor_rescan() {
 			// I have no value to store in known_devs hashmap yet.
 			if (hashmap_put(known_devs, node_name, (void*)1) != MAP_OK)
 				return;
-			cb(d, node_name, USB, di.udi_vendorNo, di.udi_productNo);
+			cb(d, node_name, USB, di.udi_vendorNo, di.udi_productNo, 0);
 		}
 	}
 }

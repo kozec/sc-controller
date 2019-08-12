@@ -55,13 +55,13 @@ void handle_input(SCController* sc, SCInput* i) {
 
 static void deallocate(Controller* c) {
 	SCController* sc = container_of(c, SCController, controller);
-	if (sc->usb_hndl != USBDEV_NONE)
+	if (sc->usb_hndl != NULL)
 		sc->daemon->get_usb_helper()->close(sc->usb_hndl);
 	free(sc);
 }
 
 void disconnected(SCController* sc) {
-	sc->usb_hndl = USBDEV_NONE;
+	sc->usb_hndl = NULL;
 	if (sc->state == SS_READY) {
 		if (sc->mapper != NULL) {
 			// Releases all buttons, centers all sticks and sends fake input to mapper
@@ -208,7 +208,7 @@ static void update_desc(SCController* sc) {
 
 bool read_serial(SCController* sc) {
 	Config* c = config_load();
-	if ((c != NULL) && (config_get_int(c, "ignore_serials") == 1)) {
+	if (1) { // ((c != NULL) && (config_get_int(c, "ignore_serials") == 1)) {
 		// Special exception for cases when controller drops instead of
 		// sending serial number. See issue #103
 		int i = 0;
@@ -285,7 +285,7 @@ bool configure(SCController* sc) {
 		0x00, 0x2e,
 	};
 	uint8_t leds[64] = { PT_CONFIGURE, PL_LED, CT_LED, sc->led_level };
-	if (sc->usb_hndl == USBDEV_NONE)
+	if (sc->usb_hndl == NULL)
 		// Special case, controller was disconnected, but it's not deallocated yet
 		goto configure_fail;
 	if (usb->hid_request(sc->usb_hndl, sc->idx, gyro_and_timeout, -64) == NULL)

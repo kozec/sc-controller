@@ -269,16 +269,24 @@ char* scc_find_binary(const char* name) {
 }
 
 #ifdef _WIN32
-size_t scc_path_fix_slashes(char* path) {
+static inline size_t _slashes(char* path, char from, char to) {
 	size_t count = 0;
 	while (*path != 0) {
-		if (*path == '\\') {
-			*path = '/';
+		if (*path == from) {
+			*path = to;
 			count++;
 		}
 		path ++;
 	}
 	return count;
+}
+
+size_t scc_path_fix_slashes(char* path) {
+	return _slashes(path, '\\', '/');
+}
+
+size_t scc_path_break_slashes(char* path) {
+	return _slashes(path, '/', '\\');
 }
 #endif
 

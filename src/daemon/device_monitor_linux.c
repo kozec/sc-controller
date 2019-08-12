@@ -36,7 +36,7 @@ void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sy
 		// I have no value to store in known_devs hashmap yet.
 		if (hashmap_put(known_devs, syspath, (void*)1) != MAP_OK)
 			return;
-		cb(d, syspath, sys, vendor, product);
+		cb(d, syspath, sys, vendor, product, 0);
 	}
 }
 
@@ -234,7 +234,7 @@ void sccd_device_monitor_close() {
 	udev_unref(ctx);
 }
 
-bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, sccd_hotplug_cb cb) {
+bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb) {
 	any_t trash;
 	const char* key = make_key(sys, vendor, product);
 	if (hashmap_get(callbacks, key, &trash) != MAP_MISSING) {

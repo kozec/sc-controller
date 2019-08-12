@@ -194,6 +194,11 @@ const char* scc_button_to_string(SCButton b);
  */
 size_t scc_path_fix_slashes(char* path);
 
+/**
+ * Works as scc_path_fix_slashes, but replaces forward slashes with backslashes.
+ */
+size_t scc_path_break_slashes(char* path);
+
 /** Returns path to directory where sc-controller.exe is located */
 const char* scc_get_exe_path();
 #endif

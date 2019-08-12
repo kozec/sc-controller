@@ -42,7 +42,6 @@ if get_option('menu-generators').enabled()
 		parser_lib_deps += [ meson.get_compiler('c').find_library('dl') ]
 	endif
 endif
-
 add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', language: 'c')
 include = [ include_directories('./include/') ]
 

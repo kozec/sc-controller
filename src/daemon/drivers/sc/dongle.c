@@ -124,11 +124,11 @@ static void turnoff(Controller* c) {
 #ifndef __BSD__
 ////// Linux and Windows, there is dongle, controllers are connected to it
 
-static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
+static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
 	USBHelper* usb = daemon->get_usb_helper();
 	Dongle* dongle = NULL;
 	USBDevHandle hndl = usb->open(syspath);
-	if (hndl == USBDEV_NONE) {
+	if (hndl == NULL) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
@@ -178,7 +178,7 @@ hotplug_cb_fail:
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
 	USBHelper* usb = daemon->get_usb_helper();
 	USBDevHandle hndl = usb->open_uhid(syspath);
-	if (hndl == USBDEV_NONE) {
+	if (hndl == NULL) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
@@ -215,7 +215,7 @@ Driver* scc_driver_init(Daemon* daemon) {
 		return NULL;
 	}
 #endif
-	if (!daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, &hotplug_cb)) {
+	if (!daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, 0, &hotplug_cb)) {
 		LERROR("Failed to register hotplug callback");
 		return NULL;
 	}

@@ -9,6 +9,7 @@
 #include "scc/utils/assert.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
+#include "scc/tools.h"
 #include "sc.h"
 #include <stddef.h>
 
@@ -42,7 +43,7 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 }
 
 
-static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
+static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
 	USBHelper* usb = daemon->get_usb_helper();
 	SCController* sc = NULL;
 #ifdef __BSD__
@@ -50,7 +51,7 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 #else
 	USBDevHandle hndl = usb->open(syspath);
 #endif
-	if (USBDEV_OPEN_FAILED(hndl)) {
+	if (hndl == NULL) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
@@ -98,7 +99,8 @@ Driver* scc_driver_init(Daemon* daemon) {
 	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
 	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	
-	if (!daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, &hotplug_cb)) {
+	Subsystem s = daemon->hidapi_enabled() ? HIDAPI : USB;
+	if (!daemon->hotplug_cb_add(s, VENDOR_ID, PRODUCT_ID, CONTROLIDX, &hotplug_cb)) {
 		LERROR("Failed to register hotplug callback");
 		return NULL;
 	}

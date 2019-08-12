@@ -1,5 +1,6 @@
-platform_dependent_deps = []
 platform_dependent_src = []
+platform_dependent_deps = []
+platform_dependent_args = []
 platform_dependent_link_with = []
 platform_dependent_link_args = []
 
@@ -46,13 +47,25 @@ elif host_machine.system() == 'windows'
 		'usb_helper.c',
 	]
 	platform_dependent_link_args += [ '-mconsole' ]
+	if get_option('use-hidapi').auto() or get_option('use-hidapi').enabled()
+		platform_dependent_deps += [
+			meson.get_compiler('cpp').find_library('setupapi'),
+			dependency('hidapi')
+		]
+		platform_dependent_args += [ '-DUSE_HIDAPI' ]
+	endif
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif
 
+if get_option('use-hidapi').enabled()
+	platform_dependent_deps += [ dependency('hidapi') ]
+	platform_dependent_args += [ '-DUSE_HIDAPI' ]
+endif
 
 executable('scc-daemon',
 	include_directories: include,
+	c_args: platform_dependent_args,
 	link_with: [ utils_lib, tools_lib, parser_lib, actions_lib,
 				 config_lib, virtual_device_lib ] + platform_dependent_link_with,
 	link_args: platform_dependent_link_args,

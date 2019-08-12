@@ -141,7 +141,11 @@ void sccd_device_monitor_init();
 void sccd_device_monitor_start();
 void sccd_device_monitor_rescan();
 void sccd_device_monitor_close();
-bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, sccd_hotplug_cb cb);
+bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb);
+
+#ifdef USE_HIDAPI
+void sccd_hidapi_rescan();
+#endif
 
 Client* sccd_get_special_client(enum SpecialClientType t);
 /** If another client is already registered, it's dropped */

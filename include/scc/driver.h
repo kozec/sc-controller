@@ -22,6 +22,7 @@ typedef enum {
 	BT			= 1,
 	INPUT		= 2,
 #endif
+	HIDAPI		= 3,
 } Subsystem;
 
 typedef struct Daemon Daemon;
@@ -29,7 +30,7 @@ typedef struct Driver Driver;
 
 typedef void (*sccd_mainloop_cb)(Daemon* d);
 typedef void (*sccd_poller_cb)(Daemon* d, int fd, void* userdata);
-typedef void (*sccd_hotplug_cb)(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product);
+typedef void (*sccd_hotplug_cb)(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx);
 typedef void (*sccd_scheduler_cb)(void* userdata);
 
 
@@ -88,10 +89,12 @@ struct Daemon {
 	 * Adds callback that will be called when new device is detected.
 	 * This is basically global shortcut to udev monitor.
 	 *
+	 * 'idx' is used only when Subsystem is set to HIDAPI, otherwise it is ignored.
+	 *
 	 * Returns true on success or false on OOM error. False is also returned if
 	 * there already is another callback for same vendor and product ID registered.
 	 */
-	bool			(*hotplug_cb_add)(Subsystem sys, Vendor vendor, Product product, sccd_hotplug_cb cb);
+	bool			(*hotplug_cb_add)(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb);
 	/**
 	 * Registers error with daemon.
 	 * Error (in this case) is simply string that will logged and sent to
@@ -119,6 +122,10 @@ struct Daemon {
 	 * before, returns NULL.
 	 */
 	void*			(*get_x_display)();
+	/**
+	 * Returns true if hidapi support was enabled at compile time
+	 */
+	bool			(*hidapi_enabled)();
 	/**
 	 * Returns USBHelper instance or NULL on platforms where it's not supported.
 	 * USBHelper is singleton and will stay allocated until daemon terminates,
