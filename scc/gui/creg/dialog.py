@@ -442,8 +442,9 @@ class ControllerRegistration(Editor):
 		self.set_hid_enabled(True)
 		
 		def retry_with_evdev(tester, code):
-			for s in tester.__signals: tester.disconnect(s)
-			tester.stop()
+			if tester:
+				for s in tester.__signals: tester.disconnect(s)
+				tester.stop()
 			self.set_hid_enabled(False)
 			if code != 0:
 				log.error("HID driver test failed (code %s)", code)
