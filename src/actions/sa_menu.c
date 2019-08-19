@@ -89,6 +89,8 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 		Parameter* size = params->items[1];
 		params = scc_make_param_list(menu_id, scc_new_int_parameter(SCC_False), size);
 		if (params == NULL) return (ActionOE)scc_oom_action_error();
+	} else {
+		RC_REL(err);
 	}
 	// Full form is tried
 	err = scc_param_checker_check(&pc, keyword, params);

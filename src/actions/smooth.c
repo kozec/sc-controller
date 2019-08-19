@@ -142,6 +142,7 @@ static ActionOE smooth_constructor(const char* keyword, ParameterList params) {
 	s->multiplier = scc_parameter_as_float(params->items[1]);
 	s->filter = scc_parameter_as_float(params->items[2]);
 	s->child = scc_parameter_as_action(params->items[3]);
+	list_free(params);
 	s->last_pos = -1;
 	s->dq.items = NULL;
 	s->weights = malloc(sizeof(double) * level);
