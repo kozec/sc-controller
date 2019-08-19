@@ -57,10 +57,7 @@ struct SCController {
 	Mapper*				mapper;
 	SCControllerType	type;
 	SCControllerState	state;
-	union {
-		USBDevHandle	usb_hndl;
-		// TODO: BT Handle
-	};
+	InputDevice*		dev;
 	char				serial[MAX_SERIAL_LEN];
 	char				desc[MAX_DESC_LEN];
 	char				id[MAX_ID_LEN];
@@ -109,7 +106,7 @@ typedef enum {
 } SCConfigType;
 
 /** Returns NULL on failure */
-SCController* create_usb_controller(Daemon* daemon, USBDevHandle hndl, SCControllerType type, uint16_t idx);
+SCController* create_usb_controller(Daemon* daemon, InputDevice* dev, SCControllerType type, uint16_t idx);
 /** Common for wired and wireless controller */
 void handle_input(SCController* sc, SCInput* i);
 /** Returns false on failure */
@@ -125,3 +122,4 @@ bool configure(SCController* sc);
  * Does not deallocate 'sc'.
  */
 void disconnected(SCController* sc);
+

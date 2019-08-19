@@ -9,7 +9,6 @@ extern "C" {
 #endif
 #include "scc/utils/dll_export.h"
 #include "scc/controller.h"
-#include "scc/usb_helper.h"
 #include <stdbool.h>
 #include <stdint.h>
 struct Daemon;
@@ -27,6 +26,7 @@ typedef enum {
 
 typedef struct Daemon Daemon;
 typedef struct Driver Driver;
+typedef struct InputDevice InputDevice;
 
 typedef void (*sccd_mainloop_cb)(Daemon* d);
 typedef void (*sccd_poller_cb)(Daemon* d, int fd, void* userdata);
@@ -127,14 +127,12 @@ struct Daemon {
 	 */
 	bool			(*hidapi_enabled)();
 	/**
-	 * Returns USBHelper instance or NULL on platforms where it's not supported.
-	 * USBHelper is singleton and will stay allocated until daemon terminates,
-	 * so it's safe to keep this value.
+	 * Opens USB, hidapi or uhid input device represented by given syspath.
+	 * Returns NULL on error.
 	 *
-	 * USBHelper is just libusb wrapper and is available only on Windows and Linux.
+	 * See input_device.h for details.
 	 */
-	USBHelper*		(*get_usb_helper)();
-
+	InputDevice*	(*open_input_device)(const char* syspath);
 };
 
 struct Driver {

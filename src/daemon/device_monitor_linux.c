@@ -157,6 +157,9 @@ void sccd_device_monitor_init() {
 	monitor = udev_monitor_new_from_netlink(ctx, "udev");
 	ASSERT(monitor != NULL);
 	ASSERT(d->poller_cb_add(udev_monitor_get_fd(monitor), &on_data_ready, NULL));
+#ifdef USE_HIDAPI
+	sccd_input_hidapi_rescan();
+#endif
 }
 
 void sccd_device_monitor_start() {
@@ -199,7 +202,7 @@ void sccd_device_monitor_rescan() {
 	Daemon* d = get_daemon();
 	// self._get_hci_addresses()
 	// subsytems_to_scan has to have enough space to fit everything from Subsystem enum
-	bool subsytems_to_scan[] = { false, false, false };
+	bool subsytems_to_scan[] = { false, false, false, false };
 		
 	HashMapIterator iter = iter_get(callbacks);
 	FOREACH(const char*, key, iter) {
@@ -247,3 +250,4 @@ bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int
 	enabled_subsystems[sys] = true;
 	return true;
 }
+

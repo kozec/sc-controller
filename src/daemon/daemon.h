@@ -133,19 +133,24 @@ void sccd_x11_close();
  */
 void* sccd_x11_get_display();
 
-void sccd_usb_helper_init();
-void sccd_usb_helper_close();
-USBHelper* sccd_get_usb_helper();
-
 void sccd_device_monitor_init();
 void sccd_device_monitor_start();
 void sccd_device_monitor_rescan();
 void sccd_device_monitor_close();
 bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb);
 
+InputDevice* sccd_input_libusb_open(const char* syspath);
+void sccd_input_libusb_init();
+void sccd_input_libusb_close();
 #ifdef USE_HIDAPI
-void sccd_hidapi_rescan();
+InputDevice* sccd_input_hidapi_open(const char* syspath);
+void sccd_input_hidapi_rescan();
 #endif
+#ifdef _WIN32
+void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx);
+void sccd_input_libusb_rescan();
+#endif
+
 
 Client* sccd_get_special_client(enum SpecialClientType t);
 /** If another client is already registered, it's dropped */

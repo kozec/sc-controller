@@ -11,8 +11,13 @@ if host_machine.system() == 'linux'
 	]
 	platform_dependent_src = [
 		'device_monitor_linux.c',
-		'usb_helper.c',
+		'input_libusb.c',
 	]
+	if get_option('use-hidapi').enabled()
+		platform_dependent_deps += [ dependency('hidapi-hidraw') ]
+		platform_dependent_args += [ '-DUSE_HIDAPI' ]
+		platform_dependent_src += [ 'input_hidapi.c' ]
+	endif
 	if get_option('android').disabled()
 		platform_dependent_deps += [
 			dependency('libudev'),
@@ -31,7 +36,7 @@ elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 	]
 	platform_dependent_src = [
 		'device_monitor_bsd.c',
-		'usb_helper_bsd.c',
+		'input_bsd.c',
 	]
 elif host_machine.system() == 'windows'
 	platform_dependent_deps = [
@@ -44,7 +49,7 @@ elif host_machine.system() == 'windows'
 	]
 	platform_dependent_src = [
 		'device_monitor_win32.c',
-		'usb_helper.c',
+		'input_libusb.c',
 	]
 	platform_dependent_link_args += [ '-mconsole' ]
 	if get_option('use-hidapi').auto() or get_option('use-hidapi').enabled()
@@ -53,14 +58,10 @@ elif host_machine.system() == 'windows'
 			dependency('hidapi')
 		]
 		platform_dependent_args += [ '-DUSE_HIDAPI' ]
+		platform_dependent_src += [ 'input_hidapi.c' ]
 	endif
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
-endif
-
-if get_option('use-hidapi').enabled()
-	platform_dependent_deps += [ dependency('hidapi') ]
-	platform_dependent_args += [ '-DUSE_HIDAPI' ]
 endif
 
 executable('scc-daemon',

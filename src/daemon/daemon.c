@@ -34,6 +34,7 @@ static bool controller_add(Controller* c);
 static void controller_remove(Controller* c);
 static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
 static bool sccd_hidapi_enabled();
+static InputDevice* sccd_open_input_device(const char* syspath);
 
 
 static Daemon _daemon = {
@@ -47,7 +48,7 @@ static Daemon _daemon = {
 	.poller_cb_add				= sccd_poller_add,
 	.hotplug_cb_add				= sccd_register_hotplug_cb,
 	.get_x_display				= sccd_x11_get_display,
-	.get_usb_helper				= sccd_get_usb_helper,
+	.open_input_device			= sccd_open_input_device,
 	.hidapi_enabled				= sccd_hidapi_enabled,
 };
 
@@ -394,6 +395,14 @@ static void load_default_profile(SCCDMapper* m) {
 	set_proctitle(default_profile);
 }
 
+static InputDevice* sccd_open_input_device(const char* syspath) {
+#ifdef USE_HIDAPI
+	if (strstr(syspath, "/hidapi/") == syspath)
+		return sccd_input_hidapi_open(syspath);
+#endif
+	return sccd_input_libusb_open(syspath);
+}
+
 intptr_t sccd_error_add(const char* message, bool fatal) {
 	ErrorData* e = NULL;
 	if (!list_allocate(errors, 1))
@@ -536,7 +545,10 @@ int sccd_start() {
 		return 1;
 	}
 	sccd_device_monitor_init(&_daemon);
-	sccd_usb_helper_init(&_daemon);
+	sccd_input_libusb_init(&_daemon);
+#ifdef USE_HIDAPI
+	sccd_input_hidapi_init(&_daemon);
+#endif
 	sccd_x11_init();
 	sccd_drivers_init(&_daemon);
 #ifdef __linux__
@@ -567,7 +579,7 @@ int sccd_start() {
 	
 	// Mainloop is timed mostly by sccd_poller_mainloop_cb, as timeout used
 	// there is what's keeping thread busy for most time.
-	// On windows, sccd_usb_helper_mainloop fullfills same side-effect.
+	// On windows, input_libusb_mainloop fullfills same side-effect.
 	while (running) {
 		FOREACH(sccd_mainloop_cb, cb, iter)
 			cb(&_daemon);
@@ -584,7 +596,10 @@ int sccd_start() {
 	// here: kill mappers
 	// here: kill drivers
 	sccd_device_monitor_close();
-	sccd_usb_helper_close();
+	sccd_input_libusb_close();
+#ifdef USE_HIDAPI
+	sccd_input_hidapi_close();
+#endif
 	sccd_poller_close();
 	sccd_scheduler_close();
 	list_free(mainloop_callbacks);

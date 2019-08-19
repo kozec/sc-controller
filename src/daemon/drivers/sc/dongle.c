@@ -8,6 +8,7 @@
 #include "scc/utils/container_of.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/list.h"
+#include "scc/input_device.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #include "sc.h"
@@ -23,7 +24,7 @@
 #ifndef __BSD__
 
 typedef struct Dongle {
-	USBDevHandle			hndl;
+	InputDevice*			dev;
 	struct SCController*	controllers[CTRLS_PER_DONGLE];
 } Dongle;
 
@@ -37,7 +38,7 @@ static Driver driver = {
 	.unload = NULL
 };
 
-void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const uint8_t* data, void* userdata) {
+void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uint8_t* data, void* userdata) {
 #ifndef __BSD__
 	Dongle* dg = (Dongle*)userdata;
 	if (data == NULL) {
@@ -68,7 +69,7 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 	if (data == NULL) {
 		// Controller disconnected (or failed in any other way)
 		DEBUG("%s disconnected", sc->desc);
-		d->get_usb_helper()->close(sc->usb_hndl);
+		sc->dev->close(sc->dev);
 		disconnected(sc);
 		// TODO: Deallocate sc
 		return;
@@ -117,7 +118,7 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 static void turnoff(Controller* c) {
 	SCController* sc = container_of(c, SCController, controller);
 	uint8_t data[64] = { PT_OFF, 0x04, 0x6f, 0x66, 0x66, 0x21 };
-	if (sc->daemon->get_usb_helper()->hid_request(sc->usb_hndl, sc->idx, data, -64) == NULL)
+	if (sc->dev->hid_request(sc->dev, sc->idx, data, -64) == NULL)
 		LERROR("Failed to turn off controller");
 }
 
@@ -125,16 +126,17 @@ static void turnoff(Controller* c) {
 ////// Linux and Windows, there is dongle, controllers are connected to it
 
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
-	USBHelper* usb = daemon->get_usb_helper();
+	InputDevice* dev = daemon->open_input_device(syspath);
 	Dongle* dongle = NULL;
-	USBDevHandle hndl = usb->open(syspath);
-	if (hndl == NULL) {
+	if (dev == NULL) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
-	if (usb->claim_interfaces_by(hndl, 3, 0, 0) <= 0) {
-		LERROR("Failed to claim interfaces");
-		goto hotplug_cb_fail;
+	if (dev->sys == USB) {
+		if (dev->claim_interfaces_by(dev, 3, 0, 0) <= 0) {
+			LERROR("Failed to claim interfaces");
+			goto hotplug_cb_fail;
+		}
 	}
 	
 	if (!list_allocate(dongles, 1))
@@ -145,11 +147,11 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 	for (size_t j=0; j<CTRLS_PER_DONGLE; j++)
 		dongle->controllers[j] = NULL;
 	for (size_t j=0; j<CTRLS_PER_DONGLE; j++) {
-		dongle->controllers[j] = create_usb_controller(daemon, hndl, SC_WIRELESS, FIRST_CONTROLIDX + j);
+		dongle->controllers[j] = create_usb_controller(daemon, dev, SC_WIRELESS, FIRST_CONTROLIDX + j);
 		if (dongle->controllers[j] == NULL)
 			goto hotplug_cb_oom;
 		dongle->controllers[j]->controller.turnoff = &turnoff;
-		if (!usb->interupt_read_loop(hndl, FIRST_ENDPOINT + j, 64, &input_interrupt_cb, dongle)) {
+		if (!dev->interupt_read_loop(dev, FIRST_ENDPOINT + j, 64, &input_interrupt_cb, dongle)) {
 			LERROR("Failed to configure dongle");
 			goto hotplug_cb_fail;
 		}
@@ -167,7 +169,7 @@ hotplug_cb_oom:
 		free(dongle);
 	}
 hotplug_cb_fail:
-	usb->close(hndl);
+	dev->close(dev);
 }
 
 #else
@@ -176,23 +178,22 @@ hotplug_cb_fail:
 ////// after 1st input is recieved
 
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
-	USBHelper* usb = daemon->get_usb_helper();
-	USBDevHandle hndl = usb->open_uhid(syspath);
-	if (hndl == NULL) {
+	InputDevice* dev = daemon->open_input_device(syspath);
+	if (dev == NULL) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
-	SCController* sc = create_usb_controller(daemon, hndl, SC_WIRELESS, 0);
+	SCController* sc = create_usb_controller(daemon, dev, SC_WIRELESS, 0);
 	if (sc == NULL) {
 		LERROR("Failed to allocate memory");
-		usb->close(hndl);
+		dev->close(dev);
 		return;
 	}
 	
 	sc->controller.turnoff = &turnoff;
-	if (!usb->interupt_read_loop(hndl, 0, 64, &input_interrupt_cb, sc)) {
+	if (!dev->interupt_read_loop(dev, 0, 64, &input_interrupt_cb, sc)) {
 		LERROR("Failed to configure dongle");
-		usb->close(hndl);
+		dev->close(dev);
 		free(sc);
 		return;
 	}

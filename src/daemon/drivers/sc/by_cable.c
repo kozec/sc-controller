@@ -7,6 +7,7 @@
 #define LOG_TAG "sc_by_cable"
 #include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
+#include "scc/input_device.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #include "scc/tools.h"
@@ -24,7 +25,7 @@ static Driver driver = {
 };
 
 
-void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const uint8_t* data, void* userdata) {
+void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uint8_t* data, void* userdata) {
 	SCController* sc = (SCController*)userdata;
 	if (data == NULL) {
 		// Means controller disconnected (or failed in any other way)
@@ -44,27 +45,22 @@ void input_interrupt_cb(Daemon* d, USBDevHandle hndl, uint8_t endpoint, const ui
 
 
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
-	USBHelper* usb = daemon->get_usb_helper();
 	SCController* sc = NULL;
-#ifdef __BSD__
-	USBDevHandle hndl = usb->open_uhid(syspath);
-#else
-	USBDevHandle hndl = usb->open(syspath);
-#endif
-	if (hndl == NULL) {
+	InputDevice* dev = daemon->open_input_device(syspath);
+	if (dev == NULL) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
 	}
-	if ((sc = create_usb_controller(daemon, hndl, SC_WIRED, CONTROLIDX)) == NULL) {
+	if ((sc = create_usb_controller(daemon, dev, SC_WIRED, CONTROLIDX)) == NULL) {
 		LERROR("Failed to allocate memory");
 		goto hotplug_cb_fail;
 	}
-#ifndef __BSD__
-	if (usb->claim_interfaces_by(hndl, 3, 0, 0) <= 0) {
-		LERROR("Failed to claim interfaces");
-		goto hotplug_cb_fail;
+	if (dev->sys == USB) {
+		if (dev->claim_interfaces_by(dev, 3, 0, 0) <= 0) {
+			LERROR("Failed to claim interfaces");
+			goto hotplug_cb_fail;
+		}
 	}
-#endif
 	if (!read_serial(sc)) {
 		LERROR("Failed to read serial number");
 		goto hotplug_cb_failed_to_configure;
@@ -74,7 +70,7 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		goto hotplug_cb_failed_to_configure;
 	if (!configure(sc))
 		goto hotplug_cb_failed_to_configure;
-	if (!usb->interupt_read_loop(hndl, ENDPOINT, 64, &input_interrupt_cb, sc))
+	if (!dev->interupt_read_loop(dev, ENDPOINT, 64, &input_interrupt_cb, sc))
 		goto hotplug_cb_failed_to_configure;
 	DEBUG("New wired Steam Controller with serial %s connected", sc->serial);
 	sc->state = SS_READY;
@@ -89,7 +85,7 @@ hotplug_cb_failed_to_configure:
 hotplug_cb_fail:
 	if (sc != NULL)
 		free(sc);
-	usb->close(hndl);
+	dev->close(dev);
 }
 
 Driver* scc_driver_init(Daemon* daemon) {
