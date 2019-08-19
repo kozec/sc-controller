@@ -139,9 +139,15 @@ void sccd_device_monitor_rescan();
 void sccd_device_monitor_close();
 bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb);
 
+#ifdef __BSD__
+InputDevice* sccd_input_bsd_open(const char* syspath);
+void sccd_input_bsd_init();
+void sccd_input_bsd_close();
+#else
 InputDevice* sccd_input_libusb_open(const char* syspath);
 void sccd_input_libusb_init();
 void sccd_input_libusb_close();
+#endif
 #ifdef USE_HIDAPI
 InputDevice* sccd_input_hidapi_open(const char* syspath);
 void sccd_input_hidapi_rescan();
@@ -150,7 +156,6 @@ void sccd_input_hidapi_rescan();
 void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx);
 void sccd_input_libusb_rescan();
 #endif
-
 
 Client* sccd_get_special_client(enum SpecialClientType t);
 /** If another client is already registered, it's dropped */

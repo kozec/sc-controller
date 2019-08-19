@@ -23,6 +23,7 @@ elif get_option('android').enabled()
 elif host_machine.system() == 'linux'
 	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
 elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
+	add_global_link_arguments('-lc', language: 'c')
 	add_global_arguments('-D__BSD__', language: 'c')
 endif
 # Check for backtrace and libexecinfo

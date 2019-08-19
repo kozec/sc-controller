@@ -177,7 +177,7 @@ hotplug_cb_fail:
 ////// that is created all the time and it is registered with daemon only
 ////// after 1st input is recieved
 
-static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
+static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
 	InputDevice* dev = daemon->open_input_device(syspath);
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", syspath);

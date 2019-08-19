@@ -22,6 +22,9 @@ typedef enum {
 	INPUT		= 2,
 #endif
 	HIDAPI		= 3,
+#ifdef __BSD__
+	BSD			= 4,
+#endif
 } Subsystem;
 
 typedef struct Daemon Daemon;
