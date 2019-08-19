@@ -187,24 +187,6 @@ static void sccd_input_libusb_hid_write(InputDevice* _dev, uint16_t idx, uint8_t
 									idx, (unsigned char *)data, length, 0);
 	if (err < 0)
 		LERROR("sccd_input_libusb_hid_write: out: %s", libusb_strerror(err));
-/*
-	switch (hndl->sys) {
-	case USB:
-		err = libusb_control_transfer(hndl->usb, request_type, request, value,
-										idx, (unsigned char *)data, length, 0);
-		if (err < 0)
-			LERROR("sccd_input_libusb_hid_write: out: %s", libusb_strerror(err));
-		break;
-#ifdef USE_HIDAPI
-	case HIDAPI:
-		hid_write(hndl->hid, data, length);
-		break;
-#endif
-	default:
-		LERROR("sccd_input_libusb_hid_write called on device of subsystem %i", hndl->sys);
-		break;
-	}
-	*/
 }
 
 static uint8_t* sccd_input_libusb_hid_request(InputDevice* _dev, uint16_t idx, uint8_t* data, int32_t _length) {
@@ -228,69 +210,25 @@ static uint8_t* sccd_input_libusb_hid_request(InputDevice* _dev, uint16_t idx, u
 		}
 	}
 	
-	//switch (hndl->sys) {
-	//case USB: {
-		uint8_t request_type = (0x21 & ~LIBUSB_ENDPOINT_DIR_MASK) | LIBUSB_ENDPOINT_OUT;
-		uint8_t request = 0x09;
-		uint16_t value = 0x0300;
-		err = libusb_control_transfer(dev->hndl, request_type, request, value, idx,
-					(unsigned char *)data, length, 500);	// 500 is timeout of 0.5s
-		if (err < 0) {
-			LERROR("sccd_input_libusb_hid_request: out: %s", libusb_strerror(err));
-			goto sccd_input_hid_request_fail;
-		}
-		
-		request_type = (0xa1 & ~LIBUSB_ENDPOINT_DIR_MASK) | LIBUSB_ENDPOINT_IN;
-		request = 0x01;
-		err = libusb_control_transfer(dev->hndl, request_type, request, value, idx,
-					(unsigned char *)out_buffer, length, 500);
-		if (err < 0) {
-			LERROR("sccd_input_libusb_hid_request: in: %s", libusb_strerror(err));
-			goto sccd_input_hid_request_fail;
-		}
-		return out_buffer;
-	// }
-/*
-#ifdef USE_HIDAPI
-#define BUFFER_MAX 256
-	case HIDAPI: {
-		unsigned char buffer[BUFFER_MAX + 1];
-		if (length > BUFFER_MAX) {
-			LERROR("sccd_input_hid_request/hidapi: called with length larger"
-					"than supported. Changing BUFFER_MAX will fix this issue");
-			return NULL;
-		}
-		buffer[0] = 0;
-		memcpy(&buffer[1], data, length);
-		if (hndl->idx != idx) {
-			LERROR("sccd_input_hid_request/hidapi: trying to send request to "
-					"different idx than device was originally opened for (%i != %i)",
-					hndl->idx, idx);
-			return NULL;
-		}
-		err = hid_send_feature_report(hndl->hid, buffer, length + 1);
-		if (err < 0) {
-			wcstombs((char*)buffer, hid_error(hndl->hid), BUFFER_MAX);
-			LERROR("sccd_input_libusb_hid_request: hid_send_feature_report failed: %s", buffer);
-			goto sccd_input_hid_request_fail;
-		}
-		err = hid_get_feature_report(hndl->hid, buffer, length + 1);
-		if (err < 0) {
-			wcstombs((char*)buffer, hid_error(hndl->hid), BUFFER_MAX);
-			LERROR("sccd_input_libusb_hid_request: hid_get_feautre_report failed: %s", buffer);
-			goto sccd_input_hid_request_fail;
-		}
-		memcpy(out_buffer, &buffer[1], length);
-		return out_buffer;
-	}
-#undef BUFFER_MAX
-#endif
-	default:
-		LERROR("sccd_input_libusb_hid_request called on device of subsystem %i", hndl->sys);
+	uint8_t request_type = (0x21 & ~LIBUSB_ENDPOINT_DIR_MASK) | LIBUSB_ENDPOINT_OUT;
+	uint8_t request = 0x09;
+	uint16_t value = 0x0300;
+	err = libusb_control_transfer(dev->hndl, request_type, request, value, idx,
+				(unsigned char *)data, length, 500);	// 500 is timeout of 0.5s
+	if (err < 0) {
+		LERROR("sccd_input_libusb_hid_request: out: %s", libusb_strerror(err));
 		goto sccd_input_hid_request_fail;
-		break;
 	}
-	*/
+	
+	request_type = (0xa1 & ~LIBUSB_ENDPOINT_DIR_MASK) | LIBUSB_ENDPOINT_IN;
+	request = 0x01;
+	err = libusb_control_transfer(dev->hndl, request_type, request, value, idx,
+				(unsigned char *)out_buffer, length, 500);
+	if (err < 0) {
+		LERROR("sccd_input_libusb_hid_request: in: %s", libusb_strerror(err));
+		goto sccd_input_hid_request_fail;
+	}
+	return out_buffer;
 	
 sccd_input_hid_request_fail:
 	if (!use_same_buffer)
@@ -359,37 +297,6 @@ input_interrupt_cb_error:
 	free(idata);
 	libusb_free_transfer(t);
 }
-
-/*
-
-void sccd_hidapi_dev_interupt_cb(void* userdata) {
-	InputInterruptData* idata = (InputInterruptData*)userdata;
-	Daemon* d = get_daemon();
-	int r;
-	while ((r = hid_read_timeout(idata->hndl->hid, idata->buffer, idata->length, 0)) > 0) {
-		idata->cb(d, idata->hndl, idata->endpoint, idata->buffer, idata->userdata);
-	}
-	d->schedule(1, sccd_hidapi_dev_interupt_cb, idata);
-}
-
-static bool sccd_hidapi_dev_interupt_read_loop(USBDevHandle hndl, uint8_t endpoint, int length, sccd_usb_input_read_cb cb, void* userdata) {
-	InputInterruptData* idata = malloc(sizeof(InputInterruptData));
-	uint8_t* buffer = malloc(length);
-	Daemon* d = get_daemon();
-	if ((idata == NULL) || (buffer == NULL)) {
-		free(idata);
-		free(buffer);
-		return false;
-	}
-	idata->cb = cb;
-	idata->hndl = hndl;
-	idata->buffer = buffer;
-	idata->userdata = userdata;
-	
-	d->schedule(1, sccd_hidapi_dev_interupt_cb, idata);
-	return true;
-}
-*/
 
 static bool sccd_input_libusb_interupt_read_loop(InputDevice* _dev, uint8_t endpoint, int length, sccd_input_read_cb cb, void* userdata) {
 	DEV_TYPECHECK(_dev, sccd_input_libusb_interupt_read_loop, false);
