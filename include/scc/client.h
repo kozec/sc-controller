@@ -25,34 +25,36 @@ typedef struct SCCClient SCCClient;
 struct SCCClient {
 	RC_HEADER;
 	
-	// All these are callbacks and none of them needs to be set.
-	// Old 'alive' signal is not needed, if sccc_connect returns client, daemon is alive
+	void*							userdata;
 	
-	void*	userdata;
-	
-	/** Called after list of controllers (as reported by daemon) is updated */
-	void (*on_controllers_changed)	(SCCClient* c, int controller_count);
-	/**
-	 * Called after connection to daemon is terminated. RC_REL should
-	 * be used as response to this to deallocate SCCClient data.
-	 */
-	void (*on_disconnected)			(SCCClient* c);
-	/**
-	 * Called when event from locked or observed input is recieved.
-	 * There is always only button or only pst is set, other value is zeroed.
-	 */
-	void (*on_event)				(SCCClient* c, uint32_t handle, SCButton button, PadStickTrigger pst, int values[]);
-	/** Called when daemon reports profile change */
-	void (*on_profile_changed)		(SCCClient* c, const char* profile_name);
-	/** Called after daemon reports its version - usually right after connection is initiated */
-	void (*on_version_recieved)		(SCCClient* c, const char* version);
-	/** Called when daemon reports change in configuration file */
-	void (*on_reconfigured)			(SCCClient* c);
-	/**
-	 * Called when "Ready" message is recieved, giving good signal to initiate
-	 * communication with daemon.
-	 */
-	void (*on_ready)				(SCCClient* c);
+	/** Application-defined callbacks. None of them needs to be set */
+	struct {
+		/** Called after list of controllers (as reported by daemon) is updated */
+		void (*on_controllers_changed)	(SCCClient* c, int controller_count);
+		/**
+		 * Called after connection to daemon is terminated. RC_REL should
+		 * be used as response to this to deallocate SCCClient data.
+		 */
+		void (*on_disconnected)			(SCCClient* c);
+		/**
+		 * Called when event from locked or observed input is recieved.
+		 * There is always only button or only pst is set, other value is zeroed.
+		 */
+		void (*on_event)				(SCCClient* c, uint32_t handle, SCButton button, PadStickTrigger pst, int values[]);
+		/** Called when daemon reports profile change */
+		void (*on_profile_changed)		(SCCClient* c, const char* profile_name);
+		/** Called after daemon reports its version - usually right after connection is initiated */
+		void (*on_version_recieved)		(SCCClient* c, const char* version);
+		/** Called when daemon reports change in configuration file */
+		void (*on_reconfigured)			(SCCClient* c);
+		/**
+		 * Called when "Ready" message is recieved, giving good signal to initiate
+		 * communication with daemon.
+		 */
+		void (*on_ready)				(SCCClient* c);
+		
+		// Old 'alive' signal is not needed, if sccc_connect returns client, daemon is alive
+	}								callbacks;
 };
 
 /**
@@ -150,15 +152,29 @@ DLL_EXPORT void sccc_slave_mapper_free(Mapper* m, bool close_attached_devices);
 
 typedef struct VirtualDevice VirtualDevice;
 
+typedef bool (*sccc_sa_handler)(Mapper* mapper, unsigned int sa_action_type, void* sa_data);
+
 /**
  * Attaches virtual devices to slave mapper. Either of devices (or both) may be NULL.
  */
-DLL_EXPORT void sccc_slave_mapper_set_devices(Mapper* mapper, VirtualDevice* keyboard, VirtualDevice* mouse);
+DLL_EXPORT void sccc_slave_mapper_set_devices(Mapper* mapper, VirtualDevice* keboard, VirtualDevice* mouse);
+
+/**
+ * Sets 'special action handler', callback that's called when special action
+ * (as defined in special_aciton.h) is executed.
+ */
+DLL_EXPORT void sccc_slave_mapper_set_sa_handler(Mapper* mapper, sccc_sa_handler callback);
+
+/** Assotiates random pointer with this slave mapper */
+DLL_EXPORT void sccc_slave_mapper_set_userdata(Mapper* mapper, void* data);
+
+/** Returns data set by sccc_slave_mapper_set_userdata */
+DLL_EXPORT void* sccc_slave_mapper_get_userdata(Mapper* mapper);
 
 /** Parses data recieved by 'on_event' callback to generate slave mapper inputs. */
 DLL_EXPORT void sccc_slave_mapper_feed(Mapper* mapper, SCButton button, PadStickTrigger pst, int values[]);
 
-/** Returns true if message startws with "OK." */
+/** Returns true if message starts with "OK." */
 #define sccc_is_ok(x) ((x != NULL) && ((x)[0] == 'O') && ((x)[1] == 'K') && ((x)[2] == '.'))
 
 

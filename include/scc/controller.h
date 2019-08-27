@@ -126,8 +126,8 @@ typedef int16_t GyroValue;
 typedef enum SCButton {
 	B_RPADTOUCH			= 0b0010000000000000000000000000000,
 	B_LPADTOUCH			= 0b0001000000000000000000000000000,
-	B_RPAD				= 0b0000100000000000000000000000000,
-	B_LPAD				= 0b0000010000000000000000000000000,
+	B_RPADPRESS			= 0b0000100000000000000000000000000,
+	B_LPADPRESS			= 0b0000010000000000000000000000000,
 	B_RGRIP				= 0b0000001000000000000000000000000,
 	B_LGRIP				= 0b0000000100000000000000000000000,
 	B_START				= 0b0000000010000000000000000000000,
@@ -177,11 +177,13 @@ struct ControllerInput {
 };
 
 typedef enum PadStickTrigger {
-	PST_LEFT			= 1,			// This is constant for both left pad and left trigger
-	PST_RIGHT			= 2,			// This is constant for both right pad and right trigger
-	PST_CPAD			= 3,
-	PST_STICK			= 4,
-	PST_GYRO			= 5,
+	PST_LPAD			= 1,
+	PST_RPAD			= 2,
+	PST_LTRIGGER		= 3,
+	PST_RTRIGGER		= 4,
+	PST_CPAD			= 5,
+	PST_STICK			= 6,
+	PST_GYRO			= 7,
 } PadStickTrigger;
 
 #define SCC_True		0x01			/* This is used only by generate-parser-constants script */

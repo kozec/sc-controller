@@ -57,7 +57,6 @@ static void osd_window_class_init(OSDWindowClass *klass) {
 }
 
 static void osd_window_show(GtkWidget* widget) {
-	GtkWindow* w = GTK_WINDOW(widget);
 	GdkScreen* scr = gdk_screen_get_default();
 	int x, y;
 	gtk_widget_realize(widget);

@@ -36,7 +36,7 @@ int on_command(struct _SCCClient* c, char* msg) {
 	}
 	case 'E':
 		if (0 == strcmp(command, "Event:")) {
-			if (c->client.on_event != NULL) {
+			if (c->client.callbacks.on_event != NULL) {
 				const char* cid = iter_next(tokens);
 				on_controller_event(c, cid, tokens);
 				// on_controller_event frees tokens
@@ -64,8 +64,8 @@ int on_command(struct _SCCClient* c, char* msg) {
 			if (0 == strcmp(command, "Count:")) {
 				remove_nonalive(c->controllers);
 				list_foreach(c->controllers, &mark_non_alive_foreach_cb);
-				if (c->client.on_controllers_changed != NULL)
-					c->client.on_controllers_changed(&c->client, list_len(c->controllers));
+				if (c->client.callbacks.on_controllers_changed != NULL)
+					c->client.callbacks.on_controllers_changed(&c->client, list_len(c->controllers));
 				tokens_free(tokens);
 				return 1;
 			}
@@ -77,8 +77,8 @@ int on_command(struct _SCCClient* c, char* msg) {
 	case 'V':
 		if (0 == strcmp(command, "Version:")) {
 			const char* version = tokens_get_rest(tokens);
-			if (c->client.on_version_recieved != NULL)
-				c->client.on_version_recieved(&c->client, version);
+			if (c->client.callbacks.on_version_recieved != NULL)
+				c->client.callbacks.on_version_recieved(&c->client, version);
 			else
 				DDEBUG("Connected to daemon, version %s", version);
 			tokens_free(tokens);
@@ -87,14 +87,14 @@ int on_command(struct _SCCClient* c, char* msg) {
 		break;
 	case 'R':
 		if (0 == strcmp(command, "Ready.")) {
-			if (c->client.on_ready != NULL)
-				c->client.on_ready(&c->client);
+			if (c->client.callbacks.on_ready != NULL)
+				c->client.callbacks.on_ready(&c->client);
 			tokens_free(tokens);
 			return 1;
 		}
 		if (0 == strcmp(command, "Reconfigured.")) {
-			if (c->client.on_reconfigured != NULL)
-				c->client.on_reconfigured(&c->client);
+			if (c->client.callbacks.on_reconfigured != NULL)
+				c->client.callbacks.on_reconfigured(&c->client);
 			tokens_free(tokens);
 			return 1;
 		}

@@ -110,8 +110,6 @@ DLL_EXPORT float scc_parameter_as_float(Parameter* p);
 
 DLL_EXPORT uint8_t scc_parameter_tuple_get_count(Parameter* p);
 
-DLL_EXPORT char* scc_parameter_to_string(Parameter* p);
-
 DLL_EXPORT Parameter* scc_parameter_tuple_get_child(Parameter* p, uint8_t n);
 
 /**

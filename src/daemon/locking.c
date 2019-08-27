@@ -29,12 +29,12 @@ typedef enum {
 	 * It may look like SCButton enum, but it's not.
 	 */
 	// Buttons & pads
-	SRC_RPADTOUCH,
 	SRC_LPADTOUCH,
-	SRC_RPAD,
-	SRC_LPAD,
-	SRC_RGRIP,
+	SRC_RPADTOUCH,
+	SRC_LPADPRESS,
+	SRC_RPADPRESS,
 	SRC_LGRIP,
+	SRC_RGRIP,
 	SRC_START,
 	SRC_C,
 	SRC_BACK,
@@ -44,16 +44,16 @@ typedef enum {
 	SRC_Y,
 	SRC_LB,
 	SRC_RB,
-	SRC_LT,
-	SRC_RT,
 	SRC_CPADTOUCH,
 	SRC_CPADPRESS,
 	SRC_STICKPRESS,
-	// Triggers
-	SRC_LEFT,
-	SRC_RIGHT,
-	// Stick & cad
+	// Triggers (LT/RT cannot be locked as button)
+	SRC_LTRIGGER,
+	SRC_RTRIGGER,
+	// Stick & pad
 	SRC_STICK,
+	SRC_LPAD,
+	SRC_RPAD,
 	SRC_CPAD,
 	
 	SRC_MAX,
@@ -86,20 +86,18 @@ static Source string_to_source(const char* source) {
 	switch (source[0]) {
 	case 'R':
 		if (0 == strcmp("RB", source)) return SRC_RB;
-		if (0 == strcmp("RT", source)) return SRC_RT;
-		if (0 == strcmp("RPAD", source)) return SRC_RPAD;
-		if (0 == strcmp("RIGHT", source)) return SRC_RIGHT;
 		if (0 == strcmp("RGRIP", source)) return SRC_RGRIP;
+		if (0 == strcmp("RPAD", source)) return SRC_RPADPRESS;
 		if (0 == strcmp("RPADPRESS", source)) return SRC_RPAD;
+		if (0 == strcmp("RTRIGGER", source)) return SRC_RTRIGGER;
 		if (0 == strcmp("RPADTOUCH", source)) return SRC_RPADTOUCH;
 		break;
 	case 'L':
 		if (0 == strcmp("LB", source)) return SRC_LB;
-		if (0 == strcmp("LT", source)) return SRC_LT;
 		if (0 == strcmp("LPAD", source)) return SRC_LPAD;
-		if (0 == strcmp("LEFT", source)) return SRC_LEFT;
 		if (0 == strcmp("LGRIP", source)) return SRC_LGRIP;
-		if (0 == strcmp("LPADPRESS", source)) return SRC_LPAD;
+		if (0 == strcmp("LTRIGGER", source)) return SRC_LTRIGGER;
+		if (0 == strcmp("LPADPRESS", source)) return SRC_LPADPRESS;
 		if (0 == strcmp("LPADTOUCH", source)) return SRC_LPADTOUCH;
 		break;
 	case 'S':
@@ -127,9 +125,10 @@ static Source string_to_source(const char* source) {
 
 /** Opposite or string_to_source */
 static const char* source_to_string[] = {
-	"RPADTOUCH", "LPADTOUCH", "RPAD", "LPAD", "RGRIP", "LGRIP", "START",
-	"C", "BACK", "A", "X", "B", "Y", "LB", "RB", "LT", "RT", "CPADTOUCH",
-	"CPADPRESS", "STICKPRESS", "LEFT", "RIGHT", "STICK", "CPAD"
+	"LPADTOUCH", "RPADTOUCH", "LPADPRESS", "RPADPRESS", "RGRIP", "LGRIP",
+	"START", "C", "BACK", "A", "X", "B", "Y", "LB", "RB", "CPADTOUCH",
+	"CPADPRESS", "STICKPRESS", "LTRIGGER", "RTRIGGER", "STICK",
+	"LPAD", "RPAD", "CPAD"
 };
 
 /** Converts SCButton value to Source value */
@@ -137,8 +136,8 @@ static Source scbutton_to_source(SCButton b) {
 	switch (b) {
 		case B_RPADTOUCH:	return SRC_RPADTOUCH;
 		case B_LPADTOUCH:	return SRC_LPADTOUCH;
-		case B_RPAD:		return SRC_RPAD;
-		case B_LPAD:		return SRC_LPAD;
+		case B_RPADPRESS:	return SRC_RPADPRESS;
+		case B_LPADPRESS:	return SRC_LPADPRESS;
 		case B_RGRIP:		return SRC_RGRIP;
 		case B_LGRIP:		return SRC_LGRIP;
 		case B_START:		return SRC_START;
@@ -150,8 +149,8 @@ static Source scbutton_to_source(SCButton b) {
 		case B_Y:			return SRC_Y;
 		case B_LB:			return SRC_LB;
 		case B_RB:			return SRC_RB;
-		case B_LT:			return SRC_LT;
-		case B_RT:			return SRC_RT;
+		// case B_LT:		// not used
+		// case B_RT:		// not used
 		case B_CPADTOUCH:	return SRC_CPADTOUCH;
 		case B_CPADPRESS:	return SRC_CPADPRESS;
 		case B_STICKPRESS:	return SRC_STICKPRESS;
@@ -165,8 +164,10 @@ static Source scbutton_to_source(SCButton b) {
 /** Converts PadStickTrigger value to Source value */
 static Source what_to_source(PadStickTrigger what) {
 	switch (what) {
-		case PST_LEFT:		return SRC_LEFT;
-		case PST_RIGHT:		return SRC_RIGHT;
+		case PST_LPAD:		return SRC_LPAD;
+		case PST_RPAD:		return SRC_RPAD;
+		case PST_LTRIGGER:	return SRC_LTRIGGER;
+		case PST_RTRIGGER:	return SRC_RTRIGGER;
 		case PST_CPAD:		return SRC_CPAD;
 		case PST_STICK:		return SRC_STICK;
 		case PST_GYRO:
@@ -195,7 +196,7 @@ static Action* locked_profile_get_trigger(Profile* _p, PadStickTrigger what) {
 	Source src = what_to_source(what);
 	if ((src != SRC_INVALID) && (p->actions[src].owner != NULL)) {
 		return &p->actions[src].action;
-	} 
+	}
 	return p->original->get_trigger(p->original, what);
 }
 
@@ -211,7 +212,7 @@ static Action* locked_profile_get_stick(Profile* _p) {
 	LockProfile* p = container_of(_p, LockProfile, profile);
 	if (p->actions[SRC_STICK].owner != NULL) {
 		return &p->actions[SRC_STICK].action;
-	} 
+	}
 	return p->original->get_stick(p->original);
 }
 
@@ -260,6 +261,16 @@ static void lock_action_whole(Action* _a, Mapper* m, AxisValue x, AxisValue y, P
 		else
 			sccd_socket_consume(a->owner, message);
 	}
+}
+
+static void lock_action_trigger(Action* _a, Mapper* m, TriggerValue old_pos, TriggerValue pos, PadStickTrigger what) {
+	LockedAction* a = container_of(_a, LockedAction, action);
+	Controller* c = m->get_controller(m);
+	char* message = strbuilder_fmt("Event: %s %s %i %i\n", c->get_id(c), scc_what_to_string(what), pos, old_pos);
+	if (message == NULL)
+		sccd_drop_client_asap(a->owner);
+	else
+		sccd_socket_consume(a->owner, message);
 }
 
 static void lock_action_button_release(Action* _a, Mapper *m) {
@@ -317,6 +328,7 @@ const char* sccd_lock_actions(Client* c, StringList sources) {
 			lp->actions[src].old_x = 0;
 			lp->actions[src].old_y = 0;
 			lp->actions[src].action.whole = &lock_action_whole;
+			lp->actions[src].action.trigger = &lock_action_trigger;
 			lp->actions[src].action.button_press = &lock_action_button_press;
 			lp->actions[src].action.button_release = &lock_action_button_release;
 		}
@@ -326,7 +338,7 @@ const char* sccd_lock_actions(Client* c, StringList sources) {
 		lp->profile.get_pad = &locked_profile_get_pad;
 		lp->profile.get_stick = &locked_profile_get_stick;
 		lp->profile.get_gyro = &locked_profile_get_gyro;
-
+		
 		profile = &lp->profile;
 		c->mapper->set_profile(c->mapper, profile, false);
 	}
@@ -369,3 +381,4 @@ void sccd_unlock_actions(Client* c) {
 	}
 	maybe_cancel_lock_profile(c, lp);
 }
+

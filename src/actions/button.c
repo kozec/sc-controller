@@ -126,8 +126,8 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 			b->pressed_button = b->button[0];
 		}
 		break;
-	case PST_LEFT:
-	case PST_RIGHT:
+	case PST_LPAD:
+	case PST_RPAD:
 		// Possibly special case, pressing with click() on entire pad
 		press = scc_what_to_pressed_button(what);
 		if (m->is_pressed(m, press) && !m->was_pressed(m, press)) {
@@ -136,8 +136,6 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 			m->key_release(m, b->button[0]);
 		}
 		break;
-	case PST_GYRO:
-		// Impossible
 	case PST_CPAD:
 		// Entire pad used as one big button
 		if (m->is_touched(m, what) && !m->was_touched(m, what)) {
@@ -148,6 +146,10 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 			// Released the pad
 			m->key_release(m, b->button[0]);
 		}
+		break;
+	default:
+		// trigger / gyro, not possible to reach here
+		break;
 	}
 }
 

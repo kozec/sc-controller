@@ -41,10 +41,10 @@ void handle_input(SCController* sc, SCInput* i) {
 		else if (lpadtouch)
 			memcpy(&sc->input.lpad_x, &i->lpad_x, sizeof(AxisValue) * 2);
 		
-		if (buttons & B_LPAD) {
-			// LPAD button may signalize pressing stick instead
+		if (buttons & B_LPADPRESS) {
+			// LPADPRESS button may signalize pressing stick instead
 			if ((buttons & B_STICKPRESS) && !(buttons & B_STICKTILT))
-				buttons &= ~B_LPAD;
+				buttons &= ~B_LPADPRESS;
 		}
 		// Steam controller computes and sends dpad "buttons" as well, but
 		// SC Controller doesn't use them, so they are zeroed here

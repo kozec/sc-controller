@@ -7,7 +7,7 @@
 
 // TODO: Almost everything here
 
-#define LOG_TAG "SCCC"
+#define LOG_TAG "SlaveMapper"
 #include "scc/utils/logging.h"
 #include "scc/utils/container_of.h"
 #include "scc/utils/strbuilder.h"
@@ -31,11 +31,14 @@ struct SlaveMapper {
 	VirtualDevice*		keyboard;
 	VirtualDevice*		mouse;
 	VirtualDeviceType	to_sync;
+	sccc_sa_handler		sa_handler;
+	void*				userdata;
 	uint8_t				keys[KEY_CNT];
 };
 
 
 static bool special_action(Mapper* _m, unsigned int sa_action_type, void* sa_data) {
+	// TODO: Move all of this to menu code
 	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
 	if (sa_action_type == SAT_PROFILE) {
 		char* command = strbuilder_fmt("Profile: %s", sa_data);
@@ -63,6 +66,8 @@ static bool special_action(Mapper* _m, unsigned int sa_action_type, void* sa_dat
 	} else if (sa_action_type == SAT_MENU) {
 		LOG("Menu selected");
 		return true;
+	} else if (m->sa_handler) {
+		return m->sa_handler(_m, sa_action_type, sa_data);
 	}
 	return false;
 }
@@ -185,9 +190,47 @@ void sccc_slave_mapper_feed(Mapper* _m, SCButton button, PadStickTrigger pst, in
 			Action* a = m->profile->get_button(m->profile, button);
 			a->button_release(a, _m);
 		}
-	} else {
-		return;
+	} else if (pst != 0) {
+		Action* a = NULL;
+		switch (pst) {
+		case PST_LPAD:
+		case PST_RPAD:
+		case PST_CPAD:
+			a = m->profile->get_pad(m->profile, pst);
+			a->whole(a, _m, values[0], values[1], pst);
+			break;
+		case PST_STICK:
+			a = m->profile->get_stick(m->profile);
+			a->whole(a, _m, values[0], values[1], pst);
+			break;
+		case PST_LTRIGGER:
+		case PST_RTRIGGER:
+			a = m->profile->get_trigger(m->profile, pst);
+			a->trigger(a, _m, values[0], values[1], pst);
+			break;
+		case PST_GYRO:
+			// TODO: This? Needed?
+			break;
+		}
 	}
+}
+
+void sccc_slave_mapper_set_sa_handler(Mapper* _m, sccc_sa_handler callback) {
+	ASSERT(_m->type == SLAVE_MAPPER_TYPE);
+	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
+	m->sa_handler = callback;
+}
+
+void sccc_slave_mapper_set_userdata(Mapper* _m, void* data) {
+	ASSERT(_m->type == SLAVE_MAPPER_TYPE);
+	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
+	m->userdata = data;
+}
+
+void* sccc_slave_mapper_get_userdata(Mapper* _m) {
+	ASSERT(_m->type == SLAVE_MAPPER_TYPE);
+	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
+	return m->userdata;
 }
 
 

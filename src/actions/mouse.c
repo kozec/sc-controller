@@ -121,11 +121,11 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 		m->move_mouse(m, (double)x * b->sensitivity.x * 0.01, (double)y * b->sensitivity.y * 0.01);
 		// mapper.force_event.add(FE_STICK)
 		break;
-	case PST_LEFT:
+	case PST_LPAD:
 	case PST_CPAD:
 		pad(a, m, x, y, what);
 		break;
-	case PST_RIGHT:
+	case PST_RPAD:
 	 	if (m->get_flags(m) & CF_HAS_RSTICK) {
 			m->move_mouse(m, (double)x * b->sensitivity.x * 0.01, (double)y * b->sensitivity.y * 0.01);
 			// mapper.force_event.add(FE_PAD)
@@ -133,8 +133,8 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 			pad(a, m, x, y, what);
 		}
 		break;
-	case PST_GYRO:
-		// Not possible
+	default:
+		// trigger / gyro, not possible to reach here
 		break;
 	}
 }

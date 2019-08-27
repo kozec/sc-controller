@@ -21,9 +21,9 @@ void test_sensitivity_mouse(CuTest* tc) {
 	assert(tc, 0 == strcmp("mouse", a->type));
 	
 	testmapper_set_buttons(m, B_RPADTOUCH);
-	a->whole(a, m, 0, 0, PST_RIGHT);
+	a->whole(a, m, 0, 0, PST_RPAD);
 	testmapper_set_buttons(m, B_RPADTOUCH);
-	a->whole(a, m, 10, -100, PST_RIGHT);
+	a->whole(a, m, 10, -100, PST_RPAD);
 	
 	double x, y;
 	testmapper_get_mouse_position(m, &x, &y);
@@ -45,9 +45,9 @@ void test_sensitivity_axis(CuTest* tc) {
 	assert(tc, 0 == strcmp("XY", a->type));
 	
 	testmapper_set_buttons(m, B_RPADTOUCH);
-	a->whole(a, m, 0, 0, PST_RIGHT);
+	a->whole(a, m, 0, 0, PST_RPAD);
 	testmapper_set_buttons(m, B_RPADTOUCH);
-	a->whole(a, m, 10, -100, PST_RIGHT);
+	a->whole(a, m, 10, -100, PST_RPAD);
 	
 	assert(tc, testmapper_get_axis_position(m, ABS_X) == (int)(10.0 * 0.2));
 	assert(tc, testmapper_get_axis_position(m, ABS_Y) == (int)(-100.0 * 0.3));
@@ -108,7 +108,7 @@ void test_deadzone(CuTest* tc) {
 		Action* a = ACTION(aoe);
 		
 		for (int j=0; j<INPUT_CNT; j++) {
-			a->whole(a, m, inputs[j][0], inputs[j][1], PST_RIGHT);
+			a->whole(a, m, inputs[j][0], inputs[j][1], PST_RPAD);
 			AxisValue x = testmapper_get_axis_position(m, ABS_X);
 			AxisValue y = testmapper_get_axis_position(m, ABS_Y);
 			snprintf(buffer, 1024,

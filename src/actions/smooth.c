@@ -97,7 +97,7 @@ static void get_pos(SmoothModifier* s, AxisValue* x, AxisValue* y) {
 
 static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) {
 	SmoothModifier* s = container_of(a, SmoothModifier, action);
-	if ((what == PST_STICK) || ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RIGHT)))
+	if ((what == PST_STICK) || ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RPAD)))
 		s->child->whole(s->child, m, x, y, what);
 	if (m->is_touched(m, what)) {
 		if (s->last_pos < 0) {

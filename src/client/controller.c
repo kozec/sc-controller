@@ -73,7 +73,7 @@ void on_controller_event(struct _SCCClient* c, const char* controller, Tokens* t
 		if (b != 0) {
 			const char* value = iter_next(tokens);
 			int values[] = { (value[0] == '1') ? 1 : 0 };
-			c->client.on_event(&c->client, handle, b, 0, values);
+			c->client.callbacks.on_event(&c->client, handle, b, 0, values);
 		}
 		if (b == 0)
 			pst = scc_string_to_pst(what);
@@ -84,7 +84,7 @@ void on_controller_event(struct _SCCClient* c, const char* controller, Tokens* t
 				strtol(x, NULL, 10),
 				strtol(y, NULL, 10),
 			};
-			c->client.on_event(&c->client, handle, 0, pst, values);
+			c->client.callbacks.on_event(&c->client, handle, 0, pst, values);
 		}
 	}
 	tokens_free(tokens);

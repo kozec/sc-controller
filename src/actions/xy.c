@@ -84,12 +84,12 @@ static inline bool is_inner_circle(AxisValue x, AxisValue y) {
 static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) {
 	XYAction* xy = container_of(a, XYAction, action);
 	// TODO: if self.haptic:
-	if ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RIGHT)) {
+	if ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RPAD)) {
 		if (xy->x->axis) xy->x->axis(xy->x, m, x, what);
 		if (xy->y->axis) xy->y->axis(xy->y, m, y, what);
 		// TODO: Is this needed?
 		// m.force_event.add(FE_PAD)
-	} else if ((what == PST_LEFT) || (what == PST_RIGHT) || (what == PST_CPAD)) {
+	} else if ((what == PST_LPAD) || (what == PST_RPAD) || (what == PST_CPAD)) {
 		// TODO: Special call for PAD as with old stuff?
 		if ((xy->is_relative) && (m->is_touched(m, what))) {
 			if (!m->was_touched(m, what))

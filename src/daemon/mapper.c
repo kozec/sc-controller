@@ -396,24 +396,24 @@ static void input(Mapper* _m, ControllerInput* i) {
 	
 	// Triggers
 	if ((force_event & FE_TRIGGER) || (m->old_state.ltrig != m->state.ltrig)) {
-		Action *a = m->profile->get_trigger(m->profile, PST_LEFT);
-		a->trigger(a, _m, m->old_state.ltrig, m->state.ltrig, PST_LEFT);
+		Action *a = m->profile->get_trigger(m->profile, PST_LTRIGGER);
+		a->trigger(a, _m, m->old_state.ltrig, m->state.ltrig, PST_LTRIGGER);
 	}
 	if ((force_event & FE_TRIGGER) || (m->old_state.rtrig != m->state.rtrig)) {
-		Action *a = m->profile->get_trigger(m->profile, PST_RIGHT);
-		a->trigger(a, _m, m->old_state.rtrig, m->state.rtrig, PST_RIGHT);
+		Action *a = m->profile->get_trigger(m->profile, PST_RTRIGGER);
+		a->trigger(a, _m, m->old_state.rtrig, m->state.rtrig, PST_RTRIGGER);
 	}
 	
 	// LPAD
 	if ((m->old_state.lpad_x != m->state.lpad_x) || (m->old_state.lpad_y != m->state.lpad_y)) {
-		Action* a = m->profile->get_pad(m->profile, PST_LEFT);
-		a->whole(a, _m, m->state.lpad_x, m->state.lpad_y, PST_LEFT);
+		Action* a = m->profile->get_pad(m->profile, PST_LPAD);
+		a->whole(a, _m, m->state.lpad_x, m->state.lpad_y, PST_LPAD);
 	}
 	
 	// RPAD
 	if ((m->old_state.rpad_x != m->state.rpad_x) || (m->old_state.rpad_y != m->state.rpad_y)) {
-		Action* a = m->profile->get_pad(m->profile, PST_RIGHT);
-		a->whole(a, _m, m->state.rpad_x, m->state.rpad_y, PST_RIGHT);
+		Action* a = m->profile->get_pad(m->profile, PST_RPAD);
+		a->whole(a, _m, m->state.rpad_x, m->state.rpad_y, PST_RPAD);
 	}
 	
 	/*

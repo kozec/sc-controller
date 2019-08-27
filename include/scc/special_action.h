@@ -15,10 +15,12 @@
 #include <unistd.h>
 
 typedef enum SAType {
-	SAT_MENU = 1,		// Displays on-screen menu. sa_data is SAMenuActionData*
-	SAT_PROFILE = 2,	// Changes profile. sa_data is (char*) representing profile name
-	SAT_TURNOFF = 3,	// Turns profile off. sa_data is NULL, ignored.
-	SAT_CEMUHOOK = 10,	// Feeds data for CemuHook motion provider. sa_data is (float[6])
+	SAT_MENU = 1,			// Displays on-screen menu. sa_data is SAMenuActionData*
+	SAT_PROFILE = 2,		// Changes profile. sa_data is (char*) representing profile name
+	SAT_TURNOFF = 3,		// Turns off controller. sa_data is NULL, ignored.
+	
+	SAT_CEMUHOOK = 10,		// Feeds data for CemuHook motion provider. sa_data is (float[6])
+	SAT_APP_DEFINED = 0xFF	// Whatever application needs. sa_data is SAAppDefinedAction
 } SAType;
 
 
@@ -33,3 +35,13 @@ typedef struct SAMenuActionData {
 	ivec_t				position;
 	size_t				size;
 } SAMenuActionData;
+
+typedef struct SAAppDefinedActionData {
+	/** Keyword of action */
+	const char*			keyword;
+	/** Size of data in bytes */
+	size_t				size;
+	/** Everything else */
+	void*				data;
+} SAAppDefinedActionData;
+

@@ -3,6 +3,7 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/aojls.h"
+#include "scc/profile.h"
 #include "scc/config.h"
 #include <string.h>
 #include <errno.h>
@@ -130,10 +131,10 @@ bool load_keyboard_data(const char* filename, OSDKeyboardPrivate* priv) {
 			free(b);
 			continue;
 		}
-		b->pressed = b->hilighted = false;
 		b->action = ACTION(aoe);
 		b->scbutton = 0;
 		b->keycode = 0;
+		b->index = i;
 		b->dark = json_object_get_bool_default(json_b, "dark", false);
 		if (b->action->flags & AF_KEYCODE) {
 			Parameter* p = b->action->get_property(b->action, "keycode");
@@ -156,4 +157,54 @@ load_keyboard_data_oom:
 	json_free_context(json_ctx);
 	return false;
 }
+
+void generate_help_lines(OSDKeyboardPrivate* priv) {
+	const static SCButton buttons[2][5] = {
+		{ B_LGRIP, B_LB, B_START, B_X, B_Y },
+		{ B_RGRIP, B_RB, B_BACK , B_A, B_B }
+	};
+	Profile* p = priv->slave_mapper->get_profile(priv->slave_mapper);
+	list_clear(priv->help_lines);
+	if (p == NULL) return;
+	
+	for (int align_right=0; align_right<=1; align_right++) {
+		for (int j=0; j<sizeof(buttons[0]) / sizeof(SCButton); j++) {
+			SCButton scbutton = buttons[align_right][j];
+			Action* a = p->get_button(p, scbutton);
+			if (!scc_action_is_none(a)) {
+				HelpLine* line = malloc(sizeof(HelpLine));
+				if (line == NULL) {
+					// OOM. Nobody reads this text anyway, just bail out
+					return;
+				}
+				char* dsc = scc_action_get_description(a, AC_OSK);
+				line->scbutton = scbutton;
+				line->align_right = align_right;
+				strncpy(line->text, dsc, MAX_HELP_LINE_LEN);
+				free(dsc);
+				if (a->flags & AF_KEYCODE) {
+					Parameter* p = a->get_property(a, "keycode");
+					if (p != NULL) {
+						int keycode = scc_parameter_as_int(p);
+						RC_REL(p);
+						FOREACH_IN(struct Button*, b, priv->buttons) {
+							if (b->keycode == keycode) {
+								b->scbutton = scbutton;
+								free(line);
+								line = NULL;
+								break;
+							}
+						}
+					}
+				}
+				RC_REL(a);
+				if (line != NULL) {
+					if (!list_add(priv->help_lines, line))
+						free(line);
+				}
+			}
+		}
+	}
+}
+
 

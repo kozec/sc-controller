@@ -11,6 +11,11 @@
 typedef struct _OSDKeyboard	OSDKeyboard;
 typedef struct Button Button;
 typedef LIST_TYPE(Button) ButtonList;
+
+extern const char* KW_OSK_CURSOR;
+extern const char* KW_OSK_CLOSE;
+extern const char* KW_OSK_PRESS;
+
 #define MAX_HELP_AREAS		2
 #define MAX_HELP_LINE_LEN	256
 
@@ -40,8 +45,11 @@ typedef struct _OSDKeyboardPrivate {
 	const char*					controller_id;
 	GdkKeymap*					keymap;
 	dvec_t						size;
-	dvec_t						cursors[2];
-	GdkPixbuf*					cursor_images[2];
+	struct {
+		dvec_t					position;
+		int						pressed_button_index;
+		GdkPixbuf*				image;
+	}							cursors[2];
 	intmap_t					button_images;
 	struct Limits				limits[3];
 	struct HelpArea				help_areas[MAX_HELP_AREAS];
@@ -61,15 +69,17 @@ struct Button {
 	Keycode						keycode;	// Used when aciton bound on key represents virtual key
 	const char*					label;		// Used with other actions
 	SCButton					scbutton;
+	int							index;
 	bool						dark;
-	bool						pressed;
-	bool						hilighted;
 	dvec_t						pos;
 	dvec_t						size;
 };
 
+void register_keyboard_actions();
 bool load_keyboard_data(const char* filename, OSDKeyboardPrivate* priv);
+bool is_button_under_cursor(OSDKeyboardPrivate* priv, int index, struct Button* b);
 void load_colors(OSDKeyboardPrivate* priv);
 bool init_display(OSDKeyboard* kbd, OSDKeyboardPrivate* priv);
+void generate_help_lines(OSDKeyboardPrivate* priv);
 bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* priv);
 

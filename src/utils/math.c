@@ -4,6 +4,7 @@
 #include "scc/utils/math.h"
 #include <math.h>
 #include <time.h>
+#define M_PId4 (M_PI / 4.0)
 
 bool dequeue_init(Dequeue* dq, size_t size) {
 	dq->size = size;
@@ -58,6 +59,35 @@ double anglediff(double a1, double a2) {
 	return fmod((a2 - a1 + M_PI), (2.0 * M_PI) - M_PI);
 }
 
+void circle_to_square(double* x, double* y) {
+	// Adapted from http://theinstructionlimit.com/squaring-the-thumbsticks
+	
+	// Determine the theta angle
+	double angle = atan2(*y, *x) + M_PI;
+	
+	// Scale according to which wall we're clamping to
+	if ((angle <= M_PId4) || (angle > 7.0 * M_PId4)) {
+		// X+ wall
+		*x = *x * (1.0 / cos(angle));
+		*y = *y * (1.0 / cos(angle));
+	} else if ((angle > M_PId4) && (angle <= 3.0 * M_PId4)) {
+		// Y+ wall
+		*x = *x * (1.0 / sin(angle));
+		*y = *y * (1.0 / sin(angle));
+	} else if ((angle > 3.0 * M_PId4) && (angle <= 5.0 * M_PId4)) {
+		// X- wall
+		*x = *x * (-1.0 / cos(angle));
+		*y = *y * (-1.0 / cos(angle));
+	} else if ((angle > 5.0 * M_PId4) && (angle <= 7.0 * M_PId4)) {
+		// Y- wall
+		*x = *x * (-1.0 / sin(angle));
+		*y = *y * (-1.0 / sin(angle));
+	} else {
+		LERROR("circle_to_square: invalid input");
+		*x = 0;
+		*y = 0;
+	}
+}
 
 uint64_t mono_time_ms() {
 	static struct timespec t;

@@ -154,8 +154,8 @@ const char* sccc_recieve(SCCClient* _c) {
 sccc_recieve_fail:
 	close(c->fd);
 	c->buffer[0] = 0;
-	if (_c->on_disconnected != NULL)
-		_c->on_disconnected(_c);
+	if (_c->callbacks.on_disconnected != NULL)
+		_c->callbacks.on_disconnected(_c);
 	return c->buffer;
 }
 

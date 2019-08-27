@@ -194,7 +194,7 @@ static void roll(Mapper* m, BallModifier* b) {
 static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) {
 	BallModifier* b = container_of(a, BallModifier, action);
 	b->what = what;
-	if ((what == PST_STICK) || ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RIGHT))) {
+	if ((what == PST_STICK) || ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RPAD))) {
 		// Special case, ball used on physical stick
 		b->child->whole(b->child, m, x, y, what);
 		return;

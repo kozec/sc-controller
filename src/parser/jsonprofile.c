@@ -28,13 +28,14 @@ typedef struct {
 } JSONProfile;
 
 static char* button_names[] = {
-	NULL, "RPADTOUCH", "LPADTOUCH", "RPAD", "LPAD", "RGRIP", "LGRIP", "START",
-	"C", "BACK", "A", "X", "B", "Y", "LB", "RB", "LT", "RT", "CPADTOUCH",
-	"CPADPRESS", "STICKPRESS"
+	NULL, "RPADTOUCH", "LPADTOUCH", "RPADPRESS", "LPADPRESS", "RGRIP", "LGRIP",
+	"START", "C", "BACK", "A", "X", "B", "Y", "LB", "RB", "LT", "RT",
+	"CPADTOUCH", "CPADPRESS", "STICKPRESS"
 };
 
 static char* axis_names[] = {
-	NULL, "pad_left", "pad_right", "cpad", "stick", "gyro"
+	// Order here has to match PadStickTrigger enum
+	NULL, "pad_left", "pad_right", NULL, NULL, "cpad", "stick", "gyro"
 };
 
 
@@ -49,7 +50,7 @@ static void json_profile_dealloc(void* obj) {
 	free(p);
 }
 
-/** 
+/**
  * Converts value from SCButton enum to number from 0 to 21.
  * This conversion is internal for profile and used only to get index to
  * buttons array.
@@ -60,9 +61,9 @@ static int scbutton_to_index(SCButton b) {
 			return 1;
 		case B_LPADTOUCH:
 			return 2;
-		case B_RPAD:
+		case B_RPADPRESS:
 			return 3;
-		case B_LPAD:
+		case B_LPADPRESS:
 			return 4;
 		case B_RGRIP:
 			return 5;
@@ -121,9 +122,9 @@ static Action* get_pad(Profile* _p, PadStickTrigger t) {
 static Action* get_trigger(Profile* _p, PadStickTrigger t) {
 	JSONProfile* p = container_of(_p, JSONProfile, profile);
 	Action* a = NoAction;
-	if (t == PST_LEFT)
+	if (t == PST_LTRIGGER)
 		a = p->triggers[0];
-	else if (t == PST_RIGHT)
+	else if (t == PST_RTRIGGER)
 		a = p->triggers[1];
 	RC_ADD(a);
 	return a;
@@ -250,12 +251,22 @@ Profile* scc_profile_from_json(const char* filename, int* error) {
 		if (error != NULL) *error = 4;
 		goto scc_profile_from_json_invalid_profile;
 	}
+	// TODO: Convert "[LR]PAD" to "[LR]PADPRESS" here
 	for (int i=0; i<=LAST_BUTTON_INDEX; i++) {
 		if (button_names[i] == NULL) continue;
 		// This replaces b->buttons[i] value without dereferencing original
 		// value. That's generaly bad idea, but I know for sure that replaced
 		// action is non-ref-counted NoAction.
 		p->buttons[i] = decode_json_action(json_object_get_object(buttons, button_names[i]));
+		if (scc_action_is_none(p->buttons[i])) {
+			if ((i == scbutton_to_index(B_LPADPRESS)) || (i == scbutton_to_index(B_RPADPRESS))) {
+				// Backwards compatibility thing - old name of [LR]PADPRESS
+				// in buttons array was just [LR]PAD.
+				char tmp[] = "LPAD";
+				tmp[0] = button_names[i][0];
+				p->buttons[i] = decode_json_action(json_object_get_object(buttons, tmp));
+			}
+		}
 	}
 	
 	for (int i=0; i<=LAST_AXIS_INDEX; i++) {

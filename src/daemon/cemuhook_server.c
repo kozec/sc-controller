@@ -173,7 +173,7 @@ static void send_gyro_data(int fd, CEHClient* target, uint16_t id, float data[6]
 static void parse_message(int fd, const char* buffer, size_t size, struct sockaddr_in* source) {
 	struct Message* msg = (struct Message*)&buffer[0];
 	struct Message out;
-	int i, x;
+	int i;
 	if ((size < 20) || (buffer[0] != 'D') || (buffer[1]!='S') || (buffer[2] != 'U') || (buffer[3] != 'C')) {
 		WARN("Recieved invalid message: Invalid header");
 		return;

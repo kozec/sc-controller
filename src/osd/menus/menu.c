@@ -348,8 +348,8 @@ void osd_menu_connect(OSDMenu* mnu) {
 	
 	priv->client = client;
 	priv->client->userdata = mnu;
-	priv->client->on_ready = &osd_menu_connection_ready;
-	priv->client->on_event = &osd_menu_on_event;
+	priv->client->callbacks.on_ready = &osd_menu_connection_ready;
+	priv->client->callbacks.on_event = &osd_menu_on_event;
 	GSource* src = scc_gio_client_to_gsource(client);
 	g_source_set_callback(src, (GSourceFunc)osd_menu_on_data_ready, mnu, NULL);
 }

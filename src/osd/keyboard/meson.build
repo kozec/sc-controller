@@ -21,6 +21,7 @@ osd_keyboard_lib = shared_library('scc-osd-keyboard',
 	sources: [
 		'init.c',
 		'data.c',
+		'actions.c',
 		'display.c',
 	]
 )

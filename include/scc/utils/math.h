@@ -79,6 +79,9 @@ void quat2euler(double pyr[3], double q0, double q1, double q2, double q3);
 /* Returns shorter distance between two angles. 'a1' and 'a2' are in radians */
 double anglediff(double a1, double a2);
 
+/* Projects (in place) coordinate in circle (of radius 1.0) to coordinate in square. */
+void circle_to_square(double* x, double* y);
+
 /** Returns current value of CLOCK_MONOTONIC converted to number of milliseconds */
 monotime_t mono_time_ms();
 

@@ -209,7 +209,7 @@ void test_multiaction(CuTest* tc) {
 	aoe = scc_parse_action("XY(None, axis(ABS_Z)) and XY(axis(ABS_Y), raxis(ABS_X))");
 	assert_msg(tc, !IS_ACTION_ERROR(aoe), ACTION_ERROR(aoe)->message);
 	testmapper_set_buttons(m, B_RPADTOUCH);
-	a->whole(a, m, 1500, 20199, PST_RIGHT);
+	a->whole(a, m, 1500, 20199, PST_RPAD);
 	
 	assert(tc, testmapper_get_axis_position(m, ABS_X) == -20200);
 	assert(tc, testmapper_get_axis_position(m, ABS_Y) == 1500);

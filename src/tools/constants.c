@@ -10,10 +10,14 @@
 
 SCButton scc_what_to_pressed_button(PadStickTrigger what) {
 	switch (what) {
-	case PST_LEFT:
-		return B_LPAD;
-	case PST_RIGHT:
-		return B_RPAD;
+	case PST_LPAD:
+		return B_LPADPRESS;
+	case PST_RPAD:
+		return B_RPADPRESS;
+	case PST_LTRIGGER:
+		return B_LT;
+	case PST_RTRIGGER:
+		return B_RT;
 	case PST_CPAD:
 		return B_CPADPRESS;
 	case PST_STICK:
@@ -26,12 +30,14 @@ SCButton scc_what_to_pressed_button(PadStickTrigger what) {
 
 SCButton scc_what_to_touch_button(PadStickTrigger what) {
 	switch (what) {
-	case PST_LEFT:
+	case PST_LPAD:
 		return B_LPADTOUCH;
-	case PST_RIGHT:
+	case PST_RPAD:
 		return B_RPADTOUCH;
 	case PST_CPAD:
 		return B_CPADTOUCH;
+	case PST_LTRIGGER:
+	case PST_RTRIGGER:
 	case PST_STICK:
 	case PST_GYRO:
 		break;
@@ -46,14 +52,14 @@ SCButton scc_string_to_button(const char* s) {
 		if (0 == strcmp("RT", s)) return B_RT;
 		if (0 == strcmp("RGRIP", s)) return B_RGRIP;
 		if (0 == strcmp("RPADTOUCH", s)) return B_RPADTOUCH;
-		if (0 == strcmp("RPADPRESS", s)) return B_RPAD;
+		if (0 == strcmp("RPADPRESS", s)) return B_RPADPRESS;
 		break;
 	case 'L':
 		if (0 == strcmp("LB", s)) return B_LB;
 		if (0 == strcmp("LT", s)) return B_LT;
 		if (0 == strcmp("LGRIP", s)) return B_LGRIP;
 		if (0 == strcmp("LPADTOUCH", s)) return B_LPADTOUCH;
-		if (0 == strcmp("LPADPRESS", s)) return B_LPAD;
+		if (0 == strcmp("LPADPRESS", s)) return B_LPADPRESS;
 		break;
 	case 'S':
 		if (0 == strcmp("START", s)) return B_START;
@@ -79,10 +85,12 @@ SCButton scc_string_to_button(const char* s) {
 PadStickTrigger scc_string_to_pst(const char* s) {
 	switch (s[0]) {
 	case 'R':
-		if (0 == strcmp("RIGHT", s)) return PST_RIGHT;
+		if (0 == strcmp("RPAD", s)) return PST_RPAD;
+		if (0 == strcmp("RTRIGGER", s)) return PST_RTRIGGER;
 		break;
 	case 'L':
-		if (0 == strcmp("LEFT", s)) return PST_LEFT;
+		if (0 == strcmp("LPAD", s)) return PST_LPAD;
+		if (0 == strcmp("LTRIGGER", s)) return PST_LTRIGGER;
 		break;
 	case 'S':
 		if (0 == strcmp("STICK", s)) return PST_STICK;
@@ -96,8 +104,10 @@ PadStickTrigger scc_string_to_pst(const char* s) {
 
 const char* scc_what_to_string(PadStickTrigger what) {
 	switch (what) {
-	case PST_LEFT:		return "LEFT";
-	case PST_RIGHT:		return "RIGHT";
+	case PST_LPAD:		return "LPAD";
+	case PST_RPAD:		return "RPAD";
+	case PST_LTRIGGER:	return "LTRIGGER";
+	case PST_RTRIGGER:	return "RTRIGGER";
 	case PST_CPAD:		return "CPAD";
 	case PST_STICK:		return "STICK";
 	case PST_GYRO:		return "GYRO";
@@ -109,8 +119,8 @@ const char* scc_button_to_string(SCButton b) {
 	switch (b) {
 	case B_RPADTOUCH:	return "RPADTOUCH";
 	case B_LPADTOUCH:	return "LPADTOUCH";
-	case B_RPAD:		return "RPAD";
-	case B_LPAD:		return "LPAD";
+	case B_RPADPRESS:	return "RPADPRESS";
+	case B_LPADPRESS:	return "LPADPRESS";
 	case B_RGRIP:		return "RGRIP";
 	case B_LGRIP:		return "LGRIP";
 	case B_START:		return "START";

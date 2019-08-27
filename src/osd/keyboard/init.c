@@ -7,6 +7,7 @@
 #include "scc/osd/osd_window.h"
 #include <glib.h> // glib.h has to be included before client.h
 #include "scc/virtual_device.h"
+#include "scc/special_action.h"
 #include "scc/profile.h"
 #include "scc/client.h"
 #include "scc/tools.h"
@@ -38,8 +39,10 @@ static void osd_keyboard_on_connection_ready(SCCClient* c) {
 		return;
 	}
 	
-	if (!sccc_lock(c, handle, "LEFT", "RIGHT", "STICK", "A", "B", "X", "Y",
-					"LB", "RB", "LT", "RT", "LGRIP", "RGRIP", "C")) {
+	if (!sccc_lock(c, handle,
+					"STICK", "A", "B", "X", "Y", "C", "LGRIP", "RGRIP",
+					"START", "BACK", "LB", "RB", "LTRIGGER", "RTRIGGER",
+					"LPAD", "RPAD", "LPADPRESS", "RPADPRESS")) {
 		LERROR("Failed to lock controller");
 		g_signal_emit_by_name(G_OBJECT(kbd), "exit", 3);
 		return;
@@ -77,6 +80,86 @@ static void osd_keyboard_stick(int dx, int dy, void* userdata) {
 	LOG("STICK: %i %i", dx, dy);
 }
 
+bool is_button_under_cursor(OSDKeyboardPrivate* priv, int index, struct Button* b) {
+	return (
+		(priv->cursors[index].position.x >= b->pos.x)
+		&& (priv->cursors[index].position.x < b->pos.x + b->size.x)
+		&& (priv->cursors[index].position.y >= b->pos.y)
+		&& (priv->cursors[index].position.y < b->pos.y + b->size.y)
+	);
+}
+
+static void osd_keyboard_set_cursor_position(OSDKeyboard* kbd, int index, AxisValue _x, AxisValue _y) {
+	OSDKeyboardPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(kbd, OSD_KEYBOARD_TYPE, OSDKeyboardPrivate);
+	if ((index < 0) || (index > 1)) return;
+	
+	double w = priv->limits[index].x1 - priv->limits[index].x0;
+	double h = priv->limits[index].y1 - priv->limits[index].y0;
+	double x = (double)_x / (double)(STICK_PAD_MAX);
+	double y = (double)_y / (double)(STICK_PAD_MAX) * -1.0;
+	
+	circle_to_square(&x, &y);
+	x = clamp(
+		0,
+		(priv->limits[index].x0 + w * 0.5) + x * w * 0.5,
+		priv->limits[index].x1
+	);
+	y = clamp(
+		0,
+		(priv->limits[index].y0 + h * 0.5) + y * h * 0.5,
+		priv->limits[index].y1 - 0
+	);
+	
+	vec_set(priv->cursors[index].position, x, y);
+	gtk_widget_queue_draw(GTK_WIDGET(kbd));
+}
+
+static void osd_keyboard_set_cursor_pressed(Mapper* m, OSDKeyboard* kbd, int index, bool pressed) {
+	OSDKeyboardPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(kbd, OSD_KEYBOARD_TYPE, OSDKeyboardPrivate);
+	if ((index < 0) || (index > 1)) return;
+	if (pressed) {
+		FOREACH_IN(Button*, b, priv->buttons) {
+			if (is_button_under_cursor(priv, index, b)) {
+				if (priv->cursors[index].pressed_button_index != b->index) {
+					Action* a = b->action;
+					priv->cursors[index].pressed_button_index = b->index;
+					a->button_press(a, m);
+				}
+				break;
+			}
+		}
+	} else {
+		if (priv->cursors[index].pressed_button_index != -1) {
+			Button* b = list_get(priv->buttons, priv->cursors[index].pressed_button_index);
+			Action* a = b->action;
+			a->button_release(a, m);
+		}
+		priv->cursors[index].pressed_button_index = -1;
+	}
+	gtk_widget_queue_draw(GTK_WIDGET(kbd));
+}
+
+static bool osd_keyboard_sa_handler(Mapper* m, unsigned int sa_action_type, void* sa_data) {
+	if (sa_action_type != SAT_APP_DEFINED)
+		return false;
+	
+	SAAppDefinedActionData* data = (SAAppDefinedActionData*)sa_data;
+	OSDKeyboard* kbd = OSD_KEYBOARD(sccc_slave_mapper_get_userdata(m));
+	
+	if (data->keyword == KW_OSK_CURSOR) {
+		AxisValue* values = (AxisValue*)(data->data);
+		osd_keyboard_set_cursor_position(kbd, values[0], values[1], values[2]);
+	} else if (data->keyword == KW_OSK_PRESS) {
+		AxisValue* values = (AxisValue*)(data->data);
+		osd_keyboard_set_cursor_pressed(m, kbd, values[0], values[1]);
+	} else if (data->keyword == KW_OSK_CLOSE) {
+		// TODO: Closing when called from osd daemon
+		exit(0);
+	}
+	return false;
+}
+
+
 static void osd_keyboard_init(OSDKeyboard* kbd) {
 	OSDKeyboardPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(kbd, OSD_KEYBOARD_TYPE, OSDKeyboardPrivate);
 	memset(priv, 0, sizeof(OSDKeyboardPrivate));
@@ -87,13 +170,13 @@ static void osd_keyboard_init(OSDKeyboard* kbd) {
 	list_set_dealloc_cb(priv->help_lines, free);
 	priv->client = NULL;
 	priv->controller_id = NULL;
+	register_keyboard_actions();
 }
 
 static const char *const usage[] = {
 	"scc-osd-keyboard -f <filename>",
 	NULL,
 };
-
 
 int osd_keyboard_parse_args(OSDKeyboardOptions* options, int argc, char** argv) {
 	struct argparse_option argopts[] = {
@@ -116,6 +199,7 @@ int osd_keyboard_parse_args(OSDKeyboardOptions* options, int argc, char** argv) 
 	return 0;
 }
 
+
 OSDKeyboard* osd_keyboard_new(OSDKeyboardOptions* options) {
 	SCCClient* client = sccc_connect();
 	if (client == NULL) {
@@ -133,11 +217,13 @@ OSDKeyboard* osd_keyboard_new(OSDKeyboardOptions* options) {
 	priv->slave_mapper = sccc_slave_mapper_new(client);
 	if (priv->slave_mapper == NULL)
 		goto osd_keyboard_new_failed;
+	sccc_slave_mapper_set_userdata(priv->slave_mapper, kbd);
+	sccc_slave_mapper_set_sa_handler(priv->slave_mapper, osd_keyboard_sa_handler);
 	
 	priv->client = client;
 	priv->client->userdata = kbd;
-	priv->client->on_ready = &osd_keyboard_on_connection_ready;
-	priv->client->on_event = &osd_keyboard_on_event;
+	priv->client->callbacks.on_ready = &osd_keyboard_on_connection_ready;
+	priv->client->callbacks.on_event = &osd_keyboard_on_event;
 	
 	sccc_slave_mapper_set_devices(priv->slave_mapper,
 			scc_virtual_device_create(VTP_KEYBOARD, NULL),
@@ -163,6 +249,10 @@ OSDKeyboard* osd_keyboard_new(OSDKeyboardOptions* options) {
 		// TODO: Do I need to deallocate something here?
 		goto osd_keyboard_new_failed;
 	
+	osd_keyboard_set_cursor_position(kbd, 0, 0, 0);
+	osd_keyboard_set_cursor_position(kbd, 1, 0, 0);
+	priv->cursors[0].pressed_button_index = -1;
+	priv->cursors[1].pressed_button_index = -1;
 	generate_help_lines(priv);
 	return kbd;
 
