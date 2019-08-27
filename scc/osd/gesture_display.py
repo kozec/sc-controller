@@ -11,7 +11,7 @@ from scc.tools import _, set_logging_level
 from gi.repository import Gtk, GObject
 from scc.gui.daemon_manager import DaemonManager
 from scc.gui.gestures import GestureDraw
-from scc.constants import LEFT, RIGHT
+from scc.constants import LEFT, RIGHT, CPAD
 from scc.config import Config
 from scc.osd import OSDWindow
 from scc.gestures import GestureDetector
@@ -95,7 +95,7 @@ class GestureDisplay(OSDWindow):
 	def _add_arguments(self):
 		OSDWindow._add_arguments(self)
 		self.argparser.add_argument('--control-with', '-c', type=str,
-			metavar="option", default=LEFT, choices=(LEFT, RIGHT),
+			metavar="option", default=LEFT, choices=(LEFT, RIGHT, CPAD),
 			help="which pad should be used to generate gesture menu (default: %s)" % (LEFT,))
 	
 	
@@ -164,7 +164,7 @@ class GestureDisplay(OSDWindow):
 		if what == self._control_with:
 			x, y = data
 			self._left_draw.add(x, y)
-			self._left_detector.whole(None, x, y, LEFT)
+			self._left_detector.whole(None, x, y, what)
 			# TODO: self._right_detector, if there is any use for it later
 			self.emit('gesture-updated', self._left_detector.get_string())
 	

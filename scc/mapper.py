@@ -432,6 +432,8 @@ class Mapper(object):
 			if controller.flags & ControllerFlags.HAS_CPAD:
 				if FE_PAD in fe or self.old_state.cpad_x != state.cpad_x or self.old_state.cpad_y != state.cpad_y:
 					self.profile.pads[CPAD].whole(self, state.cpad_x, state.cpad_y, CPAD)
+				elif (self.old_buttons & SCButtons.CPADTOUCH) and not (self.buttons & SCButtons.CPADTOUCH):
+					self.profile.pads[CPAD].whole(self, 0, 0, CPAD)
 		except Exception:
 			# Log error but don't crash here, it breaks too many things at once
 			if hasattr(self, "_testing"):

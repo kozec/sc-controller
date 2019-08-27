@@ -8,7 +8,8 @@ it clean.
 """
 from scc.actions import Action
 from scc.tools import circle_to_square, clamp
-from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, CPAD, CPAD_MIN
+from scc.constants import CPAD_X_MAX, CPAD_Y_MAX
 from math import pi as PI, atan2, sqrt
 from itertools import groupby
 
@@ -72,10 +73,16 @@ class GestureDetector(Action):
 				return
 			else:
 				# Convert positions on pad to position on grid
-				x -= STICK_PAD_MIN
-				y = STICK_PAD_MAX - y
-				x = float(x) / (float(STICK_PAD_MAX - STICK_PAD_MIN) / self._resolution)
-				y = float(y) / (float(STICK_PAD_MAX - STICK_PAD_MIN) / self._resolution)
+				if what == CPAD:
+					x = clamp(0, float(x) / (CPAD_X_MAX - CPAD_MIN), 1.0)
+					y = clamp(0, float(y) / (CPAD_Y_MAX - CPAD_MIN), 1.0)
+					x *= self._resolution
+					y *= self._resolution
+				else:
+					x -= STICK_PAD_MIN
+					y = STICK_PAD_MAX - y
+					x = float(x) / (float(STICK_PAD_MAX - STICK_PAD_MIN) / self._resolution)
+					y = float(y) / (float(STICK_PAD_MAX - STICK_PAD_MIN) / self._resolution)
 				# Check for deadzones around grid lines
 				for i in xrange(1, self._resolution):
 					if x > i - self._deadzone and x < i + self._deadzone: return
@@ -102,3 +109,4 @@ class GestureDetector(Action):
 								y -= 1
 				else:
 					self._positions.append( (x, y) )
+

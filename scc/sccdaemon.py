@@ -1255,8 +1255,10 @@ class ReportingAction(Action):
 	
 	
 	def whole(self, mapper, x, y, what):
-		if (x == 0 or y == 0 or abs(x - self.old_pos[0]) > self.MIN_DIFFERENCE
-							or abs(y - self.old_pos[1] > self.MIN_DIFFERENCE)):
+		min_difference = self.MIN_DIFFERENCE
+		if what == CPAD: min_difference /= 10
+		if (x == 0 or y == 0 or abs(x - self.old_pos[0]) > min_difference
+							or abs(y - self.old_pos[1] > min_difference)):
 			self.old_pos = x, y
 			if mapper.get_controller():
 				self._report("Event: %s %s %s %s\n" % (
