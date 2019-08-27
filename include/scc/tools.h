@@ -75,6 +75,16 @@ const char* scc_get_menuicons_path();
 const char* scc_get_default_menuicons_path();
 
 /**
+ * Returns directory where button images are stored, that is
+ * /usr/share/scc/images/button-images or $SCC_SHARED/images/button-images
+ * if program is being started from script extracted from source tarball.
+ *
+ * Note that there is no 'scc_get_button_images_path'.
+ * Button images are not user-overridable (yet).
+ */
+const char* scc_get_default_button_images_path();
+
+/**
  * Returns directory when python (gui) modules are stored.
  */
 const char* scc_get_python_src_path();
@@ -86,6 +96,7 @@ const char* scc_get_python_src_path();
  * script extracted from source tarball
  */
 const char* scc_get_default_menus_path();
+
 
 /**
  * Returns path to scc-daemon PID file.
@@ -132,6 +143,15 @@ char* scc_find_menu(const char* name);
  * Returned value has to be freed by called.
  */
 char* scc_find_icon(const char* name, bool prefer_colored, bool* has_colors, const char** paths, const char** extensions);
+
+/**
+ * Works as scc_find_icon, but searches for button image instead.
+ * Button may have both color and black-n-white image, but it will always be svg.
+ *
+ * Returns NULL if image cannot be found.
+ * Returned value has to be freed by called.
+ */
+char* scc_find_button_image(SCButton button, bool prefer_colored, bool* has_colors);
 
 /**
  * Returns full path to script or binary.

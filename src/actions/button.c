@@ -75,6 +75,15 @@ static char* describe(Action* a, ActionDescContext ctx) {
 	case KEY_NEXTSONG:		return strbuilder_cpy("Song >>");
 	case KEY_VOLUMEDOWN:	return strbuilder_cpy("- Volume");
 	case KEY_VOLUMEUP:		return strbuilder_cpy("+ Volume");
+	case KEY_LEFTSHIFT:		return strbuilder_cpy((ctx == AC_OSD) ? "Shift" : "LShift");
+	case KEY_RIGHTSHIFT:	return strbuilder_cpy((ctx == AC_OSD) ? "Shift" : "RShift");
+	case KEY_LEFTALT:		return strbuilder_cpy((ctx == AC_OSD) ? "Alt" : "LAlt");
+	case KEY_RIGHTALT:		return strbuilder_cpy((ctx == AC_OSD) ? "Alt" : "RAlt");
+	case KEY_LEFTCTRL:		return strbuilder_cpy((ctx == AC_OSD) ? "CTRL" : "LControl");
+	case KEY_RIGHTCTRL:		return strbuilder_cpy((ctx == AC_OSD) ? "CTRL" : "RControl");
+	case KEY_BACKSPACE:		return strbuilder_cpy((ctx == AC_OSD) ? "Bcksp" : "Backspace");
+	case KEY_SPACE:			return strbuilder_cpy("Space");
+	case KEY_TAB:			return strbuilder_cpy("Tab");
 	default:
 		keyname = scc_get_key_name(b->button[0]);
 		if (keyname != NULL)

@@ -46,6 +46,7 @@ static char menus_path[PATH_MAX + 128] = {0};
 static char default_menus_path[PATH_MAX + 128] = {0};
 static char menuicons_path[PATH_MAX + 128] = {0};
 static char default_menuicons_path[PATH_MAX + 128] = {0};
+static char default_button_images_path[PATH_MAX + 128] = {0};
 static char pid_file_path[PATH_MAX] = {0};
 
 const char* scc_get_config_path() {
@@ -207,6 +208,15 @@ const char* scc_get_default_menuicons_path() {
 	
 	sprintf(default_menuicons_path, "%s" SEP "images" SEP "menu-icons", scc_get_share_path());
 	return default_menuicons_path;
+}
+
+const char* scc_get_default_button_images_path() {
+	if (default_button_images_path[0] != 0)
+		// Return cached value
+		return default_button_images_path;
+	
+	sprintf(default_button_images_path, "%s" SEP "images" SEP "button-images", scc_get_share_path());
+	return default_button_images_path;
 }
 
 const char* scc_get_pid_file() {
@@ -407,33 +417,19 @@ scc_find_icon_cleanup:
 	return rv;
 }
 
+char* scc_find_button_image(SCButton button, bool prefer_colored, bool* has_colors) {
+	static const char* paths[] = { NULL, NULL };
+	static const char* extensions[] = { "svg", NULL };
+	const char* bstr = scc_button_to_string(button);
+	if (bstr == NULL) return NULL;
+	
+	if (paths[0] == NULL)
+		paths[0] = scc_get_default_button_images_path();
+	
+	return scc_find_icon(bstr, prefer_colored, has_colors, paths, extensions);
+}
 
 /*
-def get_button_images_path():
-	"""
-	Returns directory where button images are stored.
-	/usr/share/scc/images/button-images by default.
-	"""
-	return os.path.join(get_share_path(), "images/button-images")
-
-
-def get_menus_path():
-	"""
-	Returns directory where profiles are stored.
-	~/.config/scc/profiles under normal conditions.
-	"""
-	return os.path.join(get_config_path(), "menus")
-
-
-def get_default_menus_path():
-	"""
-	Returns directory where default profiles are stored.
-	Probably something like /usr/share/scc/default_profiles,
-	or ./default_profiles if program is being started from
-	extracted source tarball
-	"""
-	return os.path.join(get_share_path(), "default_menus")
-
 
 def get_controller_icons_path():
 	"""
@@ -455,26 +451,6 @@ def get_default_controller_icons_path():
 	This directory should always exist.
 	"""
 	return os.path.join(get_share_path(), "images", "controller-icons")
-
-
-def get_share_path():
-	"""
-	Returns directory where shared files are kept.
-	Usually "/usr/share/scc" or $SCC_SHARED if program is being started from
-	script extracted from source tarball
-	"""
-	if "SCC_SHARED" in os.environ:
-		return os.environ["SCC_SHARED"]
-	paths = (
-		"/usr/local/share/scc/",
-		os.path.expanduser("~/.local/share/scc"),
-		os.path.join(sys.prefix, "share/scc")
-	)
-	for path in paths:
-		if os.path.exists(path):
-			return path
-	# No path found, assume default and hope for best
-	return "/usr/share/scc"
 
 */
 

@@ -190,6 +190,22 @@ void sccc_slave_mapper_feed(Mapper* _m, SCButton button, PadStickTrigger pst, in
 	}
 }
 
+
+void sccc_slave_mapper_free(Mapper* _m, bool close_attached_devices) {
+	ASSERT(_m->type == SLAVE_MAPPER_TYPE);
+	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
+	
+	if (close_attached_devices) {
+		if (m->keyboard != NULL)
+			scc_virtual_device_close(m->keyboard);
+		if (m->mouse != NULL)
+			scc_virtual_device_close(m->mouse);
+	}
+	RC_REL(m->client);
+	RC_REL(m->profile);
+	free(m);
+}
+
 Mapper* sccc_slave_mapper_new(SCCClient* c) {
 	struct SlaveMapper* m = malloc(sizeof(struct SlaveMapper));
 	if (m == NULL) return NULL;
@@ -199,6 +215,8 @@ Mapper* sccc_slave_mapper_new(SCCClient* c) {
 	m->mapper.type = SLAVE_MAPPER_TYPE;
 	m->client = c;
 	m->c_flags = CF_NO_FLAGS;
+	RC_ADD(m->client);
+	
 	m->mapper.get_flags = get_flags;
 	m->mapper.set_profile = set_profile;
 	m->mapper.get_profile = get_profile;

@@ -265,6 +265,9 @@ struct ModeshiftModes {
  */
 Parameter* scc_modeshift_get_modes(Action* a);
 
+/** Returns true if action is NoAction */
+bool scc_action_is_none(Action* a);
+
 /**
  * Calls compress method on action to which *a points to and replaces *a target
  * with aciton it returns. Reference counters are properly decreased on old

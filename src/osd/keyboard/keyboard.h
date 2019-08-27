@@ -1,4 +1,5 @@
 #pragma once
+#include "scc/utils/intmap.h"
 #include "scc/utils/list.h"
 #include "scc/utils/math.h"
 #include "scc/parser.h"
@@ -10,41 +11,61 @@
 typedef struct _OSDKeyboard	OSDKeyboard;
 typedef struct Button Button;
 typedef LIST_TYPE(Button) ButtonList;
+#define MAX_HELP_AREAS		2
+#define MAX_HELP_LINE_LEN	256
 
 struct Limits {
-	double				x0, y0, x1, y1;
+	double						x0, y0, x1, y1;
 };
 
+struct HelpArea {
+	bool						align_right;
+	struct Limits				limits;
+};
+
+typedef struct {
+	SCButton					scbutton;
+	bool						align_right;
+	char						text[MAX_HELP_LINE_LEN];
+} HelpLine;
+
+typedef LIST_TYPE(HelpLine) HelpLineList;
+
 typedef struct _OSDKeyboardPrivate {
-	SCCClient*			client;
-	Mapper*				slave_mapper;
-	ButtonList			buttons;
-	GtkWidget*			draw_area;
-	const char*			controller_id;
-	GdkKeymap*			keymap;
-	dvec_t				size;
-	dvec_t				cursors[2];
-	GdkPixbuf*			cursor_images[2];
-	struct Limits		limits[3];
-	uint8_t				cursor_count;
-	GdkRGBA				color_pressed;
-	GdkRGBA				color_hilight;
-	GdkRGBA				color_button2;
-	GdkRGBA				color_button1;
-	GdkRGBA				color_button1_border;
-	GdkRGBA				color_text;
+	SCCClient*					client;
+	GSource*					client_src;
+	Mapper*						slave_mapper;
+	ButtonList					buttons;
+	GtkWidget*					draw_area;
+	const char*					controller_id;
+	GdkKeymap*					keymap;
+	dvec_t						size;
+	dvec_t						cursors[2];
+	GdkPixbuf*					cursor_images[2];
+	intmap_t					button_images;
+	struct Limits				limits[3];
+	struct HelpArea				help_areas[MAX_HELP_AREAS];
+	HelpLineList				help_lines;
+	uint8_t						cursor_count;
+	GdkRGBA						color_pressed;
+	GdkRGBA						color_hilight;
+	GdkRGBA						color_button2;
+	GdkRGBA						color_button1;
+	GdkRGBA						color_button1_border;
+	GdkRGBA						color_text;
 } OSDKeyboardPrivate;
 
 
 struct Button {
-	Action*				action;
-	Keycode				keycode;	// Used when aciton bound on key represents virtual key
-	const char*			label;		// Used with other actions
-	bool				dark;
-	bool				pressed;
-	bool				hilighted;
-	dvec_t				pos;
-	dvec_t				size;
+	Action*						action;
+	Keycode						keycode;	// Used when aciton bound on key represents virtual key
+	const char*					label;		// Used with other actions
+	SCButton					scbutton;
+	bool						dark;
+	bool						pressed;
+	bool						hilighted;
+	dvec_t						pos;
+	dvec_t						size;
 };
 
 bool load_keyboard_data(const char* filename, OSDKeyboardPrivate* priv);

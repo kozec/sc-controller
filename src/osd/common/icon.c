@@ -33,7 +33,41 @@ static void on_allocated(GtkWidget* widget, GdkRectangle* allocation, gpointer d
 		gtk_widget_set_size_request(widget, allocation->height, -1);
 }
 
-static bool on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
+void menu_icon_draw_pixbuf(GdkPixbuf* pb, cairo_t* target, guint width, guint height, const GdkRGBA* color) {
+	if (pb == NULL) return;
+	cairo_surface_t* surf = NULL;
+	GdkPixbuf* scaled = NULL;
+	if ((width > 0) && (height > 0)) {
+		scaled = gdk_pixbuf_scale_simple(pb, width, height, GDK_INTERP_BILINEAR);
+		surf = scaled == NULL ? NULL : gdk_cairo_surface_create_from_pixbuf(scaled, 1, NULL);
+		if ((scaled == NULL) || (surf == NULL)) {
+			LERROR("OOM while scaling icon");
+			if (surf != NULL) cairo_surface_destroy(surf);
+			if (scaled != NULL) gdk_pixbuf_unref(scaled);
+			return;
+		}
+	} else {
+		surf = gdk_cairo_surface_create_from_pixbuf(pb, 1, NULL);
+		if (surf == NULL) {
+			LERROR("OOM while drawing icon");
+			return;
+		}
+	}
+	if (color == NULL) {
+		gdk_cairo_set_source_pixbuf(target, (scaled != NULL) ? scaled : pb, 0, 0);
+		// cairo_set_source_surface(target, surf, 0, 0);
+		// cairo_rectangle(target, 0, 0, width, height);
+		cairo_paint(target);
+	} else {
+		gdk_cairo_set_source_rgba(target, color);
+		cairo_mask_surface(target, surf, 0, 0);
+	}
+	cairo_surface_destroy(surf);
+	if (scaled != NULL)
+		gdk_pixbuf_unref(scaled);
+}
+
+static bool on_draw(GtkWidget* widget, cairo_t* cr, gpointer data) {
 	MenuIconPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(widget, MENU_ICON_TYPE, MenuIconPrivate);
 	GtkStyleContext* context = gtk_widget_get_style_context(widget);
 	guint width = gtk_widget_get_allocated_width(widget);
@@ -41,28 +75,14 @@ static bool on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
 	
 	gtk_render_background (context, cr, 0, 0, width, height);
 	if (priv->pb != NULL) {
-		GdkPixbuf* scaled = gdk_pixbuf_scale_simple(priv->pb, width, height, GDK_INTERP_BILINEAR);
-		cairo_surface_t* surf = scaled == NULL ? NULL : gdk_cairo_surface_create_from_pixbuf(scaled, 1, NULL);
-		if ((scaled == NULL) || (surf == NULL)) {
-			LERROR("OOM while scaling icon");
-			if (surf != NULL) cairo_surface_destroy(surf);
-			if (scaled != NULL) gdk_pixbuf_unref(scaled);
+		if (priv->has_colors) {
+			menu_icon_draw_pixbuf(priv->pb, cr, width, height, NULL);
 		} else {
-			if (priv->has_colors) {
-				cairo_set_source_surface(cr, surf, 0, 0);
-				cairo_rectangle(cr, 0, 0, width, height);
-			} else {
-				GdkRGBA color;
-				gtk_style_context_get_color(context, GTK_STATE_FLAG_NORMAL, &color);
-				gdk_cairo_set_source_rgba(cr, &color);
-				cairo_mask_surface(cr, surf, 0, 0);
-			}
-			cairo_fill(cr);
-			cairo_surface_destroy(surf);
-			gdk_pixbuf_unref(scaled);
+			GdkRGBA color;
+			gtk_style_context_get_color(context, GTK_STATE_FLAG_NORMAL, &color);
+			menu_icon_draw_pixbuf(priv->pb, cr, width, height, &color);
 		}
 	}
-	
 	return false;
 }
 
@@ -104,7 +124,8 @@ MenuIcon* menu_icon_new(const char* file_name, bool has_colors) {
 	g_signal_connect(G_OBJECT(o), "draw", G_CALLBACK(on_draw), NULL);
 	g_signal_connect(G_OBJECT(o), "size-allocate", G_CALLBACK(on_allocated), NULL);
 	g_signal_connect(G_OBJECT(o), "destroy", G_CALLBACK(on_destroy), NULL);
-	menu_icon_set_filename(MENU_ICON(o), file_name);
+	if (file_name != NULL)
+		menu_icon_set_filename(MENU_ICON(o), file_name);
 	menu_icon_set_has_colors(MENU_ICON(o), has_colors);
 	return MENU_ICON(o);
 }

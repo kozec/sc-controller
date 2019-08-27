@@ -151,6 +151,7 @@ bindings_lib = shared_library('scc-bindings',
 	c_args: [ '-Wl,--export-all-symbols ' ],
 	sources: [
 		'src/actions/parameter/tuple.c',
+		'src/tools/constants.c',
 		'src/tools/bindings.c',
 		'src/tools/paths.c',
 	]

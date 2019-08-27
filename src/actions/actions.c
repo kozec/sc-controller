@@ -149,6 +149,11 @@ void scc_action_init(Action* a, const char* type, ActionFlags flags,
 }
 
 
+bool scc_action_is_none(Action* a) {
+	ASSERT(a != NULL);
+	return (a->flags == AF_NONE);
+}
+
 bool scc_action_compress(Action** a) {
 	if ((a == NULL) || (*a == NULL) || ((*a)->compress == NULL)) return false;
 	Action* original = *a;
@@ -162,7 +167,6 @@ bool scc_action_compress(Action** a) {
 	*a = compressed;
 	return true;
 }
-
 
 char* scc_action_to_string(Action* a) {
 	ASSERT(a->to_string != NULL);

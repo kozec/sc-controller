@@ -270,7 +270,7 @@ size_t json_object_numkeys(json_object* o);
  * @warning Do not deallocate this key
  * @see json_object_numkeys
  */
-char* json_object_get_key(json_object* o, size_t i);
+const char* json_object_get_key(json_object* o, size_t i);
 
 /**
  * @brief Returns JSON value bound to this key.

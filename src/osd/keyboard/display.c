@@ -3,8 +3,10 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/iterable.h"
 #include "scc/utils/assert.h"
+#include "scc/osd/menu_icon.h"
 #include "scc/conversions.h"
 #include "scc/controller.h"
+#include "scc/profile.h"
 #include "scc/config.h"
 #include "scc/tools.h"
 #include "../osd.h"
@@ -20,6 +22,7 @@
 
 #define LINE_WIDTH			2
 #define FONT_SIZE			38
+#define HELP_FONT_SIZE		16
 
 /*
 static gboolean osd_keyboard_on_data_ready(GIOChannel* source, GIOCondition condition, gpointer _kbd) {
@@ -81,10 +84,32 @@ inline static void button_as_path(cairo_t* ctx, Button* b) {
 	cairo_rel_line_to(ctx, 0, -b->size.y);
 }
 
+static GdkPixbuf* get_button_pixbuf(OSDKeyboardPrivate* priv, SCButton button, int size) {
+	GdkPixbuf* pbuf = NULL;
+	GError* err = NULL;
+	if (intmap_get(priv->button_images, button, (any_t)&pbuf) == MAP_OK) {
+		// Already cached
+		return pbuf;
+	}
+	char* path = scc_find_button_image(button, false, NULL);
+	if (path != NULL) {
+		// TODO: Deallocate these
+		pbuf = gdk_pixbuf_new_from_file_at_size(path, size, size, &err);
+		free(path);
+		if (err != NULL) {
+			LERROR("Failed to load button image: %s", err->message);
+			pbuf = NULL;
+		}
+	}
+	intmap_put(priv->button_images, button, pbuf);
+	return pbuf;
+}
+
 bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 	OSDKeyboardPrivate* priv = (OSDKeyboardPrivate*)_priv;
 	StrBuilder* label = strbuilder_new();
 	cairo_font_extents_t fextents;
+	cairo_font_extents_t hextents;
 	ASSERT(priv->draw_area == draw_area);
 #ifndef _WIN32
 	XkbStateRec xkb_state;
@@ -105,8 +130,11 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 	// to default font.
 	cairo_select_font_face(ctx, "DejaVu Sans", 0, 0); // CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_set_line_width(ctx, LINE_WIDTH);
+	cairo_set_font_size(ctx, HELP_FONT_SIZE);
+	cairo_font_extents(ctx, &hextents);
 	cairo_set_font_size(ctx, FONT_SIZE);
 	cairo_font_extents(ctx, &fextents);
+	int scbutton_size = hextents.height;
 	
 	// Buttons
 	ListIterator it = iter_get(priv->buttons);
@@ -130,6 +158,21 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 		button_as_path(ctx, b);
 		cairo_stroke(ctx);
 		
+		// help icon
+		if (b->scbutton) {
+			GdkPixbuf* pbuf = get_button_pixbuf(priv, b->scbutton, scbutton_size);
+			if (pbuf != NULL) {
+				int height = gdk_pixbuf_get_height(pbuf);
+				cairo_save(ctx);
+				cairo_translate(ctx,
+					(int)(b->pos.x + b->size.x - scbutton_size - 2),
+					(int)(b->pos.y + b->size.y - height - 2)
+				);
+				menu_icon_draw_pixbuf(pbuf, ctx, 0, 0, &priv->color_text);
+				cairo_restore(ctx);
+			}
+		}
+		
 		// label
 		if ((b->keycode) || (b->label)) {
 			strbuilder_clear(label);
@@ -148,9 +191,18 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 				// TODO: Maybe use images
 				if (unicode == 8)
 					strbuilder_addf(label, "←");
+				else if (unicode == 9)
+					strbuilder_addf(label, "⇥");
 				else if (unicode == 13)
 					strbuilder_addf(label, "↲");
-				else if ((translated) && (unicode > 32)) // 32 = space
+				else if (unicode == 27)
+					strbuilder_addf(label, "esc");
+				else if (unicode == 32)
+					strbuilder_addf(label, " ");
+				else if (!translated && (b->keycode == 41))
+					// TODO: Find why is grave/tilde not getting translated
+					strbuilder_addf(label, "~");
+				else if (translated && (unicode > 32)) // 32 = space
 					strbuilder_addf(label, "%lc", unicode);
 			}
 #endif
@@ -184,50 +236,69 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 		cairo_restore(ctx);
 	}
 	
-	/*
-	# Overlay
-	Gdk.cairo_set_source_pixbuf(ctx, self.overlay.get_pixbuf(), 0, 0)
-	ctx.paint()
+	// TODO: Overlay? Is it really needed?
+	// Gdk.cairo_set_source_pixbuf(ctx, self.overlay.get_pixbuf(), 0, 0)
+	// ctx.paint()
 	
-	# Help
-	ctx.set_source_rgba(*self.color_text)
-	ctx.set_font_size(16)
-	ascent, descent, height, max_x_advance, max_y_advance = ctx.font_extents()
-	for left_right in (0, 1):
-		x, y, w, h = self._help_areas[left_right]
-		lines = self._help_lines[left_right]
-		xx = x if left_right == 0 else x + w
-		yy = y
-		for (icon, line) in lines:
-			yy += height
-			if yy > y + h:
-				break
-			image = self.get_button_image(icon, height * 0.9)
-			if image is None: continue
-			iw, ih = image.get_width(), image.get_height()
+	// Help
+	gdk_cairo_set_source_rgba(ctx, &priv->color_text);
+	cairo_set_font_size(ctx, HELP_FONT_SIZE);
+	
+	for (int align_right=0; align_right<=1; align_right++) {
+		int area_index = -1;
+		for (int i=0; i<MAX_HELP_AREAS; i++) {
+			if (priv->help_areas[i].align_right == align_right) {
+				area_index = i;
+				break;
+			}
+		}
+		if (area_index < 0) continue;
+		
+		struct HelpArea help_area = priv->help_areas[area_index];
+		FOREACH_IN(HelpLine*, line, priv->help_lines) {
+			if (line->align_right != align_right)
+				continue;
+			cairo_text_extents_t extents;
+			cairo_text_extents(ctx, line->text, &extents);
 			
-			if left_right == 1:	# Right align
-				extents = ctx.text_extents(line)
-				x_bearing, y_bearing, width, trash, x_advance, y_advance = extents
-				ctx.save()
-				ctx.translate(xx - height + (height - iw) * 0.5,
-					1 + yy - (ascent + ih) * 0.5)
-				Gdk.cairo_set_source_pixbuf(ctx, image, 0, 0)
-				ctx.paint()
-				ctx.restore()
-				ctx.move_to(xx - x_bearing - width - 5 - height, yy)
-			else:
-				ctx.save()
-				ctx.translate(1 + xx + (height - iw) * 0.5,
-					1 + yy - (ascent + ih) * 0.5)
-				Gdk.cairo_set_source_pixbuf(ctx, image, 0, 0)
-				ctx.paint()
-				ctx.restore()
-				ctx.move_to(xx + 5 + height, yy)
-				
-			ctx.show_text(line)
-			ctx.stroke()
-	*/
+			GdkPixbuf* pbuf = get_button_pixbuf(priv, line->scbutton, scbutton_size);
+			if (pbuf != NULL) {
+				cairo_save(ctx);
+				int height = gdk_pixbuf_get_height(pbuf);
+				if (help_area.align_right)
+					cairo_translate(ctx, (int)(help_area.limits.x1 - scbutton_size),
+									(int)(help_area.limits.y0 + (scbutton_size - height) * 0.5));
+				else
+					cairo_translate(ctx, (int)help_area.limits.x0,
+									(int)(help_area.limits.y0 + (scbutton_size - height) * 0.5));
+				menu_icon_draw_pixbuf(pbuf, ctx, 0, 0, &priv->color_text);
+				cairo_restore(ctx);
+			}
+			
+			cairo_save(ctx);
+			// TODO: Clip to area here?
+			if (help_area.align_right)
+				cairo_move_to(ctx,
+							(int)(help_area.limits.x1 - scbutton_size - extents.width - 2),
+							// TODO: I'm not sure if this calculation makes any kind of sense
+							(int)(help_area.limits.y0 + hextents.height + extents.y_bearing
+									+ (scbutton_size * 0.5)));
+			else
+				cairo_move_to(ctx,
+							(int)(help_area.limits.x0 + scbutton_size + 2),
+							// TODO: Same as above
+							(int)(help_area.limits.y0 + hextents.height + extents.y_bearing
+									+ (scbutton_size * 0.5)));
+			cairo_show_text(ctx, line->text);
+			cairo_restore(ctx);
+			if (help_area.limits.y0 + hextents.height > help_area.limits.y1) {
+				// Can't stuff more lines to this area
+				break;
+			} else {
+				help_area.limits.y0 += (int)(hextents.height + 2 + extents.y_bearing * 0.2);
+			}
+		}
+	}
 	
 	return false;
 }
@@ -235,6 +306,56 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 static bool on_keymap_state_changed(void* keymap, void* _priv) {
 	OSDKeyboardPrivate* priv = (OSDKeyboardPrivate*)_priv;
 	gtk_widget_queue_draw(GTK_WIDGET(priv->draw_area));
+	return false;
+}
+
+void generate_help_lines(OSDKeyboardPrivate* priv) {
+	const static SCButton buttons[2][5] = {
+		{ B_LGRIP, B_LB, B_START, B_X, B_Y },
+		{ B_RGRIP, B_RB, B_BACK , B_A, B_B }
+	};
+	Profile* p = priv->slave_mapper->get_profile(priv->slave_mapper);
+	list_clear(priv->help_lines);
+	if (p == NULL) return;
+	
+	for (int align_right=0; align_right<=1; align_right++) {
+		for (int j=0; j<sizeof(buttons[0]) / sizeof(SCButton); j++) {
+			SCButton scbutton = buttons[align_right][j];
+			Action* a = p->get_button(p, scbutton);
+			if (!scc_action_is_none(a)) {
+				HelpLine* line = malloc(sizeof(HelpLine));
+				if (line == NULL) {
+					// OOM. Nobody reads this text anyway, just bail out
+					return;
+				}
+				char* dsc = scc_action_get_description(a, AC_OSK);
+				line->scbutton = scbutton;
+				line->align_right = align_right;
+				strncpy(line->text, dsc, MAX_HELP_LINE_LEN);
+				free(dsc);
+				if (a->flags & AF_KEYCODE) {
+					Parameter* p = a->get_property(a, "keycode");
+					if (p != NULL) {
+						int keycode = scc_parameter_as_int(p);
+						RC_REL(p);
+						FOREACH_IN(struct Button*, b, priv->buttons) {
+							if (b->keycode == keycode) {
+								b->scbutton = scbutton;
+								free(line);
+								line = NULL;
+								break;
+							}
+						}
+					}
+				}
+				RC_REL(a);
+				if (line != NULL) {
+					if (!list_add(priv->help_lines, line))
+						free(line);
+				}
+			}
+		}
+	}
 }
 
 
@@ -254,6 +375,8 @@ bool init_display(OSDKeyboard* kbd, OSDKeyboardPrivate* priv) {
 	free(cursor_filename);
 	g_object_ref(priv->cursor_images[0]);
 	priv->cursor_images[1] = priv->cursor_images[0];
+	priv->button_images = intmap_new();
+	ASSERT(priv->button_images != NULL);
 #ifdef _WIN32
 	priv->keymap = NULL;
 #else

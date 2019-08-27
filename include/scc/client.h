@@ -145,7 +145,8 @@ DLL_EXPORT void sccc_unref(SCCClient* c);
  */
 DLL_EXPORT Mapper* sccc_slave_mapper_new(SCCClient* c);
 
-// TODO: Deallocator for above
+/** Deallocates Slave Mapper */
+DLL_EXPORT void sccc_slave_mapper_free(Mapper* m, bool close_attached_devices);
 
 typedef struct VirtualDevice VirtualDevice;
 
@@ -167,6 +168,7 @@ DLL_EXPORT void sccc_slave_mapper_feed(Mapper* mapper, SCButton button, PadStick
 /**
  * Converts SCCClient to GSource and adds source to main loop.
  * Use g_source_set_callback to recieve events.
+ * Use g_source_unref to deallocate created object.
  */
 DLL_EXPORT GSource* scc_gio_client_to_gsource(SCCClient* c);
 

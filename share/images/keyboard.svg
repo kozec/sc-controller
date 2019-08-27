@@ -13,7 +13,7 @@
    viewBox="0 0 799.99997 404.99999"
    width="800"
    sodipodi:docname="keyboard.svg"
-   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
+   inkscape:version="0.92.4 5da689c313, 2019-01-14">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -29,16 +29,16 @@
      showguides="true"
      units="px"
      inkscape:current-layer="labels_visible"
-     inkscape:cx="257.16043"
+     inkscape:cx="338.74538"
      inkscape:cy="61.228508"
      inkscape:document-units="px"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:window-height="792"
-     inkscape:window-maximized="0"
-     inkscape:window-width="1918"
-     inkscape:window-x="768"
-     inkscape:window-y="291"
+     inkscape:window-height="1032"
+     inkscape:window-maximized="1"
+     inkscape:window-width="1855"
+     inkscape:window-x="65"
+     inkscape:window-y="0"
      inkscape:zoom="2.56" />
   <metadata
      id="metadata7">
@@ -1517,7 +1517,7 @@
       </g>
     </g>
     <rect
-       height="77.907387"
+       height="78"
        id="HELP_LEFT"
        style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#1cff13;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        width="103.37088"
@@ -1529,7 +1529,7 @@
        width="105.58063"
        style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#1cff13;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        id="HELP_RIGHT"
-       height="77.941742" />
+       height="78" />
   </g>
   <g
      inkscape:groupmode="layer"
@@ -1539,7 +1539,7 @@
     <flowRoot
        xml:space="preserve"
        id="flowRoot1158"
-       style="fill:black;stroke:none;stroke-opacity:1;stroke-width:1px;stroke-linejoin:miter;stroke-linecap:butt;fill-opacity:1;font-family:sans-serif;font-style:normal;font-weight:normal;font-size:40px;line-height:125%;letter-spacing:0px;word-spacing:0px"><flowRegion
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"><flowRegion
          id="flowRegion1160"><rect
            id="rect1162"
            width="98.330536"

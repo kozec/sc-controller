@@ -39,8 +39,8 @@ static inline bool load_limit(struct Limits* limit, json_array* arr) {
 	}
 	limit->x0 = json_array_get_double(arr, 0, NULL);
 	limit->y0 = json_array_get_double(arr, 1, NULL);
-	limit->x1 = json_array_get_double(arr, 2, NULL);
-	limit->y1 = json_array_get_double(arr, 3, NULL);
+	limit->x1 = limit->x0 + json_array_get_double(arr, 2, NULL);
+	limit->y1 = limit->y0 + json_array_get_double(arr, 3, NULL);
 	return true;
 }
 
@@ -81,7 +81,6 @@ bool load_keyboard_data(const char* filename, OSDKeyboardPrivate* priv) {
 	);
 	
 	json_object* json_limits;
-	// json_array* json_limit;
 	if ((json_limits = json_object_get_object(root, "limits")) == NULL)
 		return false;
 	if (!load_limit(&priv->limits[0], json_object_get_array(json_limits, "left")))
@@ -90,6 +89,22 @@ bool load_keyboard_data(const char* filename, OSDKeyboardPrivate* priv) {
 		return false;
 	if (!load_limit(&priv->limits[2], json_object_get_array(json_limits, "cpad")))
 		return false;
+	
+	for (size_t i=0; i<MAX_HELP_AREAS; i++) {
+		priv->help_areas[i].limits.x0 = 0; priv->help_areas[i].limits.y0 = 0;
+		priv->help_areas[i].limits.x1 = 0; priv->help_areas[i].limits.y1 = 0;
+	}
+	int area_index = 0;
+	json_array* help_areas = json_object_get_array(root, "help_areas");
+	for (size_t i=0; i<json_array_size(help_areas); i++) {
+		json_object* json_b = json_array_get_object(help_areas, i);
+		json_array* limits = json_object_get_array(json_b, "limit");
+		char* align = json_object_get_string(json_b, "align");
+		if ((limits == NULL) || (align == NULL)) continue;
+		load_limit(&priv->help_areas[area_index].limits, limits);
+		priv->help_areas[area_index++].align_right = (strstr(align, "right") != NULL);
+		if (area_index >= MAX_HELP_AREAS) break;
+	}
 	
 	for (size_t i=0; i<json_array_size(buts); i++) {
 		json_object* json_b = json_array_get_object(buts, i);
@@ -117,6 +132,7 @@ bool load_keyboard_data(const char* filename, OSDKeyboardPrivate* priv) {
 		}
 		b->pressed = b->hilighted = false;
 		b->action = ACTION(aoe);
+		b->scbutton = 0;
 		b->keycode = 0;
 		b->dark = json_object_get_bool_default(json_b, "dark", false);
 		if (b->action->flags & AF_KEYCODE) {
@@ -140,5 +156,4 @@ load_keyboard_data_oom:
 	json_free_context(json_ctx);
 	return false;
 }
-
 

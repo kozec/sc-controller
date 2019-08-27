@@ -15,12 +15,18 @@ G_BEGIN_DECLS
 typedef struct _OSDKeyboard				OSDKeyboard;
 typedef struct _OSDKeyboardClass		OSDKeyboardClass;
 
+typedef struct OSDKeyboardOptions {
+	const char*			filename;
+} OSDKeyboardOptions;
+
 typedef struct OSDKeyboardCallbacks {
 	
 } OSDKeyboardCallbacks;
 
 DLL_EXPORT GType osd_keyboard_get_type(void) G_GNUC_CONST;
-DLL_EXPORT OSDKeyboard* osd_keyboard_new(const char* filename);
+/** Returns 0 on success, negative number on failured */
+DLL_EXPORT int osd_keyboard_parse_args(OSDKeyboardOptions* options, int argc, char** argv);
+DLL_EXPORT OSDKeyboard* osd_keyboard_new(OSDKeyboardOptions* options);
 
 G_END_DECLS
 

@@ -316,7 +316,7 @@ size_t json_object_numkeys(json_object* o) {
 	return o->n;
 }
 
-char* json_object_get_key(json_object* o, size_t i) {
+const char* json_object_get_key(json_object* o, size_t i) {
 	if (o == NULL || i >= o->n)
 		return NULL;
 	return o->keys[i];

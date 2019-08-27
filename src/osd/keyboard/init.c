@@ -1,4 +1,6 @@
 #define LOG_TAG "OSD"
+#include "scc/utils/strbuilder.h"
+#include "scc/utils/argparse.h"
 #include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
 #include "scc/osd/osd_keyboard.h"
@@ -77,14 +79,44 @@ static void osd_keyboard_stick(int dx, int dy, void* userdata) {
 
 static void osd_keyboard_init(OSDKeyboard* kbd) {
 	OSDKeyboardPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(kbd, OSD_KEYBOARD_TYPE, OSDKeyboardPrivate);
+	memset(priv, 0, sizeof(OSDKeyboardPrivate));
 	priv->buttons = list_new(Button, 0);
+	priv->help_lines = list_new(HelpLine, 9);
 	ASSERT(priv->buttons);
+	ASSERT(priv->help_lines);
+	list_set_dealloc_cb(priv->help_lines, free);
 	priv->client = NULL;
 	priv->controller_id = NULL;
 }
 
+static const char *const usage[] = {
+	"scc-osd-keyboard -f <filename>",
+	NULL,
+};
 
-OSDKeyboard* osd_keyboard_new(const char* filename) {
+
+int osd_keyboard_parse_args(OSDKeyboardOptions* options, int argc, char** argv) {
+	struct argparse_option argopts[] = {
+		OPT_HELP(),
+		OPT_GROUP("Basic options"),
+		OPT_STRING('f', NULL, &options->filename, "keyboard definition file to use"),
+		OPT_END(),
+	};
+	options->filename = NULL;
+	struct argparse argparse;
+	argparse_init(&argparse, argopts, usage, 0);
+	argparse_describe(&argparse, "\nDisplays on-screen keyboard", NULL);
+	argc = argparse_parse(&argparse, argc, (const char**)argv);
+	if (argc < 0)
+		return -1;
+	if (options->filename == NULL) {
+		options->filename = strbuilder_fmt("%s/keyboard.json", scc_get_share_path());
+		ASSERT(options->filename != NULL);
+	}
+	return 0;
+}
+
+OSDKeyboard* osd_keyboard_new(OSDKeyboardOptions* options) {
 	SCCClient* client = sccc_connect();
 	if (client == NULL) {
 		LERROR("Failed to connect to scc-daemon");
@@ -99,7 +131,9 @@ OSDKeyboard* osd_keyboard_new(const char* filename) {
 	
 	vec_set(priv->size, 10, 10);
 	priv->slave_mapper = sccc_slave_mapper_new(client);
-	ASSERT(priv->slave_mapper);
+	if (priv->slave_mapper == NULL)
+		goto osd_keyboard_new_failed;
+	
 	priv->client = client;
 	priv->client->userdata = kbd;
 	priv->client->on_ready = &osd_keyboard_on_connection_ready;
@@ -111,23 +145,33 @@ OSDKeyboard* osd_keyboard_new(const char* filename) {
 	
 	int err;
 	char* osd_kbd_pro = scc_find_profile(".scc-osd.keyboard");
-	Profile* profile = (filename == NULL) ? NULL : scc_profile_from_json(osd_kbd_pro, &err);
+	Profile* profile = scc_profile_from_json(osd_kbd_pro, &err);
 	free(osd_kbd_pro);
-	if ((profile == NULL) || !load_keyboard_data(filename, priv)) {
+	if ((profile == NULL) || !load_keyboard_data(options->filename, priv)) {
 		RC_REL(profile);
 		osd_window_exit(OSD_WINDOW(kbd), 1);
-		return NULL;
+		goto osd_keyboard_new_failed;
 	}
 	priv->slave_mapper->set_profile(priv->slave_mapper, profile, false);
 	RC_REL(profile);
 	
-	GSource* src = scc_gio_client_to_gsource(client);
-	g_source_set_callback(src, (GSourceFunc)osd_keyboard_on_data_ready, kbd, NULL);
+	priv->client_src = scc_gio_client_to_gsource(client);
+	g_source_set_callback(priv->client_src,
+			(GSourceFunc)osd_keyboard_on_data_ready, kbd, NULL);
 	
 	if (!init_display(kbd, priv))
 		// TODO: Do I need to deallocate something here?
-		return NULL;
+		goto osd_keyboard_new_failed;
 	
+	generate_help_lines(priv);
 	return kbd;
+
+osd_keyboard_new_failed:
+	if (priv->slave_mapper != NULL)
+		sccc_slave_mapper_free(priv->slave_mapper, true);
+	if (priv->client_src != NULL)
+		g_source_unref(priv->client_src);
+	RC_REL(priv->client);
+	return NULL;
 }
 

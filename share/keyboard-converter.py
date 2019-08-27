@@ -189,7 +189,13 @@ if __name__ == "__main__":
 	tree = ET.fromstring(open(sys.argv[1], "r").read())
 	find_areas(tree, None, areas, get_colors=True)
 	
-	help_areas = { x: get_limit(tree, x) for x in ("HELP_LEFT", "HELP_RIGHT") }
+	help_areas = [
+		{
+			"limit": get_limit(tree, x),
+			"align": "right" if "right" in x.lower() else "left"
+		}
+		for x in ("HELP_LEFT", "HELP_RIGHT")
+	]
 	help_lines = ( [], [] )
 	limits = { x[6:].lower(): get_limit(tree, x) for x in ( "LIMIT_LEFT", "LIMIT_RIGHT", "LIMIT_CPAD" ) }
 	
