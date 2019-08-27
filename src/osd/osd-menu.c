@@ -35,6 +35,8 @@ int main(int argc, char** argv) {
 	argparse_init(&argparse, options, usage, 0);
 	argparse_describe(&argparse, "\nDisplays on-screen menu", NULL);
 	argc = argparse_parse(&argparse, argc, (const char**)argv);
+	if (argc < 0)
+		return 1;
 	if (filename == NULL) {
 		argparse_usage(&argparse);
 		return 1;

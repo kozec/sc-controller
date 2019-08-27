@@ -36,6 +36,8 @@ int main(int argc, char** argv) {
 	argparse_init(&argparse, options, usage, 0);
 	argparse_describe(&argparse, "\nDisplays on-screen keyboard", NULL);
 	argc = argparse_parse(&argparse, argc, (const char**)argv);
+	if (argc < 0)
+		return 1;
 	if (filename == NULL) {
 		filename = strbuilder_fmt("%s/keyboard.json", scc_get_share_path());
 		ASSERT(filename != NULL);

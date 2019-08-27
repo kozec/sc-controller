@@ -43,7 +43,6 @@ argparse_error(struct argparse *self, const struct argparse_option *opt,
     } else {
         fprintf(stderr, "error: option `-%c` %s\n", opt->short_name, reason);
     }
-    exit(1);
 }
 
 static int
@@ -80,6 +79,7 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
             *(const char **)opt->value = *++self->argv;
         } else {
             argparse_error(self, opt, "requires a value", flags);
+            return -3;
         }
         break;
     case ARGPARSE_OPT_INTEGER:
@@ -92,11 +92,16 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
             *(int *)opt->value = strtol(*++self->argv, (char **)&s, 0);
         } else {
             argparse_error(self, opt, "requires a value", flags);
+            return -3;
         }
-        if (errno) 
+        if (errno)  {
             argparse_error(self, opt, strerror(errno), flags);
-        if (s[0] != '\0')
+            return -3;
+        }
+        if (s[0] != '\0') {
             argparse_error(self, opt, "expects an integer value", flags);
+            return -3;
+        }
         break;
     case ARGPARSE_OPT_FLOAT:
         errno = 0; 
@@ -109,10 +114,14 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
         } else {
             argparse_error(self, opt, "requires a value", flags);
         }
-        if (errno) 
+        if (errno) {
             argparse_error(self, opt, strerror(errno), flags);
-        if (s[0] != '\0')
+            return -3;
+        }
+        if (s[0] != '\0') {
             argparse_error(self, opt, "expects a numerical value", flags);
+            return -3;
+        }
         break;
     default:
         assert(0);
@@ -245,6 +254,8 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
                 break;
             case -2:
                 goto unknown;
+            case -3:
+                return -3;
             }
             while (self->optvalue) {
                 switch (argparse_short_opt(self, self->options)) {
@@ -252,6 +263,8 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
                     break;
                 case -2:
                     goto unknown;
+                case -3:
+                    return -3;
                 }
             }
             continue;
@@ -268,13 +281,15 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
             break;
         case -2:
             goto unknown;
+        case -3:
+            return -3;
         }
         continue;
 
 unknown:
         fprintf(stderr, "error: unknown option `%s`\n", self->argv[0]);
         argparse_usage(self);
-        exit(1);
+        return -1;
     }
 
 end:
@@ -381,5 +396,5 @@ argparse_help_cb(struct argparse *self, const struct argparse_option *option)
 {
     (void)option;
     argparse_usage(self);
-    exit(0);
+    return 0;
 }

@@ -117,9 +117,15 @@ int argparse_help_cb(struct argparse *self,
 
 int argparse_init(struct argparse *self, struct argparse_option *options,
                   const char *const *usages, int flags);
+
 void argparse_describe(struct argparse *self, const char *description,
                        const char *epilog);
+
+/**
+ * Returns index of next not-parsed agument or negative number in case of error.
+ */
 int argparse_parse(struct argparse *self, int argc, const char **argv);
+
 void argparse_usage(struct argparse *self);
 
 #ifdef __cplusplus
