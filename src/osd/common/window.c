@@ -66,7 +66,7 @@ static void osd_window_show(GtkWidget* widget) {
 	if (y < 0)	// Negative Y position is counted from bottom border
 		y = gdk_screen_get_height(scr) - gtk_widget_get_allocated_height(widget) + y + 1;
 #ifdef _WIN32
-	GdkWindow* gdk_window = gtk_widget_get_window(GTK_WIDGET(w));
+	GdkWindow* gdk_window = gtk_widget_get_window(GTK_WIDGET(widget));
 	HWND hwnd = gdk_win32_window_get_handle(gdk_window);
 	LONG style = GetWindowLong(hwnd, GWL_EXSTYLE);
 	SetWindowLong(hwnd, GWL_EXSTYLE, style | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_NOACTIVATE);

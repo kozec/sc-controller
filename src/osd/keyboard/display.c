@@ -23,7 +23,6 @@
 #define FONT_SIZE			38
 #define HELP_FONT_SIZE		16
 
-
 inline static void button_as_path(cairo_t* ctx, Button* b) {
 	cairo_move_to(ctx, b->pos.x, b->pos.y);
 	cairo_rel_line_to(ctx, b->size.x, 0);
@@ -72,7 +71,15 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 	// For that reason, DejaVu Sans is hardcoded for now. On systems
 	// where DejaVu Sans is not available, Cairo will automatically fallback
 	// to default font.
+#ifndef _WIN32
 	cairo_select_font_face(ctx, "DejaVu Sans", 0, 0); // CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+#else
+	cairo_select_font_face(ctx, "Verdana Normal", 0, 0); // CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+	// Arial Normal
+	// Arial Bold
+	// Tahoma Normal
+	// Verdana Normal
+#endif
 	cairo_set_line_width(ctx, LINE_WIDTH);
 	cairo_set_font_size(ctx, HELP_FONT_SIZE);
 	cairo_font_extents(ctx, &hextents);
@@ -124,12 +131,11 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 		// label
 		if ((b->keycode) || (b->label)) {
 			strbuilder_clear(label);
-#ifndef _WIN32
 			if (b->keycode) {
+#ifndef _WIN32
 				// LOG(" >> current group: %i", xkb_state.group);
 				guint mt = gdk_keymap_get_modifier_state(priv->keymap);
 				GdkModifierType consumed_modifiers;
-				// gint effective_group, level;
 				guint keyval;
 				bool translated = gdk_keymap_translate_keyboard_state(
 							priv->keymap, scc_keycode_to_x11(b->keycode),
@@ -152,8 +158,12 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 					strbuilder_addf(label, "~");
 				else if (translated && (unicode > 32)) // 32 = space
 					strbuilder_addf(label, "%lc", unicode);
-			}
+#else
+				char* str = scc_action_get_description(b->action, AC_OSD);
+				strbuilder_addf(label, "%s", str);
+				free(str);
 #endif
+			}
 			if (strbuilder_len(label) == 0) {
 				if (b->label != NULL)
 					strbuilder_add(label, (char*)b->label);
@@ -272,13 +282,10 @@ bool init_display(OSDKeyboard* kbd, OSDKeyboardPrivate* priv) {
 	priv->cursors[1].image = priv->cursors[0].image;
 	priv->button_images = intmap_new();
 	ASSERT(priv->button_images != NULL);
-#ifdef _WIN32
-	priv->keymap = NULL;
-#else
 	priv->keymap = gdk_keymap_get_for_display(gdk_display_get_default());
 	ASSERT(priv->keymap != NULL);
 	g_signal_connect(G_OBJECT(priv->keymap), "state-changed", (GCallback)&on_keymap_state_changed, priv);
-#endif
+	
 	load_colors(priv);
 	gtk_widget_set_size_request(GTK_WIDGET(priv->draw_area), priv->size.x, priv->size.y);
 	g_signal_connect(G_OBJECT(priv->draw_area), "draw", (GCallback)&on_redraw, priv);

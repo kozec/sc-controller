@@ -81,9 +81,28 @@ static char* describe(Action* a, ActionDescContext ctx) {
 	case KEY_RIGHTALT:		return strbuilder_cpy((ctx == AC_OSD) ? "Alt" : "RAlt");
 	case KEY_LEFTCTRL:		return strbuilder_cpy((ctx == AC_OSD) ? "CTRL" : "LControl");
 	case KEY_RIGHTCTRL:		return strbuilder_cpy((ctx == AC_OSD) ? "CTRL" : "RControl");
+#ifndef _WIN32
 	case KEY_BACKSPACE:		return strbuilder_cpy((ctx == AC_OSD) ? "Bcksp" : "Backspace");
 	case KEY_SPACE:			return strbuilder_cpy("Space");
 	case KEY_TAB:			return strbuilder_cpy("Tab");
+#else
+	case KEY_BACKSPACE:		return strbuilder_cpy((ctx == AC_OSD) ? "<-" : "Backspace");
+	// case KEY_ENTER:			return strbuilder_cpy((ctx == AC_OSD) ? "↲" : "Enter");
+	case KEY_ENTER:			return strbuilder_cpy((ctx == AC_OSD) ? "◄┘" : "Enter");
+	case KEY_SPACE:			return strbuilder_cpy((ctx == AC_OSD) ? " " : "Space");
+	case KEY_COMMA:			return strbuilder_cpy((ctx == AC_OSD) ? "," : "Comma");
+	case KEY_DOT:			return strbuilder_cpy((ctx == AC_OSD) ? "." : "Dot");
+	case KEY_SEMICOLON:		return strbuilder_cpy((ctx == AC_OSD) ? ";" : "Semicolon");
+	case KEY_GRAVE:			return strbuilder_cpy("`");
+	case KEY_EQUAL:			return strbuilder_cpy("=");
+	case KEY_MINUS:			return strbuilder_cpy((ctx == AC_OSD) ? "-" : "Minus");
+	case KEY_TAB:			return strbuilder_cpy((ctx == AC_OSD) ? "⇥" : "Tab");
+	case KEY_APOSTROPHE:	return strbuilder_cpy((ctx == AC_OSD) ? "'" : "Apostrophe");
+#endif
+	case KEY_LEFTBRACE:		return strbuilder_cpy("[");
+	case KEY_RIGHTBRACE:	return strbuilder_cpy("]");
+	case KEY_BACKSLASH:		return strbuilder_cpy("\\");
+	case KEY_SLASH:			return strbuilder_cpy("/");
 	default:
 		keyname = scc_get_key_name(b->button[0]);
 		if (keyname != NULL)
