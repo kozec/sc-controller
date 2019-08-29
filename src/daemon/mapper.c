@@ -53,8 +53,6 @@ static void input(Mapper* _m, ControllerInput* i);
 
 static const char* SCCD_MAPPER_TYPE = "SCCD";
 
-extern char** environ;
-
 
 static void set_profile(Mapper* _m, Profile* p, bool cancel_effects) {
 	SCCDMapper* m = container_of(_m, SCCDMapper, mapper);
@@ -218,20 +216,21 @@ static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data
 		if (menu == NULL)
 			LERROR("Could not find menu '%s'", sa_menu_data->menu_id);
 		if ((scc_osd_menu != NULL) && (menu != NULL)) {
-#ifndef _WIN32
-			char* argv[] = { scc_osd_menu, "-f", menu, NULL };
-			pid_t pid;
-			posix_spawn(&pid, scc_osd_menu, NULL, NULL, argv, environ);
-			if (pid < 0)
-				LERROR("Fork failed: %s", strerror(errno));
-#else
-			intptr_t pid = _spawnl(_P_NOWAIT, scc_osd_menu, scc_osd_menu, "-f", menu, NULL);
-			if (pid == 0)
-				LERROR("Failed to execute %s: %i", scc_osd_menu, GetLastError());
-#endif
+			const char* argv[] = { scc_osd_menu, "-f", menu, NULL };
+			scc_spawn(argv, 0);
 		}
 		free(scc_osd_menu);
 		free(menu);
+		return true;
+	}
+	case SAT_KEYBOARD: {
+		char* scc_osd_keyboard = scc_find_binary("scc-osd-keyboard");
+		if (scc_osd_keyboard == NULL) {
+			LERROR("Could not find 'scc-osd-keyboard'");
+		} else {
+			const char* argv[] = { scc_osd_keyboard, NULL };
+			scc_spawn(argv, 0);
+		}
 		return true;
 	}
 	case SAT_CEMUHOOK:

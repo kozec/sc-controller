@@ -6,6 +6,7 @@
 #include "scc/osd/osd_window.h"
 #include "scc/osd/osd_menu.h"
 #include "scc/osd/menu_icon.h"
+#include "scc/special_action.h"
 #include "scc/controller.h"
 #include "scc/menu_data.h"
 #include "scc/config.h"
@@ -313,18 +314,32 @@ void osd_menu_next_item(OSDMenu* mnu, int direction) {
 	}
 }
 
+static bool osd_menu_sa_handler(Mapper* m, unsigned int sa_action_type, void* sa_data) {
+	if (sa_action_type == SAT_KEYBOARD) {
+		char* scc_osd_keyboard = scc_find_binary("scc-osd-keyboard");
+		if (scc_osd_keyboard == NULL) {
+			LERROR("Could not find 'scc-osd-keyboard'");
+		} else {
+			// On Windows, scc-osd-keyboard.exe may start before menu sucessfully exits,
+			// what causes keyboard to fail to acquire locks. To prevent that, lock
+			// is released before keyboard is displayed.
+			OSDMenu* mnu = OSD_MENU(sccc_slave_mapper_get_userdata(m));
+			OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+			sccc_unlock_all(priv->client);
+			const char* argv[] = { scc_osd_keyboard, NULL };
+			scc_spawn(argv, 0);
+		}
+		return true;
+	}
+	return false;
+}
+
 /** Configures menu to use already connected client */
 void osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	priv->client = client;
-	if (slave_mapper == NULL) {
-		WARN("osd_menu_set_client: creating new slave mapper");
-		priv->slave_mapper = sccc_slave_mapper_new(client);
-		// TODO: Handle OOM here?
-		ASSERT(priv->slave_mapper);
-	} else {
-		priv->slave_mapper = slave_mapper;
-	}
+	ASSERT(slave_mapper);
+	priv->slave_mapper = slave_mapper;
 	g_signal_emit_by_name(G_OBJECT(mnu), "ready");
 }
 
@@ -345,6 +360,8 @@ void osd_menu_connect(OSDMenu* mnu) {
 		osd_window_exit(OSD_WINDOW(mnu), 4);
 		return;
 	}
+	sccc_slave_mapper_set_userdata(priv->slave_mapper, mnu);
+	sccc_slave_mapper_set_sa_handler(priv->slave_mapper, osd_menu_sa_handler);
 	
 	priv->client = client;
 	priv->client->userdata = mnu;

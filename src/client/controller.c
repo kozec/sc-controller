@@ -159,6 +159,18 @@ uint32_t sccc_get_controller_handle(SCCClient* _c, const char* id) {
 	return 0;
 }
 
+bool sccc_unlock_all(SCCClient* _c) {
+	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
+	int32_t id = sccc_request(&c->client, "Unlock.");
+	char* buffer = sccc_get_response(&c->client, id);
+	if (sccc_is_ok(buffer)) {
+		free(buffer);
+		return true;
+	}
+	free(buffer);
+	return false;
+}
+
 const char* sccc_get_controller_id(SCCClient* _c, int handle) {
 	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
 	ControllerData* cd = get_data_by_handle(c, handle);

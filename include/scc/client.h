@@ -107,6 +107,13 @@ DLL_EXPORT const char* sccc_get_controller_id(SCCClient* c, int handle);
 #define sccc_lock(c, handle, ...) _sccc_lock(c, handle, __VA_ARGS__, NULL)
 DLL_EXPORT bool _sccc_lock(SCCClient* c, int handle, const char* src1, ...);
 
+/**
+ * Unlocks all button, axes or pads locked by calls to sccc_lock.
+ *
+ * Returns true on success (which should be always) or false
+ * if connection to daemon fails.
+ */
+DLL_EXPORT bool sccc_unlock_all(SCCClient* c);
 
 /**
  * Makes simple request that expects one of "Ok." or "Fail: something" as response.

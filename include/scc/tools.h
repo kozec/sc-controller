@@ -243,3 +243,12 @@ char* scc_realpath(char* path, char* resolved_path);
  */
 char* scc_path_strip_extension(const char* path);
 
+/**
+ * Spawns background process using posix_spawn or _spawnv.
+ * argv has to be NULL-terminated and contain arg0.
+ * 'options' is currenly unused and has to be set to 0.
+ *
+ * Returns PID of created process or negative number in case of failure.
+ */
+intptr_t scc_spawn(const char** argv, uint32_t options);
+

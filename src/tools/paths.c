@@ -49,6 +49,8 @@ static char default_menuicons_path[PATH_MAX + 128] = {0};
 static char default_button_images_path[PATH_MAX + 128] = {0};
 static char pid_file_path[PATH_MAX] = {0};
 
+extern char** environ;
+
 const char* scc_get_config_path() {
 	if (config_path[0] != 0)
 		// Return cached value
@@ -245,11 +247,13 @@ const char* scc_get_exe_path() {
 // TODO: This, but properly
 char* scc_find_binary(const char* name) {
 	const char* paths[] = {
-#ifndef _WIN32
+#ifdef _WIN32
+		scc_get_exe_path(),
+		"src/osd",
+		"src/daemon",
+#else
 		"./",
 		"./tools",
-#else
-		scc_get_exe_path(),
 #endif
 		"./build/src/osd",
 		"./build/src/daemon",
@@ -276,6 +280,27 @@ char* scc_find_binary(const char* name) {
 	
 	strbuilder_free(sb);
 	return NULL;
+}
+
+intptr_t scc_spawn(const char** argv, uint32_t options) {
+	ASSERT(options == 0);
+#ifdef _WIN32
+	char* arg0 = argv[0];
+	intptr_t pid = _spawnv(_P_NOWAIT, arg0, argv);
+	if (pid == 0) {
+		LERROR("Failed to execute %s: %i", argv[0], GetLastError());
+		return -1;
+	}
+	return pid;
+#else
+	pid_t pid;
+	int err = posix_spawn(&pid, argv[0], NULL, NULL, argv, environ);
+	if (pid < 0) {
+		LERROR("Fork failed: %s", strerror(errno));
+		return -1;
+	}
+	return pid;
+#endif
 }
 
 #ifdef _WIN32

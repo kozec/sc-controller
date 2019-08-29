@@ -55,7 +55,6 @@ static void sa_menu_dealloc(Action* a) {
 
 // For button press, release and trigger, it's safe to assume that they are being pressed...
 static void button_press(Action* a, Mapper* m) {
-	LOG("button_press on menu item selected");
 	SAMenuAction* sa = container_of(a, SAMenuAction, action);
 	if ((m->special_action == NULL) || !m->special_action(m, SAT_MENU, &sa->data))
 		DWARN("Mapper lacks support for 'menu'");
