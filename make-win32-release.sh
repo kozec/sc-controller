@@ -27,6 +27,7 @@ GTK_ICONS=(
 		ui/window-minimize-symbolic.symbolic.png
 		actions/list-add-symbolic.symbolic.png
 		actions/list-remove-symbolic.symbolic.png
+		actions/list-remove.png
 		ui/pan-up-symbolic.symbolic.png
 		ui/pan-start-symbolic.symbolic.png
 		ui/pan-end-symbolic.symbolic.png
