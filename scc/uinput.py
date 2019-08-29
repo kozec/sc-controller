@@ -246,7 +246,7 @@ class UInput(object):
 		c_version  = ctypes.c_uint16(version)
 		c_keyboard = ctypes.c_int(keyboard)
 		c_rumble = ctypes.c_int(MAX_FEEDBACK_EFFECTS if rumble else 0)
-		c_name = ctypes.c_char_p(name)
+		c_name = ctypes.c_char_p(name.encode("utf-8"))
 		
 		self._fd = self._lib.uinput_init(ctypes.c_int(len(self._k)),
 										 c_k,

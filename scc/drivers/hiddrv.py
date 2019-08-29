@@ -590,7 +590,7 @@ class HIDDrv(object):
 					log.warning("Ignoring file that cannot be parsed: %s", name)
 					continue
 				
-				self.config_files[vid, pid] = config_file
+				self.config_files[vid, pid] = config_file.decode("utf-8")
 				self.configs[vid, pid] = config
 				known.add((vid, pid))
 		
@@ -688,3 +688,4 @@ if __name__ == "__main__":
 	init_logging()
 	set_logging_level(True, True)
 	sys.exit(hiddrv_test(HIDController, sys.argv[1:]))
+

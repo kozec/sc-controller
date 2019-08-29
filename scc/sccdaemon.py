@@ -597,7 +597,8 @@ class SCCDaemon(Daemon):
 		"""
 		for c in self.controllers:
 			method(("Controller: %s %s %s %s\n" % (
-				c.get_id(), c.get_type(), c.flags, c.get_gui_config_file()
+				c.get_id(), c.get_type(), c.flags,
+				c.get_gui_config_file()
 			)).encode("utf-8"))
 		method(("Controller Count: %s\n" % (len(self.controllers),)).encode("utf-8"))
 	

@@ -148,7 +148,7 @@ class EvdevController(Controller):
 	
 	
 	def __repr__(self):
-		return "<Evdev %s>" % (self.device.name,)
+		return "<Evdev %s>" % (self.device.name.decode("utf-8"),)
 	
 	
 	def input(self, *a):
@@ -408,7 +408,7 @@ class EvdevDriver(object):
 				log.exception(e)
 				return False
 			try:
-				controller = EvdevController(self.daemon, dev, config_file, config)
+				controller = EvdevController(self.daemon, dev, config_file.decode("utf-8"), config)
 			except Exception, e:
 				log.debug("Failed to add evdev device: %s", e)
 				log.exception(e)
@@ -558,3 +558,4 @@ if __name__ == "__main__":
 	init_logging()
 	set_logging_level(True, True)
 	sys.exit(evdevdrv_test(sys.argv[1:]))
+
