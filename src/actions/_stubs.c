@@ -14,7 +14,6 @@
 
 const char* KW_CIRCULAR = "circular";
 const char* KW_CIRCULAR_ABS = "circularabs";
-const char* KW_KEYBOARD = "keyboard";
 const char* KW_RESETGYRO = "resetgyro";
 const char* KW_CLEAROSD = "clearosd";
 const char* KW_OSD = "osd";
@@ -96,10 +95,6 @@ static ActionOE stub_constructor(const char* keyword, ParameterList params) {
 		keyword = KW_CIRCULAR_ABS;
 		flags = AF_ACTION;
 		pc = &pc_circular;
-	} else if (0 == strcmp(KW_KEYBOARD, keyword)) {
-		keyword = KW_KEYBOARD;
-		flags = AF_ACTION;
-		pc = &pc_no_args;
 	} else if (0 == strcmp(KW_RESETGYRO, keyword)) {
 		keyword = KW_RESETGYRO;
 		flags = AF_ACTION;
@@ -223,7 +218,6 @@ void scc_actions_init_stub() {
 	
 	scc_action_register(KW_CIRCULAR, &stub_constructor);
 	scc_action_register(KW_CIRCULAR_ABS, &stub_constructor);
-	scc_action_register(KW_KEYBOARD, &stub_constructor);
 	scc_action_register(KW_RESETGYRO, &stub_constructor);
 	scc_action_register(KW_CLEAROSD, &stub_constructor);
 	scc_action_register(KW_OSD, &stub_constructor);
