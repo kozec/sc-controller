@@ -17,14 +17,15 @@ GTK_ICONS=(
 		legacy/dialog-information.png
 		legacy/dialog-warning.png
 		legacy/dialog-error.png
+		legacy/window-close.png
 		ui/checkbox-symbolic.symbolic.png
 		ui/checkbox-mixed-symbolic.symbolic.png
 		ui/checkbox-checked-symbolic.symbolic.png
 		actions/open-menu-symbolic.symbolic.png
-		ui/window-close-symbolic.symbolic.png
-		ui/window-maximize-symbolic.symbolic.png
-		ui/window-restore-symbolic.symbolic.png
-		ui/window-minimize-symbolic.symbolic.png
+		actions/window-minimize-symbolic.symbolic.png
+		actions/window-maximize-symbolic.symbolic.png
+		actions/window-restore-symbolic.symbolic.png
+		actions/window-close-symbolic.symbolic.png
 		actions/list-add-symbolic.symbolic.png
 		actions/list-remove-symbolic.symbolic.png
 		actions/list-remove.png

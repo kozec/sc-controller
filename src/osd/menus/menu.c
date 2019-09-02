@@ -382,6 +382,10 @@ static void osd_menu_item_selected(OSDMenu* mnu) {
 	switch (i->type) {
 	case MI_ACTION: {
 		Action* a = i->action;
+		if (a == NULL) {
+			WARN("Activated menu item with no action");
+			break;
+		}
 		RC_ADD(a);
 		scc_action_compress(&a);
 		a->button_press(a, priv->slave_mapper);
