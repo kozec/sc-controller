@@ -17,5 +17,5 @@ void scc_gyroabs_set_deadzone_mod(Action* a, Action* deadzone);
 void scc_deadzone_apply(Action* a, AxisValue* value);
 
 /** Returns value clamped between min/max allowed for axis */
-AxisValue clamp_axis(Axis axis, AxisValue value);
+AxisValue clamp_axis(Axis axis, double value);
 
