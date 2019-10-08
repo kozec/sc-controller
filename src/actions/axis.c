@@ -98,7 +98,7 @@ static bool apply_axis_params(AxisAction* ax, const char* keyword, ParameterList
 }
 
 // clampAxis returns value clamped between min/max allowed for axis
-AxisValue clamp_axis(Axis axis, AxisValue value) {
+AxisValue clamp_axis(Axis axis, double value) {
 	switch (axis) {
 	case ABS_Z:
 	case ABS_RZ:
@@ -130,7 +130,7 @@ static void axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) {
 	AxisAction* ax = container_of(a, AxisAction, action);
 	double p = (((double)value * ax->scale) - (double)STICK_PAD_MIN) / (double)(STICK_PAD_MAX - STICK_PAD_MIN);
 	p = (p * (double)(ax->max - ax->min)) + (double)ax->min;
-	AxisValue v = clamp_axis(ax->axis, (AxisValue)p);
+	AxisValue v = clamp_axis(ax->axis, p);
 	// AxisAction.old_positions[self.axis] = p
 	m->set_axis(m, ax->axis, v);
 	// mapper.syn_list.add(mapper.gamepad)
