@@ -85,7 +85,7 @@ static inline void trigger_press(TriggerAction* t, Mapper* m) {
 static inline void trigger_release(TriggerAction* t, Mapper* m, TriggerValue old_pos, PadStickTrigger what) {
 	t->pressed = false;
 	if (t->child->flags & AF_AXIS)
-		t->child->trigger(t->child, m, 0, old_pos, what);
+		t->child->trigger(t->child, m, old_pos, 0, what);
 	else
 		t->child->button_release(t->child, m);
 }
