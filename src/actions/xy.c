@@ -126,8 +126,8 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 
 static void change(Action* a, Mapper* m, double dx, double dy, PadStickTrigger what) {
 	XYAction* xy = container_of(a, XYAction, action);
-	if (xy->x->extended.change) xy->x->extended.change(xy->x, m, dx, 0, what);
-	if (xy->y->extended.change) xy->y->extended.change(xy->y, m, 0, dy, what);
+	if (xy->x->axis) xy->x->axis(xy->x, m, clamp(STICK_PAD_MIN, dx, STICK_PAD_MAX), what);
+	if (xy->y->axis) xy->y->axis(xy->y, m, clamp(STICK_PAD_MIN, dy, STICK_PAD_MAX), what);
 }
 
 static Action* compress(Action* _a) {

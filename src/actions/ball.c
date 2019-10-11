@@ -187,7 +187,7 @@ static void roll(Mapper* m, BallModifier* b) {
 	
 	if ((fabs(d.x) > 0.001) || (fabs(d.y) >= 0.001)) {
 		wholehaptic_change(&b->whdata, m, d.x, d.y);
-		b->roll_task = m->schedule(m, 2, (MapperScheduleCallback)&roll, b);
+		b->roll_task = m->schedule(m, 20, (MapperScheduleCallback)&roll, b);
 	}
 }
 
