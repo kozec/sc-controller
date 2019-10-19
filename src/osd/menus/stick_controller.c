@@ -1,7 +1,7 @@
 /**
  * SC Controller - StickController
- * 
- * Ustility class that gets fed by with stick positions and repeatedly calls
+ *
+ * Utility class that gets fed by with stick positions and repeatedly calls
  * callbacks with computed direction that stick is facing.
  * This is used used as input for menu navigation.
  */

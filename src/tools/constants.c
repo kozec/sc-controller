@@ -85,10 +85,14 @@ SCButton scc_string_to_button(const char* s) {
 PadStickTrigger scc_string_to_pst(const char* s) {
 	switch (s[0]) {
 	case 'R':
+		// backwards compatibility: RPAD was originally named RIGHT
+		if (0 == strcmp("RIGHT", s)) return PST_RPAD;
 		if (0 == strcmp("RPAD", s)) return PST_RPAD;
 		if (0 == strcmp("RTRIGGER", s)) return PST_RTRIGGER;
 		break;
 	case 'L':
+		// backwards compatibility: LPAD was originally named LEFT
+		if (0 == strcmp("LEFT", s)) return PST_LPAD;
 		if (0 == strcmp("LPAD", s)) return PST_LPAD;
 		if (0 == strcmp("LTRIGGER", s)) return PST_LTRIGGER;
 		break;

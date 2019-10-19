@@ -30,6 +30,9 @@ static int make_path(SCCLibraryType type, StrBuilder* sb, char* error_return) {
 	case SCLT_DRIVER:
 		strbuilder_add(sb, scc_drivers_path());
 		return 1;
+	case SCLT_OSD_MENU_PLUGIN:
+		strbuilder_add(sb, "build/src/osd/menus");
+		return 1;
 	}
 	if (error_return != NULL)
 		strncpy(error_return, "Unsupported library type", 255);

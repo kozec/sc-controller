@@ -55,12 +55,6 @@ void install_css_provider() {
 	char* css = strbuilder_consume(b);
 	RC_REL(config);
 	
-	if (css_provider != NULL) {
-		gtk_style_context_remove_provider_for_screen(gdk_screen_get_default(),
-				GTK_STYLE_PROVIDER(css_provider));
-		g_object_unref(css_provider);
-	}
-	
 	GError* error = NULL;
 	css_provider = gtk_css_provider_new();
 	gtk_css_provider_load_from_data(css_provider, css, strlen(css), &error);

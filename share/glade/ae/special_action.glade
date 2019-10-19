@@ -247,6 +247,7 @@
         <col id="0" translatable="yes">List</col>
         <col id="1">menu</col>
       </row>
+      <!--
       <row>
         <col id="0" translatable="yes">Grid</col>
         <col id="1">gridmenu</col>
@@ -255,14 +256,17 @@
         <col id="0" translatable="yes">Radial</col>
         <col id="1">radialmenu</col>
       </row>
+      -->
       <row>
         <col id="0" translatable="yes">Horizontal Menu</col>
         <col id="1">hmenu</col>
       </row>
+      <!--
       <row>
         <col id="0" translatable="yes">Quick Menu</col>
         <col id="1">quickmenu</col>
       </row>
+      -->
     </data>
   </object>
   <object class="GtkListStore" id="lstOSDSize">
@@ -584,7 +588,6 @@
             <child>
               <object class="GtkLabel" id="label4">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="margin_bottom">5</property>
                 <property name="label" translatable="yes">Menu Type</property>
@@ -602,7 +605,6 @@
             <child>
               <object class="GtkComboBox" id="cbMenuType">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="hexpand">True</property>
                 <property name="model">lstMenuType</property>
@@ -709,7 +711,6 @@
                 <child>
                   <object class="GtkGrid" id="grMenuControl">
                     <property name="visible">True</property>
-                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">20</property>
                     <property name="margin_right">20</property>

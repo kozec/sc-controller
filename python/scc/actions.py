@@ -69,6 +69,10 @@ class Parameter:
 				cparam = lib_bindings.scc_get_const_parameter(value.name)
 				if not cparam:
 					raise ValueError("Unknown or invalid name of constant: '%s'" % (value.name,))
+			elif value is True:
+				cparam = lib_actions.scc_new_int_parameter(1)
+			elif value is False:
+				cparam = lib_actions.scc_new_int_parameter(0)
 			elif value is None:
 				cparam = lib_bindings.scc_parameter_get_none()
 			else:
@@ -422,10 +426,10 @@ class RelWinAreaAction(Action): KEYWORD = "relwinarea"
 class RelAreaAction(Action): KEYWORD = "relarea"
 class WinAreaAction(Action): KEYWORD = "winarea"
 class AreaAction(Action): KEYWORD = "area"
-class HorizontalMenuAction(Action): KEYWORD = "hmenu"
-class RadialMenuAction(Action): KEYWORD = "radialmenu"
-class QuickMenuAction(Action): KEYWORD = "quickmenu"
-class GridMenuAction(Action): KEYWORD = "gridmenu"
+class HorizontalMenuAction(MenuAction): KEYWORD = "hmenu"
+class RadialMenuAction(MenuAction): KEYWORD = "radialmenu"
+class QuickMenuAction(MenuAction): KEYWORD = "quickmenu"
+class GridMenuAction(MenuAction): KEYWORD = "gridmenu"
 
 
 class ModeModifier(Action):

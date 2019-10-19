@@ -249,22 +249,26 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
         // short option
         if (arg[1] != '-') {
             self->optvalue = arg + 1;
-            switch (argparse_short_opt(self, self->options)) {
+            int rv = argparse_short_opt(self, self->options);
+            switch (rv) {
             case -1:
                 break;
             case -2:
                 goto unknown;
             case -3:
-                return -3;
+            case -4:
+                return rv;
             }
             while (self->optvalue) {
-                switch (argparse_short_opt(self, self->options)) {
+                rv = argparse_short_opt(self, self->options);
+                switch (rv) {
                 case -1:
                     break;
                 case -2:
                     goto unknown;
                 case -3:
-                    return -3;
+                case -5:
+                    return rv;
                 }
             }
             continue;
@@ -283,6 +287,8 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
             goto unknown;
         case -3:
             return -3;
+        case -5:
+            return -5;
         }
         continue;
 
@@ -396,5 +402,5 @@ argparse_help_cb(struct argparse *self, const struct argparse_option *option)
 {
     (void)option;
     argparse_usage(self);
-    return 0;
+    return -5;
 }

@@ -14,3 +14,22 @@ osd_menu_lib = shared_library('scc-osd-menu',
 	]
 )
 
+common_deps = [ dependency('gtk+-3.0', version: '>=3.22.0') ]
+common_link = [ osd_lib, actions_lib, utils_lib, tools_lib, osd_menu_lib ]
+
+
+osd_menu_vmenu_lib = shared_library('scc-osd-menu-vmenu',
+	include_directories: include,
+	link_with: common_link,
+	dependencies: common_deps,
+	sources: [ 'vmenu.c' ],
+)
+
+
+osd_menu_vmenu_lib = shared_library('scc-osd-menu-hmenu',
+	include_directories: include,
+	link_with: common_link,
+	dependencies: common_deps,
+	sources: [ 'hmenu.c' ],
+)
+

@@ -3,9 +3,9 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/iterable.h"
 #include "scc/utils/assert.h"
+#include "scc/utils/math.h"
 #include "scc/osd/osd_window.h"
 #include "scc/osd/osd_menu.h"
-#include "scc/osd/menu_icon.h"
 #include "scc/special_action.h"
 #include "scc/controller.h"
 #include "scc/menu_data.h"
@@ -16,6 +16,7 @@
 #include "../osd.h"
 #include <gtk/gtk.h>
 #include <string.h>
+
 
 #define SUBMENU_OFFSET	20
 
@@ -35,110 +36,41 @@ struct _OSDMenuPrivate {
 	MenuData*			data;
 	SCCClient*			client;
 	GtkWidget*			selected;
+	GtkWidget*			cursor;
+	GtkWidget*			fixed;
 	OSDMenu*			child;
+	extlib_t			plugin;
 	Mapper*				slave_mapper;
-	const char*			controller_id;	// NULL for "take 1st available"
-	PadStickTrigger		control_with;
-	SCButton			confirm_with;
-	SCButton			cancel_with;
+	OSDMenuSettings		settings;
 };
 
 G_DEFINE_TYPE_WITH_CODE(OSDMenu, osd_menu, OSD_WINDOW_TYPE, G_ADD_PRIVATE(OSDMenu));
 
 static void osd_menu_item_selected(OSDMenu* mnu);
 
-static void osd_menu_class_init(OSDMenuClass *klass) { }
-
-static void align_cb(GtkWidget* w, void* align) {
-	if (G_OBJECT_TYPE(w) == GTK_TYPE_LABEL)
-		gtk_label_set_xalign(GTK_LABEL(w), *(gfloat*)align);
+static void osd_menu_class_init(OSDMenuClass *klass) {
 }
 
-static GtkWidget* make_menu_row(const char* label, const char* icon, bool is_submenu) {
-	bool has_colors;
-	GtkWidget* w_icon = NULL;
-	if (icon != NULL) {	
-		char* filename = scc_find_icon(icon, false, &has_colors, NULL, NULL);
-		if (filename != NULL) {
-			w_icon = GTK_WIDGET(menu_icon_new(filename, has_colors));
-			free(filename);
-		}
-	}
-	GtkWidget* label1 = gtk_label_new(label);
-	GtkWidget* label2 = is_submenu ? gtk_label_new(">>") : NULL;
-	GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	GtkWidget* button = gtk_button_new();
-	gtk_label_set_xalign(GTK_LABEL(label1), 0.0);
-	if (w_icon != NULL) {
-		gtk_box_pack_start(GTK_BOX(box), w_icon, false, true, 0);
-		gtk_box_pack_start(GTK_BOX(box), label1, true, true, 10);
-		gtk_widget_set_name(GTK_WIDGET(w_icon), "icon");
-	} else {
-		gtk_box_pack_start(GTK_BOX(box), label1, true, true, 1);
-	}
-	if (label2 != NULL) {
-		gtk_widget_set_margin_start(label2, 30);
-		gtk_label_set_xalign(GTK_LABEL(label2), 1.0);
-		gtk_box_pack_start(GTK_BOX(box), label2, false, true, 1);
-	}
-	gtk_container_add(GTK_CONTAINER(button), box);
-	gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-	return button;
+
+static inline bool point_in_gtkrect(GtkWidget* w, double x, double y) {
+	GtkAllocation al;
+	gtk_widget_get_allocation(w, &al);
+	return ((x >= al.x) && (y >= al.y)
+				&& (x <= al.x + al.width)
+				&& (y <= al.y + al.height));
 }
 
-static GtkWidget* make_widget(MenuItem* i) {
-	GtkWidget* w;
-	gfloat center = 0.5;
-	switch (i->type) {
-	case MI_DUMMY:
-	case MI_ACTION:
-		if (i->name == NULL) {
-			// TODO: Use description instead
-			if (i->action == NULL)
-				return NULL;
-			char* label = scc_action_to_string(i->action);
-			ASSERT(label != NULL);
-			w = make_menu_row(label, i->icon, false);
-			free(label);
-		} else {
-			w = make_menu_row(i->name, i->icon, false);
-		}
-		if (i->type == MI_DUMMY)
-			gtk_widget_set_name(w, "osd-menu-dummy");
-		else
-			gtk_widget_set_name(w, "osd-menu-item");
-		break;
-	case MI_SUBMENU: {
-		if (i->submenu == NULL)
-			// Shouldn't be possible
-			return NULL;
-		if (i->name == NULL) {
-			char* name = scc_path_strip_extension(i->submenu);
-			ASSERT(name != NULL);
-			w = make_menu_row(name, i->icon, true);
-			free(name);
-		} else {
-			w = make_menu_row(i->name == NULL ? i->submenu : i->name, i->icon, true);
-		}
-		gtk_widget_set_name(GTK_WIDGET(w), "osd-menu-item");
-		break;
+
+/** Returns -1 if widget is not found */
+static int get_menuitem_index(MenuData* dt, GtkWidget* widget) {
+	if (widget == NULL)
+		return -1;
+	for (int x=0; x<scc_menudata_len(dt); x++) {
+		MenuItem* i = scc_menudata_get_by_index(dt, x);
+		if (i->userdata == widget)
+			return x;
 	}
-	case MI_SEPARATOR: {
-		if (i->name != NULL) {
-			w = gtk_button_new_with_label(i->name);
-			gtk_button_set_relief(GTK_BUTTON(w), GTK_RELIEF_NONE);
-			gtk_container_forall(GTK_CONTAINER(w), align_cb, &center);
-		} else {
-			w = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-		}
-		gtk_widget_set_name(GTK_WIDGET(w), "osd-menu-separator");
-		break;
-	}
-	default:
-		return NULL;
-	}
-	g_object_set_data(G_OBJECT(w), "scc-menu-item-data", i);
-	return w;
+	return -1;
 }
 
 
@@ -155,10 +87,12 @@ static void on_mnu_child_exit(void* _child, int code, void* _mnu) {
 	}
 }
 
+
 static void on_mnu_child_ready(void* _child, void* _mnu) {
 	gtk_widget_show_all(GTK_WIDGET(_child));
 	gtk_widget_set_name(GTK_WIDGET(_mnu), "osd-menu-inactive");
 }
+
 
 static gboolean osd_menu_on_data_ready(GIOChannel* source, GIOCondition condition, gpointer _mnu) {
 	OSDMenu* mnu = OSD_MENU(_mnu);
@@ -176,22 +110,23 @@ static gboolean osd_menu_on_data_ready(GIOChannel* source, GIOCondition conditio
 	return true;
 }
 
+
 static void osd_menu_connection_ready(SCCClient* c) {
 	OSDMenu* mnu = OSD_MENU(c->userdata);
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
-	uint32_t handle = sccc_get_controller_handle(c, priv->controller_id);
+	uint32_t handle = sccc_get_controller_handle(c, priv->settings.controller_id);
 	if (handle == 0) {
-		if (priv->controller_id == NULL)
+		if (priv->settings.controller_id == NULL)
 			LERROR("There is no controller connected");
 		else
-			LERROR("Requested controller '%s' not connected", priv->controller_id);
+			LERROR("Requested controller '%s' not connected", priv->settings.controller_id);
 		osd_window_exit(OSD_WINDOW(mnu), 4);
 		return;
 	}
 	
-	const char* control_with = scc_what_to_string(priv->control_with);
-	const char* confirm_with = scc_button_to_string(priv->confirm_with);
-	const char* cancel_with = scc_button_to_string(priv->cancel_with);
+	const char* control_with = scc_what_to_string(priv->settings.control_with);
+	const char* confirm_with = scc_button_to_string(priv->settings.confirm_with);
+	const char* cancel_with = scc_button_to_string(priv->settings.cancel_with);
 	if (!sccc_lock(c, handle, control_with, confirm_with, cancel_with)) {
 		LERROR("Failed to lock controller");
 		osd_window_exit(OSD_WINDOW(mnu), 3);
@@ -200,20 +135,47 @@ static void osd_menu_connection_ready(SCCClient* c) {
 	g_signal_emit_by_name(G_OBJECT(mnu), "ready");
 }
 
+
 static void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
-			SCButton button, PadStickTrigger pst, int values[]) {
+					SCButton button, PadStickTrigger pst, int values[]) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	if (priv->child != NULL)
 		return osd_menu_parse_event(priv->child, c, handle, button, pst, values);
-	if (pst == priv->control_with)
+	if ((pst == priv->settings.control_with) && priv->settings.use_cursor) {
+		GtkAllocation al_cursor;
+		GtkAllocation al_self;
+		gtk_widget_get_allocation(priv->cursor, &al_cursor);
+		gtk_widget_get_allocation(GTK_WIDGET(mnu), &al_self);
+		double x = (double)values[0] / (STICK_PAD_MAX * 2.0);
+		double y = (double)values[1] / (STICK_PAD_MAX * 2.0);
+		double pad_w = al_cursor.width * 0.5;
+		double pad_h = al_cursor.height * 0.5;
+		double max_w = al_self.width - (2.0 * pad_w);
+		double max_h = al_self.height - (2.0 * pad_h);
+		circle_to_square(&x, &y);
+		x = clamp(pad_w, (pad_w + max_w) * 0.5 + x * max_w, max_w - pad_w);
+		y = clamp(pad_h, (pad_h + max_h) * 0.5 + y * max_h * -1.0, max_h - pad_h);
+		gtk_fixed_move(GTK_FIXED(priv->fixed), priv->cursor, x, y);
+		
+		ListIterator it = iter_get(priv->data);
+		FOREACH(MenuItem*, i, it) {
+			if (i->userdata == NULL) continue;
+			if (point_in_gtkrect(GTK_WIDGET(i->userdata), x, y)) {
+				osd_menu_select(mnu, get_menuitem_index(priv->data,
+									GTK_WIDGET(i->userdata)));
+			}
+		}
+		iter_free(it);
+	} else if ((pst == priv->settings.control_with) && (priv->sc != NULL))
 		stick_controller_feed(priv->sc, values);
-	else if ((button == priv->cancel_with) && (values[0]))
+	else if ((button == priv->settings.cancel_with) && (!values[0]))
 		osd_window_exit(OSD_WINDOW(mnu), -1);
-	else if ((button == priv->confirm_with) && (values[0]))
+	else if ((button == priv->settings.confirm_with) && (!values[0]))
 		osd_menu_item_selected(mnu);
 	// else
 	// 	LOG("# %i %i %i > %i %i", handle, button, pst, values[0], values[1]);
 }
+
 
 static void osd_menu_on_event(SCCClient* c, uint32_t handle, SCButton button,
 			PadStickTrigger pst, int values[]) {
@@ -221,15 +183,11 @@ static void osd_menu_on_event(SCCClient* c, uint32_t handle, SCButton button,
 	return osd_menu_parse_event(mnu, c, handle, button, pst, values);
 }
 
-void osd_menu_next_item(OSDMenu* mnu, int direction);
-
-static void osd_menu_stick(int dx, int dy, void* userdata) {
-	OSDMenu* mnu = OSD_MENU(userdata);
-	osd_menu_next_item(mnu, dy);
-	// LOG("STICK: %i %i", dx, dy);
+static void osd_menu_on_reconfigured(SCCClient* c) {
+	install_css_provider();
+	LOG("Reconfigured.");
 }
 
-/** Returns false if item at index is not selectable */
 bool osd_menu_select(OSDMenu* mnu, size_t index) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	// if (first && (i->type == MI_ACTION)) {
@@ -271,19 +229,7 @@ bool osd_menu_select(OSDMenu* mnu, size_t index) {
 	return true;
 }
 
-/** Returns -1 if widget is not found */
-int get_menuitem_index(MenuData* dt, GtkWidget* widget) {
-	if (widget == NULL)
-		return -1;
-	for (int x=0; x<scc_menudata_len(dt); x++) {
-		MenuItem* i = scc_menudata_get_by_index(dt, x);
-		if (i->userdata == widget)
-			return x;
-	}
-	return -1;
-}
 
-/** Selects either next or previous menu item */
 void osd_menu_next_item(OSDMenu* mnu, int direction) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	int start = get_menuitem_index(priv->data, priv->selected);
@@ -314,6 +260,7 @@ void osd_menu_next_item(OSDMenu* mnu, int direction) {
 	}
 }
 
+
 static bool osd_menu_sa_handler(Mapper* m, unsigned int sa_action_type, void* sa_data) {
 	if (sa_action_type == SAT_KEYBOARD) {
 		char* scc_osd_keyboard = scc_find_binary("scc-osd-keyboard");
@@ -334,6 +281,7 @@ static bool osd_menu_sa_handler(Mapper* m, unsigned int sa_action_type, void* sa
 	return false;
 }
 
+
 /** Configures menu to use already connected client */
 void osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
@@ -342,6 +290,7 @@ void osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) 
 	priv->slave_mapper = slave_mapper;
 	g_signal_emit_by_name(G_OBJECT(mnu), "ready");
 }
+
 
 /** Establishes connection to daemon. Emits 'ready' or 'exit' signal when done */
 void osd_menu_connect(OSDMenu* mnu) {
@@ -371,6 +320,7 @@ void osd_menu_connect(OSDMenu* mnu) {
 	g_source_set_callback(src, (GSourceFunc)osd_menu_on_data_ready, mnu, NULL);
 }
 
+
 static void osd_menu_item_selected(OSDMenu* mnu) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	char* filename = NULL;
@@ -397,7 +347,7 @@ static void osd_menu_item_selected(OSDMenu* mnu) {
 		filename = scc_find_menu(i->submenu);
 		if (filename != NULL) {
 			DDEBUG("Opening submenu '%s'", filename);
-			OSDMenu* child = osd_menu_new(filename);
+			OSDMenu* child = osd_menu_new(filename, &priv->settings);
 			free(filename);
 			if (child != NULL) {
 				priv->child = child;
@@ -417,16 +367,34 @@ static void osd_menu_item_selected(OSDMenu* mnu) {
 	}
 }
 
+
 static void osd_menu_init(OSDMenu* mnu) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	priv->sc = NULL;
 	priv->data = NULL;
 	priv->client = NULL;
 	priv->selected = NULL;
-	priv->controller_id = NULL;
 }
 
-OSDMenu* osd_menu_new(const char* filename) {
+
+extlib_t osd_menu_load_plugin(const char* name) {
+	char error[256];
+	extlib_t plugin = scc_load_library(SCLT_OSD_MENU_PLUGIN, "libscc-osd-menu-", name, error);
+	if (plugin == NULL) {
+		LERROR("Failed to load menu plugin: %s", error);
+		return NULL;
+	}
+	return plugin;
+}
+
+
+OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
+	extlib_t plugin = osd_menu_load_plugin(settings->plugin_name);
+	if (plugin == NULL) return NULL;
+	osd_menu_create_widgets_fn osd_menu_create_widgets = scc_load_function(plugin, "osd_menu_create_widgets", NULL);
+	osd_menu_handle_stick_fn osd_menu_handle_stick = scc_load_function(plugin, "osd_menu_handle_stick", NULL);
+	ASSERT(osd_menu_create_widgets != NULL);
+	
 	int err;
 	Config* cfg = config_load();
 	if (cfg == NULL) {
@@ -448,31 +416,44 @@ OSDMenu* osd_menu_new(const char* filename) {
 	OSDMenu* mnu = OSD_MENU(o);
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	
-	priv->sc = stick_controller_create(&osd_menu_stick, mnu);
-	ASSERT(priv->sc != NULL);
-		priv->data = data;
-	priv->selected = NULL;
-	priv->control_with = PST_STICK;
-	priv->confirm_with = B_A;
-	priv->cancel_with = B_B;
-	priv->slave_mapper = NULL;
-	priv->client = NULL;
-	
-	GtkWidget* v = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_widget_set_name(GTK_WIDGET(v), "osd-menu");
-	
-	ListIterator it = iter_get(priv->data);
-	FOREACH(MenuItem*, i, it) {
-		GtkWidget* w = make_widget(i);
-		if (w != NULL) {
-			gtk_box_pack_start(GTK_BOX(v), w, false, true, 0);
-			i->userdata = w;
-		}
+	if (osd_menu_handle_stick == NULL) {
+		priv->sc = NULL;
+	} else {
+		priv->sc = stick_controller_create((void*)osd_menu_handle_stick, mnu);
+		ASSERT(priv->sc != NULL);
 	}
-	if (!osd_menu_select(mnu, 0))
-		osd_menu_next_item(mnu, 1);
 	
-	gtk_container_add(GTK_CONTAINER(mnu), v);
+	priv->data = data;
+	priv->client = NULL;
+	priv->cursor = NULL;
+	priv->fixed = NULL;
+	priv->selected = NULL;
+	priv->plugin = plugin;
+	priv->slave_mapper = NULL;
+	priv->settings = *settings;
+	
+	GtkWidget* parent = osd_menu_create_widgets(priv->data, &priv->settings);
+	
+	if (priv->settings.use_cursor) {
+		StrBuilder* sb = strbuilder_new();
+		ASSERT(sb != NULL);
+		strbuilder_add(sb, scc_get_share_path());
+		strbuilder_add_path(sb, "images");
+		strbuilder_add_path(sb, "menu-cursor.svg");
+		ASSERT(!strbuilder_failed(sb));
+		priv->cursor = gtk_image_new_from_file(strbuilder_get_value(sb));
+		strbuilder_free(sb);
+		ASSERT(priv->cursor != NULL);
+		
+		priv->fixed = gtk_fixed_new();
+		gtk_container_add(GTK_CONTAINER(mnu), priv->fixed);
+		gtk_container_add(GTK_CONTAINER(priv->fixed), parent);
+		gtk_container_add(GTK_CONTAINER(priv->fixed), priv->cursor);
+	} else {
+		if (!osd_menu_select(mnu, 0))
+			osd_menu_next_item(mnu, 1);
+		gtk_container_add(GTK_CONTAINER(mnu), parent);
+	}
 	
 	return mnu;
 }

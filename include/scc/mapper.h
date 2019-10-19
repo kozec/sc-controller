@@ -66,7 +66,7 @@ struct Mapper {
 	/**
 	 * was_touched works as is_touched, but returns true if pad *was* touched
 	 * in last known (not current) state.
-	 * 
+	 *
 	 * This is used as:
 	 * is_touched() and not was_touched() -> pad was just pressed
 	 * not is_touched() and was_touched() -> pad was just released

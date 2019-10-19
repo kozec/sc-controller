@@ -26,15 +26,18 @@ typedef enum SAType {
 
 
 typedef struct SAMenuActionData {
-	const char*			menu_id;
-	HapticData			hdata;
-	PadStickTrigger		control_with;
-	SCButton			confirm_with;
-	SCButton			cancel_with;
-	bool				show_with_release;
-	double				stick_distance;
-	ivec_t				position;
-	size_t				size;
+	const char*				menu_id;
+	const char*				menu_type;
+	HapticData				hdata;
+	PadStickTrigger			control_with;
+	SCButton				confirm_with;
+	SCButton				cancel_with;
+	bool					show_with_release;
+	double					stick_distance;
+	ivec_t					position;
+	int						size;
+	/** what triggered menu; 0 for button */
+	PadStickTrigger			triggered_by;
 } SAMenuActionData;
 
 typedef struct SAAppDefinedActionData {

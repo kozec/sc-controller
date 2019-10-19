@@ -122,7 +122,9 @@ void argparse_describe(struct argparse *self, const char *description,
                        const char *epilog);
 
 /**
- * Returns index of next not-parsed agument or negative number in case of error.
+ * Returns index of next not-parsed agument or:
+ *  -5 if '--help' was used
+ *  other negative number in case of error
  */
 int argparse_parse(struct argparse *self, int argc, const char **argv);
 

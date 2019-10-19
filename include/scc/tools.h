@@ -197,7 +197,7 @@ SCButton scc_what_to_touch_button(PadStickTrigger what);
 SCButton scc_string_to_button(const char* s);
 
 /**
- * Translates pad, stuck or trigger name (expressed as upper-case string)
+ * Translates pad, stick or trigger name (expressed as upper-case string)
  * to corresponding value of PadStickTrigger enum.
  *
  * Returns 0 for unknown value.
@@ -263,8 +263,9 @@ char* scc_path_strip_extension(const char* path);
 intptr_t scc_spawn(char* const* argv, uint32_t options);
 
 typedef enum {
-	SCLT_DRIVER			= 1,
-	SCLT_GENERATOR		= 2,
+	SCLT_DRIVER				= 1,
+	SCLT_GENERATOR			= 2,
+	SCLT_OSD_MENU_PLUGIN	= 3,
 } SCCLibraryType;
 
 /**

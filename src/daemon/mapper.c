@@ -205,30 +205,108 @@ static void cancel(Mapper* _m, TaskID task_id) {
 	sccd_scheduler_cancel(task_id);
 }
 
+static inline void sa_menu(SAMenuActionData* data) {
+	// Grab data
+	char* scc_osd_menu = scc_find_binary("scc-osd-menu");
+	char* menu = scc_find_menu(data->menu_id);
+	if (scc_osd_menu == NULL) {
+		LERROR("Could not find 'scc-osd-menu'");
+		goto sa_menu_fail;
+	}
+	if (menu == NULL) {
+		LERROR("Could not find menu '%s'", data->menu_id);
+		goto sa_menu_fail;
+	}
+	
+	// Build arguments
+	StringList argv = list_new(char, 4);
+	if (argv == NULL) {
+		WARN("OOM while trying to call 'scc-osd-menu'");
+		goto sa_menu_fail;
+	}
+	
+	// Any call to strbuilder_cpy may fail on OOM bellow, but that will
+	// result only in calling menu binary with wrong arguments, not crashing.
+	list_add(argv, strbuilder_cpy(scc_osd_menu));
+	list_add(argv, strbuilder_cpy("-f"));
+	list_add(argv, strbuilder_cpy(menu));
+	
+	const char* control_with = scc_what_to_string(data->control_with);
+	const char* confirm_with = scc_button_to_string(data->confirm_with);
+	const char* cancel_with  = scc_button_to_string(data->cancel_with);
+	// TODO: Haptics
+	// TODO: X, Y
+	// TODO: Actual defaults from config
+	switch (data->triggered_by) {
+	case PST_LPAD:
+	case PST_RPAD:
+		list_add(argv, strbuilder_cpy("-u"));
+	case PST_STICK:
+		if (data->triggered_by == PST_LPAD) {
+			if (control_with == NULL) control_with = "LPAD";
+			if (confirm_with == NULL) confirm_with = "LPADPRESS";
+			if (cancel_with == NULL)  cancel_with  = "LPADTOUCH";
+		} else if (data->triggered_by == PST_RPAD) {
+			if (control_with == NULL) control_with = "RPAD";
+			if (confirm_with == NULL) confirm_with = "RPADPRESS";
+			if (cancel_with == NULL)  cancel_with  = "RPADTOUCH";
+		} else {	// STICK
+			if (control_with == NULL) control_with = "STICK";
+			if (control_with == NULL) confirm_with = "A";
+			if (cancel_with == NULL)  cancel_with  = "B";
+		}
+		break;
+	default:
+		break;
+	}
+	if (confirm_with) {
+		list_add(argv, strbuilder_cpy("--confirm-with"));
+		list_add(argv, strbuilder_cpy(confirm_with));
+	}
+	if (control_with) {
+		list_add(argv, strbuilder_cpy("--control-with"));
+		list_add(argv, strbuilder_cpy(control_with));
+	}
+	if (cancel_with) {
+		list_add(argv, strbuilder_cpy("--cancel-with"));
+		list_add(argv, strbuilder_cpy(cancel_with));
+	}
+	if (strcmp(data->menu_type, "menu") != 0) {
+		list_add(argv, strbuilder_cpy("--type"));
+		list_add(argv, strbuilder_cpy(data->menu_type));
+	}
+	if (data->size > 0) {
+		list_add(argv, strbuilder_cpy("--size"));
+		list_add(argv, strbuilder_fmt("%i", data->size));
+	}
+	
+	// Call binary
+	if (!list_add(argv, NULL)) {
+		// That last list_add adds sentinel and so it's crucial
+		WARN("OOM while trying to call 'scc-osd-menu'");
+	} else {
+		scc_spawn(argv->items, 0);
+	}
+	
+	// Free memory
+	list_set_dealloc_cb(argv, free);
+	list_free(argv);
+sa_menu_fail:
+	free(scc_osd_menu);
+	free(menu);
+}
+
 static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data) {
 	switch (sa_action_type) {
-	case SAT_MENU: {
-		SAMenuActionData* sa_menu_data = (SAMenuActionData*)sa_data;
-		char* scc_osd_menu = scc_find_binary("scc-osd-menu");
-		char* menu = scc_find_menu(sa_menu_data->menu_id);
-		if (scc_osd_menu == NULL)
-			LERROR("Could not find 'scc-osd-menu'");
-		if (menu == NULL)
-			LERROR("Could not find menu '%s'", sa_menu_data->menu_id);
-		if ((scc_osd_menu != NULL) && (menu != NULL)) {
-			char* const argv[] = { scc_osd_menu, "-f", menu, NULL };
-			scc_spawn(argv, 0);
-		}
-		free(scc_osd_menu);
-		free(menu);
+	case SAT_MENU:
+		sa_menu((SAMenuActionData*)sa_data);
 		return true;
-	}
 	case SAT_KEYBOARD: {
 		char* scc_osd_keyboard = scc_find_binary("scc-osd-keyboard");
 		if (scc_osd_keyboard == NULL) {
 			LERROR("Could not find 'scc-osd-keyboard'");
 		} else {
-			char* const argv[] = { scc_osd_keyboard, NULL };
+			char* argv[] = { scc_osd_keyboard, NULL };
 			scc_spawn(argv, 0);
 		}
 		return true;
