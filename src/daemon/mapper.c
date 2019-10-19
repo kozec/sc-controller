@@ -216,7 +216,7 @@ static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data
 		if (menu == NULL)
 			LERROR("Could not find menu '%s'", sa_menu_data->menu_id);
 		if ((scc_osd_menu != NULL) && (menu != NULL)) {
-			const char* argv[] = { scc_osd_menu, "-f", menu, NULL };
+			char* const argv[] = { scc_osd_menu, "-f", menu, NULL };
 			scc_spawn(argv, 0);
 		}
 		free(scc_osd_menu);
@@ -228,7 +228,7 @@ static bool special_action(Mapper* m, unsigned int sa_action_type, void* sa_data
 		if (scc_osd_keyboard == NULL) {
 			LERROR("Could not find 'scc-osd-keyboard'");
 		} else {
-			const char* argv[] = { scc_osd_keyboard, NULL };
+			char* const argv[] = { scc_osd_keyboard, NULL };
 			scc_spawn(argv, 0);
 		}
 		return true;

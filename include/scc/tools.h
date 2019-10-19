@@ -250,5 +250,5 @@ char* scc_path_strip_extension(const char* path);
  *
  * Returns PID of created process or negative number in case of failure.
  */
-intptr_t scc_spawn(const char** argv, uint32_t options);
+intptr_t scc_spawn(char* const* argv, uint32_t options);
 

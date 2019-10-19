@@ -326,7 +326,7 @@ static bool osd_menu_sa_handler(Mapper* m, unsigned int sa_action_type, void* sa
 			OSDMenu* mnu = OSD_MENU(sccc_slave_mapper_get_userdata(m));
 			OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 			sccc_unlock_all(priv->client);
-			const char* argv[] = { scc_osd_keyboard, NULL };
+			char* const argv[] = { scc_osd_keyboard, NULL };
 			scc_spawn(argv, 0);
 		}
 		return true;

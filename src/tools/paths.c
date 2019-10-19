@@ -25,6 +25,7 @@
 #include <shlobj.h>
 #define SEP "\\"
 #else
+#include <spawn.h>
 #include <pwd.h>
 #define SEP "/"
 #endif
@@ -282,7 +283,7 @@ char* scc_find_binary(const char* name) {
 	return NULL;
 }
 
-intptr_t scc_spawn(const char** argv, uint32_t options) {
+intptr_t scc_spawn(char* const* argv, uint32_t options) {
 	ASSERT(options == 0);
 #ifdef _WIN32
 	char* arg0 = argv[0];
@@ -295,8 +296,8 @@ intptr_t scc_spawn(const char** argv, uint32_t options) {
 #else
 	pid_t pid;
 	int err = posix_spawn(&pid, argv[0], NULL, NULL, argv, environ);
-	if (pid < 0) {
-		LERROR("Fork failed: %s", strerror(errno));
+	if (err < 0) {
+		LERROR("Fork failed: %s", strerror(err));
 		return -1;
 	}
 	return pid;
