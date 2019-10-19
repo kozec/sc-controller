@@ -136,6 +136,13 @@ static void axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) {
 	// mapper.syn_list.add(mapper.gamepad)
 }
 
+static void change(Action* a, Mapper* m, double dx, double dy, PadStickTrigger what) {
+	// TODO: This is not enough, see https://github.com/kozec/sc-controller/issues/213
+	// TODO: Old solution at https://github.com/kozec/sc-controller/blob/master/scc/actions.py#L698
+	// TODO: is also wrong, as it doesn't work with multiple controllers
+	axis(a, m, clamp(STICK_PAD_MIN, dx, STICK_PAD_MAX), what);
+}
+
 static void trigger(Action* a, Mapper* m, TriggerValue old_pos, TriggerValue pos, PadStickTrigger what) {
 	AxisAction* ax = container_of(a, AxisAction, action);
 	double p = (((double)pos * ax->scale) - (double)TRIGGER_MIN) / (double)(TRIGGER_MAX - TRIGGER_MIN);
@@ -199,6 +206,7 @@ static ActionOE axis_constructor(const char* keyword, ParameterList params) {
 	ax->action.button_release = &button_release;
 	ax->action.get_property = &get_property;
 	ax->action.extended.set_sensitivity = &set_sensitivity;
+	ax->action.extended.change = &change;
 	return (ActionOE)&ax->action;
 }
 
