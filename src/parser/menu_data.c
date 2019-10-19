@@ -369,69 +369,28 @@ MenuData* scc_menudata_from_generator(const char* generator, Config* config, int
 	// TODO: Check freeing memory here
 	struct _MenuData* rv = NULL;
 	char* filename = NULL;
+	char error_str[256];
 	*error = 4;		// OOM
 	
 	// Prepare library name & load library
-	// TODO: This path should be somehow configurable or determined on runtime
-	StrBuilder* sb = strbuilder_new();
-	if (sb == NULL) return NULL;
-#ifdef _WIN32
-	strbuilder_add(sb, scc_get_exe_path());
-	strbuilder_add_path(sb, "menu-generators");
-#elif defined(__BSD__)
-	strbuilder_add(sb, "build-bsd/src/menu-generators");
-#else
-	strbuilder_add(sb, "build/src/menu-generators");
-#endif
-	strbuilder_add_path(sb, FILENAME_PREFIX);
-	strbuilder_add(sb, generator);
+	filename = strbuilder_cpy(generator);
+	if (filename == NULL)
+		return NULL;	// OOM
 	if (strchr(generator, '('))
-		// Stuff after ( are parameters, not part of filename
-		strbuilder_rtrim(sb, strlen(generator) - (strchr(generator, '(') - generator));
-	strbuilder_add(sb, FILENAME_SUFFIX);
-	if (strbuilder_failed(sb)) {
-		strbuilder_free(sb);
-		return NULL;
-	}
-	filename = strbuilder_consume(sb);
-	if (access(filename, R_OK) != 0) {
+		*(filename + (strchr(generator, '(') - generator)) = 0;
+	
+	extlib_t lib = scc_load_library(SCLT_GENERATOR, "libscc-menugen-", filename, error_str);
+	if (lib == NULL) {
+		LERROR("Failed to load '%s': %s", filename, error_str);
 		*error = 1;		// not found
-		LERROR("Failed to load '%s': file not found", filename);
-		free(filename);
-		return NULL;
-	}
-#ifdef _WIN32
-	HMODULE mdl = NULL;
-	mdl = LoadLibrary(filename);
-	if (mdl == NULL) {
-		DWORD err = GetLastError();
-		LERROR("Failed to load '%s': Windows error 0x%x", filename, err);
-		*error = 2;		// found, but failed
 		goto scc_menudata_from_generator_cleanup;
 	}
-	scc_menu_generator_generate_fn generate_fn = (scc_menu_generator_generate_fn)GetProcAddress(mdl, "generate");
+	scc_menu_generator_generate_fn generate_fn = (scc_menu_generator_generate_fn)scc_load_function(lib, "generate", error_str);
 	if (generate_fn == NULL) {
-		DWORD err = GetLastError();
-		LERROR("Failed to load 'scc_menu_generator_get_items' function from '%s': Windows error 0x%x", filename, err);
+		LERROR("Failed to load 'scc_menu_generator_get_items' function from '%s': Windows error 0x%x", filename, error_str);
 		*error = 2;		// found, but failed
 		goto scc_menudata_from_generator_cleanup;
 	}
-#else
-	void* img = NULL;
-	img = dlopen(filename, RTLD_LAZY);
-	if (img == NULL) {
-		LERROR("Failed to load '%s': %s", generator, dlerror());
-		*error = 2;		// found, but failed
-		goto scc_menudata_from_generator_cleanup;
-	}
-	scc_menu_generator_generate_fn generate_fn = dlsym(img, "generate");
-	if (generate_fn == NULL) {
-		LERROR("Failed to load 'scc_menu_generator_get_items' function from '%s': Windows error 0x%x", generator, dlerror());
-		*error = 2;		// found, but failed
-		goto scc_menudata_from_generator_cleanup;
-	}
-#endif
-	free(filename);
 	
 	// Prepare context
 	struct _GeneratorContext ctx = {
@@ -487,11 +446,8 @@ MenuData* scc_menudata_from_generator(const char* generator, Config* config, int
 	rv = ctx.data;
 	
 scc_menudata_from_generator_cleanup:
-#ifdef _WIN32
-	if (mdl != NULL) FreeLibrary(mdl);
-#else
-	if (img != NULL) dlclose(img);
-#endif	// _WIN32
+	scc_close_library(lib);
+	free(filename);
 	if (ctx.params != NULL)
 		list_free(ctx.params);
 	if ((rv == NULL) && (ctx.data != NULL))
@@ -507,3 +463,4 @@ MenuData* scc_menudata_from_generator(const char* generator, Config* config, int
 }
 
 #endif
+

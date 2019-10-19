@@ -49,6 +49,7 @@ static char menuicons_path[PATH_MAX + 128] = {0};
 static char default_menuicons_path[PATH_MAX + 128] = {0};
 static char default_button_images_path[PATH_MAX + 128] = {0};
 static char pid_file_path[PATH_MAX] = {0};
+static char drivers_path[PATH_MAX] = {0};
 
 extern char** environ;
 
@@ -230,6 +231,22 @@ const char* scc_get_pid_file() {
 	sprintf(pid_file_path, "%s" SEP "daemon.pid", scc_get_config_path());
 	return pid_file_path;
 }
+
+const char* scc_drivers_path() {
+	if (drivers_path[0] != 0)
+		// Return cached value
+		return drivers_path;
+	// TODO: This path should be somehow configurable or determined on runtime
+#ifdef _WIN32
+	snprintf(drivers_path, PATH_MAX, "%s\\..\\drivers", scc_get_share_path());
+#elif defined(__BSD__)
+	strncpy(drivers_path, "build-bsd/src/daemon/drivers" PATH_MAX);
+#else
+	strncpy(drivers_path, "build/src/daemon/drivers", PATH_MAX);
+#endif
+	return drivers_path;
+}
+
 
 #ifdef _WIN32
 static char exe_path[PATH_MAX] = {0};

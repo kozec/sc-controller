@@ -5,6 +5,7 @@ project('scc', 'c',
 )
 
 CONFIG_BACKEND = 'config_json'
+tools_library_deps = []
 parser_lib_deps = []
 C_FILES = '*.c'
 
@@ -14,7 +15,7 @@ if host_machine.system() == 'windows'
 	add_global_arguments('-D_POSIX', '-DNO_X11', '-mno-ms-bitfields', language: 'c')
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
-	parser_lib_deps = [ meson.get_compiler('c').find_library('regex') ]
+	parser_lib_deps += [ meson.get_compiler('c').find_library('regex') ]
 	CONFIG_BACKEND = 'config_win32'
 	C_FILES = '\\*.c'
 elif get_option('android').enabled()
@@ -22,6 +23,7 @@ elif get_option('android').enabled()
 	add_global_arguments('-DNO_TRACEBACKS', language: 'c')
 elif host_machine.system() == 'linux'
 	add_global_arguments('-DHAVE_LIBUSB', language: 'c')
+	tools_library_deps = [ meson.get_compiler('c').find_library('dl') ]
 elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 	add_global_link_arguments('-lc', language: 'c')
 	add_global_arguments('-D__BSD__', language: 'c')
@@ -39,9 +41,6 @@ if host_machine.system() == 'linux' or host_machine.system() == 'openbsd' or hos
 endif
 if get_option('menu-generators').enabled()
 	add_global_arguments('-DMENU_GENERATORS_ENABLED', language: 'c')
-	if host_machine.system() == 'linux'
-		parser_lib_deps += [ meson.get_compiler('c').find_library('dl') ]
-	endif
 endif
 add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', language: 'c')
 include = [ include_directories('./include/') ]
@@ -80,9 +79,11 @@ conversions_lib = shared_library('scc-conversions',
 #  - utils are universal stuff taken from other project (such as hashmap)
 #  - tools are scc-specific functions used on many places (such as find_profile)
 tools_lib = shared_library('scc-tools',
+	dependencies: tools_library_deps,
 	include_directories: include,
 	link_with: [utils_lib],
 	sources: [
+		'src/tools/load_library.c',
 		'src/tools/constants.c',
 		'src/tools/userdata.c',
 		'src/tools/paths.c',
@@ -90,7 +91,7 @@ tools_lib = shared_library('scc-tools',
 )
 
 config_lib = shared_library('scc-config',
-	link_with: [utils_lib, tools_lib],
+	link_with: [ utils_lib, tools_lib ],
 	include_directories: include,
 	sources: [
 		'src/config/defaults.c',
@@ -138,9 +139,9 @@ parser_lib = shared_library('scc-parser',
 	link_with: [ utils_lib, tools_lib, actions_lib, params_lib, conversions_lib ],
 	sources: [
 		'src/parser/action_parser.c',
+		'src/parser/param_parser.c',
 		'src/parser/jsonprofile.c',
 		'src/parser/menu_data.c',
-		'src/parser/param_parser.c',
 		'src/parser/regexes.c',
 	]
 )

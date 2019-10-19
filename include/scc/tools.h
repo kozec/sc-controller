@@ -1,6 +1,6 @@
 /**
  * SC-Controller - tools
- * 
+ *
  * Various stuff that I don't care to fit anywhere else.
  * This also includes path-related tools originally placed in paths.py module.
  */
@@ -13,10 +13,13 @@
 	// Luckily, NT can handle even more than this, so this redefines it with more
 	#undef PATH_MAX
 	#define PATH_MAX 4096
+	typedef HMODULE extlib_t;
 #elif __linux__
 	#include <linux/limits.h>
+	typedef void* extlib_t;
 #else
 	#include <sys/syslimits.h>
+	typedef void* extlib_t;
 #endif
 
 
@@ -96,6 +99,13 @@ const char* scc_get_python_src_path();
  * script extracted from source tarball
  */
 const char* scc_get_default_menus_path();
+
+/**
+ * Returns directory where drivers are located.
+ * Usually /usr/lib/scc/drivers or $SCC_SHARED/drivers
+ * if program is being started from script extracted from source tarball
+ */
+const char* scc_drivers_path();
 
 
 /**
@@ -251,4 +261,30 @@ char* scc_path_strip_extension(const char* path);
  * Returns PID of created process or negative number in case of failure.
  */
 intptr_t scc_spawn(char* const* argv, uint32_t options);
+
+typedef enum {
+	SCLT_DRIVER			= 1,
+	SCLT_GENERATOR		= 2,
+} SCCLibraryType;
+
+/**
+ * Loads library with given name (no extension).
+ * 'type' determines path from which library should be loaded, which is very platform-dependant.
+ * 'prefix' is just appended in between path and filename and may be NULL.
+ *
+ * On failure, returns NULL and sets error message in error_return, if set.
+ * If error_return is set, it has to have place for at least 256 characters.
+ */
+extlib_t scc_load_library(SCCLibraryType type, const char* prefix, const char* lib_name, char* error_return);
+
+/**
+ * Loads function from already open library.
+ *
+ * On failure, returns NULL and sets error message in error_return, if set.
+ * If error_return is set, it has to have place for at least 256 characters.
+ */
+void* scc_load_function(extlib_t lib, const char* name, char* error_return);
+
+/** Closes library opened with scc_load_library. If called with NULL, does nothing */
+void scc_close_library(extlib_t lib);
 

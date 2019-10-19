@@ -5,11 +5,11 @@ platform_dependent_link_with = []
 platform_dependent_link_args = []
 
 if host_machine.system() == 'linux'
-	platform_dependent_deps = [
+	platform_dependent_deps += [
 		meson.get_compiler('c').find_library('dl'),
 		dependency('x11'),
 	]
-	platform_dependent_src = [
+	platform_dependent_src += [
 		'device_monitor_linux.c',
 		'input_libusb.c',
 	]
