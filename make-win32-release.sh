@@ -18,21 +18,23 @@ GTK_ICONS=(
 		legacy/dialog-warning.png
 		legacy/dialog-error.png
 		legacy/window-close.png
-		ui/checkbox-symbolic.symbolic.png
-		ui/checkbox-mixed-symbolic.symbolic.png
-		ui/checkbox-checked-symbolic.symbolic.png
-		actions/open-menu-symbolic.symbolic.png
-		actions/window-minimize-symbolic.symbolic.png
-		actions/window-maximize-symbolic.symbolic.png
-		actions/window-restore-symbolic.symbolic.png
-		actions/window-close-symbolic.symbolic.png
-		actions/list-add-symbolic.symbolic.png
+		legacy/list-remove.png
+		legacy/edit-clear.png
+		legacy/list-add.png
 		actions/list-remove-symbolic.symbolic.png
-		actions/list-remove.png
-		ui/pan-up-symbolic.symbolic.png
+		actions/open-menu-symbolic.symbolic.png
+		actions/list-add-symbolic.symbolic.png
+		ui/checkbox-symbolic.symbolic.png
+		ui/checkbox-checked-symbolic.symbolic.png
+		ui/window-minimize-symbolic.symbolic.png
+		ui/window-maximize-symbolic.symbolic.png
+		ui/window-restore-symbolic.symbolic.png
+		ui/checkbox-mixed-symbolic.symbolic.png
+		ui/window-close-symbolic.symbolic.png
 		ui/pan-start-symbolic.symbolic.png
-		ui/pan-end-symbolic.symbolic.png
 		ui/pan-down-symbolic.symbolic.png
+		ui/pan-end-symbolic.symbolic.png
+		ui/pan-up-symbolic.symbolic.png
 )
 DRIVERS=(sc_by_cable sc_dongle)
 
@@ -40,8 +42,8 @@ export PROCESSOR_ARCHITEW6432=x86
 # meson $1
 ninja -C $1 || exit 1
 
+mkdir -p release-win32/share/glib-2.0
 mkdir -p release-win32/python
-mkdir -p release-win32/share
 mkdir -p release-win32/lib
 cp -vnur share/* release-win32/share
 cp -vur python/scc release-win32/python
@@ -51,6 +53,7 @@ cp -vnur /mingw32/lib/girepository-1.0/ release-win32/lib
 cp -vnur /mingw32/lib/gdk-pixbuf-2.0/ release-win32/lib
 cp -vnu	/mingw32/bin/gspawn-win32-helper.exe \
 		/mingw32/bin/gspawn-win32-helper-console.exe release-win32/
+cp -vnur /mingw32/share/glib-2.0/schemas release-win32/share/glib-2.0
 
 find release-win32/python/ -iname "*.pyc" -delete
 
@@ -69,6 +72,9 @@ done
 
 mkdir -p release-win32/menu-generators/
 cp -vu "$1"/src/menu-generators/*.dll release-win32/menu-generators
+
+mkdir -p release-win32/menu-plugins/
+cp -vu "$1"/src/osd/menus/libscc-osd-menu-*.dll release-win32/menu-plugins
 
 for i in "${LIBS[@]}" "${GTK_LIBS[@]}" ; do
 	if [ ! -e release-win32/$i ] ; then

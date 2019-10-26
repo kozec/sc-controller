@@ -5,6 +5,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <stdio.h>
 #define FILENAME_SUFFIX ".dll"
 #else
 #include <dlfcn.h>
@@ -18,9 +19,8 @@ static int make_path(SCCLibraryType type, StrBuilder* sb, char* error_return) {
 	switch (type) {
 	case SCLT_GENERATOR:
 #ifdef _WIN32
-		// TODO: This path should be somehow configurable or determined on runtime
 		strbuilder_add(sb, scc_get_exe_path());
-		strbuilder_add_path(sb, "..\\menu-generators");
+		strbuilder_add_path(sb, "menu-generators");
 #elif defined(__BSD__)
 		strbuilder_add(sb, "build-bsd/src/menu-generators");
 #else
@@ -31,7 +31,12 @@ static int make_path(SCCLibraryType type, StrBuilder* sb, char* error_return) {
 		strbuilder_add(sb, scc_drivers_path());
 		return 1;
 	case SCLT_OSD_MENU_PLUGIN:
+#ifdef _WIN32
+		strbuilder_add(sb, scc_get_exe_path());
+		strbuilder_add_path(sb, "menu-plugins");
+#else
 		strbuilder_add(sb, "build/src/osd/menus");
+#endif
 		return 1;
 	}
 	if (error_return != NULL)
@@ -62,12 +67,12 @@ extlib_t scc_load_library(SCCLibraryType type, const char* prefix, const char* l
 	
 	// Load library
 #ifdef _WIN32
-	extlib_t lib = = LoadLibrary(filename);
+	extlib_t lib = LoadLibrary(filename);
 	free(filename);
 	if (lib == NULL) {
 		DWORD err = GetLastError();
 		if (error_return != NULL)
-			snprintf(error_return, 255, "Windows error 0x%x", err);
+			snprintf(error_return, 255, "Windows error 0x%x", (int)err);
 		return NULL;
 	}
 #else
@@ -85,12 +90,12 @@ extlib_t scc_load_library(SCCLibraryType type, const char* prefix, const char* l
 
 void* scc_load_function(extlib_t lib, const char* name, char* error_return) {
 #ifdef _WIN32
-	void* fn = (scc_menu_generator_generate_fn)GetProcAddress(lib, name);
+	void* fn = GetProcAddress(lib, name);
 	if (fn == NULL) {
 		DWORD err = GetLastError();
 		if (error_return != NULL)
-			snprintf(error_return, 255, "Windows error 0x%x", err);
-		return NULL
+			snprintf(error_return, 255, "Windows error 0x%x", (int)err);
+		return NULL;
 	}
 #else
 	void* fn = dlsym(lib, name);

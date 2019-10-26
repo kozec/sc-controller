@@ -303,8 +303,8 @@ char* scc_find_binary(const char* name) {
 intptr_t scc_spawn(char* const* argv, uint32_t options) {
 	ASSERT(options == 0);
 #ifdef _WIN32
-	char* arg0 = argv[0];
-	intptr_t pid = _spawnv(_P_NOWAIT, arg0, argv);
+	const char* arg0 = argv[0];
+	intptr_t pid = _spawnv(_P_NOWAIT, arg0, (const char* const*)argv);
 	if (pid == 0) {
 		LERROR("Failed to execute %s: %i", argv[0], GetLastError());
 		return -1;
