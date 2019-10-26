@@ -28,7 +28,6 @@ const char* KW_WIN_AREA = "winarea";
 const char* KW_REL_WIN_AREA = "relwinarea";
 const char* KW_RADIAL_MENU = "radialmenu";
 const char* KW_QUICK_MENU = "quickmenu";
-const char* KW_GRID_MENU = "gridmenu";
 
 
 static ParamChecker pc_circular;
@@ -150,10 +149,6 @@ static ActionOE stub_constructor(const char* keyword, ParameterList params) {
 		keyword = KW_QUICK_MENU;
 		flags = AF_ACTION;
 		pc = NULL;
-	} else if (0 == strcmp(KW_GRID_MENU, keyword)) {
-		keyword = KW_GRID_MENU;
-		flags = AF_ACTION;
-		pc = NULL;
 	} else {
 		return (ActionOE)scc_new_action_error(AEC_PARSE_ERROR, "Unknown keyword for stub: '%s'", keyword);
 	}
@@ -227,6 +222,5 @@ void scc_actions_init_stub() {
 	scc_action_register(KW_REL_WIN_AREA, &stub_constructor);
 	scc_action_register(KW_RADIAL_MENU, &stub_constructor);
 	scc_action_register(KW_QUICK_MENU, &stub_constructor);
-	scc_action_register(KW_GRID_MENU, &stub_constructor);
 }
 

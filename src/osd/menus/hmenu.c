@@ -1,3 +1,10 @@
+/**
+ * SC-Controller - Horizontal OSD Menu
+ *
+ * Displays all items in one row.
+ * Designed mainly as RPG numeric pad display
+ * and looks awfull with larger number of items.
+ */
 #define LOG_TAG "OSD"
 #include "scc/utils/logging.h"
 #include "scc/utils/iterable.h"
@@ -65,9 +72,9 @@ static GtkWidget* make_widget(MenuItem* i, float size) {
 }
 
 
-DLL_EXPORT GtkWidget* osd_menu_create_widgets(MenuData* data, OSDMenuSettings* settings) {
+DLL_EXPORT GtkWidget* osd_menu_create_widgets(OSDMenu* mnu, OSDMenuSettings* settings) {
+	MenuData* data = osd_menu_get_menu_data(mnu);
 	GtkWidget* v = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_widget_set_name(GTK_WIDGET(v), "osd-menu");
 	
 	ListIterator it = iter_get(data);
 	FOREACH(MenuItem*, i, it) {
@@ -81,7 +88,7 @@ DLL_EXPORT GtkWidget* osd_menu_create_widgets(MenuData* data, OSDMenuSettings* s
 	return v;
 }
 
-DLL_EXPORT void osd_menu_handle_stick(int dx, int dy, OSDMenu* mnu) {
+DLL_EXPORT void osd_menu_handle_stick(OSDMenu* mnu, int dx, int dy) {
 	osd_menu_next_item(mnu, dx);
 }
 

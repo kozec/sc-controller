@@ -26,10 +26,18 @@ osd_menu_vmenu_lib = shared_library('scc-osd-menu-vmenu',
 )
 
 
-osd_menu_vmenu_lib = shared_library('scc-osd-menu-hmenu',
+osd_menu_hmenu_lib = shared_library('scc-osd-menu-hmenu',
 	include_directories: include,
 	link_with: common_link,
 	dependencies: common_deps,
 	sources: [ 'hmenu.c' ],
+)
+
+
+osd_menu_grid_menu_lib = shared_library('scc-osd-menu-gridmenu',
+	include_directories: include,
+	link_with: common_link + [ parser_lib ],
+	dependencies: common_deps + [ meson.get_compiler('c').find_library('m') ],
+	sources: [ 'grid_menu.c' ],
 )
 

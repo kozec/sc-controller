@@ -25,6 +25,7 @@ static ParamChecker pc_short;
 
 static const char* KW_MENU = "menu";
 static const char* KW_HMENU = "hmenu";
+static const char* KW_GRID_MENU = "gridmenu";
 
 typedef enum {
 	MT_MENU,			// Default type
@@ -119,8 +120,9 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 	params = scc_param_checker_fill_defaults(&pc, params);
 	if (params == NULL) return (ActionOE)scc_oom_action_error();
 	
-	if (strcmp(keyword, KW_MENU) == 0) keyword = KW_MENU;
-	else if (strcmp(keyword, KW_HMENU) == 0) keyword = KW_HMENU;
+	if (strcmp(keyword, KW_HMENU) == 0) keyword = KW_HMENU;
+	else if (strcmp(keyword, KW_GRID_MENU) == 0) keyword = KW_GRID_MENU;
+	else keyword = KW_MENU;
 	
 	SAMenuAction* sa = malloc(sizeof(SAMenuAction));
 	if (sa == NULL) return (ActionOE)scc_oom_action_error();
@@ -153,5 +155,6 @@ void scc_actions_init_sa_menu() {
 	scc_param_checker_init(&pc_short, "si");
 	scc_action_register(KW_MENU, &sa_menu_constructor);
 	scc_action_register(KW_HMENU, &sa_menu_constructor);
+	scc_action_register(KW_GRID_MENU, &sa_menu_constructor);
 }
 

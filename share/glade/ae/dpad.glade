@@ -180,11 +180,11 @@
         <col id="0" translatable="yes">List</col>
         <col id="1">menu</col>
       </row>
-      <!--
       <row>
         <col id="0" translatable="yes">Grid</col>
         <col id="1">gridmenu</col>
       </row>
+      <!--
       <row>
         <col id="0" translatable="yes">Radial</col>
         <col id="1">radialmenu</col>

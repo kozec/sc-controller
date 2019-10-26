@@ -22,6 +22,7 @@ typedef struct OSDMenuCallbacks {
 
 typedef struct OSDMenuSettings {
 	const char*			plugin_name;
+	int					size;			// preffered number of columns/rows
 	float				icon_size;
 	const char*			controller_id;	// NULL for "take 1st available"
 	PadStickTrigger		control_with;
@@ -45,6 +46,18 @@ void osd_menu_next_item(OSDMenu* mnu, int direction);
 /** Selects item by index. Returns false if item at index is not selectable */
 bool osd_menu_select(OSDMenu* mnu, size_t index);
 
+/** Returns MenuData (list of menu items) used by this menu */
+MenuData* osd_menu_get_menu_data(OSDMenu* mnu);
+
+/**
+ * Associates random pointer with menu. If set, 'osd_menu_free_plugin_data'
+ * will be called with this pointer once menu is destroyed
+ */
+void osd_menu_set_plugin_data(OSDMenu* mnu, void* data);
+
+/** Returns pointer assotiated using osd_menu_set_plugin_data */
+void* osd_menu_get_plugin_data(OSDMenu* mnu);
+
 // Following is list of functions exported by 'osd menu plugins'.
 // Plugins are used to control how menu looks (and partially how it behaves)
 
@@ -58,17 +71,25 @@ extern "C" {
  * Returns parent GtkWidget of hierarchy, which will then be attached to
  * menu window.
  */
-DLL_EXPORT GtkWidget* osd_menu_create_widgets(MenuData* data, OSDMenuSettings* settings);
-typedef GtkWidget*(*osd_menu_create_widgets_fn)(MenuData* data, OSDMenuSettings* settings);
+DLL_EXPORT GtkWidget* osd_menu_create_widgets(OSDMenu* mnu, OSDMenuSettings* settings);
+typedef GtkWidget*(*osd_menu_create_widgets_fn)(OSDMenu* mnu, OSDMenuSettings* settings);
 
 /**
- * Callback for "stick controller", utility that translates position of stick
- * into "keys presses". See stick_controller.c for details.
+ * Optional callback for "stick controller", utility that translates position
+ * of stick into "keys presses". See stick_controller.c for details.
  *
  * May be undefined, in which case stick controller is not used.
  */
-DLL_EXPORT void osd_menu_handle_stick(int dx, int dy, OSDMenu* mnu);
-typedef void(*osd_menu_handle_stick_fn)(int dx, int dy, OSDMenu* mnu);
+DLL_EXPORT void osd_menu_handle_stick(OSDMenu* mnu, int dx, int dy);
+typedef void(*osd_menu_handle_stick_fn)(OSDMenu* mnu, int dx, int dy);
+
+
+/**
+ * Optional callback called when menu is destoryed after 'osd_menu_set_plugin_data'
+ * was used.
+ */
+DLL_EXPORT void osd_menu_free_plugin_data(OSDMenu* mnu, void* data);
+typedef void(*osd_menu_free_plugin_data_fn)(OSDMenu* mnu, void* data);
 
 #ifdef __cplusplus
 }

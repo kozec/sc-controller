@@ -41,3 +41,4 @@ Config* config_init() {
 		config_save(c);
 	return c;
 }
+

@@ -23,32 +23,37 @@
 typedef struct _OSDMenuPrivate		OSDMenuPrivate;
 
 struct _OSDMenu {
-	GtkWindow			parent;
-	OSDMenuPrivate*		priv;
+	GtkWindow						parent;
+	OSDMenuPrivate*					priv;
 };
 
 struct _OSDMenuClass {
-	GtkWindowClass		parent_class;
+	GtkWindowClass					parent_class;
 };
 
 struct _OSDMenuPrivate {
-	StickController*	sc;
-	MenuData*			data;
-	SCCClient*			client;
-	GtkWidget*			selected;
-	GtkWidget*			cursor;
-	GtkWidget*			fixed;
-	OSDMenu*			child;
-	extlib_t			plugin;
-	Mapper*				slave_mapper;
-	OSDMenuSettings		settings;
+	StickController*				sc;
+	MenuData*						data;
+	void*							plugin_data;
+	SCCClient*						client;
+	GtkWidget*						selected;
+	GtkWidget*						cursor;
+	GtkWidget*						fixed;
+	OSDMenu*						child;
+	extlib_t						plugin;
+	Mapper*							slave_mapper;
+	osd_menu_handle_stick_fn		handle_stick_cb;
+	OSDMenuSettings					settings;
 };
 
 G_DEFINE_TYPE_WITH_CODE(OSDMenu, osd_menu, OSD_WINDOW_TYPE, G_ADD_PRIVATE(OSDMenu));
 
 static void osd_menu_item_selected(OSDMenu* mnu);
+static void osd_menu_finalize(GObject* mnu);
 
 static void osd_menu_class_init(OSDMenuClass *klass) {
+	GObjectClass* c = G_OBJECT_CLASS(klass);
+	c->finalize = osd_menu_finalize;
 }
 
 
@@ -183,10 +188,18 @@ static void osd_menu_on_event(SCCClient* c, uint32_t handle, SCButton button,
 	return osd_menu_parse_event(mnu, c, handle, button, pst, values);
 }
 
+
 static void osd_menu_on_reconfigured(SCCClient* c) {
 	install_css_provider();
 	LOG("Reconfigured.");
 }
+
+static void _osd_menu_handle_stick(int dx, int dy, void* _mnu) {
+	OSDMenu* mnu = OSD_MENU(_mnu);
+	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	priv->handle_stick_cb(mnu, dx, dy);
+}
+
 
 bool osd_menu_select(OSDMenu* mnu, size_t index) {
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
@@ -316,6 +329,7 @@ void osd_menu_connect(OSDMenu* mnu) {
 	priv->client->userdata = mnu;
 	priv->client->callbacks.on_ready = &osd_menu_connection_ready;
 	priv->client->callbacks.on_event = &osd_menu_on_event;
+	priv->client->callbacks.on_reconfigured = &osd_menu_on_reconfigured;
 	GSource* src = scc_gio_client_to_gsource(client);
 	g_source_set_callback(src, (GSourceFunc)osd_menu_on_data_ready, mnu, NULL);
 }
@@ -332,10 +346,6 @@ static void osd_menu_item_selected(OSDMenu* mnu) {
 	switch (i->type) {
 	case MI_ACTION: {
 		Action* a = i->action;
-		if (a == NULL) {
-			WARN("Activated menu item with no action");
-			break;
-		}
 		RC_ADD(a);
 		scc_action_compress(&a);
 		a->button_press(a, priv->slave_mapper);
@@ -388,11 +398,44 @@ extlib_t osd_menu_load_plugin(const char* name) {
 }
 
 
+void osd_menu_set_plugin_data(OSDMenu* mnu, void* data) {
+	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	priv->plugin_data = data;
+}
+
+
+void* osd_menu_get_plugin_data(OSDMenu* mnu) {
+	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	return priv->plugin_data;
+}
+
+
+MenuData* osd_menu_get_menu_data(OSDMenu* mnu) {
+	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	return priv->data;
+}
+
+
+static void osd_menu_finalize(GObject* _mnu) {
+	OSDMenu* mnu = OSD_MENU(_mnu);
+	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	if (priv->plugin_data != NULL) {
+		osd_menu_free_plugin_data_fn osd_menu_free_plugin_data;
+		osd_menu_free_plugin_data = scc_load_function(priv->plugin,
+				"osd_menu_free_plugin_data", NULL);
+		if (osd_menu_free_plugin_data == NULL) {
+			WARN("plugin data set, but osd_menu_free_plugin_data function not defined in plugin, we are leaking some data");
+		} else {
+			osd_menu_free_plugin_data(mnu, priv->plugin_data);
+		}
+	}
+}
+
+
 OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 	extlib_t plugin = osd_menu_load_plugin(settings->plugin_name);
 	if (plugin == NULL) return NULL;
 	osd_menu_create_widgets_fn osd_menu_create_widgets = scc_load_function(plugin, "osd_menu_create_widgets", NULL);
-	osd_menu_handle_stick_fn osd_menu_handle_stick = scc_load_function(plugin, "osd_menu_handle_stick", NULL);
 	ASSERT(osd_menu_create_widgets != NULL);
 	
 	int err;
@@ -416,10 +459,11 @@ OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 	OSDMenu* mnu = OSD_MENU(o);
 	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
 	
-	if (osd_menu_handle_stick == NULL) {
+	priv->handle_stick_cb = scc_load_function(plugin, "osd_menu_handle_stick", NULL);
+	if (priv->handle_stick_cb == NULL) {
 		priv->sc = NULL;
 	} else {
-		priv->sc = stick_controller_create((void*)osd_menu_handle_stick, mnu);
+		priv->sc = stick_controller_create(_osd_menu_handle_stick, mnu);
 		ASSERT(priv->sc != NULL);
 	}
 	
@@ -429,10 +473,12 @@ OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 	priv->fixed = NULL;
 	priv->selected = NULL;
 	priv->plugin = plugin;
+	priv->plugin_data = NULL;
 	priv->slave_mapper = NULL;
 	priv->settings = *settings;
 	
-	GtkWidget* parent = osd_menu_create_widgets(priv->data, &priv->settings);
+	GtkWidget* parent = osd_menu_create_widgets(mnu, &priv->settings);
+	gtk_widget_set_name(parent, "osd-menu");
 	
 	if (priv->settings.use_cursor) {
 		StrBuilder* sb = strbuilder_new();

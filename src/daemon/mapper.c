@@ -276,7 +276,10 @@ static inline void sa_menu(SAMenuActionData* data) {
 		list_add(argv, strbuilder_cpy(data->menu_type));
 	}
 	if (data->size > 0) {
-		list_add(argv, strbuilder_cpy("--size"));
+		if (strcmp(data->menu_type, "hmenu") == 0)
+			list_add(argv, strbuilder_cpy("--icon-size"));
+		else
+			list_add(argv, strbuilder_cpy("--size"));
 		list_add(argv, strbuilder_fmt("%i", data->size));
 	}
 	

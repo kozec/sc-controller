@@ -7,13 +7,16 @@
 #include "scc/tools.h"
 #include <gtk/gtk.h>
 
+static int exit_code = 0;
+
 static const char *const usage[] = {
 	"scc-osd-menu -f <filename>",
 	NULL,
 };
 
 static void on_mnu_exit(void* _mnu, int code) {
-	exit(code);
+	exit_code = 0;
+	gtk_main_quit();
 }
 
 static void on_mnu_ready(void* _mnu) {
@@ -25,7 +28,7 @@ int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
 	gtk_init(&argc, &argv);
 	
-	OSDMenuSettings settings = { NULL, 1.0, NULL, PST_STICK, B_A, B_B };
+	OSDMenuSettings settings = { NULL, 1.0, 1, NULL, PST_STICK, B_A, B_B };
 	char* filename = NULL;
 	char* control_with = NULL;
 	char* confirm_with = NULL;
@@ -39,7 +42,8 @@ int main(int argc, char** argv) {
 		OPT_STRING(0, "confirm-with", &confirm_with, "button used to confirm choice. Defaults to A"),
 		OPT_STRING(0, "cancel-with", &cancel_with, "button used to cancel menu. Defaults to B"),
 		OPT_BOOLEAN('u', "use-cursor", &settings.use_cursor, "display and use cursor to navigate menu"),
-		OPT_FLOAT(0, "size", &settings.icon_size, "icon size. Defaults to 1"),
+		OPT_INTEGER(0, "size", &settings.size, "Menu size (icon size). Defaults to 1"),
+		OPT_FLOAT(0, "icon-size", &settings.icon_size, "Icon size. Defaults to 1"),
 		OPT_END(),
 	};
 	struct argparse argparse;
@@ -97,7 +101,8 @@ int main(int argc, char** argv) {
 		g_signal_connect(G_OBJECT(mnu), "ready", (GCallback)&on_mnu_ready, NULL);
 		osd_menu_connect(mnu);
 		gtk_main();
-		return 0;
+		gtk_widget_destroy(GTK_WIDGET(mnu));
+		return exit_code;
 	} else {
 		return 1;
 	}
