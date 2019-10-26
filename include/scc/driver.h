@@ -93,6 +93,7 @@ struct Daemon {
 	 * This is basically global shortcut to udev monitor.
 	 *
 	 * 'idx' is used only when Subsystem is set to HIDAPI, otherwise it is ignored.
+	 * idx of -1 means 'any'
 	 *
 	 * Returns true on success or false on OOM error. False is also returned if
 	 * there already is another callback for same vendor and product ID registered.

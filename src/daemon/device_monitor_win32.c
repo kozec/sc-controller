@@ -53,6 +53,14 @@ void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sy
 		if (hashmap_put(known_devs, syspath, (void*)1) != MAP_OK)
 			return;
 		cb(d, syspath, sys, vendor, product, idx);
+		return;
+	}
+	key = make_key(sys, vendor, product, -1);
+	if (hashmap_get(callbacks, key, (any_t*)&cb) != MAP_MISSING) {
+		// I have no value to store in known_devs hashmap yet.
+		if (hashmap_put(known_devs, syspath, (void*)1) != MAP_OK)
+			return;
+		cb(d, syspath, sys, vendor, product, idx);
 	}
 }
 

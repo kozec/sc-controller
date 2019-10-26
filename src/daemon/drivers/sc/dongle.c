@@ -30,7 +30,7 @@ typedef struct Dongle {
 
 typedef LIST_TYPE(Dongle) DonglesList;
 
-static DonglesList dongles;
+static DonglesList dongles = NULL;
 
 #endif
 
@@ -39,44 +39,48 @@ static Driver driver = {
 };
 
 void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uint8_t* data, void* userdata) {
-#ifndef __BSD__
-	Dongle* dg = (Dongle*)userdata;
-	if (data == NULL) {
-		// Means dongle disconnected (or failed in any other way)
-		DEBUG("Dongle disconnected");
-		for (size_t j=0; j<CTRLS_PER_DONGLE; j++) {
-			SCController* sc = dg->controllers[j];
+	SCController* sc = NULL;
+	SCInput* i = (SCInput*)data;
+	if (dev->sys == HIDAPI) {
+		sc = (SCController*)userdata;
+		
+		if (data == NULL) {
+			// Controller disconnected (or failed in any other way)
+			DEBUG("%s disconnected", sc->desc);
+			sc->dev->close(sc->dev);
 			disconnected(sc);
 			// TODO: Deallocate sc
+			return;
+		}
+	} else {
+		Dongle* dg = (Dongle*)userdata;
+		if (data == NULL) {
+			// Means dongle disconnected (or failed in any other way)
+			DEBUG("Dongle disconnected");
+			for (size_t j=0; j<CTRLS_PER_DONGLE; j++) {
+				SCController* sc = dg->controllers[j];
+				disconnected(sc);
+				// TODO: Deallocate sc
+			}
+			
+			list_remove(dongles, dg);
+			// TODO: Deallocating this.
+			// free(dg);
+			return;
 		}
 		
-		list_remove(dongles, dg);
-		// TODO: Deallocating this.
-		// free(dg);
-		return;
+		if (endpoint < FIRST_ENDPOINT) {
+			LOG("Got data on ep %i!", endpoint);
+			return;
+		}
+		if (endpoint > FIRST_ENDPOINT + CTRLS_PER_DONGLE)
+			return;
+		
+		sc = dg->controllers[endpoint - FIRST_ENDPOINT];
 	}
 	
-	if (endpoint < FIRST_ENDPOINT) {
-		LOG("Got data on ep %i!", endpoint);
-		return;
-	}
-	if (endpoint > FIRST_ENDPOINT + CTRLS_PER_DONGLE)
-		return;
-	
-	SCController* sc = dg->controllers[endpoint - FIRST_ENDPOINT];
-#else
-	SCController* sc = (SCController*)userdata;
-	if (data == NULL) {
-		// Controller disconnected (or failed in any other way)
-		DEBUG("%s disconnected", sc->desc);
-		sc->dev->close(sc->dev);
-		disconnected(sc);
-		// TODO: Deallocate sc
-		return;
-	}
-#endif
-	SCInput* i = (SCInput*)data;
 	if (i->ptype == PT_HOTPLUG) {
+		LOG("PT_HOTPLUG");
 		if (data[4] == 1) {
 			// Controller disconnected
 			sc->state = SS_NOT_CONFIGURED;
@@ -112,7 +116,7 @@ void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uin
 	}
 	
 	if (i->ptype == PT_INPUT)
-		handle_input(sc, (SCInput*)data);
+		handle_input(sc, i);
 }
 
 static void turnoff(Controller* c) {
@@ -122,12 +126,12 @@ static void turnoff(Controller* c) {
 		LERROR("Failed to turn off controller");
 }
 
-#ifndef __BSD__
-////// Linux and Windows, there is dongle, controllers are connected to it
+////// On linux, there is dongle, controllers are connected to it
 
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
 	InputDevice* dev = daemon->open_input_device(syspath);
 	Dongle* dongle = NULL;
+	LOG("hotplug_cb %s", syspath);
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", syspath);
 		return;		// and nothing happens
@@ -172,12 +176,13 @@ hotplug_cb_fail:
 	dev->close(dev);
 }
 
-#else
-////// BSD - there is no dongle, each controller has its own /dev/uhidX node
-////// that is created all the time and it is registered with daemon only
-////// after 1st input is recieved
+////// On BSD and Windows, there is no dongle.
+////// Each controller has its own /dev/uhidX node that is created all the time
+////// and it is registered with daemon only after 1st input is recieved
 
-static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
+static void hotplug_cb_hid(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
+	if ((sys == HIDAPI) && ((idx < 1) || (idx > 4)))
+		return;
 	InputDevice* dev = daemon->open_input_device(syspath);
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", syspath);
@@ -190,6 +195,7 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 		return;
 	}
 	
+	sc->idx = idx;
 	sc->controller.turnoff = &turnoff;
 	if (!dev->interupt_read_loop(dev, 0, 64, &input_interrupt_cb, sc)) {
 		LERROR("Failed to configure dongle");
@@ -199,8 +205,6 @@ static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendo
 	}
 }
 
-#endif
-
 
 Driver* scc_driver_init(Daemon* daemon) {
 	ASSERT(sizeof(TriggerValue) == 1);
@@ -209,14 +213,23 @@ Driver* scc_driver_init(Daemon* daemon) {
 	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
 	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	
-#ifndef __BSD__
-	dongles = list_new(Dongle, 4);
-	if (dongles == NULL) {
-		LERROR("Out of memory");
-		return NULL;
+	bool success;
+#ifdef __BSD__
+	// TODO: Using 'USB' here is missleading.
+	success = daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, 0, &hotplug_cb_hid);
+#else
+	if (daemon->hidapi_enabled()) {
+		success = daemon->hotplug_cb_add(HIDAPI, VENDOR_ID, PRODUCT_ID, -1, &hotplug_cb_hid);
+	} else {
+		dongles = list_new(Dongle, 4);
+		if (dongles == NULL) {
+			LERROR("Out of memory");
+			return NULL;
+		}
+		success = daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, 0, &hotplug_cb);
 	}
 #endif
-	if (!daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, 0, &hotplug_cb)) {
+	if (!success) {
 		LERROR("Failed to register hotplug callback");
 		return NULL;
 	}
