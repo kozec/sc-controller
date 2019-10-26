@@ -44,21 +44,21 @@ elif host_machine.system() == 'windows'
 		meson.get_compiler('c').find_library('wsock32'),
 		meson.get_compiler('c').find_library('libusb-1.0'),
 	]
-	platform_dependent_link_with = [
+	platform_dependent_link_with += [
 		client_lib, msys_socket_lib,
 	]
-	platform_dependent_src = [
+	platform_dependent_src += [
 		'device_monitor_win32.c',
 		'input_libusb.c',
 	]
 	platform_dependent_link_args += [ '-mconsole' ]
 	if get_option('use-hidapi').auto() or get_option('use-hidapi').enabled()
+		# On Windows, modified hidapi is compiled directly to binary
 		platform_dependent_deps += [
 			meson.get_compiler('cpp').find_library('setupapi'),
-			dependency('hidapi')
 		]
 		platform_dependent_args += [ '-DUSE_HIDAPI' ]
-		platform_dependent_src += [ 'input_hidapi.c' ]
+		platform_dependent_src += [ 'hid.c', 'input_hidapi.c' ]
 	endif
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')

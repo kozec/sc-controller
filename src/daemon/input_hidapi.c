@@ -13,9 +13,9 @@
 #include "scc/utils/list.h"
 #include "scc/input_device.h"
 #include "scc/tools.h"
+#include "./hidapi.h"
 #include "daemon.h"
 #include <stdlib.h>
-#include <hidapi.h>
 
 #define BUFFER_MAX 256
 #define DEV_TYPECHECK(dev, method_name, err_return) do {						\
