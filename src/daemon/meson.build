@@ -39,27 +39,25 @@ elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
 		'input_bsd.c',
 	]
 elif host_machine.system() == 'windows'
+	if not (get_option('use-hidapi').auto() or get_option('use-hidapi').enabled())
+		error('use-hidapi option cannot be disabled on Windows')
+	endif
 	platform_dependent_deps = [
 		meson.get_compiler('c').find_library('regex'),
 		meson.get_compiler('c').find_library('wsock32'),
-		meson.get_compiler('c').find_library('libusb-1.0'),
+		meson.get_compiler('cpp').find_library('setupapi'),
 	]
 	platform_dependent_link_with += [
 		client_lib, msys_socket_lib,
 	]
 	platform_dependent_src += [
 		'device_monitor_win32.c',
-		'input_libusb.c',
+		'input_hidapi.c',
+		# On Windows, modified hidapi is compiled directly to binary
+		'hid.c'
 	]
 	platform_dependent_link_args += [ '-mconsole' ]
-	if get_option('use-hidapi').auto() or get_option('use-hidapi').enabled()
-		# On Windows, modified hidapi is compiled directly to binary
-		platform_dependent_deps += [
-			meson.get_compiler('cpp').find_library('setupapi'),
-		]
-		platform_dependent_args += [ '-DUSE_HIDAPI' ]
-		platform_dependent_src += [ 'hid.c', 'input_hidapi.c' ]
-	endif
+	platform_dependent_args += [ '-DUSE_HIDAPI' ]
 else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif

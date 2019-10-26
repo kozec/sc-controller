@@ -240,7 +240,7 @@ const char* scc_drivers_path() {
 #ifdef _WIN32
 	snprintf(drivers_path, PATH_MAX, "%s\\..\\drivers", scc_get_share_path());
 #elif defined(__BSD__)
-	strncpy(drivers_path, "build-bsd/src/daemon/drivers" PATH_MAX);
+	strncpy(drivers_path, "build-bsd/src/daemon/drivers", PATH_MAX);
 #else
 	strncpy(drivers_path, "build/src/daemon/drivers", PATH_MAX);
 #endif

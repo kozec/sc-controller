@@ -41,7 +41,11 @@ static Driver driver = {
 void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uint8_t* data, void* userdata) {
 	SCController* sc = NULL;
 	SCInput* i = (SCInput*)data;
+#ifdef __BSD__
+	if (dev->sys == UHID) {
+#else
 	if (dev->sys == HIDAPI) {
+#endif
 		sc = (SCController*)userdata;
 		
 		if (data == NULL) {
@@ -52,6 +56,7 @@ void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uin
 			// TODO: Deallocate sc
 			return;
 		}
+#ifndef __BSD__
 	} else {
 		Dongle* dg = (Dongle*)userdata;
 		if (data == NULL) {
@@ -77,10 +82,10 @@ void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uin
 			return;
 		
 		sc = dg->controllers[endpoint - FIRST_ENDPOINT];
+#endif
 	}
 	
 	if (i->ptype == PT_HOTPLUG) {
-		LOG("PT_HOTPLUG");
 		if (data[4] == 1) {
 			// Controller disconnected
 			sc->state = SS_NOT_CONFIGURED;
@@ -128,6 +133,7 @@ static void turnoff(Controller* c) {
 
 ////// On linux, there is dongle, controllers are connected to it
 
+#ifndef __BSD__
 static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
 	InputDevice* dev = daemon->open_input_device(syspath);
 	Dongle* dongle = NULL;
@@ -175,14 +181,17 @@ hotplug_cb_oom:
 hotplug_cb_fail:
 	dev->close(dev);
 }
+#endif
 
 ////// On BSD and Windows, there is no dongle.
 ////// Each controller has its own /dev/uhidX node that is created all the time
 ////// and it is registered with daemon only after 1st input is recieved
 
 static void hotplug_cb_hid(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
+#ifndef __BSD__
 	if ((sys == HIDAPI) && ((idx < 1) || (idx > 4)))
 		return;
+#endif
 	InputDevice* dev = daemon->open_input_device(syspath);
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", syspath);
@@ -215,8 +224,7 @@ Driver* scc_driver_init(Daemon* daemon) {
 	
 	bool success;
 #ifdef __BSD__
-	// TODO: Using 'USB' here is missleading.
-	success = daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, 0, &hotplug_cb_hid);
+	success = daemon->hotplug_cb_add(UHID, VENDOR_ID, PRODUCT_ID, 0, &hotplug_cb_hid);
 #else
 	if (daemon->hidapi_enabled()) {
 		success = daemon->hotplug_cb_add(HIDAPI, VENDOR_ID, PRODUCT_ID, -1, &hotplug_cb_hid);

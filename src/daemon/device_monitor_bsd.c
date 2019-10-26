@@ -79,12 +79,12 @@ void sccd_device_monitor_rescan() {
 		
 		// LOG("Dev: /bsd/usb/%i/%i %i %s %x %x %s %s", di.udi_bus, di.udi_addr, di.udi_addr, node_name, di.udi_vendorNo, di.udi_productNo, di.udi_product, di.udi_vendor);
 		sccd_hotplug_cb cb = NULL;
-		const char* key = make_key(BSD, di.udi_vendorNo, di.udi_productNo);
+		const char* key = make_key(UHID, di.udi_vendorNo, di.udi_productNo);
 		if (hashmap_get(callbacks, key, (any_t*)&cb) != MAP_MISSING) {
 			// I have no value to store in known_devs hashmap yet.
 			if (hashmap_put(known_devs, node_name, (void*)1) != MAP_OK)
 				return;
-			cb(d, node_name, BSD, di.udi_vendorNo, di.udi_productNo, 0);
+			cb(d, node_name, UHID, di.udi_vendorNo, di.udi_productNo, 0);
 		}
 	}
 }

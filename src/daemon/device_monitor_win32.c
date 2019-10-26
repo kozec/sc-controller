@@ -111,7 +111,12 @@ bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int
 }
 
 void sccd_device_monitor_rescan() {
+#if !defined(USE_LIBUSB) && !defined(USE_HIDAPI)
+#error "At least one of USE_LIBUSB, USE_HIDAPI has to be enabled"
+#endif
+#ifdef USE_LIBUSB
 	sccd_input_libusb_rescan();
+#endif
 #ifdef USE_HIDAPI
 	sccd_input_hidapi_rescan();
 #endif

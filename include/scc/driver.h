@@ -21,9 +21,10 @@ typedef enum {
 	BT			= 1,
 	INPUT		= 2,
 #endif
-	HIDAPI		= 3,
 #ifdef __BSD__
-	BSD			= 4,
+	UHID		= 3,
+#else
+	HIDAPI		= 4,
 #endif
 } Subsystem;
 

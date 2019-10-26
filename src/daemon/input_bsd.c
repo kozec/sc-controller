@@ -166,7 +166,7 @@ InputDevice* sccd_input_bsd_open(const char* syspath) {
 		return NULL;
 	}
 	
-	*((Subsystem*)(&dev->dev.sys)) = BSD;
+	*((Subsystem*)(&dev->dev.sys)) = UHID;
 	dev->dev.close = sccd_input_bsd_dev_close;
 	dev->dev.claim_interfaces_by = sccd_input_bsd_claim_interfaces_by;
 	dev->dev.interupt_read_loop  = sccd_input_bsd_interupt_read_loop;

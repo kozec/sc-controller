@@ -402,9 +402,11 @@ static InputDevice* sccd_open_input_device(const char* syspath) {
 #endif
 #ifdef __BSD__
 	return sccd_input_bsd_open(syspath);
-#else
+#endif
+#ifdef USE_LIBUSB
 	return sccd_input_libusb_open(syspath);
 #endif
+	return NULL;
 }
 
 intptr_t sccd_error_add(const char* message, bool fatal) {
@@ -551,7 +553,8 @@ int sccd_start() {
 	sccd_device_monitor_init(&_daemon);
 #ifdef __BSD__
 	sccd_input_bsd_init(&_daemon);
-#else
+#endif
+#ifdef USE_LIBUSB
 	sccd_input_libusb_init(&_daemon);
 #endif
 #ifdef USE_HIDAPI
@@ -606,7 +609,8 @@ int sccd_start() {
 	sccd_device_monitor_close();
 #ifdef __BSD__
 	sccd_input_bsd_close();
-#else
+#endif
+#ifdef USE_LIBUSB
 	sccd_input_libusb_close();
 #endif
 #ifdef USE_HIDAPI

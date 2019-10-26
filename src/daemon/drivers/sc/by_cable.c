@@ -95,7 +95,11 @@ Driver* scc_driver_init(Daemon* daemon) {
 	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
 	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	
+#ifndef __BSD__
 	Subsystem s = daemon->hidapi_enabled() ? HIDAPI : USB;
+#else
+	Subsystem s = UHID;
+#endif
 	if (!daemon->hotplug_cb_add(s, VENDOR_ID, PRODUCT_ID, CONTROLIDX, &hotplug_cb)) {
 		LERROR("Failed to register hotplug callback");
 		return NULL;
