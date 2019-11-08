@@ -1,68 +1,36 @@
 {
-    "_": "", 
-    "buttons": {
-        "A": {
-            "action": "button(KEY_KP7)"
-        }, 
-        "B": {
-            "action": "button(KEY_7)"
-        }, 
-        "BACK": {
-            "action": "button(BTN_SELECT)"
-        }, 
-        "C": {
-            "action": "menu('Default.menu')"
-        }, 
-        "LB": {
-            "action": "button(BTN_TL)"
-        }, 
-        "LGRIP": {
-            "action": "button(BTN_A)"
-        }, 
-        "RB": {
-            "action": "button(BTN_TR)"
-        }, 
-        "RGRIP": {
-            "action": "button(BTN_X)"
-        }, 
-        "RPAD": {
-            "action": "button(BTN_THUMBR)"
-        }, 
-        "START": {
-            "action": "button(BTN_START)"
-        }, 
-        "STICKPRESS": {
-            "action": "button(BTN_THUMBL)"
-        }, 
-        "X": {
-            "action": "button(BTN_X)"
-        }, 
-        "Y": {
-            "action": "button(BTN_Y)"
-        }
-    }, 
-    "cpad": {
-        "action": "None"
-    }, 
-    "gyro": {
-        "action": "cemuhook"
-    }, 
-    "is_template": false, 
-    "menus": {}, 
-    "pad_left": {
-        "action": "clicked(dpad(hatup(ABS_HAT0Y), hatdown(ABS_HAT0Y), hatleft(ABS_HAT0X), hatright(ABS_HAT0X)))"
-    }, 
-    "pad_right": {
-        "action": "feedback(RIGHT, 256, XY(axis(ABS_RX), raxis(ABS_RY)))"
-    }, 
-    "stick": {
-        "action": "XY(axis(ABS_X), raxis(ABS_Y))"
-    }, 
-    "trigger_left": {
-        "action": "axis(ABS_Z)"
-    }, 
-    "trigger_right": {
-        "action": "axis(ABS_RZ)"
-    }, 
-    "version": 1.4
+	"buttons" : {
+		"A"          : { "action" : "button(Keys.BTN_A)" },
+		"B"          : { "action" : "button(Keys.BTN_B)" },
+		"X"          : { "action" : "button(Keys.BTN_X)" },
+		"Y"          : { "action" : "button(Keys.BTN_Y)" },
+		"LB"         : { "action" : "button(Keys.BTN_TL)" },
+		"RB"         : { "action" : "button(Keys.BTN_TR)" },
+		"BACK"       : { "action" : "button(Keys.BTN_SELECT)" },
+		"START"      : { "action" : "button(Keys.BTN_START)" },
+		"C"          : { "action": "menu('Default.menu')" },
+		"STICKPRESS" : { "action": "button(Keys.BTN_THUMBL)" },
+		"RPAD"       : { "action" : "button(Keys.BTN_THUMBR)" },
+		"LGRIP"      : { "action" : "button(Keys.BTN_A)" },
+		"RGRIP"      : { "action" : "button(Keys.BTN_X)" }
+	},
+	
+	"trigger_left":  { "action": "axis(Axes.ABS_Z)" },
+	"trigger_right": { "action": "axis(Axes.ABS_RZ)" },
+	
+	"gyro": { "action": "cemuhook" },
+	
+	"stick" : {
+		"action": "XY(axis(Axes.ABS_X), raxis(Axes.ABS_Y))"
+	},
+	
+	"pad_left" : {
+		"action": "click(dpad(hatup(Axes.ABS_HAT0Y), hatdown(Axes.ABS_HAT0Y), hatleft(Axes.ABS_HAT0X), hatright(Axes.ABS_HAT0X)))"
+	},
+	
+	"pad_right" : {
+		"action": "feedback(RIGHT, 256, XY(axis(Axes.ABS_RX), raxis(Axes.ABS_RY)))"
+	},
+	
+	"version": 1.3
 }
