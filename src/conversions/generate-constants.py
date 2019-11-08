@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from collections import OrderedDict
-from gi.repository import Gdk
 from cheader import defines
 
 HW_SCANS = {
+	# HW_SCANS are used by uinput
 	'KEY_ESC':			0x70029,
 	'KEY_F1':			0x7003a,
 	'KEY_F2':			0x7003b,
@@ -165,6 +165,7 @@ X11_SCANS = {
 	'KEY_L':			46,
 	'KEY_SEMICOLON':	47,
 	'KEY_APOSTROPHE':	48,
+	'KEY_GRAVE':		49,
 	'KEY_BACKSLASH':	51,
 	'KEY_LEFTSHIFT':	50,
 	'KEY_102ND':		61,
@@ -212,8 +213,8 @@ X11_SCANS = {
 	'KEY_DELETE':		119,
 	'KEY_KPMINUS':		82,
 	'KEY_KPPLUS':		86,
-	'KEY_LEFTMETA':		113,
-	'KEY_RIGHTMETA':	113,
+	'KEY_LEFTMETA':		133,
+	'KEY_RIGHTMETA':	134,
 	'KEY_COMPOSE':		135,
 }
 
@@ -295,8 +296,19 @@ WIN32_SCANS = {
 	'KEY_F10':			0x44,
 	'KEY_F11':			0x57,
 	'KEY_F12':			0x58,
-	# KEY_NUMLOCK 45+
-	# KEY_PAUSE 45/46+
+	'KEY_KP7':			0x47,
+	'KEY_KP8':			0x48,
+	'KEY_KP9':			0x49,
+	'KEY_KP4':			0x4B,
+	'KEY_KP5':			0x4C,
+	'KEY_KP6':			0x4D,
+	'KEY_KP1':			0x4F,
+	'KEY_KP2':			0x50,
+	'KEY_KP3':			0x51,
+	'KEY_KP0':			0x52,
+	'KEY_KPDOT':		0x53,
+	'KEY_NUMLOCK':		0x45, # +
+	'KEY_PAUSE':		0x46, # 45/46+
 	# KEY_SCROLLLOCK 46+
 	# Home KP 0x47
 	'KEY_UP':			0xE048,
@@ -315,84 +327,113 @@ WIN32_SCANS = {
 	'KEY_COMPOSE':		0xE05D,
 }
 
-GDK_TO_KEY = {
-	# Row 1
-	"GDK_KEY_Escape":		"KEY_ESC",
-	"GDK_KEY_Print":		"KEY_PRINT",
-	"GDK_KEY_Scroll_Lock":	"KEY_SCROLLLOCK",
-	"GDK_KEY_Sys_Req":		"KEY_SYSRQ",
-	"GDK_KEY_Pause":		"KEY_PAUSE",
-	
-	# Row 2
-	"GDK_KEY_quoteleft":	"KEY_GRAVE",	# tilde
-	"GDK_KEY_minus":		"KEY_MINUS",
-	"GDK_KEY_equal":		"KEY_EQUAL",
-	"GDK_KEY_BackSpace":	"KEY_BACKSPACE",
-	
-	# Row 3
-	"GDK_KEY_Tab":			"KEY_TAB",
-	"GDK_KEY_bracketleft":	"KEY_LEFTBRACE",
-	"GDK_KEY_bracketright":	"KEY_RIGHTBRACE",
-	"GDK_KEY_backslash":	"KEY_BACKSLASH",
-	
-	# Row 4
-	"GDK_KEY_Caps_Lock":	"KEY_CAPSLOCK",
-	"GDK_KEY_semicolon":	"KEY_SEMICOLON",
-	"GDK_KEY_apostrophe":	"KEY_APOSTROPHE",
-	"GDK_KEY_Return":		"KEY_ENTER",
-	
-	# Row 5
-	"GDK_KEY_Shift_L":		"KEY_LEFTSHIFT",
-	"GDK_KEY_comma":		"KEY_COMMA",
-	"GDK_KEY_period":		"KEY_DOT",
-	"GDK_KEY_slash":		"KEY_SLASH",
-	"GDK_KEY_Shift_R":		"KEY_RIGHTSHIFT",
-	
-	# Numpad
-	"GDK_KEY_KP_0":			"KEY_KP0",
-	"GDK_KEY_KP_1":			"KEY_KP1",
-	"GDK_KEY_KP_2":			"KEY_KP2",
-	"GDK_KEY_KP_3":			"KEY_KP3",
-	"GDK_KEY_KP_4":			"KEY_KP4",
-	"GDK_KEY_KP_5":			"KEY_KP5",
-	"GDK_KEY_KP_6":			"KEY_KP6",
-	"GDK_KEY_KP_7":			"KEY_KP7",
-	"GDK_KEY_KP_8":			"KEY_KP8",
-	"GDK_KEY_KP_9":			"KEY_KP9",
-	"GDK_KEY_KP_Delete":	"KEY_KPDOT",
-	"GDK_KEY_KP_Divide":	"KEY_KPSLASH",
-	"GDK_KEY_KP_Add":		"KEY_KPPLUS",
-	"GDK_KEY_KP_Multiply":	"KEY_KPASTERISK",
-	"GDK_KEY_KP_Subtract":	"KEY_KPMINUS",
-	"GDK_KEY_KP_Enter":		"KEY_KPENTER",
-	"GDK_KEY_Num_Lock":		"KEY_NUMLOCK",
-	
-	# Home & co
-	"GDK_KEY_Insert":		"KEY_INSERT",
-	"GDK_KEY_Home":			"KEY_HOME",
-	"GDK_KEY_Page_Up":		"KEY_PAGEUP",
-	"GDK_KEY_Delete":		"KEY_DELETE",
-	"GDK_KEY_End":			"KEY_END",
-	"GDK_KEY_Page_Down":	"KEY_PAGEDOWN",
-	
-	# Arrows
-	"GDK_KEY_Up":			"KEY_UP",
-	"GDK_KEY_Left":			"KEY_LEFT",
-	"GDK_KEY_Right":		"KEY_RIGHT",
-	"GDK_KEY_Down":			"KEY_DOWN",
-	
-	# Bottom row
-	"GDK_KEY_Control_L":	"KEY_LEFTCTRL",
-	"GDK_KEY_Super_L":		"KEY_LEFTMETA",
-	"GDK_KEY_Alt_L":		"KEY_LEFTALT",
-	"GDK_KEY_space":		"KEY_SPACE",
-	"GDK_KEY_Alt_R":		"KEY_RIGHTALT",
-	"GDK_KEY_Super_R":		"KEY_RIGHTMETA",
-	"GDK_KEY_Menu":			"KEY_COMPOSE",
-	"GDK_KEY_Control_R":	"KEY_RIGHTCTRL",
+WIN32_VKs = {
+	# Source: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+	'KEY_ESC':			0x1B,
+	'KEY_GRAVE':		0xC0,
+	'KEY_0':			0x30,
+	'KEY_1':			0x31,
+	'KEY_2':			0x32,
+	'KEY_3':			0x33,
+	'KEY_4':			0x34,
+	'KEY_5':			0x35,
+	'KEY_6':			0x36,
+	'KEY_7':			0x37,
+	'KEY_8':			0x38,
+	'KEY_9':			0x39,
+	'KEY_MINUS':		0xBF,
+	'KEY_EQUAL':		0xDF,
+	'KEY_BACKSPACE':	0x08,
+	'KEY_TAB':			0x09,
+	'KEY_A':			0x41,
+	'KEY_B':			0x42,
+	'KEY_C':			0x43,
+	'KEY_D':			0x44,
+	'KEY_E':			0x45,
+	'KEY_F':			0x46,
+	'KEY_G':			0x47,
+	'KEY_H':			0x48,
+	'KEY_I':			0x49,
+	'KEY_J':			0x4A,
+	'KEY_K':			0x4B,
+	'KEY_L':			0x4C,
+	'KEY_M':			0x4D,
+	'KEY_N':			0x4E,
+	'KEY_O':			0x4F,
+	'KEY_P':			0x50,
+	'KEY_Q':			0x51,
+	'KEY_R':			0x52,
+	'KEY_S':			0x53,
+	'KEY_T':			0x54,
+	'KEY_U':			0x55,
+	'KEY_V':			0x56,
+	'KEY_W':			0x57,
+	'KEY_X':			0x58,
+	'KEY_Y':			0x59,
+	'KEY_Z':			0x5A,
+	'KEY_KP0':			0x60,
+	'KEY_KP1':			0x61,
+	'KEY_KP2':			0x62,
+	'KEY_KP3':			0x63,
+	'KEY_KP4':			0x64,
+	'KEY_KP5':			0x65,
+	'KEY_KP6':			0x66,
+	'KEY_KP7':			0x67,
+	'KEY_KP8':			0x68,
+	'KEY_KP9':			0x69,
+	'KEY_LEFTBRACE':	0xDB,
+	'KEY_RIGHTBRACE':	0xDD,
+	'KEY_ENTER':		0x0D,
+	# 'KEY_102ND':
+	'KEY_LEFTCTRL':		0x11,
+	'KEY_RIGHTCTRL':	0xa3,
+	'KEY_SEMICOLON':	0xBA,
+	'KEY_APOSTROPHE':	0xDE,
+	'KEY_BACKSLASH':	0xDC,
+	'KEY_LEFTSHIFT':	0x10,
+	'KEY_RIGHTSHIFT':	0xA1,
+	'KEY_COMMA':		0xBC,
+	'KEY_DOT':			0xBD,
+	'KEY_SLASH':		0xBE,
+	'KEY_SYSRQ':		0x2C,
+	'KEY_SCROLLLOCK':	0x91,
+	'KEY_PAUSE':		0x13,
+	# 'KEY_NUMLOCK':
+	'KEY_KPSLASH':		0x6F,
+	'KEY_KPASTERISK':	0x6A,
+	'KEY_KPMINUS':		0x6D,
+	'KEY_KPPLUS':		0x6B,
+	# 'KEY_KPENTER':
+	'KEY_LEFTALT':		0x12,
+	# 'KEY_RIGHTALT':
+	'KEY_SPACE':		0x20,
+	'KEY_CAPSLOCK':		0x14,
+	'KEY_F1':			0x70,
+	'KEY_F2':			0x71,
+	'KEY_F3':			0x72,
+	'KEY_F4':			0x73,
+	'KEY_F5':			0x74,
+	'KEY_F6':			0x75,
+	'KEY_F7':			0x76,
+	'KEY_F8':			0x77,
+	'KEY_F9':			0x78,
+	'KEY_F10':			0x79,
+	'KEY_F11':			0x7A,
+	'KEY_F12':			0x7B,
+	'KEY_END':			0x23,
+	'KEY_HOME':			0x24,
+	'KEY_INSERT':		0x2D,
+	'KEY_DELETE':		0x2E,
+	'KEY_PAGEUP':		0x21,
+	'KEY_PAGEDOWN':		0x22,
+	'KEY_UP':			0x26,
+	'KEY_LEFT':			0x25,
+	'KEY_RIGHT':		0x27,
+	'KEY_DOWN':			0x28,
+	'KEY_LEFTMETA':		0x5B,
+	'KEY_RIGHTMETA':	0x5C,
+	'KEY_COMPOSE':		0x5D,
 }
-
-KEY_TO_GTK = { v: k for (k, v) in GDK_TO_KEY.items() }
 
 NUMBERS = {
 	# Values are assigned when generating to make sure it is bellow 1st button
@@ -400,12 +441,6 @@ NUMBERS = {
 	"YAW",
 	"ROLL",
 }
-
-
-for x in dir(Gdk):
-	if x.startswith("KEY_"):
-		if x.upper() in HW_SCANS:
-			KEY_TO_GTK[x.upper()] = "GDK_" + x
 
 
 def is_rel_or_abs(x):	# or button
@@ -428,16 +463,17 @@ class Item:
 		self.hw_scan = 0
 		self.x11_keycode = 0
 		self.win32_scan = 0
-		self.gdk_constant = 0
+		self.win32_vk = 0
 	
 	def __repr__(self):
 		if self.name:
-			return '{ %i,\t%s, %s, %s, %s, GDK_KEYCODE(%s) }' % (
+			return '{ %i,\t%s, %s, %s, %s, %s }' % (
 				self.value, '"%s"' % (self.name,),
 				hex(self.hw_scan).upper().replace("0X", "0x"),
 				hex(self.x11_keycode).upper().replace("0X", "0x"),
 				hex(self.win32_scan).upper().replace("0X", "0x"),
-				self.gdk_constant )
+				hex(self.win32_vk).upper().replace("0X", "0x"),
+			)
 		else:
 			return '{ %i }' % (self.value,)
 
@@ -455,8 +491,8 @@ def generate(chead):
 		everything[x].x11_keycode = X11_SCANS[x]
 	for x in WIN32_SCANS:
 		everything[x].win32_scan = WIN32_SCANS[x]
-	for x in KEY_TO_GTK:
-		everything[x].gdk_constant = KEY_TO_GTK[x]
+	for x in WIN32_VKs:
+		everything[x].win32_vk = WIN32_VKs[x]
 		
 	key_max = max([ a.value for a in everything.values() ])
 	key_max = 256		# TODO: Removing all above this; Those keys are probably not
@@ -486,10 +522,6 @@ def generate(chead):
 		#include "conversions.h"
 		#include <unistd.h>
 		#include <stdint.h>
-		
-		#ifndef GDK_KEYCODE
-		#	define GDK_KEYCODE(x)	0
-		#endif
 		
 		""")
 	

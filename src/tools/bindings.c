@@ -151,6 +151,23 @@ ActionOE scc_action_new_from_array(const char* keyword, size_t count, Parameter*
 	return aoe;
 }
 
+
+extern struct Item keys[];
+
+Keycode scc_hardware_keycode_to_keycode(uint16_t hw) {
+	// TODO: Maybe optimize this? It's short loop not called often
+	for (Keycode code = 1; code <= SCC_KEYCODE_MAX; code ++) {
+#ifdef _WIN32
+		if (keys[code].win32_vk == hw)
+#else
+		if (keys[code].x11_keycode == hw)
+#endif
+			return code;
+	}
+	return 0;
+}
+
+
 Parameter* scc_get_const_parameter(const char* name) {
 	// Is it int constant?
 	int32_t i = scc_get_int_constant(name);

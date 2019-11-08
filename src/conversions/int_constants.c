@@ -70,7 +70,7 @@ uint16_t scc_keycode_to_hw_scan(Keycode code) {
 }
 
 
-unsigned int scc_keycode_to_x11(Keycode code) {
+uint16_t scc_keycode_to_x11(Keycode code) {
 	if ((code <= 0) || (code > SCC_KEYCODE_MAX))
 		return 0;
 	

@@ -7,6 +7,6 @@ struct Item {
 	uint32_t			hw_scan;
 	uint16_t 			x11_keycode;
 	uint16_t			win32_scan;
-	uint16_t			gdk_constant;
+	uint8_t				win32_vk;
 };
 

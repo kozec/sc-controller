@@ -17,6 +17,7 @@ typedef struct ActionError ActionError;
 typedef union ActionOE ActionOE;
 typedef union ParamOE ParamOE;
 typedef union { ParamOE* p; ActionOE* a; ActionError* e; } APError;
+typedef uint16_t Keycode;
 
 typedef struct EnumValue {
 	const char*		name;
@@ -134,6 +135,14 @@ DLL_EXPORT size_t scc_get_rels_constants(EnumValue array[], size_t count);
 
 /** Same as scc_get_key_constants, but returns button names */
 DLL_EXPORT size_t scc_get_button_constants(EnumValue array[], size_t count);
+
+/**
+ * Converts X11 keycode or Windows "virtual key" (value of 'hardware_keycode'
+ * property of GdkEvent on either platform) to value of KEY_* constant.
+ *
+ * Returns 0 for unknown values.
+ */
+DLL_EXPORT Keycode scc_hardware_keycode_to_keycode(uint16_t hw);
 
 /**
  * Converts constant name into constant-parameter.

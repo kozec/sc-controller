@@ -17,12 +17,11 @@ extern const uint16_t SCC_KEYCODE_MAX;
  */
 uint16_t scc_keycode_to_hw_scan(Keycode keycode);
 
-
 /**
  * Converts KEY_* value to x11 keycode usable by XTestFakeKeyEvent & co.
  * Returns 0 for unknown values.
  */
-unsigned int scc_keycode_to_x11(Keycode code);
+uint16_t scc_keycode_to_x11(Keycode code);
 
 #ifdef _WIN32
 /**
@@ -59,14 +58,12 @@ int32_t scc_get_int_constant(const char* key);
  */
 const char* scc_get_string_constant(const char* key);
 
-
 /**
  * Returns name of key (e.g. KEY_A for 30) or NULL if key is not recognized.
  *
  * Returned value shall not be deallocated.
  */
 const char* scc_get_key_name(int32_t code);
-
 
 /**
  * Returns string description of axis, such as "LStick Left" or "DPAD Up"

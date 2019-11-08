@@ -10,7 +10,7 @@
 #ifdef _WIN32
 	#include <windows.h>
 	// Windows have MAX_PATH instead and that's 250. Like, characters. Really.
-	// Luckily, NT can handle even more than this, so this redefines it with more
+	// Luckily, NT can handle much more than that, so SCC uses redefined value
 	#undef PATH_MAX
 	#define PATH_MAX 4096
 	typedef HMODULE extlib_t;

@@ -11,7 +11,6 @@ Mouse movement (but not buttons) are passed to uinput as usuall.
 from __future__ import unicode_literals
 from gi.repository import Gtk, Gdk, GLib
 
-from scc.gui.gdk_to_key import KEY_TO_GDK, KEY_TO_KEYCODE
 from scc.gui.daemon_manager import ControllerManager
 from scc.osd.slave_mapper import SlaveMapper
 from scc.constants import SCButtons
@@ -58,6 +57,9 @@ class OSDModeKeyboard(object):
 		][0]	
 	
 	def pressEvent(self, keys):
+		# TODO: This? Is OSDMode still usefull?
+		pass
+		"""
 		for k in keys:
 			event = Gdk.Event.new(Gdk.EventType.KEY_PRESS)
 			event.time = Gtk.get_current_event_time()
@@ -66,9 +68,13 @@ class OSDModeKeyboard(object):
 			event.window = self.mapper.target_window
 			event.set_device(self.device)
 			Gtk.main_do_event(event)
+		"""
 	
 	
 	def releaseEvent(self, keys=[]):
+		# TODO: This? Is OSDMode still usefull?
+		pass
+		"""
 		for k in keys:
 			event = Gdk.Event.new(Gdk.EventType.KEY_RELEASE)
 			event.time = Gtk.get_current_event_time()
@@ -77,6 +83,7 @@ class OSDModeKeyboard(object):
 			event.window = self.mapper.target_window
 			event.set_device(self.device)
 			Gtk.main_do_event(event)
+		"""
 
 
 class OSDModeMouse(object):

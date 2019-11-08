@@ -55,7 +55,7 @@ class Parameter:
 				raise ValueError("Invalid parameter")
 			self._cparam = value
 		else:
-			if type(value) == int:
+			if type(value) in (long, int):
 				cparam = lib_actions.scc_new_int_parameter(value)
 			elif type(value) == float:
 				cparam = lib_actions.scc_new_float_parameter(value)
@@ -598,5 +598,4 @@ lib_actions.scc_multiaction_new.restype = Action.CActionOEp
 
 lib_actions.scc_macro_new.argtypes = [ Action.CActionOEpp, ctypes.c_size_t ]
 lib_actions.scc_macro_new.restype = Action.CActionOEp
-
 
