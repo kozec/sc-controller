@@ -242,11 +242,48 @@ void test_strbuilder(CuTest* tc) {
 	
 	b = strbuilder_new();
 	strbuilder_add(b, "String 'that has' \"to\" be \\escaped");
-	strbuilder_escape(b, "'\\\"");
+	strbuilder_escape(b, "'\\\"", '\\');
 	assert(tc, strcmp(strbuilder_get_value(b), "String \\'that has\\' \\\"to\\\" be \\\\escaped") == 0);
-	free(strbuilder_consume(b));
+	
+	strbuilder_clear(b);
+	strbuilder_add(b, "String that has to be escaped");
+	strbuilder_escape(b, "-Ss t", '+');
+	assert(tc, strcmp(strbuilder_get_value(b), "+S+tring+ +tha+t+ ha+s+ +to+ be+ e+scaped") == 0);
+	
+	strbuilder_free(b);
 }
 
+void test_strbuilder_escape(CuTest* tc) {
+	StrBuilder* b = strbuilder_new();
+	strbuilder_add(b, "String 'that has' \"to\" be \\escaped");
+	strbuilder_escape(b, "'\\\"", '\\');
+	assert(tc, strcmp(strbuilder_get_value(b), "String \\'that has\\' \\\"to\\\" be \\\\escaped") == 0);
+	
+	strbuilder_clear(b);
+	strbuilder_add(b, "String that has to be escaped");
+	strbuilder_escape(b, "-Ss t", '+');
+	assert(tc, strcmp(strbuilder_get_value(b), "+S+tring+ +tha+t+ ha+s+ +to+ be+ e+scaped") == 0);
+	
+	strbuilder_clear(b);
+	strbuilder_add(b, "String ");
+	strbuilder_add_escaped(b, "'that has' \"to\" be \\escaped", "'\\\"", '\\');
+	assert(tc, strcmp(strbuilder_get_value(b), "String \\'that has\\' \\\"to\\\" be \\\\escaped") == 0);
+	
+	strbuilder_clear(b);
+	strbuilder_add(b, "String that ");
+	strbuilder_add_escaped(b, "has to be escaped", "-Ss t", '+');
+	assert(tc, strcmp(strbuilder_get_value(b), "String that ha+s+ +to+ be+ e+scaped") == 0);
+	
+	// Very special, but real use case
+	strbuilder_clear(b);
+	strbuilder_add(b, "ls ");
+	strbuilder_add(b, "\"");
+	strbuilder_add_escaped(b, "hello \"world\"", "\"", '\\');
+	strbuilder_add(b, "\"");
+	assert(tc, strcmp(strbuilder_get_value(b), "ls \"hello \\\"world\\\"\"") == 0);
+	
+	strbuilder_free(b);
+}
 
 char* template_cb(const char* keyword, int* err_return, void* userdata) {
 	if (strcmp(keyword, "world") == 0)
@@ -303,6 +340,7 @@ void test_intmap(CuTest* tc) {
 
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
+	/*
 	DEFAULT_SUITE_ADD(test_list);
 	DEFAULT_SUITE_ADD(test_list_insert);
 	DEFAULT_SUITE_ADD(test_list_filter);
@@ -313,7 +351,10 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_hashmap_iterator_1item);
 	DEFAULT_SUITE_ADD(test_hashmap_iterator_2items);
 	DEFAULT_SUITE_ADD(test_strbuilder);
-	DEFAULT_SUITE_ADD(test_template);
+	*/
+	DEFAULT_SUITE_ADD(test_strbuilder_escape);
+	// DEFAULT_SUITE_ADD(test_template);
 	
 	return CuSuiteRunDefault();
 }
+

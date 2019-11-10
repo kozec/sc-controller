@@ -330,8 +330,9 @@ void strbuilder_rtrim(StrBuilder* b, size_t count) {
 }
 
 
-bool strbuilder_escape(StrBuilder* b, const char* chars) {
+bool strbuilder_escape(StrBuilder* b, const char* chars, char escape_char) {
 	if (b == NULL) return false;
+	if (escape_char == 0) return false;
 	// Count space needed 1st
 	size_t space_needed = 0;
 	for (size_t i=0; i<b->length; i++)
@@ -344,9 +345,25 @@ bool strbuilder_escape(StrBuilder* b, const char* chars) {
 	for (size_t i=0; i<b->length; i++) {
 		if (strchr(chars, b->value[i]) != NULL) {
 			move_chars_forward(b, i, 1);
-			b->value[i] = '\\';
+			b->value[i] = escape_char;
 			i++;
 		}
+	}
+	return true;
+}
+
+
+bool strbuilder_add_escaped(StrBuilder* b, const char* string, const char* chars, char escape_char) {
+	if (b == NULL) return false;
+	if (escape_char == 0) return false;
+	int len = strlen(string);
+	for (int i=0; i<len; i++) {
+		char c = string[i];
+		if (strchr(chars, c) != NULL)
+			strbuilder_add_char(b, escape_char);
+		strbuilder_add_char(b, c);
+		if (strbuilder_failed(b))
+			return false;
 	}
 	return true;
 }

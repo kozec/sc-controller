@@ -69,10 +69,16 @@ void strbuilder_rtrim(StrBuilder* b, size_t count);
 bool strbuilder_failed(StrBuilder* b);
 
 /**
- * Escapes any instance of any character in 'chars' in stored string.
- * Returns false if memory for operation cannot be allocated or if 'b' is NULL.
+ * Escapes any instance of any character in 'chars' in stored string with 'escape_char'.
+ * Returns false if memory for operation cannot be allocated, 'b' is NULL or 'escape_char' is 0.
  */
-bool strbuilder_escape(StrBuilder* b, const char* chars);
+bool strbuilder_escape(StrBuilder* b, const char* chars, char escape_char);
+
+/**
+ * Adds string while escaping any instance of characters in 'chars' with 'escape_char'.
+ * Returns false if memory for operation cannot be allocated, 'b' is NULL or 'escape_char' is 0.
+ */
+bool strbuilder_add_escaped(StrBuilder* b, const char* string, const char* chars, char escape_char);
 
 /**
  * Adds all strings from array to builder. Empty strings and NULLs are ignored.

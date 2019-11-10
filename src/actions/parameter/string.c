@@ -16,7 +16,7 @@ static char* str_param_to_string(Parameter* _p) {
 		StrBuilder* b = strbuilder_new();
 		if (b == NULL) return NULL;
 		strbuilder_add(b, p->value);
-		strbuilder_escape(b, "\n\t\r\\'");
+		strbuilder_escape(b, "\n\t\r\\'", '\\');
 		strbuilder_add_char(b, '\'');
 		strbuilder_insert_char(b, 0, '\'');
 		if (strbuilder_failed(b)) {

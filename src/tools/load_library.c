@@ -1,4 +1,5 @@
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/logging.h"
 #include "scc/tools.h"
 #include <stdlib.h>
 #include <string.h>
@@ -6,11 +7,25 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <dirent.h>
 #define FILENAME_SUFFIX ".dll"
 #else
 #include <dlfcn.h>
 #include <errno.h>
 #define FILENAME_SUFFIX ".so"
+#endif
+
+
+#ifdef _WIN32
+static bool dir_exists(const char* path) {
+	DIR* f = opendir(path);
+	if (f != NULL) {
+		closedir(f);
+		return true;
+	}
+	return false;
+}
 #endif
 
 
@@ -21,6 +36,10 @@ static int make_path(SCCLibraryType type, StrBuilder* sb, char* error_return) {
 #ifdef _WIN32
 		strbuilder_add(sb, scc_get_exe_path());
 		strbuilder_add_path(sb, "menu-generators");
+		if (!dir_exists(sb->value) && dir_exists("src\\menu-generators")) {
+			strbuilder_clear(sb);
+			strbuilder_add(sb, "src\\menu-generators");
+		}
 #elif defined(__BSD__)
 		strbuilder_add(sb, "build-bsd/src/menu-generators");
 #else
@@ -34,6 +53,10 @@ static int make_path(SCCLibraryType type, StrBuilder* sb, char* error_return) {
 #ifdef _WIN32
 		strbuilder_add(sb, scc_get_exe_path());
 		strbuilder_add_path(sb, "menu-plugins");
+		if (!dir_exists(sb->value) && dir_exists("src\\osd")) {
+			strbuilder_clear(sb);
+			strbuilder_add(sb, "src\\osd");
+		}
 #else
 		strbuilder_add(sb, "build/src/osd/menus");
 #endif

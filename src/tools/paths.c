@@ -304,7 +304,33 @@ intptr_t scc_spawn(char* const* argv, uint32_t options) {
 	ASSERT(options == 0);
 #ifdef _WIN32
 	const char* arg0 = argv[0];
-	intptr_t pid = _spawnv(_P_NOWAIT, arg0, (const char* const*)argv);
+	// So, yeah, Windows is just fucked. Arguments with spaces needs quotes,
+	// arguments with quotes needs escaping.
+	// https://github.com/kozec/sc-controller/issues/510
+	// https://docs.microsoft.com/en-us/cpp/c-runtime-library/spawn-wspawn-functions?view=vs-2019
+	StrBuilder* wargv = strbuilder_new();
+	if (wargv != NULL) {
+		int i = 1;
+		for (const char* arg = argv[i]; arg != NULL; arg = argv[++i]) {
+			if (i > 1)
+				strbuilder_add(wargv, " ");
+			if (strchr(arg, ' ') != NULL) {
+				strbuilder_add(wargv, "\"");
+				strbuilder_add_escaped(wargv, arg, "\"", '\\');
+				strbuilder_add(wargv, "\"");
+			} else {
+				strbuilder_add_escaped(wargv, arg, "\"", '\\');
+			}
+		}
+	}
+	if ((wargv == NULL) || strbuilder_failed(wargv)) {
+		strbuilder_free(wargv);
+		LERROR("Failed to execute %s: Out of memory", argv[0]);
+		return -1;
+	}
+	const char* new_argv[] = { arg0, strbuilder_get_value(wargv), NULL };
+	intptr_t pid = _spawnv(_P_NOWAIT, arg0, new_argv);
+	strbuilder_free(wargv);
 	if (pid == 0) {
 		LERROR("Failed to execute %s: %i", argv[0], GetLastError());
 		return -1;
