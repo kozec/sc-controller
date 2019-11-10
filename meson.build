@@ -162,6 +162,7 @@ bindings_lib = shared_library('scc-bindings',
 	]
 )
 
+
 subdir('tests')
 subdir('src/virtual-device')
 subdir('src/client')

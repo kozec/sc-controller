@@ -62,7 +62,7 @@ else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif
 
-executable('scc-daemon',
+scc_daemon = executable('scc-daemon',
 	include_directories: include,
 	c_args: platform_dependent_args,
 	link_with: [ utils_lib, tools_lib, parser_lib, actions_lib,
@@ -87,4 +87,8 @@ executable('scc-daemon',
 		'cemuhook_server.c',
 	],
 )
+
+
+run_target('scc-daemon', command: ['sh', '../../meson-run.sh', 'src/daemon/scc-daemon.exe'],
+	dependencies: [scc_daemon])
 
