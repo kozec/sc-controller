@@ -19,7 +19,7 @@ else
 endif
 
 
-executable('sc-controller',
+sc_controller = executable('sc-controller',
 	include_directories: include,
 	link_with: [ utils_lib, tools_lib ],
 	link_args: platform_dependent_link_args,
@@ -31,4 +31,8 @@ executable('sc-controller',
 		'gui.c',
 	],
 )
+
+
+run_target('sc-controller', command: ['sh', '../../meson-run.sh', 'src/gui/sc-controller.exe'],
+	dependencies: [sc_controller])
 

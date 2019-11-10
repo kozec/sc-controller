@@ -17,6 +17,7 @@ GTK_ICONS=(
 		legacy/dialog-information.png
 		legacy/dialog-warning.png
 		legacy/dialog-error.png
+		legacy/document-save.png
 		legacy/window-close.png
 		legacy/list-remove.png
 		legacy/edit-clear.png
@@ -94,4 +95,5 @@ for i in "${GTK_ICONS[@]}" ; do
 	[ -e release-win32/share/images/"$n" ] || cp -nv \
 		/mingw32/share/icons/Adwaita/16x16/"$i" release-win32/share/images/"$n"
 done
+cp -vi /mingw32/share/icons/Adwaita/16x16/legacy/document-save.png release-win32/share/images/gtk-save-ltr.png
 

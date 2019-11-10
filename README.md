@@ -41,8 +41,8 @@ $ SCC_SHARED=$(pwd) build/src/daemon/scc-daemon
 $ pacman -S --needed mingw-w64-i686-pkg-config mingw-w64-i686-meson mingw-w64-i686-gcc mingw-w64-i686-python2 mingw-w64-i686-gtk3 mingw-w64-i686-libusb mingw-w64-i686-libmicroutils
 $ export PROCESSOR_ARCHITEW6432=x86
 $ meson build
-$ ninja -C build
-$ build/src/daemon/scc-daemon
+$ ninja -C build sc-controller  # start GUI
+$ ninja -C build scc-daemon     # start without gui to check why it doesn't work
 ```
 
 ###### on OpenBSD or NetBSD
@@ -52,3 +52,4 @@ $ meson build
 $ ninja -C build
 $ SCC_SHARED=$(pwd) build/src/daemon/scc-daemon
 ```
+

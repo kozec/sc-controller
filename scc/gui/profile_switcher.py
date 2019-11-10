@@ -294,7 +294,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			if not self._savebutton:
 				# Save button has to be created
 				self._savebutton = ButtonInRevealer(
-					"gtk-save", _("Save changes"),
+					"document-save", _("Save changes"),
 					self.on_savebutton_clicked)
 				self._box.pack_start(self._savebutton, False, True, 0)
 				self.show_all()
