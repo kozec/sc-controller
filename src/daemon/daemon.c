@@ -6,6 +6,7 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/list.h"
+#include "scc/utils/math.h"
 #include "scc/profile.h"
 #include "scc/config.h"
 #include "scc/mapper.h"
@@ -588,14 +589,19 @@ int sccd_start() {
 	signal(SIGINT, sigint_handler);
 	INFO("Ready.");
 	
-	// Mainloop is timed mostly by sccd_poller_mainloop_cb, as timeout used
-	// there is what's keeping thread busy for most time.
-	// On windows, input_libusb_mainloop fullfills same side-effect.
+	// Mainloop is waiting mostly on sccd_poller_mainloop_cb on Linux or
+	// sccd_input_hidapi_mainloop everywhere else.
+	// Additionally, to prevent daemon from using CPU doing nothing when
+	// there is no controller connected, at most 10ms sleep is added at end of loop
 	while (running) {
+		monotime_t start = mono_time_ms();
 		FOREACH(sccd_mainloop_cb, cb, iter)
 			cb(&_daemon);
 		list_foreach(mappers, (list_foreach_cb)sccd_mapper_flush);
 		iter_reset(iter);
+		monotime_t end = mono_time_ms();
+		if (end - start < 10)
+			usleep((10 - (end - start)) * 1000);
 	}
 	
 	DEBUG("Exiting...");
