@@ -256,7 +256,7 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
             case -2:
                 goto unknown;
             case -3:
-            case -4:
+            case -5:
                 return rv;
             }
             while (self->optvalue) {

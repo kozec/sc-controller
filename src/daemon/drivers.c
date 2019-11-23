@@ -6,6 +6,7 @@
 #include "daemon.h"
 #include <string.h>
 #include <dirent.h>
+#include <errno.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -59,7 +60,7 @@ void sccd_drivers_init() {
 	struct dirent *ent;
 	if ((dir = opendir(scc_drivers_path())) == NULL) {
 		// Failed to open directory
-		LERROR("Failed to enumerate '%s'", scc_drivers_path());
+		LERROR("Failed to enumerate '%s': %s", scc_drivers_path(), strerror(errno));
 		return;
 	}
 	while ((ent = readdir(dir)) != NULL) {
