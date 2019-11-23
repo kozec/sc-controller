@@ -21,7 +21,7 @@
 #include <stdio.h>
 
 static const char *const usage[] = {
-	"scc-daemon -h [--alone] [--once] [profile] {start,stop,restart,debug}",
+	"scc-daemon -h [--alone] [--once] [profile_name] {start,stop,restart,debug}",
 	NULL,
 };
 
@@ -214,7 +214,9 @@ int main(int argc, char** argv) {
 		else if	(0 == strcmp("debug",	argv[i])) mode = M_DEBUG;
 		else if (profile == NULL) {
 			// Any unrecognized argument is profile, only one is expected
-			profile = argv[i];
+			profile = strbuilder_cpy(argv[i]);
+			char* extension = strstr(profile, ".sccprofile");
+			if (extension != NULL) *extension = 0;
 		} else {
 			argparse_usage(&argparse);
 			return 1;
@@ -240,6 +242,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	
+	free(profile);
 	return 0;
 }
 

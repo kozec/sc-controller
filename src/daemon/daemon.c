@@ -530,6 +530,8 @@ static void remove_pid_file() {
 
 void sccd_set_default_profile(const char* profile) {
 	default_profile = scc_find_profile(profile);
+	if (default_profile == NULL)
+		WARN("Default profile set from command line not found.");
 }
 
 
