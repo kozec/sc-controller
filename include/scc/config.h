@@ -14,15 +14,31 @@
  * memory at least until Config object itself is deallocated.
  */
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "scc/utils/dll_export.h"
+#include <stdint.h>
 #include "scc/utils/aojls.h"
 #include "scc/utils/rc.h"
 #include <stdint.h>
 
 typedef struct Config Config;
+#define SCC_CONFIG_ERROR_LIMIT 1024
 
 struct Config {
 	RC_HEADER;
 };
+
+typedef enum ConfigValueType {
+	// Numbers here are chosen to losely match json_type_t values
+	CVT_STR_ARRAY		= 1,
+	CVT_DOUBLE			= 2,
+	CVT_STRING			= 3,
+	CVT_BOOL			= 4,
+	CVT_INT				= 10,	// json_type_t doesn't have this one
+} ConfigValueType;
+
 
 /**
  * Makes sure that configuration directory exists and contains config file.
@@ -31,7 +47,7 @@ struct Config {
  *
  * Returns Config* instance with single reference or NULL if anything fails.
  */
-Config* config_init();
+DLL_EXPORT Config* config_init();
 
 /**
  * Loads configuration from default location (~/.config/scc/config.json).
@@ -40,13 +56,14 @@ Config* config_init();
  *
  * Returns Config object with single reference or NULL if memory cannot be allocated.
  */
-Config* config_load();
+DLL_EXPORT Config* config_load();
+
 
 /**
- * Saves configuration. It's illegal to call this on config loaded with config_load_from
+ * Saves configuration. Using this on config loaded with config_load_from is unsupported.
  * Returns true on success.
  */
-bool config_save(Config* cfg);
+DLL_EXPORT bool config_save(Config* cfg);
 
 /**
  * Fills config with default where user-provided value is missing.
@@ -57,20 +74,30 @@ bool config_save(Config* cfg);
  * Returns true if any default was replaced. If false is returned, calling
  * config_save would have no point.
  */
-bool config_fill_defaults(Config* cfg);
-
+DLL_EXPORT bool config_fill_defaults(Config* cfg);
 
 /**
- * Loads configuration from specified file handle.
+ * On everything that's not Windows, loads configuration from specified file.
  *
  * If valid JSON cannot be loaded from given handle, returns NULL and updates
- * 'error_return' string with desciption up to 'error_limit' characters.
- * 'error_limit' should be at least 256B, but can be lower.
+ * 'error_return' string with desciption up to 1024 characters.
+ *
+ * On Windows, loads configuration from subkey in H_KEY_CURRENT_USER registry.
+ * If specified subkey is not found or cannot be loaded,
+ * returns NULL and updates 'error_return' string with desciption up
+ * to 1024 characters.
+ *
  * On memory error, returns NULL and sets error_return to empty string.
- * 'error_return' can be NULL, this will not cause crashing.
- * Otherwise, Returns Config object with single reference.
+ * 'error_return' may be NULL, in which case it's not updated. If it's not NULL,
+ * it has to have space for at least 1024 characters.
+ *
+ * On success, returns Config object with single reference.
  */
-Config* config_load_from(int fd, char* error_return, size_t error_limit);
+#ifdef _WIN32
+DLL_EXPORT Config* config_load_from(const char* path, char* error_return);
+#else
+DLL_EXPORT Config* config_load_from(const char* filename, char* error_return);
+#endif
 
 /**
  * Returns string. Returns NULL (and logs error) if memory cannot be
@@ -78,16 +105,16 @@ Config* config_load_from(int fd, char* error_return, size_t error_limit);
  *
  * Returned string is part of Config object memory and shall NOT be deallocated by caller.
  */
-const char* config_get(Config* c, const char* path);
+DLL_EXPORT const char* config_get(Config* c, const char* path);
 
 /** Returns integer value. Returns 0 (and logs error) if invalid path is requested */
-int64_t config_get_int(Config* c, const char* path);
+DLL_EXPORT int64_t config_get_int(Config* c, const char* path);
 
 /** Returns double value. Returns 0 (and logs error) if invalid path is requested */
-double config_get_double(Config* c, const char* path);
+DLL_EXPORT double config_get_double(Config* c, const char* path);
 
 /** Returns true if given driver name is mentioned and set to enabled in config */
-bool config_is_driver_enabled(Config* c, const char* path);
+DLL_EXPORT bool config_is_driver_enabled(Config* c, const char* path);
 
 /**
  * Retrieves elements of string array.
@@ -95,7 +122,13 @@ bool config_is_driver_enabled(Config* c, const char* path);
  * Strings set to 'target' are part Config object memory and shall _not_ be
  * deallocated by caller.
  */
-size_t config_get_strings(Config* c, const char* path, const char** target, size_t limit);
+DLL_EXPORT size_t config_get_strings(Config* c, const char* path, const char** target, size_t limit);
+
+/**
+ * Returns type of configuration value (see ConfigValueType)
+ * or 0 if key is not found.
+ */
+DLL_EXPORT ConfigValueType config_get_type(Config* c, const char* path);
 
 
 /**
@@ -104,7 +137,7 @@ size_t config_get_strings(Config* c, const char* path, const char** target, size
  * Returns -1 if invalid path is requested.
  * Returns -2 if config_set tries to overwrite value with different type.
  */
-int config_set(Config* c, const char* path, const char* value);
+DLL_EXPORT int config_set(Config* c, const char* path, const char* value);
 
 /**
  * Stores integer value.
@@ -112,7 +145,7 @@ int config_set(Config* c, const char* path, const char* value);
  * Returns -1 if invalid path is requested.
  * Returns -2 if config_set_int tries to overwrite value with different type.
  */
-int config_set_int(Config* c, const char* path, int64_t value);
+DLL_EXPORT int config_set_int(Config* c, const char* path, int64_t value);
 
 /**
  * Stores double value.
@@ -120,7 +153,7 @@ int config_set_int(Config* c, const char* path, int64_t value);
  * Returns -1 if invalid path is requested.
  * Returns -2 if config_set_double tries to overwrite value with different type.
  */
-int config_set_double(Config* c, const char* path, double value);
+DLL_EXPORT int config_set_double(Config* c, const char* path, double value);
 
 /**
  * Stores string array. Empty strings are not allowed.
@@ -134,5 +167,9 @@ int config_set_double(Config* c, const char* path, double value);
  * Returns -1 if invalid path is requested.
  * Returns -2 if config_set_strings tries to overwrite value with different type.
  */
-int config_set_strings(Config* c, const char* path, const char** list, ssize_t count);
+DLL_EXPORT int config_set_strings(Config* c, const char* path, const char** list, ssize_t count);
+
+#ifdef __cplusplus
+}
+#endif
 

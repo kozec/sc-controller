@@ -46,7 +46,7 @@ static long json_reader_fn(char* buffer, size_t len, void* reader_data) {
 }
 
 /** JSON-parsing part of config_load_from */
-static bool config_load_json_file(struct _Config* c, int fd, char* error_return, size_t error_limit) {
+static bool config_load_json_file(struct _Config* c, int fd, char* error_return) {
 	aojls_deserialization_prefs prefs = {
 		.reader = &json_reader_fn,
 		.reader_data = (void*)&fd
@@ -56,8 +56,8 @@ static bool config_load_json_file(struct _Config* c, int fd, char* error_return,
 	if ((c->ctx == NULL) || (prefs.error != NULL)) {
 		LERROR("Failed to decode configuration: %s", prefs.error);
 		if (error_return != NULL) {
-			strncpy(error_return, prefs.error, error_limit);
-			error_return[error_limit - 1] = 0;
+			strncpy(error_return, prefs.error, SCC_CONFIG_ERROR_LIMIT);
+			error_return[SCC_CONFIG_ERROR_LIMIT - 1] = 0;
 		}
 		json_free_context(c->ctx);
 		c->ctx = NULL;
@@ -68,7 +68,7 @@ static bool config_load_json_file(struct _Config* c, int fd, char* error_return,
 }
 
 Config* config_load() {
-	char error_return[1024];
+	char error_return[SCC_CONFIG_ERROR_LIMIT];
 	struct _Config* c = config_new();
 	if (c == NULL) return NULL;
 	
@@ -82,7 +82,7 @@ Config* config_load() {
 	int fd = open(c->filename, O_RDONLY);
 	if (fd < 0) {
 		WARN("Failed to open config file: %s. Starting with defaults.", strerror(errno));
-	} else if (!config_load_json_file(c, fd, error_return, 1024)) {
+	} else if (!config_load_json_file(c, fd, error_return)) {
 		WARN("Failed to parse config file: %s. Starting with defaults", error_return);
 	}
 	if (c->ctx == NULL) {
@@ -99,18 +99,32 @@ config_load_fail:
 	return NULL;
 }
 
-Config* config_load_from(int fd, char* error_return, size_t error_limit) {
+Config* config_load_from(const char* filename, char* error_return) {
 	if (error_return != NULL)
 		error_return[0] = 0;
+	
+	int fd = open(filename, O_RDONLY);
+	if (fd < 0) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+		int xsi;
+		if (error_return != NULL) {
+			xsi = strerror_r(errno, error_return, SCC_CONFIG_ERROR_LIMIT);
+		}
+		return NULL;
+#pragma GCC diagnostic pop
+	}
 	
 	struct _Config* c = config_new();
 	if (c == NULL) return NULL;
 	
-	if (!config_load_json_file(c, fd, error_return, error_limit)) {
+	if (!config_load_json_file(c, fd, error_return)) {
 		// Failed to load
+		close(fd);
 		config_dealloc(&c->config);
 		return NULL;
 	}
+	close(fd);
 	return &c->config;
 }
 
@@ -134,13 +148,10 @@ static inline json_object* config_get_parent(struct _Config* c, const char* path
 			json_object* child = json_object_get_object(obj, c->buffer);
 			if (child == NULL) {
 				child = json_make_object(c->ctx);
-				if (child != NULL)
-					child = json_object_set(obj, c->buffer, (json_value_t*)child);
-				if (child == NULL)
+				if ((child == NULL) || (json_object_set(obj, c->buffer, (json_value_t*)child) == NULL))
 					return NULL;
-			} else {
-				obj = child;
 			}
+			obj = child;
 			path = &path[slash_index + 1];
 		}
 	}
@@ -173,6 +184,37 @@ config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValu
 		break;
 	}
 	return value;
+}
+
+ConfigValueType config_get_type(Config* _c, const char* path) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	json_object* obj = config_get_parent(c, path, false);
+	if (obj == NULL)
+		return 0;
+	
+	config_value_t* value = json_object_get_object_as_value(obj, last_element(path));
+	if (value == NULL)
+		return 0;
+	
+	json_type_t type = json_get_type(value);
+	switch (type) {
+	case JS_STRING:
+		return CVT_STRING;
+	case JS_BOOL:
+		return CVT_BOOL;
+	case JS_NUMBER: {
+		const struct config_item* def = config_get_default(c, path);
+		if (def != NULL)
+			return def->type;
+		return CVT_DOUBLE;
+	}
+	case JS_ARRAY:
+		return CVT_STR_ARRAY;
+	default:
+		break;
+	}
+	
+	return 0;
 }
 
 bool config_save_writer(const char* buffer, size_t len, void* _fd) {
@@ -225,12 +267,26 @@ int64_t config_get_int(Config* _c, const char* path) {
 		double d_value = json_as_number(value, &correct);
 		if (correct)
 			return (int64_t)d_value;
+	} else {
+		value = config_get_value(c, path, CVT_BOOL);
+		if (value != NULL) {
+			bool correct = true;
+			bool b_value = json_as_bool(value, &correct);
+			if (correct)
+				return (int64_t)b_value;
+		}
 	}
 	
 	const struct config_item* def = config_get_default(c, path);
-	if ((def != NULL) && (def->type == CVT_INT)) {
-		config_set_int(_c, path, def->v_int);
-		return def->v_int;
+	if (def != NULL) {
+		if (def->type == CVT_INT) {
+			config_set_int(_c, path, def->v_int);
+			return def->v_int;
+		}
+		if (def->type == CVT_BOOL) {
+			config_set_int(_c, path, def->v_bool);
+			return def->v_bool;
+		}
 	}
 	
 	return 0;
@@ -290,25 +346,35 @@ static inline int config_set_common(json_object* parent, json_value_t* value, co
 
 int config_set(Config* _c, const char* path, const char* value) {
 	struct _Config* c = container_of(_c, struct _Config, config);
+	const struct config_item* def = config_get_default(c, path);
+	if ((def != NULL) && (def->type != CVT_STRING))
+		return -2;
 	json_object* parent = config_get_parent(c, path, true);
 	if (parent == NULL) return 0;
-	return config_set_common(parent, (json_value_t*)json_from_string(c->ctx, value), path);
+	json_value_t* json_value =  (json_value_t*)json_from_string(c->ctx, value);
+	if (json_value == NULL) return 0;
+	return config_set_common(parent, json_value, path);
 }
 
 int config_set_int(Config* _c, const char* path, int64_t value) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	json_object* parent = config_get_parent(c, path, true);
 	if (parent == NULL) return 0;
-	// TODO: Check for bools here
 	const struct config_item* def = config_get_default(c, path);
 	if ((def != NULL) && (def->type == CVT_BOOL))
 		return config_set_common(parent, (json_value_t*)json_from_boolean(c->ctx, value), path);
-	else
+	else if ((def == NULL) || ((def->type == CVT_INT) || (def->type == CVT_DOUBLE)))
 		return config_set_common(parent, (json_value_t*)json_from_number(c->ctx, value), path);
+	else
+		return -2;
 }
 
 int config_set_double(Config* _c, const char* path, double value) {
 	struct _Config* c = container_of(_c, struct _Config, config);
+	const struct config_item* def = config_get_default(c, path);
+	if ((def != NULL) && (def->type != CVT_INT) && (def->type != CVT_DOUBLE))
+		return -2;
+	
 	json_object* parent = config_get_parent(c, path, true);
 	if (parent == NULL) return 0;
 	return config_set_common(parent, (json_value_t*)json_from_number(c->ctx, value), path);
@@ -341,3 +407,4 @@ int config_set_strings(Config* _c, const char* path, const char** list, ssize_t 
 		return 0;
 	return 1;
 }
+

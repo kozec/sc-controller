@@ -13,6 +13,7 @@
 #include "scc/parameter.h"
 #include "scc/bindings.h"
 #include "scc/action.h"
+#include "scc/config.h"
 #include "scc/error.h"
 #include "../conversions/conversions.h"
 #include <string.h>
@@ -114,6 +115,10 @@ void scc_parameter_unref(Parameter* p) {
 	// if (p && (p->_rc.count == 1))
 	//	DDEBUG("Deleting parameter %p of type 0x%x", p, p->type);
 	RC_REL(p);
+}
+
+void scc_config_unref(Config* c) {
+	RC_REL(c);
 }
 
 Parameter* scc_parameter_get_none() {

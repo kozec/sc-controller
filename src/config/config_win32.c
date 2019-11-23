@@ -37,18 +37,6 @@ static void config_dealloc(void* _c) {
 	free(c);
 }
 
-static inline struct _Config* config_new() {
-	struct _Config* c = malloc(sizeof(struct _Config));
-	if (c == NULL) return NULL;
-	RC_INIT(&c->config, &config_dealloc);
-	c->root = NULL;
-	c->giant_memoryleak = NULL;
-	// About giant_memoryleak... Config guarantees that all strings returned by
-	// it are stored in memory at least until Config object is deallocated.
-	// To be able to deallocate them eventyally, all strings are stored
-	// as linked-list in 'giant_memoryleak'.
-	return c;
-}
 
 /**
  * Returns (optionally creating) parent node of value or root node if there are no slashes
@@ -65,9 +53,10 @@ static inline HKEY config_get_parent(struct _Config* c, const char* path, bool c
 			return obj;
 		
 		size_t slash_index = slash - path;
-		if (slash_index >= JSONPATH_MAX_LEN)
+		if (slash_index >= JSONPATH_MAX_LEN) {
 			// Requested path is too long, this is not reasonable thing to request
 			return NULL;
+		}
 		strncpy(c->buffer, path, JSONPATH_MAX_LEN);
 		c->buffer[slash_index] = 0;
 		
@@ -93,10 +82,17 @@ static inline HKEY config_get_parent(struct _Config* c, const char* path, bool c
 }
 
 
-Config* config_load() {
-	// On Windows, this actually reads from registry
-	struct _Config* c = config_new();
+static inline struct _Config* config_new() {
+	struct _Config* c = malloc(sizeof(struct _Config));
 	if (c == NULL) return NULL;
+	RC_INIT(&c->config, &config_dealloc);
+	c->root = NULL;
+	c->giant_memoryleak = NULL;
+	// About giant_memoryleak... Config guarantees that all strings returned by
+	// it are stored in memory at least until Config object is deallocated.
+	// To be able to deallocate them eventyally, all strings are stored
+	// as linked-list in 'giant_memoryleak'.
+	
 	c->values = hashmap_new();
 	if (c->values == NULL) {
 		free(c);
@@ -106,18 +102,60 @@ Config* config_load() {
 	HKEY hkcu;
 	LSTATUS r;
 	if ((r = RegOpenCurrentUser(KEY_READ, &hkcu)) != ERROR_SUCCESS) {
-		WARN("Failed to open registry: Code %i. Starting with defaults.", r);
-		return &c->config;
+		WARN("Failed to open registry: Code %i.", r);
+		c->root = NULL;
+		return c;
 	}
 	c->root = hkcu;
-	c->root = config_get_parent(c, "Software/SCController/dummy", true);
-	// ^^ Sets root to HKCU/Software/SCController
+	return c;
+}
+
+
+Config* config_load() {
+	// On Windows, this actually reads from registry
+	struct _Config* c = config_new();
+	if (c == NULL) return NULL;
+	
+	if (c->root != NULL) {
+		c->root = config_get_parent(c, "Software/SCController/dummy", true);
+		// ^^ Sets root to HKCU/Software/SCController
+	}
+	if (c->root == NULL) {
+		WARN("Starting with defaults.");
+	}
 	return &c->config;
 }
 
-Config* config_load_from(int fd, char* error_return, size_t error_limit) {
-	LERROR("config_load_from should not be used on Windows");
-	return NULL;
+
+Config* config_load_from(const char* path, char* error_return) {
+	if (error_return != NULL) *error_return = 0;
+	
+	struct _Config* c = config_new();
+	if (c == NULL) return NULL;
+	if (c->root == NULL) {
+		if (error_return != NULL)
+			strcpy(error_return, "Failed to open registry");
+		config_dealloc(c);
+		return NULL;
+	}
+	
+	// TODO: Get rid of child
+	char* child = strbuilder_fmt("%s/dummy", path);
+	if (child == NULL) {
+		config_dealloc(c);
+		return NULL;
+	}
+	
+	c->root = config_get_parent(c, child, false);
+	free(child);
+	if (c->root == NULL) {
+		if (error_return != NULL)
+			strcpy(error_return, "Registry key not found");
+		config_dealloc(c);
+		return NULL;
+	}
+	
+	return &c->config;
 }
 
 
@@ -297,8 +335,8 @@ bool config_save(Config* _c) {
 			break;
 		case CVT_DOUBLE:
 			// Fun fact: You can't save float into registry
-			snprintf(buffer, BUFFER_SIZE, "%f", value->v_double);
-			r = RegSetKeyValueA(parent, NULL, last, REG_SZ, buffer, BUFFER_SIZE);
+			snprintf(buffer, BUFFER_SIZE, "%g", value->v_double);
+			r = RegSetKeyValueA(parent, NULL, last, REG_SZ, buffer, strlen(buffer) + 1);
 			break;
 		case CVT_INT:
 		case CVT_BOOL:
@@ -332,6 +370,19 @@ bool config_save(Config* _c) {
 			RegCloseKey(parent);
 		if (r == ERROR_SUCCESS)
 			continue;
+		
+		char* err;
+		if (!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+					NULL, r,
+					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // default language
+					(LPTSTR) &err,
+					0, NULL))
+			goto config_save_key_failed;
+		
+		LERROR("Failed to save %s into registry: %s", path, err);
+		free(err);
+		iter_free(it);
+		return false;
 		
 config_save_key_failed:
 		LERROR("Failed to save %s into registry", path);
@@ -496,3 +547,4 @@ int config_set_strings(Config* _c, const char* path, const char** list, ssize_t 
 }
 
 #endif // _WIN32
+

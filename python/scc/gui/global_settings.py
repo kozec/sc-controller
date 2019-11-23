@@ -613,7 +613,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		return
 		theme = cb.get_model().get_value(cb.get_active_iter(), 0)
 		if theme in (None, "None"): return
-		filename = os.path.join(get_share_path(), "osd-styles", theme)
+		filename = os.path.join(get_share_path(), "osd_styles", theme)
 		data = json.loads(file(filename, "r").read())
 		
 		# Transfer values from json to config
@@ -630,7 +630,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	def on_cbOSDStyle_changed(self, cb):
 		color_keys = self.app.config['osk_colors'].keys() + self.app.config['osd_colors'].keys()
 		osd_style = cb.get_model().get_value(cb.get_active_iter(), 0)
-		css_file = os.path.join(get_share_path(), "osd-styles", osd_style)
+		css_file = os.path.join(get_share_path(), "osd_styles", osd_style)
 		first_line = file(css_file, "r").read().split("\n")[0]
 		used_colors = None				# None means "all"
 		if "Used colors:" in first_line:

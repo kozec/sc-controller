@@ -11,15 +11,6 @@
 // Just arbitrary limit
 #define MAX_ARRAY_SIZE			256
 
-typedef enum ConfigValueType {
-	// Numbers here are chosen to losely match json_type_t values
-	CVT_STR_ARRAY		= 1,
-	CVT_DOUBLE			= 2,
-	CVT_STRING			= 3,
-	CVT_BOOL			= 4,
-	CVT_INT				= 10,	// json_type_t doesn't have this one
-} ConfigValueType;
-
 #ifdef _WIN32
 	#include <windows.h>
 	#include "scc/utils/hashmap.h"

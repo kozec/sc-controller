@@ -11,9 +11,10 @@ extern "C" {
 #include "scc/utils/dll_export.h"
 #include <stdint.h>
 
-typedef struct Action Action;
-typedef struct Parameter Parameter;
 typedef struct ActionError ActionError;
+typedef struct Parameter Parameter;
+typedef struct Action Action;
+typedef struct Config Config;
 typedef union ActionOE ActionOE;
 typedef union ParamOE ParamOE;
 typedef union { ParamOE* p; ActionOE* a; ActionError* e; } APError;
@@ -64,6 +65,9 @@ DLL_EXPORT Parameter* scc_action_get_children(Action* a);
  */
 DLL_EXPORT ParamOE scc_parse_param_list(const char* str);
 
+/** Dereferences Config object */
+DLL_EXPORT void scc_config_unref(Config* cfg);
+
 /**
  * For applicable modifiers, returns child action.
  * For everything else, returns NULL.
@@ -75,13 +79,13 @@ DLL_EXPORT Action* scc_action_get_child(Action* a);
 /** Increases reference count on action */
 DLL_EXPORT Action* scc_action_ref(Action* a);
 
-/** Unreferences action */
+/** Dereferences action */
 DLL_EXPORT void scc_action_unref(Action* a);
 
 /** Increases reference count on parameter */
 DLL_EXPORT Parameter* scc_parameter_ref(Parameter* p);
 
-/** Unreferences parameter */
+/** Dereferences parameter */
 DLL_EXPORT void scc_parameter_unref(Parameter* p);
 
 /** Returns error message */

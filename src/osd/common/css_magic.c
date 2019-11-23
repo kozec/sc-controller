@@ -23,8 +23,7 @@ struct template_data {
 static bool installed = false;
 
 
-void install_css_provider() {
-	if (installed) return;
+void reconfigure_css_provider() {
 	Config* config = config_load();
 	struct template_data tdata = { config };
 	StrBuilder* b = NULL;
@@ -56,19 +55,26 @@ void install_css_provider() {
 	RC_REL(config);
 	
 	GError* error = NULL;
-	css_provider = gtk_css_provider_new();
-	gtk_css_provider_load_from_data(css_provider, css, strlen(css), &error);
+	GtkCssProvider* new_provider = gtk_css_provider_new();
+	gtk_css_provider_load_from_data(new_provider, css, strlen(css), &error);
 	if (error != NULL) {
 		LERROR("Failed to generate CSS provider: %s", error->message);
 		g_error_free(error);
-		g_object_unref(css_provider);
-		css_provider = NULL;
+		g_object_unref(new_provider);
 		return;
 	}
 	
 	gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-			GTK_STYLE_PROVIDER(css_provider),
+			GTK_STYLE_PROVIDER(new_provider),
 			GTK_STYLE_PROVIDER_PRIORITY_USER);
+	
+	if (css_provider != NULL) {
+		gtk_style_context_remove_provider_for_screen(gdk_screen_get_default(),
+				GTK_STYLE_PROVIDER(css_provider));
+		g_object_unref(css_provider);
+	}
+	css_provider = new_provider;
+
 	installed = true;
 	return;
 
@@ -77,6 +83,11 @@ install_css_provider_fail:
 	RC_REL(config);
 	LERROR("Failed to install css provider; Out of memory.");
 	return;
+}
+
+void install_css_provider() {
+	if (installed) return;
+	reconfigure_css_provider();
 }
 
 

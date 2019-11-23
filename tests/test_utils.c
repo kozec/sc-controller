@@ -340,7 +340,6 @@ void test_intmap(CuTest* tc) {
 
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
-	/*
 	DEFAULT_SUITE_ADD(test_list);
 	DEFAULT_SUITE_ADD(test_list_insert);
 	DEFAULT_SUITE_ADD(test_list_filter);
@@ -351,7 +350,6 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_hashmap_iterator_1item);
 	DEFAULT_SUITE_ADD(test_hashmap_iterator_2items);
 	DEFAULT_SUITE_ADD(test_strbuilder);
-	*/
 	DEFAULT_SUITE_ADD(test_strbuilder_escape);
 	// DEFAULT_SUITE_ADD(test_template);
 	
