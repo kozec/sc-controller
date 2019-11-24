@@ -147,6 +147,8 @@ static inline json_object* config_get_parent(struct _Config* c, const char* path
 			c->buffer[slash_index] = 0;
 			json_object* child = json_object_get_object(obj, c->buffer);
 			if (child == NULL) {
+				if (!create)
+					return NULL;
 				child = json_make_object(c->ctx);
 				if ((child == NULL) || (json_object_set(obj, c->buffer, (json_value_t*)child) == NULL))
 					return NULL;
@@ -156,6 +158,13 @@ static inline json_object* config_get_parent(struct _Config* c, const char* path
 		}
 	}
 	return NULL;
+}
+
+DLL_EXPORT bool config_is_parent(Config* _c, const char* path) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	snprintf(c->buffer, JSONPATH_MAX_LEN, "%s/d", path);
+	json_object* obj = config_get_parent(c, c->buffer, false);
+	return (obj != NULL);
 }
 
 config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValueType type) {

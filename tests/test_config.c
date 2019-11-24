@@ -120,11 +120,13 @@ void test_set(CuTest* tc) {
 	if (c == NULL) fprintf(stderr, "Error: %s\n", error);
 	assert(tc, c != NULL);
 	
+	assert(tc, !config_is_parent(c, "test"));
+	
 	assert(tc, config_set(c, "test/string", "hello_world") == 1);
+	assert(tc, config_is_parent(c, "test"));
 	assert(tc, config_set_int(c, "test/number", 42) == 1);
 	assert(tc, config_set_int(c, "test/bool", true) == 1);
 	assert(tc, config_set_double(c, "test/double", 13.3) == 1);
-	
 	
 	assert(tc, strcmp(config_get(c, "test/string"), "hello_world") == 0);
 	assert(tc, config_get_int(c, "test/number") == 42);

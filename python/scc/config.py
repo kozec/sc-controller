@@ -13,12 +13,27 @@ import logging, ctypes
 log = logging.getLogger("Config")
 lib_config = find_library("libscc-config")
 
+
 class Config(object):
 	CVT_STR_ARRAY		= 1
 	CVT_DOUBLE			= 2
 	CVT_STRING			= 3
 	CVT_BOOL			= 4
 	CVT_INT				= 10
+	
+	CONTROLLER_DEFAULTS = {
+		# Defaults for controller config
+		"name":					None,	# Filled with controller ID on runtime
+		"icon":					None,	# Determined by magic by UI
+		"led_level":			80,		# range 0 to 100
+		"idle_timeout":			600,	# in seconds, range from 1 to 32767
+		"osd_alignment":		0,		# not used yet
+		"input_rotation_l":		20,		# range -180 to 180
+		"input_rotation_r":		-20,	# range -180 to 180
+		"menu_control":			"STICK",
+		"menu_confirm":			"A",
+		"menu_cancel":			"B",
+	}
 	
 	def __init__(self, filename=None):
 		self.filename = filename
@@ -27,8 +42,33 @@ class Config(object):
 	
 	def __del__(self):
 		if self._cfg:
-			lib_bindings.scc_config_unref(self._cfg)
+			# lib_bindings.scc_config_unref(self._cfg)
 			self._cfg = None
+	
+	def save(self):
+		if self._cfg:
+			lib_config.config_save(self._cfg)
+	
+	class Subkey(object):
+		"""
+		Helper class that allows to use expressions like config['gui']['value']
+		to access values deeper in hierarchy and treat configs like dictionaries.
+		
+		It supports only __getitem__ / __setitem__ protocol.
+		"""
+		
+		def __init__(self, parent, prefix):
+			self._parent = parent
+			self._prefix = prefix
+		
+		def __repr__(self):
+			return "<Subkey '%s'>" % (self._prefix,)
+		
+		def __getitem__(self, key, default=None):
+			return self._parent.get("%s/%s" % (self._prefix, key), default)
+		
+		def __setitem__(self, key, value):
+			return self._parent.set("%s/%s" % (self._prefix, key), value)
 	
 	def reload(self):
 		""" (Re)loads configuration. Works as load(), but handles exceptions """
@@ -59,6 +99,8 @@ class Config(object):
 	def get(self, key, default=None):
 		cvt = lib_config.config_get_type(self._cfg, key)
 		if cvt == 0:
+			if lib_config.config_is_parent(self._cfg, key):
+				return Config.Subkey(self, key)
 			raise KeyError("Invalid config key: %s" % (key,))
 		elif cvt == Config.CVT_INT:
 			return lib_config.config_get_int(self._cfg, key)
@@ -97,6 +139,16 @@ class Config(object):
 		cvt = lib_config.config_get_type(self._cfg, key)
 		return cvt != 0
 	
+	def get_controller_config(self, controller_id):
+		# TODO: This
+		rv = dict(**Config.CONTROLLER_DEFAULTS)
+		rv['name'] = controller_id
+		return rv
+	
+	def get_controllers(self):
+		# TODO: This
+		return ()
+	
 	__getitem__ = get
 	__setitem__ = set
 
@@ -110,8 +162,14 @@ lib_config.config_load.restype = ctypes.c_void_p
 lib_config.config_load_from.argtypes = [ ctypes.c_int, ctypes.c_char_p, ctypes.c_size_t ]
 lib_config.config_load_from.restype = ctypes.c_void_p
 
+lib_config.config_save.argtypes = [ ctypes.c_void_p ]
+lib_config.config_save.restype = ctypes.c_void_p
+
 lib_config.config_get_type.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
 lib_config.config_get_type.restype = ctypes.c_int
+
+lib_config.config_is_parent.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
+lib_config.config_is_parent.restype = ctypes.c_bool
 
 lib_config.config_get_int.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
 lib_config.config_get_int.restype = ctypes.c_int64

@@ -379,10 +379,10 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 					# Controller was changed before callback was called
 					return
 				icon = None
-				used_icons = { 
-					self.config['controllers'][x]['icon']
-					for x in self.config['controllers']
-					if 'icon' in self.config['controllers'][x]
+				used_icons = {
+					self.config.get_controller_config(x)['icon']
+					for x in self.config.get_controllers()
+					if 'icon' in self.config.get_controller_config(x)
 				}
 				tp = "%s-" % (self._controller.get_type(),)
 				icons = sorted(( os.path.split(x.get_path())[-1] for x in icons ))
@@ -401,7 +401,8 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 				self.config.save()
 				GLib.idle_add(self.update_icon)
 			
-			self.load_user_data(paths, "*.svg", None, cb)
+			# TODO: Icons
+			# self.load_user_data(paths, "*.svg", None, cb)
 
 
 class ButtonInRevealer(Gtk.Revealer):

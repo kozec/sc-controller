@@ -18,6 +18,11 @@ class TestConfig(object):
 			assert False
 		except KeyError:
 			pass
+		try:
+			self.c["invalid"]["key"]
+			assert False
+		except KeyError:
+			pass
 		assert "nonexisting" not in self.c
 	
 	def test_defaults(self):
@@ -56,8 +61,10 @@ class TestConfig(object):
 		self.c["test/double"] = 1.12
 		self.c["test/bool"] = True
 		
-		assert "Hello" == self.c["test/string"], ">>'%s'<<" % (self.c["test/string"],)
+		assert "Hello" == self.c["test/string"]
+		assert "Hello" == self.c["test"]["string"]
 		assert 112 == self.c["test/int"]
+		assert 112 == self.c["test"]["int"]
 		assert 112 == self.c["test/long"]
 		assert 1.12 == self.c["test/double"]
 		assert self.c["test/bool"]

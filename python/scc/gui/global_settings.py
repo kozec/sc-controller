@@ -57,6 +57,16 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		# order: 0 - top, 1 - after 'options', 2 bottom
 	]
 	
+	OSD_COLORS = {
+		"background", "border", "text", "menuitem_border", "menuitem_hilight",
+		"menuitem_hilight_text", "menuitem_hilight_border", "menuseparator"
+	}
+	
+	OSK_COLORS = {
+		"hilight", "pressed", "button1", "button1_border", "button2",
+		"button2_border", "text"
+	}
+	
 	def __init__(self, app):
 		UserDataManager.__init__(self)
 		self.app = app
@@ -111,8 +121,8 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				.set_active(bool(self.app.config['enable_sniffing'])))
 		(self.builder.get_object("cbEnableSerials")
 				.set_active(not bool(self.app.config['ignore_serials'])))
-		(self.builder.get_object("cbEnableRumble")
-				.set_active(bool(self.app.config['output']['rumble'])))
+		# (self.builder.get_object("cbEnableRumble")
+		# 		.set_active(bool(self.app.config['output']['rumble'])))
 		(self.builder.get_object("cbEnableStatusIcon")
 				.set_active(bool(self.app.config['gui']['enable_status_icon'])))
 		(self.builder.get_object("cbMinimizeToStatusIcon")
@@ -138,28 +148,31 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			self.builder.get_object("txEvdevMissing").set_visible(True)
 	
 	def load_drivers(self):
+		pass
+		"""
 		for key, value in self.app.config['drivers'].items():
 			w = self.builder.get_object("cbEnableDriver_%s" % (key, ))
 			if w:
 				w.set_active(value)
+		"""
 	
-	def _load_color(self, w, dct, key):
+	def _load_color(self, w, value):
 		""" Common part of load_colors """
 		if w:
-			success, color = Gdk.Color.parse("#%s" % (self.app.config[dct][key],))
+			success, color = Gdk.Color.parse("#%s" % (value,))
 			if not success:
-				success, color = Gdk.Color.parse("#%s" % (self.app.config[dct][key],))
+				success, color = Gdk.Color.parse("#%s" % (value,))
 			w.set_color(color)
 	
 	def load_colors(self):
 		cbOSDStyle = self.builder.get_object("cbOSDStyle")
 		cbOSDColorPreset = self.builder.get_object("cbOSDColorPreset")
-		for k in self.app.config["osd_colors"]:
+		for k in self.OSD_COLORS:
 			w = self.builder.get_object("cb%s" % (k,))
-			self._load_color(w, "osd_colors", k)
-		for k in self.app.config["osk_colors"]:
+			self._load_color(w, self.app.config["osd_colors"][k])
+		for k in self.OSK_COLORS:
 			w = self.builder.get_object("cbosk_%s" % (k,))
-			self._load_color(w, "osk_colors", k)
+			self._load_color(w, self.app.config["osk_colors"][k])
 		theme = self.app.config.get("osd_color_theme", "None")
 		self.set_cb(cbOSDColorPreset, theme)
 		self.set_cb(cbOSDStyle, self.app.config.get("osd_style"))
@@ -269,15 +282,15 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		cbOSDColorPreset = self.builder.get_object("cbOSDColorPreset")
 		striphex = lambda a: hex(a).strip("0x").zfill(2)
 		tohex = lambda a: "".join([ striphex(int(x * 0xFF)) for x in a.to_floats() ])
-		for k in self.app.config["osd_colors"]:
+		for k in self.OSD_COLORS:
 			w = self.builder.get_object("cb%s" % (k,))
 			if w:
 				self.app.config["osd_colors"][k] = tohex(w.get_color())
-		for k in self.app.config["osk_colors"]:
+		for k in self.OSK_COLORS:
 			w = self.builder.get_object("cbosk_%s" % (k,))
 			if w:
 				self.app.config["osk_colors"][k] = tohex(w.get_color())
-		self.app.config["osd_color_theme"] = None
+		self.app.config["osd_color_theme"] = "None"
 		self.set_cb(cbOSDColorPreset, "None")
 		self.app.save_config()
 	
@@ -320,7 +333,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		self.app.config['autoswitch_osd'] = cbShowOSD.get_active()
 		self.app.config['enable_sniffing'] = self.builder.get_object("cbInputTestMode").get_active()
 		self.app.config['ignore_serials'] = not self.builder.get_object("cbEnableSerials").get_active()
-		self.app.config['output']['rumble'] = self.builder.get_object("cbEnableRumble").get_active()
+		# self.app.config['output']['rumble'] = self.builder.get_object("cbEnableRumble").get_active()
 		self.app.config['gui']['enable_status_icon'] = self.builder.get_object("cbEnableStatusIcon").get_active()
 		self.app.config['gui']['minimize_to_status_icon'] = self.builder.get_object("cbMinimizeToStatusIcon").get_active()
 		self.app.config['gui']['minimize_on_start'] = self.builder.get_object("cbMinimizeOnStart").get_active()
@@ -609,8 +622,6 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		btSave.set_sensitive(True)
 	
 	def on_cbOSDColorPreset_changed(self, cb):
-		# TODO: This
-		return
 		theme = cb.get_model().get_value(cb.get_active_iter(), 0)
 		if theme in (None, "None"): return
 		filename = os.path.join(get_share_path(), "osd_styles", theme)
@@ -619,16 +630,19 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		# Transfer values from json to config
 		for grp in ("osd_colors", "osk_colors"):
 			if grp in data:
-				for subkey in self.app.config[grp]:
+				for subkey in self.OSD_COLORS:
 					if subkey in data[grp]:
-						self.app.config[grp][subkey] = data[grp][subkey]
+						self.app.config["osd_colors"][subkey] = data[grp][subkey]
+				for subkey in self.OSK_COLORS:
+					if subkey in data[grp]:
+						self.app.config["osk_colors"][subkey] = data[grp][subkey]
 		
 		# Save
 		self.app.config["osd_color_theme"] = theme
 		self.app.save_config()
 	
 	def on_cbOSDStyle_changed(self, cb):
-		color_keys = self.app.config['osk_colors'].keys() + self.app.config['osd_colors'].keys()
+		color_keys = self.OSK_COLORS.union(self.OSD_COLORS)
 		osd_style = cb.get_model().get_value(cb.get_active_iter(), 0)
 		css_file = os.path.join(get_share_path(), "osd_styles", osd_style)
 		first_line = file(css_file, "r").read().split("\n")[0]

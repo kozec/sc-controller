@@ -113,6 +113,9 @@ DLL_EXPORT int64_t config_get_int(Config* c, const char* path);
 /** Returns double value. Returns 0 (and logs error) if invalid path is requested */
 DLL_EXPORT double config_get_double(Config* c, const char* path);
 
+/** Returns true if given key exists and has subkeys */
+DLL_EXPORT bool config_is_parent(Config* c, const char* path);
+
 /** Returns true if given driver name is mentioned and set to enabled in config */
 DLL_EXPORT bool config_is_driver_enabled(Config* c, const char* path);
 

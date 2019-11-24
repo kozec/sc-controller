@@ -139,15 +139,14 @@ Config* config_load_from(const char* path, char* error_return) {
 		return NULL;
 	}
 	
-	// TODO: Get rid of child
-	char* child = strbuilder_fmt("%s/dummy", path);
-	if (child == NULL) {
+	if (strlen(path) >= JSONPATH_MAX_LEN - 10) {
+		strcpy(error_return, "Path is too long");
 		config_dealloc(c);
 		return NULL;
 	}
 	
-	c->root = config_get_parent(c, child, false);
-	free(child);
+	snprintf(c->buffer, JSONPATH_MAX_LEN, "%s/d", path);
+	c->root = config_get_parent(c, c->buffer, false);
 	if (c->root == NULL) {
 		if (error_return != NULL)
 			strcpy(error_return, "Registry key not found");
@@ -176,6 +175,13 @@ static const char* internalize_string(struct _Config* c, const char* value) {
 	char* is = internal_string_alloc(c, len);
 	strcpy(is, value);
 	return is;
+}
+
+DLL_EXPORT bool config_is_parent(Config* _c, const char* path) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	snprintf(c->buffer, JSONPATH_MAX_LEN, "%s/d", path);
+	HKEY key = config_get_parent(c, c->buffer, false);
+	return (key != NULL);
 }
 
 config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValueType type) {
@@ -282,6 +288,7 @@ config_get_value_fail:
 }
 
 static inline config_value_t* config_get_or_create(struct _Config* c, const char* path, ConfigValueType type) {
+	config_get_parent(c, path, true);
 	config_value_t* value = config_get_value(c, path, type);
 	if (value == NULL) {
 		value = malloc(sizeof(struct _Config));
