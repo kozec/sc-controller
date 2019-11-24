@@ -33,6 +33,6 @@ sc_controller = executable('sc-controller',
 )
 
 
-run_target('sc-controller', command: ['sh', '../../meson-run.sh', 'src/gui/sc-controller.exe'],
+run_target('sc-controller', command: ['sh', '../../meson-run.sh', 'src/gui/sc-controller'],
 	dependencies: [sc_controller])
 

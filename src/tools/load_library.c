@@ -40,10 +40,8 @@ static int make_path(SCCLibraryType type, StrBuilder* sb, char* error_return) {
 			strbuilder_clear(sb);
 			strbuilder_add(sb, "src\\menu-generators");
 		}
-#elif defined(__BSD__)
-		strbuilder_add(sb, "build-bsd/src/menu-generators");
 #else
-		strbuilder_add(sb, "build/src/menu-generators");
+		strbuilder_add(sb, "src/menu-generators");
 #endif
 		return 1;
 	case SCLT_DRIVER:
@@ -58,7 +56,7 @@ static int make_path(SCCLibraryType type, StrBuilder* sb, char* error_return) {
 			strbuilder_add(sb, "src\\osd");
 		}
 #else
-		strbuilder_add(sb, "build/src/osd/menus");
+		strbuilder_add(sb, "src/osd/menus");
 #endif
 		return 1;
 	}

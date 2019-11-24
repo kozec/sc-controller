@@ -32,7 +32,7 @@ Navigate to directory with sources and use meson to compile:
 ```
 $ meson build
 $ ninja -C build
-$ SCC_SHARED=$(pwd) build/src/daemon/scc-daemon
+$ ninja -C build scc-daemon
 ```
 
 ###### on Windows
@@ -50,6 +50,6 @@ $ ninja -C build scc-daemon     # start without gui to check why it doesn't work
 # (install pkg-config, ninja-build and meson packages first. Meson is available as pip package)
 $ meson build
 $ ninja -C build
-$ SCC_SHARED=$(pwd) build/src/daemon/scc-daemon
+$ ninja -C build scc-daemon
 ```
 

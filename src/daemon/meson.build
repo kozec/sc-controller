@@ -89,6 +89,6 @@ scc_daemon = executable('scc-daemon',
 )
 
 
-run_target('scc-daemon', command: ['sh', '../../meson-run.sh', 'src/daemon/scc-daemon.exe'],
+run_target('scc-daemon', command: ['sh', '../../meson-run.sh', 'src/daemon/scc-daemon', 'debug'],
 	dependencies: [scc_daemon])
 

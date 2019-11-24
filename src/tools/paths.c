@@ -239,10 +239,8 @@ const char* scc_drivers_path() {
 	// TODO: This path should be somehow configurable or determined on runtime
 #ifdef _WIN32
 	snprintf(drivers_path, PATH_MAX, "%s\\..\\drivers", scc_get_share_path());
-#elif defined(__BSD__)
-	strncpy(drivers_path, "build-bsd/src/daemon/drivers", PATH_MAX);
 #else
-	strncpy(drivers_path, "build/src/daemon/drivers", PATH_MAX);
+	strncpy(drivers_path, "src/daemon/drivers", PATH_MAX);
 #endif
 	return drivers_path;
 }
@@ -267,14 +265,12 @@ char* scc_find_binary(const char* name) {
 	const char* paths[] = {
 #ifdef _WIN32
 		scc_get_exe_path(),
-		"src/osd",
-		"src/daemon",
 #else
 		"./",
 		"./tools",
 #endif
-		"./build/src/osd",
-		"./build/src/daemon",
+		"src/osd",
+		"src/daemon",
 	};
 	
 	StrBuilder* sb = strbuilder_new();

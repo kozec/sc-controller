@@ -31,11 +31,13 @@ def find_library(libname):
 			]
 		search_paths += [
 			os.path.abspath(os.path.normpath(
+				os.path.join( './', libname + extension ))),
+			os.path.abspath(os.path.normpath(
 				os.path.join( base_path, '..', libname + extension ))),
 			os.path.abspath(os.path.normpath(
 				os.path.join( base_path, '../..', libname + extension ))),
 			os.path.abspath(os.path.normpath(
-				os.path.join( './build', libname + extension )))
+				os.path.join( './build', libname + extension ))),
 			]
 	
 	for path in search_paths:
