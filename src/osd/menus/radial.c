@@ -17,7 +17,9 @@
 #include "scc/tools.h"
 #include <gtk/gtk.h>
 #include <math.h>
-#ifndef _WIN32
+#ifdef _WIN32
+	#include <windows.h>
+#else
 	#include <X11/extensions/Xfixes.h>
 	#include <X11/extensions/shape.h>
 	#include <X11/Xutil.h>
@@ -45,8 +47,8 @@ struct RadialMenuData {
 
 struct Position {
 	size_t		index;
-	uint		orbit;
-	uint		orbit_index;
+	uint32_t	orbit;
+	uint32_t	orbit_index;
 	double		icon_size;
 	double		icon_y;
 	double		a0;
@@ -202,7 +204,12 @@ static bool on_redraw(GtkWidget* a, cairo_t* ctx, void* _mnu) {
 	cairo_arc(ctx, cx, cy, r, 0, 2.0 * M_PI);
 	// Outline is drawn little thicker
 	// to cover difference between X's and Cairo's idea of circle
+#ifndef _WIN32
 	cairo_set_line_width(ctx, BORDER_WIDTH * 1.5);
+#else
+	// It's even worse on Windows
+	cairo_set_line_width(ctx, BORDER_WIDTH * 10.0);
+#endif
 	
 	cairo_path_t* outline = cairo_copy_path(ctx);
 	gdk_cairo_set_source_rgba(ctx, &plugin_data->color_background);
@@ -250,7 +257,7 @@ void load_colors(struct RadialMenuData* data) {
 	RC_REL(config);
 }
 
-static GtkWidget* make_icon(MenuItem* i, float size, uint* orbit, uint* items_per_orbit) {
+static GtkWidget* make_icon(MenuItem* i, float size, uint32_t* orbit, uint32_t* items_per_orbit) {
 	GtkWidget* w;
 	char* filename;
 	bool has_colors;
@@ -303,7 +310,6 @@ static GtkWidget* make_icon(MenuItem* i, float size, uint* orbit, uint* items_pe
 	return w;
 }
 
-/** Turns _parent window_ of menu into nice, round circle */
 static bool on_size_allocate(GtkWidget* w, GdkRectangle* alloc, void* _mnu) {
 	if (!gtk_widget_get_realized(w))
 		return false;
@@ -312,6 +318,8 @@ static bool on_size_allocate(GtkWidget* w, GdkRectangle* alloc, void* _mnu) {
 	int height = alloc->height;
 	int r = min(width, height) - BORDER_WIDTH * 0.5;
 	
+	// Turns _parent window_ of menu into nice, round circle
+#ifndef _WIN32
 	Display* dpy = gdk_x11_get_default_xdisplay();
 	ASSERT(dpy != NULL);
 	GdkWindow* gdk_window = gtk_widget_get_window(w);
@@ -333,11 +341,19 @@ static bool on_size_allocate(GtkWidget* w, GdkRectangle* alloc, void* _mnu) {
 	XFreeGC(dpy, gc);
 	XFreePixmap(dpy, pixmap);
 	XFlush(dpy);
+#else
+	// TODO: Windows? How?
+	GdkWindow* gdk_window = gtk_widget_get_window(GTK_WIDGET(_mnu));
+	HWND hwnd = gdk_win32_window_get_handle(gdk_window);
+	HRGN region = CreateRoundRectRgn(0, 0, width, height, width, height);
+	SetWindowRgn(hwnd, region, true);
+#endif
 	
+	// Computes position of every icon and pie piece on the canvas
 	ListIterator it = iter_get(data);
-	uint orbits = 0;
-	uint items_per_orbit[MAX_ORBITS];
-	for (uint i=0; i<MAX_ORBITS; i++)
+	uint32_t orbits = 0;
+	uint32_t items_per_orbit[MAX_ORBITS];
+	for (uint32_t i=0; i<MAX_ORBITS; i++)
 		items_per_orbit[i] = 0;
 	FOREACH(MenuItem*, i, it) {
 		if (i->userdata != NULL) {
@@ -346,7 +362,7 @@ static bool on_size_allocate(GtkWidget* w, GdkRectangle* alloc, void* _mnu) {
 			orbits = max(orbits, pos->orbit + 1);
 		}
 	}
-	for (uint i=1; i<MAX_ORBITS; i++)
+	for (uint32_t i=1; i<MAX_ORBITS; i++)
 		if (items_per_orbit[i] == 1)
 			items_per_orbit[i] = 2;
 	
@@ -385,7 +401,7 @@ static bool on_size_allocate(GtkWidget* w, GdkRectangle* alloc, void* _mnu) {
 						sqrt(tan((pos->a1 - pos->a0) * 0.5)) * (pos->y1 - pos->y0)
 					);
 				} else {
-					pos->icon_y = (pos->y0 + (pos->y1 - pos->y0) * 0.8);
+					pos->icon_y = (pos->y0 + (pos->y1 - pos->y0) * 0.6);
 					pos->icon_size = 0.5 * (double)r
 						* sqrt(tan((pos->a1 - pos->a0) * 0.3))
 						* (pos->y1 - pos->y0);
@@ -418,9 +434,9 @@ DLL_EXPORT GtkWidget* osd_menu_create_widgets(OSDMenu* mnu, OSDMenuSettings* set
 	g_signal_connect(G_OBJECT(a), "draw", (GCallback)&on_redraw, mnu);
 	g_signal_connect(G_OBJECT(mnu), "size-allocate", (GCallback)&on_size_allocate, mnu);
 	
-	uint orbit = 0;
-	uint items_per_orbit[MAX_ORBITS];
-	for (uint i=0; i<MAX_ORBITS; i++)
+	uint32_t orbit = 0;
+	uint32_t items_per_orbit[MAX_ORBITS];
+	for (uint32_t i=0; i<MAX_ORBITS; i++)
 		items_per_orbit[i] = 0;
 	ListIterator it = iter_get(data);
 	FOREACH(MenuItem*, i, it)

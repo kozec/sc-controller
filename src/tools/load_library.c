@@ -51,9 +51,9 @@ static int make_path(SCCLibraryType type, StrBuilder* sb, char* error_return) {
 #ifdef _WIN32
 		strbuilder_add(sb, scc_get_exe_path());
 		strbuilder_add_path(sb, "menu-plugins");
-		if (!dir_exists(sb->value) && dir_exists("src\\osd")) {
+		if (!dir_exists(sb->value) && dir_exists("src\\osd\\menus")) {
 			strbuilder_clear(sb);
-			strbuilder_add(sb, "src\\osd");
+			strbuilder_add(sb, "src\\osd\\menus");
 		}
 #else
 		strbuilder_add(sb, "src/osd/menus");
@@ -92,8 +92,12 @@ extlib_t scc_load_library(SCCLibraryType type, const char* prefix, const char* l
 	free(filename);
 	if (lib == NULL) {
 		DWORD err = GetLastError();
-		if (error_return != NULL)
-			snprintf(error_return, 255, "Windows error 0x%x", (int)err);
+		if (error_return != NULL) {
+			if (err == 0x7e)
+				snprintf(error_return, 255, "%s: File not found", filename);
+			else
+				snprintf(error_return, 255, "%s: Windows error 0x%x", filename, (int)err);
+		}
 		return NULL;
 	}
 #else
