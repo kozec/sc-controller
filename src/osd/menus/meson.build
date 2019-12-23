@@ -43,11 +43,11 @@ if host_machine.system() == 'linux'
 	]
 endif
 
-osd_menu_radial_menu_lib = shared_library('scc-osd-menu-radial',
+osd_menu_radial_menu_lib = shared_library('scc-osd-menu-radialmenu',
 	include_directories: include,
 	link_with: common_link + [ config_lib ],
 	dependencies: common_deps + radial_deps,
-	sources: [ 'radial.c' ],
+	sources: [ 'radial_menu.c' ],
 )
 
 

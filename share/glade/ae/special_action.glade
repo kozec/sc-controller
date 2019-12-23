@@ -251,22 +251,14 @@
         <col id="0" translatable="yes">Grid</col>
         <col id="1">gridmenu</col>
       </row>
-      <!--
-      <row>
-        <col id="0" translatable="yes">Radial</col>
-        <col id="1">radialmenu</col>
-      </row>
-      -->
       <row>
         <col id="0" translatable="yes">Horizontal Menu</col>
         <col id="1">hmenu</col>
       </row>
-      <!--
       <row>
-        <col id="0" translatable="yes">Quick Menu</col>
-        <col id="1">quickmenu</col>
+        <col id="0" translatable="yes">Radial</col>
+        <col id="1">radialmenu</col>
       </row>
-      -->
     </data>
   </object>
   <object class="GtkListStore" id="lstOSDSize">

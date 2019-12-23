@@ -26,7 +26,6 @@ const char* KW_AREA = "area";
 const char* KW_REL_AREA = "relarea";
 const char* KW_WIN_AREA = "winarea";
 const char* KW_REL_WIN_AREA = "relwinarea";
-const char* KW_RADIAL_MENU = "radialmenu";
 const char* KW_QUICK_MENU = "quickmenu";
 
 
@@ -141,10 +140,6 @@ static ActionOE stub_constructor(const char* keyword, ParameterList params) {
 		keyword = KW_REL_WIN_AREA;
 		flags = AF_ACTION;
 		pc = &pc_area;
-	} else if (0 == strcmp(KW_RADIAL_MENU, keyword)) {
-		keyword = KW_RADIAL_MENU;
-		flags = AF_ACTION;
-		pc = NULL;
 	} else if (0 == strcmp(KW_QUICK_MENU, keyword)) {
 		keyword = KW_QUICK_MENU;
 		flags = AF_ACTION;
@@ -220,7 +215,6 @@ void scc_actions_init_stub() {
 	scc_action_register(KW_REL_AREA, &stub_constructor);
 	scc_action_register(KW_WIN_AREA, &stub_constructor);
 	scc_action_register(KW_REL_WIN_AREA, &stub_constructor);
-	scc_action_register(KW_RADIAL_MENU, &stub_constructor);
 	scc_action_register(KW_QUICK_MENU, &stub_constructor);
 }
 

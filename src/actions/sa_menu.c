@@ -25,15 +25,8 @@ static ParamChecker pc_short;
 
 static const char* KW_MENU = "menu";
 static const char* KW_HMENU = "hmenu";
+static const char* KW_RADIAL_MENU = "radialmenu";
 static const char* KW_GRID_MENU = "gridmenu";
-
-typedef enum {
-	MT_MENU,			// Default type
-	MT_HORIZONTAL,		// Same as default, but prefers packing items into row
-	MT_GRID,			// Packs items into grid
-	MT_QUICK,			// Quickmenu. Max.6 items, controller by buttons
-	MT_RADIAL,			// Big (and ugly) wheel of items
-} MenuType;
 
 typedef struct {
 	Action				action;
@@ -122,6 +115,7 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 	
 	if (strcmp(keyword, KW_HMENU) == 0) keyword = KW_HMENU;
 	else if (strcmp(keyword, KW_GRID_MENU) == 0) keyword = KW_GRID_MENU;
+	else if (strcmp(keyword, KW_RADIAL_MENU) == 0) keyword = KW_RADIAL_MENU;
 	else keyword = KW_MENU;
 	
 	SAMenuAction* sa = malloc(sizeof(SAMenuAction));
@@ -156,5 +150,6 @@ void scc_actions_init_sa_menu() {
 	scc_action_register(KW_MENU, &sa_menu_constructor);
 	scc_action_register(KW_HMENU, &sa_menu_constructor);
 	scc_action_register(KW_GRID_MENU, &sa_menu_constructor);
+	scc_action_register(KW_RADIAL_MENU, &sa_menu_constructor);
 }
 

@@ -451,18 +451,18 @@ DLL_EXPORT void osd_menu_handle_input(OSDMenu* mnu, SCButton button, PadStickTri
 	MenuData* data = osd_menu_get_menu_data(mnu);
 	union {
 		int* values;
-		int* pressed;
+		int pressed;
 		struct { int x; int y; };
 	}* values = (void*)_values;
 	
 	switch (translated_input) {
 	case OMI_CONFIRM:
-		if (values->pressed)
+		if (!values->pressed)
 			osd_menu_confirm(mnu);
 		break;
 	case OMI_CANCEL:
-		if (values->pressed)
-			osd_window_exit(OSD_WINDOW(mnu), -1);
+		// if (values->pressed)
+		osd_window_exit(OSD_WINDOW(mnu), -1);
 		break;
 	case OMI_CONTROL:
 		a = atan2((double)values->x, (double)values->y) - 0.5 * M_PI;
