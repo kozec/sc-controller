@@ -28,7 +28,7 @@ from scc.actions import NoAction
 from scc.profile import Profile
 from scc.config import Config
 
-import os, sys, platform, re, json, urllib, platform, logging
+import os, sys, platform, re, json, urllib, datetime, platform, logging
 log = logging.getLogger("App")
 
 class App(Gtk.Application, UserDataManager, BindingEditor):
@@ -1379,6 +1379,9 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		""" Updates image that shows daemon status and menu shown when image is clicked """
 		log.debug("daemon status: %s", status)
 		icon = os.path.join(self.imagepath, "scc-%s.svg" % (status,))
+		today = datetime.datetime.today()
+		if today.month == 12 or (today.month == 1 or today.day <= 6):
+			icon = os.path.join(self.imagepath, "scc-%s-s.svg" % (status,))
 		imgDaemonStatus = self.builder.get_object("imgDaemonStatus")
 		btDaemon = self.builder.get_object("btDaemon")
 		mnuEmulationEnabled = self.builder.get_object("mnuEmulationEnabled")
