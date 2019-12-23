@@ -1380,7 +1380,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		log.debug("daemon status: %s", status)
 		icon = os.path.join(self.imagepath, "scc-%s.svg" % (status,))
 		today = datetime.datetime.today()
-		if today.month == 12 or (today.month == 1 or today.day <= 6):
+		if today.month == 12 or (today.month == 1 and today.day <= 6):
 			icon = os.path.join(self.imagepath, "scc-%s-s.svg" % (status,))
 		imgDaemonStatus = self.builder.get_object("imgDaemonStatus")
 		btDaemon = self.builder.get_object("btDaemon")
