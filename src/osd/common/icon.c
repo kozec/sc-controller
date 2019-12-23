@@ -33,6 +33,11 @@ static void on_allocated(GtkWidget* widget, GdkRectangle* allocation, gpointer d
 		gtk_widget_set_size_request(widget, allocation->height, -1);
 }
 
+GdkPixbuf* menu_icon_get_pixbuf(MenuIcon* w) {
+	MenuIconPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(w, MENU_ICON_TYPE, MenuIconPrivate);
+	return priv->pb;
+}
+
 void menu_icon_draw_pixbuf(GdkPixbuf* pb, cairo_t* target, guint width, guint height, const GdkRGBA* color) {
 	if (pb == NULL) return;
 	cairo_surface_t* surf = NULL;

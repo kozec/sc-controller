@@ -43,12 +43,13 @@ struct _OSDMenuPrivate {
 	extlib_t						plugin;
 	Mapper*							slave_mapper;
 	osd_menu_handle_stick_fn		handle_stick_cb;
+	osd_menu_handle_input_fn		handle_input_cb;
 	OSDMenuSettings					settings;
 };
 
 G_DEFINE_TYPE_WITH_CODE(OSDMenu, osd_menu, OSD_WINDOW_TYPE, G_ADD_PRIVATE(OSDMenu));
 
-static void osd_menu_item_selected(OSDMenu* mnu);
+
 static void osd_menu_finalize(GObject* mnu);
 
 static void osd_menu_class_init(OSDMenuClass *klass) {
@@ -79,9 +80,14 @@ static int get_menuitem_index(MenuData* dt, GtkWidget* widget) {
 }
 
 
+inline static OSDMenuPrivate* get_private(OSDMenu* mnu) {
+	return G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+}
+
+
 static void on_mnu_child_exit(void* _child, int code, void* _mnu) {
 	OSDMenu* mnu = (OSDMenu*)_mnu;
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	if (code == -1) {
 		// Canceled
 		gtk_widget_destroy(GTK_WIDGET(priv->child));
@@ -95,13 +101,14 @@ static void on_mnu_child_exit(void* _child, int code, void* _mnu) {
 
 static void on_mnu_child_ready(void* _child, void* _mnu) {
 	gtk_widget_show_all(GTK_WIDGET(_child));
+	LOG(">>> %p", _mnu);
 	gtk_widget_set_name(GTK_WIDGET(_mnu), "osd-menu-inactive");
 }
 
 
 static gboolean osd_menu_on_data_ready(GIOChannel* source, GIOCondition condition, gpointer _mnu) {
 	OSDMenu* mnu = OSD_MENU(_mnu);
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	const char* message = sccc_recieve(priv->client);
 	if (message != NULL) {
 		if (message[0] == 0)
@@ -118,7 +125,7 @@ static gboolean osd_menu_on_data_ready(GIOChannel* source, GIOCondition conditio
 
 static void osd_menu_connection_ready(SCCClient* c) {
 	OSDMenu* mnu = OSD_MENU(c->userdata);
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	uint32_t handle = sccc_get_controller_handle(c, priv->settings.controller_id);
 	if (handle == 0) {
 		if (priv->settings.controller_id == NULL)
@@ -143,9 +150,19 @@ static void osd_menu_connection_ready(SCCClient* c) {
 
 static void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 					SCButton button, PadStickTrigger pst, int values[]) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	if (priv->child != NULL)
 		return osd_menu_parse_event(priv->child, c, handle, button, pst, values);
+	if (priv->handle_input_cb != NULL) {
+		OSDMenuInput translated_input = OMI_NOT_TRANSLATED;
+		if (pst == priv->settings.control_with)
+			translated_input = OMI_CONTROL;
+		else if (button == priv->settings.cancel_with)
+			translated_input = OMI_CANCEL;
+		else if (button == priv->settings.confirm_with)
+			translated_input = OMI_CONFIRM;
+		return priv->handle_input_cb(mnu, button, pst, translated_input, values);
+	}
 	if ((pst == priv->settings.control_with) && priv->settings.use_cursor) {
 		GtkAllocation al_cursor;
 		GtkAllocation al_self;
@@ -166,8 +183,8 @@ static void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 		FOREACH(MenuItem*, i, it) {
 			if (i->userdata == NULL) continue;
 			if (point_in_gtkrect(GTK_WIDGET(i->userdata), x, y)) {
-				osd_menu_select(mnu, get_menuitem_index(priv->data,
-									GTK_WIDGET(i->userdata)));
+				osd_menu_select_index(mnu, get_menuitem_index(priv->data,
+										GTK_WIDGET(i->userdata)));
 			}
 		}
 		iter_free(it);
@@ -176,7 +193,7 @@ static void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 	else if ((button == priv->settings.cancel_with) && (!values[0]))
 		osd_window_exit(OSD_WINDOW(mnu), -1);
 	else if ((button == priv->settings.confirm_with) && (!values[0]))
-		osd_menu_item_selected(mnu);
+		osd_menu_confirm(mnu);
 	// else
 	// 	LOG("# %i %i %i > %i %i", handle, button, pst, values[0], values[1]);
 }
@@ -185,7 +202,7 @@ static void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 static void osd_menu_on_event(SCCClient* c, uint32_t handle, SCButton button,
 			PadStickTrigger pst, int values[]) {
 	OSDMenu* mnu = OSD_MENU(c->userdata);
-	return osd_menu_parse_event(mnu, c, handle, button, pst, values);
+	osd_menu_parse_event(mnu, c, handle, button, pst, values);
 }
 
 
@@ -196,13 +213,18 @@ static void osd_menu_on_reconfigured(SCCClient* c) {
 
 static void _osd_menu_handle_stick(int dx, int dy, void* _mnu) {
 	OSDMenu* mnu = OSD_MENU(_mnu);
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	priv->handle_stick_cb(mnu, dx, dy);
 }
 
 
-bool osd_menu_select(OSDMenu* mnu, size_t index) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+bool osd_menu_select_index(OSDMenu* mnu, size_t index) {
+	OSDMenuPrivate* priv = get_private(mnu);
+	return osd_menu_select(mnu, scc_menudata_get_by_index(priv->data, index));
+}
+
+bool osd_menu_select(OSDMenu* mnu, MenuItem* i) {
+	OSDMenuPrivate* priv = get_private(mnu);
 	// if (first && (i->type == MI_ACTION)) {
 	// 	gtk_widget_set_name(GTK_WIDGET(i->userdata), "osd-menu-item-selected");
 	// 	first = false;
@@ -220,7 +242,6 @@ bool osd_menu_select(OSDMenu* mnu, size_t index) {
 		priv->selected = NULL;
 	}
 	
-	MenuItem* i = scc_menudata_get_by_index(priv->data, index);
 	if ((i == NULL) || (i->id == NULL) || ((i->type != MI_ACTION) && (i->type != MI_SUBMENU)))
 		// Not selectable
 		return false;
@@ -231,26 +252,28 @@ bool osd_menu_select(OSDMenu* mnu, size_t index) {
 	// 		self.controller.feedback(*self.feedback)
 	
 	priv->selected = i->userdata;
-	StrBuilder* sb = strbuilder_new();
-	ASSERT(sb != NULL);
-	strbuilder_add(sb, gtk_widget_get_name(GTK_WIDGET(priv->selected)));
-	strbuilder_add(sb, "-selected");
-	ASSERT(!strbuilder_failed(sb));
-	gtk_widget_set_name(GTK_WIDGET(priv->selected), strbuilder_get_value(sb));
-	strbuilder_free(sb);
-	// GLib.timeout_add(2, self._check_on_screen_position)
+	if (i->userdata != NULL) {
+		StrBuilder* sb = strbuilder_new();
+		ASSERT(sb != NULL);
+		strbuilder_add(sb, gtk_widget_get_name(GTK_WIDGET(priv->selected)));
+		strbuilder_add(sb, "-selected");
+		ASSERT(!strbuilder_failed(sb));
+		gtk_widget_set_name(GTK_WIDGET(priv->selected), strbuilder_get_value(sb));
+		strbuilder_free(sb);
+		// GLib.timeout_add(2, self._check_on_screen_position)
+	}
 	return true;
 }
 
 
 void osd_menu_next_item(OSDMenu* mnu, int direction) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	int start = get_menuitem_index(priv->data, priv->selected);
 	int i = start + direction;
 	while (1) {
 		if (i == start) {
 			// Cannot find valid menu item
-			osd_menu_select(mnu, start);
+			osd_menu_select_index(mnu, start);
 			break;
 		}
 		if (i >= (int)scc_menudata_len(priv->data)) {
@@ -263,7 +286,7 @@ void osd_menu_next_item(OSDMenu* mnu, int direction) {
 			// TODO: GLib.timeout_add(1, self._check_on_screen_position, True)
 			continue;
 		}
-		if (osd_menu_select(mnu, i)) {
+		if (osd_menu_select_index(mnu, i)) {
 			// Found valid item
 			break;
 		}
@@ -284,7 +307,7 @@ static bool osd_menu_sa_handler(Mapper* m, unsigned int sa_action_type, void* sa
 			// what causes keyboard to fail to acquire locks. To prevent that, lock
 			// is released before keyboard is displayed.
 			OSDMenu* mnu = OSD_MENU(sccc_slave_mapper_get_userdata(m));
-			OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+			OSDMenuPrivate* priv = get_private(mnu);
 			sccc_unlock_all(priv->client);
 			char* const argv[] = { scc_osd_keyboard, NULL };
 			scc_spawn(argv, 0);
@@ -297,7 +320,7 @@ static bool osd_menu_sa_handler(Mapper* m, unsigned int sa_action_type, void* sa
 
 /** Configures menu to use already connected client */
 void osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	priv->client = client;
 	ASSERT(slave_mapper);
 	priv->slave_mapper = slave_mapper;
@@ -307,7 +330,7 @@ void osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) 
 
 /** Establishes connection to daemon. Emits 'ready' or 'exit' signal when done */
 void osd_menu_connect(OSDMenu* mnu) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	SCCClient* client = sccc_connect();
 	if (client == NULL) {
 		LERROR("Failed to connect to scc-daemon");
@@ -335,8 +358,8 @@ void osd_menu_connect(OSDMenu* mnu) {
 }
 
 
-static void osd_menu_item_selected(OSDMenu* mnu) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+void osd_menu_confirm(OSDMenu* mnu) {
+	OSDMenuPrivate* priv = get_private(mnu);
 	char* filename = NULL;
 	MenuItem* i = NULL;
 	if (priv->selected != NULL)
@@ -379,7 +402,7 @@ static void osd_menu_item_selected(OSDMenu* mnu) {
 
 
 static void osd_menu_init(OSDMenu* mnu) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	priv->sc = NULL;
 	priv->data = NULL;
 	priv->client = NULL;
@@ -399,26 +422,34 @@ extlib_t osd_menu_load_plugin(const char* name) {
 
 
 void osd_menu_set_plugin_data(OSDMenu* mnu, void* data) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	priv->plugin_data = data;
 }
 
 
 void* osd_menu_get_plugin_data(OSDMenu* mnu) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	return priv->plugin_data;
 }
 
 
 MenuData* osd_menu_get_menu_data(OSDMenu* mnu) {
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	return priv->data;
+}
+
+MenuItem* osd_menu_get_selected(OSDMenu* mnu) {
+	OSDMenuPrivate* priv = get_private(mnu);
+	if (priv->selected == NULL)
+		return NULL;
+	MenuItem* i = g_object_get_data(G_OBJECT(priv->selected), "scc-menu-item-data");
+	return i;
 }
 
 
 static void osd_menu_finalize(GObject* _mnu) {
 	OSDMenu* mnu = OSD_MENU(_mnu);
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	if (priv->plugin_data != NULL) {
 		osd_menu_free_plugin_data_fn osd_menu_free_plugin_data;
 		osd_menu_free_plugin_data = scc_load_function(priv->plugin,
@@ -457,14 +488,19 @@ OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 	GtkWidget* o = g_object_new(OSD_MENU_TYPE, GTK_WINDOW_TOPLEVEL, NULL);
 	osd_window_setup(OSD_WINDOW(o), "osd-menu", callbacks);
 	OSDMenu* mnu = OSD_MENU(o);
-	OSDMenuPrivate* priv = G_TYPE_INSTANCE_GET_PRIVATE(mnu, OSD_MENU_TYPE, OSDMenuPrivate);
+	OSDMenuPrivate* priv = get_private(mnu);
 	
-	priv->handle_stick_cb = scc_load_function(plugin, "osd_menu_handle_stick", NULL);
-	if (priv->handle_stick_cb == NULL) {
-		priv->sc = NULL;
+	priv->handle_input_cb = scc_load_function(plugin, "osd_menu_handle_input", NULL);
+	if (priv->handle_input_cb == NULL) {
+		priv->handle_stick_cb = scc_load_function(plugin, "osd_menu_handle_stick", NULL);
+		if (priv->handle_stick_cb == NULL) {
+			priv->sc = NULL;
+		} else {
+			priv->sc = stick_controller_create(_osd_menu_handle_stick, mnu);
+			ASSERT(priv->sc != NULL);
+		}
 	} else {
-		priv->sc = stick_controller_create(_osd_menu_handle_stick, mnu);
-		ASSERT(priv->sc != NULL);
+		priv->handle_stick_cb = NULL;
 	}
 	
 	priv->data = data;
@@ -480,7 +516,9 @@ OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 	GtkWidget* parent = osd_menu_create_widgets(mnu, &priv->settings);
 	gtk_widget_set_name(parent, "osd-menu");
 	
-	if (priv->settings.use_cursor) {
+	if (priv->handle_input_cb != NULL) {
+		gtk_container_add(GTK_CONTAINER(mnu), parent);
+	} else if (priv->settings.use_cursor) {
 		StrBuilder* sb = strbuilder_new();
 		ASSERT(sb != NULL);
 		strbuilder_add(sb, scc_get_share_path());
@@ -496,7 +534,7 @@ OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 		gtk_container_add(GTK_CONTAINER(priv->fixed), parent);
 		gtk_container_add(GTK_CONTAINER(priv->fixed), priv->cursor);
 	} else {
-		if (!osd_menu_select(mnu, 0))
+		if (!osd_menu_select_index(mnu, 0))
 			osd_menu_next_item(mnu, 1);
 		gtk_container_add(GTK_CONTAINER(mnu), parent);
 	}

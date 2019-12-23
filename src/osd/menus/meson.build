@@ -34,6 +34,23 @@ osd_menu_hmenu_lib = shared_library('scc-osd-menu-hmenu',
 )
 
 
+radial_deps = [ meson.get_compiler('c').find_library('m') ]
+
+if host_machine.system() == 'linux'
+	radial_deps += [
+		dependency('x11'),
+		dependency('xext'),
+	]
+endif
+
+osd_menu_radial_menu_lib = shared_library('scc-osd-menu-radial',
+	include_directories: include,
+	link_with: common_link + [ config_lib ],
+	dependencies: common_deps + radial_deps,
+	sources: [ 'radial.c' ],
+)
+
+
 osd_menu_grid_menu_lib = shared_library('scc-osd-menu-gridmenu',
 	include_directories: include,
 	link_with: common_link + [ parser_lib ],

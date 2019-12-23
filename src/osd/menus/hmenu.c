@@ -56,11 +56,10 @@ static GtkWidget* make_widget(MenuItem* i, float size) {
 		else
 			gtk_widget_set_name(w, "osd-menu-item");
 		break;
-	case MI_SUBMENU: {
+	case MI_SUBMENU:
 		w = make_menu_row(i->icon, size);
 		gtk_widget_set_name(GTK_WIDGET(w), "osd-menu-item");
 		break;
-	}
 	case MI_SEPARATOR:
 		// horizontal menu ignores separators
 		return NULL;

@@ -20,6 +20,8 @@ DLL_EXPORT GType menu_icon_get_type(void) G_GNUC_CONST;
 DLL_EXPORT MenuIcon* menu_icon_new(const char* file_name, bool has_colors);
 DLL_EXPORT bool menu_icon_set_filename(MenuIcon* mi, const char* filename);
 DLL_EXPORT void menu_icon_set_has_colors(MenuIcon* mi, bool has_colors);
+/** Returns internal pixbuf of menu icon, without increasing reference counter */
+DLL_EXPORT GdkPixbuf* menu_icon_get_pixbuf(MenuIcon* mi);
 /**
  * Draws GdkPixbuf* to cairo context.
  * This can be used to draw any image in same way as recolored icons in menus are.

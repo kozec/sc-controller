@@ -70,7 +70,7 @@ static GtkWidget* make_widget(MenuItem* i) {
 		else
 			gtk_widget_set_name(w, "osd-menu-item");
 		break;
-	case MI_SUBMENU: {
+	case MI_SUBMENU:
 		if (i->submenu == NULL)
 			// Shouldn't be possible
 			return NULL;
@@ -84,8 +84,7 @@ static GtkWidget* make_widget(MenuItem* i) {
 		}
 		gtk_widget_set_name(GTK_WIDGET(w), "osd-menu-item");
 		break;
-	}
-	case MI_SEPARATOR: {
+	case MI_SEPARATOR:
 		if (i->name != NULL) {
 			w = gtk_button_new_with_label(i->name);
 			gtk_button_set_relief(GTK_BUTTON(w), GTK_RELIEF_NONE);
@@ -95,7 +94,6 @@ static GtkWidget* make_widget(MenuItem* i) {
 		}
 		gtk_widget_set_name(GTK_WIDGET(w), "osd-menu-separator");
 		break;
-	}
 	default:
 		return NULL;
 	}

@@ -10,6 +10,8 @@ tags
 pkg/
 bin/
 build/
+wine-ros/
+build-ros/
 build-w10/
 build-win32/
 release-win32/
@@ -17,3 +19,8 @@ release-win32/
 sc-controller.wiki/
 .trash/
 profiles
+
+release-reactos/
+sc-controller-*-release/
+sc-controller-*-release.zip
+
