@@ -1,8 +1,10 @@
 /*
- * SC-Controller - Gyro and GyroAbs
+ * SC-Controller - Gyro, GyroAbs and Accel
  *
  * 'gyro' uses *relative* gyroscope position as input for emulated axes.
  * 'gyroabs' sets axis position based on absolute rotation.
+ * 'accel' sets axis position based on absolute position,
+ *         as random number given by accelerator
  */
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
@@ -26,6 +28,7 @@
 
 static const char* KW_GYRO = "gyro";
 const char* KW_GYROABS = "gyroabs";
+static const char* KW_ACCEL = "accel";
 // Just random number to put default sensitivity into sane range
 static const double MOUSE_FACTOR = 0.01;
 
@@ -170,6 +173,25 @@ static void gyroabs(Action* a, Mapper* m, const struct GyroInput* value) {
 	}
 }
 
+static void accel(Action* a, Mapper* m, const struct GyroInput* value) {
+	GyroAction* g = container_of(a, GyroAction, action);
+	GyroValue* xyz = &value->accel_x;
+	
+	for (int i=0; i<3; i++) {
+		Axis axis = g->axes[i];
+		if (axis == REL_X) {
+			m->move_mouse(m, clamp_axis(axis, xyz[i] * MOUSE_FACTOR * g->sensitivity[i]), 0);
+		} else if (axis == REL_Y) {
+			m->move_mouse(m, 0, clamp_axis(axis, xyz[i] * MOUSE_FACTOR * g->sensitivity[i]));
+		} else if (axis < ABS_CNT) {
+			AxisValue val = clamp_axis(axis, xyz[i] * g->sensitivity[i]);
+			if (g->deadzone != NULL) {
+				scc_deadzone_apply(g->deadzone, &val);
+			}
+			m->set_axis(m, axis, val);
+		}
+	}
+}
 
 static Parameter* get_property(Action* a, const char* name) {
 	GyroAction* g = container_of(a, GyroAction, action);
@@ -233,11 +255,16 @@ static ActionOE gyro_constructor(const char* keyword, ParameterList params) {
 						AF_ACTION | AF_MOD_SENSITIVITY | AF_MOD_SENS_Z,
 						&gyro_dealloc, &gyro_to_string);
 		g->action.gyro = &gyro;
-	} else {
+	} else if (strcmp(keyword, KW_GYROABS) == 0) {
 		scc_action_init(&g->action, KW_GYROABS,
 						AF_MOD_DEADZONE | AF_ACTION | AF_MOD_SENSITIVITY | AF_MOD_SENS_Z,
 						&gyro_dealloc, &gyro_to_string);
 		g->action.gyro = &gyroabs;
+	} else {
+		scc_action_init(&g->action, KW_ACCEL,
+						AF_MOD_DEADZONE | AF_ACTION | AF_MOD_SENSITIVITY | AF_MOD_SENS_Z,
+						&gyro_dealloc, &gyro_to_string);
+		g->action.gyro = &accel;
 	}
 	
 	g->action.describe = &describe;
@@ -261,5 +288,6 @@ static ActionOE gyro_constructor(const char* keyword, ParameterList params) {
 void scc_actions_init_gyro() {
 	scc_action_register(KW_GYRO, &gyro_constructor);
 	scc_action_register(KW_GYROABS, &gyro_constructor);
+	scc_action_register(KW_ACCEL, &gyro_constructor);
 }
 
