@@ -12,9 +12,11 @@
 #include "scc/mapper.h"
 #include "scc/tools.h"
 #include "daemon.h"
-#include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
+#ifndef _WIN32
+#include <sys/wait.h>
+#endif
 
 static const char* process_name = "scc-daemon";
 static LIST_TYPE(sccd_mainloop_cb) mainloop_callbacks;
@@ -529,7 +531,6 @@ static void remove_pid_file() {
 		}
 	}
 }
-#endif
 
 static void respawn_minion(int sig) {
 	int stat;
@@ -541,6 +542,7 @@ static void respawn_minion(int sig) {
 		sccd_scheduler_schedule(5000, spawn_minions, NULL, NULL);
 	}
 }
+#endif
 
 /**
  * Starts scc-osd-daemon and scc-autoswitch-daemon
@@ -560,7 +562,6 @@ static void spawn_minions(void* trash1, void* trash2) {
 		}
 	}
 	// TODO: autoswitch daemon here
-	// TODO: how do I get sigchild on Windows?
 }
 
 void sccd_set_default_profile(const char* profile) {
@@ -623,7 +624,10 @@ int sccd_start() {
 	
 	signal(SIGTERM, sigint_handler);
 	signal(SIGINT, sigint_handler);
+#ifndef _WIN32
+	// TODO: how do I get sigchild on Windows?
 	signal(SIGCHLD, respawn_minion);
+#endif
 	INFO("Ready.");
 	
 	// Mainloop is waiting mostly on sccd_poller_mainloop_cb on Linux or
