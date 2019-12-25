@@ -7,8 +7,8 @@
 #include "scc/osd/osd_menu.h"
 #include "scc/client.h"
 #include "scc/tools.h"
-#include <gtk/gtk.h>
 #include "osd.h"
+#include <gtk/gtk.h>
 
 static OSDMenu* current_menu = NULL;
 static SCCClient* client;

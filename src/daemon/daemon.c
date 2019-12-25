@@ -12,6 +12,7 @@
 #include "scc/mapper.h"
 #include "scc/tools.h"
 #include "daemon.h"
+#include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -27,6 +28,7 @@ static intptr_t next_error_id = 0;
 static bool running = true;
 static Client* osd_daemon = NULL;
 static Client* autoswitch_daemon = NULL;
+static struct { intptr_t osdd; } minions = { -1 };
 
 static void load_default_profile(SCCDMapper* m);
 static bool add_mainloop(sccd_mainloop_cb cb);
@@ -35,6 +37,7 @@ static bool controller_add(Controller* c);
 static void controller_remove(Controller* c);
 static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
 static bool sccd_hidapi_enabled();
+static void spawn_minions(void* trash1, void* trash2);
 static InputDevice* sccd_open_input_device(const char* syspath);
 
 
@@ -528,6 +531,38 @@ static void remove_pid_file() {
 }
 #endif
 
+static void respawn_minion(int sig) {
+	int stat;
+	pid_t pid = wait(&stat);
+	if (pid <= 0) return;
+	if (pid == minions.osdd) {
+		WARN("scc-osd-daemon died; restarting in 5s...");
+		minions.osdd = -1;
+		sccd_scheduler_schedule(5000, spawn_minions, NULL, NULL);
+	}
+}
+
+/**
+ * Starts scc-osd-daemon and scc-autoswitch-daemon
+ * and keeps them running if they crash.
+ */
+static void spawn_minions(void* trash1, void* trash2) {
+	if (minions.osdd <= 0) {
+		char* osdd = scc_find_binary("scc-osd-daemon");
+		if (osdd == NULL) {
+			WARN("Cannot start scc-osd-daemon: binary not found");
+		} else {
+			char* argv[] = { osdd, NULL };
+			minions.osdd = scc_spawn(argv, 0);
+			free(osdd);
+			if (minions.osdd < 0)
+				WARN("Cannot start scc-osd-daemon: error %i", minions.osdd);
+		}
+	}
+	// TODO: autoswitch daemon here
+	// TODO: how do I get sigchild on Windows?
+}
+
 void sccd_set_default_profile(const char* profile) {
 	default_profile = scc_find_profile(profile);
 	if (default_profile == NULL)
@@ -575,9 +610,8 @@ int sccd_start() {
 #ifndef _WIN32
 	store_pid();
 #endif
-	// here: load default profile
-	// here: start_listening()
 	// here: check X server
+	spawn_minions(NULL, NULL);
 	// here: start_drivers() // needed?
 	sccd_device_monitor_rescan(&_daemon);
 	
@@ -586,9 +620,10 @@ int sccd_start() {
 		LERROR("Failed to allocate memory");
 		running = false;
 	}
-
+	
 	signal(SIGTERM, sigint_handler);
 	signal(SIGINT, sigint_handler);
+	signal(SIGCHLD, respawn_minion);
 	INFO("Ready.");
 	
 	// Mainloop is waiting mostly on sccd_poller_mainloop_cb on Linux or

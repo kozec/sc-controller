@@ -224,8 +224,6 @@ static inline void sa_menu(SAMenuActionData* data) {
 			LERROR("Could not find menu '%s'", data->menu_id);
 			goto sa_menu_fail;
 		}
-	} else {
-		LOG("osdd = %p", osdd);
 	}
 	
 	// Build arguments

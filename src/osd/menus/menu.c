@@ -111,14 +111,11 @@ static gboolean osd_menu_on_data_ready(GIOChannel* source, GIOCondition conditio
 	OSDMenuPrivate* priv = get_private(mnu);
 	const char* message = sccc_recieve(priv->client);
 	if (message != NULL) {
-		if (message[0] == 0)
-			// Disconnected
-			// TODO: Handle this
+		if (message[0] == 0) {
+			osd_window_exit(OSD_WINDOW(mnu), 1);
 			return false;
-		// if (message != NULL)
-		// 	LOG("> %s", message);
+		}
 	}
-	// on_reconfigured
 	return true;
 }
 
