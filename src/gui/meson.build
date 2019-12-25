@@ -1,17 +1,15 @@
-platform_dependent_deps = []
-platform_dependent_src = []
-platform_dependent_link_args = []
+deps = [ dependency('python-2.7') ]
+link = [ utils_lib, tools_lib ]
+sources = [ 'gui.c' ]
+link_args = []
 
 if host_machine.system() == 'linux'
-	platform_dependent_deps = []
-	platform_dependent_src = []
+	# pass
 elif host_machine.system() == 'openbsd' or host_machine.system() == 'netbsd'
-	platform_dependent_deps = []
-	platform_dependent_src = []
+	# pass
 elif host_machine.system() == 'windows'
-	platform_dependent_deps = []
-	platform_dependent_link_args += [ '-mwindows' ]
-	platform_dependent_src = [
+	link_args += [ '-mwindows' ]
+	sources += [
 		import('windows').compile_resources('sc-controller.rc')
 	]
 else
@@ -21,17 +19,24 @@ endif
 
 sc_controller = executable('sc-controller',
 	include_directories: include,
-	link_with: [ utils_lib, tools_lib ],
-	link_args: platform_dependent_link_args,
-	dependencies: platform_dependent_deps + [
-		dependency('python-2.7')
-	],
 	build_rpath: '/usr/X11R6/lib',
-	sources: platform_dependent_src + [
-		'gui.c',
-	],
+	link_args: link_args,
+	dependencies: deps,
+	sources: sources,
+	link_with: link,
 )
 
+if host_machine.system() == 'windows'
+	# Windows-only 'stay attached to console' executable
+	sc_controller_console = executable('sc-controller-console',
+		include_directories: include,
+		build_rpath: '/usr/X11R6/lib',
+		c_args: [ '-DFORCE_CONSOLE' ],
+		dependencies: deps,
+		sources: sources,
+		link_with: link,
+	)
+endif
 
 run_target('sc-controller', command: ['sh', '../../meson-run.sh', 'src/gui/sc-controller'],
 	dependencies: [sc_controller])

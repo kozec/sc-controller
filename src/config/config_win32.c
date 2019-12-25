@@ -287,6 +287,45 @@ config_get_value_fail:
 	return NULL;
 }
 
+ConfigValueType config_get_type(Config* _c, const char* path) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	config_value_t* value;
+	// First, try to return cached value
+	if (hashmap_get(c->values, path, (void*)&value) == MAP_OK)
+		return value->type;
+	
+	// 2nd, try to use type from default
+	const struct config_item* def = config_get_default(c, path);
+	if (def != NULL)
+		return def->type;
+	
+	// 3rd, try to read value from registry
+	value = NULL;
+	HKEY parent = config_get_parent(c, path, false);
+	
+	if (parent != NULL) {
+		DWORD reg_type;
+		DWORD size;
+		LSTATUS r;
+		const char* last = last_element(path);
+		r = RegGetValueA(parent, NULL, last, RRF_RT_REG_QWORD, &reg_type, NULL, &size);
+		if (r != ERROR_SUCCESS)
+			return 0;
+		switch (reg_type) {
+		case RRF_RT_REG_SZ:
+			return CVT_STRING;
+		case RRF_RT_REG_MULTI_SZ:
+			return CVT_STR_ARRAY;
+		case RRF_RT_REG_QWORD:
+			return CVT_INT;
+		default:
+			return 0;
+		}
+	}
+	
+	return 0;
+}
+
 static inline config_value_t* config_get_or_create(struct _Config* c, const char* path, ConfigValueType type) {
 	config_get_parent(c, path, true);
 	config_value_t* value = config_get_value(c, path, type);
