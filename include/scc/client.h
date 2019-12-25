@@ -13,9 +13,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "scc/utils/rc.h"
 #include "scc/utils/dll_export.h"
+#include "scc/utils/list.h"
 #include "scc/controller.h"
+#include "scc/utils/rc.h"
 #include <stdbool.h>
 
 #define SCCC_BUFFER_SIZE 10240
@@ -66,7 +67,7 @@ struct SCCClient {
 DLL_EXPORT SCCClient* sccc_connect();
 
 /**
- * Attempts to retrieve single message from socket. This function will call
+ * Attempts to retrieve single message from the socket. This function will call
  * recv() and so it will block until at least part of message is recieved.
  * Then, if message is recieved fully, this method will return that message
  * in buffer that will be changed next time method is called.
@@ -80,6 +81,21 @@ DLL_EXPORT SCCClient* sccc_connect();
  * If socket is closed or other error occurs, returns empty string.
  */
 DLL_EXPORT const char* sccc_recieve(SCCClient* c);
+
+/**
+ * Parses message into list of strings using following rules:
+ *  - space is separator
+ *  - spearator is ignored in single or double-quoted part of string
+ *  - '\' escapes quotes, but not spaces
+ *  - '\\' is converted to '\'
+ *
+ * Returns list that has to be deallocated by caller.
+ * If passed string is empty, returned list is empty.
+ * Strings contained in list are deallocated with it.
+ *
+ * Returns NULL on memory error.
+ */
+DLL_EXPORT StringList sccc_parse(const char* message);
 
 /**
  * Returns handle of controller with given id or 0 if there is no such controller connected.
@@ -121,7 +137,7 @@ DLL_EXPORT bool sccc_unlock_all(SCCClient* c);
  * once should be unnecessary)
  *
  * Returns ID that should be used to retrieve response or -1 if request
- * cannot be sent. 0 is valid id im this case.
+ * cannot be sent. 0 is valid id in this case.
  * Note that sending request _without_ retrieving response will lead to
  * filling request buffer and eventually end up with requests failing.
  */

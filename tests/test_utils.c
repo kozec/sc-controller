@@ -137,6 +137,36 @@ void test_list_for_in(CuTest* tc) {
 	list_free(sl);
 }
 
+void test_list_pop(CuTest* tc) {
+	StringList sl = list_new(char, 1);
+	list_add(sl, "A1");
+	list_add(sl, "A2");
+	list_add(sl, "A3");
+	assert(tc, 0 == strcmp("A3", list_pop(sl)));
+	assert(tc, 0 == strcmp("A2", list_get(sl, 1)));
+	assert(tc, 2 == list_len(sl));
+	
+	list_add(sl, "A5");
+	assert(tc, 3 == list_len(sl));
+	assert(tc, 0 == strcmp("A2", list_get(sl, 1)));
+	assert(tc, 0 == strcmp("A5", list_get(sl, 2)));
+}
+
+void test_list_unshift(CuTest* tc) {
+	StringList sl = list_new(char, 1);
+	list_add(sl, "A1");
+	list_add(sl, "A2");
+	list_add(sl, "A3");
+	assert(tc, 0 == strcmp("A1", list_unshift(sl)));
+	assert(tc, 0 == strcmp("A2", list_get(sl, 0)));
+	assert(tc, 0 == strcmp("A3", list_get(sl, 1)));
+	assert(tc, 2 == list_len(sl));
+	
+	list_add(sl, "A5");
+	assert(tc, 3 == list_len(sl));
+	assert(tc, 0 == strcmp("A3", list_get(sl, 1)));
+	assert(tc, 0 == strcmp("A5", list_get(sl, 2)));
+}
 
 /**
  * Used by test_hashmap_iterator to ensure that every string returned by
@@ -345,6 +375,8 @@ int main(int argc, char** argv) {
 	DEFAULT_SUITE_ADD(test_list_filter);
 	DEFAULT_SUITE_ADD(test_list_iterator);
 	DEFAULT_SUITE_ADD(test_list_for_in);
+	DEFAULT_SUITE_ADD(test_list_pop);
+	DEFAULT_SUITE_ADD(test_list_unshift);
 	DEFAULT_SUITE_ADD(test_intmap);
 	DEFAULT_SUITE_ADD(test_hashmap_iterator);
 	DEFAULT_SUITE_ADD(test_hashmap_iterator_1item);

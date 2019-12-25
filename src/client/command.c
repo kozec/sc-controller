@@ -9,6 +9,7 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/tokenizer.h"
 #include "scc/utils/iterable.h"
+#include "scc/utils/list.h"
 #include "scc/client.h"
 #include "client.h"
 
@@ -107,5 +108,60 @@ int on_command(struct _SCCClient* c, char* msg) {
 on_command_oom:
 	tokens_free(tokens);
 	return -1;
+}
+
+inline static bool add_unqouted(StrBuilder* sb, StringList lst) {
+	const char* value = strbuilder_get_value(sb);
+	if ((value[0] == '\'') || (value[0] == '"')) {
+		if (value[0] == value[strlen(value) - 1]) {
+			strbuilder_rtrim(sb, 1);
+			strbuilder_ltrim(sb, 1);
+		}
+	}
+	return list_add(lst, strbuilder_consume(sb));
+}
+
+StringList sccc_parse(const char* msg) {
+	StringList lst = list_new(char, 1);
+	StrBuilder* sb = strbuilder_new();
+	Tokens* tokens = tokenize(msg);
+	if ((lst == NULL) || (tokens == NULL) || (sb == NULL))
+		goto sccc_parse_oom;
+	// tokens_auto_skip_whitespace(tokens);
+	list_set_dealloc_cb(lst, free);
+	
+	const char* item = iter_next(tokens);
+	while (item != NULL) {
+		if (!strbuilder_add(sb, item))
+			goto sccc_parse_oom;
+		// LOG("sccc_parse: [%s] next '%c'", item, tokens_peek_char(tokens));
+		if (tokens_peek_char(tokens) == ' ') {
+			// LOG("sccc_parse: word");
+			if (!add_unqouted(sb, lst)) {
+				sb = NULL;
+				goto sccc_parse_oom;
+			}
+			if ((sb = strbuilder_new()) == NULL)
+				goto sccc_parse_oom;
+			tokens_skip_whitespace(tokens);
+		}
+		if (!iter_has_next(tokens))
+			break;
+		item = iter_next(tokens);
+	}
+	if (strbuilder_len(sb) > 0) {
+		if (!add_unqouted(sb, lst)) {
+			sb = NULL;
+			goto sccc_parse_oom;
+		}
+		// LOG("sccc_parse: word");
+	}
+	return lst;
+	
+sccc_parse_oom:
+	tokens_free(tokens);
+	strbuilder_free(sb);
+	list_free(lst);
+	return NULL;
 }
 

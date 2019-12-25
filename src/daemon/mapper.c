@@ -206,30 +206,38 @@ static void cancel(Mapper* _m, TaskID task_id) {
 }
 
 static inline void sa_menu(SAMenuActionData* data) {
+	char* scc_osd_menu = NULL;
+	StrBuilder* sb = NULL;
+	char* menu = NULL;
+	
 	// Grab data
-	char* scc_osd_menu = scc_find_binary("scc-osd-menu");
-	char* menu = scc_find_menu(data->menu_id);
-	if (scc_osd_menu == NULL) {
-		LERROR("Could not find 'scc-osd-menu'");
-		goto sa_menu_fail;
-	}
-	if (menu == NULL) {
-		LERROR("Could not find menu '%s'", data->menu_id);
-		goto sa_menu_fail;
+	Client* osdd = sccd_get_special_client(SCT_OSD);
+	if (osdd == NULL) {
+		WARN("OSD daemon not available, starting scc-osd-menu. This is suboptimal.");
+		scc_osd_menu = scc_find_binary("scc-osd-menu");
+		menu = scc_find_menu(data->menu_id);
+		if (scc_osd_menu == NULL) {
+			LERROR("Could not find 'scc-osd-menu'");
+			goto sa_menu_fail;
+		}
+		if (menu == NULL) {
+			LERROR("Could not find menu '%s'", data->menu_id);
+			goto sa_menu_fail;
+		}
+	} else {
+		LOG("osdd = %p", osdd);
 	}
 	
 	// Build arguments
 	StringList argv = list_new(char, 4);
 	if (argv == NULL) {
-		WARN("OOM while trying to call 'scc-osd-menu'");
+		WARN("OOM while trying to display OSD menu");
 		goto sa_menu_fail;
 	}
 	
 	// Any call to strbuilder_cpy may fail on OOM bellow, but that will
 	// result only in calling menu binary with wrong arguments, not crashing.
-	list_add(argv, strbuilder_cpy(scc_osd_menu));
-	list_add(argv, strbuilder_cpy("-f"));
-	list_add(argv, strbuilder_cpy(menu));
+	list_add(argv, strbuilder_cpy((scc_osd_menu != NULL) ? scc_osd_menu : "menu"));
 	
 	const char* control_with = scc_what_to_string(data->control_with);
 	const char* confirm_with = scc_button_to_string(data->confirm_with);
@@ -283,16 +291,42 @@ static inline void sa_menu(SAMenuActionData* data) {
 		list_add(argv, strbuilder_fmt("%i", data->size));
 	}
 	
-	// Call binary
-	if (!list_add(argv, NULL)) {
-		// That last list_add adds sentinel and so it's crucial
-		WARN("OOM while trying to call 'scc-osd-menu'");
+	if (osdd == NULL) {
+		list_add(argv, strbuilder_cpy("-f"));
+		list_add(argv, strbuilder_cpy(menu));
+		// Call binary
+		if (!list_add(argv, NULL)) {
+			// That last list_add adds sentinel and so it's crucial
+			WARN("OOM while trying to call 'scc-osd-menu'");
+		} else {
+			scc_spawn(argv->items, 0);
+		}
 	} else {
-		scc_spawn(argv->items, 0);
+		// Send message to OSD daemon
+		StrBuilder* sb = strbuilder_new();
+		if (sb != NULL) {
+			ListIterator it = iter_get(argv);
+			strbuilder_add_all(sb, it, strbuilder_cpy, " ");
+			iter_free(it);
+			
+			strbuilder_insert(sb, 0, "OSD: ");
+			strbuilder_add(sb, " -m \"");
+			strbuilder_add_escaped(sb, data->menu_id, "\"'", '\\');
+			strbuilder_add(sb, "\"\n");
+		}
+		
+		if ((sb == NULL) || strbuilder_failed(sb)) {
+			WARN("OOM while trying to talk to OSD daemon");
+			goto sa_menu_fail0;
+		}
+		
+		sccd_socket_send(osdd, strbuilder_get_value(sb));
 	}
 	
+sa_menu_fail0:
 	// Free memory
 	list_set_dealloc_cb(argv, free);
+	strbuilder_free(sb);
 	list_free(argv);
 sa_menu_fail:
 	free(scc_osd_menu);

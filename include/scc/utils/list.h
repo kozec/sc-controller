@@ -112,8 +112,12 @@ bool list_set(void* list, size_t n, void* item);
  * Allocation is not decreased and so it's safe to add one item for every item
  * poped out of list.
  */
-#define list_pop(tpe, list) ((tpe*)_list_pop(list))
+#define list_pop(list) ((typeof(list->items[0]))_list_pop(list))
 void* _list_pop(void* list);
+
+/** As list_pop, but pops first item */
+#define list_unshift(list) ((typeof(list->items[0]))_list_unshift(list))
+void* _list_unshift(void* list);
 
 /** Returns length of list */
 #define list_len(list) ((list)->_data.size)

@@ -1,4 +1,5 @@
 #include "scc/utils/strbuilder.h"
+#include "scc/utils/math.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -330,6 +331,17 @@ void strbuilder_rtrim(StrBuilder* b, size_t count) {
 }
 
 
+void strbuilder_ltrim(StrBuilder* b, size_t count) {
+	if (b == NULL) return;
+	count = min(b->length, count);
+	if (count < 1) return;
+	memmove(b->value, b->value + count, b->length - count);
+	b->length -= count;
+	b->next -= count;
+	*b->next = 0;
+}
+
+
 bool strbuilder_escape(StrBuilder* b, const char* chars, char escape_char) {
 	if (b == NULL) return false;
 	if (escape_char == 0) return false;
@@ -396,9 +408,8 @@ bool _strbuilder_add_all(StrBuilder* b, void* iterator,
 					bool(*has_next)(void* i),
 					void*(*get_next)(void *i), char*(*convert_fn)(void* item),
 					const char* glue) {
-	if (!has_next(iterator))
-		return true;
 	if (b == NULL) return false;
+	if (!has_next(iterator)) return true;
 	size_t original_length = b->length;
 	bool needs_glue = false;
 	while (has_next(iterator)) {

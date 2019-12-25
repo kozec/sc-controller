@@ -164,7 +164,18 @@ bool list_set(void* _list, size_t n, void* item) {
 
 void* _list_pop(void* _list) {
 	_voidlist list = (_voidlist)_list;
+	if (list->_data.size == 0) return NULL;
 	void* item = list->items[list->_data.size - 1];
+	list->_data.size --;
+	return item;
+}
+
+void* _list_unshift(void* _list) {
+	_voidlist list = (_voidlist)_list;
+	if (list->_data.size == 0) return NULL;
+	void* item = list->items[0];
+	for (size_t i=0; i<list->_data.size-1; i++)
+		list->items[i] = list->items[i+1];
 	list->_data.size --;
 	return item;
 }

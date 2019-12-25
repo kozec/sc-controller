@@ -104,3 +104,10 @@ test('test_bindings', executable('test_bindings',
 	sources: [ 'test_bindings.c' ]
 ))
 
+test('test_client', executable('test_client',
+	dependencies: [cu_test],
+	include_directories: include,
+	link_with: link + [ client_lib ],
+	sources: [ 'test_client.c' ]
+))
+

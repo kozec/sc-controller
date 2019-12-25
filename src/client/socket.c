@@ -115,14 +115,14 @@ const char* sccc_recieve(SCCClient* _c) {
 	}
 	ssize_t r = recv(c->fd, c->next, free_space, MSG_PEEK);
 	if (r < 0) {
-#ifndef _WIN32
-		LERROR("%s; Closing connection", strerror(errno));
-#else
+#ifdef _WIN32
 		if (WSAGetLastError() == WSAEWOULDBLOCK) {
 			// No data queued
 			return NULL;
 		}
 		LERROR("Error %i; Closing connection", WSAGetLastError());
+#else
+		LERROR("%s; Closing connection", strerror(errno));
 #endif
 		goto sccc_recieve_fail;
 	}
@@ -144,6 +144,10 @@ const char* sccc_recieve(SCCClient* _c) {
 		else
 			// Unknown message
 			return c->buffer;
+	} else if (r == 0) {
+		// Connection was closed and we don't have any message left in buffer
+		c->buffer[0] = 0;
+		return c->buffer;
 	} else {
 		// empty recv buffer completly
 		recv(c->fd, c->next, r, 0);

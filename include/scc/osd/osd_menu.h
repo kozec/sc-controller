@@ -22,6 +22,8 @@ typedef struct MenuData				MenuData;
 
 typedef struct OSDMenuSettings {
 	const char*			plugin_name;
+	const char*			menu_name;
+	const char*			filename;
 	int					size;			// preffered number of columns/rows
 	float				icon_size;
 	const char*			controller_id;	// NULL for "take 1st available"
@@ -34,12 +36,13 @@ typedef struct OSDMenuSettings {
 
 DLL_EXPORT GType osd_menu_get_type(void) G_GNUC_CONST;
 DLL_EXPORT OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings);
+G_END_DECLS
+
 /**
- * Connects to the daemon. 'ready' or 'exit' signal is emitted to signal
- * success or failure.
+ * Connects to the daemon.
+ * 'ready' or 'exit' signal is emitted to signal success or failure.
  */
 DLL_EXPORT void osd_menu_connect(OSDMenu* mnu);
-G_END_DECLS
 
 /** Selects either next or previous menu item */
 void osd_menu_next_item(OSDMenu* mnu, int direction);

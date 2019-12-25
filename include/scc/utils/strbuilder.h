@@ -60,6 +60,8 @@ bool strbuilder_insert_char(StrBuilder* b, size_t pos, char c);
 bool strbuilder_insertf(StrBuilder* b, size_t pos, const char* format, ...);
 /** Removes up to 'count' characters from right of the string */
 void strbuilder_rtrim(StrBuilder* b, size_t count);
+/** Removes up to 'count' characters from left of the string */
+void strbuilder_ltrim(StrBuilder* b, size_t count);
 
 /**
  * Returns true if any _add*, _insert*, _prepend* (etc) method failed at any

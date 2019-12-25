@@ -2,6 +2,7 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/iterable.h"
+#include "scc/utils/argparse.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/osd/osd_window.h"
@@ -101,7 +102,6 @@ static void on_mnu_child_exit(void* _child, int code, void* _mnu) {
 
 static void on_mnu_child_ready(void* _child, void* _mnu) {
 	gtk_widget_show_all(GTK_WIDGET(_child));
-	LOG(">>> %p", _mnu);
 	gtk_widget_set_name(GTK_WIDGET(_mnu), "osd-menu-inactive");
 }
 
@@ -124,9 +124,12 @@ static gboolean osd_menu_on_data_ready(GIOChannel* source, GIOCondition conditio
 
 
 static void osd_menu_connection_ready(SCCClient* c) {
-	OSDMenu* mnu = OSD_MENU(c->userdata);
+	osd_menu_lock_inputs(OSD_MENU(c->userdata));
+}
+
+void osd_menu_lock_inputs(OSDMenu* mnu) {
 	OSDMenuPrivate* priv = get_private(mnu);
-	uint32_t handle = sccc_get_controller_handle(c, priv->settings.controller_id);
+	uint32_t handle = sccc_get_controller_handle(priv->client, priv->settings.controller_id);
 	if (handle == 0) {
 		if (priv->settings.controller_id == NULL)
 			LERROR("There is no controller connected");
@@ -139,16 +142,17 @@ static void osd_menu_connection_ready(SCCClient* c) {
 	const char* control_with = scc_what_to_string(priv->settings.control_with);
 	const char* confirm_with = scc_button_to_string(priv->settings.confirm_with);
 	const char* cancel_with = scc_button_to_string(priv->settings.cancel_with);
-	if (!sccc_lock(c, handle, control_with, confirm_with, cancel_with)) {
+	if (!sccc_lock(priv->client, handle, control_with, confirm_with, cancel_with)) {
 		LERROR("Failed to lock controller");
 		osd_window_exit(OSD_WINDOW(mnu), 3);
+		return;
 	}
 	
 	g_signal_emit_by_name(G_OBJECT(mnu), "ready");
 }
 
 
-static void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
+void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 					SCButton button, PadStickTrigger pst, int values[]) {
 	OSDMenuPrivate* priv = get_private(mnu);
 	if (priv->child != NULL)
@@ -318,17 +322,28 @@ static bool osd_menu_sa_handler(Mapper* m, unsigned int sa_action_type, void* sa
 }
 
 
-/** Configures menu to use already connected client */
-void osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) {
-	OSDMenuPrivate* priv = get_private(mnu);
-	priv->client = client;
-	ASSERT(slave_mapper);
-	priv->slave_mapper = slave_mapper;
-	g_signal_emit_by_name(G_OBJECT(mnu), "ready");
+inline static Mapper* create_slave_mapper(SCCClient* client, OSDMenu* mnu) {
+	Mapper* mapper = sccc_slave_mapper_new(client);
+	if (mapper == NULL)
+		return NULL;
+	sccc_slave_mapper_set_userdata(mapper, mnu);
+	sccc_slave_mapper_set_sa_handler(mapper, osd_menu_sa_handler);
+	return mapper;
 }
 
+bool osd_menu_set_client(OSDMenu* mnu, SCCClient* client, Mapper* slave_mapper) {
+	OSDMenuPrivate* priv = get_private(mnu);
+	priv->client = client;
+	if (slave_mapper == NULL) {
+		priv->slave_mapper = create_slave_mapper(client, mnu);
+		if (priv->slave_mapper == NULL)
+			return false;
+	} else {
+		priv->slave_mapper = slave_mapper;
+	}
+	return true;
+}
 
-/** Establishes connection to daemon. Emits 'ready' or 'exit' signal when done */
 void osd_menu_connect(OSDMenu* mnu) {
 	OSDMenuPrivate* priv = get_private(mnu);
 	SCCClient* client = sccc_connect();
@@ -338,15 +353,13 @@ void osd_menu_connect(OSDMenu* mnu) {
 		return;
 	}
 	
-	priv->slave_mapper = sccc_slave_mapper_new(client);
+	priv->slave_mapper = create_slave_mapper(client, mnu);
 	if (priv->slave_mapper == NULL) {
 		// OOM
 		RC_REL(client);
 		osd_window_exit(OSD_WINDOW(mnu), 4);
 		return;
 	}
-	sccc_slave_mapper_set_userdata(priv->slave_mapper, mnu);
-	sccc_slave_mapper_set_sa_handler(priv->slave_mapper, osd_menu_sa_handler);
 	
 	priv->client = client;
 	priv->client->userdata = mnu;
@@ -391,6 +404,7 @@ void osd_menu_confirm(OSDMenu* mnu) {
 				pos.y += (pos.y < 0) ? -SUBMENU_OFFSET : SUBMENU_OFFSET;
 				osd_window_set_position(OSD_WINDOW(child), pos.x, pos.y);
 				osd_menu_set_client(child, priv->client, priv->slave_mapper);
+				g_signal_emit_by_name(G_OBJECT(child), "ready");
 			}
 		}
 		break;
@@ -463,6 +477,86 @@ static void osd_menu_finalize(GObject* _mnu) {
 }
 
 
+bool osd_menu_parse_args(int argc, char** argv, const char** usage, OSDMenuSettings* settings) {
+	settings->plugin_name = NULL;
+	settings->filename = NULL;
+	settings->menu_name = NULL;
+	settings->size = 1;
+	settings->icon_size = 1.0;
+	settings->controller_id = NULL;
+	settings->control_with = PST_STICK;
+	settings->confirm_with = B_A;
+	settings->cancel_with = B_B;
+	settings->use_cursor = false;
+	
+	char* control_with = NULL;
+	char* confirm_with = NULL;
+	char* cancel_with = NULL;
+	struct argparse_option options[] = {
+		OPT_HELP(),
+		OPT_GROUP("Basic options"),
+		OPT_STRING('f', "from-file", &settings->filename, "load menu from json file (full or relative path)"),
+		OPT_STRING('m', "from-menu", &settings->menu_name, "load menu from json file (name that will be searched in menu directories)"),
+		OPT_STRING('t', "type", &settings->plugin_name, "menu type (plugin) to use. Available types: 'vmenu' (default), 'hmenu'"),
+		OPT_STRING('c', "control-with", &control_with, "sets which pad or stick should be used to navigate menu. Defaults to STICK"),
+		OPT_STRING(0, "confirm-with", &confirm_with, "button used to confirm choice. Defaults to A"),
+		OPT_STRING(0, "cancel-with", &cancel_with, "button used to cancel menu. Defaults to B"),
+		OPT_BOOLEAN('u', "use-cursor", &settings->use_cursor, "display and use cursor to navigate menu"),
+		OPT_INTEGER(0, "size", &settings->size, "Menu size (icon size). Defaults to 1"),
+		OPT_FLOAT(0, "icon-size", &settings->icon_size, "Icon size. Defaults to 1"),
+		OPT_END(),
+	};
+	struct argparse argparse;
+	argparse_init(&argparse, options, usage, 0);
+	argparse_describe(&argparse, "\nDisplays on-screen menu", NULL);
+	argc = argparse_parse(&argparse, argc, (const char**)argv);
+	if (argc < 0)
+		return (argc == -5);
+	
+	if ((settings->filename == NULL) && (settings->menu_name == NULL)) {
+		argparse_usage(&argparse);
+		return false;
+	}
+	if (settings->plugin_name == NULL)
+		settings->plugin_name = "vmenu";
+	if (control_with != NULL) {
+		settings->control_with = scc_string_to_pst(control_with);
+		if (strcmp(control_with, "DEFAULT") == 0) {
+			settings->control_with = PST_STICK;
+		} else if ((settings->control_with == 0)
+					|| (settings->control_with == PST_LTRIGGER)
+					|| (settings->control_with == PST_RTRIGGER)) {
+			LERROR("Invalid value for '--control-with' option: '%s'", control_with);
+			return false;
+		}
+	}
+	// TODO: Actual support for DEFAULT here
+	if (confirm_with != NULL) {
+		settings->confirm_with = scc_string_to_button(confirm_with);
+		if (strcmp(confirm_with, "DEFAULT") == 0) {
+			settings->confirm_with = B_A;
+		} if (strcmp(confirm_with, "SAME") == 0) {
+			if (settings->control_with == PST_LPAD)
+				settings->confirm_with = B_LPADTOUCH;
+			else if (settings->control_with == PST_RPAD)
+				settings->confirm_with = B_RPADTOUCH;
+		} else if (settings->confirm_with == 0) {
+			LERROR("Invalid value for '--confirm-with' option: '%s'", confirm_with);
+			return false;
+		}
+	}
+	if (cancel_with != NULL) {
+		settings->cancel_with = scc_string_to_button(cancel_with);
+		if (strcmp(confirm_with, "DEFAULT") == 0) {
+			settings->confirm_with = B_B;
+		} else if (settings->cancel_with == 0) {
+			LERROR("Invalid value for '--cancel-with' option: '%s'", control_with);
+			return false;
+		}
+	}
+	return true;
+}
+
 OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 	extlib_t plugin = osd_menu_load_plugin(settings->plugin_name);
 	if (plugin == NULL) return NULL;
@@ -475,7 +569,23 @@ OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 		LERROR("Failed load configuration");
 		return NULL;
 	}
-	MenuData* data = scc_menudata_from_json(filename, &err);
+	MenuData* data;
+	if (filename != NULL) {
+		data = scc_menudata_from_json(filename, &err);
+	} else if (settings->menu_name != NULL) {
+		char* filename = scc_find_menu(settings->menu_name);
+		if (filename == NULL) {
+			LERROR("Menu '%s' not found", settings->menu_name);
+			RC_REL(cfg);
+			return NULL;
+		}
+		data = scc_menudata_from_json(filename, &err);
+		free(filename);
+	} else {
+		LERROR("No source for menu specified");
+		RC_REL(cfg);
+		return NULL;
+	}
 	if (data == NULL) {
 		LERROR("Failed to decode menu");
 		RC_REL(cfg);
@@ -541,3 +651,4 @@ OSDMenu* osd_menu_new(const char* filename, const OSDMenuSettings* settings) {
 	
 	return mnu;
 }
+

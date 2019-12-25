@@ -163,7 +163,6 @@ bindings_lib = shared_library('scc-bindings',
 )
 
 
-subdir('tests')
 subdir('src/virtual-device')
 subdir('src/client')
 subdir('src/daemon/drivers')
@@ -175,4 +174,5 @@ if get_option('menu-generators').enabled()
 	subdir('src/menu-generators')
 endif
 subdir('src/gui')
+subdir('tests')
 
