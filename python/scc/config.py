@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 from scc.find_library import find_library
 from scc.actions import lib_bindings
 from weakref import WeakValueDictionary
-import logging, ctypes
+import logging, platform, ctypes
 
 log = logging.getLogger("Config")
 lib_config = find_library("libscc-config")
@@ -48,6 +48,8 @@ class Config(object):
 	
 	def set_prefix(self, prefix):
 		assert self._cfg
+		if platform.system() == "Windows":
+			raise OSError("Not available")
 		if not lib_config.config_set_prefix(self._cfg, prefix):
 			raise MemoryError("Out of memory")
 	

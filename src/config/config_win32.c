@@ -50,7 +50,7 @@ static void config_dealloc(void* _c) {
  * 'buffer' will be overwriten with random data and its size has to be at least JSONPATH_MAX_LEN.
  * if 'root' is NULL, HKEY_CURRENT_USER is assumed.
  */
-static inline HKEY config_get_parent(HKEY root, char* buffer, const char* path, bool create) {
+static HKEY config_get_parent(HKEY root, char* buffer, const char* path, bool create) {
 	LSTATUS r;
 	HKEY obj = root;
 	bool close_obj = false;
@@ -81,12 +81,22 @@ static inline HKEY config_get_parent(HKEY root, char* buffer, const char* path, 
 			sam |= KEY_WRITE;
 		
 		HKEY subkey;
-		if (create)
+		if (create) {
 			r = RegCreateKeyExA(obj, buffer, 0, NULL, 0, sam, NULL, &subkey, NULL);
-		else
+			if (r != ERROR_SUCCESS) {
+				char* errstr;
+				FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+								NULL, r, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+								(void*)&errstr, 0, NULL);
+				WARN("Failed to create registry key: %i: %s", r, errstr);
+				LocalFree(errstr);
+				return NULL;
+			}
+		} else {
 			r = RegOpenKeyExA(obj, buffer, 0, sam, &subkey);
-		if (r != ERROR_SUCCESS)
-			return NULL;
+			if (r != ERROR_SUCCESS)
+				return NULL;
+		}
 		
 		if (close_obj)
 			RegCloseKey(obj);
@@ -371,17 +381,20 @@ ConfigValueType config_get_type(Config* _c, const char* path) {
 }
 
 static inline config_value_t* config_get_or_create(struct _Config* c, const char* path, ConfigValueType type) {
-	config_get_parent(c->root, c->buffer, path, true);
+	if (config_get_parent(c->root, c->buffer, path, true) == NULL)
+		return NULL;		// OOM
 	config_value_t* value = config_get_value(c, path, type);
 	if (value == NULL) {
+		const struct config_item* def = config_get_default(c, path);
 		value = malloc(sizeof(config_value_t));
 		if (value == NULL) return NULL;			// OOM
 		if (hashmap_put(c->values, path, (void*)value) != MAP_OK) {
-				// another OOM
+			// another OOM
 			free(value);
 			return NULL;
 		}
-		value->type = type;
+		
+		value->type = (def == NULL) ? type : def->type;
 		value->v_str = NULL;
 	}
 	return value;
@@ -496,6 +509,10 @@ ConfigValueType config_get_type(Config* _c, const char* path) {
 	const struct config_item* def = config_get_default(c, path);
 	if (def != NULL) return def->type;
 	
+	config_value_t* value;
+	if (hashmap_get(c->values, path, (void*)&value) == MAP_OK)
+		return value->type;
+	
 	HKEY parent = config_get_parent(c->root, c->buffer, path, false);
 	if (parent == NULL)
 		return CVT_INVALID;
@@ -516,16 +533,17 @@ ConfigValueType config_get_type(Config* _c, const char* path) {
 	ConfigValueType type = CVT_INVALID;
 	if (r == ERROR_SUCCESS) {
 		switch (reg_type) {
-		case RRF_RT_REG_SZ:
+		case REG_SZ:
 			type = CVT_STRING;
 			break;
-		case RRF_RT_REG_QWORD:
+		case REG_QWORD:
 			type = CVT_INT;
 			break;
 		}
 	}
+	if (parent != c->root)
+		RegCloseKey(parent);
 	
-	RegCloseKey(parent);
 	return type;
 }
 
@@ -669,10 +687,12 @@ ssize_t config_get_strings(Config* _c, const char* path, const char** target, ss
 		const struct config_item* def = config_get_default(c, path);
 		if ((def == NULL) || (def->type != CVT_STR_ARRAY))
 			return 0;
-		for (size_t i=0; (i<SSIZE_MAX) && (def->v_strar[i]!=NULL); i++) {
-			if (j >= limit) return -2;
-			target[i] = def->v_strar[i];
-			j++;
+		if (def->v_strar != NULL) {
+			for (size_t i=0; (i<SSIZE_MAX) && (def->v_strar[i]!=NULL); i++) {
+				if (j >= limit) return -2;
+				target[i] = def->v_strar[i];
+				j++;
+			}
 		}
 	} else {
 		for (size_t i=0; (i<SSIZE_MAX) && (value->v_strar[i]!=NULL); i++) {
@@ -727,6 +747,8 @@ int config_set_double(Config* _c, const char* path, double value) {
 	config_value_t* v = config_get_or_create(c, path, CVT_DOUBLE);
 	if (v == NULL)
 		return 0;							// OOM
+	if ((v->type == CVT_INT) || (v->type == CVT_BOOL))
+		return config_set_int(_c, path, (int64_t)value);
 	if (v->type != CVT_DOUBLE)
 		return -2;
 	

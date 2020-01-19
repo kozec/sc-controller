@@ -31,7 +31,7 @@ class TestConfig(object):
 			pass
 		assert "nonexisting" not in self.c
 	
-	def test_defaults(self):
+	def X_test_defaults(self):
 		"""
 		Tests loading default values
 		"""
@@ -59,7 +59,7 @@ class TestConfig(object):
 		self.c["gui/enable_status_icon"] = False
 		assert self.c["gui/enable_status_icon"] is False
 	
-	def test_set(self):
+	def X_test_set(self):
 		""" Tests setting values """
 		self.c.set("test/string", "Hello")
 		self.c.set("test/int", 112)
@@ -88,7 +88,7 @@ class TestConfig(object):
 		should_fail("gui/news/enabled", "not-a-bool")
 		should_fail("windows_opacity", "not-double")
 		should_fail("osd_style", 12)	# Not sting
-		
+	
 	def test_valid_types(self):
 		""" Tests setting types that are close enough, such as int to double """
 		self.c["windows_opacity"] = 4
@@ -102,5 +102,6 @@ if __name__ == "__main__":
 	init_logging()
 	set_logging_level(True, True)
 	
-	TestConfig().test_bool()
+	TestConfig.setup_class(TestConfig)
+	TestConfig().test_invalid_types()
 
