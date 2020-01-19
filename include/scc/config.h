@@ -82,6 +82,35 @@ DLL_EXPORT bool config_save(Config* cfg);
  */
 DLL_EXPORT bool config_fill_defaults(Config* cfg);
 
+#ifdef _WIN32
+/**
+ * Loads configuration from subkey in H_KEY_CURRENT_USER registry.
+ * If specified subkey is not found or cannot be loaded, returns NULL and
+ * updates 'error_return' string with desciption up to 1024 characters.
+ *
+ * On memory error, returns NULL and sets error_return to empty string.
+ * 'error_return' may be NULL, in which case it's not updated. If it's not NULL,
+ * it has to have space for at least 1024 characters.
+ *
+ * On success, returns Config object with single reference.
+ * Available only on Windows.
+ * Used by tests.
+ */
+DLL_EXPORT Config* config_load_from_key(const char* path, char* error_return);
+/**
+ * Utility function to recursivelly create entire hierarchy of registry keys.
+ * For path == "Software\a\b\c", creates:
+ *  - HKCU\Software\a
+ *  - HKCU\Software\a\b
+ *  - HKCU\Software\a\b\c
+ * .. and returns handle to "HKCU\Software\a\b\c"
+ *
+ * May return NULL if memory can't be allocated.
+ * Available only on Windows.
+ * Used by tests.
+ */
+DLL_EXPORT HKEY config_make_subkey(HKEY root, const char* path);
+#else
 /**
  * On everything that's not Windows, loads configuration from specified file.
  *
@@ -99,22 +128,6 @@ DLL_EXPORT bool config_fill_defaults(Config* cfg);
  *
  * On success, returns Config object with single reference.
  */
-#ifdef _WIN32
-DLL_EXPORT Config* config_load_from(const char* path, char* error_return);
-/**
- * Utility function to recursivelly create entire hierarchy of registry keys.
- * For path == "Software\a\b\c", creates:
- *  - HKCU\Software\a
- *  - HKCU\Software\a\b
- *  - HKCU\Software\a\b\c
- * .. and returns handle to "HKCU\Software\a\b\c"
- *
- * Used by tests.
- * May return NULL if memory can't be allocated.
- */
-DLL_EXPORT HKEY config_make_subkey(HKEY root, const char* path);
-#else
-/** Allows loading config file from non-standard location. Used by testrs */
 DLL_EXPORT Config* config_load_from(const char* filename, char* error_return);
 /**
  * Sets prefix used to load data such as controller config. Used by tests.

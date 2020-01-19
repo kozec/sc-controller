@@ -13,6 +13,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #define TEST_CFG_PATH "Software\\SCController-test-%i"
+#define config_load_from config_load_from_key
 #define unlink(x)
 #else
 #define TEST_CFG_PATH "/tmp/test_config_%i.json"
@@ -295,9 +296,9 @@ void test_controller_config(CuTest* tc) {
 
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
-	//DEFAULT_SUITE_ADD(test_defaults);
-	//DEFAULT_SUITE_ADD(test_values);
-	//DEFAULT_SUITE_ADD(test_set);
+	DEFAULT_SUITE_ADD(test_defaults);
+	DEFAULT_SUITE_ADD(test_values);
+	DEFAULT_SUITE_ADD(test_set);
 	DEFAULT_SUITE_ADD(test_controller_config);
 	
 	return CuSuiteRunDefault();

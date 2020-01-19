@@ -144,21 +144,20 @@ class Config(object):
 			return
 		self.__del__()
 		if self.filename:
-			f, err, cfg = None, None, None
-			try:
-				f = open(self.filename, "r")
-			except IOError, e:
-				err = str(e)
-			if f:
-				err = ctypes.create_string_buffer(SCC_CONFIG_ERROR_LIMIT)
-				cfg = lib_config.config_load_from(f.fileno, ctypes.by_ref(err))
-				f.close()
+			err, cfg = None, None
+			err = ctypes.create_string_buffer(SCC_CONFIG_ERROR_LIMIT)
+			if platform.system() == "Windows":
+				cfg = lib_config.config_load_from_key(self.filename, err)
+			else:
+				cfg = lib_config.config_load_from(self.filename, err)
 			if cfg:
 				self.__del__()
 				self._cfg = cfg
 				return
+			if platform.system() == "Windows":
+				raise OSError("Failed to open registry key '%s': %s" % (self.filename, err.value))
 			log.warning("Failed to load configuration; Creating new one.")
-			log.warning("Reason: %s", err)
+			log.warning("Reason: %s", err.value)
 		
 		self.__del__()
 		self._cfg = lib_config.config_init()
@@ -284,11 +283,15 @@ lib_config.config_init.restype = ctypes.c_void_p
 lib_config.config_load.argtypes = []
 lib_config.config_load.restype = ctypes.c_void_p
 
-lib_config.config_load_from.argtypes = [ ctypes.c_int, ctypes.c_char_p, ctypes.c_size_t ]
-lib_config.config_load_from.restype = ctypes.c_void_p
-
-lib_config.config_set_prefix.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
-lib_config.config_set_prefix.restype = ctypes.c_bool
+if platform.system() == "Windows":
+	lib_config.config_load_from_key.argtypes = [ ctypes.c_char_p, ctypes.c_char_p ]
+	lib_config.config_load_from_key.restype = ctypes.c_void_p
+else:
+	lib_config.config_load_from.argtypes = [ ctypes.c_char_p, ctypes.c_char_p ]
+	lib_config.config_load_from.restype = ctypes.c_void_p
+	
+	lib_config.config_set_prefix.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
+	lib_config.config_set_prefix.restype = ctypes.c_bool
 
 lib_config.config_set_strings.argtypes = [ ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_size_t ]
 lib_config.config_set_strings.restype = ctypes.c_int

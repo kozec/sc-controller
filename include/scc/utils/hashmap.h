@@ -61,7 +61,7 @@ int hashmap_put(map_t in, const char* key, any_t value);
  * Normally, hashmap_put creates copy of every key and keeps it in memory until map is deallocated.
  * This disable that behaviour, making hashmap situable for keys that are guaranteed to stay
  * allocated by caller.
- * 
+ *
  * This has to be called before 1st key is added.
  */
 void hashmap_dont_copy_keys(map_t in);
@@ -70,6 +70,12 @@ void hashmap_dont_copy_keys(map_t in);
  * Get an element from the hashmap. Return MAP_OK or MAP_MISSING.
  */
 int hashmap_get(map_t in, const char* key, any_t *arg);
+
+/*
+ * Get a key from the hashmap. Returns key of same value allocated by hashmap
+ * or NULL if key is not found.
+ */
+const char* hashmap_get_key(map_t in, const char* key);
 
 /*
  * Remove an element from the hashmap. Return MAP_OK or MAP_MISSING.
@@ -99,3 +105,4 @@ typedef struct _HashMapIterator {
 	map_t				map;
 	int64_t				next;
 } *HashMapIterator;
+

@@ -27,11 +27,20 @@ static void config_dealloc(void* _c) {
 	
 	if (c->root != NULL)
 		RegCloseKey(c->root);
-	while (c->giant_memoryleak != NULL) {
-		struct InternalString* next = c->giant_memoryleak->next;
-		free(c->giant_memoryleak);
-		c->giant_memoryleak = next;
+	// Free interned string
+	hashmap_free(c->giant_memoryleak);
+	// Free values
+	HashMapIterator it = iter_get(c->values);
+	FOREACH(const char*, path, it) {
+		config_value_t* value;
+		if (hashmap_get(c->values, path, (void*)&value) != MAP_OK) continue;
+		if (value->type == CVT_STR_ARRAY)
+			free(value->v_strar);
+		free(value);
 	}
+	iter_free(it);
+	hashmap_free(c->values);
+	// Free config object
 	free(c);
 }
 
@@ -113,14 +122,16 @@ static inline struct _Config* config_new() {
 	c->defaults = DEFAULTS;
 	c->root = NULL;
 	
-	c->giant_memoryleak = NULL;
+	c->giant_memoryleak = hashmap_new();
 	// About giant_memoryleak... Config guarantees that all strings returned by
 	// it are stored in memory at least until Config object is deallocated.
 	// To be able to deallocate them eventyally, all strings are stored
 	// as linked-list in 'giant_memoryleak'.
 	
 	c->values = hashmap_new();
-	if (c->values == NULL) {
+	if ((c->values == NULL) || (c->giant_memoryleak == NULL)) {
+		hashmap_free(c->values);
+		hashmap_free(c->giant_memoryleak);
 		free(c);
 		return NULL;
 	}
@@ -145,7 +156,7 @@ Config* config_load() {
 }
 
 
-Config* config_load_from(const char* path, char* error_return) {
+Config* config_load_from_key(const char* path, char* error_return) {
 	if (error_return != NULL) *error_return = 0;
 	
 	struct _Config* c = config_new();
@@ -157,10 +168,10 @@ Config* config_load_from(const char* path, char* error_return) {
 	}
 	
 	snprintf(c->buffer, JSONPATH_MAX_LEN, "%s/d", path);
-	c->root = config_get_parent(NULL, c->buffer, c->buffer, false);
+	c->root = config_get_parent(NULL, c->buffer, c->buffer, true);
 	if (c->root == NULL) {
 		if (error_return != NULL)
-			strcpy(error_return, "Registry key not found");
+			strcpy(error_return, "Failed to create registry key");
 		config_dealloc(c);
 		return NULL;
 	}
@@ -168,25 +179,14 @@ Config* config_load_from(const char* path, char* error_return) {
 	return &c->config;
 }
 
-
-/** Returns NULL if memory cannot be allocated */
-static inline char* internal_string_alloc(struct _Config* c, size_t len) {
-	void* data = malloc(sizeof(struct InternalString) + len);
-	if (data == NULL) return NULL;
-	struct InternalString* s = (struct InternalString*)data;
-	s->next = c->giant_memoryleak;
-	c->giant_memoryleak = s;
-	return &s->value;
-}
-
 /** Returns NULL if memory cannot be allocated */
 static const char* internalize_string(struct _Config* c, const char* value) {
-	// TODO: Don't allocate same string twice
-	size_t len = strlen(value);
-	if (len < 1) return NULL;
-	char* is = internal_string_alloc(c, len);
-	strcpy(is, value);
-	return is;
+	const char* k = hashmap_get_key(c->giant_memoryleak, value);
+	if (k == NULL) {
+		hashmap_put(c->giant_memoryleak, value, (void*)1);
+		k = hashmap_get_key(c->giant_memoryleak, value);
+	}
+	return k;
 }
 
 DLL_EXPORT bool config_is_parent(Config* _c, const char* path) {
@@ -235,40 +235,56 @@ config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValu
 				// Value doesn't exists, has wrong type or just generally failed to be retrieved
 				goto config_get_value_fail;
 			} else {
-				char* is = internal_string_alloc(c, size);
-				if (is == NULL)
+				char* copy = malloc(size);
+				if (copy == NULL)
 					goto config_get_value_fail;
-				r = RegGetValueA(parent, NULL, last, RRF_RT_REG_SZ | RRF_RT_REG_MULTI_SZ, &reg_type, is, &size);
-				if (r != ERROR_SUCCESS)
-					// Something failed. 'is' is internal string and so it should not be deallocated
+				r = RegGetValueA(parent, NULL, last, RRF_RT_REG_SZ | RRF_RT_REG_MULTI_SZ, &reg_type, copy, &size);
+				if (r != ERROR_SUCCESS) {
+					free(copy);
 					goto config_get_value_fail;
+				}
 				if (type == CVT_STR_ARRAY) {
 					// Little bit of processing is needed to split CVT_STR_ARRAY into strings
 					// 1st, determine how many items were retrieved
 					size_t count = 0;
 					size_t len;
-					char* pos = is;
+					char* pos = copy;
 					while ((len = strlen(pos)) > 0) {
 						pos += len + 1;
 						count ++;
 					}
 					// 2nd, allocate space for all the pointers
 					value->v_strar = malloc(sizeof(char*) * (count + 1));
-					if (value->v_strar == NULL)
+					if (value->v_strar == NULL) {
+						free(copy);
 						goto config_get_value_fail;
-					// 3rd, store pointers
+					}
+					// 3rd, copy values & store pointers
 					size_t i = 0;
-					pos = is;
+					pos = copy;
 					while ((len = strlen(pos)) > 0) {
-						value->v_strar[i] = pos;
+						pos[len] = 0;
+						value->v_strar[i] = (char*)internalize_string(c, pos);
+						if (value->v_strar[i] == NULL) {
+							// OOM
+							free(copy);
+							free(value->v_strar);
+							value->v_strar = NULL;
+							goto config_get_value_fail;
+						}
 						pos += len + 1;
 						i ++;
 					}
 					value->v_strar[count] = NULL;	// terminator
 				} else {
 					// No processing needed for simple string
-					value->v_str = is;
+					value->v_str = internalize_string(c, copy);
+					if (value->v_str == NULL) {
+						free(copy);
+						goto config_get_value_fail;
+					}
 				}
+				free(copy);
 			}
 			break;
 		case CVT_DOUBLE:
@@ -358,8 +374,8 @@ static inline config_value_t* config_get_or_create(struct _Config* c, const char
 	config_get_parent(c->root, c->buffer, path, true);
 	config_value_t* value = config_get_value(c, path, type);
 	if (value == NULL) {
-		value = malloc(sizeof(struct _Config));
-			if (value == NULL) return NULL;			// OOM
+		value = malloc(sizeof(config_value_t));
+		if (value == NULL) return NULL;			// OOM
 		if (hashmap_put(c->values, path, (void*)value) != MAP_OK) {
 				// another OOM
 			free(value);
@@ -409,11 +425,13 @@ bool config_save(Config* _c) {
 			break;
 		case CVT_DOUBLE:
 			// Fun fact: You can't save float into registry
+			LOG("Saving double %s", path);
 			snprintf(buffer, BUFFER_SIZE, "%g", value->v_double);
 			r = RegSetKeyValueA(parent, NULL, last, REG_SZ, buffer, strlen(buffer) + 1);
 			break;
 		case CVT_INT:
 		case CVT_BOOL:
+			LOG("Saving int %s", path);
 			r = RegSetKeyValueA(parent, NULL, last, REG_QWORD, &value->v_int, sizeof(int64_t));
 			break;
 		case CVT_STR_ARRAY:
@@ -551,7 +569,7 @@ double config_get_double(Config* _c, const char* path) {
 	
 	const struct config_item* def = config_get_default(c, path);
 	if ((def != NULL) && (def->type == CVT_DOUBLE)) {
-		config_set_int(_c, path, def->v_double);
+		config_set_double(_c, path, def->v_double);
 		return def->v_double;
 	}
 	
@@ -695,6 +713,8 @@ int config_set_int(Config* _c, const char* path, int64_t value) {
 	config_value_t* v = config_get_or_create(c, path, CVT_INT);
 	if (v == NULL)
 		return 0;							// OOM
+	if (v->type == CVT_DOUBLE)
+		return config_set_double(_c, path, (double)value);
 	if ((v->type != CVT_INT) && (v->type != CVT_BOOL))
 		return -2;
 	
@@ -737,7 +757,6 @@ int config_set_strings(Config* _c, const char* path, const char** list, ssize_t 
 		return 0;
 	}
 	for (size_t i=0; i<count; i++) {
-		// TODO: This can be optimized so I don't have duplicate "internal" strings
 		const char* internalized = internalize_string(c, list[i]);
 		if (internalized == NULL) {
 			// OOM

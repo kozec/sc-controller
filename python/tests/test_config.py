@@ -1,10 +1,16 @@
 from scc.config import Config
-import os
+import os, platform
 
 
 class TestConfig(object):
-	filename = "/tmp/test_config_%i.json" % os.getpid()
-	c = Config(filename)
+	
+	@staticmethod
+	def setup_class(cls):
+		if platform.system() == "Windows":
+			filename = "Software\\SCController-test-%s" % os.getpid()
+		else:
+			filename = "/tmp/test_config_%i.json" % os.getpid()
+		cls.c = Config(filename)
 	
 	def test_invalid(self):
 		""" Tests loading non-existing keys """
@@ -86,6 +92,7 @@ class TestConfig(object):
 	def test_valid_types(self):
 		""" Tests setting types that are close enough, such as int to double """
 		self.c["windows_opacity"] = 4
+		self.c.save()
 		assert self.c["windows_opacity"] == 4.0
 		self.c["recent_max"] = 3.2
 		assert self.c["recent_max"] == 3

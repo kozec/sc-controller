@@ -340,7 +340,7 @@ double config_get_double(Config* _c, const char* path) {
 	
 	const struct config_item* def = config_get_default(c, path);
 	if ((def != NULL) && (def->type == CVT_DOUBLE)) {
-		config_set_int(_c, path, def->v_double);
+		config_set_double(_c, path, def->v_double);
 		return def->v_double;
 	}
 	

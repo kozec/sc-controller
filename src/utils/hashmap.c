@@ -340,6 +340,37 @@ int hashmap_get(map_t in, const char* key, any_t *arg) {
 }
 
 /*
+ * Get internal key from hashmap
+ */
+const char* hashmap_get_key(map_t in, const char* key) {
+	uint32_t curr;
+	uint32_t i;
+	hashmap_map* m;
+	
+	/* Cast the hashmap */
+	m = (hashmap_map *) in;
+	
+	/* Find data location */
+	curr = hashmap_hash_int(m, key);
+	
+	/* Linear probing, if necessary */
+	for(i = 0; i<MAX_CHAIN_LENGTH; i++){
+		
+		uint8_t in_use = m->data[curr].in_use;
+		if (in_use) {
+			if (strcmp(m->data[curr].key,key)==0){
+				return m->data[curr].key;
+			}
+		}
+		
+		curr = (curr + 1) % m->table_size;
+	}
+	
+	/* Not found */
+	return NULL;
+}
+
+/*
  * Iterate the function parameter over each element in the hashmap.  The
  * additional any_t argument is passed to the function as its first
  * argument and the hashmap element is the second.
@@ -407,6 +438,7 @@ int hashmap_remove(map_t in, const char* key) {
 
 /* Deallocate the hashmap */
 void hashmap_free(map_t in) {
+	if (in == NULL) return;
 	hashmap_map* m = (hashmap_map*) in;
 	if ((m->copy_keys) && (hashmap_length((map_t)m) > 0)) {
 		uint32_t i;

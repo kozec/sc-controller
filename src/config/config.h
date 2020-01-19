@@ -14,10 +14,6 @@
 #ifdef _WIN32
 	#include <windows.h>
 	#include "scc/utils/hashmap.h"
-	struct InternalString {
-		struct InternalString*	next;
-		char					value;
-	};
 	
 	typedef struct {
 		ConfigValueType			type;
@@ -54,7 +50,7 @@ struct _Config {
 #ifdef _WIN32
 	HKEY						root;
 	map_t						values;
-	struct InternalString*		giant_memoryleak;
+	map_t						giant_memoryleak;
 #else
 	char*						filename;
 	/** 'prefix' is set only by test */
