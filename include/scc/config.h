@@ -156,8 +156,11 @@ DLL_EXPORT Config* config_get_controller_config(Config* c, const char* id, char*
 
 /**
  * As 'config_get_controller_config', but creates new configuration if one doesn't
- * exists. NULL may be still returned if allocation fails or file cannot be created;
- * same 'error_return' rules apply.
+ * exists. Backing file or registry key may, or may not be created
+ * until config_save is called on returned object.
+ *
+ * Returns NULL may be still returned if allocation fails in which case 'error_return'
+ * is updated, if set, with string desciption of error of size up to 1024 characters.
  */
 DLL_EXPORT Config* config_create_controller_config(Config* c, const char* id, char* error_return);
 

@@ -423,25 +423,30 @@ ssize_t config_get_controllers(Config* _c, const char** target, size_t limit) {
 	return j;
 }
 
+inline static char* config_make_controller_filename(struct _Config* c, const char* id) {
+	return strbuilder_fmt("%s/devices/%s.json",
+				(c->prefix != NULL) ? c->prefix : scc_get_config_path(), id);
+}
+
 Config* config_get_controller_config(Config* _c, const char* id, char* error_return) {
 	struct _Config* c = container_of(_c, struct _Config, config);
-	char* filename = strbuilder_fmt("%s/devices/%s.json",
-				(c->prefix != NULL) ? c->prefix : scc_get_config_path(), id);
+	char* filename = config_make_controller_filename(c, id);
 	if (filename == NULL)
 		goto config_get_controller_config_oom;
 	Config* _rv = config_load_from(filename, error_return);
-	free(filename);
-	if (_rv != NULL) {
-		struct _Config* rv = container_of(_rv, struct _Config, config);
-		rv->defaults = CONTROLLER_DEFAULTS;
-		if (c->prefix != NULL) {
-			if (!config_set_prefix(_rv, c->prefix)) {
-				RC_REL(_rv);
-				goto config_get_controller_config_oom;
-			}
+	if (_rv == NULL)
+		goto config_get_controller_config_oom;
+	
+	struct _Config* rv = container_of(_rv, struct _Config, config);
+	rv->defaults = CONTROLLER_DEFAULTS;
+	rv->filename = filename;
+	filename = NULL;
+	if (c->prefix != NULL) {
+		if (!config_set_prefix(_rv, c->prefix)) {
+			RC_REL(_rv);
+			goto config_get_controller_config_oom;
 		}
 	}
-	
 	return _rv;
 	
 config_get_controller_config_oom:
@@ -454,8 +459,7 @@ Config* config_create_controller_config(Config* _c, const char* id, char* error_
 	Config* rv = config_get_controller_config(_c, id, error_return);
 	if (rv == NULL) {
 		struct _Config* c = container_of(_c, struct _Config, config);
-		char* filename = strbuilder_fmt("%s/devices/%s.json",
-				(c->prefix != NULL) ? c->prefix : scc_get_config_path(), id);
+		char* filename = config_make_controller_filename(c, id);
 		if (filename == NULL) {
 			if (error_return != NULL)
 				strncpy(error_return, "Out of memory", SCC_CONFIG_ERROR_LIMIT);
@@ -475,7 +479,7 @@ Config* config_create_controller_config(Config* _c, const char* id, char* error_
 		close(fd);
 		return config_get_controller_config(_c, id, error_return);
 	}
-	return NULL;
+	return rv;
 }
 
 /** Common part of all config_set-s */

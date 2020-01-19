@@ -13,6 +13,7 @@ import logging, ctypes
 
 log = logging.getLogger("Config")
 lib_config = find_library("libscc-config")
+SCC_CONFIG_ERROR_LIMIT = 1024
 
 
 class Config(object):
@@ -51,7 +52,7 @@ class Config(object):
 	
 	def __del__(self):
 		if self._cfg:
-			# lib_bindings.scc_config_unref(self._cfg)
+			lib_bindings.scc_config_unref(self._cfg)
 			self._cfg = None
 	
 	def save(self):
@@ -161,9 +162,8 @@ class Config(object):
 			except IOError, e:
 				err = str(e)
 			if f:
-				err = ctypes.create_string_buffer(255)
-				cfg = lib_config.config_load_from(f.fileno,
-						ctypes.by_ref(err), 255)
+				err = ctypes.create_string_buffer(SCC_CONFIG_ERROR_LIMIT)
+				cfg = lib_config.config_load_from(f.fileno, ctypes.by_ref(err))
 				f.close()
 			if cfg:
 				self.__del__()
@@ -254,18 +254,23 @@ class Config(object):
 		cvt = lib_config.config_get_type(self._cfg, key)
 		return cvt != Config.CVT_INVALID
 	
-	def get_controller_config(self, controller_id):
-		err = ctypes.create_string_buffer(255)
+	def get_controller_config(self, controller_id, return_none=False):
+		"""
+		Returns Config object bound to configuration of controller with specified id.
+		Throws OSError if config cannot be loaded, unless return_none is set.
+		"""
+		err = ctypes.create_string_buffer(SCC_CONFIG_ERROR_LIMIT)
 		ptr = lib_config.config_get_controller_config(self._cfg,
-					controller_id.encode("utf-8"), err, 255)
+					controller_id.encode("utf-8"), ctypes.byref(err))
 		if not ptr:
+			if return_none: return none
 			raise OSError(err.value)
 		return Config(c_ptr=ptr)
 	
 	def create_controller_config(self, controller_id):
-		err = ctypes.create_string_buffer(255)
+		err = ctypes.create_string_buffer(SCC_CONFIG_ERROR_LIMIT)
 		ptr = lib_config.config_create_controller_config(self._cfg,
-					controller_id.encode("utf-8"), err, 255)
+					controller_id.encode("utf-8"), ctypes.byref(err))
 		if not ptr:
 			raise OSError(err.value)
 		return Config(c_ptr=ptr)
@@ -335,4 +340,7 @@ lib_config.config_set_int.restype = ctypes.c_int
 
 lib_config.config_set_double.argtypes = [ ctypes.c_void_p, ctypes.c_char_p, ctypes.c_double ]
 lib_config.config_set_double.restype = ctypes.c_int
+
+lib_bindings.scc_config_unref.argtypes = [ ctypes.c_void_p ]
+lib_bindings.scc_config_unref.restype = None
 
