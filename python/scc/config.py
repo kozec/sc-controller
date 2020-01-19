@@ -58,9 +58,11 @@ class Config(object):
 		def __init__(self, parent, key):
 			self._parent = parent
 			self._key = key
-			# TODO: Retry if exactly 1024 strings are returned - there may be more
 			data = (ctypes.c_char_p * 1024)()
 			count = lib_config.config_get_strings(parent._cfg, key, data, 1024)
+			if count < 0:
+				# TODO: Retry with larger array if -2 is returned
+				raise MemoryError("Out of memory")
 			self._data = [ data[i].decode("utf-8") for i in xrange(count) ]
 		
 		def __len__(self):
@@ -229,6 +231,9 @@ class Config(object):
 		# TODO: Retry if exactly 1024 strings are returned - there may be more
 		data = (ctypes.c_char_p * 1024)()
 		count = lib_config.config_get_strings(self._cfg, path, data, 1024)
+		if count < 0:
+			# TODO: Retry with larger array if -2 is returned
+			raise MemoryError("Out of memory")
 		rv = [ data[i].decode("utf-8") for i in xrange(count) ]
 		return rv
 	
@@ -306,11 +311,11 @@ lib_config.config_get_double.restype = ctypes.c_double
 lib_config.config_get.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
 lib_config.config_get.restype = ctypes.c_char_p
 
-lib_config.config_get_controllers.argtypes = [ ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_size_t ]
+lib_config.config_get_controllers.argtypes = [ ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_ssize_t ]
 lib_config.config_set.restype = ctypes.c_ssize_t
 
-lib_config.config_get_strings.argtypes = [ ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_size_t ]
-lib_config.config_get_strings.restype = ctypes.c_size_t
+lib_config.config_get_strings.argtypes = [ ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_ssize_t ]
+lib_config.config_get_strings.restype = ctypes.c_ssize_t
 
 lib_config.config_get_controller_config.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
 lib_config.config_get_controller_config.restype = ctypes.c_void_p

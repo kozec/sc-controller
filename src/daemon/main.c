@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #ifndef _WIN32
+#include <sys/types.h>
 #include <signal.h>
 #else
 #include "scc/client.h"

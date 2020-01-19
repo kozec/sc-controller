@@ -99,7 +99,7 @@ DLL_EXPORT bool config_fill_defaults(Config* cfg);
 #ifdef _WIN32
 DLL_EXPORT Config* config_load_from(const char* path, char* error_return);
 #else
-/** Allows loading config file from non-standard locatin. Used by testrs */
+/** Allows loading config file from non-standard location. Used by testrs */
 DLL_EXPORT Config* config_load_from(const char* filename, char* error_return);
 /**
  * Sets prefix used to load data such as controller config. Used by tests.
@@ -133,8 +133,10 @@ DLL_EXPORT bool config_is_driver_enabled(Config* c, const char* path);
  * Fills 'target' up to 'limit'. Returns number of stored strings.
  * Strings set to 'target' are part Config object memory and shall _not_ be
  * deallocated by caller.
+ *
+ * Returns -2 if there are more than 'limit' values. Values in 'target' are valid up to 'limit'
  */
-DLL_EXPORT size_t config_get_strings(Config* c, const char* path, const char** target, size_t limit);
+DLL_EXPORT ssize_t config_get_strings(Config* c, const char* path, const char** target, ssize_t limit);
 
 /**
  * Retrieves list of available controller configurations (by enumerating directory or registry key)
@@ -142,9 +144,10 @@ DLL_EXPORT size_t config_get_strings(Config* c, const char* path, const char** t
  * Fills 'target' up to 'limit'. Returns number of stored strings.
  * Caller has to deallocate strings stored in 'target' (unlike with config_get_strings)
  *
- * Returns negative number if allocation fails. Values in target may be overwriten with invalid data in such case.
+ * Returns -1 if allocation fails. Values in 'target' may be overwriten with invalid data in such case.
+ * Returns -2 if there are more than 'limit' configurations. Values in 'target' are valid up to 'limit'
  */
-DLL_EXPORT ssize_t config_get_controllers(Config* c, const char** target, size_t limit);
+DLL_EXPORT ssize_t config_get_controllers(Config* c, const char** target, ssize_t limit);
 
 /**
  * Loads configuration for controller with specified ID, filling out defaults.

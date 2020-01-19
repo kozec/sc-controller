@@ -347,7 +347,7 @@ double config_get_double(Config* _c, const char* path) {
 	return 0;
 }
 
-size_t config_get_strings(Config* _c, const char* path, const char** target, size_t limit) {
+ssize_t config_get_strings(Config* _c, const char* path, const char** target, ssize_t limit) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	json_array* value = NULL;
 	json_value_t* obj;
@@ -360,12 +360,15 @@ size_t config_get_strings(Config* _c, const char* path, const char** target, siz
 		value = json_as_array(obj);
 	}
 	
-	size_t j = 0;
+	ssize_t j = 0;
 	if (json_get_type(obj) == JS_OBJECT) {
 		json_object* o = json_as_object(obj);
-		size_t len = min(json_object_numkeys(o), limit);
-		for (; j<len; j++)
+		size_t len = json_object_numkeys(o);
+		while ((j < SSIZE_MAX) && (j < len)) {
+			if (j >= limit) return -2;
 			target[j] = json_object_get_key(o, j);
+			j ++;
+		}
 		return len;
 	} else if (value == NULL) {
 		const struct config_item* def = config_get_default(c, path);
@@ -373,15 +376,17 @@ size_t config_get_strings(Config* _c, const char* path, const char** target, siz
 			return 0;
 		}
 		if (def->v_strar != NULL) {
-			for (size_t i=0; (i<limit) && (def->v_strar[i]!=NULL); i++) {
+			for (ssize_t i=0; (i<SSIZE_MAX) && (def->v_strar[i]!=NULL); i++) {
+				if (i >= limit) return -2;
 				target[i] = def->v_strar[i];
 				j++;
 			}
 		}
 	} else {
-		for (size_t i=0; (i<limit) && (i<json_array_size(value)); i++) {
+		for (size_t i=0; i<json_array_size(value); i++) {
 			const char* s = json_array_get_string(value, i);
 			if (s != NULL) {
+				if (j >= limit) return -2;
 				target[j] = s;
 				j++;
 			}
@@ -390,7 +395,7 @@ size_t config_get_strings(Config* _c, const char* path, const char** target, siz
 	return j;
 }
 
-ssize_t config_get_controllers(Config* _c, const char** target, size_t limit) {
+ssize_t config_get_controllers(Config* _c, const char** target, ssize_t limit) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	DIR *dir;
 	struct dirent *ent;
@@ -403,10 +408,15 @@ ssize_t config_get_controllers(Config* _c, const char** target, size_t limit) {
 	}
 	
 	ssize_t j = 0;
-	while ((j < limit) && (j < SSIZE_MAX - 1)) {
+	while (j < SSIZE_MAX - 1) {
 		ent = readdir(dir);
 		if (ent == NULL) break;
 		if (strstr(ent->d_name, ".json") != NULL) {
+			if (j >= limit) {
+				// 'target' is too small
+				j = -2;
+				break;
+			}
 			char* cpy = strbuilder_cpy(ent->d_name);
 			if (cpy == NULL) {
 				// OOM
