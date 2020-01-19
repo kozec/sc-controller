@@ -90,7 +90,6 @@ SCController* create_usb_controller(Daemon* daemon, InputDevice* dev, SCControll
 	sc->controller.get_id = &get_id;
 	sc->controller.get_type = &get_type;
 	sc->controller.get_description = &get_description;
-	sc->controller.get_gui_config_file = NULL;
 	sc->controller.haptic_effect = &haptic_effect;
 	sc->controller.turnoff = NULL;
 	sc->controller.flush = &flush;

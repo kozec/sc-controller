@@ -24,9 +24,9 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		self.controller = controller
 		self.profile_switcher = profile_switcher
 		self.setup_widgets()
-		self.load_icons()
+		self._config = controller.get_config()
 		self._timer = None
-		self.app.config.reload()
+		self.load_icons()
 		self.load_settings()
 		self._eh_ids = ()
 	
@@ -40,10 +40,14 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		lstIcons = self.builder.get_object("lstIcons")
 		cbIcon = self.builder.get_object("cbIcon")
 		paths = [ f.get_path() for f in icons ]
+		tp = "%s-" % (self.controller.get_type(),)
+		if tp in ("evdev-", "dinput-"):
+			# Special cases so I don't have to impose symlinks on Windows
+			tp = "generic-"
 		for path in sorted(paths):
 			filename = os.path.split(path)[-1]
 			name = ".".join(filename.split(".")[0:-1])
-			if self.controller.get_type() not in name:
+			if not name.startswith(tp):
 				# Ignore images for other types
 				continue
 			try:
@@ -53,11 +57,9 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 				continue
 			lstIcons.append(( path, filename, name, pb ))
 		
-		cfg = self.app.config.get_controller_config(self.controller.get_id())
-		
-		if "icon" in cfg:
+		if "icon" in self._config["gui"]:
 			# Should be always
-			self.set_cb(cbIcon, cfg["icon"], 1)
+			self.set_cb(cbIcon, self._config["gui"]["icon"], 1)
 	
 	
 	def on_Dialog_destroy(self, *a):
@@ -114,14 +116,13 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		
-		cfg = self.app.config.get_controller_config(self.controller.get_id())
-		
+		cfg = self._config
 		self._recursing = True
-		txName.set_text(cfg["name"] or "")
+		txName.set_text(cfg["gui"]["name"] or "")
 		sclLED.set_value(float(cfg["led_level"]))
 		sclIdleTimeout.set_value(float(cfg["idle_timeout"]))
-		sclLeftRotation.set_value(float(cfg["input_rotation_l"]))
-		sclRightRotation.set_value(float(cfg["input_rotation_r"]))
+		sclLeftRotation.set_value(float(cfg["input_rotation/left"]))
+		sclRightRotation.set_value(float(cfg["input_rotation/right"]))
 		cbAlignOSD.set_active(cfg["osd_alignment"] != 0)
 		self.set_cb(cbControlWith, cfg["menu_control"], keyindex=1)
 		self.set_cb(cbConfirmWith, cfg["menu_confirm"], keyindex=1)
@@ -148,19 +149,19 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		cbCancelWith = self.builder.get_object("cbCancelWith")
 		
 		# Store data
-		cfg = self.app.config.get_controller_config(self.controller.get_id())
-		cfg["name"] = txName.get_text().decode("utf-8")
+		cfg = self._config
+		cfg["gui"]["name"] = txName.get_text().decode("utf-8")
 		cfg["led_level"] = sclLED.get_value()
 		cfg["osd_alignment"] = 1 if cbAlignOSD.get_active() else 0
 		cfg["idle_timeout"] = sclIdleTimeout.get_value()
-		cfg["input_rotation_l"] = sclLeftRotation.get_value()
-		cfg["input_rotation_r"] = sclRightRotation.get_value()
+		cfg["input_rotation/left"] = sclLeftRotation.get_value()
+		cfg["input_rotation/right"] = sclRightRotation.get_value()
 		cfg["menu_control"] = cbControlWith.get_model().get_value(cbControlWith.get_active_iter(), 1)
 		cfg["menu_confirm"] = cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)
 		cfg["menu_cancel"] = cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1)
 		
 		try:
-			cfg["icon"] = cbIcon.get_model().get_value(cbIcon.get_active_iter(), 1)
+			cfg["gui"]["icon"] = cbIcon.get_model().get_value(cbIcon.get_active_iter(), 1)
 			if self.profile_switcher:
 				self.profile_switcher.update_icon()
 		except:
@@ -178,8 +179,9 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 		"""
 		def cb(*a):
 			self._timer = None
-			self.app.save_config()
-			
+			self._config.save()
+			self.app.dm.reconfigure()
+		
 		if self._timer is not None:
 			GLib.source_remove(self._timer)
 		self._timer = GLib.timeout_add_seconds(1, cb)	
@@ -195,7 +197,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 	
 	def on_sclLED_value_changed(self, scale, *a):
 		if self._recursing: return
-		cfg = self.app.config.get_controller_config(self.controller.get_id())
+		cfg = self._config
 		cfg["led_level"] = scale.get_value()
 		try:
 			self.controller.set_led_level(scale.get_value())
@@ -207,6 +209,7 @@ class ControllerSettings(Editor, UserDataManager, ComboSetter):
 	
 	def on_sclIdleTimeout_value_changed(self, scale, *a):
 		if self._recursing: return
-		cfg = self.app.config.get_controller_config(self.controller.get_id())
+		cfg = self._config
 		cfg["idle_timeout"] = scale.get_value()
 		self.schedule_save_config()
+

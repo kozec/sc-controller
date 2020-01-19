@@ -62,7 +62,8 @@ class ControllerImage(SVGWidget):
 	
 	def _ensure_config(self, data):
 		""" Ensure that required keys are present in config data """
-		data['gui'] = data.get('gui', {})
+		data = dict(data)
+		data['gui'] = dict(data.get('gui', {}))
 		data['gui']['background'] = data['gui'].get("background", "sc")
 		data['gui']['buttons'] = data['gui'].get("buttons") or self._get_default_images()
 		data['buttons'] = data.get("buttons") or ControllerImage.DEFAULT_BUTTONS

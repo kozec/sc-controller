@@ -156,7 +156,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		stckEditor = self.builder.get_object('stckEditor')
 		lblEmpty = self.builder.get_object('lblEmpty')
 		if controller:
-			config = controller.load_gui_config(self.imagepath or {})
+			config = controller.get_config()
 		else:
 			config = {}
 		config = self.background.use_config(config)

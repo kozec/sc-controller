@@ -19,7 +19,7 @@ def get_config_path():
 	Returns configuration directory.
 	~/.config/scc under normal conditions.
 	"""
-	return str(lib_bindings.scc_get_config_path())
+	return lib_bindings.scc_get_config_path().decode("utf-8")
 
 
 def get_profiles_path():
@@ -71,6 +71,7 @@ def get_menus_path():
 	Returns directory where profiles are stored.
 	~/.config/scc/profiles under normal conditions.
 	"""
+	# TODO: Get this from c
 	return os.path.join(get_config_path(), "menus")
 
 
@@ -81,6 +82,7 @@ def get_default_menus_path():
 	or ./default_profiles if program is being started from
 	extracted source tarball
 	"""
+	# TODO: Get this from c
 	return os.path.join(get_share_path(), "default_menus")
 
 
@@ -91,7 +93,7 @@ def get_controller_icons_path():
 	
 	This directory may not exist.
 	"""
-	return os.path.join(get_config_path(), "controller-icons")
+	return lib_bindings.scc_get_controller_icons_path().decode("utf-8")
 
 
 def get_default_controller_icons_path():
@@ -103,7 +105,7 @@ def get_default_controller_icons_path():
 	
 	This directory should always exist.
 	"""
-	return os.path.join(get_share_path(), "images", "controller-icons")
+	return lib_bindings.scc_get_default_controller_icons_path().decode("utf-8")
 
 
 def get_share_path():
@@ -112,7 +114,7 @@ def get_share_path():
 	Usually "/usr/share/scc" or $SCC_SHARED if program is being started from
 	script extracted from source tarball
 	"""
-	return str(lib_bindings.scc_get_share_path())
+	return lib_bindings.scc_get_share_path().decode("utf-8")
 
 
 def get_pid_file():
@@ -140,4 +142,8 @@ lib_bindings.scc_get_daemon_socket.argtypes = [ ]
 lib_bindings.scc_get_daemon_socket.restype = ctypes.c_char_p
 lib_bindings.scc_get_share_path.argtypes = [ ]
 lib_bindings.scc_get_share_path.restype = ctypes.c_char_p
+lib_bindings.scc_get_controller_icons_path.argtypes = [ ]
+lib_bindings.scc_get_controller_icons_path.restype = ctypes.c_char_p
+lib_bindings.scc_get_default_controller_icons_path.argtypes = [ ]
+lib_bindings.scc_get_default_controller_icons_path.restype = ctypes.c_char_p
 

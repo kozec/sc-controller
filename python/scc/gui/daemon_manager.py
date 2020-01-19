@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 
 from scc.tools import find_binary, find_button_image, nameof
 from scc.paths import get_daemon_socket
+from scc.config import Config
 from scc.gui import BUTTON_ORDER
 from gi.repository import GObject, Gio, GLib
 
@@ -214,12 +215,11 @@ class DaemonManager(GObject.GObject):
 					self._requests = self._requests[1:]
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
-				controller_id, type, flags, config_file = line[11:].strip().split(" ", 3)
+				controller_id, type, flags = line[11:].strip().split(" ", 3)
 				c = self.get_controller(controller_id)
 				c._connected = True
 				c._type = type
 				c._flags = long(flags)
-				c._config_file = None if config_file in ("", "None") else config_file
 				while c in self._controllers:
 					self._controllers.remove(c)
 				self._controllers.append(c)
@@ -375,7 +375,6 @@ class ControllerManager(GObject.GObject):
 		GObject.GObject.__init__(self)
 		self._dm = daemon_manager
 		self._controller_id = controller_id
-		self._config_file = None
 		self._profile = None
 		self._type = None
 		self._flags = 0
@@ -425,43 +424,21 @@ class ControllerManager(GObject.GObject):
 		""" Returns ID of this controller. Value is cached locally. """
 		return self._controller_id
 	
-	
-	def get_gui_config_file(self):
+	def get_config(self):
 		"""
-		Returns file name of json file that GUI can use to load more data about
-		controller (background image, button images, available buttons and
-		axes, etc...) File name may be absolute path or just name of file in
-		/usr/share/scc
-		
-		Returns None if there is no configuration file (GUI will use
-		defaults in such case)
+		Returns Config object bound to configuration of this controller.
+		Config object is cached, so two subsequent calls to this method
+		will return same object.
 		"""
-		return self._config_file
-	
-	
-	def load_gui_config(self, default_path):
-		"""
-		As get_gui_config_file, but returns loaded and parsed config.
-		Returns None if config cannot be loaded.
-		"""
-		filename = self.get_gui_config_file()
-		if filename:
-			if "/" not in filename:
-				filename = os.path.join(default_path, filename)
-			try:
-				data = json.loads(open(filename, "r").read()) or None
-				return data
-			except Exception, e:
-				log.exception(e)
-		return None
+		return Config().create_controller_config(self._controller_id)
 	
 	
 	@staticmethod
 	def get_button_icon(config, button, prefer_bw=False):
 		"""
-		For config returned by load_gui_config() and SCButton constant,
-		returns icon filename assigned to that button in controller config or
-		default if config is invalid or button unassigned.
+		For controller config (loaded by Config.get_controller_config()) and
+		SCButton constant, returns icon filename assigned to that button in
+		controller config or default if config is invalid or button unassigned.
 		"""
 		return find_button_image(
 			ControllerManager.get_button_name(config, button),

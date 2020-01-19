@@ -345,7 +345,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 			self._signal = None
 		self._controller = c
 		if c:
-			name = self.config.get_controller_config(c.get_id())["name"]
+			name = self.config.get_controller_config(c.get_id())["gui"]["name"]
 			self._icon.set_tooltip_text(name)
 			self._signal = c.connect('profile-changed', self.on_profile_changed)
 		else:
@@ -367,8 +367,8 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		
 		id = self._controller.get_id()
 		cfg = self.config.get_controller_config(id)
-		if cfg["icon"]:
-			icon = find_controller_icon(cfg["icon"])
+		if cfg["gui/icon"]:
+			icon = find_controller_icon(cfg["gui/icon"])
 			self._icon.set_from_file(icon)
 		else:
 			log.debug("There is no icon for controller %s, auto assinging one", id)
@@ -380,14 +380,18 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 					return
 				icon = None
 				used_icons = {
-					self.config.get_controller_config(x)['icon']
-					for x in self.config.get_controllers()
-					if 'icon' in self.config.get_controller_config(x)
+					cfg["gui/icon"] for cfg in (
+						self.config.get_controller_config(x)
+						for x in self.config.get_controllers()
+					)
+					if cfg
 				}
 				tp = "%s-" % (self._controller.get_type(),)
+				if tp in ("evdev-", "dinput-"):
+					# Special cases so I don't have to impose symlinks on Windows
+					tp = "generic-"
 				icons = sorted(( os.path.split(x.get_path())[-1] for x in icons ))
 				log.debug("Searching for icon type: %s", tp.strip("-"))
-				return
 				for i in icons:
 					if i not in used_icons and i.startswith(tp):
 						# Unused icon found
@@ -397,9 +401,9 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 					# All icons are already used, assign anything
 					icon = random.choice(icons)
 				log.debug("Auto-assigned icon %s for controller %s", icon, id)
-				cfg = self.config.get_controller_config(id)
-				cfg["icon"] = icon
-				self.config.save()
+				cfg = self.config.create_controller_config(id)
+				cfg["gui/icon"] = icon
+				cfg.save()
 				GLib.idle_add(self.update_icon)
 			
 			# TODO: Icons

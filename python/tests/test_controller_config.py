@@ -68,7 +68,7 @@ class TestControllerConfig(object):
 		assert gcfg["icon"] == "test-01"
 	
 	def test_get_invalid(self):
-		""" Tests whether openin non-existing config fails """
+		""" Tests whether opening non-existing config fails """
 		with pytest.raises(OSError):
 			ccfg = self.c.get_controller_config("notexisting")
 	
@@ -104,11 +104,21 @@ class TestControllerConfig(object):
 		
 		ccfg = self.c.get_controller_config("test_notexisting_create")
 		assert ccfg["gui"]["icon"] == "Changed"
+	
+	def test_load_invalid(self):
+		""" Tests loading file that's not json """
+		file("%s/devices/test_notjson.json" % self.prefix, "w").write("X")
+		with pytest.raises(OSError):
+			ccfg = self.c.get_controller_config("test_notjson")
+			print ccfg
+
 
 if __name__ == "__main__":
 	from scc.tools import init_logging, set_logging_level
 	init_logging()
 	set_logging_level(True, True)
 	
-	TestConfig().test_bool()
+	TestControllerConfig.setup_class()
+	TestControllerConfig().test_load_invalid()
+	TestControllerConfig.teardown_class()
 

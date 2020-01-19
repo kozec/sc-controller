@@ -46,8 +46,10 @@ static char default_profiles_path[PATH_MAX + 128] = {0};
 static char menus_path[PATH_MAX + 128] = {0};
 static char default_menus_path[PATH_MAX + 128] = {0};
 static char menuicons_path[PATH_MAX + 128] = {0};
+static char controller_icons_path[PATH_MAX + 128] = {0};
 static char default_menuicons_path[PATH_MAX + 128] = {0};
 static char default_button_images_path[PATH_MAX + 128] = {0};
+static char default_controller_icons_path[PATH_MAX + 128] = {0};
 static char pid_file_path[PATH_MAX] = {0};
 static char drivers_path[PATH_MAX] = {0};
 
@@ -212,6 +214,24 @@ const char* scc_get_default_menuicons_path() {
 	
 	sprintf(default_menuicons_path, "%s" SEP "images" SEP "menu-icons", scc_get_share_path());
 	return default_menuicons_path;
+}
+
+const char* scc_get_controller_icons_path() {
+	if (controller_icons_path[0] != 0)
+		// Return cached value
+		return controller_icons_path;
+	
+	sprintf(controller_icons_path, "%s" SEP "controller-icons", scc_get_config_path());
+	return controller_icons_path;
+}
+
+const char* scc_get_default_controller_icons_path() {
+	if (default_controller_icons_path[0] != 0)
+		// Return cached value
+		return default_controller_icons_path;
+	
+	sprintf(default_controller_icons_path, "%s" SEP "images" SEP "controller-icons", scc_get_share_path());
+	return default_controller_icons_path;
 }
 
 const char* scc_get_default_button_images_path() {
@@ -493,31 +513,6 @@ char* scc_find_button_image(SCButton button, bool prefer_colored, bool* has_colo
 	
 	return scc_find_icon(bstr, prefer_colored, has_colors, paths, extensions);
 }
-
-/*
-
-def get_controller_icons_path():
-	"""
-	Returns directory where controller icons are stored.
-	~/.config/scc/controller-icons under normal conditions.
-	
-	This directory may not exist.
-	"""
-	return os.path.join(get_config_path(), "controller-icons")
-
-
-def get_default_controller_icons_path():
-	"""
-	Returns directory where controller icons are stored.
-	Probably something like /usr/share/scc/images/controller-icons,
-	or ./images/controller-icons if program is being started from
-	extracted source tarball.
-	
-	This directory should always exist.
-	"""
-	return os.path.join(get_share_path(), "images", "controller-icons")
-
-*/
 
 char* scc_realpath(char* path, char* resolved_path) {
 	if (resolved_path == NULL) {

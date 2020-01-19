@@ -67,21 +67,6 @@ struct Controller {
 	 */
 	const char*			(*get_description)(Controller* c);
 	/**
-	 * Returns file name of json file that GUI can use to load more data about
-	 * controller (background image, button images, available buttons and
-	 * axes, etc...) File name may be absolute path or just basename of file in
-	 * /usr/share/scc
-	 *
-	 * Returns NULL if there is no configuration file. GUI will use defaults
-	 * in such case.
-	 * Alternativelly, this method may point to NULL. That will have same effect
-	 * as having method and returning NULL from it.
-	 *
-	 * Caller should not have to deallocate returned string and returned value
-	 * has to be be kept in memory at least until controller is deallocate()'d.
-	 */
-	const char*			(*get_gui_config_file)(Controller* c);
-	/**
 	 * Enables or disables gyroscope hardware.
 	 * This callback may be set to NULL if controller doesn't have gyroscope,
 	 * but has to be implemented otherwise, even if gyroscope is not

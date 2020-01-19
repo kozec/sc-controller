@@ -100,7 +100,6 @@ const struct config_item DEFAULTS[] = {
 	/// On windows, this is just string 'x360', 'ds4' or 'auto'
 	{ "output",								CVT_STRING,		.v_str = "auto" },
 	
-	// TODO: "controllers": { },
 	// TODO: Output on Linux
 	/*
 	 * # Changing this may be usefull, but can break a lot of things

@@ -25,20 +25,6 @@ class Config(object):
 	CVT_INVALID			= 6
 	CVT_INT				= 11
 	
-	CONTROLLER_DEFAULTS = {
-		# Defaults for controller config
-		"name":					None,	# Filled with controller ID on runtime
-		"icon":					None,	# Determined by magic by UI
-		"led_level":			80,		# range 0 to 100
-		"idle_timeout":			600,	# in seconds, range from 1 to 32767
-		"osd_alignment":		0,		# not used yet
-		"input_rotation_l":		20,		# range -180 to 180
-		"input_rotation_r":		-20,	# range -180 to 180
-		"menu_control":			"STICK",
-		"menu_confirm":			"A",
-		"menu_cancel":			"B",
-	}
-	
 	def __init__(self, filename=None, c_ptr=None):
 		self._refs = WeakValueDictionary()
 		self.filename = filename

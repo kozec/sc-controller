@@ -78,6 +78,24 @@ const char* scc_get_menuicons_path();
 const char* scc_get_default_menuicons_path();
 
 /**
+ * Returns directory where controller icons are stored.
+ * ~/.config/scc/controller-icons under normal conditions.
+ *
+ * This directory may not exist.
+ */
+const char* scc_get_controller_icons_path();
+
+/**
+ * Returns directory where controller icons are stored.
+ * Probably something like /usr/share/scc/images/controller-icons,
+ * or ./images/controller-icons if program is being started from
+ * extracted source tarball.
+ *
+ * This directory should always exist.
+ */
+const char* scc_get_default_controller_icons_path();
+
+/**
  * Returns directory where button images are stored, that is
  * /usr/share/scc/images/button-images or $SCC_SHARED/images/button-images
  * if program is being started from script extracted from source tarball.

@@ -20,9 +20,22 @@ void test_find_icon(CuTest* tc) {
 }
 
 
+void test_get_controller_icons_path(CuTest* tc) {
+	/** Basically, this was returning NULL and I had no idea why */
+	const char* path = scc_get_controller_icons_path();
+	assert(tc, path != NULL);
+	assert(tc, strlen(path) > 1);
+	
+	path = scc_get_default_controller_icons_path();
+	assert(tc, path != NULL);
+	assert(tc, strlen(path) > 1);
+}
+
+
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
 	DEFAULT_SUITE_ADD(test_find_icon);
+	DEFAULT_SUITE_ADD(test_get_controller_icons_path);
 	
 	return CuSuiteRunDefault();
 }

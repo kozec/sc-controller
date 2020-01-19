@@ -121,16 +121,10 @@ void sccd_send_controller_list(Client* client) {
 	int count = 0;
 	FOREACH(Controller*, c, it) {
 		count ++;
-		const char* gui_config_file = NULL;
-		if (c->get_gui_config_file != NULL)
-			gui_config_file = c->get_gui_config_file(c);
-		if (gui_config_file == NULL)
-			gui_config_file = "None";
-		sccd_socket_consume(client, strbuilder_fmt("Controller: %s %s %i %s\n",
+		sccd_socket_consume(client, strbuilder_fmt("Controller: %s %s %i\n",
 			c->get_id(c),
 			c->get_type(c),
-			(int)c->flags,
-			gui_config_file
+			(int)c->flags
 		));
 	}
 	iter_free(it);

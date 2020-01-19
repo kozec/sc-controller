@@ -160,7 +160,7 @@ class OSDModeMappings(object):
 	
 	
 	def set_controller(self, c):
-		config = c.load_gui_config(self.app.imagepath or {})
+		config = c.get_config()
 		for name in OSDModeMappings.ICONS:
 			w = self.app.builder.get_object(name)
 			icon, trash = c.get_button_icon(config, OSDModeMappings.ICONS[name])
