@@ -252,3 +252,4 @@ void sccd_input_hidapi_rescan() {
 
 
 #endif
+

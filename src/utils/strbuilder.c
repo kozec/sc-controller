@@ -33,6 +33,7 @@ void strbuilder_free(StrBuilder* b) {
 
 
 void strbuilder_clear(StrBuilder* b) {
+	if (b == NULL) return;
 	if (b->length == 0) return;
 	b->failed = false;
 	b->value[0] = 0;
@@ -42,6 +43,7 @@ void strbuilder_clear(StrBuilder* b) {
 
 
 char* strbuilder_consume(StrBuilder* b) {
+	if (b == NULL) return NULL;
 	char* str = b->value;
 	if (str == NULL) {
 		// Ugly hack to reuse StrBuilder data as empty string :)
@@ -186,6 +188,7 @@ int strbuilder_add_fd(StrBuilder* b, int fd) {
 	}
 	// Reaches here only on error
 	b->next = b->value + original_len;
+	b->failed = true;
 	*b->next = 0;
 	return err;
 }
@@ -320,6 +323,7 @@ strbuilder_insertf_this_shouldnt_ever_happen:
 
 
 void strbuilder_rtrim(StrBuilder* b, size_t count) {
+	if (b == NULL) return;
 	if (count > b->length) {
 		b->length = 0;
 		b->value[0] = 0;
@@ -381,7 +385,17 @@ bool strbuilder_add_escaped(StrBuilder* b, const char* string, const char* chars
 }
 
 
+void strbuilder_rstrip(StrBuilder* b, const char* chars) {
+	if (b == NULL) return;
+	while ((b->length > 0) && (strchr(chars, b->value[b->length - 1]) != NULL)) {
+		b->length --;
+		b->value[b->length] = 0;
+	}
+}
+
+
 bool strbuilder_join(StrBuilder* b, const char* array[], size_t size, const char* glue) {
+	if (b == NULL) return false;
 	size_t original_length = b->length;
 	bool needs_glue = false;
 	for (size_t i=0; i<size; i++) {
@@ -410,6 +424,7 @@ bool _strbuilder_add_all(StrBuilder* b, void* iterator,
 					const char* glue) {
 	if (b == NULL) return false;
 	if (!has_next(iterator)) return true;
+	if (b == NULL) return false;
 	size_t original_length = b->length;
 	bool needs_glue = false;
 	while (has_next(iterator)) {
@@ -441,6 +456,7 @@ _strbuilder_add_all_fail:
 
 
 char* strbuilder_cpy(const char* src) {
+	if (src == NULL) return NULL;
 	char* copy = malloc(strlen(src) + 1);
 	if (copy == NULL) return NULL;
 	strcpy(copy, src);

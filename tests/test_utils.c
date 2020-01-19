@@ -254,6 +254,10 @@ void test_strbuilder(CuTest* tc) {
 	strbuilder_add(b, " ");
 	strbuilder_add(b, "world");
 	assert(tc, strcmp(strbuilder_get_value(b), "hello world") == 0);
+	
+	strbuilder_add(b, " \n\r");
+	strbuilder_rstrip(b, "\n\r rld");
+	assert(tc, strcmp(strbuilder_get_value(b), "hello wo") == 0);
 	free(strbuilder_consume(b));
 	
 	b = strbuilder_new();

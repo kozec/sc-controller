@@ -40,7 +40,6 @@ static void controller_remove(Controller* c);
 static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
 static bool sccd_hidapi_enabled();
 static void spawn_minions(void* trash1, void* trash2);
-static InputDevice* sccd_open_input_device(const char* syspath);
 
 
 static Daemon _daemon = {
@@ -54,7 +53,6 @@ static Daemon _daemon = {
 	.poller_cb_add				= sccd_poller_add,
 	.hotplug_cb_add				= sccd_register_hotplug_cb,
 	.get_x_display				= sccd_x11_get_display,
-	.open_input_device			= sccd_open_input_device,
 	.hidapi_enabled				= sccd_hidapi_enabled,
 };
 
@@ -399,20 +397,6 @@ static void load_default_profile(SCCDMapper* m) {
 	RC_REL(p);
 	LOG("Activated default profile '%s'", default_profile);
 	set_proctitle(default_profile);
-}
-
-static InputDevice* sccd_open_input_device(const char* syspath) {
-#ifdef USE_HIDAPI
-	if (strstr(syspath, "/hidapi/") == syspath)
-		return sccd_input_hidapi_open(syspath);
-#endif
-#ifdef __BSD__
-	return sccd_input_bsd_open(syspath);
-#endif
-#ifdef USE_LIBUSB
-	return sccd_input_libusb_open(syspath);
-#endif
-	return NULL;
 }
 
 intptr_t sccd_error_add(const char* message, bool fatal) {

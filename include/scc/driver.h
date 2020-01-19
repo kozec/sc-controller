@@ -17,9 +17,9 @@ typedef unsigned short Vendor;
 typedef unsigned short Product;
 typedef enum {
 	USB			= 0,
-#ifndef _WIN32
+#ifdef __linux__
 	BT			= 1,
-	INPUT		= 2,
+	EVDEV		= 2,
 #endif
 #ifdef __BSD__
 	UHID		= 3,
@@ -31,12 +31,32 @@ typedef enum {
 typedef struct Daemon Daemon;
 typedef struct Driver Driver;
 typedef struct InputDevice InputDevice;
+typedef struct InputDeviceData InputDeviceData;
 
 typedef void (*sccd_mainloop_cb)(Daemon* d);
 typedef void (*sccd_poller_cb)(Daemon* d, int fd, void* userdata);
-typedef void (*sccd_hotplug_cb)(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx);
+typedef void (*sccd_hotplug_cb)(Daemon* d, const InputDeviceData* idata);
 typedef void (*sccd_scheduler_cb)(void* userdata);
 
+typedef struct HotplugFilter {
+	enum {
+		SCCD_HOTPLUG_FILTER_VENDOR		= 1,
+		SCCD_HOTPLUG_FILTER_PRODUCT		= 2,
+		/** evdev or dinput name */
+		SCCD_HOTPLUG_FILTER_NAME		= 3,
+#ifdef __BSD__
+		SCCD_HOTPLUG_FILTER_UHID_IDX	= 4,
+#endif
+	}					type;
+	union {
+		Vendor			vendor;
+		Product			product;
+		const char*		name;
+#ifdef __BSD__
+		int				idx;
+#endif
+	};
+} HotplugFilter;
 
 /** This is 'daemon from POV of driver', not everything that daemon does */
 struct Daemon {
@@ -91,15 +111,18 @@ struct Daemon {
 	bool			(*poller_cb_add)(int fd, sccd_poller_cb cb, void* userdata);
 	/**
 	 * Adds callback that will be called when new device is detected.
+	 * InputDeviceData object passed to callback will be valid only durring
+	 * that callback. Use it's copy() method if you need to keep it longer.
+	 *
 	 * This is basically global shortcut to udev monitor.
 	 *
-	 * 'idx' is used only when Subsystem is set to HIDAPI, otherwise it is ignored.
-	 * idx of -1 means 'any'
-	 *
+	 * 'filters' is NULL terminated vararg list used to filter matching devices.
+	 * Callback is called only if device matches all the filters.
+	  *
 	 * Returns true on success or false on OOM error. False is also returned if
 	 * there already is another callback for same vendor and product ID registered.
 	 */
-	bool			(*hotplug_cb_add)(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb);
+	bool			(*hotplug_cb_add)(Subsystem sys, sccd_hotplug_cb callback, const HotplugFilter* filters, ...);
 	/**
 	 * Registers error with daemon.
 	 * Error (in this case) is simply string that will logged and sent to
@@ -108,7 +131,7 @@ struct Daemon {
 	 * 'fatal' error is one that prevents emulation from working, for example
 	 * uinput not being available. On other hand, not having access to physical
 	 * controller device is not fatal, as other controller may be available.
-	 * 
+	 *
 	 * Returns ID that can be used to remove error when it's resolved.
 	 *
 	 * Error may be silently ignored if there is no memory to store it.
@@ -131,13 +154,6 @@ struct Daemon {
 	 * Returns true if hidapi support was enabled at compile time
 	 */
 	bool			(*hidapi_enabled)();
-	/**
-	 * Opens USB, hidapi or uhid input device represented by given syspath.
-	 * Returns NULL on error.
-	 *
-	 * See input_device.h for details.
-	 */
-	InputDevice*	(*open_input_device)(const char* syspath);
 };
 
 struct Driver {

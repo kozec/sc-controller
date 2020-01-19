@@ -44,11 +44,11 @@ void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uin
 }
 
 
-static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
+static void hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
 	SCController* sc = NULL;
-	InputDevice* dev = daemon->open_input_device(syspath);
+	InputDevice* dev = idata->open(idata);
 	if (dev == NULL) {
-		LERROR("Failed to open '%s'", syspath);
+		LERROR("Failed to open '%s'", idata->path);
 		return;		// and nothing happens
 	}
 	if ((sc = create_usb_controller(daemon, dev, SC_WIRED, CONTROLIDX)) == NULL) {
@@ -95,14 +95,20 @@ Driver* scc_driver_init(Daemon* daemon) {
 	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
 	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	
+	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,  .vendor=VENDOR_ID };
+	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT, .product=PRODUCT_ID };
 #ifndef __BSD__
 	Subsystem s = daemon->hidapi_enabled() ? HIDAPI : USB;
+	#define FILTERS &filter_vendor, &filter_product
 #else
 	Subsystem s = UHID;
+	HotplugFilter filter_idx = { .type=SCCD_HOTPLUG_FILTER_UHID_IDX, .idx=CONTROLIDX };
+	#define FILTERS &filter_vendor, &filter_product, &filter_idx
 #endif
-	if (!daemon->hotplug_cb_add(s, VENDOR_ID, PRODUCT_ID, CONTROLIDX, &hotplug_cb)) {
+	if (!daemon->hotplug_cb_add(s, &hotplug_cb, FILTERS, NULL)) {
 		LERROR("Failed to register hotplug callback");
 		return NULL;
 	}
 	return &driver;
 }
+

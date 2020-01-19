@@ -134,12 +134,11 @@ static void turnoff(Controller* c) {
 ////// On linux, there is dongle, controllers are connected to it
 
 #ifndef __BSD__
-static void hotplug_cb(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
-	InputDevice* dev = daemon->open_input_device(syspath);
+static void hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
+	InputDevice* dev = idata->open(idata);
 	Dongle* dongle = NULL;
-	LOG("hotplug_cb %s", syspath);
 	if (dev == NULL) {
-		LERROR("Failed to open '%s'", syspath);
+		LERROR("Failed to open '%s'", idata->path);
 		return;		// and nothing happens
 	}
 	if (dev->sys == USB) {
@@ -187,14 +186,15 @@ hotplug_cb_fail:
 ////// Each controller has its own /dev/uhidX node that is created all the time
 ////// and it is registered with daemon only after 1st input is recieved
 
-static void hotplug_cb_hid(Daemon* daemon, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
+static void hotplug_cb_hid(Daemon* daemon, const InputDeviceData* idata) {
 #ifndef __BSD__
-	if ((sys == HIDAPI) && ((idx < 1) || (idx > 4)))
+	int idx = idata->get_idx(idata);
+	if ((idata->subsystem == HIDAPI) && ((idx < 1) || (idx > 4)))
 		return;
 #endif
-	InputDevice* dev = daemon->open_input_device(syspath);
+	InputDevice* dev = idata->open(idata);
 	if (dev == NULL) {
-		LERROR("Failed to open '%s'", syspath);
+		LERROR("Failed to open '%s'", idata->path);
 		return;		// and nothing happens
 	}
 	SCController* sc = create_usb_controller(daemon, dev, SC_WIRELESS, 0);
@@ -222,19 +222,22 @@ Driver* scc_driver_init(Daemon* daemon) {
 	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
 	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	
+	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,  .vendor=VENDOR_ID };
+	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT, .product=PRODUCT_ID };
 	bool success;
 #ifdef __BSD__
-	success = daemon->hotplug_cb_add(UHID, VENDOR_ID, PRODUCT_ID, 0, &hotplug_cb_hid);
+	HotplugFilter filter_idx = { .type=SCCD_HOTPLUG_FILTER_UHID_IDX, .idx=0 };
+	success = daemon->hotplug_cb_add(UHID, &hotplug_cb_hid, &filter_vendor, &filter_product, &filter_idx, NULL);
 #else
 	if (daemon->hidapi_enabled()) {
-		success = daemon->hotplug_cb_add(HIDAPI, VENDOR_ID, PRODUCT_ID, -1, &hotplug_cb_hid);
+		success = daemon->hotplug_cb_add(HIDAPI, &hotplug_cb_hid, &filter_vendor, &filter_product, NULL);
 	} else {
 		dongles = list_new(Dongle, 4);
 		if (dongles == NULL) {
 			LERROR("Out of memory");
 			return NULL;
 		}
-		success = daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, 0, &hotplug_cb);
+		success = daemon->hotplug_cb_add(USB, &hotplug_cb, &filter_vendor, &filter_product, NULL);
 	}
 #endif
 	if (!success) {

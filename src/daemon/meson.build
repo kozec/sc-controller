@@ -84,6 +84,7 @@ scc_daemon = executable('scc-daemon',
 		'drivers.c',
 		'locking.c',
 		'scheduler.c',
+		'device_monitor.c',
 		'cemuhook_server.c',
 	],
 )

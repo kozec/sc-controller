@@ -43,7 +43,6 @@ typedef LIST_TYPE(Controller) ControllerList;
 typedef void (*sccd_scheduler_cb_internal)(void* parent, void* userdata);
 typedef uintptr_t TaskID;
 
-
 int sccd_start();
 void sccd_set_proctitle(const char* name);
 void sccd_set_default_profile(const char* profile);
@@ -134,10 +133,12 @@ void sccd_x11_close();
 void* sccd_x11_get_display();
 
 void sccd_device_monitor_init();
+void sccd_device_monitor_common_init();
 void sccd_device_monitor_start();
 void sccd_device_monitor_rescan();
 void sccd_device_monitor_close();
-bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb);
+void sccd_device_monitor_close_common();
+bool sccd_register_hotplug_cb(Subsystem sys, sccd_hotplug_cb cb, const HotplugFilter* filters, ...);
 
 #ifdef __BSD__
 InputDevice* sccd_input_bsd_open(const char* syspath);
@@ -152,8 +153,15 @@ void sccd_input_libusb_close();
 InputDevice* sccd_input_hidapi_open(const char* syspath);
 void sccd_input_hidapi_rescan();
 #endif
+void sccd_device_monitor_new_device(Daemon* d, const InputDeviceData* idata);
+void sccd_device_monitor_device_removed(Daemon* d, const char* path);
+/** Returns true if filter matches device */
+bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* data, const HotplugFilter* filter);
+/**
+ * Returns bit mask of enabled subsystems; Subsystem is enabled
+ * (and bit is set to 1) if there is any callback registered for it*/
+uint32_t sccd_device_monitor_get_enabled_subsystems(Daemon* d);
 #ifdef _WIN32
-void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx);
 void sccd_input_libusb_rescan();
 #endif
 

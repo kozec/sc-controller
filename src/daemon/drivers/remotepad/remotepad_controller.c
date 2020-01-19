@@ -109,6 +109,7 @@ RemotePad* remotepad_new(Daemon* daemon, const char* address) {
 	pad->controller.turnoff = &remotepad_turnoff;
 	pad->controller.set_gyro_enabled = NULL;
 	pad->controller.get_gyro_enabled = NULL;
+	pad->controller.flush = NULL;
 	
 	snprintf(pad->id, MAX_ID_LEN, "rpad%i", next_id);
 	snprintf(pad->desc, MAX_DESC_LEN, "<RemotePad at %s>", address);

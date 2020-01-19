@@ -83,6 +83,11 @@ bool strbuilder_escape(StrBuilder* b, const char* chars, char escape_char);
 bool strbuilder_add_escaped(StrBuilder* b, const char* string, const char* chars, char escape_char);
 
 /**
+ * While trailing character of string is one of 'chars', removes last character
+ */
+void strbuilder_rstrip(StrBuilder* b, const char* chars);
+
+/**
  * Adds all strings from array to builder. Empty strings and NULLs are ignored.
  * If 'glue' is not NULL, it's used as separator between joined items.
  *

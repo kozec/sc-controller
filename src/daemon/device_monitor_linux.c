@@ -5,60 +5,144 @@
  * and allows stuff to happen when new one is detected.
  */
 #define LOG_TAG "DevMon"
+#include "scc/utils/container_of.h"
 #include "scc/utils/logging.h"
 #include "scc/utils/hashmap.h"
 #include "scc/utils/assert.h"
+#include "scc/input_device.h"
 #include "daemon.h"
-#include <stdio.h>
-#include <unistd.h>
+#include <sys/stat.h>
 #include <libudev.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <fcntl.h>
 static struct udev* ctx;
 static struct udev_monitor* monitor;
 
 static bool get_vendor_product(const char* subsystem, const char* syspath, Vendor* vendor, Product* product);
-static void on_new_syspath(Daemon* d, const char* subsystem, const char* syspath);
 
+struct LinuxInputDeviceData {
+	InputDeviceData		idev;
+	Vendor				vendor;
+	Product				product;
+	int					idx;
+};
 
-static map_t callbacks;
-static map_t known_devs;
-static bool enabled_subsystems[] = { false, false };
-
-static char _key[256];
-inline static const char* make_key(Subsystem sys, Vendor vendor, Product product) {
-	sprintf(_key, "%i:%x:%x", sys, vendor, product);
-	return _key;
+static const char* input_device_get_name(const InputDeviceData* idev) {
+	return NULL;
 }
 
-void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product) {
-	sccd_hotplug_cb cb = NULL;
-	const char* key = make_key(sys, vendor, product);
-	if (hashmap_get(callbacks, key, (any_t*)&cb) != MAP_MISSING) {
-		// I have no value to store in known_devs hashmap yet.
-		if (hashmap_put(known_devs, syspath, (void*)1) != MAP_OK)
-			return;
-		cb(d, syspath, sys, vendor, product, 0);
+static int input_device_get_idx(const InputDeviceData* idev) {
+	const struct LinuxInputDeviceData* ldev = container_of(idev, struct LinuxInputDeviceData, idev);
+	return ldev->idx;
+}
+
+static InputDevice* input_device_open(const InputDeviceData* idev) {
+#ifdef USE_HIDAPI
+	if (idev->subsystem == HIDAPI)
+		return sccd_input_hidapi_open(idev->path);
+#endif
+#ifdef USE_LIBUSB
+	if (idev->subsystem == USB)
+		return sccd_input_libusb_open(idev->path);
+#endif
+#ifdef __BSD__
+	if (idev->subsystem == UHID)
+		return sccd_input_bsd_open(syspath);
+#endif
+	return NULL;
+}
+
+static char* input_device_get_prop(const InputDeviceData* idev, const char* name) {
+	StrBuilder* sb = strbuilder_new();
+	strbuilder_addf(sb, "%s/%s", idev->path, name);
+	if (strbuilder_failed(sb))
+		goto input_device_get_prop_fail;
+	int fd = open(strbuilder_get_value(sb), O_RDONLY);
+	if (fd < 0)
+		goto input_device_get_prop_fail;
+	strbuilder_clear(sb);
+	strbuilder_add_fd(sb, fd);
+	strbuilder_rstrip(sb, "\r\n\t ");
+	close(fd);
+	if (strbuilder_failed(sb))
+		goto input_device_get_prop_fail;
+	return strbuilder_consume(sb);
+input_device_get_prop_fail:
+	strbuilder_free(sb);
+	return NULL;
+}
+
+static void input_device_free_dummy(InputDeviceData* idev) {
+}
+
+static void input_device_free(InputDeviceData* idev) {
+	struct LinuxInputDeviceData* ldev = container_of(idev, struct LinuxInputDeviceData, idev);
+	free((char*)ldev->idev.path);
+	free(ldev);
+}
+
+static InputDeviceData* input_device_copy(const InputDeviceData* idev) {
+	const struct LinuxInputDeviceData* ldev = container_of(idev, struct LinuxInputDeviceData, idev);
+	struct LinuxInputDeviceData* copy = malloc(sizeof(struct LinuxInputDeviceData));
+	if (copy == NULL) return NULL;
+	copy->idev.path = strbuilder_cpy(ldev->idev.path);
+	if (copy->idev.path == NULL) {
+		free(copy);
+		return NULL;
 	}
+	copy->idev.free = input_device_free;
+	return &copy->idev;
 }
+
 
 static void on_new_syspath(Daemon* d, const char* subsystem, const char* syspath) {
-	any_t trash;
-	if (hashmap_get(known_devs, syspath, &trash) != MAP_MISSING)
-		return;		// Device is already known
+	static struct LinuxInputDeviceData ldata = {
+		.idev = {
+			.get_prop = input_device_get_prop,
+			.get_name = input_device_get_name,
+			.get_idx = input_device_get_idx,
+			.free = input_device_free_dummy,
+			.open = input_device_open,
+			.copy = input_device_copy,
+		}
+	};
 	
-	Subsystem sys = USB;
-	Vendor vendor = 0;
-	Product product = 0;
-	if (strcmp(subsystem  , "input") == 0) {
-		sys = INPUT;
-		// TODO: Handle input
-		// TODO: bluetooth here
-		return;
+	ldata.idev.path = syspath;
+	if (strcmp(subsystem, "input") == 0) {
+		// TODO: Bluetooth here?
+		*((Subsystem*)&ldata.idev.subsystem) = EVDEV;
+		ldata.product = -1;
+		ldata.vendor = -1;
 	} else {
-		if (!get_vendor_product(subsystem, syspath, &vendor, &product))
+		if (!get_vendor_product(subsystem, syspath, &ldata.vendor, &ldata.product))
 			return;
+		*((Subsystem*)&ldata.idev.subsystem) = USB;
 	}
 	
-	sccd_device_monitor_new_device(d, syspath, sys, vendor, product);
+	sccd_device_monitor_new_device(d, &ldata.idev);
+}
+
+bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, const HotplugFilter* filter) {
+	const struct LinuxInputDeviceData* ldev = container_of(idev, struct LinuxInputDeviceData, idev);
+	char* name;
+	switch (filter->type) {
+	case SCCD_HOTPLUG_FILTER_VENDOR:
+		return (ldev->vendor == filter->vendor);
+	case SCCD_HOTPLUG_FILTER_PRODUCT:
+		return (ldev->product == filter->product);
+	case SCCD_HOTPLUG_FILTER_NAME:
+		name = input_device_get_prop(idev, "device/name");
+		if ((name != NULL) && (strcmp(name, filter->name) == 0)) {
+			free(name);
+			return true;
+		}
+		free(name);
+		return false;
+	default:
+		return false;
+	}
 }
 
 static void on_data_ready(Daemon* d, int fd, void* userdata) {
@@ -86,15 +170,12 @@ static void on_data_ready(Daemon* d, int fd, void* userdata) {
 		}
 	}
 	if ((strcmp(action, "remove") == 0) || (strcmp(action, "unbind") == 0)) {
-		if (hashmap_get(known_devs, syspath, &trash) != MAP_MISSING) {
-			DEBUG("Device '%s' removed", syspath);
-			hashmap_remove(known_devs, syspath);
-		}
+		sccd_device_monitor_device_removed(d, syspath);
 	}
 	udev_device_unref(dev);
 }
 
-/** 
+/**
  * For given syspath, reads and returns Vendor and Product ids.
  * Returns true on success
  */
@@ -148,9 +229,7 @@ long int read_long_from_file(const char* filename, int base) {
 }
 
 void sccd_device_monitor_init() {
-	callbacks = hashmap_new();
-	known_devs = hashmap_new();
-	ASSERT((callbacks != NULL) && (known_devs != NULL));
+	sccd_device_monitor_common_init();
 	Daemon* d = get_daemon();
 	ctx = udev_new();
 	ASSERT(ctx != NULL);
@@ -169,6 +248,7 @@ void sccd_device_monitor_start() {
 
 static void sccd_device_monitor_rescan_subsystem(Daemon* d, const char* subsystem) {
 	struct udev_enumerate* e = udev_enumerate_new(ctx);
+	int evdev = strcmp(subsystem, "input");
 	if (e == NULL) {
 		WARN("udev_enumerate_new failed for subsystem %s", subsystem);
 		return;
@@ -189,6 +269,10 @@ static void sccd_device_monitor_rescan_subsystem(Daemon* d, const char* subsyste
 	struct udev_list_entry* entry = udev_enumerate_get_list_entry(e);
 	while (entry != NULL) {
 		const char* syspath = udev_list_entry_get_name(entry);
+		if ((evdev == 0) && (strstr(syspath, "/event") == NULL)) {
+			entry = udev_list_entry_get_next(entry);
+			continue;
+		}
 		on_new_syspath(d, subsystem, syspath);
 		entry = udev_list_entry_get_next(entry);
 	}
@@ -202,20 +286,11 @@ void sccd_device_monitor_rescan() {
 	Daemon* d = get_daemon();
 	// self._get_hci_addresses()
 	// subsytems_to_scan has to have enough space to fit everything from Subsystem enum
-	bool subsytems_to_scan[] = { false, false, false, false };
-		
-	HashMapIterator iter = iter_get(callbacks);
-	FOREACH(const char*, key, iter) {
-		int sys;
-		int vendor;
-		int product;
-		sscanf(key, "%i:%x:%x", &sys, &vendor, &product);
-		subsytems_to_scan[sys] = true;
-	}
-	iter_free(iter);
+	uint32_t subsytems_to_scan = sccd_device_monitor_get_enabled_subsystems(d);
 	
 	for (int sys=0; sys<sizeof(subsytems_to_scan); sys++) {
-		if (!subsytems_to_scan[sys]) continue;	// skip rests
+		if ((subsytems_to_scan & (1 << sys)) == 0)
+			continue;
 		switch (sys) {
 			case USB:
 				sccd_device_monitor_rescan_subsystem(d, "usb");
@@ -223,7 +298,7 @@ void sccd_device_monitor_rescan() {
 			case BT:
 				sccd_device_monitor_rescan_subsystem(d, "bluetooth");
 				break;
-			case INPUT:
+			case EVDEV:
 				sccd_device_monitor_rescan_subsystem(d, "input");
 				break;
 		}
@@ -231,23 +306,8 @@ void sccd_device_monitor_rescan() {
 }
 
 void sccd_device_monitor_close() {
-	hashmap_free(callbacks);
-	hashmap_free(known_devs);
+	sccd_device_monitor_close_common();
 	udev_monitor_unref(monitor);
 	udev_unref(ctx);
-}
-
-bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb) {
-	any_t trash;
-	const char* key = make_key(sys, vendor, product);
-	if (hashmap_get(callbacks, key, &trash) != MAP_MISSING) {
-		WARN("Callback for %x:%x is already registered", vendor, product);
-		return false;
-	}
-	if (hashmap_put(callbacks, key, cb) != MAP_OK)
-		return false;
-	
-	enabled_subsystems[sys] = true;
-	return true;
 }
 

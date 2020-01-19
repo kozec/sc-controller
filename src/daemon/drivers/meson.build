@@ -49,3 +49,14 @@ shared_library('scc-drv-fake',
 	]
 )
 
+if host_machine.system() == 'linux'
+	shared_library('scc-drv-udev',
+		include_directories: [ include ],
+		dependencies: [ dependency('libevdev') ],
+		link_with: [ utils_lib ],
+		sources: [
+			'generic/evdev.c',
+		]
+	)
+endif
+
