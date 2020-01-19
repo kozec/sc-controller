@@ -229,7 +229,7 @@ Driver* scc_driver_init(Daemon* daemon) {
 	HotplugFilter filter_idx = { .type=SCCD_HOTPLUG_FILTER_UHID_IDX, .idx=0 };
 	success = daemon->hotplug_cb_add(UHID, &hotplug_cb_hid, &filter_vendor, &filter_product, &filter_idx, NULL);
 #else
-	if (daemon->hidapi_enabled()) {
+	if (daemon->get_hidapi_enabled()) {
 		success = daemon->hotplug_cb_add(HIDAPI, &hotplug_cb_hid, &filter_vendor, &filter_product, NULL);
 	} else {
 		dongles = list_new(Dongle, 4);

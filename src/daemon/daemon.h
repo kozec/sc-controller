@@ -41,7 +41,6 @@ typedef LIST_TYPE(ErrorData) ErrorList;
 typedef LIST_TYPE(Controller) ControllerList;
 
 typedef void (*sccd_scheduler_cb_internal)(void* parent, void* userdata);
-typedef uintptr_t TaskID;
 
 int sccd_start();
 void sccd_set_proctitle(const char* name);
@@ -172,6 +171,7 @@ void sccd_set_special_client(enum SpecialClientType t, Client* client);
 void sccd_drivers_init();
 
 ControllerList sccd_get_controller_list();
+Controller* sccd_get_controller_by_id(const char* id);
 
 /**
  * Returns NULL on success or source that was not available for locking

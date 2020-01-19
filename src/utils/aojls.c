@@ -1727,6 +1727,7 @@ static bool parse_int(aojls_ctx_t* ctx, tokenizer_t* tokenizer, double* num) {
 	bool minus = false;
 	if (next_type(tokenizer, MINUS)) {
 		next(tokenizer);
+		minus = true;
 	}
 
 	size_t cpgr = get_current_pos(tokenizer);

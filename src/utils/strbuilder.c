@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <errno.h>
 
@@ -334,7 +335,6 @@ void strbuilder_rtrim(StrBuilder* b, size_t count) {
 	}
 }
 
-
 void strbuilder_ltrim(StrBuilder* b, size_t count) {
 	if (b == NULL) return;
 	count = min(b->length, count);
@@ -345,6 +345,19 @@ void strbuilder_ltrim(StrBuilder* b, size_t count) {
 	*b->next = 0;
 }
 
+bool strbuilder_upper(StrBuilder* b) {
+	if (b == NULL) return false;
+	for (size_t i=0; i<b->length; i++)
+		b->value[i] = toupper(b->value[i]);
+	return true;
+}
+
+bool strbuilder_lower(StrBuilder* b) {
+	if (b == NULL) return false;
+	for (size_t i=0; i<b->length; i++)
+		b->value[i] = tolower(b->value[i]);
+	return true;
+}
 
 bool strbuilder_escape(StrBuilder* b, const char* chars, char escape_char) {
 	if (b == NULL) return false;

@@ -50,11 +50,15 @@ shared_library('scc-drv-fake',
 )
 
 if host_machine.system() == 'linux'
-	shared_library('scc-drv-udev',
+	shared_library('scc-drv-evdev',
 		include_directories: [ include ],
-		dependencies: [ dependency('libevdev') ],
-		link_with: [ utils_lib ],
+		dependencies: [
+			dependency('libevdev'),
+			dependency('zlib'),
+		],
+		link_with: [ utils_lib, tools_lib ],
 		sources: [
+			'generic/common.c',
 			'generic/evdev.c',
 		]
 	)

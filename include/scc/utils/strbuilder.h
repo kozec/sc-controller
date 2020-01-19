@@ -21,8 +21,6 @@ bool strbuilder_add(StrBuilder* b, const char* string);
 /** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_add_char(StrBuilder* b, char c);
 /** Returns false if memory cannot be allocated or if 'b' is NULL */
-bool strbuilder_prepend_char(StrBuilder* b, char c);
-/** Returns false if memory cannot be allocated or if 'b' is NULL */
 bool strbuilder_addf(StrBuilder* b, const char* format, ...);
 /**
  * Clears strbuilder value, without deallocating anything.
@@ -62,6 +60,13 @@ bool strbuilder_insertf(StrBuilder* b, size_t pos, const char* format, ...);
 void strbuilder_rtrim(StrBuilder* b, size_t count);
 /** Removes up to 'count' characters from left of the string */
 void strbuilder_ltrim(StrBuilder* b, size_t count);
+/**
+ * Modifies string in place converting it to upper-case.
+ * Returns true on success, what should be always.
+ */
+bool strbuilder_upper(StrBuilder* b);
+/** As strbuilder_upper, but converts to lower case */
+bool strbuilder_lower(StrBuilder* b);
 
 /**
  * Returns true if any _add*, _insert*, _prepend* (etc) method failed at any

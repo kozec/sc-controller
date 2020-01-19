@@ -1,25 +1,23 @@
 /**
- * Generic SC-Controller driver - udev
+ * Generic SC-Controller driver - evdev
  *
  * Implementation used to communicate with generic controllers on Linux
  */
-#define LOG_TAG "udev_drv"
+#include "generic.h"
 #include "scc/utils/container_of.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
-#include "scc/utils/intmap.h"
+#include "scc/utils/math.h"
 #include "scc/input_device.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
-#include "scc/tools.h"
 #include <libevdev/libevdev.h>
-#include <unistd.h>
+#include <sys/stat.h>
 #include <fcntl.h>
+#include <zlib.h>
 
-#define MAX_DESC_LEN	32
-#define MAX_ID_LEN		24
-
+#define PADPRESS_EMULATION_TIMEOUT 2
 
 typedef struct EvdevController {
 	Controller				controller;
@@ -30,6 +28,7 @@ typedef struct EvdevController {
 	ControllerInput			input;
 	char					id[MAX_ID_LEN];
 	char					desc[MAX_DESC_LEN];
+	TaskID					padpressemu_task;
 	int						fd;
 	struct libevdev*		dev;
 } EvdevController;
@@ -68,55 +67,136 @@ static void evdev_dealloc(Controller* c) {
 		libevdev_free(ev->dev);
 	if (ev->button_map != NULL)
 		intmap_free(ev->button_map);
-	if (ev->axis_map != NULL)
-		intmap_free(ev->axis_map);
+	if (ev->axis_map != NULL) {
+		axis_map_free(ev->axis_map);
+	}
 	if (ev->fd >= 0)
 		close(ev->fd);
 	free(ev);
 }
 
-static bool evdev_load_mappings(EvdevController* ev) {
+static bool evdev_load_mappings(Daemon* d, EvdevController* ev) {
+	StrBuilder* sb = strbuilder_new();
 	ev->button_map = intmap_new();
-	ev->axis_map = intmap_new();
-	if ((ev->button_map == NULL) || (ev->axis_map == NULL))
+	ev->axis_map = axis_map_new();
+	aojls_ctx_t* ctx = NULL;
+	if ((sb == NULL) || (ev->button_map == NULL) || (ev->axis_map == NULL))
+		goto evdev_load_mappings_oom;
+	
+	const char* uniq = libevdev_get_uniq(ev->dev);
+	if (uniq == NULL)
+		uniq = libevdev_get_name(ev->dev);		// Not so unique :(
+	strbuilder_add(sb, d->get_config_path());
+	strbuilder_add_path(sb, "devices");
+	strbuilder_add_path(sb, "evdev-");
+	strbuilder_addf(sb, "%s.json", uniq);
+	if (strbuilder_failed(sb))
+		goto evdev_load_mappings_oom;
+	int fd = open(strbuilder_get_value(sb), O_RDONLY);
+	if (fd < 0) {
+		strbuilder_free(sb);
+		WARN("No mappings for '%s'", uniq);
 		return false;
+	}
+	strbuilder_clear(sb);
+	strbuilder_add_fd(sb, fd);
+	close(fd);
+	if (strbuilder_failed(sb))
+		goto evdev_load_mappings_oom;
 	
-	intmap_put(ev->button_map, 304, (any_t)B_A);
-	intmap_put(ev->button_map, 305, (any_t)B_B);
-	intmap_put(ev->button_map, 307, (any_t)B_X);
-	intmap_put(ev->button_map, 308, (any_t)B_Y);
-	intmap_put(ev->button_map, 314, (any_t)B_BACK);
-	intmap_put(ev->button_map, 315, (any_t)B_START);
-	intmap_put(ev->button_map, 317, (any_t)B_STICKPRESS);
-	intmap_put(ev->button_map, 318, (any_t)B_RPADPRESS);
-	intmap_put(ev->button_map, 310, (any_t)B_LB);
-	intmap_put(ev->button_map, 311, (any_t)B_RB);
-	intmap_put(ev->button_map, 316, (any_t)B_C);
+	aojls_deserialization_prefs prefs = { 0 };
+	ctx = aojls_deserialize((char*)strbuilder_get_value(sb), strbuilder_len(sb), &prefs);
+	if ((ctx == NULL) || (prefs.error != NULL)) {
+		LERROR("Failed to decode mappings for '%s': %s", uniq, prefs.error);
+		strbuilder_free(sb);
+		json_free_context(ctx);
+		return false;
+	}
 	
+	json_object* root = json_as_object(json_context_get_result(ctx));
+	json_object* buttons = json_object_get_object(root, "buttons");
+	json_object* axes = json_object_get_object(root, "axes");
+	
+	if (!load_button_map(uniq, buttons, ev->button_map))
+		goto evdev_load_mappings_oom;
+	if (!load_axis_map(uniq, axes, ev->axis_map))
+		goto evdev_load_mappings_oom;
+	
+	strbuilder_free(sb);
+	json_free_context(ctx);
 	return true;
+
+evdev_load_mappings_oom:
+	strbuilder_free(sb);
+	json_free_context(ctx);
+	LERROR("Out of memory");
+	return false;
 }
 
+static void cancel_padpress_emulation(void* _ev) {
+	EvdevController* ev = (EvdevController*)_ev;
+	Daemon* d = ev->daemon;
+	bool needs_reschedule = false;
+	if ((ev->input.buttons & B_LPADTOUCH) != 0) {
+		if ((ev->input.lpad_x == 0) && (ev->input.lpad_y == 0))
+			ev->input.buttons &= ~(B_LPADPRESS | B_LPADTOUCH);
+		else
+			needs_reschedule = true;
+	}
+	if ((ev->input.buttons & B_RPADTOUCH) != 0) {
+		if ((ev->input.rpad_x == 0) && (ev->input.rpad_y == 0))
+			ev->input.buttons &= ~B_RPADTOUCH;
+		else
+			needs_reschedule = true;
+	}
+	if (needs_reschedule)
+		ev->padpressemu_task = d->schedule(PADPRESS_EMULATION_TIMEOUT, cancel_padpress_emulation, ev);
+	else
+		ev->padpressemu_task = 0;
+	
+	if (ev->mapper != NULL)
+		ev->mapper->input(ev->mapper, &ev->input);
+}
 
-static void on_data_ready(Daemon* d, int fd, void* userdata) {
-	EvdevController* ev = (EvdevController*)userdata;
+static void on_data_ready(Daemon* d, int fd, void* _ev) {
+	EvdevController* ev = (EvdevController*)_ev;
 	struct input_event event;
+	SCButton old_buttons = ev->input.buttons;
 	while (libevdev_next_event(ev->dev, LIBEVDEV_READ_FLAG_NORMAL, &event) == LIBEVDEV_READ_STATUS_SUCCESS) {
 		bool call_mapper = false;
-		if (event.type == EV_KEY) {
-			intptr_t _b;
-			if (intmap_get(ev->button_map, event.code, (any_t)&_b) == MAP_OK) {
-				SCButton b = (SCButton)_b;
+		any_t val;
+		switch (event.type) {
+		case EV_KEY:
+			if (intmap_get(ev->button_map, event.code, &val) == MAP_OK) {
+				SCButton b = (SCButton)val;
 				if (event.value)
 					ev->input.buttons |= b;
 				else
 					ev->input.buttons &= ~b;
 				call_mapper = true;
 			} else {
-				LOG("Unknown code %i", event.code);
+				WARN("Unknown keycode %i", event.code);
 			}
+			break;
+		case EV_ABS:
+			if (intmap_get(ev->axis_map, event.code, &val) == MAP_OK) {
+				AxisData* a = (AxisData*)val;
+				apply_axis(a, (double)event.value, &ev->input);
+				call_mapper = true;
+			} else {
+				WARN("Unknown axis %i", event.code);
+			}
+			break;
 		}
 		if (call_mapper && (ev->mapper != NULL))
 			ev->mapper->input(ev->mapper, &ev->input);
+	}
+	
+	if ((ev->input.buttons & ~old_buttons & (B_LPADTOUCH | B_RPADTOUCH)) != 0) {
+		if (ev->padpressemu_task != 0)
+			d->cancel(ev->padpressemu_task);
+		ev->padpressemu_task = d->schedule(PADPRESS_EMULATION_TIMEOUT,
+											&cancel_padpress_emulation, ev);
 	}
 }
 
@@ -142,8 +222,7 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	}
 	free(event_file);
 	
-	if (!evdev_load_mappings(ev)) {
-		LERROR("Failed to load mappings");
+	if (!evdev_load_mappings(d, ev)) {
 		evdev_dealloc(&ev->controller);
 		return;
 	}
@@ -153,6 +232,28 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 		evdev_dealloc(&ev->controller);
 		return;
 	}
+	
+	StrBuilder* sb = strbuilder_new();
+	const char* uniq = libevdev_get_uniq(ev->dev);
+	if (uniq == NULL) {
+		const char* name = libevdev_get_name(ev->dev);
+		if (name == NULL) name = "(null)";
+		uLong crc = crc32(0, (const Bytef*)name, strlen(name));
+		strbuilder_addf(sb, "%x", crc);
+	} else {
+		strbuilder_addf(sb, "ev%s", uniq);
+	}
+	strbuilder_upper(sb);
+	strbuilder_insert(sb, 0, "ev");
+	int counter = 0;
+	do {
+		make_id(strbuilder_get_value(sb), ev->id, counter ++);
+	} while (d->get_controller_by_id(ev->id) != NULL);
+	
+	snprintf(ev->desc, MAX_DESC_LEN, "<EvDev %s>", libevdev_get_name(ev->dev));
+	ev->desc[MAX_DESC_LEN - 1] = 0;
+	if (ev->desc[MAX_DESC_LEN - 2] != 0)
+		ev->desc[MAX_DESC_LEN - 2] = '>';
 	
 	ev->controller.flags = CF_HAS_DPAD | CF_NO_GRIPS | CF_HAS_RSTICK | CF_SEPARATE_STICK;
 	ev->controller.deallocate = &evdev_dealloc;
@@ -166,8 +267,6 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	ev->controller.flush = NULL;
 	ev->mapper = NULL;
 	ev->daemon = d;
-	snprintf(ev->id, MAX_ID_LEN, "evdev%i", 77);
-	snprintf(ev->desc, MAX_DESC_LEN, "<EvDev at %p>", ev);
 	
 	if (!d->controller_add(&ev->controller)) {
 		LERROR("Failed to add new controller");

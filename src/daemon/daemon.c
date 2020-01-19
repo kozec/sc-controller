@@ -37,7 +37,7 @@ static bool add_mainloop(sccd_mainloop_cb cb);
 static void remove_mainloop(sccd_mainloop_cb cb);
 static bool controller_add(Controller* c);
 static void controller_remove(Controller* c);
-static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
+static TaskID schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
 static bool sccd_hidapi_enabled();
 static void spawn_minions(void* trash1, void* trash2);
 
@@ -50,10 +50,13 @@ static Daemon _daemon = {
 	.mainloop_cb_add			= add_mainloop,
 	.mainloop_cb_remove			= remove_mainloop,
 	.schedule					= schedule,
+	.cancel						= sccd_scheduler_cancel,
 	.poller_cb_add				= sccd_poller_add,
 	.hotplug_cb_add				= sccd_register_hotplug_cb,
+	.get_controller_by_id		= sccd_get_controller_by_id,
 	.get_x_display				= sccd_x11_get_display,
-	.hidapi_enabled				= sccd_hidapi_enabled,
+	.get_config_path			= scc_get_config_path,
+	.get_hidapi_enabled			= sccd_hidapi_enabled,
 };
 
 Daemon* get_daemon() {
@@ -73,9 +76,8 @@ static void schedule_cb(void* cb, void* userdata) {
 	((sccd_scheduler_cb)(cb))(userdata);
 }
 
-static bool schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata) {
-	TaskID id = sccd_scheduler_schedule(timeout, &schedule_cb, (void*)cb, userdata);
-	return (id != 0);
+static TaskID schedule(uint32_t timeout, sccd_scheduler_cb cb, void* userdata) {
+	return sccd_scheduler_schedule(timeout, &schedule_cb, (void*)cb, userdata);
 }
 
 void sccd_exit() {
@@ -446,6 +448,14 @@ ErrorList sccd_get_errors() {
 
 ControllerList sccd_get_controller_list() {
 	return controllers;
+}
+
+Controller* sccd_get_controller_by_id(const char* id) {
+	FOREACH_IN(Controller*, c, controllers) {
+		if (0 == strcmp(c->get_id(c), id))
+			return c;
+	}
+	return NULL;
 }
 
 Client* sccd_get_special_client(enum SpecialClientType t) {

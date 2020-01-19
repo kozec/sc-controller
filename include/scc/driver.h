@@ -15,6 +15,7 @@ struct Daemon;
 
 typedef unsigned short Vendor;
 typedef unsigned short Product;
+typedef uintptr_t TaskID;
 typedef enum {
 	USB			= 0,
 #ifdef __linux__
@@ -32,31 +33,12 @@ typedef struct Daemon Daemon;
 typedef struct Driver Driver;
 typedef struct InputDevice InputDevice;
 typedef struct InputDeviceData InputDeviceData;
+typedef struct HotplugFilter HotplugFilter;
 
 typedef void (*sccd_mainloop_cb)(Daemon* d);
 typedef void (*sccd_poller_cb)(Daemon* d, int fd, void* userdata);
 typedef void (*sccd_hotplug_cb)(Daemon* d, const InputDeviceData* idata);
 typedef void (*sccd_scheduler_cb)(void* userdata);
-
-typedef struct HotplugFilter {
-	enum {
-		SCCD_HOTPLUG_FILTER_VENDOR		= 1,
-		SCCD_HOTPLUG_FILTER_PRODUCT		= 2,
-		/** evdev or dinput name */
-		SCCD_HOTPLUG_FILTER_NAME		= 3,
-#ifdef __BSD__
-		SCCD_HOTPLUG_FILTER_UHID_IDX	= 4,
-#endif
-	}					type;
-	union {
-		Vendor			vendor;
-		Product			product;
-		const char*		name;
-#ifdef __BSD__
-		int				idx;
-#endif
-	};
-} HotplugFilter;
 
 /** This is 'daemon from POV of driver', not everything that daemon does */
 struct Daemon {
@@ -95,9 +77,15 @@ struct Daemon {
 	 * assuming entire daemon doesn't crash before.
 	 *
 	 * 'delay' is in milliseconds. It can be zero, in which case callback will be called ASAP.
-	 * Returns false if allocation fails.
+	 * Returns id that can be used to cancel scheduled call later
+	 * or 0 if allocation fails.
 	 */
-	bool			(*schedule)(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
+	TaskID			(*schedule)(uint32_t timeout, sccd_scheduler_cb cb, void* userdata);
+	/**
+	 * Cancels callback scheduled by 'schedule' method.
+	 * If id is not valid, does nothing.
+	 */
+	void			(*cancel)(TaskID task_id);
 	/**
 	 * Adds file descriptor that will be monitored for having data available to
 	 * read and callback that will be called from Daemon's mainloop when that
@@ -145,16 +133,28 @@ struct Daemon {
 	 */
 	void			(*error_remove)(intptr_t id);
 	/**
+	 * Returns controller with given ID or NULL if such controler is not found.
+	 * Note that returned value may be deallocated by daemon at any time and so
+	 * it shouldn't be kept by caller.
+	 */
+	Controller*		(*get_controller_by_id)(const char* id);
+	/**
 	 * Returns X11 display connection (casted to void*)
 	 * On platforms where X11 is not used, or if connection to XServer failed
 	 * before, returns NULL.
 	 */
 	void*			(*get_x_display)();
 	/**
+	 * Returns configuration directory, that is ~/.config/scc under normal conditions.
+	 * Returned value is cached internally and should NOT be free'd by caller.
+	 */
+	const char*		(*get_config_path)();
+	/**
 	 * Returns true if hidapi support was enabled at compile time
 	 */
-	bool			(*hidapi_enabled)();
+	bool			(*get_hidapi_enabled)();
 };
+
 
 struct Driver {
 	/**
@@ -164,7 +164,29 @@ struct Driver {
 	void			(*unload)(struct Driver* drv, struct Daemon* d);
 };
 
-/** 
+
+typedef struct HotplugFilter {
+	enum {
+		SCCD_HOTPLUG_FILTER_VENDOR		= 1,
+		SCCD_HOTPLUG_FILTER_PRODUCT		= 2,
+		/** evdev or dinput name */
+		SCCD_HOTPLUG_FILTER_NAME		= 3,
+#ifdef __BSD__
+		SCCD_HOTPLUG_FILTER_UHID_IDX	= 4,
+#endif
+	}					type;
+	union {
+		Vendor			vendor;
+		Product			product;
+		const char*		name;
+#ifdef __BSD__
+		int				idx;
+#endif
+	};
+} HotplugFilter;
+
+
+/**
  * This function should be exported by driver; It will be called automatically
  * when daemon is starting.
  * It should return NULL to indicate on any failure.

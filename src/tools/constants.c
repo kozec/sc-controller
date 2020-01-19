@@ -46,6 +46,7 @@ SCButton scc_what_to_touch_button(PadStickTrigger what) {
 }
 
 SCButton scc_string_to_button(const char* s) {
+	if (s == NULL) return 0;
 	switch (s[0]) {
 	case 'R':
 		if (0 == strcmp("RB", s)) return B_RB;
@@ -83,6 +84,7 @@ SCButton scc_string_to_button(const char* s) {
 }
 
 PadStickTrigger scc_string_to_pst(const char* s) {
+	if (s == NULL) return 0;
 	switch (s[0]) {
 	case 'R':
 		// backwards compatibility: RPAD was originally named RIGHT

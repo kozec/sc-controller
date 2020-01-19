@@ -149,31 +149,41 @@ typedef enum SCButton {
 } SCButton;
 
 struct GyroInput {
-	GyroValue			accel_x;
-	GyroValue			accel_y;
-	GyroValue			accel_z;
-	GyroValue			gpitch;
-	GyroValue			groll;
-	GyroValue			gyaw;
-	GyroValue			q0;
-	GyroValue			q1;
-	GyroValue			q2;
-	GyroValue			q3;
+	GyroValue				accel_x;
+	GyroValue				accel_y;
+	GyroValue				accel_z;
+	GyroValue				gpitch;
+	GyroValue				groll;
+	GyroValue				gyaw;
+	GyroValue				q0;
+	GyroValue				q1;
+	GyroValue				q2;
+	GyroValue				q3;
 };
 
 struct ControllerInput {
-	SCButton			buttons;
-	TriggerValue		ltrig;
-	TriggerValue		rtrig;
-	AxisValue			stick_x;
-	AxisValue			stick_y;
-	AxisValue			lpad_x;
-	AxisValue			lpad_y;
-	AxisValue			rpad_x;
-	AxisValue			rpad_y;
-	AxisValue			cpad_x;
-	AxisValue			cpad_y;
-	struct GyroInput	gyro;
+	SCButton				buttons;
+	union {
+		TriggerValue		triggers[2];
+		struct {
+			TriggerValue	ltrig;
+			TriggerValue	rtrig;
+		};
+	};
+	union {
+		AxisValue			axes[8];
+		struct {
+			AxisValue		stick_x;
+			AxisValue		stick_y;
+			AxisValue		lpad_x;
+			AxisValue		lpad_y;
+			AxisValue		rpad_x;
+			AxisValue		rpad_y;
+			AxisValue		cpad_x;
+			AxisValue		cpad_y;
+		};
+	};
+	struct GyroInput		gyro;
 };
 
 typedef enum PadStickTrigger {

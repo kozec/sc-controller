@@ -98,7 +98,7 @@ Driver* scc_driver_init(Daemon* daemon) {
 	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,  .vendor=VENDOR_ID };
 	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT, .product=PRODUCT_ID };
 #ifndef __BSD__
-	Subsystem s = daemon->hidapi_enabled() ? HIDAPI : USB;
+	Subsystem s = daemon->get_hidapi_enabled() ? HIDAPI : USB;
 	#define FILTERS &filter_vendor, &filter_product
 #else
 	Subsystem s = UHID;
