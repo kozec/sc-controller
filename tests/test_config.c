@@ -48,7 +48,7 @@ void test_defaults(CuTest* tc) {
 	RC_REL(c);
 	
 #ifdef _WIN32
-	RegDeleteKeyA(hkcu, filename);
+	RegDeleteKey(hkcu, filename);
 	RegCloseKey(hkcu);
 #endif
 }
@@ -93,7 +93,7 @@ void test_values(CuTest* tc) {
 	RC_REL(c);
 	
 #ifdef _WIN32
-	RegDeleteKeyA(hkcu, filename);
+	RegDeleteKey(hkcu, filename);
 	RegCloseKey(hkcu);
 #endif
 }
@@ -136,7 +136,7 @@ void test_set(CuTest* tc) {
 	RC_REL(c);
 	
 #ifdef _WIN32
-	RegDeleteKeyA(hkcu, filename);
+	RegDeleteKey(hkcu, filename);
 	RegCloseKey(hkcu);
 #endif
 }
@@ -144,8 +144,9 @@ void test_set(CuTest* tc) {
 
 /** Tests working with controller configs */
 void test_controller_config(CuTest* tc) {
+	const char* data[1024];
+	char buffer[1024];
 	char error[1024];
-	const char* data[256];
 	// Prepare controller config
 #ifndef _WIN32
 	char* prefix = strbuilder_fmt(TEST_CFG_DEV_PATH, getpid());
@@ -164,7 +165,6 @@ void test_controller_config(CuTest* tc) {
 			"\"dpads\": {},"
 			"\"gui\": {"
 			"	\"icon\": \"test-01\","
-			"	\"background\": \"psx\","
 			"	\"buttons\": [\"A\",\"B\",\"X\",\"Y\",\"BACK\",\"C\",\"START\",\"LB\",\"RB\",\"LT\",\"RT\",\"LG\",\"RG\"]"
 			"}"
 	"}");
@@ -180,7 +180,41 @@ void test_controller_config(CuTest* tc) {
 	write(f, "{}", 2);
 	close(f);
 #else
-#error "oops"
+	HKEY hkcu;
+	char* prefix = strbuilder_fmt(TEST_CFG_PATH, getpid());
+	assert(tc, ERROR_SUCCESS == RegOpenCurrentUser(KEY_READ, &hkcu));
+	
+	sprintf(buffer, TEST_CFG_PATH "\\devices\\test\\dpads", getpid());
+	HKEY key = config_make_subkey(hkcu, buffer);
+	RegCloseKey(key);
+	
+	sprintf(buffer, TEST_CFG_PATH "\\devices\\test2\\dpads", getpid());
+	key = config_make_subkey(hkcu, buffer);
+	RegCloseKey(key);
+	
+	sprintf(buffer, TEST_CFG_PATH "\\devices\\test\\axes\\1", getpid());
+	key = config_make_subkey(hkcu, buffer);
+	int64_t v;
+	v = -32768;		assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "min", REG_QWORD, &v, sizeof(int64_t)));
+	v = 32768;		assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "max", REG_QWORD, &v, sizeof(int64_t)));
+	v = 2000;		assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "deadzone", REG_QWORD, &v, sizeof(int64_t)));
+					assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "axis", REG_SZ, "stick_y", 8));
+	RegCloseKey(key);
+	
+	sprintf(buffer, TEST_CFG_PATH "\\devices\\test\\buttons", getpid());
+	key = config_make_subkey(hkcu, buffer);
+	assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "305", REG_SZ, "B", 2));
+	assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "307", REG_SZ, "X", 2));
+	assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "308", REG_SZ, "Y", 2));
+	RegCloseKey(key);
+	
+	sprintf(buffer, TEST_CFG_PATH "\\devices\\test\\gui", getpid());
+	key = config_make_subkey(hkcu, buffer);
+	assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "icon", REG_SZ, "test-01", 8));
+	const char* buttons = "A\0B\0X\0Y\0BACK\0C\0START\0LB\0RB\0LT\0RT\0LG\0RG";
+	assert(tc, ERROR_SUCCESS == RegSetKeyValueA(key, NULL, "buttons", REG_MULTI_SZ, buttons, 38));
+	RegCloseKey(hkcu);
+	RegCloseKey(key);
 #endif
 	
 	// Open SCC config
@@ -188,11 +222,14 @@ void test_controller_config(CuTest* tc) {
 	Config* c = config_load_from(filename2, error);
 	unlink(filename2);
 	free(filename2);
-#else
-#endif
+	
 	if (c == NULL) fprintf(stderr, "Error: %s\n", error);
 	assert(tc, c != NULL);
 	assert(tc, config_set_prefix(c, prefix));
+#else
+	Config* c = config_load_from(prefix, error);
+	assert(tc, c != NULL);
+#endif
 	free(prefix);
 	
 	// Check config_get_controllers returns expected values
@@ -203,7 +240,7 @@ void test_controller_config(CuTest* tc) {
 	
 	// Open controller config
 	Config* ccfg = config_get_controller_config(c, "test", error);
-	if (c == NULL) fprintf(stderr, "Error: %s\n", error);
+	if (ccfg == NULL) fprintf(stderr, "Error: %s\n", error);
 	assert(tc, ccfg != NULL);
 	
 	// Grab various kind of data to test it works
@@ -232,7 +269,6 @@ void test_controller_config(CuTest* tc) {
 #ifndef _WIN32
 	// Load config back and, since I'm not going to implement another JSON parser,
 	// just check if string is there.
-	char buffer[1024];
 	f = open(filename, O_RDONLY);
 	assert(tc, read(f, buffer, 1024) > 600);
 	buffer[1023] = 0;
@@ -240,15 +276,28 @@ void test_controller_config(CuTest* tc) {
 	assert(tc, NULL != strstr(buffer, "better-icon"));
 	free(filename);
 #else
+	sprintf(buffer, TEST_CFG_PATH "\\devices\\test\\gui", getpid());
+	assert(tc, ERROR_SUCCESS == RegOpenCurrentUser(KEY_READ, &hkcu));
+	key = config_make_subkey(hkcu, buffer);
+	DWORD size = 256;
+	assert(tc, ERROR_SUCCESS == RegGetValueA(key, NULL, "icon", RRF_RT_REG_SZ, NULL, buffer, &size));
+	assert(tc, 0 == strcmp("better-icon", buffer));
+	RegCloseKey(key);
+	
+	// Cleanup
+	sprintf(buffer, TEST_CFG_PATH, getpid());
+	RegDeleteTree(HKEY_CURRENT_USER, buffer);
+	RegCloseKey(hkcu);
+	// TODO: Use HKEY_CURRENT_USER instead of hcku
 #endif
 }
 
 
 int main(int argc, char** argv) {
 	traceback_set_argv0(argv[0]);
-	DEFAULT_SUITE_ADD(test_defaults);
-	DEFAULT_SUITE_ADD(test_values);
-	DEFAULT_SUITE_ADD(test_set);
+	//DEFAULT_SUITE_ADD(test_defaults);
+	//DEFAULT_SUITE_ADD(test_values);
+	//DEFAULT_SUITE_ADD(test_set);
 	DEFAULT_SUITE_ADD(test_controller_config);
 	
 	return CuSuiteRunDefault();

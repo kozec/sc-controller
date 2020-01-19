@@ -22,6 +22,9 @@ extern "C" {
 #include "scc/utils/aojls.h"
 #include "scc/utils/rc.h"
 #include <stdint.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 typedef struct Config Config;
 #define SCC_CONFIG_ERROR_LIMIT 1024
@@ -98,11 +101,25 @@ DLL_EXPORT bool config_fill_defaults(Config* cfg);
  */
 #ifdef _WIN32
 DLL_EXPORT Config* config_load_from(const char* path, char* error_return);
+/**
+ * Utility function to recursivelly create entire hierarchy of registry keys.
+ * For path == "Software\a\b\c", creates:
+ *  - HKCU\Software\a
+ *  - HKCU\Software\a\b
+ *  - HKCU\Software\a\b\c
+ * .. and returns handle to "HKCU\Software\a\b\c"
+ *
+ * Used by tests.
+ * May return NULL if memory can't be allocated.
+ */
+DLL_EXPORT HKEY config_make_subkey(HKEY root, const char* path);
 #else
 /** Allows loading config file from non-standard location. Used by testrs */
 DLL_EXPORT Config* config_load_from(const char* filename, char* error_return);
 /**
  * Sets prefix used to load data such as controller config. Used by tests.
+ * Not available on Windows, where controller configs are stored in registry subkey.
+ *
  * Creates copy of 'prefix' parameter. Returns false on OOM error.
  */
 DLL_EXPORT bool config_set_prefix(Config* c, const char* prefix);

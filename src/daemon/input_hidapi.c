@@ -233,18 +233,22 @@ InputDevice* sccd_input_hidapi_open(const char* syspath) {
 	return &dev->dev;
 }
 
+
 void sccd_input_hidapi_rescan() {
 	char fake_syspath_buffer[1024];
+	InputDeviceData idev = { .subsystem = HIDAPI, .path = fake_syspath_buffer };
+#ifdef _WIN32
+	sccd_device_monitor_win32_fill_struct(&idev);
+#endif
 	struct hid_device_info* lst = hid_enumerate(0, 0);
 	struct hid_device_info* dev = lst;
 	while (dev != NULL) {
-		snprintf(fake_syspath_buffer, 1024, "/hidapi%s", dev->path);
+		snprintf(fake_syspath_buffer, 1024, "/hidapi/%s", dev->path);
 #ifdef _WIN32
 		// Following replacement is done only so it looks better in log
 		scc_path_fix_slashes(fake_syspath_buffer);
 #endif
-		sccd_device_monitor_new_device(get_daemon(), fake_syspath_buffer,
-				HIDAPI, dev->vendor_id, dev->product_id, dev->interface_number);
+		sccd_device_monitor_new_device(get_daemon(), &idev);
 		dev = dev->next;
 	}
 	hid_free_enumeration(lst);

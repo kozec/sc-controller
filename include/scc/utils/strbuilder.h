@@ -82,6 +82,12 @@ bool strbuilder_failed(StrBuilder* b);
 bool strbuilder_escape(StrBuilder* b, const char* chars, char escape_char);
 
 /**
+ * Replaces any instance of character 'x' with character 'y'
+ * 'y' may be NULL, in which case, cuts string after first occurence of 'x'
+ */
+void strbuilder_replace(StrBuilder* b, char x, char y);
+
+/**
  * Adds string while escaping any instance of characters in 'chars' with 'escape_char'.
  * Returns false if memory for operation cannot be allocated, 'b' is NULL or 'escape_char' is 0.
  */

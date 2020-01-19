@@ -8,6 +8,7 @@
 #include "scc/utils/hashmap.h"
 #include "scc/utils/intmap.h"
 #include "scc/utils/assert.h"
+#include "scc/input_device.h"
 #include "daemon.h"
 #include <windows.h>
 #include <unistd.h>
@@ -45,25 +46,7 @@ inline static const char* make_key(Subsystem sys, Vendor vendor, Product product
 	return _key;
 }
 
-void sccd_device_monitor_new_device(Daemon* d, const char* syspath, Subsystem sys, Vendor vendor, Product product, int idx) {
-	sccd_hotplug_cb cb = NULL;
-	const char* key = make_key(sys, vendor, product, idx);
-	if (hashmap_get(callbacks, key, (any_t*)&cb) != MAP_MISSING) {
-		// I have no value to store in known_devs hashmap yet.
-		if (hashmap_put(known_devs, syspath, (void*)1) != MAP_OK)
-			return;
-		cb(d, syspath, sys, vendor, product, idx);
-		return;
-	}
-	key = make_key(sys, vendor, product, -1);
-	if (hashmap_get(callbacks, key, (any_t*)&cb) != MAP_MISSING) {
-		// I have no value to store in known_devs hashmap yet.
-		if (hashmap_put(known_devs, syspath, (void*)1) != MAP_OK)
-			return;
-		cb(d, syspath, sys, vendor, product, idx);
-	}
-}
-
+/*
 long int read_long_from_file(const char* filename, int base) {
 	char buffer[256];
 	FILE* fp = fopen(filename, "r");
@@ -73,6 +56,7 @@ long int read_long_from_file(const char* filename, int base) {
 	if (r < 1) return -1;
 	return strtol(buffer, NULL, base);
 }
+*/
 
 void sccd_device_monitor_init() {
 	callbacks = hashmap_new();
@@ -89,25 +73,69 @@ void sccd_device_monitor_close() {
 	hashmap_free(known_devs);
 }
 
-bool sccd_register_hotplug_cb(Subsystem sys, Vendor vendor, Product product, int idx, sccd_hotplug_cb cb) {
-	any_t trash;
-#ifndef USE_HIDAPI
-	if (sys == HIDAPI) {
-		WARN("Driver is trying to register callback for %x:%x on hidapi, but hidapi support was disabled at compile time",
-					vendor, product);
+
+bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, const HotplugFilter* filter) {
+	switch (filter->type) {
+	case SCCD_HOTPLUG_FILTER_VENDOR:
+		// return (ldev->vendor == filter->vendor);
+	case SCCD_HOTPLUG_FILTER_PRODUCT:
+		// return (ldev->product == filter->product);
+	case SCCD_HOTPLUG_FILTER_NAME:
+		// name = input_device_get_prop(idev, "device/name");
+		// if ((name != NULL) && (strcmp(name, filter->name) == 0)) {
+		// 	free(name);
+		// 	return true;
+		// }
+		// free(name);
+		return false;
+	default:
 		return false;
 	}
+}
+
+
+static const char* input_device_get_name(const InputDeviceData* idev) {
+	return NULL;
+}
+
+static int input_device_get_idx(const InputDeviceData* idev) {
+	// TODO: This? Used on Windows?
+	return -1;
+}
+
+static InputDevice* input_device_open(const InputDeviceData* idev) {
+#ifdef USE_HIDAPI
+	if (idev->subsystem == HIDAPI)
+		return sccd_input_hidapi_open(idev->path);
 #endif
-	const char* key = make_key(sys, vendor, product, idx);
-	if (hashmap_get(callbacks, key, &trash) != MAP_MISSING) {
-		WARN("Callback for %x:%x is already registered", vendor, product);
-		return false;
-	}
-	if (hashmap_put(callbacks, key, cb) != MAP_OK)
-		return false;
-	
-	enabled_subsystems[sys] = true;
-	return true;
+#ifdef USE_LIBUSB
+	if (idev->subsystem == USB)
+		return sccd_input_libusb_open(idev->path);
+#endif
+	return NULL;
+}
+
+static char* input_device_get_prop(const InputDeviceData* idev, const char* name) {
+	return NULL;
+}
+
+static void input_device_free(InputDeviceData* idev) {
+	free((char*)idev->path);
+	free(idev);
+}
+
+static InputDeviceData* input_device_copy(const InputDeviceData* idev) {
+	return NULL;
+}
+
+
+void sccd_device_monitor_win32_fill_struct(InputDeviceData* idev) {
+	idev->get_prop = input_device_get_prop;
+	idev->get_name = input_device_get_name;
+	idev->get_idx = input_device_get_idx;
+	idev->free = input_device_free;
+	idev->open = input_device_open;
+	idev->copy = input_device_copy;
 }
 
 void sccd_device_monitor_rescan() {

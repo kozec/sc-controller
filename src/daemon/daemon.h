@@ -161,6 +161,8 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* data, con
  * (and bit is set to 1) if there is any callback registered for it*/
 uint32_t sccd_device_monitor_get_enabled_subsystems(Daemon* d);
 #ifdef _WIN32
+typedef struct InputDeviceData InputDeviceData;
+void sccd_device_monitor_win32_fill_struct(InputDeviceData* idev);
 void sccd_input_libusb_rescan();
 #endif
 

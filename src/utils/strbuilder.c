@@ -381,6 +381,20 @@ bool strbuilder_escape(StrBuilder* b, const char* chars, char escape_char) {
 	return true;
 }
 
+void strbuilder_replace(StrBuilder* b, char x, char y) {
+	if (b == NULL) return;
+	
+	for (size_t i=0; i<b->length; i++) {
+		if (b->value[i] == x) {
+			b->value[i] = y;
+			if (y == 0) {
+				b->length = i;
+				return;
+			}
+		}
+	}
+}
+
 
 bool strbuilder_add_escaped(StrBuilder* b, const char* string, const char* chars, char escape_char) {
 	if (b == NULL) return false;
@@ -437,7 +451,6 @@ bool _strbuilder_add_all(StrBuilder* b, void* iterator,
 					const char* glue) {
 	if (b == NULL) return false;
 	if (!has_next(iterator)) return true;
-	if (b == NULL) return false;
 	size_t original_length = b->length;
 	bool needs_glue = false;
 	while (has_next(iterator)) {

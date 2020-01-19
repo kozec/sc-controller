@@ -147,7 +147,8 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 			const char* name = tokens_get_rest(tokens);
 			char* filename = NULL;
 #ifdef _WIN32
-			scc_path_fix_slashes(name);
+			// it's not a problem to overwrite this specific bit of memory here
+			scc_path_fix_slashes((char*)name);
 #endif
 			if (strstr(name, "/") == NULL) {
 				// If there is no slash in path, string is treat as profile name

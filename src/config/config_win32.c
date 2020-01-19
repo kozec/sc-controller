@@ -1,7 +1,7 @@
 /**
  * SC Controller - config
  * Handles loading, storing and querying config file
- * 
+ *
  * Backend that stores settings in registry
  */
 #ifdef _WIN32
@@ -19,10 +19,8 @@
 #include <errno.h>
 
 #define BUFFER_SIZE		256
+#define SUPPORTED_TYPES (RRF_RT_REG_SZ | RRF_RT_REG_MULTI_SZ | RRF_RT_REG_QWORD)
 
-#ifndef _WIN32
-	#error "config_win32.c included outside of Windows"
-#endif
 
 static void config_dealloc(void* _c) {
 	struct _Config* c = container_of(_c, struct _Config, config);
@@ -39,13 +37,23 @@ static void config_dealloc(void* _c) {
 
 
 /**
- * Returns (optionally creating) parent node of value or root node if there are no slashes
+ * Returns (optionally creating) parent key of value, or root node if there are no slashes
+ * 'buffer' will be overwriten with random data and its size has to be at least JSONPATH_MAX_LEN.
+ * if 'root' is NULL, HKEY_CURRENT_USER is assumed.
  */
-static inline HKEY config_get_parent(struct _Config* c, const char* path, bool create) {
+static inline HKEY config_get_parent(HKEY root, char* buffer, const char* path, bool create) {
 	LSTATUS r;
-	HKEY obj = c->root;
+	HKEY obj = root;
 	bool close_obj = false;
 	REGSAM sam = KEY_READ;
+	
+	if (obj == NULL) {
+		close_obj = true;
+		if ((r = RegOpenCurrentUser(KEY_READ, &obj)) != ERROR_SUCCESS) {
+			WARN("Failed to open registry: Code %i.", r);
+			return NULL;
+		}
+	}
 	
 	while (obj != NULL) {
 		const char* slash = strchr(path, '/');
@@ -57,17 +65,17 @@ static inline HKEY config_get_parent(struct _Config* c, const char* path, bool c
 			// Requested path is too long, this is not reasonable thing to request
 			return NULL;
 		}
-		strncpy(c->buffer, path, JSONPATH_MAX_LEN);
-		c->buffer[slash_index] = 0;
+		strncpy(buffer, path, JSONPATH_MAX_LEN);
+		buffer[slash_index] = 0;
 		
-		if (0 != strcmp("Software", c->buffer))
+		if (0 != strcmp("Software", buffer))
 			sam |= KEY_WRITE;
 		
 		HKEY subkey;
 		if (create)
-			r = RegCreateKeyExA(obj, c->buffer, 0, NULL, 0, sam, NULL, &subkey, NULL);
+			r = RegCreateKeyExA(obj, buffer, 0, NULL, 0, sam, NULL, &subkey, NULL);
 		else
-			r = RegOpenKeyExA(obj, c->buffer, 0, sam, &subkey);
+			r = RegOpenKeyExA(obj, buffer, 0, sam, &subkey);
 		if (r != ERROR_SUCCESS)
 			return NULL;
 		
@@ -81,12 +89,30 @@ static inline HKEY config_get_parent(struct _Config* c, const char* path, bool c
 	return NULL;
 }
 
+HKEY config_make_subkey(HKEY root, const char* path) {
+	char buffer[JSONPATH_MAX_LEN];
+	StrBuilder* sb = strbuilder_new();
+	
+	strbuilder_add(sb, path);
+	strbuilder_replace(sb, '\\', '/');
+	strbuilder_rstrip(sb, "/");
+	strbuilder_add(sb, "/dummy");
+	if (strbuilder_failed(sb))
+		return NULL;
+	
+	HKEY rv = config_get_parent(root, buffer, strbuilder_get_value(sb), true);
+	strbuilder_free(sb);
+	return rv;
+}
+
 
 static inline struct _Config* config_new() {
 	struct _Config* c = malloc(sizeof(struct _Config));
 	if (c == NULL) return NULL;
 	RC_INIT(&c->config, &config_dealloc);
+	c->defaults = DEFAULTS;
 	c->root = NULL;
+	
 	c->giant_memoryleak = NULL;
 	// About giant_memoryleak... Config guarantees that all strings returned by
 	// it are stored in memory at least until Config object is deallocated.
@@ -99,14 +125,7 @@ static inline struct _Config* config_new() {
 		return NULL;
 	}
 	
-	HKEY hkcu;
-	LSTATUS r;
-	if ((r = RegOpenCurrentUser(KEY_READ, &hkcu)) != ERROR_SUCCESS) {
-		WARN("Failed to open registry: Code %i.", r);
-		c->root = NULL;
-		return c;
-	}
-	c->root = hkcu;
+	c->root = NULL;
 	return c;
 }
 
@@ -116,12 +135,11 @@ Config* config_load() {
 	struct _Config* c = config_new();
 	if (c == NULL) return NULL;
 	
-	if (c->root != NULL) {
-		c->root = config_get_parent(c, "Software/SCController/dummy", true);
-		// ^^ Sets root to HKCU/Software/SCController
-	}
+	c->root = config_get_parent(NULL, c->buffer, "Software/SCController/dummy", true);
+	// ^^ Sets root to HKCU/Software/SCController
 	if (c->root == NULL) {
-		WARN("Starting with defaults.");
+		config_dealloc(c);
+		return NULL;
 	}
 	return &c->config;
 }
@@ -132,13 +150,6 @@ Config* config_load_from(const char* path, char* error_return) {
 	
 	struct _Config* c = config_new();
 	if (c == NULL) return NULL;
-	if (c->root == NULL) {
-		if (error_return != NULL)
-			strcpy(error_return, "Failed to open registry");
-		config_dealloc(c);
-		return NULL;
-	}
-	
 	if (strlen(path) >= JSONPATH_MAX_LEN - 10) {
 		strcpy(error_return, "Path is too long");
 		config_dealloc(c);
@@ -146,7 +157,7 @@ Config* config_load_from(const char* path, char* error_return) {
 	}
 	
 	snprintf(c->buffer, JSONPATH_MAX_LEN, "%s/d", path);
-	c->root = config_get_parent(c, c->buffer, false);
+	c->root = config_get_parent(NULL, c->buffer, c->buffer, false);
 	if (c->root == NULL) {
 		if (error_return != NULL)
 			strcpy(error_return, "Registry key not found");
@@ -170,6 +181,7 @@ static inline char* internal_string_alloc(struct _Config* c, size_t len) {
 
 /** Returns NULL if memory cannot be allocated */
 static const char* internalize_string(struct _Config* c, const char* value) {
+	// TODO: Don't allocate same string twice
 	size_t len = strlen(value);
 	if (len < 1) return NULL;
 	char* is = internal_string_alloc(c, len);
@@ -180,7 +192,7 @@ static const char* internalize_string(struct _Config* c, const char* value) {
 DLL_EXPORT bool config_is_parent(Config* _c, const char* path) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	snprintf(c->buffer, JSONPATH_MAX_LEN, "%s/d", path);
-	HKEY key = config_get_parent(c, c->buffer, false);
+	HKEY key = config_get_parent(c->root, c->buffer, c->buffer, false);
 	return (key != NULL);
 }
 
@@ -191,8 +203,10 @@ config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValu
 		return value;
 	
 	// 2nd, try to read value from registry
+	HKEY subkey;
 	value = NULL;
-	HKEY parent = config_get_parent(c, path, false);
+	REGSAM sam = KEY_READ;
+	HKEY parent = config_get_parent(c->root, c->buffer, path, false);
 	char buffer[BUFFER_SIZE];
 	
 	if (parent != NULL) {
@@ -206,6 +220,13 @@ config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValu
 		value->type = type;
 		
 		switch (type) {
+		case CVT_OBJECT:
+			// Just check if key exists, return NULL if it doesn't
+			r = RegOpenKeyExA(c->root, path, 0, sam, &subkey);
+			if (r != ERROR_SUCCESS)
+				return NULL;
+			RegCloseKey(subkey);
+			break;
 		case CVT_STRING:
 		case CVT_STR_ARRAY:
 			// retrieve size
@@ -269,11 +290,18 @@ config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValu
 				// Value doesn't exists, has wrong type or just generally failed to be retrieved
 				goto config_get_value_fail;
 			break;
+		case CVT_INVALID:
+			return NULL;
 		}
 		
 		// code reaches here after registry value is sucessfully retrieved
 		if (parent != c->root)
 			RegCloseKey(parent);
+		if (hashmap_put(c->values, path, (void*)value) != MAP_OK) {
+			// OOM
+			free(value);
+			return NULL;
+		}
 		return value;
 	}
 	
@@ -327,7 +355,7 @@ ConfigValueType config_get_type(Config* _c, const char* path) {
 }
 
 static inline config_value_t* config_get_or_create(struct _Config* c, const char* path, ConfigValueType type) {
-	config_get_parent(c, path, true);
+	config_get_parent(c->root, c->buffer, path, true);
 	config_value_t* value = config_get_value(c, path, type);
 	if (value == NULL) {
 		value = malloc(sizeof(struct _Config));
@@ -371,7 +399,7 @@ bool config_save(Config* _c) {
 		LSTATUS r = ERROR_SUCCESS;
 		config_value_t* value;
 		if (hashmap_get(c->values, path, (void*)&value) != MAP_OK) continue;
-		HKEY parent = config_get_parent(c, path, true);
+		HKEY parent = config_get_parent(c->root, c->buffer, path, true);
 		if (parent == NULL) goto config_save_key_failed;
 		const char* last = last_element(path);
 		
@@ -405,10 +433,15 @@ bool config_save(Config* _c) {
 					memcpy(pos, value->v_strar[i], len + 1);
 					pos += len + 1;
 				}
-				multi_sz_buffer[total_size + 1] = 0;
+				multi_sz_buffer[total_size - 1] = 0;
 				r = RegSetKeyValueA(parent, NULL, last, REG_MULTI_SZ, multi_sz_buffer, total_size);
 				free(multi_sz_buffer);
 			} while(0);
+			break;
+		case CVT_OBJECT:
+			// Not saved
+		case CVT_INVALID:
+			// Not possible
 			break;
 		}
 		
@@ -439,11 +472,52 @@ config_save_key_failed:
 	return true;
 }
 
+
+ConfigValueType config_get_type(Config* _c, const char* path) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	const struct config_item* def = config_get_default(c, path);
+	if (def != NULL) return def->type;
+	
+	HKEY parent = config_get_parent(c->root, c->buffer, path, false);
+	if (parent == NULL)
+		return CVT_INVALID;
+	
+	const char* last = last_element(path);
+	LSTATUS r;
+	HKEY subkey;
+	REGSAM sam = KEY_READ;
+	r = RegOpenKeyExA(parent, last, 0, sam, &subkey);
+	if (r == ERROR_SUCCESS) {
+		RegCloseKey(subkey);
+		return CVT_OBJECT;
+	}
+	
+	DWORD reg_type;
+	const DWORD flags = SUPPORTED_TYPES;
+	r = RegGetValueA(parent, NULL, last, flags, &reg_type, NULL, NULL);
+	ConfigValueType type = CVT_INVALID;
+	if (r == ERROR_SUCCESS) {
+		switch (reg_type) {
+		case RRF_RT_REG_SZ:
+			type = CVT_STRING;
+			break;
+		case RRF_RT_REG_QWORD:
+			type = CVT_INT;
+			break;
+		}
+	}
+	
+	RegCloseKey(parent);
+	return type;
+}
+
+
 const char* config_get(Config* _c, const char* path) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	config_value_t* value = config_get_value(c, path, CVT_STRING);
-	if (value != NULL)
+	if (value != NULL) {
 		return value->v_str;
+	}
 	
 	const struct config_item* def = config_get_default(c, path);
 	if ((def != NULL) && (def->type == CVT_STRING)) {
@@ -484,20 +558,107 @@ double config_get_double(Config* _c, const char* path) {
 	return 0;
 }
 
-size_t config_get_strings(Config* _c, const char* path, const char** target, size_t limit) {
+static ssize_t config_enum_keys(struct _Config* c, HKEY key, const char** target, ssize_t limit, bool include_values) {
+	DWORD max_len, max_value_len;
+	DWORD subkey_cnt, value_cnt;
+	// Query data
+	LSTATUS r = RegQueryInfoKeyA(key, NULL, NULL, NULL,
+			&subkey_cnt, &max_len, NULL,
+			&value_cnt, &max_value_len, NULL, NULL, NULL
+	);
+	
+	// Compute size and allocate buffer
+	if (include_values && (max_value_len > max_len))
+		max_len = max_value_len;
+	if ((r != ERROR_SUCCESS) || (max_value_len >= ULONG_MAX - 1))
+		return -1;
+	char* buffer = malloc(++ max_len);
+	if (buffer == NULL)
+		return -1;
+	
+	// Read keys
+	ssize_t j = 0;
+	for (DWORD i=0; i<subkey_cnt; i++) {
+		DWORD len = max_len;
+		r = RegEnumKeyEx(key, i, buffer, &len, NULL, NULL, NULL, NULL);
+		if (r == ERROR_SUCCESS) {
+			if (j >= limit) {
+				j = -2;
+				break;
+			}
+			buffer[len] = 0;
+			target[j] = internalize_string(c, buffer);
+			if (target[j] == NULL) {
+				j = 0;
+				break;
+			}
+			j++;
+		}
+	}
+	
+	// Read values
+	if (include_values) {
+		for (DWORD i=0; i<value_cnt; i++) {
+			DWORD len = max_len;
+			DWORD type;
+			r = RegEnumValueA(key, i, buffer, &len, NULL, &type, NULL, NULL);
+			if ((r == ERROR_SUCCESS) && (type | SUPPORTED_TYPES)) {
+				if (j >= limit) {
+					j = -2;
+					break;
+				}
+				buffer[len] = 0;
+				target[j] = internalize_string(c, buffer);
+				if (target[j] == NULL) {
+					j = 0;
+					break;
+				}
+				j++;
+			}
+		}
+	}
+	
+	// Free memory
+	free(buffer);
+	return j;
+}
+
+ssize_t config_get_strings(Config* _c, const char* path, const char** target, ssize_t limit) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	config_value_t* value = config_get_value(c, path, CVT_STR_ARRAY);
-	size_t j = 0;
+	ssize_t j = 0;
 	if (value == NULL) {
+		// Two possibilities why code reaches here;
+		// - Value in registry is not yet set and default should be used
+		// - Path represents key
+		// 2nd possibility is check 1st and if key is not found, default
+		// value is tried as fallback.
+		HKEY parent = config_get_parent(c->root, c->buffer, path, false);
+		if (parent != NULL) {
+			const char* last = last_element(path);
+			HKEY key;
+			LSTATUS r;
+			REGSAM sam = KEY_READ;
+			r = RegOpenKeyExA(parent, last, 0, sam, &key);
+			if (r == ERROR_SUCCESS) {
+				ssize_t rv = config_enum_keys(c, key, target, limit, true);
+				RegCloseKey(key);
+				return rv;
+			}
+		}
+		
+		// Path doesn't represents key, go for default value
 		const struct config_item* def = config_get_default(c, path);
 		if ((def == NULL) || (def->type != CVT_STR_ARRAY))
 			return 0;
-		for (size_t i=0; (i<limit) && (def->v_strar[i]!=NULL); i++) {
+		for (size_t i=0; (i<SSIZE_MAX) && (def->v_strar[i]!=NULL); i++) {
+			if (j >= limit) return -2;
 			target[i] = def->v_strar[i];
 			j++;
 		}
 	} else {
-		for (size_t i=0; (i<limit) && (value->v_strar[i]!=NULL); i++) {
+		for (size_t i=0; (i<SSIZE_MAX) && (value->v_strar[i]!=NULL); i++) {
+			if (j >= limit) return -2;
 			target[i] = value->v_strar[i];
 			j++;
 		}
@@ -592,5 +753,50 @@ int config_set_strings(Config* _c, const char* path, const char** list, ssize_t 
 	return 1;
 }
 
-#endif // _WIN32
+ssize_t config_get_controllers(Config* _c, const char** target, ssize_t limit) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	HKEY key = config_get_parent(c->root, c->buffer, "/devices/dummy", true);
+	if (key == NULL) return 0;
+	
+	ssize_t rv = config_enum_keys(c, key, target, limit, false);
+	RegCloseKey(key);
+	return rv;
+}
+
+Config* config_get_controller_config(Config* _c, const char* id, char* error_return) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	char* path = strbuilder_fmt("/devices/%s/dummy", id);
+	if (path == NULL) return NULL;
+	HKEY key = config_get_parent(c->root, c->buffer, path, false);
+	free(path);
+	if (key == NULL) {
+		if (error_return != NULL)
+			strcpy(error_return, "Registry key not found");
+		return NULL;
+	}
+	
+	struct _Config* rv = config_new();
+	if (rv == NULL) {
+		RegCloseKey(key);
+		return NULL;
+	}
+	rv->defaults = CONTROLLER_DEFAULTS;
+	rv->root = key;
+	return &rv->config;
+}
+
+Config* config_create_controller_config(Config* _c, const char* id, char* error_return) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	char* path = strbuilder_fmt("/devices/%s/dummy", id);
+	if (path == NULL) return NULL;
+	HKEY key = config_get_parent(c->root, c->buffer, path, true);
+	free(path);
+	if (key == NULL) return NULL;
+	RegCloseKey(key);
+	return config_get_controller_config(_c, id, error_return);
+}
+
+#else	// _WIN32
+	#error "config_win32.c included outside of Windows"
+#endif
 

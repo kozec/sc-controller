@@ -5,6 +5,7 @@
 #include "../osd.h"
 #ifdef _WIN32
 	#include <windows.h>
+	#include <gdk/gdkwin32.h>
 #else
 	#include <X11/extensions/Xfixes.h>
 	#include <X11/extensions/shape.h>
