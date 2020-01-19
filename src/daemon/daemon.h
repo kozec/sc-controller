@@ -10,6 +10,9 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include "version.h"
+#ifdef _WIN32
+#include "scc/input_device.h"
+#endif
 
 #define MIN_SLEEP_TIME 10 /** ms */
 #define CLIENT_BUFFER_SIZE 10240
@@ -151,6 +154,8 @@ void sccd_input_libusb_close();
 #ifdef USE_HIDAPI
 InputDevice* sccd_input_hidapi_open(const char* syspath);
 void sccd_input_hidapi_rescan();
+void sccd_input_hidapi_close();
+void sccd_input_hidapi_init();
 #endif
 void sccd_device_monitor_new_device(Daemon* d, const InputDeviceData* idata);
 void sccd_device_monitor_device_removed(Daemon* d, const char* path);
@@ -161,8 +166,15 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* data, con
  * (and bit is set to 1) if there is any callback registered for it*/
 uint32_t sccd_device_monitor_get_enabled_subsystems(Daemon* d);
 #ifdef _WIN32
-typedef struct InputDeviceData InputDeviceData;
-void sccd_device_monitor_win32_fill_struct(InputDeviceData* idev);
+struct Win32InputDeviceData {
+	InputDeviceData		idev;
+	Vendor				vendor;
+	Product				product;
+	uint8_t				bus;
+	uint8_t				dev;
+	int					idx;
+};
+void sccd_device_monitor_win32_fill_struct(struct Win32InputDeviceData* wdev);
 void sccd_input_libusb_rescan();
 #endif
 

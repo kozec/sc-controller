@@ -375,8 +375,11 @@ static void load_default_profile(SCCDMapper* m) {
 	if (default_profile == NULL) {
 		Config* c = config_load();
 		char* recents[1];
-		if (config_get_strings(c, "recent_profiles", (const char**)&recents, 1) >= 1)
+		int count = config_get_strings(c, "recent_profiles", (const char**)&recents, 1);
+		if ((count >= 1) || (count == -2)) {
+			// -2 means more data available. 1st value is still valid in that case
 			default_profile = scc_find_profile(recents[0]);
+		}
 		RC_REL(c);
 	}
 	

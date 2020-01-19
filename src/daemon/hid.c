@@ -588,6 +588,7 @@ HID_API_EXPORT hid_device * HID_API_CALL hid_open_path(const char *path)
 	res = HidD_SetNumInputBuffers(dev->device_handle, 64);
 	if (!res) {
 		register_error(dev, "HidD_SetNumInputBuffers");
+		printf("> HidD_SetNumInputBuffers \n");
 		goto err;
 	}
 
@@ -595,11 +596,13 @@ HID_API_EXPORT hid_device * HID_API_CALL hid_open_path(const char *path)
 	res = HidD_GetPreparsedData(dev->device_handle, &pp_data);
 	if (!res) {
 		register_error(dev, "HidD_GetPreparsedData");
+		printf("> HidD_GetPreparsedData \n");
 		goto err;
 	}
 	nt_res = HidP_GetCaps(pp_data, &caps);
 	if (nt_res != HIDP_STATUS_SUCCESS) {
-		register_error(dev, "HidP_GetCaps");	
+		register_error(dev, "HidP_GetCaps");
+		printf("> HidP_GetCaps \n");
 		goto err_pp_data;
 	}
 	dev->output_report_length = caps.OutputReportByteLength;

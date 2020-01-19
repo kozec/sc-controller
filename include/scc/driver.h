@@ -169,19 +169,16 @@ typedef struct HotplugFilter {
 	enum {
 		SCCD_HOTPLUG_FILTER_VENDOR		= 1,
 		SCCD_HOTPLUG_FILTER_PRODUCT		= 2,
-		/** evdev or dinput name */
+		/** evdev or dinput name. Not always available */
 		SCCD_HOTPLUG_FILTER_NAME		= 3,
-#ifdef __BSD__
-		SCCD_HOTPLUG_FILTER_UHID_IDX	= 4,
-#endif
+		/** interface number. Not always available */
+		SCCD_HOTPLUG_FILTER_IDX			= 4,
 	}					type;
 	union {
 		Vendor			vendor;
 		Product			product;
 		const char*		name;
-#ifdef __BSD__
 		int				idx;
-#endif
 	};
 } HotplugFilter;
 

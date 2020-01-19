@@ -4,10 +4,12 @@
  * Basically does nothing. Scanning is done by usb_helper
  */
 #define LOG_TAG "DevMon"
+#include "scc/utils/container_of.h"
 #include "scc/utils/logging.h"
 #include "scc/utils/hashmap.h"
 #include "scc/utils/intmap.h"
 #include "scc/utils/assert.h"
+#include "scc/utils/math.h"
 #include "scc/input_device.h"
 #include "daemon.h"
 #include <windows.h>
@@ -31,37 +33,9 @@ typedef struct HidapiDevice {
 map_t path_to_hidapidevice = NULL;
 #endif
 
-static map_t callbacks;
-static map_t known_devs;
-static bool enabled_subsystems[] = { false, false };
-
-static char _key[256];
-inline static const char* make_key(Subsystem sys, Vendor vendor, Product product, int idx) {
-#ifdef USE_HIDAPI
-	if (sys == HIDAPI)
-		sprintf(_key, "%i:%x:%x.%x", sys, vendor, product, idx);
-	else
-#endif
-		sprintf(_key, "%i:%x:%x", sys, vendor, product);
-	return _key;
-}
-
-/*
-long int read_long_from_file(const char* filename, int base) {
-	char buffer[256];
-	FILE* fp = fopen(filename, "r");
-	if (fp == NULL) return -1;
-	int r = fread(buffer, 1, 255, fp);
-	fclose(fp);
-	if (r < 1) return -1;
-	return strtol(buffer, NULL, base);
-}
-*/
 
 void sccd_device_monitor_init() {
-	callbacks = hashmap_new();
-	known_devs = hashmap_new();
-	ASSERT((callbacks != NULL) && (known_devs != NULL));
+	sccd_device_monitor_common_init();
 #ifdef USE_HIDAPI
 	path_to_hidapidevice = hashmap_new();
 	ASSERT(path_to_hidapidevice != NULL);
@@ -69,24 +43,20 @@ void sccd_device_monitor_init() {
 }
 
 void sccd_device_monitor_close() {
-	hashmap_free(callbacks);
-	hashmap_free(known_devs);
+	sccd_device_monitor_close_common();
 }
 
 
 bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, const HotplugFilter* filter) {
+	struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
 	switch (filter->type) {
 	case SCCD_HOTPLUG_FILTER_VENDOR:
-		// return (ldev->vendor == filter->vendor);
+		return (wdev->vendor == filter->vendor);
 	case SCCD_HOTPLUG_FILTER_PRODUCT:
-		// return (ldev->product == filter->product);
+		return (wdev->product == filter->product);
+	case SCCD_HOTPLUG_FILTER_IDX:
+		return (wdev->idx == filter->idx);
 	case SCCD_HOTPLUG_FILTER_NAME:
-		// name = input_device_get_prop(idev, "device/name");
-		// if ((name != NULL) && (strcmp(name, filter->name) == 0)) {
-		// 	free(name);
-		// 	return true;
-		// }
-		// free(name);
 		return false;
 	default:
 		return false;
@@ -99,8 +69,8 @@ static const char* input_device_get_name(const InputDeviceData* idev) {
 }
 
 static int input_device_get_idx(const InputDeviceData* idev) {
-	// TODO: This? Used on Windows?
-	return -1;
+	struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
+	return wdev->idx;
 }
 
 static InputDevice* input_device_open(const InputDeviceData* idev) {
@@ -129,13 +99,13 @@ static InputDeviceData* input_device_copy(const InputDeviceData* idev) {
 }
 
 
-void sccd_device_monitor_win32_fill_struct(InputDeviceData* idev) {
-	idev->get_prop = input_device_get_prop;
-	idev->get_name = input_device_get_name;
-	idev->get_idx = input_device_get_idx;
-	idev->free = input_device_free;
-	idev->open = input_device_open;
-	idev->copy = input_device_copy;
+void sccd_device_monitor_win32_fill_struct(struct Win32InputDeviceData* wdev) {
+	wdev->idev.get_prop = input_device_get_prop;
+	wdev->idev.get_name = input_device_get_name;
+	wdev->idev.get_idx = input_device_get_idx;
+	wdev->idev.free = input_device_free;
+	wdev->idev.open = input_device_open;
+	wdev->idev.copy = input_device_copy;
 }
 
 void sccd_device_monitor_rescan() {

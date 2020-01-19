@@ -395,15 +395,20 @@ void sccd_input_libusb_rescan() {
 	struct libusb_device_descriptor desc;
 	libusb_device** list = NULL;
 	ssize_t count = libusb_get_device_list(ctx, &list);
+	struct Win32InputDeviceData wdev = {
+		.idev = { .subsystem = USB, .path = fake_syspath_buffer }
+	};
+	sccd_device_monitor_win32_fill_struct(&wdev);
 	
 	for (ssize_t i=0; i<count; i++) {
 		if (0 != libusb_get_device_descriptor(list[i], &desc))
 			continue;
-		uint8_t bus = libusb_get_bus_number(list[i]);
-		uint8_t dev = libusb_get_device_address(list[i]);
+		wdev.bus = libusb_get_bus_number(list[i]);
+		wdev.dev = libusb_get_device_address(list[i]);
+		wdev.product = desc.idProduct;
+		wdev.vendor = desc.idVendor;
 		snprintf(fake_syspath_buffer, 1024, "/win32/usb/%x/%x", bus, dev);
-		sccd_device_monitor_new_device(get_daemon(), fake_syspath_buffer,
-										USB, desc.idVendor, desc.idProduct, 0);
+		sccd_device_monitor_new_device(get_daemon(), &wdev.idev);
 	}
 	
 	libusb_free_device_list(list, 1);

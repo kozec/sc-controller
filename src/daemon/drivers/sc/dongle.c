@@ -222,15 +222,17 @@ Driver* scc_driver_init(Daemon* daemon) {
 	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
 	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	
-	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,  .vendor=VENDOR_ID };
-	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT, .product=PRODUCT_ID };
+	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,	.vendor=VENDOR_ID };
+	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT,	.product=PRODUCT_ID };
 	bool success;
 #ifdef __BSD__
-	HotplugFilter filter_idx = { .type=SCCD_HOTPLUG_FILTER_UHID_IDX, .idx=0 };
-	success = daemon->hotplug_cb_add(UHID, &hotplug_cb_hid, &filter_vendor, &filter_product, &filter_idx, NULL);
+	HotplugFilter filter_idx	 = { .type=SCCD_HOTPLUG_FILTER_IDX,		.idx=0 };
+	#define FILTERS &filter_vendor, &filter_product, &filter_idx
+	success = daemon->hotplug_cb_add(UHID, &hotplug_cb_hid, FILTERS, NULL);
 #else
+	#define FILTERS &filter_vendor, &filter_product
 	if (daemon->get_hidapi_enabled()) {
-		success = daemon->hotplug_cb_add(HIDAPI, &hotplug_cb_hid, &filter_vendor, &filter_product, NULL);
+		success = daemon->hotplug_cb_add(HIDAPI, &hotplug_cb_hid, FILTERS, NULL);
 	} else {
 		dongles = list_new(Dongle, 4);
 		if (dongles == NULL) {
@@ -246,3 +248,4 @@ Driver* scc_driver_init(Daemon* daemon) {
 	}
 	return &driver;
 }
+

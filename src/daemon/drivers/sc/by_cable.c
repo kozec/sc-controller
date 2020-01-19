@@ -95,15 +95,14 @@ Driver* scc_driver_init(Daemon* daemon) {
 	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
 	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	
-	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,  .vendor=VENDOR_ID };
-	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT, .product=PRODUCT_ID };
+	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,	.vendor=VENDOR_ID };
+	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT,	.product=PRODUCT_ID };
+	HotplugFilter filter_idx	 = { .type=SCCD_HOTPLUG_FILTER_IDX,		.idx=CONTROLIDX };
+	#define FILTERS &filter_vendor, &filter_product, &filter_idx
 #ifndef __BSD__
 	Subsystem s = daemon->get_hidapi_enabled() ? HIDAPI : USB;
-	#define FILTERS &filter_vendor, &filter_product
 #else
 	Subsystem s = UHID;
-	HotplugFilter filter_idx = { .type=SCCD_HOTPLUG_FILTER_UHID_IDX, .idx=CONTROLIDX };
-	#define FILTERS &filter_vendor, &filter_product, &filter_idx
 #endif
 	if (!daemon->hotplug_cb_add(s, &hotplug_cb, FILTERS, NULL)) {
 		LERROR("Failed to register hotplug callback");
