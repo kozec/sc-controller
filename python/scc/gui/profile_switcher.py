@@ -387,6 +387,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 				tp = "%s-" % (self._controller.get_type(),)
 				icons = sorted(( os.path.split(x.get_path())[-1] for x in icons ))
 				log.debug("Searching for icon type: %s", tp.strip("-"))
+				return
 				for i in icons:
 					if i not in used_icons and i.startswith(tp):
 						# Unused icon found
@@ -402,7 +403,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 				GLib.idle_add(self.update_icon)
 			
 			# TODO: Icons
-			# self.load_user_data(paths, "*.svg", None, cb)
+			self.load_user_data(paths, "*.svg", None, cb)
 
 
 class ButtonInRevealer(Gtk.Revealer):

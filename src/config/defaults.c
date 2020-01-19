@@ -26,7 +26,7 @@ const char* DEFAULT_PROFILES[] = {
  */
 const char* DEFAULT_ENABLED_DRIVERS[] = { "sc_by_cable" };
 
-const struct config_item DEFAULT_VALUES[] = {
+const struct config_item DEFAULTS[] = {
 	
 	/** Important stuff */
 	
@@ -83,6 +83,7 @@ const struct config_item DEFAULT_VALUES[] = {
 	
 	/** GUI config */
 	
+	{ "gui",								CVT_OBJECT },
 	/// If enabled, GUI will display status icon
 	{ "gui/enable_status_icon",				CVT_BOOL,		.v_bool = false },
 	/// If enabled, GUI will hide to status icon instead of minimizing
@@ -126,22 +127,48 @@ const struct config_item DEFAULT_VALUES[] = {
 	{ NULL },
 };
 
+const struct config_item CONTROLLER_DEFAULTS[] = {
+	{ "axes",					CVT_OBJECT },
+	{ "dpads",					CVT_OBJECT },
+	{ "buttons",				CVT_OBJECT },
+	
+	{ "led_level",				CVT_INT,			.v_int =  80 },
+	{ "menu_cancel",			CVT_STRING,			.v_str = "B" },
+	{ "menu_confirm",			CVT_STRING,			.v_str = "A" },
+	{ "menu_control", 			CVT_STRING,			.v_str = "STICK" },
+	{ "idle_timeout",			CVT_INT,			.v_int = 600 },
+	{ "osd_alignment",			CVT_INT,			.v_int = 0 },
+	
+	{ "input_rotation",			CVT_OBJECT },
+	{ "input_rotation/left",	CVT_DOUBLE,			.v_double = 0.0 },
+	{ "input_rotation/right",	CVT_DOUBLE,			.v_double = 0.0 },
+	
+	{ "gui",					CVT_OBJECT },
+	{ "gui/icon",				CVT_STRING,			.v_str = "" },
+	{ "gui/name",				CVT_STRING,			.v_str = "" },
+	{ "gui/buttons",			CVT_STR_ARRAY,		.v_strar = NULL },
+	{ NULL },
+};
+
 
 const struct config_item* config_get_default(struct _Config* c, const char* path) {
-	for (const struct config_item* v = DEFAULT_VALUES; v->path != NULL; v++) {
+	for (const struct config_item* v = c->defaults; v->path != NULL; v++) {
 		if (strcmp(v->path, path) == 0)
 			return v;
 	}
-	return NULL;	
+	return NULL;
 }
 
 bool config_fill_defaults(Config* _c) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	bool change = false;
-	for (const struct config_item* v = DEFAULT_VALUES; v->path != NULL; v++) {
+	for (const struct config_item* v = c->defaults; v->path != NULL; v++) {
 		const config_value_t* value = config_get_value(c, v->path, v->type);
 		if (value == NULL) {
 			switch (v->type) {
+			case CVT_OBJECT:
+			case CVT_INVALID:
+				break;
 			case CVT_STRING:
 				if (1 != config_set(_c, v->path, v->v_str))
 					return false;

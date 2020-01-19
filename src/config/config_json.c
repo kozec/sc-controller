@@ -8,12 +8,15 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/hashmap.h"
+#include "scc/utils/math.h"
 #include "scc/tools.h"
 #include "config.h"
 #include <sys/stat.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 
@@ -29,6 +32,7 @@ static void config_dealloc(void* _c) {
 	
 	json_free_context(c->ctx);
 	free(c->filename);
+	free(c->prefix);
 	free(c);
 }
 
@@ -36,7 +40,9 @@ static inline struct _Config* config_new() {
 	struct _Config* c = malloc(sizeof(struct _Config));
 	if (c == NULL) return NULL;
 	RC_INIT(&c->config, &config_dealloc);
+	c->defaults = DEFAULTS;
 	c->filename = NULL;
+	c->prefix = NULL;
 	c->ctx = NULL;
 	return c;
 }
@@ -118,8 +124,9 @@ Config* config_load_from(const char* filename, char* error_return) {
 	struct _Config* c = config_new();
 	if (c == NULL) return NULL;
 	
-	if (!config_load_json_file(c, fd, error_return)) {
-		// Failed to load
+	c->filename = strbuilder_cpy(filename);
+	if ((c->filename == NULL) || (!config_load_json_file(c, fd, error_return))) {
+		// Failed to load / allocate
 		close(fd);
 		config_dealloc(&c->config);
 		return NULL;
@@ -128,6 +135,14 @@ Config* config_load_from(const char* filename, char* error_return) {
 	return &c->config;
 }
 
+bool config_set_prefix(Config* _c, const char* prefix) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	char* cpy = strbuilder_cpy(prefix);
+	if (cpy == NULL) return false;
+	free(c->prefix);
+	c->prefix = cpy;
+	return true;
+}
 
 /**
  * Returns (optionally creating) parent node of value or root node if there are no slashes
@@ -174,6 +189,10 @@ config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValu
 	
 	config_value_t* value = json_object_get_object_as_value(obj, last_element(path));
 	switch (type) {
+	case CVT_OBJECT:
+		if (json_get_type(value) != JS_OBJECT)
+			return NULL;
+		break;
 	case CVT_STRING:
 		if (json_get_type(value) != JS_STRING)
 			return NULL;
@@ -191,6 +210,8 @@ config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValu
 		if (json_get_type(value) != JS_ARRAY)
 			return NULL;
 		break;
+	case CVT_INVALID:
+		return NULL;
 	}
 	return value;
 }
@@ -198,32 +219,36 @@ config_value_t* config_get_value(struct _Config* c, const char* path, ConfigValu
 ConfigValueType config_get_type(Config* _c, const char* path) {
 	struct _Config* c = container_of(_c, struct _Config, config);
 	json_object* obj = config_get_parent(c, path, false);
+	if ((obj == NULL) && (config_get_default(c, path) != NULL))
+		obj = config_get_parent(c, path, true);
 	if (obj == NULL)
-		return 0;
+		return CVT_INVALID;
 	
 	config_value_t* value = json_object_get_object_as_value(obj, last_element(path));
-	if (value == NULL)
-		return 0;
+	json_type_t type = 0;
+	if (value != NULL)
+		type = json_get_type(value);
 	
-	json_type_t type = json_get_type(value);
+	const struct config_item* def;
 	switch (type) {
 	case JS_STRING:
 		return CVT_STRING;
 	case JS_BOOL:
 		return CVT_BOOL;
-	case JS_NUMBER: {
-		const struct config_item* def = config_get_default(c, path);
+	case JS_NUMBER:
+		def = config_get_default(c, path);
 		if (def != NULL)
 			return def->type;
 		return CVT_DOUBLE;
-	}
 	case JS_ARRAY:
 		return CVT_STR_ARRAY;
 	default:
-		break;
+		def = config_get_default(c, path);
+		if (def != NULL)
+			return def->type;
 	}
 	
-	return 0;
+	return CVT_INVALID;
 }
 
 bool config_save_writer(const char* buffer, size_t len, void* _fd) {
@@ -233,11 +258,13 @@ bool config_save_writer(const char* buffer, size_t len, void* _fd) {
 
 bool config_save(Config* _c) {
 	struct _Config* c = container_of(_c, struct _Config, config);
-	if (c->filename == NULL)
+	if (c->filename == NULL) {
+		WARN("Failed to save config file: Filename not set");
 		return false;
+	}
 	int fd = open(c->filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
-		WARN("Failed to save config file: %s. ", strerror(errno));
+		WARN("Failed to save config file: %s: %s. ", c->filename, strerror(errno));
 		return false;
 	}
 	aojls_serialization_prefs prefs = {
@@ -322,15 +349,34 @@ double config_get_double(Config* _c, const char* path) {
 
 size_t config_get_strings(Config* _c, const char* path, const char** target, size_t limit) {
 	struct _Config* c = container_of(_c, struct _Config, config);
-	json_array* value = json_as_array(config_get_value(c, path, CVT_STR_ARRAY));
+	json_array* value = NULL;
+	json_value_t* obj;
+	if (0 == strcmp("/", path)) {
+		obj = json_context_get_result(c->ctx);
+	} else {
+		obj = config_get_value(c, path, CVT_STR_ARRAY);
+		if (obj == NULL)
+			obj = config_get_value(c, path, CVT_OBJECT);
+		value = json_as_array(obj);
+	}
+	
 	size_t j = 0;
-	if (value == NULL) {
+	if (json_get_type(obj) == JS_OBJECT) {
+		json_object* o = json_as_object(obj);
+		size_t len = min(json_object_numkeys(o), limit);
+		for (; j<len; j++)
+			target[j] = json_object_get_key(o, j);
+		return len;
+	} else if (value == NULL) {
 		const struct config_item* def = config_get_default(c, path);
-		if ((def == NULL) || (def->type != CVT_STR_ARRAY))
+		if ((def == NULL) || (def->type != CVT_STR_ARRAY)) {
 			return 0;
-		for (size_t i=0; (i<limit) && (def->v_strar[i]!=NULL); i++) {
-			target[i] = def->v_strar[i];
-			j++;
+		}
+		if (def->v_strar != NULL) {
+			for (size_t i=0; (i<limit) && (def->v_strar[i]!=NULL); i++) {
+				target[i] = def->v_strar[i];
+				j++;
+			}
 		}
 	} else {
 		for (size_t i=0; (i<limit) && (i<json_array_size(value)); i++) {
@@ -344,6 +390,93 @@ size_t config_get_strings(Config* _c, const char* path, const char** target, siz
 	return j;
 }
 
+ssize_t config_get_controllers(Config* _c, const char** target, size_t limit) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	DIR *dir;
+	struct dirent *ent;
+	char* device_cfg_path = strbuilder_fmt("%s/devices", (c->prefix != NULL) ? c->prefix : scc_get_config_path());
+	if (device_cfg_path == NULL) return -1;
+	if ((dir = opendir(device_cfg_path)) == NULL) {
+		// Failed to open directory
+		WARN("Failed to enumerate '%s': %s", device_cfg_path, strerror(errno));
+		return 0;
+	}
+	
+	ssize_t j = 0;
+	while ((j < limit) && (j < SSIZE_MAX - 1)) {
+		ent = readdir(dir);
+		if (ent == NULL) break;
+		if (strstr(ent->d_name, ".json") != NULL) {
+			char* cpy = strbuilder_cpy(ent->d_name);
+			if (cpy == NULL) {
+				// OOM
+				while (j > 0)
+					free((char*)target[--j]);
+				j = -1;
+				break;
+			}
+			cpy[strlen(ent->d_name) - 5] = 0;			// Strips extension
+			target[j++] = cpy;
+		}
+	}
+	closedir (dir);
+	return j;
+}
+
+Config* config_get_controller_config(Config* _c, const char* id, char* error_return) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	char* filename = strbuilder_fmt("%s/devices/%s.json",
+				(c->prefix != NULL) ? c->prefix : scc_get_config_path(), id);
+	if (filename == NULL)
+		goto config_get_controller_config_oom;
+	Config* _rv = config_load_from(filename, error_return);
+	free(filename);
+	if (_rv != NULL) {
+		struct _Config* rv = container_of(_rv, struct _Config, config);
+		rv->defaults = CONTROLLER_DEFAULTS;
+		if (c->prefix != NULL) {
+			if (!config_set_prefix(_rv, c->prefix)) {
+				RC_REL(_rv);
+				goto config_get_controller_config_oom;
+			}
+		}
+	}
+	
+	return _rv;
+	
+config_get_controller_config_oom:
+	if (error_return != NULL)
+		strncpy(error_return, "Out of memory", SCC_CONFIG_ERROR_LIMIT);
+	return NULL;
+}
+
+Config* config_create_controller_config(Config* _c, const char* id, char* error_return) {
+	Config* rv = config_get_controller_config(_c, id, error_return);
+	if (rv == NULL) {
+		struct _Config* c = container_of(_c, struct _Config, config);
+		char* filename = strbuilder_fmt("%s/devices/%s.json",
+				(c->prefix != NULL) ? c->prefix : scc_get_config_path(), id);
+		if (filename == NULL) {
+			if (error_return != NULL)
+				strncpy(error_return, "Out of memory", SCC_CONFIG_ERROR_LIMIT);
+			return NULL;
+		}
+		int fd = open(filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+		if (fd < 0) {
+			if (error_return != NULL) {
+				snprintf(error_return, SCC_CONFIG_ERROR_LIMIT, "Failed to open '%s': %s",
+						filename, strerror(fd));
+			}
+			free(filename);
+			return NULL;
+		}
+		free(filename);
+		write(fd, "{}\n", 3);
+		close(fd);
+		return config_get_controller_config(_c, id, error_return);
+	}
+	return NULL;
+}
 
 /** Common part of all config_set-s */
 static inline int config_set_common(json_object* parent, json_value_t* value, const char* path) {
@@ -396,8 +529,9 @@ int config_set_strings(Config* _c, const char* path, const char** list, ssize_t 
 	
 	if (count < 0) {
 		count = 0;
-		while ((count <= MAX_ARRAY_SIZE) && (list[count] != NULL))
-			count++;
+		if (list != NULL)
+			while ((count <= MAX_ARRAY_SIZE) && (list[count] != NULL))
+				count++;
 		if (count == MAX_ARRAY_SIZE)
 			return 0;
 	}

@@ -32,11 +32,14 @@ struct Config {
 
 typedef enum ConfigValueType {
 	// Numbers here are chosen to losely match json_type_t values
+	CVT_OBJECT			= 0,
 	CVT_STR_ARRAY		= 1,
 	CVT_DOUBLE			= 2,
 	CVT_STRING			= 3,
 	CVT_BOOL			= 4,
-	CVT_INT				= 10,	// json_type_t doesn't have this one
+	CVT_INVALID			= 6,
+	// ... except for those bellow
+	CVT_INT				= 11,
 } ConfigValueType;
 
 
@@ -96,7 +99,13 @@ DLL_EXPORT bool config_fill_defaults(Config* cfg);
 #ifdef _WIN32
 DLL_EXPORT Config* config_load_from(const char* path, char* error_return);
 #else
+/** Allows loading config file from non-standard locatin. Used by testrs */
 DLL_EXPORT Config* config_load_from(const char* filename, char* error_return);
+/**
+ * Sets prefix used to load data such as controller config. Used by tests.
+ * Creates copy of 'prefix' parameter. Returns false on OOM error.
+ */
+DLL_EXPORT bool config_set_prefix(Config* c, const char* prefix);
 #endif
 
 /**
@@ -120,12 +129,37 @@ DLL_EXPORT bool config_is_parent(Config* c, const char* path);
 DLL_EXPORT bool config_is_driver_enabled(Config* c, const char* path);
 
 /**
- * Retrieves elements of string array.
+ * Retrieves elements of string array or list of available subkeys.
  * Fills 'target' up to 'limit'. Returns number of stored strings.
  * Strings set to 'target' are part Config object memory and shall _not_ be
  * deallocated by caller.
  */
 DLL_EXPORT size_t config_get_strings(Config* c, const char* path, const char** target, size_t limit);
+
+/**
+ * Retrieves list of available controller configurations (by enumerating directory or registry key)
+ *
+ * Fills 'target' up to 'limit'. Returns number of stored strings.
+ * Caller has to deallocate strings stored in 'target' (unlike with config_get_strings)
+ *
+ * Returns negative number if allocation fails. Values in target may be overwriten with invalid data in such case.
+ */
+DLL_EXPORT ssize_t config_get_controllers(Config* c, const char** target, size_t limit);
+
+/**
+ * Loads configuration for controller with specified ID, filling out defaults.
+ * May return NULL if configuration doesn't exists or allocation fails, in which
+ * case 'error_return' is updated, if set, with string desciption of error
+ * of size up to 1024 characters.
+ */
+DLL_EXPORT Config* config_get_controller_config(Config* c, const char* id, char* error_return);
+
+/**
+ * As 'config_get_controller_config', but creates new configuration if one doesn't
+ * exists. NULL may be still returned if allocation fails or file cannot be created;
+ * same 'error_return' rules apply.
+ */
+DLL_EXPORT Config* config_create_controller_config(Config* c, const char* id, char* error_return);
 
 /**
  * Returns type of configuration value (see ConfigValueType)

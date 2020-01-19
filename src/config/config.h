@@ -50,18 +50,22 @@ struct _Config {
 	// Private version of Config
 	Config						config;
 	char						buffer[JSONPATH_MAX_LEN];
+	const struct config_item*	defaults;
 #ifdef _WIN32
 	HKEY						root;
 	map_t						values;
 	struct InternalString*		giant_memoryleak;
 #else
 	char*						filename;
+	/** 'prefix' is set only by test */
+	char*						prefix;
 	aojls_ctx_t*				ctx;
 #endif
 };
 
 
-extern const struct config_item DEFAULT_VALUES[];
+extern const struct config_item DEFAULTS[];
+extern const struct config_item CONTROLLER_DEFAULTS[];
 extern const char* DEFAULT_PROFILES[];
 extern const char* DEFAULT_ENABLED_DRIVERS[];
 
