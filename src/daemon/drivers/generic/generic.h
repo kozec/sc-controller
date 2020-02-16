@@ -25,6 +25,8 @@ typedef struct GenericController {
 	Mapper*					mapper;
 	Daemon*					daemon;
 	intmap_t				button_map;
+	/** largest key in button_map */
+	intptr_t				button_max;
 	/** int -> AxisData */
 	intmap_t				axis_map;
 	ControllerInput			input;
@@ -82,7 +84,7 @@ void gc_set_mapper(Controller* c, Mapper* mapper);
 void gc_turnoff(Controller* c);
 
 /** Loads mappings from provided config object */
-bool gc_load_mappings(const char* id, GenericController* gc, Config* ccfg);
+bool gc_load_mappings(GenericController* gc, Config* ccfg);
 
 /**
  * Applies input_value, as read from physical controller, to ControllerInput

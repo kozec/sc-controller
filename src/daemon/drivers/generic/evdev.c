@@ -57,11 +57,10 @@ static void on_data_ready(Daemon* d, int fd, void* _ev) {
 		switch (event.type) {
 		case EV_KEY:
 			if (intmap_get(ev->gc.button_map, event.code, &val) == MAP_OK) {
-				SCButton b = (SCButton)val;
 				if (event.value)
-					ev->gc.input.buttons |= b;
+					ev->gc.input.buttons |= (SCButton)val;
 				else
-					ev->gc.input.buttons &= ~b;
+					ev->gc.input.buttons &= ~(SCButton)val;
 				call_mapper = true;
 			} else {
 				WARN("Unknown keycode %i", event.code);
@@ -81,6 +80,8 @@ static void on_data_ready(Daemon* d, int fd, void* _ev) {
 			ev->gc.mapper->input(ev->gc.mapper, &ev->gc.input);
 	}
 	
+	// TODO: DPad
+	// TODO: Allow to disable PADPRESS_EMULATION
 	if ((ev->gc.input.buttons & ~old_buttons & (B_LPADTOUCH | B_RPADTOUCH)) != 0) {
 		if (ev->gc.padpressemu_task != 0)
 			d->cancel(ev->gc.padpressemu_task);
@@ -116,6 +117,7 @@ static inline char* evdev_idev_to_config_key(const InputDeviceData* idev) {
 
 
 static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+	char error[1024];
 	char* ckey = evdev_idev_to_config_key(idev);
 	Config* cfg = config_load();
 	if ((cfg == NULL) || (ckey == NULL)) {
@@ -123,43 +125,56 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 		free(ckey);
 		return;
 	}
-	Config* ccfg = config_get_controller_config(cfg, ckey, NULL);
+	Config* ccfg = config_get_controller_config(cfg, ckey, error);
 	RC_REL(cfg);
 	if (ccfg == NULL) {
+		if (strstr(error, "No such file") == NULL)
+			WARN("%s: %s", ckey, error);
 		free(ckey);
 		return;
 	}
 	
 	int err;
 	char* event_file = strbuilder_fmt("/dev/input%s", strrchr(idev->path, '/'));
-	if (event_file == NULL) return;		// OOM
-	
-	EvdevController* ev = malloc(sizeof(EvdevController));
-	if (ev == NULL) {
-		free(event_file);
-		RC_REL(ccfg);
+	if (event_file == NULL) {
+		// OOM
 		free(ckey);
 		return;
 	}
 	
-	memset(ev, 0, sizeof(EvdevController));
+	EvdevController* ev = malloc(sizeof(EvdevController));
+	if (ev != NULL) memset(ev, 0, sizeof(EvdevController));
+	if ((ev == NULL) || !gc_alloc(d, &ev->gc)) {
+		// OOM
+		free(event_file);
+		RC_REL(ccfg);
+		free(ckey);
+		free(ev);
+		return;
+	}
+	
+	snprintf(ev->gc.desc, MAX_DESC_LEN, "<EvDev %s>", ckey);
+	ev->gc.desc[MAX_DESC_LEN - 1] = 0;
+	if (ev->gc.desc[MAX_DESC_LEN - 2] != 0)
+		ev->gc.desc[MAX_DESC_LEN - 2] = '>';
+	free(ckey);
+	
+	if (!gc_load_mappings(&ev->gc, ccfg)) {
+		evdev_dealloc(&ev->controller);
+		RC_REL(ccfg);
+		return;
+	}
+	RC_REL(ccfg);
+	
 	ev->fd = open(event_file, O_RDONLY|O_NONBLOCK);
 	if ((err = libevdev_new_from_fd(ev->fd, &ev->dev)) < 0) {
 		LERROR("Failed to open evdev device %s: %s", event_file, strerror(-err));
 		evdev_dealloc(&ev->controller);
 		free(event_file);
 		RC_REL(ccfg);
-		free(ckey);
 		return;
 	}
 	free(event_file);
-	
-	if (!gc_alloc(d, &ev->gc)) {
-		evdev_dealloc(&ev->controller);
-		RC_REL(ccfg);
-		free(ckey);
-		return;
-	}
 	
 	StrBuilder* sb = strbuilder_new();
 	char* uniq = idev->get_prop(idev, "device/uniq");
@@ -179,28 +194,17 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	free(uniq);
 	strbuilder_upper(sb);
 	strbuilder_insert(sb, 0, "ev");
-	gc_make_id(strbuilder_get_value(sb), &ev->gc);
-	
-	LOG("GONNA LOAD MAPPINGS for %s", ev->gc.id);
-	if (!gc_load_mappings(ckey, &ev->gc, ccfg)) {
+	if (strbuilder_failed(sb)) {
 		evdev_dealloc(&ev->controller);
-		RC_REL(ccfg);
-		free(ckey);
 		return;
 	}
-	RC_REL(ccfg);
-	free(ckey);
+	gc_make_id(strbuilder_get_value(sb), &ev->gc);
 	
 	if (!d->poller_cb_add(ev->fd, &on_data_ready, ev)) {
 		LERROR("Failed to register with poller");
 		evdev_dealloc(&ev->controller);
 		return;
 	}
-	
-	snprintf(ev->gc.desc, MAX_DESC_LEN, "<EvDev %s>", libevdev_get_name(ev->dev));
-	ev->gc.desc[MAX_DESC_LEN - 1] = 0;
-	if (ev->gc.desc[MAX_DESC_LEN - 2] != 0)
-		ev->gc.desc[MAX_DESC_LEN - 2] = '>';
 	
 	ev->controller.flags = CF_HAS_DPAD | CF_NO_GRIPS | CF_HAS_RSTICK | CF_SEPARATE_STICK;
 	ev->controller.deallocate = evdev_dealloc;
@@ -223,6 +227,8 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 
 
 Driver* scc_driver_init(Daemon* daemon) {
+	// TODO: Don't register everything, list known devices and register handlers
+	// TODO: only for those instead
 	if (!daemon->hotplug_cb_add(EVDEV, &hotplug_cb, NULL)) {
 		LERROR("Failed to register hotplug callback");
 		return NULL;

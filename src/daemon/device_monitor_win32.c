@@ -50,55 +50,6 @@ void sccd_device_monitor_close() {
 	sccd_device_monitor_close_common();
 }
 
-
-bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, const HotplugFilter* filter) {
-	struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
-	switch (filter->type) {
-	case SCCD_HOTPLUG_FILTER_VENDOR:
-		return (idev->subsystem != DINPUT) && (wdev->vendor == filter->vendor);
-	case SCCD_HOTPLUG_FILTER_PRODUCT:
-		return (idev->subsystem != DINPUT) && (wdev->product == filter->product);
-	case SCCD_HOTPLUG_FILTER_IDX:
-		return (wdev->idx == filter->idx);
-	case SCCD_HOTPLUG_FILTER_NAME:
-#ifdef USE_DINPUT
-		if (idev->subsystem == DINPUT) {
-			const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
-			return 0 == strcmp(d8dev->tszInstanceName, filter->name);
-		}
-#endif
-		return false;
-	case SCCD_HOTPLUG_FILTER_GUID:
-#ifdef USE_DINPUT
-		if (idev->subsystem == DINPUT) {
-			static char buffer[256];
-			const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
-			LPOLESTR guid_str;
-			if (S_OK != StringFromCLSID(&d8dev->guidInstance, &guid_str))
-				return false;
-			snprintf(buffer, 256, "%ls", guid_str);
-			CoTaskMemFree(guid_str);
-			return 0 == strcmp(buffer, filter->name);
-		}
-#endif
-		return false;
-	default:
-		return false;
-	}
-}
-
-
-static char* input_device_get_name(const InputDeviceData* idev) {
-#ifdef USE_DINPUT
-	if (idev->subsystem == DINPUT) {
-		struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
-		const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
-		return strbuilder_cpy(d8dev->tszInstanceName);
-	}
-#endif
-	return NULL;
-}
-
 static int input_device_get_idx(const InputDeviceData* idev) {
 	struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
 	return wdev->idx;
@@ -120,7 +71,64 @@ static InputDevice* input_device_open(const InputDeviceData* idev) {
 }
 
 static char* input_device_get_prop(const InputDeviceData* idev, const char* name) {
+	if (idev->subsystem == DINPUT) {
+		struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
+		const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
+		if (0 == strcmp("tszInstanceName", name)) {
+			return strbuilder_cpy(d8dev->tszInstanceName);
+		} else if (0 == strcmp("guidInstance", name)) {
+			LPOLESTR guid_str;
+			if (S_OK != StringFromCLSID(&d8dev->guidInstance, &guid_str))
+				return NULL;
+			char* normal_str = malloc(256);
+			if (normal_str == NULL)
+				return NULL;
+			snprintf(normal_str, 256, "%ls", guid_str);
+			CoTaskMemFree(guid_str);
+			return normal_str;
+		}
+	}
 	return NULL;
+}
+
+static char* input_device_get_name(const InputDeviceData* idev) {
+#ifdef USE_DINPUT
+	if (idev->subsystem == DINPUT)
+		return input_device_get_prop(idev, "tszInstanceName");
+#endif
+	return NULL;
+}
+
+bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, const HotplugFilter* filter) {
+	struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
+	switch (filter->type) {
+	case SCCD_HOTPLUG_FILTER_VENDOR:
+		return (idev->subsystem != DINPUT) && (wdev->vendor == filter->vendor);
+	case SCCD_HOTPLUG_FILTER_PRODUCT:
+		return (idev->subsystem != DINPUT) && (wdev->product == filter->product);
+	case SCCD_HOTPLUG_FILTER_IDX:
+		return (wdev->idx == filter->idx);
+	case SCCD_HOTPLUG_FILTER_NAME:
+#ifdef USE_DINPUT
+		if (idev->subsystem == DINPUT) {
+			const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
+			return 0 == strcmp(d8dev->tszInstanceName, filter->name);
+		}
+#endif
+		return false;
+	case SCCD_HOTPLUG_FILTER_GUID:
+#ifdef USE_DINPUT
+		if (idev->subsystem == DINPUT) {
+			char* guid = input_device_get_prop(idev, "guidInstance");
+			bool rv = (guid != NULL) && (0 == strcmp(guid, filter->name));
+			free(guid);
+			return rv;
+		}
+#endif
+		return false;
+	default:
+		return false;
+	}
 }
 
 static void input_device_free(InputDeviceData* idev) {

@@ -69,3 +69,4 @@ typedef struct _IntMapIterator {
 	intmap_t				map;
 	int64_t				next;
 } *IntMapIterator;
+

@@ -30,6 +30,7 @@ bool gc_alloc(Daemon* d, GenericController* gc) {
 	gc->mapper = NULL;
 	gc->button_map = intmap_new();
 	gc->axis_map = intmap_new();
+	gc->button_max = 0;
 	return (gc->button_map != NULL) && (gc->axis_map != NULL);
 }
 
@@ -148,8 +149,15 @@ static AxisData* parse_axis(Config* ccfg, const char* key) {
 	snprintf(buffer, 256, "axes/%s/max", key);
 	int max = config_get_double(ccfg, buffer);
 	if ((min == 0) && (max == 0)) {
+#ifdef _WIN32
+		// Those are default values with DInput
+		min = 0;
+		max = 65535;
+#else
+		// Those are defaults with anything else
 		min = -127;
 		max = 128;
+#endif
 	}
 	snprintf(buffer, 256, "axes/%s/deadzone", key);
 	double deadzone = config_get_double(ccfg, buffer);
@@ -170,7 +178,7 @@ static AxisData* parse_axis(Config* ccfg, const char* key) {
 	return ad;
 }
 
-static bool load_axis_map(const char* id, GenericController* gc, Config* ccfg) {
+static bool load_axis_map(GenericController* gc, Config* ccfg) {
 	const char* keys[64];
 	char buffer[64];
 	ssize_t count;
@@ -179,14 +187,15 @@ static bool load_axis_map(const char* id, GenericController* gc, Config* ccfg) {
 		char* ok = NULL;
 		int k = strtol(keys[i], &ok, 10);
 		if (ok == keys[i]) {
-			WARN("Ignoring mapping for '%s': '%s' is not a number", id, keys[i]);
+			WARN("Ignoring mapping for '%s': '%s' is not a number",
+							gc->desc, keys[i]);
 			continue;
 		}
 		snprintf(buffer, 64, "axes/%s/axis", keys[i]);
 		AxisID axis = parse_axis_name(config_get(ccfg, buffer));
 		if (axis == A_NONE) {
-			WARN("Ignoring mapping for '%s': '%s' is not valid axis name", id,
-					config_get(ccfg, buffer));
+			WARN("Ignoring mapping for '%s': '%s' is not valid axis name",
+							gc->desc, config_get(ccfg, buffer));
 			continue;
 		}
 		AxisData* data = parse_axis(ccfg, keys[i]);
@@ -208,7 +217,7 @@ static bool load_axis_map(const char* id, GenericController* gc, Config* ccfg) {
 	return true;
 }
 
-static bool load_button_map(const char* id, GenericController* gc, Config* ccfg) {
+static bool load_button_map(GenericController* gc, Config* ccfg) {
 	const char* keys[64];
 	char buffer[64];
 	ssize_t count;
@@ -217,25 +226,29 @@ static bool load_button_map(const char* id, GenericController* gc, Config* ccfg)
 		char* ok = NULL;
 		int k = strtol(keys[i], &ok, 10);
 		if (ok == keys[i]) {
-			WARN("Ignoring mapping for '%s': '%s' is not a number", id, keys[i]);
+			WARN("Ignoring mapping for '%s': '%s' is not a number",
+							gc->desc, keys[i]);
 			continue;
 		}
 		snprintf(buffer, 64, "buttons/%s", keys[i]);
 		SCButton b = scc_string_to_button(config_get(ccfg, buffer));
 		if (b == 0) {
-			WARN("Ignoring mapping for '%s': Unknown button '%s'", id, keys[i]);
+			WARN("Ignoring mapping for '%s': Unknown button '%s'",
+							gc->desc, keys[i]);
 			continue;
 		}
 		if (intmap_put(gc->button_map, k, (any_t)b) == MAP_OMEM)
 			return false;
+		if (k > gc->button_max)
+			gc->button_max = k;
 	}
 	return true;
 }
 
-bool gc_load_mappings(const char* id, GenericController* gc, Config* ccfg) {
-	if (!load_axis_map(id, gc, ccfg))
+bool gc_load_mappings(GenericController* gc, Config* ccfg) {
+	if (!load_axis_map(gc, ccfg))
 		return false;
-	if (!load_button_map(id, gc, ccfg))
+	if (!load_button_map(gc, ccfg))
 		return false;
 	return true;
 }

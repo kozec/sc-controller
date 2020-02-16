@@ -70,6 +70,7 @@ if host_machine.system() == 'windows'
 		dependencies: [
 			meson.get_compiler('c').find_library('dinput8'),
 			meson.get_compiler('c').find_library('dxguid'),
+			dependency('zlib'),
 		],
 		link_with: [ utils_lib, tools_lib, config_lib ],
 		sources: [
@@ -77,14 +78,5 @@ if host_machine.system() == 'windows'
 			'generic/dinput.c',
 		]
 	)
-	# shared_library('scc-drv-hidapi',
-	# 	include_directories: [ include ],
-	# 	dependencies: [],
-	# 	link_with: [ utils_lib, tools_lib ],
-	# 	sources: [
-	# 		'generic/common.c',
-	# 		'generic/hidapi.c',
-	# 	]
-	# )
 endif
 

@@ -42,8 +42,12 @@ typedef struct {
 #define vec_mul(v, v2) do { (v).x *= (v2).x; (v).y *= (v2).y; } while(0);
 #define vec_muls(v, scalar) do { (v).x *= (scalar); (v).y *= (scalar); } while(0);
 
+#ifndef min
 #define min(x, y) ( ((x)<(y)) ? (x) : (y) )
+#endif
+#ifndef max
 #define max(x, y) ( ((x)>(y)) ? (x) : (y) )
+#endif
 #define clamp(x, v, y) ( ((v)<(x)) ? (x) : ( ((v)>(y)) ? (y) : (v) ) )
 
 #ifndef M_PI
