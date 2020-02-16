@@ -33,7 +33,7 @@ typedef struct InputDeviceData {
 	 *
 	 * Returned string has to be free'd by caller.
 	 */
-	const char*			(*get_name)(const InputDeviceData* idev);
+	char*				(*get_name)(const InputDeviceData* idev);
 	/**
 	 * Returns device index or -1 if index is not used or available */
 	int					(*get_idx)(const InputDeviceData* idev);

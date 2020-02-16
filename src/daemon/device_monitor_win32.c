@@ -15,6 +15,10 @@
 #include <windows.h>
 #include <unistd.h>
 #include <stdio.h>
+#if USE_DINPUT
+#include <winbase.h>
+#include <dinput.h>
+#endif
 #if USE_HIDAPI
 #include <winbase.h>
 #include <setupapi.h>
@@ -51,12 +55,32 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 	struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
 	switch (filter->type) {
 	case SCCD_HOTPLUG_FILTER_VENDOR:
-		return (wdev->vendor == filter->vendor);
+		return (idev->subsystem != DINPUT) && (wdev->vendor == filter->vendor);
 	case SCCD_HOTPLUG_FILTER_PRODUCT:
-		return (wdev->product == filter->product);
+		return (idev->subsystem != DINPUT) && (wdev->product == filter->product);
 	case SCCD_HOTPLUG_FILTER_IDX:
 		return (wdev->idx == filter->idx);
 	case SCCD_HOTPLUG_FILTER_NAME:
+#if USE_DINPUT
+		if (idev->subsystem == DINPUT) {
+			const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
+			return 0 == strcmp(d8dev->tszInstanceName, filter->name);
+		}
+#endif
+		return false;
+	case SCCD_HOTPLUG_FILTER_GUID:
+#if USE_DINPUT
+		if (idev->subsystem == DINPUT) {
+			static char buffer[256];
+			const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
+			LPOLESTR guid_str;
+			if (S_OK != StringFromCLSID(&d8dev->guidInstance, &guid_str))
+				return false;
+			snprintf(buffer, 256, "%ls", guid_str);
+			CoTaskMemFree(guid_str);
+			return 0 == strcmp(buffer, filter->name);
+		}
+#endif
 		return false;
 	default:
 		return false;
@@ -64,7 +88,14 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 }
 
 
-static const char* input_device_get_name(const InputDeviceData* idev) {
+static char* input_device_get_name(const InputDeviceData* idev) {
+#if USE_DINPUT
+	if (idev->subsystem == DINPUT) {
+		struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
+		const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
+		return strbuilder_cpy(d8dev->tszInstanceName);
+	}
+#endif
 	return NULL;
 }
 
@@ -117,6 +148,9 @@ void sccd_device_monitor_rescan() {
 #endif
 #ifdef USE_HIDAPI
 	sccd_input_hidapi_rescan();
+#endif
+#ifdef USE_DINPUT
+	sccd_input_dinput_rescan();
 #endif
 }
 

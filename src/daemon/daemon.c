@@ -596,6 +596,9 @@ int sccd_start() {
 #ifdef USE_HIDAPI
 	sccd_input_hidapi_init(&_daemon);
 #endif
+#ifdef USE_DINPUT
+	sccd_input_dinput_init();
+#endif
 	sccd_x11_init();
 	sccd_drivers_init(&_daemon);
 #ifdef __linux__
@@ -659,6 +662,9 @@ int sccd_start() {
 #endif
 #ifdef USE_HIDAPI
 	sccd_input_hidapi_close();
+#endif
+#ifdef USE_DINPUT
+	sccd_input_dinput_close();
 #endif
 	sccd_poller_close();
 	sccd_scheduler_close();

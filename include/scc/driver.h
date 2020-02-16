@@ -27,6 +27,9 @@ typedef enum {
 #else
 	HIDAPI		= 4,
 #endif
+#ifdef _WIN32
+	DINPUT		= 5,
+#endif
 } Subsystem;
 
 typedef struct Daemon Daemon;
@@ -173,11 +176,17 @@ typedef struct HotplugFilter {
 		SCCD_HOTPLUG_FILTER_NAME		= 3,
 		/** interface number. Not always available */
 		SCCD_HOTPLUG_FILTER_IDX			= 4,
+		/**
+		 * guidInstance or similar. Great filter that matches only specific
+		 * piece of HW, but available only on Windows
+		 */
+		SCCD_HOTPLUG_FILTER_GUID		= 5,
 	}					type;
 	union {
 		Vendor			vendor;
 		Product			product;
 		const char*		name;
+		const char*		guid_string;
 		int				idx;
 	};
 } HotplugFilter;

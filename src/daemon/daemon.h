@@ -157,6 +157,11 @@ void sccd_input_hidapi_rescan();
 void sccd_input_hidapi_close();
 void sccd_input_hidapi_init();
 #endif
+#ifdef USE_DINPUT
+void sccd_input_dinput_rescan();
+void sccd_input_dinput_close();
+void sccd_input_dinput_init();
+#endif
 void sccd_device_monitor_new_device(Daemon* d, const InputDeviceData* idata);
 void sccd_device_monitor_device_removed(Daemon* d, const char* path);
 /** Returns true if filter matches device */
@@ -173,6 +178,7 @@ struct Win32InputDeviceData {
 	uint8_t				bus;
 	uint8_t				dev;
 	int					idx;
+	void*				d8dev;
 };
 void sccd_device_monitor_win32_fill_struct(struct Win32InputDeviceData* wdev);
 void sccd_input_libusb_rescan();

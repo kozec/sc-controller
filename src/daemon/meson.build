@@ -42,10 +42,19 @@ elif host_machine.system() == 'windows'
 	if not (get_option('use-hidapi').auto() or get_option('use-hidapi').enabled())
 		error('use-hidapi option cannot be disabled on Windows')
 	endif
+	if get_option('use-dinput').auto() or get_option('use-dinput').enabled()
+		platform_dependent_deps += [
+			meson.get_compiler('c').find_library('dinput8'),
+			meson.get_compiler('c').find_library('dxguid'),
+		]
+		platform_dependent_args += [ '-DUSE_DINPUT' ]
+		platform_dependent_src += [ 'input_dinput.c' ]
+		platform_dependent_link_args += [ '-ldinput8', '-ldxguid' ]
+	endif
 	platform_dependent_deps = [
 		meson.get_compiler('c').find_library('regex'),
 		meson.get_compiler('c').find_library('wsock32'),
-		meson.get_compiler('cpp').find_library('setupapi'),
+		meson.get_compiler('c').find_library('setupapi'),
 	]
 	platform_dependent_link_with += [
 		client_lib, msys_socket_lib,
@@ -53,7 +62,7 @@ elif host_machine.system() == 'windows'
 	platform_dependent_src += [
 		'device_monitor_win32.c',
 		'input_hidapi.c',
-		# On Windows, modified hidapi is compiled directly to binary
+		# On Windows, modified hidapi is compiled directly into binary
 		'hid.c'
 	]
 	platform_dependent_link_args += [ '-mconsole' ]

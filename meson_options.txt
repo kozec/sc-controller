@@ -17,4 +17,8 @@ option('use-hidapi', type: 'feature', value: 'auto', description: '''
 	Enables and prefers hidapi where available.
 	Default on Windows.
 ''')
+option('use-dinput', type: 'feature', value: 'auto', description: '''
+	Enables dinput support for input devices.
+	Default and available only on Windows.
+''')
 
