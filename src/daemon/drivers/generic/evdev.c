@@ -12,6 +12,7 @@
 #include "scc/input_device.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
+#include "scc/config.h"
 #include <libevdev/libevdev.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -45,61 +46,6 @@ static void evdev_dealloc(Controller* c) {
 	free(ev);
 }
 
-static bool evdev_load_mappings(Daemon* d, EvdevController* ev) {
-	StrBuilder* sb = strbuilder_new();
-	aojls_ctx_t* ctx = NULL;
-	if (sb == NULL)
-		goto evdev_load_mappings_oom;
-	
-	const char* uniq = libevdev_get_uniq(ev->dev);
-	if (uniq == NULL)
-		uniq = libevdev_get_name(ev->dev);		// Not so unique :(
-	strbuilder_add(sb, d->get_config_path());
-	strbuilder_add_path(sb, "devices");
-	strbuilder_add_path(sb, "evdev-");
-	strbuilder_addf(sb, "%s.json", uniq);
-	if (strbuilder_failed(sb))
-		goto evdev_load_mappings_oom;
-	int fd = open(strbuilder_get_value(sb), O_RDONLY);
-	if (fd < 0) {
-		strbuilder_free(sb);
-		WARN("No mappings for '%s'", uniq);
-		return false;
-	}
-	strbuilder_clear(sb);
-	strbuilder_add_fd(sb, fd);
-	close(fd);
-	if (strbuilder_failed(sb))
-		goto evdev_load_mappings_oom;
-	
-	aojls_deserialization_prefs prefs = { 0 };
-	ctx = aojls_deserialize((char*)strbuilder_get_value(sb), strbuilder_len(sb), &prefs);
-	if ((ctx == NULL) || (prefs.error != NULL)) {
-		LERROR("Failed to decode mappings for '%s': %s", uniq, prefs.error);
-		strbuilder_free(sb);
-		json_free_context(ctx);
-		return false;
-	}
-	
-	json_object* root = json_as_object(json_context_get_result(ctx));
-	json_object* buttons = json_object_get_object(root, "buttons");
-	json_object* axes = json_object_get_object(root, "axes");
-	
-	if (!load_button_map(uniq, buttons, &ev->gc))
-		goto evdev_load_mappings_oom;
-	if (!load_axis_map(uniq, axes, &ev->gc))
-		goto evdev_load_mappings_oom;
-	
-	strbuilder_free(sb);
-	json_free_context(ctx);
-	return true;
-
-evdev_load_mappings_oom:
-	strbuilder_free(sb);
-	json_free_context(ctx);
-	LERROR("Out of memory");
-	return false;
-}
 
 static void on_data_ready(Daemon* d, int fd, void* _ev) {
 	EvdevController* ev = (EvdevController*)_ev;
@@ -144,7 +90,46 @@ static void on_data_ready(Daemon* d, int fd, void* _ev) {
 }
 
 
+static inline char* evdev_idev_to_config_key(const InputDeviceData* idev) {
+	StrBuilder* sb = strbuilder_new();
+	if (sb == NULL) return NULL;
+	strbuilder_add(sb, "evdev");
+	char* name = idev->get_prop(idev, "device/name");
+	if (name != NULL) {
+		strbuilder_add(sb, "-");
+		strbuilder_add(sb, name);
+		free(name);
+	}
+	char* uniq = idev->get_prop(idev, "device/uniq");
+	if ((uniq != NULL) && (strlen(uniq) >= 2)) {
+		strbuilder_add(sb, "-");
+		strbuilder_add(sb, uniq);
+	}
+	free(uniq);
+	
+	if (strbuilder_failed(sb)) {
+		strbuilder_free(sb);
+		return NULL;
+	}
+	return strbuilder_consume(sb);
+}
+
+
 static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+	char* ckey = evdev_idev_to_config_key(idev);
+	Config* cfg = config_load();
+	if ((cfg == NULL) || (ckey == NULL)) {
+		RC_REL(cfg);
+		free(ckey);
+		return;
+	}
+	Config* ccfg = config_get_controller_config(cfg, ckey, NULL);
+	RC_REL(cfg);
+	if (ccfg == NULL) {
+		free(ckey);
+		return;
+	}
+	
 	int err;
 	char* event_file = strbuilder_fmt("/dev/input%s", strrchr(idev->path, '/'));
 	if (event_file == NULL) return;		// OOM
@@ -152,6 +137,8 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	EvdevController* ev = malloc(sizeof(EvdevController));
 	if (ev == NULL) {
 		free(event_file);
+		RC_REL(ccfg);
+		free(ckey);
 		return;
 	}
 	
@@ -161,39 +148,54 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 		LERROR("Failed to open evdev device %s: %s", event_file, strerror(-err));
 		evdev_dealloc(&ev->controller);
 		free(event_file);
+		RC_REL(ccfg);
+		free(ckey);
 		return;
 	}
 	free(event_file);
 	
 	if (!gc_alloc(d, &ev->gc)) {
 		evdev_dealloc(&ev->controller);
+		RC_REL(ccfg);
+		free(ckey);
 		return;
 	}
 	
-	if (!evdev_load_mappings(d, ev)) {
+	StrBuilder* sb = strbuilder_new();
+	char* uniq = idev->get_prop(idev, "device/uniq");
+	if ((uniq == NULL) || (strlen(uniq) < 2)) {
+		char* name = idev->get_prop(idev, "device/name");
+		uLong crc;
+		if (name == NULL) {
+			crc = 0x101A17E;
+		} else {
+			crc = crc32(0, (const Bytef*)name, strlen(name));
+			free(name);
+		}
+		strbuilder_addf(sb, "%x", crc);
+	} else {
+		strbuilder_addf(sb, "ev%s", uniq);
+	}
+	free(uniq);
+	strbuilder_upper(sb);
+	strbuilder_insert(sb, 0, "ev");
+	gc_make_id(strbuilder_get_value(sb), &ev->gc);
+	
+	LOG("GONNA LOAD MAPPINGS for %s", ev->gc.id);
+	if (!gc_load_mappings(ckey, &ev->gc, ccfg)) {
 		evdev_dealloc(&ev->controller);
+		RC_REL(ccfg);
+		free(ckey);
 		return;
 	}
+	RC_REL(ccfg);
+	free(ckey);
 	
 	if (!d->poller_cb_add(ev->fd, &on_data_ready, ev)) {
 		LERROR("Failed to register with poller");
 		evdev_dealloc(&ev->controller);
 		return;
 	}
-	
-	StrBuilder* sb = strbuilder_new();
-	const char* uniq = libevdev_get_uniq(ev->dev);
-	if (uniq == NULL) {
-		const char* name = libevdev_get_name(ev->dev);
-		if (name == NULL) name = "(null)";
-		uLong crc = crc32(0, (const Bytef*)name, strlen(name));
-		strbuilder_addf(sb, "%x", crc);
-	} else {
-		strbuilder_addf(sb, "ev%s", uniq);
-	}
-	strbuilder_upper(sb);
-	strbuilder_insert(sb, 0, "ev");
-	gc_make_id(strbuilder_get_value(sb), &ev->gc);
 	
 	snprintf(ev->gc.desc, MAX_DESC_LEN, "<EvDev %s>", libevdev_get_name(ev->dev));
 	ev->gc.desc[MAX_DESC_LEN - 1] = 0;
@@ -221,8 +223,7 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 
 
 Driver* scc_driver_init(Daemon* daemon) {
-	HotplugFilter filter_name = { .type=SCCD_HOTPLUG_FILTER_NAME, .name="Logitech Gamepad F310" };
-	if (!daemon->hotplug_cb_add(EVDEV, &hotplug_cb, &filter_name, NULL)) {
+	if (!daemon->hotplug_cb_add(EVDEV, &hotplug_cb, NULL)) {
 		LERROR("Failed to register hotplug callback");
 		return NULL;
 	}

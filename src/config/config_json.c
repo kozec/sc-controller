@@ -445,7 +445,7 @@ Config* config_get_controller_config(Config* _c, const char* id, char* error_ret
 		goto config_get_controller_config_oom;
 	Config* _rv = config_load_from(filename, error_return);
 	if (_rv == NULL)
-		goto config_get_controller_config_oom;
+		return NULL;
 	
 	struct _Config* rv = container_of(_rv, struct _Config, config);
 	rv->defaults = CONTROLLER_DEFAULTS;

@@ -56,7 +56,7 @@ if host_machine.system() == 'linux'
 			dependency('libevdev'),
 			dependency('zlib'),
 		],
-		link_with: [ utils_lib, tools_lib ],
+		link_with: [ utils_lib, tools_lib, config_lib ],
 		sources: [
 			'generic/common.c',
 			'generic/evdev.c',
@@ -71,7 +71,7 @@ if host_machine.system() == 'windows'
 			meson.get_compiler('c').find_library('dinput8'),
 			meson.get_compiler('c').find_library('dxguid'),
 		],
-		link_with: [ utils_lib, tools_lib ],
+		link_with: [ utils_lib, tools_lib, config_lib ],
 		sources: [
 			'generic/common.c',
 			'generic/dinput.c',

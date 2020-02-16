@@ -7,6 +7,7 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/intmap.h"
 #include "scc/utils/aojls.h"
+#include "scc/config.h"
 #include "scc/driver.h"
 #include <stddef.h>
 #include <unistd.h>
@@ -80,21 +81,8 @@ void gc_set_mapper(Controller* c, Mapper* mapper);
 /** Controller.turnoff callback */
 void gc_turnoff(Controller* c);
 
-/**
- * Loads and parses button map from given JSON object.
- * Updates 'button_map' in place.
- *
- * Returns false on failure, which can be caused only by OOM error
- */
-bool load_button_map(const char* name, json_object* json, GenericController* gc);
-
-/**
- * Loads and parses axis map from given JSON object.
- * Updates 'axis_map' in place.
- *
- * Returns false on failure, which can be caused only by OOM error
- */
-bool load_axis_map(const char* name, json_object* json, GenericController* gc);
+/** Loads mappings from provided config object */
+bool gc_load_mappings(const char* id, GenericController* gc, Config* ccfg);
 
 /**
  * Applies input_value, as read from physical controller, to ControllerInput

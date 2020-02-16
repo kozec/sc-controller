@@ -29,10 +29,6 @@ struct LinuxInputDeviceData {
 	int					idx;
 };
 
-static char* input_device_get_name(const InputDeviceData* idev) {
-	return NULL;
-}
-
 static int input_device_get_idx(const InputDeviceData* idev) {
 	const struct LinuxInputDeviceData* ldev = container_of(idev, struct LinuxInputDeviceData, idev);
 	return ldev->idx;
@@ -72,6 +68,10 @@ static char* input_device_get_prop(const InputDeviceData* idev, const char* name
 input_device_get_prop_fail:
 	strbuilder_free(sb);
 	return NULL;
+}
+
+static char* input_device_get_name(const InputDeviceData* idev) {
+	return input_device_get_prop(idev, "device/name");
 }
 
 static void input_device_free_dummy(InputDeviceData* idev) {

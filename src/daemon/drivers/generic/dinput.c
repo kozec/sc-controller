@@ -16,12 +16,11 @@
 #include <winbase.h>
 #include <dinput.h>
 
-typedef struct EvdevController {
+typedef struct DInputController {
 	Controller				controller;
 	GenericController		gc;
-	int						fd;
-	struct libevdev*		dev;
-} EvdevController;
+	InputDevice*			dev;
+} DInputController;
 
 static Driver driver = {
 	.unload = NULL
@@ -34,15 +33,20 @@ static void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, co
 
 
 static void hotplug_cb(Daemon* d, const InputDeviceData* idata) {
+	DInputController* di = malloc(sizeof(DInputController));
+	if ((di == NULL) || !gc_alloc(d, &di->gc))
+		return;		// OOM
+	
 	InputDevice* dev = idata->open(idata);
 	if (dev == NULL) {
 		LERROR("Failed open '%s'", idata->path);
+		free(di);
 		return;
 	}
 	if (!dev->interupt_read_loop(dev, 0, sizeof(DIJOYSTATE2), input_interrupt_cb, dev)) {
 		LERROR("Failed to configure controller");
 		dev->close(dev);
-		// free();
+		free(di);
 		return;
 	}
 	

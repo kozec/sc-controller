@@ -6,6 +6,7 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/math.h"
 #include "scc/controller.h"
+#include "scc/config.h"
 #include "scc/mapper.h"
 #include "scc/tools.h"
 #include <math.h>
@@ -109,38 +110,6 @@ void gc_make_id(const char* base, GenericController* gc) {
 }
 
 
-
-static AxisData* parse_axis(json_object* data) {
-	bool valid = false;
-	AxisData* ad = malloc(sizeof(AxisData));
-	if (ad == NULL) return NULL;
-	
-	ad->clamp_min = STICK_PAD_MIN;
-	ad->clamp_max = STICK_PAD_MAX;
-	
-	int min = json_object_get_double(data, "min", &valid);
-	if (!valid) min = -127;
-	int max = json_object_get_double(data, "max", &valid);
-	if (!valid) max = 128;
-	double deadzone = json_object_get_double(data, "deadzone", &valid);
-	if (!valid) deadzone = 0;
-	ad->center = json_object_get_double(data, "center", &valid);
-	if (!valid) ad->center = 0;
-	
-	ad->offset = 0;
-	if ((max >= 0) && (min >= 0))
-		ad->offset = 1;
-	if (min == max) {
-		ad->scale = 1.0;
-	} else {
-		ad->scale = -2.0 / (double)(min - max);
-		if (max > min)
-			ad->offset *= -1.0;
-	}
-	ad->deadzone = fabs(deadzone * ad->scale);
-	return ad;
-}
-
 static AxisID parse_axis_name(const char* s) {
 	if (s == NULL) return A_NONE;
 	// TODO: Use stricmp here?
@@ -166,56 +135,63 @@ static AxisID parse_axis_name(const char* s) {
 	return A_NONE;
 }
 
-bool load_button_map(const char* name, json_object* json, GenericController* gc) {
-	intmap_t button_map = gc->button_map;
-	if (json == NULL) return true;
+static AxisData* parse_axis(Config* ccfg, const char* key) {
+	char buffer[256];
+	AxisData* ad = malloc(sizeof(AxisData));
+	if (ad == NULL) return NULL;
 	
-	for(size_t i=0; i<json_object_numkeys(json); i++) {
-		const char* key = json_object_get_key(json, i);
-		char* value = json_object_get_string(json, key);
-		if (value == NULL) continue;
-		SCButton b = scc_string_to_button(value);
-		char* ok = NULL;
-		int k = strtol(key, &ok, 10);
-		if (ok == key) {
-			WARN("Ignoring mapping for '%s': '%s' is not a number", name, key);
-			continue;
-		}
-		if (b == 0) {
-			WARN("Ignoring mapping for '%s': Unknown button '%s'", name, value);
-			continue;
-		}
-		if (intmap_put(button_map, k, (any_t)b) == MAP_OMEM)
-			return false;
+	ad->clamp_min = STICK_PAD_MIN;
+	ad->clamp_max = STICK_PAD_MAX;
+	
+	snprintf(buffer, 256, "axes/%s/min", key);
+	int min = config_get_double(ccfg, buffer);
+	snprintf(buffer, 256, "axes/%s/max", key);
+	int max = config_get_double(ccfg, buffer);
+	if ((min == 0) && (max == 0)) {
+		min = -127;
+		max = 128;
 	}
+	snprintf(buffer, 256, "axes/%s/deadzone", key);
+	double deadzone = config_get_double(ccfg, buffer);
+	snprintf(buffer, 256, "axes/%s/center", key);
+	ad->center = config_get_double(ccfg, buffer);
 	
-	return true;
+	ad->offset = 0;
+	if ((max >= 0) && (min >= 0))
+		ad->offset = 1;
+	if (min == max) {
+		ad->scale = 1.0;
+	} else {
+		ad->scale = -2.0 / (double)(min - max);
+		if (max > min)
+			ad->offset *= -1.0;
+	}
+	ad->deadzone = fabs(deadzone * ad->scale);
+	return ad;
 }
 
-
-bool load_axis_map(const char* name, json_object* json, GenericController* gc) {
-	intmap_t axis_map = gc->axis_map;
-	if (json == NULL) return true;
-	
-	for(size_t i=0; i<json_object_numkeys(json); i++) {
-		const char* key = json_object_get_key(json, i);
-		json_object* value = json_object_get_object(json, key);
-		if (value == NULL) continue;
+static bool load_axis_map(const char* id, GenericController* gc, Config* ccfg) {
+	const char* keys[64];
+	char buffer[64];
+	ssize_t count;
+	count = config_get_strings(ccfg, "axes", keys, 64);
+	for (ssize_t i=0; i<count; i++) {
 		char* ok = NULL;
-		int k = strtol(key, &ok, 10);
-		if (ok == key) {
-			WARN("Ignoring mapping for '%s': '%s' is not a number", name, key);
+		int k = strtol(keys[i], &ok, 10);
+		if (ok == keys[i]) {
+			WARN("Ignoring mapping for '%s': '%s' is not a number", id, keys[i]);
 			continue;
 		}
-		AxisID axis = parse_axis_name(json_object_get_string(value, "axis"));
+		snprintf(buffer, 64, "axes/%s/axis", keys[i]);
+		AxisID axis = parse_axis_name(config_get(ccfg, buffer));
 		if (axis == A_NONE) {
-			WARN("Ignoring mapping for '%s': '%s' is not valid axis name", name,
-					json_object_get_string(value, "axis"));
+			WARN("Ignoring mapping for '%s': '%s' is not valid axis name", id,
+					config_get(ccfg, buffer));
 			continue;
 		}
-		AxisData* data = parse_axis(value);
+		AxisData* data = parse_axis(ccfg, keys[i]);
 		if (data == NULL)
-			return false;
+			return false;						// OOM
 		data->axis = axis;
 		if ((data->axis == A_LTRIG) || (data->axis == A_RTRIG)) {
 			data->clamp_min = TRIGGER_MIN;
@@ -224,12 +200,43 @@ bool load_axis_map(const char* name, json_object* json, GenericController* gc) {
 			data->scale *= 0.5;
 		}
 		
-		if (intmap_put(axis_map, k, (any_t)data) == MAP_OMEM) {
+		if (intmap_put(gc->axis_map, k, (any_t)data) == MAP_OMEM) {
 			free(data);
-			return false;
+			return false;						// OOM
 		}
 	}
-	
+	return true;
+}
+
+static bool load_button_map(const char* id, GenericController* gc, Config* ccfg) {
+	const char* keys[64];
+	char buffer[64];
+	ssize_t count;
+	count = config_get_strings(ccfg, "buttons", keys, 64);
+	for (ssize_t i=0; i<count; i++) {
+		char* ok = NULL;
+		int k = strtol(keys[i], &ok, 10);
+		if (ok == keys[i]) {
+			WARN("Ignoring mapping for '%s': '%s' is not a number", id, keys[i]);
+			continue;
+		}
+		snprintf(buffer, 64, "buttons/%s", keys[i]);
+		SCButton b = scc_string_to_button(config_get(ccfg, buffer));
+		if (b == 0) {
+			WARN("Ignoring mapping for '%s': Unknown button '%s'", id, keys[i]);
+			continue;
+		}
+		if (intmap_put(gc->button_map, k, (any_t)b) == MAP_OMEM)
+			return false;
+	}
+	return true;
+}
+
+bool gc_load_mappings(const char* id, GenericController* gc, Config* ccfg) {
+	if (!load_axis_map(id, gc, ccfg))
+		return false;
+	if (!load_button_map(id, gc, ccfg))
+		return false;
 	return true;
 }
 

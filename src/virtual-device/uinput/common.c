@@ -35,9 +35,9 @@ VirtualDevice* setup_device(VirtualDeviceType type,
 		return NULL;
 	}
 	
-	snprintf((char*)vdev->name, NAME_SIZE, "<UInput 0x%x: %s>", fd, uidev.name);
+	snprintf((char*)vdev->name, NAME_SIZE, "<UInput 0x%02x: %s>", fd, uidev.name);
 	
-	#define IOCTLSETUP(ctl, value) \
+	#define IOCTLSETUP(ctl, value)											\
 		if (ioctl(fd, ctl, value) < 0) {									\
 			LERROR("" #ctl " " #value " failed: %s", strerror(errno));		\
 			close(fd);														\
