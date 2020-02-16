@@ -158,6 +158,7 @@ void sccd_input_hidapi_close();
 void sccd_input_hidapi_init();
 #endif
 #ifdef USE_DINPUT
+InputDevice* sccd_input_dinput_open(const InputDeviceData* idev);
 void sccd_input_dinput_rescan();
 void sccd_input_dinput_close();
 void sccd_input_dinput_init();

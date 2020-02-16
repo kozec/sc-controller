@@ -48,8 +48,8 @@ typedef struct InputDeviceData {
 	
 	/**
 	 * Opens assotiated device.
-	 * Note that this will not work with EVDEV and DINPUT devices.
-	 * For those, use path to open device using apropriate library.
+	 * Note that this will not work with EVDEV devices.
+	 * For those, use path to open device using udev library directly.
 	 *
 	 * Returns InputDevice object or NULL on error.
 	 */

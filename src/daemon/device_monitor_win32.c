@@ -15,7 +15,7 @@
 #include <windows.h>
 #include <unistd.h>
 #include <stdio.h>
-#if USE_DINPUT
+#ifdef USE_DINPUT
 #include <winbase.h>
 #include <dinput.h>
 #endif
@@ -61,7 +61,7 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 	case SCCD_HOTPLUG_FILTER_IDX:
 		return (wdev->idx == filter->idx);
 	case SCCD_HOTPLUG_FILTER_NAME:
-#if USE_DINPUT
+#ifdef USE_DINPUT
 		if (idev->subsystem == DINPUT) {
 			const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
 			return 0 == strcmp(d8dev->tszInstanceName, filter->name);
@@ -69,7 +69,7 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 #endif
 		return false;
 	case SCCD_HOTPLUG_FILTER_GUID:
-#if USE_DINPUT
+#ifdef USE_DINPUT
 		if (idev->subsystem == DINPUT) {
 			static char buffer[256];
 			const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
@@ -89,7 +89,7 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 
 
 static char* input_device_get_name(const InputDeviceData* idev) {
-#if USE_DINPUT
+#ifdef USE_DINPUT
 	if (idev->subsystem == DINPUT) {
 		struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
 		const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
@@ -105,6 +105,9 @@ static int input_device_get_idx(const InputDeviceData* idev) {
 }
 
 static InputDevice* input_device_open(const InputDeviceData* idev) {
+#ifdef USE_DINPUT
+	return sccd_input_dinput_open(idev);
+#endif
 #ifdef USE_HIDAPI
 	if (idev->subsystem == HIDAPI)
 		return sccd_input_hidapi_open(idev->path);

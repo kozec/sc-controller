@@ -39,7 +39,7 @@ typedef struct HidapiInputDevice {
 	} 					idata;
 } HidapiInputDevice;
 
-typedef LIST_TYPE(HidapiInputDevice) HidapiInputDeviceList;
+typedef LIST_TYPE(HidapiInputDevice) InputDeviceList;
 
 /**
  * Unlike with libusb, there is no problem with sending packets at any time,
@@ -47,8 +47,8 @@ typedef LIST_TYPE(HidapiInputDevice) HidapiInputDeviceList;
  *
  * To workaroud this, devices with interrupt callback set are pooled repeadedly
  * to recieve any input packets.
-  */
-static HidapiInputDeviceList devices_with_iterupts;
+ */
+static InputDeviceList devices_with_iterupts;
 // TODO: ^^ Maybe actual poll() can be used on BSD/Linux?
 // This is needed mostly for Windows, so it probably doesn't matter :(
 
@@ -173,6 +173,7 @@ static bool sccd_input_hidapi_interupt_read_loop(InputDevice* _dev, uint8_t endp
 static void sccd_input_hidapi_mainloop(Daemon* d) {
 	int r;
 	FOREACH_IN(HidapiInputDevice*, dev, devices_with_iterupts) {
+		// TODO: Handle device disconnecting
 		while ((r = hid_read_timeout(dev->hid, dev->idata.buffer, dev->idata.length, 0)) > 0) {
 			dev->idata.cb(d,
 					&dev->dev,
