@@ -2,39 +2,112 @@
  * Generic SC-Controller driver - common code for generic driver
  */
 #include "generic.h"
+#include "scc/utils/container_of.h"
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/math.h"
 #include "scc/controller.h"
+#include "scc/mapper.h"
 #include "scc/tools.h"
 #include <math.h>
 
+struct _DerivedFromGenericController {
+	Controller				controller;
+	GenericController		gc;
+};
 
-intmap_t axis_map_new() {
-	return intmap_new();
+inline static GenericController* get_gc_from_controller_instance(Controller* c) {
+	// This depends on every structure that uses GenericController starting
+	// with same field order
+	struct _DerivedFromGenericController* dgc;
+	dgc = container_of(c, struct _DerivedFromGenericController, controller);
+	return &dgc->gc;
 }
 
+
+bool gc_alloc(Daemon* d, GenericController* gc) {
+	gc->daemon = d;
+	gc->mapper = NULL;
+	gc->button_map = intmap_new();
+	gc->axis_map = intmap_new();
+	return (gc->button_map != NULL) && (gc->axis_map != NULL);
+}
 
 static int axis_data_dealloc(any_t item, any_t _data) {
 	free(_data);
 	return MAP_OK;
 }
 
-void axis_map_free(intmap_t map) {
-	intmap_iterate(map, axis_data_dealloc, NULL);
-	intmap_free(map);
-}
-
-
-void make_id(const char* base, char target[MAX_ID_LEN], int counter) {
-	static char buffer[32];
-	strncpy(target, base, MAX_ID_LEN - 1);
-	target[MAX_ID_LEN - 1] = 0;
-	if (counter > 0) {
-		snprintf(buffer, 31, "%x", counter);
-		size_t len = min(strlen(target), MAX_ID_LEN - strlen(buffer) - 1);
-		strcpy(target + len, buffer);
+void gc_dealloc(GenericController* gc) {
+	if (gc->button_map != NULL) {
+		intmap_free(gc->button_map);
+		gc->button_map = NULL;
+	}
+	if (gc->axis_map != NULL) {
+		intmap_iterate(gc->axis_map, axis_data_dealloc, NULL);
+		intmap_free(gc->axis_map);
+		gc->axis_map = NULL;
 	}
 }
+
+const char* gc_get_id(Controller* c) {
+	GenericController* gc = get_gc_from_controller_instance(c);
+	return gc->id;
+}
+
+const char* gc_get_description(Controller* c) {
+	GenericController* gc = get_gc_from_controller_instance(c);
+	return gc->desc;
+}
+
+void gc_set_mapper(Controller* c, Mapper* mapper) {
+	GenericController* gc = get_gc_from_controller_instance(c);
+	gc->mapper = mapper;
+}
+
+void gc_turnoff(Controller* c) {
+}
+
+void gc_cancel_padpress_emulation(void* _gc) {
+	GenericController* gc = (GenericController*)_gc;
+	Daemon* d = gc->daemon;
+	bool needs_reschedule = false;
+	if ((gc->input.buttons & B_LPADTOUCH) != 0) {
+		if ((gc->input.lpad_x == 0) && (gc->input.lpad_y == 0))
+			gc->input.buttons &= ~(B_LPADPRESS | B_LPADTOUCH);
+		else
+			needs_reschedule = true;
+	}
+	if ((gc->input.buttons & B_RPADTOUCH) != 0) {
+		if ((gc->input.rpad_x == 0) && (gc->input.rpad_y == 0))
+			gc->input.buttons &= ~B_RPADTOUCH;
+		else
+			needs_reschedule = true;
+	}
+	if (needs_reschedule)
+		gc->padpressemu_task = d->schedule(PADPRESS_EMULATION_TIMEOUT,
+										gc_cancel_padpress_emulation, gc);
+	else
+		gc->padpressemu_task = 0;
+	
+	if (gc->mapper != NULL)
+		gc->mapper->input(gc->mapper, &gc->input);
+}
+
+void gc_make_id(const char* base, GenericController* gc) {
+	int counter = 0;
+	do {
+		static char buffer[32];
+		strncpy(gc->id, base, MAX_ID_LEN - 1);
+		gc->id[MAX_ID_LEN - 1] = 0;
+		if (counter > 0) {
+			snprintf(buffer, 31, "%x", counter);
+			size_t len = min(strlen(gc->id), MAX_ID_LEN - strlen(gc->id) - 1);
+			strcpy(gc->id + len, buffer);
+		}
+		counter ++;
+	} while (gc->daemon->get_controller_by_id(gc->id) != NULL);
+}
+
 
 
 static AxisData* parse_axis(json_object* data) {
@@ -93,7 +166,8 @@ static AxisID parse_axis_name(const char* s) {
 	return A_NONE;
 }
 
-bool load_button_map(const char* name, json_object* json, intmap_t button_map) {
+bool load_button_map(const char* name, json_object* json, GenericController* gc) {
+	intmap_t button_map = gc->button_map;
 	if (json == NULL) return true;
 	
 	for(size_t i=0; i<json_object_numkeys(json); i++) {
@@ -119,7 +193,8 @@ bool load_button_map(const char* name, json_object* json, intmap_t button_map) {
 }
 
 
-bool load_axis_map(const char* name, json_object* json, intmap_t axis_map) {
+bool load_axis_map(const char* name, json_object* json, GenericController* gc) {
+	intmap_t axis_map = gc->axis_map;
 	if (json == NULL) return true;
 	
 	for(size_t i=0; i<json_object_numkeys(json); i++) {

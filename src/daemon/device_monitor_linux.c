@@ -29,7 +29,7 @@ struct LinuxInputDeviceData {
 	int					idx;
 };
 
-static const char* input_device_get_name(const InputDeviceData* idev) {
+static char* input_device_get_name(const InputDeviceData* idev) {
 	return NULL;
 }
 

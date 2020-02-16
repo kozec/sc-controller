@@ -16,7 +16,13 @@
 #include <winbase.h>
 #include <dinput.h>
 
-// static LPVOID di;
+typedef struct EvdevController {
+	Controller				controller;
+	GenericController		gc;
+	int						fd;
+	struct libevdev*		dev;
+} EvdevController;
+
 static Driver driver = {
 	.unload = NULL
 };

@@ -11,8 +11,27 @@
 #include <stddef.h>
 #include <unistd.h>
 
-#define MAX_DESC_LEN	64
-#define MAX_ID_LEN		32
+#define MAX_DESC_LEN				64
+#define MAX_ID_LEN					32
+#define PADPRESS_EMULATION_TIMEOUT	2
+
+/**
+ * Mix-in for stuff that's common for all (two) generic drivers
+ * Note that it's important for this to be 2nd field of parent structure,
+ * so get_gc_from_controller_instance() method works.
+ */
+typedef struct GenericController {
+	Mapper*					mapper;
+	Daemon*					daemon;
+	intmap_t				button_map;
+	/** int -> AxisData */
+	intmap_t				axis_map;
+	ControllerInput			input;
+	char					id[MAX_ID_LEN];
+	char					desc[MAX_DESC_LEN];
+	TaskID					padpressemu_task;
+} GenericController;
+
 
 
 typedef enum AxisID {
@@ -41,13 +60,25 @@ typedef struct AxisData {
 } AxisData;
 
 
+/** Sets up and allocates fields in GenericController structure */
+bool gc_alloc(Daemon* d, GenericController* gc);
+/** Deallocates fields in GenericController structure (but not structure itself) */
+void gc_dealloc(GenericController* gc);
+/** Callback used when emulating pressing left pad */
+void gc_cancel_padpress_emulation(void* _gc);
 /**
- * Axis map is map int -> AxisData
- * Returns NULL if memory cannot be allocated
+ * Generates unique controller ID using 'base' as prefix.
  */
-intmap_t axis_map_new();
+void gc_make_id(const char* base, GenericController* gc);
 
-void axis_map_free(intmap_t map);
+/** Controller.get_id callback */
+const char* gc_get_id(Controller* c);
+/** Controller.get_description callback */
+const char* gc_get_description(Controller* c);
+/** Controller.set_mapper callback */
+void gc_set_mapper(Controller* c, Mapper* mapper);
+/** Controller.turnoff callback */
+void gc_turnoff(Controller* c);
 
 /**
  * Loads and parses button map from given JSON object.
@@ -55,7 +86,7 @@ void axis_map_free(intmap_t map);
  *
  * Returns false on failure, which can be caused only by OOM error
  */
-bool load_button_map(const char* name, json_object* json, intmap_t button_map);
+bool load_button_map(const char* name, json_object* json, GenericController* gc);
 
 /**
  * Loads and parses axis map from given JSON object.
@@ -63,19 +94,11 @@ bool load_button_map(const char* name, json_object* json, intmap_t button_map);
  *
  * Returns false on failure, which can be caused only by OOM error
  */
-bool load_axis_map(const char* name, json_object* json, intmap_t axis_map);
+bool load_axis_map(const char* name, json_object* json, GenericController* gc);
 
 /**
  * Applies input_value, as read from physical controller, to ControllerInput
  * of virtual controller.
  */
 void apply_axis(const AxisData* a, double input_value, ControllerInput* input);
-
-/**
- * Generates controller ID using 'base' as prefix and stores it to target.
- * 'counter' should be 0, unless function is called repeadedly because returned
- * ID was not unique.
- * Target has to have space for at least MAX_ID_LEN bytes (including terminating \0)
- */
-void make_id(const char* base, char target[MAX_ID_LEN], int counter);
 
