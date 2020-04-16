@@ -239,14 +239,22 @@ static HANDLE open_device(const char *path, BOOL enumerate)
 	HANDLE handle;
 	DWORD desired_access = (enumerate)? 0: (GENERIC_WRITE | GENERIC_READ);
 	DWORD share_mode = (enumerate)? (FILE_SHARE_READ|FILE_SHARE_WRITE): 0;
+	// Remove extra buffering
+	DWORD flags = FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH | FILE_ATTRIBUTE_TEMPORARY;
 
 	handle = CreateFileA(path,
 		desired_access,
 		share_mode,
 		NULL,
 		OPEN_EXISTING,
-		FILE_FLAG_OVERLAPPED,/*FILE_ATTRIBUTE_NORMAL,*/
+		flags,/*FILE_FLAG_OVERLAPPED,*//*FILE_ATTRIBUTE_NORMAL,*/
 		0);
+
+	if (!enumerate)
+	{
+		// Reduce HID input buffer queue size
+		HidD_SetNumInputBuffers(handle, 2);
+	}
 
 	return handle;
 }
