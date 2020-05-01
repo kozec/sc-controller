@@ -99,7 +99,7 @@ struct __attribute__((packed)) Message {
 			uint16_t			max_version;
 			uint16_t			min_version;
 		} version_info;
-		struct PortInfo			port_info[4];		// size = 12B * 4B
+		struct PortInfo			port_info;			// size = 12B
 		struct {
 			struct PortInfo		pad_info;
 			uint32_t			packet_number;
@@ -192,9 +192,10 @@ static void parse_message(int fd, const char* buffer, size_t size, struct sockad
 		break;
 	case DSUC_LISTPORTS:
 		if ((msg->list_ports.count > 0) && (msg->list_ports.count <= 4)) {
-			for (i=0; i<msg->list_ports.count; i++)
-				fill_port_info(&out.port_info[i], msg->list_ports.ids[i], 0);
-			send_msg(fd, source, &out, DSUS_PORTINFO, 12 * msg->list_ports.count);
+			for (i=0; i<msg->list_ports.count; i++) {
+				fill_port_info(&out.port_info, msg->list_ports.ids[i], 0);
+				send_msg(fd, source, &out, DSUS_PORTINFO, 12);
+			}
 		}
 		break;
 	case DSUC_PADDATAREQ: {
