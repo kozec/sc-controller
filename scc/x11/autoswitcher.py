@@ -312,8 +312,8 @@ class AutoswitchOptsMenuGenerator(MenuGenerator):
 			if menuitem.id == "as::unassign":
 				AutoSwitcher.unassign(self.conds, self.title, self.wm_class, self.assigned_prof)
 			else:
-				if menu.daemon.get_profile():
-					profile = os.path.split(menu.daemon.get_profile())[-1]
+				if controller.get_profile():
+					profile = os.path.split(controller.get_profile())[-1]
 					if profile.endswith(".mod"):
 						profile = profile[0:-4]
 					if profile.endswith(".sccprofile"):
