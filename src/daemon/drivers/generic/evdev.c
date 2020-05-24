@@ -135,7 +135,6 @@ static void open_device(Daemon* d, const InputDeviceData* idev, Config* ccfg, co
 	if ((ev == NULL) || !gc_alloc(d, &ev->gc)) {
 		// OOM
 		free(event_file);
-		RC_REL(ccfg);
 		free(ev);
 		return;
 	}
@@ -147,10 +146,8 @@ static void open_device(Daemon* d, const InputDeviceData* idev, Config* ccfg, co
 	
 	if (!gc_load_mappings(&ev->gc, ccfg)) {
 		evdev_dealloc(&ev->controller);
-		RC_REL(ccfg);
 		return;
 	}
-	RC_REL(ccfg);
 	
 	ev->fd = open(event_file, O_RDONLY|O_NONBLOCK);
 	if ((err = libevdev_new_from_fd(ev->fd, &ev->dev)) < 0) {
@@ -229,6 +226,7 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	}
 	
 	open_device(d, idev, ccfg, ckey);
+	RC_REL(ccfg);
 	free(ckey);
 }
 

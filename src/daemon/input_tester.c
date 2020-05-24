@@ -155,15 +155,14 @@ static void controller_available_list(const char* driver_name, uint8_t confidenc
 #endif
 	if (path == NULL)
 		path = idev->path;
-#ifdef _WIN32
-	char* vendor = NULL;
-#else
+#ifndef _WIN32
 	char* vendor = idev->get_prop(idev, "vendor_id");
 	if ((vendor != NULL) && (0 == strcmp(vendor, "0000"))) {
 		// Internal, definitelly not gamepad related stuff. Skip it
 		free(vendor);
 		return;
 	}
+	free(vendor);
 #endif
 	unique_id = idev->get_prop(idev, "unique_id");
 	char icon = (confidence > 5) ? 'c' : '?';
@@ -181,9 +180,7 @@ static void controller_available_list(const char* driver_name, uint8_t confidenc
 	}
 	free(unique_id);
 	free(nice_path);
-	free(vendor);
 	free(name);
-// #endif
 }
 
 static bool controller_add(Controller* c) {
@@ -318,7 +315,8 @@ int main(int argc, char** argv) {
 	if (!opt_list && (argc < 1)) {
 #ifdef _WIN32
 		// Windows-only: If no argument is specified, list all devices
-		opt_list = 1;
+		// opt_list = 1;
+		device_id = "{6C7EB1D0-420A-11EA-8001-444553540000}";
 #else
 		argparse_usage(&argparse);
 		return 1;
@@ -329,12 +327,13 @@ int main(int argc, char** argv) {
 	
 	mainloop_callbacks = list_new(sccd_mainloop_cb, 0);
 	sccd_scheduler_init();
-	sccd_poller_init();
-#ifdef USE_LIBUSB
-	sccd_input_libusb_init(&_daemon);
-#endif
 #ifdef _WIN32
 	sccd_input_dinput_init();
+#else
+	sccd_poller_init();
+#endif
+#ifdef USE_LIBUSB
+	sccd_input_libusb_init(&_daemon);
 #endif
 	sccd_device_monitor_init(&_daemon);
 	logging_handler handler = logging_set_handler(dev_null_logging_handler);
