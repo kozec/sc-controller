@@ -1,6 +1,8 @@
 from scc.config import Config
 import pytest, os, sys, shutil, platform
 
+suffix = 99 # os.getpid()
+
 class TestControllerConfig(object):
 	
 	@classmethod
@@ -9,7 +11,7 @@ class TestControllerConfig(object):
 			import _winreg
 			reg = _winreg.ConnectRegistry(None, _winreg.HKEY_CURRENT_USER)
 			software_key = _winreg.OpenKey(reg, "Software")
-			scc_key = _winreg.CreateKey(software_key, "SCController-c-test-%s" % os.getpid())
+			scc_key = _winreg.CreateKey(software_key, "SCController-c-test-%s" % suffix)
 			devs_key = _winreg.CreateKey(scc_key, "devices")
 			_winreg.CloseKey(_winreg.CreateKey(devs_key, "test_empty"))
 			_winreg.CloseKey(_winreg.CreateKey(devs_key, "test_changeme"))
@@ -36,11 +38,14 @@ class TestControllerConfig(object):
 				_winreg.CloseKey(x)
 			
 			# ^^ see? and this is why Config class exists
-			filename = "Software\\SCController-c-test-%s" % os.getpid()
+			filename = "Software\\SCController-c-test-%s" % suffix
 			cls.c = Config(filename)
 		else:
-			cls.prefix = "/tmp/test_config_%i" % os.getpid()
-			os.makedirs("%s/devices" % cls.prefix)
+			cls.prefix = "/tmp/test_config_%i" % suffix
+			try:
+				os.makedirs("%s/devices" % cls.prefix)
+			except OSError:
+				pass
 			file("%s/devices/test_empty.json" % cls.prefix, "w").write("{}")
 			file("%s/devices/test_changeme.json" % cls.prefix, "w").write("{}")
 			file("%s/devices/test.json" % cls.prefix, "w").write("""{
@@ -60,8 +65,9 @@ class TestControllerConfig(object):
 	
 	@classmethod
 	def teardown_class(cls):
-		if platform.system() != "Windows":
-			shutil.rmtree(cls.prefix)
+		pass
+		#if platform.system() != "Windows":
+		#	shutil.rmtree(cls.prefix)
 	
 	def x_test_get_controllers(self):
 		assert "test" in self.c.get_controllers()
@@ -147,6 +153,15 @@ class TestControllerConfig(object):
 		with pytest.raises(OSError):
 			ccfg = self.c.get_controller_config("test_notjson")
 			print ccfg
+	
+	def test_create_values(self):
+		""" Tests creating new values """
+		ccfg = self.c.create_controller_config("test_create")
+		ccfg["buttons"][10] = "C"
+		ccfg["buttons"][15] = "X"
+		ccfg["axes/1/deadzone"] = 2
+		ccfg.save()
+		self.c.save()
 
 
 if __name__ == "__main__":
@@ -155,6 +170,6 @@ if __name__ == "__main__":
 	set_logging_level(True, True)
 	
 	TestControllerConfig.setup_class()
-	TestControllerConfig().test_gui_related()
+	TestControllerConfig().test_create_values()
 	TestControllerConfig.teardown_class()
 

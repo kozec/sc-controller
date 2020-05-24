@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.constants import STICK_PAD_MAX, STICK_PAD_MIN
+from scc.gui.creg.constants import AXIS_MASK
 from scc.gui.creg.data import AxisData, DPadEmuData
 from scc.gui.creg.constants import X, Y
 from scc.tools import nameof
@@ -112,7 +113,7 @@ class TriggerGrabber(InputGrabber):
 	def axis_change(self, number, value, change):
 		if value > 250:
 			self.what.reset()
-			self.set_mapping(number, self.what)
+			self.set_mapping(AXIS_MASK | number, self.what)
 			self.parent.generate_unassigned()
 			self.parent.generate_raw_data()
 			self.cancel()
@@ -177,7 +178,8 @@ class StickGrabber(TriggerGrabber):
 				self.grabbed[Y] = number
 				for i in xrange(len(self.grabbed)):
 					self.what[i].reset()
-					self.set_mapping(self.grabbed[i], self.what[i])
+					self.set_mapping(AXIS_MASK | self.grabbed[i], self.what[i])
 				self.parent.generate_unassigned()
 				self.parent.generate_raw_data()
 				self.cancel()
+

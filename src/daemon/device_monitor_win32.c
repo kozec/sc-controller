@@ -130,7 +130,16 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 #ifdef USE_DINPUT
 		if (idev->subsystem == DINPUT) {
 			char* guid = input_device_get_prop(idev, "guidInstance");
-			bool rv = (guid != NULL) && (0 == strcmp(guid, filter->name));
+			bool rv = false;
+			if (guid != NULL) {
+				rv = (0 == strcmp(guid, filter->name));
+				if (!rv && (strlen(guid) > 2)) {
+					// Special case because windows arg parsing.
+					// Under certain conditions, { and } from GUID are stripped
+					guid[strlen(guid) - 1] = 0;
+					rv = (0 == strcmp(guid + 1, filter->name));
+				}
+			}
 			free(guid);
 			return rv;
 		}

@@ -27,8 +27,10 @@
 
 static const char *const usage[] = {
 	"scc-input-test device",
-	"scc-input-test --gamecontrollerdb-id [device]",
-	"scc-input-test --list [--all]",
+	"scc-input-test --gamecontrollerdb-id device",
+	// "scc-input-test --list [--all]",
+	"scc-input-test --list",
+	"scc-input-test --first",
 	"scc-input-test -h",
 	"",
 	"Data on output, where applicable, is tab (\\t) separated",
@@ -53,6 +55,8 @@ static char* device_id = NULL;
 static bool running = false;
 static bool opt_gamecontrollerdb_id = false;
 static bool opt_list_all = false;
+static bool opt_first = false;
+static bool opt_list = false;
 static char* argv0;
 
 static bool add_mainloop(sccd_mainloop_cb cb) {
@@ -227,7 +231,7 @@ static void controller_available_test(const char* driver_name, uint8_t confidenc
 		filter.type = SCCD_HOTPLUG_FILTER_UNIQUE_ID;
 		filter.id = device_id;
 	}
-	if (sccd_device_monitor_test_filter(daemon, idev, &filter)) {
+	if (opt_first || sccd_device_monitor_test_filter(daemon, idev, &filter)) {
 		if (opt_gamecontrollerdb_id)
 			return print_gamecontrollerdb_id(idev);
 		Driver* drv = sccd_drivers_get_by_name(driver_name);
@@ -260,6 +264,8 @@ static void controller_available_test(const char* driver_name, uint8_t confidenc
 					printf("\n");
 				}
 			}
+			// Should we be doing "--first" option, no more controllers can be first
+			opt_first = false;
 		}
 	}
 }
@@ -290,7 +296,6 @@ Daemon* get_daemon() {
 int main(int argc, char** argv) {
 	argv0 = argv[0];
 	traceback_set_argv0(argv[0]);
-	bool opt_list = false;
 	
 	struct argparse_option options[] = {
 		OPT_HELP(),
@@ -298,8 +303,10 @@ int main(int argc, char** argv) {
 				"list available controllers", NULL),
 		OPT_BOOLEAN(0, "gamecontrollerdb-id", &opt_gamecontrollerdb_id,
 				"for given device, prints ID compatible with SDL_GameControllerDB", NULL),
-		OPT_BOOLEAN(0, "all", &opt_list_all,
-				"list not only controllers, but all input devices", NULL),
+		// OPT_BOOLEAN(0, "all", &opt_list_all,
+		// 		"list not only controllers, but all input devices", NULL),
+		OPT_BOOLEAN(0, "first", &opt_first,
+				"start testing first available controller", NULL),
 		OPT_END(),
 	};
 	struct argparse argparse;
@@ -308,14 +315,17 @@ int main(int argc, char** argv) {
 	argc = argparse_parse(&argparse, argc, (const char**)argv);
 	if (argc < 0)
 		return 1;
-	if (!opt_list && (argc < 1)) {
+	if (!opt_list && !opt_first && (argc < 1)) {
 #ifdef _WIN32
 		// Windows-only: If no argument is specified, list all devices
 		opt_list = 1;
 #else
+		// Anywhere else: If no argument is specified, print help & exit
 		argparse_usage(&argparse);
 		return 1;
 #endif
+	} else if (opt_first) {
+		device_id = "first";
 	} else {
 		device_id = argv[0];
 	}

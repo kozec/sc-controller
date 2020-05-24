@@ -71,7 +71,6 @@ class Tester(GObject.GObject):
 		""" Starts driver test subprocess """
 		cmd = [ find_binary("scc-input-tester"), self.device_path ]
 		
-		print "START:", cmd
 		try:
 			if platform.system() == "Windows":
 				from subprocess import Popen, PIPE, STARTUPINFO, STARTF_USESHOWWINDOW
@@ -170,7 +169,6 @@ class Tester(GObject.GObject):
 	
 	
 	def _on_line(self, line):
-		print "on_line", line
 		sys.stdout.flush()
 		if line.startswith("axis_update"):
 			trash, number, value = line.split("\t")

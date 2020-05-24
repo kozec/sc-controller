@@ -43,6 +43,7 @@ if get_option('menu-generators').enabled()
 	add_global_arguments('-DMENU_GENERATORS_ENABLED', language: 'c')
 endif
 add_global_arguments('-Werror=incompatible-pointer-types', '-Werror=switch', language: 'c')
+add_global_arguments('-fcommon', language: 'c')		# TODO: Fix this
 include = [ include_directories('./include/') ]
 
 

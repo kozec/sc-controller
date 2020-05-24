@@ -4,7 +4,7 @@ SC-Controller - find_library
 
 This method is imported on multiple places and was causing circular import hell
 """
-import os, ctypes, imp, platform
+import os, sys, ctypes, imp, platform
 
 _find_library_cache = {}
 

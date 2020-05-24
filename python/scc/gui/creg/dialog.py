@@ -13,6 +13,7 @@ from gi.repository import Gtk, GLib, GdkPixbuf
 from scc.gui.creg.constants import SDL_TO_SCC_NAMES, STICK_PAD_AREAS
 from scc.gui.creg.constants import AXIS_ORDER, SDL_AXES, SDL_DPAD
 from scc.gui.creg.constants import BUTTON_ORDER, TRIGGER_AREAS
+from scc.gui.creg.constants import AXIS_MASK
 from scc.gui.creg.grabs import InputGrabber, TriggerGrabber, StickGrabber
 from scc.gui.creg.data import AxisData, DPadEmuData
 from scc.gui.creg.tester import Tester
@@ -86,7 +87,6 @@ class ControllerRegistration(Editor):
 		
 		Return True on success.
 		"""
-		return False
 		# Build list of button and axes
 		buttons = self._tester.buttons
 		axes = self._tester.axes
@@ -138,15 +138,15 @@ class ControllerRegistration(Editor):
 						elif v.startswith("h") and 16 in axes and 17 in axes:
 							# Special case for evdev hatswitch
 							if v == "h0.1" and k == "dpup":
-								self._mappings[16] = self._axis_data[SDL_AXES.index("dpadx")]
-								self._mappings[17] = self._axis_data[SDL_AXES.index("dpady")]
+								self._mappings[AXIS_MASK | 16] = self._axis_data[SDL_AXES.index("dpadx")]
+								self._mappings[AXIS_MASK | 17] = self._axis_data[SDL_AXES.index("dpady")]
 						elif k in SDL_AXES: 
 							try:
 								code = axes[int(v.strip("a"))]
 							except IndexError:
 								log.warning("Skipping unknown gamecontrollerdb axis: '%s'", v)
 								continue
-							self._mappings[code] = self._axis_data[SDL_AXES.index(k)]
+							self._mappings[AXIS_MASK | code] = self._axis_data[SDL_AXES.index(k)]
 						elif k in SDL_DPAD and v.startswith("b"):
 							try:
 								keycode = buttons[int(v.strip("b"))]
@@ -164,6 +164,7 @@ class ControllerRegistration(Editor):
 				return True
 		else:
 			log.debug("Mappings for '%s' not found in gamecontrollerdb", weird_id)
+			print "Mappings for '%s' not found in gamecontrollerdb", weird_id
 		
 		return False
 	
@@ -178,7 +179,7 @@ class ControllerRegistration(Editor):
 		log.debug("Buttons: %s", self._tester.buttons)
 		log.debug("Axes: %s", self._tester.axes)
 		for axis in self._tester.axes:
-			self._mappings[axis], axes = axes[0], axes[1:]
+			self._mappings[AXIS_MASK | axis], axes = axes[0], axes[1:]
 			if len(axes) == 0: break
 		for button in self._tester.buttons:
 			self._mappings[button], buttons = buttons[0], buttons[1:]
@@ -294,19 +295,27 @@ class ControllerRegistration(Editor):
 	
 	
 	def save_registration(self):
-		data = self.generate_raw_data()
-		controller_id = "%s-%s" % (self._tester.driver, self._tester.device_id)
-		
-		ccfg = Config().create_controller_config(controller_id)
-		for key in data['axes']:
-			ccfg['axes'][key] = data['axes'][key]
-		# ccfg.
-		ccff.save()
-		log.info("Controller configuration '%s' written", name)
-		
-		self.kill_tester()
-		self.window.destroy()
-		GLib.timeout_add_seconds(1, self.app.dm.rescan)
+		try:
+			data = self.generate_raw_data()
+			controller_id = "%s-%s" % (self._tester.driver, self._tester.device_id)
+			
+			ccfg = Config().create_controller_config(controller_id)
+			for key in data['axes']:
+				print "AXES", key, data['axes'][key]
+				for (item, value) in data['axes'][key].items():
+					# TODO: This seems suboptimal
+					ccfg['axes/%s/%s' % (key & ~AXIS_MASK, item)] = value
+			for key in data['buttons']:
+				# TODO: This seems suboptimal
+				ccfg['buttons/%s' % (key,)] = data['buttons'][key]
+			ccfg.save()
+			log.info("Controller configuration '%s' written", controller_id)
+			
+			self.kill_tester()
+			self.window.destroy()
+			GLib.timeout_add_seconds(1, self.app.dm.rescan)
+		except Exception as e:
+			print e
 	
 	
 	def on_buffRawData_changed(self, buffRawData, *a):
@@ -522,7 +531,7 @@ class ControllerRegistration(Editor):
 		if self._grabber:
 			return self._grabber.on_axis(number, value)
 		
-		axis = self._mappings.get(number)
+		axis = self._mappings.get(AXIS_MASK | number)
 		if axis:
 			self.hilight_axis(axis, value)
 	
