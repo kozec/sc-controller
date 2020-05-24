@@ -799,6 +799,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	def load_controllers(self, *a):
 		lstControllers = self.builder.get_object("lstControllers")
 		lstControllers.clear()
+		"""
 		devices_path = os.path.join(get_config_path(), "devices")
 		if not os.path.exists(devices_path):
 			os.makedirs(os.path.join(get_config_path(), "devices"))
@@ -812,4 +813,5 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 					name = name[0:-5]
 				path = os.path.join(get_config_path(), "devices", filename)
 				lstControllers.append((path, name, self._get_gamepad_icon(drv)))
+		"""
 

@@ -49,6 +49,19 @@ SDL_TO_SCC_NAMES = {
 	'rightstick':		'RPAD',
 	'leftshoulder':		'LB',
 	'rightshoulder':	'RB',
+	'b0':				'X',
+	'b1':				'A',
+	'b2':				'B',
+	'b3':				'Y',
+	'b4':				'LT',
+	'b5':				'RT',
+	'b6':				'LB',
+	'b7':				'RB',
+	'b8':				'BACK',
+	'b9':				'C',
+	'b10':				'STICKPRESS',
+	'b11':				'RPAD',
+	'b12':				'START',
 }
 
 SDL_AXES = (

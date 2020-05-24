@@ -38,6 +38,7 @@ static LIST_TYPE(sccd_mainloop_cb) mainloop_callbacks;
 static Controller* controller = NULL;
 static char* device_id = NULL;
 static bool running = false;
+static bool list_all = false;
 static char* argv0;
 #ifndef _WIN32
 static size_t max_argv0_size = 0;
@@ -146,6 +147,8 @@ static void controller_available_list(const char* driver_name, uint8_t confidenc
 	const char* path = NULL;
 	char* nice_path = NULL;
 	char* name = NULL;
+	if (!list_all && (confidence < 5))
+		return;
 #ifdef __linux__
 	if (idev->subsystem == EVDEV) {
 		char* a = idev->get_prop(idev, "device/modalias");
@@ -173,9 +176,10 @@ static void controller_available_list(const char* driver_name, uint8_t confidenc
 		return;
 	}
 	char* product = idev->get_prop(idev, "product_id");
+	char icon = (confidence > 5) ? 'c' : '?';
 	name = idev->get_name(idev);
 	snprintf(buffer, 256, "%s:%s", or_questionmarks(vendor), or_questionmarks(product));
-	printf("%-15s\t%-15s\t%-23s\t%s\n", buffer, driver_name, path, or_questionmarks(name));
+	printf("%c %-15s\t%-15s\t%-23s\t%s\n", icon, buffer, driver_name, path, or_questionmarks(name));
 	free(nice_path);
 	free(product);
 	free(vendor);
@@ -185,12 +189,17 @@ static void controller_available_list(const char* driver_name, uint8_t confidenc
 
 static void controller_available_test(const char* driver_name, uint8_t confidence,
 			const InputDeviceData* idev) {
-	HotplugFilter filter = {
+	HotplugFilter filter;
+	if (strchr(device_id, '/') != NULL) {
+		// device_id is actually path
+		filter.type = SCCD_HOTPLUG_FILTER_PATH;
+		filter.path = device_id;
+	} else {
 #ifdef __linux__
-		.type = SCCD_HOTPLUG_FILTER_VIDPID,
-		.vidpid = device_id,
+		filter.type = SCCD_HOTPLUG_FILTER_VIDPID;
+		filter.vidpid = device_id;
 #endif
-	};
+	}
 	if (sccd_device_monitor_test_filter(&_daemon, idev, &filter)) {
 		Driver* drv = sccd_drivers_get_by_name(driver_name);
 		if ((drv == NULL) || (drv->test_device == NULL))
@@ -204,7 +213,6 @@ int main(int argc, char** argv) {
 	argv0 = argv[0];
 	traceback_set_argv0(argv[0]);
 	bool list = false;
-	bool all = false;
 #ifndef _WIN32
 	for (int i=0; i<argc; i++)
 		max_argv0_size += strlen(argv[i]) + 1;
@@ -212,9 +220,9 @@ int main(int argc, char** argv) {
 	
 	struct argparse_option options[] = {
 		OPT_HELP(),
-		OPT_BOOLEAN(0, "list", &list,	"list available controllers", NULL),
+		OPT_BOOLEAN(0, "list", &list,		"list available controllers", NULL),
 		// TODO: This option. Or rather, don't automatically do that
-		OPT_BOOLEAN(0, "all", &all,		"list not only controllers, but all input devices", NULL),
+		OPT_BOOLEAN(0, "all", &list_all,	"list not only controllers, but all input devices", NULL),
 		OPT_END(),
 	};
 	struct argparse argparse;
@@ -242,7 +250,7 @@ int main(int argc, char** argv) {
 	logging_set_handler(handler);
 	
 	if (list) {
-		printf("%-15s\t%-15s\t%-23s\t%s\n", "Device", "Driver", "Path", "Description");
+		printf("  %-15s\t%-15s\t%-23s\t%s\n", "Device", "Driver", "Path", "Description");
 		// Disable logging while drivers are initialized
 		sccd_drivers_list_devices(&_daemon, controller_available_list);
 		sccd_device_monitor_rescan(&_daemon);
@@ -253,6 +261,9 @@ int main(int argc, char** argv) {
 		if (controller == NULL) {
 			LERROR("No such device");
 			return 1;
+		} else {
+			printf("Ready. Press some buttons...\n");
+			fflush(stdout);
 		}
 		
 		ListIterator iter = iter_get(mainloop_callbacks);

@@ -152,6 +152,24 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 	switch (filter->type) {
 	case SCCD_HOTPLUG_FILTER_VENDOR:
 		return (ldev->vendor == filter->vendor);
+	case SCCD_HOTPLUG_FILTER_PATH:
+		if (strstr(filter->path, "/dev/input/event") == filter->path) {
+			// Small special case, I want this to be equivalent of
+			// /sys/devices/......./eventXY
+			name = malloc(256);
+			if (name == NULL) {
+				WARN("sccd_device_monitor_test_filter: Out of memory");
+				return false;
+			}
+			strcpy(name, "/dev/input");
+			strncat(name, strrchr(idev->path, '/'), 240);
+			if (0 == strcmp(name, filter->path)) {
+				free(name);
+				return true;
+			}
+			free(name);
+		}
+		return 0 == strcmp(idev->path, filter->path);
 	case SCCD_HOTPLUG_FILTER_PRODUCT:
 		return (ldev->product == filter->product);
 	case SCCD_HOTPLUG_FILTER_NAME:
@@ -208,6 +226,7 @@ static void on_data_ready(Daemon* d, int fd, void* userdata) {
 		sccd_device_monitor_device_removed(d, syspath);
 	}
 	udev_device_unref(dev);
+	(void)trash;
 }
 
 /**

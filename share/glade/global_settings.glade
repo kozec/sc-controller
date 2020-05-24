@@ -1373,7 +1373,6 @@ or even crash.</property>
             <child>
               <object class="GtkGrid" id="grid68">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">10</property>
                 <property name="margin_right">10</property>
@@ -1409,6 +1408,7 @@ or even crash.</property>
                   <object class="GtkCheckButton" id="cbEnableDriver_ds4drv">
                     <property name="name">ds4drv</property>
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="margin_top">5</property>
@@ -1446,13 +1446,14 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">6</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkLabel" id="lblKuaa14">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">30</property>
                     <property name="label" translatable="yes">If enabled, any connected Dualshock4 controller will be automatically used by SC-Controller</property>
@@ -1475,7 +1476,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">7</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -1519,34 +1520,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">10</property>
-                    <property name="width">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="cbEnableDriver_hiddrv">
-                    <property name="name">hiddrv</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="margin_top">5</property>
-                    <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_cbEnableDriver_toggled" swapped="no"/>
-                    <child>
-                      <object class="GtkLabel" id="lblKuaa12">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Enable HID device support</property>
-                        <property name="xalign">0</property>
-                        <attributes>
-                          <attribute name="weight" value="bold"/>
-                        </attributes>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">3</property>
+                    <property name="top_attach">8</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -1554,6 +1528,7 @@ or even crash.</property>
                   <object class="GtkCheckButton" id="cbEnableDriver_evdevdrv">
                     <property name="name">evdevdrv</property>
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="margin_top">5</property>
@@ -1573,7 +1548,7 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">4</property>
+                    <property name="top_attach">3</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
@@ -1669,28 +1644,15 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">11</property>
+                    <property name="top_attach">9</property>
                     <property name="width">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="txEvdevMissing">
-                    <property name="can_focus">False</property>
-                    <property name="no_show_all">True</property>
-                    <property name="label" translatable="yes">Note: python-evdev package is needed for non-steam controller support</property>
-                    <attributes>
-                      <attribute name="style" value="italic"/>
-                    </attributes>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">5</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="cbEnableDriver_remotepad">
                     <property name="name">remotepad</property>
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="margin_top">5</property>
@@ -1710,13 +1672,14 @@ or even crash.</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">6</property>
+                    <property name="top_attach">4</property>
                     <property name="width">3</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkLabel" id="lblKuaa2">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">30</property>
                     <property name="label" translatable="yes">If enabled, any device or application compatibile with Retroarch's Remote RetroPad protocol
@@ -1728,15 +1691,9 @@ on network can connect and remote-control this computer as additional gamepad.
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">7</property>
+                    <property name="top_attach">5</property>
                     <property name="width">3</property>
                   </packing>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
                 </child>
               </object>
               <packing>

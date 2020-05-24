@@ -2,7 +2,7 @@
 """
 SC-Controller - Controller Registration - Tester
 
-Class that interacts with `scc hid_test` and `scc evdev_test` commands.
+Wrapper around `scc-input-tester` utility
 """
 from gi.repository import GObject, Gio
 from scc.tools import find_binary
@@ -34,14 +34,14 @@ class Tester(GObject.GObject):
 		b"button"		: (GObject.SignalFlags.RUN_FIRST, None, (int, bool)),
 	}
 	
-	def __init__(self, driver, device_id):
+	def __init__(self, device_id, device_path):
 		GObject.GObject.__init__(self)
 		self.buffer = b""
 		self.buttons = []
 		self.axes = []
-		self.subprocess = None
-		self.driver = driver
+		self.device_path = device_path
 		self.device_id = device_id
+		self.subprocess = None
 		self.errorred = False	# To prevent sending 'error' signal multiple times
 	
 	
@@ -52,7 +52,7 @@ class Tester(GObject.GObject):
 	
 	def start(self):
 		""" Starts driver test subprocess """
-		cmd = [find_binary("scc")] + ["test_" + self.driver, self.device_id]
+		cmd = [ find_binary("scc-input-tester"), self.device_path ]
 		self.subprocess = Gio.Subprocess.new(cmd, Gio.SubprocessFlags.STDOUT_PIPE)
 		self.subprocess.wait_async(None, self._on_finished)
 		self.subprocess.get_stdout_pipe().read_bytes_async(
@@ -98,19 +98,21 @@ class Tester(GObject.GObject):
 	
 	
 	def _on_line(self, line):
-		if line.startswith("Axis"):
-			trash, number, value = line.split(" ")
+		if line.startswith("axis_update"):
+			trash, number, value = line.split("\t")
 			number, value = int(number), int(value)
 			self.emit('axis', number, value)
-		elif line.startswith("ButtonPress"):
-			trash, code = line.split(" ")
+		elif line.startswith("button_press"):
+			trash, code = line.split("\t")
 			self.emit('button', int(code), True)
-		elif line.startswith("ButtonRelease"):
-			trash, code = line.split(" ")
+		elif line.startswith("button_release"):
+			trash, code = line.split("\t")
 			self.emit('button', int(code), False)
-		elif line.startswith("Ready"):
+		elif line.startswith("Ready."):
+			# print "REAAAAAAAAAAAAAADY"
 			self.emit('ready')
-		elif line.startswith("Axes:"):
-			self.axes = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
-		elif line.startswith("Buttons:"):
-			self.buttons = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
+		#elif line.startswith("Axes:"):
+		#	self.axes = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
+		#elif line.startswith("Buttons:"):
+		#	self.buttons = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
+

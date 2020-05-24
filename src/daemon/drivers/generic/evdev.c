@@ -13,6 +13,7 @@
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #include "scc/config.h"
+#include <linux/input-event-codes.h>
 #include <libevdev/libevdev.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -230,8 +231,46 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	free(ckey);
 }
 
+static inline int test_bit(const char* bitmask, int bit) {
+    return bitmask[bit/8] & (1 << (bit % 8));
+}
+
 static void list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
-	controller_available("evdev", 9, idev);
+	// Examine device capabilities and decides if it passes for gamepad.
+	// Device is considered gamepad-like if has at least one button with
+	// keycode in gamepad range and at least two axes.
+	char dev_input_path[256];
+	int probablity_of_gamepad = 0;
+	char code_bits[KEY_MAX/8 + 1];
+	
+	strcpy(dev_input_path, "/dev/input");
+	strncat(dev_input_path, strrchr(idev->path, '/'), 230);
+	int fd = open(dev_input_path, O_RDONLY);
+	if (fd < 0) return;
+	
+	// buttons
+	memset(&code_bits, 0, sizeof(code_bits));
+	ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(code_bits)), code_bits);
+	for (int ev_code=0; ev_code<KEY_MAX; ev_code++) {
+		if (test_bit(code_bits, ev_code)) {
+			if ((ev_code >= BTN_JOYSTICK) && (ev_code <= BTN_THUMBR)) {
+				probablity_of_gamepad += 5;
+				break;
+			}
+		}
+	}
+	// axes
+	memset(&code_bits, 0, sizeof(code_bits));
+	ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(code_bits)), code_bits);
+	for (int ev_code=0; ev_code<ABS_MAX; ev_code++) {
+		if (test_bit(code_bits, ev_code)) {
+			if (ev_code <= ABS_RZ)
+				probablity_of_gamepad += 2;
+		}
+	}
+	close(fd);
+	
+	controller_available("evdev", min(9, probablity_of_gamepad), idev);
 }
 
 static void driver_list_devices(Driver* drv, Daemon* d,

@@ -1317,6 +1317,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if self.app.config['gui']['enable_status_icon']:
 			self.setup_statusicon()
 		self.set_daemon_status("unknown", True)
+		
+		from scc.gui.global_settings import GlobalSettings
+		gs = GlobalSettings(self)
+		gs.on_btAddController_clicked()
 	
 	
 	def do_local_options(self, trash, lo):
@@ -1440,7 +1444,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		
 		aso("verbose",	b"v", "Be verbose")
 		aso("debug",	b"d", "Be more verbose (debug mode)")
-		aso("osd",		b"o", "OSD mode (OSD-controllable editor for current profile)")
+		# aso("osd",		b"o", "OSD mode (OSD-controllable editor for current profile)")
+		aso("debug",	b"d", "Be more verbose (debug mode)")
 	
 	
 	def save_profile_selection(self, path):
@@ -1620,3 +1625,4 @@ class UndoRedo(object):
 		self.id = id
 		self.before = before
 		self.after = after
+

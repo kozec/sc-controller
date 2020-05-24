@@ -229,20 +229,23 @@ typedef struct HotplugFilter {
 		/** vendor:product ids as string (format that lsusb uses) */
 		SCCD_HOTPLUG_FILTER_VIDPID			= 3,
 #endif
+		/** device path. Emulated on Windows. Useful mostly for input tester */
+		SCCD_HOTPLUG_FILTER_PATH			= 4,
 		/** evdev or dinput name. Not always available */
-		SCCD_HOTPLUG_FILTER_NAME			= 4,
+		SCCD_HOTPLUG_FILTER_NAME			= 5,
 		/** interface number. Not always available */
-		SCCD_HOTPLUG_FILTER_IDX				= 5,
+		SCCD_HOTPLUG_FILTER_IDX				= 6,
 		/**
 		 * guidInstance or similar. Great filter that matches only specific
 		 * piece of HW, but available only on Windows
 		 */
-		SCCD_HOTPLUG_FILTER_GUID			= 6,
+		SCCD_HOTPLUG_FILTER_GUID			= 7,
 	}					type;
 	union {
 		Vendor			vendor;
 		Product			product;
 		const char*		name;
+		const char*		path;
 		const char*		vidpid;
 		const char*		guid_string;
 		int				idx;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.4 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkTextBuffer" id="buffRawData">
@@ -75,6 +75,8 @@
       <column type="gchararray"/>
       <!-- column-name icon -->
       <column type="GdkPixbuf"/>
+      <!-- column-name dev_id -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="Dialog">
@@ -105,7 +107,7 @@
               <object class="GtkLabel" id="label1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Controller Device</property>
+                <property name="label" translatable="yes">Device</property>
                 <property name="xalign">0</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
@@ -114,24 +116,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label5">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">20</property>
-                <property name="margin_right">20</property>
-                <property name="margin_bottom">10</property>
-                <property name="label" translatable="yes">This dialog allows to setup traditional controllers to be used with SC Controller. 
-
-Please, select your controller from list bellow and click Next.</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
                 <property name="width">2</property>
               </packing>
             </child>
@@ -203,6 +187,8 @@ Please, select your controller from list bellow and click Next.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="halign">start</property>
+                <property name="hexpand">False</property>
                 <property name="relief">half</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="refresh_devices" swapped="no"/>
@@ -210,6 +196,24 @@ Please, select your controller from list bellow and click Next.</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label5">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">20</property>
+                <property name="margin_right">20</property>
+                <property name="margin_bottom">10</property>
+                <property name="label" translatable="yes">This dialog allows to setup traditional controllers to be used with SC Controller. 
+
+Please, select your controller from list bellow and click Next.</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">2</property>
               </packing>
             </child>
           </object>
@@ -399,7 +403,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">0</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -420,7 +424,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
+                <property name="top_attach">2</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -440,7 +444,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
+                <property name="top_attach">1</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -615,46 +619,12 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
                         <property name="top_attach">4</property>
                       </packing>
                     </child>
-                    <child>
-                      <object class="GtkLabel" id="lblAccessMode">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">10</property>
-                        <property name="label" translatable="yes">Access Mode</property>
-                        <property name="xalign">0</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">5</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkComboBox" id="cbAccessMode">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="model">lstAccessMode</property>
-                        <property name="active">1</property>
-                        <signal name="changed" handler="on_cbAccessMode_changed" swapped="no"/>
-                        <child>
-                          <object class="GtkCellRendererText" id="crAccessMode1"/>
-                          <attributes>
-                            <attribute name="sensitive">2</attribute>
-                            <attribute name="markup">1</attribute>
-                          </attributes>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">5</property>
-                        <property name="width">2</property>
-                      </packing>
-                    </child>
                   </object>
                 </child>
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">5</property>
+                <property name="top_attach">4</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -682,7 +652,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">4</property>
+                <property name="top_attach">3</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -710,7 +680,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">6</property>
+                <property name="top_attach">5</property>
                 <property name="width">3</property>
               </packing>
             </child>
@@ -741,94 +711,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">7</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkRevealer" id="rvHIDWarning">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <child>
-                  <object class="GtkInfoBar" id="ibHIDWarning">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="show_close_button">True</property>
-                    <signal name="response" handler="on_ibHIDWarning_response" swapped="no"/>
-                    <child internal-child="action_area">
-                      <object class="GtkButtonBox" id="box1HIDWarning">
-                        <property name="can_focus">False</property>
-                        <property name="spacing">6</property>
-                        <property name="layout_style">end</property>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child internal-child="content_area">
-                      <object class="GtkBox" id="box2HIDWarning">
-                        <property name="can_focus">False</property>
-                        <property name="spacing">16</property>
-                        <child>
-                          <object class="GtkImage" id="imgHIDWarning">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="stock">gtk-dialog-warning</property>
-                            <property name="icon_size">6</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="lblHIDWarning">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Warning: evdev access mode was auto-selected for HID device.
-
-That means your account lacks permissons needed to read controller exclusivelly. You can still use controller in evdev mode, but you may have trouble with some games detecting it twice.
-
-&lt;a href="https://github.com/kozec/sc-controller/wiki/Evdev-and-HID-mode-for-non-steam-controllers"&gt;Click here&lt;/a&gt; for more info.</property>
-                            <property name="use_markup">True</property>
-                            <property name="justify">fill</property>
-                            <property name="wrap">True</property>
-                            <property name="max_width_chars">60</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">6</property>
                 <property name="width">3</property>
               </packing>
             </child>

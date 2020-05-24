@@ -21,11 +21,10 @@ from scc.gui.editor import Editor
 from scc.gui.app import App
 from scc.constants import SCButtons, STICK_PAD_MAX, STICK_PAD_MIN
 from scc.paths import get_config_path, get_share_path
-from scc.tools import nameof, clamp
+from scc.tools import find_binary, nameof, clamp
 from scc.config import Config
 
-import evdev
-import os, logging, json
+import subprocess, os, logging, json
 log = logging.getLogger("CRegistration")
 
 
@@ -45,15 +44,14 @@ class ControllerRegistration(Editor):
 		Editor.__init__(self)
 		self.app = app
 		self._gamepad_icon = GdkPixbuf.Pixbuf.new_from_file(
-				os.path.join(self.app.imagepath, "controller-icons", "evdev-0.svg"))
+				os.path.join(self.app.imagepath, "controller-icons", "generic-0.svg"))
 		self._other_icon = GdkPixbuf.Pixbuf.new_from_file(
 				os.path.join(self.app.imagepath, "controller-icons", "unknown.svg"))
 		self._axis_data = [ AxisData(name, xy) for (name, xy) in AXIS_ORDER ]
 		self.setup_widgets()
 		self._controller_image = None
-		self._evdevice = None
-		self._tester = None
 		self._grabber = None
+		self._tester = None
 		self._input_axes = {}
 		self._mappings = {}
 		self._hilights = {}
@@ -77,32 +75,7 @@ class ControllerRegistration(Editor):
 		self.builder.get_object("cbInvert_5").set_active(True)
 	
 	
-	@staticmethod
-	def does_he_looks_like_a_gamepad(dev):
-		"""
-		Examines device capabilities and decides if it passes for gamepad.
-		Device is considered gamepad-like if has at least one button with
-		keycode in gamepad range and at least two axes.
-		"""
-		# ... but some cheating first
-		if "keyboard" in dev.name.lower():
-			return False
-		if "touchpad" in dev.name.lower():
-			return False
-		if "mouse" in dev.name.lower():
-			return False
-		if "gamepad" in dev.name.lower():
-			return True
-		caps = dev.capabilities(verbose=False)
-		if evdev.ecodes.EV_ABS in caps: # Has axes
-			if evdev.ecodes.EV_KEY in caps: # Has buttons
-				for button in caps[evdev.ecodes.EV_KEY]:
-					if button >= evdev.ecodes.BTN_0 and button <= evdev.ecodes.BTN_GEAR_UP:
-						return True
-		return False
-	
-	
-	def load_sdl_mappings(self):
+	def load_sdl_mappings(self, device_id):
 		"""
 		Attempts to load mappings from gamecontrollerdb.txt.
 		
@@ -115,12 +88,13 @@ class ControllerRegistration(Editor):
 		# Generate database ID
 		wordswap = lambda i: ((i & 0xFF) << 8) | ((i & 0xFF00) >> 8)
 		# TODO: version?
-		weird_id = "%.4x%.8x%.8x%.8x0000" % (
-				wordswap(self._evdevice.info.bustype),
-				wordswap(self._evdevice.info.vendor),
-				wordswap(self._evdevice.info.product),
-				wordswap(self._evdevice.info.version)
+		vendor, product = [ int(x, 16) for x in device_id.split(":") ]
+		weird_id = "%.4x%.8x%.8x" % (
+				wordswap(3),	# bustype # TODO: It may be 05 for BT
+				wordswap(vendor),
+				wordswap(product)
 		)
+		print weird_id
 		
 		# Search in database
 		try:
@@ -368,8 +342,10 @@ class ControllerRegistration(Editor):
 		index = pages.index(stDialog.get_visible_child())
 		if index == 0:
 			model, iter = tvDevices.get_selection().get_selected()
-			dev = evdev.InputDevice(model[iter][0])
-			if (dev.info.vendor, dev.info.product) == (0x054c, 0x09cc):
+			path, name, icon, dev_id = list(model[iter])
+			# TODO: This. There is no DS4 driver yet
+			"""
+			if dev_id == "054c:09cc":
 				# Special case for PS4 controller
 				cbDS4 = self.builder.get_object("cbDS4")
 				imgDS4 = self.builder.get_object("imgDS4")
@@ -380,6 +356,7 @@ class ControllerRegistration(Editor):
 				btBack.set_sensitive(True)
 				btNext.set_label("_Restart Emulation")
 				return
+			"""
 			stDialog.set_visible_child(pages[1])
 			self.load_buttons()
 			self.refresh_controller_image()
@@ -390,9 +367,7 @@ class ControllerRegistration(Editor):
 		elif index == 1:
 			# Disable Next button and determine which driver should be used
 			btNext.set_sensitive(False)
-			model, iter = tvDevices.get_selection().get_selected()
-			dev = evdev.InputDevice(model[iter][0])
-			self.prepare_registration(dev)
+			self.prepare_registration()
 		elif index == 2:
 			self.save_registration()
 		elif index == 3:
@@ -433,55 +408,28 @@ class ControllerRegistration(Editor):
 		config.save()
 	
 	
-	def prepare_registration(self, dev):
-		self._evdevice = dev
-		self.set_hid_enabled(True)
+	def prepare_registration(self):
+		tvDevices = self.builder.get_object("tvDevices")
+		model, iter = tvDevices.get_selection().get_selected()
 		
-		def retry_with_evdev(tester, code):
-			for s in tester.__signals: tester.disconnect(s)
-			tester.stop()
-			self.set_hid_enabled(False)
-			if code != 0:
-				log.error("HID driver test failed (code %s)", code)
-			if code == 2:
-				# Special case, device may be usable, but there is no access
-				rvHIDWarning = self.builder.get_object("rvHIDWarning")
-				rvHIDWarning.set_reveal_child(False)
-			log.debug("Trying to use '%s' with evdev driver...", dev.fn)
-			self._tester = Tester("evdev", dev.fn)
-			self._tester.__signals = [
-				self._tester.connect('ready', self.on_registration_ready),
-				self._tester.connect('error', self.on_device_open_failed)
-			]
-			self._tester.start()
-		
-		if dev.info.vendor == 0 and dev.info.product == 0:
-			# Not an USB device, skip HID test altogether
-			retry_with_evdev(None, 0)
-		else:
-			log.debug("Trying to use %.4x:%.4x with HID driver...",
-					dev.info.vendor, dev.info.product)
-			self._tester = Tester("hid", "%.4x:%.4x" % (dev.info.vendor, dev.info.product))
-			self._tester.__signals = [
-				self._tester.connect('ready', self.on_registration_ready),
-				self._tester.connect('error', retry_with_evdev),
-			]
-			self._tester.start()
+		path, name, icon, device_id = list(model[iter])
+		self._tester = Tester(device_id, path)
+		self._tester.__signals = [
+			self._tester.connect('ready', self.on_registration_ready),
+			self._tester.connect('error', self.on_device_open_failed),
+		]
+		self._tester.start()
 	
 	
 	def on_registration_ready(self, tester):
-		cbAccessMode = self.builder.get_object("cbAccessMode")
 		fxController = self.builder.get_object("fxController")
 		cbEmulateC = self.builder.get_object("cbEmulateC")
 		stDialog = self.builder.get_object("stDialog")
 		btNext = self.builder.get_object("btNext")
 		
-		self.set_cb(cbAccessMode, tester.driver)
-		cbAccessMode.set_sensitive(True)
-		
 		if not self._mappings:
 			self._mappings = {}
-			if not self.load_sdl_mappings():
+			if not self.load_sdl_mappings(tester.device_id):
 				self.generate_mappings()
 			self.generate_unassigned()
 			self.generate_raw_data()
@@ -528,38 +476,6 @@ class ControllerRegistration(Editor):
 			tester.stop()
 	
 	
-	def set_hid_enabled(self, enabled):
-		""" Enables or disables option to use HID driver """
-		cbAccessMode = self.builder.get_object("cbAccessMode")
-		for x in cbAccessMode.get_model():
-			if x[0] == "hid":
-				x[1] = _("USB HID (recommended)") if enabled else _("USB HID")
-				x[2] = enabled
-	
-	
-	def on_cbAccessMode_changed(self, cb):
-		if self._tester:
-			btNext = self.builder.get_object("btNext")
-			target = cb.get_model().get_value(cb.get_active_iter(), 0)
-			if self._tester.driver != target:
-				# User changed driver that should be used, a lot of stuff has
-				# to be restarted
-				log.debug("User-requested driver change")
-				self.kill_tester()
-				cb.set_sensitive(False)
-				btNext.set_sensitive(False)
-				if target == "hid":
-					self._tester = Tester("hid", "%.4x:%.4x" % (
-						self._evdevice.info.vendor, self._evdevice.info.product))
-				else:
-					self._tester = Tester("evdev", self._evdevice.fn)
-				self._tester.__signals = [
-					self._tester.connect('ready', self.on_registration_ready),
-					self._tester.connect('error', self.on_device_open_failed),
-				]
-				GLib.timeout_add_seconds(1, self._tester.start)
-	
-	
 	def cbInvert_toggled_cb(self, cb, *a):
 		index = int(cb.get_name().split("_")[-1])
 		self._axis_data[index].invert = cb.get_active()
@@ -570,6 +486,20 @@ class ControllerRegistration(Editor):
 			return self._grabber.on_button(keycode, pressed)
 		
 		what = self._mappings.get(keycode)
+		if what is None and pressed:
+			# Not-yet-mapped physical button pressed.
+			# Try to assign it to first not-yet-mapped virtual button.
+			assigned_buttons = set([ x for x in self._mappings.values()
+									if x in SCButtons.__members__.values() ])
+			for a in BUTTON_ORDER:
+				if a not in assigned_buttons:
+					if a not in (SCButtons.RGRIP, SCButtons.LGRIP):
+						self._mappings[keycode] = a
+						self.generate_unassigned()
+						self.generate_raw_data()
+						what = self._mappings.get(keycode)
+						log.info("Auto-assigned %s to %s", keycode, a)
+						break
 		if isinstance(what, AxisData):
 			if pressed:
 				self.hilight_axis(what, STICK_PAD_MAX)
@@ -653,7 +583,6 @@ class ControllerRegistration(Editor):
 			# Update raw data if needed
 			if changed:
 				self.generate_raw_data()
-
 	
 	
 	def hilight(self, what, color=None):
@@ -731,17 +660,28 @@ class ControllerRegistration(Editor):
 		log.debug("Refreshing device list")
 		lstDevices = self.builder.get_object("lstDevices")
 		cbShowAllDevices = self.builder.get_object("cbShowAllDevices")
+		cmd = [ find_binary("scc-input-tester"), "--list" ]
+		if cbShowAllDevices.get_active():
+			cmd.append("--all")
+		p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+		
 		lstDevices.clear()
-		for fname in evdev.list_devices():
-			dev = evdev.InputDevice(fname)
-			is_gamepad = ControllerRegistration.does_he_looks_like_a_gamepad(dev)
-			if not dev.phys:
-				# Skipping over virtual devices so list doesn't show
-				# gamepads emulated by SCC
+		line = p.stdout.readline()	# Skips over list header
+		line = p.stdout.readline()
+		while line:
+			icon, line = line[0], line[1:]
+			data = [ x.strip() for x in line.strip("\r\n ").split("\t") ]
+			try:
+				dev_id, driver, path, name = data
+			except:
+				log.warn("Failed to parse scc-input-tester output: '%s'", line)
 				continue
-			if is_gamepad or cbShowAllDevices.get_active():
-				lstDevices.append(( fname, dev.name,
-					self._gamepad_icon if is_gamepad else self._other_icon ))
+			
+			icon = self._gamepad_icon if icon == 'c' else self._other_icon
+			is_gamepad = (icon == 'c')
+			# if not dev.phys: continue		# TODO: This
+			line = p.stdout.readline()
+			lstDevices.append(( path, name, icon, dev_id ))
 	
 	
 	def refresh_controller_image(self, *a):
@@ -760,3 +700,4 @@ class ControllerRegistration(Editor):
 			self._controller_image.connect('leave', self.on_area_leave)
 			self._controller_image.connect('click', self.on_area_click)
 			rvController.add(self._controller_image)
+

@@ -120,6 +120,6 @@ scc_input_tester = executable('scc-input-tester',
 run_target('scc-daemon', command: ['sh', '../../meson-run.sh', 'src/daemon/scc-daemon', 'debug'],
 	dependencies: [scc_daemon])
 
-run_target('scc-input-tester', command: ['sh', '../../meson-run.sh', 'src/daemon/scc-input-tester', '045e:028e'],
+run_target('scc-input-tester', command: ['sh', '../../meson-run.sh', 'src/daemon/scc-input-tester', '--list'],
 	dependencies: [scc_input_tester])
 
