@@ -323,6 +323,7 @@ int main(int argc, char** argv) {
 	mainloop_callbacks = list_new(sccd_mainloop_cb, 0);
 	sccd_scheduler_init();
 #ifdef _WIN32
+	logging_handler handler = logging_set_handler(dev_null_logging_handler);
 	sccd_input_dinput_init();
 #else
 	sccd_poller_init();
@@ -331,7 +332,9 @@ int main(int argc, char** argv) {
 	sccd_input_libusb_init(&_daemon);
 #endif
 	sccd_device_monitor_init(&_daemon);
+#ifndef _WIN32
 	logging_handler handler = logging_set_handler(dev_null_logging_handler);
+#endif
 	sccd_drivers_init(&_daemon, DIMODE_LIST_DEVICES_ONLY);
 	logging_set_handler(handler);
 	

@@ -24,8 +24,13 @@ from scc.paths import get_config_path, get_share_path
 from scc.tools import find_binary, nameof, clamp
 from scc.config import Config
 
-import subprocess, os, logging, json
+import subprocess, platform, os, logging, json
 log = logging.getLogger("CRegistration")
+
+POPEN_FLAGS = {}
+if platform.system() == "Windows":
+	CREATE_NO_WINDOW = 0x08000000
+	POPEN_FLAGS = { "creationflags": CREATE_NO_WINDOW }
 
 
 class ControllerRegistration(Editor):
@@ -81,13 +86,14 @@ class ControllerRegistration(Editor):
 		
 		Return True on success.
 		"""
+		return False
 		# Build list of button and axes
 		buttons = self._tester.buttons
 		axes = self._tester.axes
 		
 		# Generate GamecontrollerDB id
 		cmd = [ find_binary("scc-input-tester"), "--gamecontrollerdb-id", device_id ]
-		p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+		p = subprocess.Popen(cmd, stdout=subprocess.PIPE, **POPEN_FLAGS)
 		weird_id, trash = p.communicate()
 		if p.returncode != 0:
 			log.warn('Failed to generate GamecontrollerDB id')
@@ -652,7 +658,7 @@ class ControllerRegistration(Editor):
 		cmd = [ find_binary("scc-input-tester"), "--list" ]
 		if cbShowAllDevices.get_active():
 			cmd.append("--all")
-		p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+		p = subprocess.Popen(cmd, stdout=subprocess.PIPE, **POPEN_FLAGS)
 		
 		lstDevices.clear()
 		line = p.stdout.readline()	# Skips over list header

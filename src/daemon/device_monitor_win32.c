@@ -116,6 +116,8 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 		return (idev->subsystem != DINPUT) && (wdev->product == filter->product);
 	case SCCD_HOTPLUG_FILTER_IDX:
 		return (wdev->idx == filter->idx);
+	case SCCD_HOTPLUG_FILTER_PATH:
+		return 0 == strcmp(idev->path, filter->path);
 	case SCCD_HOTPLUG_FILTER_NAME:
 #ifdef USE_DINPUT
 		if (idev->subsystem == DINPUT) {

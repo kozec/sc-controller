@@ -837,6 +837,11 @@ Config* config_create_controller_config(Config* _c, const char* id, char* error_
 	return config_get_controller_config(_c, id, error_return);
 }
 
+int config_delete_key(Config* _c, const char* path) {
+	printf("Should delete key: %s\n", path);
+	return 1;
+}
+
 #else	// _WIN32
 	#error "config_win32.c included outside of Windows"
 #endif

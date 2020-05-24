@@ -55,6 +55,7 @@ const struct config_item DEFAULTS[] = {
 	
 	/** OSD style and colors config */
 	{ "osd_style",							CVT_STRING,		.v_str = "Reloaded.gtkstyle.css" },
+	{ "osd_color_theme",					CVT_STRING,		.v_str = "Green.colors.json" },
 	{ "osd_colors/background",				CVT_STRING, 	.v_str = "#101010" },
 	{ "osd_colors/border",					CVT_STRING, 	.v_str = "#00FF00" },
 	{ "osd_colors/text",					CVT_STRING, 	.v_str = "#16BF24" },

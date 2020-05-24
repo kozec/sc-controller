@@ -126,7 +126,7 @@ class StickGrabber(TriggerGrabber):
 	
 	def __init__(self, parent, what):
 		TriggerGrabber.__init__(self, parent, what,
-				text=_("Move stick left and right..."))
+				text=_("Move stick left or right..."))
 		self.xy = X
 		self.grabbed = [ None, None ]
 	
@@ -171,7 +171,7 @@ class StickGrabber(TriggerGrabber):
 		if self.xy == X:
 			self.grabbed[X] = number
 			self.xy = Y
-			self.set_message(_("Move stick up and down..."))
+			self.set_message(_("Move stick up or down..."))
 		else:
 			if number != self.grabbed[X]:
 				self.grabbed[Y] = number
