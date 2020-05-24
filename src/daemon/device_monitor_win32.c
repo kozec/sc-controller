@@ -74,7 +74,9 @@ static char* input_device_get_prop(const InputDeviceData* idev, const char* name
 	if (idev->subsystem == DINPUT) {
 		struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
 		const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
-		if (0 == strcmp("tszInstanceName", name)) {
+		if (0 == strcmp(name, "unique_id")) {
+			return input_device_get_prop(idev, "guidInstance");
+		} else if (0 == strcmp("tszInstanceName", name)) {
 			return strbuilder_cpy(d8dev->tszInstanceName);
 		} else if (0 == strcmp("guidInstance", name)) {
 			LPOLESTR guid_str;
@@ -116,7 +118,7 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 		}
 #endif
 		return false;
-	case SCCD_HOTPLUG_FILTER_GUID:
+	case SCCD_HOTPLUG_FILTER_UNIQUE_ID:
 #ifdef USE_DINPUT
 		if (idev->subsystem == DINPUT) {
 			char* guid = input_device_get_prop(idev, "guidInstance");

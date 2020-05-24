@@ -310,6 +310,28 @@ json_object* json_object_set(json_object* o, const char* key, json_value_t* valu
 	return json_object_nadd(o, key, strlen(key), value);
 }
 
+json_object* json_object_set_undefined(json_object* o, const char* key) {
+	if (o == NULL || key == NULL) {
+		if (o != NULL)
+			o->self.ctx->failed = true;
+		return NULL;
+	}
+
+	for (size_t i=0; i<o->n; i++) {
+		if (0 == strcmp(o->keys[i], key)) {
+			if (o->n > 1) {
+				for (size_t j=i; j<o->n - 1; j++) {
+					o->keys[j] = o->keys[j+1];
+					o->values[j] = o->values[j+1];
+				}
+			}
+			--o->n;
+			return o;
+		}
+	}
+	return 0;
+}
+
 size_t json_object_numkeys(json_object* o) {
 	if (o == NULL)
 		return 0;
@@ -696,7 +718,7 @@ static bool string_writer_function(const char* buffer, size_t len, void* writer_
 	return true;
 }
 
-static bool do_serialize_string(char* string, aojls_serialization_prefs* prefs) {
+static bool do_serialize_string(const char* string, aojls_serialization_prefs* prefs) {
 	size_t len = strlen(string);
 	if (!prefs->writer("\"", 1, prefs->writer_data))
 		return false;
@@ -757,7 +779,7 @@ static bool do_serialize(json_value_t* value, aojls_serialization_prefs* prefs,
 					return false;
 			}
 
-			char* key = json_object_get_key(o, k);
+			const char* key = json_object_get_key(o, k);
 			if (!do_serialize_string(key, prefs))
 				return false;
 			if (prefs->pretty) {

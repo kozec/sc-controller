@@ -34,11 +34,13 @@ class Tester(GObject.GObject):
 		b"button"		: (GObject.SignalFlags.RUN_FIRST, None, (int, bool)),
 	}
 	
-	def __init__(self, device_id, device_path):
+	def __init__(self, driver, device_id, name, device_path):
 		GObject.GObject.__init__(self)
 		self.buffer = b""
 		self.buttons = []
 		self.axes = []
+		self.driver = driver
+		self.device_name = name
 		self.device_path = device_path
 		self.device_id = device_id
 		self.subprocess = None
@@ -111,8 +113,8 @@ class Tester(GObject.GObject):
 		elif line.startswith("Ready."):
 			# print "REAAAAAAAAAAAAAADY"
 			self.emit('ready')
-		#elif line.startswith("Axes:"):
-		#	self.axes = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
-		#elif line.startswith("Buttons:"):
-		#	self.buttons = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
+		elif line.startswith("axes:"):
+			self.axes = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
+		elif line.startswith("buttons:"):
+			self.buttons = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
 

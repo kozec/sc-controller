@@ -26,7 +26,8 @@
 #include <stdio.h>
 
 static const char *const usage[] = {
-	"scc-input-test [-t driver] device",
+	"scc-input-test device",
+	"scc-input-test --gamecontrollerdb-id [device]",
 	"scc-input-test --list [--all]",
 	"scc-input-test -h",
 	"",
@@ -34,23 +35,26 @@ static const char *const usage[] = {
 	NULL,
 };
 
+/**
+ * Formatting of 'Device Driver Path Description' table.
+ * As guid used on Windows is much, much longer than IDs used elsewhere,
+ * different column length is needed. On other hand, 1st column (with ID)
+ * is not needed, as ID is always part of path.
+ */
+#ifndef _WIN32
+#define TABLE_COLUMNS "%c %-15s\t%-15s\t%-23s\t%s\n"
+#else
+#define TABLE_COLUMNS "%c %-15s\t%-48s\t%s\n"
+#endif
+
+#define BUTTON_AXIS_MAX		256
 static LIST_TYPE(sccd_mainloop_cb) mainloop_callbacks;
 static Controller* controller = NULL;
 static char* device_id = NULL;
 static bool running = false;
-static bool list_all = false;
+static bool opt_gamecontrollerdb_id = false;
+static bool opt_list_all = false;
 static char* argv0;
-#ifndef _WIN32
-static size_t max_argv0_size = 0;
-#endif
-
-
-static bool controller_add(Controller* c) {
-	if (controller != NULL)
-		return false;
-	controller = c;
-	return true;
-}
 
 static bool add_mainloop(sccd_mainloop_cb cb) {
 	return list_add(mainloop_callbacks, cb);
@@ -94,6 +98,180 @@ void* sccd_x11_get_display() {
 }
 
 
+#ifndef _WIN32
+static void sigint_handler(int sig) {
+	INFO("^C caught");
+	running = false;
+}
+#endif
+
+static void dev_null_logging_handler(const char* tag, const char* filename, int level, const char* message) {
+	// Maybe really open /dev/null to write to it? :)
+}
+
+inline static const char* or_questionmarks(char* a) {
+	if (a == NULL)
+		return "????";
+	return a;
+}
+
+static void controller_test_event(Controller* c, TestModeEvent event, uint32_t code, int64_t value) {
+	if ((event == TME_BUTTON) && value) {
+		printf("button_press\t%u\n", code);
+	} else if (event == TME_BUTTON) {
+		printf("button_release\t%u\n", code);
+	} else if (event == TME_AXIS) {
+		printf("axis_update\t%u\t%lli\n", code, value);
+	}
+	fflush(stdout);
+}
+
+static void controller_available_list(const char* driver_name, uint8_t confidence,
+			const InputDeviceData* idev) {
+	const char* path = NULL;
+	char* nice_path = NULL;
+	char* unique_id = NULL;
+	char* name = NULL;
+	if (!opt_list_all && (confidence < 5))
+		return;
+#ifdef __linux__
+	if (idev->subsystem == EVDEV) {
+		char* a = idev->get_prop(idev, "device/modalias");
+		if (a == NULL) return;
+		if (strstr(a, "input") != a) {
+			free(a);
+			return;
+		}
+		free(a);
+		path = strrchr(idev->path, '/');
+		if (path != NULL) {
+			nice_path = strbuilder_fmt("/dev/input/%s", path + 1);
+			path = nice_path;
+		}
+	} else {
+		path = idev->path;
+		path =  strstr(idev->path, "usb");
+	}
+#endif
+	if (path == NULL)
+		path = idev->path;
+#ifdef _WIN32
+	char* vendor = NULL;
+#else
+	char* vendor = idev->get_prop(idev, "vendor_id");
+	if ((vendor != NULL) && (0 == strcmp(vendor, "0000"))) {
+		// Internal, definitelly not gamepad related stuff. Skip it
+		free(vendor);
+		return;
+	}
+#endif
+	unique_id = idev->get_prop(idev, "unique_id");
+	char icon = (confidence > 5) ? 'c' : '?';
+	name = idev->get_name(idev);
+	if (unique_id != NULL) {
+		printf(TABLE_COLUMNS,
+				icon,
+#ifndef _WIN32
+				unique_id,
+#endif
+				driver_name,
+				path,
+				or_questionmarks(name)
+		);
+	}
+	free(unique_id);
+	free(nice_path);
+	free(vendor);
+	free(name);
+// #endif
+}
+
+static bool controller_add(Controller* c) {
+	if (controller != NULL)
+		return false;
+	controller = c;
+	return true;
+}
+
+/**
+ * Parses string as integer and swaps higher bytes with lower.
+ * **deallocates** 'number'.
+ * Returns 0 if 'number' is NULL.
+ */
+static int wordswap(char* number) {
+	int i = 0;
+	if (number != NULL) {
+		i = strtol(number, NULL, 16);
+		free(number);
+	}
+	return ((i & 0xFF) << 8) | ((i & 0xFF00) >> 8);
+}
+
+static void print_gamecontrollerdb_id(const InputDeviceData* idev) {
+	// Note: This is as platform-dependent as it can be
+	printf("%.4x%.8x%.8x%.8x0000\n",
+			0x0300,		// TODO: BT support. That 3 stands for USB
+			wordswap(idev->get_prop(idev, "vendor_id")),
+			wordswap(idev->get_prop(idev, "product_id")),
+			wordswap(idev->get_prop(idev, "device/id/version"))
+	);
+}
+
+static void controller_available_test(const char* driver_name, uint8_t confidence,
+			const InputDeviceData* idev) {
+	HotplugFilter filter;
+	Daemon* daemon = get_daemon();
+	if (strchr(device_id, '/') != NULL) {
+		// device_id is actually path
+		filter.type = SCCD_HOTPLUG_FILTER_PATH;
+		filter.path = device_id;
+#ifdef __linux__
+	} else if (strchr(device_id, ':') != NULL) {
+		filter.type = SCCD_HOTPLUG_FILTER_VIDPID;
+		filter.vidpid = device_id;
+#endif
+	} else {
+		filter.type = SCCD_HOTPLUG_FILTER_UNIQUE_ID;
+		filter.id = device_id;
+	}
+	if (sccd_device_monitor_test_filter(daemon, idev, &filter)) {
+		if (opt_gamecontrollerdb_id)
+			return print_gamecontrollerdb_id(idev);
+		Driver* drv = sccd_drivers_get_by_name(driver_name);
+		if ((drv == NULL) || (drv->input_test == NULL)
+					|| (drv->input_test->test_device == NULL))
+			return;
+		drv->input_test->test_device(drv, daemon, idev, controller_test_event);
+		if (controller != NULL) {
+			// Controller was just added
+			if (drv->input_test->get_device_capabilities != NULL) {
+				uint32_t buttons[BUTTON_AXIS_MAX];
+				uint32_t axes[BUTTON_AXIS_MAX];
+				InputDeviceCapabilities capabilities = {
+					.max_button_count = BUTTON_AXIS_MAX,
+					.max_axis_count = BUTTON_AXIS_MAX,
+					.buttons = buttons,
+					.axes = axes
+				};
+				drv->input_test->get_device_capabilities(drv, daemon, idev, &capabilities);
+				if (capabilities.button_count > 0) {
+					printf("buttons:");
+					for (size_t i=0; i<capabilities.button_count; i++)
+						printf(" %i", capabilities.buttons[i]);
+					printf("\n");
+				}
+				if (capabilities.axis_count > 0) {
+					printf("axes:");
+					for (size_t i=0; i<capabilities.axis_count; i++)
+						printf(" %i", capabilities.axes[i]);
+					printf("\n");
+				}
+			}
+		}
+	}
+}
+
+
 static Daemon _daemon = {
 	.controller_add				= controller_add,
 	.controller_remove			= controller_remove,
@@ -115,115 +293,20 @@ Daemon* get_daemon() {
 	return &_daemon;
 }
 
-static void sigint_handler(int sig) {
-	INFO("^C caught");
-	running = false;
-}
-
-static void dev_null_logging_handler(const char* tag, const char* filename, int level, const char* message) {
-	// Maybe really open /dev/null to write to it? :)
-}
-
-inline static const char* or_questionmarks(char* a) {
-	if (a == NULL)
-		return "????";
-	return a;
-}
-
-static void controller_test_event(Controller* c, TestModeEvent event, uint32_t code, int64_t value) {
-	if ((event == TME_BUTTON) && value) {
-		printf("button_press\t%u\n", code);
-	} else if (event == TME_BUTTON) {
-		printf("button_release\t%u\n", code);
-	} else if (event == TME_AXIS) {
-		printf("axis_update\t%u\t%li\n", code, value);
-	}
-	fflush(stdout);
-}
-
-static void controller_available_list(const char* driver_name, uint8_t confidence,
-			const InputDeviceData* idev) {
-	static char buffer[256];
-	const char* path = NULL;
-	char* nice_path = NULL;
-	char* name = NULL;
-	if (!list_all && (confidence < 5))
-		return;
-#ifdef __linux__
-	if (idev->subsystem == EVDEV) {
-		char* a = idev->get_prop(idev, "device/modalias");
-		if (a == NULL) return;
-		if (strstr(a, "input") != a) {
-			free(a);
-			return;
-		}
-		free(a);
-		path = strrchr(idev->path, '/');
-		if (path != NULL) {
-			nice_path = strbuilder_fmt("/dev/input/%s", path + 1);
-			path = nice_path;
-		}
-	} else {
-		path = idev->path;
-		path =  strstr(idev->path, "usb");
-	}
-	if (path == NULL)
-		path = idev->path;
-	char* vendor = idev->get_prop(idev, "vendor_id");
-	if ((vendor != NULL) && (0 == strcmp(vendor, "0000"))) {
-		// Internal, definitelly not gamepad related stuff. Skip it
-		free(vendor);
-		return;
-	}
-	char* product = idev->get_prop(idev, "product_id");
-	char icon = (confidence > 5) ? 'c' : '?';
-	name = idev->get_name(idev);
-	snprintf(buffer, 256, "%s:%s", or_questionmarks(vendor), or_questionmarks(product));
-	printf("%c %-15s\t%-15s\t%-23s\t%s\n", icon, buffer, driver_name, path, or_questionmarks(name));
-	free(nice_path);
-	free(product);
-	free(vendor);
-	free(name);
-#endif
-}
-
-static void controller_available_test(const char* driver_name, uint8_t confidence,
-			const InputDeviceData* idev) {
-	HotplugFilter filter;
-	if (strchr(device_id, '/') != NULL) {
-		// device_id is actually path
-		filter.type = SCCD_HOTPLUG_FILTER_PATH;
-		filter.path = device_id;
-	} else {
-#ifdef __linux__
-		filter.type = SCCD_HOTPLUG_FILTER_VIDPID;
-		filter.vidpid = device_id;
-#endif
-	}
-	if (sccd_device_monitor_test_filter(&_daemon, idev, &filter)) {
-		Driver* drv = sccd_drivers_get_by_name(driver_name);
-		if ((drv == NULL) || (drv->input_test != NULL)
-								|| (drv->input_test->test_device == NULL))
-			return;
-		drv->input_test->test_device(drv, &_daemon, idev, controller_test_event);
-	}
-}
-
 
 int main(int argc, char** argv) {
 	argv0 = argv[0];
 	traceback_set_argv0(argv[0]);
-	bool list = false;
-#ifndef _WIN32
-	for (int i=0; i<argc; i++)
-		max_argv0_size += strlen(argv[i]) + 1;
-#endif
+	bool opt_list = false;
 	
 	struct argparse_option options[] = {
 		OPT_HELP(),
-		OPT_BOOLEAN(0, "list", &list,		"list available controllers", NULL),
-		// TODO: This option. Or rather, don't automatically do that
-		OPT_BOOLEAN(0, "all", &list_all,	"list not only controllers, but all input devices", NULL),
+		OPT_BOOLEAN(0, "list", &opt_list,
+				"list available controllers", NULL),
+		OPT_BOOLEAN(0, "gamecontrollerdb-id", &opt_gamecontrollerdb_id,
+				"for given device, prints ID compatible with SDL_GameControllerDB", NULL),
+		OPT_BOOLEAN(0, "all", &opt_list_all,
+				"list not only controllers, but all input devices", NULL),
 		OPT_END(),
 	};
 	struct argparse argparse;
@@ -232,9 +315,14 @@ int main(int argc, char** argv) {
 	argc = argparse_parse(&argparse, argc, (const char**)argv);
 	if (argc < 0)
 		return 1;
-	if (!list && (argc < 1)) {
+	if (!opt_list && (argc < 1)) {
+#ifdef _WIN32
+		// Windows-only: If no argument is specified, list all devices
+		opt_list = 1;
+#else
 		argparse_usage(&argparse);
 		return 1;
+#endif
 	} else {
 		device_id = argv[0];
 	}
@@ -245,13 +333,23 @@ int main(int argc, char** argv) {
 #ifdef USE_LIBUSB
 	sccd_input_libusb_init(&_daemon);
 #endif
+#ifdef _WIN32
+	sccd_input_dinput_init();
+#endif
 	sccd_device_monitor_init(&_daemon);
 	logging_handler handler = logging_set_handler(dev_null_logging_handler);
 	sccd_drivers_init(&_daemon, DIMODE_LIST_DEVICES_ONLY);
 	logging_set_handler(handler);
 	
-	if (list) {
-		printf("  %-15s\t%-15s\t%-23s\t%s\n", "Device", "Driver", "Path", "Description");
+	if (opt_list) {
+		printf(TABLE_COLUMNS, ' ',
+#ifndef _WIN32
+				"Device",
+#endif
+				"Driver",
+				"Path",
+				"Description"
+		);
 		// Disable logging while drivers are initialized
 		sccd_drivers_list_devices(&_daemon, controller_available_list);
 		sccd_device_monitor_rescan(&_daemon);
@@ -259,7 +357,9 @@ int main(int argc, char** argv) {
 		sccd_drivers_list_devices(&_daemon, controller_available_test);
 		sccd_device_monitor_rescan(&_daemon);
 		
-		if (controller == NULL) {
+		if (opt_gamecontrollerdb_id) {
+			return 0;
+		} else if (controller == NULL) {
 			LERROR("No such device");
 			return 1;
 		} else {
@@ -269,8 +369,10 @@ int main(int argc, char** argv) {
 		
 		ListIterator iter = iter_get(mainloop_callbacks);
 		running = true;
+#ifndef _WIN32
 		signal(SIGTERM, sigint_handler);
 		signal(SIGINT, sigint_handler);
+#endif
 		while (running) {
 			monotime_t start = mono_time_ms();
 			FOREACH(sccd_mainloop_cb, cb, iter)

@@ -136,6 +136,9 @@ class Config(object):
 		def __iter__(self):
 			return iter(self.keys())
 		
+		def clear(self):
+			self._parent.delete_key(self._prefix)
+		
 		def keys(self):
 			return self._parent.keys(self._prefix)
 	
@@ -238,6 +241,9 @@ class Config(object):
 		rv = [ data[i].decode("utf-8") for i in xrange(count) ]
 		return rv
 	
+	def delete_key(self, path):
+		lib_config.config_delete_key(self._cfg, path)
+	
 	def __iter__(self):
 		return iter(self.keys())
 	
@@ -321,6 +327,9 @@ lib_config.config_set.restype = ctypes.c_ssize_t
 
 lib_config.config_get_strings.argtypes = [ ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_ssize_t ]
 lib_config.config_get_strings.restype = ctypes.c_ssize_t
+
+lib_config.config_delete_key.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
+lib_config.config_delete_key.restype = None
 
 lib_config.config_get_controller_config.argtypes = [ ctypes.c_void_p, ctypes.c_char_p ]
 lib_config.config_get_controller_config.restype = ctypes.c_void_p

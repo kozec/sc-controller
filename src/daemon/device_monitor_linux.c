@@ -68,6 +68,18 @@ static char* input_device_get_prop(const InputDeviceData* idev, const char* name
 		if (idev->subsystem == EVDEV)
 			return input_device_get_prop(idev, "device/id/product");
 	}
+	if (0 == strcmp(name, "unique_id")) {
+		char* uniq = idev->get_prop(idev, "device/uniq");
+		if (uniq == NULL) {
+			char* vendor = idev->get_prop(idev, "vendor_id");
+			char* product = idev->get_prop(idev, "product_id");
+			if ((vendor != NULL) && (product != NULL))
+				uniq = strbuilder_fmt("%s:%s", vendor, product);
+			free(vendor);
+			free(product);
+		}
+		return uniq;
+	}
 	
 	StrBuilder* sb = strbuilder_new();
 	strbuilder_addf(sb, "%s/%s", idev->path, name);
@@ -180,6 +192,15 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 		}
 		free(name);
 		return false;
+	case SCCD_HOTPLUG_FILTER_UNIQUE_ID: {
+		char* unique_id = idev->get_prop(idev, "unique_id");
+		if (0 == strcmp(unique_id, filter->id)) {
+			free(unique_id);
+			return true;
+		}
+		free(unique_id);
+		return false;
+	}
 	case SCCD_HOTPLUG_FILTER_VIDPID: {
 		char* product = idev->get_prop(idev, "product_id");
 		char* vendor = idev->get_prop(idev, "vendor_id");

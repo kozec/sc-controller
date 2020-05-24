@@ -259,6 +259,19 @@ json_object* json_object_nadd(json_object* o, const char* key, size_t len, json_
 json_object* json_object_set(json_object* o, const char* key, json_value_t* value);
 
 /**
+ * @brief Removes value for key in this JSON object
+ *
+ * If key doesn't exists, does nothing.
+ * If key already exists, it is removed.
+ *
+ * @param o JSON object
+ * @param key null terminated string
+ * @return NULL in case of failure or JSON object
+ * @warning Key must be null terminated.
+ */
+json_object* json_object_set_undefined(json_object* o, const char* key);
+
+/**
  * @return number of keys in this JSON object
  */
 size_t json_object_numkeys(json_object* o);

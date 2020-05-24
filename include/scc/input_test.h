@@ -23,6 +23,21 @@ typedef void (*controller_available_cb)(const char* driver_name,
 typedef void (*controller_test_cb)(Controller* c, TestModeEvent event,
 					uint32_t code, int64_t data);
 
+typedef struct InputDeviceCapabilities {
+	/** Allocated size of 'buttons' array */
+	size_t			max_button_count;
+	/** Allocated size of 'axes' array */
+	size_t			max_axis_count;
+	/** Actual size of 'buttons' array */
+	size_t			button_count;
+	/** Actual size of 'axes' array */
+	size_t			axis_count;
+	/** Array of button codes */
+	uint32_t*		buttons;
+	/** Array of axis codes */
+	uint32_t*		axes;
+} InputDeviceCapabilities;
+
 
 typedef struct InputTestMethods {
 	/**
@@ -61,6 +76,18 @@ typedef struct InputTestMethods {
 	void			(*test_device)(Driver* drv, Daemon* daemon,
 							const InputDeviceData* idata,
 							const controller_test_cb test_cb);
+	/**
+	 * Called to ask driver about number of buttons and axes on controller.
+	 * 'capabilities' will be preallocated by caller. Method should fill
+	 * both 'axes' and 'buttons' arrays and set '*_count' fields,
+	 * while respecting 'max_*_count' limits set by caller.
+	 *
+	 * This method is called from scc-input-tester.
+	 * May be NULL.
+	 */
+	void			(*get_device_capabilities)(Driver* drv, Daemon* daemon,
+							const InputDeviceData* idata,
+							InputDeviceCapabilities* capabilities);
 } InputTestDriver;
 
 #ifdef __cplusplus

@@ -242,6 +242,13 @@ DLL_EXPORT int config_set_double(Config* c, const char* path, double value);
  */
 DLL_EXPORT int config_set_strings(Config* c, const char* path, const char** list, ssize_t count);
 
+/**
+ * Deletes key and all subkeys.
+ * Returns 1 on success.
+ * Returns -1 if there is no such key.
+ */
+DLL_EXPORT int config_delete_key(Config* c, const char* path);
+
 #ifdef __cplusplus
 }
 #endif

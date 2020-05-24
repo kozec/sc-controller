@@ -10,6 +10,7 @@
 #include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/input_device.h"
+#include "scc/input_test.h"
 #include "scc/driver.h"
 #include "scc/config.h"
 #include "scc/mapper.h"
@@ -17,6 +18,9 @@
 #include <winbase.h>
 #include <dinput.h>
 #include <zlib.h>
+
+static controller_available_cb controller_available = NULL;
+static controller_test_cb controller_test = NULL;
 
 typedef struct DInputController {
 	Controller				controller;
@@ -65,12 +69,13 @@ static void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, co
 	}
 	// TODO: DPad
 	// TODO: Allow to disable PADPRESS_EMULATION
+	/*
 	if ((di->gc.input.buttons & ~old_buttons & (B_LPADTOUCH | B_RPADTOUCH)) != 0) {
 		if (di->gc.padpressemu_task != 0)
 			d->cancel(di->gc.padpressemu_task);
 		di->gc.padpressemu_task = d->schedule(PADPRESS_EMULATION_TIMEOUT,
 										&gc_cancel_padpress_emulation, &di->gc);
-	}
+	}*/
 	/*
 	LOG(">>> %i %i %i %i",
 			state->rgdwPOV[0],
@@ -183,11 +188,25 @@ static bool driver_start(Driver* drv, Daemon* daemon) {
 	return true;
 }
 
+static void list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+	controller_available("dinput", 9, idev);
+}
+
+static void driver_list_devices(Driver* drv, Daemon* d,
+										const controller_available_cb ca) {
+	controller_available = ca;
+	d->hotplug_cb_add(DINPUT, list_devices_hotplug_cb, NULL);
+}
+
 
 static Driver driver = {
 	.unload = NULL,
 	.start = driver_start,
-	.list_devices = driver_list_devices,
+	.input_test = &((InputTestMethods) {
+		.list_devices = driver_list_devices,
+		// .test_device = driver_test_device,
+		// .get_device_capabilities = driver_get_device_capabilities,
+	})
 };
 
 Driver* scc_driver_init(Daemon* daemon) {

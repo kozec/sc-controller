@@ -565,3 +565,11 @@ int config_set_strings(Config* _c, const char* path, const char** list, ssize_t 
 	return 1;
 }
 
+int config_delete_key(Config* _c, const char* path) {
+	struct _Config* c = container_of(_c, struct _Config, config);
+	json_object* parent = config_get_parent(c, path, false);
+	if (parent == NULL) return -1;
+	json_object_set_undefined(parent, last_element(path));
+	return 1;
+}
+

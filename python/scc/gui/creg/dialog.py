@@ -85,16 +85,14 @@ class ControllerRegistration(Editor):
 		buttons = self._tester.buttons
 		axes = self._tester.axes
 		
-		# Generate database ID
-		wordswap = lambda i: ((i & 0xFF) << 8) | ((i & 0xFF00) >> 8)
-		# TODO: version?
-		vendor, product = [ int(x, 16) for x in device_id.split(":") ]
-		weird_id = "%.4x%.8x%.8x" % (
-				wordswap(3),	# bustype # TODO: It may be 05 for BT
-				wordswap(vendor),
-				wordswap(product)
-		)
-		print weird_id
+		# Generate GamecontrollerDB id
+		cmd = [ find_binary("scc-input-tester"), "--gamecontrollerdb-id", device_id ]
+		p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+		weird_id, trash = p.communicate()
+		if p.returncode != 0:
+			log.warn('Failed to generate GamecontrollerDB id')
+			return False
+		weird_id = weird_id.strip(" \t\n\r")
 		
 		# Search in database
 		try:
@@ -222,12 +220,11 @@ class ControllerRegistration(Editor):
 		cbControllerButtons = self.builder.get_object("cbControllerButtons")
 		cbControllerType = self.builder.get_object("cbControllerType")
 		buffRawData = self.builder.get_object("buffRawData")
-		config = dict(
+		data = dict(
 			buttons = {},
 			axes = {},
 			dpads = {},
 		)
-		
 		
 		def axis_to_json(axisdata):
 			index = self._axis_data.index(axisdata)
@@ -255,23 +252,24 @@ class ControllerRegistration(Editor):
 		
 		for code, target in self._mappings.iteritems():
 			if target in SCButtons:
-				config['buttons'][code] = nameof(target)
+				data['buttons'][code] = nameof(target)
 			elif isinstance(target, DPadEmuData):
-				config['dpads'][code] = axis_to_json(target.axis_data)
-				config['dpads'][code]["positive"] = target.positive
-				config['dpads'][code]["button"] = nameof(target.button)
+				data['dpads'][code] = axis_to_json(target.axis_data)
+				data['dpads'][code]["positive"] = target.positive
+				data['dpads'][code]["button"] = nameof(target.button)
 			elif isinstance(target, AxisData):
-				config['axes'][code] = axis_to_json(target)
+				data['axes'][code] = axis_to_json(target)
 		
 		group = cbControllerButtons.get_model()[cbControllerButtons.get_active()][0]
 		controller = cbControllerType.get_model()[cbControllerType.get_active()][0]
-		config['gui'] = {
+		data['gui'] = {
 			'background' : controller,
 			'buttons': self._groups[group]
 		}
 		
-		buffRawData.set_text(json.dumps(config, sort_keys=True,
+		buffRawData.set_text(json.dumps(data, sort_keys=True,
 						indent=4, separators=(',', ': ')))
+		return data
 	
 	
 	def load_buttons(self):
@@ -290,24 +288,15 @@ class ControllerRegistration(Editor):
 	
 	
 	def save_registration(self):
-		self.generate_raw_data()
-		buffRawData = self.builder.get_object("buffRawData")
-		jsondata = buffRawData.get_text(buffRawData.get_start_iter(),
-			buffRawData.get_end_iter(), True)
-		try:
-			os.makedirs(os.path.join(get_config_path(), "devices"))
-		except: pass
+		data = self.generate_raw_data()
+		controller_id = "%s-%s" % (self._tester.driver, self._tester.device_id)
 		
-		filename = self._evdevice.name.strip().replace("/","")
-		if self._tester.driver == "hid":
-			filename = "%.4x:%.4x-%s" % (self._evdevice.info.vendor,
-				self._evdevice.info.product, filename)
-		
-		config_file = os.path.join(get_config_path(), "devices",
-				"%s-%s.json" % (self._tester.driver, filename,))
-		
-		open(config_file, "w").write(jsondata)
-		log.debug("Controller configuration '%s' written", config_file)
+		ccfg = Config().create_controller_config(controller_id)
+		for key in data['axes']:
+			ccfg['axes'][key] = data['axes'][key]
+		# ccfg.
+		ccff.save()
+		log.info("Controller configuration '%s' written", name)
 		
 		self.kill_tester()
 		self.window.destroy()
@@ -342,10 +331,10 @@ class ControllerRegistration(Editor):
 		index = pages.index(stDialog.get_visible_child())
 		if index == 0:
 			model, iter = tvDevices.get_selection().get_selected()
-			path, name, icon, dev_id = list(model[iter])
+			path, name, icon, driver, device_id = list(model[iter])
 			# TODO: This. There is no DS4 driver yet
 			"""
-			if dev_id == "054c:09cc":
+			if device_id == "054c:09cc":
 				# Special case for PS4 controller
 				cbDS4 = self.builder.get_object("cbDS4")
 				imgDS4 = self.builder.get_object("imgDS4")
@@ -412,8 +401,8 @@ class ControllerRegistration(Editor):
 		tvDevices = self.builder.get_object("tvDevices")
 		model, iter = tvDevices.get_selection().get_selected()
 		
-		path, name, icon, device_id = list(model[iter])
-		self._tester = Tester(device_id, path)
+		path, name, icon, driver, device_id = list(model[iter])
+		self._tester = Tester(driver, device_id, name, path)
 		self._tester.__signals = [
 			self._tester.connect('ready', self.on_registration_ready),
 			self._tester.connect('error', self.on_device_open_failed),
@@ -672,7 +661,7 @@ class ControllerRegistration(Editor):
 			icon, line = line[0], line[1:]
 			data = [ x.strip() for x in line.strip("\r\n ").split("\t") ]
 			try:
-				dev_id, driver, path, name = data
+				device_id, driver, path, name = data
 			except:
 				log.warn("Failed to parse scc-input-tester output: '%s'", line)
 				continue
@@ -681,7 +670,7 @@ class ControllerRegistration(Editor):
 			is_gamepad = (icon == 'c')
 			# if not dev.phys: continue		# TODO: This
 			line = p.stdout.readline()
-			lstDevices.append(( path, name, icon, dev_id ))
+			lstDevices.append(( path, name, icon, driver, device_id ))
 	
 	
 	def refresh_controller_image(self, *a):

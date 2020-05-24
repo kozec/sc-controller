@@ -4,7 +4,7 @@
  * Check input_device.h to see interface this uses.
  */
 #if USE_DINPUT
-#define LOG_TAG "input_hidapi"
+#define LOG_TAG "input_dinput"
 #include "scc/utils/logging.h"
 #include "scc/utils/assert.h"
 #include "scc/utils/container_of.h"
@@ -198,8 +198,6 @@ sccd_input_hidapi_mainloop_device_lost:
 		dev->idata.cb(d, &dev->dev, 0, NULL, dev->idata.userdata);
 	}
 }
-
-
 
 
 static char fake_syspath_buffer[1024];

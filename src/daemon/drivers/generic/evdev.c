@@ -236,18 +236,21 @@ static inline int test_bit(const char* bitmask, int bit) {
     return bitmask[bit/8] & (1 << (bit % 8));
 }
 
+static int open_idev(const InputDeviceData* idev) {
+	char dev_input_path[256];
+	strcpy(dev_input_path, "/dev/input");
+	strncat(dev_input_path, strrchr(idev->path, '/'), 230);
+	return open(dev_input_path, O_RDONLY);
+	
+}
+
 static void list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	// Examine device capabilities and decides if it passes for gamepad.
 	// Device is considered gamepad-like if has at least one button with
 	// keycode in gamepad range and at least two axes.
-	char dev_input_path[256];
 	int probablity_of_gamepad = 0;
 	char code_bits[KEY_MAX/8 + 1];
-	
-	strcpy(dev_input_path, "/dev/input");
-	strncat(dev_input_path, strrchr(idev->path, '/'), 230);
-	int fd = open(dev_input_path, O_RDONLY);
-	if (fd < 0) return;
+	int fd = open_idev(idev);
 	
 	// buttons
 	memset(&code_bits, 0, sizeof(code_bits));
@@ -280,6 +283,40 @@ static void driver_list_devices(Driver* drv, Daemon* d,
 	d->hotplug_cb_add(EVDEV, list_devices_hotplug_cb, NULL);
 }
 
+static void driver_get_device_capabilities(Driver* drv, Daemon* daemon,
+									const InputDeviceData* idev,
+									InputDeviceCapabilities* capabilities) {
+	char code_bits[KEY_MAX/8 + 1];
+	int fd = open_idev(idev);
+	capabilities->button_count = 0;
+	capabilities->axis_count = 0;
+	if (fd < 0) {
+		LERROR("get_device_capabilities: failed to open device");
+		return;
+	}
+	
+	// buttons
+	memset(&code_bits, 0, sizeof(code_bits));
+	ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(code_bits)), code_bits);
+	for (int ev_code=0; ev_code<KEY_MAX; ev_code++) {
+		if (test_bit(code_bits, ev_code)) {
+			if (capabilities->button_count >= capabilities->max_button_count)
+				break;
+			capabilities->buttons[capabilities->button_count++] = ev_code;
+		}
+	}
+	// axes
+	memset(&code_bits, 0, sizeof(code_bits));
+	ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(code_bits)), code_bits);
+	for (int ev_code=0; ev_code<ABS_MAX; ev_code++) {
+		if (test_bit(code_bits, ev_code)) {
+			if (capabilities->axis_count >= capabilities->max_axis_count)
+				break;
+			capabilities->axes[capabilities->axis_count++] = ev_code;
+		}
+	}
+}
+
 static void driver_test_device(Driver* drv, Daemon* daemon,
 			const InputDeviceData* idata,  const controller_test_cb test_cb) {
 	controller_test = test_cb;
@@ -296,15 +333,14 @@ static bool driver_start(Driver* drv, Daemon* daemon) {
 	return true;
 }
 
-static InputTestMethods input_test = {
-	.list_devices = driver_list_devices,
-	.test_device = driver_test_device,
-};
-
 static Driver driver = {
 	.unload = NULL,
 	.start = driver_start,
-	.input_test = &input_test,
+	.input_test = &((InputTestMethods) {
+		.list_devices = driver_list_devices,
+		.test_device = driver_test_device,
+		.get_device_capabilities = driver_get_device_capabilities,
+	})
 };
 
 Driver* scc_driver_init(Daemon* daemon) {

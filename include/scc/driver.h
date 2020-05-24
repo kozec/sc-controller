@@ -166,7 +166,7 @@ struct Driver {
 	 * Called when daemon is exiting to give driver chance to deallocate things.
 	 * May be NULL.
 	 */
-	void				(*unload)(Driver* drv, struct Daemon* d);
+	void				(*unload)(Driver* drv, Daemon* d);
 	/**
 	 * Called after daemon is completly initialized (unless set to NULL).
 	 * It's good idea to register hotplug callbacks from here.
@@ -175,7 +175,7 @@ struct Driver {
 	 * This method is not called from scc-input-tester.
 	 * May be NULL.
 	 */
-	bool				(*start)(Driver* drv, struct Daemon* d);
+	bool				(*start)(Driver* drv, Daemon* d);
 	/**
 	 * Methods used by `scc-input-tester`. See 'input_test.h' to more details.
 	 * May (and most likely will be) NULL.
@@ -199,10 +199,10 @@ typedef struct HotplugFilter {
 		/** interface number. Not always available */
 		SCCD_HOTPLUG_FILTER_IDX				= 6,
 		/**
-		 * guidInstance or similar. Great filter that matches only specific
-		 * piece of HW, but available only on Windows
+		 * guidInstance on Windows, 'device/uniq' on Linux, or similar.
+		 * May fallback to "vendor:product" format.
 		 */
-		SCCD_HOTPLUG_FILTER_GUID			= 7,
+		SCCD_HOTPLUG_FILTER_UNIQUE_ID		= 7,
 	}					type;
 	union {
 		Vendor			vendor;
@@ -210,7 +210,7 @@ typedef struct HotplugFilter {
 		const char*		name;
 		const char*		path;
 		const char*		vidpid;
-		const char*		guid_string;
+		const char*		id;
 		int				idx;
 	};
 } HotplugFilter;
