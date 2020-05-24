@@ -21,6 +21,8 @@
 #define FIRST_CONTROLIDX	1
 #define CHUNK_LENGTH		64
 
+static controller_available_cb controller_available = NULL;
+
 #ifndef __BSD__
 
 typedef struct Dongle {
@@ -33,10 +35,6 @@ typedef LIST_TYPE(Dongle) DonglesList;
 static DonglesList dongles = NULL;
 
 #endif
-
-static Driver driver = {
-	.unload = NULL
-};
 
 void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uint8_t* data, void* userdata) {
 	SCController* sc = NULL;
@@ -135,6 +133,8 @@ static void turnoff(Controller* c) {
 
 #ifndef __BSD__
 static void hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
+	if (controller_available != NULL)
+		return controller_available("sc_dongle", 9, idata);
 	InputDevice* dev = idata->open(idata);
 	Dongle* dongle = NULL;
 	if (dev == NULL) {
@@ -192,6 +192,8 @@ static void hotplug_cb_hid(Daemon* daemon, const InputDeviceData* idata) {
 	if ((idata->subsystem == HIDAPI) && ((idx < 1) || (idx > 4)))
 		return;
 #endif
+	if (controller_available != NULL)
+		return controller_available("sc", 9, idata);
 	InputDevice* dev = idata->open(idata);
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", idata->path);
@@ -215,37 +217,51 @@ static void hotplug_cb_hid(Daemon* daemon, const InputDeviceData* idata) {
 }
 
 
-Driver* scc_driver_init(Daemon* daemon) {
-	ASSERT(sizeof(TriggerValue) == 1);
-	ASSERT(sizeof(AxisValue) == 2);
-	ASSERT(sizeof(GyroValue) == 2);
-	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
-	//    modified so it doesn't use memcpy calls, as those depends on those sizes
-	
+static bool driver_start(Driver* drv, Daemon* daemon) {
 	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,	.vendor=VENDOR_ID };
 	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT,	.product=PRODUCT_ID };
 	bool success;
 #ifdef __BSD__
 	HotplugFilter filter_idx	 = { .type=SCCD_HOTPLUG_FILTER_IDX,		.idx=0 };
 	#define FILTERS &filter_vendor, &filter_product, &filter_idx
-	success = daemon->hotplug_cb_add(UHID, &hotplug_cb_hid, FILTERS, NULL);
+	success = daemon->hotplug_cb_add(UHID, hotplug_cb_hid, FILTERS, NULL);
 #else
 	#define FILTERS &filter_vendor, &filter_product
 	if (daemon->get_hidapi_enabled()) {
-		success = daemon->hotplug_cb_add(HIDAPI, &hotplug_cb_hid, FILTERS, NULL);
+		success = daemon->hotplug_cb_add(HIDAPI, hotplug_cb_hid, FILTERS, NULL);
 	} else {
 		dongles = list_new(Dongle, 4);
 		if (dongles == NULL) {
 			LERROR("Out of memory");
-			return NULL;
+			return false;
 		}
-		success = daemon->hotplug_cb_add(USB, &hotplug_cb, &filter_vendor, &filter_product, NULL);
+		success = daemon->hotplug_cb_add(USB, hotplug_cb, &filter_vendor, &filter_product, NULL);
 	}
 #endif
 	if (!success) {
 		LERROR("Failed to register hotplug callback");
-		return NULL;
+		return false;
 	}
+	return true;
+}
+
+static void driver_list_devices(Driver* drv, Daemon* daemon, const controller_available_cb ca) {
+	controller_available = ca;
+	driver_start(drv, daemon);
+}
+
+static Driver driver = {
+	.unload = NULL,
+	.start = driver_start,
+	// .list_devices = driver_list_devices,
+};
+
+Driver* scc_driver_init(Daemon* daemon) {
+	ASSERT(sizeof(TriggerValue) == 1);
+	ASSERT(sizeof(AxisValue) == 2);
+	ASSERT(sizeof(GyroValue) == 2);
+	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
+	//    modified so it doesn't use memcpy calls, as those depends on those sizes
 	return &driver;
 }
 

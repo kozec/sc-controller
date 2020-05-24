@@ -7,17 +7,14 @@
 #define LOG_TAG "fakedrv"
 #include "scc/utils/logging.h"
 #include "scc/utils/container_of.h"
+#include "scc/utils/strbuilder.h"
 #include "scc/utils/assert.h"
+#include "scc/input_device.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include "fake.h"
-
-
-static Driver driver = {
-	.unload = NULL
-};
 
 
 static FakeGamepad** pads = NULL;
@@ -40,6 +37,30 @@ void on_load(void* _d) {
 	}
 }
 
+static void driver_list_devices(Driver* drv, Daemon* daemon, const controller_available_cb ca) {
+	char* get_name(const InputDeviceData* idev) {
+		return strbuilder_cpy("Fake (test) controller driver");
+	}
+	char* get_prop(const InputDeviceData* idev, const char* name) {
+		if ((0 == strcmp(name, "vendor_id")) || (0 == strcmp(name, "product_id")))
+			return strbuilder_cpy("fake");
+		return NULL;
+	}
+	InputDeviceData idev = {
+		.subsystem = 0,
+		.path = "(fake)",
+		.get_name = get_name,
+		.get_prop = get_prop,
+	};
+	ca("fake", 9, &idev);
+}
+
+
+static Driver driver = {
+	.unload = NULL,
+	.start = NULL,
+	.list_devices = driver_list_devices,
+};
 
 Driver* scc_driver_init(Daemon* d) {
 	if (getenv("SCC_FAKES") == NULL) return NULL;

@@ -21,24 +21,17 @@ typedef struct {
 	Filters				filters;
 } CallbackData;
 
+static LIST_TYPE(CallbackData) callbacks;
 // Note: Following type has to have enought bits to fit all possible Subsystem enum values
 static uint32_t enabled_subsystems = 0;
-// static map_t callbacks;
 static map_t known_devs;
-static LIST_TYPE(CallbackData) callbacks;
-
-/*
-static char _key[256];
-inline static const char* make_key(Subsystem sys, Vendor vendor, Product product) {
-	sprintf(_key, "%i:%x:%x", sys, vendor, product);
-	return _key;
-}*/
 
 static void free_callback_data(void* _data) {
 	CallbackData* data = (CallbackData*)_data;
 	list_free(data->filters);
 	free(data);
 }
+
 
 void sccd_device_monitor_common_init() {
 	callbacks = list_new(CallbackData, 10);
@@ -56,7 +49,6 @@ void sccd_device_monitor_close_common() {
 uint32_t sccd_device_monitor_get_enabled_subsystems(Daemon* d) {
 	return enabled_subsystems;
 }
-
 
 void sccd_device_monitor_new_device(Daemon* d, const InputDeviceData* idata) {
 	FOREACH_IN(CallbackData*, data, callbacks) {
@@ -76,15 +68,6 @@ void sccd_device_monitor_new_device(Daemon* d, const InputDeviceData* idata) {
 			return;
 		}
 	}
-	/*
-	sccd_hotplug_cb cb = NULL;
-	const char* key = make_key(sys, vendor, product);
-	if (hashmap_get(callbacks, key, (any_t*)&cb) != MAP_MISSING) {
-		// I have no value to store in known_devs hashmap yet.
-		if (hashmap_put(known_devs, syspath, (void*)1) != MAP_OK)
-			return;
-		cb(d, syspath, sys, vendor, product, 0);
-	}*/
 }
 
 

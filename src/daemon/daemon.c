@@ -600,7 +600,7 @@ int sccd_start() {
 	sccd_input_dinput_init();
 #endif
 	sccd_x11_init();
-	sccd_drivers_init(&_daemon);
+	sccd_drivers_init(&_daemon, DIMODE_ALL);
 #ifdef __linux__
 	sccd_device_monitor_start(&_daemon);
 #endif

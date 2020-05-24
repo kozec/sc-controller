@@ -18,6 +18,8 @@
 #include <fcntl.h>
 #include <zlib.h>
 
+static controller_available_cb controller_available = NULL;
+static controller_test_cb controller_test = NULL;
 
 typedef struct EvdevController {
 	Controller				controller;
@@ -26,10 +28,6 @@ typedef struct EvdevController {
 	struct libevdev*		dev;
 } EvdevController;
 
-
-static Driver driver = {
-	.unload = NULL
-};
 
 static const char* evdev_get_type(Controller* c) {
 	return "evdev";
@@ -56,6 +54,11 @@ static void on_data_ready(Daemon* d, int fd, void* _ev) {
 		any_t val;
 		switch (event.type) {
 		case EV_KEY:
+			if (controller_test != NULL) {
+				controller_test(&ev->controller, TME_BUTTON,
+						event.code, event.value ? 1 : 0);
+				break;
+			}
 			if (intmap_get(ev->gc.button_map, event.code, &val) == MAP_OK) {
 				if (event.value)
 					ev->gc.input.buttons |= (SCButton)val;
@@ -67,6 +70,10 @@ static void on_data_ready(Daemon* d, int fd, void* _ev) {
 			}
 			break;
 		case EV_ABS:
+			if (controller_test != NULL) {
+				controller_test(&ev->controller, TME_AXIS, event.code, event.value);
+				break;
+			}
 			if (intmap_get(ev->gc.axis_map, event.code, &val) == MAP_OK) {
 				AxisData* a = (AxisData*)val;
 				apply_axis(a, (double)event.value, &ev->gc.input);
@@ -115,32 +122,11 @@ static inline char* evdev_idev_to_config_key(const InputDeviceData* idev) {
 	return strbuilder_consume(sb);
 }
 
-
-static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
-	char error[1024];
-	char* ckey = evdev_idev_to_config_key(idev);
-	Config* cfg = config_load();
-	if ((cfg == NULL) || (ckey == NULL)) {
-		RC_REL(cfg);
-		free(ckey);
-		return;
-	}
-	Config* ccfg = config_get_controller_config(cfg, ckey, error);
-	RC_REL(cfg);
-	if (ccfg == NULL) {
-		if (strstr(error, "No such file") == NULL)
-			WARN("%s: %s", ckey, error);
-		free(ckey);
-		return;
-	}
-	
+static void open_device(Daemon* d, const InputDeviceData* idev, Config* ccfg, const char* ckey) {
 	int err;
 	char* event_file = strbuilder_fmt("/dev/input%s", strrchr(idev->path, '/'));
-	if (event_file == NULL) {
-		// OOM
-		free(ckey);
-		return;
-	}
+	if (event_file == NULL)
+		return;		// OOM
 	
 	EvdevController* ev = malloc(sizeof(EvdevController));
 	if (ev != NULL) memset(ev, 0, sizeof(EvdevController));
@@ -148,7 +134,6 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 		// OOM
 		free(event_file);
 		RC_REL(ccfg);
-		free(ckey);
 		free(ev);
 		return;
 	}
@@ -157,7 +142,6 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	ev->gc.desc[MAX_DESC_LEN - 1] = 0;
 	if (ev->gc.desc[MAX_DESC_LEN - 2] != 0)
 		ev->gc.desc[MAX_DESC_LEN - 2] = '>';
-	free(ckey);
 	
 	if (!gc_load_mappings(&ev->gc, ccfg)) {
 		evdev_dealloc(&ev->controller);
@@ -171,7 +155,6 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 		LERROR("Failed to open evdev device %s: %s", event_file, strerror(-err));
 		evdev_dealloc(&ev->controller);
 		free(event_file);
-		RC_REL(ccfg);
 		return;
 	}
 	free(event_file);
@@ -225,14 +208,62 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	libevdev_grab(ev->dev, LIBEVDEV_GRAB);
 }
 
+static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+	char error[1024];
+	char* ckey = evdev_idev_to_config_key(idev);
+	Config* cfg = config_load();
+	if ((cfg == NULL) || (ckey == NULL)) {
+		RC_REL(cfg);
+		free(ckey);
+		return;
+	}
+	Config* ccfg = config_get_controller_config(cfg, ckey, error);
+	RC_REL(cfg);
+	if (ccfg == NULL) {
+		if (strstr(error, "No such file") == NULL)
+			WARN("%s: %s", ckey, error);
+		free(ckey);
+		return;
+	}
+	
+	open_device(d, idev, ccfg, ckey);
+	free(ckey);
+}
 
-Driver* scc_driver_init(Daemon* daemon) {
+static void list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+	controller_available("evdev", 9, idev);
+}
+
+static void driver_list_devices(Driver* drv, Daemon* d,
+										const controller_available_cb ca) {
+	controller_available = ca;
+	d->hotplug_cb_add(EVDEV, list_devices_hotplug_cb, NULL);
+}
+
+static void driver_test_device(Driver* drv, Daemon* daemon,
+			const InputDeviceData* idata,  const controller_test_cb test_cb) {
+	controller_test = test_cb;
+	open_device(daemon, idata, NULL, "test");
+}
+
+static bool driver_start(Driver* drv, Daemon* daemon) {
 	// TODO: Don't register everything, list known devices and register handlers
 	// TODO: only for those instead
-	if (!daemon->hotplug_cb_add(EVDEV, &hotplug_cb, NULL)) {
+	if (!daemon->hotplug_cb_add(EVDEV, hotplug_cb, NULL)) {
 		LERROR("Failed to register hotplug callback");
-		return NULL;
+		return false;
 	}
+	return true;
+}
+
+static Driver driver = {
+	.unload = NULL,
+	.start = driver_start,
+	.list_devices = driver_list_devices,
+	.test_device = driver_test_device,
+};
+
+Driver* scc_driver_init(Daemon* daemon) {
 	return &driver;
 }
 

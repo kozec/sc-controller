@@ -20,10 +20,7 @@
 #define CONTROLIDX			2
 #define CHUNK_LENGTH		64
 
-static Driver driver = {
-	.unload = NULL
-};
-
+static controller_available_cb controller_available = NULL;
 
 void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uint8_t* data, void* userdata) {
 	SCController* sc = (SCController*)userdata;
@@ -45,6 +42,8 @@ void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uin
 
 
 static void hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
+	if (controller_available != NULL)
+		return controller_available("sc_by_cable", 9, idata);
 	SCController* sc = NULL;
 	InputDevice* dev = idata->open(idata);
 	if (dev == NULL) {
@@ -88,13 +87,7 @@ hotplug_cb_fail:
 	dev->close(dev);
 }
 
-Driver* scc_driver_init(Daemon* daemon) {
-	ASSERT(sizeof(TriggerValue) == 1);
-	ASSERT(sizeof(AxisValue) == 2);
-	ASSERT(sizeof(GyroValue) == 2);
-	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
-	//    modified so it doesn't use memcpy calls, as those depends on those sizes
-	
+static bool driver_start(Driver* drv, Daemon* daemon) {
 	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,	.vendor=VENDOR_ID };
 	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT,	.product=PRODUCT_ID };
 	HotplugFilter filter_idx	 = { .type=SCCD_HOTPLUG_FILTER_IDX,		.idx=CONTROLIDX };
@@ -104,10 +97,31 @@ Driver* scc_driver_init(Daemon* daemon) {
 #else
 	Subsystem s = UHID;
 #endif
-	if (!daemon->hotplug_cb_add(s, &hotplug_cb, FILTERS, NULL)) {
+	if (!daemon->hotplug_cb_add(s, hotplug_cb, FILTERS, NULL)) {
 		LERROR("Failed to register hotplug callback");
-		return NULL;
+		return false;
 	}
+	return true;
+}
+
+static void driver_list_devices(Driver* drv, Daemon* daemon, const controller_available_cb ca) {
+	controller_available = ca;
+	driver_start(drv, daemon);
+}
+
+static Driver driver = {
+	.unload = NULL,
+	.start = driver_start,
+	// .list_devices = driver_list_devices,
+};
+
+Driver* scc_driver_init(Daemon* daemon) {
+	ASSERT(sizeof(TriggerValue) == 1);
+	ASSERT(sizeof(AxisValue) == 2);
+	ASSERT(sizeof(GyroValue) == 2);
+	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
+	//    modified so it doesn't use memcpy calls, as those depends on those sizes
+	
 	return &driver;
 }
 

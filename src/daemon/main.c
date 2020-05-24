@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 static const char *const usage[] = {
-	"scc-daemon -h [--alone] [--once] [profile_name] {start,stop,restart,debug}",
+	"scc-daemon [-h] [--alone] [--once] [profile_name] {start,stop,restart,debug}",
 	NULL,
 };
 

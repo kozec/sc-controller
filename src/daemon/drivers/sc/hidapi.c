@@ -58,12 +58,23 @@ hotplug_cb_fail:
 }
 
 
-void unload(struct Driver* drv, struct Daemon* d) {
+static void unload(struct Driver* drv, struct Daemon* d) {
 	hid_exit();
 }
 
+static bool driver_start(Driver* drv, Daemon* daemon) {
+	if (!daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, hotplug_cb)) {
+		LERROR("Failed to register hotplug callback");
+		return false;
+	}
+	returm true;
+}
+
+
 static Driver driver = {
 	.unload = &unload
+	.start = driver_start,
+	.list_devices = NULL,
 };
 
 Driver* scc_driver_init(Daemon* daemon) {
@@ -78,10 +89,6 @@ Driver* scc_driver_init(Daemon* daemon) {
 		return NULL;
 	}
 	
-	if (!daemon->hotplug_cb_add(USB, VENDOR_ID, PRODUCT_ID, &hotplug_cb)) {
-		LERROR("Failed to register hotplug callback");
-		return NULL;
-	}
 	return &driver;
 }
 

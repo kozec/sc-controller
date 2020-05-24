@@ -51,6 +51,24 @@ static InputDevice* input_device_open(const InputDeviceData* idev) {
 }
 
 static char* input_device_get_prop(const InputDeviceData* idev, const char* name) {
+	// Special handling for vendor/product/name so it's all accessible using same prop names
+	if (0 == strcmp(name, "vendor_id")) {
+#ifdef USE_LIBUSB
+		if (idev->subsystem == USB)
+			return input_device_get_prop(idev, "idVendor");
+#endif
+		if (idev->subsystem == EVDEV)
+			return input_device_get_prop(idev, "device/id/vendor");
+	}
+	if (0 == strcmp(name, "product_id")) {
+#ifdef USE_LIBUSB
+		if (idev->subsystem == USB)
+			return input_device_get_prop(idev, "idProduct");
+#endif
+		if (idev->subsystem == EVDEV)
+			return input_device_get_prop(idev, "device/id/product");
+	}
+	
 	StrBuilder* sb = strbuilder_new();
 	strbuilder_addf(sb, "%s/%s", idev->path, name);
 	if (strbuilder_failed(sb))
@@ -71,6 +89,10 @@ input_device_get_prop_fail:
 }
 
 static char* input_device_get_name(const InputDeviceData* idev) {
+#ifdef USE_LIBUSB
+	if (idev->subsystem == USB)
+		return input_device_get_prop(idev, "product");
+#endif
 	return input_device_get_prop(idev, "device/name");
 }
 
@@ -134,12 +156,25 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 		return (ldev->product == filter->product);
 	case SCCD_HOTPLUG_FILTER_NAME:
 		name = input_device_get_prop(idev, "device/name");
-		if ((name != NULL) && (strcmp(name, filter->name) == 0)) {
+		if ((name != NULL) && (0 == strcmp(name, filter->name))) {
 			free(name);
 			return true;
 		}
 		free(name);
 		return false;
+	case SCCD_HOTPLUG_FILTER_VIDPID: {
+		char* product = idev->get_prop(idev, "product_id");
+		char* vendor = idev->get_prop(idev, "vendor_id");
+		char* buffer = strbuilder_fmt("%s:%s", vendor, product);
+		free(product);
+		free(vendor);
+		if (0 == strcmp(buffer, filter->vidpid)) {
+			free(buffer);
+			return true;
+		}
+		free(buffer);
+		return false;
+	}
 	default:
 		return false;
 	}

@@ -37,11 +37,19 @@ typedef struct Driver Driver;
 typedef struct InputDevice InputDevice;
 typedef struct InputDeviceData InputDeviceData;
 typedef struct HotplugFilter HotplugFilter;
+typedef enum TestModeEvent TestModeEvent;
 
 typedef void (*sccd_mainloop_cb)(Daemon* d);
 typedef void (*sccd_poller_cb)(Daemon* d, int fd, void* userdata);
 typedef void (*sccd_hotplug_cb)(Daemon* d, const InputDeviceData* idata);
 typedef void (*sccd_scheduler_cb)(void* userdata);
+typedef void (*controller_available_cb)(const char* driver_name,
+					uint8_t confidence, const InputDeviceData* idata);
+typedef void (*controller_available_cb)(const char* driver_name,
+					uint8_t confidence, const InputDeviceData* idata);
+typedef void (*controller_test_cb)(Controller* c, TestModeEvent event,
+					uint32_t code, int64_t data);
+
 
 /** This is 'daemon from POV of driver', not everything that daemon does */
 struct Daemon {
@@ -164,42 +172,100 @@ struct Driver {
 	 * Called when daemon is exiting to give driver chance to deallocate things.
 	 * May be NULL.
 	 */
-	void			(*unload)(struct Driver* drv, struct Daemon* d);
+	void			(*unload)(Driver* drv, struct Daemon* d);
+	/**
+	 * Called after daemon is completly initialized (unless set to NULL).
+	 * It's good idea to register hotplug callbacks from here.
+	 *
+	 * Returns false to indicate any failure. Library may be unloaded in such case.
+	 * This method is not called from scc-input-tester.
+	 * May be NULL.
+	 */
+	bool			(*start)(Driver* drv, struct Daemon* d);
+	/**
+	 * Called to instruct driver to list all devices it recognizes,
+	 * even thought it's not currently configured to use them.
+	 *
+	 * 'controller_available' callback doesn't have to be called right away.
+	 * Instead, registering callbacks with daemon->hotplug_cb_add and waiting
+	 * until list of devices is retrieved by daemon (or input tester) may be
+	 * necessary.
+	 * It's safe to store 'controller_available' callback for later use.
+	 *
+	 * 'driver_name' controller_available should be set to driver filename,
+	 * without "libscc-drv-" prefix and ".so" / ".dll" (or other) suffix.
+	 * That means that "libscc-drv-evdev.so" will identify itself as "evdev".
+	 *
+	 * 'confidence' controller_available argument describes how sure driver
+	 * is that device described by 'idata' is game controller.
+	 * Scale goes from 9 (definitelly controller) to 0 (definitelly not controller)
+	 *
+	 * This method is called from scc-input-tester.
+	 * May be NULL.
+	 */
+	void			(*list_devices)(Driver* drv, Daemon* daemon,
+							const controller_available_cb controller_available);
+	/**
+	 * Called to instruct driver to open and start testing given device.
+	 * This will be most likelly called from 'controller_available' callback and
+	 * driver is expected to call daemon->controller_add method if device is
+	 * opened sucesfully but then, instead of supplying data to mapper,
+	 * supply changes in controller read-outs using 'test_cb'.
+	 *
+	 * This method is called from scc-input-tester.
+	 * May be NULL.
+	 */
+	void			(*test_device)(Driver* drv, Daemon* daemon,
+							const InputDeviceData* idata,
+							const controller_test_cb test_cb);
 };
 
 
 typedef struct HotplugFilter {
 	enum {
-		SCCD_HOTPLUG_FILTER_VENDOR		= 1,
-		SCCD_HOTPLUG_FILTER_PRODUCT		= 2,
+		SCCD_HOTPLUG_FILTER_VENDOR			= 1,
+		SCCD_HOTPLUG_FILTER_PRODUCT			= 2,
+#ifdef __linux__
+		/** vendor:product ids as string (format that lsusb uses) */
+		SCCD_HOTPLUG_FILTER_VIDPID			= 3,
+#endif
 		/** evdev or dinput name. Not always available */
-		SCCD_HOTPLUG_FILTER_NAME		= 3,
+		SCCD_HOTPLUG_FILTER_NAME			= 4,
 		/** interface number. Not always available */
-		SCCD_HOTPLUG_FILTER_IDX			= 4,
+		SCCD_HOTPLUG_FILTER_IDX				= 5,
 		/**
 		 * guidInstance or similar. Great filter that matches only specific
 		 * piece of HW, but available only on Windows
 		 */
-		SCCD_HOTPLUG_FILTER_GUID		= 5,
+		SCCD_HOTPLUG_FILTER_GUID			= 6,
 	}					type;
 	union {
 		Vendor			vendor;
 		Product			product;
 		const char*		name;
+		const char*		vidpid;
 		const char*		guid_string;
 		int				idx;
 	};
 } HotplugFilter;
 
+enum TestModeEvent {
+	TME_AXIS =		1,
+	TME_REL =		2,
+	TME_BUTTON =	3,
+};
 
 /**
- * This function should be exported by driver; It will be called automatically
+ * This function has to be exported by driver; It will be called automatically
  * when daemon is starting.
- * It should return NULL to indicate on any failure.
+ *
+ * Returns NULL to indicate any failure.
  */
 DLL_EXPORT Driver* scc_driver_init(Daemon* daemon);
 typedef Driver*(*scc_driver_init_fn)(Daemon* daemon);
 
+
 #ifdef __cplusplus
 }
 #endif
+

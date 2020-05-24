@@ -82,8 +82,9 @@ scc_daemon = executable('scc-daemon',
 	],
 	build_rpath: '/usr/X11R6/lib',
 	sources: platform_dependent_src + [
-		'x11.c',
 		'main.c',
+		
+		'x11.c',
 		'daemon.c',
 		'logger.c',
 		'socket.c',
@@ -98,7 +99,27 @@ scc_daemon = executable('scc-daemon',
 	],
 )
 
+scc_input_tester = executable('scc-input-tester',
+	include_directories: include,
+	c_args: platform_dependent_args,
+	link_with: [ utils_lib, tools_lib ],
+	link_args: platform_dependent_link_args,
+	dependencies: platform_dependent_deps + [
+		dependency('zlib'),
+	],
+	sources: platform_dependent_src + [
+		'input_tester.c',
+		
+		'poller.c',
+		'drivers.c',
+		'scheduler.c',
+		'device_monitor.c',
+	],
+)
 
 run_target('scc-daemon', command: ['sh', '../../meson-run.sh', 'src/daemon/scc-daemon', 'debug'],
 	dependencies: [scc_daemon])
+
+run_target('scc-input-tester', command: ['sh', '../../meson-run.sh', 'src/daemon/scc-input-tester', '045e:028e'],
+	dependencies: [scc_input_tester])
 

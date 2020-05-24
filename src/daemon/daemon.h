@@ -189,7 +189,22 @@ Client* sccd_get_special_client(enum SpecialClientType t);
 /** If another client is already registered, it's dropped */
 void sccd_set_special_client(enum SpecialClientType t, Client* client);
 
-void sccd_drivers_init();
+enum DirverInitMode {
+	/** Used by daemon */
+	DIMODE_ALL =					1,
+	/**
+	 * Used by scc-input-tester to initialize only dirvers with
+	 * 'list_devices' method.
+	 */
+	DIMODE_LIST_DEVICES_ONLY =		2
+};
+
+/** Loads and initializes all available drivers */
+void sccd_drivers_init(Daemon* daemon, enum DirverInitMode mode);
+/** Asks input drivers to list available devices. Used by input_tester */
+void sccd_drivers_list_devices(Daemon* daemon, const controller_available_cb cb);
+/** Returns driver with given name or NULL if there is no such loaded */
+Driver* sccd_drivers_get_by_name(const char* driver_name);
 
 ControllerList sccd_get_controller_list();
 Controller* sccd_get_controller_by_id(const char* id);

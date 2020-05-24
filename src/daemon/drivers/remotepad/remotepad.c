@@ -9,7 +9,9 @@
 #define LOG_TAG "remotepad"
 #include "scc/utils/logging.h"
 #include "scc/utils/container_of.h"
+#include "scc/utils/strbuilder.h"
 #include "scc/utils/hashmap.h"
+#include "scc/input_device.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #ifdef _WIN32
@@ -31,10 +33,6 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-
-static Driver driver = {
-	.unload = NULL
-};
 
 static int sock;
 static const int port = 55400;
@@ -73,18 +71,11 @@ void remove_pad_by_address(const char* address) {
 	hashmap_remove(controllers, address);
 }
 
-
-Driver* scc_driver_init(Daemon* d) {
-	controllers = hashmap_new();
-	if (controllers == NULL) {
-		LERROR("OOM");
-		return NULL;
-	}
-	
+static bool driver_start(Driver* drv, Daemon* d) {
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) {
 		LERROR("Failed to open control socket" SOCKETERROR);
-		return NULL;
+		return false;
 	}
 	struct sockaddr_in server_addr;
 	memset(&server_addr, 0, sizeof(struct sockaddr_in));
@@ -97,23 +88,59 @@ Driver* scc_driver_init(Daemon* d) {
 #else
 	if (setsockopt(sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, &(char){ 1 }, sizeof(char)) < 0) {
 #endif
-	// stupid, but not fatal
-	WARN("setsockopt failed" SOCKETERROR);
+		// stupid, but not fatal
+		WARN("setsockopt failed" SOCKETERROR);
 	}
 	
 	if (bind(sock, (const struct sockaddr *)&server_addr, sizeof(struct sockaddr_in)) < 0) {
 		LERROR("Bind failed" SOCKETERROR);
 		close(sock);
-		return NULL;
+		return false;
 	}
 	
 	if (!d->poller_cb_add(sock, &on_data_ready, NULL)) {
 		LERROR("Failed to register with poller");
 		close(sock);
-		return NULL;
+		return false;
 	}
 	
 	LOG("Listening on 0.0.0.0:%i", ntohs(server_addr.sin_port));
 	
+	return true;
+}
+
+static void driver_list_devices(Driver* drv, Daemon* daemon, const controller_available_cb ca) {
+	char* get_name(const InputDeviceData* idev) {
+		return strbuilder_cpy("RemotePad");
+	}
+	char* get_prop(const InputDeviceData* idev, const char* name) {
+		if ((0 == strcmp(name, "vendor_id")) || (0 == strcmp(name, "product_id")))
+			return strbuilder_cpy("rmtp");
+		return NULL;
+	}
+	InputDeviceData idev = {
+		.subsystem = 0,
+		.path = "(remotepad)",
+		.get_name = get_name,
+		.get_prop = get_prop,
+	};
+	ca("remotepad", 9, &idev);
+}
+
+
+static Driver driver = {
+	.unload = NULL,
+	.start = driver_start,
+	// .list_devices = driver_list_devices,
+};
+
+Driver* scc_driver_init(Daemon* d) {
+	controllers = hashmap_new();
+	if (controllers == NULL) {
+		LERROR("OOM");
+		return NULL;
+	}
+	
 	return &driver;
 }
+

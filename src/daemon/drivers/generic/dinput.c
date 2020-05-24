@@ -25,10 +25,6 @@ typedef struct DInputController {
 	InputDevice*			dev;
 } DInputController;
 
-static Driver driver = {
-	.unload = NULL
-};
-
 
 static const char* dinput_get_type(Controller* c) {
 	return "dinput";
@@ -177,14 +173,24 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	}
 }
 
-
-Driver* scc_driver_init(Daemon* daemon) {
+static bool driver_start(Driver* drv, Daemon* daemon) {
 	// TODO: Don't register everything, list known devices and register handlers
 	// TODO: only for those instead
-	if (!daemon->hotplug_cb_add(DINPUT, &hotplug_cb, NULL)) {
+	if (!daemon->hotplug_cb_add(DINPUT, hotplug_cb, NULL)) {
 		LERROR("Failed to register hotplug callback");
-		return NULL;
+		return false;
 	}
+	return true;
+}
+
+
+static Driver driver = {
+	.unload = NULL,
+	.start = driver_start,
+	.list_devices = driver_list_devices,
+};
+
+Driver* scc_driver_init(Daemon* daemon) {
 	return &driver;
 }
 

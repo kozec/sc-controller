@@ -1,5 +1,5 @@
 #ifdef __linux__
-#define LOG_TAG "udev_drv"
+#define LOG_TAG "evdev_drv"
 #else
 #define LOG_TAG "gnrc_drv"
 #endif

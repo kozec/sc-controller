@@ -182,7 +182,7 @@ static bool load_axis_map(GenericController* gc, Config* ccfg) {
 	const char* keys[64];
 	char buffer[64];
 	ssize_t count;
-	count = config_get_strings(ccfg, "axes", keys, 64);
+	count = (ccfg == NULL) ? 0 : config_get_strings(ccfg, "axes", keys, 64);
 	for (ssize_t i=0; i<count; i++) {
 		char* ok = NULL;
 		int k = strtol(keys[i], &ok, 10);
@@ -221,7 +221,7 @@ static bool load_button_map(GenericController* gc, Config* ccfg) {
 	const char* keys[64];
 	char buffer[64];
 	ssize_t count;
-	count = config_get_strings(ccfg, "buttons", keys, 64);
+	count = (ccfg == NULL) ? 0 : config_get_strings(ccfg, "buttons", keys, 64);
 	for (ssize_t i=0; i<count; i++) {
 		char* ok = NULL;
 		int k = strtol(keys[i], &ok, 10);
