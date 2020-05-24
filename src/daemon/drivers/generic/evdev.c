@@ -10,6 +10,7 @@
 #include "scc/utils/assert.h"
 #include "scc/utils/math.h"
 #include "scc/input_device.h"
+#include "scc/input_test.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #include "scc/config.h"
@@ -295,11 +296,15 @@ static bool driver_start(Driver* drv, Daemon* daemon) {
 	return true;
 }
 
+static InputTestMethods input_test = {
+	.list_devices = driver_list_devices,
+	.test_device = driver_test_device,
+};
+
 static Driver driver = {
 	.unload = NULL,
 	.start = driver_start,
-	.list_devices = driver_list_devices,
-	.test_device = driver_test_device,
+	.input_test = &input_test,
 };
 
 Driver* scc_driver_init(Daemon* daemon) {

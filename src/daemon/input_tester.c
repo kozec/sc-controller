@@ -202,9 +202,10 @@ static void controller_available_test(const char* driver_name, uint8_t confidenc
 	}
 	if (sccd_device_monitor_test_filter(&_daemon, idev, &filter)) {
 		Driver* drv = sccd_drivers_get_by_name(driver_name);
-		if ((drv == NULL) || (drv->test_device == NULL))
+		if ((drv == NULL) || (drv->input_test != NULL)
+								|| (drv->input_test->test_device == NULL))
 			return;
-		drv->test_device(drv, &_daemon, idev, controller_test_event);
+		drv->input_test->test_device(drv, &_daemon, idev, controller_test_event);
 	}
 }
 

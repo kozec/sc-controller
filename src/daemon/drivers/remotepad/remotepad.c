@@ -12,6 +12,7 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/hashmap.h"
 #include "scc/input_device.h"
+#include "scc/input_test.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #ifdef _WIN32

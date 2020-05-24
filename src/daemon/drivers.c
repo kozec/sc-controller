@@ -2,6 +2,7 @@
 #include "scc/utils/logging.h"
 #include "scc/utils/hashmap.h"
 #include "scc/utils/assert.h"
+#include "scc/input_test.h"
 #include "scc/tools.h"
 #include "daemon.h"
 #include <string.h>
@@ -56,7 +57,7 @@ static void initialize_driver(Daemon* d, const char* filename, enum DirverInitMo
 		goto initialize_driver_end;
 	}
 	if (mode == DIMODE_LIST_DEVICES_ONLY) {
-		if (drv->list_devices == NULL)
+		if ((drv->input_test == NULL) || (drv->input_test->list_devices == NULL))
 			goto initialize_driver_unload;
 	} else {
 		if ((drv->start != NULL) && !drv->start(drv, d))
@@ -82,9 +83,9 @@ void sccd_drivers_list_devices(Daemon* d, const controller_available_cb cb) {
 		Driver* drv = NULL;
 		if (MAP_OK != hashmap_get(loaded_drivers, name, (void*)&drv))
 			continue;
-		if (drv->list_devices == NULL)
+		if ((drv->input_test == NULL) || (drv->input_test->list_devices == NULL))
 			continue;
-		drv->list_devices(drv, d, cb);
+		drv->input_test->list_devices(drv, d, cb);
 	}
 	iter_free(it);
 }

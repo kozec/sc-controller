@@ -9,6 +9,7 @@
 #include "scc/utils/assert.h"
 #include "scc/utils/list.h"
 #include "scc/input_device.h"
+#include "scc/input_test.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #include "sc.h"

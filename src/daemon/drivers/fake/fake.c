@@ -10,6 +10,7 @@
 #include "scc/utils/strbuilder.h"
 #include "scc/utils/assert.h"
 #include "scc/input_device.h"
+#include "scc/input_test.h"
 #include "scc/driver.h"
 #include "scc/mapper.h"
 #include <stdlib.h>
@@ -56,10 +57,14 @@ static void driver_list_devices(Driver* drv, Daemon* daemon, const controller_av
 }
 
 
+static InputTestMethods input_test = {
+	.list_devices = driver_list_devices,
+};
+
 static Driver driver = {
 	.unload = NULL,
 	.start = NULL,
-	.list_devices = driver_list_devices,
+	.input_test = &input_test,
 };
 
 Driver* scc_driver_init(Daemon* d) {
