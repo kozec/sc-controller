@@ -74,7 +74,13 @@ static char* input_device_get_prop(const InputDeviceData* idev, const char* name
 	if (idev->subsystem == DINPUT) {
 		struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
 		const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
-		if (0 == strcmp(name, "unique_id")) {
+		if (0 == strcmp(name, "vendor_id")) {
+			return strbuilder_fmt("%.4x", (uint16_t)LOWORD(d8dev->guidProduct.Data1));
+		} else if (0 == strcmp(name, "product_id")) {
+			return strbuilder_fmt("%.4x", (uint16_t)HIWORD(d8dev->guidProduct.Data1));
+		} else if (0 == strcmp(name, "version_id")) {
+			return strbuilder_cpy("0000");
+		} else if (0 == strcmp(name, "unique_id")) {
 			return input_device_get_prop(idev, "guidInstance");
 		} else if (0 == strcmp("tszInstanceName", name)) {
 			return strbuilder_cpy(d8dev->tszInstanceName);

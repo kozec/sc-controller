@@ -207,10 +207,14 @@ static int wordswap(char* number) {
 static void print_gamecontrollerdb_id(const InputDeviceData* idev) {
 	// Note: This is as platform-dependent as it can be
 	printf("%.4x%.8x%.8x%.8x0000\n",
-			0x0300,		// TODO: BT support. That 3 stands for USB
+#ifdef _WIN32
+			0x0300,		// Everything is 0x03 on Windows
+#else
+			0x0300,		// TODO: BT support. 0x03 stands for USB
+#endif
 			wordswap(idev->get_prop(idev, "vendor_id")),
 			wordswap(idev->get_prop(idev, "product_id")),
-			wordswap(idev->get_prop(idev, "device/id/version"))
+			wordswap(idev->get_prop(idev, "version_id"))
 	);
 }
 
@@ -315,8 +319,7 @@ int main(int argc, char** argv) {
 	if (!opt_list && (argc < 1)) {
 #ifdef _WIN32
 		// Windows-only: If no argument is specified, list all devices
-		// opt_list = 1;
-		device_id = "{6C7EB1D0-420A-11EA-8001-444553540000}";
+		opt_list = 1;
 #else
 		argparse_usage(&argparse);
 		return 1;

@@ -68,6 +68,15 @@ static char* input_device_get_prop(const InputDeviceData* idev, const char* name
 		if (idev->subsystem == EVDEV)
 			return input_device_get_prop(idev, "device/id/product");
 	}
+	if (0 == strcmp(name, "version_id")) {
+#ifdef USE_LIBUSB
+		if (idev->subsystem == USB)
+			// TODO: Check this
+			return input_device_get_prop(idev, "idVersion");
+#endif
+		if (idev->subsystem == EVDEV)
+			return input_device_get_prop(idev, "device/id/version");
+	}
 	if (0 == strcmp(name, "unique_id")) {
 		char* uniq = idev->get_prop(idev, "device/uniq");
 		if (uniq == NULL) {
