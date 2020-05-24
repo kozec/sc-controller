@@ -38,13 +38,12 @@ static const char *const usage[] = {
 /**
  * Formatting of 'Device Driver Path Description' table.
  * As guid used on Windows is much, much longer than IDs used elsewhere,
- * different column length is needed. On other hand, 1st column (with ID)
- * is not needed, as ID is always part of path.
+ * different column length is needed.
  */
 #ifndef _WIN32
 #define TABLE_COLUMNS "%c %-15s\t%-15s\t%-23s\t%s\n"
 #else
-#define TABLE_COLUMNS "%c %-15s\t%-48s\t%s\n"
+#define TABLE_COLUMNS "%c %-40s\t%-15s\t%-48s\t%s\n"
 #endif
 
 #define BUTTON_AXIS_MAX		256
@@ -169,14 +168,7 @@ static void controller_available_list(const char* driver_name, uint8_t confidenc
 	name = idev->get_name(idev);
 	if (unique_id != NULL) {
 		printf(TABLE_COLUMNS,
-				icon,
-#ifndef _WIN32
-				unique_id,
-#endif
-				driver_name,
-				path,
-				or_questionmarks(name)
-		);
+				icon, unique_id, driver_name, path, or_questionmarks(name));
 	}
 	free(unique_id);
 	free(nice_path);
@@ -344,14 +336,7 @@ int main(int argc, char** argv) {
 	logging_set_handler(handler);
 	
 	if (opt_list) {
-		printf(TABLE_COLUMNS, ' ',
-#ifndef _WIN32
-				"Device",
-#endif
-				"Driver",
-				"Path",
-				"Description"
-		);
+		printf(TABLE_COLUMNS, ' ', "Device", "Driver", "Path", "Description");
 		// Disable logging while drivers are initialized
 		sccd_drivers_list_devices(&_daemon, controller_available_list);
 		sccd_device_monitor_rescan(&_daemon);
