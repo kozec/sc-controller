@@ -79,7 +79,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		}
 		self.app.config.reload()
 		self.load_settings()
-		self.load_profile_list()
+		# self.load_profile_list()
 		self._recursing = False
 		self._eh_ids = (
 			self.app.dm.connect('reconfigured', self.on_daemon_reconfigured),
@@ -791,6 +791,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	def load_controllers(self, *a):
 		lstControllers = self.builder.get_object("lstControllers")
 		lstControllers.clear()
+		for cid in self.app.config.get_controllers():
+			drv, name = cid.split("-", 1)
+			lstControllers.append((cid, name, self._get_gamepad_icon(drv)))
+			
 		"""
 		devices_path = os.path.join(get_config_path(), "devices")
 		if not os.path.exists(devices_path):

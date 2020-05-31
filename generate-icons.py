@@ -5,9 +5,9 @@
 import os, subprocess, colorsys
 from xml.etree import ElementTree as ET
 
-ICODIR = "./images/"					# Directory with icons
-CICONS = "./images/controller-icons/"	# Directory controller-icons
-RECOLORS = {							# Defines set of hue shifts for controller-icons
+ICODIR = "./share/images/"						# Directory with icons
+CICONS = "./share/images/controller-icons/"		# Directory controller-icons
+RECOLORS = {		# Defines set of hue shifts for controller-icons
 	# "0" : 0.0,	# Green - original
 	"1" : 0.3,		# Blue
 	"2" : 0.7,		# Red
@@ -78,7 +78,7 @@ def recolor(tree, add):
 
 # Generate different colors for controller icons
 ET.register_namespace("","http://www.w3.org/2000/svg")
-for tp in ("sc", "scbt", "fake", "ds4", "hid"):
+for tp in ("sc", "scbt", "fake", "ds4", "dinput"):
 	# Read svg and parse it
 	data = file("%s/%s-0.svg" % (CICONS, tp), "r").read()
 	# Create recolored images

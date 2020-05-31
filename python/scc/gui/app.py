@@ -1317,17 +1317,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if self.app.config['gui']['enable_status_icon']:
 			self.setup_statusicon()
 		self.set_daemon_status("unknown", True)
-		
-		from scc.gui.global_settings import GlobalSettings
-		gs = GlobalSettings(self)
-		gs.on_btAddController_clicked()
-	
 	
 	def do_local_options(self, trash, lo):
 		set_logging_level(lo.contains("verbose"), lo.contains("debug") )
 		self.osd_mode = lo.contains("osd")
 		return -1
-	
 	
 	def do_command_line(self, cl):
 		Gtk.Application.do_command_line(self, cl)

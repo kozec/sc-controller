@@ -1621,6 +1621,7 @@ or even crash.</property>
                     <child>
                       <object class="GtkButton" id="btRemoveController">
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="hexpand">False</property>
