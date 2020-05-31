@@ -156,11 +156,9 @@ static void open_device(Daemon* d, const InputDeviceData* idev, Config* ccfg, co
 	StrBuilder* sb = strbuilder_new();
 	char* uniq = idev->get_prop(idev, "guidInstance");
 	if (uniq != NULL) {
-		uLong crc = crc32(0, (const Bytef*)uniq, strlen(uniq));
-		strbuilder_addf(sb, "%x", crc);
+		strbuilder_add(sb, "dinput-");
+		strbuilder_add(sb, uniq);
 		free(uniq);
-		strbuilder_upper(sb);
-		strbuilder_insert(sb, 0, "dinput");
 	}
 	if ((uniq == NULL) || strbuilder_failed(sb)) {
 		dinput_dealloc(&di->controller);

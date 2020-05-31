@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 #define MAX_DESC_LEN				64
-#define MAX_ID_LEN					32
+#define MAX_ID_LEN					64
 #define PADPRESS_EMULATION_TIMEOUT	2
 
 /**

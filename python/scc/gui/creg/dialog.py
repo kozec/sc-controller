@@ -308,6 +308,8 @@ class ControllerRegistration(Editor):
 			for key in data['buttons']:
 				# TODO: This seems suboptimal
 				ccfg['buttons/%s' % (key,)] = data['buttons'][key]
+			ccfg['gui/background'] = data['gui']['background']
+			ccfg['gui/buttons'] = data['gui']['buttons']
 			ccfg.save()
 			log.info("Controller configuration '%s' written", controller_id)
 			

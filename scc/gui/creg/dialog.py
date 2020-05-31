@@ -760,3 +760,4 @@ class ControllerRegistration(Editor):
 			self._controller_image.connect('leave', self.on_area_leave)
 			self._controller_image.connect('click', self.on_area_click)
 			rvController.add(self._controller_image)
+

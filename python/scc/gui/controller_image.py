@@ -81,7 +81,7 @@ class ControllerImage(SVGWidget):
 		if type(dict_or_tuple) in (list, tuple):
 			return dict_or_tuple
 		return [
-			(x["axis"] if type(x) == dict else x)
+			(x.get("axis", x) if hasattr(x, "get") else x)
 			for x in dict_or_tuple.values()
 		]
 	

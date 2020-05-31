@@ -136,11 +136,16 @@ class Config(object):
 		def __iter__(self):
 			return iter(self.keys())
 		
+		get = __getitem__
+		
 		def clear(self):
 			self._parent.delete_key(self._prefix)
 		
 		def keys(self):
 			return self._parent.keys(self._prefix)
+		
+		def values(self):
+			return [ self[x] for x in self.keys() ]
 	
 	def reload(self):
 		""" (Re)loads configuration. Works as load(), but handles exceptions """

@@ -792,22 +792,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		lstControllers = self.builder.get_object("lstControllers")
 		lstControllers.clear()
 		for cid in self.app.config.get_controllers():
-			drv, name = cid.split("-", 1)
-			lstControllers.append((cid, name, self._get_gamepad_icon(drv)))
-			
-		"""
-		devices_path = os.path.join(get_config_path(), "devices")
-		if not os.path.exists(devices_path):
-			os.makedirs(os.path.join(get_config_path(), "devices"))
-		for filename in os.listdir(os.path.join(get_config_path(), "devices")):
-			if filename.endswith(".json"):
-				if filename.startswith("hid-"):
-					drv, usbid, name = filename.split("-", 2)
-					name = "%s <i>(%s)</i>" % (name[0:-5], usbid.upper())
-				else:
-					drv, name = filename.split("-", 1)
-					name = name[0:-5]
-				path = os.path.join(get_config_path(), "devices", filename)
-				lstControllers.append((path, name, self._get_gamepad_icon(drv)))
-		"""
+			if "-" in cid:
+				drv, name = cid.split("-", 1)
+				lstControllers.append((cid, name, self._get_gamepad_icon(drv)))
 
