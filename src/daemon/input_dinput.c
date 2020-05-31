@@ -28,13 +28,13 @@ typedef LIST_TYPE(DInputInputDevice) InputDeviceList;
 static InputDeviceList devices_with_iterupts;
 static HWND input_window = 0;
 
-static void sccd_input_hidapi_mainloop(Daemon* d);
+static void sccd_input_dinput_mainloop(Daemon* d);
 
 
 void sccd_input_dinput_init() {
 	Daemon* d = get_daemon();
 	devices_with_iterupts = list_new(DInputInputDevice, 32);
-	ASSERT(d->mainloop_cb_add(&sccd_input_hidapi_mainloop));
+	ASSERT(d->mainloop_cb_add(&sccd_input_dinput_mainloop));
 	ASSERT(devices_with_iterupts != NULL);
 	if (DI_OK != DirectInput8Create(GetModuleHandle(NULL),
 						DIRECTINPUT_VERSION, &IID_IDirectInput8A, (void**)&di, NULL)) {
@@ -163,15 +163,15 @@ sccd_input_dinput_open_cleanup:
 }
 
 
-static void sccd_input_hidapi_mainloop(Daemon* d) {
+static void sccd_input_dinput_mainloop(Daemon* d) {
 	static DIJOYSTATE2 state;
 	FOREACH_IN(DInputInputDevice*, dev, devices_with_iterupts) {
 		if (DIERR_INPUTLOST == IDirectInputDevice8_Poll(dev->d8))
-			goto sccd_input_hidapi_mainloop_device_lost;
+			goto sccd_input_dinput_mainloop_device_lost;
 		HRESULT r = IDirectInputDevice8_GetDeviceState(dev->d8,
 											sizeof(DIJOYSTATE2), &state);
 		if (r == DIERR_INPUTLOST)
-			goto sccd_input_hidapi_mainloop_device_lost;
+			goto sccd_input_dinput_mainloop_device_lost;
 		else if (r != DI_OK) {
 			switch (r) {
 			case DIERR_INVALIDPARAM:
@@ -193,7 +193,7 @@ static void sccd_input_hidapi_mainloop(Daemon* d) {
 		}
 		dev->idata.cb(d, &dev->dev, 0, (const uint8_t*)&state, dev->idata.userdata);
 		continue;
-sccd_input_hidapi_mainloop_device_lost:
+sccd_input_dinput_mainloop_device_lost:
 		LERROR("Device lost");
 		dev->idata.cb(d, &dev->dev, 0, NULL, dev->idata.userdata);
 	}

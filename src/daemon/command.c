@@ -190,6 +190,12 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 			}
 			return send_ok(client, tokens);
 		}
+		if (0 == strcmp(command, "Rescan.")) {
+			INFO("Re-scanning available controllers");
+			send_ok(client, tokens);
+			sccd_device_monitor_rescan();
+			return;
+		}
 		break;
 	case 'T':
 		if (0 == strcmp(command, "Turnoff.")) {

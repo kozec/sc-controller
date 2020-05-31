@@ -41,7 +41,7 @@ typedef struct InputTestMethods InputTestMethods;
 
 typedef void (*sccd_mainloop_cb)(Daemon* d);
 typedef void (*sccd_poller_cb)(Daemon* d, int fd, void* userdata);
-typedef void (*sccd_hotplug_cb)(Daemon* d, const InputDeviceData* idata);
+typedef bool (*sccd_hotplug_cb)(Daemon* d, const InputDeviceData* idata);
 typedef void (*sccd_scheduler_cb)(void* userdata);
 
 
@@ -111,7 +111,10 @@ struct Daemon {
 	 *
 	 * 'filters' is NULL terminated vararg list used to filter matching devices.
 	 * Callback is called only if device matches all the filters.
-	  *
+	 * Callback should return true to signalize device was handled sucesfully.
+	 * If it does so, callback will not be called for same device again
+	 * unless it is disconnected and reconnected back.
+	 *
 	 * Returns true on success or false on OOM error. False is also returned if
 	 * there already is another callback for same vendor and product ID registered.
 	 */

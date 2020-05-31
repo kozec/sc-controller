@@ -42,14 +42,16 @@ void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, const uin
 }
 
 
-static void hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
-	if (controller_available != NULL)
-		return controller_available("sc_by_cable", 9, idata);
+static bool hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
+	if (controller_available != NULL) {
+		controller_available("sc_by_cable", 9, idata);
+		return true;
+	}
 	SCController* sc = NULL;
 	InputDevice* dev = idata->open(idata);
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", idata->path);
-		return;		// and nothing happens
+		return true;		// and nothing happens
 	}
 	if ((sc = create_usb_controller(daemon, dev, SC_WIRED, CONTROLIDX)) == NULL) {
 		LERROR("Failed to allocate memory");
@@ -79,13 +81,14 @@ static void hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
 		DEBUG("Failed to add controller to daemon");
 		goto hotplug_cb_fail;
 	}
-	return;
+	return true;
 hotplug_cb_failed_to_configure:
 	LERROR("Failed to configure controlller");
 hotplug_cb_fail:
 	if (sc != NULL)
 		free(sc);
 	dev->close(dev);
+	return true;
 }
 
 static bool driver_start(Driver* drv, Daemon* daemon) {

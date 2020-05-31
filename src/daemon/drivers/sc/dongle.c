@@ -133,14 +133,16 @@ static void turnoff(Controller* c) {
 ////// On linux, there is dongle, controllers are connected to it
 
 #ifndef __BSD__
-static void hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
-	if (controller_available != NULL)
-		return controller_available("sc_dongle", 9, idata);
+static bool hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
+	if (controller_available != NULL) {
+		controller_available("sc_dongle", 9, idata);
+		return true;
+	}
 	InputDevice* dev = idata->open(idata);
 	Dongle* dongle = NULL;
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", idata->path);
-		return;		// and nothing happens
+		return true;		// and nothing happens
 	}
 	if (dev->sys == USB) {
 		if (dev->claim_interfaces_by(dev, 3, 0, 0) <= 0) {
@@ -168,7 +170,7 @@ static void hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
 	}
 	
 	list_add(dongles, dongle);
-	return;
+	return true;
 	
 hotplug_cb_oom:
 	LERROR("Failed to allocate memory");
@@ -180,6 +182,7 @@ hotplug_cb_oom:
 	}
 hotplug_cb_fail:
 	dev->close(dev);
+	return false;
 }
 #endif
 
@@ -187,24 +190,26 @@ hotplug_cb_fail:
 ////// Each controller has its own /dev/uhidX node that is created all the time
 ////// and it is registered with daemon only after 1st input is recieved
 
-static void hotplug_cb_hid(Daemon* daemon, const InputDeviceData* idata) {
+static bool hotplug_cb_hid(Daemon* daemon, const InputDeviceData* idata) {
 #ifndef __BSD__
 	int idx = idata->get_idx(idata);
 	if ((idata->subsystem == HIDAPI) && ((idx < 1) || (idx > 4)))
-		return;
+		return true;
 #endif
-	if (controller_available != NULL)
-		return controller_available("sc", 9, idata);
+	if (controller_available != NULL) {
+		controller_available("sc", 9, idata);
+		return true;
+	}
 	InputDevice* dev = idata->open(idata);
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", idata->path);
-		return;		// and nothing happens
+		return false;		// and nothing happens
 	}
 	SCController* sc = create_usb_controller(daemon, dev, SC_WIRELESS, 0);
 	if (sc == NULL) {
 		LERROR("Failed to allocate memory");
 		dev->close(dev);
-		return;
+		return true;
 	}
 	
 	sc->idx = idx;
@@ -213,8 +218,8 @@ static void hotplug_cb_hid(Daemon* daemon, const InputDeviceData* idata) {
 		LERROR("Failed to configure dongle");
 		dev->close(dev);
 		free(sc);
-		return;
 	}
+	return true;
 }
 
 

@@ -130,7 +130,9 @@ static void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, co
 }
 
 static inline char* dinput_idev_to_config_key(const InputDeviceData* idev) {
-	return idev->get_prop(idev, "guidInstance");
+	char* ckey = malloc(1024);
+	snprintf(ckey, 1023, "dinput-%s", idev->get_prop(idev, "guidInstance"));
+	return ckey;
 }
 
 static void open_device(Daemon* d, const InputDeviceData* idev, Config* ccfg, const char* ckey) {
@@ -201,26 +203,27 @@ static void open_device(Daemon* d, const InputDeviceData* idev, Config* ccfg, co
 	}
 }
 
-static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+static bool hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	char error[1024];
 	char* ckey = dinput_idev_to_config_key(idev);
 	Config* cfg = config_load();
 	if ((cfg == NULL) || (ckey == NULL)) {
 		RC_REL(cfg);
 		free(ckey);
-		return;
+		return false;
 	}
 	Config* ccfg = config_get_controller_config(cfg, ckey, NULL);
 	RC_REL(cfg);
 	if (ccfg == NULL) {
 		WARN("%s: %s", ckey, error);
 		free(ckey);
-		return;
+		return false;
 	}
 	
 	open_device(d, idev, ccfg, ckey);
 	RC_REL(ccfg);
 	free(ckey);
+	return true;
 }
 
 static bool driver_start(Driver* drv, Daemon* daemon) {
@@ -233,8 +236,9 @@ static bool driver_start(Driver* drv, Daemon* daemon) {
 	return true;
 }
 
-static void list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+static bool list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	controller_available("dinput", 9, idev);
+	return true;
 }
 
 static void driver_list_devices(Driver* drv, Daemon* d,

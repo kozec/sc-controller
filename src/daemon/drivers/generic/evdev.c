@@ -207,14 +207,14 @@ static void open_device(Daemon* d, const InputDeviceData* idev, Config* ccfg, co
 	libevdev_grab(ev->dev, LIBEVDEV_GRAB);
 }
 
-static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+static bool hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	char error[1024];
 	char* ckey = evdev_idev_to_config_key(idev);
 	Config* cfg = config_load();
 	if ((cfg == NULL) || (ckey == NULL)) {
 		RC_REL(cfg);
 		free(ckey);
-		return;
+		return false;
 	}
 	Config* ccfg = config_get_controller_config(cfg, ckey, error);
 	RC_REL(cfg);
@@ -222,12 +222,13 @@ static void hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 		if (strstr(error, "No such file") == NULL)
 			WARN("%s: %s", ckey, error);
 		free(ckey);
-		return;
+		return false;
 	}
 	
 	open_device(d, idev, ccfg, ckey);
 	RC_REL(ccfg);
 	free(ckey);
+	return true;
 }
 
 static inline int test_bit(const char* bitmask, int bit) {
@@ -242,7 +243,7 @@ static int open_idev(const InputDeviceData* idev) {
 	
 }
 
-static void list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
+static bool list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	// Examine device capabilities and decides if it passes for gamepad.
 	// Device is considered gamepad-like if has at least one button with
 	// keycode in gamepad range and at least two axes.
@@ -273,6 +274,7 @@ static void list_devices_hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	close(fd);
 	
 	controller_available("evdev", min(9, probablity_of_gamepad), idev);
+	return true;
 }
 
 static void driver_list_devices(Driver* drv, Daemon* d,

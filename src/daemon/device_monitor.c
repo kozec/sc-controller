@@ -67,10 +67,10 @@ void sccd_device_monitor_new_device(Daemon* d, const InputDeviceData* idata) {
 			}
 		}
 		if (matches_filters) {
-			if (hashmap_put(known_devs, idata->path, (void*)1) != MAP_OK)	// OOM
+			if (data->callback(d, idata)) {
+				hashmap_put(known_devs, idata->path, (void*)1);
 				return;
-			data->callback(d, idata);
-			return;
+			}
 		}
 	}
 }
