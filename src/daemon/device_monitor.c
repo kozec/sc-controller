@@ -51,6 +51,11 @@ uint32_t sccd_device_monitor_get_enabled_subsystems(Daemon* d) {
 }
 
 void sccd_device_monitor_new_device(Daemon* d, const InputDeviceData* idata) {
+	any_t trash;
+	if (hashmap_get(known_devs, idata->path, &trash) != MAP_MISSING) {
+		// Already known & handled
+		return;
+	}
 	FOREACH_IN(CallbackData*, data, callbacks) {
 		if (data->subsystem != idata->subsystem)
 			continue;
