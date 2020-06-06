@@ -91,16 +91,17 @@ static inline char* evdev_idev_to_config_key(const InputDeviceData* idev) {
 	StrBuilder* sb = strbuilder_new();
 	if (sb == NULL) return NULL;
 	strbuilder_add(sb, "evdev");
-	char* name = idev->get_prop(idev, "device/name");
-	if (name != NULL) {
-		strbuilder_add(sb, "-");
-		strbuilder_add(sb, name);
-		free(name);
-	}
 	char* uniq = idev->get_prop(idev, "device/uniq");
 	if ((uniq != NULL) && (strlen(uniq) >= 2)) {
 		strbuilder_add(sb, "-");
 		strbuilder_add(sb, uniq);
+	} else {
+		char* name = idev->get_prop(idev, "device/name");
+		if (name != NULL) {
+			strbuilder_add(sb, "-");
+			strbuilder_add(sb, name);
+			free(name);
+		}
 	}
 	free(uniq);
 	
@@ -158,11 +159,11 @@ static void open_device(Daemon* d, const InputDeviceData* idev, Config* ccfg, co
 		}
 		strbuilder_addf(sb, "%x", crc);
 	} else {
-		strbuilder_addf(sb, "ev%s", uniq);
+		strbuilder_add(sb, uniq);
 	}
 	free(uniq);
 	strbuilder_upper(sb);
-	strbuilder_insert(sb, 0, "ev");
+	strbuilder_insert(sb, 0, "evdev-");
 	if (strbuilder_failed(sb)) {
 		evdev_dealloc(&ev->controller);
 		return;
