@@ -131,6 +131,7 @@ const struct config_item CONTROLLER_DEFAULTS[] = {
 	{ "axes",					CVT_OBJECT },
 	{ "dpads",					CVT_OBJECT },
 	{ "buttons",				CVT_OBJECT },
+	{ "emulate_c",				CVT_BOOL },
 	
 	{ "led_level",				CVT_INT,			.v_int =  80 },
 	{ "menu_cancel",			CVT_STRING,			.v_str = "B" },

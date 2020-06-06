@@ -14,7 +14,8 @@
 
 #define MAX_DESC_LEN				64
 #define MAX_ID_LEN					64
-#define PADPRESS_EMULATION_TIMEOUT	2
+#define PADPRESS_EMULATION_TIMEOUT	2		/* ms */
+#define C_EMULATION_TIMEOUT			100		/* ms */
 
 /**
  * Mix-in for stuff that's common for all (two) generic drivers
@@ -29,6 +30,9 @@ typedef struct GenericController {
 	intptr_t				button_max;
 	/** int -> AxisData */
 	intmap_t				axis_map;
+	bool					emulate_c;
+	TaskID					emulate_c_task;
+	SCButton				held_buttons;
 	ControllerInput			input;
 	char					id[MAX_ID_LEN];
 	char					desc[MAX_DESC_LEN];
@@ -90,5 +94,8 @@ bool gc_load_mappings(GenericController* gc, Config* ccfg);
  * Applies input_value, as read from physical controller, to ControllerInput
  * of virtual controller.
  */
-void apply_axis(const AxisData* a, double input_value, ControllerInput* input);
+bool apply_axis(GenericController* gc, uintptr_t code, double value);
+
+/** Same as 'apply_axis', applies button */
+bool apply_button(Daemon* d, GenericController* gc, uintptr_t code, uint8_t value);
 

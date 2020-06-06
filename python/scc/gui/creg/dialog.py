@@ -13,7 +13,7 @@ from gi.repository import Gtk, GLib, GdkPixbuf
 from scc.gui.creg.constants import SDL_TO_SCC_NAMES, STICK_PAD_AREAS
 from scc.gui.creg.constants import AXIS_ORDER, SDL_AXES, SDL_DPAD
 from scc.gui.creg.constants import BUTTON_ORDER, TRIGGER_AREAS
-from scc.gui.creg.constants import AXIS_MASK
+from scc.gui.creg.constants import AXIS_MASK, EMULATE_C_TIMEOUT
 from scc.gui.creg.grabs import InputGrabber, TriggerGrabber, StickGrabber
 from scc.gui.creg.data import AxisData, DPadEmuData
 from scc.gui.creg.tester import Tester
@@ -58,6 +58,7 @@ class ControllerRegistration(Editor):
 		self._controller_image = None
 		self._grabber = None
 		self._tester = None
+		self._emulate_c_buttons = set()
 		self._input_axes = {}
 		self._mappings = {}
 		self._hilights = {}
@@ -94,7 +95,11 @@ class ControllerRegistration(Editor):
 		# Generate GamecontrollerDB id
 		cmd = [ find_binary("scc-input-tester"), "--gamecontrollerdb-id", device_id ]
 		p = subprocess.Popen(cmd, stdout=subprocess.PIPE, **POPEN_FLAGS)
+		print cmd, p
 		weird_id, trash = p.communicate()
+		print weird_id, trash
+		import sys
+		sys.stdout.flush()
 		if p.returncode != 0:
 			log.warn('Failed to generate GamecontrollerDB id')
 			return False
@@ -187,6 +192,7 @@ class ControllerRegistration(Editor):
 	
 	
 	def generate_unassigned(self):
+		cbEmulateC = self.builder.get_object("cbEmulateC")
 		unassigned = set()
 		unassigned.clear()
 		assigned_axes = set([ x for x in self._mappings.values()
@@ -215,6 +221,8 @@ class ControllerRegistration(Editor):
 				self._axis_data[index] in assigned_axes for index in axes ]))
 			if not has_mapping:
 				unassigned.add(area_name)
+		if cbEmulateC.get_active():
+			unassigned.remove(nameof(SCButtons.C))
 		
 		hilight = unassigned - self._unassigned
 		unhilight = self._unassigned - unassigned
@@ -227,7 +235,9 @@ class ControllerRegistration(Editor):
 		cbControllerButtons = self.builder.get_object("cbControllerButtons")
 		cbControllerType = self.builder.get_object("cbControllerType")
 		buffRawData = self.builder.get_object("buffRawData")
+		cbEmulateC = self.builder.get_object("cbEmulateC")
 		data = dict(
+			emulate_c = cbEmulateC.get_active(),
 			buttons = {},
 			axes = {},
 			dpads = {},
@@ -310,6 +320,7 @@ class ControllerRegistration(Editor):
 				ccfg['buttons/%s' % (key,)] = data['buttons'][key]
 			ccfg['gui/background'] = data['gui']['background']
 			ccfg['gui/buttons'] = data['gui']['buttons']
+			ccfg['emulate_c'] = data['emulate_c']
 			ccfg.save()
 			log.info("Controller configuration '%s' written", controller_id)
 			
@@ -487,7 +498,13 @@ class ControllerRegistration(Editor):
 		self._axis_data[index].invert = cb.get_active()
 	
 	
+	def cbEmulateC_toggled_cb(self, cb, *a):
+		self.generate_unassigned()
+		self.generate_raw_data()
+	
+	
 	def on_tester_button(self, tester, keycode, pressed):
+		cbEmulateC = self.builder.get_object("cbEmulateC")
 		if self._grabber:
 			return self._grabber.on_button(keycode, pressed)
 		
@@ -522,11 +539,32 @@ class ControllerRegistration(Editor):
 				self.unhilight(nameof(what.button))
 				self.hilight_axis(what.axis_data, 0)
 		elif what is not None:
+			if what in (SCButtons.BACK, SCButtons.START):
+				if pressed:
+					self._emulate_c_buttons.add(what)
+				else:
+					self._emulate_c_buttons.discard(what)
+				if cbEmulateC.get_active():
+					if pressed:
+						if len(self._emulate_c_buttons) == 2:
+							self.hilight(nameof(SCButtons.C))
+							self.unhilight(nameof(SCButtons.START))
+							self.unhilight(nameof(SCButtons.BACK))
+						else:
+							GLib.timeout_add(EMULATE_C_TIMEOUT,
+									self._on_emulate_c_timeout)
+						return
+					else:
+						self.unhilight(nameof(SCButtons.C))
 			if pressed:
 				self.hilight(nameof(what))
 			else:
 				self.unhilight(nameof(what))
 	
+	def _on_emulate_c_timeout(self, *a):
+		if len(self._emulate_c_buttons) < 2:
+			for what in self._emulate_c_buttons:
+				self.hilight(nameof(what))
 	
 	def on_tester_axis(self, tester, number, value):
 		self._input_axes[number] = value

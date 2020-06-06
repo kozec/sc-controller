@@ -93,12 +93,8 @@ static void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, co
 			}
 			continue;
 		}
-		if (intmap_get(di->gc.button_map, i, &val) != MAP_OK)
-			continue;
-		if (state->rgbButtons[i])
-			di->gc.input.buttons |= (SCButton)val;
-		else
-			di->gc.input.buttons &= ~(SCButton)val;
+		if (apply_button(d, &ev->gc, i, state->rgbButtons[i]))
+			call_mapper = true;
 	}
 	for(intptr_t i=0; i<8; i++) {
 		AxisData* ad;
@@ -107,9 +103,8 @@ static void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, co
 				controller_test(&di->controller, TME_AXIS, i, axes[i]);
 			}
 		}
-		if (intmap_get(di->gc.axis_map, i, (any_t)&ad) != MAP_OK)
-			continue;
-		apply_axis(ad, (double)axes[i], &di->gc.input);
+		if (apply_axis(&ev->gc, i, (double)axes[i]))
+			call_mapper = true;
 	}
 	for(intptr_t i=0; i<4; i++) {
 		if (controller_test != NULL) {

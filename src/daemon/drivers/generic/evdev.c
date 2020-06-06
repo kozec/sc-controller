@@ -53,7 +53,6 @@ static void on_data_ready(Daemon* d, int fd, void* _ev) {
 	SCButton old_buttons = ev->gc.input.buttons;
 	while (libevdev_next_event(ev->dev, LIBEVDEV_READ_FLAG_NORMAL, &event) == LIBEVDEV_READ_STATUS_SUCCESS) {
 		bool call_mapper = false;
-		any_t val;
 		switch (event.type) {
 		case EV_KEY:
 			if (controller_test != NULL) {
@@ -61,28 +60,16 @@ static void on_data_ready(Daemon* d, int fd, void* _ev) {
 						event.code, event.value ? 1 : 0);
 				break;
 			}
-			if (intmap_get(ev->gc.button_map, event.code, &val) == MAP_OK) {
-				if (event.value)
-					ev->gc.input.buttons |= (SCButton)val;
-				else
-					ev->gc.input.buttons &= ~(SCButton)val;
+			if (apply_button(d, &ev->gc, event.code, event.value))
 				call_mapper = true;
-			} else {
-				WARN("Unknown keycode %i", event.code);
-			}
 			break;
 		case EV_ABS:
 			if (controller_test != NULL) {
 				controller_test(&ev->controller, TME_AXIS, event.code, event.value);
 				break;
 			}
-			if (intmap_get(ev->gc.axis_map, event.code, &val) == MAP_OK) {
-				AxisData* a = (AxisData*)val;
-				apply_axis(a, (double)event.value, &ev->gc.input);
+			if (apply_axis(&ev->gc, event.code, (double)event.value))
 				call_mapper = true;
-			} else {
-				WARN("Unknown axis %i", event.code);
-			}
 			break;
 		}
 		if (call_mapper && (ev->gc.mapper != NULL))

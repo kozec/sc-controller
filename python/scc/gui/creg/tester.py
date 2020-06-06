@@ -141,7 +141,6 @@ class Tester(GObject.GObject):
 	
 	def _on_read(self, stream, result):
 		""" Not called under Windows """
-		sys.stdout.flush()
 		try:
 			data = stream.read_bytes_finish(result).get_data()
 		except Exception, e:
@@ -151,10 +150,6 @@ class Tester(GObject.GObject):
 				self.errorred = True
 				self.emit('error', 1)
 			return
-		sys.stdout.flush()
-		if len(data) > 0:
-			stream.read_bytes_async(32, 0, None, self._on_read)
-		return
 		
 		if len(data) > 0:
 			self.buffer += data

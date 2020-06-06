@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from scc.constants import SCButtons, STICK, LEFT, RIGHT
 from scc.gui import BUTTON_ORDER
 
+EMULATE_C_TIMEOUT = 100
 AXIS_MASK = 0x100000	# Just to offset axis codes from button codes
 X = 0
 Y = 1

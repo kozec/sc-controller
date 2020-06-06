@@ -470,6 +470,7 @@ If anything is assigned incorrectly, click on button on image to (re)assign phys
                         <property name="receives_default">False</property>
                         <property name="hexpand">True</property>
                         <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="cbEmulateC_toggled_cb" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>

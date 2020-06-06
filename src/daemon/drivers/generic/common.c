@@ -31,6 +31,9 @@ bool gc_alloc(Daemon* d, GenericController* gc) {
 	gc->button_map = intmap_new();
 	gc->axis_map = intmap_new();
 	gc->button_max = 0;
+	gc->emulate_c = false;
+	gc->emulate_c_task = 0;
+	gc->held_buttons = 0;
 	return (gc->button_map != NULL) && (gc->axis_map != NULL);
 }
 
@@ -250,11 +253,63 @@ bool gc_load_mappings(GenericController* gc, Config* ccfg) {
 		return false;
 	if (!load_button_map(gc, ccfg))
 		return false;
+	gc->emulate_c = config_get_int(ccfg, "emulate_c");
 	return true;
 }
 
+static void c_emulation_callback(void* _gc) {
+	GenericController* gc = (GenericController*)_gc;
+	gc->input.buttons |= gc->held_buttons;
+	gc->emulate_c_task = 0;
+	gc->held_buttons = 0;
+	if (gc->mapper != NULL)
+		gc->mapper->input(gc->mapper, &gc->input);
+}
 
-void apply_axis(const AxisData* a, double value, ControllerInput* input) {
+bool apply_button(Daemon* d, GenericController* gc, uintptr_t code, uint8_t value) {
+	any_t val;
+	if (intmap_get(gc->button_map, code, &val) == MAP_OK) {
+		if ((gc->emulate_c) && ((val == B_START) || (val == B_BACK))) {
+			if (value) {
+				if (gc->emulate_c_task) {
+					d->cancel(gc->emulate_c_task);
+					gc->emulate_c_task = 0;
+					val = (any_t)B_C;
+				} else {
+					gc->emulate_c_task = d->schedule(C_EMULATION_TIMEOUT,
+							c_emulation_callback, gc);
+					gc->held_buttons |= (SCButton)val;
+					return false;
+				}
+			} else {
+				gc->input.buttons &= ~B_C;
+				gc->held_buttons = 0;
+				if (gc->emulate_c_task) {
+					d->cancel(gc->emulate_c_task);
+					gc->emulate_c_task = 0;
+				}
+			}
+		}
+		if (value && !(gc->input.buttons & (SCButton)val)) {
+			gc->input.buttons |= (SCButton)val;
+			return true;
+		} else if (!value && (gc->input.buttons | (SCButton)val)) {
+			gc->input.buttons &= ~(SCButton)val;
+			return true;
+		}
+	} else {
+		WARN("Unknown keycode %i", code);
+	}
+	return false;
+}
+
+bool apply_axis(GenericController* gc, uintptr_t code, double value) {
+	AxisData* a;
+	if (intmap_get(gc->axis_map, code, (any_t)&a) != MAP_OK) {
+		WARN("Unknown axis %i", code);
+		return false;
+	}
+	
 	value = (value * a->scale) + a->offset;
 	if ((value >= -a->deadzone) && (value <= a->deadzone))
 		value = 0;
@@ -262,27 +317,28 @@ void apply_axis(const AxisData* a, double value, ControllerInput* input) {
 		value = clamp(a->clamp_min, value * a->clamp_max, a->clamp_max);
 	
 	switch (a->axis) {
-	case A_NONE:
-		break;
-	case A_LTRIG:
-	case A_RTRIG:
-		input->triggers[a->axis - A_LTRIG] = value;
-		break;
-	case A_LPAD_X:
-	case A_LPAD_Y:
-		input->buttons |= B_LPADTOUCH | B_LPADPRESS;
-		input->axes[a->axis] = value;
-		break;
-	case A_RPAD_X:
-	case A_RPAD_Y:
-		input->buttons |= B_RPADTOUCH;
-		input->axes[a->axis] = value;
-		break;
-	default:
-		if ((a->axis < A_STICK_X) || (a->axis > A_CPAD_Y))
+		case A_NONE:
 			break;
-		input->axes[a->axis] = value;
-		break;
+		case A_LTRIG:
+		case A_RTRIG:
+			gc->input.triggers[a->axis - A_LTRIG] = value;
+			break;
+		case A_LPAD_X:
+		case A_LPAD_Y:
+			gc->input.buttons |= B_LPADTOUCH | B_LPADPRESS;
+			gc->input.axes[a->axis] = value;
+			break;
+		case A_RPAD_X:
+		case A_RPAD_Y:
+			gc->input.buttons |= B_RPADTOUCH;
+			gc->input.axes[a->axis] = value;
+			break;
+		default:
+			if ((a->axis < A_STICK_X) || (a->axis > A_CPAD_Y))
+				break;
+			gc->input.axes[a->axis] = value;
+			break;
 	}
+	return true;
 }
 
