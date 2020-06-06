@@ -101,7 +101,7 @@ void gc_cancel_padpress_emulation(void* _gc) {
 void gc_make_id(const char* base, GenericController* gc) {
 	int counter = 0;
 	do {
-		static char buffer[32];
+		static char buffer[MAX_ID_LEN];
 		strncpy(gc->id, base, MAX_ID_LEN - 1);
 		gc->id[MAX_ID_LEN - 1] = 0;
 		if (counter > 0) {
@@ -249,6 +249,8 @@ static bool load_button_map(GenericController* gc, Config* ccfg) {
 }
 
 bool gc_load_mappings(GenericController* gc, Config* ccfg) {
+	if (ccfg == NULL)
+		return true;
 	if (!load_axis_map(gc, ccfg))
 		return false;
 	if (!load_button_map(gc, ccfg))
@@ -269,7 +271,8 @@ static void c_emulation_callback(void* _gc) {
 bool apply_button(Daemon* d, GenericController* gc, uintptr_t code, uint8_t value) {
 	any_t val;
 	if (intmap_get(gc->button_map, code, &val) == MAP_OK) {
-		if ((gc->emulate_c) && ((val == B_START) || (val == B_BACK))) {
+		if ((gc->emulate_c) &&
+					(((SCButton)val == B_START) || ((SCButton)val == B_BACK))) {
 			if (value) {
 				if (gc->emulate_c_task) {
 					d->cancel(gc->emulate_c_task);
