@@ -545,6 +545,9 @@ double config_get_double(Config* _c, const char* path) {
 	config_value_t* value = config_get_value(c, path, CVT_DOUBLE);
 	if (value != NULL)
 		return value->v_double;
+	value = config_get_value(c, path, CVT_INT);
+	if (value != NULL)
+		return value->v_int;
 	
 	const struct config_item* def = config_get_default(c, path);
 	if ((def != NULL) && (def->type == CVT_DOUBLE)) {

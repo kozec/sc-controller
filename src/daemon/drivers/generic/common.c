@@ -11,6 +11,8 @@
 #include "scc/tools.h"
 #include <math.h>
 
+#define SPAM_WITH_WARNINGS 0
+
 struct _DerivedFromGenericController {
 	Controller				controller;
 	GenericController		gc;
@@ -205,12 +207,15 @@ static bool load_axis_map(GenericController* gc, Config* ccfg) {
 		if (data == NULL)
 			return false;						// OOM
 		data->axis = axis;
+#ifndef _WIN32
+		// TODO: Find why this breaks dinput
 		if ((data->axis == A_LTRIG) || (data->axis == A_RTRIG)) {
 			data->clamp_min = TRIGGER_MIN;
 			data->clamp_max = TRIGGER_MAX;
 			data->offset += 1.0;
 			data->scale *= 0.5;
 		}
+#endif
 		
 		if (intmap_put(gc->axis_map, k, (any_t)data) == MAP_OMEM) {
 			free(data);
@@ -300,8 +305,10 @@ bool apply_button(Daemon* d, GenericController* gc, uintptr_t code, uint8_t valu
 			gc->input.buttons &= ~(SCButton)val;
 			return true;
 		}
+#if SPAM_WITH_WARNINGS
 	} else {
 		WARN("Unknown keycode %i", code);
+#endif
 	}
 	return false;
 }
@@ -309,7 +316,9 @@ bool apply_button(Daemon* d, GenericController* gc, uintptr_t code, uint8_t valu
 bool apply_axis(GenericController* gc, uintptr_t code, double value) {
 	AxisData* a;
 	if (intmap_get(gc->axis_map, code, (any_t)&a) != MAP_OK) {
+#if SPAM_WITH_WARNINGS
 		WARN("Unknown axis %i", code);
+#endif
 		return false;
 	}
 	

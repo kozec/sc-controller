@@ -21,7 +21,10 @@
 
 static controller_available_cb controller_available = NULL;
 static controller_test_cb controller_test = NULL;
-#define DI_BUTTON_COUNT 128
+#define DI_MAX_AXES			8
+#define DI_MAX_HATS			2
+#define DI_BUTTONS_OFFSET	64
+#define DI_BUTTON_COUNT		128
 
 typedef struct DInputController {
 	Controller				controller;
@@ -84,35 +87,43 @@ static void input_interrupt_cb(Daemon* d, InputDevice* dev, uint8_t endpoint, co
 	LONG* axes = (LONG*)state;					// 8 axes followed by POV hat
 	
 	memset(&di->gc.input, 0, sizeof(ControllerInput));
-	for(intptr_t i=0; i<=di->gc.button_max; i++) {
-		any_t val;
-		if (controller_test != NULL) {
-			if (state->rgbButtons[i] != di->old_state.rgbButtons[i]) {
+	// Buttons
+	for(intptr_t i = 0; i <= di->gc.button_max; i++) {
+		if (state->rgbButtons[i] != di->old_state.rgbButtons[i]) {
+			if (controller_test != NULL)
 				controller_test(&di->controller, TME_BUTTON,
-						i, state->rgbButtons[i]);
+						DI_BUTTONS_OFFSET + i, state->rgbButtons[i]);
+			else {
+				apply_button(d, &di->gc,
+						DI_BUTTONS_OFFSET + i, state->rgbButtons[i]);
+				apply_axis(&di->gc, DI_BUTTONS_OFFSET + i,
+						(double)(state->rgbButtons[i]
+								? STICK_PAD_MAX : STICK_PAD_MIN));
 			}
-			continue;
 		}
-		if (apply_button(d, &ev->gc, i, state->rgbButtons[i]))
-			call_mapper = true;
 	}
-	for(intptr_t i=0; i<8; i++) {
-		AxisData* ad;
-		if (controller_test != NULL) {
-			if (axes[i] != ((LONG*)&di->old_state)[i]) {
+	// Axes
+	for(intptr_t i = 0; i < DI_MAX_AXES; i++) {
+		if (axes[i] != ((LONG*)&di->old_state)[i]) {
+			if (controller_test != NULL)
 				controller_test(&di->controller, TME_AXIS, i, axes[i]);
-			}
+			else
+				apply_axis(&di->gc, i, (double)axes[i]);
 		}
-		if (apply_axis(&ev->gc, i, (double)axes[i]))
-			call_mapper = true;
 	}
-	for(intptr_t i=0; i<4; i++) {
-		if (controller_test != NULL) {
-			if (state->rgdwPOV[i] != di->old_state.rgdwPOV[i]) {
-				LONG x, y;
-				pow_to_axis(state->rgdwPOV[i], &x, &y);
-				controller_test(&di->controller, TME_AXIS, 8 + i * 2, x);
-				controller_test(&di->controller, TME_AXIS, 9 + i * 2, y);
+	// Hats
+	for(intptr_t i = 0; i < DI_MAX_HATS * 2; i++) {
+		if (state->rgdwPOV[i] != di->old_state.rgdwPOV[i]) {
+			LONG x, y;
+			pow_to_axis(state->rgdwPOV[i], &x, &y);
+			if (controller_test != NULL) {
+				controller_test(&di->controller, TME_AXIS,
+						DI_MAX_AXES + 0 + i * 2, x);
+				controller_test(&di->controller, TME_AXIS,
+						DI_MAX_AXES + 1 + i * 2, y);
+			} else {
+				apply_axis(&di->gc, DI_MAX_AXES + 0 + i * 2, (double)x);
+				apply_axis(&di->gc, DI_MAX_AXES + 1 + i * 2, (double)y);
 			}
 		}
 	}
@@ -208,7 +219,6 @@ static bool hotplug_cb(Daemon* d, const InputDeviceData* idev) {
 	Config* ccfg = config_get_controller_config(cfg, ckey, NULL);
 	RC_REL(cfg);
 	if (ccfg == NULL) {
-		WARN("%s: %s", ckey, error);
 		free(ckey);
 		return false;
 	}
@@ -244,11 +254,11 @@ static void driver_get_device_capabilities(Driver* drv, Daemon* daemon,
 									const InputDeviceData* idev,
 									InputDeviceCapabilities* capabilities) {
 	capabilities->button_count = min(capabilities->max_button_count, DI_BUTTON_COUNT);
-	capabilities->axis_count = min(capabilities->max_axis_count, 16);
+	capabilities->axis_count = DI_MAX_AXES + DI_MAX_HATS * 2;
 	// ^^ 8 supported by DINPUT + 2*4 POV hats
-	for (int i=0; i<capabilities->button_count; i++)
-		capabilities->buttons[i] = i;
-	for (int i=0; i<capabilities->axis_count; i++)
+	for (int i = 0; i < capabilities->button_count; i++)
+		capabilities->buttons[i] = DI_BUTTONS_OFFSET + i;
+	for (int i = 0; i < capabilities->axis_count; i++)
 		capabilities->axes[i] = i;
 }
 
