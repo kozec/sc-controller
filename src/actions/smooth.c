@@ -28,7 +28,8 @@ typedef struct {
 	double*				weights;
 	double				w_sum;
 	Dequeue				dq;
-	int64_t				last_pos;
+	AxisValue			last_pos_x;
+	AxisValue			last_pos_y;
 } SmoothModifier;
 
 
@@ -100,25 +101,25 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 	if ((what == PST_STICK) || ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RPAD)))
 		s->child->whole(s->child, m, x, y, what);
 	if (m->is_touched(m, what)) {
-		if (s->last_pos < 0) {
+		if ((s->last_pos_x == 0) && (s->last_pos_y == 0)) {
 			// Just pressed - fill deque with current position
 			for(size_t i=0; i<dequeue_len(&s->dq); i++)
 				dequeue_add(&s->dq, x, y);
 			get_pos(s, &x, &y);
-			s->last_pos = 0;
 		} else {
 			// Pressed for longer time
 			dequeue_add(&s->dq, x, y);
 			get_pos(s, &x, &y);
 		}
-		if (fabs(x + y - s->last_pos) > s->filter)
+		if ((abs(s->last_pos_x - x) + abs(s->last_pos_y - y)) > s->filter)
 			s->child->whole(s->child, m, x, y, what);
-		s->last_pos = x + y;
+		s->last_pos_x = x;
+		s->last_pos_y = y;
 	} else {
 		// Pad was just released
 		get_pos(s, &x, &y);
 		s->child->whole(s->child, m, x, y, what);
-		s->last_pos = -1;
+		s->last_pos_x = s->last_pos_y = 0;
 	}
 }
 
@@ -143,7 +144,7 @@ static ActionOE smooth_constructor(const char* keyword, ParameterList params) {
 	s->filter = scc_parameter_as_float(params->items[2]);
 	s->child = scc_parameter_as_action(params->items[3]);
 	list_free(params);
-	s->last_pos = -1;
+	s->last_pos_x = s->last_pos_y = 0;
 	s->dq.items = NULL;
 	s->weights = malloc(sizeof(double) * level);
 	if ((s->weights == NULL) || !dequeue_init(&s->dq, level)) {
