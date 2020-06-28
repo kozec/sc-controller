@@ -1,62 +1,36 @@
 {
-    "_": "", 
-    "buttons": {
-        "A": {
-            "action": "button(KEY_ENTER)"
-        }, 
-        "B": {
-            "action": "button(KEY_ESC)"
-        }, 
-        "BACK": {
-            "action": "button(KEY_BACKSPACE)"
-        }, 
-        "C": {
-            "action": "menu('Default.menu')"
-        }, 
-        "CPADPRESS": {
-            "action": "button(BTN_LEFT)"
-        }, 
-        "LB": {
-            "action": "button(KEY_LEFTCTRL)"
-        }, 
-        "RB": {
-            "action": "button(KEY_LEFTALT)"
-        }, 
-        "RPAD": {
-            "action": "button(BTN_LEFT)"
-        }, 
-        "START": {
-            "action": "button(KEY_LEFTSHIFT)"
-        }, 
-        "X": {
-            "action": "button(KEY_SPACE)"
-        }, 
-        "Y": {
-            "action": "button(KEY_TAB)"
-        }
-    }, 
-    "cpad": {
-        "action": "mouse()"
-    }, 
-    "gyro": {
-        "action": "cemuhook"
-    }, 
-    "is_template": false, 
-    "menus": {}, 
-    "pad_left": {
-        "action": "feedback(LEFT, 4096, 16, ball(XY(mouse(REL_HWHEEL), mouse(REL_WHEEL))))"
-    }, 
-    "pad_right": {
-        "action": "smooth(feedback(RIGHT, 256, 100, ball(mouse())))"
-    }, 
-    "stick": {
-        "action": "dpad(button(KEY_UP), button(KEY_DOWN), button(KEY_LEFT), button(KEY_RIGHT))"
-    }, 
-    "trigger_left": {
-        "action": "button(BTN_RIGHT)"
-    }, 
-    "trigger_right": {
-        "action": "button(BTN_LEFT)"
-    }, 
-    "version": 1.4
+	"buttons": {
+		"A"         : { "action": "button(Keys.KEY_ENTER)" },
+		"B"         : { "action": "button(Keys.KEY_ESC)" },
+		"BACK"      : { "action": "button(Keys.KEY_BACKSPACE)" },
+		"C"          : { "action": "menu('Default.menu')" },
+		"CPADPRESS" : { "action": "button(Keys.BTN_LEFT)" },
+		"LB"        : { "action": "button(Keys.KEY_LEFTCTRL)" },
+		"RB"        : { "action": "button(Keys.KEY_LEFTALT)" },
+		"RPAD"	    : { "action": "button(Keys.BTN_LEFT)" },
+		"START"     : { "action": "button(Keys.KEY_LEFTSHIFT)" },
+		"X"         : { "action": "button(Keys.KEY_SPACE)" },
+		"Y"         : { "action": "button(Keys.KEY_TAB)" }
+	},
+	
+	"trigger_left":  { "action": "button(Keys.BTN_RIGHT)" },
+	"trigger_right": { "action": "button(Keys.BTN_LEFT)" },
+	
+	"gyro": { "action": "cemuhook" },
+	
+	"pad_left": {
+		"action": "feedback(LEFT, 4096, 16, ball(XY(mouse(REL_HWHEEL), mouse(REL_WHEEL))))"
+	},
+	
+	"pad_right": {
+		"action": "smooth(8, 0.78, 2.0, feedback(RIGHT, 256, ball(mouse())))"
+	},
+	
+	"cpad": {
+		"action": "mouse()"
+	},
+	
+	"stick": { "action": "dpad(button(Keys.KEY_UP), button(Keys.KEY_DOWN), button(Keys.KEY_LEFT), button(Keys.KEY_RIGHT))" },
+	
+	"version": 1.3
 }
