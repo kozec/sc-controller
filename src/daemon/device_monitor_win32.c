@@ -57,7 +57,8 @@ static int input_device_get_idx(const InputDeviceData* idev) {
 
 static InputDevice* input_device_open(const InputDeviceData* idev) {
 #ifdef USE_DINPUT
-	return sccd_input_dinput_open(idev);
+	if (idev->subsystem == DINPUT)
+		return sccd_input_dinput_open(idev);
 #endif
 #ifdef USE_HIDAPI
 	if (idev->subsystem == HIDAPI)
