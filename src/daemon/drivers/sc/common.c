@@ -184,7 +184,17 @@ static void flush(Controller* c, Mapper* m) {
 			haptic.position = i;
 			haptic.amplitude = sc->hdata[i].amplitude;
 			haptic.period = sc->hdata[i].period;
+#ifdef _WIN32
+			// Special case, windows needs to do this synchronously
+			// using hid_request, or it throws "overlapped operation in progress"
+			// error.
+			haptic.packet_type = PT_FEEDBACK;
+			haptic.len = PL_FEEDBACK;
+			haptic.cunt = 1;
+			sc->dev->hid_request(sc->dev, sc->idx, haptic.bytes, -64);
+#else
 			sc->dev->hid_write(sc->dev, sc->idx, haptic.bytes, 64);
+#endif
 		}
 		HAPTIC_DISABLE(&sc->hdata[i]);
 	}
