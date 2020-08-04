@@ -87,9 +87,17 @@ static void button_press(Action* a, Mapper* m) {
 	MouseAction* b = container_of(a, MouseAction, action);
 	// This is generaly bad idea...
 	if ((b->axis == REL_WHEEL) || (b->axis == REL_HWHEEL))
-		change(a, m, 100000, 0, 0);
+	{
+		double dx = (b->axis == REL_HWHEEL) ? 12000 : 0;
+		double dy = (b->axis == REL_WHEEL) ? -12000 : 0;
+		change(a, m, dx, dy, 0);
+	}
 	else
 		change(a, m, 100, 0, 0);
+}
+
+// Do nothing on button release
+static void button_release(Action* a, Mapper* m) {
 }
 
 static void axis(Action* a, Mapper* m, AxisValue value, PadStickTrigger what) {
@@ -190,6 +198,7 @@ static ActionOE mouse_constructor(const char* keyword, ParameterList params) {
 						| AF_MOD_FEEDBACK | AF_MOD_DEADZONE,
 					&mouse_dealloc, &mouse_to_string);
 	b->action.button_press = &button_press;
+	b->action.button_release = &button_release;
 	b->action.axis = &axis;
 	b->action.whole = &whole;
 	b->action.gyro = &gyro;
