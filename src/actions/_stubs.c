@@ -206,7 +206,6 @@ void scc_actions_init_stub() {
 	scc_action_register(KW_RESETGYRO, &stub_constructor);
 	scc_action_register(KW_CLEAROSD, &stub_constructor);
 	scc_action_register(KW_OSD, &stub_constructor);
-	scc_action_register(KW_ROTATE, &stub_constructor);
 	scc_action_register(KW_GESTURES, &stub_constructor);
 	scc_action_register(KW_POSITION, &stub_constructor);
 	scc_action_register(KW_RESTART, &stub_constructor);
