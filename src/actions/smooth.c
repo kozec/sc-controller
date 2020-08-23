@@ -98,9 +98,9 @@ static void get_pos(SmoothModifier* s, AxisValue* x, AxisValue* y) {
 
 static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) {
 	SmoothModifier* s = container_of(a, SmoothModifier, action);
-	if ((what == PST_STICK) || ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RPAD)))
+	if ((what == PST_STICK) || ((m->get_flags(m) & CF_HAS_RSTICK) && (what == PST_RPAD))) {
 		s->child->whole(s->child, m, x, y, what);
-	if (m->is_touched(m, what)) {
+	} else if (m->is_touched(m, what)) {
 		if ((s->last_pos_x == 0) && (s->last_pos_y == 0)) {
 			// Just pressed - fill deque with current position
 			for(size_t i=0; i<dequeue_len(&s->dq); i++)

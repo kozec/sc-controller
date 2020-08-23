@@ -26,9 +26,15 @@ static const char* KW_MOUSE = "mouse";
 static const char* KW_TRACKPAD = "trackpad";
 static const char* KW_TRACKBALL = "trackball";
 #define MOUSE_FACTOR 0.005	/* Just random number to put default sensitivity into sane range */
+#define MOUSE_REPEAT_DELAY 5
 
 static int YAW = -1;
 static int ROLL = -1;
+static struct {
+	TaskID		task;
+	double		dx;
+	double		dy;
+} mouse_repeat_data = { 0 };
 
 
 typedef struct {
@@ -43,7 +49,6 @@ typedef struct {
 
 
 ACTION_MAKE_TO_STRING(MouseAction, mouse, KW_MOUSE, &pc);
-
 WHOLEHAPTIC_MAKE_SET_HAPTIC(MouseAction, a->whdata);
 
 static char* describe(Action* a, ActionDescContext ctx) {
@@ -122,19 +127,42 @@ static void pad(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger 
 	}
 }
 
+static void mouse_repeat(Mapper* m, void* trash) {
+	if (mouse_repeat_data.task != 0) {
+		m->move_mouse(m, mouse_repeat_data.dx, mouse_repeat_data.dy);
+		mouse_repeat_data.task = m->schedule(m, MOUSE_REPEAT_DELAY, mouse_repeat, NULL);
+	}
+}
+
+static inline void mouse_repeat_update(MouseAction* b, AxisValue x, AxisValue y) {
+	mouse_repeat_data.dx = (double)x * b->sensitivity.x * 0.01;
+	mouse_repeat_data.dy = (double)y * b->sensitivity.y * 0.01;
+}
+
 static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigger what) {
 	MouseAction* b = container_of(a, MouseAction, action);
 	switch (what) {
 	case PST_STICK:
-		m->move_mouse(m, (double)x * b->sensitivity.x * 0.01, (double)y * b->sensitivity.y * 0.01);
-		// mapper.force_event.add(FE_STICK)
+		if (mouse_repeat_data.task == 0) {
+			mouse_repeat_data.task = m->schedule(m, MOUSE_REPEAT_DELAY, mouse_repeat, NULL);
+			mouse_repeat_update(b, x, y);
+			mouse_repeat(m, NULL);
+		} else if ((x == 0) && (y == 0)) {
+			// Stick released
+			if (mouse_repeat_data.task != 0) {
+				m->cancel(m, mouse_repeat_data.task);
+				mouse_repeat_data.task = 0;
+			}
+		} else {
+			mouse_repeat_update(b, x, y);
+		}
 		break;
 	case PST_LPAD:
 	case PST_CPAD:
 		pad(a, m, x, y, what);
 		break;
 	case PST_RPAD:
-	 	if (m->get_flags(m) & CF_HAS_RSTICK) {
+		if (m->get_flags(m) & CF_HAS_RSTICK) {
 			m->move_mouse(m, (double)x * b->sensitivity.x * 0.01, (double)y * b->sensitivity.y * 0.01);
 			// mapper.force_event.add(FE_PAD)
 		} else {
