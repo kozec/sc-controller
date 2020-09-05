@@ -1,7 +1,8 @@
 osd_menu_lib = shared_library('scc-osd-menu',
 	include_directories: include,
 	link_with: [ osd_lib, utils_lib, client_lib, config_lib, gio_client_lib,
-				 slave_mapper_lib, tools_lib, actions_lib, parser_lib ],
+				 slave_mapper_lib, virtual_device_lib, tools_lib, actions_lib,
+				 parser_lib ],
 	c_args: ['-Wno-deprecated-declarations'],
 	dependencies: [
 		dependency('gtk+-3.0', version: '>=3.22.0'),

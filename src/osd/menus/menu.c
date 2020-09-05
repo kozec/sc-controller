@@ -7,6 +7,7 @@
 #include "scc/utils/math.h"
 #include "scc/osd/osd_window.h"
 #include "scc/osd/osd_menu.h"
+#include "scc/virtual_device.h"
 #include "scc/special_action.h"
 #include "scc/controller.h"
 #include "scc/menu_data.h"
@@ -325,6 +326,9 @@ inline static Mapper* create_slave_mapper(SCCClient* client, OSDMenu* mnu) {
 		return NULL;
 	sccc_slave_mapper_set_userdata(mapper, mnu);
 	sccc_slave_mapper_set_sa_handler(mapper, osd_menu_sa_handler);
+	sccc_slave_mapper_set_devices(mapper,
+		scc_virtual_device_create(VTP_KEYBOARD, NULL),
+		scc_virtual_device_create(VTP_MOUSE, NULL));
 	return mapper;
 }
 
@@ -367,6 +371,24 @@ void osd_menu_connect(OSDMenu* mnu) {
 	g_source_set_callback(src, (GSourceFunc)osd_menu_on_data_ready, mnu, NULL);
 }
 
+struct osd_menu_release_data {
+	Action*			action;
+	OSDMenu*		mnu;
+};
+
+static gboolean osd_menu_dummy(gpointer ptr) {
+	return FALSE;
+}
+static void osd_menu_release(gpointer ptr) {
+	struct osd_menu_release_data* data = ptr;
+	
+	OSDMenuPrivate* priv = get_private(data->mnu);
+	data->action->button_release(data->action, priv->slave_mapper);
+	g_object_unref(data->mnu);
+	RC_REL(data->action);
+	free(data);
+}
+
 
 void osd_menu_confirm(OSDMenu* mnu) {
 	OSDMenuPrivate* priv = get_private(mnu);
@@ -378,11 +400,16 @@ void osd_menu_confirm(OSDMenu* mnu) {
 	if (i == NULL) return;
 	switch (i->type) {
 	case MI_ACTION: {
-		Action* a = i->action;
-		RC_ADD(a);
-		scc_action_compress(&a);
-		a->button_press(a, priv->slave_mapper);
-		RC_REL(a);
+		struct osd_menu_release_data* data;
+		data = malloc(sizeof(struct osd_menu_release_data));
+		ASSERT(data != NULL);
+		data->action = i->action;
+		data->mnu = mnu;
+		RC_ADD(data->action);
+		g_object_ref(data->mnu);
+		scc_action_compress(&data->action);
+		data->action->button_press(data->action, priv->slave_mapper);
+		g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, osd_menu_dummy, data, osd_menu_release);
 		osd_window_exit(OSD_WINDOW(mnu), 0);
 		break;
 	}
