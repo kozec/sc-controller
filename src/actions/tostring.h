@@ -33,7 +33,7 @@
  */
 #define MODIFIER_MAKE_TOSTRING(ActionType, prefix, keyword)					\
 	static char* prefix ## _to_string(Action* _a) {							\
-		ActionType* a = container_of(_a, ClickedModifier, action);			\
+		ActionType* a = container_of(_a, ActionType, action);				\
 		ParameterList l = scc_inline_param_list(							\
 				scc_new_action_parameter(a->child)							\
 		);																	\
