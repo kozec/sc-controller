@@ -398,3 +398,7 @@ lib_bindings = find_library("libscc-bindings")
 lib_bindings.scc_find_binary.argtypes = [ ctypes.c_char_p ]
 lib_bindings.scc_find_binary.restype = ctypes.c_char_p
 
+scc_logging_handler = ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p)
+lib_bindings.scc_logging_set_handler.argtypes = [ scc_logging_handler ]
+lib_bindings.scc_logging_set_handler.restype = None
+

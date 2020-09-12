@@ -47,7 +47,10 @@ Action* scc_action_get_compressed(Action* a) {
 Parameter* scc_action_get_children(Action* a) {
 	if (a->extended.get_children != NULL) {
 		ActionList children = a->extended.get_children(a);
-		if (children == NULL) return NULL;
+		if (children == NULL) {
+			WARN("scc_action_get_children: no children returned");
+			return NULL;
+		}
 		Parameter** arr = malloc(sizeof(Parameter*) * list_len(children));
 		if (arr == NULL) {
 			list_free(children);
@@ -69,12 +72,17 @@ Parameter* scc_action_get_children(Action* a) {
 		list_free(children);
 		return tup;
 	}
+	WARN("scc_action_get_children: no get_children handler");
 	return NULL;
 }
 
 Action* scc_action_get_child(Action* a) {
-	if ((a == NULL) || (a->extended.get_child == NULL))
+	if (a == NULL)
 		return NULL;
+	if (a->extended.get_child == NULL) {
+		WARN("scc_action_get_child: no get_child handler");
+		return NULL;
+	}
 	return a->extended.get_child(a);
 }
 
@@ -218,5 +226,9 @@ size_t scc_get_rels_constants(EnumValue array[], size_t count) {
 
 size_t scc_get_button_constants(EnumValue array[], size_t count) {
 	return scc_get_constants(array, count, rels_and_abses, rels_and_abses_cnt, "BTN_");
+}
+
+void scc_logging_set_handler(logging_handler handler) {
+	logging_set_handler(handler);
 }
 
