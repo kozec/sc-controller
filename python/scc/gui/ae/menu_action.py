@@ -296,7 +296,6 @@ class MenuActionCofC(UserDataManager):
 	def on_cbMenus_changed(self, *a):
 		""" Called when user changes any menu settings """
 		if self._recursing : return
-		print "> on_cbMenus_changed", self._recursing
 		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
 		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
@@ -368,9 +367,7 @@ class MenuActionCofC(UserDataManager):
 				caw = cbCancelWith.get_model().get_value(cbCancelWith.get_active_iter(), 1)
 				if caw != DEFAULT:
 					caw = getattr(SCButtons, caw)
-			
 			params += [ self.get_control_with(), cow, caw ]
-			
 			
 			# Hide / apply and display 'Items per row' selector if it exists in UI
 			if self.builder.get_object("rvMenuSize"):
@@ -402,7 +399,6 @@ class MenuActionCofC(UserDataManager):
 			
 			# Grab menu type and choose apropriate action
 			action = NoAction()
-			print ">#", cbm, menu_type
 			if cbm and menu_type == "gridmenu":
 				# Grid menu
 				action = GridMenuAction(*params)
@@ -418,7 +414,6 @@ class MenuActionCofC(UserDataManager):
 			else:
 				# Normal menu
 				action = MenuAction(*params)
-			print ">>>>>", action
 			
 			# Apply Menu Position options, if such block exists in UI
 			if self.builder.get_object("spMenuPosX"):

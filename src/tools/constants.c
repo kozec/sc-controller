@@ -117,6 +117,10 @@ const char* scc_what_to_string(PadStickTrigger what) {
 	case PST_CPAD:		return "CPAD";
 	case PST_STICK:		return "STICK";
 	case PST_GYRO:		return "GYRO";
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch"
+	case SCC_DEFAULT:	return "DEFAULT";
+#pragma GCC diagnostic pop
 	}
 	return NULL;
 }
@@ -143,6 +147,11 @@ const char* scc_button_to_string(SCButton b) {
 	case B_CPADTOUCH:	return "CPADTOUCH";
 	case B_CPADPRESS:	return "CPADPRESS";
 	case B_STICKPRESS:	return "STICKPRESS";
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch"
+	case SCC_DEFAULT:	return "DEFAULT";
+	case SCC_SAME:		return "SAME";
+#pragma GCC diagnostic pop
 	default:
 		return NULL;
 	}

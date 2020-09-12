@@ -22,8 +22,8 @@ static void on_mnu_ready(void* _mnu) {
 static void on_mnu_exit(void* _mnu) {
 	if (current_menu == _mnu) {
 		gtk_widget_destroy(GTK_WIDGET(_mnu));
-		sccc_unlock_all(client);
 		current_menu = NULL;
+		sccc_unlock_all(client);
 	}
 }
 

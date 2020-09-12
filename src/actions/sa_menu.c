@@ -20,8 +20,6 @@ static ParamChecker pc;
 static ParamChecker pc_short;
 #define DEFAULT_POSITION_X		10
 #define DEFAULT_POSITION_Y		-10
-#define SAME					0xFE
-#define DEFAULT					0xFF
 
 static const char* KW_MENU = "menu";
 static const char* KW_HMENU = "hmenu";
@@ -93,6 +91,22 @@ static Parameter* get_property(Action* a, const char* name) {
 	return NULL;
 }
 
+SCButton string_to_confirm_cancel(const char* s) {
+	// TODO: Magic strings here
+	if (0 == strcmp("DEFAULT", s))
+		return SCC_DEFAULT;
+	if (0 == strcmp("SAME", s))
+		return SCC_SAME;
+	return scc_string_to_button(s);
+}
+
+PadStickTrigger string_to_control(const char* s) {
+	if (0 == strcmp("DEFAULT", s))
+		return SCC_DEFAULT;
+	
+	return scc_string_to_pst(s);
+}
+
 
 static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 	// Backwards compatibility / convience thing: Menu can have 'short form'
@@ -130,9 +144,9 @@ static ActionOE sa_menu_constructor(const char* keyword, ParameterList params) {
 	sa->params = params;
 	sa->data.menu_id = scc_parameter_as_string(params->items[0]);
 	sa->data.menu_type = keyword;
-	sa->data.control_with = scc_string_to_pst(scc_parameter_as_string(params->items[1]));
-	sa->data.confirm_with = scc_string_to_button(scc_parameter_as_string(params->items[2]));
-	sa->data.cancel_with = scc_string_to_button(scc_parameter_as_string(params->items[3]));
+	sa->data.control_with = string_to_control(scc_parameter_as_string(params->items[1]));
+	sa->data.confirm_with = string_to_confirm_cancel(scc_parameter_as_string(params->items[2]));
+	sa->data.cancel_with = string_to_confirm_cancel(scc_parameter_as_string(params->items[3]));
 	sa->data.show_with_release = scc_parameter_as_int(params->items[4]) ? true: false;
 	sa->data.size = scc_parameter_as_int(params->items[5]);
 	sa->data.triggered_by = 0;

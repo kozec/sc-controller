@@ -19,6 +19,21 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
+/**
+ * How GUI options maps to menu behaviour:
+ *
+ *          confirm   cancel
+ * Con Can ByCl ByRel ByRel
+ * def def  0     0     0		menu('x.menu')					 // [1]
+ * A   def  0     0     0		menu('x.menu',DEFAULT,A)		 // cancels by release
+ * A   X    0     0     0		menu('x.menu',DEFAULT,A,X)
+ * -   X    1     0     0		menu('x.menu',DEFAULT,DEFAULT,X) // confirms by press
+ * -   def  0     0     0		menu('x.menu')					 // [1]
+ * -   def  0     1     0		menu('x.menu',DEFAULT,SAME)		 // broken
+ * -   -    1     0     1		menu('x.menu')					 // [1]
+ *
+ * [1] this is default behaviour on pads
+ */
 
 #define SUBMENU_OFFSET	20
 
@@ -165,6 +180,7 @@ void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 			translated_input = OMI_CONFIRM;
 		return priv->handle_input_cb(mnu, button, pst, translated_input, values);
 	}
+	
 	if ((pst == priv->settings.control_with) && priv->settings.use_cursor) {
 		GtkAllocation al_cursor;
 		GtkAllocation al_self;
@@ -192,12 +208,10 @@ void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 		iter_free(it);
 	} else if ((pst == priv->settings.control_with) && (priv->sc != NULL))
 		stick_controller_feed(priv->sc, values);
-	else if ((button == priv->settings.cancel_with) && (!values[0]))
-		osd_window_exit(OSD_WINDOW(mnu), -1);
 	else if ((button == priv->settings.confirm_with) && (!values[0]))
 		osd_menu_confirm(mnu);
-	// else
-	// 	LOG("# %i %i %i > %i %i", handle, button, pst, values[0], values[1]);
+	else if ((button == priv->settings.cancel_with) && (!values[0]))
+		osd_window_exit(OSD_WINDOW(mnu), -1);
 }
 
 
@@ -554,16 +568,15 @@ bool osd_menu_parse_args(int argc, char** argv, const char** usage, OSDMenuSetti
 			return false;
 		}
 	}
-	// TODO: Actual support for DEFAULT here
 	if (confirm_with != NULL) {
 		settings->confirm_with = scc_string_to_button(confirm_with);
 		if (strcmp(confirm_with, "DEFAULT") == 0) {
-			settings->confirm_with = B_A;
-		} if (strcmp(confirm_with, "SAME") == 0) {
-			if (settings->control_with == PST_LPAD)
-				settings->confirm_with = B_LPADTOUCH;
-			else if (settings->control_with == PST_RPAD)
-				settings->confirm_with = B_RPADTOUCH;
+			settings->confirm_with = scc_what_to_pressed_button(settings->control_with);
+			if (settings->confirm_with == 0)
+				// TODO: Actual DEFAULTs from config here?
+				settings->confirm_with = B_A;
+		} else if (strcmp(confirm_with, "SAME") == 0) {
+			settings->confirm_with = scc_what_to_touch_button(settings->control_with);
 		} else if (settings->confirm_with == 0) {
 			LERROR("Invalid value for '--confirm-with' option: '%s'", confirm_with);
 			return false;
@@ -571,10 +584,22 @@ bool osd_menu_parse_args(int argc, char** argv, const char** usage, OSDMenuSetti
 	}
 	if (cancel_with != NULL) {
 		settings->cancel_with = scc_string_to_button(cancel_with);
-		if (strcmp(confirm_with, "DEFAULT") == 0) {
-			settings->confirm_with = B_B;
+		if (strcmp(cancel_with, "DEFAULT") == 0) {
+			if (settings->control_with == PST_LPAD)
+				settings->cancel_with = B_LPADTOUCH;
+			else if (settings->control_with == PST_RPAD)
+				settings->cancel_with = B_RPADTOUCH;
+			else
+				// TODO: Actual DEFAULTs from config here?
+				settings->cancel_with = B_B;
+			if (settings->cancel_with == settings->confirm_with) {
+				// Special case, would create un-cancelable menu
+				settings->cancel_with = B_B;
+			}
+		} if (strcmp(cancel_with, "SAME") == 0) {
+			settings->cancel_with = scc_what_to_touch_button(settings->control_with);
 		} else if (settings->cancel_with == 0) {
-			LERROR("Invalid value for '--cancel-with' option: '%s'", control_with);
+			LERROR("Invalid value for '--cancel-with' option: '%s'", cancel_with);
 			return false;
 		}
 	}

@@ -240,29 +240,32 @@ static inline void sa_menu(SAMenuActionData* data) {
 	const char* control_with = scc_what_to_string(data->control_with);
 	const char* confirm_with = scc_button_to_string(data->confirm_with);
 	const char* cancel_with  = scc_button_to_string(data->cancel_with);
+	// scc-osd-menu executable can handle most of defaults, but it doesn't know
+	// what triggered the menu. Knowing that is important for default value
+	// of 'control_with' and 'confirm_with' when menu is bound on button.
 	// TODO: Haptics
 	// TODO: X, Y
 	// TODO: Actual defaults from config
 	switch (data->triggered_by) {
 	case PST_LPAD:
-	case PST_RPAD:
+		if ((control_with == NULL) || (0 == strcmp("DEFAULT", control_with)))
+			control_with = "LPAD";
 		list_add(argv, strbuilder_cpy("-u"));
+		break;
+	case PST_RPAD:
+		if ((control_with == NULL) || (0 == strcmp("DEFAULT", control_with)))
+			control_with = "RPAD";
+		list_add(argv, strbuilder_cpy("-u"));
+		break;
 	case PST_STICK:
-		if (data->triggered_by == PST_LPAD) {
-			if (control_with == NULL) control_with = "LPAD";
-			if (confirm_with == NULL) confirm_with = "LPADPRESS";
-			if (cancel_with == NULL)  cancel_with  = "LPADTOUCH";
-		} else if (data->triggered_by == PST_RPAD) {
-			if (control_with == NULL) control_with = "RPAD";
-			if (confirm_with == NULL) confirm_with = "RPADPRESS";
-			if (cancel_with == NULL)  cancel_with  = "RPADTOUCH";
-		} else {	// STICK
-			if (control_with == NULL) control_with = "STICK";
-			if (control_with == NULL) confirm_with = "A";
-			if (cancel_with == NULL)  cancel_with  = "B";
-		}
+		if ((control_with == NULL) || (0 == strcmp("DEFAULT", control_with)))
+			control_with = "STICK";
+		break;
+	case PST_CPAD:
 		break;
 	default:
+		if ((confirm_with == NULL) || (0 == strcmp("DEFAULT", confirm_with)))
+			confirm_with = "A";
 		break;
 	}
 	if (confirm_with) {
