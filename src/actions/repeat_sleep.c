@@ -83,6 +83,12 @@ static void button_release(Action* a, Mapper* m) {
 	}
 }
 
+static Action* get_child(Action* a) {
+	SoR* sor = container_of(a, SoR, action);
+	Action* c = scc_parameter_as_action(sor->params->items[0]);
+	return c;
+}
+
 uint32_t sor_get_sleep_time(Action *a) {
 	ASSERT(a->type == KW_SLEEP);
 	SoR* sor = container_of(a, SoR, action);
@@ -113,6 +119,7 @@ static ActionOE sor_constructor(const char* keyword, ParameterList params) {
 	sor->action.compress = &compress;
 	sor->action.button_press = &button_press;
 	sor->action.button_release = &button_release;
+	sor->action.extended.get_child = &get_child;
 	
 	sor->params = params;
 	sor->macro = NULL;
@@ -126,3 +133,4 @@ void scc_actions_init_sor() {
 	scc_action_register(KW_SLEEP, &sor_constructor);
 	scc_action_register(KW_REPEAT, &sor_constructor);
 }
+
