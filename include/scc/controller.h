@@ -183,6 +183,7 @@ typedef enum PadStickTrigger {
 
 #define SCC_True		0x01			/* This is used only by generate-parser-constants script */
 #define SCC_False		0x00			/* This is used only by generate-parser-constants script */
+#define SCC_ALWAYS		0xFD
 #define SCC_SAME		0xFE
 #define SCC_DEFAULT		0xFF
 

@@ -52,6 +52,8 @@ YAW		= "YAW"
 ROLL	= "ROLL"
 
 # Special constants currently used only by menus
+ALWAYS	= "ALWAYS"		# Menu item is activated when it is hilighted
+						# and deactivated when hilight is canceled
 SAME	= "SAME"		# Menu is canceled by releasing same button that intiated it
 DEFAULT	= "DEFAULT"		# Default confirm/cancel button. A/B for menus initiated by
 						# button, pad clicking / releasing for menus on pads
