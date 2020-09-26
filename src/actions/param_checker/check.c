@@ -45,7 +45,9 @@ bool check_axis_name(const char* value) {
 }
 
 static bool check_plus(const char* value) {
-	return (0 == strcmp(value, "DEFAULT")) || (0 == strcmp(value, "SAME"));
+	return (0 == strcmp(value, "DEFAULT"))
+			|| (0 == strcmp(value, "ALWAYS"))
+			|| (0 == strcmp(value, "SAME"));
 }
 
 bool check_button_name_plus(const char* value) {

@@ -952,6 +952,30 @@
                         <property name="width">2</property>
                       </packing>
                     </child>
+                    <child>
+                      <object class="GtkCheckButton" id="cbMenuAlwaysActive">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="margin_top">5</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_cbMenus_changed" swapped="no"/>
+                        <signal name="toggled" handler="prevent_confirm_cancel_nonsense" swapped="no"/>
+                        <child>
+                          <object class="GtkLabel" id="lblMenuAlwaysActive">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Selection is always active</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
                   </object>
                 </child>
               </object>

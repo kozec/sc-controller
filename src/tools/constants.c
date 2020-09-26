@@ -150,6 +150,7 @@ const char* scc_button_to_string(SCButton b) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch"
 	case SCC_DEFAULT:	return "DEFAULT";
+	case SCC_ALWAYS:	return "ALWAYS";
 	case SCC_SAME:		return "SAME";
 #pragma GCC diagnostic pop
 	default:

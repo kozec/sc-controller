@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk
-from scc.constants import SCButtons, SAME, STICK, DEFAULT
+from scc.constants import SCButtons, SAME, STICK, DEFAULT, ALWAYS
 from scc.actions import MenuAction, HorizontalMenuAction
 from scc.actions import RadialMenuAction, GridMenuAction
 from scc.actions import QuickMenuAction, PositionModifier
@@ -92,12 +92,13 @@ class MenuActionCofC(UserDataManager):
 			if self.update_size_display(action):
 				size = spMenuSize.get_adjustment().set_value(action.size)
 		
+		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
+		cbMenuAlwaysActive = self.builder.get_object("cbMenuAlwaysActive")
+		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
+		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
 		cbControlWith = self.builder.get_object("cbControlWith")
 		cbConfirmWith = self.builder.get_object("cbConfirmWith")
 		cbCancelWith = self.builder.get_object("cbCancelWith")
-		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
-		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
-		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
 		if cbControlWith:
 			self.set_cb(cbControlWith, nameof(action.control_with), 1)
 		
@@ -110,6 +111,9 @@ class MenuActionCofC(UserDataManager):
 				cbConfirmWith.set_sensitive(False)
 			elif cbMenuConfirmWithClick and cow == self.get_default_confirm():
 				cbMenuConfirmWithClick.set_active(True)
+				cbConfirmWith.set_sensitive(False)
+			if cow == ALWAYS and cbMenuAlwaysActive:
+				cbMenuAlwaysActive.set_active(True)
 				cbConfirmWith.set_sensitive(False)
 			else:
 				if cbMenuAutoConfirm:
@@ -277,18 +281,28 @@ class MenuActionCofC(UserDataManager):
 		being checked in nonsensical way.
 		"""
 		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
+		cbMenuAlwaysActive = self.builder.get_object("cbMenuAlwaysActive")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
 		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
 		if widget.get_active():
 			if widget == cbMenuConfirmWithClick:
 				if cbMenuAutoConfirm:
 					cbMenuAutoConfirm.set_active(False)
+				if cbMenuAlwaysActive:
+					cbMenuAlwaysActive.set_active(False)
 			elif widget == cbMenuAutoConfirm:
 				if cbMenuConfirmWithClick:
 					cbMenuConfirmWithClick.set_active(False)
 				if cbMenuAutoCancel:
 					cbMenuAutoCancel.set_active(False)
+				if cbMenuAlwaysActive:
+					cbMenuAlwaysActive.set_active(False)
 			elif widget == cbMenuAutoCancel:
+				if cbMenuAutoConfirm:
+					cbMenuAutoConfirm.set_active(False)
+			elif widget == cbMenuAlwaysActive:
+				if cbMenuConfirmWithClick:
+					cbMenuConfirmWithClick.set_active(False)
 				if cbMenuAutoConfirm:
 					cbMenuAutoConfirm.set_active(False)
 	
@@ -297,6 +311,7 @@ class MenuActionCofC(UserDataManager):
 		""" Called when user changes any menu settings """
 		if self._recursing : return
 		cbMenuConfirmWithClick = self.builder.get_object("cbMenuConfirmWithClick")
+		cbMenuAlwaysActive = self.builder.get_object("cbMenuAlwaysActive")
 		cbMenuAutoConfirm = self.builder.get_object("cbMenuAutoConfirm")
 		cbMenuAutoCancel = self.builder.get_object("cbMenuAutoCancel")
 		lblControlWith = self.builder.get_object("lblControlWith")
@@ -321,6 +336,8 @@ class MenuActionCofC(UserDataManager):
 			if cbMenuAutoConfirm and cbMenuAutoConfirm.get_active():
 				sensitive = False
 			if cbMenuConfirmWithClick and cbMenuConfirmWithClick.get_active():
+				sensitive = False
+			if cbMenuAlwaysActive and cbMenuAlwaysActive.get_active():
 				sensitive = False
 			if menu_type == "quickmenu":
 				sensitive = False
@@ -355,6 +372,8 @@ class MenuActionCofC(UserDataManager):
 				cow = SAME
 			elif cbMenuConfirmWithClick and cbMenuConfirmWithClick.get_active():
 				cow = DEFAULT
+			elif cbMenuAlwaysActive and cbMenuAlwaysActive.get_active():
+				cow = ALWAYS
 			elif cbConfirmWith:
 				cow = cbConfirmWith.get_model().get_value(cbConfirmWith.get_active_iter(), 1)
 				if cow != DEFAULT:

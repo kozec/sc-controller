@@ -67,6 +67,7 @@ struct _OSDMenuPrivate {
 G_DEFINE_TYPE_WITH_CODE(OSDMenu, osd_menu, OSD_WINDOW_TYPE, G_ADD_PRIVATE(OSDMenu));
 
 
+static void osd_menu_exit(OSDMenu* mnu, int code);
 static void osd_menu_finalize(GObject* mnu);
 
 static void osd_menu_class_init(OSDMenuClass *klass) {
@@ -128,7 +129,7 @@ static gboolean osd_menu_on_data_ready(GIOChannel* source, GIOCondition conditio
 	const char* message = sccc_recieve(priv->client);
 	if (message != NULL) {
 		if (message[0] == 0) {
-			osd_window_exit(OSD_WINDOW(mnu), 1);
+			osd_menu_exit(mnu, 1);
 			return false;
 		}
 	}
@@ -148,16 +149,18 @@ void osd_menu_lock_inputs(OSDMenu* mnu) {
 			LERROR("There is no controller connected");
 		else
 			LERROR("Requested controller '%s' not connected", priv->settings.controller_id);
-		osd_window_exit(OSD_WINDOW(mnu), 4);
+		osd_menu_exit(mnu, 4);
 		return;
 	}
 	
 	const char* control_with = scc_what_to_string(priv->settings.control_with);
 	const char* confirm_with = scc_button_to_string(priv->settings.confirm_with);
 	const char* cancel_with = scc_button_to_string(priv->settings.cancel_with);
+	if (priv->settings.confirm_with == SCC_ALWAYS)
+		confirm_with = control_with;
 	if (!sccc_lock(priv->client, handle, control_with, confirm_with, cancel_with)) {
 		LERROR("Failed to lock controller");
-		osd_window_exit(OSD_WINDOW(mnu), 3);
+		osd_menu_exit(mnu, 3);
 		return;
 	}
 	
@@ -211,7 +214,7 @@ void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 	else if ((button == priv->settings.confirm_with) && (!values[0]))
 		osd_menu_confirm(mnu);
 	else if ((button == priv->settings.cancel_with) && (!values[0]))
-		osd_window_exit(OSD_WINDOW(mnu), -1);
+		osd_menu_exit(mnu, -1);
 }
 
 
@@ -231,6 +234,39 @@ static void _osd_menu_handle_stick(int dx, int dy, void* _mnu) {
 	OSDMenu* mnu = OSD_MENU(_mnu);
 	OSDMenuPrivate* priv = get_private(mnu);
 	priv->handle_stick_cb(mnu, dx, dy);
+}
+
+/**
+ * Activates (calls 'pressed' handler) or deactivates (calls 'released hanlder')
+ * specific menu item.
+ * Doesn't works with submenus & etc.
+ */
+static void osd_menu_set_action_active(OSDMenu* mnu, MenuItem* i, bool active) {
+	if (i == NULL) return;
+	OSDMenuPrivate* priv = get_private(mnu);
+	Action* a = NULL;
+	
+	switch (i->type) {
+		case MI_ACTION:
+			a = i->action;
+			scc_action_compress(&a);
+			if (active)
+				a->button_press(a, priv->slave_mapper);
+			else
+				a->button_release(a, priv->slave_mapper);
+			break;
+		default:
+			break;
+	}
+}
+
+static void osd_menu_exit(OSDMenu* mnu, int code) {
+	OSDMenuPrivate* priv = get_private(mnu);
+	if ((priv->settings.confirm_with == SCC_ALWAYS) && (priv->selected != NULL)) {
+		MenuItem* i = g_object_get_data(G_OBJECT(priv->selected), "scc-menu-item-data");
+		osd_menu_set_action_active(mnu, i, false);
+	}
+	osd_window_exit(OSD_WINDOW(mnu), 2);
 }
 
 
@@ -255,6 +291,10 @@ bool osd_menu_select(OSDMenu* mnu, MenuItem* i) {
 			gtk_widget_set_name(GTK_WIDGET(priv->selected), name);
 		}
 		free(name);
+		if (priv->settings.confirm_with == SCC_ALWAYS) {
+			MenuItem* i = g_object_get_data(G_OBJECT(priv->selected), "scc-menu-item-data");
+			osd_menu_set_action_active(mnu, i, false);
+		}
 		priv->selected = NULL;
 	}
 	
@@ -277,6 +317,10 @@ bool osd_menu_select(OSDMenu* mnu, MenuItem* i) {
 		gtk_widget_set_name(GTK_WIDGET(priv->selected), strbuilder_get_value(sb));
 		strbuilder_free(sb);
 		// GLib.timeout_add(2, self._check_on_screen_position)
+	}
+	if (priv->settings.confirm_with == SCC_ALWAYS) {
+		MenuItem* i = g_object_get_data(G_OBJECT(priv->selected), "scc-menu-item-data");
+		osd_menu_set_action_active(mnu, i, true);
 	}
 	return true;
 }
@@ -385,6 +429,7 @@ void osd_menu_connect(OSDMenu* mnu) {
 	g_source_set_callback(src, (GSourceFunc)osd_menu_on_data_ready, mnu, NULL);
 }
 
+
 struct osd_menu_release_data {
 	Action*			action;
 	OSDMenu*		mnu;
@@ -393,6 +438,7 @@ struct osd_menu_release_data {
 static gboolean osd_menu_dummy(gpointer ptr) {
 	return FALSE;
 }
+
 static void osd_menu_release(gpointer ptr) {
 	struct osd_menu_release_data* data = ptr;
 	
@@ -577,6 +623,8 @@ bool osd_menu_parse_args(int argc, char** argv, const char** usage, OSDMenuSetti
 				settings->confirm_with = B_A;
 		} else if (strcmp(confirm_with, "SAME") == 0) {
 			settings->confirm_with = scc_what_to_touch_button(settings->control_with);
+		} else if (strcmp(confirm_with, "ALWAYS") == 0) {
+			settings->confirm_with = SCC_ALWAYS;
 		} else if (settings->confirm_with == 0) {
 			LERROR("Invalid value for '--confirm-with' option: '%s'", confirm_with);
 			return false;

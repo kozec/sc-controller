@@ -72,7 +72,6 @@ static void whole(Action* a, Mapper* m, AxisValue x, AxisValue y, PadStickTrigge
 			break;
 	}
 	sa->data.triggered_by = what;
-	LOG("WHOOOLE %i %i", x, y);
 	if ((m->special_action == NULL) || !m->special_action(m, SAT_MENU, &sa->data))
 		DWARN("Mapper lacks support for 'menu'");
 }
@@ -93,6 +92,8 @@ static Parameter* get_property(Action* a, const char* name) {
 
 SCButton string_to_confirm_cancel(const char* s) {
 	// TODO: Magic strings here
+	if (0 == strcmp("ALWAYS", s))
+		return SCC_ALWAYS;
 	if (0 == strcmp("DEFAULT", s))
 		return SCC_DEFAULT;
 	if (0 == strcmp("SAME", s))
