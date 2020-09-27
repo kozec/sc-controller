@@ -322,10 +322,13 @@ bool osd_menu_select(OSDMenu* mnu, MenuItem* i) {
 	if (i->userdata != NULL) {
 		StrBuilder* sb = strbuilder_new();
 		ASSERT(sb != NULL);
-		strbuilder_add(sb, gtk_widget_get_name(GTK_WIDGET(priv->selected)));
-		strbuilder_add(sb, "-selected");
-		ASSERT(!strbuilder_failed(sb));
-		gtk_widget_set_name(GTK_WIDGET(priv->selected), strbuilder_get_value(sb));
+		char* name = gtk_widget_get_name(GTK_WIDGET(priv->selected));
+		if (name != NULL) {
+			strbuilder_add(sb, name);
+			strbuilder_add(sb, "-selected");
+			ASSERT(!strbuilder_failed(sb));
+			gtk_widget_set_name(GTK_WIDGET(priv->selected), strbuilder_get_value(sb));
+		}
 		strbuilder_free(sb);
 		// GLib.timeout_add(2, self._check_on_screen_position)
 	}
