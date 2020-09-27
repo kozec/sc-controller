@@ -33,7 +33,7 @@ struct SlaveMapper {
 	VirtualDeviceType	to_sync;
 	sccc_sa_handler		sa_handler;
 	void*				userdata;
-	uint8_t				keys[KEY_CNT];
+	uint8_t				keys[BTN_DIGI];
 };
 
 
@@ -72,11 +72,25 @@ static bool special_action(Mapper* _m, unsigned int sa_action_type, void* sa_dat
 	return false;
 }
 
+static bool send_button(Mapper* _m, unsigned int controller_index, Keycode b, bool pressed) {
+	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
+	char command[64];
+	if (snprintf(command, 63, "Button: %i %i", b, pressed) >= 63) {
+		LERROR("Failed to send button press: Out of memory");
+		return false;
+	}
+	int32_t rid = sccc_request(m->client, command);
+	free(sccc_get_response(m->client, rid));
+	return true;
+}
+
 inline static VirtualDevice* device_for_button(struct SlaveMapper* m, Keycode b) {
 	// To prevent games from going absolutelly crazy over rapidly adding and
 	// removing virtual pads, slave mapper doesn't work with virtual gamepad.
-	if ((b >= BTN_MOUSE) && (b <= BTN_TASK))
+	if ((b >= BTN_MOUSE) && (b < BTN_JOYSTICK))
 		return m->mouse;
+	if ((b >= BTN_JOYSTICK) && (b < BTN_DIGI))
+		return NULL;
 	m->to_sync |= VTP_KEYBOARD;
 	return m->keyboard;
 }
@@ -84,27 +98,43 @@ inline static VirtualDevice* device_for_button(struct SlaveMapper* m, Keycode b)
 static void key_press(Mapper* _m, Keycode b, bool release_press) {
 	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
 	VirtualDevice* d = device_for_button(m, b);
-	if (d == NULL) return;
-	if (m->keys[b] == 0) {
-		scc_virtual_device_key_press(d, b);
-	} else if (release_press) {
-		scc_virtual_device_key_release(d, b);
-		scc_virtual_device_key_press(d, b);
+	if (d == NULL) {
+		// Special case for gamepad. Since creating gamepads on the fly would
+		// basically break every game in existence, gamepad events are sent to
+		// daemon and handled there instead.
+		if (m->keys[b] == 0) {
+			send_button(_m, 0, b, 1);
+			m->keys[b] = 1;
+		}
+	} else {
+		if (m->keys[b] == 0) {
+			scc_virtual_device_key_press(d, b);
+		} else if (release_press) {
+			scc_virtual_device_key_release(d, b);
+			scc_virtual_device_key_press(d, b);
+		}
+		
+		if (m->keys[b] < 0xFE)
+			m->keys[b] ++;
 	}
-	
-	if (m->keys[b] < 0xFE)
-		m->keys[b] ++;
 }
 
 static void key_release(Mapper* _m, Keycode b) {
 	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
 	VirtualDevice* d = device_for_button(m, b);
-	if (d == NULL) return;
-	if (m->keys[b] > 1) {
-		m->keys[b] --;
-	} else if (m->keys[b] == 1) {
-		scc_virtual_device_key_release(d, b);
-		m->keys[b] --;
+	if (d == NULL) {
+		// See above
+		if (m->keys[b] > 0) {
+			send_button(_m, 0, b, 0);
+			m->keys[b] = 0;
+		}
+	} else {
+		if (m->keys[b] > 1) {
+			m->keys[b] --;
+		} else if (m->keys[b] == 1) {
+			scc_virtual_device_key_release(d, b);
+			m->keys[b] --;
+		}
 	}
 }
 
@@ -127,7 +157,7 @@ static bool is_pressed(Mapper* _m, SCButton button) {
 
 static bool is_virtual_key_pressed(Mapper* _m, Keycode key) {
 	struct SlaveMapper* m = container_of(_m, struct SlaveMapper, mapper);
-	if ((key < 0) || (key > KEY_CNT)) return false;
+	if ((key < 0) || (key > BTN_DIGI)) return false;
 	return m->keys[key] > 0;
 }
 

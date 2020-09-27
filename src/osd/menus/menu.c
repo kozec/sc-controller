@@ -189,6 +189,8 @@ void osd_menu_parse_event(OSDMenu* mnu, SCCClient* c, uint32_t handle,
 		GtkAllocation al_self;
 		gtk_widget_get_allocation(priv->cursor, &al_cursor);
 		gtk_widget_get_allocation(GTK_WIDGET(mnu), &al_self);
+		if ((values[0] == 0) && (values[1] == 0))
+			return;
 		double x = (double)values[0] / (STICK_PAD_MAX * 2.0);
 		double y = (double)values[1] / (STICK_PAD_MAX * 2.0);
 		double pad_w = al_cursor.width * 0.5;
@@ -277,6 +279,7 @@ bool osd_menu_select_index(OSDMenu* mnu, size_t index) {
 
 bool osd_menu_select(OSDMenu* mnu, MenuItem* i) {
 	OSDMenuPrivate* priv = get_private(mnu);
+	bool always_action_kept = false;
 	// if (first && (i->type == MI_ACTION)) {
 	// 	gtk_widget_set_name(GTK_WIDGET(i->userdata), "osd-menu-item-selected");
 	// 	first = false;
@@ -292,8 +295,12 @@ bool osd_menu_select(OSDMenu* mnu, MenuItem* i) {
 		}
 		free(name);
 		if (priv->settings.confirm_with == SCC_ALWAYS) {
-			MenuItem* i = g_object_get_data(G_OBJECT(priv->selected), "scc-menu-item-data");
-			osd_menu_set_action_active(mnu, i, false);
+			if (priv->selected == i->userdata) {
+				always_action_kept = true;
+			} else {
+				MenuItem* s = g_object_get_data(G_OBJECT(priv->selected), "scc-menu-item-data");
+				osd_menu_set_action_active(mnu, s, false);
+			}
 		}
 		priv->selected = NULL;
 	}
@@ -307,6 +314,10 @@ bool osd_menu_select(OSDMenu* mnu, MenuItem* i) {
 	// 	if self.feedback and self.controller:
 	// 		self.controller.feedback(*self.feedback)
 	
+	if ((priv->settings.confirm_with == SCC_ALWAYS) && !always_action_kept) {
+		MenuItem* s = g_object_get_data(G_OBJECT(i->userdata), "scc-menu-item-data");
+		osd_menu_set_action_active(mnu, s, true);
+	}
 	priv->selected = i->userdata;
 	if (i->userdata != NULL) {
 		StrBuilder* sb = strbuilder_new();
@@ -317,10 +328,6 @@ bool osd_menu_select(OSDMenu* mnu, MenuItem* i) {
 		gtk_widget_set_name(GTK_WIDGET(priv->selected), strbuilder_get_value(sb));
 		strbuilder_free(sb);
 		// GLib.timeout_add(2, self._check_on_screen_position)
-	}
-	if (priv->settings.confirm_with == SCC_ALWAYS) {
-		MenuItem* i = g_object_get_data(G_OBJECT(priv->selected), "scc-menu-item-data");
-		osd_menu_set_action_active(mnu, i, true);
 	}
 	return true;
 }

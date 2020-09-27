@@ -54,6 +54,23 @@ void sccd_on_client_command(Client* client, char* buffer, size_t len) {
 	}
 	
 	switch (command[0]) {
+	case 'B':
+		if (0 == strcmp(command, "Button:")) {
+			// Emulates pressing or reelasing button on n-th gamepad
+			Keycode b = atoi(iter_next(tokens));
+			int pressed = atoi(iter_next(tokens));
+			if (b == 0)
+				return send_error(client, tokens, "Fail: invalid keycode\n");
+			if (pressed) {
+				if (!client->mapper->is_virtual_key_pressed(client->mapper, b))
+					client->mapper->key_press(client->mapper, b, false);
+			} else {
+				if (client->mapper->is_virtual_key_pressed(client->mapper, b))
+					client->mapper->key_release(client->mapper, b);
+			}
+			return send_ok(client, tokens);
+		}
+		break;
 	case 'C':
 		if (0 == strcmp(command, "Controller.")) {
 			// Resets controller chosen by client back to default
