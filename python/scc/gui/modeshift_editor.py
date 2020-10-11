@@ -47,8 +47,8 @@ class ModeshiftEditor(Editor):
 		("Soft RT",				_('Right Trigger (soft)') ),
 		(None, None),
 		(SCButtons.STICKPRESS,	_('Stick Pressed') ),
-		(SCButtons.LPAD,		_('Left Pad Pressed') ),
-		(SCButtons.RPAD,		_('Right Pad Pressed') ),
+		(SCButtons.LPADPRESS,	_('Left Pad Pressed') ),
+		(SCButtons.RPADPRESS,	_('Right Pad Pressed') ),
 		(SCButtons.LPADTOUCH,	_('Left Pad Touched') ),
 		(SCButtons.RPADTOUCH,	_('Right Pad Touched') ),
 	)
@@ -107,7 +107,7 @@ class ModeshiftEditor(Editor):
 					continue
 			
 			if item == SCButtons.STICKPRESS:
-				if self.id == nameof(SCButtons.LPAD):
+				if self.id == nameof(SCButtons.LPADPRESS):
 					# Controller cannot handle pressing stick and lpad at once
 					continue
 			model.append(( None if item is None else nameof(item), text ))

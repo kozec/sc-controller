@@ -26,8 +26,8 @@ class VDFProfile(Profile):
 		'button_escape'		: SCButtons.START,	# what what what
 		'left_bumper'		: SCButtons.LB,
 		'right_bumper'		: SCButtons.RB,
-		'left_click'		: SCButtons.LPAD,
-		'right_click'		: SCButtons.RPAD,
+		'left_click'		: SCButtons.LPADPRESS,
+		'right_click'		: SCButtons.RPADPRESS,
 	}
 	
 	SPECIAL_KEYS = {
@@ -351,15 +351,15 @@ class VDFProfile(Profile):
 			
 			action = GridMenuAction(menu_id,
 				'LEFT' if side == Profile.LEFT else 'RIGHT',
-				SCButtons.LPAD if side == Profile.LEFT else SCButtons.RPAD
+				SCButtons.LPADPRESS if side == Profile.LEFT else SCButtons.RPADPRESS
 			)
 		elif mode == "absolute_mouse":
 			if "click" in inputs:
 				if side == Profile.LEFT:
-					self.add_by_binding(SCButtons.LPAD,
+					self.add_by_binding(SCButtons.LPADPRESS,
 							self.parse_button(inputs["click"]))
 				else:
-					self.add_by_binding(SCButtons.RPAD,
+					self.add_by_binding(SCButtons.RPADPRESS,
 							self.parse_button(inputs["click"]))
 			if "gyro_axis" in settings:
 				if int(settings["gyro_axis"]) == 1:

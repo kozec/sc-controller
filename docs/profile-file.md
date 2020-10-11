@@ -37,9 +37,9 @@ Possible keys are:
 
 - `X`, `Y`, `A` and `B` for colored buttons
 - `C` for Steam button in center
-- `SELECT` and `START` for small "( &lt; )" and "( &gt; )" buttons
+- `BACK` and `START` for small "( &lt; )" and "( &gt; )" buttons
 - `LB` and `RB` for left and right bumper
-- `LPAD`, `RPAD` and `STICK` for presing pads or stick.
+- `LPADPRESS`, `RPADPRESS` and `STICKPRESS` for presing pads or stick.
 
 All keys are optional. Value for each key is [action definition](#Action_definition)
 

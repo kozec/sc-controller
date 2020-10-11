@@ -39,16 +39,16 @@ AXIS_TO_BUTTON = {
 	# Maps stick and dpad axes to their respective "pressed" button
 	"stick_x":	SCButtons.STICKPRESS,
 	"stick_y":	SCButtons.STICKPRESS,
-	"rpad_x":	SCButtons.RPAD,
-	"rpad_y":	SCButtons.RPAD,
-	"lpad_x":	SCButtons.LPAD,
-	"lpad_y":	SCButtons.LPAD,
+	"rpad_x":	SCButtons.RPADPRESS,
+	"rpad_y":	SCButtons.RPADPRESS,
+	"lpad_x":	SCButtons.LPADPRESS,
+	"lpad_y":	SCButtons.LPADPRESS,
 }
 
 SDL_TO_SCC_NAMES = {
 	'guide':			'C',
 	'leftstick':		'STICKPRESS',
-	'rightstick':		'RPAD',
+	'rightstick':		'RPADPRESS',
 	'leftshoulder':		'LB',
 	'rightshoulder':	'RB',
 	'b0':				'X',
@@ -62,7 +62,7 @@ SDL_TO_SCC_NAMES = {
 	'b8':				'BACK',
 	'b9':				'C',
 	'b10':				'STICKPRESS',
-	'b11':				'RPAD',
+	'b11':				'RPADPRESS',
 	'b12':				'START',
 }
 

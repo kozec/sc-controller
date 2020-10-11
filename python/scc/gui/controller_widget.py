@@ -25,7 +25,7 @@ TRIGGERS = [ "LT", "RT" ]
 PADS	= [ Profile.LPAD, Profile.RPAD, Profile.CPAD ]
 STICKS	= [ STICK ]
 GYROS	= [ GYRO ]
-PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD,
+PRESSABLE = [ SCButtons.LPADPRESS, SCButtons.RPADPRESS,
 				SCButtons.STICKPRESS, SCButtons.CPADPRESS ]
 _NOT_BUTTONS = PADS + STICKS + GYROS + TRIGGERS
 _NOT_BUTTONS += [ x + "TOUCH" for x in PADS ]
@@ -220,19 +220,17 @@ class ControllerPad(ControllerStick):
 	
 	def __init__(self, app, name, use_icon, enable_press, widget):
 		ControllerStick.__init__(self, app, name, use_icon, enable_press, widget)
-		if name in (Profile.LPAD, Profile.RPAD):
-			self.click_button = getattr(SCButtons, name)
-		elif name == Profile.CPAD:
-			self.click_button = SCButtons.CPADPRESS
+		if name in PADS:
+			self.click_button = getattr(SCButtons, name + "PRESS")
 	
 	
 	def update(self):
 		if self.id == Profile.LPAD:
 			action = self.app.current.pads[Profile.LEFT]
-			pressed = self.app.current.buttons[SCButtons.LPAD]
+			pressed = self.app.current.buttons[SCButtons.LPADPRESS]
 		elif self.id == Profile.RPAD:
 			action = self.app.current.pads[Profile.RIGHT]
-			pressed = self.app.current.buttons[SCButtons.RPAD]
+			pressed = self.app.current.buttons[SCButtons.RPADPRESS]
 		else:
 			action = self.app.current.pads[Profile.CPAD]
 			pressed = self.app.current.buttons[SCButtons.CPADPRESS]

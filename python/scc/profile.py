@@ -6,7 +6,7 @@ Handles mapping profile stored in json file
 """
 from __future__ import unicode_literals
 
-from scc.constants import LEFT, RIGHT, CPAD, WHOLE, STICK, GYRO
+from scc.constants import LEFT, RIGHT, LPAD, RPAD, CPAD, WHOLE, STICK, GYRO
 from scc.constants import SCButtons, HapticPos
 from scc.actions import MenuAction, HoldModifier, NoAction
 from scc.lib.jsonencoder import JSONEncoder
@@ -23,8 +23,8 @@ class Profile(object):
 	
 	LEFT  = LEFT
 	RIGHT = RIGHT
-	LPAD = SCButtons.LPAD.name
-	RPAD = SCButtons.RPAD.name
+	LPAD = LPAD
+	RPAD = RPAD
 	CPAD = CPAD
 	WHOLE = WHOLE
 	STICK = STICK

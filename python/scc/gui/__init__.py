@@ -5,6 +5,6 @@ BUTTON_ORDER = (
 	SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
 	SCButtons.BACK, SCButtons.C, SCButtons.START,
 	SCButtons.LB, SCButtons.RB, SCButtons.LT, SCButtons.RT,
-	SCButtons.STICKPRESS, SCButtons.RPAD, SCButtons.LPAD,
+	SCButtons.STICKPRESS, SCButtons.RPADPRESS, SCButtons.LPADPRESS,
 	SCButtons.RGRIP, SCButtons.LGRIP
 )

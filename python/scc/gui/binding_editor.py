@@ -83,7 +83,7 @@ class BindingEditor(object):
 			self.button_widgets[Profile.CPAD].update()
 		elif id in PRESSABLE:
 			before, profile.buttons[id] = profile.buttons[id], action
-			self.button_widgets[id.name].update()
+			self.button_widgets[id.name.replace("PRESS", "")].update()
 		elif id in BUTTONS:
 			before, profile.buttons[id] = profile.buttons[id], action
 			self.button_widgets[id].update()

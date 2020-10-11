@@ -261,9 +261,9 @@ class Mapper(object):
 		Returns True if button is pressed
 		"""
 		if button == LEFT:
-			button = SCButtons.LPAD
+			button = SCButtons.LPADPRESS
 		elif button == RIGHT:
-			button = SCButtons.RPAD
+			button = SCButtons.RPADPRESS
 		return self.buttons & button
 	
 	
@@ -272,9 +272,9 @@ class Mapper(object):
 		Returns True if button was pressed in previous known state
 		"""
 		if button == LEFT:
-			button = SCButtons.LPAD
+			button = SCButtons.LPADPRESS
 		elif button == RIGHT:
-			button = SCButtons.RPAD
+			button = SCButtons.RPADPRESS
 		return self.old_buttons & button
 	
 	
@@ -359,8 +359,8 @@ class Mapper(object):
 		self.state = state
 		self.buttons = state.buttons
 		
-		if self.buttons & SCButtons.LPAD and not self.buttons & SCButtons.LPADTOUCH:
-			self.buttons = (self.buttons & ~SCButtons.LPAD) | SCButtons.STICKPRESS
+		if self.buttons & SCButtons.LPADPRESS and not self.buttons & SCButtons.LPADTOUCH:
+			self.buttons = (self.buttons & ~SCButtons.LPADPRESS) | SCButtons.STICKPRESS
 		
 		fe = self.force_event
 		self.force_event = set()

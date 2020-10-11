@@ -33,8 +33,10 @@ class ControllerImage(SVGWidget):
 		nameof(SCButtons.LB), nameof(SCButtons.RB),
 		nameof(SCButtons.LT), nameof(SCButtons.RT),
 		nameof(SCButtons.STICKPRESS),
-		nameof(SCButtons.RPAD), nameof(SCButtons.LPAD),
-		nameof(SCButtons.LGRIP), nameof(SCButtons.RGRIP),
+		nameof(SCButtons.RPADPRESS),
+		nameof(SCButtons.LPADPRESS),
+		nameof(SCButtons.LGRIP),
+		nameof(SCButtons.RGRIP),
 	]
 	
 	
