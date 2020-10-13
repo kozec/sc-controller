@@ -9,9 +9,9 @@ GTK_LIBS=(libgtk-3-0.dll libgdk-3-0.dll libharfbuzz-0.dll libfreetype-6.dll
 		libglib-2.0-0.dll libgmodule-2.0-0.dll libgobject-2.0-0.dll
 		libpango-1.0-0.dll libpangocairo-1.0-0.dll libpangoft2-1.0-0.dll
 		libpangowin32-1.0-0.dll libpixman-1-0.dll zlib1.dll libexpat-1.dll
-		libffi-6.dll libfribidi-0.dll libpcre-1.dll libthai-0.dll liblzma-5.dll
-		librsvg-2-2.dll libcroco-0.6-3.dll libxml2-2.dll libdatrie-1.dll
-		libcrypto-1_1.dll)
+		libffi-7.dll libfribidi-0.dll libpcre-1.dll libthai-0.dll liblzma-5.dll
+		librsvg-2-2.dll libxml2-2.dll libdatrie-1.dll libcrypto-1_1.dll
+		libbrotlidec.dll libbrotlicommon.dll libssp-0.dll)
 GTK_ICONS=(
 		status/image-missing.png
 		legacy/dialog-information.png
@@ -95,5 +95,5 @@ for i in "${GTK_ICONS[@]}" ; do
 	[ -e release-win32/share/images/"$n" ] || cp -nv \
 		/mingw32/share/icons/Adwaita/16x16/"$i" release-win32/share/images/"$n"
 done
-cp -vi /mingw32/share/icons/Adwaita/16x16/legacy/document-save.png release-win32/share/images/gtk-save-ltr.png
+cp -vu /mingw32/share/icons/Adwaita/16x16/legacy/document-save.png release-win32/share/images/gtk-save-ltr.png
 

@@ -27,6 +27,7 @@ int main(int argc, char** argv) {
 	INFO("Starting SC Controller GUI (forced console) v%s...", DAEMON_VERSION);
 #else	// FORCE_CONSOLE
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	FreeConsole();
 #endif	// FORCE_CONSOLE
 	_putenv("PYTHONIOENCODING=UTF-8");
 	char* new_path = NULL;
