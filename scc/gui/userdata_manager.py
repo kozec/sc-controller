@@ -121,7 +121,7 @@ class UserDataManager(object):
 				for pdir, enumerator in data:
 					if pdir is not None:
 						for finfo in enumerator:
-							name = finfo.get_name()
+							name = finfo.get_name().decode("utf-8")
 							if name and not name.endswith("~"):
 								files[name] = pdir.get_child(name)
 			except Exception, e:
@@ -146,7 +146,7 @@ class UserDataManager(object):
 		files = {}
 		for pdir in pdirs:
 			for name in os.listdir(pdir.get_path()):
-				files[name] = pdir.get_child(name)
+				files[name.decode("utf-8")] = pdir.get_child(name)
 		return files
 	
 	

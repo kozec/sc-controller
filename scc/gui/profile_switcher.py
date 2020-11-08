@@ -111,8 +111,11 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		if name.endswith(".mod"): name = name[0:-4]
 		if name.endswith(".sccprofile"): name = name[0:-11]
 		if "/" in name : name = os.path.split(name)[-1]
-		
 		self._current = name
+		if type(name) == unicode:
+			# GTK can't handle this
+			name = name.encode("utf-8")
+		
 		active = self._combo.get_active_iter()
 		giofile = None
 		for row in self._model:
@@ -158,7 +161,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		self._model.clear()
 		i, current_index = 0, 0
 		for f in sorted(lst, key=lambda f: f.get_basename()):
-			name = f.get_basename()
+			name = f.get_basename().decode("utf-8")
 			if name.endswith(".mod"):
 				continue
 			if name.startswith("."):

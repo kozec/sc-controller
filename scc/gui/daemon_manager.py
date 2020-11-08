@@ -78,7 +78,7 @@ class DaemonManager(GObject.GObject):
 		self.alive = None
 		self.connection = None
 		self.connecting = False
-		self.buffer = ""
+		self.buffer = b""
 		self._connect()
 		self._requests = []
 		self._controllers = []			# Ordered as daemon says
@@ -149,7 +149,7 @@ class DaemonManager(GObject.GObject):
 		except Exception, e:
 			self._on_daemon_died()
 			return
-		self.buffer = ""
+		self.buffer = b""
 		self.connection.get_input_stream().read_bytes_async(102400,
 			1, None, self._on_read_data)
 	
@@ -164,14 +164,15 @@ class DaemonManager(GObject.GObject):
 			# Broken sonnection, daemon was probbaly terminated
 			self._on_daemon_died()
 			return
-		data = response.get_data().decode("utf-8")
+		data = response.get_data()
 		if len(data) == 0:
 			# Connection terminated
 			self._on_daemon_died()
 			return
 		self.buffer += data
-		while "\n" in self.buffer:
-			line, self.buffer = self.buffer.split("\n", 1)
+		while b"\n" in self.buffer:
+			line, self.buffer = self.buffer.split(b"\n", 1)
+			line = line.decode("utf-8")
 			if line.startswith("Version:"):
 				version = line.split(":", 1)[-1].strip()
 				log.debug("Connected to daemon, version %s", version)

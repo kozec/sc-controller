@@ -563,8 +563,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if update_ui:
 			self.profile_switchers[0].set_profile_modified(True, self.current.is_template)
 		
-		if not self.current_file.get_path().endswith(".mod"):
-			mod = self.current_file.get_path() + ".mod"
+		if not self.current_file.get_path().decode("utf-8").endswith(".mod"):
+			mod = self.current_file.get_path().decode("utf-8") + ".mod"
 			self.current_file = Gio.File.new_for_path(mod)
 		
 		self.save_profile(self.current_file, self.current)
@@ -575,7 +575,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.current_file = giofile
 		self.recursing = True
 		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
-		self.builder.get_object("txProfileFilename").set_text(giofile.get_path())
+		self.builder.get_object("txProfileFilename").set_text(giofile.get_path().decode("utf-8"))
 		self.builder.get_object("txProfileDescription").get_buffer().set_text(self.current.description)
 		self.builder.get_object("cbProfileIsTemplate").set_active(self.current.is_template)
 		for b in self.button_widgets.values():
@@ -587,18 +587,18 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if ps == self.profile_switchers[0]:
 			self.load_profile(giofile)
 		if ps.get_controller():
-			ps.get_controller().set_profile(giofile.get_path())
+			ps.get_controller().set_profile(giofile.get_path().decode("utf-8"))
 	
 	
 	def on_unknown_profile(self, ps, name):
 		log.warn("Daemon reported unknown profile: '%s'; Overriding.", name)
 		if self.current_file is not None:
-			ps.get_controller().set_profile(self.current_file.get_path())
+			ps.get_controller().set_profile(self.current_file.get_path().decode("utf-8"))
 	
 	
 	def on_save_clicked(self, *a):
-		if self.current_file.get_path().endswith(".mod"):
-			orig = self.current_file.get_path()[0:-4]
+		if self.current_file.get_path().decode("utf-8").endswith(".mod"):
+			orig = self.current_file.get_path().decode("utf-8")[0:-4]
 			self.current_file = Gio.File.new_for_path(orig)
 		
 		if self.current.is_template:
@@ -650,19 +650,19 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		if self.osd_mode:
 			# Special case, profile shouldn't be changed while in osd_mode
-			if not giofile.get_path().endswith(".mod"):
+			if not giofile.get_path().decode("utf-8").endswith(".mod"):
 				self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 			return
 		
-		if giofile.get_path().endswith(".mod"):
+		if giofile.get_path().decode("utf-8").endswith(".mod"):
 			# Special case, this one is saved only to be sent to daemon
 			# and user doesn't need to know about it
 			if self.dm.is_alive():
 				controller = self.profile_switchers[0].get_controller()
 				if controller:
-					controller.set_profile(giofile.get_path())
+					controller.set_profile(giofile.get_path().decode("utf-8"))
 				else:
-					self.dm.set_profile(giofile.get_path())
+					self.dm.set_profile(giofile.get_path().decode("utf-8"))
 			return
 		
 		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
@@ -672,8 +672,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				if controller:
 					active = controller.get_profile()
 					if active.endswith(".mod"): active = active[0:-4]
-					if active == giofile.get_path():
-						controller.set_profile(giofile.get_path())
+					if active == giofile.get_path().decode("utf-8"):
+						controller.set_profile(giofile.get_path().decode("utf-8"))
 		
 		self.current_file = giofile	
 	
@@ -838,7 +838,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		if self.osd_mode:
 			self.enable_osd_mode()
 		elif self.profile_switchers[0].get_file() is not None and not self.just_started:
-			self.dm.set_profile(self.current_file.get_path())
+			self.dm.set_profile(self.current_file.get_path().decode("utf-8"))
 		GLib.timeout_add_seconds(1, self.check)
 		self.enable_test_mode()
 	
@@ -1628,7 +1628,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		from scc.parser import ActionParser
 		to_convert = {}
-		for name in os.listdir(get_profiles_path()):
+		for name in [ x.decode("utf-8") for x in os.listdir(get_profiles_path()) ]:
 			if name.endswith("~"):
 				# Ignore backups - https://github.com/kozec/sc-controller/issues/440
 				continue
