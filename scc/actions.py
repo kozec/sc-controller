@@ -2465,6 +2465,141 @@ class TriggerAction(Action, HapticEnabledAction):
 	
 	__repr__ = __str__
 
+class HipfireAction(Action, HapticEnabledAction):
+	"""
+	Hipfire style using the two ranges for the trigger
+	"""
+	COMMAND = "hipfire"
+	PROFILE_KEYS = "levels",
+	DEFAULT_TIMEOUT = 0.1
+	DEFAULT_SOFTPRESS_LEVEL = 50
+	DEFAULT_FULLPULL_LEVEL = 254
+	TIMEOUT_KEY = "time"
+	PROFILE_KEY_PRIORITY = -5
+	
+	def __init__(self, softpull_level, fullpull_level, softpull_action, *params):
+		Action.__init__(self, softpull_level, fullpull_level, softpull_action, *params)
+		HapticEnabledAction.__init__(self)
+		self.softpull_level = int(softpull_level)
+		self.fullpull_level = int(fullpull_level)
+		self.softpull_action = softpull_action
+		# self.fullpull_action = fullpull_action
+		if len(params) == 1:
+			self.fullpull_action = params[0]
+			self.timeout = HipfireAction.DEFAULT_TIMEOUT
+		elif len(params) == 2:
+			self.fullpull_action = params[0]
+			self.timeout = params[1]
+		else:
+			raise TypeError("Invalid number of parameters")
+		self.range = "None"
+		self.waiting_task = None
+
+	
+	@staticmethod
+	def decode(data, a, parser, *b):
+		args = [ parser.from_json_data(data[HipfireAction.COMMAND]), a ]
+		a = HipfireAction(*args)
+		if HipfireAction.TIMEOUT_KEY in data:
+			a.timeout = data[HipfireAction.TIMEOUT_KEY]
+		return a
+
+			
+	def get_compatible_modifiers(self):
+		return Action.MOD_FEEDBACK
+	
+	
+	def compress(self):
+		self.softpull_action = self.softpull_action.compress()
+		self.fullpull_action = self.fullpull_action.compress()
+		return self
+	
+	def on_timeout(self, mapper, *a):
+		if self.waiting_task:
+			self.waiting_task = None
+			if self.range == "SOFTPULL":
+				# Timeouted while inside softpull range
+				if self.haptic:
+					mapper.send_feedback(self.haptic)
+				self.softpull_press(mapper)
+	
+	def softpull_press(self, mapper):
+		if self.haptic:
+			mapper.send_feedback(self.haptic)
+		self.softpull_action.button_press(mapper)
+	
+	
+	def softpull_release(self, mapper):
+		if self.haptic:
+			mapper.send_feedback(self.haptic)
+		self.softpull_action.button_release(mapper)
+	
+	def fullpull_press(self, mapper):
+		if self.haptic:
+			mapper.send_feedback(self.haptic)
+		self.fullpull_action.button_press(mapper)
+	
+	def fullpull_release(self, mapper):
+		if self.haptic:
+			mapper.send_feedback(self.haptic)
+		self.fullpull_action.button_release(mapper)
+	
+	
+	def trigger(self, mapper, position, old_position):
+		# Check the current position of the trigger and apply the action based on three possible range: [None, SOFTPULL, FULLPULL]
+
+		# check fullpull first to prevent unecessary conditional evaluation
+		if position >= self.fullpull_level and old_position < self.fullpull_level:
+			# entered now in fullpull range and activate fullpull action
+			self.range = "FULLPULL"
+			self.fullpull_press(mapper)
+			# Cancel any pending timer to prevent softpull from activating
+			if self.waiting_task:
+				mapper.cancel_task(self.waiting_task)
+				self.waiting_task = None
+
+		elif position >= self.softpull_level and old_position < self.softpull_level:
+			# entered now in softpull range and start the timer
+			self.range = "SOFTPULL"
+			#cancels previous timer
+			if self.waiting_task:
+				mapper.cancel_task(self.waiting_task)
+				self.waiting_task = None
+			#start the timer to execute the action if the fullpull is not reached before timeout
+			self.waiting_task = mapper.schedule(self.timeout, self.on_timeout)
+		
+		elif position < self.fullpull_level and old_position >= self.fullpull_level:
+			#re-enter in softpull range and release fullpull action
+			self.range = "SOFTPULL"
+			self.fullpull_release(mapper)			
+
+		elif position < self.softpull_level and old_position >= self.softpull_level:
+			self.range = "NONE"
+			if self.waiting_task:
+				mapper.cancel_task(self.waiting_task)
+				self.waiting_task = None
+				self.softpull_press(mapper)
+				mapper.schedule(0.02, self.softpull_release)
+			else:
+				self.softpull_release(mapper)
+		# else:
+		# 	do nothing
+
+	
+	def describe(self, context):
+		l = [ ]
+		if self.softpull_action:
+			l += [ self.softpull_action ]
+		if self.fullpull_action:
+			l += [ self.fullpull_action ]
+		return "\n".join([ x.describe(context) for x in l ])
+	
+	
+	def __str__(self):
+		return "<Hipfire %s-%s %s %s >" % (self.softpull_level, self.fullpull_level, self.softpull_action, self.fullpull_action)
+	
+	__repr__ = __str__
+
 
 class NoAction(Action):
 	"""
