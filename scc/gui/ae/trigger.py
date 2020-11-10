@@ -9,7 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.constants import TRIGGER_MIN, TRIGGER_HALF, TRIGGER_CLICK, TRIGGER_MAX
-from scc.actions import TriggerAction, ButtonAction, AxisAction, MouseAction
+from scc.actions import TriggerAction, ButtonAction, AxisAction, MouseAction, HipfireAction
 from scc.actions import Action, NoAction, MultiAction
 from scc.gui.ae import AEComponent, describe_action
 from scc.gui.area_to_action import action_to_area
@@ -148,23 +148,32 @@ class TriggerComponent(AEComponent, BindingEditor):
 		actions = []
 		half_level = int(self.builder.get_object("sclPartialLevel").get_value())
 		full_level = int(self.builder.get_object("sclFullLevel").get_value())
-		release = self.builder.get_object("cbReleasePartially").get_active()
+		# release = self.builder.get_object("cbReleasePartially").get_active()
+		cb = self.builder.get_object("cbActionType")
+		trigger_style = cb.get_model().get_value(cb.get_active_iter(), 1)
 		
-		if self.half:
-			if self.full and release:
-				actions.append(TriggerAction(half_level, full_level, self.half))
-			else:
+		if (trigger_style == "hipfire"):
+			if self.half and self.full:
+				actions.append(HipfireAction(half_level, full_level, self.half, self.full))
+		elif (trigger_style == "exclusive"):
+				actions.append(HipfireAction(half_level, full_level, self.half, self.full))
+		else:
+			if self.half:
+				# if self.full and release:
+				# 	actions.append(TriggerAction(half_level, full_level, self.half))
+				# else:
+				# 	actions.append(TriggerAction(half_level, TRIGGER_MAX, self.half))
 				actions.append(TriggerAction(half_level, TRIGGER_MAX, self.half))
-		if self.full:
-			actions.append(TriggerAction(full_level, TRIGGER_MAX, self.full))
-		
-		if self.analog:
-			analog_start = int(self.builder.get_object("sclARangeStart").get_value())
-			analog_end   = int(self.builder.get_object("sclARangeEnd").get_value())
-			if analog_start == TRIGGER_MIN and analog_end == TRIGGER_MAX:
-				actions.append(self.analog)
-			else:
-				actions.append(TriggerAction(analog_start, analog_end, self.analog))
+			if self.full:
+				actions.append(TriggerAction(full_level, TRIGGER_MAX, self.full))
+			
+			if self.analog:
+				analog_start = int(self.builder.get_object("sclARangeStart").get_value())
+				analog_end   = int(self.builder.get_object("sclARangeEnd").get_value())
+				if analog_start == TRIGGER_MIN and analog_end == TRIGGER_MAX:
+					actions.append(self.analog)
+				else:
+					actions.append(TriggerAction(analog_start, analog_end, self.analog))
 		
 		self.editor.set_action(MultiAction.make(*actions))
 	
@@ -182,6 +191,10 @@ class TriggerComponent(AEComponent, BindingEditor):
 	
 	
 	def on_ui_value_changed(self, *a):
+		if not self._recursing:
+			self.send()
+
+	def on_cbActionType_changed(self, *a):
 		if not self._recursing:
 			self.send()
 	
