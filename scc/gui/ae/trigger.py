@@ -93,6 +93,10 @@ class TriggerComponent(AEComponent, BindingEditor):
 						# UI can handle only one half-press action
 						return False, half, full, analog
 					half = a
+			elif isinstance(a, HipfireAction):
+				hipfire_actions = TriggerComponent._strip_hipfire(a)
+				half, full = (x.strip() for x in hipfire_actions )
+
 			elif isinstance(a, NoAction):
 				# Ignore theese
 				pass
@@ -114,25 +118,45 @@ class TriggerComponent(AEComponent, BindingEditor):
 			return action.action
 		return action
 	
+	@staticmethod
+	def _strip_hipfire(action):
+		"""
+		If passed action is HipfireAction, returns its childs action.
+		Returns passed action otherwise.
+		"""
+		if isinstance(action, HipfireAction):
+			return action.softpull_action, action.fullpull_action
+		return action
 	
 	def get_button_title(self):
 		return _("Key or Button")
-	
-	
+
+
 	def set_action(self, mode, action):
 		self.half, self.full, self.analog = NoAction(), NoAction(), NoAction()
 		sucess, half, full, analog = TriggerComponent._split(action)
 		if sucess:
 			self._recursing = True
-			self.half, self.full, self.analog = (TriggerComponent._strip_trigger(x) for x in (half, full, analog))
-			if half:
-				self.builder.get_object("sclPartialLevel").set_value(half.press_level)
-				self.builder.get_object("cbReleasePartially").set_active(half.release_level < TRIGGER_MAX)
-			if full:
-				self.builder.get_object("sclFullLevel").set_value(full.press_level)
-			if isinstance(analog, TriggerAction):
-				self.builder.get_object("sclARangeStart").set_value(analog.press_level)
-				self.builder.get_object("sclARangeEnd").set_value(analog.release_level)
+			cb = self.builder.get_object("cbActionType")
+			if isinstance(action, HipfireAction):
+				self.half, self.full = (TriggerComponent._strip_hipfire(x) for x in (half, full))
+				if half and full:
+					self.builder.get_object("sclPartialLevel").set_value(action.softpull_level)
+					self.builder.get_object("sclFullLevel").set_value(action.fullpull_level)
+					trigger_style = "hipfire_exclusive" if (action.mode == "EXCLUSIVE") else "hipfire"
+					self.set_cb(cb, trigger_style, 1)
+
+			else:
+				self.half, self.full, self.analog = (TriggerComponent._strip_trigger(x) for x in (half, full, analog))
+				if half:
+					self.builder.get_object("sclPartialLevel").set_value(half.press_level)
+					trigger_style = "normal_exclusive" if (half.release_level < TRIGGER_MAX) else "normal"
+					self.set_cb(cb, trigger_style, 1)
+				if full:
+					self.builder.get_object("sclFullLevel").set_value(full.press_level)
+				if isinstance(analog, TriggerAction):
+					self.builder.get_object("sclARangeStart").set_value(analog.press_level)
+					self.builder.get_object("sclARangeEnd").set_value(analog.release_level)
 			
 			self._recursing = False
 		self.update()
@@ -148,22 +172,20 @@ class TriggerComponent(AEComponent, BindingEditor):
 		actions = []
 		half_level = int(self.builder.get_object("sclPartialLevel").get_value())
 		full_level = int(self.builder.get_object("sclFullLevel").get_value())
-		# release = self.builder.get_object("cbReleasePartially").get_active()
 		cb = self.builder.get_object("cbActionType")
 		trigger_style = cb.get_model().get_value(cb.get_active_iter(), 1)
 		
 		if (trigger_style == "hipfire"):
 			if self.half and self.full:
 				actions.append(HipfireAction(half_level, full_level, self.half, self.full))
-		elif (trigger_style == "exclusive"):
+		elif (trigger_style == "hipfire_exclusive"):
 				actions.append(HipfireAction(half_level, full_level, self.half, self.full))
 		else:
 			if self.half:
-				# if self.full and release:
-				# 	actions.append(TriggerAction(half_level, full_level, self.half))
-				# else:
-				# 	actions.append(TriggerAction(half_level, TRIGGER_MAX, self.half))
-				actions.append(TriggerAction(half_level, TRIGGER_MAX, self.half))
+				if self.full and trigger_style == "normal_exclusive":
+					actions.append(TriggerAction(half_level, full_level, self.half))
+				else:
+					actions.append(TriggerAction(half_level, TRIGGER_MAX, self.half))
 			if self.full:
 				actions.append(TriggerAction(full_level, TRIGGER_MAX, self.full))
 			

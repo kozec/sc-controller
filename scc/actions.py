@@ -2473,6 +2473,7 @@ class HipfireAction(Action, HapticEnabledAction):
 	PROFILE_KEYS = "levels",
 	DEFAULT_TIMEOUT = 0.1
 	DEFAULT_SOFTPRESS_LEVEL = 50
+	DEFAULT_MODE = "NORMAL"
 	DEFAULT_FULLPULL_LEVEL = 254
 	TIMEOUT_KEY = "time"
 	PROFILE_KEY_PRIORITY = -5
@@ -2487,9 +2488,15 @@ class HipfireAction(Action, HapticEnabledAction):
 		if len(params) == 1:
 			self.fullpull_action = params[0]
 			self.timeout = HipfireAction.DEFAULT_TIMEOUT
+			self.mode = HipfireAction.DEFAULT_MODE
 		elif len(params) == 2:
 			self.fullpull_action = params[0]
 			self.timeout = params[1]
+			self.mode = HipfireAction.DEFAULT_MODE
+		elif len(params) == 3:
+			self.fullpull_action = params[0]
+			self.timeout = params[1]
+			self.mode = params[2]
 		else:
 			raise TypeError("Invalid number of parameters")
 		self.range = "None"
