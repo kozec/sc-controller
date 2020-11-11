@@ -9,6 +9,7 @@ from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
 from scc.constants import TRIGGER_MIN, TRIGGER_HALF, TRIGGER_CLICK, TRIGGER_MAX
+from scc.constants import HIPFIRE_NORMAL, HIPFIRE_SENSIBLE, HIPFIRE_EXCLUSIVE
 from scc.actions import TriggerAction, ButtonAction, AxisAction, MouseAction, HipfireAction
 from scc.actions import Action, NoAction, MultiAction
 from scc.gui.ae import AEComponent, describe_action
@@ -143,14 +144,14 @@ class TriggerComponent(AEComponent, BindingEditor):
 				if half and full:
 					self.builder.get_object("sclPartialLevel").set_value(action.softpull_level)
 					self.builder.get_object("sclFullLevel").set_value(action.fullpull_level)
-					trigger_style = "hipfire_exclusive" if (action.mode == "EXCLUSIVE") else "hipfire"
-					self.set_cb(cb, trigger_style, 1)
+					trigger_style = action.mode
+					self.set_cb(cb, "HIPFIRE_" + trigger_style, 1)
 
 			else:
 				self.half, self.full, self.analog = (TriggerComponent._strip_trigger(x) for x in (half, full, analog))
 				if half:
 					self.builder.get_object("sclPartialLevel").set_value(half.press_level)
-					trigger_style = "normal_exclusive" if (half.release_level < TRIGGER_MAX) else "normal"
+					trigger_style = "NORMAL_EXCLUSIVE" if (half.release_level < TRIGGER_MAX) else "NORMAL"
 					self.set_cb(cb, trigger_style, 1)
 				if full:
 					self.builder.get_object("sclFullLevel").set_value(full.press_level)
@@ -175,14 +176,15 @@ class TriggerComponent(AEComponent, BindingEditor):
 		cb = self.builder.get_object("cbActionType")
 		trigger_style = cb.get_model().get_value(cb.get_active_iter(), 1)
 		
-		if (trigger_style == "hipfire"):
-			if self.half and self.full:
-				actions.append(HipfireAction(half_level, full_level, self.half, self.full))
-		elif (trigger_style == "hipfire_exclusive"):
-				actions.append(HipfireAction(half_level, full_level, self.half, self.full))
+		if (trigger_style == "HIPFIRE_NORMAL") and self.half and self.full:
+				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_NORMAL))
+		elif (trigger_style == "HIPFIRE_EXCLUSIVE") and self.half and self.full:
+				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_EXCLUSIVE))
+		elif (trigger_style == "HIPFIRE_SENSIBLE") and self.half and self.full:
+				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_SENSIBLE))
 		else:
 			if self.half:
-				if self.full and trigger_style == "normal_exclusive":
+				if self.full and trigger_style == "NORMAL_EXCLUSIVE":
 					actions.append(TriggerAction(half_level, full_level, self.half))
 				else:
 					actions.append(TriggerAction(half_level, TRIGGER_MAX, self.half))
