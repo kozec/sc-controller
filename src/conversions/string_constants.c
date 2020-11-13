@@ -11,7 +11,7 @@
 
 static const char* CONSTANTS[] = {
 	// Buttons
-	"A", "B", "X", "Y", "START", "C", "BACK", "LRPADTOUCH", "RPADTOUCH",
+	"A", "B", "X", "Y", "START", "C", "BACK", "LPADTOUCH", "RPADTOUCH",
 	"LPADPRESS", "RPADPRESS", "STICKPRESS",
 	// Bumpers
 	"LB", "RB",
