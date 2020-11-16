@@ -126,7 +126,7 @@ class TriggerComponent(AEComponent, BindingEditor):
 		Returns passed action otherwise.
 		"""
 		if isinstance(action, HipfireAction):
-			return action.softpull_action, action.fullpull_action
+			return action.partialpress_action, action.fullpress_action
 		return action
 	
 	def get_button_title(self):
@@ -142,10 +142,11 @@ class TriggerComponent(AEComponent, BindingEditor):
 			if isinstance(action, HipfireAction):
 				self.half, self.full = (TriggerComponent._strip_hipfire(x) for x in (half, full))
 				if half and full:
-					self.builder.get_object("sclPartialLevel").set_value(action.softpull_level)
-					self.builder.get_object("sclFullLevel").set_value(action.fullpull_level)
+					self.builder.get_object("sclPartialLevel").set_value(action.partialpress_level)
+					self.builder.get_object("sclFullLevel").set_value(action.fullpress_level)
 					trigger_style = action.mode
 					self.set_cb(cb, "HIPFIRE_" + trigger_style, 1)
+					self.builder.get_object("sclTimeOut").set_value(action.timeout)
 
 			else:
 				self.half, self.full, self.analog = (TriggerComponent._strip_trigger(x) for x in (half, full, analog))
@@ -175,13 +176,14 @@ class TriggerComponent(AEComponent, BindingEditor):
 		full_level = int(self.builder.get_object("sclFullLevel").get_value())
 		cb = self.builder.get_object("cbActionType")
 		trigger_style = cb.get_model().get_value(cb.get_active_iter(), 1)
+		timeout = self.builder.get_object("sclTimeOut").get_value()
 		
 		if (trigger_style == "HIPFIRE_NORMAL") and self.half and self.full:
-				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_NORMAL))
+				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_NORMAL,timeout))
 		elif (trigger_style == "HIPFIRE_EXCLUSIVE") and self.half and self.full:
-				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_EXCLUSIVE))
+				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_EXCLUSIVE,timeout))
 		elif (trigger_style == "HIPFIRE_SENSIBLE") and self.half and self.full:
-				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_SENSIBLE))
+				actions.append(HipfireAction(half_level, full_level, self.half, self.full, HIPFIRE_SENSIBLE,timeout))
 		else:
 			if self.half:
 				if self.full and trigger_style == "NORMAL_EXCLUSIVE":
@@ -274,3 +276,6 @@ class TriggerComponent(AEComponent, BindingEditor):
 	
 	def on_btARangeEndClear_clicked(self, *a):
 		self.builder.get_object("sclARangeEnd").set_value(TRIGGER_MAX)
+
+	def on_btTimeOutClear_clicked(self, *a):
+		self.builder.get_object("sclTimeOut").set_value(HipfireAction.DEFAULT_TIMEOUT)

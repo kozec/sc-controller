@@ -15,6 +15,7 @@ from scc.uinput import Keys, Axes, Rels
 from scc.lib import xwrappers as X
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MIN_HALF
 from scc.constants import STICK_PAD_MAX_HALF, TRIGGER_MIN, TRIGGER_HALF
+from scc.constants import HIPFIRE_NORMAL, HIPFIRE_SENSIBLE, HIPFIRE_EXCLUSIVE
 from scc.constants import LEFT, RIGHT, CPAD, STICK, PITCH, YAW, ROLL
 from scc.constants import PARSER_CONSTANTS, ControllerFlags
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD
@@ -2473,36 +2474,47 @@ class HipfireAction(Action, HapticEnabledAction):
 
 	COMMAND = "hipfire"
 	PROFILE_KEYS = "levels",
-	DEFAULT_TIMEOUT = 0.1
-	DEFAULT_SOFTPRESS_LEVEL = 50
-	DEFAULT_MODE = "NORMAL"
-	DEFAULT_FULLPULL_LEVEL = 254
+	DEFAULT_TIMEOUT = 0.15
+	DEFAULT_PARTIALPRESS_LEVEL = 50
+	DEFAULT_FULLPRESS_LEVEL = 254
+	DEFAULT_MODE = HIPFIRE_NORMAL
 	TIMEOUT_KEY = "time"
 	PROFILE_KEY_PRIORITY = -5
 	
-	def __init__(self, softpull_level, fullpull_level, softpull_action, fullpull_action, *params):
-		Action.__init__(self, softpull_level, fullpull_level, softpull_action, fullpull_action, *params)
+	def __init__(self, *params):
+		Action.__init__(self, *params)
 		HapticEnabledAction.__init__(self)
-		self.softpull_level = int(softpull_level)
-		self.fullpull_level = int(fullpull_level)
-		self.softpull_action = softpull_action
-		self.fullpull_action = fullpull_action
-		if len(params) == 1:
-			self.mode = params[0]
-			self.timeout = HipfireAction.DEFAULT_TIMEOUT
-		elif len(params) == 2:
-			self.mode = params[0]
-			self.timeout = params[1]
+		# set default values in case is not provided
+		self.partialpress_level = HipfireAction.DEFAULT_PARTIALPRESS_LEVEL
+		self.fullpress_level = HipfireAction.DEFAULT_FULLPRESS_LEVEL
+		self.mode = HipfireAction.DEFAULT_MODE
+		self.timeout = HipfireAction.DEFAULT_TIMEOUT
+
+		if len(params) >= 2:
+			if type(params[0]) in (int, float):
+				self.partialpress_level = int(params[0])
+				if type(params[1]) in (int, float):
+					self.fullpress_level = int(params[1])
+					params = params[2:]
+				else:
+					params = params[1:]
+
+			self.partialpress_action = params[0]
+			self.fullpress_action = params[1]
+			if len(params) >= 3:
+				self.mode = params[2]
+			if len(params) == 4:
+				self.timeout = params[3]
 		else:
 			raise TypeError("Invalid number of parameters")
 
-		if self.mode not in ("NORMAL", "EXCLUSIVE", "SENSIBLE"):
+		if self.mode not in (HIPFIRE_NORMAL, HIPFIRE_EXCLUSIVE, HIPFIRE_SENSIBLE):
 			raise ValueError("Invalid hipfire mode")
-		self.softpull_active = False
+		self.partialpress_active = False
 		self.range = "None"
 		self.waiting_task = None
-		self.sensible_state = "ready"
-		self.new_softpull_level = self.softpull_level
+		self.sensible_state = "READY"
+		self._partialpress_level = self.partialpress_level
 
 	
 	@staticmethod
@@ -2519,132 +2531,132 @@ class HipfireAction(Action, HapticEnabledAction):
 	
 	
 	def compress(self):
-		self.softpull_action = self.softpull_action.compress()
-		self.fullpull_action = self.fullpull_action.compress()
+		self.partialpress_action = self.partialpress_action.compress()
+		self.fullpress_action = self.fullpress_action.compress()
 		return self
 	
 	def on_timeout(self, mapper, *a):
 		if self.waiting_task:
 			self.waiting_task = None
-			if self.range == "SOFTPULL":
-				# Timeouted while inside softpull range
+			if self.range == "PARTIALPRESS":
+				# Timeouted while inside partial press range
 				if self.haptic:
 					mapper.send_feedback(self.haptic)
-				self.softpull_press(mapper)
+				self._partial_press(mapper)
 	
-	def softpull_press(self, mapper):
-		self.softpull_active = True
+	def _partial_press(self, mapper):
+		self.partialpress_active = True
 		if self.haptic:
 			mapper.send_feedback(self.haptic)
-		self.softpull_action.button_press(mapper)
+		self.partialpress_action.button_press(mapper)
 	
 	
-	def softpull_release(self, mapper):
-		self.softpull_active = False
+	def _partial_release(self, mapper):
+		self.partialpress_active = False
 		if self.haptic:
 			mapper.send_feedback(self.haptic)
-		self.softpull_action.button_release(mapper)
+		self.partialpress_action.button_release(mapper)
 	
-	def fullpull_press(self, mapper):
+	def _full_press(self, mapper):
 		if self.haptic:
 			mapper.send_feedback(self.haptic)
-		self.fullpull_action.button_press(mapper)
+		self.fullpress_action.button_press(mapper)
 	
-	def fullpull_release(self, mapper):
+	def _full_release(self, mapper):
 		if self.haptic:
 			mapper.send_feedback(self.haptic)
-		self.fullpull_action.button_release(mapper)
+		self.fullpress_action.button_release(mapper)
 	
 	
 	def trigger(self, mapper, position, old_position):
-		# Checks the current position of the trigger and apply the action based on three possible range: [None, SOFTPULL, FULLPULL]
+		# Checks the current position of the trigger and apply the action based on three possible range: [None, PARTIALPRESS, FULLPRESS]
 
-		# Checks full pull first to prevent unnecessary conditional evaluation
-		if position >= self.fullpull_level and old_position < self.fullpull_level:
-			self.range = "FULLPULL"
-			# Entered now in full pull range and activate fully pressed action
+		# Checks full press first to prevent unnecessary conditional evaluation
+		if position >= self.fullpress_level and old_position < self.fullpress_level:
+			self.range = "FULLPRESS"
+			# Entered now in full press range and activate fully pressed action
 			
-			# Checks if it's in exclusive mode and if soft pull is active before activating
-			if (self.mode == "EXCLUSIVE") and self.softpull_active: return
+			# Checks if it's in exclusive mode and if partial press is active before activating
+			if (self.mode == HIPFIRE_EXCLUSIVE) and self.partialpress_active: return
 
-			self.fullpull_press(mapper)
+			self._full_press(mapper)
 			# Cancel any pending timer to prevent partially pressed action from activating
 			if self.waiting_task:
 				mapper.cancel_task(self.waiting_task)
 				self.waiting_task = None
 		
-		elif position < self.fullpull_level and old_position >= self.fullpull_level:
-			self.range = "SOFTPULL"
-			# left the full pull range and released the fully pressed action
-			self.fullpull_release(mapper)	
+		elif position < self.fullpress_level and old_position >= self.fullpress_level:
+			self.range = "PARTIALPRESS"
+			# left the full press range and released the fully pressed action
+			self._full_release(mapper)	
 		
-		elif position >= self.softpull_level:
-			self.range = "SOFTPULL"
-			# Entered now in soft pull range and should start the timer
+		elif position >= self.partialpress_level:
+			self.range = "PARTIALPRESS"
+			# Entered now in partial press range and should start the timer
 			# normal behavior. without the sensible trigger 
-			if old_position < self.softpull_level:
+			if old_position < self.partialpress_level:
 				# Cancels previous timer
 				if self.waiting_task:
 					mapper.cancel_task(self.waiting_task)
 					self.waiting_task = None
-				# Start the timer to execute the action if the full pull range is not reached before timeout
+				# Start the timer to execute the action if the full press range is not reached before timeout
 				self.waiting_task = mapper.schedule(self.timeout, self.on_timeout)
 
 			# Spliting conditional for treating the sensible mode
-			# in this mode after reaching the soft pull level, releasing the trigger a little will cause it to deactivate the action
+			# in this mode after reaching the partial press level, releasing the trigger a little will cause it to deactivate the action
 			# allowing fast repeatly presses without needing to release the trigger the all the way back
-			if self.mode == "SENSIBLE":
-				if position > old_position and self.sensible_state == "ready":
-					## Create the new soft pull point while pressing the trigger and the trigger is in its initial state
-					self.new_softpull_level = max(old_position, self.new_softpull_level) - 45 # using a arbitrary value just for tests
+			if self.mode == HIPFIRE_SENSIBLE:
+				if position > old_position and self.sensible_state == "READY":
+					## Create the new partial press point while pressing the trigger and the trigger is in its initial state
+					self.new_partialpress_level = max(old_position, self.new_partialpress_level) - 45 # using a arbitrary value just for tests
 				
-				if self.sensible_state != "released" and position < self.new_softpull_level and old_position >= self.new_softpull_level:
+				if self.sensible_state != "RELEASED" and position < self.new_partialpress_level and old_position >= self.new_partialpress_level:
 					# Leaving the sensible range deactivating the action if it's already activated otherwise just schedule a short press
-					self.sensible_state = "released"
+					self.sensible_state = "RELEASED"
 					if self.waiting_task:
 						mapper.cancel_task(self.waiting_task)
 						self.waiting_task = None
-						self.softpull_press(mapper)
-						mapper.schedule(0.02, self.softpull_release)
+						self._partial_press(mapper)
+						mapper.schedule(0.02, self._partial_release)
 					else:
-						self.softpull_release(mapper)
+						self._partial_release(mapper)
 
-				elif self.sensible_state != "pressed" and position >= self.new_softpull_level and old_position < self.new_softpull_level:
-					# Activate the action (schedule) again without needed to release the action until the softpress level
-					self.sensible_state = "pressed"
+				elif self.sensible_state != "PRESSED" and position >= self.new_partialpress_level and old_position < self.new_partialpress_level:
+					# Activate the action (schedule) again without needed to release the action until the partial press level
+					self.sensible_state = "PRESSED"
 					if self.waiting_task:
 						mapper.cancel_task(self.waiting_task)
 						self.waiting_task = None
-					#start the timer to execute the action if the fullpull is not reached before timeout
+					#start the timer to execute the action if the full press is not reached before timeout
 					self.waiting_task = mapper.schedule(self.timeout, self.on_timeout)
 
-		## Normal release of the soft pull, deactivates the partially pressed action if it was active or if the time was still going schedule a short press 
-		elif position < self.softpull_level and old_position >= self.softpull_level:
+		## Normal release of the partial press, deactivates the partially pressed action if it was active or if the time was still going schedule a short press 
+		elif position < self.partialpress_level and old_position >= self.partialpress_level:
 			self.range = "NONE"
 			if self.waiting_task:
 				mapper.cancel_task(self.waiting_task)
 				self.waiting_task = None
-				self.softpull_press(mapper)
-				mapper.schedule(0.02, self.softpull_release)
+				self._partial_press(mapper)
+				mapper.schedule(0.02, self._partial_release)
 			else:
-				self.softpull_release(mapper)
+				self._partial_release(mapper)
 
 			# reset the sensible state
-			self.sensible_state = "ready"
-			self.new_softpull_level = self.softpull_level
+			self.sensible_state = "READY"
+			self.new_partialpress_level = self.partialpress_level
 
 	
 	def describe(self, context):
 		l = [ ]
-		if self.softpull_action:
-			l += [ self.softpull_action ]
-		if self.fullpull_action:
-			l += [ self.fullpull_action ]
+		if self.partialpress_action:
+			l += [ self.partialpress_action ]
+		if self.fullpress_action:
+			l += [ self.fullpress_action ]
 		return "\n".join([ x.describe(context) for x in l ])
 	
 	
 	def __str__(self):
-		return "<Hipfire %s-%s %s %s %s >" % (self.softpull_level, self.fullpull_level, self.softpull_action, self.fullpull_action, self.mode)
+		return "<Hipfire %s-%s %s %s %s >" % (self.partialpress_level, self.fullpress_level, self.partialpress_action, self.fullpress_action, self.mode)
 	
 	__repr__ = __str__
 
