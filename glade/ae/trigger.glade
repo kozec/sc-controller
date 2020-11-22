@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.36.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjARangeEnd">
@@ -27,6 +27,43 @@
     <property name="value">50</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjTimeOut">
+    <property name="lower">0.05</property>
+    <property name="upper">0.8</property>
+    <property name="value">0.15</property>
+    <property name="step_increment">0.01</property>
+    <property name="page_increment">0.1</property>
+  </object>
+  <object class="GtkListStore" id="lstTriggerStyle">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name action -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Normal</col>
+        <col id="1" translatable="yes">NORMAL</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Normal - Exclusive Buttons</col>
+        <col id="1" translatable="yes">NORMAL_EXCLUSIVE</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Hip Fire</col>
+        <col id="1" translatable="yes">HIPFIRE_NORMAL</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Hip Fire - Exclusive Buttons</col>
+        <col id="1" translatable="yes">HIPFIRE_EXCLUSIVE</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Hip fire - Sensible</col>
+        <col id="1" translatable="yes">HIPFIRE_SENSIBLE</col>
+      </row>
+    </data>
   </object>
   <object class="GtkGrid" id="trigger">
     <property name="visible">True</property>
@@ -190,7 +227,7 @@
       </object>
       <packing>
         <property name="left_attach">3</property>
-        <property name="top_attach">3</property>
+        <property name="top_attach">2</property>
       </packing>
     </child>
     <child>
@@ -210,7 +247,7 @@
       </object>
       <packing>
         <property name="left_attach">3</property>
-        <property name="top_attach">4</property>
+        <property name="top_attach">3</property>
       </packing>
     </child>
     <child>
@@ -277,7 +314,7 @@
       </object>
       <packing>
         <property name="left_attach">0</property>
-        <property name="top_attach">5</property>
+        <property name="top_attach">6</property>
         <property name="width">3</property>
       </packing>
     </child>
@@ -299,7 +336,7 @@
       </object>
       <packing>
         <property name="left_attach">3</property>
-        <property name="top_attach">5</property>
+        <property name="top_attach">6</property>
       </packing>
     </child>
     <child>
@@ -315,7 +352,7 @@
       </object>
       <packing>
         <property name="left_attach">0</property>
-        <property name="top_attach">6</property>
+        <property name="top_attach">7</property>
       </packing>
     </child>
     <child>
@@ -332,7 +369,7 @@
       </object>
       <packing>
         <property name="left_attach">1</property>
-        <property name="top_attach">6</property>
+        <property name="top_attach">7</property>
         <property name="width">2</property>
       </packing>
     </child>
@@ -350,7 +387,7 @@
       </object>
       <packing>
         <property name="left_attach">1</property>
-        <property name="top_attach">7</property>
+        <property name="top_attach">8</property>
         <property name="width">2</property>
       </packing>
     </child>
@@ -367,7 +404,7 @@
       </object>
       <packing>
         <property name="left_attach">0</property>
-        <property name="top_attach">7</property>
+        <property name="top_attach">8</property>
       </packing>
     </child>
     <child>
@@ -387,7 +424,7 @@
       </object>
       <packing>
         <property name="left_attach">3</property>
-        <property name="top_attach">6</property>
+        <property name="top_attach">7</property>
       </packing>
     </child>
     <child>
@@ -407,7 +444,7 @@
       </object>
       <packing>
         <property name="left_attach">3</property>
-        <property name="top_attach">7</property>
+        <property name="top_attach">8</property>
       </packing>
     </child>
     <child>
@@ -424,7 +461,7 @@
       </object>
       <packing>
         <property name="left_attach">2</property>
-        <property name="top_attach">4</property>
+        <property name="top_attach">3</property>
       </packing>
     </child>
     <child>
@@ -440,7 +477,7 @@
       </object>
       <packing>
         <property name="left_attach">0</property>
-        <property name="top_attach">4</property>
+        <property name="top_attach">3</property>
         <property name="width">2</property>
       </packing>
     </child>
@@ -458,7 +495,7 @@
       </object>
       <packing>
         <property name="left_attach">2</property>
-        <property name="top_attach">3</property>
+        <property name="top_attach">2</property>
       </packing>
     </child>
     <child>
@@ -474,34 +511,103 @@
       </object>
       <packing>
         <property name="left_attach">0</property>
-        <property name="top_attach">3</property>
+        <property name="top_attach">2</property>
         <property name="width">2</property>
       </packing>
     </child>
     <child>
-      <object class="GtkCheckButton" id="cbReleasePartially">
+      <object class="GtkLabel" id="label3">
+        <property name="width_request">200</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Dual Stage Trigger Style</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">4</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkComboBox" id="cbActionType">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="receives_default">False</property>
-        <property name="margin_top">5</property>
-        <property name="active">True</property>
-        <property name="draw_indicator">True</property>
-        <signal name="toggled" handler="on_ui_value_changed" swapped="no"/>
+        <property name="model">lstTriggerStyle</property>
+        <property name="row_span_column">0</property>
+        <property name="active">0</property>
+        <signal name="changed" handler="on_cbActionType_changed" swapped="no"/>
         <child>
-          <object class="GtkLabel" id="label2">
-            <property name="width_request">250</property>
+          <object class="GtkCellRendererText" id="cellrenderertext1"/>
+          <attributes>
+            <attribute name="text">0</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">4</property>
+        <property name="width">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="label2">
+        <property name="width_request">200</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Hip Fire Delay</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">5</property>
+        <property name="width">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="btTimeOutClear">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <property name="margin_left">10</property>
+        <signal name="clicked" handler="on_btTimeOutClear_clicked" swapped="no"/>
+        <child>
+          <object class="GtkImage" id="image5">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Release Partially Pressed when Fully Pressed is activated</property>
-            <property name="xalign">0</property>
+            <property name="stock">gtk-clear</property>
           </object>
         </child>
       </object>
       <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">2</property>
-        <property name="width">4</property>
+        <property name="left_attach">3</property>
+        <property name="top_attach">5</property>
       </packing>
+    </child>
+    <child>
+      <object class="GtkScale" id="sclTimeOut">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="hexpand">True</property>
+        <property name="adjustment">adjTimeOut</property>
+        <property name="fill_level">1</property>
+        <property name="round_digits">0</property>
+        <property name="digits">2</property>
+        <property name="value_pos">right</property>
+        <signal name="value-changed" handler="on_ui_value_changed" swapped="no"/>
+      </object>
+      <packing>
+        <property name="left_attach">2</property>
+        <property name="top_attach">5</property>
+      </packing>
+    </child>
+    <child>
+      <placeholder/>
     </child>
   </object>
 </interface>

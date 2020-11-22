@@ -138,6 +138,35 @@ and
 	trigger(255, feedback(LEFT, button(KEY_ENTER)))
 ```
 
+#### <a name="hipfire"></a> hipfire([partialpress_level, ][fullpress_level, ] partialpress_action, fullpress_action [, mode][, delay])
+Maps two different actions to be executed when trigger is inside a defined range and meet predefined conditions.
+Basically, the "partialpress_action" will be activated if the trigger is pressed passed the "partialpress_level" and it stays inside the range between this level and the "fullpress_level" until the "delay" ends, otherwise, the "fullpress_action" will be activated ALONE if the "fullpress_level" is reached before the "delay" ends.
+
+The partial and full levels goes from 0 to 255, and the values 50 and 254 are used for "partialpress_level" and "fullpress_level", respectively, if none is passed.
+
+The "mode" can be defined as described below and the "NORMAL" one is used if none is  passed.
+
+Modes available:
+
+ - NORMAL - if trigger is pressed beyond the "partialpress_level" and the timeout is reached, the "partialpress_action" is executed. If the "partialpress_action" was pressed it will only be released after the trigger return back beyond the "partialpress_level". The "fullpress_action" will be executed every time the "fullpress_level" is reached, but if this level is reached before the timeout the "partialpres_action" will not be triggered until releasing the trigger.
+ - EXCLUSIVE - Acts similar to the previous mode, but the "fullpress_action" is only triggered if the "partialpres_action" was not triggered. Meaning it will only activate if the "fullpress_level" is reached before the timeout ends.
+ - SENSIBLE - Acts similar to NORMAL, but after the "partialpress_action" is activated, releasing the trigger a little, will deactivate the action allowing it to be activated again more faster without needing to release the trigger back beyond the "partialpress_level". 
+
+The "delay" is time window used to determine if the "partialpress_action" should or not be activated. 
+
+Examples:
+
+Hold right mouse button while trigger is being softly pressed and press left mouse button when trigger click, but will bypass the right mouse button and only press the left mouse button if the trigger is pressed very fast to the click.
+```
+hipfire(50, 254, button(BTN_RIGHT),button(BTN_LEFT), NORMAL, 0.20)
+```
+
+Press A if the trigger is pressed slowly and not reaches the click or press B if the trigger is pressed fast and reached the click, and will execute only one of this two actions.
+
+```
+hipfire(50, 254, button(KEY_A),button(KEY_B), EXCLUSIVE, 0.15)
+```
+
 #### <a name="gyro"></a> gyro(axis1 [, axis2 [, axis3]])
 Maps *changes* in gyroscope pitch, yaw and roll movement into movements of gamepad stick.
 Can be used to map gyroscope to camera when camera can be controlled only with analog stick.
