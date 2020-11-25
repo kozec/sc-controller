@@ -359,7 +359,7 @@ class Mapper(object):
 		self.state = state
 		self.buttons = state.buttons
 		
-		if self.buttons & SCButtons.LPAD and not self.buttons & SCButtons.LPADTOUCH:
+		if self.buttons & SCButtons.LPAD and not self.buttons & (SCButtons.LPADTOUCH | STICKTILT):
 			self.buttons = (self.buttons & ~SCButtons.LPAD) | SCButtons.STICKPRESS
 		
 		fe = self.force_event

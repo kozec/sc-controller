@@ -12,9 +12,10 @@ from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
 from scc.actions import GyroAbsAction
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX, STICK_PAD_MAX_HALF
-from scc.constants import FE_PAD, SCButtons, HapticPos, ControllerFlags
 from scc.constants import CUT, ROUND, LINEAR, MINIMUM, FE_STICK, FE_TRIGGER
 from scc.constants import TRIGGER_MAX, LEFT, CPAD, RIGHT, STICK
+from scc.constants import FE_PAD, SCButtons, STICKTILT
+from scc.constants import HapticPos, ControllerFlags
 from scc.tools import nameof, clamp, quat2euler
 from scc.controller import HapticData
 from scc.uinput import Axes, Rels
@@ -172,19 +173,19 @@ class NameModifier(Modifier):
 class ClickModifier(Modifier):
 	# TODO: Rename to 'clicked'
 	COMMAND = "click"
-
+	
 	@staticmethod
 	def decode(data, a, *b):
 		return ClickModifier(a)
-
-
+	
+	
 	def describe(self, context):
 		if context in (Action.AC_STICK, Action.AC_PAD):
 			return _("(if pressed)") + "\n" + self.action.describe(context)
 		else:
 			return _("(if pressed)") + " " + self.action.describe(context)
-
-
+	
+	
 	def to_string(self, multiline=False, pad=0):
 		if multiline:
 			childstr = self.action.to_string(True, pad + 2)
@@ -199,28 +200,28 @@ class ClickModifier(Modifier):
 			self.COMMAND,
 			self.action.to_string()
 		)
-
-
+	
+	
 	def strip(self):
 		return self.action.strip()
-
-
+	
+	
 	def compress(self):
 		self.action = self.action.compress()
 		return self
-
-
+	
+	
 	# For button press & co it's safe to assume that they are being pressed...
 	def button_press(self, mapper):
 		return self.action.button_press(mapper)
-
+	
 	def button_release(self, mapper):
 		return self.action.button_release(mapper)
-
+	
 	def trigger(self, mapper, position, old_position):
 		return self.action.trigger(mapper, position, old_position)
-
-
+	
+	
 	def axis(self, mapper, position, what):
 		if what in (STICK, LEFT) and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
@@ -239,8 +240,8 @@ class ClickModifier(Modifier):
 		elif mapper.was_pressed(SCButtons.RPAD):
 			# what == RIGHT, last option, Just released
 			return self.action.axis(mapper, 0, what)
-
-
+	
+	
 	def pad(self, mapper, position, what):
 		if what == LEFT and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
@@ -259,13 +260,14 @@ class ClickModifier(Modifier):
 		elif mapper.was_pressed(SCButtons.RPAD):
 			# what == RIGHT, there are only two options, Just released
 			return self.action.pad(mapper, 0, what)
-
-
+	
+	
 	def whole(self, mapper, x, y, what):
 		if what in (STICK, LEFT) and mapper.is_pressed(SCButtons.LPAD):
 			if what == STICK: mapper.force_event.add(FE_STICK)
 			return self.action.whole(mapper, x, y, what)
-		elif what in (STICK, LEFT) and mapper.was_pressed(SCButtons.LPAD):
+		elif (what in (STICK, LEFT) and (mapper.was_pressed(SCButtons.LPAD)
+					or mapper.was_pressed(STICKTILT))):
 			# Just released
 			return self.action.whole(mapper, 0, 0, what)
 		elif what == RIGHT and mapper.is_pressed(SCButtons.RPAD):
