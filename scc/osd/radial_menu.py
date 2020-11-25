@@ -193,14 +193,14 @@ class RadialMenu(Menu):
 	
 	def show(self):
 		OSDWindow.show(self)
-
+		
 		from ctypes import byref
-
+		
 		pb = self.b.get_pixbuf()
 		win = X.XID(self.get_window().get_xid())
 		
-		width = int(pb.get_width() * self.scale)
-		height = int(pb.get_height() * self.scale)
+		width = int(pb.get_width() * self.scale * self.get_scale_factor())
+		height = int(pb.get_height() * self.scale * self.get_scale_factor())
 		pixmap = X.create_pixmap(self.xdisplay, win, width, height, 1)
 		self.f.move(self.cursor, int(width / 2), int(height / 2))
 		
@@ -293,3 +293,4 @@ if __name__ == "__main__":
 	if m.get_exit_code() == 0:
 		print m.get_selected_item_id()
 	sys.exit(m.get_exit_code())
+
