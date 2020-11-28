@@ -28,7 +28,7 @@ from scc.lib import IntEnum
 If SC-Controller is updated while daemon is running, DAEMON_VERSION send by
 daemon will differ one one expected by UI and daemon will be forcefully restarted.
 """
-DAEMON_VERSION = "0.4.7"
+DAEMON_VERSION = "0.4.8"
 
 HPERIOD  = 0.02
 LPERIOD  = 0.5
