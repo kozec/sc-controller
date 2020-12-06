@@ -1,5 +1,6 @@
 from scc.uinput import Keys, Axes, Rels
 from scc.actions import *
+from scc.constants import HIPFIRE_SENSIBLE
 from . import _parses_as_itself, parser
 import inspect
 
@@ -293,3 +294,16 @@ class TestActions(object):
 			ButtonAction(Keys.KEY_A)
 		))
 
+	def test_hipfire(self):
+		"""
+		Tests if HipfireAction can be converted to string and parsed back to
+		same action.
+		"""
+		a = ButtonAction(Keys.KEY_A)
+		b = ButtonAction(Keys.KEY_B)
+		assert _parses_as_itself(HipfireAction(a, b))
+		assert _parses_as_itself(HipfireAction(49, 253, a, b))
+		assert _parses_as_itself(HipfireAction(a, b, HIPFIRE_SENSIBLE))
+		assert _parses_as_itself(HipfireAction(a, b, HIPFIRE_SENSIBLE, 0.14))
+		assert _parses_as_itself(HipfireAction(49, a, b, HIPFIRE_SENSIBLE, 0.14))
+		assert _parses_as_itself(HipfireAction(49, 253, a, b, HIPFIRE_SENSIBLE, 0.14))
