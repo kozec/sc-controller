@@ -121,6 +121,10 @@ CASES = {
 			"action": "menu('Default.menu')"
 		},
 		"feedback": ["LEFT", 32640]
+	},
+	"hipfire": {
+                'action': 'hipfire( button(KEY_A), button(KEY_B) )',
+                "feedback": ['BOTH']
 	}
 }
 
