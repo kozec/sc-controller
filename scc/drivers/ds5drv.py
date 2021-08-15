@@ -20,7 +20,7 @@ import sys, logging, ctypes
 log = logging.getLogger("DS4")
 
 VENDOR_ID = 0x054c
-PRODUCT_ID = 0x09cc
+PRODUCT_ID = 0x0ce6
 
 
 class DS4Controller(HIDController):
@@ -425,4 +425,4 @@ if __name__ == "__main__":
 	""" Called when executed as script """
 	init_logging()
 	set_logging_level(True, True)
-	sys.exit(hiddrv_test(DS4Controller, [ "054c:09cc" ]))
+	sys.exit(hiddrv_test(DS4Controller, [ "054c:0ce6" ]))
