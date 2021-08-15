@@ -17,7 +17,7 @@ from scc.constants import SCButtons, ControllerFlags
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.tools import init_logging, set_logging_level
 import sys, logging, ctypes
-log = logging.getLogger("DS4")
+log = logging.getLogger("DS5")
 
 VENDOR_ID = 0x054c
 PRODUCT_ID = 0x0ce6
@@ -54,12 +54,16 @@ class DS4Controller(HIDController):
 	def _load_hid_descriptor(self, config, max_size, vid, pid, test_mode):
 		# Overrided and hardcoded
 		self._decoder = HIDDecoder()
+		
+		# Dpad works on DualSense!
 		self._decoder.axes[AxisType.AXIS_LPAD_X] = AxisData(
-			mode = AxisMode.HATSWITCH, byte_offset = 5, size = 8,
+			mode = AxisMode.HATSWITCH, byte_offset = 8, size = 8, 
 			data = AxisDataUnion(hatswitch = HatswitchModeData(
 				button = SCButtons.LPAD | SCButtons.LPADTOUCH,
 				min = STICK_PAD_MIN, max = STICK_PAD_MAX
 		)))
+
+		# Sticks are the same as DS4
 		self._decoder.axes[AxisType.AXIS_STICK_X] = AxisData(
 			mode = AxisMode.AXIS, byte_offset = 1, size = 8,
 			data = AxisDataUnion(axis = AxisModeData(
@@ -82,35 +86,44 @@ class DS4Controller(HIDController):
 				button = SCButtons.RPADTOUCH,
 				scale = -1.0, offset = 127.5, clamp_max = 257, deadzone = 10
 		)))
+
+		# Triggers
 		self._decoder.axes[AxisType.AXIS_LTRIG] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 8, size = 8,
+			mode = AxisMode.AXIS, byte_offset = 5, size = 8, # Not sure about the size
 			data = AxisDataUnion(axis = AxisModeData(
 				scale = 1.0, clamp_max = 1, deadzone = 10
 		)))
 		self._decoder.axes[AxisType.AXIS_RTRIG] = AxisData(
-			mode = AxisMode.AXIS, byte_offset = 9, size = 8,
+			mode = AxisMode.AXIS, byte_offset = 6, size = 8, # Not sure about the size
 			data = AxisDataUnion(axis = AxisModeData(
 				scale = 1.0, clamp_max = 1, deadzone = 10
 		)))
-		self._decoder.axes[AxisType.AXIS_GPITCH] = AxisData(
-			mode = AxisMode.DS4ACCEL, byte_offset = 13)
-		self._decoder.axes[AxisType.AXIS_GROLL] = AxisData(
-			mode = AxisMode.DS4ACCEL, byte_offset = 17)
-		self._decoder.axes[AxisType.AXIS_GYAW] = AxisData(
-			mode = AxisMode.DS4ACCEL, byte_offset = 15)
-		self._decoder.axes[AxisType.AXIS_Q1] = AxisData(
-			mode = AxisMode.DS4GYRO, byte_offset = 23)
-		self._decoder.axes[AxisType.AXIS_Q2] = AxisData(
-			mode = AxisMode.DS4GYRO, byte_offset = 19)
-		self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
-			mode = AxisMode.DS4GYRO, byte_offset = 21)
+
+		# TODO: Gyro
+		# self._decoder.axes[AxisType.AXIS_GPITCH] = AxisData(
+		# 	mode = AxisMode.DS4ACCEL, byte_offset = 13)
+		# self._decoder.axes[AxisType.AXIS_GROLL] = AxisData(
+		# 	mode = AxisMode.DS4ACCEL, byte_offset = 17)
+		# self._decoder.axes[AxisType.AXIS_GYAW] = AxisData(
+		# 	mode = AxisMode.DS4ACCEL, byte_offset = 15)
+		# self._decoder.axes[AxisType.AXIS_Q1] = AxisData(
+		# 	mode = AxisMode.DS4GYRO, byte_offset = 23)
+		# self._decoder.axes[AxisType.AXIS_Q2] = AxisData(
+		# 	mode = AxisMode.DS4GYRO, byte_offset = 19)
+		# self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
+		# 	mode = AxisMode.DS4GYRO, byte_offset = 21)
 		
+		# TODO: Touchpad
 		self._decoder.axes[AxisType.AXIS_CPAD_X] = AxisData(
-			mode = AxisMode.DS4TOUCHPAD, byte_offset = 36)
-		self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
-			mode = AxisMode.DS4TOUCHPAD, byte_offset = 37, bit_offset=4)
+		  mode = AxisMode.DS4TOUCHPAD, byte_offset = 36)
+		# self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
+		# 	mode = AxisMode.DS4TOUCHPAD, byte_offset = 37, bit_offset=4)
+
+		# Button maps seem to work for standard arrangement (matching Xbox360)
+		# Not enough information about the button event triggered when LT && RT are pressed?
+		# Could be connected to adaptive triggers?
 		self._decoder.buttons = ButtonData(
-			enabled = True, byte_offset=5, bit_offset=4, size=14,
+			enabled = True, byte_offset=8, bit_offset=4, size=14, # Not sure about bit offset
 			button_count = 14
 		)
 		
@@ -180,6 +193,9 @@ class DS4EvdevController(EvdevController):
 		308: "X",
 		310: "LB",
 		311: "RB",
+		# TODO: Figure out what it is the purpose of the button event when using the trigger
+		# 312: "LT2", 
+		# 313: "RT2",
 		314: "BACK",
 		315: "START",
 		316: "C",
@@ -197,6 +213,7 @@ class DS4EvdevController(EvdevController):
 		16: { "axis": "lpad_x", "deadzone": 0, "max": 1, "min": -1 },
 		17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
 	}
+	# TODO: Should the old button for DS4 map be removed? DualSense support came with kernel 5.12
 	BUTTON_MAP_OLD = {
 		304: "X",
 		305: "A",
