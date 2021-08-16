@@ -99,25 +99,25 @@ class DS4Controller(HIDController):
 				scale = 1.0, clamp_max = 1, deadzone = 10
 		)))
 
-		# TODO: Gyro
-		# self._decoder.axes[AxisType.AXIS_GPITCH] = AxisData(
-		# 	mode = AxisMode.DS4ACCEL, byte_offset = 13)
-		# self._decoder.axes[AxisType.AXIS_GROLL] = AxisData(
-		# 	mode = AxisMode.DS4ACCEL, byte_offset = 17)
-		# self._decoder.axes[AxisType.AXIS_GYAW] = AxisData(
-		# 	mode = AxisMode.DS4ACCEL, byte_offset = 15)
-		# self._decoder.axes[AxisType.AXIS_Q1] = AxisData(
-		# 	mode = AxisMode.DS4GYRO, byte_offset = 23)
-		# self._decoder.axes[AxisType.AXIS_Q2] = AxisData(
-		# 	mode = AxisMode.DS4GYRO, byte_offset = 19)
-		# self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
-		# 	mode = AxisMode.DS4GYRO, byte_offset = 21)
+		# Gyro
+		self._decoder.axes[AxisType.AXIS_GPITCH] = AxisData(
+			mode = AxisMode.DS4ACCEL, byte_offset = 16) # Pitch found
+		self._decoder.axes[AxisType.AXIS_GROLL] = AxisData(
+			mode = AxisMode.DS4ACCEL, byte_offset = 20) # Roll
+		self._decoder.axes[AxisType.AXIS_GYAW] = AxisData(
+			mode = AxisMode.DS4ACCEL, byte_offset = 18) # Yaw found
+		self._decoder.axes[AxisType.AXIS_Q1] = AxisData(
+			mode = AxisMode.DS4GYRO, byte_offset = 26)
+		self._decoder.axes[AxisType.AXIS_Q2] = AxisData(
+			mode = AxisMode.DS4GYRO, byte_offset = 22)
+		self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
+			mode = AxisMode.DS4GYRO, byte_offset = 24)
 		
 		# TODO: Touchpad
-		self._decoder.axes[AxisType.AXIS_CPAD_X] = AxisData(
-		  mode = AxisMode.DS4TOUCHPAD, byte_offset = 36)
-		# self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
-		# 	mode = AxisMode.DS4TOUCHPAD, byte_offset = 37, bit_offset=4)
+		# self._decoder.axes[AxisType.AXIS_CPAD_X] = AxisData(
+		#   mode = AxisMode.DS4TOUCHPAD, byte_offset = 33, bit_offset=2)
+		#self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
+		#	mode = AxisMode.DS4TOUCHPAD, byte_offset = 34, bit_offset=4)
 
 		# Button maps seem to work for standard arrangement (matching Xbox360)
 		# Not enough information about the button event triggered when LT && RT are pressed?
@@ -214,30 +214,30 @@ class DS4EvdevController(EvdevController):
 		17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
 	}
 	# TODO: Should the old button for DS4 map be removed? DualSense support came with kernel 5.12
-	BUTTON_MAP_OLD = {
-		304: "X",
-		305: "A",
-		306: "B",
-		307: "Y",
-		308: "LB",
-		309: "RB",
-		312: "BACK",
-		313: "START",
-		314: "STICKPRESS",
-		315: "RPAD",
-		316: "C",
-		# 317: "CPAD",
-	}
-	AXIS_MAP_OLD = {
-		0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
-		1:  { "axis": "stick_y", "deadzone": 4, "max": 0, "min": 255 },
-		2:  { "axis": "rpad_x", "deadzone": 4, "max": 255, "min": 0 },
-		5:  { "axis": "rpad_y", "deadzone": 8, "max": 0, "min": 255 },
-		3:  { "axis": "ltrig", "max": 32767, "min": -32767 },
-		4:  { "axis": "rtrig", "max": 32767, "min": -32767 },
-		16: { "axis": "lpad_x", "deadzone": 0, "max": 1, "min": -1 },
-		17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
-	}
+	# BUTTON_MAP_OLD = {
+	# 	304: "X",
+	# 	305: "A",
+	# 	306: "B",
+	# 	307: "Y",
+	# 	308: "LB",
+	# 	309: "RB",
+	# 	312: "BACK",
+	# 	313: "START",
+	# 	314: "STICKPRESS",
+	# 	315: "RPAD",
+	# 	316: "C",
+	# 	# 317: "CPAD",
+	# }
+	# AXIS_MAP_OLD = {
+	# 	0:  { "axis": "stick_x", "deadzone": 4, "max": 255, "min": 0 },
+	# 	1:  { "axis": "stick_y", "deadzone": 4, "max": 0, "min": 255 },
+	# 	2:  { "axis": "rpad_x", "deadzone": 4, "max": 255, "min": 0 },
+	# 	5:  { "axis": "rpad_y", "deadzone": 8, "max": 0, "min": 255 },
+	# 	3:  { "axis": "ltrig", "max": 32767, "min": -32767 },
+	# 	4:  { "axis": "rtrig", "max": 32767, "min": -32767 },
+	# 	16: { "axis": "lpad_x", "deadzone": 0, "max": 1, "min": -1 },
+	# 	17: { "axis": "lpad_y", "deadzone": 0, "max": -1, "min": 1 }
+	# }
 	GYRO_MAP = {
 		EvdevController.ECODES.ABS_RX : ('gpitch', 0.01),
 		EvdevController.ECODES.ABS_RY : ('gyaw', 0.01),
