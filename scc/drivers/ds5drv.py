@@ -113,11 +113,11 @@ class DS4Controller(HIDController):
 		self._decoder.axes[AxisType.AXIS_Q3] = AxisData(
 			mode = AxisMode.DS4GYRO, byte_offset = 24)
 		
-		# TODO: Touchpad
-		# self._decoder.axes[AxisType.AXIS_CPAD_X] = AxisData(
-		#   mode = AxisMode.DS4TOUCHPAD, byte_offset = 33, bit_offset=2)
-		#self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
-		#	mode = AxisMode.DS4TOUCHPAD, byte_offset = 34, bit_offset=4)
+		# Touchpad
+		self._decoder.axes[AxisType.AXIS_CPAD_X] = AxisData(
+		  mode = AxisMode.DS4TOUCHPAD, byte_offset = 34) # DualSense X
+		self._decoder.axes[AxisType.AXIS_CPAD_Y] = AxisData(
+		 	mode = AxisMode.DS4TOUCHPAD, byte_offset = 35, bit_offset =4) # DualSense Y
 
 		# Button maps seem to work for standard arrangement (matching Xbox360)
 		# Not enough information about the button event triggered when LT && RT are pressed?
