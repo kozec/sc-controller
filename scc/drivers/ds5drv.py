@@ -1,8 +1,8 @@
 #!/usr/bin/env python2
 """
-SC Controller - Dualshock 4 Driver
+SC Controller - DualSense driver
 
-Extends HID driver with DS4-specific options.
+Extends HID driver with DS5-specific options.
 """
 
 from scc.drivers.hiddrv import BUTTON_COUNT, ButtonData, AxisType, AxisData
@@ -23,7 +23,7 @@ VENDOR_ID = 0x054c
 PRODUCT_ID = 0x0ce6
 
 
-class DS4Controller(HIDController):
+class DS5Controller(HIDController):
 	# Most of axes are the same
 	BUTTON_MAP = (
 		SCButtons.X,
@@ -100,6 +100,7 @@ class DS4Controller(HIDController):
 		)))
 
 		# Gyro
+		# Leaving the AxisMode naming to match DS4
 		self._decoder.axes[AxisType.AXIS_GPITCH] = AxisData(
 			mode = AxisMode.DS4ACCEL, byte_offset = 16) # Pitch found
 		self._decoder.axes[AxisType.AXIS_GROLL] = AxisData(
@@ -133,7 +134,7 @@ class DS4Controller(HIDController):
 		else:
 			for x in xrange(BUTTON_COUNT):
 				self._decoder.buttons.button_map[x] = 64
-			for x, sc in enumerate(DS4Controller.BUTTON_MAP):
+			for x, sc in enumerate(DS5Controller.BUTTON_MAP):
 				self._decoder.buttons.button_map[x] = self.button_to_bit(sc)
 		
 		self._packet_size = 64
@@ -159,7 +160,7 @@ class DS4Controller(HIDController):
 	
 	
 	def get_type(self):
-		return "ds4"
+		return "ds5"
 	
 	
 	def get_gui_config_file(self):
@@ -167,23 +168,23 @@ class DS4Controller(HIDController):
 	
 	
 	def __repr__(self):
-		return "<DS4Controller %s>" % (self.get_id(), )
+		return "<DS5Controller %s>" % (self.get_id(), )
 	
 	
 	def _generate_id(self):
 		"""
-		ID is generated as 'ds4' or 'ds4:X' where 'X' starts as 1 and increases
+		ID is generated as 'ds5' or 'ds5:X' where 'X' starts as 1 and increases
 		as controllers with same ids are connected.
 		"""
 		magic_number = 1
-		id = "ds4"
+		id = "ds5"
 		while id in self.daemon.get_active_ids():
-			id = "ds4:%s" % (magic_number, )
+			id = "ds5:%s" % (magic_number, )
 			magic_number += 1
 		return id
 
 
-class DS4EvdevController(EvdevController):
+class DS5EvdevController(EvdevController):
 	TOUCH_FACTOR_X = STICK_PAD_MAX / 940.0
 	TOUCH_FACTOR_Y = STICK_PAD_MAX / 470.0
 	BUTTON_MAP = {
@@ -256,15 +257,15 @@ class DS4EvdevController(EvdevController):
 	
 	def __init__(self, daemon, controllerdevice, gyro, touchpad):
 		config = {
-			'axes' : DS4EvdevController.AXIS_MAP,
-			'buttons' : DS4EvdevController.BUTTON_MAP,
+			'axes' : DS5EvdevController.AXIS_MAP,
+			'buttons' : DS5EvdevController.BUTTON_MAP,
 			'dpads' : {}
 		}
-		if controllerdevice.info.version & 0x8000 == 0:
-			# Older kernel uses different mappings
-			# see kernel source, drivers/hid/hid-sony.c#L2748
-			config['axes'] = DS4EvdevController.AXIS_MAP_OLD
-			config['buttons'] = DS4EvdevController.BUTTON_MAP_OLD
+		# if controllerdevice.info.version & 0x8000 == 0:
+		# 	# Older kernel uses different mappings
+		# 	# see kernel source, drivers/hid/hid-sony.c#L2748
+		# 	config['axes'] = DS4EvdevController.AXIS_MAP_OLD
+		# 	config['buttons'] = DS4EvdevController.BUTTON_MAP_OLD
 		self._gyro = gyro
 		self._touchpad = touchpad
 		for device in (self._gyro, self._touchpad):
@@ -281,7 +282,7 @@ class DS4EvdevController(EvdevController):
 		try:
 			for event in self._gyro.read():
 				if event.type == self.ECODES.EV_ABS:
-					axis, factor = DS4EvdevController.GYRO_MAP[event.code]
+					axis, factor = DS5EvdevController.GYRO_MAP[event.code]
 					if axis:
 						new_state = new_state._replace(
 								**{ axis : int(event.value * factor) })
@@ -301,11 +302,11 @@ class DS4EvdevController(EvdevController):
 			for event in self._touchpad.read():
 				if event.type == self.ECODES.EV_ABS:
 					if event.code == self.ECODES.ABS_MT_POSITION_X:
-						value = event.value * DS4EvdevController.TOUCH_FACTOR_X
+						value = event.value * DS5EvdevController.TOUCH_FACTOR_X
 						value = STICK_PAD_MIN + int(value)
 						new_state = new_state._replace(cpad_x = value)
 					elif event.code == self.ECODES.ABS_MT_POSITION_Y:
-						value = event.value * DS4EvdevController.TOUCH_FACTOR_Y
+						value = event.value * DS5EvdevController.TOUCH_FACTOR_Y
 						value = STICK_PAD_MAX - int(value)
 						new_state = new_state._replace(cpad_y = value)
 				elif event.type == 0:
@@ -351,35 +352,35 @@ class DS4EvdevController(EvdevController):
 	
 	
 	def get_type(self):
-		return "ds4evdev"
+		return "ds5evdev"
 	
-	
+	# TODO: Create ds5-config.json for GUI
 	def get_gui_config_file(self):
 		return "ds4-config.json"
 	
 	
 	def __repr__(self):
-		return "<DS4EvdevController %s>" % (self.get_id(), )
+		return "<DS5EvdevController %s>" % (self.get_id(), )
 	
 	
 	def _generate_id(self):
 		"""
-		ID is generated as 'ds4' or 'ds4:X' where 'X' starts as 1 and increases
+		ID is generated as 'ds5' or 'ds5:X' where 'X' starts as 1 and increases
 		as controllers with same ids are connected.
 		"""
 		magic_number = 1
-		id = "ds4"
+		id = "ds5"
 		while id in self.daemon.get_active_ids():
-			id = "ds4:%s" % (magic_number, )
+			id = "ds5:%s" % (magic_number, )
 			magic_number += 1
 		return id
 
 
 def init(daemon, config):
-	""" Registers hotplug callback for ds4 device """
+	""" Registers hotplug callback for ds5 device """
 		
 	def hid_callback(device, handle):
-		return DS4Controller(device, daemon, handle, None, None)
+		return DS5Controller(device, daemon, handle, None, None)
 	
 	def make_evdev_device(syspath, *whatever):
 		devices = get_evdev_devices_from_syspath(syspath)
@@ -415,7 +416,7 @@ def init(daemon, config):
 					touchpad = device
 		# 3rd, do a magic
 		if controllerdevice and gyro and touchpad:
-			return make_new_device(DS4EvdevController, controllerdevice, gyro, touchpad)
+			return make_new_device(DS5EvdevController, controllerdevice, gyro, touchpad)
 	
 	
 	def fail_cb(syspath, vid, pid):
@@ -423,9 +424,9 @@ def init(daemon, config):
 			log.warning("Failed to acquire USB device, falling back to evdev driver. This is far from optimal.")
 			make_evdev_device(syspath)
 		else:
-			log.error("Failed to acquire USB device and evdev is not available. Everything is lost and DS4 support disabled.")
+			log.error("Failed to acquire USB device and evdev is not available. Everything is lost and DS5 support disabled.")
 			# TODO: Maybe add_error here, but error reporting needs little rework so it's not threated as fatal
-			# daemon.add_error("ds4", "No access to DS4 device")
+			# daemon.add_error("ds5", "No access to DS5 device")
 	
 	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
 		register_hotplug_device(hid_callback, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
@@ -434,7 +435,7 @@ def init(daemon, config):
 							VENDOR_ID, PRODUCT_ID, make_evdev_device, None)
 		return True
 	else:
-		log.warning("Neither HID nor Evdev driver is enabled, DS4 support cannot be enabled.")
+		log.warning("Neither HID nor Evdev driver is enabled, DS5 support cannot be enabled.")
 		return False
 
 
@@ -442,4 +443,4 @@ if __name__ == "__main__":
 	""" Called when executed as script """
 	init_logging()
 	set_logging_level(True, True)
-	sys.exit(hiddrv_test(DS4Controller, [ "054c:0ce6" ]))
+	sys.exit(hiddrv_test(DS5Controller, [ "054c:0ce6" ]))
