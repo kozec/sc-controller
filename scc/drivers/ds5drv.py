@@ -144,7 +144,7 @@ class DS5Controller(HIDController):
 		# Special override for CPAD touch button
 		if _lib.decode(ctypes.byref(self._decoder), data):
 			if self.mapper:
-				if ord(data[35]) >> 7:
+				if ord(data[33]) >> 7:
 					# cpad is not touched
 					self._decoder.state.buttons &= ~SCButtons.CPADTOUCH
 				else:
