@@ -164,7 +164,7 @@ class DS5Controller(HIDController):
 	
 	
 	def get_gui_config_file(self):
-		return "ds4-config.json"
+		return "ds5-config.json"
 	
 	
 	def __repr__(self):
