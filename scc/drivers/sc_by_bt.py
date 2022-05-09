@@ -240,7 +240,10 @@ class SCByBt(SCController):
 		""" Flushes all prepared control messages to the device """
 		while len(self._cmsg):
 			msg = self._cmsg.pop()
-			self._hidrawdev.sendFeatureReport(msg)
+			# Feature report data must be sent with report ID 3
+			# or Input/output error will occur with later BlueZ versions (5.64)
+			# Does not affect older BlueZ versions
+			self._hidrawdev.sendFeatureReport(msg, 3)
 	
 	
 	def input(self, idata):
