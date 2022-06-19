@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from scc.gui.svg_widget import SVGWidget, SVGEditor
+from scc.paths import get_share_path
 from scc.constants import SCButtons
 from scc.tools import nameof
 
@@ -19,7 +20,8 @@ class ControllerImage(SVGWidget):
 	DEFAULT  = "sc"
 	BUTTONS_WITH_IMAGES = (
 		SCButtons.A, SCButtons.B, SCButtons.X, SCButtons.Y,
-		SCButtons.BACK, SCButtons.C, SCButtons.START
+		SCButtons.BACK, SCButtons.C, SCButtons.START,
+		SCButtons.DOTS,
 	)
 	
 	DEFAULT_AXES = (
@@ -41,7 +43,7 @@ class ControllerImage(SVGWidget):
 	def __init__(self, app, config=None):
 		self.app = app
 		self.backup = None
-		self.current = self._ensure_config({})
+		self.current = self._ensure_config({}, None)
 		filename = self._make_controller_image_path(ControllerImage.DEFAULT)
 		SVGWidget.__init__(self, filename)
 		if config:
@@ -60,7 +62,7 @@ class ControllerImage(SVGWidget):
 		return self.current
 	
 	
-	def _ensure_config(self, data):
+	def _ensure_config(self, data, controller):
 		""" Ensure that required keys are present in config data """
 		data['gui'] = data.get('gui', {})
 		data['gui']['background'] = data['gui'].get("background", "sc")
@@ -86,13 +88,13 @@ class ControllerImage(SVGWidget):
 		]
 	
 	
-	def use_config(self, config, backup=None):
+	def use_config(self, config, backup=None, controller=None):
 		"""
 		Loads controller settings from provided config, adding default values
 		when needed. Returns same config.
 		"""
 		self.backup = backup
-		self.current = self._ensure_config(config or {})
+		self.current = self._ensure_config(config or {}, controller)
 		self.set_image(os.path.join(self.app.imagepath,
 			"controller-images/%s.svg" % (self.current["gui"]["background"], )))
 		if not self.current["gui"]["no_buttons_in_gui"]:
@@ -154,6 +156,10 @@ class ControllerImage(SVGWidget):
 		target_x, target_y = SVGEditor.get_translation(target)
 		for i in xrange(len(ControllerImage.BUTTONS_WITH_IMAGES)):
 			b = nameof(ControllerImage.BUTTONS_WITH_IMAGES[i])
+			if b == "DOTS":
+				# How did I managed to create this kind of special case? -_-
+				i = 16
+			path = None
 			try:
 				elm = SVGEditor.get_element(e, "AREA_%s" % (b,))
 				if elm is None:
@@ -179,6 +185,7 @@ class ControllerImage(SVGWidget):
 				img.attrib["id"] = b
 				SVGEditor.add_element(target, img)
 			except Exception, err:
-				log.warning("Failed to add image for button %s", b)
+				log.warning("Failed to add image for button %s (from %s)", b, path)
 				log.exception(err)
 		e.commit()
+

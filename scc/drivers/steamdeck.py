@@ -138,8 +138,14 @@ class Deck(USBDevice, SCController):
 		# Overrided to skip returning serial# to pool.
 		pass
 	
+	def get_type(self):
+		return "deck"
+	
 	def __repr__(self):
 		return "<Deck %s>" % (self.get_id(),)
+	
+	def get_gui_config_file(self):
+		return "deck.config.json"
 	
 	def configure(self, idle_timeout=None, enable_gyros=None, led_level=None):
 		FORMAT = b'>BBBB60x'

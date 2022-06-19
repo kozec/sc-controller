@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, Pango
-from scc.constants import SCButtons, STICK, GYRO, LEFT, RIGHT
+from scc.constants import SCButtons, STICK, RSTICK, GYRO, LEFT, RIGHT
 from scc.actions import Action, XYAction, MultiAction
 from scc.gui.ae.gyro_action import is_gyro_enable
 from scc.modifiers import DoubleclickModifier
@@ -23,7 +23,7 @@ log = logging.getLogger("ControllerWidget")
 
 TRIGGERS = [ "LT", "RT" ]
 PADS	= [ Profile.LPAD, Profile.RPAD, Profile.CPAD ]
-STICKS	= [ STICK ]
+STICKS	= [ STICK, Profile.RSTICK, Profile.DPAD ]
 GYROS	= [ GYRO ]
 PRESSABLE = [ SCButtons.LPAD, SCButtons.RPAD,
 				SCButtons.STICKPRESS, SCButtons.CPADPRESS ]
@@ -34,7 +34,7 @@ LONG_TEXT = 16
 
 class ControllerWidget:
 	ACTION_CONTEXT = None
-
+	
 	def __init__(self, app, id, use_icon, widget):
 		self.app = app
 		self.id = id
@@ -161,13 +161,17 @@ class ControllerStick(ControllerWidget):
 		# self.icon.get_allocation().x + self.icon.get_allocation().width	# yields nonsense
 		ix2 = 74
 		# Check if cursor is placed on icon
+		what = None
 		if event.x < ix2:
 			what = {
 				Profile.LPAD : LEFT,
 				Profile.RPAD : RIGHT,
 				Profile.CPAD : nameof(SCButtons.CPADPRESS),
 				Profile.STICK : nameof(SCButtons.STICKPRESS),
-			}[self.name]
+				Profile.RSTICK : nameof(SCButtons.RSTICKPRESS),
+				Profile.DPAD: None,
+			}.get(self.name)
+		if what:
 			self.app.hilight(what)
 			self.over_icon = True
 		else:

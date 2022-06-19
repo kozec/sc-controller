@@ -81,7 +81,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.outdated_version = None
 		self.profile_switchers = []
 		self.test_mode_controller = None
-		self.current_file = None	# Currently edited file
+		self.current_ui_layout = "default"		# only "default" and "deck" are supported
+		self.current_file = None				# Currently edited file
 		self.controller_count = 0
 		self.current = Profile(GuiActionParser())
 		self.just_started = True
@@ -162,11 +163,11 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			config = controller.load_gui_config(self.imagepath or {})
 		else:
 			config = {}
-		config = self.background.use_config(config)
+		config = self.background.use_config(config, controller=controller)
 		
 		def do_loading():
 			""" Called after transition is finished """
-			self.background.use_config(config)
+			self.background.use_config(config, controller=controller)
 			self.apply_gui_config_buttons(config)
 		
 		if first:
@@ -188,6 +189,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		stckEditor = self.builder.get_object('stckEditor')
 		grEditor = self.builder.get_object('grEditor')
 		btCPAD = self.builder.get_object('btCPAD')
+		btDPAD = self.builder.get_object('btDPAD')
+		btGYRO = self.builder.get_object('btGYRO')
 		btC = self.builder.get_object('btC')
 		
 		buttons = ControllerImage.get_names(config.get('buttons', {}))
@@ -226,10 +229,49 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			if w:
 				# TODO: Maybe actual detection
 				w.set_sensitive(gyros)
-		for w in (btC, btCPAD):
+		
+		for w in (btC, btCPAD, btDPAD, btGYRO):
 			w.set_visible(w.get_sensitive())
+		
+		# Re-layout if needed
+		expected_layout = "default"
+		if len(axes) >= 8 and btC.get_sensitive():
+			expected_layout = "deck"
+		
+		if expected_layout != self.current_ui_layout:
+			self.apply_ui_layout(expected_layout)
+		
 		stckEditor.set_visible_child(grEditor)
 		GLib.idle_add(self.on_c_size_allocate)
+	
+	
+	def apply_ui_layout(self, layout):
+		"""
+		Changes layout of ui elements to fit additional buttons needed for Deck
+		"""
+		if layout == "deck":
+			# Move 'C' button bellow LGRIP
+			btRGRIP = self.builder.get_object("btRGRIP")
+			btC = self.builder.get_object("btC")
+			btC.get_parent().remove(btC)
+			btC.set_margin_right(0)
+			btRGRIP.get_parent().pack_start(btC, False, True, 0)
+			btRGRIP.get_parent().reorder_child(btC, 5)
+			# Move 'GYRO' button to middle of image (where C was)
+			btGYRO = self.builder.get_object("btGYRO")
+			btGYRO.get_parent().remove(btGYRO)
+			vbC = self.builder.get_object("vbC")
+			vbC.pack_start(btGYRO, False, True, 0)
+			btGYRO.set_margin_top(30)
+			# Resize buttons at bottom
+			#for w in ['btSTICK', 'btRSTICK', 'btLPAD', 'btRPAD']:
+			#	w.set_size_request(150, -1)
+			# Move 'DPAD' bellow 'LGRIP'
+			btLGRIP = self.builder.get_object("btLGRIP")
+			btDPAD = self.builder.get_object("btDPAD")
+			btDPAD.get_parent().remove(btDPAD)
+			btLGRIP.get_parent().pack_start(btDPAD, False, True, 6)
+			btLGRIP.get_parent().reorder_child(btDPAD, 5)
 	
 	
 	def setup_statusicon(self):
