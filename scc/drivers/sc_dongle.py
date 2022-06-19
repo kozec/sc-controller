@@ -133,6 +133,7 @@ class SCStatus(IntEnum):
 class SCPacketType(IntEnum):
 	OFF = 0x9f
 	AUDIO = 0xb6
+	CLEAR_MAPPINGS = 0x81
 	CONFIGURE = 0x87
 	LED = 0x87
 	CALIBRATE_JOYSTICK = 0xbf

@@ -32,6 +32,7 @@ class Config(object):
 			"sc_dongle": True,
 			"sc_by_cable": True,
 			"sc_by_bt": True,
+			"steamdeck": True,
 			"fake": False,			# Used for developement
 			"hiddrv": True,
 			"evdevdrv": True,
