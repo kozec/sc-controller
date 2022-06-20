@@ -63,12 +63,14 @@ class Profile(object):
 								else self.description.strip("\n").split("\n")),
 			'buttons'		: {},
 			'stick'			: self.stick,
+			'rstick'		: self.rstick,
 			'gyro'			: self.gyro,
 			'trigger_left'	: self.triggers[Profile.LEFT],
 			'trigger_right'	: self.triggers[Profile.RIGHT],
 			"pad_left"		: self.pads[Profile.LEFT],
 			"pad_right"		: self.pads[Profile.RIGHT],
 			"cpad"			: self.pads[Profile.CPAD],
+			"dpad"			: self.pads[Profile.DPAD],
 			"menus"			: { id : self.menus[id].encode() for id in self.menus },
 			"is_template"	: self.is_template,
 			"version"		: Profile.VERSION,
@@ -142,8 +144,12 @@ class Profile(object):
 			self.pads = {
 				Profile.LEFT	: self.parser.from_json_data(data, "left_pad"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "right_pad"),
-				Profile.CPAD	: NoAction()
+				Profile.CPAD	: NoAction(),
+				Profile.DPAD	: NoAction(),
 			}
+			
+			# Rigth stick
+			self.rstick = NoAction()
 		else:
 			# New format
 			# Triggers
@@ -157,7 +163,11 @@ class Profile(object):
 				Profile.LEFT	: self.parser.from_json_data(data, "pad_left"),
 				Profile.RIGHT	: self.parser.from_json_data(data, "pad_right"),
 				Profile.CPAD	: self.parser.from_json_data(data, "cpad"),
+				Profile.DPAD	: self.parser.from_json_data(data, "dpad"),
 			}
+			
+			# Rigth stick
+			self.rstick = self.parser.from_json_data(data, "rstick")
 		
 		# Menus
 		self.menus = {}
@@ -185,10 +195,15 @@ class Profile(object):
 		)
 		self.menus = {}
 		self.stick = NoAction()
+		self.rstick = NoAction()
 		self.is_template = False
-		self.triggers = { Profile.LEFT : NoAction(), Profile.RIGHT : NoAction() }
-		self.pads = { Profile.LEFT : NoAction(),
-				Profile.RIGHT : NoAction(), Profile.CPAD : NoAction() }
+		self.triggers = { Profile.LEFT: NoAction(), Profile.RIGHT: NoAction() }
+		self.pads = {
+			Profile.LEFT: NoAction(),
+			Profile.RIGHT: NoAction(),
+			Profile.CPAD: NoAction(),
+			Profile.DPAD: NoAction(),
+		}
 		self.gyro = NoAction()
 	
 	
@@ -219,7 +234,7 @@ class Profile(object):
 		for dct in (self.buttons, self.triggers, self.pads):
 			for k in dct:
 				yield dct[k]
-		for action in (self.stick, self.gyro):
+		for action in (self.stick, self.rstick, self.gyro):
 			yield action
 	
 	
@@ -233,11 +248,12 @@ class Profile(object):
 	def compress(self):
 		"""
 		Calls compress on every action to throw out some redundant stuff.
-		Note that calling save() after compress() will break stuff.
+		Note that calling save() after compress() will cause data loss.
 		"""
 		for dct in (self.buttons, self.triggers, self.pads):
 			for x in dct:
 				dct[x] = dct[x].compress()
+		self.rstick = self.rstick.compress()
 		self.stick = self.stick.compress()
 		self.gyro = self.gyro.compress()
 		for menu in self.menus.values():

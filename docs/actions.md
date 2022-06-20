@@ -380,7 +380,7 @@ Rotates input pad or stick input by given angle.
 #### <a name="feedback"></a> feedback(side, [amplitude=256 [, frequency=4 [, period=100 [, count=1 ]]]], action)
 Enables haptic feedback for specified action, if action supports it.
 Side has to be one of LEFT, RIGHT or BOTH. All remaining numbers can be anything
-from 1 to 32768, but note that setting count to large number will start long
+from 1 to 32767, but note that setting count to large number will start long
 running feedback that you may not be able to stop.
 
 'frequency' is used only when emulating touchpad and describes how many pixels

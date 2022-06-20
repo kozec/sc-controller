@@ -51,7 +51,8 @@ class BindingEditor(object):
 		for b in STICKS:
 			w = self.builder.get_object("bt" + b)
 			if w:
-				self.button_widgets[b] = ControllerStick(self, b, use_icons, enable_press, w)
+				e = False if b == Profile.DPAD else enable_press
+				self.button_widgets[b] = ControllerStick(self, b, use_icons, e, w)
 		w = self.builder.get_object("btSTICKPRESS")
 		if w:
 			self.button_widgets[SCButtons.STICKPRESS] = ControllerButton(self, SCButtons.STICKPRESS, use_icons, w)
@@ -96,14 +97,20 @@ class BindingEditor(object):
 			before, profile.gyro = profile.gyro, action
 			self.button_widgets[id].update()
 		elif id in STICKS + PADS:
-			if id in STICKS:
+			if id == Profile.STICK:
 				before, profile.stick = profile.stick, action
+			elif id == Profile.RSTICK:
+				before, profile.rstick = profile.rstick, action
+			elif id == Profile.DPAD:
+				before, profile.pads[Profile.DPAD] = profile.pads[Profile.DPAD], action
 			elif id == Profile.LPAD:
 				before, profile.pads[Profile.LEFT] = profile.pads[Profile.LEFT], action
 			elif id == Profile.RPAD:
 				before, profile.pads[Profile.RIGHT] = profile.pads[Profile.RIGHT], action
-			else:
+			elif id == Profile.CPAD:
 				before, profile.pads[Profile.CPAD] = profile.pads[Profile.CPAD], action
+			else:
+				raise ValueError("unknown id %s" % (id,))
 			self.button_widgets[id].update()
 		return before
 	
@@ -125,14 +132,20 @@ class BindingEditor(object):
 		elif id in GYROS:
 			return profile.gyro
 		elif id in STICKS + PADS:
-			if id in STICKS:
+			if id == Profile.STICK:
 				return profile.stick
+			elif id == Profile.RSTICK:
+				return profile.rstick
+			elif id in Profile.DPAD:
+				return profile.pads[Profile.DPAD]
 			elif id == Profile.LPAD:
 				return profile.pads[Profile.LEFT]
 			elif id == Profile.RPAD:
 				return profile.pads[Profile.RIGHT]
-			else:
+			elif id == Profile.CPAD:
 				return profile.pads[Profile.CPAD]
+			else:
+				raise ValueError("unknown id %s" % (id,))
 		return None
 	
 	

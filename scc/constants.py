@@ -129,10 +129,11 @@ class ControllerFlags(IntEnum):
 	HAS_CPAD =			1 << 3	# Controller has DS4-like touchpad in center
 	HAS_DPAD =			1 << 4	# Controller has normal d-pad instead of touchpad
 	NO_GRIPS =			1 << 5	# Controller has no grips
+	IS_DECK =			1 << 6	# Very special case
 
 
 STICK_PAD_MIN = -32768
-STICK_PAD_MAX = 32768
+STICK_PAD_MAX = 32767
 STICK_PAD_MIN_HALF = STICK_PAD_MIN / 3
 STICK_PAD_MAX_HALF = STICK_PAD_MAX / 3
 
@@ -145,3 +146,4 @@ TRIGGER_MIN = 0
 TRIGGER_HALF = 50
 TRIGGER_CLICK = 254 # Values under this are generated until trigger clicks
 TRIGGER_MAX = 255
+

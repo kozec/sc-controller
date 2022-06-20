@@ -757,7 +757,7 @@ class GesturesAction(Action, OSDEnabledAction, SpecialAction):
 
 class CemuHookAction(Action, SpecialAction):
 	SA = COMMAND = "cemuhook"
-	MAGIC_GYRO = (2000.0 / 32768.0)
+	MAGIC_GYRO = (2000.0 / float(STICK_PAD_MAX))
 	
 	def gyro(self, mapper, *pyr):
 		sa_data = (

@@ -10,7 +10,8 @@ Used by on-screen keyboard.
 from __future__ import unicode_literals
 
 from collections import deque
-from scc.constants import SCButtons, LEFT, RIGHT, CPAD, STICK, TRIGGER_MAX
+from scc.constants import SCButtons, LEFT, RIGHT, CPAD, DPAD, TRIGGER_MAX
+from scc.constants import STICK, RSTICK
 from scc.mapper import Mapper
 
 import logging, time
@@ -60,6 +61,8 @@ class SlaveMapper(Mapper):
 		self.old_buttons = self.buttons
 		if what == STICK:
 			self.profile.stick.whole(self, data[0], data[1], what)
+		elif what == RSTICK:
+			self.profile.rstick.whole(self, data[0], data[1], what)
 		elif what == SCButtons.LT.name:
 			self.profile.triggers[LEFT].trigger(self, *data)
 		elif what == SCButtons.RT.name:
@@ -80,7 +83,7 @@ class SlaveMapper(Mapper):
 					self.profile.pads[LEFT].whole(self, 0, 0, LEFT)
 				elif what == "RPADTOUCH":
 					self.profile.pads[RIGHT].whole(self, 0, 0, RIGHT)
-		elif what in (LEFT, RIGHT, CPAD):
+		elif what in (LEFT, RIGHT, CPAD, DPAD):
 			# print what, self.profile.pads[what]
 			self.profile.pads[what].whole(self, data[0], data[1], what)
 		else:

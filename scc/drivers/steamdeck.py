@@ -13,7 +13,8 @@ to not do so periodically.
 from scc.lib import IntEnum
 from scc.lib.usb1 import USBError
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from scc.constants import SCButtons, STICK_PAD_MIN, STICK_PAD_MAX
+from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
+from scc.constants import SCButtons, ControllerFlags
 from sc_dongle import ControllerInput, SCController, SCPacketType
 import struct, logging, ctypes
 
@@ -24,6 +25,8 @@ ENDPOINT			= 3
 CONTROLIDX			= 2
 PACKET_SIZE			= 128
 UNLIZARD_INTERVAL	= 100
+# Basically, sticks on deck tend to return to non-zero position
+STICK_DEADZONE		= 3000
 
 log = logging.getLogger("deck")
 
@@ -41,8 +44,8 @@ class DeckInput(ctypes.Structure):
 		('_a2', ctypes.c_uint8 * 20),
 		('ltrig', ctypes.c_uint16),
 		('rtrig', ctypes.c_uint16),
-		('lstick_x', ctypes.c_int16),
-		('lstick_y', ctypes.c_int16),
+		('stick_x', ctypes.c_int16),
+		('stick_y', ctypes.c_int16),
 		('rstick_x', ctypes.c_int16),
 		('rstick_y', ctypes.c_int16),
 		# int16_t	accel_x
@@ -115,10 +118,26 @@ def map_button(i, from_, to):
 
 
 def map_dpad(i, low, hi):
-	return STICK_PAD_MIN if (i.buttons & low) else (STICK_PAD_MAX if (i.buttons & hi) else 0)
+	if (i.buttons & low) != 0:
+		return STICK_PAD_MIN
+	elif (i.buttons & hi) != 0:
+		return STICK_PAD_MAX
+	else:
+		return 0
+
+
+def apply_deadzone(value, deadzone):
+	if value > -deadzone and value < deadzone:
+		return 0
+	return value
 
 
 class Deck(USBDevice, SCController):
+	flags = ( 0
+		| ControllerFlags.SEPARATE_STICK
+		| ControllerFlags.HAS_DPAD
+		| ControllerFlags.IS_DECK
+	)
 	
 	def __init__(self, device, handle, daemon):
 		self.daemon = daemon
@@ -170,12 +189,15 @@ class Deck(USBDevice, SCController):
 			self.configure()
 			self._ready = True
 		
-		ctypes.memmove(ctypes.addressof(self._old_state), ctypes.addressof(self._input), len(data))
+		self._old_state, self._input = self._input, self._old_state
 		ctypes.memmove(ctypes.addressof(self._input), data, len(data))
 		if self._input.seq % UNLIZARD_INTERVAL == 0:
 			# Keeps lizard mode from happening
 			self.clear_mappings()
 		
+		# Handle dpad
+		self._input.dpad_x = map_dpad(self._input, DeckButton.DPAD_LEFT, DeckButton.DPAD_RIGHT)
+		self._input.dpad_y = map_dpad(self._input, DeckButton.DPAD_DOWN, DeckButton.DPAD_UP)
 		# Convert buttons
 		self._input.buttons = (0
 			| ((self._input.buttons & DIRECTLY_TRANSLATABLE_BUTTONS) << 8)
@@ -190,9 +212,11 @@ class Deck(USBDevice, SCController):
 		# Convert triggers
 		self._input.ltrig >>= 7
 		self._input.rtrig >>= 7
-		# Handle dpad
-		self._input.dpad_x = map_dpad(self._input, DeckButton.DPAD_LEFT, DeckButton.DPAD_RIGHT)
-		self._input.dpad_y = map_dpad(self._input, DeckButton.DPAD_DOWN, DeckButton.DPAD_UP)
+		# Apply deadzones
+		self._input.stick_x = apply_deadzone(self._input.stick_x, STICK_DEADZONE)
+		self._input.stick_y = apply_deadzone(self._input.stick_y, STICK_DEADZONE)
+		self._input.rstick_x = apply_deadzone(self._input.rstick_x, STICK_DEADZONE)
+		self._input.rstick_y = apply_deadzone(self._input.rstick_y, STICK_DEADZONE)
 		
 		m = self.get_mapper()
 		if m:

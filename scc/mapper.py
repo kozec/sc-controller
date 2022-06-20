@@ -4,9 +4,9 @@ from __future__ import unicode_literals
 from collections import deque
 from scc.lib import xwrappers as X
 from scc.uinput import UInput, Keyboard, Mouse, Dummy, Rels
-from scc.constants import SCButtons, LEFT, RIGHT, CPAD, HapticPos
-from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO
-from scc.constants import STICK, STICKTILT, ControllerFlags
+from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD, GYRO, STICK, RSTICK
+from scc.constants import SCButtons, LEFT, RIGHT, CPAD, DPAD, HapticPos
+from scc.constants import STICK_PAD_MAX, STICKTILT, ControllerFlags
 from scc.aliases import ALL_AXES, ALL_BUTTONS
 from scc.actions import ButtonAction, GyroAbsAction
 from scc.controller import HapticData
@@ -78,7 +78,7 @@ class Mapper(object):
 		i = 0
 		for min, max in cfg["output"]["axes"]:
 			fuzz, flat = 0, 0
-			if abs(max - min) > 32768:
+			if abs(max - min) > STICK_PAD_MAX:
 				fuzz, flat = 16, 128
 			try:
 				axes.append(( ALL_AXES[i], min, max, fuzz, flat ))
@@ -380,13 +380,16 @@ class Mapper(object):
 						self.profile.buttons[x].button_release(self)
 			
 			
-			# Check stick
+			# Check sticks
 			if self.controller.flags & ControllerFlags.SEPARATE_STICK:
 				if FE_STICK in fe or self.old_state.stick_x != state.stick_x or self.old_state.stick_y != state.stick_y:
 					self.profile.stick.whole(self, state.stick_x, state.stick_y, STICK)
 			elif not self.buttons & SCButtons.LPADTOUCH:
 				if FE_STICK in fe or self.old_state.lpad_x != state.lpad_x or self.old_state.lpad_y != state.lpad_y:
 					self.profile.stick.whole(self, state.lpad_x, state.lpad_y, STICK)
+			if self.controller.flags & ControllerFlags.IS_DECK:
+				if FE_STICK in fe or self.old_state.rstick_x != state.rstick_x or self.old_state.rstick_y != state.rstick_y:
+					self.profile.rstick.whole(self, state.rstick_x, state.rstick_y, RSTICK)
 			
 			# Check gyro
 			if controller.get_gyro_enabled():
@@ -407,6 +410,10 @@ class Mapper(object):
 					self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
 			elif FE_PAD in fe or self.buttons & SCButtons.RPADTOUCH or SCButtons.RPADTOUCH & btn_rem:
 				self.profile.pads[RIGHT].whole(self, state.rpad_x, state.rpad_y, RIGHT)
+			# DPAD
+			if controller.flags & ControllerFlags.IS_DECK:
+				if FE_PAD in fe or self.old_state.dpad_x != state.dpad_x or self.old_state.dpad_y != state.dpad_y:
+					self.profile.pads[DPAD].whole(self, state.dpad_x, state.dpad_y, DPAD)
 			
 			# LPAD
 			if self.controller.flags & ControllerFlags.SEPARATE_STICK:

@@ -1120,12 +1120,16 @@ class ActionEditor(Editor):
 		elif id in STICKS:
 			if id == Profile.DPAD:
 				self.set_title(_("DPAD"))
-			else:
+			elif id == Profile.RSTICK:
+				self.set_title(_("Right Strick"))
+			elif id == Profile.STICK:
 				self.set_title(_("Stick"))
+			else:
+				raise ValueError("unknown id %s" % (id, ))
 			self._set_mode(action, mode or Action.AC_STICK)
 			self.set_action(action)
 			self.hide_macro()
-			self.id = Profile.STICK
+			self.id = id
 		elif id in GYROS:
 			self.set_title(_("Gyro"))
 			self._set_mode(action, mode or Action.AC_GYRO)

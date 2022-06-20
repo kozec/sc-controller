@@ -4,7 +4,7 @@
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adjHoldFeedback">
     <property name="lower">15</property>
-    <property name="upper">32768</property>
+    <property name="upper">32767</property>
     <property name="step_increment">32</property>
     <property name="page_increment">128</property>
   </object>

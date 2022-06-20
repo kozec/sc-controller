@@ -9,14 +9,14 @@
   </object>
   <object class="GtkAdjustment" id="adjDeadzoneUpper">
     <property name="lower">1</property>
-    <property name="upper">32768</property>
-    <property name="value">32768</property>
+    <property name="upper">32767</property>
+    <property name="value">32767</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjFAmplitude">
     <property name="lower">16</property>
-    <property name="upper">32768</property>
+    <property name="upper">32767</property>
     <property name="value">512</property>
     <property name="step_increment">32</property>
     <property name="page_increment">128</property>
@@ -31,7 +31,7 @@
   </object>
   <object class="GtkAdjustment" id="adjFPeriod">
     <property name="lower">16</property>
-    <property name="upper">32768</property>
+    <property name="upper">32767</property>
     <property name="value">1024</property>
     <property name="step_increment">32</property>
     <property name="page_increment">128</property>

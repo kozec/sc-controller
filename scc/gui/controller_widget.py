@@ -116,10 +116,10 @@ class ControllerButton(ControllerWidget):
 class ControllerStick(ControllerWidget):
 	ACTION_CONTEXT = Action.AC_STICK
 	
-	def __init__(self, app, name, use_icon, enable_press, widget):
+	def __init__(self, app, id, use_icon, enable_press, widget):
 		self.pressed = Gtk.Label() if enable_press else None
-		self.click_button = SCButtons.STICKPRESS
-		ControllerWidget.__init__(self, app, name, use_icon, widget)
+		self.click_button = SCButtons.STICKPRESS if id == STICK else SCButtons.RSTICKPRESS
+		ControllerWidget.__init__(self, app, id, use_icon, widget)
 		
 		grid = Gtk.Grid()
 		grid.set_column_spacing(6)
@@ -184,9 +184,14 @@ class ControllerStick(ControllerWidget):
 	
 	
 	def update(self):
-		action = self.app.current.buttons[self.click_button]
-		self._set_label(self.app.current.stick)
-		if self.pressed:
+		if self.id == Profile.STICK:
+			self._set_label(self.app.current.stick)
+		elif self.id == Profile.RSTICK:
+			self._set_label(self.app.current.rstick)
+		elif self.id == Profile.DPAD:
+			self._set_label(self.app.current.pads[Profile.DPAD])
+		if self.click_button and self.pressed:
+			action = self.app.current.buttons[self.click_button]
 			self._update_pressed(action)
 	
 	

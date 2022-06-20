@@ -8,7 +8,7 @@ from scc.lib import xwrappers as X
 from scc.lib import xinput
 from scc.lib.daemon import Daemon
 from scc.constants import SCButtons, DAEMON_VERSION, HapticPos
-from scc.constants import LEFT, RIGHT, STICK, CPAD
+from scc.constants import LEFT, RIGHT, STICK, RSTICK, CPAD, DPAD
 from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
 from scc.uinput import CannotCreateUInputException
 from scc.tools import set_logging_level, find_binary, clamp
@@ -1017,13 +1017,19 @@ class SCCDaemon(Daemon):
 			if is_locked(mapper.profile.stick):
 				return False
 			return True
+		if what == RSTICK:
+			if is_locked(mapper.profile.buttons[SCButtons.RSTICKPRESS]):
+				return False
+			if is_locked(mapper.profile.rstick):
+				return False
+			return True
 		if what == SCButtons.LT:
 			return not is_locked(mapper.profile.triggers[LEFT])
 		if what == SCButtons.RT:
 			return not is_locked(mapper.profile.triggers[RIGHT])
 		if what in SCButtons:
 			return not is_locked(mapper.profile.buttons[what])
-		if what in (LEFT, RIGHT, CPAD):
+		if what in (LEFT, RIGHT, CPAD, DPAD):
 			return not is_locked(mapper.profile.pads[what])
 		return False
 	
@@ -1038,6 +1044,8 @@ class SCCDaemon(Daemon):
 		"""
 		if what == STICK:
 			mapper.profile.stick = callback(mapper.profile.stick, *args)
+		elif what == RSTICK:
+			mapper.profile.rstick = callback(mapper.profile.rstick, *args)
 		elif what == SCButtons.LT:
 			mapper.profile.triggers[LEFT] = callback(mapper.profile.triggers[LEFT], *args)
 		elif what == SCButtons.RT:
@@ -1053,7 +1061,7 @@ class SCCDaemon(Daemon):
 			a = callback(mapper.profile.pads[what], *args)
 			a.whole(mapper, 0, 0, what)
 			mapper.profile.pads[what] = a
-		elif what == CPAD:
+		elif what in (CPAD, DPAD):
 			a = callback(mapper.profile.pads[what], *args)
 			a.whole(mapper, 0, 0, what)
 			mapper.profile.pads[what] = a
@@ -1072,7 +1080,7 @@ class SCCDaemon(Daemon):
 		Used when parsing `Lock: ...` message
 		"""
 		s = s.strip(" \t\r\n")
-		if s in (STICK, LEFT, RIGHT, CPAD):
+		if s in (STICK, RSTICK, LEFT, RIGHT, CPAD, DPAD):
 			return s
 		if s == "STICKPRESS":
 			# Special case, as that button is actually named STICK :(

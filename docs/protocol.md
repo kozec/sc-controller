@@ -158,7 +158,7 @@ If everything went well, daemon respnds with `OK.`
 
 #### `Feedback: position amplitude`
 Asks daemon to generate feedback effect. Position can be one of 'LEFT', 'RIGHT' or 'BOTH' and
-amplitude is integer in range 0 to 32768 and controls power of generated effect.
+amplitude is integer in range 0 to 32767 and controls power of generated effect.
 
 Daemon responds with `OK.`
 
