@@ -266,8 +266,7 @@ class Config(object):
 		ptr = lib_config.config_get_controller_config(self._cfg,
 					controller_id.encode("utf-8"), ctypes.byref(err))
 		if not ptr:
-			if return_none: return none
-			raise OSError(err.value)
+			raise OSError("Failed to load '%s': %s" % (controller_id, err.value))
 		return Config(c_ptr=ptr)
 	
 	def create_controller_config(self, controller_id):

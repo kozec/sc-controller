@@ -216,7 +216,7 @@ static uint8_t* sccd_input_libusb_hid_request(InputDevice* _dev, uint16_t idx, u
 	err = libusb_control_transfer(dev->hndl, request_type, request, value, idx,
 				(unsigned char *)data, length, 500);	// 500 is timeout of 0.5s
 	if (err < 0) {
-		LERROR("sccd_input_libusb_hid_request: out: %s", libusb_strerror(err));
+		LERROR("sccd_input_libusb_hid_request: out: [%i] %s", err, libusb_strerror(err));
 		goto sccd_input_hid_request_fail;
 	}
 	
@@ -225,7 +225,7 @@ static uint8_t* sccd_input_libusb_hid_request(InputDevice* _dev, uint16_t idx, u
 	err = libusb_control_transfer(dev->hndl, request_type, request, value, idx,
 				(unsigned char *)out_buffer, length, 500);
 	if (err < 0) {
-		LERROR("sccd_input_libusb_hid_request: in: %s", libusb_strerror(err));
+		LERROR("sccd_input_libusb_hid_request: in: [%i] %s", err, libusb_strerror(err));
 		goto sccd_input_hid_request_fail;
 	}
 	return out_buffer;

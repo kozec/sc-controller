@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 
 from scc.tools import find_binary, find_button_image, nameof
 from scc.paths import get_daemon_socket
+from scc.constants import SCButtons
 from scc.config import Config
 from scc.gui import BUTTON_ORDER
 from gi.repository import GObject, Gio, GLib
@@ -95,7 +96,7 @@ class DaemonManager(GObject.GObject):
 		return [] + self._controllers
 	
 	
-	def get_controller(self, controller_id):
+	def get_controller(self, controller_id, type=None):
 		"""
 		Returns ControllerManager instance bound to provided controller_id.
 		Note that this method will return instance for any controller_id,
@@ -104,8 +105,11 @@ class DaemonManager(GObject.GObject):
 		For same controller_id, there is always same instance returned.
 		"""
 		if controller_id not in self._controller_by_id:
-			self._controller_by_id[controller_id] = ControllerManager(self, controller_id)
-		return self._controller_by_id[controller_id]
+			c = self._controller_by_id[controller_id] = ControllerManager(self, controller_id, type)
+		else:
+			c = self._controller_by_id[controller_id]
+			c.set_type(type)
+		return c
 	
 	
 	def has_controller(self):
@@ -216,7 +220,7 @@ class DaemonManager(GObject.GObject):
 					error_cb(line[5:].strip())
 			elif line.startswith("Controller:"):
 				controller_id, type, flags = line[11:].strip().split(" ", 3)
-				c = self.get_controller(controller_id)
+				c = self.get_controller(controller_id, type)
 				c._connected = True
 				c._type = type
 				c._flags = long(flags)
@@ -368,17 +372,17 @@ class ControllerManager(GObject.GObject):
 	}
 	
 	DEFAULT_ICONS = [ "A", "B", "X", "Y", "BACK", "C", "START",
-		"LB", "RB", "LT", "RT", "LG", "RG" ]
+		"LB", "RB", "LT", "RT", "STICK", "LPAD", "RPAD", "RGRIP", "LGRIP", "DOTS" ]
 	# ^^ those are icon names
 	
-	def __init__(self, daemon_manager, controller_id):
+	def __init__(self, daemon_manager, controller_id, controller_type):
 		GObject.GObject.__init__(self)
 		self._dm = daemon_manager
 		self._controller_id = controller_id
-		self._profile = None
-		self._type = None
-		self._flags = 0
+		self._type = controller_type
 		self._connected = False
+		self._profile = None
+		self._flags = 0
 	
 	
 	def __repr__(self):
@@ -410,6 +414,12 @@ class ControllerManager(GObject.GObject):
 		"""
 		return self._type
 	
+	def set_type(self, type):
+		"""
+		Sets type, if none is yet set.
+		"""
+		if self._type is None:
+			self._type = type
 	
 	def get_flags(self):
 		"""
@@ -432,7 +442,6 @@ class ControllerManager(GObject.GObject):
 		"""
 		return Config().create_controller_config(self._controller_id)
 	
-	
 	@staticmethod
 	def get_button_icon(config, button, prefer_bw=False):
 		"""
@@ -452,7 +461,10 @@ class ControllerManager(GObject.GObject):
 		As get_button_icon, but returns icon name instead of filename.
 		"""
 		name = nameof(button)
+		index = -1
 		try:
+			if type(button) is str:
+				button = SCButtons.__members__[button]
 			index = BUTTON_ORDER.index(button)
 			name = ControllerManager.DEFAULT_ICONS[index]
 			name = config['gui']['buttons'][index]

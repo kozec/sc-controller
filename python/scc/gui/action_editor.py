@@ -1112,7 +1112,10 @@ class ActionEditor(Editor):
 			self.hide_macro()
 			self.hide_ring()
 		elif id in STICKS:
-			self.set_title(_("Stick"))
+			if id == "DPAD":
+				self.set_title(_("DPAD"))
+			else:
+				self.set_title(_("Stick"))
 			action = self._set_mode(action, mode or Action.AC_STICK)
 			self.set_action(action)
 			self.hide_macro()
