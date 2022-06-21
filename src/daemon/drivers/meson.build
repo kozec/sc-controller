@@ -30,6 +30,16 @@ shared_library('scc-drv-sc_dongle',
 	]
 )
 
+shared_library('scc-drv-steamdeck',
+	include_directories: [ include ],
+	link_with: [ utils_lib, config_lib ],
+	dependencies: deps,
+	sources: [
+		'sc/common.c',
+		'sc/steamdeck.c',
+	]
+)
+
 shared_library('scc-drv-remotepad',
 	include_directories: [ include ],
 	link_with: [ utils_lib ],

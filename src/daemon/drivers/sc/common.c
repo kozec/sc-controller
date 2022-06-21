@@ -11,6 +11,7 @@
 #include <string.h>
 
 #define B_STICKTILT			0b10000000000000000000000000000000
+#define BUFFER_SIZE			128
 
 static const char* get_description(Controller* c);
 static const char* get_type(Controller* c);
@@ -162,7 +163,7 @@ static void haptic_effect(Controller* c, HapticData* hdata) {
 }
 
 static union {
-	uint8_t		bytes[64];
+	uint8_t		bytes[BUFFER_SIZE];
 	struct __attribute__((__packed__)) {
 		uint8_t		packet_type;
 		uint8_t		len;
@@ -212,6 +213,9 @@ static void update_desc(SCController* sc) {
 	case SC_BT:
 		snprintf(sc->desc, MAX_DESC_LEN, "<SCByBt %s>", sc->serial);
 		break;
+	case SC_DECK:
+		snprintf(sc->desc, MAX_DESC_LEN, "<Deck %s>", sc->serial);
+		break;
 	}
 }
 
@@ -230,35 +234,41 @@ bool read_serial(SCController* sc) {
 		sc->auto_id_used = true;
 		sc->auto_id = i;
 		snprintf(sc->serial, MAX_SERIAL_LEN, "%d", i);
-		snprintf(sc->id, MAX_ID_LEN, "sc%s", sc->serial);
+		if (sc->type == SC_DECK)
+			snprintf(sc->id, MAX_ID_LEN, "deck%s", sc->serial);
+		else
+			snprintf(sc->id, MAX_ID_LEN, "sc%s", sc->serial);
 		update_desc(sc);
 		RC_REL(c);
 		return true;
 	}
 	RC_REL(c);
 	
-	uint8_t data[64] = { PT_GET_SERIAL, PL_GET_SERIAL, 0x01 };
+	uint8_t data[BUFFER_SIZE] = { PT_GET_SERIAL, PL_GET_SERIAL, 0x01 };
 	uint8_t* response;
 	response = sc->dev->hid_request(sc->dev, sc->idx, data, -64);
 	if (response == NULL) {
 		LERROR("Failed to retrieve serial number");
 		return false;
 	}
-	if (data[1] != PL_GET_SERIAL) {
+	if ((data[0] != PT_GET_SERIAL) && (data[1] != PL_GET_SERIAL)) {
 		// Sometimes, freshly connected controller is not able to send its own
 		// serial straight away
 		return false;
 	}
 	data[13] = 0;	// to terminate string
 	strncpy(sc->serial, (const char*) &data[3], MAX_SERIAL_LEN);
-	snprintf(sc->id, MAX_ID_LEN, "sc%s", sc->serial);
+	if (sc->type == SC_DECK)
+		snprintf(sc->id, MAX_ID_LEN, "deck%s", sc->serial);
+	else
+		snprintf(sc->id, MAX_ID_LEN, "sc%s", sc->serial);
 	update_desc(sc);
 	
 	return true;
 }
 
 bool lizard_mode(SCController* sc) {
-	uint8_t data[64] = { PT_LIZARD_BUTTONS, 0x01 };
+	uint8_t data[BUFFER_SIZE] = { PT_LIZARD_BUTTONS, 0x01 };
 	if (sc->dev->hid_request(sc->dev, sc->idx, data, -64) == NULL) {
 		LERROR("Failed to activate lizard mode");
 		return false;
@@ -272,7 +282,8 @@ bool lizard_mode(SCController* sc) {
 }
 
 bool clear_mappings(SCController* sc) {
-	uint8_t data[64] = { PT_CLEAR_MAPPINGS, 0x01 };
+	uint8_t data[BUFFER_SIZE] = { PT_CLEAR_MAPPINGS, 0x01 };
+	
 	if (sc->dev->hid_request(sc->dev, sc->idx, data, -64) == NULL) {
 		LERROR("Failed to clear mappings");
 		return false;
@@ -281,26 +292,32 @@ bool clear_mappings(SCController* sc) {
 }
 
 bool configure(SCController* sc) {
-	uint8_t gyro_and_timeout[64] = {
-		// Header
-		PT_CONFIGURE, PL_CONFIGURE, CT_CONFIGURE,
-		// Idle timeout
-		(uint8_t)(sc->idle_timeout & 0xFF), (uint8_t)((sc->idle_timeout & 0xFF00) >> 8),
-		// unknown1
-		0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30,
-		// Gyros
-		(sc->gyro_enabled ? 0x1c : 0),
-		// unknown2:
-		0x00, 0x2e,
-	};
-	uint8_t leds[64] = { PT_CONFIGURE, PL_LED, CT_LED, sc->led_level };
 	if (sc->dev == NULL)
 		// Special case, controller was disconnected, but it's not deallocated yet
 		goto configure_fail;
-	if (sc->dev->hid_request(sc->dev, sc->idx, gyro_and_timeout, -64) == NULL)
-		goto configure_fail;
-	if (sc->dev->hid_request(sc->dev, sc->idx, leds, -64) == NULL)
-		goto configure_fail;
+	if (sc->type == SC_DECK) {
+		uint8_t deck_configure[BUFFER_SIZE] = { PT_CONFIGURE, 0x03, 0x08, 0x07 };
+		if (sc->dev->hid_request(sc->dev, sc->idx, deck_configure, -64) == NULL)
+			goto configure_fail;
+	} else {
+		uint8_t leds[BUFFER_SIZE] = { PT_CONFIGURE, PL_LED, CT_LED, sc->led_level };
+		uint8_t gyro_and_timeout[BUFFER_SIZE] = {
+			// Header
+			PT_CONFIGURE, PL_CONFIGURE, CT_CONFIGURE,
+			// Idle timeout
+			(uint8_t)(sc->idle_timeout & 0xFF), (uint8_t)((sc->idle_timeout & 0xFF00) >> 8),
+			// unknown1
+			0x18, 0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30,
+			// Gyros
+			(sc->gyro_enabled ? 0x1c : 0),
+			// unknown2:
+			0x00, 0x2e,
+		};
+		if (sc->dev->hid_request(sc->dev, sc->idx, gyro_and_timeout, -64) == NULL)
+			goto configure_fail;
+		if (sc->dev->hid_request(sc->dev, sc->idx, leds, -64) == NULL)
+			goto configure_fail;
+	}
 	return true;
 configure_fail:
 	LERROR("Failed to configure controller");

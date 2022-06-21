@@ -8,6 +8,7 @@ typedef enum {
 	SC_WIRED = 1,
 	SC_WIRELESS = 2,
 	SC_BT = 3,
+	SC_DECK = 4,
 } SCControllerType;
 
 typedef enum {
@@ -16,7 +17,7 @@ typedef enum {
 	SS_FAILED = 2
 } SCControllerState;
 
-#define MAX_SERIAL_LEN	16
+#define MAX_SERIAL_LEN	24
 /** MAX_DESC_LEN has to fit "<SCByCable SERIAL>" */
 #define MAX_DESC_LEN (15 + MAX_SERIAL_LEN)
 /** MAX_DESC_LEN has to fit "scSERIAL" */
