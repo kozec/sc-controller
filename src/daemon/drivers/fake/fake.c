@@ -47,6 +47,7 @@ static void driver_list_devices(Driver* drv, Daemon* daemon, const controller_av
 			return strbuilder_cpy("fake");
 		return NULL;
 	}
+	
 	InputDeviceData idev = {
 		.subsystem = 0,
 		.path = "(fake)",

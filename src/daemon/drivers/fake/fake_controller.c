@@ -20,7 +20,10 @@ static const char* fakegamepad_get_id(Controller* c) {
 }
 
 static const char* fakegamepad_get_type(Controller* c) {
-	return "fake";
+	const char* type = getenv("SCC_FAKE_TYPE");
+	if (type == NULL)
+		type = "fake";
+	return type;
 }
 
 static const char* fakegamepad_get_description(Controller* c) {
@@ -48,7 +51,6 @@ FakeGamepad* fakegamepad_new(Daemon* daemon) {
 	
 	next_id ++;
 	memset(pad, 0, sizeof(FakeGamepad));
-	pad->controller.flags = CF_NO_FLAGS;
 	pad->controller.deallocate = &fakegamepad_dealloc;
 	pad->controller.get_id = &fakegamepad_get_id;
 	pad->controller.get_type = &fakegamepad_get_type;
@@ -57,6 +59,13 @@ FakeGamepad* fakegamepad_new(Daemon* daemon) {
 	pad->controller.turnoff = &fakegamepad_turnoff;
 	pad->controller.set_gyro_enabled = NULL;
 	pad->controller.get_gyro_enabled = NULL;
+	
+	const char* flags = getenv("SCC_FAKE_FLAGS");
+	if (flags) {
+		pad->controller.flags = atoi(flags);
+	} else {
+		pad->controller.flags = CF_NO_FLAGS;
+	}
 	
 	snprintf(pad->id, MAX_ID_LEN, "fake%i", next_id);
 	snprintf(pad->desc, MAX_DESC_LEN, "<FakeGamepad #%i>", next_id);
