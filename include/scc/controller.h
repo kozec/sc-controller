@@ -130,7 +130,7 @@ typedef enum SCButton {
 	B_CPADTOUCH			= 0b000000000000000000000000000000100,
 	B_CPADPRESS			= 0b000000000000000000000000000000010,
 	B_STICKPRESS		= 0b001000000000000000000000000000000,
-	B_LSTICKPRESS		= 0b010000000000000000000000000000000,
+	B_RSTICKPRESS		= 0b010000000000000000000000000000000,
 	// SteamDeck only buttons
 	B_DOTS				= 0b000000000000000000000000000001000,
 	B_RGRIP2			= 0b000000000000000000000000000100000,
@@ -161,7 +161,7 @@ struct ControllerInput {
 		};
 	};
 	union {
-		AxisValue			axes[8];
+		AxisValue			axes[12];
 		struct {
 			AxisValue		stick_x;
 			AxisValue		stick_y;
@@ -171,6 +171,10 @@ struct ControllerInput {
 			AxisValue		rpad_y;
 			AxisValue		cpad_x;
 			AxisValue		cpad_y;
+			AxisValue		dpad_x;
+			AxisValue		dpad_y;
+			AxisValue		rstick_x;
+			AxisValue		rstick_y;
 		};
 	};
 	struct GyroInput		gyro;
@@ -182,8 +186,10 @@ typedef enum PadStickTrigger {
 	PST_LTRIGGER		= 3,
 	PST_RTRIGGER		= 4,
 	PST_CPAD			= 5,
-	PST_STICK			= 6,
-	PST_GYRO			= 7,
+	PST_DPAD			= 6,
+	PST_STICK			= 7,
+	PST_RSTICK			= 8,
+	PST_GYRO			= 9,
 } PadStickTrigger;
 
 #define SCC_True		0x01			/* This is used only by generate-parser-constants script */

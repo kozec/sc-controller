@@ -8,6 +8,7 @@
  */
 #define LOG_TAG "Mapper"
 #include "scc/utils/logging.h"
+#include "scc/utils/assert.h"
 #include "scc/utils/rc.h"
 #include "scc/virtual_device.h"
 #include "scc/special_action.h"
@@ -476,24 +477,30 @@ static void input(Mapper* _m, ControllerInput* i) {
 	// Buttons
 	if ((btn_add != 0) || (btn_rem != 0)) {
 		int i = 1;
-		SCButton b;
-		do {
-			b = 1 << (i++);
+		static_assert(B_RSTICKPRESS < ((uint64_t)1 << (uint64_t)32));
+		for (uint64_t i = 0; i < 32; i ++) {
+			SCButton b = 1 << i;
 			if (b & btn_add) {
+				LOG("PRESS %i", b);
 				Action* a = m->profile->get_button(m->profile, b);
 				a->button_press(a, _m);
 			} else if (b & btn_rem) {
 				Action* a = m->profile->get_button(m->profile, b);
 				a->button_release(a, _m);
 			}
-		} while (b != B_STICKPRESS);
+		}
 	}
 	
-	// Stick
+	// Sticks
 	if ((force_event & FE_STICK) || (m->old_state.stick_x != m->state.stick_x)
 								|| (m->old_state.stick_y != m->state.stick_y)) {
-		Action* a = m->profile->get_stick(m->profile);
+		Action* a = m->profile->get_stick(m->profile, PST_STICK);
 		a->whole(a, _m, m->state.stick_x, m->state.stick_y, PST_STICK);
+	}
+	if ((force_event & FE_STICK) || (m->old_state.rstick_x != m->state.rstick_x)
+								|| (m->old_state.rstick_y != m->state.rstick_y)) {
+		Action* a = m->profile->get_stick(m->profile, PST_RSTICK);
+		a->whole(a, _m, m->state.rstick_x, m->state.rstick_y, PST_RSTICK);
 	}
 	
 	// Gyro
@@ -529,6 +536,12 @@ static void input(Mapper* _m, ControllerInput* i) {
 	if ((m->old_state.rpad_x != m->state.rpad_x) || (m->old_state.rpad_y != m->state.rpad_y)) {
 		Action* a = m->profile->get_pad(m->profile, PST_RPAD);
 		a->whole(a, _m, m->state.rpad_x, m->state.rpad_y, PST_RPAD);
+	}
+	
+	// DPAD
+	if ((m->old_state.dpad_x != m->state.dpad_x) || (m->old_state.dpad_y != m->state.dpad_y)) {
+		Action* a = m->profile->get_pad(m->profile, PST_DPAD);
+		a->whole(a, _m, m->state.dpad_x, m->state.dpad_y, PST_DPAD);
 	}
 	
 	/*

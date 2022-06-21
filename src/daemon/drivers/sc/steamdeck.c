@@ -20,14 +20,24 @@
 #include "sc.h"
 #include <stddef.h>
 
+#define member_size(type, member) sizeof(((type *)0)->member)
+
 #define VENDOR_ID			0x28de
 #define PRODUCT_ID			0x1205
 #define ENDPOINT			3
 #define CONTROLIDX			2
 #define PACKET_SIZE			128
-#define UNLIZARD_INTERVAL	500
+#define UNLIZARD_INTERVAL	100
+// Counts are used only for scc-input-test
+#define BUTTON_COUNT		32
+#define AXIS_COUNT			(member_size(ControllerInput, axes) / sizeof(AxisValue))
+#define TRIGGER_COUNT		2
+// Basically, sticks on deck tend to return to non-zero position
+#define STICK_DEADZONE		3000
 
 static controller_available_cb controller_available = NULL;
+static controller_test_cb controller_test = NULL;
+static ControllerInput* controller_test_last = NULL;
 
 
 typedef struct DeckInput {
@@ -65,7 +75,6 @@ typedef struct DeckInput {
 	int16_t			q2;
 	int16_t			q3;
 	int16_t			q4;
-	uint8_t			_a3[8];
 } DeckInput;
 
 
@@ -103,21 +112,6 @@ typedef enum DeckButton {
 } DeckButton;
 
 
-static char* int_to_bin(uint64_t k, uint64_t* last) {
-	static char bits[65] = {' '};
-	uint64_t j = 1;
-	for (uint64_t i=0; i<64; i++) {
-		bits[64-i] = '.';
-		if (k & j) {
-			bits[64-i] = '1';
-			*last = i;
-		}
-		j <<= 1;
-	}
-	return bits;
-}
-
-
 static const uint64_t DIRECTLY_TRANSLATABLE_BUTTONS = (0
 	| SDB_A | SDB_B | SDB_X | SDB_Y
 	| SDB_LB | SDB_RB | SDB_LT | SDB_RT
@@ -131,63 +125,77 @@ inline static SCButton map_button(DeckInput* i, DeckButton from, SCButton to) {
 	return (i->buttons & from) ? to : 0;
 }
 
+inline static AxisValue map_dpad(DeckInput* i, DeckButton low, DeckButton hi) {
+	return ((i->buttons & low) ? STICK_PAD_MIN : ((i->buttons & hi) ? STICK_PAD_MAX : 0));
+}
+
+inline static AxisValue apply_deadzone(AxisValue value, AxisValue deadzone) {
+	return ((value > -deadzone) && (value < deadzone)) ? 0 : value;
+}
+
 
 static void handle_deck_input(SCController* sc, DeckInput* i) {
-	if (sc->mapper != NULL) {
-		if (i->seq % UNLIZARD_INTERVAL == 0) {
-			// Keeps lizard mode from happening
-			clear_mappings(sc);
-		}
+	if (i->seq % UNLIZARD_INTERVAL == 0) {
+		// Keeps lizard mode from happening
+		clear_mappings(sc);
+	}
+	
+	if ((sc->mapper != NULL) || (controller_test != NULL)) {
 		
+		// Convert buttons
 		SCButton buttons = (0
 			| ((i->buttons & DIRECTLY_TRANSLATABLE_BUTTONS) << 8)
 			| map_button(i, SDB_DOTS, B_DOTS)
 			// | map_button(i, SDB_RSTICKTOUCH, ....)	// not mapped
 			// | map_button(i, SDB_LSTICKTOUCH, ....) // not mapped
-			| map_button(i, SDB_RSTICKPRESS, B_STICKPRESS)
-			| map_button(i, SDB_LSTICKPRESS, B_LSTICKPRESS)
+			| map_button(i, SDB_LSTICKPRESS, B_STICKPRESS)
+			| map_button(i, SDB_RSTICKPRESS, B_RSTICKPRESS)
 			| map_button(i, SDB_LGRIP2, B_LGRIP2)
 			| map_button(i, SDB_RGRIP2, B_RGRIP2)
 		);
+		sc->input.buttons = buttons;
 		
-		sc->input.stick_x = i->lstick_x;
-		sc->input.stick_y = i->lstick_y;
-		sc->input.cpad_x = i->rstick_x;
-		sc->input.cpad_y = i->rstick_y;
+		// Convert triggers
+		sc->input.ltrig = i->ltrig >> 7;
+		sc->input.rtrig = i->rtrig >> 7;
+		
+		// Copy axes
+		sc->input.stick_x = apply_deadzone(i->lstick_x, STICK_DEADZONE);
+		sc->input.stick_y = apply_deadzone(i->lstick_y, STICK_DEADZONE);
+		sc->input.rstick_x = apply_deadzone(i->rstick_x, STICK_DEADZONE);
+		sc->input.rstick_y = apply_deadzone(i->rstick_y, STICK_DEADZONE);
 		sc->input.lpad_x = i->lpad_x;  // TODO: is memcpy faster here?
 		sc->input.lpad_y = i->lpad_y;  // TODO: is memcpy faster here?
 		sc->input.rpad_x = i->rpad_x;  // TODO: is memcpy faster here?
 		sc->input.rpad_y = i->rpad_y;  // TODO: is memcpy faster here?
-		sc->input.ltrig = i->ltrig >> 7;
-		sc->input.rtrig = i->rtrig >> 7;
 		
-		// uint64_t last = 0;
-		// char* b = int_to_bin(i->buttons, &last);
-		// LOG("B %s %li %x %x %lx", b, last, sc->input.ltrig, sc->input.rtrig, i->buttons);
+		// Handle dpad
+		sc->input.dpad_x = map_dpad(i, SDB_DPAD_LEFT, SDB_DPAD_RIGHT);
+		sc->input.dpad_y = map_dpad(i, SDB_DPAD_DOWN, SDB_DPAD_UP);
 		
-		/*
-		SCButton buttons = (((SCButton)i->buttons1) << 24) | (((SCButton)i->buttons0) << 8);
-		bool lpadtouch = buttons & B_LPADTOUCH;
-		bool sticktilt = buttons & B_STICKTILT;
-		if (lpadtouch & !sticktilt)
-			sc->input.stick_x = sc->input.stick_y = 0;
-		else if (!lpadtouch)
-			memcpy(&sc->input.stick_x, &i->lpad_x, sizeof(AxisValue) * 2);
-		if (!(lpadtouch || sticktilt))
-			sc->input.lpad_x = sc->input.lpad_y = 0;
-		else if (lpadtouch)
-			memcpy(&sc->input.lpad_x, &i->lpad_x, sizeof(AxisValue) * 2);
-		
-		if (buttons & B_LPADPRESS) {
-			// LPADPRESS button may signalize pressing stick instead
-			if ((buttons & B_STICKPRESS) && !(buttons & B_STICKTILT))
-				buttons &= ~B_LPADPRESS;
+		if (controller_test != NULL) {
+			uint32_t i;
+			for (i = 0; i < member_size(ControllerInput, axes) / sizeof(AxisValue); i++) {
+				if (controller_test_last->axes[i] != sc->input.axes[i]) {
+					controller_test_last->axes[i] = sc->input.axes[i];
+					controller_test(&sc->controller, TME_AXIS, i, sc->input.axes[i]);
+				}
+			}
+			for (i = 0; i < 2; i++) {
+				if (controller_test_last->triggers[i] != sc->input.triggers[i]) {
+					controller_test_last->triggers[i] = sc->input.triggers[i];
+					controller_test(&sc->controller, TME_AXIS, AXIS_COUNT + i, sc->input.triggers[i]);
+				}
+			}
+			for (i = 0; i < BUTTON_COUNT; i ++) {
+				if ((sc->input.buttons & (1 << i)) != (controller_test_last->buttons & (1 << i))) {
+					controller_test(&sc->controller, TME_BUTTON, i, (sc->input.buttons & (1 << i)) ? 1 : 0);
+				}
+			}
+			controller_test_last->buttons = sc->input.buttons;
+		} else {
+			sc->mapper->input(sc->mapper, &sc->input);
 		}
-		// Steam controller computes and sends dpad "buttons" as well, but
-		// SC Controller doesn't use them, so they are zeroed here
-		*/
-		sc->input.buttons = buttons;
-		sc->mapper->input(sc->mapper, &sc->input);
 	}
 }
 
@@ -218,43 +226,40 @@ static bool deck_configure(SCController* sc, uint8_t* data) {
 	uint8_t len = data[1] + 2;
 	memcpy(buffer, data, len);
 	if (sc->dev != NULL)
-		if (!sc->dev->hid_request(sc->dev, sc->idx, buffer, -64) == NULL)
+		if (!sc->dev->hid_request(sc->dev, sc->idx, buffer, -64) == 0)
 			return true;
 	return false;
 }
 
 
-static bool hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
-	if (controller_available != NULL) {
-		controller_available("deck", 9, idata);
-		return true;
-	}
+static void open_device(Daemon* daemon, const InputDeviceData* idata) {
+	// TODO: unify all that open_device bs
 	SCController* sc = NULL;
 	InputDevice* dev = idata->open(idata);
 	if (dev == NULL) {
 		LERROR("Failed to open '%s'", idata->path);
-		return true;		// and nothing happens
+		return;
 	}
 	if ((sc = create_usb_controller(daemon, dev, SC_DECK, CONTROLIDX)) == NULL) {
 		LERROR("Failed to allocate memory");
-		goto hotplug_cb_fail;
+		goto open_device_fail;
 	}
 	if (dev->claim_interfaces_by(dev, 3, 0, 0) <= 0) {
 		LERROR("Failed to claim interfaces");
-		goto hotplug_cb_fail;
+		goto open_device_fail;
 	}
 	if (!configure(sc))
-		goto hotplug_cb_failed_to_configure;
+		goto open_device_failed_to_configure;
 	if (!clear_mappings(sc))
-		goto hotplug_cb_failed_to_configure;
+		goto open_device_failed_to_configure;
 	if (!read_serial(sc)) {
 		LERROR("Failed to read serial number");
-		goto hotplug_cb_failed_to_configure;
+		goto open_device_failed_to_configure;
 	}
 	
 	if (!dev->interupt_read_loop(dev, ENDPOINT, PACKET_SIZE, &input_interrupt_cb, sc)) {
 		LERROR("interupt_read_loop failed");
-		goto hotplug_cb_failed_to_configure;
+		goto open_device_failed_to_configure;
 	}
 	
 	DEBUG("Steam Deck with serial %s sucesfully configured", sc->serial);
@@ -263,17 +268,28 @@ static bool hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
 	if (!daemon->controller_add(&sc->controller)) {
 		// This shouldn't happen unless memory is running out
 		DEBUG("Failed to add deck to daemon");
-		goto hotplug_cb_fail;
+		goto open_device_fail;
 	}
-	return true;
-hotplug_cb_failed_to_configure:
+	return;
+	
+open_device_failed_to_configure:
 	LERROR("Failed to configure deck");
-hotplug_cb_fail:
+open_device_fail:
 	if (sc != NULL)
 		free(sc);
 	dev->close(dev);
+}
+
+
+static bool hotplug_cb(Daemon* daemon, const InputDeviceData* idata) {
+	if (controller_available != NULL) {
+		controller_available("steamdeck", 9, idata);
+	} else {
+		open_device(daemon, idata);
+	}
 	return true;
 }
+
 
 static bool driver_start(Driver* drv, Daemon* daemon) {
 	HotplugFilter filter_vendor  = { .type=SCCD_HOTPLUG_FILTER_VENDOR,	.vendor=VENDOR_ID };
@@ -298,24 +314,48 @@ static bool driver_start(Driver* drv, Daemon* daemon) {
 	return true;
 }
 
+
 static void driver_list_devices(Driver* drv, Daemon* daemon, const controller_available_cb ca) {
 	controller_available = ca;
 	driver_start(drv, daemon);
 }
 
+static void driver_get_device_capabilities(Driver* drv, Daemon* daemon,
+									const InputDeviceData* idev,
+									InputDeviceCapabilities* capabilities) {
+	capabilities->button_count = 31;
+	capabilities->axis_count = AXIS_COUNT + 2;
+	for (int i = 0; i < capabilities->button_count; i++)
+		capabilities->buttons[i] = i;
+	for (int i = 0; i < capabilities->axis_count; i++)
+		capabilities->axes[i] = i;
+}
+
+static void driver_test_device(Driver* drv, Daemon* daemon,
+			const InputDeviceData* idata,  const controller_test_cb test_cb) {
+	controller_test = test_cb;
+	if (controller_test_last == NULL) {
+		controller_test_last = calloc(1, sizeof(ControllerInput));
+		if (controller_test_last == NULL) {
+			LERROR("driver_test_device: out of memory");
+			return;
+		}
+	}
+	open_device(daemon, idata);
+}
+
+
 static Driver driver = {
 	.unload = NULL,
 	.start = driver_start,
-	// .list_devices = driver_list_devices,
+	.input_test = &((InputTestMethods) {
+		.list_devices = driver_list_devices,
+		.test_device = driver_test_device,
+		.get_device_capabilities = driver_get_device_capabilities,
+	})
 };
 
 Driver* scc_driver_init(Daemon* daemon) {
-	ASSERT(sizeof(TriggerValue) == 1);
-	ASSERT(sizeof(AxisValue) == 2);
-	ASSERT(sizeof(GyroValue) == 2);
-	// ^^ If any of above assertions fails, input_interrupt_cb code has to be
-	//    modified so it doesn't use memcpy calls, as those depends on those sizes
-	
 	return &driver;
 }
 

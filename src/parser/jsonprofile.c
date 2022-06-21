@@ -12,11 +12,11 @@
 #include "scc/profile.h"
 #include "scc/parser.h"
 #include "scc/action.h"
-#include <errno.h>
 #include <stdlib.h>
+#include <errno.h>
 
 static const char* PROFILE_TYPE_JSON = "json";
-#define LAST_BUTTON_INDEX 20
+#define LAST_BUTTON_INDEX 24
 #define LAST_AXIS_INDEX PST_GYRO
 #define LAST_TRIGGER_INDEX 1
 
@@ -30,12 +30,15 @@ typedef struct {
 static char* button_names[] = {
 	NULL, "RPADTOUCH", "LPADTOUCH", "RPADPRESS", "LPADPRESS", "RGRIP", "LGRIP",
 	"START", "C", "BACK", "A", "X", "B", "Y", "LB", "RB", "LT", "RT",
-	"CPADTOUCH", "CPADPRESS", "STICKPRESS"
+	"CPADTOUCH", "CPADPRESS", "STICKPRESS", "RSTICKPRESS", "DOTS",
+	"RGRIP2", "LGRIP2"
 };
+
+static_assert(COUNT_OF(button_names) == LAST_BUTTON_INDEX + 1);
 
 static char* axis_names[] = {
 	// Order here has to match PadStickTrigger enum
-	NULL, "pad_left", "pad_right", NULL, NULL, "cpad", "stick", "gyro"
+	NULL, "pad_left", "pad_right", NULL, NULL, "cpad", "dpad", "stick", "rstick", "gyro"
 };
 
 
@@ -97,7 +100,15 @@ static int scbutton_to_index(SCButton b) {
 			return 19;
 		case B_STICKPRESS:
 			return 20;
-		default:
+		case B_RSTICKPRESS:
+			return 21;
+		case B_DOTS	:
+			return 22;
+		case B_RGRIP2:
+			return 23;
+		case B_LGRIP2:
+			return 24;
+		case _SCButton_padding:
 			return 0;
 	}
 	return 0;
@@ -130,18 +141,15 @@ static Action* get_trigger(Profile* _p, PadStickTrigger t) {
 	return a;
 }
 
-static Action* get_stick(Profile* _p) {
+static Action* get_stick(Profile* _p, PadStickTrigger t) {
 	JSONProfile* p = container_of(_p, JSONProfile, profile);
-	Action* a = p->axes[PST_STICK];
+	Action* a = p->axes[t];
 	RC_ADD(a);
 	return a;
 }
 
 static Action* get_gyro(Profile* _p) {
-	JSONProfile* p = container_of(_p, JSONProfile, profile);
-	Action* a = p->axes[PST_GYRO];
-	RC_ADD(a);
-	return a;
+	return get_stick(_p, PST_GYRO);
 }
 
 static void compress(Profile* _p) {

@@ -261,7 +261,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			vbC.pack_start(btGYRO, False, True, 0)
 			btGYRO.set_margin_top(30)
 			# Resize buttons at bottom
-			#for w in ['btLSTICK', 'btSTICK', 'btLPAD', 'btRPAD']:
+			#for w in ['btSTICK', 'btRSTICK', 'btLPAD', 'btRPAD']:
 			#	w.set_size_request(150, -1)
 			# Move 'DPAD' bellow 'LGRIP'
 			btLGRIP = self.builder.get_object("btLGRIP")

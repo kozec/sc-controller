@@ -1112,14 +1112,18 @@ class ActionEditor(Editor):
 			self.hide_macro()
 			self.hide_ring()
 		elif id in STICKS:
-			if id == "DPAD":
+			if id == Profile.DPAD:
 				self.set_title(_("DPAD"))
-			else:
+			elif id == Profile.RSTICK:
+				self.set_title(_("Rigth Stick"))
+			elif id == Profile.STICK:
 				self.set_title(_("Stick"))
+			else:
+				raise ValueError("unknown id %s" % (id, ))
 			action = self._set_mode(action, mode or Action.AC_STICK)
 			self.set_action(action)
 			self.hide_macro()
-			self.id = Profile.STICK
+			self.id = id
 		elif id in GYROS:
 			self.set_title(_("Gyro"))
 			action = self._set_mode(action, mode or Action.AC_GYRO)

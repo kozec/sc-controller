@@ -47,14 +47,20 @@ typedef enum {
 	SRC_CPADTOUCH,
 	SRC_CPADPRESS,
 	SRC_STICKPRESS,
+	SRC_RSTICKPRESS,
+	SRC_LGRIP2,
+	SRC_RGRIP2,
+	SRC_DOTS,
 	// Triggers (LT/RT cannot be locked as button)
 	SRC_LTRIGGER,
 	SRC_RTRIGGER,
 	// Stick & pad
 	SRC_STICK,
+	SRC_RSTICK,
 	SRC_LPAD,
 	SRC_RPAD,
 	SRC_CPAD,
+	SRC_DPAD,
 	
 	SRC_MAX,
 	SRC_INVALID,
@@ -83,19 +89,24 @@ typedef struct {
  * string is not recognized
  */
 static Source string_to_source(const char* source) {
+	// TODO: this seems bit duplicated, constants.c has very similar code
 	switch (source[0]) {
 	case 'R':
 		if (0 == strcmp("RB", source)) return SRC_RB;
 		if (0 == strcmp("RGRIP", source)) return SRC_RGRIP;
+		if (0 == strcmp("RGRIP2", source)) return SRC_RGRIP2;
 		if (0 == strcmp("RPAD", source)) return SRC_RPADPRESS;
 		if (0 == strcmp("RPADPRESS", source)) return SRC_RPAD;
 		if (0 == strcmp("RTRIGGER", source)) return SRC_RTRIGGER;
 		if (0 == strcmp("RPADTOUCH", source)) return SRC_RPADTOUCH;
+		if (0 == strcmp("RSTICK", source)) return SRC_RSTICK;
+		if (0 == strcmp("RSTICKPRESS", source)) return SRC_RSTICKPRESS;
 		break;
 	case 'L':
 		if (0 == strcmp("LB", source)) return SRC_LB;
 		if (0 == strcmp("LPAD", source)) return SRC_LPAD;
 		if (0 == strcmp("LGRIP", source)) return SRC_LGRIP;
+		if (0 == strcmp("LGRIP2", source)) return SRC_LGRIP2;
 		if (0 == strcmp("LTRIGGER", source)) return SRC_LTRIGGER;
 		if (0 == strcmp("LPADPRESS", source)) return SRC_LPADPRESS;
 		if (0 == strcmp("LPADTOUCH", source)) return SRC_LPADTOUCH;
@@ -109,6 +120,10 @@ static Source string_to_source(const char* source) {
 		if (0 == strcmp("C", source)) return SRC_C;
 		if (0 == strcmp("CPADTOUCH", source)) return SRC_CPADTOUCH;
 		if (0 == strcmp("CPADPRESS", source)) return SRC_CPADPRESS;
+		break;
+	case 'D':
+		if (0 == strcmp("DOTS", source)) return SRC_DOTS;
+		if (0 == strcmp("DPAD", source)) return SRC_DPAD;
 		break;
 	case 'B':
 		if (0 == strcmp("B", source)) return SRC_B;
@@ -127,9 +142,13 @@ static Source string_to_source(const char* source) {
 static const char* source_to_string[] = {
 	"LPADTOUCH", "RPADTOUCH", "LPADPRESS", "RPADPRESS", "RGRIP", "LGRIP",
 	"START", "C", "BACK", "A", "X", "B", "Y", "LB", "RB", "CPADTOUCH",
-	"CPADPRESS", "STICKPRESS", "LTRIGGER", "RTRIGGER", "STICK",
-	"LPAD", "RPAD", "CPAD"
+	"CPADPRESS", "STICKPRESS", "RSTICKPRESS", "LGRIP2", "RGRIP2", "DOTS",
+	"LTRIGGER", "RTRIGGER", "STICK", "RSTICK",
+	"LPAD", "RPAD", "CPAD", "DPAD",
 };
+
+static_assert(COUNT_OF(source_to_string) == SRC_MAX);
+
 
 /** Converts SCButton value to Source value */
 static Source scbutton_to_source(SCButton b) {
@@ -139,7 +158,9 @@ static Source scbutton_to_source(SCButton b) {
 		case B_RPADPRESS:	return SRC_RPADPRESS;
 		case B_LPADPRESS:	return SRC_LPADPRESS;
 		case B_RGRIP:		return SRC_RGRIP;
+		case B_RGRIP2:		return SRC_RGRIP2;
 		case B_LGRIP:		return SRC_LGRIP;
+		case B_LGRIP2:		return SRC_LGRIP2;
 		case B_START:		return SRC_START;
 		case B_C:			return SRC_C;
 		case B_BACK:		return SRC_BACK;
@@ -149,12 +170,15 @@ static Source scbutton_to_source(SCButton b) {
 		case B_Y:			return SRC_Y;
 		case B_LB:			return SRC_LB;
 		case B_RB:			return SRC_RB;
-		// case B_LT:		// not used
-		// case B_RT:		// not used
+		case B_DOTS:		return SRC_DOTS;
 		case B_CPADTOUCH:	return SRC_CPADTOUCH;
 		case B_CPADPRESS:	return SRC_CPADPRESS;
 		case B_STICKPRESS:	return SRC_STICKPRESS;
-		default:
+		case B_RSTICKPRESS:	return SRC_RSTICKPRESS;
+		case _SCButton_padding:
+		case B_LT:
+		case B_RT:
+			// not used
 			break;
 	}
 	
@@ -169,7 +193,9 @@ static Source what_to_source(PadStickTrigger what) {
 		case PST_LTRIGGER:	return SRC_LTRIGGER;
 		case PST_RTRIGGER:	return SRC_RTRIGGER;
 		case PST_CPAD:		return SRC_CPAD;
+		case PST_DPAD:		return SRC_DPAD;
 		case PST_STICK:		return SRC_STICK;
+		case PST_RSTICK:		return SRC_RSTICK;
 		case PST_GYRO:
 			break;
 	}
@@ -208,12 +234,13 @@ static Action* locked_profile_get_pad(Profile* _p, PadStickTrigger what) {
 	return p->original->get_pad(p->original, what);
 }
 
-static Action* locked_profile_get_stick(Profile* _p) {
+static Action* locked_profile_get_stick(Profile* _p, PadStickTrigger what) {
 	LockProfile* p = container_of(_p, LockProfile, profile);
-	if (p->actions[SRC_STICK].owner != NULL) {
-		return &p->actions[SRC_STICK].action;
+	Source s = (what == PST_STICK) ? SRC_STICK : SRC_RSTICK;
+	if (p->actions[s].owner != NULL) {
+		return &p->actions[s].action;
 	}
-	return p->original->get_stick(p->original);
+	return p->original->get_stick(p->original, what);
 }
 
 static Action* locked_profile_get_gyro(Profile* _p) {

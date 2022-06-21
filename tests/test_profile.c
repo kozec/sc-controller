@@ -1,6 +1,5 @@
 #include "CuTest.h"
 #include "scc/utils/traceback.h"
-#include "scc/utils/assert.h"
 #include "scc/utils/rc.h"
 #include "scc/controller.h"
 #include "scc/profile.h"

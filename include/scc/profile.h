@@ -51,7 +51,7 @@ struct Profile {
 	 * is ignored (but it's safe to decrease.)
 	 */
 	
-	Action*			(*get_stick)(Profile* p);
+	Action*			(*get_stick)(Profile* p, PadStickTrigger t);
 	
 	/**
 	 * Returns action assigned to gyros (which can be NoAction).

@@ -847,7 +847,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="btLSTICK">
+                      <object class="GtkButton" id="btSTICK">
                         <property name="width_request">220</property>
                         <property name="visible">False</property>
                         <property name="can_focus">True</property>
@@ -863,7 +863,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="btSTICK">
+                      <object class="GtkButton" id="btRSTICK">
                         <property name="width_request">220</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>

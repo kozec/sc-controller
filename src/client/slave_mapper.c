@@ -226,11 +226,13 @@ void sccc_slave_mapper_feed(Mapper* _m, SCButton button, PadStickTrigger pst, in
 		case PST_LPAD:
 		case PST_RPAD:
 		case PST_CPAD:
+		case PST_DPAD:
 			a = m->profile->get_pad(m->profile, pst);
 			a->whole(a, _m, values[0], values[1], pst);
 			break;
 		case PST_STICK:
-			a = m->profile->get_stick(m->profile);
+		case PST_RSTICK:
+			a = m->profile->get_stick(m->profile, pst);
 			a->whole(a, _m, values[0], values[1], pst);
 			break;
 		case PST_LTRIGGER:
