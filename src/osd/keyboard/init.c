@@ -98,7 +98,14 @@ static void osd_keyboard_set_cursor_position(OSDKeyboard* kbd, int index, AxisVa
 	double x = (double)_x / (double)(STICK_PAD_MAX);
 	double y = (double)_y / (double)(STICK_PAD_MAX) * -1.0;
 	
-	circle_to_square(&x, &y);
+	// TODO not on every input
+	ControllerData * cd = sccc_get_controller_data(priv->client, priv->controller_id);
+	if(cd != NULL){
+		if(strcmp(cd->type, "deck") != 0){
+			circle_to_square(&x, &y);
+		}
+	}
+
 	x = clamp(
 		0,
 		(priv->limits[index].x0 + w * 0.5) + x * w * 0.5,

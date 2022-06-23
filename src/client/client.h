@@ -5,14 +5,6 @@
 #include "scc/client.h"
 #include <stdint.h>
 
-typedef struct ControllerData {
-	uint32_t			handle;
-	char*				id;
-	char*				type;
-	ControllerFlags		flags;
-	char*				config_file;
-	bool				alive;
-} ControllerData;
 
 typedef LIST_TYPE(ControllerData) ControllerList;
 

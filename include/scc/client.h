@@ -112,6 +112,13 @@ DLL_EXPORT uint32_t sccc_get_controller_handle(SCCClient* c, const char* id);
 DLL_EXPORT const char* sccc_get_controller_id(SCCClient* c, int handle);
 
 /**
+ * Returns controller data of specified controller or NULL if id is invalid.
+ * Returned value should _not_ be deallocated by caller and will be available
+ * at least until next call to 'sccc_recieve'.
+ */
+DLL_EXPORT ControllerData * sccc_get_controller_data(SCCClient* c, const char* id);
+
+/**
  * Locks physical button, axis or pad. Events from locked sources are
  * sent to this client and processed using 'event' callback until
  * unlock_all() is called.

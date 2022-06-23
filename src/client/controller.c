@@ -159,6 +159,23 @@ uint32_t sccc_get_controller_handle(SCCClient* _c, const char* id) {
 	return 0;
 }
 
+ControllerData * sccc_get_controller_data(SCCClient* _c, const char* id) {
+	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
+	// Not using Iterator here to avoid need to allocate it
+	if (id == NULL) {
+		if (list_len(c->controllers) > 0)
+			return c->controllers->items[0];
+	} else {
+		FOREACH_IN(ControllerData*, cd, c->controllers) {
+			if (strcmp(cd->id, id) == 0) {
+				// Got one
+				return cd;
+			}
+		}
+	}
+	return NULL;
+}
+
 bool sccc_unlock_all(SCCClient* _c) {
 	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
 	int32_t id = sccc_request(&c->client, "Unlock.");
@@ -175,6 +192,23 @@ const char* sccc_get_controller_id(SCCClient* _c, int handle) {
 	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
 	ControllerData* cd = get_data_by_handle(c, handle);
 	return cd->id;
+}
+
+char * sccc_get_controller_type(SCCClient* _c, const char* id) {
+	struct _SCCClient* c = container_of(_c, struct _SCCClient, client);
+	// Not using Iterator here to avoid need to allocate it
+	if (id == NULL) {
+		if (list_len(c->controllers) > 0)
+			return c->controllers->items[0]->type;
+	} else {
+		FOREACH_IN(ControllerData*, cd, c->controllers) {
+			if (strcmp(cd->id, id) == 0) {
+				// Got one
+				return cd->type;
+			}
+		}
+	}
+	return 0;
 }
 
 void controller_data_free(ControllerData* cd) {

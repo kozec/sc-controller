@@ -10,6 +10,7 @@
 
 typedef struct Controller Controller;
 typedef struct ControllerInput ControllerInput;
+typedef struct ControllerData ControllerData;
 typedef struct Mapper Mapper;
 typedef struct HapticData HapticData;
 
@@ -100,6 +101,14 @@ struct Controller {
 	void				(*set_mapper)(Controller* c, Mapper* m);
 };
 
+typedef struct ControllerData {
+	uint32_t			handle;
+	char*				id;
+	char*				type;
+	ControllerFlags		flags;
+	char*				config_file;
+	bool				alive;
+} ControllerData;
 
 typedef uint16_t Axis;
 typedef uint16_t Keycode;
