@@ -39,6 +39,7 @@ typedef LIST_TYPE(HelpLine) HelpLineList;
 typedef struct _OSDKeyboardPrivate {
 	SCCClient*					client;
 	GSource*					client_src;
+	bool						square;
 	Mapper*						slave_mapper;
 	ButtonList					buttons;
 	GtkWidget*					draw_area;

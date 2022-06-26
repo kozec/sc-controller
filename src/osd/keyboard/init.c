@@ -39,13 +39,21 @@ static void osd_keyboard_on_connection_ready(SCCClient* c) {
 		return;
 	}
 	
+	ControllerData * cd = sccc_get_controller_data(priv->client, priv->controller_id);
+	if(strcmp(cd->type, "deck") == 0){
+		priv->square = true;
+	}
+
 	if (!sccc_lock(c, handle,
-					"STICK", "A", "B", "X", "Y", "C", "LGRIP", "RGRIP",
+					"STICK", "A", "B", "X", "Y", "C", 
+					"LGRIP", //"LGRIP2", TODO lock not break LGRIP
+					"RGRIP", strcmp(cd->type, "deck") == 0 ? "RGRIP2" : "",	
+					strcmp(cd->type, "deck") == 0 ? "DOTS" : "",				
 					"START", "BACK", "LB", "RB", "LTRIGGER", "RTRIGGER",
 					"LPAD", "RPAD", "LPADPRESS", "RPADPRESS")) {
-		LERROR("Failed to lock controller");
-		g_signal_emit_by_name(G_OBJECT(kbd), "exit", 3);
-		return;
+			LERROR("Failed to lock controller");
+			g_signal_emit_by_name(G_OBJECT(kbd), "exit", 3);
+			return;
 	}
 	
 	g_signal_emit_by_name(G_OBJECT(kbd), "ready");
@@ -98,12 +106,8 @@ static void osd_keyboard_set_cursor_position(OSDKeyboard* kbd, int index, AxisVa
 	double x = (double)_x / (double)(STICK_PAD_MAX);
 	double y = (double)_y / (double)(STICK_PAD_MAX) * -1.0;
 	
-	// TODO not on every input
-	ControllerData * cd = sccc_get_controller_data(priv->client, priv->controller_id);
-	if(cd != NULL){
-		if(strcmp(cd->type, "deck") != 0){
-			circle_to_square(&x, &y);
-		}
+	if(!priv->square){
+		circle_to_square(&x, &y);
 	}
 
 	x = clamp(
@@ -175,6 +179,7 @@ static void osd_keyboard_init(OSDKeyboard* kbd) {
 	ASSERT(priv->buttons);
 	ASSERT(priv->help_lines);
 	list_set_dealloc_cb(priv->help_lines, free);
+	priv->square = false;
 	priv->client = NULL;
 	priv->controller_id = NULL;
 	register_keyboard_actions();
