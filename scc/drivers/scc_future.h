@@ -40,6 +40,16 @@ typedef enum SCButton {
 	_SCButton_padding = 0xFFFFFFFF	// uint32_t
 } SCButton;
 
+struct GyroInput {
+	GyroValue			gpitch;
+	GyroValue			groll;
+	GyroValue			gyaw;
+	GyroValue			q1;
+	GyroValue			q2;
+	GyroValue			q3;
+	GyroValue			q4;
+};
+
 struct ControllerInput {
 	SCButton				buttons;
 	union {
