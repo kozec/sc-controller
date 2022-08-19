@@ -28,7 +28,7 @@ inline static SCButton libretro_button_to_sc_button(int id) {
 	case RETRO_DEVICE_ID_JOYPAD_L2:			return B_LT;
 	case RETRO_DEVICE_ID_JOYPAD_R2:			return B_RT;
 	case RETRO_DEVICE_ID_JOYPAD_L3:			return B_STICKPRESS;
-	case RETRO_DEVICE_ID_JOYPAD_R3:			return B_RPAD;
+	case RETRO_DEVICE_ID_JOYPAD_R3:			return B_RPADPRESS;
 	default:
 		return 0;
 	}
