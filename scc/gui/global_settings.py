@@ -830,8 +830,10 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				if filename.startswith("hid-"):
 					drv, usbid, name = filename.split("-", 2)
 					name = "%s <i>(%s)</i>" % (name[0:-5], usbid.upper())
-				else:
+				elif "-" in filename:
 					drv, name = filename.split("-", 1)
 					name = name[0:-5]
+				else:
+					continue
 				path = os.path.join(get_config_path(), "devices", filename)
 				lstControllers.append((path, name, self._get_gamepad_icon(drv)))

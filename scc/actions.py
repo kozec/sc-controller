@@ -874,7 +874,7 @@ class MouseAction(WholeHapticAction, Action):
 		self.change(mapper, position * MouseAbsAction.MOUSE_FACTOR, 0, what)
 		mapper.force_event.add(FE_STICK)
 	
-		
+	
 	def pad(self, mapper, position, what):
 		if mapper.is_touched(what):
 			if self._old_pos and mapper.was_touched(what):

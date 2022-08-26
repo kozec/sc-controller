@@ -41,31 +41,27 @@ class DeckInput(ctypes.Structure):
 		('lpad_y', ctypes.c_int16),
 		('rpad_x', ctypes.c_int16),
 		('rpad_y', ctypes.c_int16),
-		('_a2', ctypes.c_uint8 * 20),
-		('ltrig', ctypes.c_uint16),
-		('rtrig', ctypes.c_uint16),
-		('stick_x', ctypes.c_int16),
-		('stick_y', ctypes.c_int16),
-		('rstick_x', ctypes.c_int16),
-		('rstick_y', ctypes.c_int16),
-		# int16_t	accel_x
-		# int16_t	accel_y
-		# int16_t	accel_z
-		# int16_t	gpitch
-		# int16_t	groll
-		# int16_t	gyaw
-		('q1', ctypes.c_int16),
-		('q2', ctypes.c_int16),
-		('q3', ctypes.c_int16),
-		('q4', ctypes.c_int16),
-		# Values above are readed directly from deck
-		# Values bellow are converted so mapper can understand them
+		
 		('accel_x', ctypes.c_int16),
 		('accel_y', ctypes.c_int16),
 		('accel_z', ctypes.c_int16),
 		('gpitch', ctypes.c_int16),
 		('groll', ctypes.c_int16),
 		('gyaw', ctypes.c_int16),
+		('q1', ctypes.c_uint16),
+		('q2', ctypes.c_uint16),
+		('q3', ctypes.c_uint16),
+		('q4', ctypes.c_uint16),
+		
+		('ltrig', ctypes.c_uint16),
+		('rtrig', ctypes.c_uint16),
+		('stick_x', ctypes.c_int16),
+		('stick_y', ctypes.c_int16),
+		('rstick_x', ctypes.c_int16),
+		('rstick_y', ctypes.c_int16),
+		
+		# Values above are readed directly from deck
+		# Values bellow are converted so mapper can understand them
 		('dpad_x', ctypes.c_int16),
 		('dpad_y', ctypes.c_int16),
 	]
@@ -156,6 +152,14 @@ class Deck(USBDevice, SCController):
 	def disconnected(self):
 		# Overrided to skip returning serial# to pool.
 		pass
+	
+	def set_gyro_enabled(self, enabled):
+		# Always on on deck
+		pass
+	
+	def get_gyro_enabled(self):
+		# Always on on deck
+		return True
 	
 	def get_type(self):
 		return "deck"

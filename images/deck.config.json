@@ -15,6 +15,7 @@
 		"stick_x", "stick_y", "rstick_x", "rstick_y",
 		"lpad_x", "lpad_x", "rpad_y", "rpad_y",
 		"dpad_x", "dpad_y", "ltrig", "rtrig"
-	]
+	],
+	"gyros": true
 }
 
