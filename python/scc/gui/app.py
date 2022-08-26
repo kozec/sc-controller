@@ -993,7 +993,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				c.unlock_all()
 				c.observe(DaemonManager.nocallback, self.on_observe_failed,
 					'A', 'B', 'C', 'X', 'Y', 'START', 'BACK', 'LB', 'RB',
-					'LPADPRESS', 'RPADPRESS', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
+					'LPAD', 'RPAD', 'LGRIP', 'RGRIP', 'LT', 'RT', 'LEFT',
 					'RIGHT', 'STICK', 'STICKPRESS')
 				self.test_mode_controller = c
 	
