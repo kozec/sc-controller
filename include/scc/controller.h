@@ -10,6 +10,7 @@
 
 typedef struct Controller Controller;
 typedef struct ControllerInput ControllerInput;
+typedef struct GyroInput GyroInput;
 typedef struct Mapper Mapper;
 typedef struct HapticData HapticData;
 
