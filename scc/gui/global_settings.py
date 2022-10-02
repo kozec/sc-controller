@@ -563,6 +563,11 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		model.clear()
 		for f in profiles:
 			name = f.get_basename()
+			if type(name) is not unicode:
+				try:
+					name = name.decode("utf-8")
+				except Exception:
+					continue
 			if name.endswith(".mod"):
 				continue
 			if name.endswith(".sccprofile"):
