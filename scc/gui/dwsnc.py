@@ -32,8 +32,11 @@ def child_get_property(parent, child, propname):
 def headerbar(bar):
 	"""
 	Moves all buttons from left to right (and vice versa) if user's desktop
-	environment is identified as Unity
+	environment is identified as Unity.
+	
+	Removes 'icon' button otherwise
 	"""
+	bar.set_decoration_layout(":minimize,close")
 	pass	# Not outside of Unity
 
 IS_UNITY = False
