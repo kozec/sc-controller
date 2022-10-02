@@ -59,10 +59,10 @@ download_dep "gdk-pixbuf-2.36.9" "https://archive.archlinux.org/packages/g/gdk-p
 download_dep "libffi-3.3" "https://archive.archlinux.org/packages/l/libffi/libffi-3.3-4-x86_64.pkg.tar.zst"
 download_dep "libcroco-0.6.13" "https://archive.archlinux.org/packages/l/libcroco/libcroco-0.6.13-1-x86_64.pkg.tar.xz"
 download_dep "libxml2-2.9.7" "https://archive.archlinux.org/packages/l/libxml2/libxml2-2.9.7%2B4%2Bg72182550-2-x86_64.pkg.tar.xz"
-download_dep "librsvg-2.42.2" "https://archive.archlinux.org/packages/l/librsvg/librsvg-2%3A2.42.2-1-x86_64.pkg.tar.xz"
+download_dep "librsvg-2.44.12" "https://archive.archlinux.org/packages/l/librsvg/librsvg-2%3A2.44.12-1-x86_64.pkg.tar.xz"
 download_dep "libffi-3.2.1" "https://archive.archlinux.org/packages/l/libffi/libffi-3.2.1-4-x86_64.pkg.tar.xz"
 download_dep "icu-60.2" "https://archive.archlinux.org/packages/i/icu/icu-60.2-1-x86_64.pkg.tar.xz"
-download_dep "zlib-1:1.2.11" "https://archive.archlinux.org/packages/z/zlib/zlib-1%3A1.2.11-1-x86_64.pkg.tar.xz"
+download_dep "zlib-1:1.2.12" "https://archive.archlinux.org/packages/z/zlib/zlib-1%3A1.2.12-2-x86_64.pkg.tar.zst"
 
 # Prepare & build deps
 export PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages/
@@ -86,9 +86,9 @@ unpack_dep "gdk-pixbuf-2.36.9"
 unpack_dep "libffi-3.3"
 unpack_dep "libcroco-0.6.13"
 unpack_dep "libxml2-2.9.7"
-unpack_dep "librsvg-2.42.2"
+unpack_dep "librsvg-2.44.12"
 unpack_dep "icu-60.2"
-unpack_dep "zlib-1:1.2.11"
+unpack_dep "zlib-1:1.2.12"
 
 # Remove uneeded files
 rm -f "${BUILD_APPDIR}/usr/${LIB}/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-ani.so"
