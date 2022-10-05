@@ -38,13 +38,13 @@ run_target('scc-osd-menu',
 		'-t', 'radial',
 		'-c', 'LEFT',
 		# '-f', '/e/SC Controller/share/default_menus/Default.menu'
-	],
-	dependencies: [scc_osd_menu])
+	]
+)
 
 
 run_target('scc-osd-daemon',
 	command: [
 		'sh', '../../meson-run.sh', 'src/osd/scc-osd-daemon',
 	],
-	dependencies: [scc_osd_daemon])
+)
 

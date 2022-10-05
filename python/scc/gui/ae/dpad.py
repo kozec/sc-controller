@@ -192,7 +192,7 @@ class DPADComponent(AEComponent, MenuActionCofC, BindingEditor):
 	
 	def get_default_confirm(self):
 		"""
-		Returns default confirm button for pads/stick - LPADPRESS, RPADPRESS or STICKPRESS
+		Returns default confirm button for pads/stick - LPAD, RPAD or STICKPRESS
 		"""
 		if self.editor.id == STICK:
 			return SCButtons.STICKPRESS

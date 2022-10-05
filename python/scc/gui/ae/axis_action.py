@@ -315,8 +315,8 @@ class AxisActionComponent(AEComponent, TimerManager):
 	
 	def on_ok(self, action):
 		if isinstance(action.strip(), AreaAction):
-			# Kinda hacky way to set action on LPADPRESS press or RPADPRESS
-			# press when user selects Mouse Area as ouput and checks
+			# Kinda hacky way to set action on LPAD press or RPAD press
+			# when user selects Mouse Area as ouput and checks
 			# 'Pressing the Pad Clicks' checkbox
 			side = getattr(SCButtons, self.editor.get_id())
 			clicks = self.pressing_pad_clicks()

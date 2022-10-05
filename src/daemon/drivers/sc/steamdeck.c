@@ -57,24 +57,24 @@ typedef struct DeckInput {
 	int16_t			lpad_y;
 	int16_t			rpad_x;
 	int16_t			rpad_y;
-	uint8_t			_a2[20];
+	
+	int16_t			accel_x;
+	int16_t			accel_y;
+	int16_t			accel_z;
+	int16_t			gpitch;
+	int16_t			groll;
+	int16_t			gyaw;
+	int16_t			q1;
+	int16_t			q2;
+	int16_t			q3;
+	int16_t			q4;
+	
 	uint16_t		ltrig;
 	uint16_t		rtrig;
 	int16_t			lstick_x;
 	int16_t			lstick_y;
 	int16_t			rstick_x;
 	int16_t			rstick_y;
-	/*int16_t			accel_x;
-	int16_t			accel_y;
-	int16_t			accel_z;
-	int16_t			gpitch;
-	int16_t			groll;
-	int16_t			gyaw;
-	*/
-	int16_t			q1;
-	int16_t			q2;
-	int16_t			q3;
-	int16_t			q4;
 } DeckInput;
 
 
@@ -168,6 +168,10 @@ static void handle_deck_input(SCController* sc, DeckInput* i) {
 		sc->input.lpad_y = i->lpad_y;  // TODO: is memcpy faster here?
 		sc->input.rpad_x = i->rpad_x;  // TODO: is memcpy faster here?
 		sc->input.rpad_y = i->rpad_y;  // TODO: is memcpy faster here?
+		
+		// Copy gyro
+		static_assert(sizeof(GyroValue) == sizeof(int16_t));
+		memcpy(&sc->input.gyro, &i->accel_x, sizeof(GyroInput));
 		
 		// Handle dpad
 		sc->input.dpad_x = map_dpad(i, SDB_DPAD_LEFT, SDB_DPAD_RIGHT);

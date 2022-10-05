@@ -23,8 +23,8 @@ class Profile(object):
 	
 	LEFT  = LEFT
 	RIGHT = RIGHT
-	LPAD = LPAD
-	RPAD = RPAD
+	LPAD = SCButtons.LPAD.name
+	RPAD = SCButtons.RPAD.name
 	CPAD = CPAD
 	DPAD = DPAD
 	WHOLE = WHOLE
@@ -348,4 +348,3 @@ class Encoder(JSONEncoder):
 		if hasattr(obj, "encode"):
 			return obj.encode()
 		return JSONEncoder.default(self, obj)
-
