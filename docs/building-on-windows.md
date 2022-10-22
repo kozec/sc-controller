@@ -2,7 +2,6 @@ Notes from building sc-controller (c version) on fresh install of Windows 10
 
 - Install [MSYS2](https://www.msys2.org/) normally
 - Install required build packages
-    # - `pacman -Sy git gcc mingw-w64-x86_64-meson mingw-w64-x86_64-ninja mingw-w64-x86_64-cmake`
     - `pacman -Sy git mingw-w64-x86_64-meson mingw-w64-x86_64-toolchain`
     - if everything starts to crash with 'fatal error - cygheap base mismatch detected'
       message, close windows terminal and open new instance
