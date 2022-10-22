@@ -300,16 +300,17 @@ static bool driver_start(Driver* drv, Daemon* daemon) {
 	HotplugFilter filter_product = { .type=SCCD_HOTPLUG_FILTER_PRODUCT,	.product=PRODUCT_ID };
 	HotplugFilter filter_idx	 = { .type=SCCD_HOTPLUG_FILTER_IDX,		.idx=CONTROLIDX };
 	// Subsystem s = daemon->get_hidapi_enabled() ? HIDAPI : USB;
-	Subsystem s = USB;
 #if defined(_WIN32)
 	#define FILTERS &filter_vendor, &filter_product, &filter_idx
+	Subsystem s = HIDAPI;
 #elif defined(__BSD__)
 	#define FILTERS &filter_vendor, &filter_product, &filter_idx
-	s = UHID;
+	Subsystem s = UHID;
 #else
 	// NOTE: if &filter_idx is included, USB mode fails to find dev
 	// NOTE: if &filter_idx is excluded, HIDAPI mode fails to find dev
 	#define FILTERS &filter_vendor, &filter_product
+	Subsystem s = USB;
 #endif
 	if (!daemon->hotplug_cb_add(s, hotplug_cb, FILTERS, NULL)) {
 		LERROR("Failed to register hotplug callback");
