@@ -40,5 +40,5 @@ endif
 
 run_target('sc-controller',
 	command: ['sh', '../meson-run.sh', 'src/gui/sc-controller'],
-)
+        depends: [sc_controller])
 
