@@ -115,10 +115,13 @@ static uint8_t* sccd_input_hidapi_hid_request(InputDevice* _dev, int16_t idx, ui
 		}
 	}
 	
+	//BT buffer
 	int ACTUAL_BUFFER = BUFFER_MAX;
 	if(idx == -42){
 		ACTUAL_BUFFER = SMALL_BUFFER_MAX;
 	}
+
+#ifdef _WIN32
 	unsigned char buffer[ACTUAL_BUFFER + 1];
 
 	//NEF TODO
@@ -127,6 +130,15 @@ static uint8_t* sccd_input_hidapi_hid_request(InputDevice* _dev, int16_t idx, ui
 				"than supported. Changing BUFFER_MAX will fix this issue", length, ACTUAL_BUFFER+1);
 		return NULL;
 	}
+#else
+	unsigned char buffer[ACTUAL_BUFFER];
+	//NEF TODO
+	if (length > ACTUAL_BUFFER) {
+		LERROR("sccd_input_hid_request: called with length larger %u > %d"
+				"than supported. Changing BUFFER_MAX will fix this issue", length, ACTUAL_BUFFER);
+		return NULL;
+	}
+#endif
 	
 	//TODO dont rely on IDX -1 quirk for BT report ID, test other controllers
 	buffer[0] = (idx == -1 ? 0x03 : 0x00);

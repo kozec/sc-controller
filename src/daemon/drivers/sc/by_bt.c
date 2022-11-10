@@ -2,7 +2,7 @@
  * Steam Controller Controller Steam Controller Driver
  *
  * Used to communicate with single Steam Controller
- * connected directly by USB cable.
+ * connected via bluetooth.
  */
 #define LOG_TAG "sc_by_bt"
 #include "scc/utils/logging.h"
