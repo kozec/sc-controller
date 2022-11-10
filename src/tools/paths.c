@@ -88,12 +88,11 @@ const char* scc_get_config_path() {
 }
 
 static bool dir_exists(const char* path) {
-	DIR* dir = opendir(share_path);
-	if (dir) {
-		closedir(dir);
-		return true;
-	}
-	return false;
+	DIR* dir = opendir(path);
+	if (dir == NULL)
+		return false;
+	closedir(dir);
+	return true;
 }
 
 const char* scc_get_share_path() {
@@ -258,7 +257,11 @@ const char* scc_drivers_path() {
 		return drivers_path;
 	// TODO: This path should be somehow configurable or determined on runtime
 #ifdef _WIN32
-	snprintf(drivers_path, PATH_MAX, "%s\\..\\drivers", scc_get_share_path());
+	snprintf(drivers_path, PATH_MAX, "%s/../drivers", scc_get_share_path());
+	if (dir_exists(drivers_path))
+		return drivers_path;
+	// Path used when running from the source
+	snprintf(drivers_path, PATH_MAX, "%s/../build/src/daemon/drivers", scc_get_share_path());
 #else
 	strncpy(drivers_path, "src/daemon/drivers", PATH_MAX);
 #endif

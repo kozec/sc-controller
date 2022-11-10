@@ -56,6 +56,7 @@ void sccd_device_monitor_new_device(Daemon* d, const InputDeviceData* idata) {
 		// Already known & handled
 		return;
 	}
+	
 	FOREACH_IN(CallbackData*, data, callbacks) {
 		if (data->subsystem != idata->subsystem)
 			continue;

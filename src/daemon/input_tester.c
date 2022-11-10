@@ -341,6 +341,9 @@ int main(int argc, char** argv) {
 #ifdef USE_LIBUSB
 	sccd_input_libusb_init(&_daemon);
 #endif
+#ifdef USE_HIDAPI
+	sccd_input_hidapi_init(&_daemon);
+#endif
 	sccd_device_monitor_init(&_daemon);
 #ifndef _WIN32
 	logging_handler handler = logging_set_handler(dev_null_logging_handler);

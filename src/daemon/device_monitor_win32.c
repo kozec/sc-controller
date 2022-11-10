@@ -72,6 +72,7 @@ static InputDevice* input_device_open(const InputDeviceData* idev) {
 }
 
 static char* input_device_get_prop(const InputDeviceData* idev, const char* name) {
+#ifdef USE_DINPUT
 	if (idev->subsystem == DINPUT) {
 		struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
 		const DIDEVICEINSTANCE* d8dev = (const DIDEVICEINSTANCE*)wdev->d8dev;
@@ -97,6 +98,31 @@ static char* input_device_get_prop(const InputDeviceData* idev, const char* name
 			return normal_str;
 		}
 	}
+#endif
+#ifdef USE_HIDAPI
+	if (idev->subsystem == HIDAPI) {
+		struct Win32InputDeviceData* wdev = container_of(idev, struct Win32InputDeviceData, idev);
+		if (0 == strcmp(name, "vendor_id")) {
+			return strbuilder_fmt("%.4x", wdev->vendor);
+		} else if (0 == strcmp(name, "product_id")) {
+			return strbuilder_fmt("%.4x", wdev->product);
+		} else if (0 == strcmp(name, "version_id")) {
+			return strbuilder_cpy("0000");
+		} else if (0 == strcmp(name, "unique_id")) {
+			// TODO: Parses UUID from path. Hopefully this makes some kind of sense
+			char* i1 = strrchr(wdev->idev.path, '{');
+			char* i2 = strrchr(wdev->idev.path, '}');
+			if (i1 && i2 && i2 > i1) {
+				char* id = malloc(i2 - i1 + 2);
+				if (!id) return NULL;
+				strncpy(id, i1, i2 - i1 + 1);
+				id[i2 - i1 + 1] = 0;
+				return id;
+			}
+			return NULL;
+		}
+	}
+#endif
 	return NULL;
 }
 
@@ -128,9 +154,15 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 #endif
 		return false;
 	case SCCD_HOTPLUG_FILTER_UNIQUE_ID:
+		if (0
 #ifdef USE_DINPUT
-		if (idev->subsystem == DINPUT) {
-			char* guid = input_device_get_prop(idev, "guidInstance");
+			|| (idev->subsystem == DINPUT)
+#endif
+#ifdef USE_HIDAPI
+			|| (idev->subsystem == HIDAPI)
+#endif
+		) {
+			char* guid = input_device_get_prop(idev, "unique_id");
 			bool rv = false;
 			if (guid != NULL) {
 				rv = (0 == strcmp(guid, filter->name));
@@ -144,7 +176,6 @@ bool sccd_device_monitor_test_filter(Daemon* d, const InputDeviceData* idev, con
 			free(guid);
 			return rv;
 		}
-#endif
 		return false;
 	default:
 		return false;
