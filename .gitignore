@@ -15,6 +15,7 @@ build-ros/
 build-w10/
 build-win32/
 release-win32/
+release-win64/
 
 sc-controller.wiki/
 .trash/
