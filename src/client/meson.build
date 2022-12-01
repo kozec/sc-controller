@@ -17,6 +17,10 @@ if host_machine.system() == 'windows'
 	]
 endif
 
+
+run_target_env.append('LD_LIBRARY_PATH', meson.build_root() / 'src' / 'client')
+
+
 client_lib = shared_library('scc-client',
 	include_directories: include,
 	link_with: [ tools_lib, utils_lib ] + platform_dependent_link_with,

@@ -172,6 +172,7 @@ run_target_env.append('PATH', meson.build_root() / 'src' / 'client')
 run_target_env.append('PATH', meson.build_root() / 'src' / 'osd' / 'common')
 run_target_env.append('PATH', meson.build_root() / 'src' / 'osd' / 'menus')
 run_target_env.append('PATH', meson.build_root() / 'src' / 'virtual-device')
+run_target_env.append('LD_LIBRARY_PATH', meson.build_root())
 
 
 subdir('src/virtual-device')

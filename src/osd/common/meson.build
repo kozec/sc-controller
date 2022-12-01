@@ -8,6 +8,9 @@ if host_machine.system() == 'linux'
 endif
 
 
+run_target_env.append('LD_LIBRARY_PATH', meson.build_root() / 'src' / 'osd' / 'common')
+
+
 osd_lib = shared_library('scc-osd',
 	include_directories: include,
 	link_with: [ utils_lib, tools_lib, config_lib, gio_client_lib ],

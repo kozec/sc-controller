@@ -53,3 +53,6 @@ else
 	error('Unsupported system ' + host_machine.system() + ', please add it here')
 endif
 
+
+run_target_env.append('LD_LIBRARY_PATH', meson.build_root() / 'src' / 'virtual-device')
+

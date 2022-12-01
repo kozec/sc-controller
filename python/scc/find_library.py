@@ -31,17 +31,11 @@ def find_library(libname):
 			]
 		search_paths += [
 			os.path.abspath(os.path.normpath(
-				os.path.join( './', libname + extension ))),
-			os.path.abspath(os.path.normpath(
-				os.path.join( base_path, '..', libname + extension ))),
-			os.path.abspath(os.path.normpath(
-				os.path.join( base_path, '../..', libname + extension ))),
-			os.path.abspath(os.path.normpath(
-				os.path.join( './build', libname + extension ))),
-			]
+				os.path.join('./', libname + extension ))),
+		]
 		if os.environ.get('LD_LIBRARY_PATH'):
-			search_paths.append(os.path.abspath(os.path.normpath(
-				os.path.join( os.environ['LD_LIBRARY_PATH'], libname + extension )))),
+			for path in os.environ.get('LD_LIBRARY_PATH').split(";" if platform.system() == "Windows" else ":"):
+				search_paths.append(os.path.abspath(os.path.normpath( os.path.join(path, libname + extension ))))
 	for path in search_paths:
 		if os.path.exists(path):
 			lib = path
