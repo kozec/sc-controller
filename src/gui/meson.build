@@ -39,6 +39,8 @@ if host_machine.system() == 'windows'
 endif
 
 run_target('sc-controller',
-	command: ['sh', '../meson-run.sh', 'src/gui/sc-controller'],
-        depends: [sc_controller])
+	command: [sc_controller],
+	depends: [sc_controller],
+	env: run_target_env,
+)
 

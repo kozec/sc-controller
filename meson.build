@@ -164,6 +164,16 @@ bindings_lib = shared_library('scc-bindings',
 )
 
 
+run_target_env = environment()
+run_target_env.set('SCC_SHARED', meson.source_root())
+run_target_env.set('SCC_DRIVERS', meson.build_root() / 'src' / 'daemon' / 'drivers')
+run_target_env.append('PATH', meson.build_root())
+run_target_env.append('PATH', meson.build_root() / 'src' / 'client')
+run_target_env.append('PATH', meson.build_root() / 'src' / 'osd' / 'common')
+run_target_env.append('PATH', meson.build_root() / 'src' / 'osd' / 'menus')
+run_target_env.append('PATH', meson.build_root() / 'src' / 'virtual-device')
+
+
 subdir('src/virtual-device')
 subdir('src/client')
 subdir('src/daemon/drivers')

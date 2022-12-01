@@ -351,6 +351,8 @@ int main(int argc, char** argv) {
 	sccd_drivers_init(&_daemon, DIMODE_LIST_DEVICES_ONLY);
 	logging_set_handler(handler);
 	
+	// printf("drivers path: %s\n", scc_drivers_path());
+	
 	if (opt_list) {
 		printf(TABLE_COLUMNS, ' ', "Device", "Driver", "Path", "Description");
 		// Disable logging while drivers are initialized

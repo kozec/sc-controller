@@ -255,13 +255,18 @@ const char* scc_drivers_path() {
 	if (drivers_path[0] != 0)
 		// Return cached value
 		return drivers_path;
-	// TODO: This path should be somehow configurable or determined on runtime
+	
+	const char* scc_drivers = getenv("SCC_DRIVERS");
+	if (scc_drivers != NULL) {
+		if (snprintf(drivers_path, PATH_MAX, "%s", scc_drivers) >= PATH_MAX)
+			FATAL("SCC_DRIVERS doesn't fit PATH_MAX.");
+		return drivers_path;
+	}
 #ifdef _WIN32
+	// TODO: This path should be somehow configurable or determined on runtime
 	snprintf(drivers_path, PATH_MAX, "%s/../drivers", scc_get_share_path());
 	if (dir_exists(drivers_path))
 		return drivers_path;
-	// Path used when running from the source
-	snprintf(drivers_path, PATH_MAX, "%s/../build/src/daemon/drivers", scc_get_share_path());
 #else
 	strncpy(drivers_path, "src/daemon/drivers", PATH_MAX);
 #endif
