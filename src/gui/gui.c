@@ -71,11 +71,19 @@ int main(int argc, char** argv) {
 		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\lib-dynload", python_home);
 		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\site-packages", python_home);
 	} else {
+#ifdef _WIN64
+		Py_SetPythonHome("C:/msys64/mingw64/");
+		Py_InitializeEx(0);
+		strbuilder_add(sys_path, ";C:/msys64/mingw64/lib/python2.7");
+		strbuilder_add(sys_path, ";C:/msys64/mingw64/lib/python2.7/lib-dynload");
+		strbuilder_add(sys_path, ";C:/msys64/mingw64/lib/python2.7/site-packages");
+#else
 		Py_SetPythonHome("C:/msys32/mingw32/");
 		Py_InitializeEx(0);
 		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7");
 		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/lib-dynload");
 		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/site-packages");
+#endif
 	}
 	DDEBUG("Python path: %s", strbuilder_get_value(sys_path));
 #else

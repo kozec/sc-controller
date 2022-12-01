@@ -26,6 +26,8 @@ sc_controller = executable('sc-controller',
 	link_with: link,
 )
 
+run_target_scc = sc_controller
+
 if host_machine.system() == 'windows'
 	# Windows-only 'stay attached to console' executable
 	sc_controller_console = executable('sc-controller-console',
@@ -36,11 +38,12 @@ if host_machine.system() == 'windows'
 		sources: sources,
 		link_with: link,
 	)
+	run_target_scc = sc_controller_console
 endif
 
 run_target('sc-controller',
-	command: [sc_controller],
-	depends: [sc_controller],
+	command: [run_target_scc],
+	depends: [run_target_scc],
 	env: run_target_env,
 )
 

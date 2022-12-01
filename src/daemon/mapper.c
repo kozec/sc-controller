@@ -481,8 +481,8 @@ static void input(Mapper* _m, ControllerInput* i) {
 		for (uint64_t i = 0; i < 32; i ++) {
 			SCButton b = 1 << i;
 			if (b & btn_add) {
-				LOG("PRESS %i", b);
 				Action* a = m->profile->get_button(m->profile, b);
+				// LOG("PRESS %i -> %p", b, a);
 				a->button_press(a, _m);
 			} else if (b & btn_rem) {
 				Action* a = m->profile->get_button(m->profile, b);
