@@ -29,11 +29,11 @@ function build_dep() {
 	mkdir -p ${BUILDCACHE}/${NAME}
 	pushd ${BUILDCACHE}/${NAME}
 	tar --extract --strip-components=1 -f ${DEPCACHE}/${NAME}.tar.gz
-	PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages python2 \
+	PYTHONPATH=${BUILD_APPDIR}/usr/lib/python2.7/site-packages python3 \
 		setup.py install --optimize=1 \
 		--prefix="/usr/" --root="${BUILD_APPDIR}"
 	mkdir -p "${BUILD_APPDIR}/usr/lib/python2.7/site-packages/"
-	python2 setup.py install --prefix="/usr/" --root="${BUILD_APPDIR}"
+	python3 setup.py install --prefix="/usr/" --root="${BUILD_APPDIR}"
 	popd
 }
 
@@ -111,8 +111,8 @@ rm -R "${BUILD_APPDIR}/usr/share/vala"
 rm -R "${BUILD_APPDIR}/usr/share/icu"
 
 # Build important part
-python2 setup.py build
-python2 setup.py install --prefix ${BUILD_APPDIR}/usr
+python3 setup.py build
+python3 setup.py install --prefix ${BUILD_APPDIR}/usr
 
 # Move udev stuff
 mv ${BUILD_APPDIR}/usr/lib/udev/rules.d/69-${APP}.rules ${BUILD_APPDIR}/
