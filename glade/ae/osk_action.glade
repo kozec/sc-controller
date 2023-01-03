@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
 <interface>
-  <requires lib="gtk+" version="3.10"/>
+  <requires lib="gtk" version="4.0"/>
   <object class="GtkListStore" id="lstActionType">
     <columns>
-      <!-- column-name text -->
       <column type="gchararray"/>
-      <!-- column-name key -->
       <column type="gchararray"/>
     </columns>
     <data>
@@ -53,33 +50,22 @@
     </data>
   </object>
   <object class="GtkBox" id="osk_action">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
     <child>
       <object class="GtkLabel" id="label5">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="margin_top">10</property>
         <property name="margin_bottom">10</property>
-        <property name="label" translatable="yes">Action</property>
+        <property name="label" translatable="1">Action</property>
         <property name="xalign">0</property>
         <attributes>
-          <attribute name="weight" value="bold"/>
+          <attribute name="weight" value="bold"></attribute>
         </attributes>
       </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">0</property>
-      </packing>
     </child>
     <child>
       <object class="GtkComboBox" id="cbActionType">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="margin_left">10</property>
-        <property name="margin_right">10</property>
+        <property name="margin-start">10</property>
+        <property name="margin-end">10</property>
         <property name="model">lstActionType</property>
         <property name="active">0</property>
         <signal name="changed" handler="on_cbActionType_changed" swapped="no"/>
@@ -90,11 +76,6 @@
           </attributes>
         </child>
       </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">1</property>
-      </packing>
     </child>
   </object>
 </interface>

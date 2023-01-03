@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
 <interface>
-  <requires lib="gtk+" version="3.10"/>
+  <requires lib="gtk" version="4.0"/>
   <object class="GtkTextBuffer" id="buffRawData">
     <signal name="changed" handler="on_buffRawData_changed" swapped="no"/>
   </object>
   <object class="GtkListStore" id="lstAccessMode">
     <columns>
-      <!-- column-name key -->
       <column type="gchararray"/>
-      <!-- column-name text -->
       <column type="gchararray"/>
-      <!-- column-name enabled -->
       <column type="gboolean"/>
     </columns>
     <data>
@@ -29,23 +25,16 @@
   </object>
   <object class="GtkListStore" id="lstButtons">
     <columns>
-      <!-- column-name key -->
       <column type="gchararray"/>
-      <!-- column-name a -->
       <column type="GdkPixbuf"/>
-      <!-- column-name b -->
       <column type="GdkPixbuf"/>
-      <!-- column-name x -->
       <column type="GdkPixbuf"/>
-      <!-- column-name y -->
       <column type="GdkPixbuf"/>
     </columns>
   </object>
   <object class="GtkListStore" id="lstControllerType">
     <columns>
-      <!-- column-name key -->
       <column type="gchararray"/>
-      <!-- column-name text -->
       <column type="gchararray"/>
     </columns>
     <data>
@@ -69,974 +58,837 @@
   </object>
   <object class="GtkListStore" id="lstDevices">
     <columns>
-      <!-- column-name path -->
       <column type="gchararray"/>
-      <!-- column-name name -->
       <column type="gchararray"/>
-      <!-- column-name icon -->
       <column type="GdkPixbuf"/>
     </columns>
   </object>
   <object class="GtkWindow" id="Dialog">
     <property name="width_request">650</property>
-    <property name="can_focus">False</property>
     <property name="role">action-editor</property>
-    <property name="resizable">False</property>
+    <property name="resizable">0</property>
     <property name="window_position">center-on-parent</property>
-    <property name="destroy_with_parent">True</property>
+    <property name="destroy_with_parent">1</property>
     <property name="type_hint">dialog</property>
     <signal name="destroy" handler="kill_tester" swapped="no"/>
     <signal name="key-press-event" handler="on_window_key_press_event" swapped="no"/>
-    <child>
+    <property name="child">
       <object class="GtkStack" id="stDialog">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="transition_type">slide-left</property>
-        <property name="interpolate_size">True</property>
+        <property name="interpolate_size">1</property>
         <child>
-          <object class="GtkGrid" id="grDevices">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_left">10</property>
-            <property name="margin_right">10</property>
-            <property name="margin_top">10</property>
-            <property name="margin_bottom">10</property>
-            <child>
-              <object class="GtkLabel" id="label1">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Controller Device</property>
-                <property name="xalign">0</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label5">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">20</property>
-                <property name="margin_right">20</property>
+          <object class="GtkStackPage">
+            <property name="name">page0</property>
+            <property name="title" translatable="1">page0</property>
+            <property name="child">
+              <object class="GtkGrid" id="grDevices">
+                <property name="margin-start">10</property>
+                <property name="margin-end">10</property>
+                <property name="margin_top">10</property>
                 <property name="margin_bottom">10</property>
-                <property name="label" translatable="yes">This dialog allows to setup traditional controllers to be used with SC Controller. 
+                <child>
+                  <object class="GtkLabel" id="label1">
+                    <property name="label" translatable="1">Controller Device</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"></attribute>
+                    </attributes>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">1</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label5">
+                    <property name="margin-start">20</property>
+                    <property name="margin-end">20</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="label" translatable="1">This dialog allows to setup traditional controllers to be used with SC Controller. 
 
 Please, select your controller from list bellow and click Next.</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkScrolledWindow" id="swDevices">
-                <property name="height_request">200</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="margin_bottom">5</property>
-                <property name="hexpand">True</property>
-                <property name="vexpand">True</property>
-                <property name="border_width">1</property>
-                <property name="shadow_type">in</property>
+                    <property name="xalign">0</property>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
                 <child>
-                  <object class="GtkTreeView" id="tvDevices">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="model">lstDevices</property>
-                    <property name="headers_visible">False</property>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="tsDevices"/>
-                    </child>
-                    <child>
-                      <object class="GtkTreeViewColumn" id="tcDevice">
-                        <property name="title" translatable="yes">column</property>
-                        <child>
-                          <object class="GtkCellRendererPixbuf" id="tcDeviceIcon"/>
-                          <attributes>
-                            <attribute name="pixbuf">2</attribute>
-                          </attributes>
+                  <object class="GtkScrolledWindow" id="swDevices">
+                    <property name="height_request">200</property>
+                    <property name="focusable">1</property>
+                    <property name="margin_bottom">5</property>
+                    <property name="hexpand">1</property>
+                    <property name="vexpand">1</property>
+                    <property name="border_width">1</property>
+                    <property name="shadow_type">in</property>
+                    <property name="child">
+                      <object class="GtkTreeView" id="tvDevices">
+                        <property name="focusable">1</property>
+                        <property name="model">lstDevices</property>
+                        <property name="headers_visible">0</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection" id="tsDevices"/>
                         </child>
                         <child>
-                          <object class="GtkCellRendererText" id="tcDeviceName"/>
-                          <attributes>
-                            <attribute name="text">1</attribute>
-                          </attributes>
+                          <object class="GtkTreeViewColumn" id="tcDevice">
+                            <property name="title" translatable="1">column</property>
+                            <child>
+                              <object class="GtkCellRendererPixbuf" id="tcDeviceIcon"/>
+                              <attributes>
+                                <attribute name="pixbuf">2</attribute>
+                              </attributes>
+                            </child>
+                            <child>
+                              <object class="GtkCellRendererText" id="tcDeviceName"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
                         </child>
                       </object>
-                    </child>
+                    </property>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">2</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbShowAllDevices">
+                    <property name="label" translatable="1">Show All Devices</property>
+                    <property name="focusable">1</property>
+                    <property name="halign">end</property>
+                    <property name="hexpand">1</property>
+                    <property name="xalign">1</property>
+                    <signal name="toggled" handler="refresh_devices" swapped="no"/>
+                    <layout>
+                      <property name="column">1</property>
+                      <property name="row">3</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btnRefresh">
+                    <property name="label">gtk-refresh</property>
+                    <property name="focusable">1</property>
+                    <property name="receives_default">1</property>
+                    <property name="relief">half</property>
+                    <property name="use_stock">True</property>
+                    <signal name="clicked" handler="refresh_devices" swapped="no"/>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">3</property>
+                    </layout>
                   </object>
                 </child>
               </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbShowAllDevices">
-                <property name="label" translatable="yes">Show All Devices</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="halign">end</property>
-                <property name="hexpand">True</property>
-                <property name="xalign">1</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="refresh_devices" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btnRefresh">
-                <property name="label">gtk-refresh</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="relief">half</property>
-                <property name="use_stock">True</property>
-                <signal name="clicked" handler="refresh_devices" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
-              </packing>
-            </child>
+            </property>
           </object>
-          <packing>
-            <property name="name">page0</property>
-            <property name="title" translatable="yes">page0</property>
-          </packing>
         </child>
         <child>
-          <object class="GtkGrid" id="grSettings">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_left">10</property>
-            <property name="margin_right">10</property>
-            <property name="margin_top">10</property>
-            <property name="margin_bottom">10</property>
-            <child>
-              <object class="GtkLabel" id="label2">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">&lt;b&gt;Input Configuration&lt;/b&gt;
-Please, select options that are best describing controller you are configuring.</property>
-                <property name="use_markup">True</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkComboBox" id="cbControllerType">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="model">lstControllerType</property>
-                <property name="active">0</property>
-                <signal name="changed" handler="refresh_controller_image" swapped="no"/>
-                <child>
-                  <object class="GtkCellRendererText" id="crControllerType"/>
-                  <attributes>
-                    <attribute name="text">1</attribute>
-                  </attributes>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label3">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_top">20</property>
-                <property name="label" translatable="yes">Sticks</property>
-                <property name="xalign">0</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label4">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_right">10</property>
-                <property name="margin_top">20</property>
-                <property name="label" translatable="yes">Labels</property>
-                <property name="xalign">0</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkComboBox" id="cbControllerButtons">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_right">10</property>
-                <property name="model">lstButtons</property>
-                <property name="active">0</property>
-                <signal name="changed" handler="refresh_controller_image" swapped="no"/>
-                <child>
-                  <object class="GtkCellRendererPixbuf" id="crControllerButtonsA">
-                    <property name="width">30</property>
-                  </object>
-                  <attributes>
-                    <attribute name="pixbuf">1</attribute>
-                  </attributes>
-                </child>
-                <child>
-                  <object class="GtkCellRendererPixbuf" id="crControllerButtonsB">
-                    <property name="width">30</property>
-                  </object>
-                  <attributes>
-                    <attribute name="pixbuf">2</attribute>
-                  </attributes>
-                </child>
-                <child>
-                  <object class="GtkCellRendererPixbuf" id="crControllerButtonsX">
-                    <property name="width">30</property>
-                  </object>
-                  <attributes>
-                    <attribute name="pixbuf">3</attribute>
-                  </attributes>
-                </child>
-                <child>
-                  <object class="GtkCellRendererPixbuf" id="crControllerButtonsY">
-                    <property name="width">30</property>
-                  </object>
-                  <attributes>
-                    <attribute name="pixbuf">4</attribute>
-                  </attributes>
-                </child>
-                <child>
-                  <object class="GtkCellRendererText" id="crControllerButtonsText"/>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">4</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkRevealer" id="rvController">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
-                <property name="margin_top">20</property>
-                <property name="margin_bottom">10</property>
-                <property name="hexpand">True</property>
-                <property name="vexpand">True</property>
-                <child>
-                  <placeholder/>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">5</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
+          <object class="GtkStackPage">
             <property name="name">page1</property>
-            <property name="title" translatable="yes">page1</property>
+            <property name="title" translatable="1">page1</property>
             <property name="position">1</property>
-          </packing>
+            <property name="child">
+              <object class="GtkGrid" id="grSettings">
+                <property name="margin-start">10</property>
+                <property name="margin-end">10</property>
+                <property name="margin_top">10</property>
+                <property name="margin_bottom">10</property>
+                <child>
+                  <object class="GtkLabel" id="label2">
+                    <property name="hexpand">1</property>
+                    <property name="label" translatable="1">&lt;b&gt;Input Configuration&lt;/b&gt;
+Please, select options that are best describing controller you are configuring.</property>
+                    <property name="use_markup">1</property>
+                    <property name="xalign">0</property>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkComboBox" id="cbControllerType">
+                    <property name="model">lstControllerType</property>
+                    <property name="active">0</property>
+                    <signal name="changed" handler="refresh_controller_image" swapped="no"/>
+                    <child>
+                      <object class="GtkCellRendererText" id="crControllerType"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">2</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label3">
+                    <property name="margin_top">20</property>
+                    <property name="label" translatable="1">Sticks</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"></attribute>
+                    </attributes>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">1</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label4">
+                    <property name="margin-end">10</property>
+                    <property name="margin_top">20</property>
+                    <property name="label" translatable="1">Labels</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"></attribute>
+                    </attributes>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">3</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkComboBox" id="cbControllerButtons">
+                    <property name="margin-end">10</property>
+                    <property name="model">lstButtons</property>
+                    <property name="active">0</property>
+                    <signal name="changed" handler="refresh_controller_image" swapped="no"/>
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="crControllerButtonsA">
+                        <property name="width">30</property>
+                      </object>
+                      <attributes>
+                        <attribute name="pixbuf">1</attribute>
+                      </attributes>
+                    </child>
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="crControllerButtonsB">
+                        <property name="width">30</property>
+                      </object>
+                      <attributes>
+                        <attribute name="pixbuf">2</attribute>
+                      </attributes>
+                    </child>
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="crControllerButtonsX">
+                        <property name="width">30</property>
+                      </object>
+                      <attributes>
+                        <attribute name="pixbuf">3</attribute>
+                      </attributes>
+                    </child>
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="crControllerButtonsY">
+                        <property name="width">30</property>
+                      </object>
+                      <attributes>
+                        <attribute name="pixbuf">4</attribute>
+                      </attributes>
+                    </child>
+                    <child>
+                      <object class="GtkCellRendererText" id="crControllerButtonsText"/>
+                    </child>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">4</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkRevealer" id="rvController">
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="margin_top">20</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="hexpand">1</property>
+                    <property name="vexpand">1</property>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">5</property>
+                      <property name="column-span">2</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
         </child>
         <child>
-          <object class="GtkGrid" id="grBindings">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_bottom">10</property>
-            <child>
-              <object class="GtkLabel" id="label6">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
-                <property name="margin_top">10</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">&lt;b&gt;Input Mappings&lt;/b&gt;
+          <object class="GtkStackPage">
+            <property name="name">page2</property>
+            <property name="title" translatable="1">page2</property>
+            <property name="position">2</property>
+            <property name="child">
+              <object class="GtkGrid" id="grBindings">
+                <property name="margin_bottom">10</property>
+                <child>
+                  <object class="GtkLabel" id="label6">
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="margin_top">10</property>
+                    <property name="hexpand">1</property>
+                    <property name="label" translatable="1">&lt;b&gt;Input Mappings&lt;/b&gt;
 
 Please, press every button on the controller, push every trigger at least twice and move every stick. Make sure that correct buttons, sticks and triggers on image blinks blue when you do so.
 
 If anything is assigned incorrectly, click on button on image to (re)assign physical button to it.</property>
-                <property name="use_markup">True</property>
-                <property name="wrap">True</property>
-                <property name="max_width_chars">60</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label7">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">Red colored controls are not assigned.</property>
-                <property name="wrap">True</property>
-                <property name="max_width_chars">60</property>
-                <property name="xalign">1</property>
-                <attributes>
-                  <attribute name="style" value="italic"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkAlignment" id="alController">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="xscale">0</property>
-                <child>
-                  <object class="GtkFixed" id="fxController">
-                    <property name="width_request">32</property>
-                    <property name="height_request">32</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="use_markup">1</property>
+                    <property name="wrap">1</property>
+                    <property name="max_width_chars">60</property>
+                    <property name="xalign">0</property>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">1</property>
+                      <property name="column-span">3</property>
+                    </layout>
                   </object>
                 </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkRevealer" id="rvAdditionalOptions">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
                 <child>
-                  <object class="GtkGrid" id="grAdditionalOptions">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">20</property>
-                    <property name="margin_right">20</property>
-                    <child>
-                      <object class="GtkCheckButton" id="cbEmulateC">
-                        <property name="label" translatable="yes">Emulate center (guide) button by pressing Back + Start at once</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="hexpand">True</property>
-                        <property name="draw_indicator">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
-                        <property name="width">3</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="lblInvertAxes">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">5</property>
-                        <property name="hexpand">True</property>
-                        <property name="label" translatable="yes">Invert Axes</property>
-                        <property name="xalign">0</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
-                        <property name="width">3</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="lblLeftStick">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">40</property>
-                        <property name="label" translatable="yes">Left stick</property>
-                        <property name="xalign">0</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">2</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="lblRigthStick">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">40</property>
-                        <property name="label" translatable="yes">Right stick (right pad)</property>
-                        <property name="xalign">0</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">3</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="lblDPAD">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">40</property>
-                        <property name="label" translatable="yes">DPAD (left pad)</property>
-                        <property name="xalign">0</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">4</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="cbInvert_0">
-                        <property name="label" translatable="yes">X</property>
-                        <property name="name">cbInvert_0</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">2</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="cbInvert_1">
-                        <property name="label" translatable="yes">Y</property>
-                        <property name="name">cbInvert_1</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="left_attach">2</property>
-                        <property name="top_attach">2</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="cbInvert_2">
-                        <property name="label" translatable="yes">X</property>
-                        <property name="name">cbInvert_2</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">3</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="cbInvert_4">
-                        <property name="label" translatable="yes">X</property>
-                        <property name="name">cbInvert_4</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">4</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="cbInvert_3">
-                        <property name="label" translatable="yes">Y</property>
-                        <property name="name">cbInvert_3</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="left_attach">2</property>
-                        <property name="top_attach">3</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="cbInvert_5">
-                        <property name="label" translatable="yes">Y</property>
-                        <property name="name">cbInvert_5</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="left_attach">2</property>
-                        <property name="top_attach">4</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="lblAccessMode">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">10</property>
-                        <property name="label" translatable="yes">Access Mode</property>
-                        <property name="xalign">0</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">5</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkComboBox" id="cbAccessMode">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="model">lstAccessMode</property>
-                        <property name="active">1</property>
-                        <signal name="changed" handler="on_cbAccessMode_changed" swapped="no"/>
-                        <child>
-                          <object class="GtkCellRendererText" id="crAccessMode1"/>
-                          <attributes>
-                            <attribute name="sensitive">2</attribute>
-                            <attribute name="markup">1</attribute>
-                          </attributes>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">5</property>
-                        <property name="width">2</property>
-                      </packing>
-                    </child>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">5</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkExpander" id="exAdditionalOptions">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
-                <property name="margin_top">20</property>
-                <signal name="activate" handler="on_exAdditionalOptions_activate" swapped="no"/>
-                <child>
-                  <placeholder/>
-                </child>
-                <child type="label">
-                  <object class="GtkLabel" id="lblAdditionalOptions">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Advanced Options</property>
+                  <object class="GtkLabel" id="label7">
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="hexpand">1</property>
+                    <property name="label" translatable="1">Red colored controls are not assigned.</property>
+                    <property name="wrap">1</property>
+                    <property name="max_width_chars">60</property>
+                    <property name="xalign">1</property>
                     <attributes>
-                      <attribute name="weight" value="bold"/>
+                      <attribute name="style" value="italic"></attribute>
                     </attributes>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">3</property>
+                      <property name="column-span">3</property>
+                    </layout>
                   </object>
                 </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">4</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkExpander" id="exRawData">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
-                <property name="margin_top">5</property>
-                <signal name="activate" handler="on_exRawData_activate" swapped="no"/>
                 <child>
-                  <placeholder/>
-                </child>
-                <child type="label">
-                  <object class="GtkLabel" id="lblRawData">
+                  <object class="GtkAlignment" id="alController">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Display Raw Data</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">6</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkRevealer" id="rvRawData">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">10</property>
-                <property name="margin_right">10</property>
-                <property name="vexpand">True</property>
-                <child>
-                  <object class="GtkScrolledWindow" id="swRawData">
-                    <property name="height_request">300</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="border_width">1</property>
-                    <property name="shadow_type">in</property>
+                    <property name="xscale">0</property>
                     <child>
-                      <object class="GtkTextView" id="txtRawData">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="buffer">buffRawData</property>
-                        <property name="monospace">True</property>
+                      <object class="GtkFixed" id="fxController">
+                        <property name="width_request">32</property>
+                        <property name="height_request">32</property>
                       </object>
                     </child>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">2</property>
+                      <property name="column-span">3</property>
+                    </layout>
                   </object>
                 </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">7</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkRevealer" id="rvHIDWarning">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <child>
-                  <object class="GtkInfoBar" id="ibHIDWarning">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="show_close_button">True</property>
-                    <signal name="response" handler="on_ibHIDWarning_response" swapped="no"/>
-                    <child internal-child="action_area">
-                      <object class="GtkButtonBox" id="box1HIDWarning">
-                        <property name="can_focus">False</property>
-                        <property name="spacing">6</property>
-                        <property name="layout_style">end</property>
+                  <object class="GtkRevealer" id="rvAdditionalOptions">
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="child">
+                      <object class="GtkGrid" id="grAdditionalOptions">
+                        <property name="margin-start">20</property>
+                        <property name="margin-end">20</property>
                         <child>
-                          <placeholder/>
+                          <object class="GtkCheckButton" id="cbEmulateC">
+                            <property name="label" translatable="1">Emulate center (guide) button by pressing Back + Start at once</property>
+                            <property name="focusable">1</property>
+                            <property name="hexpand">1</property>
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                              <property name="column-span">3</property>
+                            </layout>
+                          </object>
                         </child>
                         <child>
-                          <placeholder/>
+                          <object class="GtkLabel" id="lblInvertAxes">
+                            <property name="margin_top">5</property>
+                            <property name="hexpand">1</property>
+                            <property name="label" translatable="1">Invert Axes</property>
+                            <property name="xalign">0</property>
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="row">1</property>
+                              <property name="column-span">3</property>
+                            </layout>
+                          </object>
                         </child>
                         <child>
-                          <placeholder/>
+                          <object class="GtkLabel" id="lblLeftStick">
+                            <property name="margin-start">40</property>
+                            <property name="label" translatable="1">Left stick</property>
+                            <property name="xalign">0</property>
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="row">2</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblRigthStick">
+                            <property name="margin-start">40</property>
+                            <property name="label" translatable="1">Right stick (right pad)</property>
+                            <property name="xalign">0</property>
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="row">3</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblDPAD">
+                            <property name="margin-start">40</property>
+                            <property name="label" translatable="1">DPAD (left pad)</property>
+                            <property name="xalign">0</property>
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="row">4</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="cbInvert_0">
+                            <property name="label" translatable="1">X</property>
+                            <property name="name">cbInvert_0</property>
+                            <property name="focusable">1</property>
+                            <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="row">2</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="cbInvert_1">
+                            <property name="label" translatable="1">Y</property>
+                            <property name="name">cbInvert_1</property>
+                            <property name="focusable">1</property>
+                            <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                            <layout>
+                              <property name="column">2</property>
+                              <property name="row">2</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="cbInvert_2">
+                            <property name="label" translatable="1">X</property>
+                            <property name="name">cbInvert_2</property>
+                            <property name="focusable">1</property>
+                            <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="row">3</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="cbInvert_4">
+                            <property name="label" translatable="1">X</property>
+                            <property name="name">cbInvert_4</property>
+                            <property name="focusable">1</property>
+                            <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="row">4</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="cbInvert_3">
+                            <property name="label" translatable="1">Y</property>
+                            <property name="name">cbInvert_3</property>
+                            <property name="focusable">1</property>
+                            <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                            <layout>
+                              <property name="column">2</property>
+                              <property name="row">3</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="cbInvert_5">
+                            <property name="label" translatable="1">Y</property>
+                            <property name="name">cbInvert_5</property>
+                            <property name="focusable">1</property>
+                            <signal name="toggled" handler="cbInvert_toggled_cb" swapped="no"/>
+                            <layout>
+                              <property name="column">2</property>
+                              <property name="row">4</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lblAccessMode">
+                            <property name="margin_top">10</property>
+                            <property name="label" translatable="1">Access Mode</property>
+                            <property name="xalign">0</property>
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="row">5</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkComboBox" id="cbAccessMode">
+                            <property name="model">lstAccessMode</property>
+                            <property name="active">1</property>
+                            <signal name="changed" handler="on_cbAccessMode_changed" swapped="no"/>
+                            <child>
+                              <object class="GtkCellRendererText" id="crAccessMode1"/>
+                              <attributes>
+                                <attribute name="sensitive">2</attribute>
+                                <attribute name="markup">1</attribute>
+                              </attributes>
+                            </child>
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="row">5</property>
+                              <property name="column-span">2</property>
+                            </layout>
+                          </object>
                         </child>
                       </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">0</property>
-                      </packing>
+                    </property>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">5</property>
+                      <property name="column-span">3</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkExpander" id="exAdditionalOptions">
+                    <property name="focusable">1</property>
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="margin_top">20</property>
+                    <signal name="activate" handler="on_exAdditionalOptions_activate" swapped="no"/>
+                    <child>
+                      <placeholder/>
                     </child>
-                    <child internal-child="content_area">
-                      <object class="GtkBox" id="box2HIDWarning">
-                        <property name="can_focus">False</property>
-                        <property name="spacing">16</property>
-                        <child>
-                          <object class="GtkImage" id="imgHIDWarning">
-                            <property name="visible">True</property>
+                    <child type="label">
+                      <object class="GtkLabel" id="lblAdditionalOptions">
+                        <property name="label" translatable="1">Advanced Options</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"></attribute>
+                        </attributes>
+                      </object>
+                    </child>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">4</property>
+                      <property name="column-span">3</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkExpander" id="exRawData">
+                    <property name="focusable">1</property>
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="margin_top">5</property>
+                    <signal name="activate" handler="on_exRawData_activate" swapped="no"/>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child type="label">
+                      <object class="GtkLabel" id="lblRawData">
+                        <property name="label" translatable="1">Display Raw Data</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"></attribute>
+                        </attributes>
+                      </object>
+                    </child>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">6</property>
+                      <property name="column-span">3</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkRevealer" id="rvRawData">
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="vexpand">1</property>
+                    <property name="child">
+                      <object class="GtkScrolledWindow" id="swRawData">
+                        <property name="height_request">300</property>
+                        <property name="focusable">1</property>
+                        <property name="border_width">1</property>
+                        <property name="shadow_type">in</property>
+                        <property name="child">
+                          <object class="GtkTextView" id="txtRawData">
+                            <property name="focusable">1</property>
+                            <property name="buffer">buffRawData</property>
+                            <property name="monospace">1</property>
+                          </object>
+                        </property>
+                      </object>
+                    </property>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">7</property>
+                      <property name="column-span">3</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkRevealer" id="rvHIDWarning">
+                    <property name="child">
+                      <object class="GtkInfoBar" id="ibHIDWarning">
+                        <property name="show_close_button">1</property>
+                        <signal name="response" handler="on_ibHIDWarning_response" swapped="no"/>
+                        <child internal-child="action_area">
+                          <object class="GtkButtonBox" id="box1HIDWarning">
                             <property name="can_focus">False</property>
-                            <property name="stock">gtk-dialog-warning</property>
-                            <property name="icon_size">6</property>
+                            <property name="spacing">6</property>
+                            <property name="layout_style">end</property>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
-                            <property name="fill">True</property>
+                            <property name="fill">False</property>
                             <property name="position">0</property>
                           </packing>
                         </child>
-                        <child>
-                          <object class="GtkLabel" id="lblHIDWarning">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Warning: evdev access mode was auto-selected for HID device.
+                        <child internal-child="content_area">
+                          <object class="GtkBox" id="box2HIDWarning">
+                            <property name="visible">0</property>
+                            <property name="spacing">16</property>
+                            <child>
+                              <object class="GtkImage" id="imgHIDWarning">
+                                <property name="stock">gtk-dialog-warning</property>
+                                <property name="icon_size">6</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="lblHIDWarning">
+                                <property name="label" translatable="1">Warning: evdev access mode was auto-selected for HID device.
 
 That means your account lacks permissons needed to read controller exclusivelly. You can still use controller in evdev mode, but you may have trouble with some games detecting it twice.
 
-&lt;a href="https://github.com/kozec/sc-controller/wiki/Evdev-and-HID-mode-for-non-steam-controllers"&gt;Click here&lt;/a&gt; for more info.</property>
-                            <property name="use_markup">True</property>
-                            <property name="justify">fill</property>
-                            <property name="wrap">True</property>
-                            <property name="max_width_chars">60</property>
+&lt;a href=&quot;https://github.com/kozec/sc-controller/wiki/Evdev-and-HID-mode-for-non-steam-controllers&quot;&gt;Click here&lt;/a&gt; for more info.</property>
+                                <property name="use_markup">1</property>
+                                <property name="justify">fill</property>
+                                <property name="wrap">1</property>
+                                <property name="max_width_chars">60</property>
+                              </object>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
+                            <property name="fill">False</property>
+                            <property name="position">0</property>
                           </packing>
                         </child>
-                        <child>
-                          <placeholder/>
-                        </child>
                       </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
+                    </property>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="column-span">3</property>
+                    </layout>
                   </object>
                 </child>
               </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-                <property name="width">3</property>
-              </packing>
-            </child>
+            </property>
           </object>
-          <packing>
-            <property name="name">page2</property>
-            <property name="title" translatable="yes">page2</property>
-            <property name="position">2</property>
-          </packing>
         </child>
         <child>
-          <object class="GtkGrid" id="grDS4">
-            <property name="name">01</property>
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_left">20</property>
-            <property name="margin_right">20</property>
-            <property name="margin_top">20</property>
-            <child>
-              <object class="GtkLabel" id="label8">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">&lt;b&gt;DS4 Controller&lt;/b&gt;
+          <object class="GtkStackPage">
+            <property name="name">page3</property>
+            <property name="title" translatable="1">page3</property>
+            <property name="position">3</property>
+            <property name="child">
+              <object class="GtkGrid" id="grDS4">
+                <property name="name">01</property>
+                <property name="margin-start">20</property>
+                <property name="margin-end">20</property>
+                <property name="margin_top">20</property>
+                <child>
+                  <object class="GtkLabel" id="label8">
+                    <property name="hexpand">1</property>
+                    <property name="label" translatable="1">&lt;b&gt;DS4 Controller&lt;/b&gt;
 
 SC-Controller supports DS4 controllers automatically
 and requires no additional configuration. All you need
-is to make sure "DS4 Controller Support" checkbox
+is to make sure &quot;DS4 Controller Support&quot; checkbox
 is enabled in Settings or here:</property>
-                <property name="use_markup">True</property>
-                <property name="wrap">True</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="cbDS4">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="margin_left">20</property>
-                <property name="margin_top">20</property>
-                <property name="margin_bottom">20</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_cbDS4_toggled" swapped="no"/>
-                <child>
-                  <object class="GtkLabel" id="lblDS4">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">_Enable DS4 Controller Support</property>
-                    <property name="use_underline">True</property>
-                    <property name="mnemonic_widget">cbDS4</property>
+                    <property name="use_markup">1</property>
+                    <property name="wrap">1</property>
                     <property name="xalign">0</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <layout>
+                      <property name="column">1</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cbDS4">
+                    <property name="focusable">1</property>
+                    <property name="margin-start">20</property>
+                    <property name="margin_top">20</property>
+                    <property name="margin_bottom">20</property>
+                    <signal name="toggled" handler="on_cbDS4_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkLabel" id="lblDS4">
+                        <property name="label" translatable="1">_Enable DS4 Controller Support</property>
+                        <property name="use_underline">1</property>
+                        <property name="mnemonic_widget">cbDS4</property>
+                        <property name="xalign">0</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"></attribute>
+                        </attributes>
+                      </object>
+                    </child>
+                    <layout>
+                      <property name="column">1</property>
+                      <property name="row">1</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label9">
+                    <property name="hexpand">1</property>
+                    <property name="label" translatable="1">Change will be applied after emulation is restarted.
+If you have any games running, restarting emulation will
+&quot;unplug&quot; virtual gamepad, what may cause them to ignore 
+future inputs or even crash.</property>
+                    <property name="use_markup">1</property>
+                    <property name="wrap">1</property>
+                    <property name="xalign">0</property>
+                    <layout>
+                      <property name="column">1</property>
+                      <property name="row">2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkImage" id="imgDS4">
+                    <property name="margin-start">5</property>
+                    <property name="margin-end">30</property>
+                    <property name="xalign">0.5</property>
+                    <property name="yalign">0</property>
+                    <property name="stock">gtk-missing-image</property>
+                    <property name="icon_size">6</property>
+                    <layout>
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="row-span">3</property>
+                    </layout>
                   </object>
                 </child>
               </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label9">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">Change will be applied after emulation is restarted.
-If you have any games running, restarting emulation will
-"unplug" virtual gamepad, what may cause them to ignore 
-future inputs or even crash.</property>
-                <property name="use_markup">True</property>
-                <property name="wrap">True</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkImage" id="imgDS4">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">5</property>
-                <property name="margin_right">30</property>
-                <property name="xalign">0.5</property>
-                <property name="yalign">0</property>
-                <property name="stock">gtk-missing-image</property>
-                <property name="icon_size">6</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-                <property name="height">3</property>
-              </packing>
-            </child>
+            </property>
           </object>
-          <packing>
-            <property name="name">page3</property>
-            <property name="title" translatable="yes">page3</property>
-            <property name="position">3</property>
-          </packing>
         </child>
       </object>
-    </child>
+    </property>
     <child type="titlebar">
       <object class="GtkHeaderBar" id="header">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="title">Controller Registration</property>
-        <property name="show_close_button">True</property>
         <child>
           <object class="GtkButton" id="btBack">
-            <property name="label" translatable="yes">_Back</property>
-            <property name="visible">True</property>
-            <property name="sensitive">False</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="use_underline">True</property>
+            <property name="label" translatable="1">_Back</property>
+            <property name="sensitive">0</property>
+            <property name="focusable">1</property>
+            <property name="receives_default">1</property>
+            <property name="use_underline">1</property>
             <signal name="clicked" handler="on_btBack_clicked" swapped="no"/>
           </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
         </child>
         <child>
           <object class="GtkButton" id="btNext">
-            <property name="label" translatable="yes">_Next</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="use_underline">True</property>
+            <property name="label" translatable="1">_Next</property>
+            <property name="focusable">1</property>
+            <property name="receives_default">1</property>
+            <property name="use_underline">1</property>
             <signal name="clicked" handler="on_btNext_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="pack_type">end</property>
-            <property name="position">1</property>
           </packing>
         </child>
       </object>
     </child>
   </object>
   <object class="GtkWindow" id="dlgPressButton">
-    <property name="can_focus">False</property>
-    <property name="resizable">False</property>
-    <property name="modal">True</property>
+    <property name="resizable">0</property>
+    <property name="modal">1</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
-    <property name="deletable">False</property>
+    <property name="deletable">0</property>
     <property name="transient_for">Dialog</property>
-    <child>
+    <property name="child">
       <object class="GtkBox" id="vbJustFuckingBox">
         <property name="name">vb687i</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="margin_left">10</property>
-        <property name="margin_right">10</property>
+        <property name="margin-start">10</property>
+        <property name="margin-end">10</property>
         <property name="margin_top">10</property>
         <property name="margin_bottom">10</property>
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkLabel" id="lblPressButton">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="margin_top">25</property>
             <property name="margin_bottom">25</property>
-            <property name="label" translatable="yes">Press button...</property>
+            <property name="label" translatable="1">Press button...</property>
             <attributes>
-              <attribute name="weight" value="bold"/>
+              <attribute name="weight" value="bold"></attribute>
             </attributes>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
         </child>
         <child>
           <object class="GtkButton" id="btCancelInput">
             <property name="label">gtk-cancel</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="margin_left">50</property>
-            <property name="margin_right">50</property>
+            <property name="focusable">1</property>
+            <property name="receives_default">1</property>
+            <property name="margin-start">50</property>
+            <property name="margin-end">50</property>
             <property name="margin_top">10</property>
             <property name="margin_bottom">10</property>
             <property name="use_stock">True</property>
             <signal name="clicked" handler="on_btCancelInput_clicked" swapped="no"/>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
         </child>
       </object>
-    </child>
+    </property>
     <child type="titlebar">
       <object class="GtkHeaderBar" id="hb485">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="title">Button Input</property>
         <child>
           <placeholder/>
@@ -1046,9 +898,7 @@ future inputs or even crash.</property>
   </object>
   <object class="GtkListStore" id="lstTriggers">
     <columns>
-      <!-- column-name key -->
       <column type="gchararray"/>
-      <!-- column-name text -->
       <column type="gchararray"/>
     </columns>
     <data>
@@ -1073,7 +923,7 @@ future inputs or even crash.</property>
       <object class="GtkMenuItem" id="mnuStickPress">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Change mapping for _Pressing stick</property>
+        <property name="label" translatable="1">Change mapping for _Pressing stick</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_mnuStickPress_activate" swapped="no"/>
       </object>
@@ -1082,7 +932,7 @@ future inputs or even crash.</property>
       <object class="GtkMenuItem" id="mnuStickmove">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Change mapping for _Moving stick</property>
+        <property name="label" translatable="1">Change mapping for _Moving stick</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_mnuStickmove_activate" swapped="no"/>
       </object>
