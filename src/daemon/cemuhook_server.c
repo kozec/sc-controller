@@ -263,11 +263,21 @@ static void parse_message(int fd, const char* buffer, size_t size, struct sockad
 	}
 }
 
+#ifndef PYTHON
+static TaskID schedule_id;
+void sccd_cemuhook_feed_keepalive(void* trash1, void* trash2) {
+	float emptyGyroData[6] = {0.0};
+	sccd_cemuhook_feed(0, emptyGyroData);
+}
+#endif
+
 #ifdef PYTHON
 bool cemuhook_feed(int fd, int index, float data[6]) {
 #else
 bool sccd_cemuhook_feed(int index, float data[6]) {
 	const int fd = sock;
+	sccd_scheduler_cancel(schedule_id);
+	schedule_id = sccd_scheduler_schedule(1000, sccd_cemuhook_feed_keepalive, NULL, NULL);
 #endif
 	monotime_t t = mono_time_ms();
 #ifdef PYTHON
