@@ -28,31 +28,31 @@ static uint64_t used_serials = 0;
 void handle_input(SCController* sc, SCInput* i) {
 	if (sc->mapper != NULL) {
 		memcpy(&sc->input.ltrig, &i->ltrig, sizeof(TriggerValue) * 2);
-			memcpy(&sc->input.rpad_x, &i->rpad_x, sizeof(AxisValue) * 2);
-			memcpy(&sc->input.gyro, &i->accel_x, sizeof(struct GyroInput));
-			
-			SCButton buttons = (((SCButton)i->buttons1) << 24) | (((SCButton)i->buttons0) << 8);
-			bool lpadtouch = buttons & B_LPADTOUCH;
-			bool sticktilt = buttons & B_STICKTILT;
-			if (lpadtouch & !sticktilt)
-				sc->input.stick_x = sc->input.stick_y = 0;
-			else if (!lpadtouch)
-				memcpy(&sc->input.stick_x, &i->lpad_x, sizeof(AxisValue) * 2);
-			if (!(lpadtouch || sticktilt))
-				sc->input.lpad_x = sc->input.lpad_y = 0;
-			else if (lpadtouch)
-				memcpy(&sc->input.lpad_x, &i->lpad_x, sizeof(AxisValue) * 2);
-			
-			if (buttons & B_LPADPRESS) {
-				// LPADPRESS button may signalize pressing stick instead
-				if ((buttons & B_STICKPRESS) && !(buttons & B_STICKTILT))
-					buttons &= ~B_LPADPRESS;
-			}
-			// Steam controller computes and sends dpad "buttons" as well, but
-			// SC Controller doesn't use them, so they are zeroed here
-			buttons &= ~0b00000000000011110000000000000000;
-			sc->input.buttons = buttons;
-			sc->mapper->input(sc->mapper, &sc->input);
+		memcpy(&sc->input.rpad_x, &i->rpad_x, sizeof(AxisValue) * 2);
+		memcpy(&sc->input.gyro, &i->accel_x, sizeof(struct GyroInput));
+		
+		SCButton buttons = (((SCButton)i->buttons1) << 24) | (((SCButton)i->buttons0) << 8);
+		bool lpadtouch = buttons & B_LPADTOUCH;
+		bool sticktilt = buttons & B_STICKTILT;
+		if (lpadtouch & !sticktilt)
+			sc->input.stick_x = sc->input.stick_y = 0;
+		else if (!lpadtouch)
+			memcpy(&sc->input.stick_x, &i->lpad_x, sizeof(AxisValue) * 2);
+		if (!(lpadtouch || sticktilt))
+			sc->input.lpad_x = sc->input.lpad_y = 0;
+		else if (lpadtouch)
+			memcpy(&sc->input.lpad_x, &i->lpad_x, sizeof(AxisValue) * 2);
+		
+		if (buttons & B_LPADPRESS) {
+			// LPADPRESS button may signalize pressing stick instead
+			if ((buttons & B_STICKPRESS) && !(buttons & B_STICKTILT))
+				buttons &= ~B_LPADPRESS;
+		}
+		// Steam controller computes and sends dpad "buttons" as well, but
+		// SC Controller doesn't use them, so they are zeroed here
+		buttons &= ~0b00000000000011110000000000000000;
+		sc->input.buttons = buttons;
+		sc->mapper->input(sc->mapper, &sc->input);
 	}
 }
 
@@ -100,12 +100,14 @@ SCController* create_usb_controller(Daemon* daemon, InputDevice* dev, SCControll
 	sc->controller.get_gyro_enabled = &get_gyro_enabled;
 	// Main difference between dongle-bound and wired controller is that dongle-bound
 	// countroller doesn't close USB device when deallocated
-	sc->controller.deallocate = (type == SC_WIRED) ? &deallocate : &deallocate_dongle_controller;
+	sc->controller.deallocate = (type == SC_WIRED || type == SC_BT) ? &deallocate : &deallocate_dongle_controller;
 	
 	HAPTIC_DISABLE(&sc->hdata[0]); sc->hdata[0].pos = HAPTIC_LEFT;
 	HAPTIC_DISABLE(&sc->hdata[1]); sc->hdata[1].pos = HAPTIC_RIGHT;
 	sc->state = SS_NOT_CONFIGURED;
-	sc->gyro_enabled = true;
+	// spam inputs as some cards drop packets when gyro packets are sent too fast
+	// TODO timesliced scheduler and poller system as in python version
+	sc->gyro_enabled = (type == SC_BT) ? false : true;
 	sc->dev = dev;
 	sc->daemon = daemon;
 	sc->auto_id_used = false;
@@ -202,6 +204,29 @@ static void flush(Controller* c, Mapper* m) {
 #endif
 		}
 		HAPTIC_DISABLE(&sc->hdata[i]);
+	}
+}
+
+// TODO does not work, find correct SC_BT command
+static void turnoff(Controller* c) {
+	SCController* sc = container_of(c, SCController, controller);
+	DDEBUG("turn off req");
+	switch (sc->type) {
+	case SC_WIRED:
+		break;
+	case SC_WIRELESS:
+		//0xC0, 0x9F, 0x04, 0x6f, 0x66, 0x66, 0x21 };
+		uint8_t data1[] = { PT_OFF, PL_OFF, 0x6f, 0x66, 0x66, 0x21 };
+		if (sc->dev->hid_request(sc->dev, sc->idx, data1, -(SMALL_BUFFER_SIZE)) == NULL)
+			LERROR("Failed to turn off controller");
+	case SC_BT:
+		//0xC0, 0x9F, 0x04, 0x6f, 0x66, 0x66, 0x21 };
+		uint8_t data[] = { PT_BT_PREFIX, PT_OFF, PL_OFF, 0x6f, 0x66, 0x66, 0x21 };
+		if (sc->dev->hid_request(sc->dev, sc->idx, data, -(SMALL_BUFFER_SIZE + 1)) == NULL)
+			LERROR("Failed to turn off controller");
+		break;
+	case SC_DECK:
+		break;
 	}
 }
 
@@ -390,7 +415,7 @@ bool configure(SCController* sc) {
 		uint8_t gyro_and_timeout[SMALL_BUFFER_SIZE] = {
 #endif
 			// Header 
-			// 0x87 0x0f 0x18
+			// 0xc0 0x87 0x0f 0x18
 			PT_BT_PREFIX, PT_CONFIGURE, PL_CONFIGURE_BT, CONFIGURE_BT,
 			// Idle timeout
 			//TODO write IDLE timeout(?)
