@@ -88,5 +88,15 @@ if host_machine.system() == 'windows'
 			'generic/dinput.c',
 		]
 	)
+
+	shared_library('scc-drv-sc_by_bt',
+		include_directories: [ include ],
+		link_with: [ utils_lib, config_lib ],
+		dependencies: deps,
+		sources: [
+			'sc/common.c',
+			'sc/by_bt.c',
+		]
+	)
 endif
 

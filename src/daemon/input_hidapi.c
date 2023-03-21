@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #define BUFFER_MAX 256
+#define SMALL_BUFFER_MAX 64
 #define DEV_TYPECHECK(dev, method_name, err_return) do {						\
 	if (dev->sys != HIDAPI) {													\
 		LERROR("" #method_name " called on device of subsystem %i", dev->sys);	\
@@ -93,7 +94,7 @@ static void sccd_input_hidapi_hid_write(InputDevice* _dev, uint16_t idx, uint8_t
 	hid_write(dev->hid, data, length);
 }
 
-static uint8_t* sccd_input_hidapi_hid_request(InputDevice* _dev, uint16_t idx, uint8_t* data, int32_t _length) {
+static uint8_t* sccd_input_hidapi_hid_request(InputDevice* _dev, int16_t idx, uint8_t* data, int32_t _length) {
 	DEV_TYPECHECK(_dev, sccd_input_hidapi_dev_close, NULL);
 	HidapiInputDevice* dev = container_of(_dev, HidapiInputDevice, dev);
 	
@@ -114,15 +115,23 @@ static uint8_t* sccd_input_hidapi_hid_request(InputDevice* _dev, uint16_t idx, u
 		}
 	}
 	
-	unsigned char buffer[BUFFER_MAX + 1];
-	if (length > BUFFER_MAX) {
-		LERROR("sccd_input_hid_request: called with length larger"
-				"than supported. Changing BUFFER_MAX will fix this issue");
+	int ACTUAL_BUFFER = BUFFER_MAX;
+	if(idx == -42){
+		ACTUAL_BUFFER = SMALL_BUFFER_MAX;
+	}
+	unsigned char buffer[ACTUAL_BUFFER + 1];
+
+	//NEF TODO
+	if (length > ACTUAL_BUFFER+1) {
+		LERROR("sccd_input_hid_request: called with length larger %u > %d"
+				"than supported. Changing BUFFER_MAX will fix this issue", length, ACTUAL_BUFFER+1);
 		return NULL;
 	}
-	buffer[0] = 0;
+	
+	//TODO dont rely on IDX -1 quirk for BT report ID, test other controllers
+	buffer[0] = (idx == -1 ? 0x03 : 0x00);
 	memcpy(&buffer[1], data, length);
-	if (dev->idx != idx) {
+	if (dev->idx != -42 && dev->idx != idx) {
 		LERROR("sccd_input_hid_request: trying to send request to "
 				"different idx than device was originally opened for (%i != %i)",
 				dev->idx, idx);
@@ -130,13 +139,13 @@ static uint8_t* sccd_input_hidapi_hid_request(InputDevice* _dev, uint16_t idx, u
 	}
 	err = hid_send_feature_report(dev->hid, buffer, length + 1);
 	if (err < 0) {
-		wcstombs((char*)buffer, hid_error(dev->hid), BUFFER_MAX);
+		wcstombs((char*)buffer, hid_error(dev->hid), ACTUAL_BUFFER);
 		LERROR("sccd_input_hid_request: hid_send_feature_report failed: %s", buffer);
 		goto sccd_input_hid_request_fail;
 	}
 	err = hid_get_feature_report(dev->hid, buffer, length + 1);
 	if (err < 0) {
-		wcstombs((char*)buffer, hid_error(dev->hid), BUFFER_MAX);
+		wcstombs((char*)buffer, hid_error(dev->hid), ACTUAL_BUFFER);
 		LERROR("sccd_input_hid_request: hid_get_feautre_report failed: %s", buffer);
 		goto sccd_input_hid_request_fail;
 	}
@@ -207,6 +216,7 @@ InputDevice* sccd_input_hidapi_open(const char* syspath) {
 		free(dev);
 		return NULL;
 	}
+	DDEBUG("successfully opened device %s", device_path);
 	
 	dev->hid = hid;
 	*((Subsystem*)(&dev->dev.sys)) = HIDAPI;
@@ -226,8 +236,15 @@ InputDevice* sccd_input_hidapi_open(const char* syspath) {
 		char* endptr = NULL;
 		dev->idx = strtol(hex_str, &endptr, 16);
 		if (endptr == hex_str) {
-			// Parsing failed
+ 			// Parsing failed
 			dev->idx = -1;
+		}
+		// TODO Add more criteria to matching
+		char* rev_component = strstr(device_path, "rev&0001");
+		char* unknown_component = strstr(device_path, "0&0002");
+		if(rev_component && unknown_component){
+			//most likely a SC
+			dev->idx = -42;
 		}
 	}
 #endif
@@ -253,6 +270,7 @@ void sccd_input_hidapi_rescan() {
 		wdev.product = dev->product_id;
 		wdev.vendor = dev->vendor_id;
 		wdev.idx = dev->interface_number;
+		DDEBUG("%u %u", dev->usage, dev->usage_page);
 		sccd_device_monitor_new_device(get_daemon(), &wdev.idev);
 #endif
 		dev = dev->next;

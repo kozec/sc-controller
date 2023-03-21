@@ -24,7 +24,7 @@ const char* DEFAULT_PROFILES[] = {
  * Default list of enabled drivers. If driver is not listed in "drivers"
  * object, it's enabled only if listed here.
  */
-const char* DEFAULT_ENABLED_DRIVERS[] = { "sc_by_cable" };
+const char* DEFAULT_ENABLED_DRIVERS[] = { "sc_by_cable sc_by_bt" };
 
 const struct config_item DEFAULTS[] = {
 	

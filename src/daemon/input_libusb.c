@@ -189,7 +189,7 @@ static void sccd_input_libusb_hid_write(InputDevice* _dev, uint16_t idx, uint8_t
 		LERROR("sccd_input_libusb_hid_write: out: %s", libusb_strerror(err));
 }
 
-static uint8_t* sccd_input_libusb_hid_request(InputDevice* _dev, uint16_t idx, uint8_t* data, int32_t _length) {
+static uint8_t* sccd_input_libusb_hid_request(InputDevice* _dev, int16_t idx, uint8_t* data, int32_t _length) {
 	DEV_TYPECHECK(_dev, sccd_input_libusb_hid_request, NULL);
 	USBInputDevice* dev = container_of(_dev, USBInputDevice, dev);
 	
