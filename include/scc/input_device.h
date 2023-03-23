@@ -125,7 +125,7 @@ typedef struct InputDevice {
 	 *
 	 * 'idx' has meaning only with libusb devices and is ignored for everything else.
 	 */
-	uint8_t*			(*hid_request)(InputDevice* dev, uint16_t idx, uint8_t* data, int32_t length);
+	uint8_t*			(*hid_request)(InputDevice* dev, int16_t idx, uint8_t* data, int32_t length);
 } InputDevice;
 
 

@@ -62,7 +62,7 @@ static void sccd_input_bsd_hid_write(InputDevice* _dev, uint16_t idx, uint8_t* d
 		WARN("sccd_usb_dev_hid_write: USB_SET_REPORT: %s", strerror(err));
 }
 
-static uint8_t* sccd_input_bsd_hid_request(InputDevice* _dev, uint16_t idx, uint8_t* data, int32_t _length) {
+static uint8_t* sccd_input_bsd_hid_request(InputDevice* _dev, int16_t idx, uint8_t* data, int32_t _length) {
 	BSDInputDevice* dev = container_of(_dev, BSDInputDevice, dev);
 	uint16_t length;
 	uint8_t* out_buffer = NULL;

@@ -3,6 +3,7 @@
 
 typedef struct SCController SCController;
 typedef struct SCInput SCInput;
+typedef struct SCByBtControllerInput SCByBtControllerInput;
 
 typedef enum {
 	SC_WIRED = 1,
@@ -51,6 +52,76 @@ struct SCInput {
 	// uint8_t		_a4[16];
 };
 
+struct SCByBtControllerInput {
+	uint16_t type;
+	uint32_t buttons;
+	uint8_t ltrig;
+	uint8_t rtrig;
+	int32_t stick_x;
+	int32_t stick_y;
+	int32_t lpad_x;
+	int32_t lpad_y;
+	int32_t rpad_x;
+	int32_t rpad_y;
+	int32_t gpitch;
+	int32_t groll;
+	int32_t gyaw;
+	int32_t q1;
+	int32_t q2;
+	int32_t q3;
+	int32_t q4;
+};
+
+enum SCButtons {
+	// This may be moved later to something shared
+	SCB_RPADTOUCH	= 0b10000000000000000000000000000,
+	SCB_LPADTOUCH	= 0b01000000000000000000000000000,
+	SCB_RPAD		= 0b00100000000000000000000000000,
+	SCB_LPAD		= 0b00010000000000000000000000000, // # Same for stick but without LPadTouch
+	SCB_STICKPRESS	= 0b00000000000000000000000000001, // # generated internally, not sent by controller
+	SCB_RGRIP	 	= 0b00001000000000000000000000000,
+	SCB_LGRIP	 	= 0b00000100000000000000000000000,
+	SCB_START	 	= 0b00000010000000000000000000000,
+	SCB_C		 	= 0b00000001000000000000000000000,
+	SCB_BACK		= 0b00000000100000000000000000000,
+	SCB_A			= 0b00000000000001000000000000000,
+	SCB_X			= 0b00000000000000100000000000000,
+	SCB_B			= 0b00000000000000010000000000000,
+	SCB_Y			= 0b00000000000000001000000000000,
+	SCB_LB			= 0b00000000000000000100000000000,
+	SCB_RB			= 0b00000000000000000010000000000,
+	SCB_LT			= 0b00000000000000000001000000000,
+	SCB_RT			= 0b00000000000000000000100000000,
+	SCB_CPADTOUCH	= 0b00000000000000000000000000100, // # Available on DS4 pad
+	SCB_CPADPRESS	= 0b00000000000000000000000000010, // # Available on DS4 pad
+};
+
+static uint32_t BT_BUTTONS[] = {
+	// Bit to SCButton
+	SCB_RT,					// 00
+	SCB_LT,					// 01
+	SCB_RB,					// 02
+	SCB_LB,					// 03
+	SCB_Y,					// 04
+	SCB_B,					// 05
+	SCB_X,					// 06
+	SCB_A,					// 07
+	0, 						// 08 - dpad, ignored
+	0, 						// 09 - dpad, ignored
+	0, 						// 10 - dpad, ignored
+	0, 						// 11 - dpad, ignored
+	SCB_BACK,				// 12
+	SCB_C,					// 13
+	SCB_START,				// 14
+	SCB_LGRIP,				// 15
+	SCB_RGRIP,				// 16
+	SCB_LPAD,				// 17
+	SCB_RPAD,				// 18
+	SCB_LPADTOUCH,			// 19
+	SCB_RPADTOUCH,			// 20
+	0,						// 21 - nothing
+	SCB_STICKPRESS,			// 22
+};
 
 struct SCController {
 	Controller			controller;
@@ -59,10 +130,11 @@ struct SCController {
 	SCControllerType	type;
 	SCControllerState	state;
 	InputDevice*		dev;
+	bool 				long_packet;
 	char				serial[MAX_SERIAL_LEN];
 	char				desc[MAX_DESC_LEN];
 	char				id[MAX_ID_LEN];
-	uint16_t			idx;
+	int16_t				idx;
 	bool				gyro_enabled;
 	uint64_t			auto_id;
 	bool				auto_id_used;
@@ -89,6 +161,7 @@ typedef enum {
 	PT_FEEDBACK = 0x8f,
 	PT_RESET = 0x95,
 	PT_GET_SERIAL = 0xAE,
+	PT_BT_PREFIX = 0xC0
 } SCPacketType;
 
 typedef enum {

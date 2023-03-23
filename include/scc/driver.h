@@ -18,8 +18,8 @@ typedef unsigned short Product;
 typedef uintptr_t TaskID;
 typedef enum {
 	USB			= 0,
-#ifdef __linux__
 	BT			= 1,
+#ifdef __linux__
 	EVDEV		= 2,
 #endif
 #ifdef __BSD__

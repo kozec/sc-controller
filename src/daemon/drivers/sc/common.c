@@ -12,6 +12,7 @@
 
 #define B_STICKTILT			0b10000000000000000000000000000000
 #define BUFFER_SIZE			128
+#define SMALL_BUFFER_SIZE	64
 
 static const char* get_description(Controller* c);
 static const char* get_type(Controller* c);
@@ -99,18 +100,21 @@ SCController* create_usb_controller(Daemon* daemon, InputDevice* dev, SCControll
 	sc->controller.get_gyro_enabled = &get_gyro_enabled;
 	// Main difference between dongle-bound and wired controller is that dongle-bound
 	// countroller doesn't close USB device when deallocated
-	sc->controller.deallocate = (type == SC_WIRED) ? &deallocate : &deallocate_dongle_controller;
+	sc->controller.deallocate = (type == SC_WIRED || type == SC_BT) ? &deallocate : &deallocate_dongle_controller;
 	
 	HAPTIC_DISABLE(&sc->hdata[0]); sc->hdata[0].pos = HAPTIC_LEFT;
 	HAPTIC_DISABLE(&sc->hdata[1]); sc->hdata[1].pos = HAPTIC_RIGHT;
 	sc->state = SS_NOT_CONFIGURED;
-	sc->gyro_enabled = true;
+	// spam inputs as some cards drop packets when gyro packets are sent too fast
+	// TODO timesliced scheduler and poller system as in python version
+	sc->gyro_enabled = (type == SC_BT) ? false : true;
 	sc->dev = dev;
 	sc->daemon = daemon;
 	sc->auto_id_used = false;
 	sc->idle_timeout = 10 * 60;		// 10 minutes
 	sc->led_level = 50;
 	sc->type = type;
+	sc->long_packet = 0;
 	sc->idx = idx;
 	return sc;
 }
@@ -172,6 +176,7 @@ static union {
 		uint16_t	period;
 		uint16_t	cunt;
 	};
+//TODO need change for BT?
 } haptic = { .packet_type = PT_FEEDBACK, .len = PL_FEEDBACK, .cunt = 1 };
 
 /**
@@ -189,6 +194,7 @@ static void flush(Controller* c, Mapper* m) {
 			// Special case, windows needs to do this synchronously
 			// using hid_request, or it throws "overlapped operation in progress"
 			// error.
+			//TODO need change for BT?
 			haptic.packet_type = PT_FEEDBACK;
 			haptic.len = PL_FEEDBACK;
 			haptic.cunt = 1;
@@ -198,6 +204,29 @@ static void flush(Controller* c, Mapper* m) {
 #endif
 		}
 		HAPTIC_DISABLE(&sc->hdata[i]);
+	}
+}
+
+// TODO does not work, find correct SC_BT command
+static void turnoff(Controller* c) {
+	SCController* sc = container_of(c, SCController, controller);
+	DDEBUG("turn off req");
+	switch (sc->type) {
+	case SC_WIRED:
+		break;
+	case SC_WIRELESS:
+		//0xC0, 0x9F, 0x04, 0x6f, 0x66, 0x66, 0x21 };
+		uint8_t data1[] = { PT_OFF, PL_OFF, 0x6f, 0x66, 0x66, 0x21 };
+		if (sc->dev->hid_request(sc->dev, sc->idx, data1, -(SMALL_BUFFER_SIZE)) == NULL)
+			LERROR("Failed to turn off controller");
+	case SC_BT:
+		//0xC0, 0x9F, 0x04, 0x6f, 0x66, 0x66, 0x21 };
+		uint8_t data[] = { PT_BT_PREFIX, PT_OFF, PL_OFF, 0x6f, 0x66, 0x66, 0x21 };
+		if (sc->dev->hid_request(sc->dev, sc->idx, data, -(SMALL_BUFFER_SIZE + 1)) == NULL)
+			LERROR("Failed to turn off controller");
+		break;
+	case SC_DECK:
+		break;
 	}
 }
 
@@ -219,6 +248,12 @@ static void update_desc(SCController* sc) {
 	}
 }
 
+static inline void debug_packet(char* buffer, size_t size) {
+	size_t i;
+	for(i=0; i<size; i++)
+		printf("%02x", buffer[i] & 0xff);
+	DDEBUG("\n");
+}
 
 bool read_serial(SCController* sc) {
 	Config* c = config_load();
@@ -244,20 +279,56 @@ bool read_serial(SCController* sc) {
 	}
 	RC_REL(c);
 	
-	uint8_t data[BUFFER_SIZE] = { PT_GET_SERIAL, PL_GET_SERIAL, 0x01 };
+//ephemeral extra bit at end (?) of buffer on windows only
+#ifdef _WIN32
+	int data_size = sc->type == SC_BT ? BUFFER_SIZE : (SMALL_BUFFER_SIZE + 1);
+#else
+	int data_size = sc->type == SC_BT ? BUFFER_SIZE : (SMALL_BUFFER_SIZE);
+#endif
+	int bt_offset = 0;
 	uint8_t* response;
-	response = sc->dev->hid_request(sc->dev, sc->idx, data, -64);
+	uint8_t* data; 
+	if(sc->type == SC_BT){
+		data = calloc(data_size, sizeof(uint8_t));
+		data[0] = PT_BT_PREFIX;
+		data[1] = PT_GET_SERIAL;
+		data[2] = PL_GET_SERIAL;
+	    data[3] = 0x01;
+		bt_offset = 2;
+	} else {
+		//TODO expand to 128 okay?
+		data = calloc(data_size, sizeof(uint8_t));
+		data[0] = PT_GET_SERIAL;
+	    data[1] = PL_GET_SERIAL;
+	    data[2] = 0x01;
+	}
+
+	if(sc->type == SC_BT){
+#ifdef _WIN32
+		response = sc->dev->hid_request(sc->dev, sc->idx, data, -(SMALL_BUFFER_SIZE + 1));
+#else
+		response = sc->dev->hid_request(sc->dev, sc->idx, data, -(SMALL_BUFFER_SIZE));
+#endif
+	} else {
+		response = sc->dev->hid_request(sc->dev, sc->idx, data, -SMALL_BUFFER_SIZE);
+	}
 	if (response == NULL) {
 		LERROR("Failed to retrieve serial number");
 		return false;
 	}
-	if ((data[0] != PT_GET_SERIAL) && (data[1] != PL_GET_SERIAL)) {
+	if (sc->type != SC_BT && (data[0] != PT_GET_SERIAL) && (data[1] != PL_GET_SERIAL)) {
 		// Sometimes, freshly connected controller is not able to send its own
 		// serial straight away
 		return false;
+	} 
+	if (sc->type == SC_BT && data[4] == 0) {
+		//TODO flush so don't have to reset controller
+		debug_packet((char *)data, data_size);
+		return false;
 	}
-	data[13] = 0;	// to terminate string
-	strncpy(sc->serial, (const char*) &data[3], MAX_SERIAL_LEN);
+	data[13 + bt_offset] = 0;	// to terminate string
+	debug_packet((char *)data, data_size);
+	strncpy(sc->serial, (const char*) &data[3 + bt_offset], MAX_SERIAL_LEN);
 	if (sc->type == SC_DECK)
 		snprintf(sc->id, MAX_ID_LEN, "deck%s", sc->serial);
 	else
@@ -282,16 +353,52 @@ bool lizard_mode(SCController* sc) {
 }
 
 bool clear_mappings(SCController* sc) {
-	uint8_t data[BUFFER_SIZE] = { PT_CLEAR_MAPPINGS, 0x01 };
-	
-	if (sc->dev->hid_request(sc->dev, sc->idx, data, -64) == NULL) {
-		LERROR("Failed to clear mappings");
-		return false;
+	uint8_t* data; 
+#ifdef _WIN32
+	int data_size = sc->type == SC_BT ? BUFFER_SIZE : (SMALL_BUFFER_SIZE + 1);
+#else
+	int data_size = sc->type == SC_BT ? BUFFER_SIZE : (SMALL_BUFFER_SIZE);
+#endif
+	int bt_offset = 0;
+	if(sc->type == SC_BT){
+		data = calloc(data_size, sizeof(uint8_t));
+		data[0] = PT_BT_PREFIX;
+		data[1] = PT_CLEAR_MAPPINGS;
+		data[2] = 0x01;
+		bt_offset = 2;
+	} else {
+		//TODO expand to 128 okay?
+		data = calloc(data_size, sizeof(uint8_t));
+		data[0] = PT_CLEAR_MAPPINGS;
+	    data[1] = 0x01;
+	}
+
+	if(sc->type == SC_BT){
+#ifdef _WIN32
+		if (sc->dev->hid_request(sc->dev, sc->idx, data, -(SMALL_BUFFER_SIZE+1)) == NULL){
+#else
+		if (sc->dev->hid_request(sc->dev, sc->idx, data, -(SMALL_BUFFER_SIZE)) == NULL){
+#endif
+			LERROR("Failed to clear mappings");
+			return false;
+		}
+	} else {
+		if (sc->dev->hid_request(sc->dev, sc->idx, data, -SMALL_BUFFER_SIZE) == NULL){
+			LERROR("Failed to clear mappings");
+			return false;
+		}
 	}
 	return true;
 }
 
 bool configure(SCController* sc) {
+	int bt_offset = 0;
+#ifdef _WIN32
+	int data_size = sc->type == SC_BT ? BUFFER_SIZE : (SMALL_BUFFER_SIZE + 1);
+#else
+	int data_size = sc->type == SC_BT ? BUFFER_SIZE : (SMALL_BUFFER_SIZE);
+#endif
+
 	if (sc->dev == NULL)
 		// Special case, controller was disconnected, but it's not deallocated yet
 		goto configure_fail;
@@ -299,6 +406,40 @@ bool configure(SCController* sc) {
 		uint8_t deck_configure[BUFFER_SIZE] = { PT_CONFIGURE, 0x03, 0x08, 0x07 };
 		if (sc->dev->hid_request(sc->dev, sc->idx, deck_configure, -64) == NULL)
 			goto configure_fail;
+	} else if (sc->type == SC_BT) {
+		DDEBUG("configuring BT");
+
+#ifdef _WIN32
+		uint8_t gyro_and_timeout[SMALL_BUFFER_SIZE + 1] = {
+#else
+		uint8_t gyro_and_timeout[SMALL_BUFFER_SIZE] = {
+#endif
+			// Header 
+			// 0xc0 0x87 0x0f 0x18
+			PT_BT_PREFIX, PT_CONFIGURE, PL_CONFIGURE_BT, CONFIGURE_BT,
+			// Idle timeout
+			//TODO write IDLE timeout(?)
+			//(uint8_t)(sc->idle_timeout & 0xFF), (uint8_t)((sc->idle_timeout & 0xFF00) >> 8),
+			// unknown1
+			0x00, 0x00, 0x31, 0x02, 0x00, 0x08, 0x07, 0x00, 0x07, 0x07, 0x00, 0x30,
+			// Gyros
+			(sc->gyro_enabled ? 0x14 : 0),
+			// unknown2:
+			0x00, 0x2e,
+		};
+		uint8_t leds[65] = { PT_BT_PREFIX, PT_CONFIGURE, PL_LED, CT_LED, sc->led_level };
+#ifdef _WIN32
+		if (sc->dev->hid_request(sc->dev, sc->idx, gyro_and_timeout, -(SMALL_BUFFER_SIZE + 1)) == NULL)
+			goto configure_fail;
+		if (sc->dev->hid_request(sc->dev, sc->idx, leds, -(SMALL_BUFFER_SIZE + 1)) == NULL)
+			goto configure_fail;
+#else
+		if (sc->dev->hid_request(sc->dev, sc->idx, gyro_and_timeout, -(SMALL_BUFFER_SIZE)) == NULL)
+			goto configure_fail;
+		if (sc->dev->hid_request(sc->dev, sc->idx, leds, -(SMALL_BUFFER_SIZE)) == NULL)
+			goto configure_fail;
+#endif
+		bt_offset = 2;
 	} else {
 		uint8_t leds[BUFFER_SIZE] = { PT_CONFIGURE, PL_LED, CT_LED, sc->led_level };
 		uint8_t gyro_and_timeout[BUFFER_SIZE] = {
