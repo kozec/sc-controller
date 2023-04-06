@@ -384,7 +384,7 @@ class Action(object):
 		if parameter in PARSER_CONSTANTS:
 			return parameter
 		if type(parameter) in (str, str):
-			return "'%s'" % (encode_escape(str(parameter)),)
+			return "'%s'" % (encode_escape(str(parameter).encode('utf-8')))
 		return nameof(parameter)
 	
 	

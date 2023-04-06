@@ -233,7 +233,7 @@ class OSDAction(Action, SpecialAction):
 		if self.action:
 			parameters.append(self.action.to_string(multiline=multiline, pad=pad))
 		else:
-			parameters.append("'%s'" % (encode_escape(str(self.text)),))
+			parameters.append("'%s'" % (encode_escape(str(self.text).encode('utf-8')),))
 		return (" " * pad) + "%s(%s)" % (self.COMMAND, ",".join(parameters))
 	
 	
@@ -537,7 +537,7 @@ class DialogAction(Action, SpecialAction):
 			rv += "%s, " % (nameof(self.confirm_with),)
 			if self.cancel_with != DEFAULT:
 				rv += "%s, " % (nameof(self.cancel_with),)
-		rv += "'%s', " % (encode_escape(self.text),)
+		rv += "'%s', " % (encode_escape(self.text.encode('utf-8')),)
 		if multiline:
 			rv += "\n%s" % (" " * (pad + 2))
 		for option in self.options:

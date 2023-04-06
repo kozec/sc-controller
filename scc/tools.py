@@ -431,6 +431,6 @@ def circle_to_square(x, y):
 def decode_escape(str):
 	return codecs.escape_decode(bytes(str, "utf-8"))[0].decode("utf-8")
 
-def encode_escape(str):
-	return codecs.escape_encode(bytes(str, "utf-8"))[0].decode("utf-8")
+def encode_escape(b):
+	return codecs.escape_encode(b)[0].decode("utf-8")
 

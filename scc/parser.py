@@ -192,7 +192,7 @@ class ActionParser(object):
 			return self._parse_number()
 		
 		if t.type == TokenType.STRING:
-			return decode_escape(t.value[1:-1])
+			return decode_escape(str(t.value[1:-1]))
 		
 		raise ParseError("Expected parameter, got '%s'" % (t.value,))
 
