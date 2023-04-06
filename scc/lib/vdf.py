@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 VDF file reader
 Copyright (C) 2017 Kozec

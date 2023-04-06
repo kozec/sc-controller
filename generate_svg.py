@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 from scc.tools import _
 
 from scc.actions import Action, DPadAction, XYAction, MouseAction

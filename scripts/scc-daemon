@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 from scc.sccdaemon import SCCDaemon
 from scc.paths import get_pid_file, get_daemon_socket
 from scc.tools import init_logging

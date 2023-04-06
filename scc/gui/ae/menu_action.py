@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 SC-Controller - Action Editor - common part of "DPAD or menu" and "Special Action",
 two components with MenuAction selectable.

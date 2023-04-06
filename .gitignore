@@ -15,3 +15,4 @@ out.svg
 *.AppImage
 *.cpp
 *.vdf
+sccontroller.egg-info/

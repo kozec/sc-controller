@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Used to generate some icons
 # Requires inkscape and imagemagick pacages
 

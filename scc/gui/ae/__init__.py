@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """ ae - Action Editor components """
 
 from scc.tools import _
