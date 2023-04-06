@@ -38,7 +38,7 @@ class GestureDisplay(OSDWindow):
    3  - erorr, failed to lock input
 	"""
 	__gsignals__ = {
-		b"gesture-updated"                    : (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+		"gesture-updated"                    : (GObject.SignalFlags.RUN_FIRST, None, (str,)),
 	}
 
 	SIZE = 128	# times two horizontaly + borders

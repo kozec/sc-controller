@@ -7,6 +7,8 @@ Also supports clicking on areas defined in SVG image.
 """
 
 from scc.tools import _
+import gi
+gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, Gdk, GObject, GdkPixbuf, Rsvg
 from xml.etree import ElementTree as ET
@@ -24,11 +26,11 @@ class SVGWidget(Gtk.EventBox):
 	
 	__gsignals__ = {
 			# Raised when mouse is over defined area
-			b"hover"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			"hover"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 			# Raised when mouse leaves all defined areas
-			b"leave"	: (GObject.SignalFlags.RUN_FIRST, None, ()),
+			"leave"	: (GObject.SignalFlags.RUN_FIRST, None, ()),
 			# Raised user clicks on defined area
-			b"click"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+			"click"	: (GObject.SignalFlags.RUN_FIRST, None, (object,)),
 	}
 	
 	

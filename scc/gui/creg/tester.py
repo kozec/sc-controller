@@ -27,11 +27,11 @@ class Tester(GObject.GObject):
 	"""
 
 	__gsignals__ = {
-		b"error"		: (GObject.SignalFlags.RUN_FIRST, None, (int, )),
-		b"ready"		: (GObject.SignalFlags.RUN_FIRST, None, ()),
-		b"finished"		: (GObject.SignalFlags.RUN_FIRST, None, ()),
-		b"axis"			: (GObject.SignalFlags.RUN_FIRST, None, (int, int)),
-		b"button"		: (GObject.SignalFlags.RUN_FIRST, None, (int, bool)),
+		"error"		: (GObject.SignalFlags.RUN_FIRST, None, (int, )),
+		"ready"		: (GObject.SignalFlags.RUN_FIRST, None, ()),
+		"finished"		: (GObject.SignalFlags.RUN_FIRST, None, ()),
+		"axis"			: (GObject.SignalFlags.RUN_FIRST, None, (int, int)),
+		"button"		: (GObject.SignalFlags.RUN_FIRST, None, (int, bool)),
 	}
 	
 	def __init__(self, driver, device_id):

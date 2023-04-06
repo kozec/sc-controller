@@ -42,11 +42,11 @@ class StatusIcon(GObject.GObject):
 	TRAY_TITLE     = _("SC-Controller")
 	
 	__gsignals__ = {
-		b"clicked": (GObject.SignalFlags.RUN_FIRST, None, ()),
+		"clicked": (GObject.SignalFlags.RUN_FIRST, None, ()),
 	}
 	
 	__gproperties__ = {
-		b"active": (
+		"active": (
 			GObject.TYPE_BOOLEAN,
 			"is the icon user-visible?",
 			"does the icon back-end think that anything is might be shown to the user?",
