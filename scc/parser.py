@@ -14,12 +14,11 @@ from scc.actions import Action, RangeOP, NoAction, MultiAction
 from scc.special_actions import OSDAction
 from scc.uinput import Keys, Axes, Rels
 from scc.macros import Macro
-from scc.tools import nameof
+from scc.tools import nameof, decode_escape
 import scc.aliases
 
 import token as TokenType
 import sys
-
 
 class ParseError(Exception): pass
 
@@ -193,7 +192,7 @@ class ActionParser(object):
 			return self._parse_number()
 		
 		if t.type == TokenType.STRING:
-			return t.value[1:-1].decode('string_escape')
+			return decode_escape(t.value[1:-1])
 		
 		raise ParseError("Expected parameter, got '%s'" % (t.value,))
 

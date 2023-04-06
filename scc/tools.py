@@ -13,6 +13,7 @@ from scc.paths import get_menus_path, get_default_menus_path
 from scc.paths import get_button_images_path
 from math import pi as PI, sin, cos, atan2, sqrt
 import os, sys, ctypes, imp, shlex, gettext, logging
+import codecs
 
 HAVE_POSIX1E = False
 try:
@@ -424,3 +425,8 @@ def circle_to_square(x, y):
 		raise ValueError("Invalid angle...?")
 	
 	return squared
+
+
+# Decode an escaped string in python3
+def decode_escape(str):
+	return codecs.escape_decode(bytes(str, "utf-8"))[0].decode("utf-8")
