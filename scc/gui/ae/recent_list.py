@@ -4,7 +4,7 @@ SC-Controller - Action Editor - Recent List Component
 
 Displays page that can edit settings for RecentListMenuGenerator
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.gui.ae import AEComponent

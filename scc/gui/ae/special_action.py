@@ -4,7 +4,7 @@ SC-Controller - Action Editor - Axis Component
 
 Assigns emulated axis to trigger
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.special_actions import ChangeProfileAction, ShellCommandAction

@@ -4,7 +4,7 @@ SC-Controller - Action Editor - Tilt
 
 Setups DPAD emulation or menu display
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
@@ -46,9 +46,9 @@ class TiltComponent(AEComponent, BindingEditor):
 	
 	
 	def update_button_desc(self, action):
-		for i in xrange(0, len(action.actions)):
+		for i in range(0, len(action.actions)):
 			self.actions[i] = action.actions[i]
-		for i in xrange(0, 6):
+		for i in range(0, 6):
 			self.set_button_desc(i)
 	
 	

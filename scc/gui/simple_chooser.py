@@ -4,7 +4,7 @@ SC-Controller - Simple Chooser
 
 Used by Action Editor to display window with just one Component
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib
@@ -35,7 +35,7 @@ class SimpleChooser(Editor):
 		mod = importlib.import_module("scc.gui.ae.%s" % (component_name,))
 		for x in dir(mod):
 			cls = getattr(mod, x)
-			if isinstance(cls, (type, types.ClassType)) and issubclass(cls, AEComponent):
+			if isinstance(cls, type) and issubclass(cls, AEComponent):
 				if cls.NAME == component_name:
 					self.component = cls(self.app, self)
 					break

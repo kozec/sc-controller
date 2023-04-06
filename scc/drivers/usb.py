@@ -39,7 +39,7 @@ class USBDevice(object):
 			data = transfer.getBuffer()
 			try:
 				callback(endpoint, data)
-			except Exception, e:
+			except Exception as e:
 				log.error("Failed to handle recieved data")
 				log.error(e)
 				log.error(traceback.format_exc())
@@ -200,7 +200,7 @@ class USBDriver(object):
 		""" Closes all devices and unclaims all interfaces """
 		if len(self._devices):
 			log.debug("Releasing devices...")
-			to_release, self._devices, self._syspaths = self._devices.values(), {}, {}
+			to_release, self._devices, self._syspaths = list(self._devices.values()), {}, {}
 			for d in to_release:
 				d.close()
 	
@@ -234,7 +234,7 @@ class USBDriver(object):
 				try:
 					handle = device.open()
 					break
-				except usb1.USBError, e:
+				except usb1.USBError as e:
 					log.error("Failed to open USB device %.4x:%.4x : %s", tp[0], tp[1], e)
 					if tp in self._fail_cbs:
 						self._fail_cbs[tp](syspath, *tp)
@@ -252,7 +252,7 @@ class USBDriver(object):
 		handled_device = None
 		try:
 			handled_device = callback(device, handle)
-		except usb1.USBErrorBusy, e:
+		except usb1.USBErrorBusy as e:
 			log.error("Failed to claim USB device %.4x:%.4x : %s", tp[0], tp[1], e)
 			if tp in self._fail_cbs:
 				device.close()
@@ -316,7 +316,7 @@ class USBDriver(object):
 			self._ctx.handleEventsTimeout()
 			self._changed = 0
 		
-		for d in self._devices.values():		# TODO: don't use .values() here
+		for d in list(self._devices.values()):		# TODO: don't use .values() here
 			try:
 				d.flush()
 			except usb1.USBErrorPipe:

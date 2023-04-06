@@ -4,7 +4,7 @@ SC-Controller - OSD Menu Generators
 
 Auto-generated menus with stuff like list of all available profiles...
 """
-from __future__ import unicode_literals
+
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gdk, Gio, GdkX11
@@ -112,7 +112,7 @@ class WindowListMenuGenerator(MenuGenerator):
 			display = Gdk.Display.get_default()
 			window = GdkX11.X11Window.foreign_new_for_display(display, xid)
 			window.focus(0)
-		except Exception, e:
+		except Exception as e:
 			log.error("Failed to activate window")
 			log.error(traceback.format_exc())
 		menu.quit(-2)

@@ -4,7 +4,7 @@ SC-Controller - Action Editor - Trigger-as-button Component
 
 Assigns one or two emulated buttons to trigger
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib

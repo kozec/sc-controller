@@ -4,7 +4,7 @@ DWSNC - Doing Weird Things in Name of Compatibility
 This module, when imported, applies various fixes and monkey-patching to allow
 application to run with older versions of GLib and/or GTK.
 """
-from __future__ import unicode_literals
+
 from gi.repository import Gtk, GObject
 import os
 

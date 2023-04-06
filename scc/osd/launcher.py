@@ -7,7 +7,7 @@ application (list is generated using xdg) and start it.
 
 Reuses styles from OSD Menu and OSD Dialog
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gio, GdkX11, Pango
@@ -121,7 +121,7 @@ class Launcher(OSDWindow):
 	def create_app_list(self):
 		lst = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		lst.set_name("osd-application-list")
-		self.items = [ self.generate_widget("") for x in xrange(self.MAX_ROWS) ]
+		self.items = [ self.generate_widget("") for x in range(self.MAX_ROWS) ]
 		for a in self.items:
 			lst.pack_start(a, False, True, 0)
 		self.parent.pack_start(lst, True, True, 0)
@@ -229,7 +229,7 @@ class Launcher(OSDWindow):
 			x.set_label("")
 			x.set_name("osd-hidden-item")
 			x.launcher = None
-		for i in xrange(0, len(launchers)):
+		for i in range(0, len(launchers)):
 			self.items[i].set_name("osd-launcher-item")
 			self.items[i].launcher = launchers[i]
 			label = self.items[i].get_children()[0]
@@ -259,7 +259,7 @@ class Launcher(OSDWindow):
 			
 		keys = Launcher.string_to_keys_and_spaces(label)
 		index1, index2 = -1, -1
-		for i in xrange(0, len(keys)):
+		for i in range(0, len(keys)):
 			if keys[i] == self._string[0]:
 				index2 = _check(keys[i:])
 				if index2 > 0:

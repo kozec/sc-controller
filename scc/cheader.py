@@ -189,5 +189,5 @@ def defines(base, include):
 if __name__ == '__main__':
 	import sys
 	definesDict = defines(sys.argv[1], sys.argv[2])
-	for k, v in definesDict.items():
-		print("{}:\t{}".format(k, v))
+	for k, v in list(definesDict.items()):
+		print(("{}:\t{}".format(k, v)))

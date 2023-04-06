@@ -4,7 +4,7 @@ SC-Controller - OSD Message
 
 Display message that just sits there
 """
-from __future__ import unicode_literals
+
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, GLib

@@ -2,7 +2,7 @@
 """
 SC-Controller - Action Editor - Gyro -> Joystick or Mouse component
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.actions import Action, NoAction, MouseAction, MultiAction, RangeOP
@@ -80,7 +80,7 @@ class GyroActionComponent(AEComponent):
 				self._recursing = True
 				self.builder.get_object("cbInvertGyro").set_active(bool(action.default))
 				self._recursing = False
-				b = action.mods.keys()[0]
+				b = list(action.mods.keys())[0]
 				action = action.mods[b] or action.default
 				self.select_gyro_button(b)
 			else:
@@ -156,7 +156,7 @@ class GyroActionComponent(AEComponent):
 		if isinstance(action, NoAction):
 			return True
 		if is_gyro_enable(action):
-			action = action.mods.values()[0] or action.default
+			action = list(action.mods.values())[0] or action.default
 			if isinstance(action, SensitivityModifier):
 				action = action.action
 		if isinstance(action, GyroAction):	# Takes GyroAbsAction as well
@@ -299,7 +299,7 @@ def is_gyro_enable(modemod):
 	if isinstance(modemod, ModeModifier):
 		if len(modemod.mods) != 1:
 			return False
-		action = modemod.mods.values()[0]
+		action = list(modemod.mods.values())[0]
 		if modemod.default:
 			if not action:
 				# Possibly, default action is gyro and mode is NoAction.

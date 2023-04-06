@@ -1,6 +1,6 @@
 from scc.lib.vdf import parse_vdf
 from scc.foreign.vdf import VDFProfile
-from cStringIO import StringIO
+from io import StringIO
 import os, pytest
 
 class TestVDF(object):
@@ -81,5 +81,5 @@ class TestVDF(object):
 		path = "tests/vdfs"
 		for f in os.listdir(path):
 			filename = os.path.join(path, f)
-			print "Testing import of '%s'" % (filename,)
+			print("Testing import of '%s'" % (filename,))
 			VDFProfile().load(filename)

@@ -4,7 +4,7 @@ SC-Controller - Global Settings
 
 Currently setups only one thing...
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GObject, GLib, GdkPixbuf
@@ -145,7 +145,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	
 	def load_drivers(self):
-		for key, value in self.app.config['drivers'].items():
+		for key, value in list(self.app.config['drivers'].items()):
 			w = self.builder.get_object("cbEnableDriver_%s" % (key, ))
 			if w:
 				w.set_active(value)
@@ -181,7 +181,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		conditions = AutoSwitcher.parse_conditions(self.app.config)
 		model = tvItems.get_model()
 		model.clear()
-		for cond in conditions.keys():
+		for cond in list(conditions.keys()):
 			o = GObject.GObject()
 			o.condition = cond
 			o.action = conditions[cond]
@@ -387,11 +387,11 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 					self.app.config["drivers"][x] = True
 				self._recursing = False
 		
-		if not cb.get_active() and any([ drv in x for x in self.DRIVER_DEPS.values() ]):
+		if not cb.get_active() and any([ drv in x for x in list(self.DRIVER_DEPS.values()) ]):
 			# Something depends on this driver,
 			# disable anything that has no dependent drivers active
 			self._recursing = True
-			for x, deps in self.DRIVER_DEPS.items():
+			for x, deps in list(self.DRIVER_DEPS.items()):
 				w = self.builder.get_object("cbEnableDriver_%s" % (x, ))
 				one_active = any([ self.app.config["drivers"].get(y)
 										for y in self.DRIVER_DEPS[x] ])
@@ -563,7 +563,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		model.clear()
 		for f in profiles:
 			name = f.get_basename()
-			if type(name) is not unicode:
+			if type(name) is not str:
 				try:
 					name = name.decode("utf-8")
 				except Exception:
@@ -638,7 +638,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			# in field and don't allow user to save unless expression is valid
 			try:
 				re.compile(ent.get_text().decode("utf-8"))
-			except Exception, e:
+			except Exception as e:
 				log.error(e)
 				btSave.set_sensitive(False)
 				return
@@ -664,7 +664,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 	
 	
 	def on_cbOSDStyle_changed(self, cb):
-		color_keys = self.app.config['osk_colors'].keys() + self.app.config['osd_colors'].keys()
+		color_keys = list(self.app.config['osk_colors'].keys()) + list(self.app.config['osd_colors'].keys())
 		osd_style = cb.get_model().get_value(cb.get_active_iter(), 0)
 		css_file = os.path.join(get_share_path(), "osd-styles", osd_style)
 		first_line = file(css_file, "r").read().split("\n")[0]
@@ -718,7 +718,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 				GuiActionParser())
 			index = int(widget.get_name().split("_")[-1])
 			instance = GlobalSettings._make_mi_instance(index)
-		except Exception, e:
+		except Exception as e:
 			log.error(traceback.format_exc())
 			self._recursing = True
 			widget.set_active(not widget.get_active())
@@ -770,13 +770,13 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 		"""
 		try:
 			data = MenuData.from_fileobj(open(find_menu("Default.menu"), "r"))
-		except Exception, e:
+		except Exception as e:
 			# Shouldn't really happen
 			log.error(traceback.format_exc())
 			return
 		self._recursing = True
 		
-		for index in xrange(0, len(GlobalSettings.DEFAULT_MENU_OPTIONS)):
+		for index in range(0, len(GlobalSettings.DEFAULT_MENU_OPTIONS)):
 			id = "cbMI_%s" % (index,)
 			instance = GlobalSettings._make_mi_instance(index)
 			present = ( instance.describe().strip(" >")
@@ -817,7 +817,7 @@ class GlobalSettings(Editor, UserDataManager, ComboSetter):
 			path = model[iter][0]
 			try:
 				os.unlink(path)
-			except Exception, e:
+			except Exception as e:
 				log.exception(e)
 			self._needs_restart()
 			self.load_controllers()

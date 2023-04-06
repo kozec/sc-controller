@@ -599,7 +599,7 @@ class VDFProfile(Profile):
 				self.action_sets[aset.name] = aset
 				VDFProfile._load_preset(data, aset, p)
 		
-		for aset in self.action_sets.values():
+		for aset in list(self.action_sets.values()):
 			aset.buttons[SCButtons.C] = HoldModifier(
 				MenuAction("Default.menu"), MenuAction("Default.menu")
 			)

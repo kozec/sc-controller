@@ -4,7 +4,7 @@ SC-Controller - OSD
 
 Common methods for OSD-related stuff
 """
-from __future__ import unicode_literals
+
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, GLib, GObject, GdkX11
@@ -79,7 +79,7 @@ class OSDWindow(Gtk.Window):
 					Gdk.Screen.get_default(),
 					OSDWindow.css_provider,
 					Gtk.STYLE_PROVIDER_PRIORITY_USER)
-		except GLib.Error, e:
+		except GLib.Error as e:
 			log.error("Failed to apply css with user settings:")
 			log.error(e)
 			log.error("Retrying with default values")
@@ -133,7 +133,7 @@ class OSDWindow(Gtk.Window):
 			self.args = self.argparser.parse_args(argv[1:])
 		except SystemExit:
 			return False
-		except BaseException, e:	# Includes SystemExit
+		except BaseException as e:	# Includes SystemExit
 			log.error(traceback.format_exc())
 			return False
 		del self.argparser

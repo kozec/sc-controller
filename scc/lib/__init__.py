@@ -1,3 +1,3 @@
 #!/usr/bin/env python2
 
-from enum import Enum, IntEnum, unique
+from .enum import Enum, IntEnum, unique

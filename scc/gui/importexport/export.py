@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gio
@@ -70,7 +70,7 @@ class Export(UserDataManager):
 		profile = Profile(ActionParser())
 		try:
 			profile.load(giofile.get_path())
-		except Exception, e:
+		except Exception as e:
 			# Profile that cannot be parsed shouldn't be exported
 			log.error(e)
 			return False
@@ -104,7 +104,7 @@ class Export(UserDataManager):
 						filename, True, self.TP_MENU))
 				try:
 					menu = MenuData.from_file(filename, ActionParser())
-				except Exception, e:
+				except Exception as e:
 					# Menu that cannot be parsed shouldn't be exported
 					log.error(e)
 					return
@@ -239,7 +239,7 @@ class Export(UserDataManager):
 		profile = Profile(TalkingActionParser())
 		try:
 			profile.load(giofile.get_path())
-		except Exception, e:
+		except Exception as e:
 			# Profile that cannot be parsed shouldn't be exported
 			log.error(e)
 			return False
@@ -270,7 +270,7 @@ class Export(UserDataManager):
 				profile.load(filename)
 				profile.save(out.name)
 				tar.add(out.name, arcname=os.path.split(filename)[-1], recursive=False)
-			except Exception, e:
+			except Exception as e:
 				# Profile that cannot be parsed shouldn't be exported
 				log.error(e)
 				return False
@@ -280,7 +280,7 @@ class Export(UserDataManager):
 			try:
 				menu = MenuData.from_json_data(json.loads(open(filename, "r").read()), ActionParser())
 				tar.add(filename, arcname=os.path.split(filename)[-1], recursive=False)
-			except Exception, e:
+			except Exception as e:
 				# Menu that cannot be parsed shouldn't be exported
 				log.error(e)
 				return False

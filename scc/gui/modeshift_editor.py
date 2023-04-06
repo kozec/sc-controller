@@ -4,7 +4,7 @@ SC-Controller - Action Editor
 
 Allows to edit button or trigger action.
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.gui.controller_widget import ControllerButton
@@ -98,7 +98,7 @@ class ModeshiftEditor(Editor):
 			if any([ x[0] == item for x in self.actions[self.current_page] ]):
 				# Skip already added buttons
 				continue
-			if type(item) in (str, unicode):
+			if type(item) in (str, str):
 				# Special case for soft pull items
 				button = getattr(SCButtons, item.split(" ")[-1])
 				if any([ (isinstance(x, RangeOP) and x.what == button)
@@ -175,7 +175,7 @@ class ModeshiftEditor(Editor):
 		cbButtonChooser = self.builder.get_object("cbButtonChooser")
 		model = cbButtonChooser.get_model()
 		# Remove requested action from the list
-		for i in xrange(0, len(self.actions[index])):
+		for i in range(0, len(self.actions[index])):
 			if self.actions[index][i][0] == button:
 				button, action, l, b, clearb = self.actions[index][i]
 				for w in (l, b, clearb): grActions.remove(w)
@@ -183,11 +183,11 @@ class ModeshiftEditor(Editor):
 				break
 		# Move everything after that action one position up
 		# - remove it
-		for j in xrange(i, len(self.actions[index])):
+		for j in range(i, len(self.actions[index])):
 			button, action, l, b, clearb = self.actions[index][j]
 			for w in (l, b, clearb): grActions.remove(w)
 		# - add it again
-		for j in xrange(i, len(self.actions[index])):
+		for j in range(i, len(self.actions[index])):
 			button, action, l, b, clearb = self.actions[index][j]
 			grActions.attach(l,			0, j + 1, 1, 1)
 			grActions.attach(b,			1, j + 1, 1, 1)

@@ -4,7 +4,7 @@ SC-Controller - Action Editor - Button Component
 
 Assigns emulated button to physical button
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib

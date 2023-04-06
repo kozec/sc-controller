@@ -4,7 +4,7 @@ SC-Controller - Controller Image
 
 Big, SVGWidget based widget with interchangeable controller and button images.
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.gui.svg_widget import SVGWidget, SVGEditor
@@ -84,7 +84,7 @@ class ControllerImage(SVGWidget):
 			return dict_or_tuple
 		return [
 			(x["axis"] if type(x) == dict else x)
-			for x in dict_or_tuple.values()
+			for x in list(dict_or_tuple.values())
 		]
 	
 	
@@ -154,7 +154,7 @@ class ControllerImage(SVGWidget):
 		SVGEditor.update_parents(e)
 		target = SVGEditor.get_element(e, "controller")
 		target_x, target_y = SVGEditor.get_translation(target)
-		for i in xrange(len(ControllerImage.BUTTONS_WITH_IMAGES)):
+		for i in range(len(ControllerImage.BUTTONS_WITH_IMAGES)):
 			b = nameof(ControllerImage.BUTTONS_WITH_IMAGES[i])
 			if b == "DOTS":
 				# How did I managed to create this kind of special case? -_-
@@ -184,7 +184,7 @@ class ControllerImage(SVGWidget):
 					x - target_x, y - target_y, scale)
 				img.attrib["id"] = b
 				SVGEditor.add_element(target, img)
-			except Exception, err:
+			except Exception as err:
 				log.warning("Failed to add image for button %s (from %s)", b, path)
 				log.exception(err)
 		e.commit()

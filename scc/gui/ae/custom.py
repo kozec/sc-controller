@@ -4,7 +4,7 @@ SC-Controller - Action Editor - Custom action
 
 Custom Action page in Action Editor window
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib

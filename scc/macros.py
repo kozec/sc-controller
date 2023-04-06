@@ -4,7 +4,7 @@ SC Controller - Macros
 
 Frontier is my favorite.
 """
-from __future__ import unicode_literals
+
 
 from scc.actions import Action, NoAction, ButtonAction, MOUSE_BUTTONS
 from scc.constants import FE_STICK, FE_TRIGGER, FE_PAD

@@ -13,7 +13,7 @@ class TestSpecialActions(object):
 		"""
 		Tests if this class has test for each known SpecialAction defined.
 		"""
-		for cls in Action.ALL.values():
+		for cls in list(Action.ALL.values()):
 			if "/special_actions.py" in inspect.getfile(cls):
 				if cls in MENU_CLASSES:
 					# Skip over some hard-coded cases, these have

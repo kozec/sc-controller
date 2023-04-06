@@ -7,7 +7,7 @@ application (list is generated using xdg) and start it.
 
 Reuses styles from OSD Menu and OSD Dialog
 """
-from __future__ import unicode_literals
+
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk

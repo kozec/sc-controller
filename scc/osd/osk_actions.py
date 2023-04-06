@@ -9,7 +9,7 @@ Actions defined here are *not* automatically registered, but OSD Keyboard
 and its binding editor enables them to use with 'OSK.something'
 syntax.
 """
-from __future__ import unicode_literals
+
 
 from scc.lib import Enum
 from scc.constants import TRIGGER_HALF, LEFT, RIGHT

@@ -2,7 +2,7 @@
 """
 SC-Controller - Icon Chooser
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, Gio, GdkPixbuf, GObject
@@ -151,7 +151,7 @@ class IconChooser(Editor, UserDataManager):
 				pb = None
 				try:
 					pb = GdkPixbuf.Pixbuf.new_from_file(f.get_path())
-				except Exception, e:
+				except Exception as e:
 					log.error(e)
 					log.error(traceback.format_exc())
 					continue

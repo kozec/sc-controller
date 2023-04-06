@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 from scc.parser import ActionParser, ParseError
 from scc.actions import Action
 from scc.tools import _
@@ -46,7 +46,7 @@ class GuiActionParser(ActionParser):
 			a = ActionParser.parse(self)
 			a.string = self.string
 			return a
-		except ParseError, e:
+		except ParseError as e:
 			log.error("Failed to parse '%s'", self.string)
 			log.error(e)
 			return InvalidAction(self.string, e)

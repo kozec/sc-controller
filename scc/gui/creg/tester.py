@@ -78,7 +78,7 @@ class Tester(GObject.GObject):
 	def _on_read(self, stream, result):
 		try:
 			data = stream.read_bytes_finish(result).get_data()
-		except Exception, e:
+		except Exception as e:
 			log.exception(e)
 			self.subprocess.send_signal(2)
 			if not self.errorred:
@@ -91,7 +91,7 @@ class Tester(GObject.GObject):
 				line, self.buffer = self.buffer.split("\n", 1)
 				try:
 					self._on_line(line)
-				except Exception, e:
+				except Exception as e:
 					log.exception(e)
 			self.subprocess.get_stdout_pipe().read_bytes_async(
 				32, 0, None, self._on_read)

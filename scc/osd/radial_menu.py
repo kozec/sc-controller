@@ -4,7 +4,7 @@ SC-Controller - OSD Menu
 
 Display menu that user can navigate through
 """
-from __future__ import unicode_literals
+
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, Gdk, GLib, GdkX11
@@ -52,7 +52,7 @@ class RadialMenu(Menu):
 			# Try to read json file and bail out if it fails
 			desc = os.path.join(get_share_path(), "images", 'radial-menu.svg.json')
 			source_colors = json.loads(open(desc, "r").read())['colors']
-		except Exception, e:
+		except Exception as e:
 			log.warning("Failed to load keyboard description")
 			log.warning(e)
 			return
@@ -65,7 +65,7 @@ class RadialMenu(Menu):
 		
 		for k in RadialMenu.RECOLOR_STROKES:
 			if k in config['osd_colors'] and k in source_colors:
-				print "REC", source_colors[k], config['osd_colors'][k]
+				print("REC", source_colors[k], config['osd_colors'][k])
 				editor.recolor_strokes(source_colors[k], config['osd_colors'][k])
 		
 		editor.commit()
@@ -176,7 +176,7 @@ class RadialMenu(Menu):
 				elif len(label) == 2:
 					self.editor.remove_element(SVGEditor.get_element(i.widget, "line0"))
 					first_line = 1
-				for line in xrange(0, len(label)):
+				for line in range(0, len(label)):
 					l = SVGEditor.get_element(i.widget, "line%s" % (first_line + line,))
 					if l is None:
 						break
@@ -291,6 +291,6 @@ if __name__ == "__main__":
 		sys.exit(1)
 	m.run()
 	if m.get_exit_code() == 0:
-		print m.get_selected_item_id()
+		print(m.get_selected_item_id())
 	sys.exit(m.get_exit_code())
 

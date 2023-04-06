@@ -134,10 +134,10 @@ class Daemon(object):
 
 		# Try killing the daemon process
 		try:
-			for x in xrange(0, 10): # Waits max 1s
+			for x in range(0, 10): # Waits max 1s
 				os.kill(pid, signal.SIGTERM)
 				if once: break
-				for x in xrange(50):
+				for x in range(50):
 					os.kill(pid, 0)
 					time.sleep(0.1)
 				time.sleep(0.1)
@@ -148,7 +148,7 @@ class Daemon(object):
 				if os.path.exists(self.pidfile):
 					os.remove(self.pidfile)
 			else:
-				print(str(err.args))
+				print((str(err.args)))
 				sys.exit(1)
 		syslog.syslog(syslog.LOG_INFO, '{}: stopped'.format(os.path.basename(sys.argv[0])))
 

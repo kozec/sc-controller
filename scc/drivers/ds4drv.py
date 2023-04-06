@@ -115,10 +115,10 @@ class DS4Controller(HIDController):
 		)
 		
 		if test_mode:
-			for x in xrange(BUTTON_COUNT):
+			for x in range(BUTTON_COUNT):
 				self._decoder.buttons.button_map[x] = x
 		else:
-			for x in xrange(BUTTON_COUNT):
+			for x in range(BUTTON_COUNT):
 				self._decoder.buttons.button_map[x] = 64
 			for x, sc in enumerate(DS4Controller.BUTTON_MAP):
 				self._decoder.buttons.button_map[x] = self.button_to_bit(sc)

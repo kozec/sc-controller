@@ -4,7 +4,7 @@ SC-Controller - Global Settings
 
 Currently setups only one thing...
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import GLib, GdkPixbuf

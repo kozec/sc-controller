@@ -5,7 +5,7 @@ SC-Controller - Action Editor - Gesture Component
 
 Handles gesture recognition settings.
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib, GdkX11, GObject
@@ -256,7 +256,7 @@ class GestureGrabber(object):
 				'A', 'Y'
 			)
 			self._signals = [ (c, c.connect('event', self.on_event)) ]
-		except IndexError, e:
+		except IndexError as e:
 			# No controllers
 			self.fail()
 	

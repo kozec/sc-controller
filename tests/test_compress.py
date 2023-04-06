@@ -137,7 +137,7 @@ class TestCompress(object):
 	def test_tests(self):
 		# Test if there is key in CASES for every action that suppports
 		# setting feedback or sensitivity.
-		for cls in Action.ALL.values():
+		for cls in list(Action.ALL.values()):
 			if Macro in cls.__bases__:
 				# Skip macros, they are handled separately
 				continue
@@ -191,7 +191,7 @@ class TestCompress(object):
 		"""
 		for case in CASES:
 			if 'sensitivity' in CASES[case]:
-				print "Testing 'sensitivity' on %s" % (case,)
+				print("Testing 'sensitivity' on %s" % (case,))
 				a = parser.from_json_data(CASES[case]).compress()
 				assert (
 					a.get_speed() == CASES[case]['sensitivity']
@@ -207,7 +207,7 @@ class TestCompress(object):
 		"""
 		for case in CASES:
 			if 'feedback' in CASES[case]:
-				print "Testing 'feedback' on %s" % (case,)
+				print("Testing 'feedback' on %s" % (case,))
 				a = parser.from_json_data(CASES[case]).compress()
 				assert a.get_haptic().get_position().name == CASES[case]['feedback'][0]
 	

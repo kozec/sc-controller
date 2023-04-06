@@ -6,7 +6,7 @@ Modifier is Action that just sits between input and actual action, changing
 way how resulting action works.
 For example, click() modifier executes action only if pad is pressed.
 """
-from __future__ import unicode_literals
+
 
 from scc.actions import Action, MouseAction, XYAction, AxisAction, RangeOP
 from scc.actions import NoAction, WholeHapticAction, HapticEnabledAction
@@ -612,7 +612,7 @@ class DeadzoneModifier(Modifier):
 	
 	def _mod_init(self, *params):
 		if len(params) < 1: raise TypeError("Not enough parameters")
-		if type(params[0]) in (str, unicode):
+		if type(params[0]) in (str, str):
 			self.mode = params[0]
 			if hasattr(self, "mode_" + self.mode):
 				self._convert = getattr(self, "mode_" + self.mode)
@@ -838,7 +838,7 @@ class ModeModifier(Modifier):
 		self.checks = []
 		self.shell_commands = {}
 		ShellCommandAction = Action.ALL['shell']
-		for c, action in self.mods.items():
+		for c, action in list(self.mods.items()):
 			if isinstance(c, RangeOP):
 				self.checks.append(( c, action ))
 			elif isinstance(c, ShellCommandAction):
@@ -871,7 +871,7 @@ class ModeModifier(Modifier):
 	
 	def get_compatible_modifiers(self):
 		rv = 0
-		for action in self.mods.values():
+		for action in list(self.mods.values()):
 			rv |= action.get_compatible_modifiers()
 		if self.default:
 			rv |= self.default.get_compatible_modifiers()
@@ -883,7 +883,7 @@ class ModeModifier(Modifier):
 		if self.default:
 			return self.default.strip()
 		if len(self.mods):
-			return self.mods.values()[0].strip()
+			return list(self.mods.values())[0].strip()
 		# Empty ModeModifier
 		return NoAction()
 	
@@ -923,7 +923,7 @@ class ModeModifier(Modifier):
 			for check in self.mods:
 				a_str = NameModifier.unstrip(self.mods[check]).to_string(True).split("\n")
 				a_str[0] = (" " * pad) + "  " + (nameof(check) + ",").ljust(11) + a_str[0]	# Key has to be one of SCButtons
-				for i in xrange(1, len(a_str)):
+				for i in range(1, len(a_str)):
 					a_str[i] = (" " * pad) + "  " + a_str[i]
 				a_str[-1] = a_str[-1] + ","
 				rv += a_str
@@ -947,7 +947,7 @@ class ModeModifier(Modifier):
 	
 	
 	def cancel(self, mapper):
-		for action in self.mods.values():
+		for action in list(self.mods.values()):
 			action.cancel(mapper)
 		self.default.cancel(mapper)
 	
@@ -1001,7 +1001,7 @@ class ModeModifier(Modifier):
 			# are executed and ModeShift waits up to 500ms for them
 			# to terminate. Then, if command returned zero exit code
 			# it's considered as 'true' condition.
-			for c in self.shell_commands.values():
+			for c in list(self.shell_commands.values()):
 				c.__proc = c.button_press(mapper)
 			self.shell_timeout = 0.5
 			mapper.schedule(0, self.check_shell_commands)
@@ -1013,7 +1013,7 @@ class ModeModifier(Modifier):
 	
 	
 	def check_shell_commands(self, mapper):
-		for c in self.shell_commands.values():
+		for c in list(self.shell_commands.values()):
 			if c.__proc and c.__proc.poll() == 0:
 				sel = self.select(mapper)
 				self.kill_shell_commands()
@@ -1032,7 +1032,7 @@ class ModeModifier(Modifier):
 	
 	
 	def kill_shell_commands(self):
-		for c in self.shell_commands.values():
+		for c in list(self.shell_commands.values()):
 			try:
 				if c.__proc: c.__proc.kill()
 			except: pass
@@ -1485,7 +1485,7 @@ class SmoothModifier(Modifier):
 		self.filter = filter
 		self._deq_x = deque([ 0.0 ] * level, maxlen=level)
 		self._deq_y = deque([ 0.0 ] * level, maxlen=level)
-		self._range = list(xrange(level))
+		self._range = list(range(level))
 		self._weights = [ multiplier ** x for x in reversed(self._range) ]
 		self._w_sum = sum(self._weights)
 		self._last_pos = None

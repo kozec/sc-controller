@@ -5,7 +5,7 @@ SC-Controller - Controller Registration - Grabs
 Helper classes for grabbing buttons and axes from physical gamepads.
 
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.constants import STICK_PAD_MAX, STICK_PAD_MIN
@@ -48,8 +48,8 @@ class InputGrabber(object):
 	def set_mapping(self, keycode, what):
 		parent = self.parent
 		
-		if isinstance(what, AxisData) and what in parent._mappings.values():
-			for c in parent._mappings.keys():
+		if isinstance(what, AxisData) and what in list(parent._mappings.values()):
+			for c in list(parent._mappings.keys()):
 				if parent._mappings[c] == what:
 					del parent._mappings[c]
 		
@@ -175,7 +175,7 @@ class StickGrabber(TriggerGrabber):
 		else:
 			if number != self.grabbed[X]:
 				self.grabbed[Y] = number
-				for i in xrange(len(self.grabbed)):
+				for i in range(len(self.grabbed)):
 					self.what[i].reset()
 					self.set_mapping(self.grabbed[i], self.what[i])
 				self.parent.generate_unassigned()

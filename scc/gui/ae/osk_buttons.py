@@ -6,7 +6,7 @@ Binds controller buttons on on on on on... screen keyboard.
 Retuses ButtonsComponent, but hides image, so user can't select mouse or gamepad
 button.
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib

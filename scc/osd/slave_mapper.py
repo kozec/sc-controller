@@ -7,7 +7,7 @@ using libusb directly. Relies to Observe or Lock message being sent by client.
 
 Used by on-screen keyboard.
 """
-from __future__ import unicode_literals
+
 
 from collections import deque
 from scc.constants import SCButtons, LEFT, RIGHT, CPAD, DPAD, TRIGGER_MAX
@@ -87,5 +87,5 @@ class SlaveMapper(Mapper):
 			# print what, self.profile.pads[what]
 			self.profile.pads[what].whole(self, data[0], data[1], what)
 		else:
-			print ">>>", what, data
+			print(">>>", what, data)
 		self.generate_events()

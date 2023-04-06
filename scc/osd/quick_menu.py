@@ -5,7 +5,7 @@ SC-Controller - Quick OSD Menu
 Controled by buttons instead of stick. Fast to use, but can display only
 limited number of items
 """
-from __future__ import unicode_literals
+
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk, GLib
@@ -116,7 +116,7 @@ class QuickMenu(Menu):
 			if config and config["gui"] and config["gui"]["buttons"]:
 				buttons = config["gui"]["buttons"]
 				try:
-					for i in xrange(len(self._icons)):
+					for i in range(len(self._icons)):
 						icon = self._icons[i]
 						name = buttons[self.BUTTON_INDEXES[i]]
 						filename, trash = find_icon("buttons/%s" % name)
@@ -130,10 +130,10 @@ class QuickMenu(Menu):
 	
 	def parse_argumets(self, argv):
 		if not OSDWindow.parse_argumets(self, argv):
-			print "failed to parse args"
+			print("failed to parse args")
 			return False
 		if not self.parse_menu():
-			print "failed to parse menu"
+			print("failed to parse menu")
 			return False
 		if not self.config:
 			self.config = Config()
@@ -151,7 +151,7 @@ class QuickMenu(Menu):
 				self.items.append(item)
 		self.pack_items(self.parent, self.items)
 		if len(self.items) == 0:
-			print >>sys.stderr, '%s: error: no items in menu' % (sys.argv[0])
+			print('%s: error: no items in menu' % (sys.argv[0]), file=sys.stderr)
 			return False
 		
 		return True
@@ -279,5 +279,5 @@ if __name__ == "__main__":
 		sys.exit(1)
 	m.run()
 	if m.get_exit_code() == 0:
-		print m.get_selected_item_id()
+		print(m.get_selected_item_id())
 	sys.exit(m.get_exit_code())

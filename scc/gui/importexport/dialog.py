@@ -2,14 +2,14 @@
 """
 SC-Controller - Import / Export Dialog
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.gui.editor import Editor, ComboSetter
 from scc.tools import find_profile, profile_is_default, profile_is_override
-from export import Export
-from import_vdf import ImportVdf
-from import_sccprofile import ImportSccprofile
+from .export import Export
+from .import_vdf import ImportVdf
+from .import_sccprofile import ImportSccprofile
 
 import sys, os, tarfile, logging, json, traceback
 log = logging.getLogger("IE.Dialog")
@@ -37,7 +37,7 @@ class Dialog(Editor, ComboSetter, Export, ImportVdf, ImportSccprofile):
 		"""
 		try:
 			f = file(filename, 'rb').read(1024)
-		except Exception, e:
+		except Exception as e:
 			# File not readable
 			log.error(traceback.format_exc())
 			return None

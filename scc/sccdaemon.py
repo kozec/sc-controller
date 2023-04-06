@@ -2,7 +2,7 @@
 """
 SC-Controller - Daemon class
 """
-from __future__ import unicode_literals
+
 
 from scc.lib import xwrappers as X
 from scc.lib import xinput
@@ -27,7 +27,7 @@ from scc.poller import Poller
 from scc.mapper import Mapper
 from scc import drivers
 
-from SocketServer import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
+from socketserver import UnixStreamServer, ThreadingMixIn, StreamRequestHandler
 import os, sys, pkgutil, signal, time, json, logging
 import threading, traceback, subprocess, shlex
 log = logging.getLogger("SCCDaemon")
@@ -283,7 +283,7 @@ class SCCDaemon(Daemon):
 		if self.cemuhook is None:
 			try:
 				self.cemuhook = CemuhookServer(self)
-			except Exception, e:
+			except Exception as e:
 				log.error("Failed to initialize CemuHookUDP Motion Provider: %s", e)
 				return
 		self.cemuhook.feed(data)
@@ -304,7 +304,7 @@ class SCCDaemon(Daemon):
 		try:
 			self.osd_daemon.wfile.write(data)
 			self.osd_daemon.wfile.flush()
-		except Exception, e:
+		except Exception as e:
 			log.error("Failed to display OSD: %s", e)
 			self.osd_daemon = None
 			return False
@@ -390,7 +390,7 @@ class SCCDaemon(Daemon):
 				try:
 					self._set_profile(mapper, path)
 					log.info("Loaded profile '%s'", name)
-				except Exception, e:
+				except Exception as e:
 					log.exception(e)
 			return
 		log.error("Cannot load profile: Profile '%s' not found", name)
@@ -457,7 +457,7 @@ class SCCDaemon(Daemon):
 		try:
 			mapper = Mapper(Profile(TalkingActionParser()),
 					self.scheduler, poller=self.poller)
-		except CannotCreateUInputException, e:
+		except CannotCreateUInputException as e:
 			# Most likely UInput is not available
 			# Create mapper with all virtual devices set to Dummies.
 			log.exception(e)
@@ -482,7 +482,7 @@ class SCCDaemon(Daemon):
 					if d.get_name() == name:
 						if d.is_pointer() and d.is_slave():
 							d.float()
-			except OSError, e:
+			except OSError as e:
 				# Most likely 'xinput' executable not found
 				log.warn("Failed to deatach gamepad from xinput master: %s", e)
 	
@@ -497,7 +497,7 @@ class SCCDaemon(Daemon):
 				pass
 		try:
 			mapper.profile.load(self.default_profile).compress()
-		except Exception, e:
+		except Exception as e:
 			log.warning("Failed to load profile. Starting with no mappings.")
 			log.warning("Reason: %s", e)
 	
@@ -669,7 +669,7 @@ class SCCDaemon(Daemon):
 		t = threading.Thread(target=self.sserver.serve_forever)
 		t.daemon = True
 		t.start()
-		os.chmod(self.socket_file, 0600)
+		os.chmod(self.socket_file, 0o600)
 		log.debug("Created control socket %s", self.socket_file)
 	
 	
@@ -751,10 +751,10 @@ class SCCDaemon(Daemon):
 					self._set_profile(client.mapper, filename)
 					log.info("Loaded profile '%s'", filename)
 					client.wfile.write(b"OK.\n")
-				except Exception, e:
+				except Exception as e:
 					exc = traceback.format_exc()
 					log.exception(e)
-					tb = unicode(exc).encode("utf-8").encode('string_escape')
+					tb = str(exc).encode("utf-8").encode('string_escape')
 					client.wfile.write(b"Fail: " + tb + b"\n")
 		elif message.startswith("OSD:"):
 			if not self.osd_daemon:
@@ -778,7 +778,7 @@ class SCCDaemon(Daemon):
 				if client.mapper.get_controller():
 					client.mapper.get_controller().feedback(data)
 				client.wfile.write(b"OK.\n")
-			except Exception, e:
+			except Exception as e:
 				log.exception(e)
 				client.wfile.write(b"Fail: %s\n" % (e,))
 		elif message.startswith("Controller."):
@@ -796,7 +796,7 @@ class SCCDaemon(Daemon):
 							break
 					else:
 						raise Exception("goto fail")
-				except Exception, e:
+				except Exception as e:
 					client.wfile.write(b"Fail: no such controller\n")
 		elif message.startswith("State."):
 			if Config()["enable_sniffing"]:
@@ -808,7 +808,7 @@ class SCCDaemon(Daemon):
 			try:
 				number = int(message[4:])
 				number = clamp(0, number, 100)
-			except Exception, e:
+			except Exception as e:
 				client.wfile.write(b"Fail: %s\n" % (e,))
 				return
 			if client.mapper.get_controller():
@@ -827,8 +827,8 @@ class SCCDaemon(Daemon):
 			try:
 				l, actionstr = message.split(":", 1)[1].strip(" \t\r").split(" ", 1)
 				action = TalkingActionParser().restart(actionstr).parse().compress()
-			except Exception, e:
-				e = unicode(e).encode("utf-8").encode('string_escape')
+			except Exception as e:
+				e = str(e).encode("utf-8").encode('string_escape')
 				client.wfile.write(b"Fail: failed to parse: " + e + "\n")
 				return
 			with self.lock:
@@ -836,8 +836,8 @@ class SCCDaemon(Daemon):
 					if not self._can_lock_action(client.mapper, SCCDaemon.source_to_constant(l)):
 						client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
 						return
-				except ValueError, e:
-					tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+				except ValueError as e:
+					tb = str(traceback.format_exc()).encode("utf-8").encode('string_escape')
 					client.wfile.write(b"Fail: " + tb + b"\n")
 					return
 				client.replace_action(self, SCCDaemon.source_to_constant(l), action)
@@ -850,8 +850,8 @@ class SCCDaemon(Daemon):
 						if not self._can_lock_action(client.mapper, SCCDaemon.source_to_constant(l)):
 							client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
 							return
-				except ValueError, e:
-					tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+				except ValueError as e:
+					tb = str(traceback.format_exc()).encode("utf-8").encode('string_escape')
 					client.wfile.write(b"Fail: " + tb + b"\n")
 					return
 				for l in to_lock:
@@ -897,12 +897,12 @@ class SCCDaemon(Daemon):
 			for cb in self.rescan_cbs:
 				try:
 					cb()
-				except Exception, e:
+				except Exception as e:
 					log.exception(e)
 			# dev_monitor rescan has to be last to run
 			try:
 				self.dev_monitor.rescan()
-			except Exception, e:
+			except Exception as e:
 				log.exception(e)
 
 		elif message.startswith("Turnoff."):
@@ -919,8 +919,8 @@ class SCCDaemon(Daemon):
 			try:
 				what, up_angle = message[8:].strip().split(" ", 2)
 				up_angle = int(up_angle)
-			except Exception, e:
-				tb = unicode(traceback.format_exc()).encode("utf-8").encode('string_escape')
+			except Exception as e:
+				tb = str(traceback.format_exc()).encode("utf-8").encode('string_escape')
 				client.wfile.write(b"Fail: " + tb + b"\n")
 				return
 			with self.lock:
@@ -939,13 +939,13 @@ class SCCDaemon(Daemon):
 				try:
 					menuaction.button_press(mapper)
 					client.mapper.schedule(0.1, release)
-				except Exception, e:
+				except Exception as e:
 					log.error("Error while processing menu action")
 					log.exception(e)
 			def release(mapper):
 				try:
 					menuaction.button_release(mapper)
-				except Exception, e:
+				except Exception as e:
 					log.error("Error while processing menu action")
 					log.exception(e)
 			
@@ -1230,7 +1230,7 @@ class ReportingAction(Action):
 	def _report(self, message):
 		try:
 			self.client.wfile.write(message.encode("utf-8"))
-		except Exception, e:
+		except Exception as e:
 			# May fail when client dies
 			self.client.rfile.close()
 			self.client.wfile.close()

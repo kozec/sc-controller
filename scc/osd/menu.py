@@ -4,7 +4,7 @@ SC-Controller - OSD Menu
 
 Display menu that user can navigate through and prints chosen item id to stdout
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, GLib, Gio, Gdk, GdkX11, GdkPixbuf
@@ -179,24 +179,24 @@ class Menu(OSDWindow):
 				self._menuid = self.args.items[0]
 				self.items = MenuData.from_profile(self.args.from_profile, self._menuid)
 			except IOError:
-				print >>sys.stderr, '%s: error: profile file not found' % (sys.argv[0])
+				print('%s: error: profile file not found' % (sys.argv[0]), file=sys.stderr)
 				return False
 			except ValueError:
-				print >>sys.stderr, '%s: error: menu not found' % (sys.argv[0])
+				print('%s: error: menu not found' % (sys.argv[0]), file=sys.stderr)
 				return False
 		elif self.args.from_file:
 			try:
 				self._menuid = self.args.from_file
 				self.items = MenuData.from_file(self.args.from_file)
 			except:
-				print >>sys.stderr, '%s: error: failed to load menu file' % (sys.argv[0])
+				print('%s: error: failed to load menu file' % (sys.argv[0]), file=sys.stderr)
 				return False
 		else:
 			try:
 				self.items = MenuData.from_args(self.args.items)
 				self._menuid = None
 			except ValueError:
-				print >>sys.stderr, '%s: error: invalid number of arguments' % (sys.argv[0])
+				print('%s: error: invalid number of arguments' % (sys.argv[0]), file=sys.stderr)
 				return False
 		return True
 	
@@ -221,14 +221,14 @@ class Menu(OSDWindow):
 				self.items.append(item)
 		self.pack_items(self.parent, self.items)
 		if len(self.items) == 0:
-			print >>sys.stderr, '%s: error: no items in menu' % (sys.argv[0])
+			print('%s: error: no items in menu' % (sys.argv[0]), file=sys.stderr)
 			return False
 		
 		if self.args.print_items:
 			max_id_len = max(*[ len(x.id) for x in self.items ])
 			row_format ="{:>%s}:\t{}" % (max_id_len,)
 			for item in self.items:
-				print row_format.format(item.id, item.label)
+				print(row_format.format(item.id, item.label))
 		return True
 	
 	

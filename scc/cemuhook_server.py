@@ -5,7 +5,7 @@ SC-Controller - Daemon - CemuHookUDP motion provider
 Accepts all connections from clients and sends data captured
 by 'cemuhook' actions to them.
 """
-from __future__ import unicode_literals
+
 from scc.tools import find_library
 from scc.lib.enum import IntEnum
 from ctypes import c_uint32, c_int, c_bool, c_char_p, c_size_t, c_float

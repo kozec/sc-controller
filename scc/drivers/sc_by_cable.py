@@ -9,8 +9,8 @@ Shares a lot of classes with sc_dongle.py
 
 from scc.lib.usb1 import USBError
 from scc.drivers.usb import USBDevice, register_hotplug_device
-from sc_dongle import ControllerInput, TUP_FORMAT
-from sc_dongle import SCStatus, SCController
+from .sc_dongle import ControllerInput, TUP_FORMAT
+from .sc_dongle import SCStatus, SCController
 import struct, logging
 
 VENDOR_ID = 0x28de
@@ -85,7 +85,7 @@ class SCByCable(USBDevice, SCController):
 				m.generate_feedback()
 			try:
 				self.flush()
-			except USBError, e:
+			except USBError as e:
 				log.exception(e)
 				log.error("Error while communicating with device, baling out...")
 				self.force_restart()

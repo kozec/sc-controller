@@ -4,7 +4,7 @@ SC-Controller - Autoswitch Daemon
 
 Observes active window and commands scc-daemon to change profiles as needed.
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.menu_data import MenuGenerator, MenuItem, Separator, MENU_GENERATORS
@@ -52,7 +52,7 @@ class AutoSwitcher(object):
 					astr = astr["action"]
 				action = parser.restart(astr).parse()
 				conds[Condition.parse(c['condition'])] = action
-			except Exception, e:
+			except Exception as e:
 				# Failure here is not fatal
 				log.error("Failed to parse autoswitcher condition '%s'", c)
 				log.error(e)
@@ -76,7 +76,7 @@ class AutoSwitcher(object):
 		count, cmpwith = 0, None
 		if action is not None:
 			cmpwith = action.to_string()
-		for c in conds.keys():
+		for c in list(conds.keys()):
 			if action is None or conds[c].to_string() == cmpwith:
 				if c.matches(title, wm_class):
 					del conds[c]
@@ -218,7 +218,7 @@ class Condition(object):
 		self.exact_title = exact_title
 		self.title = title
 		self.regexp = regexp
-		if type(self.regexp) in (str, unicode):
+		if type(self.regexp) in (str, str):
 			self.regexp = re.compile(self.regexp)
 		self.wm_class = wm_class
 		self.empty = not ( title or title or regexp or wm_class )

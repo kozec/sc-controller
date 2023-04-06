@@ -5,7 +5,7 @@ SC-Controller - GDK_TO_KEY
 Maps Gdk.KEY_* constants into Keys.KEY_* constants.
 Used by ActionEditor (when grabbing the key)
 """
-from __future__ import unicode_literals
+
 
 from gi.repository import Gdk
 from scc.uinput import Keys
@@ -221,7 +221,7 @@ for x in dir(Gdk):
 			GDK_TO_KEY[getattr(Gdk, x)] = names[x]
 
 # A-Z keys, because GDK has different codes for 'A' and 'a'
-for x in xrange(ord('a'), ord('z')+1):
+for x in range(ord('a'), ord('z')+1):
 	GDK_TO_KEY[getattr(Gdk, "KEY_" + chr(x))] = names["KEY_" + chr(x).upper()]
 
 KEY_TO_GDK = { GDK_TO_KEY[a] : a for a in GDK_TO_KEY }

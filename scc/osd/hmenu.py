@@ -7,7 +7,7 @@ Works as OSD menu, but displays all items in one row.
 Designed mainly as RPG numeric pad display and looks
 awfull with larger number of items.
 """
-from __future__ import unicode_literals
+
 from scc.tools import _, set_logging_level
 
 from gi.repository import Gtk

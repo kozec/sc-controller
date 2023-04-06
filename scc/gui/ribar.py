@@ -4,7 +4,7 @@ SC-Controller - RIBar
 
 Infobar wrapped in Revealer, looks better than sounds.
 """
-from __future__ import unicode_literals
+
 from gi.repository import Gtk, GLib, GObject, Pango
 import os
 

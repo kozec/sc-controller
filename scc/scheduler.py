@@ -8,7 +8,7 @@ also called on main thread.
 
 Use schedule(delay, callback, *data) to register one-time task.
 """
-import time, Queue, logging
+import time, queue, logging
 log = logging.getLogger("Scheduler")
 
 # TODO: Maybe create actual thread for this? Use poler? Scrap everything and rewrite it in GO?
@@ -16,7 +16,7 @@ log = logging.getLogger("Scheduler")
 class Scheduler(object):
 	
 	def __init__(self):
-		self._scheduled = Queue.PriorityQueue()
+		self._scheduled = queue.PriorityQueue()
 		self._next = None
 		self._now = time.time()
 	

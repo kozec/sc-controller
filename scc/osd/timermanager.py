@@ -5,7 +5,7 @@ SC-Controller - Timer manager
 Simple abstract class for named, cancelable timers
 """
 
-from __future__ import unicode_literals
+
 from gi.repository import GLib
 
 class TimerManager(object):

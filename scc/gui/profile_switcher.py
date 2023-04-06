@@ -8,7 +8,7 @@ Set of widgets designed to allow user to select profile, placed in one Gtk.Box:
 ... where (S) is Save button that can be shown on demand and (ch) is change
 indicator drawn in combobox.
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gio, GLib, GObject
@@ -112,7 +112,7 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		if name.endswith(".sccprofile"): name = name[0:-11]
 		if "/" in name : name = os.path.split(name)[-1]
 		self._current = name
-		if type(name) == unicode:
+		if type(name) == str:
 			# GTK can't handle this
 			name = name.encode("utf-8")
 		

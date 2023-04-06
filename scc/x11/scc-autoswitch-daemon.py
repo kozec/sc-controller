@@ -4,7 +4,7 @@ SC-Controller - Autoswitch Daemon
 
 Observes active window and commands scc-daemon to change profiles as needed.
 """
-from __future__ import unicode_literals
+
 
 from scc.x11.autoswitcher import AutoSwitcher
 from scc.lib import xwrappers as X

@@ -21,8 +21,8 @@ ALL_AXES = ( Axes.ABS_X, Axes.ABS_Y, Axes.ABS_RX, Axes.ABS_RY, Axes.ABS_Z,
 	Axes.ABS_PRESSURE, Axes.ABS_DISTANCE, Axes.ABS_TILT_X, Axes.ABS_TILT_Y,
 	Axes.ABS_TOOL_WIDTH, Axes.ABS_VOLUME, Axes.ABS_MISC )
 
-for i in xrange(0, len(ALL_BUTTONS)):
+for i in range(0, len(ALL_BUTTONS)):
 	setattr(Keys, "BTN%i" % (i,), ALL_BUTTONS[i])
 
-for i in xrange(0, len(ALL_AXES)):
+for i in range(0, len(ALL_AXES)):
 	setattr(Axes, "ABS%i" % (i,), ALL_AXES[i])

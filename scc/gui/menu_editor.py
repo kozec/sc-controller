@@ -4,7 +4,7 @@ SC-Controller - Menu Editor
 
 Edits .menu files and menus stored in profile.
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk, Gdk, GLib, GObject
@@ -430,7 +430,7 @@ class MenuEditor(Editor):
 				filename, trash = find_icon(self.selected_icon)
 				self.menu_icon.set_filename(filename)
 				self.menu_icon.set_visible(True)
-			except Exception, e:
+			except Exception as e:
 				log.error(e)
 				log.error(traceback.format_exc())
 				self.menu_icon.set_visible(False)

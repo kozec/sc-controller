@@ -4,7 +4,7 @@ SC-Controller - Action Editor - Menu Only Component
 
 Displays page that can edito only MenuAction
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from scc.special_actions import MenuAction, PositionModifier

@@ -15,7 +15,7 @@ from scc.lib.usb1 import USBError
 from scc.drivers.usb import USBDevice, register_hotplug_device
 from scc.constants import STICK_PAD_MIN, STICK_PAD_MAX
 from scc.constants import SCButtons, ControllerFlags
-from sc_dongle import ControllerInput, SCController, SCPacketType
+from .sc_dongle import ControllerInput, SCController, SCPacketType
 import struct, logging, ctypes
 
 

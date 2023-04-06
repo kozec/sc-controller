@@ -385,7 +385,7 @@ def make_parsers(data):
 				pass
 			elif x[1] == ItemType.Data:
 				if kind in AXES:
-					for i in xrange(count):
+					for i in range(count):
 						parsers.append(HIDAxisParser(axis_id, offset + size * i, 1, size))
 						axis_id += 1
 				else:

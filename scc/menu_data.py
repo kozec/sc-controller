@@ -4,7 +4,7 @@ SC-Controller - Menu Data
 
 Container for list of menu items + required parsers
 """
-from __future__ import unicode_literals
+
 from scc.tools import _, set_logging_level
 from scc.actions import Action
 
@@ -98,7 +98,7 @@ class MenuData(object):
 		# Rearange data into list of pair tuples
 		data = [
 			(data[i * 2], data[(i * 2) + 1])
-			for i in xrange(0, len(data) / 2)
+			for i in range(0, len(data) / 2)
 		]
 		
 		# Parse data
@@ -210,7 +210,7 @@ class MenuItem(object):
 	
 	def encode(self):
 		""" Returns item data as dict storable in json (profile) file """
-		if self.action and type(self.action) in (str, unicode):
+		if self.action and type(self.action) in (str, str):
 			rv = { 'action' : self.action }
 		elif self.action:
 			rv = self.action.encode()

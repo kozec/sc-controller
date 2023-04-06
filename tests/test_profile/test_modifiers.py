@@ -21,7 +21,7 @@ class TestModifiers(object):
 		"""
 		Tests if this class has test for each known modifier defined.
 		"""
-		for cls in Action.ALL.values():
+		for cls in list(Action.ALL.values()):
 			if "/modifiers.py" in inspect.getfile(cls):
 				method_name = "test_%s" % (cls.COMMAND,)
 				assert hasattr(self, method_name), \

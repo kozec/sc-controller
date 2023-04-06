@@ -43,16 +43,16 @@ else:
 MAX_FEEDBACK_EFFECTS = 4
 
 # Keys enum contains all keys and button from linux/uinput.h (KEY_* BTN_*)
-Keys = IntEnum('Keys', {i: CHEAD[i] for i in CHEAD.keys() if (i.startswith('KEY_') or
+Keys = IntEnum('Keys', {i: CHEAD[i] for i in list(CHEAD.keys()) if (i.startswith('KEY_') or
 															i.startswith('BTN_'))})
 # Keys enum contains all keys and button from linux/uinput.h (KEY_* BTN_*)
-KeysOnly = IntEnum('KeysOnly', {i: CHEAD[i] for i in CHEAD.keys() if i.startswith('KEY_')})
+KeysOnly = IntEnum('KeysOnly', {i: CHEAD[i] for i in list(CHEAD.keys()) if i.startswith('KEY_')})
 
 # Axes enum contains all axes from linux/uinput.h (ABS_*)
-Axes = IntEnum('Axes', {i: CHEAD[i] for i in CHEAD.keys() if i.startswith('ABS_')})
+Axes = IntEnum('Axes', {i: CHEAD[i] for i in list(CHEAD.keys()) if i.startswith('ABS_')})
 
 # Rels enum contains all rels from linux/uinput.h (REL_*)
-Rels = IntEnum('Rels', {i: CHEAD[i] for i in CHEAD.keys() if i.startswith('REL_')})
+Rels = IntEnum('Rels', {i: CHEAD[i] for i in list(CHEAD.keys()) if i.startswith('REL_')})
 
 # Scan codes for each keys (taken from a logitech keyboard)
 Scans = {
@@ -213,7 +213,7 @@ class UInput(object):
 		if not axes or len(axes) == 0:
 			self._a, self._amin, self._amax, self._afuzz, self._aflat = [[]] * 5
 		else:
-			self._a, self._amin, self._amax, self._afuzz, self._aflat = zip(*axes)
+			self._a, self._amin, self._amax, self._afuzz, self._aflat = list(zip(*axes))
 
 		self._r = rels
 		
@@ -221,7 +221,7 @@ class UInput(object):
 		self._ff_events = None
 		if rumble:
 			self._ff_events = (POINTER(FeedbackEvent) * MAX_FEEDBACK_EFFECTS)()
-			for i in xrange(MAX_FEEDBACK_EFFECTS):
+			for i in range(MAX_FEEDBACK_EFFECTS):
 				self._ff_events[i].contents = FeedbackEvent()
 		
 		try:
@@ -229,9 +229,9 @@ class UInput(object):
 				raise Exception()
 		except:
 			import sys
-			print >>sys.stderr, "Invalid native module version. Please, recompile 'libuinput.so'"
-			print >>sys.stderr, "If you are running sc-controller from source, you can do this by removing 'build' directory"
-			print >>sys.stderr, "and runinng 'python setup.py build' or 'run.sh' script"
+			print("Invalid native module version. Please, recompile 'libuinput.so'", file=sys.stderr)
+			print("If you are running sc-controller from source, you can do this by removing 'build' directory", file=sys.stderr)
+			print("and runinng 'python setup.py build' or 'run.sh' script", file=sys.stderr)
 			raise Exception("Invalid native module version")
 		
 		c_k		= (ctypes.c_uint16 * len(self._k))(*self._k)
@@ -532,7 +532,7 @@ class Keyboard(UInput):
 									   product=0x1142,
 									   version=1,
 									   name=name,
-									   keys=Scans.keys(),
+									   keys=list(Scans.keys()),
 									   axes=[],
 									   rels=[],
 									   keyboard=True)

@@ -21,7 +21,7 @@ def _same_action(a1, a2):
 	Done by comparing .parameters list and .to_string() output.
 	"""
 	assert len(a1.parameters) == len(a2.parameters)
-	for i in xrange(0, len(a1.parameters)):
+	for i in range(0, len(a1.parameters)):
 		if isinstance(a1.parameters[i], Action):
 			assert isinstance(a2.parameters[i], Action), "Parameter missmatch"
 			assert _same_action(a1.parameters[i], a2.parameters[i])

@@ -2,7 +2,7 @@
 """
 SC-Controller - About dialog
 """
-from __future__ import unicode_literals
+
 from scc.tools import _
 
 from gi.repository import Gtk

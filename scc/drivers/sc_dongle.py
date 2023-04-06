@@ -45,7 +45,7 @@ INPUT_FORMAT = [
 	('h',   'q3'),
 	('h',   'q4'),
 	('16x', 'ukn_07')]
-FORMATS, NAMES = zip(*INPUT_FORMAT)
+FORMATS, NAMES = list(zip(*INPUT_FORMAT))
 TUP_FORMAT = '<' + ''.join(FORMATS)
 ControllerInput = namedtuple('ControllerInput', ' '.join([ x for x in NAMES if not x.startswith('ukn_') ]))
 SCI_NULL = ControllerInput._make(struct.unpack('<' + ''.join(FORMATS), b'\x00' * 64))
@@ -74,14 +74,14 @@ class Dongle(USBDevice):
 		self.claim_by(klass=3, subclass=0, protocol=0)
 		self._controllers = {}
 		self._no_serial = []
-		for i in xrange(0, Dongle.MAX_ENDPOINTS):
+		for i in range(0, Dongle.MAX_ENDPOINTS):
 			# Steam dongle apparently can do only 4 controllers at once
 			self.set_input_interrupt(FIRST_ENDPOINT + i, 64, self._on_input)
 	
 	
 	def close(self):
 		# Called when dongle is removed
-		for c in self._controllers.values():
+		for c in list(self._controllers.values()):
 			self.daemon.remove_controller(c)
 		self._controllers = {}
 		USBDevice.close(self)
