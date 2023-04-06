@@ -94,7 +94,7 @@ class Modifier(Action):
 		Overrides Action.strip_defaults; Uses defaults from _mod_init instead
 		of __init__, but does NOT include last of original parameters - action.
 		"""
-		argspec = inspect.getargspec(self.__class__._mod_init)
+		argspec = inspect.getfullargspec(self.__class__._mod_init)
 		required_count = len(argspec.args) - len(argspec.defaults) - 1
 		l = list(self.parameters[0:-1])
 		d = list(argspec.defaults)[0:len(l)]
