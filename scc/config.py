@@ -222,7 +222,7 @@ class Config(object):
 		# Save
 		data = { k:self.values[k] for k in self.values }
 		jstr = Encoder(sort_keys=True, indent=4).encode(data)
-		file(self.filename, "w").write(jstr)
+		open(self.filename, mode="w").write(jstr)
 		log.debug("Configuration saved")
 	
 	
