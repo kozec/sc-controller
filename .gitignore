@@ -16,3 +16,4 @@ out.svg
 *.cpp
 *.vdf
 sccontroller.egg-info/
+dist/
