@@ -126,7 +126,7 @@ def shjoin(lst):
 	""" Joins list into shell-escaped, utf-8 encoded string """
 	s = [ str(x).encode("utf-8") for x in lst ]
 	#   - escape quotes
-	s = [ x.encode('string_escape') if (b'"' in x or b"'" in x) else x for x in s ]
+	s = [ encode_escape(x) if (b'"' in x or b"'" in x) else x for x in s ]
 	#   - quote strings with spaces
 	s = [ b"'%s'" % (x,) if b" " in x else x for x in s ]
 	return b" ".join(s)
@@ -430,3 +430,7 @@ def circle_to_square(x, y):
 # Decode an escaped string in python3
 def decode_escape(str):
 	return codecs.escape_decode(bytes(str, "utf-8"))[0].decode("utf-8")
+
+def encode_escape(str):
+	return codecs.escape_encode(bytes(str, "utf-8"))[0].decode("utf-8")
+

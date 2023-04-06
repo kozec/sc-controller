@@ -9,7 +9,7 @@ from scc.lib import xinput
 from scc.lib.daemon import Daemon
 from scc.constants import SCButtons, DAEMON_VERSION, HapticPos
 from scc.constants import LEFT, RIGHT, STICK, RSTICK, CPAD, DPAD
-from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin
+from scc.tools import find_profile, find_menu, nameof, shsplit, shjoin, encode_escape
 from scc.uinput import CannotCreateUInputException
 from scc.tools import set_logging_level, find_binary, clamp
 from scc.device_monitor import create_device_monitor
@@ -754,7 +754,7 @@ class SCCDaemon(Daemon):
 				except Exception as e:
 					exc = traceback.format_exc()
 					log.exception(e)
-					tb = str(exc).encode("utf-8").encode('string_escape')
+					tb = encode_escape(str(exc).encode("utf-8"))
 					client.wfile.write(b"Fail: " + tb + b"\n")
 		elif message.startswith("OSD:"):
 			if not self.osd_daemon:
@@ -828,7 +828,7 @@ class SCCDaemon(Daemon):
 				l, actionstr = message.split(":", 1)[1].strip(" \t\r").split(" ", 1)
 				action = TalkingActionParser().restart(actionstr).parse().compress()
 			except Exception as e:
-				e = str(e).encode("utf-8").encode('string_escape')
+				e = encode_escape(str(e).encode("utf-8"))
 				client.wfile.write(b"Fail: failed to parse: " + e + "\n")
 				return
 			with self.lock:
@@ -837,7 +837,7 @@ class SCCDaemon(Daemon):
 						client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
 						return
 				except ValueError as e:
-					tb = str(traceback.format_exc()).encode("utf-8").encode('string_escape')
+					tb = encode_escape(str(traceback.format_exc()).encode("utf-8"))
 					client.wfile.write(b"Fail: " + tb + b"\n")
 					return
 				client.replace_action(self, SCCDaemon.source_to_constant(l), action)
@@ -851,7 +851,7 @@ class SCCDaemon(Daemon):
 							client.wfile.write(b"Fail: Cannot lock " + l.encode("utf-8") + b"\n")
 							return
 				except ValueError as e:
-					tb = str(traceback.format_exc()).encode("utf-8").encode('string_escape')
+					tb = encode_escape(str(traceback.format_exc()).encode("utf-8"))
 					client.wfile.write(b"Fail: " + tb + b"\n")
 					return
 				for l in to_lock:
@@ -920,7 +920,7 @@ class SCCDaemon(Daemon):
 				what, up_angle = message[8:].strip().split(" ", 2)
 				up_angle = int(up_angle)
 			except Exception as e:
-				tb = str(traceback.format_exc()).encode("utf-8").encode('string_escape')
+				tb = encode_escape(str(traceback.format_exc()).encode("utf-8"))
 				client.wfile.write(b"Fail: " + tb + b"\n")
 				return
 			with self.lock:
