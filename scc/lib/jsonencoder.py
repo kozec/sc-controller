@@ -285,7 +285,6 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
 		isinstance=isinstance,
 		list=list,
 		long=int,
-		str=str,
 		tuple=tuple,
 	):
 
