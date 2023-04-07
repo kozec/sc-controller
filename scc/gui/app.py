@@ -231,7 +231,8 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				w.set_sensitive(gyros)
 		
 		for w in (btC, btCPAD, btDPAD, btGYRO):
-			w.set_visible(w.get_sensitive())
+			if w is not None:
+				w.set_visible(w.get_sensitive())
 		
 		# Re-layout if needed
 		expected_layout = "default"
@@ -269,9 +270,10 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			# Move 'DPAD' bellow 'LGRIP'
 			btLGRIP = self.builder.get_object("btLGRIP")
 			btDPAD = self.builder.get_object("btDPAD")
-			btDPAD.get_parent().remove(btDPAD)
-			btLGRIP.get_parent().pack_start(btDPAD, False, True, 6)
-			btLGRIP.get_parent().reorder_child(btDPAD, 5)
+			if btDPAD is not None:
+				btDPAD.get_parent().remove(btDPAD)
+				btLGRIP.get_parent().pack_start(btDPAD, False, True, 6)
+				btLGRIP.get_parent().reorder_child(btDPAD, 5)
 	
 	
 	def setup_statusicon(self):
@@ -574,7 +576,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 			self.current.clear()
 		else:
 			self.current.is_template = False
-		self.new_profile(self.current, txNewProfile.get_text().decode("utf-8"))
+		self.new_profile(self.current, txNewProfile.get_text())
 		dlg.hide()
 	
 	
@@ -617,7 +619,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		self.current_file = giofile
 		self.recursing = True
 		self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
-		self.builder.get_object("txProfileFilename").set_text(giofile.get_path().decode("utf-8"))
+		self.builder.get_object("txProfileFilename").set_text(giofile.get_path())
 		self.builder.get_object("txProfileDescription").get_buffer().set_text(self.current.description)
 		self.builder.get_object("cbProfileIsTemplate").set_active(self.current.is_template)
 		for b in list(self.button_widgets.values()):
@@ -696,7 +698,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 				self.profile_switchers[0].set_profile_modified(False, self.current.is_template)
 			return
 		
-		if giofile.get_path().decode("utf-8").endswith(".mod"):
+		if giofile.get_path().endswith(".mod"):
 			# Special case, this one is saved only to be sent to daemon
 			# and user doesn't need to know about it
 			if self.dm.is_alive():
@@ -1670,7 +1672,7 @@ class App(Gtk.Application, UserDataManager, BindingEditor):
 		"""
 		from scc.parser import ActionParser
 		to_convert = {}
-		for name in [ x.decode("utf-8") for x in os.listdir(get_profiles_path()) ]:
+		for name in [ x for x in os.listdir(get_profiles_path()) ]:
 			if name.endswith("~"):
 				# Ignore backups - https://github.com/kozec/sc-controller/issues/440
 				continue

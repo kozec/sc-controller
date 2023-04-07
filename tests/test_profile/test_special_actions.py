@@ -31,7 +31,7 @@ class TestSpecialActions(object):
 		"""
 		a = parser.from_json_data({ 'action' : "shell('ls -la')" })
 		assert isinstance(a, ShellCommandAction)
-		assert a.command == "ls -la"
+		assert a.command == b"ls -la"
 	
 	
 	def test_turnoff(self):

@@ -242,7 +242,7 @@ class ActionParser(object):
 			elif t.type == TokenType.OP and t.value == ',':
 				self._next_token()
 			else:
-				raise ParseError("Expected ',' or end of parameter list after parameter '%s' for token '%s'" % (str(parameters[-1]), str(t)))
+				raise ParseError("Expected ',' or end of parameter list after parameters '%s' for token '%s' from tokens '%s'" % (str(parameters), str(t), str(self.tokens)))
 
 
 		# Code shouldn't reach here, unless there is not closing ')' in parameter list

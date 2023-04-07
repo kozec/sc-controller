@@ -36,7 +36,7 @@ class Tester(GObject.GObject):
 	
 	def __init__(self, driver, device_id):
 		GObject.GObject.__init__(self)
-		self.buffer = b""
+		self.buffer : bytes = b""
 		self.buttons = []
 		self.axes = []
 		self.subprocess = None
@@ -87,8 +87,8 @@ class Tester(GObject.GObject):
 			return
 		if len(data) > 0:
 			self.buffer += data
-			while "\n" in self.buffer:
-				line, self.buffer = self.buffer.split("\n", 1)
+			while b"\n" in self.buffer:
+				line, self.buffer = self.buffer.split(b"\n", 1)
 				try:
 					self._on_line(line)
 				except Exception as e:
@@ -98,19 +98,19 @@ class Tester(GObject.GObject):
 	
 	
 	def _on_line(self, line):
-		if line.startswith("Axis"):
-			trash, number, value = line.split(" ")
+		if line.startswith(b"Axis"):
+			trash, number, value = line.split(b" ")
 			number, value = int(number), int(value)
 			self.emit('axis', number, value)
-		elif line.startswith("ButtonPress"):
-			trash, code = line.split(" ")
+		elif line.startswith(b"ButtonPress"):
+			trash, code = line.split(b" ")
 			self.emit('button', int(code), True)
-		elif line.startswith("ButtonRelease"):
-			trash, code = line.split(" ")
+		elif line.startswith(b"ButtonRelease"):
+			trash, code = line.split(b" ")
 			self.emit('button', int(code), False)
-		elif line.startswith("Ready"):
+		elif line.startswith(b"Ready"):
 			self.emit('ready')
-		elif line.startswith("Axes:"):
-			self.axes = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
-		elif line.startswith("Buttons:"):
-			self.buttons = [ int(x) for x in line.split(" ")[1:] if len(x.strip()) ]
+		elif line.startswith(b"Axes:"):
+			self.axes = [ int(x) for x in line.split(b" ")[1:] if len(x.strip()) ]
+		elif line.startswith(b"Buttons:"):
+			self.buttons = [ int(x) for x in line.split(b" ")[1:] if len(x.strip()) ]

@@ -161,8 +161,8 @@ class ProfileSwitcher(Gtk.EventBox, UserDataManager):
 		self._model.clear()
 		i, current_index = 0, 0
 		for f in sorted(lst, key=lambda f: f.get_basename()):
-			name = f.get_basename().decode("utf-8")
-			if type(name) is str:
+			name = f.get_basename()
+			if type(name) is bytes:
 				name = name.decode("utf-8")
 			if name.endswith(".mod"):
 				continue

@@ -39,6 +39,14 @@ class TestSpecialActions(object):
 		"""
 		assert _parses_as_itself(ShellCommandAction("ls -la"))
 	
+		
+	def test_shell_unicode(self):
+		"""
+		Tests if ShellAction can be converted to string and parsed
+		back to same action.
+		"""
+		assert _parses_as_itself(ShellCommandAction("echo 😀"))
+	
 	
 	def test_turnoff(self):
 		"""

@@ -55,7 +55,7 @@ class SVGWidget(Gtk.EventBox):
 	
 	
 	def set_image(self, filename):
-		self.current_svg = open(filename, "r").read().decode("utf-8")
+		self.current_svg : bytes = open(filename, "rb").read()
 		self.cache = OrderedDict()
 		self.areas = []
 		self.parse_image()
@@ -68,7 +68,7 @@ class SVGWidget(Gtk.EventBox):
 		This area list is later used to determine over which button is mouse
 		hovering.
 		"""
-		tree = ET.fromstring(self.current_svg.encode("utf-8"))
+		tree = ET.fromstring(self.current_svg.decode("utf-8"))
 		SVGWidget.find_areas(tree, None, self.areas)
 		self.image_width =  float(tree.attrib["width"])
 		self.image_height = float(tree.attrib["height"])
@@ -122,7 +122,7 @@ class SVGWidget(Gtk.EventBox):
 		if prefix == "AREA_":
 			return self.areas
 		lst = []
-		tree = ET.fromstring(self.current_svg.encode("utf-8"))
+		tree = ET.fromstring(self.current_svg.decode("utf-8"))
 		SVGWidget.find_areas(tree, None, lst, prefix=prefix)
 		return lst
 	
@@ -168,7 +168,7 @@ class SVGWidget(Gtk.EventBox):
 		element can be specified by it's id.
 		"""
 		if type(element) in (str, str):
-			tree = ET.fromstring(self.current_svg.encode("utf-8"))
+			tree = ET.fromstring(self.current_svg.decode("utf-8"))
 			SVGEditor.update_parents(tree)
 			element = SVGEditor.get_element(tree, element)
 		width, height = 0, 0
@@ -199,10 +199,10 @@ class SVGWidget(Gtk.EventBox):
 			# 200 images by hand;
 			if len(buttons) == 0:
 				# Quick way out - changes are not needed
-				svg = Rsvg.Handle.new_from_data(self.current_svg.encode("utf-8"))
+				svg = Rsvg.Handle.new_from_data(self.current_svg)
 			else:
 				# 1st, parse source as XML
-				tree = ET.fromstring(self.current_svg.encode("utf-8"))
+				tree = ET.fromstring(self.current_svg.decode('utf-8'))
 				# 2nd, change colors of some elements
 				for button in buttons:
 					el = SVGEditor.find_by_id(tree, button)
@@ -213,7 +213,7 @@ class SVGWidget(Gtk.EventBox):
 				xml = ET.tostring(tree)
 				
 				# ... and now, parse that as XML again......
-				svg = Rsvg.Handle.new_from_data(xml.encode("utf-8"))
+				svg = Rsvg.Handle.new_from_data(xml)
 			while len(self.cache) >= self.CACHE_SIZE:
 				self.cache.popitem(False)
 			if self.size_override:
@@ -274,12 +274,12 @@ class SVGEditor(object):
 		if type(svgw) == str:
 			self._svgw = None
 			self._tree = ET.fromstring(svgw)
-		elif type(svgw) == str:
+		elif type(svgw) == bytes:
 			self._svgw = None
-			self._tree = ET.fromstring(svgw.encode("utf-8"))
+			self._tree = ET.fromstring(svgw.decode("utf-8"))
 		else:
 			self._svgw = svgw
-			self._tree = ET.fromstring(svgw.current_svg.encode("utf-8"))
+			self._tree = ET.fromstring(svgw.current_svg.decode("utf-8"))
 	
 	
 	def commit(self):
@@ -377,11 +377,10 @@ class SVGEditor(object):
 			tree = tree._tree
 		def add_parent(parent):
 			for child in parent:
-				child.parent = parent
+				if hasattr(child, "parent"):
+					child.parent = parent
 				add_parent(child)
 		add_parent(tree)
-		if not hasattr(tree, "parent"):
-			tree.parent = None
 	
 	
 	@staticmethod
@@ -558,10 +557,15 @@ class SVGEditor(object):
 		if isinstance(elm_or_matrix, ET.Element):
 			elm = elm_or_matrix
 			matrix = SVGEditor.parse_transform(elm)
-			parent = elm.parent
+			parent = None
+			if hasattr(elm, "parent"):
+				parent = elm.parent
 			while parent is not None:
 				matrix = SVGEditor.matrixmul(matrix, SVGEditor.parse_transform(parent))
-				parent = parent.parent
+				if hasattr(parent, "parent"):
+					parent = parent.parent
+				else:
+					parent = None
 		else:
 			matrix = elm_or_matrix
 		

@@ -42,7 +42,7 @@ class ComboSetter(object):
 
 class Editor(ComboSetter):
 	""" Common stuff for all editor windows """
-	ERROR_CSS = " #error {background-color:green; color:red;} "
+	ERROR_CSS = b" #error {background-color:green; color:red;} "
 	_error_css_provider = None
 	
 	def __init__(self):
@@ -66,7 +66,7 @@ class Editor(ComboSetter):
 	def install_error_css():
 		if Editor._error_css_provider is None:
 			Editor._error_css_provider = Gtk.CssProvider()
-			Editor._error_css_provider.load_from_data(str(Editor.ERROR_CSS))
+			Editor._error_css_provider.load_from_data(Editor.ERROR_CSS)
 			Gtk.StyleContext.add_provider_for_screen(
 					Gdk.Screen.get_default(),
 					Editor._error_css_provider,

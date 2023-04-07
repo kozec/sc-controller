@@ -50,7 +50,7 @@ class Profile(object):
 	
 	def save(self, filename):
 		""" Saves profile into file. Returns self """
-		fileobj = file(filename, "w")
+		fileobj = open(filename, mode="w")
 		self.save_fileobj(fileobj)
 		fileobj.close()
 		return self

@@ -335,7 +335,7 @@ class ActionEditor(Editor):
 	def _set_title(self):
 		""" Copies title from text entry into action instance """
 		entName = self.builder.get_object("entName")
-		name = entName.get_text().decode("utf-8").strip(" \t\r\n")
+		name = entName.get_text().strip(" \t\r\n")
 		if len(name) < 1:
 			self._action.name = None
 		elif not self._action:

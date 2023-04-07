@@ -328,7 +328,7 @@ class ControllerRegistration(Editor):
 			os.makedirs(os.path.join(get_config_path(), "devices"))
 		except: pass
 		
-		filename = self._evdevice.name.decode("utf-8").strip().replace("/","")
+		filename = self._evdevice.name.strip().replace("/","")
 		if self._tester.driver == "hid":
 			filename = "%.4x:%.4x-%s" % (self._evdevice.info.vendor,
 				self._evdevice.info.product, filename)
