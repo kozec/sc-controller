@@ -72,7 +72,7 @@ class Mapper(object):
 		vendor = int(cfg["output"]["vendor"], 16)
 		product = int(cfg["output"]["product"], 16)
 		version = int(cfg["output"]["version"], 16)
-		name = cfg["output"]["name"]
+		name = bytes(cfg["output"]["name"], 'utf-8')
 		rumble = cfg["output"]["rumble"] and poller != None
 		axes = []
 		i = 0

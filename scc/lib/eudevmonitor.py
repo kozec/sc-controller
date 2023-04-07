@@ -245,6 +245,8 @@ class Monitor:
 			# Already done
 			return self
 		fn = getattr(self._eudev._lib, "udev_monitor_filter_add_" + whichone)
+		if pars and type(pars[0]) == str:
+			raise OSError("unexpected pars %s", str(pars))
 		pars = [ ctypes.c_char_p(p) for p in pars ]
 		self._keep_in_mem += pars
 		err = fn(self._monitor, *pars)

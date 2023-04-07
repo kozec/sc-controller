@@ -362,7 +362,7 @@ class EvdevDriver(object):
 	
 	
 	def start(self):
-		self.daemon.get_device_monitor().add_callback("input", None, None,
+		self.daemon.get_device_monitor().add_callback(b"input", None, None,
 				self.handle_new_device, self.handle_removed_device)
 	
 	

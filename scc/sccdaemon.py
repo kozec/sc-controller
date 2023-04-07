@@ -431,7 +431,7 @@ class SCCDaemon(Daemon):
 			self.xdisplay = None
 			return
 		
-		self.xdisplay = X.open_display(os.environ["DISPLAY"])
+		self.xdisplay = X.open_display(bytes(os.environ["DISPLAY"], 'utf-8'))
 		if self.xdisplay:
 			log.debug("Connected to XServer %s", os.environ["DISPLAY"])
 			

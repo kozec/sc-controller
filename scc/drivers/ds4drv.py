@@ -413,7 +413,7 @@ def init(daemon, config):
 	if config["drivers"].get("hiddrv") or (HAVE_EVDEV and config["drivers"].get("evdevdrv")):
 		register_hotplug_device(hid_callback, VENDOR_ID, PRODUCT_ID, on_failure=fail_cb)
 		if HAVE_EVDEV and config["drivers"].get("evdevdrv"):
-			daemon.get_device_monitor().add_callback("bluetooth",
+			daemon.get_device_monitor().add_callback(b"bluetooth",
 							VENDOR_ID, PRODUCT_ID, make_evdev_device, None)
 		return True
 	else:

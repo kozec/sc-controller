@@ -69,7 +69,7 @@ class Driver:
 		read_input = self._lib.read_input
 		read_input.restype = ctypes.c_int
 		read_input.argtypes = [ SCByBtCPtr ]
-		daemon.get_device_monitor().add_callback("bluetooth",
+		daemon.get_device_monitor().add_callback(b"bluetooth",
 				VENDOR_ID, PRODUCT_ID, self.new_device_callback, None)
 	
 	

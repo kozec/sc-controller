@@ -298,7 +298,7 @@ class USBDriver(object):
 		if on_failure:
 			self._fail_cbs[vendor_id, product_id] = on_failure
 		monitor = self.daemon.get_device_monitor()
-		monitor.add_callback("usb", vendor_id, product_id,
+		monitor.add_callback(b"usb", vendor_id, product_id,
 				self.handle_new_device, self.handle_removed_device)
 		log.debug("Registered USB driver for %.4x:%.4x", vendor_id, product_id)
 	
