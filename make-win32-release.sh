@@ -37,7 +37,7 @@ GTK_ICONS=(
 		ui/pan-end-symbolic.symbolic.png
 		ui/pan-up-symbolic.symbolic.png
 )
-DRIVERS=(sc_by_cable sc_dongle)
+DRIVERS=(sc_by_cable sc_dongle steamdeck)
 
 export PROCESSOR_ARCHITEW6432=x86
 # meson $1
