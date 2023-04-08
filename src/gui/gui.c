@@ -21,6 +21,11 @@
 						":/usr/lib/python2.7/lib-dynload" \
 						":/usr/lib/python2.7/site-packages"
 
+#define MSYSTEM_ENV "MSYSTEM"
+
+#define MSYS32_PATH "C:\\msys32"
+#define MSYS64_PATH "C:\\msys64"
+
 #ifdef _WIN32
 #ifdef FORCE_CONSOLE
 int main(int argc, char** argv) {
@@ -71,20 +76,25 @@ int main(int argc, char** argv) {
 		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\lib-dynload", python_home);
 		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\site-packages", python_home);
 	} else {
-#ifdef _WIN64
-		Py_SetPythonHome("C:/msys64/mingw64/");
+		char* msystem = getenv(MSYSTEM_ENV);
+		ASSERT(msystem != NULL);
+		for (int i = 0; msystem[i]; i++) msystem[i] = tolower(msystem[i]);
+
+		// Try MSYS64 next, assuming it is not installed
+		DEBUG("Trying %s", test);
+		if (access(strbuilder_fmt("%s\\%s\\bin\\python2.7.exe", MSYS32_PATH, msystem), F_OK) == 0) {
+			test = strbuilder_fmt("%s\\%s", MSYS32_PATH, msystem);
+		} else if (access(strbuilder_fmt("%s\\%s\\bin\\python2.7.exe", MSYS64_PATH, msystem), F_OK) == 0) {
+			test = strbuilder_fmt("%s\\%s", MSYS64_PATH, msystem);
+		}
+
+		Py_SetPythonHome(test);
 		Py_InitializeEx(0);
-		strbuilder_add(sys_path, ";C:/msys64/mingw64/lib/python2.7");
-		strbuilder_add(sys_path, ";C:/msys64/mingw64/lib/python2.7/lib-dynload");
-		strbuilder_add(sys_path, ";C:/msys64/mingw64/lib/python2.7/site-packages");
-#else
-		Py_SetPythonHome("C:/msys32/mingw32/");
-		Py_InitializeEx(0);
-		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7");
-		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/lib-dynload");
-		strbuilder_add(sys_path, ";C:/msys32/mingw32/lib/python2.7/site-packages");
-#endif
-	}
+		strbuilder_addf(sys_path, ";%s", test);
+		strbuilder_addf(sys_path, ";%s\\lib\\python2.7", test);
+		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\lib-dynload", test);
+		strbuilder_addf(sys_path, ";%s\\lib\\python2.7\\site-packages", test);
+	}	
 	DDEBUG("Python path: %s", strbuilder_get_value(sys_path));
 #else
 	Py_Initialize();
