@@ -49,3 +49,9 @@ run_target('scc-osd-daemon',
 	env: run_target_env,
 )
 
+
+run_target('scc-osd-keyboard',
+	command: [scc_osd_keyboard],
+	depends: [scc_osd_keyboard],
+	env: run_target_env,
+)
