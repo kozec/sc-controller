@@ -199,6 +199,17 @@ int osd_keyboard_parse_args(OSDKeyboardOptions* options, int argc, char** argv) 
 	return 0;
 }
 
+static bool update(OSDKeyboardPrivate * priv) {
+	if(GetKeyState(VK_SHIFT) & 0x8000){
+		// modifier state incorrect on Windows, store bit
+		guint state = gdk_keymap_get_modifier_state(priv->keymap);
+		priv->mod_state = state | GDK_SHIFT_MASK;
+	} else {
+		priv->mod_state = 0;
+	}
+	return TRUE;
+}
+
 
 OSDKeyboard* osd_keyboard_new(OSDKeyboardOptions* options) {
 	SCCClient* client = sccc_connect();
@@ -253,6 +264,10 @@ OSDKeyboard* osd_keyboard_new(OSDKeyboardOptions* options) {
 	osd_keyboard_set_cursor_position(kbd, 1, 0, 0);
 	priv->cursors[0].pressed_button_index = -1;
 	priv->cursors[1].pressed_button_index = -1;
+
+	priv->mod_state = 0;	
+	g_timeout_add(100, (GSourceFunc) update, priv);
+
 	generate_help_lines(priv);
 	return kbd;
 
