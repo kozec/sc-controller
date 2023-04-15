@@ -1,24 +1,24 @@
 {
 	"###" : "Colors used by OSD",
 	"osd_colors": {
-		"background": "101010",
-		"border": "FFFF00",
-		"text": "BFBF24",
-		"menuitem_border": "151500",
-		"menuitem_hilight": "FFFF00",
-		"menuitem_hilight_text": "000000",
-		"menuitem_hilight_border": "FFFF00",
-		"menuseparator": "A5A5A5"
+		"background": "#101010",
+		"border": "#FFFF00",
+		"text": "#BFBF24",
+		"menuitem_border": "#151500",
+		"menuitem_hilight": "#FFFF00",
+		"menuitem_hilight_text": "#000000",
+		"menuitem_hilight_border": "#FFFF00",
+		"menuseparator": "#A5A5A5"
 	},
 	
 	"###" : "Colors used by on-screen keyboard",
 	"osk_colors": {
-		"hilight" : "00688D",
-		"pressed" : "1A9485",
-		"button1" : "162082",
-		"button1_border" : "262b5e",
-		"button2" : "162d44",
-		"button2_border" : "27323e",
-		"text" : "ffffff"
+		"hilight" : "#00688D",
+		"pressed" : "#1A9485",
+		"button1" : "#162082",
+		"button1_border" : "#262b5e",
+		"button2" : "#162d44",
+		"button2_border" : "#27323e",
+		"text" : "#ffffff"
 	}
 }
