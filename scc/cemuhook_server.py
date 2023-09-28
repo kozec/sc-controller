@@ -47,7 +47,7 @@ class CemuhookServer:
 		poller = daemon.get_poller()
 		daemon.poller.register(self.socket.fileno(), poller.POLLIN, self.on_data_recieved)
 		
-		server_port = os.getenv('SERVER_PORT') or PORT;
+		server_port = os.getenv('SCC_SERVER_PORT') or PORT;
 		self.socket.bind(('127.0.0.1', server_port))
 		log.info("Created CemuHookUDP Motion Provider")
 	
