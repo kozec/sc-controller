@@ -346,8 +346,8 @@ bool sccd_cemuhook_socket_enable() {
 	memset(&server_addr, 0, sizeof(struct sockaddr_in));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	if (const char* custom_port = std::getenv("SCC_SERVER_PORT")) {
-		server_addr.sin_port = std::atoi(custom_port);
+	if (const char* custom_port = getenv("SCC_SERVER_PORT")) {
+		server_addr.sin_port = atoi(custom_port);
 	} else {
 		server_addr.sin_port = htons(26760);
 	}
