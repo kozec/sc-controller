@@ -346,8 +346,12 @@ bool sccd_cemuhook_socket_enable() {
 	memset(&server_addr, 0, sizeof(struct sockaddr_in));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	server_addr.sin_port = htons(26760);
-	
+	if (const char* custom_port = getenv("SCC_SERVER_PORT")) {
+		server_addr.sin_port = atoi(custom_port);
+	} else {
+		server_addr.sin_port = htons(26760);
+	}
+
 #ifdef _WIN32
 	WSADATA wsaData;
 	int err = WSAStartup(MAKEWORD(2, 2), &wsaData);

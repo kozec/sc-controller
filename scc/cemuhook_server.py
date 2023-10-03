@@ -10,7 +10,7 @@ from scc.tools import find_library
 from scc.lib.enum import IntEnum
 from ctypes import c_uint32, c_int, c_bool, c_char_p, c_size_t, c_float
 from ctypes import create_string_buffer
-import logging, socket
+import logging, os, socket
 log = logging.getLogger("CemuHook")
 
 BUFFER_SIZE = 1024
@@ -47,7 +47,8 @@ class CemuhookServer:
 		poller = daemon.get_poller()
 		daemon.poller.register(self.socket.fileno(), poller.POLLIN, self.on_data_recieved)
 		
-		self.socket.bind(('127.0.0.1', 26760))
+		server_port = os.getenv('SCC_SERVER_PORT') or PORT;
+		self.socket.bind(('127.0.0.1', server_port))
 		log.info("Created CemuHookUDP Motion Provider")
 	
 	
