@@ -160,6 +160,16 @@ bool on_redraw(GtkWidget* draw_area, cairo_t* ctx, void* _priv) {
 					strbuilder_addf(label, "%lc", unicode);
 #else
 				char* str = scc_action_get_description(b->action, AC_OSD);
+				// TODO symbol change on shift
+				if (strlen(str) > 0) {
+					if (isascii(str[0])) {
+						if ((priv->mod_state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK && isalpha(str[0])) {
+							str[0] = toupper(str[0]);
+						} else if (isalpha(str[0])) {
+							str[0] = tolower(str[0]);
+						}
+					} 
+				}
 				strbuilder_addf(label, "%s", str);
 				free(str);
 #endif

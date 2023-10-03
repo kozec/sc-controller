@@ -241,20 +241,47 @@ static bool on_redraw(GtkWidget* a, cairo_t* ctx, void* _mnu) {
 	return false;
 }
 
+const char * add_hex_hash(char * rgba_string) {
+	if (rgba_string[0] == '#') {
+		return rgba_string;
+	}
+	char * rgba_string_with_hash = malloc(strlen(rgba_string) + 2);
+	strcpy(rgba_string_with_hash, "#");
+	strcat(rgba_string_with_hash, rgba_string);
+	return rgba_string_with_hash;
+}
+
+const char * config_get_color_hex(Config * config, char * key) {
+	char * rgba_string = config_get(config, key);
+	if (rgba_string == NULL) {
+		return NULL;
+	}
+	const char * rgba_string_with_hash = add_hex_hash(rgba_string);
+	return rgba_string_with_hash;
+}
 
 void load_colors(struct RadialMenuData* data) {
 	Config* config = config_load();
 	ASSERT(config);
-	
-	gdk_rgba_parse(&data->color_background, config_get(config, "osd_colors/background"));
-	gdk_rgba_parse(&data->color_border, config_get(config, "osd_colors/border"));
-	gdk_rgba_parse(&data->color_text, config_get(config, "osd_colors/text"));
-	gdk_rgba_parse(&data->color_menuitem_border, config_get(config, "osd_colors/menuitem_border"));
-	gdk_rgba_parse(&data->color_menuitem_hilight, config_get(config, "osd_colors/menuitem_hilight"));
-	gdk_rgba_parse(&data->color_menuitem_hilight_text, config_get(config, "osd_colors/menuitem_hilight_text"));
-	gdk_rgba_parse(&data->color_menuitem_hilight_border, config_get(config, "osd_colors/menuitem_hilight_border"));
-	gdk_rgba_parse(&data->color_menuseparator, config_get(config, "osd_colors/menuseparator"));
-	
+
+	gdk_rgba_parse(&data->color_background, config_get_color_hex(config, "osd_colors/background"));
+	gdk_rgba_parse(&data->color_border, config_get_color_hex(config, "osd_colors/border"));
+	gdk_rgba_parse(&data->color_text, config_get_color_hex(config, "osd_colors/text"));
+	gdk_rgba_parse(&data->color_menuitem_border, config_get_color_hex(config, "osd_colors/menuitem_border"));
+	gdk_rgba_parse(&data->color_menuitem_hilight, config_get_color_hex(config, "osd_colors/menuitem_hilight"));
+	gdk_rgba_parse(&data->color_menuitem_hilight_text, config_get_color_hex(config, "osd_colors/menuitem_hilight_text"));
+	gdk_rgba_parse(&data->color_menuitem_hilight_border, config_get_color_hex(config, "osd_colors/menuitem_hilight_border"));
+	gdk_rgba_parse(&data->color_menuseparator, config_get_color_hex(config, "osd_colors/menuseparator"));
+
+	if(data->color_text.alpha == 0.0) {
+		DWARN("Text color from register/config not parsed correctly, change colour config to reset.");
+		// RGBA (108, 122, 137), 1
+		data->color_text.red = 0.4235294117647059;
+		data->color_text.green = 0.47843137254901963;
+		data->color_text.blue = 0.5372549019607843;
+		data->color_text.alpha = 1.0;
+	}
+		
 	RC_REL(config);
 }
 

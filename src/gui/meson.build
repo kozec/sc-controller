@@ -1,5 +1,5 @@
 deps = [ dependency('python-2.7') ]
-link = [ utils_lib, tools_lib ]
+link = [ utils_lib, tools_lib, bindings_lib ]
 sources = [ 'gui.c' ]
 link_args = []
 

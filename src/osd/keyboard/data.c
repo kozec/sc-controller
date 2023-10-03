@@ -15,17 +15,50 @@ static long json_reader_fn(char* buffer, size_t len, void* reader_data) {
 	return read(*((int*)reader_data), buffer, len);
 }
 
-void load_colors(OSDKeyboardPrivate* priv) {
+const char * add_hex_hash(char * rgba_string) {
+	if (rgba_string[0] == '#') {
+		return rgba_string;
+	}
+	char * rgba_string_with_hash = malloc(strlen(rgba_string) + 2);
+	strcpy(rgba_string_with_hash, "#");
+	strcat(rgba_string_with_hash, rgba_string);
+	return rgba_string_with_hash;
+}
+
+const char * config_get_color_hex(Config * config, char * key) {
+	char * rgba_string = config_get(config, key);
+	if (rgba_string == NULL) {
+		return NULL;
+	}
+	const char * rgba_string_with_hash = add_hex_hash(rgba_string);
+	return rgba_string_with_hash;
+}
+
+void load_colors(OSDKeyboardPrivate* priv) { 
 	Config* config = config_load();
 	ASSERT(config);
 	
-	gdk_rgba_parse(&priv->color_pressed, config_get(config, "osk_colors/pressed"));
-	gdk_rgba_parse(&priv->color_hilight, config_get(config, "osk_colors/hilight"));
-	gdk_rgba_parse(&priv->color_button2, config_get(config, "osk_colors/button2"));
-	gdk_rgba_parse(&priv->color_button1, config_get(config, "osk_colors/button1"));
-	gdk_rgba_parse(&priv->color_button1_border, config_get(config, "osk_colors/button1_border"));
-	gdk_rgba_parse(&priv->color_text, config_get(config, "osk_colors/text"));
+	// fix applied to gui, but grandfather people in
+	gdk_rgba_parse(&priv->color_pressed, config_get_color_hex(config, "osk_colors/pressed"));
+	gdk_rgba_parse(&priv->color_hilight, config_get_color_hex(config, "osk_colors/hilight"));
+	gdk_rgba_parse(&priv->color_button2, config_get_color_hex(config, "osk_colors/button2"));
+	gdk_rgba_parse(&priv->color_button1, config_get_color_hex(config, "osk_colors/button1"));
+	gdk_rgba_parse(&priv->color_button1_border, config_get_color_hex(config, "osk_colors/button1_border"));
+	gdk_rgba_parse(&priv->color_text, config_get_color_hex(config, "osk_colors/text"));
 	
+	if(priv->color_text.alpha == 0.0) {
+		DWARN("Text color from register/config not parsed correctly, using fallback.");
+		// RGBA (108, 122, 137), 1
+		priv->color_text.red = 0.4235294117647059;
+		priv->color_text.green = 0.47843137254901963;
+		priv->color_text.blue = 0.5372549019607843;
+		priv->color_text.alpha = 1.0;
+
+		priv->color_hilight.red = 0.8;
+		priv->color_hilight.green = 0.8;
+		priv->color_hilight.blue = 0.8;
+		priv->color_hilight.alpha = 1.0;
+	}
 	RC_REL(config);
 }
 
