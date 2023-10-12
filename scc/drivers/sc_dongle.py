@@ -186,6 +186,12 @@ class SCController(Controller):
 	
 	
 	def input(self, idata):
+		if idata.rtrig >= 253 and (idata.buttons & SCButtons.RT == 0):
+			idata = idata._replace(rtrig=253)
+
+		if idata.ltrig >= 253 and (idata.buttons & SCButtons.LT == 0):
+			idata = idata._replace(ltrig=253)
+
 		old_state, self._old_state = self._old_state, idata
 		if self.mapper:
 			#if idata.buttons & SCButtons.LPAD:
