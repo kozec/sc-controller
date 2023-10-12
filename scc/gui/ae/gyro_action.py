@@ -53,6 +53,9 @@ class GyroActionComponent(AEComponent):
 		(SCButtons.BACK,		_('Back (select)') ),
 		(SCButtons.C,			_('Center') ),
 		(SCButtons.START,		_('Start') ),
+		(None, None),
+		(SCButtons.CPADTOUCH,   _('Touch Touchpad')),
+		(SCButtons.CPADPRESS,   _('Press Touchpad')),
 	)
 	
 	def __init__(self, app, editor):
